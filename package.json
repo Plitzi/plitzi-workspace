@@ -1,0 +1,25 @@
+{
+  "name": "root",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "../plitzi-builder",
+      "../plitzi-sdk",
+      "../plitzi-plugin-template",
+      "../plitzi-plugin-transformd",
+      "../plitzi-plugin-navbar",
+      "../plitzi-plugin-cms"
+    ]
+  },
+  "scripts": {
+    "start": "lerna run --parallel --scope={@plitzi/plitzi-builder,@plitzi/plitzi-sdk} start",
+    "start-plugins": "lerna run --parallel --scope={@plitzi/plitzi-plugin-template,@plitzi/plitzi-plugin-transformd,@plitzi/plitzi-plugin-navbar,@plitzi/plitzi-plugin-cms} start",
+    "build": "lerna run build",
+    "serve": "lerna run --parallel serve",
+    "clean": "lerna run --parallel clean",
+    "build-assets:dev-watch": "lerna run --parallel --scope={@plitzi/plitzi-plugin-template,@plitzi/plitzi-plugin-transformd,@plitzi/plitzi-plugin-navbar,@plitzi/plitzi-plugin-cms} build-assets:dev-watch"
+  },
+  "devDependencies": {
+    "lerna": "^4.0.0"
+  }
+}
