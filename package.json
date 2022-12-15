@@ -8,12 +8,12 @@
       "../plitzi-plugin-template",
       "../plitzi-plugin-transformd",
       "../plitzi-plugin-navbar",
-      "../plitzi-plugin-cms"
+      "../plitzi-plugin-collection"
     ]
   },
   "scripts": {
     "start": "lerna run --parallel --scope={@plitzi/plitzi-builder,@plitzi/plitzi-sdk} start",
-    "start-plugins": "lerna run --parallel --scope={@plitzi/plitzi-plugin-template,@plitzi/plitzi-plugin-transformd,@plitzi/plitzi-plugin-navbar,@plitzi/plitzi-plugin-cms} start",
+    "start-plugins": "lerna run --parallel --scope={@plitzi/plitzi-plugin-template,@plitzi/plitzi-plugin-transformd,@plitzi/plitzi-plugin-navbar,@plitzi/plitzi-plugin-collection} start",
     "build": "lerna run build",
     "serve": "lerna run --parallel serve",
     "clean": "lerna run --parallel clean",
