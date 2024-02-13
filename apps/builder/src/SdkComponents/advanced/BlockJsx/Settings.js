@@ -1,0 +1,107 @@
+// Packages
+import React, { useCallback, useContext, useState } from 'react';
+import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
+import PropTypes from 'prop-types';
+import noop from 'lodash/noop';
+import get from 'lodash/get';
+import Button from '@plitzi/plitzi-ui-components/Button';
+import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
+import Alert from '@plitzi/plitzi-ui-components/Alert';
+import TextArea from '@plitzi/plitzi-ui-components/TextArea';
+
+// Alias
+import useNetwork from '@pmodules/Network/hooks/useNetwork';
+import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
+
+// content is done in builder side and injected here as child
+const Settings = props => {
+  const { content = '', props: componentProps = '{}', allowEmptyRender = false, onUpdate = noop } = props;
+  const {
+    contexts: { NetworkContext }
+  } = usePlitziServiceContext();
+  const { server, webKey } = useContext(NetworkContext);
+  const [error, setError] = useState(undefined);
+  const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
+
+  const generateJSX = useCallback(
+    async data => {
+      const queryResponse = await networkQuery('/utils/transform-jsx', { data }, 'post');
+      const compiled = get(queryResponse, 'data');
+      if (!compiled) {
+        setError(get(queryResponse, 'error'));
+        onUpdate('contentCache', '');
+
+        return;
+      }
+
+      setError(undefined);
+      onUpdate('contentCache', btoa(compiled));
+    },
+    [onUpdate, networkQuery]
+  );
+
+  const handleChange = key => e => onUpdate(key, e.target.value);
+
+  const handleClick = useCallback(() => generateJSX(content), [generateJSX]);
+
+  const handleChangeAllowEmpty = key => e => onUpdate(key, e.target.checked);
+
+  const handleChangeContent = useCallback(value => onUpdate('content', value), [onUpdate]);
+
+  return (
+    <div className="flex flex-col grow">
+      <div className="bg-blue-400 px-4 py-2 flex items-center justify-center">
+        <h1 className="text-white m-0">Block JSX Settings</h1>
+      </div>
+      <ElementAdvancedEditor className="grow" value={content} mode="js" onChange={handleChangeContent} />
+      <div className="flex flex-col p-2">
+        {error && (
+          <Alert className="text-white mb-4" containerClassName="overflow-x-auto" iconClassName="" intent="danger">
+            <div className="flex flex-col text-xs">
+              <div className="whitespace-pre">{error.message}</div>
+              <div className="my-2">
+                Reason: <div className="inline-block font-bold">{error.reasonCode}</div>
+              </div>
+            </div>
+          </Alert>
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Checkbox
+              id="custom-is-plugin"
+              checked={allowEmptyRender}
+              onChange={handleChangeAllowEmpty('allowEmptyRender')}
+              className="rounded mr-2"
+            />
+            <label htmlFor="custom-is-plugin" className="cursor-pointer select-none">
+              Allow Empty Render
+            </label>
+          </div>
+          <Button onClick={handleClick} disabled={networkLoading} className="rounded">
+            {!networkLoading && 'Compile'}
+            {networkLoading && (
+              <div className="flex items-center justify-center">
+                <i className="fas fa-sync fa-spin mr-1" />
+                Compiling...
+              </div>
+            )}
+          </Button>
+        </div>
+        <div className="flex flex-col mt-4">
+          <label>Properties</label>
+          <TextArea value={componentProps} onChange={handleChange('props')} className="rounded" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+Settings.propTypes = {
+  content: PropTypes.string,
+  contentCache: PropTypes.string,
+  props: PropTypes.string,
+  allowEmptyRender: PropTypes.bool,
+  onUpdate: PropTypes.func
+};
+
+export default Settings;

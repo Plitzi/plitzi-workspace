@@ -1,0 +1,209 @@
+// Packages
+import React, { useContext, useMemo, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import get from 'lodash/get';
+import classNames from 'classnames';
+import { ComponentContext } from '@plitzi/plitzi-sdk';
+import useStateDebounce from '@plitzi/plitzi-ui-components/hooks/useStateDebounce';
+import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
+
+// Alias
+import StyleInspector from '@pmodules/Style/StyleInspector';
+import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
+import Interactions from '@pmodules/Interactions/Interactions';
+import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
+
+// Relatives
+import BuilderBreadcrumb from '../BuilderBreadcrumb';
+import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
+import useBuilderElement from '../../hooks/useBuilderElement';
+import ElementSettings from './ElementSettings';
+import ElementDefinitionSettings from './ElementDefinitionSettings';
+import BuilderContext from '../../BuilderContext';
+
+const BuilderElementTools = props => {
+  const { initialTab = 'style' } = props;
+  const [, setCache, getCache] = useCache();
+  const [selected, setSelected] = useState(() => getCache('BuilderElementTools.tabSelected', initialTab));
+  const { builderHandler } = useContext(BuilderContext);
+  const { getComponent, componentDefinitions } = useContext(ComponentContext);
+  const { elementSelected } = useContext(BuilderSelectedContext);
+  const element = useBuilderElement(elementSelected);
+  const attributes = useMemo(() => get(element, 'attributes', {}), [element]);
+  const definition = useMemo(() => get(element, 'definition', {}), [element]);
+
+  const handleClickListItems = item => () => {
+    setSelected(item);
+    setCache(item, 'BuilderElementTools.tabSelected');
+  };
+
+  const [tempAttributes, setTempAttributes] = useStateDebounce(
+    attributes,
+    useCallback(
+      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...element, attributes: state }),
+      [builderHandler, element]
+    ),
+    500
+  );
+
+  const [tempDefinition, setTempDefinition] = useStateDebounce(
+    definition,
+    useCallback(
+      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...element, definition: state }),
+      [builderHandler, element]
+    ),
+    500
+  );
+
+  const handleChange = useCallback(
+    (key, value, isDefinition = false) => {
+      if (isDefinition) {
+        setTempDefinition(state => ({ ...state, [key]: value }));
+      } else {
+        setTempAttributes(state => ({ ...state, [key]: value }));
+      }
+    },
+    [setTempAttributes]
+  );
+
+  const handleChangeBinding = useCallback(
+    bindings => {
+      const { definition } = element;
+      builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...element, definition: { ...definition, bindings } });
+    },
+    [builderHandler, element]
+  );
+
+  const handleChangeInteractions = useCallback(
+    interactions => {
+      const { definition } = element;
+      builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, {
+        ...element,
+        definition: { ...definition, interactions }
+      });
+    },
+    [builderHandler, element]
+  );
+
+  if (!element) {
+    return (
+      <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded text-center">
+        Click on a component to select it
+      </div>
+    );
+  }
+
+  const {
+    definition: { type, bindings, interactions }
+  } = element;
+  const Plugin = getComponent(type);
+  if (!Plugin) {
+    return null;
+  }
+
+  const { bindingsAllowed } = componentDefinitions[type];
+
+  return (
+    <div className={classNames('flex flex-col grow', { [`element-${type}`]: type })}>
+      <div className="top-0 sticky z-10 flex flex-col bg-white shadow-[rgba(0,15,51,0.2)_0px_1px_3px_0px]">
+        <ul className="w-full m-0 p-0 flex justify-around list-type-none border-b border-gray-300">
+          <li
+            className={classNames(
+              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
+              {
+                'border-transparent': selected !== 'style',
+                'border-blue-400 text-blue-400': selected === 'style'
+              }
+            )}
+            onClick={handleClickListItems('style')}
+            title="Style"
+          >
+            <i className="fas fa-palette" />
+          </li>
+          <li
+            className={classNames(
+              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
+              {
+                'border-transparent': selected !== 'definition',
+                'border-blue-400 text-blue-400': selected === 'definition'
+              }
+            )}
+            onClick={handleClickListItems('definition')}
+            title="Definition"
+          >
+            <i className="fa-solid fa-tarp" />
+          </li>
+          <li
+            className={classNames(
+              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
+              {
+                'border-transparent': selected !== 'settings',
+                'border-blue-400 text-blue-400': selected === 'settings'
+              }
+            )}
+            onClick={handleClickListItems('settings')}
+            title="Settings"
+          >
+            <i className="fas fa-cog" />
+          </li>
+          <li
+            className={classNames(
+              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
+              {
+                'border-transparent': selected !== 'bindings',
+                'border-blue-400 text-blue-400': selected === 'bindings'
+              }
+            )}
+            onClick={handleClickListItems('bindings')}
+            title="Bindings"
+          >
+            <i className="fas fa-link" />
+          </li>
+          <li
+            className={classNames(
+              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
+              {
+                'border-transparent': selected !== 'interactions',
+                'border-blue-400 text-blue-400': selected === 'interactions'
+              }
+            )}
+            onClick={handleClickListItems('interactions')}
+            title="Interactions"
+          >
+            <i className="fas fa-bolt" />
+          </li>
+        </ul>
+        <BuilderBreadcrumb limit={4} />
+      </div>
+      <div className="flex flex-col grow overflow-y-auto basis-0">
+        {selected === 'style' && (
+          <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
+        )}
+        {selected === 'definition' && (
+          <ElementDefinitionSettings definition={tempDefinition} type={type} onUpdate={handleChange} />
+        )}
+        {selected === 'settings' && (
+          <ElementSettings attributes={tempAttributes} id={elementSelected} type={type} handleChange={handleChange} />
+        )}
+        {selected === 'bindings' && (
+          <DataSourceBinding
+            onChange={handleChangeBinding}
+            id={elementSelected}
+            bindings={bindings}
+            bindingsAllowed={bindingsAllowed}
+            allowCustomBindings={type === 'custom' || type === 'blockJsx' || type === 'blockHtml'}
+          />
+        )}
+        {selected === 'interactions' && (
+          <Interactions id={elementSelected} interactions={interactions} onChange={handleChangeInteractions} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+BuilderElementTools.propTypes = {
+  initialTab: PropTypes.string
+};
+
+export default BuilderElementTools;

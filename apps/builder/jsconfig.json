@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "umd",
+    "paths": {
+      "@pmodules/*": ["./src/modules/*"],
+      "@pcomponents/*": ["./src/components/*"],
+    }
+  }
+}

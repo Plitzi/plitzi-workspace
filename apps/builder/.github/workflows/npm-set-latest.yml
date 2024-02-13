@@ -1,0 +1,28 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
+
+name: npm-set-latest
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to set latest'
+        required: true
+        default: ''
+
+jobs:
+  sync-s3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to latest version
+        run: |
+          aws s3 sync s3://plitzi-cdn/builder/${{ github.event.inputs.version }} s3://plitzi-cdn/builder/latest --delete --cache-control max-age=300,public
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFROUND_DISTRIBUTION_ID }} --paths '/builder/latest/*'

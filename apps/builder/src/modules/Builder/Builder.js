@@ -1,0 +1,113 @@
+// Packages
+import React, { useContext, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
+import { POPUP_PLACEMENT_RIGHT } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+
+// Alias
+import AppContext from '@pmodules/App/AppContext';
+
+// Relatives
+import BuilderArea from './components/BuilderArea';
+import BuilderContext from './BuilderContext';
+import { BUILDER_MODE_NORMAL } from './BuilderProvider';
+import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
+
+const pagesDefault = [];
+
+const Builder = props => {
+  const { pages = pagesDefault, customCss = '', externalStyle = '' } = props;
+  const builderContextValue = useContext(BuilderContext);
+  const { existsPopup, addPopup } = usePopup();
+  const { multiPagesMode, builderElementPermissions, mode, hasMultiPages, mobilePreview } = builderContextValue;
+  const { displayMode, previewMode } = useContext(AppContext);
+  if (pages.length === 0 && mode === BUILDER_MODE_NORMAL) {
+    return (
+      <div className="flex grow basis-0 overflow-auto min-w-0 relative flex-col items-center">
+        <div
+          className="opacity-20 translate-y-[-50%] h-[400px] w-[400px] top-[50%] absolute bg-no-repeat bg-contain"
+          style={{ backgroundImage: 'url(https://cdn.plitzi.com/resources/img/favicon.svg)' }}
+        />
+        <div>Please add your first page</div>
+      </div>
+    );
+  }
+
+  useEffect(() => {
+    if (!existsPopup('element-tools')) {
+      const title = (
+        <>
+          <i className="fas fa-tools m-1 text-base" />
+          Tools
+        </>
+      );
+      addPopup('element-tools', <BuilderElementTools />, {
+        resizeHandles: ['se'],
+        width: 350,
+        title,
+        allowLeftSide: true,
+        allowRightSide: true,
+        placement: POPUP_PLACEMENT_RIGHT
+      });
+    }
+  }, []);
+
+  const contextsMemo = useMemo(
+    () =>
+      pages.reduce(
+        (acum, page) => ({
+          ...acum,
+          [page]: { ...builderContextValue, baseContext: { baseElementId: page }, builderElementPermissions }
+        }),
+        {}
+      ),
+    [pages, builderElementPermissions, builderContextValue]
+  );
+
+  return (
+    <div className="flex grow basis-0 overflow-auto min-w-0">
+      {(!multiPagesMode || mode !== BUILDER_MODE_NORMAL) && (
+        <BuilderArea
+          externalStyle={externalStyle}
+          customCss={customCss}
+          displayMode={displayMode}
+          previewMode={previewMode}
+        />
+      )}
+      {mobilePreview && displayMode !== 'mobile' && !previewMode && (
+        <BuilderArea
+          className="basis-[425px] mb-11"
+          externalStyle={externalStyle}
+          customCss={customCss}
+          mobilePreview
+          displayMode="mobile"
+          showFooter={false}
+          headerTitle="Mobile Preview"
+          previewMode
+        />
+      )}
+      {multiPagesMode &&
+        hasMultiPages &&
+        pages.map(page => (
+          <BuilderContext.Provider key={page} value={contextsMemo[page]}>
+            <BuilderArea
+              externalStyle={externalStyle}
+              customCss={customCss}
+              displayMode={displayMode}
+              previewMode={previewMode}
+            />
+          </BuilderContext.Provider>
+        ))}
+    </div>
+  );
+};
+
+Builder.propTypes = {
+  externalStyle: PropTypes.string,
+  customCss: PropTypes.string,
+  pages: PropTypes.arrayOf(PropTypes.string)
+};
+
+Builder.Plugin = () => null;
+
+export default Builder;

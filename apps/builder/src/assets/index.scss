@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap');
+@import 'tailwindcss/base'; // @tailwind base;
+@import 'tailwindcss/components'; // @tailwind components;
+@import 'tailwindcss/utilities'; // @tailwind utilities;
+
+@import '@plitzi/plitzi-sdk/plitzi-sdk-extended.css';
+
+$border-radius: '4px';
+@import './helpers';
+@import './variables';
+@import './global';
+@import './icons';
+@import '@pmodules/Builder/Assets';
+
+
+.plitzi-builder {
+  font-family: 'Rubik', sans-serif;
+
+  &.resizing {
+    .builder-area {
+      pointer-events: none;
+    }
+  }
+}
+
+@import '@plitzi/plitzi-ui-components/style.css';
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
+}

@@ -6,6 +6,31 @@
       "dependsOn": ["^start"],
       "cache": false,
       "persistent": true
+    },
+    "start:debug": {
+      "dependsOn": ["^start:debug"],
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "cache": false
+    },
+    "test:coverage": {
+      "dependsOn": ["^test:coverage"],
+      "cache": false
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "cache": false
+    },
+    "lint-style": {
+      "dependsOn": ["^lint-style"],
+      "cache": false
+    },
+    "lint-style:fix": {
+      "dependsOn": ["^lint-style:fix"],
+      "cache": false
     }
   }
 }

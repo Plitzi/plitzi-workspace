@@ -1,0 +1,90 @@
+// Packages
+import { useCallback, useContext, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+
+// Alias
+import InteractionsContext from '@pmodules/Interactions/InteractionsContext';
+
+const SpaceContainerInternal = props => {
+  const { children } = props;
+  const { addToast } = useToast();
+  const { useInteractions } = useContext(InteractionsContext);
+
+  const handleAddNotification = useCallback(
+    params => {
+      const { placement, appeareance, autoDismiss, transitionDuration, autoDismissTimeout } = params;
+      let { content } = params;
+      if (typeof content !== 'string') {
+        content = JSON.stringify(content);
+      }
+
+      addToast(content, { appeareance, autoDismiss, placement, transitionDuration, autoDismissTimeout });
+    },
+    [addToast]
+  );
+
+  const interactionCallbacks = useMemo(
+    () => ({
+      addNotification: {
+        title: 'Add Notification',
+        type: 'globalCallback',
+        callback: handleAddNotification,
+        preview: {},
+        params: {
+          content: {
+            label: 'Content',
+            defaultValue: 'Content',
+            type: 'textarea'
+          },
+          placement: {
+            label: 'Placement',
+            defaultValue: 'top-right',
+            type: 'select',
+            options: [
+              { value: 'top-right', label: 'Top Right' },
+              { value: 'top-center', label: 'Top Center' },
+              { value: 'top-left', label: 'Top Left' },
+              { value: 'bottom-right', label: 'Bottom Right' },
+              { value: 'bottom-center', label: 'Bottom Center' },
+              { value: 'bottom-left', label: 'Bottom Left' }
+            ]
+          },
+          appeareance: {
+            label: 'Appeareance',
+            defaultValue: 'success',
+            type: 'select',
+            options: [
+              { value: 'success', label: 'Success' },
+              { value: 'danger', label: 'Danger' },
+              { value: 'warning', label: 'Warning' },
+              { value: 'info', label: 'Info' }
+            ]
+          },
+          autoDismiss: {
+            label: 'Auto Dismiss',
+            defaultValue: true,
+            canBind: false,
+            type: 'boolean'
+          },
+          autoDismissTimeout: {
+            label: 'Auto Dismiss Timeout',
+            defaultValue: 5000,
+            when: params => !!params.autoDismiss
+          }
+        }
+      }
+    }),
+    [handleAddNotification]
+  );
+
+  useInteractions({ id: 'space', callbacks: interactionCallbacks });
+
+  return children;
+};
+
+SpaceContainerInternal.propTypes = {
+  children: PropTypes.node
+};
+
+export default SpaceContainerInternal;

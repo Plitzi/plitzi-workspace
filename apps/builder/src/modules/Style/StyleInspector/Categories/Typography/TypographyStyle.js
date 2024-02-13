@@ -1,0 +1,94 @@
+// Packages
+import React, { useCallback, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import noop from 'lodash/noop';
+
+// Alias
+import Icons from '@pcomponents/Icons';
+import { FONT_STYLE, TEXT_DECORATION } from '@pmodules/Style/StyleConstants';
+
+// Relatives
+import GroupButtons from '../../../components/GroupButtons';
+
+const TypographyStyle = props => {
+  const { fontStyle, fontDecoration, onChange = noop } = props;
+
+  const handleChange = useCallback(itemValue => onChange(itemValue), [onChange]);
+
+  const itemsItalicize = useMemo(
+    () => [
+      {
+        value: { value: 'normal', type: FONT_STYLE },
+        children: <Icons width={16} height={16} type="FontNormal" />,
+        description: 'Normal',
+        active: fontStyle === 'normal'
+      },
+      {
+        value: { value: 'italic', type: FONT_STYLE },
+        children: <Icons width={16} height={16} type="FontItalic" />,
+        description: 'Italic',
+        active: fontStyle === 'italic'
+      }
+    ],
+    [fontStyle]
+  );
+
+  const itemsDecoration = useMemo(
+    () => [
+      {
+        value: { value: 'none', type: TEXT_DECORATION },
+        children: <Icons width={16} height={16} type="XMark" />,
+        description: 'None',
+        active: fontDecoration === 'none'
+      },
+      {
+        value: { value: 'line-through', type: TEXT_DECORATION },
+        children: <Icons width={16} height={16} type="TextDecorationStrike" />,
+        description: 'Strikethrough',
+        active: fontDecoration === 'line-through'
+      },
+      {
+        value: { value: 'underline', type: TEXT_DECORATION },
+        children: <Icons width={16} height={16} type="TextDecorationUnderline" />,
+        description: 'Underline',
+        active: fontDecoration === 'underline'
+      },
+      {
+        value: { value: 'overline', type: TEXT_DECORATION },
+        children: <Icons width={16} height={16} type="TextDecorationOverline" />,
+        description: 'Overline',
+        active: fontDecoration === 'overline'
+      }
+    ],
+    [fontDecoration]
+  );
+
+  return (
+    <>
+      <GroupButtons
+        className="w-full"
+        classNameContainer="w-[180px]"
+        keyValue={FONT_STYLE}
+        items={itemsItalicize}
+        label="Italicize"
+        onChange={handleChange}
+      />
+      <GroupButtons
+        className="w-full"
+        classNameContainer="w-[180px]"
+        keyValue={TEXT_DECORATION}
+        items={itemsDecoration}
+        label="Decoration"
+        onChange={handleChange}
+      />
+    </>
+  );
+};
+
+TypographyStyle.propTypes = {
+  fontStyle: PropTypes.string,
+  fontDecoration: PropTypes.string,
+  onChange: PropTypes.func
+};
+
+export default TypographyStyle;

@@ -1,0 +1,101 @@
+// Packages
+import React, { useContext } from 'react';
+// import PropTypes from 'prop-types';
+import get from 'lodash/get';
+import { ComponentContext } from '@plitzi/plitzi-sdk';
+import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+
+// Relatives
+import Plugin from './Plugin';
+import PluginsContext from './PluginsContext';
+
+const Plugins = () => {
+  const { showModal } = useModal();
+  const { addToast } = useToast();
+  const { components } = useContext(ComponentContext);
+  const { plugins, update, remove } = useContext(PluginsContext);
+
+  const onUpdate = type => async settings => {
+    const plugin = plugins[type];
+    if (!plugin) {
+      return;
+    }
+
+    if (await update({ ...plugin, settings: { ...plugin.settings, ...settings } })) {
+      addToast(
+        <div>
+          Plugin <b>{plugin.name}</b> Settings Updated
+        </div>,
+        {
+          appeareance: 'success',
+          autoDismiss: true,
+          placement: 'top-right'
+        }
+      );
+    }
+  };
+
+  const onRemove = type => async () => {
+    const plugin = plugins[type];
+    if (!plugin) {
+      return;
+    }
+
+    if (await remove(type)) {
+      addToast(
+        <div>
+          Plugin <b>{`${plugin.name} ${plugin.version}`}</b> Removed
+        </div>,
+        {
+          appeareance: 'success',
+          autoDismiss: true,
+          placement: 'top-right'
+        }
+      );
+    }
+  };
+
+  const pluginsData = Object.values(plugins);
+
+  return (
+    <div className="flex flex-col">
+      {pluginsData.length > 0 && (
+        <div className="p-2 flex flex-col">
+          {pluginsData.map((plugin, i) => {
+            const {
+              name,
+              type,
+              assets: { size },
+              market: { backgroundColor, icon },
+              settings,
+              version,
+              latestVersion
+            } = plugin;
+            const component = components[type];
+
+            return (
+              <Plugin
+                key={i}
+                name={name}
+                backgroundColor={backgroundColor}
+                icon={icon}
+                version={version}
+                newVersion={version !== latestVersion.version}
+                size={size}
+                settings={{ ...get(component, 'settings', {}), ...settings }}
+                onUpdate={onUpdate(plugin.type)}
+                onRemove={onRemove(plugin.type)}
+                showModal={showModal}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+Plugins.propTypes = {};
+
+export default Plugins;

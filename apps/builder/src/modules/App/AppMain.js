@@ -1,0 +1,90 @@
+// Packages
+import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+
+// Alias
+import DataSourceContextProvider from '@pmodules/DataSource/DataSourceContextProvider';
+import InteractionsContextProvider from '@pmodules/Interactions/InteractionsContextProvider';
+import UserContextProvider from '@pmodules/User/UserContextProvider';
+import StateManagerContextProvider from '@pmodules/StateManager/StateManagerContextProvider';
+import { DISPLAY_BORDER_BLACK } from '@pmodules/Builder/BuilderHelper';
+
+// Relatives
+import AppContext from './AppContext';
+import AppProvider from './AppProvider';
+import AppContainer from './AppContainer';
+
+const AppMain = props => {
+  const {
+    webKey = '',
+    userKey = '',
+    instanceId = '',
+    server,
+    environment = 'development',
+    includeSubscriptions = true,
+    includeRealTime = true,
+    externalStyle = '',
+    state
+  } = props;
+  const [previewMode, setPreviewMode] = useState(false);
+  const [displayBorderComponents, setDisplayBorderComponents] = useState(DISPLAY_BORDER_BLACK);
+  const [displayMode, setDisplayMode] = useState('desktop');
+
+  const appValueMemo = useMemo(
+    () => ({
+      previewMode,
+      setPreviewMode,
+      displayBorderComponents,
+      setDisplayBorderComponents,
+      displayMode,
+      setDisplayMode
+    }),
+    [previewMode, setPreviewMode, displayBorderComponents, setDisplayBorderComponents, displayMode, setDisplayMode]
+  );
+
+  const childrenMemo = useMemo(
+    () => (
+      <AppProvider
+        instanceId={instanceId}
+        webKey={webKey}
+        environment={environment}
+        userKey={userKey}
+        server={server}
+        includeSubscriptions={includeSubscriptions}
+        includeRealTime={includeRealTime}
+        previewMode={previewMode}
+      >
+        <StateManagerContextProvider state={state}>
+          <DataSourceContextProvider>
+            <InteractionsContextProvider previewMode={previewMode}>
+              <UserContextProvider previewMode={previewMode}>
+                <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
+                  <AppContainer externalStyle={externalStyle} />
+                </PopupProvider>
+              </UserContextProvider>
+            </InteractionsContextProvider>
+          </DataSourceContextProvider>
+        </StateManagerContextProvider>
+      </AppProvider>
+    ),
+    [props]
+  );
+
+  return <AppContext.Provider value={appValueMemo}>{childrenMemo}</AppContext.Provider>;
+};
+
+AppMain.propTypes = {
+  children: PropTypes.node,
+  instanceId: PropTypes.string,
+  webKey: PropTypes.string,
+  environment: PropTypes.string,
+  userKey: PropTypes.string,
+  server: PropTypes.object,
+  includeSubscriptions: PropTypes.bool,
+  includeRealTime: PropTypes.bool,
+  externalStyle: PropTypes.string,
+  state: PropTypes.object
+};
+
+export default AppMain;

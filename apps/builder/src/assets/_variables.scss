@@ -1,0 +1,43 @@
+$background-color: #eee;
+$background-color-black: #23282d;
+$border-color: #ddd;
+$border-color-black: #23282d;
+$border: 1px solid $border-color;
+$border-black: 1px solid $border-color-black;
+$font-color-black: #b4b9be;
+$white: #fff;
+$black: #000;
+
+// gray degradations
+$gray-1: #ededed;
+$gray-2: #979797;
+
+// COLOR
+$primary-color: #4422ee;
+$secondary-color: #fff; // still pending
+
+$font-color: #555d66;
+$font-color-light-1: #b0b3b8;
+
+$danger-color: #dc3545;
+$danger-color--hover: #bd2130;
+
+:root {
+  --pl-primary-color: #4422ee;
+  --pl-primary-color-dark-3: #{darken($primary-color, 30%)};
+  --pl-primary-color-dark-2-5: #{darken($primary-color, 25%)};
+  --pl-primary-color-dark-2: #{darken($primary-color, 20%)};
+  --pl-primary-color-dark-1-5: #{darken($primary-color, 15%)};
+  --pl-primary-color-dark-1: #{darken($primary-color, 10%)};
+  --pl-primary-color-light-3: #{lighten($primary-color, 30%)};
+  --pl-primary-color-light-2-5: #{lighten($primary-color, 25%)};
+  --pl-primary-color-light-2: #{lighten($primary-color, 20%)};
+  --pl-primary-color-light-1-5: #{lighten($primary-color, 15%)};
+  --pl-primary-color-light-1: #{lighten($primary-color, 10%)};
+
+  --pl-gray-1: #f8f9fc;
+
+  --pl-border-1: #e8e9ef;
+
+  --pl-font-color-1: #97989a;
+}
