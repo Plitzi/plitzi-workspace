@@ -31,6 +31,56 @@
     "lint-style:fix": {
       "dependsOn": ["^lint-style:fix"],
       "cache": false
+    },
+    "build-assets:dev": {
+      "dependsOn": ["^build-assets:dev"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:dev-watch": {
+      "dependsOn": ["^build-assets:dev-watch"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:dev-measure": {
+      "dependsOn": ["^build-assets:dev-measure"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:dev-gzip": {
+      "dependsOn": ["^build-assets:dev-gzip"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:dev-analyze": {
+      "dependsOn": ["^build-assets:dev-analyze"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:prod": {
+      "dependsOn": ["^build-assets:prod"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:prod-watch": {
+      "dependsOn": ["^build-assets:prod-watch"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:prod-measure": {
+      "dependsOn": ["^build-assets:prod-measure"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:prod-gzip": {
+      "dependsOn": ["^build-assets:prod-gzip"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-assets:prod-analyze": {
+      "dependsOn": ["^build-assets:prod-analyze"],
+      "cache": false,
+      "outputs": ["dist/**"]
     }
   }
 }
