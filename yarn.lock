@@ -2850,7 +2850,7 @@ __metadata:
     "@plitzi/plitzi-ui-components": ^0.8.8
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
-    "@tailwindcss/forms": ^0.5.7
+    "@repo/tailwind-config": "*"
     "@testing-library/jest-dom": ^6.4.2
     "@testing-library/react": ^14.2.1
     "@testing-library/react-hooks": ^8.0.1
@@ -2905,7 +2905,6 @@ __metadata:
     stylelint-order: ^6.0.4
     stylelint-scss: ^6.1.0
     subscriptions-transport-ws: ^0.11.0
-    tailwindcss: ^3.4.1
     terser-webpack-plugin: ^5.3.10
     thread-loader: ^4.0.2
     twig: ^1.17.1
@@ -2941,6 +2940,7 @@ __metadata:
     "@plitzi/plitzi-ui-components": 0.8.8
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
+    "@repo/tailwind-config": "*"
     "@storybook/addon-essentials": ^7.6.14
     "@storybook/addon-interactions": ^7.6.14
     "@storybook/addon-links": ^7.6.14
@@ -2948,7 +2948,6 @@ __metadata:
     "@storybook/react": ^7.6.14
     "@storybook/react-webpack5": ^7.6.14
     "@storybook/testing-library": ^0.2.2
-    "@tailwindcss/forms": ^0.5.7
     "@testing-library/jest-dom": ^6.4.2
     "@testing-library/react": ^14.2.1
     "@testing-library/react-hooks": ^8.0.1
@@ -3000,7 +2999,6 @@ __metadata:
     stylelint: ^16.2.1
     stylelint-order: ^6.0.4
     stylelint-scss: ^6.1.0
-    tailwindcss: ^3.4.1
     terser-webpack-plugin: ^5.3.10
     thread-loader: ^4.0.2
     twig: ^1.17.1
@@ -3679,6 +3677,16 @@ __metadata:
   checksum: 0b5ea6b2e7bb7f3266005e033337a6fed29c458aa5ddc9a97a90ff19813ae6dfb4392871722d66d7e8db93a29760a8257830a9af58824b3a3363ed58e1e471d8
   languageName: node
   linkType: hard
+
+"@repo/tailwind-config@*, @repo/tailwind-config@workspace:packages/tailwind-config":
+  version: 0.0.0-use.local
+  resolution: "@repo/tailwind-config@workspace:packages/tailwind-config"
+  dependencies:
+    "@tailwindcss/forms": ^0.5.7
+    autoprefixer: ^10.4.17
+    tailwindcss: ^3.4.1
+  languageName: unknown
+  linkType: soft
 
 "@rushstack/eslint-patch@npm:^1.1.0":
   version: 1.7.2
