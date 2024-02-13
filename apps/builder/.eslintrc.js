@@ -3,6 +3,9 @@ const sharedConfig = require('@repo/eslint-config');
 
 module.exports = {
   ...sharedConfig,
+  compilerOptions: {
+    baseUrl: './src'
+  },
   settings: {
     ...sharedConfig.settings,
     'import/resolver': {
