@@ -1,0 +1,78 @@
+// Packages
+import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import classNames from 'classnames';
+import get from 'lodash/get';
+
+// Alias
+import RootElement from '@modules/Element/RootElement';
+
+// Relatives
+import usePlitziServiceContext from '../../../../../services/hooks/usePlitziServiceContext';
+import ListControlledItem from './ListControlledItem';
+import { emptyObject, getPathsFromObeject } from '../../../../../helpers/utils';
+
+const ListControlled = forwardRef((props, ref) => {
+  const { className = '', internalProps = emptyObject, children, items = [] } = props;
+  const { id } = internalProps;
+  const {
+    settings: { previewMode },
+    contexts: { DataSourceContext }
+  } = usePlitziServiceContext();
+  const { useDataSource } = useContext(DataSourceContext);
+
+  const sourceFields = useCallback(
+    async () =>
+      getPathsFromObeject({ item: get(items, '0', {}) }).reduce((acum, path) => [...acum, { path, name: path }], []),
+    [items]
+  );
+
+  const listContextValue = useMemo(() => ({ items }), [items]);
+
+  useDataSource({
+    id,
+    source: `list-${id}`,
+    name: `Plitzi - List ${id}`,
+    value: listContextValue,
+    fields: sourceFields
+  });
+
+  return (
+    <RootElement
+      ref={ref}
+      internalProps={internalProps}
+      className={classNames('plitzi-component__controlled-list', className, {
+        'controlled-list--build-mode': !previewMode
+      })}
+    >
+      {Array.isArray(items) &&
+        items.map((item, i) => {
+          if (!children || (Array.isArray(children) && children.length === 0)) {
+            return (
+              <div className="plitzi-component__controlled-list-item controlled-list--empty" key={i}>
+                <div className="controlled-list-item__counter">{`List Item - ${i + 1}`}</div>
+              </div>
+            );
+          }
+
+          return (
+            <ListControlledItem key={i} itemCount={i} parentId={id} isTemplate={i !== 0 && !previewMode} record={item}>
+              {children}
+            </ListControlledItem>
+          );
+        })}
+      {!previewMode && Array.isArray(items) && items.length === 0 && (
+        <div className="controlled-list controlled-list--empty">This list does not contain any items</div>
+      )}
+    </RootElement>
+  );
+});
+
+ListControlled.propTypes = {
+  internalProps: PropTypes.object,
+  children: PropTypes.node,
+  items: PropTypes.array,
+  className: PropTypes.string
+};
+
+export default ListControlled;

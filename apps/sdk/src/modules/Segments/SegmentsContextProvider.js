@@ -1,0 +1,63 @@
+// Packages
+import React, { useMemo, useContext, useRef, useCallback, useState } from 'react';
+import PropTypes from 'prop-types';
+import get from 'lodash/get';
+
+// Alias
+import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
+import NetworkContext from '@modules/Network/NetworkContext';
+
+// Relatives
+import SegmentsContext from './SegmentsContext';
+
+const SegmentsContextProvider = props => {
+  const { children, segments: segmentsProp } = props;
+  const { query } = useContext(NetworkContext);
+  const internalData = useContext(NetworkInternalContext);
+  const segmentsPropMemo = useMemo(() => {
+    if (segmentsProp) {
+      return segmentsProp;
+    }
+
+    return internalData.segments ?? {};
+  }, [segmentsProp, internalData]);
+
+  const [segments, setSegments] = useState(segmentsPropMemo);
+  const segmentsRef = useRef(segmentsPropMemo);
+  segmentsRef.current = segmentsPropMemo;
+
+  const segmentGet = useCallback(
+    async identifier => {
+      if (segmentsRef.current[identifier]) {
+        return segmentsRef.current[identifier];
+      }
+
+      let segment = await query('Segment', { identifier }, 'network-only');
+      if (!(segment instanceof Error) && segment) {
+        segment = {
+          ...segment,
+          schema: {
+            ...get(segment, 'schema'),
+            flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+          }
+        };
+
+        setSegments({ ...segmentsRef.current, [segment.id]: segment });
+      }
+
+      return segment;
+    },
+    [query]
+  );
+
+  const valueMemo = useMemo(() => ({ segments, segmentGet }), [segments, segmentGet]);
+
+  return <SegmentsContext.Provider value={valueMemo}>{children}</SegmentsContext.Provider>;
+};
+
+SegmentsContextProvider.propTypes = {
+  children: PropTypes.node,
+  segments: PropTypes.array
+};
+
+export default SegmentsContextProvider;

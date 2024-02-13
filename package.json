@@ -1,25 +1,34 @@
 {
-  "name": "root",
+  "name": "@plitzi/plitzi-workspace",
   "private": true,
   "workspaces": {
     "packages": [
-      "../plitzi-builder",
-      "../plitzi-sdk",
-      "../plitzi-plugin-template",
-      "../plitzi-plugin-transformd",
-      "../plitzi-plugin-navbar",
-      "../plitzi-plugin-collection"
+      "apps/*",
+      "packages/*"
     ]
   },
   "scripts": {
-    "start": "lerna run --parallel --scope={@plitzi/plitzi-builder,@plitzi/plitzi-sdk} start",
-    "start-plugins": "lerna run --parallel --scope={@plitzi/plitzi-plugin-template,@plitzi/plitzi-plugin-transformd,@plitzi/plitzi-plugin-navbar,@plitzi/plitzi-plugin-collection} start",
-    "build": "lerna run build",
-    "serve": "lerna run --parallel serve",
-    "clean": "lerna run --parallel clean",
-    "build-assets:dev-watch": "lerna run --parallel build-assets:dev-watch"
+    "start": "turbo start",
+    "start-debug": "node-nightly --inspect ./node_modules/webpack/bin/webpack.js serve --mode development",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint ./src",
+    "lint-style": "stylelint \"**/*.scss\" --custom-syntax postcss-scss",
+    "lint-style:fix": "stylelint \"**/*.scss\" --custom-syntax postcss-scss --fix",
+    "build-assets:dev": "webpack --mode development",
+    "build-assets:dev-watch": "webpack --mode development --env watch",
+    "build-assets:dev-measure": "webpack --mode development --env measure",
+    "build-assets:dev-gzip": "webpack --mode development --env onlyGzip",
+    "build-assets:dev-analyze": "webpack --mode development --env onlyAnalyze",
+    "build-assets:prod": "webpack --mode production",
+    "build-assets:prod-watch": "webpack --mode production --env watch",
+    "build-assets:prod-measure": "webpack --mode production --env measure",
+    "build-assets:prod-gzip": "webpack --mode production --env onlyGzip",
+    "build-assets:prod-analyze": "webpack --mode production --env onlyAnalyze",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "devDependencies": {
-    "lerna": "^4.0.0"
+    "turbo": "^1.12.3"
   }
 }

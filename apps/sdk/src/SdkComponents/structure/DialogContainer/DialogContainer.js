@@ -1,0 +1,204 @@
+// Packages
+import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
+import classNames from 'classnames';
+import get from 'lodash/get';
+
+// Alias
+import withElement from '@modules/Element/hocs/withElement';
+import RootElement from '@modules/Element/RootElement';
+
+// Relatives
+import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
+import { emptyObject, getPathsFromObeject } from '../../../helpers/utils';
+
+const DialogContainer = forwardRef((props, ref) => {
+  const {
+    className = '',
+    internalProps = emptyObject,
+    children,
+    headerLabel = 'Dialog Header',
+    acceptButtonLabel = 'Accept',
+    acceptButtonLabelLoading = 'Loading...',
+    rejectButtonLabel = 'Cancel',
+    autoHideAfterClick = true
+  } = props;
+  const { id, setElementState, styleSelectors } = internalProps;
+  const {
+    contexts: { InteractionsContext, DataSourceContext }
+  } = usePlitziServiceContext();
+  const { interactionTrigger } = useContext(InteractionsContext);
+  const { useDataSource } = useContext(DataSourceContext);
+  const [internalMetadata, setInternalMetadata] = useState({});
+  const [processing, setProcessing] = useState(false);
+
+  // Modal methods
+
+  const handleOpeDialog = useCallback(
+    params => {
+      const { metadata } = params;
+      if (metadata && typeof metadata === 'object') {
+        setInternalMetadata(metadata);
+      } else if (typeof metadata === 'string') {
+        try {
+          setInternalMetadata(JSON.parse(metadata));
+        } catch (error) {
+          setInternalMetadata({ content: metadata });
+        }
+      } else if (typeof metadata === 'boolean' || typeof metadata === 'number') {
+        setInternalMetadata({ content: metadata });
+      } else {
+        setInternalMetadata({});
+      }
+
+      setElementState({ key: 'visibility', value: true });
+    },
+    [setElementState, setInternalMetadata]
+  );
+
+  const handleClickClose = useCallback(() => {
+    interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
+    setInternalMetadata({});
+    setElementState({ key: 'visibility', value: false });
+  }, [interactionTrigger, setElementState, setInternalMetadata, internalMetadata, id]);
+
+  const handleClickBackground = useCallback(() => {
+    if (!autoHideAfterClick) {
+      return;
+    }
+
+    interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
+    setInternalMetadata({});
+    setElementState({ key: 'visibility', value: false });
+  }, [interactionTrigger, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
+
+  // Dialog Methods
+
+  const handleClickAccept = useCallback(async () => {
+    setProcessing(true);
+    await interactionTrigger(id, 'onDialogAccept', { metadata: internalMetadata });
+    setProcessing(false);
+    setElementState({ key: 'visibility', value: false });
+  }, [interactionTrigger, setElementState, internalMetadata]);
+
+  const handleClickCancel = useCallback(async () => {
+    setProcessing(true);
+    await interactionTrigger(id, 'onDialogReject', { metadata: internalMetadata });
+    setProcessing(false);
+    setElementState({ key: 'visibility', value: false });
+  }, [interactionTrigger, setElementState, internalMetadata]);
+
+  const interactionTriggers = useMemo(
+    () => ({
+      onDialogAccept: { title: 'On Dialog Accept', params: { metadata: '' }, preview: { metadata: '' } },
+      onDialogReject: { title: 'On Dialog Reject', params: { metadata: '' }, preview: { metadata: '' } },
+      onDialogOpen: { title: 'On Dialog Open', params: { metadata: '' }, preview: { metadata: '' } },
+      onDialogClose: { title: 'On Dialog Close', params: { metadata: '' }, preview: { metadata: '' } }
+    }),
+    []
+  );
+
+  const interactionCallbacks = useMemo(() => {
+    const label = get(internalProps, 'definition.label', 'Modal');
+
+    return {
+      openDialog: {
+        title: `Open ${label}`,
+        callback: handleOpeDialog,
+        preview: { metadata: '' },
+        params: { metadata: '' }
+      },
+      closeDialog: { title: `Close ${label}`, callback: handleClickClose, preview: {}, params: {} }
+    };
+  }, [handleOpeDialog, internalProps?.definition?.label]);
+
+  useEffect(() => {
+    if (internalProps?.elementState?.visibility !== false) {
+      interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
+    }
+  }, [internalProps?.elementState?.visibility]);
+
+  const sourceFields = useCallback(async () => {
+    if (!internalMetadata || typeof internalMetadata !== 'object') {
+      return [];
+    }
+
+    return getPathsFromObeject(internalMetadata).reduce((acum, path) => {
+      const name = path.split('.');
+      if (name.length > 1) {
+        return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
+      }
+
+      return [...acum, { path, name: name[name.length - 1] }];
+    }, []);
+  }, [internalMetadata]);
+
+  useDataSource({
+    id,
+    source: `dialogContainer-${id}`,
+    name: `Plitzi - Dialog Container ${id}`,
+    value: internalMetadata,
+    fields: sourceFields
+  });
+
+  return (
+    <RootElement
+      ref={ref}
+      internalProps={internalProps}
+      className={classNames('plitzi-component__dialog-container', className)}
+      interactionTriggers={interactionTriggers}
+      interactionCallbacks={interactionCallbacks}
+    >
+      <div
+        className={classNames('dialog-container__background', styleSelectors.backgroundContainer)}
+        onClick={handleClickBackground}
+      />
+      <div className={classNames('dialog-container__root', styleSelectors.rootContainer)}>
+        <div className={classNames('dialog-container__header', styleSelectors.headerContainer)}>
+          <div className={classNames('modal-container__header__title', styleSelectors.headerTitle)}>
+            {headerLabel ?? 'Dialog Header'}
+          </div>
+          <i className="fa-solid fa-xmark" title="Close" onClick={handleClickCancel} />
+        </div>
+        <div className={classNames('dialog-container__body', styleSelectors.body)}>{children}</div>
+        <div className={classNames('dialog-container__footer', styleSelectors.footerContainer)}>
+          <button
+            className={classNames('footer__button button--accept', styleSelectors.acceptButton)}
+            onClick={handleClickAccept}
+            disabled={processing}
+          >
+            {processing && (
+              <div className="button--accept__container">
+                <i className="fa-solid fa-rotate fa-spin" />
+                {acceptButtonLabelLoading}
+              </div>
+            )}
+            {!processing && acceptButtonLabel}
+          </button>
+          <button
+            className={classNames('footer__button button--cancel', styleSelectors.cancelButton)}
+            onClick={handleClickCancel}
+            disabled={processing}
+          >
+            {rejectButtonLabel}
+          </button>
+        </div>
+      </div>
+    </RootElement>
+  );
+});
+
+DialogContainer.propTypes = {
+  className: PropTypes.string,
+  internalProps: PropTypes.object,
+  children: PropTypes.node,
+  headerLabel: PropTypes.string,
+  acceptButtonLabel: PropTypes.string,
+  acceptButtonLabelLoading: PropTypes.string,
+  rejectButtonLabel: PropTypes.string,
+  autoHideAfterClick: PropTypes.bool
+};
+
+export default withElement(DialogContainer);
+
+export { DialogContainer };

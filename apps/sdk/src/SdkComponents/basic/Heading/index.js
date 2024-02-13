@@ -1,0 +1,139 @@
+// Relatives
+import Heading from './Heading';
+
+Heading.content = {
+  attributes: {
+    content: 'Heading',
+    subType: 'h1'
+  },
+  definition: {
+    label: 'Heading',
+    type: 'heading',
+    bindings: {},
+    styleSelectors: {
+      base: ''
+    },
+    initialState: {
+      visibility: true
+    }
+  },
+  builder: {
+    canDelete: true,
+    canSelect: true,
+    canDragDrop: true,
+    canMove: true,
+    canTemplate: true,
+    itemsAllowed: [],
+    itemsNotAllowed: []
+  },
+  market: {
+    category: 'basic',
+    owner: 'Plitzi',
+    verified: true,
+    license: 'MIT',
+    website: 'https://plitzi.com',
+    backgroundColor: '#4422ee',
+    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+  },
+  bindingsAllowed: {
+    attributes: [{ path: 'content', label: 'Content' }],
+    style: [
+      { path: 'color', label: 'Color' },
+      { path: 'background-color', label: 'Background Color' }
+    ],
+    initialState: [
+      { path: 'visibility', label: 'Visibility' },
+      { path: 'styleSelectors.base', label: 'Selector - Base' }
+    ]
+  },
+  defaultStyle: {
+    name: 'Heading',
+    displayMode: 'desktop',
+    style: {},
+    subTypes: {
+      h1: {
+        name: 'H1 Heading',
+        displayMode: 'desktop',
+        style: {
+          base: {
+            'margin-top': '25px',
+            'margin-bottom': '25px',
+            'font-size': '38px',
+            'font-weight': 700,
+            'line-height': '44px'
+          }
+        }
+      },
+      h2: {
+        name: 'H2 Heading',
+        displayMode: 'desktop',
+        style: {
+          base: {
+            'margin-top': '25px',
+            'margin-bottom': '25px',
+            'font-size': '32px',
+            'font-weight': 700,
+            'line-height': '36px'
+          }
+        }
+      },
+      h3: {
+        name: 'H3 Heading',
+        displayMode: 'desktop',
+        style: {
+          base: {
+            'margin-top': '25px',
+            'margin-bottom': '25px',
+            'font-size': '24px',
+            'font-weight': 700,
+            'line-height': '30px'
+          }
+        }
+      },
+      h4: {
+        name: 'H4 Heading',
+        displayMode: 'desktop',
+        style: {
+          base: {
+            'margin-top': '25px',
+            'margin-bottom': '25px',
+            'font-size': '18px',
+            'font-weight': 700,
+            'line-height': '24px'
+          }
+        }
+      },
+      h5: {
+        name: 'H5 Heading',
+        displayMode: 'desktop',
+        style: {
+          base: {
+            'margin-top': '25px',
+            'margin-bottom': '25px',
+            'font-size': '14px',
+            'font-weight': 700,
+            'line-height': '20px'
+          }
+        }
+      },
+      h6: {
+        name: 'H6 Heading',
+        displayMode: 'desktop',
+        style: {
+          base: {
+            'margin-top': '25px',
+            'margin-bottom': '25px',
+            'font-size': '12px',
+            'font-weight': 700,
+            'line-height': '18px'
+          }
+        }
+      }
+    }
+  },
+  settings: {}
+};
+
+Heading.type = 'heading';
+
+export default Heading;

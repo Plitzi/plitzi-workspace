@@ -1,0 +1,15 @@
+.plitzi-component__reference {
+  min-height: 50px;
+  min-width: 50px;
+}
+
+.reference--build-mode {
+  position: relative;
+
+  .reference__label {
+    left: 50%;
+    top: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+  }
+}

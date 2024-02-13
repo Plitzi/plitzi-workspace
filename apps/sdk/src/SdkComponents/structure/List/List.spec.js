@@ -1,0 +1,16 @@
+// Packages
+import React from 'react';
+import { render } from '@testing-library/react';
+
+// Relatives
+import List from './List';
+
+jest.mock('plitziSdkFederation/usePlitziServiceContext');
+
+describe('List', () => {
+  it('should render successfully', () => {
+    const { baseElement } = render(<List />);
+
+    expect(baseElement).toBeTruthy();
+  });
+});

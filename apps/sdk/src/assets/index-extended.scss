@@ -1,0 +1,8 @@
+@import 'tailwindcss/base'; // @tailwind base;
+@import 'tailwindcss/components'; // @tailwind components;
+@import 'tailwindcss/utilities'; // @tailwind utilities;
+
+@import './sdk';
+
+// Uncomment it if is required
+// @import '@plitzi/plitzi-ui-components/style.css';
