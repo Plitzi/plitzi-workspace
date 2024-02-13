@@ -1,8 +1,7 @@
-// Monorepo
-import sharedConfig from '@repo/jest-config';
-
 const config = {
-  ...sharedConfig,
+  testEnvironment: 'jsdom',
+  coverageReporters: ['clover', 'json', 'lcov', 'text', 'html'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1'

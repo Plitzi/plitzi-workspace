@@ -178,7 +178,7 @@ const Transform = props => {
           <Select2
             className="rounded w-[150px]"
             size="sm"
-            placeholder={`Select mode`}
+            placeholder="Select mode"
             value={mode}
             onChange={handleChangeMode}
             options={options}
