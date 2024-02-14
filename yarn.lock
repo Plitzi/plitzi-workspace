@@ -2845,7 +2845,7 @@ __metadata:
     "@babel/polyfill": ^7.12.1
     "@babel/preset-env": ^7.23.9
     "@babel/preset-react": ^7.23.3
-    "@plitzi/plitzi-sdk": ^0.18.3
+    "@plitzi/plitzi-sdk": "*"
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
@@ -2902,7 +2902,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-sdk@^0.18.3, @plitzi/plitzi-sdk@workspace:apps/sdk":
+"@plitzi/plitzi-sdk@*, @plitzi/plitzi-sdk@workspace:apps/sdk":
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-sdk@workspace:apps/sdk"
   dependencies:

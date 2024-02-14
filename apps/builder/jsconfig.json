@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "module": "umd",
+    "module": "commonjs",
+    "jsx": "react-jsx",
     "paths": {
       "@pmodules/*": ["./src/modules/*"],
       "@pcomponents/*": ["./src/components/*"]

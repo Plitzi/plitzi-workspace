@@ -1,6 +1,8 @@
+// Monorepo
+const sharedConfig = require('@repo/jest-config');
+
 module.exports = {
-  testEnvironment: 'jsdom',
-  coverageReporters: ['clover', 'json', 'lcov', 'text', 'html'],
+  ...sharedConfig,
   moduleNameMapper: {
     '^@pmodules/(.*)$': '<rootDir>/src/modules/$1',
     '^@pcomponents/(.*)$': '<rootDir>/src/components/$1'
