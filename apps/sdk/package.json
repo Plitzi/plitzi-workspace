@@ -23,7 +23,6 @@
   "dependencies": {
     "@apollo/client": "^3.9.4",
     "@auth0/auth0-react": "^2.2.4",
-    "@plitzi/plitzi-ui-components": "0.8.8",
     "axios": "^1.6.7",
     "classnames": "^2.5.1",
     "dompurify": "^3.0.8",
@@ -98,7 +97,7 @@
     "start-debug": "node-nightly --inspect ./node_modules/webpack/bin/webpack.js serve --mode development",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "lint": "eslint ./src",
+    "lint": "TIMING=1 eslint ./src",
     "lint-style": "stylelint \"**/*.scss\" --custom-syntax postcss-scss",
     "lint-style:fix": "stylelint \"**/*.scss\" --custom-syntax postcss-scss --fix",
     "build-assets:dev": "webpack --mode development",
