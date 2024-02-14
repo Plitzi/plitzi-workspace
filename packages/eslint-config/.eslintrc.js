@@ -40,13 +40,14 @@ module.exports = {
       alias: {
         map: [
           [
-            '@plitzi/plitzi-ui-components',
-            path.resolve('../../node_modules/@plitzi/plitzi-ui-components/dist/components')
-          ],
-          [
             '@plitzi/plitzi-ui-components/hooks',
             path.resolve('../../node_modules/@plitzi/plitzi-ui-components/dist/hooks')
+          ],
+          [
+            '@plitzi/plitzi-ui-components',
+            path.resolve('../../node_modules/@plitzi/plitzi-ui-components/dist/components')
           ]
+          
         ],
         extensions: ['.ts', '.js', '.jsx', '.json', '.stores.js']
       }

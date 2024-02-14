@@ -4,7 +4,7 @@
     "module": "umd",
     "paths": {
       "@pmodules/*": ["./src/modules/*"],
-      "@pcomponents/*": ["./src/components/*"],
+      "@pcomponents/*": ["./src/components/*"]
     }
   }
 }
