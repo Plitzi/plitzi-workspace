@@ -2846,6 +2846,7 @@ __metadata:
     "@babel/preset-env": ^7.23.9
     "@babel/preset-react": ^7.23.3
     "@plitzi/plitzi-sdk": ^0.18.3
+    "@plitzi/plitzi-ui-components": 0.8.8
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
@@ -2918,6 +2919,7 @@ __metadata:
     "@babel/polyfill": ^7.12.1
     "@babel/preset-env": ^7.23.9
     "@babel/preset-react": ^7.23.3
+    "@plitzi/plitzi-ui-components": 0.8.8
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
@@ -3019,6 +3021,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@plitzi/plitzi-ui-components": 0.8.8
+    eslint: ^8.56.0
     turbo: ^1.12.3
   languageName: unknown
   linkType: soft
@@ -3649,7 +3652,6 @@ __metadata:
   resolution: "@repo/eslint-config@workspace:packages/eslint-config"
   dependencies:
     "@babel/eslint-parser": ^7.23.10
-    eslint: ^8.56.0
     eslint-config-airbnb: ^19.0.4
     eslint-config-prettier: ^9.1.0
     eslint-config-react-app: ^7.0.1

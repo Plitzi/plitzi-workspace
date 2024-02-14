@@ -161,5 +161,3 @@ App.propTypes = {
 };
 
 export default App;
-
-const w = 'test';
