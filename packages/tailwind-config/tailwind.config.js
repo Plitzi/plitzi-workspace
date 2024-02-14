@@ -1,14 +1,8 @@
-import { join } from 'path';
 import colors from 'tailwindcss/colors';
 import defaultTheme from 'tailwindcss/defaultTheme';
 import plugin from 'tailwindcss/plugin';
 
 const config = {
-  content: [
-    // join(__dirname, "src/**/!(*.stories|*.spec).{js,html}")
-    join(__dirname, 'src/**/*.{js,html}'),
-    join(__dirname, 'node_modules/@plitzi/plitzi-ui-components/dist/**/!(*.stories|*.spec).{js,html}')
-  ],
   theme: {
     extend: {},
     groups: ['1', '2', '3', '4', '5'],

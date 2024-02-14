@@ -1,12 +1,6 @@
 {
   "name": "@plitzi/plitzi-workspace",
   "private": true,
-  "workspaces": {
-    "packages": [
-      "apps/*",
-      "packages/*"
-    ]
-  },
   "scripts": {
     "start": "turbo start --parallel",
     "start:debug": "turbo start:debug --parallel",
@@ -28,7 +22,18 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
+  "dependencies": {
+    "@plitzi/plitzi-ui-components": "0.8.8"
+  },
   "devDependencies": {
     "turbo": "^1.12.3"
-  }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "yarn@3.6.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

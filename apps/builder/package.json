@@ -17,7 +17,6 @@
   "dependencies": {
     "@apollo/client": "^3.9.4",
     "@plitzi/plitzi-sdk": "^0.18.3",
-    "@plitzi/plitzi-ui-components": "^0.8.8",
     "apollo-upload-client": "^18.0.1",
     "axios": "^1.6.7",
     "classnames": "^2.5.1",
