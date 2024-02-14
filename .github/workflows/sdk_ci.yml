@@ -61,10 +61,10 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
       - name: Yarn Lint
-        run: yarn lint
+        run: yarn lint --filter=@plitzi/plitzi-sdk
 
       - name: Yarn Scss Lint
-        run: yarn lint-style
+        run: yarn lint-style --filter=@plitzi/plitzi-sdk
 
   # tests:
   #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/master')
