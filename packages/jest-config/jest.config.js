@@ -1,11 +1,9 @@
-const config = {
+module.exports = {
   testEnvironment: 'jsdom',
   coverageReporters: ['clover', 'json', 'lcov', 'text', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['@repo/jest-config/jest.setup.js'],
   moduleNameMapper: {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1'
   }
 };
-
-export default config;

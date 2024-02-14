@@ -1,12 +1,10 @@
 // Monorepo
-import sharedConfig from '@repo/jest-config';
+const sharedConfig = require('@repo/jest-config');
 
-const config = {
+module.exports = {
   ...sharedConfig,
   moduleNameMapper: {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1'
   }
 };
-
-export default config;
