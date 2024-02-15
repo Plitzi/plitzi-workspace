@@ -3681,6 +3681,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/event-bridge@workspace:packages/event-bridge":
+  version: 0.0.0-use.local
+  resolution: "@repo/event-bridge@workspace:packages/event-bridge"
+  dependencies:
+    eslint: ^8.56.0
+    lodash: ^4.17.21
+    prop-types: ^15.8.1
+    react: ^18.2.0
+  languageName: unknown
+  linkType: soft
+
 "@repo/jest-config@*, @repo/jest-config@workspace:packages/jest-config":
   version: 0.0.0-use.local
   resolution: "@repo/jest-config@workspace:packages/jest-config"
