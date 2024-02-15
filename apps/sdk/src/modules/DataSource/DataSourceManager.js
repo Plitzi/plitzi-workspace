@@ -7,7 +7,7 @@ import omit from 'lodash/omit';
 import { produce } from 'immer';
 
 // Monorepo
-import EventBridge from '@repo/event-bridge';
+import EventBridge from '@repo/event-bridge-shared';
 
 // Alias
 import FlatMap from '@modules/Schema/SchemaHelper';

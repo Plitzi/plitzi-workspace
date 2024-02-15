@@ -6,8 +6,8 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import Builder from '@pmodules/Builder';

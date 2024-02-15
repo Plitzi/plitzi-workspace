@@ -9,7 +9,7 @@ import set from 'lodash/set';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import { makeSelector } from '@pmodules/Style/StyleHelper';

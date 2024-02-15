@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import pick from 'lodash/pick';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';

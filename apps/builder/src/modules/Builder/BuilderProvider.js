@@ -11,13 +11,13 @@ import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useStateMemo from '@plitzi/plitzi-ui-components/hooks/useStateMemo';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
-import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
+import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
 import {
   EventBridgeModuleTypes,
   EventBridgeTypes,
   EventBridgeTypesPerModule
-} from '@repo/event-bridge/EventBridgeHelper';
+} from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import { DROP_DIRECTION_INSIDE } from '@pmodules/Schema/helpers/FlatMap';

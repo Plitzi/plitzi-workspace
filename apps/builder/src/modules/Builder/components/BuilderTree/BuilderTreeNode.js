@@ -9,7 +9,7 @@ import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import BuilderElementTools from '@pmodules/Builder/components/BuilderElementTools';

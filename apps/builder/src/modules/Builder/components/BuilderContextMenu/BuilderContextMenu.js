@@ -9,7 +9,7 @@ import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';

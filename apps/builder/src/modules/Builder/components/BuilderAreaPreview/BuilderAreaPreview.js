@@ -7,7 +7,7 @@ import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';

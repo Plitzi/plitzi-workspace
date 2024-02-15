@@ -13,7 +13,7 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

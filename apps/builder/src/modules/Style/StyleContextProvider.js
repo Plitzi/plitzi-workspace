@@ -5,8 +5,8 @@ import get from 'lodash/get';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
 // Monorepo
-import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
+import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';

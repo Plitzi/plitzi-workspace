@@ -1,11 +1,12 @@
 {
-  "name": "@repo/style",
+  "name": "@repo/schema-shared",
   "version": "0.0.0",
   "private": true,
   "files": [],
   "exports": {
     ".": "./src/index.js",
-    "./StyleHelper": "./src/StyleHelper.js"
+    "./SchemaContext": "./src/SchemaContext.js",
+    "./FlatMap": "./src/helpers/FlatMap.js"
   },
   "scripts": {
     "lint": "eslint ./src"
@@ -14,7 +15,6 @@
     "eslint": "^8.56.0"
   },
   "dependencies": {
-    "immer": "^10.0.3",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
     "react": "^18.2.0"

@@ -2849,7 +2849,7 @@ __metadata:
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
-    "@repo/event-bridge": "*"
+    "@repo/event-bridge-shared": "*"
     "@repo/jest-config": "*"
     "@repo/tailwind-config": "*"
     "@welldone-software/why-did-you-render": ^8.0.1
@@ -2922,7 +2922,7 @@ __metadata:
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
-    "@repo/event-bridge": "*"
+    "@repo/event-bridge-shared": "*"
     "@repo/jest-config": "*"
     "@repo/tailwind-config": "*"
     "@storybook/addon-essentials": ^7.6.14
@@ -3650,11 +3650,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@repo/data-source@workspace:packages/data-source":
+"@repo/data-source-shared@workspace:packages/data-source-shared":
   version: 0.0.0-use.local
-  resolution: "@repo/data-source@workspace:packages/data-source"
+  resolution: "@repo/data-source-shared@workspace:packages/data-source-shared"
   dependencies:
-    "@repo/event-bridge": "*"
+    "@repo/event-bridge-shared": "*"
     eslint: ^8.56.0
     lodash: ^4.17.21
     moment: ^2.30.1
@@ -3684,9 +3684,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/event-bridge@*, @repo/event-bridge@workspace:packages/event-bridge":
+"@repo/event-bridge-shared@*, @repo/event-bridge-shared@workspace:packages/event-bridge-shared":
   version: 0.0.0-use.local
-  resolution: "@repo/event-bridge@workspace:packages/event-bridge"
+  resolution: "@repo/event-bridge-shared@workspace:packages/event-bridge-shared"
   dependencies:
     eslint: ^8.56.0
     lodash: ^4.17.21
@@ -3707,9 +3707,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/schema@workspace:packages/schema":
+"@repo/schema-shared@workspace:packages/schema-shared":
   version: 0.0.0-use.local
-  resolution: "@repo/schema@workspace:packages/schema"
+  resolution: "@repo/schema-shared@workspace:packages/schema-shared"
   dependencies:
     eslint: ^8.56.0
     lodash: ^4.17.21
@@ -3727,9 +3727,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/style@workspace:packages/style":
+"@repo/style-shared@workspace:packages/style-shared":
   version: 0.0.0-use.local
-  resolution: "@repo/style@workspace:packages/style"
+  resolution: "@repo/style-shared@workspace:packages/style-shared"
   dependencies:
     eslint: ^8.56.0
     immer: ^10.0.3

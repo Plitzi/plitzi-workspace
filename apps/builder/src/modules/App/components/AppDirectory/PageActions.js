@@ -8,8 +8,8 @@ import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import SchemaContext from '@pmodules/Schema/SchemaContext';

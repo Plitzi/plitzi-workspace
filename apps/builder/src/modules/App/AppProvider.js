@@ -5,7 +5,7 @@ import { withApollo } from '@apollo/client/react/hoc';
 import ModalProvider from '@plitzi/plitzi-ui-components/Modal/ModalProvider';
 
 // Monorepo
-import EventBridgeContextProvider from '@repo/event-bridge/EventBridgeContextProvider';
+import EventBridgeContextProvider from '@repo/event-bridge-shared/EventBridgeContextProvider';
 
 // Alias
 import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscriptionsContextProvider';

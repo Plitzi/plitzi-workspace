@@ -9,8 +9,8 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import { DROP_DIRECTION_CUSTOM } from '@pmodules/Schema/helpers/FlatMap';

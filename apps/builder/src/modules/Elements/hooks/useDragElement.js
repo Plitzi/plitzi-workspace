@@ -7,8 +7,8 @@ import { produce } from 'immer';
 import pick from 'lodash/pick';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Relatives
 import { generateID } from '../../../helpers/utils';

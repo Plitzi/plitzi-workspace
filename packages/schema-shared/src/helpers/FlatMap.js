@@ -5,7 +5,7 @@ import cloneDeep from 'lodash/cloneDeep';
 
 // Monorepo
 import { generateID } from '@repo/shared';
-import { calculateInheriting } from '@repo/style/StyleHelper';
+import { calculateInheriting } from '@repo/style-shared/StyleHelper';
 
 export const DROP_DIRECTION_TOP = 'top';
 export const DROP_DIRECTION_BOTTOM = 'bottom';

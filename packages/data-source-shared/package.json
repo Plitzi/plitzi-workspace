@@ -1,5 +1,5 @@
 {
-  "name": "@repo/data-source",
+  "name": "@repo/data-source-shared",
   "version": "0.0.0",
   "private": true,
   "files": [],
@@ -10,7 +10,7 @@
     "lint": "eslint ./src"
   },
   "dependencies": {
-    "@repo/event-bridge": "*",
+    "@repo/event-bridge-shared": "*",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "react": "^18.2.0",

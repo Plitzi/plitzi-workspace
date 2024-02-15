@@ -9,7 +9,7 @@ import set from 'lodash/set';
 import { produce } from 'immer';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

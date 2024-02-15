@@ -10,7 +10,7 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';

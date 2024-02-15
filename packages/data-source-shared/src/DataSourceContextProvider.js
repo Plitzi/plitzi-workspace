@@ -3,7 +3,7 @@ import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 // Monorepo
-import SchemaContext from '@repo/schema/SchemaContext';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Relatives
 import DataSourceContext from './DataSourceContext';

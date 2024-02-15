@@ -7,8 +7,8 @@ import omit from 'lodash/omit';
 import { produce } from 'immer';
 
 // Monorepo
-import EventBridge from '@repo/event-bridge';
-import FlatMap from '@repo/schema/FlatMap';
+import EventBridge from '@repo/event-bridge-shared';
+import FlatMap from '@repo/schema-shared/FlatMap';
 
 class DataSourceManager {
   constructor(dataSource = {}) {

@@ -7,9 +7,9 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
 // Monorepo
-import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
-import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
+import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';

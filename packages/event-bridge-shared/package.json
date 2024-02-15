@@ -1,5 +1,5 @@
 {
-  "name": "@repo/event-bridge",
+  "name": "@repo/event-bridge-shared",
   "version": "0.0.0",
   "private": true,
   "files": [],

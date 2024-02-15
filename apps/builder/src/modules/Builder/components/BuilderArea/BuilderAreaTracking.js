@@ -8,7 +8,7 @@ import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';

@@ -7,12 +7,14 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+// Monorepo
+import EventBridgeTypes from '@repo/event-bridge-shared/EventBridgeHelper';
+
 // Alias
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import EventBridgeTypes from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import { cssToSelectors, StyleConstants, getReadOnlyRangesFromContent } from '../../StyleHelper';
