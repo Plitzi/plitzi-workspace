@@ -8,8 +8,10 @@ import { produce } from 'immer';
 import set from 'lodash/set';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import { makeSelector } from '@pmodules/Style/StyleHelper';
 
 // Relatives

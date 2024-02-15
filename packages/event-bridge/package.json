@@ -4,7 +4,11 @@
   "private": true,
   "files": [],
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./EventBridgeContextProvider": "./src/EventBridgeContextProvider.js",
+    "./EventBridgeContext": "./src/EventBridgeContext.js",
+    "./EventBridgeHelper": "./src/EventBridgeHelper.js",
+    "./hooks/useEventBridge": "./src/hooks/useEventBridge.js"
   },
   "scripts": {
     "lint": "eslint ./src"

@@ -78,7 +78,7 @@ const build = (env, args) => {
       rules: [
         {
           test: /(\.jsx|\.js)$/,
-          exclude: /(node_modules|bower_components)/,
+          exclude: /(node_modules|bower_components)\/(?!(@repo)\/).*/,
           use: [
             {
               loader: 'thread-loader',
@@ -103,7 +103,7 @@ const build = (env, args) => {
         {
           test: /\.(png|jpg|gif|svg|...)$/,
           loader: 'url-loader',
-          exclude: /(node_modules|bower_components)/
+          exclude: /(node_modules|bower_components)\/(?!(@repo)\/).*/
         },
         {
           test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
@@ -138,7 +138,7 @@ const build = (env, args) => {
               }
             }
           ],
-          exclude: /(node_modules|bower_components|\.module.(sa|sc|c)ss$)/
+          exclude: /(node_modules|bower_components)\/(?!(@repo)\/).*/
         },
         {
           test: /\.(c)ss$/,

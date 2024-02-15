@@ -8,10 +8,12 @@ import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
 import TemplatesContext from '@pmodules/Templates/TemplatesContext';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 

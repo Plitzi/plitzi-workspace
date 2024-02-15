@@ -10,11 +10,13 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import AppContext from '@pmodules/App/AppContext';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import Selector from '../Selector';

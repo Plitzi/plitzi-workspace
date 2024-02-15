@@ -4,12 +4,14 @@ import PropTypes from 'prop-types';
 import { withApollo } from '@apollo/client/react/hoc';
 import ModalProvider from '@plitzi/plitzi-ui-components/Modal/ModalProvider';
 
+// Monorepo
+import EventBridgeContextProvider from '@repo/event-bridge/EventBridgeContextProvider';
+
 // Alias
 import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscriptionsContextProvider';
 import NetworkContextProvider from '@pmodules/Network/NetworkContextProvider';
 import QueueContextProvider from '@pmodules/Queue/QueueContextProvider';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
-import EventBridgeContextProvider from '@pmodules/EventBridge/EventBridgeContextProvider';
 import CollectionContextProvider from '@pmodules/Collection/CollectionContextProvider';
 import PluginsContextProvider from '@pmodules/Plugins/PluginsContextProvider';
 import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';

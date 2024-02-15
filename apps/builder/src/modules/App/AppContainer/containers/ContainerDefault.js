@@ -5,6 +5,10 @@ import PopupSidebar from '@plitzi/plitzi-ui-components/Popup/PopupSidebar';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
@@ -12,8 +16,6 @@ import StyleContext from '@pmodules/Style/StyleContext';
 import SchemaContext from '@pmodules/Schema/SchemaContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
-import { EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 const ContainerDefault = props => {

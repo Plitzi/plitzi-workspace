@@ -2849,6 +2849,7 @@ __metadata:
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
+    "@repo/event-bridge": "*"
     "@repo/jest-config": "*"
     "@repo/tailwind-config": "*"
     "@welldone-software/why-did-you-render": ^8.0.1
@@ -3648,10 +3649,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@repo/data-source@workspace:packages/dataSource":
+"@repo/data-source@workspace:packages/data-source":
   version: 0.0.0-use.local
-  resolution: "@repo/data-source@workspace:packages/dataSource"
+  resolution: "@repo/data-source@workspace:packages/data-source"
   dependencies:
+    "@repo/event-bridge": "*"
     eslint: ^8.56.0
     lodash: ^4.17.21
     moment: ^2.30.1
@@ -3681,7 +3683,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/event-bridge@workspace:packages/event-bridge":
+"@repo/event-bridge@*, @repo/event-bridge@workspace:packages/event-bridge":
   version: 0.0.0-use.local
   resolution: "@repo/event-bridge@workspace:packages/event-bridge"
   dependencies:

@@ -6,6 +6,9 @@ import classNames from 'classnames';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import DataSourceContext from '@pmodules/DataSource/DataSourceContext';
@@ -19,7 +22,6 @@ import InteractionsContextProvider from '@pmodules/Interactions/InteractionsCont
 import AppContext from '@pmodules/App/AppContext';
 import UserContextProvider from '@pmodules/User/UserContextProvider';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
 
 // Relatives
 import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE } from '../../BuilderHelper';

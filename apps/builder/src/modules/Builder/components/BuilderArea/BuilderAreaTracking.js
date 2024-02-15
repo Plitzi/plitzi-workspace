@@ -7,12 +7,14 @@ import classNames from 'classnames';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import AppContext from '@pmodules/App/AppContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 

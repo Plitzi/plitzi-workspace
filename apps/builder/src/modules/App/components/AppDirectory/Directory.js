@@ -9,11 +9,13 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import Page from './Page';

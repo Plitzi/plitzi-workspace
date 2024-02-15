@@ -8,16 +8,18 @@ import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import { DROP_DIRECTION_CUSTOM } from '@pmodules/Schema/helpers/FlatMap';
 import SchemaContext from '@pmodules/Schema/SchemaContext';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 
 // Relatives
 import { generateID } from '../../../../helpers/utils';
 import PageLayout from './PageLayout';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '../../../EventBridge/EventBridgeHelper';
 
 const PageLayouts = props => {
   const { className = '' } = props;

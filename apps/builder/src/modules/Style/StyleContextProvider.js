@@ -4,14 +4,16 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
+// Monorepo
+import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
+import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import { SubscriptionEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
-import useEventBridge from '@pmodules/EventBridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import StyleContext from './StyleContext';

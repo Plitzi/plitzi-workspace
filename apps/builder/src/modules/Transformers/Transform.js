@@ -12,6 +12,9 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -19,7 +22,6 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview'
 import SchemaContext from '@pmodules/Schema/SchemaContext';
 import StyleContext from '@pmodules/Style/StyleContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
 import { DROP_DIRECTION_INSIDE } from '@pmodules/Schema/helpers/FlatMap';
 

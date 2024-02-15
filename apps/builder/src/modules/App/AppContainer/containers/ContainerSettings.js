@@ -4,10 +4,12 @@ import Card from '@plitzi/plitzi-ui-components/Card';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
+// Monorepo
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
 
 const ContainerSettings = () => {
   const { settings: settingsProp } = useContext(SchemaMainContext);

@@ -4,11 +4,13 @@ import set from 'lodash/set';
 import { produce } from 'immer';
 import pick from 'lodash/pick';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
 import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 import { generateCache, generateStyleSelector, makeSelector } from '@pmodules/Style/StyleHelper';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import { generateID } from '../../helpers/utils';

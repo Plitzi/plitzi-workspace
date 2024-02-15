@@ -8,11 +8,13 @@ import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 import { produce } from 'immer';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import { getDisplayName } from '../../../helpers/utils';

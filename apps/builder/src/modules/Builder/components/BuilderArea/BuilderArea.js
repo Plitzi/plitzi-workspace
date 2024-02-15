@@ -9,6 +9,9 @@ import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -26,7 +29,6 @@ import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import InteractionsContext from '@pmodules/Interactions/InteractionsContext';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 
 // Relatives

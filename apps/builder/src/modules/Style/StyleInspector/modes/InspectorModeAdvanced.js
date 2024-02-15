@@ -8,11 +8,13 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 import set from 'lodash/set';
 import { produce } from 'immer';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import { StyleConstants } from '@pmodules/Style/StyleConstants';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import { cssToSelectors, getReadOnlyRangesFromContent, formatCssFromSelector, makeSelector } from '../../StyleHelper';

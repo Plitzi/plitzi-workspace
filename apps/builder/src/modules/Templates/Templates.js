@@ -9,11 +9,13 @@ import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
 import FlatMap from '@pmodules/Schema/helpers/FlatMap';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives

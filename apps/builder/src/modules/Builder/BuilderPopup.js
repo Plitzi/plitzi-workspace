@@ -5,12 +5,14 @@ import PopupSidebar from '@plitzi/plitzi-ui-components/Popup/PopupSidebar';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import Builder from '@pmodules/Builder';
 import BuilderProvider, { BUILDER_MODE_SEGMENT } from '@pmodules/Builder/BuilderProvider';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
-import { EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 const BuilderPopup = props => {
   const { previewMode = false, segmentIdentifier = '' } = props;

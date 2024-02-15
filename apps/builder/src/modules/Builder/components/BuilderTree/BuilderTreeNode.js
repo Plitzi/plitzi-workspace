@@ -8,12 +8,14 @@ import camelCase from 'lodash/camelCase';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import BuilderElementTools from '@pmodules/Builder/components/BuilderElementTools';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import useDataSource from '@pmodules/DataSource/hooks/useDataSource';
 import getBindingsDetails from '@pmodules/DataSource/helpers/getBindingsDetails';
 

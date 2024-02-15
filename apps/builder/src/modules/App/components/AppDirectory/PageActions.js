@@ -7,10 +7,12 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import SchemaContext from '@pmodules/Schema/SchemaContext';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 
 const PageActions = props => {

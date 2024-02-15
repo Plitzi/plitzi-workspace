@@ -9,10 +9,12 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
 import TemplatesContext from '@pmodules/Templates/TemplatesContext';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 import SegmentForm from '@pmodules/Segments/Models/SegmentForm';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 

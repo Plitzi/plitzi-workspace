@@ -11,10 +11,12 @@ import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import AppContext from '@pmodules/App/AppContext';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import SelectorForm from '../Models/SelectorForm';

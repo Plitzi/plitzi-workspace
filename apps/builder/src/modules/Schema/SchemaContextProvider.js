@@ -6,15 +6,17 @@ import pick from 'lodash/pick';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
+// Monorepo
+import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
+import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import { SubscriptionEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
-import useEventBridge from '@pmodules/EventBridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
 
 // Relatives
 import FlatMap, { DROP_DIRECTION_INSIDE } from './helpers/FlatMap';

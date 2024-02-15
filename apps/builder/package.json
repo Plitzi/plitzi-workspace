@@ -17,6 +17,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.4",
     "@plitzi/plitzi-sdk": "*",
+    "@repo/event-bridge": "*",
     "apollo-upload-client": "^18.0.1",
     "axios": "^1.6.7",
     "classnames": "^2.5.1",

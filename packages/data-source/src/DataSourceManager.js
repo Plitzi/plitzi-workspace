@@ -6,11 +6,11 @@ import get from 'lodash/get';
 import omit from 'lodash/omit';
 import { produce } from 'immer';
 
-// Alias
-import FlatMap from '@pmodules/Schema/helpers/FlatMap';
-
 // Monorepo
 import EventBridge from '@repo/event-bridge';
+
+// Alias
+import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 
 class DataSourceManager {
   constructor(dataSource = {}) {

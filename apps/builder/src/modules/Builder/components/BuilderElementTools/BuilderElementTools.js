@@ -7,11 +7,13 @@ import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useStateDebounce from '@plitzi/plitzi-ui-components/hooks/useStateDebounce';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
+// Monorepo
+import { EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import StyleInspector from '@pmodules/Style/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
-import { EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import BuilderBreadcrumb from '../BuilderBreadcrumb';

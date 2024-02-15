@@ -6,9 +6,9 @@ import sneakCase from 'lodash/snakeCase';
 import { produce } from 'immer';
 import pick from 'lodash/pick';
 
-// Alias
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@pmodules/EventBridge/EventBridgeHelper';
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
 
 // Relatives
 import { generateID } from '../../../helpers/utils';

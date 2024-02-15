@@ -7,11 +7,13 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
+// Monorepo
+import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+
 // Alias
 import PageForm from '@pmodules/App/models/PageForm';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@pmodules/EventBridge/EventBridgeHelper';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
 
 const pageFoldersDefault = [];
 

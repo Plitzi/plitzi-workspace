@@ -7,6 +7,10 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -15,13 +19,11 @@ import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
 
 // Relatives
 import AppContext from '../AppContext';
 import DeployForm from '../models/DeployForm';
 import PublishForm from '../models/PublishForm';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '../../EventBridge/EventBridgeHelper';
 
 const AppHeaher = () => {
   const { showModal } = useModal();

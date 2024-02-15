@@ -10,18 +10,20 @@ import { produce } from 'immer';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useStateMemo from '@plitzi/plitzi-ui-components/hooks/useStateMemo';
 
-// Alias
-import { DROP_DIRECTION_INSIDE } from '@pmodules/Schema/helpers/FlatMap';
-import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
-import EventBridgeContext from '@pmodules/EventBridge/EventBridgeContext';
+// Monorepo
+import EventBridgeContext from '@repo/event-bridge/EventBridgeContext';
+import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
 import {
   EventBridgeModuleTypes,
   EventBridgeTypes,
   EventBridgeTypesPerModule
-} from '@pmodules/EventBridge/EventBridgeHelper';
+} from '@repo/event-bridge/EventBridgeHelper';
+
+// Alias
+import { DROP_DIRECTION_INSIDE } from '@pmodules/Schema/helpers/FlatMap';
+import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
+import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
-import useEventBridge from '@pmodules/EventBridge/hooks/useEventBridge';
 
 // Relatives
 import BuilderSchemaContext from './contexts/BuilderSchemaContext';
