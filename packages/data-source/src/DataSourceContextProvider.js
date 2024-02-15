@@ -2,8 +2,8 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
-// Alias
-import SchemaContext from '@pmodules/Schema/SchemaContext';
+// Monorepo
+import SchemaContext from '@repo/schema/SchemaContext';
 
 // Relatives
 import DataSourceContext from './DataSourceContext';

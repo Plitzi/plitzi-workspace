@@ -8,9 +8,7 @@ import { produce } from 'immer';
 
 // Monorepo
 import EventBridge from '@repo/event-bridge';
-
-// Alias
-import FlatMap from '@pmodules/Schema/helpers/FlatMap';
+import FlatMap from '@repo/schema/FlatMap';
 
 class DataSourceManager {
   constructor(dataSource = {}) {

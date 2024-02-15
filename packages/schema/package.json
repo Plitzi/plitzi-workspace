@@ -4,7 +4,9 @@
   "private": true,
   "files": [],
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./SchemaContext": "./src/SchemaContext.js",
+    "./FlatMap": "./src/helpers/FlatMap.js"
   },
   "scripts": {
     "lint": "eslint ./src"

@@ -4,7 +4,8 @@
   "private": true,
   "files": [],
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./StyleHelper": "./src/StyleHelper.js"
   },
   "scripts": {
     "lint": "eslint ./src"
