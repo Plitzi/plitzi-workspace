@@ -1,0 +1,19 @@
+{
+  "name": "@repo/shared",
+  "version": "0.0.0",
+  "private": true,
+  "files": [],
+  "exports": {
+    ".": "./src/index.js",
+    "./helpers/*": "./src/helpers/*"
+  },
+  "scripts": {
+    "lint": "eslint ./src"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  },
+  "dependencies": {
+    "twig": "^1.17.1"
+  }
+}

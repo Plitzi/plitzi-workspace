@@ -1,0 +1,58 @@
+// Packages
+import { useCallback, useContext, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import get from 'lodash/get';
+
+// Alias
+import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
+import DataSourceContext from '@pmodules/DataSource/DataSourceContext';
+import NavigationContext from '@pmodules/Navigation/NavigationContext';
+import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+
+// Monorepo
+import { getPathsFromObeject } from '@repo/shared';
+
+const PageStateContextProvider = props => {
+  const { children } = props;
+  const { state } = useContext(StateManagerContext);
+  const { useDataSource } = useContext(DataSourceContext);
+  const { currentPageId } = useContext(NavigationContext);
+  const { pages: pageIds, pageDefinitions } = useContext(SchemaMainContext);
+
+  const pageOptions = useMemo(
+    () =>
+      pageIds.reduce((acum, pageId) => {
+        const pageName = get(pageDefinitions, `${pageId}.attributes.name`, pageId);
+
+        return [...acum, { value: pageId, label: pageName }];
+      }, []),
+    [pageDefinitions, pageIds]
+  );
+
+  const sourceFields = useCallback(
+    async () => [
+      ...getPathsFromObeject(state).reduce((acum, path) => [...acum, { path, name: path }], []),
+      { path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pageOptions }
+    ],
+    [state, currentPageId, pageOptions]
+  );
+
+  const finalState = useMemo(() => ({ ...state, currentPageId }), [state, currentPageId]);
+
+  useDataSource({
+    id: 'global',
+    source: 'page',
+    name: 'Plitzi - Page State',
+    contextName: 'PageContext',
+    value: finalState,
+    fields: sourceFields
+  });
+
+  return children;
+};
+
+PageStateContextProvider.propTypes = {
+  children: PropTypes.node
+};
+
+export default PageStateContextProvider;
