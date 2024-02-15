@@ -2922,6 +2922,7 @@ __metadata:
     "@plitzi/plitzi-webpack": ^0.2.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
+    "@repo/event-bridge": "*"
     "@repo/jest-config": "*"
     "@repo/tailwind-config": "*"
     "@storybook/addon-essentials": ^7.6.14
@@ -3706,12 +3707,35 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/schema@workspace:packages/schema":
+  version: 0.0.0-use.local
+  resolution: "@repo/schema@workspace:packages/schema"
+  dependencies:
+    eslint: ^8.56.0
+    lodash: ^4.17.21
+    prop-types: ^15.8.1
+    react: ^18.2.0
+  languageName: unknown
+  linkType: soft
+
 "@repo/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@repo/shared@workspace:packages/shared"
   dependencies:
     eslint: ^8.56.0
     twig: ^1.17.1
+  languageName: unknown
+  linkType: soft
+
+"@repo/style@workspace:packages/style":
+  version: 0.0.0-use.local
+  resolution: "@repo/style@workspace:packages/style"
+  dependencies:
+    eslint: ^8.56.0
+    immer: ^10.0.3
+    lodash: ^4.17.21
+    prop-types: ^15.8.1
+    react: ^18.2.0
   languageName: unknown
   linkType: soft
 

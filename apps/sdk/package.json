@@ -21,9 +21,9 @@
     "registry": "https://npm.pkg.github.com/plitzi"
   },
   "dependencies": {
-    "@repo/event-bridge": "*",
     "@apollo/client": "^3.9.4",
     "@auth0/auth0-react": "^2.2.4",
+    "@repo/event-bridge": "*",
     "axios": "^1.6.7",
     "classnames": "^2.5.1",
     "dompurify": "^3.0.8",

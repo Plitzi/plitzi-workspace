@@ -40,3 +40,22 @@ export const getPathsFromObeject = (object, basePath = '', glue = '.', skipArray
     return [...acum, path, ...getPathsFromObeject(object[key], path, glue, skipArray)];
   }, []);
 };
+
+export const makeId = (length, includeMayus = true, includeNumbers = true) => {
+  let result = '';
+  let characters = 'abcdefghijklmnopqrstuvwxyz';
+  if (includeMayus) {
+    characters = `ABCDEFGHIJKLMNOPQRSTUVWXYZ${characters}`;
+  }
+
+  if (includeNumbers) {
+    characters = `${characters}0123456789`;
+  }
+
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+};
