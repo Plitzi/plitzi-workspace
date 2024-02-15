@@ -3,6 +3,9 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import EventBridgeContextProvider from '@repo/event-bridge/EventBridgeContextProvider';
+
 // Alias
 import Sdk, {
   RENDER_MODE_IFRAME,
@@ -23,7 +26,6 @@ import StateManagerContextProvider from '@modules/StateManager/StateManagerConte
 import InteractionsContextProvider from '@modules/Interactions/InteractionsContextProvider';
 import UserContextProvider from '@modules/User/UserContextProvider';
 import UserBaseContextProvider from '@modules/User/UserBaseContextProvider';
-import EventBridgeContextProvider from '@modules/EventBridge/EventBridgeContextProvider';
 
 const AppMain = props => {
   const {

@@ -2,9 +2,9 @@
 import { useContext, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
-// Alias
-import useEventBridge from '@modules/EventBridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@modules/EventBridge/EventBridgeHelper';
+// Monorepo
+import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
+import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
 
 // Relatives
 import usePlitziServiceContext from '../../../../services/hooks/usePlitziServiceContext';

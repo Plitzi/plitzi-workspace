@@ -6,10 +6,12 @@ import { produce } from 'immer';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
+// Monorepo
+import useEventBridge from '@repo/event-bridge/hooks/useEventBridge';
+import { EventBridgeModuleTypes } from '@repo/event-bridge/EventBridgeHelper';
+
 // Alias
 import NavigationContext from '@modules/Navigation/NavigationContext';
-import useEventBridge from '@modules/EventBridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@modules/EventBridge/EventBridgeHelper';
 
 // Relatives
 import InteractionsContext from './InteractionsContext';
