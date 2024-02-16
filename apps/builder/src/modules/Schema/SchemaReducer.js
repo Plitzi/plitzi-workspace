@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import has from 'lodash/has';
 
 // Relatives
-import FlatMap from './helpers/FlatMap';
+import FlatMap from '@repo/schema-shared/FlatMap';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',

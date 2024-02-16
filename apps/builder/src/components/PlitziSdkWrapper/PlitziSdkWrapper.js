@@ -4,9 +4,11 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import StyleContext from '@pmodules/Style/StyleContext';
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
 

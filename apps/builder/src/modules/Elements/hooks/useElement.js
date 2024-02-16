@@ -3,8 +3,8 @@ import { useContext } from 'react';
 import get from 'lodash/get';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 
-// Alias
-import SchemaContext from '@pmodules/Schema/SchemaContext';
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 const useElement = id => {
   const { componentDefinitions } = useContext(ComponentContext);

@@ -8,10 +8,12 @@ import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 
 const StyleAdvanceEditor = props => {
   const { className = '' } = props;

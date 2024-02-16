@@ -11,10 +11,10 @@ import { ComponentContext } from '@plitzi/plitzi-sdk';
 // Monorepo
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+import { DROP_DIRECTION_CUSTOM } from '@repo/schema-shared/FlatMap';
 
 // Alias
-import { DROP_DIRECTION_CUSTOM } from '@pmodules/Schema/helpers/FlatMap';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 
 // Relatives

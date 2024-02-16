@@ -10,10 +10,10 @@ import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
 import DataSourceContextProvider from '@repo/data-source-shared/DataSourceContextProvider';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';

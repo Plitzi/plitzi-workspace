@@ -7,9 +7,9 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 // Monorepo
 import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import FlatMap, { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
 
 // Alias
-import FlatMap, { DROP_DIRECTION_INSIDE } from '@pmodules/Schema/helpers/FlatMap';
 import { generateCache } from '@pmodules/Style/StyleHelper';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';

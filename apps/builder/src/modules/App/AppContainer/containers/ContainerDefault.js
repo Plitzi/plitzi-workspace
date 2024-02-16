@@ -8,12 +8,12 @@ import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 // Monorepo
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import StyleContext from '@pmodules/Style/StyleContext';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';

@@ -12,6 +12,7 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 // Monorepo
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
@@ -22,7 +23,6 @@ import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import AppContext from '@pmodules/App/AppContext';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import StyleContext from '@pmodules/Style/StyleContext';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';

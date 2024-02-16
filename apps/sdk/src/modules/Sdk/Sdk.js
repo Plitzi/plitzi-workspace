@@ -5,6 +5,7 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 
 // Monorepo
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
@@ -12,7 +13,6 @@ import CollectionContext from '@modules/Collection/CollectionContext';
 import NetworkContext from '@modules/Network/NetworkContext';
 import PluginsContext from '@modules/Plugins/PluginsContext';
 import NavigationContext from '@modules/Navigation/NavigationContext';
-import SchemaContext from '@modules/Schema/SchemaContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
 import StyleContext from '@modules/Style/StyleContext';
 import StateManagerContext from '@modules/StateManager/StateManagerContext';

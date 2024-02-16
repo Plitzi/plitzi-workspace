@@ -6,10 +6,10 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import FlatMap from '@repo/schema-shared/FlatMap';
 
 // Alias
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
-import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 import { generateCache, generateStyleSelector, makeSelector } from '@pmodules/Style/StyleHelper';
 
 // Relatives

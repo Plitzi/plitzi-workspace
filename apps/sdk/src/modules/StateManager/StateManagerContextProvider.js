@@ -6,9 +6,11 @@ import noop from 'lodash/noop';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
 import NetworkContext from '@modules/Network/NetworkContext';
-import SchemaContext from '@modules/Schema/SchemaContext';
 
 // Relatives
 import StateManagerContext from './StateManagerContext';

@@ -4,9 +4,11 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 import { produce } from 'immer';
 
+// Monorepo
+import FlatMap from '@repo/schema-shared/FlatMap';
+
 // Alias
 import { generateCache, processSelector } from '@pmodules/Style/StyleHelper';
-import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 
 export const SegmentsActions = {
   SEGMENTS_ADD: 'SEGMENTS_ADD',

@@ -9,6 +9,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
 // Monorepo
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
@@ -16,7 +17,6 @@ import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import AppContext from '@pmodules/App/AppContext';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import StyleContext from '@pmodules/Style/StyleContext';

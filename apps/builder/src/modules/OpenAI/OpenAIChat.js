@@ -8,11 +8,13 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import StyleContext from '@pmodules/Style/StyleContext';
 import useMediaRecorder from './hooks/useMediaRecorder';
 import VoiceVisualizer from './components/VoiceVisualizer';

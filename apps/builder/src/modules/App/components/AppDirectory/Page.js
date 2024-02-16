@@ -6,8 +6,10 @@ import get from 'lodash/get';
 import { Link } from 'react-router-dom';
 import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 import StyleContext from '@pmodules/Style/StyleContext';
 

@@ -12,10 +12,10 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Monorepo
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import FlatMap from '@repo/schema-shared/FlatMap';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
-import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives

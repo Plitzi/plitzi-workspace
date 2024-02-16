@@ -18,9 +18,9 @@ import {
   EventBridgeTypes,
   EventBridgeTypesPerModule
 } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
 
 // Alias
-import { DROP_DIRECTION_INSIDE } from '@pmodules/Schema/helpers/FlatMap';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';

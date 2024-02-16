@@ -2,11 +2,13 @@
 import React, { useCallback, useContext, useMemo, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
 
+// Monorepo
+import FlatMap from '@repo/schema-shared/FlatMap';
+
 // Alias
 import { generateCache } from '@pmodules/Style/StyleHelper';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 
 // Relatives
 import TemplatesContext from './TemplatesContext';

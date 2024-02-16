@@ -10,6 +10,8 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import FlatMap, { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -19,8 +21,6 @@ import { SubscriptionEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 // Relatives
-import FlatMap, { DROP_DIRECTION_INSIDE } from './helpers/FlatMap';
-import SchemaContext from './SchemaContext';
 import SchemaReducer, { SchemaActions } from './SchemaReducer';
 import SchemaMainContext from './SchemaMainContext';
 

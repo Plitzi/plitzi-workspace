@@ -9,13 +9,13 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import FlatMap from '@repo/schema-shared/FlatMap';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import AppContext from '@pmodules/App/AppContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
-import FlatMap from '@pmodules/Schema/helpers/FlatMap';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives

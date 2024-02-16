@@ -4,11 +4,13 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 
 // Relatives
-import SchemaContext from './SchemaContext';
 import SchemaSettingsContext from './SchemaSettingsContext';
 import SchemaPagesContext from './SchemaPagesContext';
 

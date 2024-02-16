@@ -2,6 +2,9 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
 import {
   RENDER_MODE_IFRAME,
@@ -13,7 +16,6 @@ import {
 import NetworkContext from '@modules/Network/NetworkContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 import UserContext from '@modules/User/UserContext';
-import SchemaContext from '@modules/Schema/SchemaContext';
 
 // Relatives
 import NavigationWidget from './NavigationWidget';

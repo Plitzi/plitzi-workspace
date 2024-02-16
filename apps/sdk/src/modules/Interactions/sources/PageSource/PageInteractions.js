@@ -4,10 +4,12 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
 import InteractionsContext from '@modules/Interactions/InteractionsContext';
-import SchemaContext from '@modules/Schema/SchemaContext';
 import NavigationContext from '@modules/Navigation/NavigationContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 

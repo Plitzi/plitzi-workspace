@@ -7,8 +7,10 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
+// Monorepo
+import SchemaContext from '@repo/schema-shared/SchemaContext';
+
 // Alias
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 import StyleContext from '@pmodules/Style/StyleContext';
 

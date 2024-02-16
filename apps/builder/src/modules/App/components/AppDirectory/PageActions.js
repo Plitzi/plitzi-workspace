@@ -10,9 +10,9 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Monorepo
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias
-import SchemaContext from '@pmodules/Schema/SchemaContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 
 const PageActions = props => {
