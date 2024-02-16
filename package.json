@@ -30,7 +30,7 @@
     "@repo/jest-config": "*",
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
-    "turbo": "^1.12.3"
+    "turbo": "^1.12.4"
   },
   "engines": {
     "node": ">=20"

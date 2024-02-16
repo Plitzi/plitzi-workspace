@@ -15,7 +15,7 @@
   },
   "main": "dist/plitzi-builder.js",
   "dependencies": {
-    "@apollo/client": "^3.9.4",
+    "@apollo/client": "^3.9.5",
     "@plitzi/plitzi-sdk": "*",
     "@repo/event-bridge-shared": "*",
     "apollo-upload-client": "^18.0.1",
@@ -57,7 +57,7 @@
     "css-loader": "^6.10.0",
     "cypress": "^13.6.4",
     "file-loader": "^6.2.0",
-    "flow-bin": "^0.228.0",
+    "flow-bin": "^0.229.0",
     "handlebars-webpack-plugin": "^2.2.1",
     "mini-css-extract-plugin": "^2.8.0",
     "node-sass": "^9.0.0",
@@ -76,11 +76,11 @@
     "thread-loader": "^4.0.2",
     "typescript": "^5.3.3",
     "url-loader": "^4.1.1",
-    "webpack": "^5.90.1",
+    "webpack": "^5.90.2",
     "webpack-assets-manifest": "^5.1.0",
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.0",
+    "webpack-dev-server": "^5.0.1",
     "webpack-subresource-integrity": "^5.2.0-rc.1"
   },
   "scripts": {
