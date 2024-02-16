@@ -12,11 +12,13 @@ import { BrowserRouter } from 'react-router-dom';
 import omit from 'lodash/omit';
 import get from 'lodash/get';
 import { v4 as uuidv4 } from 'uuid';
-import { ComponentProvider } from '@plitzi/plitzi-sdk';
 import classNames from 'classnames';
 import ToastProvider from '@plitzi/plitzi-ui-components/Toast/ToastProvider';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
 import CacheProvider from '@plitzi/plitzi-ui-components/Cache/CacheProvider';
+
+// Monorepo
+import { ComponentProvider } from '@plitzi/plitzi-sdk';
 
 // Alias
 import customFetch from '@pmodules/Network/helpers/customFetch';
