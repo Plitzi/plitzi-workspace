@@ -18,7 +18,6 @@ import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
 import CollectionContextProvider from '@modules/Collection/CollectionContextProvider';
-import DataSourceContextProvider from '@modules/DataSource/DataSourceContextProvider';
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
 import StyleContextProvider from '@modules/Style/StyleContextProvider';
@@ -26,6 +25,7 @@ import StateManagerContextProvider from '@modules/StateManager/StateManagerConte
 import InteractionsContextProvider from '@modules/Interactions/InteractionsContextProvider';
 import UserContextProvider from '@modules/User/UserContextProvider';
 import UserBaseContextProvider from '@modules/User/UserBaseContextProvider';
+import DataSourceSdkContextProvider from '@modules/DataSource/DataSourceSdkContextProvider';
 
 const AppMain = props => {
   const {
@@ -73,7 +73,7 @@ const AppMain = props => {
                         previewMode={previewMode}
                       >
                         <StateManagerContextProvider state={state} onInit={onInitStateManager}>
-                          <DataSourceContextProvider>
+                          <DataSourceSdkContextProvider>
                             <InteractionsContextProvider previewMode={previewMode}>
                               <UserContextProvider previewMode={previewMode}>
                                 <Sdk
@@ -84,7 +84,7 @@ const AppMain = props => {
                                 />
                               </UserContextProvider>
                             </InteractionsContextProvider>
-                          </DataSourceContextProvider>
+                          </DataSourceSdkContextProvider>
                         </StateManagerContextProvider>
                       </NavigationContextProvider>
                     </UserBaseContextProvider>

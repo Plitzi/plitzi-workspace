@@ -2,9 +2,11 @@
 import { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
+// Monorepo
+import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
-import DataSourceContext from '@modules/DataSource/DataSourceContext';
 import NavigationContext from '@modules/Navigation/NavigationContext';
 
 // Relatives

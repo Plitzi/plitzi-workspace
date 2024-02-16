@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 
 // Alias
-import useDataSource from '@pmodules/DataSource/hooks/useDataSource';
+import useDataSource from '@repo/data-source-shared/hooks/useDataSource';
 
 // Relatives
 import { getDisplayName, getPathsFromObeject } from '../../../helpers/utils';

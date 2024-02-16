@@ -8,8 +8,10 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
 import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
 
+// Monorepo
+import utility from '@repo/data-source-shared/utility';
+
 // Alias
-import utility from './utility';
 import { emptyObject } from '../../helpers/utils';
 
 const transformersDefault = [];

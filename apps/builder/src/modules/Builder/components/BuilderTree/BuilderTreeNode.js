@@ -10,14 +10,14 @@ import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
 import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import useDataSource from '@repo/data-source-shared/hooks/useDataSource';
+import getBindingsDetails from '@repo/data-source-shared/helpers/getBindingsDetails';
 
 // Alias
 import BuilderElementTools from '@pmodules/Builder/components/BuilderElementTools';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
-import useDataSource from '@pmodules/DataSource/hooks/useDataSource';
-import getBindingsDetails from '@pmodules/DataSource/helpers/getBindingsDetails';
 
 // Relatives
 import TreeNodeActionButton from './TreeNodeActionButton';

@@ -3,8 +3,8 @@ import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 
-// Alias
-import useDataSource from '@modules/DataSource/hooks/useDataSource';
+// Monorepo
+import useDataSource from '@repo/data-source-shared/hooks/useDataSource';
 
 // Relatives
 import { getDisplayName, getPathsFromObeject } from '../../../helpers/utils';

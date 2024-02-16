@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Alias
-import DataSourceContextProvider from '@pmodules/DataSource/DataSourceContextProvider';
+import DataSourceBuilderContextProvider from '@pmodules/DataSource/DataSourceBuilderContextProvider';
 import InteractionsContextProvider from '@pmodules/Interactions/InteractionsContextProvider';
 import UserContextProvider from '@pmodules/User/UserContextProvider';
 import StateManagerContextProvider from '@pmodules/StateManager/StateManagerContextProvider';
@@ -56,7 +56,7 @@ const AppMain = props => {
         previewMode={previewMode}
       >
         <StateManagerContextProvider state={state}>
-          <DataSourceContextProvider>
+          <DataSourceBuilderContextProvider>
             <InteractionsContextProvider previewMode={previewMode}>
               <UserContextProvider previewMode={previewMode}>
                 <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
@@ -64,7 +64,7 @@ const AppMain = props => {
                 </PopupProvider>
               </UserContextProvider>
             </InteractionsContextProvider>
-          </DataSourceContextProvider>
+          </DataSourceBuilderContextProvider>
         </StateManagerContextProvider>
       </AppProvider>
     ),

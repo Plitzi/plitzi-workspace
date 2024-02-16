@@ -3,9 +3,11 @@ import React, { useContext, useMemo, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
+// Monorepo
+import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
-import DataSourceContext from '@modules/DataSource/DataSourceContext';
 import CollectionContext from '@modules/Collection/CollectionContext';
 import NetworkContext from '@modules/Network/NetworkContext';
 import PluginsContext from '@modules/Plugins/PluginsContext';

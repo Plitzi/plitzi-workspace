@@ -7,11 +7,13 @@ import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
+// Monorepo
+import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
-import DataSourceContext from '@pmodules/DataSource/DataSourceContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import AppContext from '@pmodules/App/AppContext';
 import SchemaContext from '@pmodules/Schema/SchemaContext';

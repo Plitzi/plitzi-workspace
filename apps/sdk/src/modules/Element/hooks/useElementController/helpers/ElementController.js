@@ -5,11 +5,13 @@ import omit from 'lodash/omit';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+// Monorepo
+import getBindingsDetails from '@repo/data-source-shared/helpers/getBindingsDetails';
+
 // Alias
 import { classStringFilter, StyleSelectors } from '@modules/Style/StyleHelper';
 import PluginManager from '@modules/Element/PluginManager';
 import { PARTIAL_SCHEMA_TYPE_SEGMENT } from '@modules/Element/ElementConstants';
-import getBindingsDetails from '@modules/DataSource/helpers/getBindingsDetails';
 
 // Relatives
 import { getRandomInteger } from '../../../../../helpers/utils';

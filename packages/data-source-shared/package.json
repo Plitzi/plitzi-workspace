@@ -4,7 +4,12 @@
   "private": true,
   "files": [],
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./DataSourceContext": "./src/DataSourceContext.js",
+    "./DataSourceContextProvider": "./src/DataSourceContextProvider.js",
+    "./hooks/useDataSource": "./src/hooks/useDataSource.js",
+    "./helpers/getBindingsDetails": "./src/helpers/getBindingsDetails.js",
+    "./utility": "./src/utility/index.js"
   },
   "scripts": {
     "lint": "eslint ./src"

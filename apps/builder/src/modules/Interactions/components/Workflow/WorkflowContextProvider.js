@@ -8,9 +8,11 @@ import noop from 'lodash/noop';
 import omit from 'lodash/omit';
 import upperFirst from 'lodash/upperFirst';
 
+// Monorepo
+import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+
 // Alias
 import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
-import DataSourceContext from '@pmodules/DataSource/DataSourceContext';
 
 // Relatives
 import WorkflowContext from './WorkflowContext';

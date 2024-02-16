@@ -9,8 +9,8 @@ import { produce } from 'immer';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 
-// Alias
-import DataSourceContext from '@pmodules/DataSource/DataSourceContext';
+// Monorepo
+import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
 
 // Relatives
 import BindingForm from './models/BindingForm';

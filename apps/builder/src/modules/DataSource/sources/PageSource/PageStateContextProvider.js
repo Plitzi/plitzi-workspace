@@ -3,9 +3,11 @@ import { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
+// Monorepo
+import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
-import DataSourceContext from '@pmodules/DataSource/DataSourceContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 

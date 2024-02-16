@@ -8,7 +8,6 @@ import SchemaContext from '@repo/schema-shared/SchemaContext';
 // Relatives
 import DataSourceContext from './DataSourceContext';
 import useDataSource from './hooks/useDataSource';
-import PageStateContextProvider from './sources/PageSource/PageStateContextProvider';
 import DataSourceManager from './DataSourceManager';
 
 const DataSourceContextProvider = props => {
@@ -19,11 +18,7 @@ const DataSourceContextProvider = props => {
 
   const valueMemo = useMemo(() => ({ dataSourceManager, useDataSource }), [dataSourceManager, useDataSource]);
 
-  return (
-    <DataSourceContext.Provider value={valueMemo}>
-      <PageStateContextProvider>{children}</PageStateContextProvider>
-    </DataSourceContext.Provider>
-  );
+  return <DataSourceContext.Provider value={valueMemo}>{children}</DataSourceContext.Provider>;
 };
 
 DataSourceContextProvider.propTypes = {

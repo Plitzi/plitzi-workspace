@@ -9,8 +9,10 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
+// Monorepo
+import utility from '@repo/data-source-shared/utility';
+
 // Alias
-import utility from '../../../../utility';
 import TransformerParam from './TransformerParam';
 import { emptyObject } from '../../../../../../helpers/utils';
 

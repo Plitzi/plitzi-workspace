@@ -8,8 +8,10 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
 
+// Monorepo
+import utility from '@repo/data-source-shared/utility';
+
 // Alias
-import utility from '../../../utility';
 import { emptyObject } from '../../../../../helpers/utils';
 
 const fieldsDefault = [];
