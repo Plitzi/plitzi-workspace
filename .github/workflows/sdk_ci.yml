@@ -6,13 +6,6 @@ name: sdk_ci
 on:
   release:
     types: [published]
-  push:
-    paths:
-      - 'apps/sdk/**'
-    branches:
-      - develop
-      - staging
-      - main # Change this to your default branch
 
 jobs:
   packages:
@@ -61,10 +54,10 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
       - name: Yarn Lint
-        run: yarn lint --filter=@plitzi/plitzi-sdk
+        run: yarn lint
 
       - name: Yarn Scss Lint
-        run: yarn lint-style --filter=@plitzi/plitzi-sdk
+        run: yarn lint-style
 
   # tests:
   #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/master')
