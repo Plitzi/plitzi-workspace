@@ -56,6 +56,9 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
+      - name: Build Sdk
+        run: yarn build-assets:prod --filter=@plitzi/plitzi-sdk
+
       - name: Yarn Lint
         run: yarn lint
 
