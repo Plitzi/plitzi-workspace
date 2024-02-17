@@ -230,8 +230,8 @@ jobs:
 
       - name: Deploy static site to S3 bucket
         run: |
-          aws s3 sync ./dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.js" --include "*.css" --content-encoding gzip --delete
-          aws s3 sync ./dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.json" --delete
+          aws s3 sync ./apps/${{matrix.package}}/dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.js" --include "*.css" --content-encoding gzip --delete
+          aws s3 sync ./apps/${{matrix.package}}/dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.json" --delete
 
   sync-latest-s3:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
