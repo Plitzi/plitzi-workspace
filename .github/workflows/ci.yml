@@ -12,6 +12,10 @@ on:
       - staging
       - main # Change this to your default branch
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   packages:
     runs-on: ubuntu-latest
@@ -174,6 +178,9 @@ jobs:
       - name: Publish to NPM
         id: changesets
         uses: changesets/action@v1
+        with:
+          # This expects you to have a script called release which does a build for your packages and calls changeset publish
+          publish: yarn changeset publish # build already coming from cache
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
