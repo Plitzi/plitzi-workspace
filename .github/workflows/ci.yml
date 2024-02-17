@@ -169,7 +169,9 @@ jobs:
         run: exit 1
 
       - name: add token to .npmrc
-        run: echo "//npm.pkg.github.com/:_authToken=${{secrets.NPM_AUTH_TOKEN}}" >> ~/.npmrc
+        run: |
+          echo "@plitzi:registry=https://npm.pkg.github.com/" > ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{secrets.NPM_AUTH_TOKEN}}" >> ~/.npmrc
 
       - name: Yarn Publish
         run: yarn changeset publish
