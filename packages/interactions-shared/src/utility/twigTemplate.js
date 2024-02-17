@@ -1,6 +1,6 @@
-// Relatives
-import { processTwig } from '../../../helpers/twigWrapper';
-import { getPathsFromObeject } from '../../../helpers/utils';
+// Monorepo
+import { processTwig } from '@repo/shared/helpers/twigWrapper';
+import { getPathsFromObeject } from '@repo/shared';
 
 const callback = params => {
   const { template, returnMode } = params;

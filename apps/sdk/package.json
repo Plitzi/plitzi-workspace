@@ -53,6 +53,7 @@
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@repo/eslint-config": "*",
     "@repo/jest-config": "*",
+    "@repo/interactions-shared": "*",
     "@repo/tailwind-config": "*",
     "@storybook/addon-essentials": "^7.6.16",
     "@storybook/addon-interactions": "^7.6.16",

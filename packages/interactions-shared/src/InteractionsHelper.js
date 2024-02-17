@@ -3,8 +3,10 @@ import get from 'lodash/get';
 import omit from 'lodash/omit';
 import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
 
+// Monorepo
+import { processTwig, hasTokens } from '@repo/shared/helpers/twigWrapper';
+
 // Relatives
-import { processTwig, hasTokens } from '../../helpers/twigWrapper';
 import utility from './utility';
 
 const isValidTokenNode = tokenName => !!tokenName.replaceAll(' ', '').match(/^{{node-[a-z0-9]+(.*|)}}$/gim);
@@ -23,7 +25,6 @@ const processParams = (type, params, flowValues, globalValues, action) => {
     return { ...acum, [param]: value };
   }, {});
 };
-
 const processNode = async (node, callbacksAvailables = {}, flowParams = {}, globalParams = {}) => {
   let result = {};
   const postCallbacks = [];

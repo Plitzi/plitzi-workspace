@@ -48,6 +48,7 @@
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@repo/eslint-config": "*",
     "@repo/jest-config": "*",
+    "@repo/interactions-shared": "*",
     "@repo/tailwind-config": "*",
     "@welldone-software/why-did-you-render": "^8.0.1",
     "autoprefixer": "^10.4.17",

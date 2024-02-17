@@ -6,10 +6,10 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import SchemaContext from '@repo/schema-shared/SchemaContext';
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
-import InteractionsContext from '@pmodules/Interactions/InteractionsContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 

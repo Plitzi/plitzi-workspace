@@ -1,0 +1,24 @@
+{
+  "name": "@repo/interactions-shared",
+  "version": "0.0.0",
+  "private": true,
+  "files": [],
+  "exports": {
+    ".": "./src/index.js",
+    "./utility": "./src/utility/index.js",
+    "./InteractionsContext": "./src/InteractionsContext.js",
+    "./InteractionsHelper": "./src/InteractionsHelper.js",
+    "./useInteractions": "./src/hooks/useInteractions.js"
+  },
+  "scripts": {
+    "lint": "eslint ./src"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  },
+  "dependencies": {
+    "@repo/shared": "*",
+    "axios": "^1.6.7",
+    "lodash": "^4.17.21"
+  }
+}

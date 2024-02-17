@@ -13,6 +13,7 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
@@ -26,7 +27,6 @@ import AppContext from '@pmodules/App/AppContext';
 import StyleContext from '@pmodules/Style/StyleContext';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
-import InteractionsContext from '@pmodules/Interactions/InteractionsContext';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';

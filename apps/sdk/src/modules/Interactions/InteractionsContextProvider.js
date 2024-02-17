@@ -9,16 +9,16 @@ import get from 'lodash/get';
 // Monorepo
 import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+import { flowTrigger } from '@repo/interactions-shared/InteractionsHelper';
+import useInteractions from '@repo/interactions-shared/useInteractions';
 
 // Alias
 import NavigationContext from '@modules/Navigation/NavigationContext';
 
 // Relatives
-import InteractionsContext from './InteractionsContext';
-import { flowTrigger } from './InteractionsHelper';
 import PageInteractions from './sources/PageSource/PageInteractions';
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
-import useInteractions from './hooks/useInteractions';
 
 const InteractionsContextProvider = props => {
   const { children, previewMode = true } = props;

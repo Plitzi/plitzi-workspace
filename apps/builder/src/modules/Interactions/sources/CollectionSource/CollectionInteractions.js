@@ -4,8 +4,10 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
+// Monorepo
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+
 // Alias
-import InteractionsContext from '@pmodules/Interactions/InteractionsContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import { collectionFieldTypeToInteractions } from '@pmodules/Collection/CollectionsConstants';
 

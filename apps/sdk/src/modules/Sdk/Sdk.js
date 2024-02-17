@@ -6,6 +6,7 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 // Monorepo
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
@@ -16,7 +17,6 @@ import NavigationContext from '@modules/Navigation/NavigationContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
 import StyleContext from '@modules/Style/StyleContext';
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
-import InteractionsContext from '@modules/Interactions/InteractionsContext';
 import SchemaSettingsContext from '@modules/Schema/SchemaSettingsContext';
 
 // Relatives

@@ -5,7 +5,7 @@
   "files": [],
   "exports": {
     ".": "./src/index.js",
-    "./helpers/*": "./src/helpers/*"
+    "./helpers/twigWrapper": "./src/helpers/twigWrapper.js"
   },
   "scripts": {
     "lint": "eslint ./src"

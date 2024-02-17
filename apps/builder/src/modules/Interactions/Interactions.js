@@ -5,12 +5,14 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 
+// Monorepo
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+import utility from '@repo/interactions-shared/utility';
+
 // Alias
 import Workflow from './components/Workflow';
 
 // Relatives
-import InteractionsContext from './InteractionsContext';
-import utility from './utility';
 import { emptyObject } from '../../helpers/utils';
 
 const Interactions = props => {

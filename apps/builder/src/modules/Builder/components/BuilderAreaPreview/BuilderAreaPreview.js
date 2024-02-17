@@ -11,13 +11,13 @@ import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
 import DataSourceContextProvider from '@repo/data-source-shared/DataSourceContextProvider';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
-import InteractionsContext from '@pmodules/Interactions/InteractionsContext';
 import InteractionsContextProvider from '@pmodules/Interactions/InteractionsContextProvider';
 import AppContext from '@pmodules/App/AppContext';
 import UserContextProvider from '@pmodules/User/UserContextProvider';

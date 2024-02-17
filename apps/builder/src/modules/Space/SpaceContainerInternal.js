@@ -3,8 +3,8 @@ import { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
-// Alias
-import InteractionsContext from '@pmodules/Interactions/InteractionsContext';
+// Monorepo
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 
 const SpaceContainerInternal = props => {
   const { children } = props;

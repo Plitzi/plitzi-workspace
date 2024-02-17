@@ -1,8 +1,10 @@
 // Packages
 import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
 
+// Monorepo
+import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+
 // Alias
-import InteractionsContext from '@modules/Interactions/InteractionsContext';
 import SchemaSettingsContext from '@modules/Schema/SchemaSettingsContext';
 
 // Relatives
