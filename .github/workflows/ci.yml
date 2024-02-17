@@ -28,6 +28,9 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@plitzi'
 
+      - name: Test
+        run: echo ${github.context.ref.replace("refs/heads/", "")}
+
       - name: Cache node_modules
         id: cache-packages
         uses: actions/cache@v2
@@ -114,7 +117,7 @@ jobs:
         run: yarn lint-style
 
   # tests:
-  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/master')
+  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
   #   needs: lint
   #   runs-on: ubuntu-latest
   #   steps:
