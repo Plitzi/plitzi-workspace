@@ -229,6 +229,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy static site to S3 bucket
+        if: steps.package-version.outputs.version != '' && matrix.package != ''
         run: |
           aws s3 sync ./apps/${{matrix.package}}/dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.js" --include "*.css" --content-encoding gzip --delete
           aws s3 sync ./apps/${{matrix.package}}/dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.json" --delete
@@ -246,7 +247,7 @@ jobs:
       - name: Read package.json
         uses: tyankatsu0105/read-package-version-actions@v1
         with:
-          path: '.'
+          path: './apps/${{matrix.package}}'
         id: package-version
 
       - name: Configure AWS Credentials
@@ -257,6 +258,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to latest version
+        if: steps.package-version.outputs.version != '' && matrix.package != ''
         run: |
           aws s3 sync s3://plitzi-cdn/${{matrix.package}}/${{ steps.package-version.outputs.version }} s3://plitzi-cdn/${{matrix.package}}/latest --delete --cache-control max-age=300,public
           aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFROUND_DISTRIBUTION_ID }} --paths '/${{matrix.package}}/latest/*'
