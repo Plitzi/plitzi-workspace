@@ -29,7 +29,7 @@ jobs:
           scope: '@plitzi'
 
       - name: Test
-        run: echo ${github.context.ref.replace("refs/heads/", "")}
+        run: echo "${github.ref.replace("refs/heads/", "")}"
 
       - name: Cache node_modules
         id: cache-packages
