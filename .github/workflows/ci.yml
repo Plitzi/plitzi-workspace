@@ -213,7 +213,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
       - name: Yarn Build
-        run: yarn build-assets:prod-gzip --filter=@plitzi/plitzi-${{matrix.package}}
+        run: yarn workspace @plitzi/plitzi-${{matrix.package}} build-assets:prod-gzip
 
       - name: Read package.json
         uses: tyankatsu0105/read-package-version-actions@v1
