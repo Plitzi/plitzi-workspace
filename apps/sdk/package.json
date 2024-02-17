@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.18.4",
+  "version": "0.18.5",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "https",
-    "url": "https://github.com/plitzi/plitzi-sdk.git"
+    "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/plitzi"

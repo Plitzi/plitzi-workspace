@@ -181,74 +181,74 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
           HOME: ${{ github.workspace }}
 
-  # publish-s3:
-  #   if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-  #   needs: lint
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       package: [sdk, builder]
-  #   steps:
-  #     - uses: actions/checkout@v2
+  publish-s3:
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [sdk, builder]
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - uses: actions/setup-node@v1
-  #       with:
-  #         node-version: 20
-  #         registry-url: https://npm.pkg.github.com
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
 
-  #     - name: Restore Cache
-  #       uses: actions/cache@v2
-  #       env:
-  #         cache-name: cache-node-modules
-  #       with:
-  #         path: '**/node_modules'
-  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
+      - name: Restore Cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-  #     - name: Yarn Build
-  #       run: yarn build-assets:prod-gzip
+      - name: Yarn Build
+        run: yarn build-assets:prod-gzip
 
-  #     - name: Read package.json
-  #       uses: tyankatsu0105/read-package-version-actions@v1
-  #       with:
-  #         path: '.'
-  #       id: package-version
+      - name: Read package.json
+        uses: tyankatsu0105/read-package-version-actions@v1
+        with:
+          path: '.'
+        id: package-version
 
-  #     - name: Configure AWS Credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ secrets.AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-  #     - name: Deploy static site to S3 bucket
-  #       run: |
-  #         aws s3 sync ./dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.js" --include "*.css" --content-encoding gzip --delete
-  #         aws s3 sync ./dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.json" --delete
+      - name: Deploy static site to S3 bucket
+        run: |
+          aws s3 sync ./dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.js" --include "*.css" --content-encoding gzip --delete
+          aws s3 sync ./dist/ s3://plitzi-cdn/${{matrix.package}}/${{steps.package-version.outputs.version}} --exclude "*" --include "*.json" --delete
 
-  # sync-latest-s3:
-  #   if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-  #   needs: publish-s3
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       package: [sdk, builder]
-  #   steps:
-  #     - uses: actions/checkout@v2
+  sync-latest-s3:
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    needs: publish-s3
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [sdk, builder]
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - name: Read package.json
-  #       uses: tyankatsu0105/read-package-version-actions@v1
-  #       with:
-  #         path: '.'
-  #       id: package-version
+      - name: Read package.json
+        uses: tyankatsu0105/read-package-version-actions@v1
+        with:
+          path: '.'
+        id: package-version
 
-  #     - name: Configure AWS Credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ secrets.AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-  #     - name: Deploy to latest version
-  #       run: |
-  #         aws s3 sync s3://plitzi-cdn/${{matrix.package}}/${{ steps.package-version.outputs.version }} s3://plitzi-cdn/${{matrix.package}}/latest --delete --cache-control max-age=300,public
-  #         aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFROUND_DISTRIBUTION_ID }} --paths '/${{matrix.package}}/latest/*'
+      - name: Deploy to latest version
+        run: |
+          aws s3 sync s3://plitzi-cdn/${{matrix.package}}/${{ steps.package-version.outputs.version }} s3://plitzi-cdn/${{matrix.package}}/latest --delete --cache-control max-age=300,public
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFROUND_DISTRIBUTION_ID }} --paths '/${{matrix.package}}/latest/*'
