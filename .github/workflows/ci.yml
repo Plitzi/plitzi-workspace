@@ -28,9 +28,7 @@ jobs:
         env:
           cache-name: cache-node-modules
         with:
-          path: |
-            '**/node_modules'
-            '**/dist'
+          path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
       - name: Yarn Install
@@ -38,7 +36,27 @@ jobs:
         run: yarn install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-      
+
+  build-packages:
+    needs: packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@plitzi'
+
+      - name: Restore Cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-build
+        with:
+          path: '**/dist'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+
       - name: Yarn Build
         run: yarn build-assets:prod
 
@@ -58,10 +76,16 @@ jobs:
         env:
           cache-name: cache-node-modules
         with:
-          path: |
-            '**/node_modules'
-            '**/dist'
+          path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Restore Cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-build
+        with:
+          path: '**/dist'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
       - name: Yarn Lint
         run: yarn lint
