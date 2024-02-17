@@ -175,6 +175,8 @@ jobs:
 
       - name: Yarn Publish
         run: yarn changeset publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
       # - name: Publish to NPM
       #   id: changesets
