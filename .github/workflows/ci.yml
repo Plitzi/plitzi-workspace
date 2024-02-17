@@ -125,33 +125,45 @@ jobs:
   #     - name: Yarn Tests
   #       run: yarn test:ci
 
-  # publish-github:
-  #   if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-  #   needs: lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
+  publish-github:
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - uses: actions/setup-node@v1
-  #       with:
-  #         node-version: 20
-  #         registry-url: https://npm.pkg.github.com/plitzi
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com/plitzi
 
-  #     - name: Restore Cache
-  #       uses: actions/cache@v2
-  #       env:
-  #         cache-name: cache-node-modules
-  #       with:
-  #         path: '**/node_modules'
-  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
+      - name: Restore Cache node_modules
+        id: cache-packages
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-  #     - name: Yarn Build
-  #       run: yarn build-assets:prod
+      - name: Restore Cache build
+        id: cache-build
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-build
+        with:
+          path: '**/dist'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
-  #     - name: Yarn Publish
-  #       run: yarn publish
-  #       env:
-  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      - name: Validate Cache
+        if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
+        run: exit 1
+
+      - name: Yarn Publish
+        if: steps.cache-packages.outputs.cache-hit == 'true' && steps.cache-build.outputs.cache-hit == 'true'
+        run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
   # publish-s3:
   #   if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
