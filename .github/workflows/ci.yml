@@ -171,8 +171,7 @@ jobs:
         run: exit 1
 
       - name: Yarn Publish
-        if: steps.cache-packages.outputs.cache-hit == 'true' && steps.cache-build.outputs.cache-hit == 'true'
-        run: yarn release
+        run: yarn changeset publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
       # - name: Publish to NPM
