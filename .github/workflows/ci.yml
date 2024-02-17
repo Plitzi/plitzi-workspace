@@ -63,9 +63,6 @@ jobs:
             '**/dist'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Build Sdk
-        run: yarn build-assets:prod
-
       - name: Yarn Lint
         run: yarn lint
 
