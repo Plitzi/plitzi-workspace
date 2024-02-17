@@ -4,6 +4,8 @@
 name: ci
 
 on:
+  release:
+    types: [published]
   push:
     branches:
       - develop
