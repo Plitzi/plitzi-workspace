@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.18.3",
+  "version": "0.18.4",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -112,7 +112,8 @@
     "build-assets:prod-gzip": "webpack --mode production --env onlyGzip",
     "build-assets:prod-analyze": "webpack --mode production --env onlyAnalyze",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "release": "changeset publish"
   },
   "eslintConfig": {
     "extends": "react-app"

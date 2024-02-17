@@ -21,7 +21,8 @@
     "build-assets:prod-analyze": "turbo build-assets:prod-analyze --parallel",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "release": "turbo release"
   },
   "dependencies": {
     "@plitzi/plitzi-ui-components": "0.8.8"

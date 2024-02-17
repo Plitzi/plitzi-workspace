@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-builder",
-  "version": "0.18.3",
+  "version": "0.18.4",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -100,7 +100,8 @@
     "build-assets:prod-watch": "webpack --mode production --env watch",
     "build-assets:prod-measure": "webpack --mode production --env measure",
     "build-assets:prod-gzip": "webpack --mode production --env onlyGzip",
-    "build-assets:prod-analyze": "webpack --mode production --env onlyAnalyze"
+    "build-assets:prod-analyze": "webpack --mode production --env onlyAnalyze",
+    "release": "changeset publish"
   },
   "eslintConfig": {
     "extends": "react-app"

@@ -81,6 +81,10 @@
       "dependsOn": ["^build-assets:prod-analyze"],
       "cache": false,
       "outputs": ["dist/**"]
+    },
+    "release": {
+      "dependsOn": ["^release"],
+      "cache": false
     }
   }
 }
