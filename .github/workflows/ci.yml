@@ -22,7 +22,7 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@plitzi'
 
-      - name: Cache multiple paths
+      - name: Cache node_modules
         id: cache-packages
         uses: actions/cache@v2
         env:
@@ -49,7 +49,7 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@plitzi'
 
-      - name: Cache multiple paths
+      - name: Restore Cache node_modules
         id: cache-packages
         uses: actions/cache@v2
         env:
@@ -58,7 +58,7 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Restore Cache
+      - name: Restore Cache build
         uses: actions/cache@v2
         env:
           cache-name: cache-build
@@ -80,7 +80,7 @@ jobs:
           node-version: 20
           registry-url: https://npm.pkg.github.com
 
-      - name: Restore Cache
+      - name: Restore Cache node_modules
         uses: actions/cache@v2
         env:
           cache-name: cache-node-modules
@@ -88,7 +88,7 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Restore Cache
+      - name: Restore Cache build
         uses: actions/cache@v2
         env:
           cache-name: cache-build
