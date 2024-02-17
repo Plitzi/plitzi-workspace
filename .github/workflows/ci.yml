@@ -29,7 +29,7 @@ jobs:
           scope: '@plitzi'
 
       - name: Test
-        run: echo "${github.ref}"
+        run: echo "${{github.ref}}"
 
       - name: Cache node_modules
         id: cache-packages
