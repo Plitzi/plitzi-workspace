@@ -134,7 +134,7 @@ jobs:
   #       run: yarn test:ci
 
   publish-github:
-    # if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
     needs: lint
     runs-on: ubuntu-latest
     steps:
@@ -145,8 +145,6 @@ jobs:
           node-version: 20
           registry-url: https://npm.pkg.github.com
           scope: '@plitzi'
-        # env:
-        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
       - name: Restore Cache node_modules
         id: cache-packages
@@ -169,11 +167,6 @@ jobs:
       - name: Validate Cache
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
         run: exit 1
-
-      # - name: add token to .npmrc
-      #   run: |
-      #     echo "@plitzi:registry=https://npm.pkg.github.com/" > $HOME/.npmrc
-      #     echo "//npm.pkg.github.com/:_authToken=${{secrets.NPM_AUTH_TOKEN}}" >> $HOME/.npmrc
 
       - name: Publish to NPM
         id: changesets
