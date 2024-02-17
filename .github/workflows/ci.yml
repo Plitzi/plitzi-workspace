@@ -182,7 +182,7 @@ jobs:
           HOME: ${{ github.workspace }}
 
   publish-s3:
-    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    # if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
     needs: lint
     runs-on: ubuntu-latest
     strategy:
@@ -218,7 +218,7 @@ jobs:
       - name: Read package.json
         uses: tyankatsu0105/read-package-version-actions@v1
         with:
-          path: '.'
+          path: './apps/${{matrix.package}}'
         id: package-version
 
       - name: Configure AWS Credentials
