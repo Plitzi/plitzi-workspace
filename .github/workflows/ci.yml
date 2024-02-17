@@ -61,7 +61,7 @@ jobs:
         run: yarn build-assets:prod
 
   lint:
-    needs: packages
+    needs: build-packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
