@@ -9,23 +9,25 @@
     "lint": "turbo lint --parallel",
     "lint-style": "turbo lint-style --parallel",
     "lint-style:fix": "turbo lint-style:fix --parallel",
-    "build-assets:dev": "turbo build-assets:dev --parallel",
+    "build-assets:dev": "turbo build-assets:dev",
     "build-assets:dev-watch": "turbo build-assets:dev-watch --parallel",
     "build-assets:dev-measure": "turbo build-assets:dev-measure --parallel",
     "build-assets:dev-gzip": "turbo build-assets:dev-gzip --parallel",
     "build-assets:dev-analyze": "turbo build-assets:dev-analyze --parallel",
-    "build-assets:prod": "turbo build-assets:prod --parallel",
+    "build-assets:prod": "turbo build-assets:prod",
     "build-assets:prod-watch": "turbo build-assets:prod-watch --parallel",
     "build-assets:prod-measure": "turbo build-assets:prod-measure --parallel",
     "build-assets:prod-gzip": "turbo build-assets:prod-gzip --parallel",
     "build-assets:prod-analyze": "turbo build-assets:prod-analyze --parallel",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "changeset": "changeset"
   },
   "dependencies": {
     "@plitzi/plitzi-ui-components": "0.8.8"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.1",
     "@repo/eslint-config": "*",
     "@repo/jest-config": "*",
     "eslint": "^8.56.0",
