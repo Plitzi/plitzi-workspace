@@ -147,6 +147,8 @@ jobs:
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com/plitzi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
       - name: Restore Cache node_modules
         id: cache-packages
@@ -171,10 +173,7 @@ jobs:
         run: exit 1
 
       - name: Yarn Publish
-        run: yarn changeset publish --otp=${{ secrets.NPM_AUTH_TOKEN }}
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+        run: yarn changeset publish
 
       # - name: Publish to NPM
       #   id: changesets
