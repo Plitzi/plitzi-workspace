@@ -6,12 +6,12 @@ import PropTypes from 'prop-types';
 import InteractionsContextProvider from '@repo/interactions-shared/InteractionsContextProvider';
 
 // Alias
-import NavigationContext from '@modules/Navigation/NavigationContext';
+import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
 import PageInteractions from './sources/PageSource/PageInteractions';
 
-const InteractionsSdkContextProvider = props => {
-  const { children, previewMode = false } = props;
+const InteractionsBuilderContextProvider = props => {
+  const { children, previewMode = true } = props;
   const { currentPageId, routeParams, queryParams } = useContext(NavigationContext);
 
   return (
@@ -23,9 +23,9 @@ const InteractionsSdkContextProvider = props => {
   );
 };
 
-InteractionsSdkContextProvider.propTypes = {
+InteractionsBuilderContextProvider.propTypes = {
   children: PropTypes.node,
   previewMode: PropTypes.bool
 };
 
-export default InteractionsSdkContextProvider;
+export default InteractionsBuilderContextProvider;

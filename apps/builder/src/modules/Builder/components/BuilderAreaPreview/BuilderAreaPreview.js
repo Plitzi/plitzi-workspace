@@ -18,7 +18,7 @@ import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
-import InteractionsContextProvider from '@pmodules/Interactions/InteractionsContextProvider';
+import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 import AppContext from '@pmodules/App/AppContext';
 import UserContextProvider from '@pmodules/User/UserContextProvider';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
@@ -96,7 +96,7 @@ const BuilderAreaPreview = props => {
         <style>{css}</style>
         <PlitziServiceProvider value={plitziContextValue}>
           <DataSourceContextProvider>
-            <InteractionsContextProvider>
+            <InteractionsBuilderContextProvider>
               <UserContextProvider>
                 <div
                   className={classNames('builder-iframe', {
@@ -110,7 +110,7 @@ const BuilderAreaPreview = props => {
                   {Plugin && <Plugin internalProps={internalProps} />}
                 </div>
               </UserContextProvider>
-            </InteractionsContextProvider>
+            </InteractionsBuilderContextProvider>
           </DataSourceContextProvider>
         </PlitziServiceProvider>
       </ContainerShadow.Content>

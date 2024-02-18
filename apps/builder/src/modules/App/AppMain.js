@@ -5,7 +5,7 @@ import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Alias
 import DataSourceBuilderContextProvider from '@pmodules/DataSource/DataSourceBuilderContextProvider';
-import InteractionsContextProvider from '@pmodules/Interactions/InteractionsContextProvider';
+import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 import UserContextProvider from '@pmodules/User/UserContextProvider';
 import StateManagerContextProvider from '@pmodules/StateManager/StateManagerContextProvider';
 import { DISPLAY_BORDER_BLACK } from '@pmodules/Builder/BuilderHelper';
@@ -57,13 +57,13 @@ const AppMain = props => {
       >
         <StateManagerContextProvider state={state}>
           <DataSourceBuilderContextProvider>
-            <InteractionsContextProvider previewMode={previewMode}>
+            <InteractionsBuilderContextProvider previewMode={previewMode}>
               <UserContextProvider previewMode={previewMode}>
                 <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
                   <AppContainer externalStyle={externalStyle} />
                 </PopupProvider>
               </UserContextProvider>
-            </InteractionsContextProvider>
+            </InteractionsBuilderContextProvider>
           </DataSourceBuilderContextProvider>
         </StateManagerContextProvider>
       </AppProvider>

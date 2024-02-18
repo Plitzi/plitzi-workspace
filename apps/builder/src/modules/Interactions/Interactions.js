@@ -17,8 +17,8 @@ import { emptyObject } from '../../helpers/utils';
 
 const Interactions = props => {
   const { className = '', id = '', interactions = emptyObject, onChange = noop } = props;
-  const { getSubscriptor, getCallbacksAvailables } = useContext(InteractionsContext);
-  const { triggers } = useMemo(() => getSubscriptor(id) ?? {}, [id]);
+  const { interactionsManager } = useContext(InteractionsContext);
+  const { triggers } = useMemo(() => interactionsManager.getSubscriptor(id) ?? {}, [id, interactionsManager]);
 
   const handleWorkflowChange = useCallback(workflow => onChange(workflow), [onChange]);
 
@@ -33,7 +33,7 @@ const Interactions = props => {
       definitions.push({ action: triggerKey, title, type: 'trigger', params, preview, elementId: id });
     });
 
-    const callbacksAvailables = getCallbacksAvailables();
+    const callbacksAvailables = interactionsManager.getCallbacksAvailables();
     Object.keys(callbacksAvailables).forEach(elementId => {
       const callbacks = get(callbacksAvailables, elementId, {});
       Object.values(callbacks).forEach(callback => {
@@ -50,7 +50,7 @@ const Interactions = props => {
     });
 
     return definitions;
-  }, [id, triggers, getCallbacksAvailables]);
+  }, [id, triggers, interactionsManager]);
 
   return (
     <div className={classNames('flex flex-col grow', className)}>
