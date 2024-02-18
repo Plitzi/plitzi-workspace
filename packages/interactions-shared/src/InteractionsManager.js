@@ -91,15 +91,19 @@ class InteractionsManager {
     }
   }
 
-  getSubscriptor(subscriptorId) {
-    let subscriptor = get(this.subscriptors, subscriptorId);
-    if (!subscriptor && this.parentManager) {
-      subscriptor = this.parentManager.getSubscriptor(subscriptorId);
+  getRootManager() {
+    if (this.parentManager) {
+      return this.parentManager.getRootManager();
     }
 
+    return this;
+  }
+
+  _getSubscriptorInternal(subscriptorId) {
+    let subscriptor = get(this.subscriptors, subscriptorId);
     if (!subscriptor && this.childManagers.length > 0) {
       for (const childManager of this.childManagers) {
-        subscriptor = childManager.getSubscriptor(subscriptorId);
+        subscriptor = childManager._getSubscriptorInternal(subscriptorId);
         if (subscriptor) {
           break;
         }
@@ -109,12 +113,35 @@ class InteractionsManager {
     return subscriptor;
   }
 
-  getCallbacksAvailables() {
-    if (this.parentManager) {
-      return { ...this.parentManager.getCallbacksAvailables(), ...this.callbacksAvailables };
+  getSubscriptor(subscriptorId) {
+    if (!this.parentManager) {
+      return this._getSubscriptorInternal(subscriptorId);
     }
 
-    return this.callbacksAvailables;
+    const rootManager = this.getRootManager();
+
+    return rootManager?._getSubscriptorInternal(subscriptorId);
+  }
+
+  _getCallbacksAvailablesInternal() {
+    let callbacks = {};
+    if (this.childManagers.length > 0) {
+      for (const childManager of this.childManagers) {
+        callbacks = { ...callbacks, ...childManager._getCallbacksAvailablesInternal() };
+      }
+    }
+
+    return { ...callbacks, ...this.callbacksAvailables };
+  }
+
+  getCallbacksAvailables() {
+    if (!this.parentManager) {
+      return this._getCallbacksAvailablesInternal();
+    }
+
+    const rootManager = this.getRootManager();
+
+    return rootManager?._getCallbacksAvailablesInternal();
   }
 
   interactionTrigger(subscriptorId, eventName, params = {}) {

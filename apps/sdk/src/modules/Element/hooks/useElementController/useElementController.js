@@ -1,5 +1,5 @@
 // Packages
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -51,6 +51,18 @@ const useElementController = (internalProps, { plitziCustomComponent, children, 
     () => instance.parseItems(schema, children, SchemaContext, prevSchema, newSchema),
     [children, prevSchema, newSchema, items, previewMode, plitziElementLayout]
   );
+
+  // Others
+
+  const initRef = useRef(false);
+  useEffect(() => {
+    if (initRef.current) {
+      instance.initInteractions();
+      setReRender(Date.now());
+    } else {
+      initRef.current = true;
+    }
+  }, [get(element, 'definition.label', id)]);
 
   return {
     internalProps: instance.internalProps,

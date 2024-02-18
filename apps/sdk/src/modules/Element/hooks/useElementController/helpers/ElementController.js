@@ -13,9 +13,6 @@ import { classStringFilter, StyleSelectors } from '@modules/Style/StyleHelper';
 import PluginManager from '@modules/Element/PluginManager';
 import { PARTIAL_SCHEMA_TYPE_SEGMENT } from '@modules/Element/ElementConstants';
 
-// Relatives
-import { getRandomInteger } from '../../../../../helpers/utils';
-
 class ElementController {
   setReRender = noop;
 
@@ -51,15 +48,15 @@ class ElementController {
     this.params = { isCustomComponent, previewMode, baseElementId };
 
     this.baseInternalProps = this.parseBase(internalProps, schema);
-    this.initInteractions(this.baseInternalProps);
+    this.initInteractions();
     this.initState(this.baseInternalProps);
     this.refreshLayoutKeyIdentifier();
   }
 
   // Init
 
-  initInteractions = internalProps => {
-    const { attributes, definition } = internalProps;
+  initInteractions = () => {
+    const { attributes, definition } = this.baseInternalProps;
     const label = get(definition, 'label', this.id);
 
     this.interactionsBasicCallbacks = {
@@ -228,7 +225,7 @@ class ElementController {
       const { attributesBinded } = this.cache;
       nextState = omit(nextState, attributesBinded);
       this.state = nextState;
-      this.setReRender(getRandomInteger(1, 999));
+      this.setReRender(Date.now());
 
       return nextState;
     }
@@ -287,7 +284,7 @@ class ElementController {
     }
 
     this.state = prevState;
-    this.setReRender(getRandomInteger(1, 999));
+    this.setReRender(Date.now());
   };
 
   // Items

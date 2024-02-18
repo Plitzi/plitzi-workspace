@@ -96,7 +96,7 @@ const RootElement = forwardRef((props, ref) => {
 
   const interactionCallbacksMemo = useMemo(
     () => ({ ...interactionCallbacks, ...interactionsBasicCallbacks }),
-    [interactionCallbacks]
+    [interactionCallbacks, interactionsBasicCallbacks]
   );
 
   useInteractions({
