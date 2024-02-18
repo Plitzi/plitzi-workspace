@@ -48,7 +48,7 @@ class InteractionsManager {
         flowTrigger(
           trigger,
           interactions,
-          this.callbacksAvailables,
+          this.getCallbacksAvailables(),
           { [trigger.id]: params },
           { ...this.interactionsData, ...dataSource, eventBridge: this.eventBridge }
         )
@@ -96,12 +96,30 @@ class InteractionsManager {
   }
 
   getCallbacksAvailables() {
+    if (this.parentManager) {
+      return { ...this.parentManager.getCallbacksAvailables(), ...this.callbacksAvailables };
+    }
+
     return this.callbacksAvailables;
   }
 
   interactionTrigger(subscriptorId, eventName, params = {}) {
     return this.eventBridge.emit(EventBridgeModuleTypes.INTERACTION, subscriptorId, subscriptorId, eventName, params);
   }
+
+  // child managers
+
+  createChildManager = () => {
+    const childManager = new InteractionsManager(this.currentPageId, this.routeParams, this.queryParams);
+    childManager.parentManager = this;
+    this.childManagers.push(childManager);
+
+    return childManager;
+  };
+
+  removeChildManager = childManager => {
+    this.childManagers = this.childManagers.filter(manager => manager !== childManager);
+  };
 }
 
 export default InteractionsManager;

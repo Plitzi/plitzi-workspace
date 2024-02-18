@@ -12,8 +12,10 @@ import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContex
 const ReplicaProvider = props => {
   const { children, id = '', dataSourceValue = emptyObject } = props;
   const {
-    contexts: { DataSourceContext }
+    contexts: { DataSourceContext, InteractionsContext }
   } = usePlitziServiceContext();
+
+  // Data Source
 
   const dataSourceContext = useContext(DataSourceContext);
   const dsManager = get(dataSourceContext, 'dataSourceManager');
@@ -39,7 +41,28 @@ const ReplicaProvider = props => {
     };
   }, [dsManagerChild]);
 
-  return <DataSourceContext.Provider value={referenceContextSource}>{children}</DataSourceContext.Provider>;
+  // Interactions
+
+  const interactionsContext = useContext(InteractionsContext);
+  const interactionsManager = get(interactionsContext, 'interactionsManager');
+  const interactionsManagerChild = useMemo(() => interactionsContext.interactionsManager.createChildManager(), [id]);
+
+  const interactionsContextSource = useMemo(
+    () => ({ ...interactionsContext, interactionsManager: interactionsManagerChild }),
+    [interactionsContext, interactionsManagerChild]
+  );
+
+  useEffect(() => {
+    return () => {
+      interactionsManager.removeChildManager(interactionsManagerChild);
+    };
+  }, [interactionsManagerChild]);
+
+  return (
+    <DataSourceContext.Provider value={referenceContextSource}>
+      <InteractionsContext.Provider value={interactionsContextSource}>{children}</InteractionsContext.Provider>
+    </DataSourceContext.Provider>
+  );
 };
 
 ReplicaProvider.propTypes = {
