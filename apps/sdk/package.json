@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.18.5",
+  "version": "0.19.0",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -35,7 +35,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^2.0.4",
-    "react-router-dom": "^6.22.0",
+    "react-router-dom": "^6.22.1",
     "twig": "^1.17.1"
   },
   "devDependencies": {
@@ -52,8 +52,8 @@
     "@plitzi/plitzi-webpack": "^0.2.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@repo/eslint-config": "*",
-    "@repo/jest-config": "*",
     "@repo/interactions-shared": "*",
+    "@repo/jest-config": "*",
     "@repo/tailwind-config": "*",
     "@storybook/addon-essentials": "^7.6.16",
     "@storybook/addon-interactions": "^7.6.16",
@@ -91,7 +91,7 @@
     "webpack-assets-manifest": "^5.1.0",
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.1",
+    "webpack-dev-server": "^5.0.2",
     "webpack-subresource-integrity": "^5.2.0-rc.1"
   },
   "scripts": {

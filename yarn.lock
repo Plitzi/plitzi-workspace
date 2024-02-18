@@ -3111,6 +3111,7 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
     "@repo/event-bridge-shared": "*"
+    "@repo/interactions-shared": "*"
     "@repo/jest-config": "*"
     "@repo/tailwind-config": "*"
     "@welldone-software/why-did-you-render": ^8.0.1
@@ -3141,7 +3142,7 @@ __metadata:
     react-hook-form: ^7.50.1
     react-moment: ^1.1.3
     react-refresh: ^0.14.0
-    react-router-dom: ^6.22.0
+    react-router-dom: ^6.22.1
     react-test-renderer: ^18.2.0
     sass-loader: ^14.1.0
     speed-measure-webpack-plugin: ^1.5.0
@@ -3159,7 +3160,7 @@ __metadata:
     webpack-assets-manifest: ^5.1.0
     webpack-bundle-analyzer: ^4.10.1
     webpack-cli: ^5.1.4
-    webpack-dev-server: ^5.0.1
+    webpack-dev-server: ^5.0.2
     webpack-subresource-integrity: ^5.2.0-rc.1
   languageName: unknown
   linkType: soft
@@ -3184,6 +3185,7 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/eslint-config": "*"
     "@repo/event-bridge-shared": "*"
+    "@repo/interactions-shared": "*"
     "@repo/jest-config": "*"
     "@repo/tailwind-config": "*"
     "@storybook/addon-essentials": ^7.6.16
@@ -3219,7 +3221,7 @@ __metadata:
     react-dom: ^18.2.0
     react-helmet-async: ^2.0.4
     react-refresh: ^0.14.0
-    react-router-dom: ^6.22.0
+    react-router-dom: ^6.22.1
     react-test-renderer: ^18.2.0
     sass-loader: ^14.1.0
     speed-measure-webpack-plugin: ^1.5.0
@@ -3235,7 +3237,7 @@ __metadata:
     webpack-assets-manifest: ^5.1.0
     webpack-bundle-analyzer: ^4.10.1
     webpack-cli: ^5.1.4
-    webpack-dev-server: ^5.0.1
+    webpack-dev-server: ^5.0.2
     webpack-subresource-integrity: ^5.2.0-rc.1
   languageName: unknown
   linkType: soft
@@ -3912,6 +3914,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@remix-run/router@npm:1.15.1":
+  version: 1.15.1
+  resolution: "@remix-run/router@npm:1.15.1"
+  checksum: 5c404e64a95da7d2a06811c15e8b213cd1079bca546d8a78a1626264ac0b71361b9ce93269bda7209a938e5a22c25993902841f81240c58eb7ed0934e1781197
+  languageName: node
+  linkType: hard
+
 "@repo/data-source-shared@workspace:packages/data-source-shared":
   version: 0.0.0-use.local
   resolution: "@repo/data-source-shared@workspace:packages/data-source-shared"
@@ -3942,7 +3951,7 @@ __metadata:
     eslint-plugin-prettier: ^5.1.3
     eslint-plugin-react: ^7.33.2
     eslint-plugin-react-hooks: ^4.6.0
-    eslint-plugin-storybook: ^0.6.15
+    eslint-plugin-storybook: ^0.8.0
   languageName: unknown
   linkType: soft
 
@@ -3957,10 +3966,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/interactions-shared@workspace:packages/interactions-shared":
+"@repo/interactions-shared@*, @repo/interactions-shared@workspace:packages/interactions-shared":
   version: 0.0.0-use.local
   resolution: "@repo/interactions-shared@workspace:packages/interactions-shared"
   dependencies:
+    "@repo/shared": "*"
     axios: ^1.6.7
     eslint: ^8.56.0
     lodash: ^4.17.21
@@ -3990,7 +4000,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/shared@workspace:packages/shared":
+"@repo/shared@*, @repo/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@repo/shared@workspace:packages/shared"
   dependencies:
@@ -5846,7 +5856,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/utils@npm:5.62.0, @typescript-eslint/utils@npm:^5.45.0, @typescript-eslint/utils@npm:^5.58.0":
+"@typescript-eslint/utils@npm:5.62.0, @typescript-eslint/utils@npm:^5.58.0, @typescript-eslint/utils@npm:^5.62.0":
   version: 5.62.0
   resolution: "@typescript-eslint/utils@npm:5.62.0"
   dependencies:
@@ -9600,17 +9610,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-storybook@npm:^0.6.15":
-  version: 0.6.15
-  resolution: "eslint-plugin-storybook@npm:0.6.15"
+"eslint-plugin-storybook@npm:^0.8.0":
+  version: 0.8.0
+  resolution: "eslint-plugin-storybook@npm:0.8.0"
   dependencies:
     "@storybook/csf": ^0.0.1
-    "@typescript-eslint/utils": ^5.45.0
-    requireindex: ^1.1.0
+    "@typescript-eslint/utils": ^5.62.0
+    requireindex: ^1.2.0
     ts-dedent: ^2.2.0
   peerDependencies:
     eslint: ">=6"
-  checksum: e2c4d7be3e695c88d7194c363fba8ac644b36583bf9d608aa59dcd53cc5e422f7828611ee49c7934639ce827c0206d33fa94b3ea452ffbd2c8e7254ed90bc412
+  checksum: 71e4b064259e09a6353360ca4a3ec929df0ea3aabe1dc83a40b9264fe5c16bcecb94d097e7403f6916622b8fdb739e91f1268bbad220d838fcbc2b9a901345ec
   languageName: node
   linkType: hard
 
@@ -15843,6 +15853,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-router-dom@npm:^6.22.1":
+  version: 6.22.1
+  resolution: "react-router-dom@npm:6.22.1"
+  dependencies:
+    "@remix-run/router": 1.15.1
+    react-router: 6.22.1
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 01a074518663db1b64d9ee7fa22eb628544b74316057aab0c39ef58ad665f012df081e8523eb62c4e060272a67c8d90cccedb6a6dac4e8f71290f9be8aaab1f6
+  languageName: node
+  linkType: hard
+
 "react-router@npm:6.22.0":
   version: 6.22.0
   resolution: "react-router@npm:6.22.0"
@@ -15851,6 +15874,17 @@ __metadata:
   peerDependencies:
     react: ">=16.8"
   checksum: 94f382f3fa6fcb8525c143d83d4c3a3b010979f417cac0bbe7a63f906b3809e2bb56e8c329b9b3fd3212a498670ab278aea72893e921b827dcf00024c3d115dd
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.22.1":
+  version: 6.22.1
+  resolution: "react-router@npm:6.22.1"
+  dependencies:
+    "@remix-run/router": 1.15.1
+  peerDependencies:
+    react: ">=16.8"
+  checksum: b53fab4c507eca8af03581387e37d9a1616f5cda0639abd84ba223c502528324171c4fee0ad8b86a92ba00eb3de4bd77c25c107e1754eb62988c874a059f3060
   languageName: node
   linkType: hard
 
@@ -16217,7 +16251,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"requireindex@npm:^1.1.0":
+"requireindex@npm:^1.2.0":
   version: 1.2.0
   resolution: "requireindex@npm:1.2.0"
   checksum: 50d8b10a1ff1fdf6aea7a1870bc7bd238b0fb1917d8d7ca17fd03afc38a65dcd7a8a4eddd031f89128b5f0065833d5c92c4fef67f2c04e8624057fe626c9cf94
@@ -18914,9 +18948,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-dev-server@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "webpack-dev-server@npm:5.0.1"
+"webpack-dev-server@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "webpack-dev-server@npm:5.0.2"
   dependencies:
     "@types/bonjour": ^3.5.13
     "@types/connect-history-api-fallback": ^1.5.4
@@ -18957,7 +18991,7 @@ __metadata:
       optional: true
   bin:
     webpack-dev-server: bin/webpack-dev-server.js
-  checksum: 142c0a9a999ccffe0efbe89f381da9081fe82e908aaca06261f9e8dc3879d4d6842634015e51079f86d5a0b52adc50066c3d1bc952f3dc7751d88275d86b87b0
+  checksum: d10624915ed25772317a3bd5d487c5fa17c74c2dc30d3abf5514c531a561aa0eaf5bb5b6a12416ee7005e2eea3679dc1616daf2eac69442dd3c579ce9150378b
   languageName: node
   linkType: hard
 
