@@ -3919,34 +3919,34 @@ __metadata:
 
 "@repo/event-bridge-shared@file:../../packages/event-bridge-shared::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
   version: 0.0.0
-  resolution: "@repo/event-bridge-shared@file:../../packages/event-bridge-shared#../../packages/event-bridge-shared::hash=daf43d&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
+  resolution: "@repo/event-bridge-shared@file:../../packages/event-bridge-shared#../../packages/event-bridge-shared::hash=54fe29&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
   dependencies:
     lodash: ^4.17.21
     prop-types: ^15.8.1
     react: ^18.2.0
-  checksum: e9ad3131e96cda95f63093efad2be914c9a6963201d6c42e02deba1eb1c610ef911fadab49b445e690411975ad23e262773e9b4f5660088a44e12f0b98850323
+  checksum: acf3e2c327dfed6a2f71d5bbb40cef686fe7d6c83b705a8677f6e72e5d6eca5c8398c9efeea30a3a70c5d29de6e2fcde8cc84adfa32eb536bd877b002b9608a6
   languageName: node
   linkType: hard
 
 "@repo/event-bridge-shared@file:../../packages/event-bridge-shared::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
   version: 0.0.0
-  resolution: "@repo/event-bridge-shared@file:../../packages/event-bridge-shared#../../packages/event-bridge-shared::hash=daf43d&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
+  resolution: "@repo/event-bridge-shared@file:../../packages/event-bridge-shared#../../packages/event-bridge-shared::hash=54fe29&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
   dependencies:
     lodash: ^4.17.21
     prop-types: ^15.8.1
     react: ^18.2.0
-  checksum: e9ad3131e96cda95f63093efad2be914c9a6963201d6c42e02deba1eb1c610ef911fadab49b445e690411975ad23e262773e9b4f5660088a44e12f0b98850323
+  checksum: acf3e2c327dfed6a2f71d5bbb40cef686fe7d6c83b705a8677f6e72e5d6eca5c8398c9efeea30a3a70c5d29de6e2fcde8cc84adfa32eb536bd877b002b9608a6
   languageName: node
   linkType: hard
 
 "@repo/event-bridge-shared@file:../event-bridge-shared::locator=%40repo%2Fdata-source-shared%40workspace%3Apackages%2Fdata-source-shared":
   version: 0.0.0
-  resolution: "@repo/event-bridge-shared@file:../event-bridge-shared#../event-bridge-shared::hash=daf43d&locator=%40repo%2Fdata-source-shared%40workspace%3Apackages%2Fdata-source-shared"
+  resolution: "@repo/event-bridge-shared@file:../event-bridge-shared#../event-bridge-shared::hash=54fe29&locator=%40repo%2Fdata-source-shared%40workspace%3Apackages%2Fdata-source-shared"
   dependencies:
     lodash: ^4.17.21
     prop-types: ^15.8.1
     react: ^18.2.0
-  checksum: e9ad3131e96cda95f63093efad2be914c9a6963201d6c42e02deba1eb1c610ef911fadab49b445e690411975ad23e262773e9b4f5660088a44e12f0b98850323
+  checksum: acf3e2c327dfed6a2f71d5bbb40cef686fe7d6c83b705a8677f6e72e5d6eca5c8398c9efeea30a3a70c5d29de6e2fcde8cc84adfa32eb536bd877b002b9608a6
   languageName: node
   linkType: hard
 
@@ -3964,23 +3964,23 @@ __metadata:
 
 "@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
   version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=26585b&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
+  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=abf2c8&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
   dependencies:
     "@repo/shared": "file:../shared"
     axios: ^1.6.7
     lodash: ^4.17.21
-  checksum: 2204e484865a21c987d5ee5f6703b7cf7c6471df9593c73141434bdfc6086fbc9f91df97d5aabae1cb8ca068ac380ba6775937f64f3271cc4a34729cd4e6417d
+  checksum: c61d25ab14ec73b5e3f981843cdc96482a55cf4366e1d1da813685c4fe2d69f0af990d688db5871faa12cb654a098f776a6bed46a353c30661ddb5e275744ae2
   languageName: node
   linkType: hard
 
 "@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
   version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=26585b&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
+  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=abf2c8&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
   dependencies:
     "@repo/shared": "file:../shared"
     axios: ^1.6.7
     lodash: ^4.17.21
-  checksum: 2204e484865a21c987d5ee5f6703b7cf7c6471df9593c73141434bdfc6086fbc9f91df97d5aabae1cb8ca068ac380ba6775937f64f3271cc4a34729cd4e6417d
+  checksum: c61d25ab14ec73b5e3f981843cdc96482a55cf4366e1d1da813685c4fe2d69f0af990d688db5871faa12cb654a098f776a6bed46a353c30661ddb5e275744ae2
   languageName: node
   linkType: hard
 
@@ -4044,30 +4044,30 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3D26585b%26locator%3D%2540plitzi%252Fplitzi-builder%2540workspace%253Aapps%252Fbuilder":
+"@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dabf2c8%26locator%3D%2540plitzi%252Fplitzi-builder%2540workspace%253Aapps%252Fbuilder":
   version: 0.0.0
-  resolution: "@repo/shared@file:../shared#../shared::hash=a59dd2&locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3D26585b%26locator%3D%2540plitzi%252Fplitzi-builder%2540workspace%253Aapps%252Fbuilder"
+  resolution: "@repo/shared@file:../shared#../shared::hash=430c6d&locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dabf2c8%26locator%3D%2540plitzi%252Fplitzi-builder%2540workspace%253Aapps%252Fbuilder"
   dependencies:
     twig: ^1.17.1
-  checksum: 0cc9545fd4a3414f9973cc311bd614cdb0db095b71835d45f449a929873e45bb47b859cc332c357d04e410b829338a1f4ea76bb9a5e28583bccf3f0ebf31e34c
+  checksum: e0bf52e24b6f9ca38429a3fcf6de8fb56a6c4592f62170a7f3bf41d3eecd08dc5b19abdda2e8e3c43f665ddad91cbf5e5efcc1f73cac002ad6cb720bfadb76be
   languageName: node
   linkType: hard
 
-"@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3D26585b%26locator%3D%2540plitzi%252Fplitzi-sdk%2540workspace%253Aapps%252Fsdk":
+"@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dabf2c8%26locator%3D%2540plitzi%252Fplitzi-sdk%2540workspace%253Aapps%252Fsdk":
   version: 0.0.0
-  resolution: "@repo/shared@file:../shared#../shared::hash=a59dd2&locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3D26585b%26locator%3D%2540plitzi%252Fplitzi-sdk%2540workspace%253Aapps%252Fsdk"
+  resolution: "@repo/shared@file:../shared#../shared::hash=430c6d&locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dabf2c8%26locator%3D%2540plitzi%252Fplitzi-sdk%2540workspace%253Aapps%252Fsdk"
   dependencies:
     twig: ^1.17.1
-  checksum: 0cc9545fd4a3414f9973cc311bd614cdb0db095b71835d45f449a929873e45bb47b859cc332c357d04e410b829338a1f4ea76bb9a5e28583bccf3f0ebf31e34c
+  checksum: e0bf52e24b6f9ca38429a3fcf6de8fb56a6c4592f62170a7f3bf41d3eecd08dc5b19abdda2e8e3c43f665ddad91cbf5e5efcc1f73cac002ad6cb720bfadb76be
   languageName: node
   linkType: hard
 
 "@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40workspace%3Apackages%2Finteractions-shared":
   version: 0.0.0
-  resolution: "@repo/shared@file:../shared#../shared::hash=a59dd2&locator=%40repo%2Finteractions-shared%40workspace%3Apackages%2Finteractions-shared"
+  resolution: "@repo/shared@file:../shared#../shared::hash=430c6d&locator=%40repo%2Finteractions-shared%40workspace%3Apackages%2Finteractions-shared"
   dependencies:
     twig: ^1.17.1
-  checksum: 0cc9545fd4a3414f9973cc311bd614cdb0db095b71835d45f449a929873e45bb47b859cc332c357d04e410b829338a1f4ea76bb9a5e28583bccf3f0ebf31e34c
+  checksum: e0bf52e24b6f9ca38429a3fcf6de8fb56a6c4592f62170a7f3bf41d3eecd08dc5b19abdda2e8e3c43f665ddad91cbf5e5efcc1f73cac002ad6cb720bfadb76be
   languageName: node
   linkType: hard
 
@@ -4094,15 +4094,15 @@ __metadata:
 
 "@repo/tailwind-config@file:../../packages/tailwind-config::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
   version: 0.0.0
-  resolution: "@repo/tailwind-config@file:../../packages/tailwind-config#../../packages/tailwind-config::hash=8fe5d0&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
-  checksum: c08db9d0c09f20968117c4a3138d42c0dbe41673167304e81202a91200468dfb8155e9872454221ee3545a280854e403b4fdeba8ee370a83dad512aa18de4f24
+  resolution: "@repo/tailwind-config@file:../../packages/tailwind-config#../../packages/tailwind-config::hash=1c2238&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
+  checksum: 85a193f75541835d5d7a83ee71b52f0f24ad24d9f8bbb05ba6c40458db647ef3548c7eb91a597166370987ff17fc65f4771ecdc6f230739de450dc011df86d57
   languageName: node
   linkType: hard
 
 "@repo/tailwind-config@file:../../packages/tailwind-config::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
   version: 0.0.0
-  resolution: "@repo/tailwind-config@file:../../packages/tailwind-config#../../packages/tailwind-config::hash=8fe5d0&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
-  checksum: c08db9d0c09f20968117c4a3138d42c0dbe41673167304e81202a91200468dfb8155e9872454221ee3545a280854e403b4fdeba8ee370a83dad512aa18de4f24
+  resolution: "@repo/tailwind-config@file:../../packages/tailwind-config#../../packages/tailwind-config::hash=1c2238&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
+  checksum: 85a193f75541835d5d7a83ee71b52f0f24ad24d9f8bbb05ba6c40458db647ef3548c7eb91a597166370987ff17fc65f4771ecdc6f230739de450dc011df86d57
   languageName: node
   linkType: hard
 
@@ -13573,11 +13573,11 @@ __metadata:
   linkType: hard
 
 "memfs@npm:^3.4.1, memfs@npm:^3.4.12":
-  version: 3.5.3
-  resolution: "memfs@npm:3.5.3"
+  version: 3.6.0
+  resolution: "memfs@npm:3.6.0"
   dependencies:
     fs-monkey: ^1.0.4
-  checksum: 18dfdeacad7c8047b976a6ccd58bc98ba76e122ad3ca0e50a21837fe2075fc0d9aafc58ab9cf2576c2b6889da1dd2503083f2364191b695273f40969db2ecc44
+  checksum: 934e79f32aabb10869056815bf369ed63aacb61d13183a3a3826847bbb359d7023fd5b365984ddd73faed463bbb5370ed5cd1e87ecf50ac010c5cac81929ed78
   languageName: node
   linkType: hard
 
@@ -16797,7 +16797,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"socks@npm:^2.6.2, socks@npm:^2.7.1":
+"socks@npm:^2.6.2":
+  version: 2.7.3
+  resolution: "socks@npm:2.7.3"
+  dependencies:
+    ip-address: ^9.0.5
+    smart-buffer: ^4.2.0
+  checksum: a3eedee3054d55edb1395db1fb4689259b76af062aadd4c3e757961c7122f27baedd9a0947d70cfc902cf8d8c378f5874293ea96c6fb805033d7a08da32f012e
+  languageName: node
+  linkType: hard
+
+"socks@npm:^2.7.1":
   version: 2.8.0
   resolution: "socks@npm:2.8.0"
   dependencies:

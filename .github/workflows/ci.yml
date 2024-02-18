@@ -16,13 +16,17 @@ jobs:
   packages:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v1
+      - name: Enable Corepack
+        run: yarn corepack enable
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com
           scope: '@plitzi'
+          cache: 'yarn'
 
       - name: Cache node_modules
         id: cache-packages
@@ -43,9 +47,9 @@ jobs:
     needs: packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com
@@ -75,9 +79,9 @@ jobs:
     needs: build-packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com
@@ -115,9 +119,9 @@ jobs:
   #   needs: lint
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v2
+  #     - uses: actions/checkout@v4
 
-  #     - uses: actions/setup-node@v1
+  #     - uses: actions/setup-node@v4
   #       with:
   #         node-version: 20
   #         registry-url: https://npm.pkg.github.com/plitzi
@@ -138,9 +142,9 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com
@@ -189,9 +193,9 @@ jobs:
       matrix:
         package: [sdk, builder]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com
@@ -242,7 +246,7 @@ jobs:
       matrix:
         package: [sdk, builder]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Read package.json
         uses: tyankatsu0105/read-package-version-actions@v1
