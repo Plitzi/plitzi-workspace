@@ -97,6 +97,15 @@ class InteractionsManager {
       subscriptor = this.parentManager.getSubscriptor(subscriptorId);
     }
 
+    if (!subscriptor && this.childManagers.length > 0) {
+      for (const childManager of this.childManagers) {
+        subscriptor = childManager.getSubscriptor(subscriptorId);
+        if (subscriptor) {
+          break;
+        }
+      }
+    }
+
     return subscriptor;
   }
 

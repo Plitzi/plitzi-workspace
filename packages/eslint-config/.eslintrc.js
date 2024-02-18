@@ -54,6 +54,7 @@ module.exports = {
     }
   },
   rules: {
+    'no-restricted-syntax': 0,
     'no-await-in-loop': 0,
     'turbo/no-undeclared-env-vars': 0,
     'react/require-default-props': 0,
