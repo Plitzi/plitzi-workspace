@@ -64,14 +64,14 @@ class InteractionsManager {
     const callbackKeys = Object.keys(callbacks);
     if (callbackKeys.length > 0) {
       this.callbacksAvailables[id] = callbackKeys.reduce((acum, callbackKey) => {
-        const { title, callback, postCallback, params, preview } = callbacks[callbackKey];
+        const { title, callback, postCallback, params, preview, type } = callbacks[callbackKey];
         if (!callback || typeof callback !== 'function') {
           return acum;
         }
 
         return {
           ...acum,
-          [callbackKey]: { title, callback, postCallback, action: callbackKey, elementId: id, params, preview }
+          [callbackKey]: { title, callback, postCallback, action: callbackKey, elementId: id, params, preview, type }
         };
       }, {});
     }
@@ -92,7 +92,7 @@ class InteractionsManager {
   }
 
   getSubscriptor(subscriptorId) {
-    get(this.subscriptors, subscriptorId);
+    return get(this.subscriptors, subscriptorId);
   }
 
   getCallbacksAvailables() {
