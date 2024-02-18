@@ -22,7 +22,7 @@ import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
 import StyleContextProvider from '@modules/Style/StyleContextProvider';
 import StateManagerContextProvider from '@modules/StateManager/StateManagerContextProvider';
-import InteractionsContextProvider from '@modules/Interactions/InteractionsContextProvider';
+import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
 import UserContextProvider from '@modules/User/UserContextProvider';
 import UserBaseContextProvider from '@modules/User/UserBaseContextProvider';
 import DataSourceSdkContextProvider from '@modules/DataSource/DataSourceSdkContextProvider';
@@ -74,7 +74,7 @@ const AppMain = props => {
                       >
                         <StateManagerContextProvider state={state} onInit={onInitStateManager}>
                           <DataSourceSdkContextProvider>
-                            <InteractionsContextProvider previewMode={previewMode}>
+                            <InteractionsSdkContextProvider previewMode={previewMode}>
                               <UserContextProvider previewMode={previewMode}>
                                 <Sdk
                                   renderMode={renderMode}
@@ -83,7 +83,7 @@ const AppMain = props => {
                                   {...sdkProps}
                                 />
                               </UserContextProvider>
-                            </InteractionsContextProvider>
+                            </InteractionsSdkContextProvider>
                           </DataSourceSdkContextProvider>
                         </StateManagerContextProvider>
                       </NavigationContextProvider>

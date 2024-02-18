@@ -53,7 +53,7 @@ const RootElement = forwardRef((props, ref) => {
     );
   }
 
-  const { interactionTrigger, useInteractions } = useContext(InteractionsContext);
+  const { interactionsManager, useInteractions } = useContext(InteractionsContext);
   const processEvent = useCallback(
     (e, id, actionName, originalCallback) => {
       e.stopPropagation();
@@ -64,9 +64,9 @@ const RootElement = forwardRef((props, ref) => {
 
       // Interactions Code here
       e.preventDefault();
-      interactionTrigger(id, actionName, { event: e });
+      interactionsManager.interactionTrigger(id, actionName, { event: e });
     },
-    [interactionTrigger]
+    [interactionsManager]
   );
 
   const eventsAttached = useMemo(() => {

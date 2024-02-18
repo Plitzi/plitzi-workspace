@@ -24,7 +24,7 @@ const ModalContainer = forwardRef((props, ref) => {
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
-  const { interactionTrigger } = useContext(InteractionsContext);
+  const { interactionsManager } = useContext(InteractionsContext);
   const { useDataSource } = useContext(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState({});
 
@@ -51,20 +51,20 @@ const ModalContainer = forwardRef((props, ref) => {
   );
 
   const handleClickClose = useCallback(() => {
-    interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
+    interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState({ key: 'visibility', value: false });
-  }, [interactionTrigger, setElementState, setInternalMetadata, internalMetadata, id]);
+  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const handleClickBackground = useCallback(() => {
     if (!autoHideAfterClick) {
       return;
     }
 
-    interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
+    interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState({ key: 'visibility', value: false });
-  }, [interactionTrigger, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
+  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const interactionTriggers = useMemo(
     () => ({
@@ -90,7 +90,7 @@ const ModalContainer = forwardRef((props, ref) => {
 
   useEffect(() => {
     if (internalProps?.elementState?.visibility !== false) {
-      interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
+      interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
     }
   }, [internalProps?.elementState?.visibility]);
 

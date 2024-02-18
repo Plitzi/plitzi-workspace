@@ -8,15 +8,15 @@ import InteractionsContext from '../InteractionsContext';
 
 const useInteractions = props => {
   const { id, interactions = {}, triggers = {}, callbacks = {}, getAdditionalParams = noop } = props;
-  const { subscribe, unsubscribe } = useContext(InteractionsContext);
+  const { interactionsManager } = useContext(InteractionsContext);
   if (typeof window !== 'undefined') {
     useLayoutEffect(() => {
-      subscribe(id, interactions, triggers, callbacks, getAdditionalParams);
+      interactionsManager.subscribe(id, interactions, triggers, callbacks, getAdditionalParams);
 
       return () => {
-        unsubscribe(id);
+        interactionsManager.unsubscribe(id);
       };
-    }, [id, interactions, triggers, callbacks, getAdditionalParams]);
+    }, [id, interactions, triggers, callbacks, getAdditionalParams, interactionsManager]);
   }
 };
 

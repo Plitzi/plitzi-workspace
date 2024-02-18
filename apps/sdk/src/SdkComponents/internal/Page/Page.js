@@ -29,7 +29,7 @@ const Page = forwardRef((props, ref) => {
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionTrigger } = useContext(InteractionsContext);
+  const { interactionsManager } = useContext(InteractionsContext);
   const { Helmet, routeParams, queryParams } = useContext(NavigationContext);
   const { components } = useContext(ComponentContext);
   const LayoutContainerPlugin = components.layoutContainer;
@@ -65,7 +65,7 @@ const Page = forwardRef((props, ref) => {
   );
 
   useEffect(() => {
-    interactionTrigger(id, 'onPageLoad', { pageId: id, routeParams, queryParams });
+    interactionsManager.interactionTrigger(id, 'onPageLoad', { pageId: id, routeParams, queryParams });
   }, []);
 
   return (

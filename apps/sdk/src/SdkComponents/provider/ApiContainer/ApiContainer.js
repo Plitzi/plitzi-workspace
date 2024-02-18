@@ -31,7 +31,7 @@ const ApiContainer = forwardRef((props, ref) => {
     settings: { previewMode },
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionTrigger } = useContext(InteractionsContext);
+  const { interactionsManager } = useContext(InteractionsContext);
   const [loading, setLoading] = useState(previewMode);
   const [error, setError] = useState(undefined);
   const { useDataSource } = useContext(DataSourceContext);
@@ -114,13 +114,13 @@ const ApiContainer = forwardRef((props, ref) => {
       setLoading(false);
       if (statusCode > 0 && statusCode <= 399) {
         setError(undefined);
-        interactionTrigger(id, 'onApiSuccess', { url, method, data: result, status: statusCode });
+        interactionsManager.interactionTrigger(id, 'onApiSuccess', { url, method, data: result, status: statusCode });
       } else {
         setError(result);
-        interactionTrigger(id, 'onApiError', { url, method, data: result, status: statusCode });
+        interactionsManager.interactionTrigger(id, 'onApiError', { url, method, data: result, status: statusCode });
       }
     },
-    [fetch, id, interactionTrigger, previewMode, mockData]
+    [fetch, id, interactionsManager, previewMode, mockData]
   );
 
   const sourceFields = useCallback(

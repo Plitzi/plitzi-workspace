@@ -33,7 +33,7 @@ const Form = forwardRef((props, ref) => {
     contexts: { DataSourceContext, InteractionsContext }
   } = usePlitziServiceContext();
   const { useDataSource } = useContext(DataSourceContext);
-  const { interactionTrigger } = useContext(InteractionsContext);
+  const { interactionsManager } = useContext(InteractionsContext);
 
   const registerField = useCallback(field => setFields(state => ({ ...state, [field.name]: field })), [setFields]);
 
@@ -168,9 +168,9 @@ const Form = forwardRef((props, ref) => {
       }
 
       const valuesParsed = Object.values(fields).reduce((acum, { name }) => ({ ...acum, [name]: values[name] }), {});
-      interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl });
+      interactionsManager.interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl });
     },
-    [fields, values, managedByInteractions, actionUrl, setElementState, previewMode, interactionTrigger]
+    [fields, values, managedByInteractions, actionUrl, setElementState, previewMode, interactionsManager]
   );
 
   const handleReset = useCallback(
