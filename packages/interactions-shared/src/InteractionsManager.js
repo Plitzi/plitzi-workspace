@@ -92,7 +92,12 @@ class InteractionsManager {
   }
 
   getSubscriptor(subscriptorId) {
-    return get(this.subscriptors, subscriptorId);
+    let subscriptor = get(this.subscriptors, subscriptorId);
+    if (!subscriptor && this.parentManager) {
+      subscriptor = this.parentManager.getSubscriptor(subscriptorId);
+    }
+
+    return subscriptor;
   }
 
   getCallbacksAvailables() {
