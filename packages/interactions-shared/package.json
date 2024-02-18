@@ -15,10 +15,11 @@
     "lint": "eslint ./src"
   },
   "devDependencies": {
+    "@repo/eslint-config": "file:../eslint-config",
     "eslint": "^8.56.0"
   },
   "dependencies": {
-    "@repo/shared": "*",
+    "@repo/shared": "file:../shared",
     "axios": "^1.6.7",
     "lodash": "^4.17.21"
   }

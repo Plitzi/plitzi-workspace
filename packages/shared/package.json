@@ -8,6 +8,7 @@
     "./helpers/twigWrapper": "./src/helpers/twigWrapper.js"
   },
   "scripts": {
+    "@repo/eslint-config": "file:../eslint-config",
     "lint": "eslint ./src"
   },
   "devDependencies": {

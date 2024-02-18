@@ -1,5 +1,13 @@
 # @plitzi/plitzi-builder
 
+## 0.19.1
+
+### Patch Changes
+
+- v0.19.1
+- Updated dependencies
+  - @plitzi/plitzi-sdk@0.19.1
+
 ## 0.19.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -23,7 +23,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.5",
     "@auth0/auth0-react": "^2.2.4",
-    "@repo/event-bridge-shared": "*",
+    "@repo/event-bridge-shared": "file:../../packages/event-bridge-shared",
     "axios": "^1.6.7",
     "classnames": "^2.5.1",
     "dompurify": "^3.0.8",
@@ -51,10 +51,10 @@
     "@babel/preset-react": "^7.23.3",
     "@plitzi/plitzi-webpack": "^0.2.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
-    "@repo/eslint-config": "*",
-    "@repo/interactions-shared": "*",
-    "@repo/jest-config": "*",
-    "@repo/tailwind-config": "*",
+    "@repo/eslint-config": "file:../../packages/eslint-config",
+    "@repo/interactions-shared": "file:../../packages/interactions-shared",
+    "@repo/jest-config": "file:../../packages/jest-config",
+    "@repo/tailwind-config": "file:../../packages/tailwind-config",
     "@storybook/addon-essentials": "^7.6.16",
     "@storybook/addon-interactions": "^7.6.16",
     "@storybook/addon-links": "^7.6.16",

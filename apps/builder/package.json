@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-builder",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -17,7 +17,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.5",
     "@plitzi/plitzi-sdk": "*",
-    "@repo/event-bridge-shared": "*",
+    "@repo/event-bridge-shared": "file:../../packages/event-bridge-shared",
     "apollo-upload-client": "^18.0.1",
     "axios": "^1.6.7",
     "classnames": "^2.5.1",
@@ -46,10 +46,10 @@
     "@babel/preset-react": "^7.23.3",
     "@plitzi/plitzi-webpack": "^0.2.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
-    "@repo/eslint-config": "*",
-    "@repo/interactions-shared": "*",
-    "@repo/jest-config": "*",
-    "@repo/tailwind-config": "*",
+    "@repo/eslint-config": "file:../../packages/eslint-config",
+    "@repo/interactions-shared": "file:../../packages/interactions-shared",
+    "@repo/jest-config": "file:../../packages/jest-config",
+    "@repo/tailwind-config": "file:../../packages/tailwind-config",
     "@welldone-software/why-did-you-render": "^8.0.1",
     "autoprefixer": "^10.4.17",
     "babel-loader": "^9.1.3",
