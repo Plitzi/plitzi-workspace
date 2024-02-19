@@ -4,8 +4,8 @@ import get from 'lodash/get';
 import noop from 'lodash/noop';
 
 // Monorepo
-import EventBridge from '@repo/event-bridge-shared';
-import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import EventBridge from '@plitzi/sdk-event-bridge';
+import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { flowTrigger } from '@repo/interactions-shared/InteractionsHelper';
 
 class InteractionsManager {

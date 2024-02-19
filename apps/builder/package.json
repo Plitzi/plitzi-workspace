@@ -17,7 +17,8 @@
   "dependencies": {
     "@apollo/client": "^3.9.5",
     "@plitzi/plitzi-sdk": "*",
-    "@repo/event-bridge-shared": "file:../../packages/event-bridge-shared",
+    "@plitzi/sdk-event-bridge": "*",
+    "@plitzi/sdk-shared": "*",
     "apollo-upload-client": "^18.0.1",
     "axios": "^1.6.7",
     "classnames": "^2.5.1",
@@ -46,7 +47,6 @@
     "@babel/preset-react": "^7.23.3",
     "@plitzi/plitzi-webpack": "^0.2.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
-    "@repo/eslint-config": "file:../../packages/eslint-config",
     "@repo/interactions-shared": "file:../../packages/interactions-shared",
     "@repo/jest-config": "file:../../packages/jest-config",
     "@repo/tailwind-config": "file:../../packages/tailwind-config",

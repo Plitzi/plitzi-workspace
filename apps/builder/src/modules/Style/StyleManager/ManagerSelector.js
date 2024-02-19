@@ -12,7 +12,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import BuilderContext from '@pmodules/Builder/BuilderContext';

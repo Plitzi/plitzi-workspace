@@ -5,8 +5,8 @@ import get from 'lodash/get';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
 // Monorepo
-import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap, { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
 
 // Alias

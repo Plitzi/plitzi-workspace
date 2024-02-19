@@ -1,5 +1,5 @@
 const path = require('path');
-const sharedConfig = require('@repo/eslint-config');
+const sharedConfig = require('@plitzi/sdk-shared/.eslintrc.js');
 
 module.exports = {
   ...sharedConfig,

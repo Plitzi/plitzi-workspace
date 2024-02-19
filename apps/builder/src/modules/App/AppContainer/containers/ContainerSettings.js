@@ -5,8 +5,8 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
 // Monorepo
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
-import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';

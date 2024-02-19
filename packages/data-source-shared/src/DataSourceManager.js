@@ -7,7 +7,7 @@ import omit from 'lodash/omit';
 import { produce } from 'immer';
 
 // Monorepo
-import EventBridge from '@repo/event-bridge-shared';
+import EventBridge from '@plitzi/sdk-event-bridge';
 import FlatMap from '@repo/schema-shared/FlatMap';
 
 class DataSourceManager {

@@ -78,7 +78,7 @@ const build = (env, args) => {
       rules: [
         {
           test: /(\.jsx|\.js)$/,
-          exclude: /(node_modules|bower_components)\/(?!(@repo)\/).*/,
+          exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+|@repo)\/).*/,
           use: [
             {
               loader: 'thread-loader',

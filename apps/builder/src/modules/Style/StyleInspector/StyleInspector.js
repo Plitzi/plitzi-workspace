@@ -11,7 +11,7 @@ import Select from '@plitzi/plitzi-ui-components/Select';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

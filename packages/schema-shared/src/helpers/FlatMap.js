@@ -4,7 +4,7 @@ import set from 'lodash/set';
 import cloneDeep from 'lodash/cloneDeep';
 
 // Monorepo
-import { generateID } from '@repo/shared';
+import { generateID } from '@plitzi/sdk-shared/utils';
 import { calculateInheriting } from '@repo/style-shared/StyleHelper';
 
 export const DROP_DIRECTION_TOP = 'top';

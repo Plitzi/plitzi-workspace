@@ -4,7 +4,7 @@ import omit from 'lodash/omit';
 import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
 
 // Monorepo
-import { processTwig, hasTokens } from '@repo/shared/helpers/twigWrapper';
+import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 // Relatives
 import utility from './utility';

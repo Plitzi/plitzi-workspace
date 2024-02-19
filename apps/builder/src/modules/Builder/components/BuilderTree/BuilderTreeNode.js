@@ -9,7 +9,7 @@ import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useDataSource from '@repo/data-source-shared/hooks/useDataSource';
 import getBindingsDetails from '@repo/data-source-shared/helpers/getBindingsDetails';
 

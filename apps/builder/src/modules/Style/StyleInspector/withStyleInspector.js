@@ -9,7 +9,7 @@ import pick from 'lodash/pick';
 import { produce } from 'immer';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import BuilderContext from '@pmodules/Builder/BuilderContext';

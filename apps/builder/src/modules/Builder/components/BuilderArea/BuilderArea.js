@@ -10,7 +10,7 @@ import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
 import InteractionsContext from '@repo/interactions-shared/InteractionsContext';

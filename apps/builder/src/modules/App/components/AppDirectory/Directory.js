@@ -10,8 +10,8 @@ import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
-import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';

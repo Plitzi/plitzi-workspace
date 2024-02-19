@@ -4,7 +4,7 @@ import pick from 'lodash/pick';
 import set from 'lodash/set';
 
 // Monorepo
-import { makeId } from '@repo/shared';
+import { makeId } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import { StyleConstants, inheritableAttributesBase } from './StyleConstants';

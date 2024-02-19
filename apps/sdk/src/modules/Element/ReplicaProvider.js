@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
 // Monorepo
-import { emptyObject } from '@repo/shared';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';

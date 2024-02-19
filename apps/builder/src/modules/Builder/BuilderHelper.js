@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import pick from 'lodash/pick';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@repo/schema-shared/FlatMap';
 
 // Alias

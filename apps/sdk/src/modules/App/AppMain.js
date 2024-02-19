@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
-import EventBridgeContextProvider from '@repo/event-bridge-shared/EventBridgeContextProvider';
+import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 
 // Alias
 import Sdk, {

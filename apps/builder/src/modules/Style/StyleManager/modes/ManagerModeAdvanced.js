@@ -8,7 +8,7 @@ import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Monorepo
-import EventBridgeTypes from '@repo/event-bridge-shared/EventBridgeHelper';
+import EventBridgeTypes from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

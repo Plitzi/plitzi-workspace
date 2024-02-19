@@ -3021,9 +3021,9 @@ __metadata:
     "@babel/preset-react": ^7.23.3
     "@plitzi/plitzi-sdk": "*"
     "@plitzi/plitzi-webpack": ^0.2.0
+    "@plitzi/sdk-event-bridge": "*"
+    "@plitzi/sdk-shared": "*"
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
-    "@repo/eslint-config": "file:../../packages/eslint-config"
-    "@repo/event-bridge-shared": "file:../../packages/event-bridge-shared"
     "@repo/interactions-shared": "file:../../packages/interactions-shared"
     "@repo/jest-config": "file:../../packages/jest-config"
     "@repo/tailwind-config": "file:../../packages/tailwind-config"
@@ -3097,9 +3097,9 @@ __metadata:
     "@babel/preset-env": ^7.23.9
     "@babel/preset-react": ^7.23.3
     "@plitzi/plitzi-webpack": ^0.2.0
+    "@plitzi/sdk-event-bridge": "*"
+    "@plitzi/sdk-shared": "*"
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
-    "@repo/eslint-config": "file:../../packages/eslint-config"
-    "@repo/event-bridge-shared": "file:../../packages/event-bridge-shared"
     "@repo/interactions-shared": "file:../../packages/interactions-shared"
     "@repo/jest-config": "file:../../packages/jest-config"
     "@repo/tailwind-config": "file:../../packages/tailwind-config"
@@ -3201,11 +3201,48 @@ __metadata:
   dependencies:
     "@changesets/cli": ^2.27.1
     "@plitzi/plitzi-ui-components": 0.8.8
-    "@repo/eslint-config": "file:./packages/eslint-config"
+    "@plitzi/sdk-shared": "*"
     "@repo/jest-config": "file:./packages/jest-config"
     eslint: ^8.56.0
     jest: ^29.7.0
     turbo: ^1.12.4
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/sdk-event-bridge@*, @plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge"
+  dependencies:
+    "@plitzi/sdk-shared": "*"
+    eslint: ^8.56.0
+    lodash: ^4.17.21
+    prop-types: ^15.8.1
+    react: ^18.2.0
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/sdk-shared@*, @plitzi/sdk-shared@workspace:packages/sdk-shared":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-shared@workspace:packages/sdk-shared"
+  dependencies:
+    "@babel/core": ^7.23.9
+    "@babel/eslint-parser": ^7.23.10
+    "@babel/plugin-syntax-flow": ^7.23.3
+    "@babel/plugin-transform-react-jsx": ^7.23.4
+    eslint: ^8.56.0
+    eslint-config-airbnb: ^19.0.4
+    eslint-config-prettier: ^9.1.0
+    eslint-config-turbo: ^1.12.4
+    eslint-import-resolver-alias: ^1.1.2
+    eslint-plugin-cypress: ^2.15.1
+    eslint-plugin-flowtype: 8.0.3
+    eslint-plugin-import: ^2.29.1
+    eslint-plugin-jsx-a11y: ^6.8.0
+    eslint-plugin-prettier: ^5.1.3
+    eslint-plugin-react: ^7.33.2
+    eslint-plugin-react-hooks: ^4.6.0
+    eslint-plugin-storybook: ^0.8.0
+    twig: ^1.17.1
   languageName: unknown
   linkType: soft
 
@@ -3834,8 +3871,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/data-source-shared@workspace:packages/data-source-shared"
   dependencies:
-    "@repo/eslint-config": "file:../eslint-config"
-    "@repo/event-bridge-shared": "file:../event-bridge-shared"
+    "@plitzi/sdk-event-bridge": "*"
+    "@plitzi/sdk-shared": "*"
     eslint: ^8.56.0
     lodash: ^4.17.21
     moment: ^2.30.1
@@ -3844,143 +3881,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/eslint-config@file:../../packages/eslint-config::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
-  version: 0.0.0
-  resolution: "@repo/eslint-config@file:../../packages/eslint-config#../../packages/eslint-config::hash=9ec1a5&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
-  checksum: f7ca2db8abe8194c196006e21e9e3326b178c3a2e2c8c5544590096dffb6bcd322e9134fd538eb471cdc8b9a7c74dc503229463ef3dcdeb6e7de56e2e2e75fee
-  languageName: node
-  linkType: hard
-
-"@repo/eslint-config@file:../../packages/eslint-config::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
-  version: 0.0.0
-  resolution: "@repo/eslint-config@file:../../packages/eslint-config#../../packages/eslint-config::hash=9ec1a5&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
-  checksum: f7ca2db8abe8194c196006e21e9e3326b178c3a2e2c8c5544590096dffb6bcd322e9134fd538eb471cdc8b9a7c74dc503229463ef3dcdeb6e7de56e2e2e75fee
-  languageName: node
-  linkType: hard
-
-"@repo/eslint-config@file:../eslint-config::locator=%40repo%2Fdata-source-shared%40workspace%3Apackages%2Fdata-source-shared":
-  version: 0.0.0
-  resolution: "@repo/eslint-config@file:../eslint-config#../eslint-config::hash=9ec1a5&locator=%40repo%2Fdata-source-shared%40workspace%3Apackages%2Fdata-source-shared"
-  checksum: f7ca2db8abe8194c196006e21e9e3326b178c3a2e2c8c5544590096dffb6bcd322e9134fd538eb471cdc8b9a7c74dc503229463ef3dcdeb6e7de56e2e2e75fee
-  languageName: node
-  linkType: hard
-
-"@repo/eslint-config@file:../eslint-config::locator=%40repo%2Fevent-bridge-shared%40workspace%3Apackages%2Fevent-bridge-shared":
-  version: 0.0.0
-  resolution: "@repo/eslint-config@file:../eslint-config#../eslint-config::hash=9ec1a5&locator=%40repo%2Fevent-bridge-shared%40workspace%3Apackages%2Fevent-bridge-shared"
-  checksum: f7ca2db8abe8194c196006e21e9e3326b178c3a2e2c8c5544590096dffb6bcd322e9134fd538eb471cdc8b9a7c74dc503229463ef3dcdeb6e7de56e2e2e75fee
-  languageName: node
-  linkType: hard
-
-"@repo/eslint-config@file:../eslint-config::locator=%40repo%2Finteractions-shared%40workspace%3Apackages%2Finteractions-shared":
-  version: 0.0.0
-  resolution: "@repo/eslint-config@file:../eslint-config#../eslint-config::hash=9ec1a5&locator=%40repo%2Finteractions-shared%40workspace%3Apackages%2Finteractions-shared"
-  checksum: f7ca2db8abe8194c196006e21e9e3326b178c3a2e2c8c5544590096dffb6bcd322e9134fd538eb471cdc8b9a7c74dc503229463ef3dcdeb6e7de56e2e2e75fee
-  languageName: node
-  linkType: hard
-
-"@repo/eslint-config@file:../eslint-config::locator=%40repo%2Fschema-shared%40workspace%3Apackages%2Fschema-shared":
-  version: 0.0.0
-  resolution: "@repo/eslint-config@file:../eslint-config#../eslint-config::hash=9ec1a5&locator=%40repo%2Fschema-shared%40workspace%3Apackages%2Fschema-shared"
-  checksum: f7ca2db8abe8194c196006e21e9e3326b178c3a2e2c8c5544590096dffb6bcd322e9134fd538eb471cdc8b9a7c74dc503229463ef3dcdeb6e7de56e2e2e75fee
-  languageName: node
-  linkType: hard
-
-"@repo/eslint-config@file:./packages/eslint-config::locator=%40plitzi%2Fplitzi-workspace%40workspace%3A.":
-  version: 0.0.0
-  resolution: "@repo/eslint-config@file:./packages/eslint-config#./packages/eslint-config::hash=9ec1a5&locator=%40plitzi%2Fplitzi-workspace%40workspace%3A."
-  checksum: f7ca2db8abe8194c196006e21e9e3326b178c3a2e2c8c5544590096dffb6bcd322e9134fd538eb471cdc8b9a7c74dc503229463ef3dcdeb6e7de56e2e2e75fee
-  languageName: node
-  linkType: hard
-
-"@repo/eslint-config@workspace:packages/eslint-config":
-  version: 0.0.0-use.local
-  resolution: "@repo/eslint-config@workspace:packages/eslint-config"
-  dependencies:
-    "@babel/core": ^7.23.9
-    "@babel/eslint-parser": ^7.23.10
-    "@babel/plugin-syntax-flow": ^7.23.3
-    "@babel/plugin-transform-react-jsx": ^7.23.4
-    eslint: ^8.56.0
-    eslint-config-airbnb: ^19.0.4
-    eslint-config-prettier: ^9.1.0
-    eslint-config-turbo: ^1.12.4
-    eslint-import-resolver-alias: ^1.1.2
-    eslint-plugin-cypress: ^2.15.1
-    eslint-plugin-flowtype: 8.0.3
-    eslint-plugin-import: ^2.29.1
-    eslint-plugin-jsx-a11y: ^6.8.0
-    eslint-plugin-prettier: ^5.1.3
-    eslint-plugin-react: ^7.33.2
-    eslint-plugin-react-hooks: ^4.6.0
-    eslint-plugin-storybook: ^0.8.0
-  languageName: unknown
-  linkType: soft
-
-"@repo/event-bridge-shared@file:../../packages/event-bridge-shared::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
-  version: 0.0.0
-  resolution: "@repo/event-bridge-shared@file:../../packages/event-bridge-shared#../../packages/event-bridge-shared::hash=e6c296&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
-  dependencies:
-    lodash: ^4.17.21
-    prop-types: ^15.8.1
-    react: ^18.2.0
-  checksum: 3de77dbed6e0eadbdbe21f265e68b381a6e05018c292b995de903d5e0a94ec3d54aaa0df7b460b26d8678e63fb89f78d95b85ba4aa33452655c680741670fa90
-  languageName: node
-  linkType: hard
-
-"@repo/event-bridge-shared@file:../../packages/event-bridge-shared::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
-  version: 0.0.0
-  resolution: "@repo/event-bridge-shared@file:../../packages/event-bridge-shared#../../packages/event-bridge-shared::hash=e6c296&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
-  dependencies:
-    lodash: ^4.17.21
-    prop-types: ^15.8.1
-    react: ^18.2.0
-  checksum: 3de77dbed6e0eadbdbe21f265e68b381a6e05018c292b995de903d5e0a94ec3d54aaa0df7b460b26d8678e63fb89f78d95b85ba4aa33452655c680741670fa90
-  languageName: node
-  linkType: hard
-
-"@repo/event-bridge-shared@file:../event-bridge-shared::locator=%40repo%2Fdata-source-shared%40workspace%3Apackages%2Fdata-source-shared":
-  version: 0.0.0
-  resolution: "@repo/event-bridge-shared@file:../event-bridge-shared#../event-bridge-shared::hash=e6c296&locator=%40repo%2Fdata-source-shared%40workspace%3Apackages%2Fdata-source-shared"
-  dependencies:
-    lodash: ^4.17.21
-    prop-types: ^15.8.1
-    react: ^18.2.0
-  checksum: 3de77dbed6e0eadbdbe21f265e68b381a6e05018c292b995de903d5e0a94ec3d54aaa0df7b460b26d8678e63fb89f78d95b85ba4aa33452655c680741670fa90
-  languageName: node
-  linkType: hard
-
-"@repo/event-bridge-shared@workspace:packages/event-bridge-shared":
-  version: 0.0.0-use.local
-  resolution: "@repo/event-bridge-shared@workspace:packages/event-bridge-shared"
-  dependencies:
-    "@repo/eslint-config": "file:../eslint-config"
-    eslint: ^8.56.0
-    lodash: ^4.17.21
-    prop-types: ^15.8.1
-    react: ^18.2.0
-  languageName: unknown
-  linkType: soft
-
 "@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
   version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=fcaa6b&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
+  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=0e70f9&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
   dependencies:
-    "@repo/shared": "file:../shared"
+    "@plitzi/sdk-shared": "*"
     axios: ^1.6.7
     lodash: ^4.17.21
-  checksum: b6823061308bb6f52a0601b7b7e96e990ff6a250d00eae05daeb03c6cc0810ca8d005dc2566f47a7866d13a5c458d33f643c4d4abf37872fc0b1120276d9c50b
+  checksum: 39d758dc3a7124b0f2b741e52e9566fa1c7861b1927a15c97d2fe50fac6c52ec357416e45586d51714ec95f9d0d16712c881cf2406b3a04a5e8d3e07cae02495
   languageName: node
   linkType: hard
 
 "@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
   version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=fcaa6b&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
+  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=0e70f9&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
   dependencies:
-    "@repo/shared": "file:../shared"
+    "@plitzi/sdk-shared": "*"
     axios: ^1.6.7
     lodash: ^4.17.21
-  checksum: b6823061308bb6f52a0601b7b7e96e990ff6a250d00eae05daeb03c6cc0810ca8d005dc2566f47a7866d13a5c458d33f643c4d4abf37872fc0b1120276d9c50b
+  checksum: 39d758dc3a7124b0f2b741e52e9566fa1c7861b1927a15c97d2fe50fac6c52ec357416e45586d51714ec95f9d0d16712c881cf2406b3a04a5e8d3e07cae02495
   languageName: node
   linkType: hard
 
@@ -3988,8 +3907,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/interactions-shared@workspace:packages/interactions-shared"
   dependencies:
-    "@repo/eslint-config": "file:../eslint-config"
-    "@repo/shared": "file:../shared"
+    "@plitzi/sdk-shared": "*"
     axios: ^1.6.7
     eslint: ^8.56.0
     lodash: ^4.17.21
@@ -4036,47 +3954,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/schema-shared@workspace:packages/schema-shared"
   dependencies:
-    "@repo/eslint-config": "file:../eslint-config"
+    "@plitzi/sdk-shared": "*"
     eslint: ^8.56.0
     lodash: ^4.17.21
     prop-types: ^15.8.1
     react: ^18.2.0
-  languageName: unknown
-  linkType: soft
-
-"@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dfcaa6b%26locator%3D%2540plitzi%252Fplitzi-builder%2540workspace%253Aapps%252Fbuilder":
-  version: 0.0.0
-  resolution: "@repo/shared@file:../shared#../shared::hash=430c6d&locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dfcaa6b%26locator%3D%2540plitzi%252Fplitzi-builder%2540workspace%253Aapps%252Fbuilder"
-  dependencies:
-    twig: ^1.17.1
-  checksum: e0bf52e24b6f9ca38429a3fcf6de8fb56a6c4592f62170a7f3bf41d3eecd08dc5b19abdda2e8e3c43f665ddad91cbf5e5efcc1f73cac002ad6cb720bfadb76be
-  languageName: node
-  linkType: hard
-
-"@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dfcaa6b%26locator%3D%2540plitzi%252Fplitzi-sdk%2540workspace%253Aapps%252Fsdk":
-  version: 0.0.0
-  resolution: "@repo/shared@file:../shared#../shared::hash=430c6d&locator=%40repo%2Finteractions-shared%40file%3A..%2F..%2Fpackages%2Finteractions-shared%23..%2F..%2Fpackages%2Finteractions-shared%3A%3Ahash%3Dfcaa6b%26locator%3D%2540plitzi%252Fplitzi-sdk%2540workspace%253Aapps%252Fsdk"
-  dependencies:
-    twig: ^1.17.1
-  checksum: e0bf52e24b6f9ca38429a3fcf6de8fb56a6c4592f62170a7f3bf41d3eecd08dc5b19abdda2e8e3c43f665ddad91cbf5e5efcc1f73cac002ad6cb720bfadb76be
-  languageName: node
-  linkType: hard
-
-"@repo/shared@file:../shared::locator=%40repo%2Finteractions-shared%40workspace%3Apackages%2Finteractions-shared":
-  version: 0.0.0
-  resolution: "@repo/shared@file:../shared#../shared::hash=430c6d&locator=%40repo%2Finteractions-shared%40workspace%3Apackages%2Finteractions-shared"
-  dependencies:
-    twig: ^1.17.1
-  checksum: e0bf52e24b6f9ca38429a3fcf6de8fb56a6c4592f62170a7f3bf41d3eecd08dc5b19abdda2e8e3c43f665ddad91cbf5e5efcc1f73cac002ad6cb720bfadb76be
-  languageName: node
-  linkType: hard
-
-"@repo/shared@workspace:packages/shared":
-  version: 0.0.0-use.local
-  resolution: "@repo/shared@workspace:packages/shared"
-  dependencies:
-    eslint: ^8.56.0
-    twig: ^1.17.1
   languageName: unknown
   linkType: soft
 

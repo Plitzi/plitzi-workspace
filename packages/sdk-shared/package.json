@@ -1,10 +1,14 @@
 {
-  "name": "@repo/eslint-config",
+  "name": "@plitzi/sdk-shared",
   "version": "0.0.0",
-  "private": true,
   "files": [],
   "exports": {
-    ".": "./.eslintrc.js"
+    "./.eslintrc.js": "./.eslintrc.js",
+    "./utils": "./src/helpers/utils.js",
+    "./helpers/twigWrapper": "./src/helpers/twigWrapper.js"
+  },
+  "scripts": {
+    "lint": "eslint ./src"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
@@ -24,5 +28,8 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-storybook": "^0.8.0"
+  },
+  "dependencies": {
+    "twig": "^1.17.1"
   }
 }

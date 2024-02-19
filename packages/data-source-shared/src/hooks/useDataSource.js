@@ -2,7 +2,7 @@
 import { useMemo, useContext, useEffect, useRef, useState } from 'react';
 
 // Monorepo
-import { emptyObject, makeId } from '@repo/shared';
+import { emptyObject, makeId } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import DataSourceContext from '../DataSourceContext';

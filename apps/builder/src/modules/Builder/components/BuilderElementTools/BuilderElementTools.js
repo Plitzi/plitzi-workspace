@@ -8,7 +8,7 @@ import useStateDebounce from '@plitzi/plitzi-ui-components/hooks/useStateDebounc
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import StyleInspector from '@pmodules/Style/StyleInspector';

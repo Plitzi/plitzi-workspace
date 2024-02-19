@@ -13,7 +13,7 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 // Monorepo
-import { EventBridgeTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
 import { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
 

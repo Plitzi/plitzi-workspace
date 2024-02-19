@@ -7,9 +7,9 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
 // Monorepo
-import useEventBridge from '@repo/event-bridge-shared/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@repo/event-bridge-shared/EventBridgeHelper';
-import EventBridgeContext from '@repo/event-bridge-shared/EventBridgeContext';
+import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import FlatMap, { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
 
