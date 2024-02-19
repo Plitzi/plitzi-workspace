@@ -37,7 +37,6 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-
       - name: Yarn Token
         run: |
           echo "npmAuthToken: ${{ secrets.NPM_AUTH_TOKEN }}" >> $HOME/.yarnrc.yml
@@ -53,6 +52,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - uses: actions/setup-node@v4
         with:
@@ -86,6 +88,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - uses: actions/setup-node@v4
         with:
@@ -128,6 +133,9 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@v4
 
+      # - name: Enable Corepack
+      # run: corepack enable
+
   #     - uses: actions/setup-node@v4
   #       with:
   #         node-version: 20
@@ -151,6 +159,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - uses: actions/setup-node@v4
         with:
@@ -203,6 +214,9 @@ jobs:
         package: [sdk, builder]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - uses: actions/setup-node@v4
         with:
