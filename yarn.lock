@@ -3287,6 +3287,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-style@workspace:packages/sdk-style":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
+  dependencies:
+    eslint: ^8.56.0
+    immer: ^10.0.3
+    lodash: ^4.17.21
+    prop-types: ^15.8.1
+    react: ^18.2.0
+  languageName: unknown
+  linkType: soft
+
 "@pmmmwh/react-refresh-webpack-plugin@npm:^0.5.11":
   version: 0.5.11
   resolution: "@pmmmwh/react-refresh-webpack-plugin@npm:0.5.11"
@@ -3907,18 +3919,6 @@ __metadata:
   checksum: 5c404e64a95da7d2a06811c15e8b213cd1079bca546d8a78a1626264ac0b71361b9ce93269bda7209a938e5a22c25993902841f81240c58eb7ed0934e1781197
   languageName: node
   linkType: hard
-
-"@repo/style-shared@workspace:packages/style-shared":
-  version: 0.0.0-use.local
-  resolution: "@repo/style-shared@workspace:packages/style-shared"
-  dependencies:
-    eslint: ^8.56.0
-    immer: ^10.0.3
-    lodash: ^4.17.21
-    prop-types: ^15.8.1
-    react: ^18.2.0
-  languageName: unknown
-  linkType: soft
 
 "@sinclair/typebox@npm:^0.27.8":
   version: 0.27.8

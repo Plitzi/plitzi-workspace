@@ -78,7 +78,7 @@ const build = (env, args) => {
       rules: [
         {
           test: /(\.jsx|\.js)$/,
-          exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+|@repo)\/).*/,
+          exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
           use: [
             {
               loader: 'thread-loader',
@@ -103,7 +103,7 @@ const build = (env, args) => {
         {
           test: /\.(png|jpg|gif|svg|...)$/,
           loader: 'url-loader',
-          exclude: /(node_modules|bower_components)\/(?!(@repo)\/).*/
+          exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/
         },
         {
           test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
@@ -138,7 +138,7 @@ const build = (env, args) => {
               }
             }
           ],
-          exclude: /(node_modules|bower_components)\/(?!(@repo)\/).*/
+          exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/
         },
         {
           test: /\.(c)ss$/,
