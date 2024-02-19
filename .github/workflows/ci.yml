@@ -39,7 +39,7 @@ jobs:
 
 
       - name: Yarn Token
-        run: echo "npmAuthToken:${{ secrets.NPM_AUTH_TOKEN }}" > $HOME/.yarnrc.yml
+        run: echo "npmAuthToken:${{ secrets.NPM_AUTH_TOKEN }}" >> $HOME/.yarnrc.yml
 
       - name: Yarn Install
         if: steps.cache-packages.outputs.cache-hit != 'true'
