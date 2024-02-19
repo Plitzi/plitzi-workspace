@@ -1,5 +1,5 @@
 // Monorepo
-const sharedConfig = require('@repo/jest-config');
+const sharedConfig = require('@plitzi/sdk-shared/jest.config');
 
 module.exports = {
   ...sharedConfig,

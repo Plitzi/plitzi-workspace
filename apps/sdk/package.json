@@ -53,7 +53,6 @@
     "@plitzi/plitzi-webpack": "^0.2.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@repo/interactions-shared": "file:../../packages/interactions-shared",
-    "@repo/jest-config": "file:../../packages/jest-config",
     "@repo/tailwind-config": "file:../../packages/tailwind-config",
     "@storybook/addon-essentials": "^7.6.16",
     "@storybook/addon-interactions": "^7.6.16",
