@@ -6,8 +6,8 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 
 // Monorepo
-import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
-import utility from '@repo/interactions-shared/utility';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import utility from '@plitzi/sdk-interactions/utility';
 
 // Alias
 import Workflow from './components/Workflow';

@@ -11,7 +11,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
-import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';

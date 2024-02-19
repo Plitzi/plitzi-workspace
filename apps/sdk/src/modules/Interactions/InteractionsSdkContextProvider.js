@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 
 // Monorepo
-import InteractionsContextProvider from '@repo/interactions-shared/InteractionsContextProvider';
+import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
 
 // Alias
 import NavigationContext from '@modules/Navigation/NavigationContext';

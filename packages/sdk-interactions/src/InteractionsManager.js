@@ -6,7 +6,9 @@ import noop from 'lodash/noop';
 // Monorepo
 import EventBridge from '@plitzi/sdk-event-bridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { flowTrigger } from '@repo/interactions-shared/InteractionsHelper';
+
+// Relatives
+import { flowTrigger } from './InteractionsHelper';
 
 class InteractionsManager {
   constructor(currentPageId = '', routeParams = {}, queryParams = {}) {

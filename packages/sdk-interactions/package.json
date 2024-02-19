@@ -1,7 +1,6 @@
 {
-  "name": "@repo/interactions-shared",
+  "name": "@plitzi/sdk-interactions",
   "version": "0.0.0",
-  "private": true,
   "files": [],
   "exports": {
     ".": "./src/index.js",

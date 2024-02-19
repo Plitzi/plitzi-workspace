@@ -3022,9 +3022,9 @@ __metadata:
     "@plitzi/plitzi-sdk": "*"
     "@plitzi/plitzi-webpack": ^0.2.0
     "@plitzi/sdk-event-bridge": "*"
+    "@plitzi/sdk-interactions": "*"
     "@plitzi/sdk-shared": "*"
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
-    "@repo/interactions-shared": "file:../../packages/interactions-shared"
     "@welldone-software/why-did-you-render": ^8.0.1
     apollo-upload-client: ^18.0.1
     autoprefixer: ^10.4.17
@@ -3096,9 +3096,9 @@ __metadata:
     "@babel/preset-react": ^7.23.3
     "@plitzi/plitzi-webpack": ^0.2.0
     "@plitzi/sdk-event-bridge": "*"
+    "@plitzi/sdk-interactions": "*"
     "@plitzi/sdk-shared": "*"
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
-    "@repo/interactions-shared": "file:../../packages/interactions-shared"
     "@storybook/addon-essentials": ^7.6.16
     "@storybook/addon-interactions": ^7.6.16
     "@storybook/addon-links": ^7.6.16
@@ -3227,6 +3227,17 @@ __metadata:
     lodash: ^4.17.21
     prop-types: ^15.8.1
     react: ^18.2.0
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/sdk-interactions@*, @plitzi/sdk-interactions@workspace:packages/sdk-interactions":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
+  dependencies:
+    "@plitzi/sdk-shared": "*"
+    axios: ^1.6.7
+    eslint: ^8.56.0
+    lodash: ^4.17.21
   languageName: unknown
   linkType: soft
 
@@ -3884,39 +3895,6 @@ __metadata:
   checksum: 5c404e64a95da7d2a06811c15e8b213cd1079bca546d8a78a1626264ac0b71361b9ce93269bda7209a938e5a22c25993902841f81240c58eb7ed0934e1781197
   languageName: node
   linkType: hard
-
-"@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
-  version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=af28e8&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
-  dependencies:
-    "@plitzi/sdk-shared": "*"
-    axios: ^1.6.7
-    lodash: ^4.17.21
-  checksum: 03a3a696058750ad06617979a9590b19e1e5186272a86e61c79db2f6bb03725590d02e0ea6726d172ef58ba8abf34619f555e917a959d1d2626c00a2e2f73d4d
-  languageName: node
-  linkType: hard
-
-"@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
-  version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=af28e8&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
-  dependencies:
-    "@plitzi/sdk-shared": "*"
-    axios: ^1.6.7
-    lodash: ^4.17.21
-  checksum: 03a3a696058750ad06617979a9590b19e1e5186272a86e61c79db2f6bb03725590d02e0ea6726d172ef58ba8abf34619f555e917a959d1d2626c00a2e2f73d4d
-  languageName: node
-  linkType: hard
-
-"@repo/interactions-shared@workspace:packages/interactions-shared":
-  version: 0.0.0-use.local
-  resolution: "@repo/interactions-shared@workspace:packages/interactions-shared"
-  dependencies:
-    "@plitzi/sdk-shared": "*"
-    axios: ^1.6.7
-    eslint: ^8.56.0
-    lodash: ^4.17.21
-  languageName: unknown
-  linkType: soft
 
 "@repo/schema-shared@workspace:packages/schema-shared":
   version: 0.0.0-use.local

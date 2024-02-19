@@ -6,7 +6,7 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import SchemaContext from '@repo/schema-shared/SchemaContext';
-import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';

@@ -5,7 +5,7 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 
 // Monorepo
-import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 // Alias
 import CollectionContext from '@modules/Collection/CollectionContext';

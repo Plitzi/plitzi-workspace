@@ -2,7 +2,7 @@
 import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
 
 // Monorepo
-import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';

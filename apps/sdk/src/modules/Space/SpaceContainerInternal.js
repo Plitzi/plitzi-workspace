@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
-import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 const SpaceContainerInternal = props => {
   const { children } = props;
