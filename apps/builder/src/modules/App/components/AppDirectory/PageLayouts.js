@@ -11,8 +11,8 @@ import { ComponentContext } from '@plitzi/plitzi-sdk';
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import SchemaContext from '@repo/schema-shared/SchemaContext';
-import { DROP_DIRECTION_CUSTOM } from '@repo/schema-shared/FlatMap';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import { DROP_DIRECTION_CUSTOM } from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import NavigationContext from '@pmodules/Navigation/NavigationContext';

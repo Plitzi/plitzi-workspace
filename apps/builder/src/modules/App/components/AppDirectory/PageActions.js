@@ -10,7 +10,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import NavigationContext from '@pmodules/Navigation/NavigationContext';

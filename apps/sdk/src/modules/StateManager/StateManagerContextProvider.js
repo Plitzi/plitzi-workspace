@@ -7,7 +7,7 @@ import set from 'lodash/set';
 import get from 'lodash/get';
 
 // Monorepo
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import NetworkContext from '@modules/Network/NetworkContext';

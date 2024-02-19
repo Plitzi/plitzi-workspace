@@ -8,7 +8,7 @@ import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale'
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
 // Monorepo
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';

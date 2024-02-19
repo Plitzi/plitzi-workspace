@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
 // Monorepo
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';

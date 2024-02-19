@@ -9,7 +9,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import PluginsContext from '@pmodules/Plugins/PluginsContext';

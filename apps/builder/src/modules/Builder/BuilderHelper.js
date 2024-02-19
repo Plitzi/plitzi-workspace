@@ -6,7 +6,7 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import FlatMap from '@repo/schema-shared/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';

@@ -14,8 +14,8 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import SchemaContext from '@repo/schema-shared/SchemaContext';
-import { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

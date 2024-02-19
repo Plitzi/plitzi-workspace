@@ -18,7 +18,7 @@ import {
   EventBridgeTypes,
   EventBridgeTypesPerModule
 } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
+import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';

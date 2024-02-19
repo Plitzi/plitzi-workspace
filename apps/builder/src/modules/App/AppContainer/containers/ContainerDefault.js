@@ -8,7 +8,7 @@ import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import Builder from '@pmodules/Builder';

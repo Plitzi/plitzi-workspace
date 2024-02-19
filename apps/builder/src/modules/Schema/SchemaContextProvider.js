@@ -10,8 +10,8 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import FlatMap, { DROP_DIRECTION_INSIDE } from '@repo/schema-shared/FlatMap';
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import FlatMap, { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';

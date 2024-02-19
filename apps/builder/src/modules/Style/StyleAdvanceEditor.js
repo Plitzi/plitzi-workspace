@@ -9,7 +9,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Monorepo
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

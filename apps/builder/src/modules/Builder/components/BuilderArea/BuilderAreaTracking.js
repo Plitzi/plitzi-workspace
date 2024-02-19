@@ -9,7 +9,7 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import FlatMap from '@repo/schema-shared/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';

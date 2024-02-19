@@ -10,7 +10,7 @@ import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
-import SchemaContext from '@repo/schema-shared/SchemaContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 // Alias

@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useMemo, useReducer, useRef } from 'rea
 import PropTypes from 'prop-types';
 
 // Monorepo
-import FlatMap from '@repo/schema-shared/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import { generateCache } from '@pmodules/Style/StyleHelper';

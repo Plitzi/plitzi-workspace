@@ -8,7 +8,7 @@ import { produce } from 'immer';
 
 // Monorepo
 import EventBridge from '@plitzi/sdk-event-bridge';
-import FlatMap from '@repo/schema-shared/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 class DataSourceManager {
   constructor(dataSource = {}) {

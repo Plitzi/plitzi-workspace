@@ -3241,6 +3241,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-schema@workspace:packages/schema-shared":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-schema@workspace:packages/schema-shared"
+  dependencies:
+    "@plitzi/sdk-shared": "*"
+    eslint: ^8.56.0
+    lodash: ^4.17.21
+    prop-types: ^15.8.1
+    react: ^18.2.0
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/sdk-shared@*, @plitzi/sdk-shared@workspace:packages/sdk-shared":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-shared@workspace:packages/sdk-shared"
@@ -3895,18 +3907,6 @@ __metadata:
   checksum: 5c404e64a95da7d2a06811c15e8b213cd1079bca546d8a78a1626264ac0b71361b9ce93269bda7209a938e5a22c25993902841f81240c58eb7ed0934e1781197
   languageName: node
   linkType: hard
-
-"@repo/schema-shared@workspace:packages/schema-shared":
-  version: 0.0.0-use.local
-  resolution: "@repo/schema-shared@workspace:packages/schema-shared"
-  dependencies:
-    "@plitzi/sdk-shared": "*"
-    eslint: ^8.56.0
-    lodash: ^4.17.21
-    prop-types: ^15.8.1
-    react: ^18.2.0
-  languageName: unknown
-  linkType: soft
 
 "@repo/style-shared@workspace:packages/style-shared":
   version: 0.0.0-use.local

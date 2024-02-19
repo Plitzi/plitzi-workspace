@@ -5,7 +5,7 @@ import set from 'lodash/set';
 import { produce } from 'immer';
 
 // Monorepo
-import FlatMap from '@repo/schema-shared/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import { generateCache, processSelector } from '@pmodules/Style/StyleHelper';
