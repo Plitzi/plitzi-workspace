@@ -8,7 +8,7 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
 // Monorepo
-import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
 
 // Alias

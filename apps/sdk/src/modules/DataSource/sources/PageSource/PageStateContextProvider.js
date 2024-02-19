@@ -3,7 +3,7 @@ import { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 // Monorepo
-import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/data-source-shared",
+  "name": "@plitzi/sdk-data-source",
   "version": "0.0.0",
   "private": true,
   "files": [],

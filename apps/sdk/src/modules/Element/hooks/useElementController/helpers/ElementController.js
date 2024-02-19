@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 
 // Monorepo
-import getBindingsDetails from '@repo/data-source-shared/helpers/getBindingsDetails';
+import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 
 // Alias
 import { classStringFilter, StyleSelectors } from '@modules/Style/StyleHelper';

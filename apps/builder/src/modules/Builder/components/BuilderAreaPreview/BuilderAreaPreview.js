@@ -8,8 +8,8 @@ import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
-import DataSourceContextProvider from '@repo/data-source-shared/DataSourceContextProvider';
+import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
 import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 

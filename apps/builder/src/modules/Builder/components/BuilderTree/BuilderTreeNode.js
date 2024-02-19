@@ -10,8 +10,8 @@ import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import useDataSource from '@repo/data-source-shared/hooks/useDataSource';
-import getBindingsDetails from '@repo/data-source-shared/helpers/getBindingsDetails';
+import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
+import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 
 // Alias
 import BuilderElementTools from '@pmodules/Builder/components/BuilderElementTools';

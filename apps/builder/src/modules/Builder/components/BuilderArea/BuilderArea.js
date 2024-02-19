@@ -11,7 +11,7 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
 import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 

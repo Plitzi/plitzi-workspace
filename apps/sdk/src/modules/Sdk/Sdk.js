@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Monorepo
-import DataSourceContext from '@repo/data-source-shared/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@repo/schema-shared/SchemaContext';
 import InteractionsContext from '@repo/interactions-shared/InteractionsContext';
 

@@ -3204,6 +3204,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-data-source@workspace:packages/sdk-data-source":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-data-source@workspace:packages/sdk-data-source"
+  dependencies:
+    "@plitzi/sdk-event-bridge": "*"
+    "@plitzi/sdk-shared": "*"
+    eslint: ^8.56.0
+    lodash: ^4.17.21
+    moment: ^2.30.1
+    react: ^18.2.0
+    react-dom: ^18.2.0
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/sdk-event-bridge@*, @plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge"
@@ -3870,20 +3884,6 @@ __metadata:
   checksum: 5c404e64a95da7d2a06811c15e8b213cd1079bca546d8a78a1626264ac0b71361b9ce93269bda7209a938e5a22c25993902841f81240c58eb7ed0934e1781197
   languageName: node
   linkType: hard
-
-"@repo/data-source-shared@workspace:packages/data-source-shared":
-  version: 0.0.0-use.local
-  resolution: "@repo/data-source-shared@workspace:packages/data-source-shared"
-  dependencies:
-    "@plitzi/sdk-event-bridge": "*"
-    "@plitzi/sdk-shared": "*"
-    eslint: ^8.56.0
-    lodash: ^4.17.21
-    moment: ^2.30.1
-    react: ^18.2.0
-    react-dom: ^18.2.0
-  languageName: unknown
-  linkType: soft
 
 "@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
   version: 0.0.0

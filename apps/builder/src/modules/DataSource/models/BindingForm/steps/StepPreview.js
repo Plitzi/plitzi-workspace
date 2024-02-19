@@ -9,7 +9,7 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
 
 // Monorepo
-import utility from '@repo/data-source-shared/utility';
+import utility from '@plitzi/sdk-data-source/utility';
 
 // Alias
 import { emptyObject } from '../../../../../helpers/utils';

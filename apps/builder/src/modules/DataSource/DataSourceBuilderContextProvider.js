@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 // Monorepo
-import DataSourceContextProvider from '@repo/data-source-shared/DataSourceContextProvider';
+import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 
 // Relatives
 import PageStateContextProvider from './sources/PageSource/PageStateContextProvider';

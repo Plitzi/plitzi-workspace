@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 
 // Monorepo
-import useDataSource from '@repo/data-source-shared/hooks/useDataSource';
+import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
 
 // Relatives
 import { getDisplayName, getPathsFromObeject } from '../../../helpers/utils';
