@@ -1,5 +1,5 @@
 // Monorepo
-import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 const callback = params => {

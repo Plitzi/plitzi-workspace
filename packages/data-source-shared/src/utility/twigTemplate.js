@@ -1,5 +1,5 @@
 // Monorepo
-import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
 
 const callback = (source, params, dataSources = {}) => {
   const { template } = params;

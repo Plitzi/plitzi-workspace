@@ -48,7 +48,6 @@
     "@plitzi/plitzi-webpack": "^0.2.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@repo/interactions-shared": "file:../../packages/interactions-shared",
-    "@repo/tailwind-config": "file:../../packages/tailwind-config",
     "@welldone-software/why-did-you-render": "^8.0.1",
     "autoprefixer": "^10.4.17",
     "babel-loader": "^9.1.3",

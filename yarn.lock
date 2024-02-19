@@ -3025,7 +3025,6 @@ __metadata:
     "@plitzi/sdk-shared": "*"
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/interactions-shared": "file:../../packages/interactions-shared"
-    "@repo/tailwind-config": "file:../../packages/tailwind-config"
     "@welldone-software/why-did-you-render": ^8.0.1
     apollo-upload-client: ^18.0.1
     autoprefixer: ^10.4.17
@@ -3100,7 +3099,6 @@ __metadata:
     "@plitzi/sdk-shared": "*"
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.11
     "@repo/interactions-shared": "file:../../packages/interactions-shared"
-    "@repo/tailwind-config": "file:../../packages/tailwind-config"
     "@storybook/addon-essentials": ^7.6.16
     "@storybook/addon-interactions": ^7.6.16
     "@storybook/addon-links": ^7.6.16
@@ -3226,11 +3224,13 @@ __metadata:
     "@babel/eslint-parser": ^7.23.10
     "@babel/plugin-syntax-flow": ^7.23.3
     "@babel/plugin-transform-react-jsx": ^7.23.4
+    "@tailwindcss/forms": ^0.5.7
     "@testing-library/dom": ^9.3.4
     "@testing-library/jest-dom": ^6.4.2
     "@testing-library/react": ^14.2.1
     "@testing-library/react-hooks": ^8.0.1
     "@testing-library/user-event": ^14.5.2
+    autoprefixer: ^10.4.17
     eslint: ^8.56.0
     eslint-config-airbnb: ^19.0.4
     eslint-config-prettier: ^9.1.0
@@ -3245,6 +3245,7 @@ __metadata:
     eslint-plugin-react-hooks: ^4.6.0
     eslint-plugin-storybook: ^0.8.0
     jest-environment-jsdom: ^29.7.0
+    tailwindcss: ^3.4.1
     twig: ^1.17.1
   languageName: unknown
   linkType: soft
@@ -3886,23 +3887,23 @@ __metadata:
 
 "@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
   version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=0e70f9&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
+  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=af28e8&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
   dependencies:
     "@plitzi/sdk-shared": "*"
     axios: ^1.6.7
     lodash: ^4.17.21
-  checksum: 39d758dc3a7124b0f2b741e52e9566fa1c7861b1927a15c97d2fe50fac6c52ec357416e45586d51714ec95f9d0d16712c881cf2406b3a04a5e8d3e07cae02495
+  checksum: 03a3a696058750ad06617979a9590b19e1e5186272a86e61c79db2f6bb03725590d02e0ea6726d172ef58ba8abf34619f555e917a959d1d2626c00a2e2f73d4d
   languageName: node
   linkType: hard
 
 "@repo/interactions-shared@file:../../packages/interactions-shared::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
   version: 0.0.0
-  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=0e70f9&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
+  resolution: "@repo/interactions-shared@file:../../packages/interactions-shared#../../packages/interactions-shared::hash=af28e8&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
   dependencies:
     "@plitzi/sdk-shared": "*"
     axios: ^1.6.7
     lodash: ^4.17.21
-  checksum: 39d758dc3a7124b0f2b741e52e9566fa1c7861b1927a15c97d2fe50fac6c52ec357416e45586d51714ec95f9d0d16712c881cf2406b3a04a5e8d3e07cae02495
+  checksum: 03a3a696058750ad06617979a9590b19e1e5186272a86e61c79db2f6bb03725590d02e0ea6726d172ef58ba8abf34619f555e917a959d1d2626c00a2e2f73d4d
   languageName: node
   linkType: hard
 
@@ -3938,30 +3939,6 @@ __metadata:
     lodash: ^4.17.21
     prop-types: ^15.8.1
     react: ^18.2.0
-  languageName: unknown
-  linkType: soft
-
-"@repo/tailwind-config@file:../../packages/tailwind-config::locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder":
-  version: 0.0.0
-  resolution: "@repo/tailwind-config@file:../../packages/tailwind-config#../../packages/tailwind-config::hash=1c2238&locator=%40plitzi%2Fplitzi-builder%40workspace%3Aapps%2Fbuilder"
-  checksum: 85a193f75541835d5d7a83ee71b52f0f24ad24d9f8bbb05ba6c40458db647ef3548c7eb91a597166370987ff17fc65f4771ecdc6f230739de450dc011df86d57
-  languageName: node
-  linkType: hard
-
-"@repo/tailwind-config@file:../../packages/tailwind-config::locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk":
-  version: 0.0.0
-  resolution: "@repo/tailwind-config@file:../../packages/tailwind-config#../../packages/tailwind-config::hash=1c2238&locator=%40plitzi%2Fplitzi-sdk%40workspace%3Aapps%2Fsdk"
-  checksum: 85a193f75541835d5d7a83ee71b52f0f24ad24d9f8bbb05ba6c40458db647ef3548c7eb91a597166370987ff17fc65f4771ecdc6f230739de450dc011df86d57
-  languageName: node
-  linkType: hard
-
-"@repo/tailwind-config@workspace:packages/tailwind-config":
-  version: 0.0.0-use.local
-  resolution: "@repo/tailwind-config@workspace:packages/tailwind-config"
-  dependencies:
-    "@tailwindcss/forms": ^0.5.7
-    autoprefixer: ^10.4.17
-    tailwindcss: ^3.4.1
   languageName: unknown
   linkType: soft
 

@@ -1,5 +1,5 @@
 import { join } from 'path';
-import sharedConfig from '@repo/tailwind-config';
+import sharedConfig from '@plitzi/sdk-shared/tailwind.config';
 
 const config = {
   content: [
