@@ -26,7 +26,7 @@ jobs:
           node-version: 20
           registry-url: https://npm.pkg.github.com
           scope: '@plitzi'
-          cache: 'yarn'
+          # cache: 'yarn'
 
       - name: Cache node_modules
         id: cache-packages
