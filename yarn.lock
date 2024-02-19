@@ -3241,9 +3241,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-schema@workspace:packages/schema-shared":
+"@plitzi/sdk-schema@workspace:packages/sdk-schema":
   version: 0.0.0-use.local
-  resolution: "@plitzi/sdk-schema@workspace:packages/schema-shared"
+  resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
   dependencies:
     "@plitzi/sdk-shared": "*"
     eslint: ^8.56.0
