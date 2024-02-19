@@ -86,7 +86,7 @@
     "terser-webpack-plugin": "^5.3.10",
     "thread-loader": "^4.0.2",
     "url-loader": "^4.1.1",
-    "webpack": "^5.90.2",
+    "webpack": "^5.90.3",
     "webpack-assets-manifest": "^5.1.0",
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.1.4",
