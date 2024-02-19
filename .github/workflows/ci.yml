@@ -27,6 +27,8 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@plitzi'
           cache: 'yarn'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
       - name: Cache node_modules
         id: cache-packages
