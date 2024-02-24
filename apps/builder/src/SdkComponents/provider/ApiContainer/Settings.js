@@ -1,16 +1,28 @@
 // Packages
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+// Alias
+import NavigationContext from '@pmodules/Navigation/NavigationContext';
+
 const Settings = props => {
   const { query = '', method = 'get', accessToken = '', subType = 'div', mockData = '{}', onUpdate = noop } = props;
   const handleChange = key => e => onUpdate(key, e.target.value);
 
+  const handleChangeQuery = useCallback(value => onUpdate('query', value), [onUpdate]);
+
   const handleChangeMockData = useCallback(value => onUpdate('mockData', value), [onUpdate]);
+
+  const { routeParams, queryParams } = useContext(NavigationContext);
+
+  const queryParamsAutoComplete = useMemo(
+    () => [...Object.keys(routeParams), ...Object.keys(queryParams)],
+    [routeParams, queryParams]
+  );
 
   return (
     <div className="flex flex-col grow">
@@ -20,7 +32,16 @@ const Settings = props => {
       <div className="flex flex-col grow p-2">
         <div className="flex flex-col">
           <label>Query</label>
-          <Input value={query} onChange={handleChange('query')} inputClassName="rounded" />
+          <CodeMirror
+            className="basis-auto border border-gray-300 rounded font-rubik text-sm px-3 py-1"
+            value={query}
+            theme="light"
+            mode="text"
+            autoComplete={queryParamsAutoComplete}
+            lineWrapping
+            multiline={false}
+            onChange={handleChangeQuery}
+          />
         </div>
         <div className="flex flex-col py-2">
           <label>Method</label>
