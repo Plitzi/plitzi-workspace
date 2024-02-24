@@ -145,7 +145,8 @@ const Form = forwardRef((props, ref) => {
         params: {},
         preview: {
           values: Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {}),
-          actionUrl: ''
+          actionUrl: '',
+          method: ''
         }
       }
     }),
@@ -168,9 +169,9 @@ const Form = forwardRef((props, ref) => {
       }
 
       const valuesParsed = Object.values(fields).reduce((acum, { name }) => ({ ...acum, [name]: values[name] }), {});
-      interactionsManager.interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl });
+      interactionsManager.interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl, method });
     },
-    [fields, values, managedByInteractions, actionUrl, setElementState, previewMode, interactionsManager]
+    [fields, values, managedByInteractions, actionUrl, setElementState, previewMode, interactionsManager, method]
   );
 
   const handleReset = useCallback(
