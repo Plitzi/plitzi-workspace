@@ -1,6 +1,7 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -8,20 +9,28 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Alias
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
+import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
 const Settings = props => {
   const { query = '', method = 'get', accessToken = '', subType = 'div', mockData = '{}', onUpdate = noop } = props;
+  const { pageDefinitions } = useContext(SchemaMainContext);
+  const { routeParams, queryParams, currentPageId } = useContext(NavigationContext);
+
   const handleChange = key => e => onUpdate(key, e.target.value);
 
   const handleChangeQuery = useCallback(value => onUpdate('query', value), [onUpdate]);
 
   const handleChangeMockData = useCallback(value => onUpdate('mockData', value), [onUpdate]);
 
-  const { routeParams, queryParams } = useContext(NavigationContext);
+  const urlParams = useMemo(() => {
+    const slug = get(pageDefinitions, `${currentPageId}.attributes.slug`, '');
+
+    return [...slug.matchAll(/:[a-z0-9_-]+/gim)].map(match => match[0].slice(1));
+  }, [pageDefinitions, currentPageId]);
 
   const queryParamsAutoComplete = useMemo(
-    () => [...Object.keys(routeParams), ...Object.keys(queryParams)],
-    [routeParams, queryParams]
+    () => [...Object.keys(routeParams), ...Object.keys(queryParams), ...urlParams],
+    [routeParams, queryParams, urlParams]
   );
 
   return (
