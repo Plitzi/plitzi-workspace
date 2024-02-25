@@ -18,8 +18,12 @@ const processParams = (type, params, flowValues, globalValues, action) => {
 
   return Object.keys(params).reduce((acum, param) => {
     let value = params[param];
-    if (type !== 'trigger' && typeof value === 'string' && value && hasTokens(value)) {
-      value = processTwig(value, { ...flowValues, ...globalValues }, !isValidTokenNode(value));
+    if (type !== 'trigger') {
+      let timeout = 5;
+      while (typeof value === 'string' && hasTokens(value) && timeout > 0) {
+        value = processTwig(value, { ...flowValues, ...globalValues }, !isValidTokenNode(value));
+        timeout--;
+      }
     }
 
     return { ...acum, [param]: value };

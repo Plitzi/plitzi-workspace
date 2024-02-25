@@ -126,7 +126,7 @@ const ApiContainer = forwardRef((props, ref) => {
   const sourceFields = useCallback(
     async (refetch = false) => {
       let data = state;
-      if (refetch) {
+      if (refetch && state && state.statusCode > 0 && state.statusCode <= 399) {
         const response = await fetch(queryCompiled, method);
         if (response && typeof response === 'object') {
           const { status, data: responseData } = response;
