@@ -1,5 +1,11 @@
 # @plitzi/sdk-style
 
+## 0.19.3
+
+### Patch Changes
+
+- v0.19.3
+
 ## 0.19.2
 
 ### Patch Changes
