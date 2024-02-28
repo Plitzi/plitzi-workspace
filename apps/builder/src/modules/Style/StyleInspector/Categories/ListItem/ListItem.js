@@ -9,7 +9,6 @@ import Icons from '@pcomponents/Icons';
 
 // Relatives
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
 
@@ -100,4 +99,4 @@ ListItem.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(ListItem));
+export default memo(ListItem);

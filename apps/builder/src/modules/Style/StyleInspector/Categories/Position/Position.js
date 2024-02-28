@@ -15,7 +15,6 @@ import PositionClear from './PositionClear';
 import PositionFloat from './PositionFloat';
 import PositionAdvanced from './PositionAdvanced';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
 
@@ -128,4 +127,4 @@ Position.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(Position));
+export default memo(Position);

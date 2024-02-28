@@ -22,7 +22,6 @@ const StyleViewer = () => {
     selector => {
       let style = '';
       if (!isEmpty(selector)) {
-        selector = btoa(selector);
         Object.keys(platform).forEach(mode => {
           const segment = platform[mode][selector];
 

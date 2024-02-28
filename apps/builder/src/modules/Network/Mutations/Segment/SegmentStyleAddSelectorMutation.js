@@ -6,6 +6,7 @@ const SegmentStyleAddSelectorMutation = gql`
     $environment: String!
     $displayMode: String!
     $selector: String!
+    $type: String!
     $path: String
     $style: Json
     $contextId: String!
@@ -14,6 +15,7 @@ const SegmentStyleAddSelectorMutation = gql`
       environment: $environment
       displayMode: $displayMode
       selector: $selector
+      type: $type
       path: $path
       style: $style
       contextId: $contextId

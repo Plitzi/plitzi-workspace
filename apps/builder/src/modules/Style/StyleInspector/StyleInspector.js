@@ -23,6 +23,7 @@ import Selector from '../Selector';
 import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
 import InspectorModeBasic from './modes/InspectorModeBasic';
 import { emptyObject } from '../../../helpers/utils';
+import { StyleSelectors } from '../StyleHelper';
 
 const StyleInspector = props => {
   const { mode = 'element', styleSelectors = emptyObject, element, allowStyleSelector = true } = props;
@@ -59,8 +60,8 @@ const StyleInspector = props => {
           set(draft, `definition.styleSelectors.${styleSelector}`, value);
         })
       );
-      if (value !== '' && !platform[displayMode][btoa(value)]) {
-        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, value);
+      if (value !== '' && !platform[displayMode][value]) {
+        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, value, StyleSelectors.SELECTOR_CLASS);
       }
     },
     [element, builderHandler, styleSelector]

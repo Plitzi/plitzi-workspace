@@ -30,7 +30,6 @@ import BorderRadius from './BorderRadius';
 import BorderPlacements from './BorderPlacements';
 import BorderWidth from './BorderWidth';
 import BorderColor from './BorderColor';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 
 const BORDER_TOP = 'top';
@@ -204,4 +203,4 @@ Border.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(Border));
+export default memo(Border);

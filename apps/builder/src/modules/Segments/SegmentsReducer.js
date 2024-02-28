@@ -90,12 +90,13 @@ const SegmentsReducer = (state, action = {}) => {
 
     case SegmentsActions.SEGMENTS_SELECTOR_ADD:
     case SegmentsActions.SEGMENTS_SELECTOR_UPDATE: {
-      const { displayMode, selector, path, value } = action;
+      const { displayMode, selector, selectorType = 'class', path, value } = action;
 
       if (!path) {
         return produce(state, draft => {
-          const selectorInstance = get(draft, `${identifier}.style.platform.${displayMode}.${btoa(selector)}`, {
+          const selectorInstance = get(draft, `${identifier}.style.platform.${displayMode}.${selector}`, {
             name: selector,
+            type: selectorType,
             attributes: {},
             cache: ''
           });
@@ -104,9 +105,9 @@ const SegmentsReducer = (state, action = {}) => {
             set(selectorInstance, 'attributes', value);
           }
 
-          set(draft, `${identifier}.style.platform.${displayMode}.${btoa(selector)}`, {
+          set(draft, `${identifier}.style.platform.${displayMode}.${selector}`, {
             ...selectorInstance,
-            cache: `${selector}{${processSelector(selectorInstance.attributes)}}`
+            cache: processSelector(selector, selectorType, selectorInstance.attributes)
           });
 
           set(
@@ -118,8 +119,9 @@ const SegmentsReducer = (state, action = {}) => {
       }
 
       return produce(state, draft => {
-        const selectorInstance = get(draft, `${identifier}.style.platform.${displayMode}.${btoa(selector)}`, {
+        const selectorInstance = get(draft, `${identifier}.style.platform.${displayMode}.${selector}`, {
           name: selector,
+          type: selectorType,
           attributes: {},
           cache: ''
         });
@@ -132,9 +134,9 @@ const SegmentsReducer = (state, action = {}) => {
           set(selectorInstance, `attributes.${path}`, value);
         }
 
-        set(draft, `${identifier}.style.platform.${displayMode}.${btoa(selector)}`, {
+        set(draft, `${identifier}.style.platform.${displayMode}.${selector}`, {
           ...selectorInstance,
-          cache: `${selector}{${processSelector(selectorInstance.attributes)}}`
+          cache: processSelector(selector, selectorType, selectorInstance.attributes)
         });
 
         set(

@@ -30,7 +30,6 @@ import TypographyStyle from './TypographyStyle';
 import TypographyAlign from './TypographyAlign';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import { defaultFonts } from './TypographyConstants';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
 
@@ -247,4 +246,4 @@ Typography.propTypes = {
   fonts: PropTypes.array
 };
 
-export default memo(withStyleInspector(Typography));
+export default memo(Typography);

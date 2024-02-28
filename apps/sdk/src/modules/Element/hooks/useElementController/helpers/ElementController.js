@@ -9,7 +9,6 @@ import noop from 'lodash/noop';
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 
 // Alias
-import { classStringFilter, StyleSelectors } from '@modules/Style/StyleHelper';
 import PluginManager from '@modules/Element/PluginManager';
 import { PARTIAL_SCHEMA_TYPE_SEGMENT } from '@modules/Element/ElementConstants';
 
@@ -167,19 +166,8 @@ class ElementController {
       rootId: get(plitziElementLayout, 'rootId', rootId),
       attributes: { ...attributesFinal, ...customAttributes },
       definition,
-      interactions: definition.interactions,
-      styleSelectors: Object.keys(get(definition, 'styleSelectors', {})).reduce(
-        (acum, styleSelectorKey) => ({
-          ...acum,
-          [styleSelectorKey]: classStringFilter(
-            definition.styleSelectors[styleSelectorKey],
-            [StyleSelectors.SELECTOR_CLASS],
-            false,
-            ' '
-          )
-        }),
-        {}
-      )
+      interactions: get(definition, 'interactions', {}),
+      styleSelectors: get(definition, 'styleSelectors', {})
     };
   };
 

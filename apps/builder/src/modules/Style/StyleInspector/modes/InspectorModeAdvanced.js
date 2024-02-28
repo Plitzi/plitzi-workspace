@@ -17,7 +17,13 @@ import BuilderContext from '@pmodules/Builder/BuilderContext';
 import { StyleConstants } from '@pmodules/Style/StyleConstants';
 
 // Relatives
-import { cssToSelectors, getReadOnlyRangesFromContent, formatCssFromSelector, makeSelector } from '../../StyleHelper';
+import {
+  cssToSelectors,
+  getReadOnlyRangesFromContent,
+  formatCssFromSelector,
+  makeSelector,
+  StyleSelectors
+} from '../../StyleHelper';
 
 const selectorsDefault = [];
 
@@ -49,12 +55,13 @@ const InspectorModeAdvanced = props => {
           EventBridgeTypes.STYLE_UPDATE_SELECTOR,
           displayMode,
           currentState.name,
+          selectorInstance?.type,
           null,
           currentState.attributes
         );
       }
     },
-    [builderHandler]
+    [builderHandler, displayMode, selectorInstance?.type]
   );
 
   const syncDebounced = useMemo(() => debounce(sync, 500), [sync]);
@@ -77,11 +84,18 @@ const InspectorModeAdvanced = props => {
       builderHandler(
         EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
         produce(element, draft => {
-          set(draft, `definition.styleSelectors.${styleSelector}`, `.${customClass}`);
+          set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
         })
       );
 
-      builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, `.${customClass}`, undefined, undefined);
+      builderHandler(
+        EventBridgeTypes.STYLE_ADD_SELECTOR,
+        displayMode,
+        customClass,
+        StyleSelectors.SELECTOR_CLASS,
+        undefined,
+        undefined
+      );
     }
   }, [element, selector, builderHandler, styleSelector]);
 

@@ -6,7 +6,6 @@ import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
 // Relatives
 import { emptyObject, getDisplayName } from '../../../helpers/utils';
-import { classStringFilter, StyleSelectors } from '../../Style/StyleHelper';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useElementController from '../hooks/useElementController';
 
@@ -52,20 +51,12 @@ const withElement = WrappedComponent => {
       [previewMode]
     );
 
-    const selector = useMemo(() => {
-      if (!definition.styleSelectors || !definition.styleSelectors.base) {
-        return '';
-      }
-
-      return classStringFilter(definition.styleSelectors.base, [StyleSelectors.SELECTOR_CLASS], false, ' ');
-    }, [definition.styleSelectors]);
-
     return useMemo(
       () => (
         <ErrorBoundary>
           <WrappedComponent
             {...internalProps.attributes}
-            className={classNames(className, selector)}
+            className={classNames(className, definition.styleSelectors?.base)}
             // Plitzi
             ref={refProxy}
             internalProps={internalProps}

@@ -21,7 +21,6 @@ import SizeOverflow from './SizeOverflow';
 import SizePosition from './SizePosition';
 import SizeFit from './SizeFit';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
 
@@ -103,4 +102,4 @@ Size.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(Size));
+export default memo(Size);

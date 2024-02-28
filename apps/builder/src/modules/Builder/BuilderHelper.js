@@ -10,7 +10,7 @@ import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
-import { generateCache, generateStyleSelector, makeSelector } from '@pmodules/Style/StyleHelper';
+import { StyleSelectors, generateCache, generateStyleSelector, makeSelector } from '@pmodules/Style/StyleHelper';
 
 // Relatives
 import { generateID } from '../../helpers/utils';
@@ -203,7 +203,7 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
       metadata: { size }
     } = data;
     const type = file.type.split('/')[0];
-    const selector = `.${makeSelector(type)}`;
+    const selector = makeSelector(type);
     const elementDefinition = getElementDefinition(componentDefinitions, type, {}, { base: selector });
     mutate('SpaceAddResource', { resource: file }, false, false, { customFetch: true }).then(result => {
       if (result instanceof Error) {
@@ -217,8 +217,8 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
     if (size) {
       set(
         templateData,
-        `style.platform.desktop.${btoa(selector)}`,
-        generateStyleSelector(selector, { height: `${size?.height}px`, width: `${size?.width}px` })
+        `style.platform.desktop.${selector}`,
+        generateStyleSelector(selector, StyleSelectors.SELECTOR_CLASS, { height: `${size?.height}px`, width: `${size?.width}px` })
       );
       set(templateData, 'style.cache', generateCache({ platform: get(templateData, 'style.platform') }));
     }

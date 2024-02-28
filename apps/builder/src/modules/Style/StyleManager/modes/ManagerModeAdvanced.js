@@ -56,11 +56,12 @@ const ManagerModeAdvanced = props => {
         EventBridgeTypes.STYLE_UPDATE_SELECTOR,
         displayMode,
         currentState.name,
+        selector.type,
         null,
         currentState.attributes
       );
     },
-    [builderHandler]
+    [builderHandler, displayMode, selector?.type]
   );
 
   const syncDebounced = useMemo(() => debounce(sync, 500), [sync]);

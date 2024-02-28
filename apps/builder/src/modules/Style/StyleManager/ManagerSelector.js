@@ -60,7 +60,7 @@ const ManagerSelector = props => {
         data: { name }
       } = response;
 
-      builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, name);
+      builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, name, StyleSelectors.SELECTOR_CLASS);
     }
   }, [builderHandler]);
 
@@ -122,7 +122,7 @@ const ManagerSelector = props => {
         );
       });
 
-      builderHandler(EventBridgeTypes.STYLE_REMOVE_SELECTOR, btoa(selector));
+      builderHandler(EventBridgeTypes.STYLE_REMOVE_SELECTOR, selector);
       onSelect(undefined);
     },
     [flatList, onSelect, builderHandler]
@@ -162,17 +162,7 @@ const ManagerSelector = props => {
       </div>
       <div className="flex flex-col grow basis-0 overflow-y-auto">
         {finalSelectors.map(selector => {
-          const { name } = selector;
-          let type = StyleSelectors.SELECTOR_CLASS;
-          if (name.includes('.')) {
-            type = StyleSelectors.SELECTOR_CLASS;
-          } else if (name.includes('#')) {
-            type = StyleSelectors.SELECTOR_ID;
-          } else if (name.includes(' ')) {
-            type = StyleSelectors.SELECTOR_PARENT;
-          } else {
-            type = StyleSelectors.SELECTOR_ELEMENT;
-          }
+          const { name, type } = selector;
 
           return (
             <StyleSelectorTag

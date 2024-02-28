@@ -29,7 +29,7 @@ const SelectorTag = props => {
       return;
     }
 
-    if (![StyleSelectors.SELECTOR_STATE, StyleSelectors.SELECTOR_ELEMENT].includes(type)) {
+    if (![StyleSelectors.SELECTOR_STATE].includes(type)) {
       flushSync(() => {
         setEditMode(true);
       });

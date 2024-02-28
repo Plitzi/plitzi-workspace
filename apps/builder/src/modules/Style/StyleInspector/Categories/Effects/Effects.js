@@ -12,7 +12,6 @@ import BoxShadow from './BoxShadow';
 import Filter from './Filters/Filter';
 import Transform from './Transform/Transform';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
 
@@ -122,4 +121,4 @@ Effects.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(Effects));
+export default memo(Effects);

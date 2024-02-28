@@ -192,12 +192,13 @@ const SegmentsContextProvider = props => {
   // Style Actions
 
   const segmentAddSelector = useCallback(
-    (segmentId, displayMode, selector, path, value, fromSubscriptions = false) =>
+    (segmentId, displayMode, selector, type, path, value, fromSubscriptions = false) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_SELECTOR_ADD,
         segmentId,
         displayMode,
         selector,
+        selectorType: type,
         path,
         value,
         fromSubscriptions
@@ -206,12 +207,13 @@ const SegmentsContextProvider = props => {
   );
 
   const segmentUpdateSelector = useCallback(
-    (segmentId, displayMode, selector, path, value, fromSubscriptions = false) =>
+    (segmentId, displayMode, selector, type, path, value, fromSubscriptions = false) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_SELECTOR_UPDATE,
         segmentId,
         displayMode,
         selector,
+        selectorType: type,
         path,
         value,
         fromSubscriptions
@@ -244,8 +246,8 @@ const SegmentsContextProvider = props => {
 
         Object.values(styleSelectors).forEach(selector => {
           ['desktop', 'tablet', 'mobile'].forEach(mode => {
-            if (style.platform[mode][btoa(selector)]) {
-              elementsStyle.platform[mode][btoa(selector)] = style.platform[mode][btoa(selector)];
+            if (style.platform[mode][selector]) {
+              elementsStyle.platform[mode][selector] = style.platform[mode][selector];
             }
           });
         });
@@ -328,8 +330,8 @@ const SegmentsContextProvider = props => {
         SubscriptionEventTypes.SEGMENT_STYLE_SELECTOR_ADD,
         {},
         data => {
-          const { displayMode, selector, path, style, contextId } = get(data, 'data.SegmentStyleAddSelector', {});
-          segmentAddSelector(contextId, displayMode, selector, path, style, true);
+          const { displayMode, selector, type, path, style, contextId } = get(data, 'data.SegmentStyleAddSelector', {});
+          segmentAddSelector(contextId, displayMode, selector, type, path, style, true);
         }
       );
       subscriptionManager.subscribe(
@@ -337,8 +339,12 @@ const SegmentsContextProvider = props => {
         SubscriptionEventTypes.SEGMENT_STYLE_SELECTOR_UPDATE,
         {},
         data => {
-          const { displayMode, selector, path, style, contextId } = get(data, 'data.SegmentStyleUpdateSelector', {});
-          segmentUpdateSelector(contextId, displayMode, selector, path, style, true);
+          const { displayMode, selector, type, path, style, contextId } = get(
+            data,
+            'data.SegmentStyleUpdateSelector',
+            {}
+          );
+          segmentUpdateSelector(contextId, displayMode, selector, type, path, style, true);
         }
       );
       subscriptionManager.subscribe(
@@ -347,7 +353,7 @@ const SegmentsContextProvider = props => {
         {},
         data => {
           const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {});
-          segmentRemoveSelector(contextId, btoa(selector), true);
+          segmentRemoveSelector(contextId, selector, true);
         }
       );
     }

@@ -19,7 +19,6 @@ import ImageMode from './modes/ImageMode';
 import LinearGradientMode from './modes/LinearGradientMode';
 import RadialGradientMode from './modes/RadialGradientMode';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
 
@@ -172,4 +171,4 @@ Background.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(Background));
+export default memo(Background);

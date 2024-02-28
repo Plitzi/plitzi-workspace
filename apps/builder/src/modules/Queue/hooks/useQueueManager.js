@@ -146,21 +146,21 @@ const useQueueManager = (props = {}) => {
         // Style
 
         case StyleActions.STYLE_ADD_SELECTOR: {
-          const { displayMode, selector, path, value } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value } = itemParsed.data;
 
-          return mutate('StyleAddSelector', { displayMode, selector, path, style: value });
+          return mutate('StyleAddSelector', { displayMode, selector, type: selectorType, path, style: value });
         }
 
         case StyleActions.STYLE_UPDATE_SELECTOR: {
-          const { displayMode, selector, path, value } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value } = itemParsed.data;
 
-          return mutate('StyleUpdateSelector', { displayMode, selector, path, style: value });
+          return mutate('StyleUpdateSelector', { displayMode, selector, type: selectorType, path, style: value });
         }
 
         case StyleActions.STYLE_REMOVE_SELECTOR: {
           const { selector } = itemParsed.data;
 
-          return mutate('StyleRemoveSelector', { selector: atob(selector) });
+          return mutate('StyleRemoveSelector', { selector });
         }
 
         case StyleActions.STYLE_UPDATE: {
@@ -231,11 +231,12 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_SELECTOR_ADD: {
-          const { displayMode, selector, path, value, segmentId } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value, segmentId } = itemParsed.data;
 
           return mutate('SegmentStyleAddSelector', {
             displayMode,
             selector,
+            type: selectorType,
             path,
             style: value,
             contextId: segmentId
@@ -243,11 +244,12 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_SELECTOR_UPDATE: {
-          const { displayMode, selector, path, value, segmentId } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value, segmentId } = itemParsed.data;
 
           return mutate('SegmentStyleUpdateSelector', {
             displayMode,
             selector,
+            type: selectorType,
             path,
             style: value,
             contextId: segmentId
@@ -257,7 +259,7 @@ const useQueueManager = (props = {}) => {
         case SegmentsActions.SEGMENTS_SELECTOR_REMOVE: {
           const { selector, segmentId } = itemParsed.data;
 
-          return mutate('SegmentStyleRemoveSelector', { selector: atob(selector), contextId: segmentId });
+          return mutate('SegmentStyleRemoveSelector', { selector, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {

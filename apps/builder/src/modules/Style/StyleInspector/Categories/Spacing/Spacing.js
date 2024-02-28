@@ -17,7 +17,6 @@ import {
 import SpacingMargin from './SpacingMargin';
 import SpacingEditor from './SpacingEditor';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 
 const dotKeys = [
@@ -76,4 +75,4 @@ Spacing.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(Spacing));
+export default memo(Spacing);

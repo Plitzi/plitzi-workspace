@@ -30,7 +30,6 @@ import DisplayFlexJustify from './DisplayFlexJustify';
 import DisplayFlex from './DisplayFlex';
 import DisplayFlexAlignContent from './DisplayFlexAlignContent';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import DisplayGap from './DIsplayGap';
 import CategoryContainer from '../../../components/CategoryContainer';
 import DisplayGridTemplate from './DisplayGridTemplate';
@@ -124,4 +123,4 @@ Display.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(Display));
+export default memo(Display);

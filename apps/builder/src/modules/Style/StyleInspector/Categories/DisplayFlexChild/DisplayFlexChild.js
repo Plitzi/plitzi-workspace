@@ -12,7 +12,6 @@ import { ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS } from '@pmodules
 import DisplayAlignSelf from './DisplayAlignSelf';
 import DisplayOrder from './DisplayOrder';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import withStyleInspector from '../../withStyleInspector';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
 
@@ -114,4 +113,4 @@ DisplayFlexChild.propTypes = {
   onCollapse: PropTypes.func
 };
 
-export default memo(withStyleInspector(DisplayFlexChild));
+export default memo(DisplayFlexChild);

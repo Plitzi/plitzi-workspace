@@ -24,7 +24,7 @@ const OverlaySpacing = props => {
       return {};
     }
 
-    return get(style, `platform.${displayMode}.${btoa(selector)}.attributes`, {});
+    return get(style, `platform.${displayMode}.${selector}.attributes`, {});
   }, [style, displayMode, selector]);
 
   const getStyle = () => {

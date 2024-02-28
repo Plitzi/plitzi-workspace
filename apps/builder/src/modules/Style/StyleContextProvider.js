@@ -59,22 +59,31 @@ const StyleContextProvider = props => {
   );
 
   const styleAddSelector = useCallback(
-    (displayMode, selector, path, value, fromSubscriptions = false) => {
+    (displayMode, selector, type, path, value, fromSubscriptions = false) => {
       if (!selector) {
-        selector = `.${makeSelector(type)}`;
+        selector = makeSelector(type);
       }
 
-      dispatchStyle({ type: StyleActions.STYLE_ADD_SELECTOR, displayMode, selector, path, value, fromSubscriptions });
+      dispatchStyle({
+        type: StyleActions.STYLE_ADD_SELECTOR,
+        displayMode,
+        selector,
+        selectorType: type,
+        path,
+        value,
+        fromSubscriptions
+      });
     },
     [dispatchStyle]
   );
 
   const styleUpdateSelector = useCallback(
-    (displayMode, selector, path, value, fromSubscriptions = false) =>
+    (displayMode, selector, type, path, value, fromSubscriptions = false) =>
       dispatchStyle({
         type: StyleActions.STYLE_UPDATE_SELECTOR,
         displayMode,
         selector,
+        selectorType: type,
         path,
         value,
         fromSubscriptions
@@ -102,18 +111,18 @@ const StyleContextProvider = props => {
       });
 
       subscriptionManager.subscribe('StyleAddSelector', SubscriptionEventTypes.STYLE_ADD_SELECTOR, {}, data => {
-        const { displayMode, selector, path, style } = get(data, 'data.StyleAddSelector', {});
-        styleAddSelector(displayMode, selector, path, style, true);
+        const { displayMode, selector, type, path, style } = get(data, 'data.StyleAddSelector', {});
+        styleAddSelector(displayMode, selector, type, path, style, true);
       });
 
       subscriptionManager.subscribe('StyleUpdateSelector', SubscriptionEventTypes.STYLE_UPDATE_SELECTOR, {}, data => {
-        const { displayMode, selector, path, style } = get(data, 'data.StyleUpdateSelector', {});
-        styleUpdateSelector(displayMode, selector, path, style, true);
+        const { displayMode, selector, type, path, style } = get(data, 'data.StyleUpdateSelector', {});
+        styleUpdateSelector(displayMode, selector, type, path, style, true);
       });
 
       subscriptionManager.subscribe('StyleRemoveSelector', SubscriptionEventTypes.STYLE_REMOVE_SELECTOR, {}, data => {
         const { selector } = get(data, 'data.StyleRemoveSelector', {});
-        styleRemoveSelector(btoa(selector), true);
+        styleRemoveSelector(selector, true);
       });
     }
   }, [subscriptionManager, includeSubscriptions]);

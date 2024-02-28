@@ -1,20 +1,26 @@
 // Packages
-import React, { memo, useMemo, useRef, useState } from 'react';
+import React, { memo, useContext, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
+import get from 'lodash/get';
+import pick from 'lodash/pick';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
+
+// Alias
+import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 
 // Relatives
 import SelectorTag from './SelectorTag';
 import { selectorFormatter } from './SelectorHelper';
-import { StyleSelectors, selectorToString, stringToSelector } from '../StyleHelper';
+import { StyleSelectors, selectorToString } from '../StyleHelper';
 
 const Selector = props => {
   const { className = '', value, displayMode = 'desktop', disabled = false, onChange = noop } = props;
   const inputRef = useRef(null);
   const [inputValue, setInputValue] = useState('');
-  const tags = useMemo(() => stringToSelector(value), [value]);
+  const { style } = useContext(BuilderStyleContext);
+  const tags = useMemo(() => Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))), [value]);
   const currentState = useMemo(() => tags.find(v => v.type === StyleSelectors.SELECTOR_STATE), [tags]);
 
   const handleChange = e => setInputValue(e.target.value);
@@ -99,7 +105,7 @@ const Selector = props => {
         tags.map((tag, i) => (
           <SelectorTag
             key={`${i}-${tag.value}`}
-            selector={tag.value}
+            selector={tag.name}
             type={tag.type}
             onRemove={handleClickRemove(i)}
             onChange={handleChangeItem(i)}

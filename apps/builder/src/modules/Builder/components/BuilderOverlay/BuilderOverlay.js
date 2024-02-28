@@ -111,7 +111,7 @@ const BuilderOverlay = props => {
       return {};
     }
 
-    return get(style, `platform.${displayMode}.${btoa(overlayProps?.selector)}.attributes`, {});
+    return get(style, `platform.${displayMode}.${overlayProps?.selector}.attributes`, {});
   }, [style, displayMode, overlayProps?.selector]);
 
   useEffect(() => {

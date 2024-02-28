@@ -12,7 +12,7 @@ import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
-import { makeSelector } from '@pmodules/Style/StyleHelper';
+import { StyleSelectors, makeSelector } from '@pmodules/Style/StyleHelper';
 
 // Relatives
 import OverlaySpacing from './OverlaySpacing';
@@ -98,20 +98,21 @@ const OverlayNormal = forwardRef((props, ref) => {
 
       let selector = get(element, 'definition.styleSelectors.base', '');
       if (!selector) {
-        selector = `.${makeSelector(type)}`;
+        selector = makeSelector(type);
         builderHandler(
           EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
           produce(element, draft => {
             set(draft, 'definition.styleSelectors.base', selector);
           })
         );
-        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, selector, '', {
+        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, selector, StyleSelectors.SELECTOR_CLASS, '', {
           width: `${width}px`,
           height: `${height}px`
         });
       } else {
-        const values = get(styleRef.current, `platform.${displayMode}.${btoa(selector)}.attributes`);
-        builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, '', {
+        const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`);
+        const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
+        builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, '', {
           ...values,
           width: `${width}px`,
           height: `${height}px`

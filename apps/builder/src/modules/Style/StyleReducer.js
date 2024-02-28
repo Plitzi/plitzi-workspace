@@ -23,11 +23,12 @@ const StyleReducer = (state, action = {}) => {
 
     case StyleActions.STYLE_ADD_SELECTOR:
     case StyleActions.STYLE_UPDATE_SELECTOR: {
-      const { displayMode, selector, path, value } = action;
+      const { displayMode, selector, path, selectorType = 'class', value } = action;
       if (!path) {
         return produce(state, draft => {
-          const selectorInstance = get(draft, `platform.${displayMode}.${btoa(selector)}`, {
+          const selectorInstance = get(draft, `platform.${displayMode}.${selector}`, {
             name: selector,
+            type: selectorType,
             attributes: {},
             cache: ''
           });
@@ -36,9 +37,9 @@ const StyleReducer = (state, action = {}) => {
             set(selectorInstance, 'attributes', value);
           }
 
-          set(draft, `platform.${displayMode}.${btoa(selector)}`, {
+          set(draft, `platform.${displayMode}.${selector}`, {
             ...selectorInstance,
-            cache: `${selector}{${processSelector(selectorInstance.attributes)}}`
+            cache: processSelector(selector, selectorType, selectorInstance.attributes)
           });
 
           set(draft, 'cache', generateCache({ platform: get(draft, 'platform') }));
@@ -46,8 +47,9 @@ const StyleReducer = (state, action = {}) => {
       }
 
       return produce(state, draft => {
-        const selectorInstance = get(draft, `platform.${displayMode}.${btoa(selector)}`, {
+        const selectorInstance = get(draft, `platform.${displayMode}.${selector}`, {
           name: selector,
+          type: selectorType,
           attributes: {},
           cache: ''
         });
@@ -61,9 +63,9 @@ const StyleReducer = (state, action = {}) => {
           set(selectorInstance, `attributes.${path}`, value);
         }
 
-        set(draft, `platform.${displayMode}.${btoa(selector)}`, {
+        set(draft, `platform.${displayMode}.${selector}`, {
           ...selectorInstance,
-          cache: `${selector}{${processSelector(selectorInstance.attributes)}}`
+          cache: processSelector(selector, selectorType, selectorInstance.attributes)
         });
 
         set(draft, 'cache', generateCache({ platform: get(draft, 'platform') }));
