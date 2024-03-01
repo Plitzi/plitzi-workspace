@@ -340,9 +340,8 @@ const flatAsTemplate = (flat, style, elementId, excludeRoot = false) => {
     const calculatedStyle = calculateInheriting(e, flat, style.platform);
     calculatedStyle.tree.forEach(item => {
       const { displayMode, name } = item;
-      const nameEncoded = btoa(name);
-      if (!elementsStyle.platform[displayMode][nameEncoded] && style.platform[displayMode][nameEncoded]) {
-        elementsStyle.platform[displayMode][nameEncoded] = style.platform[displayMode][nameEncoded];
+      if (!elementsStyle.platform[displayMode][name] && style.platform[displayMode][name]) {
+        elementsStyle.platform[displayMode][name] = style.platform[displayMode][name];
       }
     });
   });
