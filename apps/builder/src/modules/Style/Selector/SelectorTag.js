@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
@@ -24,7 +24,15 @@ const SelectorTag = props => {
     onAction = noop
   } = props;
   const [editMode, setEditMode] = useState(false);
-  const [value, setValue] = useState(selector);
+  const { value, state } = useMemo(() => {
+    if (selector.includes(':')) {
+      const [value, state] = selector.split(':');
+
+      return { value, state };
+    }
+
+    return { value: selector, state: '' };
+  }, [selector]);
   const [isVisible, setIsVisible] = useState(false);
 
   const handleClick = useCallback(
@@ -55,14 +63,25 @@ const SelectorTag = props => {
 
   const handleChange = useCallback(
     value => {
-      console.log(value);
-      setValue(value);
-      onChange({ name: selectorFormatter(value), type });
+      if (state) {
+        onChange({ name: `${selectorFormatter(value)}:${state}`, type });
+      } else {
+        onChange({ name: selectorFormatter(value), type });
+      }
     },
-    [value, setValue, type, onChange]
+    [value, type, onChange, state]
   );
 
   const handleDropVisible = useCallback(isVisible => setIsVisible(isVisible), []);
+
+  const handleClickHover = useCallback(() => onChange({ name: `${selectorFormatter(value)}:hover`, type }), [onChange]);
+
+  const handleClickActive = useCallback(
+    () => onChange({ name: `${selectorFormatter(value)}:active`, type }),
+    [onChange]
+  );
+
+  const handleClickFocus = useCallback(() => onChange({ name: `${selectorFormatter(value)}:focus`, type }), [onChange]);
 
   return (
     <div
@@ -133,9 +152,22 @@ const SelectorTag = props => {
             <div className="bg-gray-300 h-[1px] w-full my-2" />
             <div className="font-bold mb-1 px-2">States</div>
             <ul className="flex flex-col gap-1 px-2">
-              <li className="hover:bg-gray-200 px-2 py-1 rounded">Hover</li>
-              <li className="hover:bg-gray-200 px-2 py-1 rounded">Active</li>
-              <li className="hover:bg-gray-200 px-2 py-1 rounded">Focus</li>
+              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1">
+                {state === '' && <i className="fa-solid fa-check text-green-500" />}
+                None
+              </li>
+              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickHover}>
+                {state === 'hover' && <i className="fa-solid fa-check text-green-500" />}
+                Hover
+              </li>
+              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickActive}>
+                {state === 'active' && <i className="fa-solid fa-check text-green-500" />}
+                Active
+              </li>
+              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickFocus}>
+                {state === 'focus' && <i className="fa-solid fa-check text-green-500" />}
+                Focus
+              </li>
             </ul>
           </div>
         </Dropdown.Container>
@@ -164,8 +196,7 @@ SelectorTag.propTypes = {
   editable: PropTypes.bool,
   onChange: PropTypes.func,
   onClick: PropTypes.func,
-  onAction: PropTypes.func,
-  onState: PropTypes.func
+  onAction: PropTypes.func
 };
 
 export default SelectorTag;

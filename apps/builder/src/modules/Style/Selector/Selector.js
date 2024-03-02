@@ -113,7 +113,7 @@ const Selector = props => {
         const { value } = e.target;
 
         if (value !== '' && !tags.find(tag => tag.name === value)) {
-          setInputValue('');
+          setTimeout(() => setInputValue(''), 0);
           const finalValue = [...tags, { name: selectorFormatter(value), type: StyleSelectors.SELECTOR_CLASS }]
             .filter(tag => !!tag?.name)
             .reduce((acum, tag) => `${acum} ${tag.name}`, '')
@@ -121,6 +121,7 @@ const Selector = props => {
 
           onSelectorAdded(value);
           onChange(finalValue);
+          setPopupOpened(false);
           e.target.blur();
           if (!selectorSelected) {
             setSelectorSelected(value);
@@ -156,6 +157,18 @@ const Selector = props => {
     [tags, onChange, selectorSelected]
   );
 
+  const handleSuggestionsCreate = useCallback(
+    tag => {
+      setTimeout(() => setInputValue(''), 0);
+      setPopupOpened(false);
+      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
+      onChange(finalValue);
+      onSelectorAdded(tag.name);
+      setSelectorSelected(tag.name);
+    },
+    [tags, onChange, selectorSelected]
+  );
+
   return (
     <Dropdown
       className="w-full"
@@ -163,10 +176,12 @@ const Selector = props => {
       popupOpened={popupOpened}
       disabled
       onContainerVisible={handleDropdownVisible}
+      backgroundDisabled
+      classNameBackground=""
     >
-      <Dropdown.Content className="w-full flex">
+      <Dropdown.Content className="w-full z-[51]">
         <div
-          className={classNames('flex flex-wrap border border-gray-300 rounded relative p-1 gap-1', className, {
+          className={classNames('flex flex-wrap border border-gray-300 rounded relative p-1 gap-1 flex', className, {
             'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
             'cursor-pointer': !disabled
           })}
@@ -187,7 +202,7 @@ const Selector = props => {
             ))}
           <input
             ref={inputRef}
-            className="border-none bg-transparent w-0 text-inherit outline-none focus:min-w-[50px] focus:grow focus:ring-transparent min-h-0 px-1 text-xs py-0"
+            className="border-none bg-transparent w-0 text-inherit outline-none focus:min-w-[50px] focus:grow focus:ring-transparent min-h-0 px-1 text-xs py-0 flex"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -198,7 +213,12 @@ const Selector = props => {
         </div>
       </Dropdown.Content>
       <Dropdown.Container>
-        <SelectorSuggestions selector={inputValue} selectors={selectorsAvailables} onSelect={handleSuggestionsSelect} />
+        <SelectorSuggestions
+          selector={inputValue}
+          selectors={selectorsAvailables}
+          onSelect={handleSuggestionsSelect}
+          onCreate={handleSuggestionsCreate}
+        />
       </Dropdown.Container>
     </Dropdown>
   );
