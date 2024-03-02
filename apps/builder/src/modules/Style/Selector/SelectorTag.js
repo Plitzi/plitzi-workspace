@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
@@ -75,9 +75,19 @@ const SelectorTag = props => {
     [value, type, onChange, state]
   );
 
+  useEffect(() => {
+    if (!active && state) {
+      onChange({ name: selectorFormatter(value), type }, false);
+    }
+  }, [active]);
+
   const handleDropVisible = useCallback(isVisible => setIsVisible(isVisible), []);
 
-  const handleClickHover = useCallback(() => onChange({ name: `${selectorFormatter(value)}:hover`, type }), [onChange]);
+  const handleClickNone = useCallback(() => onChange({ name: selectorFormatter(value), type }), [onChange]);
+
+  const handleClickHover = useCallback(() => {
+    onChange({ name: `${selectorFormatter(value)}:hover`, type });
+  }, [onChange]);
 
   const handleClickActive = useCallback(
     () => onChange({ name: `${selectorFormatter(value)}:active`, type }),
@@ -156,7 +166,7 @@ const SelectorTag = props => {
             <div className="bg-gray-300 h-[1px] w-full my-2" />
             <div className="font-bold mb-1 px-2">States</div>
             <ul className="flex flex-col gap-1 px-2">
-              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1">
+              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickNone}>
                 {state === '' && <i className="fa-solid fa-check text-green-500" />}
                 None
               </li>

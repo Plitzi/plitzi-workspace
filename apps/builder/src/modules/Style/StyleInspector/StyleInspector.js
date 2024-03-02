@@ -49,10 +49,7 @@ const StyleInspector = props => {
       return selectorActiveInternal;
     }
 
-    const newSelectorActive = get(selector.split(' '), '0');
-    setSelectorActiveInternal(newSelectorActive); // Reset selectorActive
-
-    return newSelectorActive;
+    return get(selector.split(' '), '0');
   }, [selector, selectorActiveInternal]);
 
   useEffect(() => {

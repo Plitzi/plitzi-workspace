@@ -63,15 +63,21 @@ const Selector = props => {
     [onSelectorSelected]
   );
 
-  const handleChangeItem = position => value => {
-    const finalValue = [...tags.filter((tag, i) => i !== position), value]
-      .filter(tag => !!tag?.name)
-      .reduce((acum, tag) => `${acum} ${tag.name}`, '')
-      .trim();
+  const handleChangeItem =
+    position =>
+    (value, selectTag = true) => {
+      const finalValue = [...tags.filter((tag, i) => i !== position), value]
+        .filter(tag => !!tag?.name)
+        .reduce((acum, tag) => `${acum} ${tag.name}`, '')
+        .trim();
 
-    onSelectorAdded(value);
-    onChange(finalValue);
-  };
+      onSelectorAdded(value);
+      onChange(finalValue);
+      if (selectTag) {
+        onSelectorSelected(value);
+        setSelectorSelected(value.name);
+      }
+    };
 
   const handleClickAction = position => (action, value) => {
     switch (action) {
