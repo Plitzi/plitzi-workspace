@@ -5,6 +5,7 @@ import noop from 'lodash/noop';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
+import omit from 'lodash/omit';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
 // Alias
@@ -37,17 +38,16 @@ const Selector = props => {
       ),
     [value, style]
   );
-  const selectorsAvailables = useMemo(() => Object.values(get(style, `platform.${displayMode}`)), [style, displayMode]);
+  const selectorsAvailables = useMemo(
+    () => Object.values(omit(get(style, `platform.${displayMode}`), value.split(' '))),
+    [style, displayMode]
+  );
   const [selectorSelected, setSelectorSelected] = useState(get(tags, '0.name', ''));
   const [popupOpened, setPopupOpened] = useState(false);
 
   const handleChange = useCallback(e => {
     setPopupOpened(e.target.value.length > 0);
     setInputValue(e.target.value);
-  }, []);
-
-  const handleBlur = useCallback(() => {
-    setInputValue('');
   }, []);
 
   const handleClick = useCallback(() => {
@@ -145,6 +145,17 @@ const Selector = props => {
 
   const handleDropdownVisible = useCallback(visible => setPopupOpened(visible), []);
 
+  const handleSuggestionsSelect = useCallback(
+    tag => {
+      setTimeout(() => setInputValue(''), 0);
+      setPopupOpened(false);
+      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
+      onChange(finalValue);
+      setSelectorSelected(tag.name);
+    },
+    [tags, onChange, selectorSelected]
+  );
+
   return (
     <Dropdown
       className="w-full"
@@ -182,13 +193,12 @@ const Selector = props => {
             autoCapitalize="off"
             spellCheck="false"
             value={inputValue}
-            onBlur={handleBlur}
             onChange={handleChange}
           />
         </div>
       </Dropdown.Content>
       <Dropdown.Container>
-        <SelectorSuggestions selector={inputValue} selectors={selectorsAvailables} />
+        <SelectorSuggestions selector={inputValue} selectors={selectorsAvailables} onSelect={handleSuggestionsSelect} />
       </Dropdown.Container>
     </Dropdown>
   );

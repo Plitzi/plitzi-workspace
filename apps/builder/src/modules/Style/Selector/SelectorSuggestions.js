@@ -12,7 +12,7 @@ const SelectorSuggestions = props => {
 
   const alreadyExists = useMemo(() => selector && selectors.find(s => s.name === selector), [selector, selectors]);
 
-  const handleClick = useCallback((value, type) => onSelect(value, type), [onSelect]);
+  const handleClick = useCallback(tag => onSelect(tag), [onSelect]);
 
   const handleClickCreate = useCallback(() => onCreate(selector), [onCreate, selector]);
 
@@ -42,7 +42,8 @@ const SelectorSuggestions = props => {
           <div className="flex flex-col overflow-y-auto items-start max-h-[250px] text-xs gap-1 pl-1">
             {finalSelectors.map((selector, index) => (
               <SelectorTag
-                key={index}
+                className="cursor-pointer"
+                key={`${selector.name}-${index}`}
                 selector={selector.name}
                 type={selector.type}
                 editable={false}

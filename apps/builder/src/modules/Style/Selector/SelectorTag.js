@@ -14,6 +14,7 @@ import { makeId } from '../../../helpers/utils';
 
 const SelectorTag = props => {
   const {
+    className = '',
     selector = '',
     type = StyleSelectors.SELECTOR_CLASS,
     editable = true,
@@ -28,15 +29,10 @@ const SelectorTag = props => {
 
   const handleClick = useCallback(
     e => {
-      if (editable) {
-        e.stopPropagation();
-      }
-
-      if (!active) {
-        onClick(selector);
-      }
+      e.stopPropagation();
+      onClick({ name: selector, type });
     },
-    [editable, active, onClick, selector]
+    [editable, active, onClick, selector, type]
   );
 
   const handleClickDuplicate = useCallback(
@@ -70,7 +66,7 @@ const SelectorTag = props => {
 
   return (
     <div
-      className={classNames('group px-1 relative flex items-center rounded text-white select-none', {
+      className={classNames('group px-1 relative flex items-center rounded text-white select-none', className, {
         'bg-blue-400': type === 'class' && active,
         'bg-green-500': type === 'state' && active,
         'bg-purple-500': type === 'parent' && active,
@@ -107,8 +103,9 @@ const SelectorTag = props => {
       </div>
       <Dropdown
         className={classNames('absolute right-0 text-xs px-1 rounded-r h-full', {
-          'hidden group-hover:flex': !isVisible,
-          flex: isVisible,
+          'hidden group-hover:flex': !isVisible && editable,
+          flex: isVisible && editable,
+          hidden: !editable,
           'bg-blue-400': type === 'class' && active,
           'bg-green-500': type === 'state' && active,
           'bg-purple-500': type === 'parent' && active,
@@ -160,6 +157,7 @@ const SelectorTag = props => {
 };
 
 SelectorTag.propTypes = {
+  className: PropTypes.string,
   selector: PropTypes.string,
   type: PropTypes.string,
   active: PropTypes.bool,
