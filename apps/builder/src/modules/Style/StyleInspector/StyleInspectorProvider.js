@@ -10,7 +10,7 @@ import omit from 'lodash/omit';
 import { produce } from 'immer';
 
 // Monorepo
-import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
+// import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 // import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
 
 // Alias
@@ -428,11 +428,7 @@ const StyleInspectorProvider = props => {
     [getValue, setValue, resetValue, inheritData, bindingData, hasValue, getDefaultValue]
   );
 
-  return (
-    <DataSourceContextProvider>
-      <StyleInspectorContext.Provider value={inspectorContextValue}>{children}</StyleInspectorContext.Provider>
-    </DataSourceContextProvider>
-  );
+  return <StyleInspectorContext.Provider value={inspectorContextValue}>{children}</StyleInspectorContext.Provider>;
 };
 
 StyleInspectorProvider.propTypes = {
