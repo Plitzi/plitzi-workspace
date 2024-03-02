@@ -42,14 +42,14 @@ const StyleInspector = props => {
     () => get(componentDefinitions, `${get(element, 'definition.type', '')}.definition.styleSelectors`, {}),
     [componentDefinitions, element]
   );
-  const [selectorActiveInternal, setSelectorActiveInternal] = useState(() => get(selector.split(' '), '0'));
+  const [selectorActiveInternal, setSelectorActiveInternal] = useState(() => get(selector.split(' '), '0', ''));
 
   const selectorActive = useMemo(() => {
     if (selector && selectorActiveInternal && selector.includes(selectorActiveInternal)) {
       return selectorActiveInternal;
     }
 
-    return get(selector.split(' '), '0');
+    return get(selector.split(' '), '0', '');
   }, [selector, selectorActiveInternal]);
 
   useEffect(() => {
