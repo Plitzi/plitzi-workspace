@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
@@ -44,6 +44,12 @@ const Selector = props => {
   );
   const [selectorSelected, setSelectorSelected] = useState(get(tags, '0.name', ''));
   const [popupOpened, setPopupOpened] = useState(false);
+
+  useEffect(() => {
+    if (!tags.find(tag => tag.name === selectorSelected)) {
+      setSelectorSelected(get(tags, '0.name', ''));
+    }
+  }, [tags, selectorSelected]);
 
   const handleChange = useCallback(e => {
     setPopupOpened(e.target.value.length > 0);
