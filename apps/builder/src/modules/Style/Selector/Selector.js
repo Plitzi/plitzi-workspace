@@ -57,7 +57,7 @@ const Selector = props => {
 
   const handleClickSelector = useCallback(
     selector => {
-      setSelectorSelected(selector);
+      setSelectorSelected(selector.name);
       onSelectorSelected(selector);
     },
     [onSelectorSelected]

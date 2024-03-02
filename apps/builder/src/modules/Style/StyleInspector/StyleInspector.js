@@ -42,9 +42,23 @@ const StyleInspector = props => {
     () => get(componentDefinitions, `${get(element, 'definition.type', '')}.definition.styleSelectors`, {}),
     [componentDefinitions, element]
   );
+  const [selectorActiveInternal, setSelectorActiveInternal] = useState(() => get(selector.split(' '), '0'));
+
+  const selectorActive = useMemo(() => {
+    if (selector && selectorActiveInternal && selector.includes(selectorActiveInternal)) {
+      return selectorActiveInternal;
+    }
+
+    const newSelectorActive = get(selector.split(' '), '0');
+    setSelectorActiveInternal(newSelectorActive); // Reset selectorActive
+
+    return newSelectorActive;
+  }, [selector, selectorActiveInternal]);
 
   useEffect(() => {
-    setStyleSelector('base');
+    if (styleSelector !== 'base') {
+      setStyleSelector('base');
+    }
   }, [element?.id]);
 
   const handleChangeSelector = useCallback(
@@ -108,6 +122,8 @@ const StyleInspector = props => {
 
   const handleChangeStyleSelector = useCallback(e => setStyleSelector(e.target.value), []);
 
+  const handleCurrentSelector = useCallback(tag => setSelectorActiveInternal(tag.name), []);
+
   return (
     <div className="w-full flex flex-col grow">
       <div className="flex flex-col w-full p-2 border-b border-gray-300">
@@ -129,6 +145,7 @@ const StyleInspector = props => {
             onChange={handleChangeSelector}
             onSelectorAdded={handleAddSelector}
             onSelectorRemoved={handleRemoveSelector}
+            onSelectorSelected={handleCurrentSelector}
             disabled={mode === 'manager'}
             value={selector}
             displayMode={displayMode}
@@ -149,12 +166,12 @@ const StyleInspector = props => {
           <InspectorModeAdvanced
             styleSelector={styleSelector}
             selectors={selectors}
-            selector={selector}
+            selector={selectorActive}
             element={element}
           />
         )}
         {viewMode === 'basic' && (
-          <InspectorModeBasic styleSelector={styleSelector} selector={selector} element={element} />
+          <InspectorModeBasic styleSelector={styleSelector} selector={selectorActive} element={element} />
         )}
       </div>
     </div>

@@ -31,7 +31,7 @@ const StyleSelectorTag = props => {
 
   return (
     <div
-      className={classNames('group-1 flex justify-between items-center border-t border-gray-300 cursor-pointer p-1', {
+      className={classNames('group-1 flex justify-between items-center border-t border-gray-300 p-1', {
         'hover:bg-gray-200': !active,
         'bg-gray-200': active
       })}

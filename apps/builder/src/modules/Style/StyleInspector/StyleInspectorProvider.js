@@ -224,21 +224,20 @@ const StyleInspectorProvider = props => {
   const { children, selector = '', styleSelector = 'base', element } = props;
   const { displayMode } = useContext(AppContext);
   const { componentDefinitions } = useContext(ComponentContext);
+  const { builderHandler } = useContext(BuilderContext);
   const {
     schema: { flat }
   } = useContext(BuilderSchemaContext);
   const {
-    style: { platform }
+    style: { platform },
+    style
   } = useContext(BuilderStyleContext);
 
   const bindingData = useMemo(() => calculateBindings(element), [element]);
-
   const inheritData = useMemo(
     () => calculateInheriting(element, flat, platform, displayMode, styleSelector, componentDefinitions),
     [element, flat, displayMode, styleSelector, componentDefinitions]
   );
-  const { style } = useContext(BuilderStyleContext);
-  const { builderHandler } = useContext(BuilderContext);
   const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
   const values = get(style, `platform.${displayMode}.${selector}.attributes`);
 
@@ -259,7 +258,7 @@ const StyleInspectorProvider = props => {
             defaultValueOptional[k] = defaultValue[k];
           }
 
-          value[k] = get(values, k, get(inheritData, `${k}.0.value`, defaultValueOptional[k]));
+          value[k] = get(values, k, get(inheritData, `style.${k}.0.value`, defaultValueOptional[k]));
         });
 
         return value;
@@ -276,7 +275,7 @@ const StyleInspectorProvider = props => {
       return get(
         values,
         key,
-        get(inheritData, `${key}.0.value`, get(bindingData, `${key}.0.value`, defaultValueOptional))
+        get(inheritData, `style.${key}.0.value`, get(bindingData, `style.${key}.0.value`, defaultValueOptional))
       );
     },
     [defaultValue, inheritData, bindingData, values]
@@ -421,8 +420,8 @@ const StyleInspectorProvider = props => {
       getValue,
       setValue,
       resetValue,
-      inheritData,
-      bindingData,
+      inheritData: get(inheritData, 'style', {}),
+      bindingData: get(bindingData, 'style', {}),
       hasValue,
       getDefaultValue
     }),

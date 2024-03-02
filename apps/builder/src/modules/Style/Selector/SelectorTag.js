@@ -37,7 +37,10 @@ const SelectorTag = props => {
 
   const handleClick = useCallback(
     e => {
-      e.stopPropagation();
+      if (editable) {
+        e.stopPropagation();
+      }
+
       onClick({ name: selector, type });
     },
     [editable, active, onClick, selector, type]
@@ -50,7 +53,7 @@ const SelectorTag = props => {
 
   const handleClickRemove = useCallback(() => onAction('remove'), [onAction]);
 
-  const handleClickDelete = useCallback(() => onAction('delete'), [onAction]);
+  // const handleClickDelete = useCallback(() => onAction('delete'), [onAction]);
 
   const handleClickType = useCallback(e => {
     e.stopPropagation();
@@ -86,6 +89,7 @@ const SelectorTag = props => {
   return (
     <div
       className={classNames('group px-1 relative flex items-center rounded text-white select-none', className, {
+        'cursor-pointer': !editMode,
         'bg-blue-400': type === 'class' && active,
         'bg-green-500': type === 'state' && active,
         'bg-purple-500': type === 'parent' && active,
@@ -145,9 +149,9 @@ const SelectorTag = props => {
               <li onClick={handleClickRemove} className="hover:bg-gray-200 px-2 py-1 rounded">
                 Remove
               </li>
-              <li onClick={handleClickDelete} className="text-red-400 hover:bg-gray-200 px-2 py-1 rounded">
+              {/* <li onClick={handleClickDelete} className="text-red-400 hover:bg-gray-200 px-2 py-1 rounded">
                 Delete
-              </li>
+              </li> */}
             </ul>
             <div className="bg-gray-300 h-[1px] w-full my-2" />
             <div className="font-bold mb-1 px-2">States</div>
