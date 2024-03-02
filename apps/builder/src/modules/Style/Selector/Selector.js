@@ -69,7 +69,7 @@ const Selector = props => {
       .reduce((acum, tag) => `${acum} ${tag.name}`, '')
       .trim();
 
-    onSelectorAdded(value.name);
+    onSelectorAdded(value);
     onChange(finalValue);
   };
 
@@ -92,7 +92,7 @@ const Selector = props => {
           .reduce((acum, tag) => `${acum} ${tag.name}`, '')
           .trim();
 
-        onSelectorAdded(value.name, true, get(tags, `${position}.name`, ''));
+        onSelectorAdded(value, true, get(tags, `${position}`));
         onChange(finalValue);
         break;
       }
@@ -114,12 +114,13 @@ const Selector = props => {
 
         if (value !== '' && !tags.find(tag => tag.name === value)) {
           setTimeout(() => setInputValue(''), 0);
-          const finalValue = [...tags, { name: selectorFormatter(value), type: StyleSelectors.SELECTOR_CLASS }]
+          const tag = { name: selectorFormatter(value), type: StyleSelectors.SELECTOR_CLASS };
+          const finalValue = [...tags, tag]
             .filter(tag => !!tag?.name)
             .reduce((acum, tag) => `${acum} ${tag.name}`, '')
             .trim();
 
-          onSelectorAdded(value);
+          onSelectorAdded(tag);
           onChange(finalValue);
           setPopupOpened(false);
           e.target.blur();
@@ -163,7 +164,7 @@ const Selector = props => {
       setPopupOpened(false);
       const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
       onChange(finalValue);
-      onSelectorAdded(tag.name);
+      onSelectorAdded(tag);
       setSelectorSelected(tag.name);
     },
     [tags, onChange, selectorSelected]

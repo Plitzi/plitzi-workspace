@@ -23,7 +23,6 @@ import Selector from '../Selector';
 import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
 import InspectorModeBasic from './modes/InspectorModeBasic';
 import { emptyObject } from '../../../helpers/utils';
-import { StyleSelectors } from '../StyleHelper';
 
 const StyleInspector = props => {
   const { mode = 'element', styleSelectors = emptyObject, element, allowStyleSelector = true } = props;
@@ -65,24 +64,29 @@ const StyleInspector = props => {
   );
 
   const handleAddSelector = useCallback(
-    (value, isDuplicated, originalValue) => {
-      if (!isDuplicated && value !== '' && !platform[displayMode][value]) {
-        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, value, StyleSelectors.SELECTOR_CLASS);
+    (tag, isDuplicated, originalTag) => {
+      if (!tag || (isDuplicated && !originalTag)) {
+        return;
+      }
+
+      const { name, type } = tag;
+      if (!isDuplicated && name !== '' && !platform[displayMode][name]) {
+        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, name, type);
       } else if (
         isDuplicated &&
-        originalValue &&
-        value &&
-        originalValue !== value &&
-        platform[displayMode][originalValue] &&
-        !platform[displayMode][value]
+        originalTag &&
+        tag &&
+        originalTag.name !== name &&
+        platform[displayMode][originalTag.name] &&
+        !platform[displayMode][name]
       ) {
         builderHandler(
           EventBridgeTypes.STYLE_ADD_SELECTOR,
           displayMode,
-          value,
-          StyleSelectors.SELECTOR_CLASS,
+          name,
+          type,
           '',
-          get(platform, `${displayMode}.${originalValue}.attributes`, {})
+          get(platform, `${displayMode}.${originalTag.name}.attributes`, {})
         );
       }
     },
