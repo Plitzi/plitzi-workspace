@@ -35,7 +35,7 @@ const ManagerSelector = props => {
   const { builderHandler } = useContext(BuilderContext);
   const finalSelectors = useMemo(() => {
     if (selectors && !isEmpty(searchInput)) {
-      selectors = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
+      selectors = selectors.filter(selector => selector.name?.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
     return selectors;
@@ -85,7 +85,7 @@ const ManagerSelector = props => {
         selector = get(selector.split(':'), '0', selector);
       }
 
-      return styleSelector.includes(selector);
+      return styleSelector && selector && styleSelector.split(' ').includes(selector);
     });
   }, []);
 

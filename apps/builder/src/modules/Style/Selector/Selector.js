@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useContext, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
@@ -13,27 +13,89 @@ import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext'
 // Relatives
 import SelectorTag from './SelectorTag';
 import { selectorFormatter } from './SelectorHelper';
-import { StyleSelectors, selectorToString } from '../StyleHelper';
+import { StyleSelectors } from '../StyleHelper';
+import SelectorSuggestions from './SelectorSuggestions';
 
 const Selector = props => {
-  const { className = '', value, displayMode = 'desktop', disabled = false, onChange = noop } = props;
+  const {
+    className = '',
+    value = '',
+    displayMode = 'desktop',
+    disabled = false,
+    onChange = noop,
+    onSelectorSelected = noop,
+    onSelectorAdded = noop
+    // onSelectorRemoved = noop
+  } = props;
   const inputRef = useRef(null);
   const [inputValue, setInputValue] = useState('');
   const { style } = useContext(BuilderStyleContext);
-  const tags = useMemo(() => Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))), [value]);
-  const currentState = useMemo(() => tags.find(v => v.type === StyleSelectors.SELECTOR_STATE), [tags]);
+  const tags = useMemo(
+    () =>
+      Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))).map(tag =>
+        pick(tag, ['name', 'type'])
+      ),
+    [value, style]
+  );
+  const selectorsAvailables = useMemo(() => Object.values(get(style, `platform.${displayMode}`)), [style, displayMode]);
+  const [selectorSelected, setSelectorSelected] = useState(get(tags, '0.name', ''));
 
-  const handleChange = e => setInputValue(e.target.value);
+  const handleChange = useCallback(e => setInputValue(e.target.value), []);
+
+  const handleClick = useCallback(() => {
+    inputRef.current.focus();
+  }, [inputRef]);
+
+  const handleClickSelector = useCallback(
+    selector => {
+      setSelectorSelected(selector);
+      onSelectorSelected(selector);
+    },
+    [onSelectorSelected]
+  );
 
   const handleChangeItem = position => value => {
-    tags[position] = value;
-    onChange(selectorToString(tags));
+    const finalValue = [...tags.filter((tag, i) => i !== position), value]
+      .filter(tag => !!tag?.name)
+      .reduce((acum, tag) => `${acum} ${tag.name}`, '')
+      .trim();
+
+    onSelectorAdded(value.name);
+    onChange(finalValue);
   };
 
-  const handleClick = () => inputRef.current.focus();
+  const handleClickAction = position => (action, value) => {
+    switch (action) {
+      case 'remove': {
+        const finalTags = tags.filter((tag, i) => i !== position);
+        const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
+        if (tags[position].name === selectorSelected) {
+          setSelectorSelected(get(finalTags, '0.name', ''));
+        }
 
-  const handleClickRemove = position => () => {
-    onChange(selectorToString(tags.filter((tag, i) => i !== position)));
+        onChange(finalValue);
+        break;
+      }
+
+      case 'duplicate': {
+        const finalValue = [...tags, value]
+          .filter(tag => !!tag?.name)
+          .reduce((acum, tag) => `${acum} ${tag.name}`, '')
+          .trim();
+
+        onSelectorAdded(value.name, true, get(tags, `${position}.name`, ''));
+        onChange(finalValue);
+        break;
+      }
+
+      case 'delete': {
+        // onSelectorRemoved(value.name);
+        break;
+      }
+
+      default:
+        break;
+    }
   };
 
   const handleKeyDown = e => {
@@ -41,26 +103,26 @@ const Selector = props => {
       case 'Enter': {
         const { value } = e.target;
 
-        if (value !== '' && !tags.find(t => t === value)) {
+        if (value !== '' && !tags.find(tag => tag.name === value)) {
           setInputValue('');
-          const finalValue = selectorToString(
-            [...tags, { value: selectorFormatter(value), type: StyleSelectors.SELECTOR_CLASS }].sort((tag1, tag2) => {
-              if (tag2.type === StyleSelectors.SELECTOR_STATE) {
-                return -1;
-              }
+          const finalValue = [...tags, { name: selectorFormatter(value), type: StyleSelectors.SELECTOR_CLASS }]
+            .filter(tag => !!tag?.name)
+            .reduce((acum, tag) => `${acum} ${tag.name}`, '')
+            .trim();
 
-              return 0;
-            })
-          );
-
+          onSelectorAdded(value);
           onChange(finalValue);
           e.target.blur();
+          if (!selectorSelected) {
+            setSelectorSelected(value);
+          }
         }
 
         break;
       }
 
       case 'Escape': {
+        e.stopPropagation();
         setInputValue('');
         e.target.blur();
 
@@ -72,75 +134,45 @@ const Selector = props => {
     }
   };
 
-  const handleBlur = () => setInputValue('');
-
-  const handleClickItem = item => e => {
-    e.stopPropagation();
-    const tagsTemp = tags.filter(tag => tag.type !== StyleSelectors.SELECTOR_STATE);
-    if (item === 'none') {
-      onChange(selectorToString(tagsTemp));
-    } else {
-      onChange(selectorToString([...tagsTemp, { value: item, type: StyleSelectors.SELECTOR_STATE }]));
-    }
-  };
-
   return (
-    <div
-      className={classNames('flex flex-wrap border border-gray-300 rounded relative pr-8 py-1 pl-1', className, {
-        'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
-        'cursor-pointer': !disabled
-      })}
-      onClick={handleClick}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-    >
-      {displayMode && (
-        <div className="m-0.5 px-2 py-1 flex justify-center items-center border border-gray-300 rounded">
-          {displayMode === 'desktop' && <i className="fas fa-desktop" />}
-          {displayMode === 'tablet' && <i className="fas fa-tablet-alt" />}
-          {displayMode === 'mobile' && <i className="fas fa-mobile-alt" />}
-        </div>
-      )}
-      {tags &&
-        tags.map((tag, i) => (
-          <SelectorTag
-            key={`${i}-${tag.value}`}
-            selector={tag.name}
-            type={tag.type}
-            onRemove={handleClickRemove(i)}
-            onChange={handleChangeItem(i)}
+    <Dropdown className="w-full" showIcon={false}>
+      <Dropdown.Content className="w-full flex">
+        <div
+          className={classNames('flex flex-wrap border border-gray-300 rounded relative p-1 gap-1', className, {
+            'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
+            'cursor-pointer': !disabled
+          })}
+          onClick={handleClick}
+          onKeyDown={handleKeyDown}
+        >
+          {tags &&
+            tags.map((tag, i) => (
+              <SelectorTag
+                key={`${i}-${tag.value}`}
+                selector={tag.name}
+                type={tag.type}
+                active={tag.name === selectorSelected}
+                onAction={handleClickAction(i)}
+                onClick={handleClickSelector}
+                onChange={handleChangeItem(i)}
+              />
+            ))}
+          <input
+            ref={inputRef}
+            className="border-none bg-transparent w-0 text-inherit outline-none focus:min-w-[50px] focus:grow focus:ring-transparent min-h-0 px-1 text-xs py-0"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            value={inputValue}
+            onChange={handleChange}
           />
-        ))}
-      <input
-        ref={inputRef}
-        className="border-none bg-transparent w-0 text-inherit outline-none focus:min-w-[50px] focus:grow focus:ring-transparent min-h-0 px-1 text-xs py-0"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck="false"
-        value={inputValue}
-        onChange={handleChange}
-      />
-      {tags.length > 0 && (
-        <Dropdown className="right-0 top-0 bottom-0 absolute flex justify-center items-center mr-2">
-          <Dropdown.Container>
-            {['none', 'hover', 'focus', 'active'].map(item => {
-              const isActive = (currentState && currentState.value === item) || (!currentState && item === 'none');
-
-              return (
-                <div
-                  key={item}
-                  onClick={handleClickItem(item)}
-                  className={classNames('px-2 py-1 hover:bg-gray-100 select-none', { 'text-blue-400': isActive })}
-                >
-                  {item}
-                </div>
-              );
-            })}
-          </Dropdown.Container>
-        </Dropdown>
-      )}
-    </div>
+        </div>
+      </Dropdown.Content>
+      <Dropdown.Container>
+        <SelectorSuggestions selector={inputValue} selectors={selectorsAvailables} />
+      </Dropdown.Container>
+    </Dropdown>
   );
 };
 
@@ -148,8 +180,11 @@ Selector.propTypes = {
   className: PropTypes.string,
   value: PropTypes.string,
   disabled: PropTypes.bool,
+  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
   onChange: PropTypes.func,
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile'])
+  onSelectorSelected: PropTypes.func,
+  onSelectorAdded: PropTypes.func,
+  onSelectorRemoved: PropTypes.func
 };
 
 export default memo(Selector);

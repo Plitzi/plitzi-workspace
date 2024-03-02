@@ -43,6 +43,7 @@ const StyleInspector = props => {
     () => get(componentDefinitions, `${get(element, 'definition.type', '')}.definition.styleSelectors`, {}),
     [componentDefinitions, element]
   );
+  const [popupOpened, setPopupOpened] = useState(false);
 
   useEffect(() => {
     setStyleSelector('base');
@@ -60,12 +61,36 @@ const StyleInspector = props => {
           set(draft, `definition.styleSelectors.${styleSelector}`, value);
         })
       );
-      if (value !== '' && !platform[displayMode][value]) {
-        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, value, StyleSelectors.SELECTOR_CLASS);
-      }
     },
     [element, builderHandler, styleSelector]
   );
+
+  const handleAddSelector = useCallback(
+    (value, isDuplicated, originalValue) => {
+      if (!isDuplicated && value !== '' && !platform[displayMode][value]) {
+        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, value, StyleSelectors.SELECTOR_CLASS);
+      } else if (
+        isDuplicated &&
+        originalValue &&
+        value &&
+        originalValue !== value &&
+        platform[displayMode][originalValue] &&
+        !platform[displayMode][value]
+      ) {
+        builderHandler(
+          EventBridgeTypes.STYLE_ADD_SELECTOR,
+          displayMode,
+          value,
+          StyleSelectors.SELECTOR_CLASS,
+          '',
+          get(platform, `${displayMode}.${originalValue}.attributes`, {})
+        );
+      }
+    },
+    [builderHandler, displayMode, platform]
+  );
+
+  const handleRemoveSelector = useCallback(() => {}, []);
 
   const handleClicViewMode = useCallback(
     () =>
@@ -97,10 +122,12 @@ const StyleInspector = props => {
         )}
         <div className={classNames('flex w-full', { 'mt-2': allowStyleSelector })}>
           <Selector
-            className="w-full"
+            className="w-full min-h-[34px]"
             onChange={handleChangeSelector}
+            onSelectorAdded={handleAddSelector}
+            onSelectorRemoved={handleRemoveSelector}
             disabled={mode === 'manager'}
-            value={styleSelectors[styleSelector]}
+            value={selector}
             displayMode={displayMode}
           />
           <Button

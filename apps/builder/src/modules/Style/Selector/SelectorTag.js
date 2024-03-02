@@ -1,80 +1,52 @@
 // Packages
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import { flushSync } from 'react-dom';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import Input from '@plitzi/plitzi-ui-components/Input';
+import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
+import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
 // Relatives
 import { selectorFormatter } from './SelectorHelper';
 import { StyleSelectors } from '../StyleHelper';
+import { makeId } from '../../../helpers/utils';
 
 const SelectorTag = props => {
   const {
     selector = '',
     type = StyleSelectors.SELECTOR_CLASS,
     editable = true,
+    active = false,
+    onClick = noop,
     onChange = noop,
-    onRemove = noop
+    onAction = noop
   } = props;
   const [editMode, setEditMode] = useState(false);
-  const inputRef = useRef(null);
   const [value, setValue] = useState(selector);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const handleClick = e => {
-    e.stopPropagation();
-    if (!editable) {
-      return;
-    }
-
-    if (![StyleSelectors.SELECTOR_STATE].includes(type)) {
-      flushSync(() => {
-        setEditMode(true);
-      });
-      inputRef.current.focus();
-    }
-  };
-
-  const handleClickInput = e => {
-    e.stopPropagation();
-  };
-
-  const handleClickRemove = e => {
-    e.stopPropagation();
-    onRemove(e);
-  };
-
-  const handleKeyDown = e => {
-    e.stopPropagation();
-    if (!editable) {
-      return;
-    }
-
-    switch (e.key) {
-      case 'Enter': {
-        const { value } = e.target;
-
-        if (value !== '' && selector !== value) {
-          onChange({ value: selectorFormatter(e.target.value), type });
-          e.target.blur();
-        }
-
-        break;
+  const handleClick = useCallback(
+    e => {
+      if (editable) {
+        e.stopPropagation();
       }
 
-      case 'Escape': {
-        setEditMode(false);
-        setValue(selector);
-
-        break;
+      if (!active) {
+        onClick(selector);
       }
+    },
+    [editable, active, onClick, selector]
+  );
 
-      default:
-        break;
-    }
-  };
+  const handleClickDuplicate = useCallback(
+    () => onAction('duplicate', { name: `${selector}-${makeId(4)}`, type }),
+    [selector, type, onChange]
+  );
+
+  const handleClickRemove = useCallback(() => onAction('remove'), [onAction]);
+
+  const handleClickDelete = useCallback(() => onAction('delete'), [onAction]);
 
   const handleClickType = useCallback(e => {
     e.stopPropagation();
@@ -85,36 +57,36 @@ const SelectorTag = props => {
     setEditMode(false);
   }, []);
 
-  const handleBlur = useCallback(() => {
-    if (!editable) {
-      return;
-    }
+  const handleChange = useCallback(
+    value => {
+      console.log(value);
+      setValue(value);
+      onChange({ name: selectorFormatter(value), type });
+    },
+    [value, setValue, type, onChange]
+  );
 
-    setValue(selector);
-  }, []);
-
-  const handleChange = e => setValue(e.target.value);
+  const handleDropVisible = useCallback(isVisible => setIsVisible(isVisible), []);
 
   return (
     <div
-      className={classNames(
-        'group m-1 px-1 relative flex items-center justify-center rounded text-white overflow-hidden select-none',
-        {
-          'bg-blue-400': type === 'class',
-          'bg-green-500': type === 'state',
-          'bg-purple-500': type === 'parent',
-          'bg-pink-500': type === 'element',
-          'bg-yellow-500': type === 'id'
-        }
-      )}
+      className={classNames('group px-1 relative flex items-center rounded text-white select-none', {
+        'bg-blue-400': type === 'class' && active,
+        'bg-green-500': type === 'state' && active,
+        'bg-purple-500': type === 'parent' && active,
+        'bg-pink-500': type === 'element' && active,
+        'bg-yellow-500': type === 'id' && active,
+        'bg-gray-500': !active
+      })}
     >
       <div
         className={classNames('px-1 my-1 rounded bg-white capitalize font-bold text-xs', {
-          'text-blue-400': type === 'class',
-          'text-green-500': type === 'state',
-          'text-purple-500': type === 'parent',
-          'text-pink-500': type === 'element',
-          'text-yellow-500': type === 'id',
+          'text-blue-400': type === 'class' && active,
+          'text-green-500': type === 'state' && active,
+          'text-purple-500': type === 'parent' && active,
+          'text-pink-500': type === 'element' && active,
+          'text-yellow-500': type === 'id' && active,
+          'text-gray-400': !active,
           'py-1 mr-1': editMode
         })}
         title={type}
@@ -122,26 +94,55 @@ const SelectorTag = props => {
       >
         {type[0]}
       </div>
-      {!editMode && (
-        <div className="px-1.5 text-xs truncate" onClick={handleClick} title={selector}>
-          {selector}
-        </div>
-      )}
-      {editMode && (
-        <Input
-          size="custom"
-          type="text"
-          className="flex min-w-0"
-          inputClassName="my-1 rounded text-xs px-2 py-1 text-gray-700 border-none leading-[9px] focus:ring-transparent focus:outline-none"
-          ref={inputRef}
-          value={value}
-          onClick={handleClickInput}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-        />
-      )}
-
+      <div onClick={handleClick}>
+        {editable && (
+          <Contenteditable
+            className="px-1.5 text-xs truncate"
+            value={selector}
+            onChange={handleChange}
+            openMode="doubleClick"
+          />
+        )}
+        {!editable && <div className="px-1.5 text-xs truncate">{selector}</div>}
+      </div>
+      <Dropdown
+        className={classNames('absolute right-0 text-xs px-1 rounded-r h-full', {
+          'hidden group-hover:flex': !isVisible,
+          flex: isVisible,
+          'bg-blue-400': type === 'class' && active,
+          'bg-green-500': type === 'state' && active,
+          'bg-purple-500': type === 'parent' && active,
+          'bg-pink-500': type === 'element' && active,
+          'bg-yellow-500': type === 'id' && active,
+          'bg-gray-500': !active
+        })}
+        onContainerVisible={handleDropVisible}
+        backgroundDisabled
+      >
+        <Dropdown.Container className="text-gray-700">
+          <div className="py-1 bg-gray-50">
+            <div className="font-bold mb-1 px-2">Actions</div>
+            <ul className="flex flex-col gap-1 px-2">
+              <li onClick={handleClickDuplicate} className="hover:bg-gray-200 px-2 py-1 rounded">
+                Duplicate
+              </li>
+              <li onClick={handleClickRemove} className="hover:bg-gray-200 px-2 py-1 rounded">
+                Remove
+              </li>
+              <li onClick={handleClickDelete} className="text-red-400 hover:bg-gray-200 px-2 py-1 rounded">
+                Delete
+              </li>
+            </ul>
+            <div className="bg-gray-300 h-[1px] w-full my-2" />
+            <div className="font-bold mb-1 px-2">States</div>
+            <ul className="flex flex-col gap-1 px-2">
+              <li className="hover:bg-gray-200 px-2 py-1 rounded">Hover</li>
+              <li className="hover:bg-gray-200 px-2 py-1 rounded">Active</li>
+              <li className="hover:bg-gray-200 px-2 py-1 rounded">Focus</li>
+            </ul>
+          </div>
+        </Dropdown.Container>
+      </Dropdown>
       {editable && editMode && (
         <div className="ml-1 flex flex-col justify-around rounded bg-blue-400 text-white">
           <Button
@@ -161,9 +162,12 @@ const SelectorTag = props => {
 SelectorTag.propTypes = {
   selector: PropTypes.string,
   type: PropTypes.string,
+  active: PropTypes.bool,
   editable: PropTypes.bool,
-  onRemove: PropTypes.func,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
+  onClick: PropTypes.func,
+  onAction: PropTypes.func,
+  onState: PropTypes.func
 };
 
 export default SelectorTag;
