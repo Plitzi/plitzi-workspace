@@ -39,12 +39,21 @@ const Selector = props => {
   );
   const selectorsAvailables = useMemo(() => Object.values(get(style, `platform.${displayMode}`)), [style, displayMode]);
   const [selectorSelected, setSelectorSelected] = useState(get(tags, '0.name', ''));
+  const [popupOpened, setPopupOpened] = useState(false);
 
-  const handleChange = useCallback(e => setInputValue(e.target.value), []);
+  const handleChange = useCallback(e => {
+    setPopupOpened(e.target.value.length > 0);
+    setInputValue(e.target.value);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setInputValue('');
+  }, []);
 
   const handleClick = useCallback(() => {
     inputRef.current.focus();
-  }, [inputRef]);
+    setPopupOpened(inputValue.length > 0);
+  }, [inputRef, inputValue]);
 
   const handleClickSelector = useCallback(
     selector => {
@@ -134,8 +143,16 @@ const Selector = props => {
     }
   };
 
+  const handleDropdownVisible = useCallback(visible => setPopupOpened(visible), []);
+
   return (
-    <Dropdown className="w-full" showIcon={false}>
+    <Dropdown
+      className="w-full"
+      showIcon={false}
+      popupOpened={popupOpened}
+      disabled
+      onContainerVisible={handleDropdownVisible}
+    >
       <Dropdown.Content className="w-full flex">
         <div
           className={classNames('flex flex-wrap border border-gray-300 rounded relative p-1 gap-1', className, {
@@ -165,6 +182,7 @@ const Selector = props => {
             autoCapitalize="off"
             spellCheck="false"
             value={inputValue}
+            onBlur={handleBlur}
             onChange={handleChange}
           />
         </div>

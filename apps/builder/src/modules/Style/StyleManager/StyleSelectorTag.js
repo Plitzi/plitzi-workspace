@@ -37,7 +37,7 @@ const StyleSelectorTag = props => {
       })}
       onClick={handleClickSelect}
     >
-      <SelectorTag editable={false} selector={label} type={type} />
+      <SelectorTag editable={false} selector={label} type={type} active />
       <div className="flex">
         <div className={classNames('mr-1', { flex: active, 'hidden group-1-hover:flex': !active })}>
           <Button

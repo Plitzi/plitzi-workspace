@@ -43,7 +43,6 @@ const StyleInspector = props => {
     () => get(componentDefinitions, `${get(element, 'definition.type', '')}.definition.styleSelectors`, {}),
     [componentDefinitions, element]
   );
-  const [popupOpened, setPopupOpened] = useState(false);
 
   useEffect(() => {
     setStyleSelector('base');
