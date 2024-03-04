@@ -136,9 +136,8 @@ const Selector = props => {
           onChange(finalValue);
           setPopupOpened(false);
           e.target.blur();
-          if (!selectorSelected) {
-            setSelectorSelected(value);
-          }
+          onSelectorSelected(tag);
+          setSelectorSelected(tag.name);
         }
 
         break;
