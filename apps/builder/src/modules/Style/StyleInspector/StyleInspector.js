@@ -31,7 +31,9 @@ const StyleInspector = props => {
   const viewModeCache = useMemo(() => getCacheByKey('StyleInspector.viewMode', 'basic'), []);
   const [viewMode, setViewMode] = useState(viewModeCache);
   const {
-    style: { platform }
+    style: { platform },
+    selectorSelected,
+    setSelectorSelected
   } = useContext(BuilderStyleContext);
   const [styleSelector, setStyleSelector] = useState('base');
   const { builderHandler } = useContext(BuilderContext);
@@ -42,15 +44,6 @@ const StyleInspector = props => {
     () => get(componentDefinitions, `${get(element, 'definition.type', '')}.definition.styleSelectors`, {}),
     [componentDefinitions, element]
   );
-  const [selectorActiveInternal, setSelectorActiveInternal] = useState(() => get(selector.split(' '), '0', ''));
-
-  const selectorActive = useMemo(() => {
-    if (selector && selectorActiveInternal && selector.includes(selectorActiveInternal)) {
-      return selectorActiveInternal;
-    }
-
-    return get(selector.split(' '), '0', '');
-  }, [selector, selectorActiveInternal]);
 
   useEffect(() => {
     if (styleSelector !== 'base') {
@@ -119,7 +112,9 @@ const StyleInspector = props => {
 
   const handleChangeStyleSelector = useCallback(e => setStyleSelector(e.target.value), []);
 
-  const handleCurrentSelector = useCallback(tag => setSelectorActiveInternal(tag.name), []);
+  const handleCurrentSelector = useCallback(tag => setSelectorSelected(tag.name), []);
+
+  console.log(selectorSelected);
 
   return (
     <div className="w-full flex flex-col grow">
@@ -145,6 +140,7 @@ const StyleInspector = props => {
             onSelectorSelected={handleCurrentSelector}
             disabled={mode === 'manager'}
             value={selector}
+            selectorSelected={selectorSelected}
             displayMode={displayMode}
           />
           <Button
@@ -163,12 +159,12 @@ const StyleInspector = props => {
           <InspectorModeAdvanced
             styleSelector={styleSelector}
             selectors={selectors}
-            selector={selectorActive}
+            selector={selectorSelected}
             element={element}
           />
         )}
         {viewMode === 'basic' && (
-          <InspectorModeBasic styleSelector={styleSelector} selector={selectorActive} element={element} />
+          <InspectorModeBasic styleSelector={styleSelector} selector={selectorSelected} element={element} />
         )}
       </div>
     </div>

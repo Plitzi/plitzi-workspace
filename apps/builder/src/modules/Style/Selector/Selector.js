@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
@@ -21,6 +21,7 @@ const Selector = props => {
   const {
     className = '',
     value = '',
+    selectorSelected = '',
     displayMode = 'desktop',
     disabled = false,
     onChange = noop,
@@ -42,14 +43,7 @@ const Selector = props => {
     () => Object.values(omit(get(style, `platform.${displayMode}`), value.split(' '))),
     [style, displayMode]
   );
-  const [selectorSelected, setSelectorSelected] = useState(get(tags, '0.name', ''));
   const [popupOpened, setPopupOpened] = useState(false);
-
-  useEffect(() => {
-    if (!tags.find(tag => tag.name === selectorSelected)) {
-      setSelectorSelected(get(tags, '0.name', ''));
-    }
-  }, [tags, selectorSelected]);
 
   const handleChange = useCallback(e => {
     setPopupOpened(e.target.value.length > 0);
@@ -63,7 +57,6 @@ const Selector = props => {
 
   const handleClickSelector = useCallback(
     selector => {
-      setSelectorSelected(selector.name);
       onSelectorSelected(selector);
     },
     [onSelectorSelected]
@@ -81,7 +74,6 @@ const Selector = props => {
       onChange(finalValue);
       if (selectTag) {
         onSelectorSelected(value);
-        setSelectorSelected(value.name);
       }
     };
 
@@ -91,7 +83,7 @@ const Selector = props => {
         const finalTags = tags.filter((tag, i) => i !== position);
         const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
         if (tags[position].name === selectorSelected) {
-          setSelectorSelected(get(finalTags, '0.name', ''));
+          onSelectorSelected(get(finalTags, '0.name', ''));
         }
 
         onChange(finalValue);
@@ -137,7 +129,6 @@ const Selector = props => {
           setPopupOpened(false);
           e.target.blur();
           onSelectorSelected(tag);
-          setSelectorSelected(tag.name);
         }
 
         break;
@@ -164,9 +155,9 @@ const Selector = props => {
       setPopupOpened(false);
       const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
       onChange(finalValue);
-      setSelectorSelected(tag.name);
+      onSelectorSelected(tag.name);
     },
-    [tags, onChange, selectorSelected]
+    [tags, onChange, onSelectorSelected]
   );
 
   const handleSuggestionsCreate = useCallback(
@@ -176,9 +167,9 @@ const Selector = props => {
       const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
       onChange(finalValue);
       onSelectorAdded(tag);
-      setSelectorSelected(tag.name);
+      onSelectorSelected(tag.name);
     },
-    [tags, onChange, selectorSelected]
+    [tags, onChange, onSelectorSelected]
   );
 
   return (
@@ -239,6 +230,7 @@ const Selector = props => {
 Selector.propTypes = {
   className: PropTypes.string,
   value: PropTypes.string,
+  selectorSelected: PropTypes.string,
   disabled: PropTypes.bool,
   displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
   onChange: PropTypes.func,

@@ -38,7 +38,7 @@ const OverlayNormal = forwardRef((props, ref) => {
   } = props;
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = useContext(BuilderContext);
-  const { style } = useContext(BuilderStyleContext);
+  const { style, selectorSelected } = useContext(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
   const theme = useMemo(() => {
@@ -96,9 +96,8 @@ const OverlayNormal = forwardRef((props, ref) => {
         return;
       }
 
-      let selector = get(element, 'definition.styleSelectors.base', '');
-      if (!selector) {
-        selector = makeSelector(type);
+      if (!selectorSelected) {
+        const selector = makeSelector(type);
         builderHandler(
           EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
           produce(element, draft => {
@@ -110,16 +109,16 @@ const OverlayNormal = forwardRef((props, ref) => {
           height: `${height}px`
         });
       } else {
-        const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`);
-        const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
-        builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, '', {
+        const selectorType = get(styleRef.current, `platform.${displayMode}.${selectorSelected}.type`);
+        const values = get(styleRef.current, `platform.${displayMode}.${selectorSelected}.attributes`);
+        builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selectorSelected, selectorType, '', {
           ...values,
           width: `${width}px`,
           height: `${height}px`
         });
       }
     },
-    [id, get(element, 'definition.styleSelectors.base', ''), displayMode, builderHandler, type]
+    [id, displayMode, builderHandler, type, selectorSelected]
   );
 
   const handleChange = useCallback(

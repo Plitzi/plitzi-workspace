@@ -51,8 +51,9 @@ const BuilderProvider = props => {
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { getComponentBuilderSettings, componentDefinitions, getComponent } = useContext(ComponentContext);
   const { supportRealTime, subscriptionsPush } = useContext(BuilderSubscriptionsContext);
-  const [elementSelected, setElementSelected] = useState(null);
-  const [elementHovered, setElementHovered] = useState(null);
+  const [elementSelected, setElementSelected] = useState();
+  const [elementHovered, setElementHovered] = useState();
+  const [selectorSelected, setSelectorSelected] = useState();
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -119,9 +120,11 @@ const BuilderProvider = props => {
   );
 
   const setSelected = useCallback(
-    (elementId, iframeDOM = null, force = false) => {
+    (elementId, iframeDOM = undefined, force = false) => {
       setElementSelected(state => {
         if (force) {
+          setSelectorSelected(undefined);
+
           return elementId;
         }
 
@@ -159,6 +162,8 @@ const BuilderProvider = props => {
             offsetParent.scrollTop = offsetTop;
           }
         }
+
+        setSelectorSelected(undefined);
 
         return elementId;
       });
@@ -207,12 +212,13 @@ const BuilderProvider = props => {
 
       onBaseElementChange(id);
       setBaseContext(state => {
-        setHovered(null);
+        setHovered(undefined);
+        setSelectorSelected(undefined);
         if (state.baseElementId === id) {
           return state;
         }
 
-        setSelected(null);
+        setSelected(undefined);
 
         return { baseElementId: id };
       });
@@ -289,7 +295,7 @@ const BuilderProvider = props => {
         if (type[0] === 'move') {
           const fromParentId = get(data.element, 'definition.parentId');
           builderHandler(EventBridgeTypes.SCHEMA_MOVE_ELEMENT, fromParentId, toElementId, data.id, dropPosition);
-          setHovered(null);
+          setHovered(undefined);
         } else if (type[0] === 'add') {
           const element = {
             ...pick(data.element, ['attributes', 'definition']),
@@ -311,7 +317,7 @@ const BuilderProvider = props => {
             dropPosition,
             itemsToAdd.items
           );
-          setSelected(data.id, null, true);
+          setSelected(data.id, undefined, true);
         }
       } catch (err) {
         return false;
@@ -343,14 +349,14 @@ const BuilderProvider = props => {
     otherBaseElementId => {
       const element = getElement(otherBaseElementId ?? baseElementId);
       if (!element) {
-        return null;
+        return undefined;
       }
 
       const {
         definition: { type, items }
       } = element;
       if (!items) {
-        return null;
+        return undefined;
       }
 
       return {
@@ -363,8 +369,9 @@ const BuilderProvider = props => {
 
   useEffect(() => {
     if (baseElementId) {
-      setHovered(null);
-      setSelected(null);
+      setHovered(undefined);
+      setSelectorSelected(undefined);
+      setSelected(undefined);
       if (baseContext.baseElementId !== baseElementId && mode !== BUILDER_MODE_NORMAL) {
         builderSetBaseContext(baseElementId);
       }
@@ -385,7 +392,19 @@ const BuilderProvider = props => {
     [getBaseElement, drop, setVisibility, schema]
   );
 
-  const builderStyleValueMemo = useMemo(() => ({ style }), [style]);
+  const selector = get(schemaRef.current, `flat.${elementSelected}.definition.styleSelectors.base`, '');
+  const selectorActive = useMemo(() => {
+    if (selector && selectorSelected && selector.includes(selectorSelected)) {
+      return selectorSelected;
+    }
+
+    return get(selector.split(' '), '0', '');
+  }, [selector, selectorSelected]);
+
+  const builderStyleValueMemo = useMemo(
+    () => ({ style, selectorSelected: selectorActive, setSelectorSelected }),
+    [style, selectorActive, setSelectorSelected]
+  );
 
   const events = useMemo(
     () => ({ builderSetBaseContext, builderSetSelected: setSelected, builderSetHovered: setHovered }),
