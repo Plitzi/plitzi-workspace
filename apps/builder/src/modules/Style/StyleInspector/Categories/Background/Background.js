@@ -69,7 +69,7 @@ const Background = props => {
       } else if (type === BACKGROUND_IMAGE) {
         switch (imgType) {
           case 'image':
-            setValue(BACKGROUND_IMAGE, `url(${value})`);
+            setValue(BACKGROUND_IMAGE, `url("${value}")`);
 
             break;
           case 'linear-gradient':
@@ -99,7 +99,7 @@ const Background = props => {
         active: imgType === 'none'
       },
       {
-        value: { value: 'url(https://cdn.plitzi.com/resources/img/background-image.svg)', type: 'bgType' },
+        value: { value: 'url("https://cdn.plitzi.com/resources/img/background-image.svg")', type: 'bgType' },
         children: <Icons width={16} height={16} type="BackgroundModeImage" />,
         description: 'Image',
         active: imgType === 'image'

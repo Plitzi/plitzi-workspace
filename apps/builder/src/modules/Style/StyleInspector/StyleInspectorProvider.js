@@ -191,7 +191,7 @@ const defaultValue = {
   [RIGHT]: 'auto',
   [ZINDEX]: 0,
   [BACKGROUND_COLOR]: 'transparent',
-  [BACKGROUND_IMAGE]: 'url(https://cdn.plitzi.com/resources/img/background-image.svg)',
+  [BACKGROUND_IMAGE]: 'url("https://cdn.plitzi.com/resources/img/background-image.svg")',
   [BACKGROUND_SIZE]: 'auto',
   [BACKGROUND_POSITION]: '0px 0px',
   [BACKGROUND_REPEAT]: 'repeat',

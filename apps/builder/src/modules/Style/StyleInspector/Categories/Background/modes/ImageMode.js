@@ -28,7 +28,7 @@ const ImageMode = props => {
     [BACKGROUND_REPEAT]: backgroundRepeat
   } = partialValue;
 
-  const backgroundImage = useMemo(() => get(bgImage.match(/\((?<content>.*)\)/im), 'groups.content', ''), [bgImage]);
+  const backgroundImage = useMemo(() => get(bgImage.match(/\("(?<content>.*)"\)/im), 'groups.content', ''), [bgImage]);
 
   const position = backgroundPosition.split(' ');
   let size = backgroundSize.split(' ');
