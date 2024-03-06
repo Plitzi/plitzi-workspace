@@ -123,16 +123,16 @@ const SelectorTag = props => {
       >
         {type[0]}
       </div>
-      <div onClick={handleClick}>
+      <div onClick={handleClick} className="mx-1.5">
         {editable && (
           <Contenteditable
-            className="px-1.5 text-xs truncate"
+            className={classNames('text-xs truncate group-hover:mr-3', {})}
             value={selector}
             onChange={handleChange}
             openMode="doubleClick"
           />
         )}
-        {!editable && <div className="px-1.5 text-xs truncate">{selector}</div>}
+        {!editable && <div className="text-xs truncate">{selector}</div>}
       </div>
       <Dropdown
         className={classNames('absolute right-0 text-xs px-1 rounded-r h-full', {

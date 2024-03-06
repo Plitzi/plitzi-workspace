@@ -114,8 +114,6 @@ const StyleInspector = props => {
 
   const handleCurrentSelector = useCallback(tag => setSelectorSelected(tag.name), []);
 
-  console.log(selectorSelected);
-
   return (
     <div className="w-full flex flex-col grow">
       <div className="flex flex-col w-full p-2 border-b border-gray-300">
