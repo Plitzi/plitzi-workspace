@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-builder",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -72,7 +72,7 @@
     "speed-measure-webpack-plugin": "^1.5.0",
     "stylelint": "^16.2.1",
     "stylelint-order": "^6.0.4",
-    "stylelint-scss": "^6.2.0",
+    "stylelint-scss": "^6.2.1",
     "terser-webpack-plugin": "^5.3.10",
     "thread-loader": "^4.0.2",
     "typescript": "^5.3.3",

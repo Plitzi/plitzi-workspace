@@ -3273,7 +3273,7 @@ __metadata:
     speed-measure-webpack-plugin: "npm:^1.5.0"
     stylelint: "npm:^16.2.1"
     stylelint-order: "npm:^6.0.4"
-    stylelint-scss: "npm:^6.2.0"
+    stylelint-scss: "npm:^6.2.1"
     subscriptions-transport-ws: "npm:^0.11.0"
     terser-webpack-plugin: "npm:^5.3.10"
     thread-loader: "npm:^4.0.2"
@@ -3352,7 +3352,7 @@ __metadata:
     storybook: "npm:^7.6.17"
     stylelint: "npm:^16.2.1"
     stylelint-order: "npm:^6.0.4"
-    stylelint-scss: "npm:^6.2.0"
+    stylelint-scss: "npm:^6.2.1"
     terser-webpack-plugin: "npm:^5.3.10"
     thread-loader: "npm:^4.0.2"
     twig: "npm:^1.17.1"
@@ -17357,9 +17357,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-scss@npm:^6.2.0":
-  version: 6.2.0
-  resolution: "stylelint-scss@npm:6.2.0"
+"stylelint-scss@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "stylelint-scss@npm:6.2.1"
   dependencies:
     known-css-properties: "npm:^0.29.0"
     postcss-media-query-parser: "npm:^0.2.3"
@@ -17368,7 +17368,7 @@ __metadata:
     postcss-value-parser: "npm:^4.2.0"
   peerDependencies:
     stylelint: ^16.0.2
-  checksum: 10c0/d4b5ebaee3686ab34b272cbfc64f5c2574a128b06b3eb8e2a9cce38b57a1309dbbcb212bedba8d3f7d6277b4907a16f29abb767a5f15aa7e03f2a2059832bddb
+  checksum: 10c0/a3563e422fd8d27c14497d8922c9bb1285400aa41fa11ebdc3d0ec685ea69f732a4f1c1ac3bc34bfb7c4f8f8d97bb1bba2ebf003a03f7d0bdf79a1bad1282702
   languageName: node
   linkType: hard
 

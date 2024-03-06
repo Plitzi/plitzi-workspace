@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -82,7 +82,7 @@
     "storybook": "^7.6.17",
     "stylelint": "^16.2.1",
     "stylelint-order": "^6.0.4",
-    "stylelint-scss": "^6.2.0",
+    "stylelint-scss": "^6.2.1",
     "terser-webpack-plugin": "^5.3.10",
     "thread-loader": "^4.0.2",
     "url-loader": "^4.1.1",
