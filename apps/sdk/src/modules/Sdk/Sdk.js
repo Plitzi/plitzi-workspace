@@ -7,6 +7,7 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
@@ -15,7 +16,6 @@ import NetworkContext from '@modules/Network/NetworkContext';
 import PluginsContext from '@modules/Plugins/PluginsContext';
 import NavigationContext from '@modules/Navigation/NavigationContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
-import StyleContext from '@modules/Style/StyleContext';
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
 import SchemaSettingsContext from '@modules/Schema/SchemaSettingsContext';
 

@@ -4,6 +4,7 @@
   "files": [],
   "exports": {
     ".": "./src/index.js",
+    "./StyleContext": "./src/StyleContext.js",
     "./StyleHelper": "./src/StyleHelper.js"
   },
   "scripts": {

@@ -7,6 +7,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 // Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -16,7 +17,6 @@ import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 // Relatives
-import StyleContext from './StyleContext';
 import StyleReducer, { StyleActions } from './StyleReducer';
 import { makeSelector } from './StyleHelper';
 

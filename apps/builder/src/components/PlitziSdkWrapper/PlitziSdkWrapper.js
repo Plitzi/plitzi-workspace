@@ -6,10 +6,10 @@ import PlitziSdk from '@plitzi/plitzi-sdk';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import StyleContext from '@pmodules/Style/StyleContext';
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
 
 const PlitziSdkWrapper = props => {

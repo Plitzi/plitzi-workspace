@@ -10,12 +10,12 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
-import StyleContext from '@pmodules/Style/StyleContext';
 import useMediaRecorder from './hooks/useMediaRecorder';
 import VoiceVisualizer from './components/VoiceVisualizer';
 

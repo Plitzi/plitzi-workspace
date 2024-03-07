@@ -14,6 +14,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
@@ -24,7 +25,6 @@ import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import AppContext from '@pmodules/App/AppContext';
-import StyleContext from '@pmodules/Style/StyleContext';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';

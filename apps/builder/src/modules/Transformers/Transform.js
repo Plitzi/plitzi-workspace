@@ -16,12 +16,12 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
-import StyleContext from '@pmodules/Style/StyleContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
 

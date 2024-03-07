@@ -9,10 +9,10 @@ import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
-import StyleContext from '@pmodules/Style/StyleContext';
 
 const PageLayout = props => {
   const { id = '', name = '', onSelect = noop, onRemove = noop } = props;

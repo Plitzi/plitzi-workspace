@@ -2,11 +2,11 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 
+// Monorepo
+import StyleContext from '@plitzi/sdk-style/StyleContext';
+
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
-
-// Relatives
-import StyleContext from './StyleContext';
 
 export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';

@@ -9,11 +9,11 @@ import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
-import StyleContext from '@pmodules/Style/StyleContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';

@@ -8,10 +8,10 @@ import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale'
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
-import StyleContext from '@pmodules/Style/StyleContext';
 
 // Relatives
 import PageActions from './PageActions';

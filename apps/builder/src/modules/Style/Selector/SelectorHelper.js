@@ -3,5 +3,5 @@ export const selectorFormatter = selector => {
     selector = `_${selector}`;
   }
 
-  return selector.replace(' ', '-').replace(/[^a-zA-Z0-9-_]+/, '');
+  return selector.replace(' ', '-').replace(/[^a-zA-Z0-9_-]+/, '');
 };
