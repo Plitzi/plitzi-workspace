@@ -8,7 +8,6 @@ import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Alias
-import StyleManager from '@pmodules/Style/StyleManager';
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
 import {
   DISPLAY_BORDER,
@@ -82,25 +81,6 @@ const BuilderAreaFooter = props => {
       });
     }
   }, [setDragTree, addPopup, existsPopup, mode]);
-
-  const handleClickStyleManager = useCallback(() => {
-    if (!existsPopup('styleManager')) {
-      const title = (
-        <>
-          <i className="fas fa-swatchbook m-1 text-base" />
-          Style Manager
-        </>
-      );
-      addPopup('styleManager', <StyleManager />, {
-        resizeHandles: ['se'],
-        title,
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
-        width: 600
-      });
-    }
-  }, [addPopup, existsPopup, mode]);
 
   const handleClickAdvanceStyle = useCallback(() => {
     if (!existsPopup('advance-style')) {
@@ -302,15 +282,6 @@ const BuilderAreaFooter = props => {
           title="Layer Manager"
         >
           <i className="fas fa-stream" />
-        </Button>
-        <Button
-          intent="custom"
-          size="custom"
-          onClick={handleClickStyleManager}
-          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
-          title="Style Manager"
-        >
-          <i className="fas fa-swatchbook" />
         </Button>
         <Button
           intent="custom"

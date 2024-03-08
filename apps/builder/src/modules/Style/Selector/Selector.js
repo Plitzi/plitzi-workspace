@@ -6,7 +6,10 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import omit from 'lodash/omit';
+import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
+import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
+import { POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Alias
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
@@ -16,6 +19,7 @@ import SelectorTag from './SelectorTag';
 import { selectorFormatter } from './SelectorHelper';
 import { StyleSelectors } from '../StyleHelper';
 import SelectorSuggestions from './SelectorSuggestions';
+import StyleManager from '../StyleManager';
 
 const Selector = props => {
   const {
@@ -32,6 +36,7 @@ const Selector = props => {
   const inputRef = useRef(null);
   const [inputValue, setInputValue] = useState('');
   const { style } = useContext(BuilderStyleContext);
+  const { existsPopup, addPopup } = usePopup();
   const tags = useMemo(
     () =>
       Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))).map(tag =>
@@ -172,6 +177,30 @@ const Selector = props => {
     [tags, onChange, onSelectorSelected]
   );
 
+  const handleClickStyleManager = useCallback(
+    e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!existsPopup('styleManager')) {
+        const title = (
+          <>
+            <i className="fas fa-swatchbook m-1 text-base" />
+            Style Manager
+          </>
+        );
+        addPopup('styleManager', <StyleManager />, {
+          resizeHandles: ['se'],
+          title,
+          allowLeftSide: true,
+          allowRightSide: true,
+          placement: POPUP_PLACEMENT_FLOATING,
+          width: 600
+        });
+      }
+    },
+    [addPopup, existsPopup]
+  ); // mode
+
   return (
     <Dropdown
       className="w-full"
@@ -182,7 +211,7 @@ const Selector = props => {
       backgroundDisabled
       classNameBackground=""
     >
-      <Dropdown.Content className="w-full z-[51]">
+      <Dropdown.Content className={classNames('w-full', { 'z-[51]': popupOpened })}>
         <div
           className={classNames('flex flex-wrap border border-gray-300 rounded relative p-1 gap-1 flex', className, {
             'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
@@ -191,6 +220,15 @@ const Selector = props => {
           onClick={handleClick}
           onKeyDown={handleKeyDown}
         >
+          <Button
+            intent="custom"
+            size="custom"
+            onClick={handleClickStyleManager}
+            className="hover:bg-gray-200 border border-gray-300 rounded h-6 w-6 text-gray-500"
+            title="Style Manager"
+          >
+            <i className="fas fa-swatchbook" />
+          </Button>
           {tags &&
             tags.map((tag, i) => (
               <SelectorTag
