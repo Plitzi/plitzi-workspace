@@ -36,9 +36,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.9.5":
-  version: 3.9.5
-  resolution: "@apollo/client@npm:3.9.5"
+"@apollo/client@npm:^3.9.6":
+  version: 3.9.6
+  resolution: "@apollo/client@npm:3.9.6"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.1.1"
     "@wry/caches": "npm:^1.0.0"
@@ -48,7 +48,7 @@ __metadata:
     hoist-non-react-statics: "npm:^3.3.2"
     optimism: "npm:^0.18.0"
     prop-types: "npm:^15.7.2"
-    rehackt: "npm:0.0.5"
+    rehackt: "npm:0.0.6"
     response-iterator: "npm:^0.2.6"
     symbol-observable: "npm:^4.0.0"
     ts-invariant: "npm:^0.10.3"
@@ -69,7 +69,7 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 10c0/ede8ea975ba12cbf11d1b88074808ff7c8677321b5780c952c4b7d7672a4bdda24f27a6a1fed79cc6e6d9787b083f12afed0033c2fee06a2d226faadf3f44aec
+  checksum: 10c0/566cbb82e5272c260f04c647a150068a328800bd2f0d492a594d6ab2a2a616e84b8e6a494d8207483a26af50552ed09a3361e52713f9b75407bca0cfd4123724
   languageName: node
   linkType: hard
 
@@ -3221,7 +3221,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-builder@workspace:apps/builder"
   dependencies:
-    "@apollo/client": "npm:^3.9.5"
+    "@apollo/client": "npm:^3.9.6"
     "@babel/compat-data": "npm:^7.23.5"
     "@babel/core": "npm:^7.24.0"
     "@babel/helper-builder-react-jsx-experimental": "npm:^7.12.11"
@@ -3248,7 +3248,7 @@ __metadata:
     css-loader: "npm:^6.10.0"
     cypress: "npm:^13.6.6"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.229.2"
+    flow-bin: "npm:^0.230.0"
     graphql: "npm:^16.8.1"
     handlebars-webpack-plugin: "npm:^2.2.1"
     html-webpack-plugin: "npm:^5.6.0"
@@ -3267,7 +3267,7 @@ __metadata:
     react-hook-form: "npm:^7.51.0"
     react-moment: "npm:^1.1.3"
     react-refresh: "npm:^0.14.0"
-    react-router-dom: "npm:^6.22.2"
+    react-router-dom: "npm:^6.22.3"
     react-test-renderer: "npm:^18.2.0"
     sass-loader: "npm:^14.1.1"
     speed-measure-webpack-plugin: "npm:^1.5.0"
@@ -3278,7 +3278,6 @@ __metadata:
     terser-webpack-plugin: "npm:^5.3.10"
     thread-loader: "npm:^4.0.2"
     twig: "npm:^1.17.1"
-    typescript: "npm:^5.3.3"
     url-loader: "npm:^4.1.1"
     uuid: "npm:^9.0.1"
     webpack: "npm:^5.90.3"
@@ -3294,7 +3293,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-sdk@workspace:apps/sdk"
   dependencies:
-    "@apollo/client": "npm:^3.9.5"
+    "@apollo/client": "npm:^3.9.6"
     "@auth0/auth0-react": "npm:^2.2.4"
     "@babel/compat-data": "npm:^7.23.5"
     "@babel/core": "npm:^7.24.0"
@@ -3328,7 +3327,7 @@ __metadata:
     css-loader: "npm:^6.10.0"
     dompurify: "npm:^3.0.9"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.229.2"
+    flow-bin: "npm:^0.230.0"
     graphql: "npm:^16.8.1"
     handlebars: "npm:^4.7.8"
     handlebars-webpack-plugin: "npm:^2.2.1"
@@ -3345,7 +3344,7 @@ __metadata:
     react-dom: "npm:^18.2.0"
     react-helmet-async: "npm:^2.0.4"
     react-refresh: "npm:^0.14.0"
-    react-router-dom: "npm:^6.22.2"
+    react-router-dom: "npm:^6.22.3"
     react-test-renderer: "npm:^18.2.0"
     sass-loader: "npm:^14.1.1"
     speed-measure-webpack-plugin: "npm:^1.5.0"
@@ -3412,7 +3411,7 @@ __metadata:
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"
-    turbo: "npm:^1.12.4"
+    turbo: "npm:^1.12.5"
   languageName: unknown
   linkType: soft
 
@@ -3438,7 +3437,6 @@ __metadata:
     eslint: "npm:^8.57.0"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
-    react: "npm:^18.2.0"
   languageName: unknown
   linkType: soft
 
@@ -3483,7 +3481,7 @@ __metadata:
     eslint: "npm:^8.57.0"
     eslint-config-airbnb: "npm:^19.0.4"
     eslint-config-prettier: "npm:^9.1.0"
-    eslint-config-turbo: "npm:^1.12.4"
+    eslint-config-turbo: "npm:^1.12.5"
     eslint-import-resolver-alias: "npm:^1.1.2"
     eslint-plugin-cypress: "npm:^2.15.1"
     eslint-plugin-flowtype: "npm:8.0.3"
@@ -4129,6 +4127,13 @@ __metadata:
   version: 1.15.2
   resolution: "@remix-run/router@npm:1.15.2"
   checksum: 10c0/7bcad98a91e8a2e822f3776360d284bee48f9ba2d3b7ee2235f95b8701da2f06de3db880a205c4fd4e78c9198eaf6272229a2e66574a8cf563befd428fdefeee
+  languageName: node
+  linkType: hard
+
+"@remix-run/router@npm:1.15.3":
+  version: 1.15.3
+  resolution: "@remix-run/router@npm:1.15.3"
+  checksum: 10c0/aea197447cee21e137d70f0c93e00de70c64fcfae20ae349ade9dc4202e782bd94dbc88be7302d13b6aa6cde38a701b074cd8e09a161d14cecda832a36dd2695
   languageName: node
   linkType: hard
 
@@ -9410,14 +9415,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-turbo@npm:^1.12.4":
-  version: 1.12.4
-  resolution: "eslint-config-turbo@npm:1.12.4"
+"eslint-config-turbo@npm:^1.12.5":
+  version: 1.12.5
+  resolution: "eslint-config-turbo@npm:1.12.5"
   dependencies:
-    eslint-plugin-turbo: "npm:1.12.4"
+    eslint-plugin-turbo: "npm:1.12.5"
   peerDependencies:
     eslint: ">6.6.0"
-  checksum: 10c0/62f86ab122a21aba77c03b97dc6b3f6f6661a58fd65b44bf0f0a53f97d77c23937fa15b8062bb12b25404445a25acf5683467a1bcd5fe0615862010666b608d4
+  checksum: 10c0/8f2188e2eca353ed36a9a2025b01e881d061787e30af4e3d593c33e056bac1c9f590c9d89ea3a5ae5c05f0ed7ad3c2d090691d5f6b157b36c4e8fc32ddc9bab7
   languageName: node
   linkType: hard
 
@@ -9602,14 +9607,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-turbo@npm:1.12.4":
-  version: 1.12.4
-  resolution: "eslint-plugin-turbo@npm:1.12.4"
+"eslint-plugin-turbo@npm:1.12.5":
+  version: 1.12.5
+  resolution: "eslint-plugin-turbo@npm:1.12.5"
   dependencies:
     dotenv: "npm:16.0.3"
   peerDependencies:
     eslint: ">6.6.0"
-  checksum: 10c0/1fec52b02b087f794250108366a8a1d90bd266c7500aada843251555a5b5fd2e7d2b9fd923e558d26af3ac707ae74c7280898228955229797bdd24818668bb22
+  checksum: 10c0/9a18aa276e9f3bbd6b8624919557daa527c464ae502963aa80bc6c87b9809690094a0f58d3e91011f4cbb4096b8a2136d791e3e2cf6afb51c1269c96cd6a2b8c
   languageName: node
   linkType: hard
 
@@ -10294,12 +10299,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flow-bin@npm:^0.229.2":
-  version: 0.229.2
-  resolution: "flow-bin@npm:0.229.2"
+"flow-bin@npm:^0.230.0":
+  version: 0.230.0
+  resolution: "flow-bin@npm:0.230.0"
   bin:
     flow: cli.js
-  checksum: 10c0/10845a6056c4dfe8457c2d93be85d5fbe0a110be7fff8263415be86f67f998be9a95c1f8e98934d50fb0140b620f32a83a1fcb170fb0147029c63fee948e4a67
+  checksum: 10c0/f179f4b8de29ab1e3e918f64853b053116042ebba77a6e8f89310730e59d0a8e675ceeb24c3588c572369fe08a6e1319279c7c810c2a21a050f897c08fd50247
   languageName: node
   linkType: hard
 
@@ -15786,6 +15791,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-router-dom@npm:^6.22.3":
+  version: 6.22.3
+  resolution: "react-router-dom@npm:6.22.3"
+  dependencies:
+    "@remix-run/router": "npm:1.15.3"
+    react-router: "npm:6.22.3"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 10c0/39b0472db5d153cbbbf4f5df5c0b26f2b75ffd7b857d7b67d17e03f4618d806b957cf033fbeb265bb317ade951e6ce0d576311bdf6eb15a7013203079cfadf03
+  languageName: node
+  linkType: hard
+
 "react-router@npm:6.22.2":
   version: 6.22.2
   resolution: "react-router@npm:6.22.2"
@@ -15794,6 +15812,17 @@ __metadata:
   peerDependencies:
     react: ">=16.8"
   checksum: 10c0/e0a0d1a0c8566b377cda632691a7c39d4009cbc8fced4fe06f13789a8acc38c474a366984b536b109e3685f3d7e1f839d6bec7b28fb96d311d86d02fc8999379
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.22.3":
+  version: 6.22.3
+  resolution: "react-router@npm:6.22.3"
+  dependencies:
+    "@remix-run/router": "npm:1.15.3"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10c0/a2c85c3d1fa93585e312b1f7e6e21d1ca421875013a8d879e109d3ed41fb035bc93faef4cd42b354ea18d039bc50b679bf752679ad83ac26a986e3432fbd0462
   languageName: node
   linkType: hard
 
@@ -16071,9 +16100,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rehackt@npm:0.0.5":
-  version: 0.0.5
-  resolution: "rehackt@npm:0.0.5"
+"rehackt@npm:0.0.6":
+  version: 0.0.6
+  resolution: "rehackt@npm:0.0.6"
   peerDependencies:
     "@types/react": "*"
     react: "*"
@@ -16082,7 +16111,7 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/6123188b6cae82441e2e670ec1dbd741a11874958479b44a69323429bc038398a0b431ffd845c69fc60cc0c0939252ffd2cb37255c314eda38f6a4072bf81b56
+  checksum: 10c0/814c9b80b2680dc0572639ecad1ed1961b23b606e53a00976ee4c4876f6ed736ea702381235ac40ed2a5c826fb55641b46ae23343e4ddd6378ced1da3d51ada7
   languageName: node
   linkType: hard
 
@@ -18019,58 +18048,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo-darwin-64@npm:1.12.4":
-  version: 1.12.4
-  resolution: "turbo-darwin-64@npm:1.12.4"
+"turbo-darwin-64@npm:1.12.5":
+  version: 1.12.5
+  resolution: "turbo-darwin-64@npm:1.12.5"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-darwin-arm64@npm:1.12.4":
-  version: 1.12.4
-  resolution: "turbo-darwin-arm64@npm:1.12.4"
+"turbo-darwin-arm64@npm:1.12.5":
+  version: 1.12.5
+  resolution: "turbo-darwin-arm64@npm:1.12.5"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-linux-64@npm:1.12.4":
-  version: 1.12.4
-  resolution: "turbo-linux-64@npm:1.12.4"
+"turbo-linux-64@npm:1.12.5":
+  version: 1.12.5
+  resolution: "turbo-linux-64@npm:1.12.5"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-linux-arm64@npm:1.12.4":
-  version: 1.12.4
-  resolution: "turbo-linux-arm64@npm:1.12.4"
+"turbo-linux-arm64@npm:1.12.5":
+  version: 1.12.5
+  resolution: "turbo-linux-arm64@npm:1.12.5"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-windows-64@npm:1.12.4":
-  version: 1.12.4
-  resolution: "turbo-windows-64@npm:1.12.4"
+"turbo-windows-64@npm:1.12.5":
+  version: 1.12.5
+  resolution: "turbo-windows-64@npm:1.12.5"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-windows-arm64@npm:1.12.4":
-  version: 1.12.4
-  resolution: "turbo-windows-arm64@npm:1.12.4"
+"turbo-windows-arm64@npm:1.12.5":
+  version: 1.12.5
+  resolution: "turbo-windows-arm64@npm:1.12.5"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo@npm:^1.12.4":
-  version: 1.12.4
-  resolution: "turbo@npm:1.12.4"
+"turbo@npm:^1.12.5":
+  version: 1.12.5
+  resolution: "turbo@npm:1.12.5"
   dependencies:
-    turbo-darwin-64: "npm:1.12.4"
-    turbo-darwin-arm64: "npm:1.12.4"
-    turbo-linux-64: "npm:1.12.4"
-    turbo-linux-arm64: "npm:1.12.4"
-    turbo-windows-64: "npm:1.12.4"
-    turbo-windows-arm64: "npm:1.12.4"
+    turbo-darwin-64: "npm:1.12.5"
+    turbo-darwin-arm64: "npm:1.12.5"
+    turbo-linux-64: "npm:1.12.5"
+    turbo-linux-arm64: "npm:1.12.5"
+    turbo-windows-64: "npm:1.12.5"
+    turbo-windows-arm64: "npm:1.12.5"
   dependenciesMeta:
     turbo-darwin-64:
       optional: true
@@ -18086,7 +18115,7 @@ __metadata:
       optional: true
   bin:
     turbo: bin/turbo
-  checksum: 10c0/c5ba0b5f4c45df5e95783c0d2f3342fde5a015b337a24e77002ffcb1ece93bd92d17ced1696ff2d0e3dde408d229046ac8b1f61f5ea5aef56597f268c78c07f6
+  checksum: 10c0/87c5891808b6c5f9a1e9e0179c4d2b1560fdd1b15753840464fb35d6b68208747f6deae93703ec9a5b95db65def95eff36d3670432e5613d427be6b896036dcd
   languageName: node
   linkType: hard
 
@@ -18249,26 +18278,6 @@ __metadata:
   version: 0.0.6
   resolution: "typedarray@npm:0.0.6"
   checksum: 10c0/6005cb31df50eef8b1f3c780eb71a17925f3038a100d82f9406ac2ad1de5eb59f8e6decbdc145b3a1f8e5836e17b0c0002fb698b9fe2516b8f9f9ff602d36412
-  languageName: node
-  linkType: hard
-
-"typescript@npm:^5.3.3":
-  version: 5.3.3
-  resolution: "typescript@npm:5.3.3"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/e33cef99d82573624fc0f854a2980322714986bc35b9cb4d1ce736ed182aeab78e2cb32b385efa493b2a976ef52c53e20d6c6918312353a91850e2b76f1ea44f
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A^5.3.3#optional!builtin<compat/typescript>":
-  version: 5.3.3
-  resolution: "typescript@patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/1d0a5f4ce496c42caa9a30e659c467c5686eae15d54b027ee7866744952547f1be1262f2d40de911618c242b510029d51d43ff605dba8fb740ec85ca2d3f9500
   languageName: node
   linkType: hard
 
