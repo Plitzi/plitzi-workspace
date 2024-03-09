@@ -118,8 +118,9 @@ const AppHeaher = () => {
   }, [addToast, mutate, showModal]);
 
   return (
-    <div className="h-12 pl-6 flex items-center bg-white justify-between border-b border-gray-300">
+    <div className="h-12 flex items-center bg-white justify-between border-b border-gray-300">
       <div className="flex h-full items-center">
+        <div className="flex items-center justify-center w-14 h-12" id="plitzi-logo" />
         <div className="h-full px-3 flex items-center cursor-pointer select-none border-r border-gray-300">
           <div className="font-bold">Page:</div>
           <div className="ml-1 text-blue-400">{pageLabel}</div>
