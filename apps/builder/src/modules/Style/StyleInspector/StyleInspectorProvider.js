@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
@@ -16,13 +15,13 @@ import { produce } from 'immer';
 // Alias
 import AppContext from '@pmodules/App/AppContext';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives
 import StyleInspectorContext from './StyleInspectorContext';
-import { StyleSelectors, calculateBindings, calculateInheriting, makeSelector } from '../StyleHelper';
+import { StyleSelectors, makeSelector } from '../StyleHelper';
+import useStyleBinding from '../hooks/useStyleBinding';
 import {
   // typography
   FONT_FAMILY,
@@ -221,23 +220,11 @@ const defaultValue = {
 };
 
 const StyleInspectorProvider = props => {
-  const { children, selector = '', styleSelector = 'base', element } = props;
+  const { children, selector = '', styleSelector = 'base', element, inheritData } = props;
   const { displayMode } = useContext(AppContext);
-  const { componentDefinitions } = useContext(ComponentContext);
   const { builderHandler } = useContext(BuilderContext);
-  const {
-    schema: { flat }
-  } = useContext(BuilderSchemaContext);
-  const {
-    style: { platform },
-    style
-  } = useContext(BuilderStyleContext);
-
-  const bindingData = useMemo(() => calculateBindings(element), [element]);
-  const inheritData = useMemo(
-    () => calculateInheriting(element, flat, platform, displayMode, styleSelector, componentDefinitions),
-    [element, flat, displayMode, styleSelector, componentDefinitions]
-  );
+  const { style } = useContext(BuilderStyleContext);
+  const bindingData = useStyleBinding({ element });
   const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
   const values = get(style, `platform.${displayMode}.${selector}.attributes`);
 
