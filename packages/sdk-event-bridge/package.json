@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-event-bridge",
-  "version": "0.20.2",
+  "version": "0.20.3",
   "files": [],
   "exports": {
     ".": "./src/index.js",
