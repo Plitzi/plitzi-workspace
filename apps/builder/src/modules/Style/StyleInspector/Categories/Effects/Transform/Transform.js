@@ -29,7 +29,7 @@ const Transform = props => {
     if (partialValue.length > 0) {
       onChange({ type: TRANSFORM, value: partialValue.join(' ') });
     } else {
-      onChange({ type: TRANSFORM, value: null });
+      onChange({ type: TRANSFORM, value: undefined });
     }
   };
 

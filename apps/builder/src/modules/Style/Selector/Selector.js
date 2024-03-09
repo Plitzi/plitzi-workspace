@@ -33,7 +33,7 @@ const Selector = props => {
     onSelectorAdded = noop
     // onSelectorRemoved = noop
   } = props;
-  const inputRef = useRef(null);
+  const inputRef = useRef();
   const [inputValue, setInputValue] = useState('');
   const { style } = useContext(BuilderStyleContext);
   const { existsPopup, addPopup } = usePopup();

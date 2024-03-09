@@ -14,7 +14,7 @@ const SpacingPadding = props => {
   const { fragmentSelected, partialValue, onSelectFragment = noop } = props;
   const handleClickSelect = type => () => {
     if (type === fragmentSelected) {
-      onSelectFragment(null);
+      onSelectFragment(undefined);
     } else {
       onSelectFragment(type);
     }

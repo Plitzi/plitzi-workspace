@@ -19,7 +19,7 @@ import GroupButtons from '../../../../components/GroupButtons';
 const TransitionItem = props => {
   const { value = '', onRemove = noop, onChange = noop } = props;
   const [progress, setProgress] = useState(0);
-  const [loopHandler, setLoopHandler] = useState(null);
+  const [loopHandler, setLoopHandler] = useState();
 
   const handleChangeEasing = useCallback(type => value => handleChange({ type, value }), []);
 
@@ -28,7 +28,7 @@ const TransitionItem = props => {
   const handleClickEaseAnimation = () => {
     if (loopHandler) {
       clearInterval(loopHandler);
-      setLoopHandler(null);
+      setLoopHandler(undefined);
       setProgress(0);
 
       return;

@@ -19,7 +19,7 @@ const NodeDraggable = props => {
     onPositionChanged = noop,
     ...otherProps
   } = props;
-  const elementRef = useRef(null);
+  const elementRef = useRef();
   const xRef = useRef(x);
   const yRef = useRef(y);
   const [dragging, setDragging] = useState(false);

@@ -28,7 +28,7 @@ const BoxShadow = props => {
     if (boxShadows.length > 0) {
       onChange({ type: BOX_SHADOW, value: boxShadows.join(',') });
     } else {
-      onChange({ type: BOX_SHADOW, value: null });
+      onChange({ type: BOX_SHADOW, value: undefined });
     }
   };
 

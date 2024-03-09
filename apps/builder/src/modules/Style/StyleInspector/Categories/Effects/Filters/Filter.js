@@ -27,7 +27,7 @@ const Filter = props => {
     if (partialValue.length > 0) {
       onChange({ type: FILTER, value: partialValue.join(' ') });
     } else {
-      onChange({ type: FILTER, value: null });
+      onChange({ type: FILTER, value: undefined });
     }
   };
 

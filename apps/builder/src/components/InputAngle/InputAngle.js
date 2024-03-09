@@ -17,8 +17,8 @@ const InputAngle = props => {
     onChange = noop
   } = props;
   const value = useRef(valueProp);
-  const inputRef = useRef(null);
-  const dotRef = useRef(null);
+  const inputRef = useRef();
+  const dotRef = useRef();
 
   useEffect(() => {
     value.current = valueProp;

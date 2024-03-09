@@ -56,7 +56,7 @@ const InspectorModeAdvanced = props => {
           displayMode,
           currentState.name,
           selectorInstance?.type,
-          null,
+          undefined,
           currentState.attributes
         );
       }

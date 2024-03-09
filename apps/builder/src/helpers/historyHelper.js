@@ -8,7 +8,7 @@ const updateHistoryBrowser = (history, params, persistParams = true) => {
   const newParams = {};
   Object.keys(params).forEach(key => {
     const currentValue = currentParams[key] || '';
-    if (typeof params[key] === 'undefined' || params[key] === null) {
+    if (typeof params[key] === 'undefined' || params[key] === undefined) {
       return;
     }
 

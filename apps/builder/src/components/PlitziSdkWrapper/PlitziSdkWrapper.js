@@ -21,7 +21,7 @@ const PlitziSdkWrapper = props => {
 
   const offlineDataMemo = useMemo(() => {
     if (renderMode === 'iframe') {
-      return null;
+      return undefined;
     }
 
     return {

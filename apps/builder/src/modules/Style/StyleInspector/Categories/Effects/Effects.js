@@ -107,10 +107,10 @@ const Effects = props => {
           label="Cursor"
           onChange={handleChange}
         />
-        <BoxShadow onChange={handleChange} partialValue={getValue(BOX_SHADOW, null, true)} />
-        <Transform onChange={handleChange} partialValue={getValue(TRANSFORM, null, true)} />
-        <Transition onChange={handleChange} partialValue={getValue(TRANSITION, null, true)} />
-        <Filter onChange={handleChange} partialValue={getValue(FILTER, null, true)} />
+        <BoxShadow onChange={handleChange} partialValue={getValue(BOX_SHADOW, undefined, true)} />
+        <Transform onChange={handleChange} partialValue={getValue(TRANSFORM, undefined, true)} />
+        <Transition onChange={handleChange} partialValue={getValue(TRANSITION, undefined, true)} />
+        <Filter onChange={handleChange} partialValue={getValue(FILTER, undefined, true)} />
       </div>
     </CategoryContainer>
   );

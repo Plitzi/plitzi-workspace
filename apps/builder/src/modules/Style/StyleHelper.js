@@ -77,7 +77,7 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
 const getDataStyle = (element, platform, displayMode, isParent = false, componentDefinitions = {}) => {
   const metadata = { tree: [] };
   if (!element) {
-    return null;
+    return undefined;
   }
 
   const {
@@ -152,7 +152,7 @@ export const calculateInheriting = (element, flat, platform, displayMode, styleS
     metadata.tree = [...metadata.tree, ...styleData.tree];
     const parentId = get(element, 'definition.parentId');
     if (!parentId) {
-      element = null;
+      element = undefined;
 
       break;
     }

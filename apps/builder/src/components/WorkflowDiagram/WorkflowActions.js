@@ -23,7 +23,7 @@ const WorkflowActions = props => {
         action: '',
         position: { x: 0, y: 0 },
         connectors: {
-          [idConnectorToOut]: { id: idConnectorToOut, mode: 'out', placement: 'right', limit: null }
+          [idConnectorToOut]: { id: idConnectorToOut, mode: 'out', placement: 'right', limit: undefined }
         },
         params: {}
       });
@@ -35,7 +35,7 @@ const WorkflowActions = props => {
         position: { x: 0, y: 0 },
         connectors: {
           [idConnectorToIn]: { id: idConnectorToIn, mode: 'in', placement: 'left', limit: 1 },
-          [idConnectorToOut]: { id: idConnectorToOut, mode: 'out', placement: 'right', limit: null }
+          [idConnectorToOut]: { id: idConnectorToOut, mode: 'out', placement: 'right', limit: undefined }
         },
         params: {}
       });

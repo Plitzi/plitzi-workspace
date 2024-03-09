@@ -39,7 +39,7 @@ const Background = props => {
   const handleCollapse = useCallback(isCollapsed => onCollapse('background', isCollapsed), [onCollapse]);
 
   let imgType = 'none';
-  const bgImage = getValue(BACKGROUND_IMAGE, null, true);
+  const bgImage = getValue(BACKGROUND_IMAGE, undefined, true);
   if (bgImage && bgImage.includes('url')) {
     imgType = 'image';
   } else if (bgImage && bgImage.includes('linear-gradient')) {
@@ -58,14 +58,14 @@ const Background = props => {
       const { type, value } = itemValue;
       if (type === 'bgType' && value === 'none') {
         setValue([BACKGROUND_IMAGE, BACKGROUND_POSITION, BACKGROUND_SIZE, BACKGROUND_REPEAT, BACKGROUND_ATTACHMENT], {
-          [BACKGROUND_IMAGE]: null,
-          [BACKGROUND_POSITION]: null,
-          [BACKGROUND_SIZE]: null,
-          [BACKGROUND_REPEAT]: null,
-          [BACKGROUND_ATTACHMENT]: null
+          [BACKGROUND_IMAGE]: undefined,
+          [BACKGROUND_POSITION]: undefined,
+          [BACKGROUND_SIZE]: undefined,
+          [BACKGROUND_REPEAT]: undefined,
+          [BACKGROUND_ATTACHMENT]: undefined
         });
       } else if (type === 'bgType') {
-        setValue([BACKGROUND_COLOR, BACKGROUND_IMAGE], { [BACKGROUND_COLOR]: null, [BACKGROUND_IMAGE]: value });
+        setValue([BACKGROUND_COLOR, BACKGROUND_IMAGE], { [BACKGROUND_COLOR]: undefined, [BACKGROUND_IMAGE]: value });
       } else if (type === BACKGROUND_IMAGE) {
         switch (imgType) {
           case 'image':

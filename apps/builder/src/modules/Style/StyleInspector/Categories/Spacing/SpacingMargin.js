@@ -17,7 +17,7 @@ const SpacingMargin = props => {
   const handleClickSelect = type => () => {
     const { fragmentSelected, onSelectFragment } = props;
     if (type === fragmentSelected) {
-      onSelectFragment(null);
+      onSelectFragment(undefined);
     } else {
       onSelectFragment(type);
     }

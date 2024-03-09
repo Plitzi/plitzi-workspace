@@ -51,7 +51,7 @@ const ManagerSelector = props => {
       <Modal.Body>
         <SelectorForm />
       </Modal.Body>,
-      null,
+      undefined,
       { placement: 'center', renderFooter: false }
     );
 
@@ -67,7 +67,7 @@ const ManagerSelector = props => {
   const handleClickSelect = useCallback(
     selector => {
       if (selected === selector) {
-        onSelect(null);
+        onSelect(undefined);
       } else {
         onSelect(selector);
       }
@@ -100,7 +100,7 @@ const ManagerSelector = props => {
           <Modal.Body>
             <h4 className="px-3 py-2">Do you want to remove this item ?</h4>
           </Modal.Body>,
-          null,
+          undefined,
           { placement: 'center', renderFooter: true }
         );
 

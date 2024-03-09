@@ -27,7 +27,7 @@ const Transition = props => {
     if (partialValue.length > 0) {
       onChange({ type: TRANSITION, value: partialValue.join(',') });
     } else {
-      onChange({ type: TRANSITION, value: null });
+      onChange({ type: TRANSITION, value: undefined });
     }
   };
 

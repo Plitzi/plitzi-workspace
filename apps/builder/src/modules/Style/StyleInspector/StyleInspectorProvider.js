@@ -229,14 +229,14 @@ const StyleInspectorProvider = props => {
   const values = get(style, `platform.${displayMode}.${selector}.attributes`);
 
   const getValue = useCallback(
-    (key, defaultValueOptional = null, strictMode = false) => {
+    (key, defaultValueOptional = undefined, strictMode = false) => {
       if (!key) {
         return values;
       }
 
       if (Array.isArray(key)) {
         const value = {};
-        if (defaultValueOptional === null) {
+        if (defaultValueOptional === undefined) {
           defaultValueOptional = {};
         }
 
@@ -255,7 +255,7 @@ const StyleInspectorProvider = props => {
         return get(values, key);
       }
 
-      if (defaultValueOptional === null && defaultValue[key] !== null && defaultValue[key] !== undefined) {
+      if (defaultValueOptional === undefined && defaultValue[key] !== undefined && defaultValue[key] !== undefined) {
         defaultValueOptional = defaultValue[key];
       }
 
@@ -269,7 +269,7 @@ const StyleInspectorProvider = props => {
   );
 
   const setValue = useCallback(
-    (styleKey, value = null) => {
+    (styleKey, value = undefined) => {
       if (typeof styleKey === 'object') {
         Object.keys({ ...styleKey }).forEach(styleKeyItem => {
           if (get(bindingData, styleKeyItem)) {
@@ -287,7 +287,7 @@ const StyleInspectorProvider = props => {
         } else if (Array.isArray(styleKey)) {
           const newValues = { ...values, ...value };
           Object.keys(newValues).forEach(k => {
-            if (newValues[k] === null || newValues[k] === undefined) {
+            if (newValues[k] === undefined || newValues[k] === undefined) {
               delete newValues[k];
             }
           });

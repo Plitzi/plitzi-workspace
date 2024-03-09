@@ -57,7 +57,7 @@ const ManagerModeAdvanced = props => {
         displayMode,
         currentState.name,
         selector.type,
-        null,
+        undefined,
         currentState.attributes
       );
     },

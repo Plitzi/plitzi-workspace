@@ -124,7 +124,7 @@ const WorkflowContextProvider = props => {
                   id: idConnectorOut,
                   mode: 'out',
                   placement: 'left',
-                  limit: null
+                  limit: undefined
                 });
               }
             }
@@ -199,8 +199,8 @@ const WorkflowContextProvider = props => {
             node => node.type === 'connector' && node.to.id === nodeToId && node.to.connector === connectorToId
           ).length;
           if (
-            (connectorFrom.limit !== null && fromLimit >= connectorFrom.limit) ||
-            (connectorTo.limit !== null && toLimit >= connectorTo.limit)
+            (connectorFrom.limit !== undefined && fromLimit >= connectorFrom.limit) ||
+            (connectorTo.limit !== undefined && toLimit >= connectorTo.limit)
           ) {
             return;
           }

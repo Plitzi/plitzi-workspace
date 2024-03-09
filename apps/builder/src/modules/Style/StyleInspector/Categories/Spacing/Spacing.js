@@ -33,7 +33,7 @@ const dotKeys = [
 const Spacing = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
   const { getValue, setValue } = useContext(StyleInspectorContext);
-  const [fragmentSelected, setFragmentSelected] = useState(null);
+  const [fragmentSelected, setFragmentSelected] = useState();
 
   const handleChange = (type, partialValue) => {
     setValue(type, partialValue);
