@@ -4,9 +4,11 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
+// Monorepo
+import { POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
 import Icons from '@pcomponents/Icons';
-import { POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT } from '@pmodules/Style/StyleConstants';
 
 // Relatives
 import InspectorLabel from '../../InspectorLabel';

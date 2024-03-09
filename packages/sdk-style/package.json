@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.js",
     "./StyleContext": "./src/StyleContext.js",
-    "./StyleHelper": "./src/StyleHelper.js"
+    "./StyleHelper": "./src/StyleHelper.js",
+    "./StyleConstants": "./src/StyleConstants.js"
   },
   "scripts": {
     "lint": "eslint ./src"

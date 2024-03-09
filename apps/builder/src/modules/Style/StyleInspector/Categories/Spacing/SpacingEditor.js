@@ -4,9 +4,7 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import InputMetric from '@plitzi/plitzi-ui-components/InputMetric';
 
-// Alias
-import Icons from '@pcomponents/Icons';
-import InspectorButton from '@pmodules/Style/components/InspectorButton';
+// Monorepo
 import {
   MARGIN_TOP,
   MARGIN_BOTTOM,
@@ -16,7 +14,11 @@ import {
   PADDING_BOTTOM,
   PADDING_LEFT,
   PADDING_RIGHT
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
+
+// Alias
+import Icons from '@pcomponents/Icons';
+import InspectorButton from '@pmodules/Style/components/InspectorButton';
 
 const iconsMap = {
   [MARGIN_TOP]: 'MarginTop',

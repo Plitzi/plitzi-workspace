@@ -3,9 +3,11 @@ import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { FILTER } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
 import InspectorButton from '@pmodules/Style/components/InspectorButton';
-import { FILTER } from '@pmodules/Style/StyleConstants';
 
 // Relatives
 import FilterItem from './FilterItem';

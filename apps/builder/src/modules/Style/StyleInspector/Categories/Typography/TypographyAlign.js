@@ -3,8 +3,10 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { TEXT_ALIGN } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
-import { TEXT_ALIGN } from '@pmodules/Style/StyleConstants';
 import Icons from '@pcomponents/Icons';
 
 // Relatives

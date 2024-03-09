@@ -3,8 +3,7 @@ import React, { memo, useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
-import Icons from '@pcomponents/Icons';
+// Monorepo
 import {
   BACKGROUND_COLOR,
   BACKGROUND_IMAGE,
@@ -12,7 +11,10 @@ import {
   BACKGROUND_SIZE,
   BACKGROUND_REPEAT,
   BACKGROUND_ATTACHMENT
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
+
+// Alias
+import Icons from '@pcomponents/Icons';
 
 // Relatives
 import ImageMode from './modes/ImageMode';

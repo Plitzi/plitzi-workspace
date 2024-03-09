@@ -3,8 +3,8 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
-import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@pmodules/Style/StyleConstants';
+// Monorepo
+import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import InspectorLabel from '../../InspectorLabel';

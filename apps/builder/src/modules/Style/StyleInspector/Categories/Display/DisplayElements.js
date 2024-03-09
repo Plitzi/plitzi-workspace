@@ -3,12 +3,14 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { ALIGN_ITEMS, DISPLAY, FLEX_DIRECTION, FLEX_WRAP, JUSTIFY_CONTENT } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
 import Icons from '@pcomponents/Icons';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
-import { ALIGN_ITEMS, DISPLAY, FLEX_DIRECTION, FLEX_WRAP, JUSTIFY_CONTENT } from '../../../StyleConstants';
 
 const DisplayElements = props => {
   const { partialValue, onChange = noop } = props;

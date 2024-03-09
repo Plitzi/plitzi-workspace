@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 // import noop from 'lodash/noop';
 
-// import { BACKGROUND_IMAGE } from '../../../StyleConstants';
+// import { BACKGROUND_IMAGE } from '@plitzi/sdk-style/StyleConstants';
 // import InputMetric from '../../../../InputMetric';
 // import InspectorLabel from '../../../InspectorLabel';
 

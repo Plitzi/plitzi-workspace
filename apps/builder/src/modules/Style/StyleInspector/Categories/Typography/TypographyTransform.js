@@ -3,9 +3,11 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { TEXT_TRANSFORM, DIRECTION } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
 import Icons from '@pcomponents/Icons';
-import { TEXT_TRANSFORM, DIRECTION } from '@pmodules/Style/StyleConstants';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

@@ -3,8 +3,8 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
-import { OBJECT_POSITION } from '@pmodules/Style/StyleConstants';
+// Monorepo
+import { OBJECT_POSITION } from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

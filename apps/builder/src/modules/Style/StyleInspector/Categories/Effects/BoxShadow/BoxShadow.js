@@ -3,9 +3,11 @@ import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { BOX_SHADOW } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
 import InspectorButton from '@pmodules/Style/components/InspectorButton';
-import { BOX_SHADOW } from '@pmodules/Style/StyleConstants';
 
 // Relatives
 import BoxShadowItem from './BoxShadowItem';

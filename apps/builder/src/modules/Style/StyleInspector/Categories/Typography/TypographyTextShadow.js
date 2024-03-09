@@ -3,8 +3,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
-import { TEXT_SHADOW } from '@pmodules/Style/StyleConstants';
+// Monorepo
+import { TEXT_SHADOW } from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import InspectorLabel from '../../InspectorLabel';

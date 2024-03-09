@@ -10,11 +10,11 @@ import { produce } from 'immer';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { StyleConstants } from '@plitzi/sdk-style/StyleConstants';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
-import { StyleConstants } from '@pmodules/Style/StyleConstants';
 
 // Relatives
 import {

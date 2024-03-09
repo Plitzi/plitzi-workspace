@@ -11,17 +11,6 @@ import { produce } from 'immer';
 // Monorepo
 // import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 // import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
-
-// Alias
-import AppContext from '@pmodules/App/AppContext';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-
-// Relatives
-import StyleInspectorContext from './StyleInspectorContext';
-import { StyleSelectors, makeSelector } from '../StyleHelper';
-import useStyleBinding from '../hooks/useStyleBinding';
 import {
   // typography
   FONT_FAMILY,
@@ -124,7 +113,18 @@ import {
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
-} from '../StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
+
+// Alias
+import AppContext from '@pmodules/App/AppContext';
+import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
+import BuilderContext from '@pmodules/Builder/BuilderContext';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+
+// Relatives
+import StyleInspectorContext from './StyleInspectorContext';
+import { StyleSelectors, makeSelector } from '../StyleHelper';
+import useStyleBinding from '../hooks/useStyleBinding';
 
 const defaultValue = {
   [FONT_FAMILY]: 'Arial',

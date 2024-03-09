@@ -3,8 +3,10 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { ORDER } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
-import { ORDER } from '@pmodules/Style/StyleConstants';
 import Icons from '@pcomponents/Icons/Icons';
 
 // Relatives

@@ -3,8 +3,8 @@ import React, { memo, useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
-import { OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM } from '@pmodules/Style/StyleConstants';
+// Monorepo
+import { OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM } from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import Transition from './Transition';

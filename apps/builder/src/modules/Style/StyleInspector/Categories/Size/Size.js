@@ -3,7 +3,7 @@ import React, { memo, useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
+// Monorepo
 import {
   WIDTH,
   HEIGHT,
@@ -14,7 +14,7 @@ import {
   OVERFLOW,
   OBJECT_FIT,
   OBJECT_POSITION
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import SizeOverflow from './SizeOverflow';

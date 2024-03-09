@@ -3,7 +3,7 @@ import React, { memo, useCallback, useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
+// Monorepo
 import {
   BORDER_TOP_STYLE,
   BORDER_TOP_WIDTH,
@@ -21,7 +21,7 @@ import {
   BORDER_RADIUS_TOP_RIGHT,
   BORDER_RADIUS_BOTTOM_LEFT,
   BORDER_RADIUS_BOTTOM_RIGHT
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import StyleInspectorContext from '../../StyleInspectorContext';

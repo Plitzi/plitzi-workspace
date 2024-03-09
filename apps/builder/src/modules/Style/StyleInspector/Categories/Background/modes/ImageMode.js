@@ -4,15 +4,17 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 
-// Alias
-import Icons from '@pcomponents/Icons';
+// Monorepo
 import {
   BACKGROUND_ATTACHMENT,
   BACKGROUND_IMAGE,
   BACKGROUND_POSITION,
   BACKGROUND_REPEAT,
   BACKGROUND_SIZE
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
+
+// Alias
+import Icons from '@pcomponents/Icons';
 
 // Relatives
 import GroupButtons from '../../../../components/GroupButtons';

@@ -2,6 +2,8 @@
 import React, { memo, useCallback, useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
+
+// Monorepo
 import {
   MARGIN_TOP,
   MARGIN_BOTTOM,
@@ -11,7 +13,7 @@ import {
   PADDING_BOTTOM,
   PADDING_LEFT,
   PADDING_RIGHT
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import SpacingMargin from './SpacingMargin';

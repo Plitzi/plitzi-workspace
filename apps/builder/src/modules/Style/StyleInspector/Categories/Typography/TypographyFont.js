@@ -3,8 +3,8 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
-import { FONT_FAMILY } from '@pmodules/Style/StyleConstants';
+// Monorepo
+import { FONT_FAMILY } from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import { defaultFonts } from './TypographyConstants';

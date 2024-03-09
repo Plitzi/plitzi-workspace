@@ -3,9 +3,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { TRANSITION } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
 import InspectorButton from '@pmodules/Style/components/InspectorButton';
-import { TRANSITION } from '@pmodules/Style/StyleConstants';
 
 // Relatives
 import TransitionItem from './TransitionItem';

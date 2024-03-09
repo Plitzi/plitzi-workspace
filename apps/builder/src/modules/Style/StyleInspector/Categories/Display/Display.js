@@ -3,7 +3,7 @@ import React, { memo, useCallback, useContext } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
+// Monorepo
 import {
   DISPLAY,
   FLEX_WRAP,
@@ -20,7 +20,7 @@ import {
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import DisplayElements from './DisplayElements';

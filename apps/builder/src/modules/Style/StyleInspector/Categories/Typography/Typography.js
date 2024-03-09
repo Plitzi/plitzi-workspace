@@ -3,7 +3,7 @@ import React, { memo, useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
+// Monorepo
 import {
   FONT_FAMILY,
   FONT_WEIGHT,
@@ -20,7 +20,7 @@ import {
   TEXT_SHADOW,
   WHITE_SPACE,
   TEXT_OVERFLOW
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import TypographyFont from './TypographyFont';

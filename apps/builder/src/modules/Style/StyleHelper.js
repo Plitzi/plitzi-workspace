@@ -3,8 +3,10 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 
+// Monorepo
+import { StyleConstants, inheritableAttributesBase } from '@plitzi/sdk-style/StyleConstants';
+
 // Relatives
-import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 import { makeId } from '../../helpers/utils';
 
 export const StyleSelectors = {
@@ -112,9 +114,9 @@ const getDataStyle = (element, platform, displayMode, isParent = false, componen
     }
 
     // global native type
-    if (type && platform[mode][type]) {
+    if (type && platform[mode][type] && platform[mode][type].type !== 'class') {
       metadata.tree.push({ name: type, displayMode: mode, style: platform[mode][type].attributes, isParent });
-    } else if (subType && platform[mode][subType]) {
+    } else if (subType && platform[mode][subType] && platform[mode][subType].type !== 'class') {
       metadata.tree.push({
         name: subType,
         displayMode: mode,
@@ -170,6 +172,10 @@ export const calculateInheriting = (element, flat, platform, displayMode, styleS
       }
 
       Object.keys(data).forEach(key => {
+        if (!inheritableAttributesBase.includes(key) && node.isParent) {
+          return;
+        }
+
         if (!finalMeta[key]) {
           finalMeta[key] = [];
         }

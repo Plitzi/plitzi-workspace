@@ -3,14 +3,14 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
-// Alias
+// Monorepo
 import {
   GRID_AUTO_COLUMNS,
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_TEMPLATE_COLUMNS,
   GRID_TEMPLATE_ROWS
-} from '@pmodules/Style/StyleConstants';
+} from '@plitzi/sdk-style/StyleConstants';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

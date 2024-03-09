@@ -4,9 +4,11 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import isEqual from 'lodash/isEqual';
 
+// Monorepo
+import { ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS } from '@plitzi/sdk-style/StyleConstants';
+
 // Alias
 import Icons from '@pcomponents/Icons';
-import { ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS } from '@pmodules/Style/StyleConstants';
 
 // Relatives
 import DisplayAlignSelf from './DisplayAlignSelf';
