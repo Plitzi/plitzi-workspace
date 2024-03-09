@@ -287,7 +287,7 @@ const StyleInspectorProvider = props => {
         } else if (Array.isArray(styleKey)) {
           const newValues = { ...values, ...value };
           Object.keys(newValues).forEach(k => {
-            if (newValues[k] === undefined || newValues[k] === undefined) {
+            if (newValues[k] === undefined) {
               delete newValues[k];
             }
           });
