@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-builder",
-  "version": "0.20.3",
+  "version": "0.20.4",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -24,7 +24,7 @@
     "axios": "^1.6.7",
     "classnames": "^2.5.1",
     "graphql": "^16.8.1",
-    "immer": "^10.0.3",
+    "immer": "^10.0.4",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "react": "^18.2.0",
