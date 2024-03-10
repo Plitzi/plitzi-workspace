@@ -161,7 +161,7 @@ export const calculateInheriting = (
     const styleData = getDataStyle(element, platform, displayMode, element.id !== id, componentDefinitions);
     metadata.tree = [
       ...metadata.tree,
-      ...styleData.tree.filter(node => !skipSelectors || !skipSelectors.includes(node.name))
+      ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isParent))
     ];
     const parentId = get(element, 'definition.parentId');
     if (!parentId) {
