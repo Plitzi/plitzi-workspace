@@ -25,7 +25,7 @@ const InspectorModeBasic = props => {
   const [cache, setCache, getCacheByKey] = useCache();
   const collapsedCache = useMemo(() => getCacheByKey('StyleInspector.collapsedCache', {}), [cache]);
   const showAllOptions = get(cache, 'StyleInspector.showAllOptions', false);
-  const inheritData = useStyleInherit({ element, styleSelector });
+  const inheritData = useStyleInherit({ element, selector, styleSelector });
 
   const handleChangeCollapse = useCallback(
     (id, isCollapsed) => setCache({ ...collapsedCache, [id]: isCollapsed }, 'StyleInspector.collapsedCache'),

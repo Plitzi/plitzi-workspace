@@ -142,7 +142,15 @@ const getDataStyle = (element, platform, displayMode, isParent = false, componen
   return metadata;
 };
 
-export const calculateInheriting = (element, flat, platform, displayMode, styleSelector, componentDefinitions) => {
+export const calculateInheriting = (
+  element,
+  flat,
+  platform,
+  displayMode,
+  styleSelector,
+  componentDefinitions,
+  skipSelectors = []
+) => {
   const metadata = { tree: [], treeData: {}, style: {} };
   if (!element) {
     return metadata;
@@ -151,7 +159,10 @@ export const calculateInheriting = (element, flat, platform, displayMode, styleS
   const { id } = element;
   while (element) {
     const styleData = getDataStyle(element, platform, displayMode, element.id !== id, componentDefinitions);
-    metadata.tree = [...metadata.tree, ...styleData.tree];
+    metadata.tree = [
+      ...metadata.tree,
+      ...styleData.tree.filter(node => !skipSelectors || !skipSelectors.includes(node.name))
+    ];
     const parentId = get(element, 'definition.parentId');
     if (!parentId) {
       element = undefined;

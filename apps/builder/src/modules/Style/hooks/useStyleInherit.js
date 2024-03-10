@@ -11,7 +11,7 @@ import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContex
 import { calculateInheriting } from '../StyleHelper';
 
 const useStyleInherit = props => {
-  const { element, styleSelector } = props;
+  const { element, selector, styleSelector } = props;
   const { componentDefinitions } = useContext(ComponentContext);
   const { displayMode } = useContext(AppContext);
   const {
@@ -22,8 +22,8 @@ const useStyleInherit = props => {
   } = useContext(BuilderStyleContext);
 
   const inheritData = useMemo(
-    () => calculateInheriting(element, flat, platform, displayMode, styleSelector, componentDefinitions),
-    [element, flat, displayMode, styleSelector, componentDefinitions]
+    () => calculateInheriting(element, flat, platform, displayMode, styleSelector, componentDefinitions, [selector]),
+    [element, flat, displayMode, styleSelector, selector, componentDefinitions]
   );
 
   return inheritData;

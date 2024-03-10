@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import Button from '@plitzi/plitzi-ui-components/Button';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
@@ -23,7 +22,6 @@ const SelectorTag = props => {
     onChange = noop,
     onAction = noop
   } = props;
-  const [editMode, setEditMode] = useState(false);
   const { value, state } = useMemo(() => {
     if (selector.includes(':')) {
       const [value, state] = selector.split(':');
@@ -54,15 +52,6 @@ const SelectorTag = props => {
   const handleClickRemove = useCallback(() => onAction('remove'), [onAction]);
 
   // const handleClickDelete = useCallback(() => onAction('delete'), [onAction]);
-
-  const handleClickType = useCallback(e => {
-    e.stopPropagation();
-    if (!editable) {
-      return;
-    }
-
-    setEditMode(false);
-  }, []);
 
   const handleChange = useCallback(
     value => {
@@ -98,15 +87,19 @@ const SelectorTag = props => {
 
   return (
     <div
-      className={classNames('group px-1 relative flex items-center rounded text-white select-none', className, {
-        'cursor-pointer': !editMode,
-        'bg-blue-400': type === 'class' && active,
-        'bg-green-500': type === 'state' && active,
-        'bg-purple-500': type === 'parent' && active,
-        'bg-pink-500': type === 'element' && active,
-        'bg-yellow-500': type === 'id' && active,
-        'bg-gray-500': !active
-      })}
+      className={classNames(
+        'group px-1 relative flex items-center rounded text-white select-none cursor-pointer',
+        className,
+        {
+          'bg-blue-400': type === 'class' && active,
+          'bg-green-500': type === 'state' && active,
+          'bg-purple-500': type === 'parent' && active,
+          'bg-pink-500': type === 'element' && active,
+          'bg-yellow-500': type === 'id' && active,
+          'bg-gray-500': !active
+        }
+      )}
+      onClick={handleClick}
     >
       <div
         className={classNames('px-1 my-1 rounded bg-white capitalize font-bold text-xs', {
@@ -115,15 +108,13 @@ const SelectorTag = props => {
           'text-purple-500': type === 'parent' && active,
           'text-pink-500': type === 'element' && active,
           'text-yellow-500': type === 'id' && active,
-          'text-gray-400': !active,
-          'py-1 mr-1': editMode
+          'text-gray-400': !active
         })}
         title={type}
-        onClick={handleClickType}
       >
         {type[0]}
       </div>
-      <div onClick={handleClick} className="mx-1.5">
+      <div className="mx-1.5">
         {editable && (
           <Contenteditable
             className={classNames('text-xs truncate group-hover:mr-3', {})}
@@ -186,18 +177,6 @@ const SelectorTag = props => {
           </div>
         </Dropdown.Container>
       </Dropdown>
-      {editable && editMode && (
-        <div className="ml-1 flex flex-col justify-around rounded bg-blue-400 text-white">
-          <Button
-            intent="custom"
-            size="custom"
-            onClick={handleClickRemove}
-            className="bg-red-400 hover:bg-red-500 h-full w-full rounded-none px-1"
-          >
-            <i className="fas fa-times" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
