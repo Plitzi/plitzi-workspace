@@ -58,7 +58,7 @@
     "@storybook/addon-links": "^7.6.17",
     "@storybook/blocks": "^7.6.17",
     "@storybook/react": "^7.6.17",
-    "@storybook/react-webpack5": "^7.6.17",
+    "@storybook/react-webpack5": "^8.0.0",
     "@storybook/testing-library": "^0.2.2",
     "@welldone-software/why-did-you-render": "^8.0.1",
     "autoprefixer": "^10.4.18",
