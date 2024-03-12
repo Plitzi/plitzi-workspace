@@ -54,7 +54,7 @@
     "@plitzi/plitzi-webpack": "^0.2.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@storybook/addon-essentials": "^7.6.17",
-    "@storybook/addon-interactions": "^7.6.17",
+    "@storybook/addon-interactions": "^8.0.0",
     "@storybook/addon-links": "^7.6.17",
     "@storybook/blocks": "^7.6.17",
     "@storybook/react": "^7.6.17",
