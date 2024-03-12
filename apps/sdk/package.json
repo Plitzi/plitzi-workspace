@@ -79,7 +79,7 @@
     "react-test-renderer": "^18.2.0",
     "sass-loader": "^14.1.1",
     "speed-measure-webpack-plugin": "^1.5.0",
-    "storybook": "^7.6.17",
+    "storybook": "^8.0.0",
     "stylelint": "^16.2.1",
     "stylelint-order": "^6.0.4",
     "stylelint-scss": "^6.2.1",
