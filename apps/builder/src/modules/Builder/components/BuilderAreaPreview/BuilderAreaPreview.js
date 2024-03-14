@@ -12,9 +12,9 @@ import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 // Alias
-import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';

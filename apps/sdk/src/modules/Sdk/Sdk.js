@@ -8,12 +8,12 @@ import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
 import CollectionContext from '@modules/Collection/CollectionContext';
 import NetworkContext from '@modules/Network/NetworkContext';
-import PluginsContext from '@modules/Plugins/PluginsContext';
 import NavigationContext from '@modules/Navigation/NavigationContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
 import StateManagerContext from '@modules/StateManager/StateManagerContext';

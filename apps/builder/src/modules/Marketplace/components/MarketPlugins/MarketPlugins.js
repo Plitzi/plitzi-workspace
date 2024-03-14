@@ -4,8 +4,8 @@ import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
-// Alias
-import PluginsContext from '@pmodules/Plugins/PluginsContext';
+// Monorepo
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 // Relatives
 import PluginsFilter from './PluginsFilter';

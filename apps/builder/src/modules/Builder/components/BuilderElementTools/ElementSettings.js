@@ -11,9 +11,9 @@ import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 // Alias
-import PluginsContext from '@pmodules/Plugins/PluginsContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';

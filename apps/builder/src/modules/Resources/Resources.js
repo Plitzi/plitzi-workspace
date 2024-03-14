@@ -1,38 +1,19 @@
 // Packages
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import FileUpload from '@plitzi/plitzi-ui-components/FileUpload';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
-import Resource from './Resource';
+import Resource from './ResourceManager/Resource';
+import ResourceManager from './ResourceManager';
 
 const Resources = () => {
   const { query } = useContext(NetworkContext);
-  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [, /* hasNextPage */ setHasNextPage] = useState(false);
   const [resources, setResources] = useState([]);
-
-  const handleChange = data => {
-    const files = Array.from(data);
-    files.forEach(file => {
-      file.id = Date.now() + Math.floor(Math.random() * 200);
-    });
-
-    setFiles(state => [...state, ...files]);
-  };
-
-  const handleResourceUploaded = file => {
-    setFiles(state => state.filter(f => f !== file));
-    fetch('');
-  };
-
-  const handleResourceUploadCancelled = file => {
-    setFiles(state => state.filter(f => f !== file));
-  };
 
   const handleResourceRemoved = (/* id */) => {
     fetch('');
@@ -53,6 +34,10 @@ const Resources = () => {
     }
   };
 
+  const handleUploaded = useCallback(() => {
+    fetch('');
+  }, [fetch]);
+
   useEffect(() => {
     fetch('');
   }, []);
@@ -61,36 +46,7 @@ const Resources = () => {
 
   return (
     <div className="w-full flex flex-col overflow-y-auto grow basis-0">
-      <FileUpload
-        multiple
-        canDragAndDrop
-        label="Select a resource file to upload"
-        onChange={handleChange}
-        onSelect={handleChange}
-        types={uploadTypesMemo}
-        className="p-4 h-40 m-1 flex flex-col"
-        maxSize={10240000}
-      />
-      {files && files.length > 0 && (
-        <div className="flex flex-col px-2 mb-4">
-          <Heading type="h5" className="mb-2">
-            To Upload
-          </Heading>
-          <div className="grid gap-2 overflow-y-auto">
-            {files.map(file => (
-              <Resource
-                key={file.id}
-                file={file}
-                type={file.type.split('/')[0]}
-                title={file.name}
-                src={URL.createObjectURL(file)}
-                onUploaded={handleResourceUploaded}
-                onUploadCancel={handleResourceUploadCancelled}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <ResourceManager types={uploadTypesMemo} onUploaded={handleUploaded} />
       {!loading && resources && resources.length > 0 && (
         <div className="flex flex-col px-2">
           <Heading type="h5" className="mb-2">

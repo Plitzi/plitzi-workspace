@@ -1,0 +1,76 @@
+// Packages
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import noop from 'lodash/noop';
+import FileUpload from '@plitzi/plitzi-ui-components/FileUpload';
+import Heading from '@plitzi/plitzi-ui-components/Heading';
+
+// Relatives
+import Resource from './Resource';
+
+const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
+
+const ResourceManager = props => {
+  const { uploadTypes = defaultUploadTypes, onUploaded = noop } = props;
+  const [files, setFiles] = useState([]);
+
+  const handleChange = data => {
+    const files = Array.from(data);
+    files.forEach(file => {
+      file.id = Date.now() + Math.floor(Math.random() * 200);
+    });
+
+    setFiles(state => [...state, ...files]);
+  };
+
+  const handleResourceUploaded = file => {
+    setFiles(state => state.filter(f => f !== file));
+    onUploaded(file);
+  };
+
+  const handleResourceUploadCancelled = file => {
+    setFiles(state => state.filter(f => f !== file));
+  };
+
+  return (
+    <div className="w-full flex flex-col overflow-y-auto">
+      <FileUpload
+        multiple
+        canDragAndDrop
+        label="Select a resource file to upload"
+        onChange={handleChange}
+        onSelect={handleChange}
+        types={uploadTypes}
+        className="p-4 h-40 m-1 flex flex-col"
+        maxSize={10240000}
+      />
+      {files && files.length > 0 && (
+        <div className="flex flex-col px-2 mb-4">
+          <Heading type="h5" className="mb-2">
+            To Upload
+          </Heading>
+          <div className="grid gap-2 overflow-y-auto">
+            {files.map(file => (
+              <Resource
+                key={file.id}
+                file={file}
+                type={file.type.split('/')[0]}
+                title={file.name}
+                src={URL.createObjectURL(file)}
+                onUploaded={handleResourceUploaded}
+                onUploadCancel={handleResourceUploadCancelled}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+ResourceManager.propTypes = {
+  uploadTypes: PropTypes.array,
+  onUploaded: PropTypes.func
+};
+
+export default ResourceManager;

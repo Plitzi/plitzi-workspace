@@ -6,6 +6,9 @@ import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import omit from 'lodash/omit';
 
+// Monorepo
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
@@ -16,9 +19,6 @@ import {
   RENDER_MODE_SSR,
   RENDER_MODE_WIDGET
 } from '@modules/Sdk/Sdk';
-
-// Relatives
-import PluginsContext from './PluginsContext';
 
 const PluginsContextProvider = props => {
   const { children, renderMode = RENDER_MODE_IFRAME, plugins: pluginsProp, sdkStylePath = './plitzi-sdk.css' } = props;

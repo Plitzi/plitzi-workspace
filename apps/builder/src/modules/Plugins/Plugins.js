@@ -6,9 +6,11 @@ import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
+// Monorepo
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+
 // Relatives
 import Plugin from './Plugin';
-import PluginsContext from './PluginsContext';
 
 const Plugins = () => {
   const { showModal } = useModal();

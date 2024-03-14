@@ -8,13 +8,15 @@ import cloneDeep from 'lodash/cloneDeep';
 import isEmpty from 'lodash/isEmpty';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 
+// Monorepo
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 
 // Relatives
 import { pluginCompactDefinition, pluginParseDefinition } from './helpers/PluginHelper';
-import PluginsContext from './PluginsContext';
 import PluginsReducer, { PluginsActions } from './PluginsReducer';
 
 const PluginsContextProvider = props => {

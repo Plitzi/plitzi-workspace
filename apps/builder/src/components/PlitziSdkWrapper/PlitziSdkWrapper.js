@@ -7,10 +7,10 @@ import PlitziSdk from '@plitzi/plitzi-sdk';
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import PluginsContext from '@pmodules/Plugins/PluginsContext';
 
 const PlitziSdkWrapper = props => {
   const { currentPageId, className = '', renderMode = 'iframe', previewMode = true } = props;
