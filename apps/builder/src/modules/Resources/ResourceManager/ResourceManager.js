@@ -7,6 +7,7 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 
 // Relatives
 import TemporalResource from './TemporalResource';
+import getPluginManifest from './helpers/getPluginManifest';
 
 const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 
@@ -14,11 +15,32 @@ const ResourceManager = props => {
   const { uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop } = props;
   const [files, setFiles] = useState([]);
 
-  const handleChange = data => {
+  const handleChange = async data => {
     const files = Array.from(data);
-    files.forEach(file => {
+    for (const file of files) {
       file.id = Date.now() + Math.floor(Math.random() * 200);
-    });
+      const { type } = file;
+      switch (type.split('/')[0]) {
+        case 'image':
+        case 'video':
+          [file.resourceType] = type.split('/');
+          break;
+
+        case 'application': {
+          const pluginManifest = await getPluginManifest(file);
+          if (pluginManifest) {
+            file.resourceType = 'plugin';
+            file.metadata = pluginManifest;
+          } else {
+            file.resourceType = '';
+          }
+
+          break;
+        }
+
+        default:
+      }
+    }
 
     setFiles(state => [...state, ...files]);
   };
@@ -50,18 +72,21 @@ const ResourceManager = props => {
             To Upload
           </Heading>
           <div className="grid gap-2 overflow-y-auto">
-            {files.map(file => (
-              <TemporalResource
-                key={file.id}
-                file={file}
-                type={file.type.split('/')[0]}
-                title={file.name}
-                src={URL.createObjectURL(file)}
-                mutate={mutate}
-                onUploaded={handleResourceUploaded}
-                onUploadCancel={handleResourceUploadCancelled}
-              />
-            ))}
+            {files
+              // .filter(file => !!file.resourceType)
+              .map(file => (
+                <TemporalResource
+                  key={file.id}
+                  file={file}
+                  type={file.resourceType}
+                  title={file.name}
+                  metadata={file.metadata}
+                  src={URL.createObjectURL(file)}
+                  mutate={mutate}
+                  onUploaded={handleResourceUploaded}
+                  onUploadCancel={handleResourceUploadCancelled}
+                />
+              ))}
           </div>
         </div>
       )}

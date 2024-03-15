@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 // import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
@@ -9,10 +9,15 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Monorepo
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
+// Alias
+import ResourceManager from '@pmodules/Resources/ResourceManager';
+import NetworkContext from '@pmodules/Network/NetworkContext';
+
 // Relatives
 import Plugin from './Plugin';
 
 const Plugins = () => {
+  const { mutate } = useContext(NetworkContext);
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { components } = useContext(ComponentContext);
@@ -60,8 +65,19 @@ const Plugins = () => {
 
   const pluginsData = Object.values(plugins);
 
+  const handleUploaded = useCallback(() => {
+    // fetch('');
+  }, [fetch]);
+
+  useEffect(() => {
+    // fetch('');
+  }, []);
+
+  const uploadTypesMemo = useMemo(() => ['zip'], []);
+
   return (
     <div className="flex flex-col">
+      <ResourceManager mutate={mutate} uploadTypes={uploadTypesMemo} onUploaded={handleUploaded} />
       {pluginsData.length > 0 && (
         <div className="p-2 flex flex-col">
           {pluginsData.map((plugin, i) => {

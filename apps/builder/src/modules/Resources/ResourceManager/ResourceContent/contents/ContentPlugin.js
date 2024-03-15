@@ -1,0 +1,63 @@
+// Packages
+import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
+import classNames from 'classnames';
+
+const ContentPlugin = props => {
+  const {
+    className = '',
+    backgroundColor = '#4422ee',
+    icon = 'https://cdn.plitzi.com/resources/img/favicon.svg',
+    name = 'Plugin Name',
+    version = 'v0.0.0',
+    author = 'Plitzi Team',
+    size = '0KB',
+    components = 'No components'
+  } = props;
+
+  const finalVersion = useMemo(() => `v${version.replaceAll('v', '').replaceAll('V', '')}`, [version]);
+
+  return (
+    <div className={classNames("group flex flex-col m-2 gap-2 overflow-hidden", className)}>
+      <div className="flex items-center gap-3">
+        <div
+          className="h-11 w-11 flex items-center justify-center shrink-0 rounded-lg bg-gray-500"
+          style={{ backgroundColor }}
+        >
+          <div className="p-1 flex items-center justify-center rounded bg-white">
+            <img src={icon} alt="" className="h-6 w-6" />
+          </div>
+        </div>
+        <div className="flex flex-col grow basis-0 font-bold">
+          <div className="truncate">{name}</div>
+          <div className="text-xs">{finalVersion}</div>
+        </div>
+      </div>
+      <div className="inline-flex gap-1 text-sm">
+        <div className="font-bold">Author:</div>
+        <div className="truncate">{author}</div>
+      </div>
+      <div className="flex flex-col text-sm">
+        <div className="font-bold">Components Availables:</div>
+        <div className="truncate">{components}</div>
+      </div>
+      <div className="inline-flex gap-1 text-xs">
+        <div className="font-bold">Size:</div>
+        <div className="truncate">{size}</div>
+      </div>
+    </div>
+  );
+};
+
+ContentPlugin.propTypes = {
+  className: PropTypes.string,
+  backgroundColor: PropTypes.string,
+  icon: PropTypes.string,
+  name: PropTypes.string,
+  version: PropTypes.string,
+  author: PropTypes.string,
+  size: PropTypes.string,
+  components: PropTypes.string
+};
+
+export default ContentPlugin;

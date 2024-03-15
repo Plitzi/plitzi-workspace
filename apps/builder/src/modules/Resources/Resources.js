@@ -46,7 +46,7 @@ const Resources = () => {
 
   return (
     <div className="w-full flex flex-col overflow-y-auto grow basis-0">
-      <ResourceManager mutate={mutate} types={uploadTypesMemo} onUploaded={handleUploaded} />
+      <ResourceManager mutate={mutate} uploadTypes={uploadTypesMemo} onUploaded={handleUploaded} />
       {!loading && resources && resources.length > 0 && (
         <div className="flex flex-col px-2">
           <Heading type="h5" className="mb-2">

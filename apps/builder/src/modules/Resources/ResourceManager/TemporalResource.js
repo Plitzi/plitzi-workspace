@@ -5,6 +5,9 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import ResourceUploadStatus from './ResourceUploadStatus';
 import ResourceContent from './ResourceContent';
@@ -18,6 +21,7 @@ const TemporalResource = props => {
     title = '',
     className = '',
     file,
+    metadata = emptyObject,
     mutate = noop,
     onUploaded = noop,
     onError: onErrorProp = noop,
@@ -124,7 +128,7 @@ const TemporalResource = props => {
         className
       )}
     >
-      <ResourceContent type={type} src={src} title={title} />
+      <ResourceContent type={type} src={src} title={title} metadata={metadata} />
       <ResourceType type={type} />
       {(uploading || processing || hovered) && (
         <ResourceUploadStatus
@@ -151,9 +155,10 @@ TemporalResource.propTypes = {
   className: PropTypes.string,
   id: PropTypes.string,
   file: PropTypes.object,
-  type: PropTypes.oneOf(['image', 'video', 'document']),
+  type: PropTypes.oneOf(['image', 'video', 'document', 'plugin']),
   title: PropTypes.string,
   src: PropTypes.string,
+  metadata: PropTypes.object,
   mutate: PropTypes.func,
   onUploaded: PropTypes.func,
   onUploadCancel: PropTypes.func,
