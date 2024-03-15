@@ -16,7 +16,7 @@ const ResourceUploadStatus = props => {
               <span className="text-[10px]">%</span>
             </div>
             <div className="hidden group-hover:block" title="Cancel">
-              <i className="fa-solid fa-circle-xmark fa-2x hover:text-blue-400" onClick={onCancel} />
+              <i className="fa-solid fa-circle-xmark fa-2x hover:text-red-400" onClick={onCancel} />
             </div>
           </>
         )}
@@ -31,7 +31,7 @@ const ResourceUploadStatus = props => {
         <i className="fa-solid fa-cloud-arrow-up hover:text-blue-400 fa-3x" onClick={onUpload} />
       </div>
       <div className="w-12 h-12 flex items-center justify-center" title="Cancel">
-        <i className="fa-solid fa-circle-xmark hover:text-blue-400 fa-3x" onClick={onCancel} />
+        <i className="fa-solid fa-circle-xmark hover:text-red-400 fa-3x" onClick={onCancel} />
       </div>
     </div>
   );

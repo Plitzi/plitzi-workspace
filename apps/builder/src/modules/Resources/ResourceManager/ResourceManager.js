@@ -6,7 +6,7 @@ import FileUpload from '@plitzi/plitzi-ui-components/FileUpload';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 
 // Relatives
-import Resource from './Resource';
+import TemporalResource from './TemporalResource';
 
 const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 
@@ -51,7 +51,7 @@ const ResourceManager = props => {
           </Heading>
           <div className="grid gap-2 overflow-y-auto">
             {files.map(file => (
-              <Resource
+              <TemporalResource
                 key={file.id}
                 file={file}
                 type={file.type.split('/')[0]}

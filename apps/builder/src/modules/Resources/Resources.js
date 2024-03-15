@@ -6,7 +6,7 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
-import Resource from './ResourceManager/Resource';
+import Resource from './Resource';
 import ResourceManager from './ResourceManager';
 
 const Resources = () => {
