@@ -4,7 +4,7 @@
   "files": [],
   "exports": {
     ".": "./src/index.js",
-    "./*": "./src/*"
+    "./PluginsContext": "./src/PluginsContext.js"
   },
   "scripts": {
     "lint": "eslint ./src"

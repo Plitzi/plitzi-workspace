@@ -11,7 +11,7 @@ import TemporalResource from './TemporalResource';
 const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 
 const ResourceManager = props => {
-  const { uploadTypes = defaultUploadTypes, onUploaded = noop } = props;
+  const { uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop } = props;
   const [files, setFiles] = useState([]);
 
   const handleChange = data => {
@@ -57,6 +57,7 @@ const ResourceManager = props => {
                 type={file.type.split('/')[0]}
                 title={file.name}
                 src={URL.createObjectURL(file)}
+                mutate={mutate}
                 onUploaded={handleResourceUploaded}
                 onUploadCancel={handleResourceUploadCancelled}
               />
@@ -70,6 +71,7 @@ const ResourceManager = props => {
 
 ResourceManager.propTypes = {
   uploadTypes: PropTypes.array,
+  mutate: PropTypes.func,
   onUploaded: PropTypes.func
 };
 

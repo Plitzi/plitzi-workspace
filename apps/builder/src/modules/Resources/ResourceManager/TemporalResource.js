@@ -1,12 +1,9 @@
 // Packages
-import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
-
-// Alias
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
 import ResourceUploadStatus from './ResourceUploadStatus';
@@ -21,11 +18,11 @@ const TemporalResource = props => {
     title = '',
     className = '',
     file,
+    mutate = noop,
     onUploaded = noop,
     onError: onErrorProp = noop,
     onUploadCancel = noop
   } = props;
-  const { mutate } = useContext(NetworkContext);
   const [isUploaded, setIsUploaded] = useState(!!id);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -157,6 +154,7 @@ TemporalResource.propTypes = {
   type: PropTypes.oneOf(['image', 'video', 'document']),
   title: PropTypes.string,
   src: PropTypes.string,
+  mutate: PropTypes.func,
   onUploaded: PropTypes.func,
   onUploadCancel: PropTypes.func,
   onRemove: PropTypes.func,

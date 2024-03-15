@@ -3282,6 +3282,7 @@ __metadata:
     "@plitzi/plitzi-webpack": "npm:^0.2.0"
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-interactions": "npm:*"
+    "@plitzi/sdk-plugins": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:^0.5.11"
     "@storybook/addon-essentials": "npm:^8.0.0"

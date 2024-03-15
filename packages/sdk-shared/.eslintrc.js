@@ -46,10 +46,6 @@ module.exports = {
           [
             '@plitzi/plitzi-ui-components',
             path.resolve('../../node_modules/@plitzi/plitzi-ui-components/dist/components')
-          ],
-          [
-            '@plitzi/sdk-plugins/*',
-            path.resolve('../sdk-plugins/src')
           ]
         ],
         extensions: ['.ts', '.js', '.jsx', '.json', '.stores.js']
