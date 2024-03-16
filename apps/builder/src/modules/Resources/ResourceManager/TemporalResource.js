@@ -67,9 +67,7 @@ const TemporalResource = props => {
     setUploading(true);
     const response = await mutate(
       'SpaceAddResource',
-      {
-        resource: file
-      },
+      { resource: file, type, compression: type === 'plugin' ? 'gzip' : undefined },
       false,
       false,
       {

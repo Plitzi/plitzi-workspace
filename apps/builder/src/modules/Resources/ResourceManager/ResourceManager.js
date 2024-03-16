@@ -1,5 +1,5 @@
 // Packages
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import FileUpload from '@plitzi/plitzi-ui-components/FileUpload';
@@ -15,44 +15,51 @@ const ResourceManager = props => {
   const { uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop } = props;
   const [files, setFiles] = useState([]);
 
-  const handleChange = async data => {
-    const files = Array.from(data);
-    for (const file of files) {
-      file.id = Date.now() + Math.floor(Math.random() * 200);
-      const { type } = file;
-      switch (type.split('/')[0]) {
-        case 'image':
-        case 'video':
-          [file.resourceType] = type.split('/');
-          break;
+  const handleChange = useCallback(
+    async data => {
+      const files = Array.from(data);
+      for (const file of files) {
+        file.id = Date.now() + Math.floor(Math.random() * 200);
+        const { type } = file;
+        switch (type.split('/')[0]) {
+          case 'image':
+          case 'video':
+            [file.resourceType] = type.split('/');
+            break;
 
-        case 'application': {
-          const pluginManifest = await getPluginManifest(file);
-          if (pluginManifest) {
-            file.resourceType = 'plugin';
-            file.metadata = pluginManifest;
-          } else {
-            file.resourceType = '';
+          case 'application': {
+            const pluginManifest = await getPluginManifest(file);
+            if (pluginManifest) {
+              file.resourceType = 'plugin';
+              file.metadata = pluginManifest;
+            }
+
+            break;
           }
 
-          break;
+          default:
         }
-
-        default:
       }
-    }
 
-    setFiles(state => [...state, ...files]);
-  };
+      setFiles(state => [...state, ...files]);
+    },
+    [setFiles]
+  );
 
-  const handleResourceUploaded = file => {
-    setFiles(state => state.filter(f => f !== file));
-    onUploaded(file);
-  };
+  const handleResourceUploaded = useCallback(
+    file => {
+      setFiles(state => state.filter(f => f !== file));
+      onUploaded(file);
+    },
+    [setFiles, onUploaded]
+  );
 
-  const handleResourceUploadCancelled = file => {
-    setFiles(state => state.filter(f => f !== file));
-  };
+  const handleResourceUploadCancelled = useCallback(
+    file => {
+      setFiles(state => state.filter(f => f !== file));
+    },
+    [setFiles]
+  );
 
   return (
     <div className="w-full flex flex-col overflow-y-auto">
@@ -73,7 +80,7 @@ const ResourceManager = props => {
           </Heading>
           <div className="grid gap-2 overflow-y-auto">
             {files
-              // .filter(file => !!file.resourceType)
+              .filter(file => !!file.resourceType)
               .map(file => (
                 <TemporalResource
                   key={file.id}

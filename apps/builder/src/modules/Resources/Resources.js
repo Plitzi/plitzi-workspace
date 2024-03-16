@@ -57,7 +57,7 @@ const Resources = () => {
               <Resource
                 key={resource.id}
                 id={resource.id}
-                type={resource.type.split('/')[0]}
+                type={resource.type}
                 title={resource.name}
                 src={resource.path}
                 onRemove={handleResourceRemoved}
