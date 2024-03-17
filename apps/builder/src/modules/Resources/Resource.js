@@ -145,7 +145,7 @@ const Resource = props => {
       )}
       onClick={handleClick}
     >
-      <ResourceContent type={type} src={src} title={title} metadata={metadata} />
+      <ResourceContent type={type} src={src} title={title} metadata={metadata} isUploaded />
       {hovered && (
         <div className="absolute top-1 right-1 bg-white rounded-full aspect-square flex items-center justify-center px-1 cursor-pointer">
           <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={handleClickRemove} />

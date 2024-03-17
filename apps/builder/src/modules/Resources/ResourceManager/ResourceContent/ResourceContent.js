@@ -14,7 +14,8 @@ const ResourceContent = props => {
     type = 'image',
     title = '',
     metadata = emptyObject,
-    size = 0
+    size = 0,
+    isUploaded = false
   } = props;
 
   const componentsAvailables = useMemo(() => {
@@ -34,6 +35,7 @@ const ResourceContent = props => {
           version={metadata?.version}
           components={componentsAvailables}
           size={size}
+          isUploaded={isUploaded}
         />
       )}
     </>
@@ -46,7 +48,8 @@ ResourceContent.propTypes = {
   type: PropTypes.oneOf(['image', 'video', 'document', 'plugin']),
   title: PropTypes.string,
   metadata: PropTypes.object,
-  size: PropTypes.number
+  size: PropTypes.number,
+  isUploaded: PropTypes.bool
 };
 
 export default ResourceContent;

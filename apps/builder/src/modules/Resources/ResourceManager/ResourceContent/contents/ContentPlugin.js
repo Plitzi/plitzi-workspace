@@ -13,7 +13,8 @@ const ContentPlugin = props => {
     version = 'v0.0.0',
     author = 'Plitzi Team',
     size = 0,
-    components = 'No components'
+    components = 'No components',
+    isUploaded = false
   } = props;
 
   const finalSize = useMemo(() => formatBytes(size), [size]);
@@ -21,7 +22,7 @@ const ContentPlugin = props => {
   const finalVersion = useMemo(() => `v${version.replaceAll('v', '').replaceAll('V', '')}`, [version]);
 
   return (
-    <div className={classNames("group flex flex-col m-2 gap-2 overflow-hidden", className)}>
+    <div className={classNames('group flex flex-col m-2 gap-2 overflow-hidden', className)}>
       <div className="flex items-center gap-3">
         <div
           className="h-11 w-11 flex items-center justify-center shrink-0 rounded-lg bg-gray-500"
@@ -44,10 +45,12 @@ const ContentPlugin = props => {
         <div className="font-bold">Components Availables:</div>
         <div className="truncate">{components}</div>
       </div>
-      <div className="inline-flex gap-1 text-xs">
-        <div className="font-bold">Size:</div>
-        <div className="truncate">{finalSize}</div>
-      </div>
+      {!isUploaded && (
+        <div className="inline-flex gap-1 text-xs">
+          <div className="font-bold">Size:</div>
+          <div className="truncate">{finalSize}</div>
+        </div>
+      )}
     </div>
   );
 };
@@ -60,7 +63,8 @@ ContentPlugin.propTypes = {
   version: PropTypes.string,
   author: PropTypes.string,
   size: PropTypes.number,
-  components: PropTypes.string
+  components: PropTypes.string,
+  isUploaded: PropTypes.bool
 };
 
 export default ContentPlugin;
