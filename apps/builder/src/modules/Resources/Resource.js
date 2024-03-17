@@ -10,6 +10,9 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -20,7 +23,15 @@ import ResourceType from './ResourceManager/ResourceType';
 import ResourceUploadStatus from './ResourceManager/ResourceUploadStatus';
 
 const Resource = props => {
-  const { id = '', type = 'image', src = '', title = '', className = '', onRemove = noop } = props;
+  const {
+    className = '',
+    id = '',
+    type = 'image',
+    src = '',
+    title = '',
+    metadata = emptyObject,
+    onRemove = noop
+  } = props;
   const { onDragStart } = useDragElement({ type, attributes: { src } });
   const { mutate } = useContext(NetworkContext);
   const { showModal } = useModal();
@@ -134,7 +145,7 @@ const Resource = props => {
       )}
       onClick={handleClick}
     >
-      <ResourceContent type={type} src={src} title={title} />
+      <ResourceContent type={type} src={src} title={title} metadata={metadata} />
       {hovered && (
         <div className="absolute top-1 right-1 bg-white rounded-full aspect-square flex items-center justify-center px-1 cursor-pointer">
           <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={handleClickRemove} />
@@ -159,6 +170,7 @@ Resource.propTypes = {
   type: PropTypes.oneOf(['image', 'video', 'document', 'plugin']),
   title: PropTypes.string,
   src: PropTypes.string,
+  metadata: PropTypes.object,
   onUploaded: PropTypes.func,
   onUploadCancel: PropTypes.func,
   onRemove: PropTypes.func,

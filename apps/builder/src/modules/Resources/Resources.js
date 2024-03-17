@@ -1,6 +1,7 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import get from 'lodash/get';
+import classNames from 'classnames';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 
@@ -50,7 +51,6 @@ const Resources = () => {
 
   const handleUploaded = useCallback(
     resource => {
-      console.log('resource', resource);
       if (resource.type === 'plugin') {
         const pluginType = get(resource, 'metadata.root');
         const path = get(resource, 'path');
@@ -96,6 +96,18 @@ const Resources = () => {
     []
   );
 
+  const finalResources = useMemo(() => {
+    return resources.map(resource => {
+      if (resource.type === 'plugin') {
+        const plugin = Object.values(plugins).find(plugin => plugin.resource === resource.path);
+
+        return { ...resource, metadata: plugin.manifest };
+      }
+
+      return resource;
+    });
+  }, [resources]);
+
   return (
     <div className="w-full flex flex-col overflow-y-auto grow basis-0">
       <ResourceManager
@@ -104,19 +116,21 @@ const Resources = () => {
         onUploaded={handleUploaded}
         onUploadAdded={handleUploadAdded}
       />
-      {!loading && resources && resources.length > 0 && (
+      {!loading && finalResources.length > 0 && (
         <div className="flex flex-col px-2 basis-0 grow overflow-y-auto">
           <Heading type="h5" className="mb-2">
             Uploaded
           </Heading>
           <div className="grid grid-cols-2 gap-2 pb-1 overflow-y-auto">
-            {resources.map(resource => (
+            {finalResources.map(resource => (
               <Resource
+                className={classNames({ 'col-span-2': resource.type === 'plugin' })}
                 key={resource.id}
                 id={resource.id}
                 type={resource.type}
                 title={resource.name}
                 src={resource.path}
+                metadata={resource.metadata}
                 onRemove={handleResourceRemoved(resource)}
               />
             ))}

@@ -43,6 +43,7 @@ const getComponentDefinition = (pluginRaw, pluginManifest) => {
           bindingsAllowed,
           defaultStyle,
           resource,
+          manifest: pluginManifest,
           // SDK
           settings,
           assets: Object.values(assets).map(asset => ({ type: asset.type, url: `${resource}/${asset.src}` })),
