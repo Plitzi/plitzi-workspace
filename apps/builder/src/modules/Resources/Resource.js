@@ -17,6 +17,7 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 // Relatives
 import ResourceContent from './ResourceManager/ResourceContent';
 import ResourceType from './ResourceManager/ResourceType';
+import ResourceUploadStatus from './ResourceManager/ResourceUploadStatus';
 
 const Resource = props => {
   const { id = '', type = 'image', src = '', title = '', className = '', onRemove = noop } = props;
@@ -24,6 +25,7 @@ const Resource = props => {
   const { mutate } = useContext(NetworkContext);
   const { showModal } = useModal();
   const [hovered, setHovered] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const { addToast } = useToast();
 
   const handleClickCopyUrl = useCallback(() => {
@@ -106,7 +108,9 @@ const Resource = props => {
       );
 
       if (response.result && id) {
+        setRemoving(true);
         await mutate('SpaceRemoveResource', { resourceId: id });
+        setRemoving(false);
         onRemove(id);
       }
     },
@@ -121,10 +125,11 @@ const Resource = props => {
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onDragStart={onDragStart}
-      draggable
+      onDragStart={type !== 'plugin' ? onDragStart : undefined}
+      draggable={type !== 'plugin'}
       className={classNames(
-        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden cursor-grabbing',
+        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden',
+        { 'cursor-grabbing': type !== 'plugin' },
         className
       )}
       onClick={handleClick}
@@ -136,6 +141,7 @@ const Resource = props => {
         </div>
       )}
       <ResourceType type={type} />
+      {removing && <ResourceUploadStatus processing={removing} />}
       <div
         className="absolute top-1 left-1 bg-white rounded-full aspect-square flex items-center justify-center px-1 hover:text-blue-400 cursor-pointer"
         title="Information"

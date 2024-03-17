@@ -12,12 +12,13 @@ import getPluginManifest from './helpers/getPluginManifest';
 const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 
 const ResourceManager = props => {
-  const { uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop } = props;
+  const { uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop, onUploadAdded = noop } = props;
   const [files, setFiles] = useState([]);
 
   const handleChange = useCallback(
     async data => {
       const files = Array.from(data);
+      const filesApproved = [];
       for (const file of files) {
         file.id = Date.now() + Math.floor(Math.random() * 200);
         const { type } = file;
@@ -39,9 +40,13 @@ const ResourceManager = props => {
 
           default:
         }
+
+        if (onUploadAdded === noop || onUploadAdded(file)) {
+          filesApproved.push(file);
+        }
       }
 
-      setFiles(state => [...state, ...files]);
+      setFiles(state => [...state, ...filesApproved]);
     },
     [setFiles]
   );
@@ -105,7 +110,8 @@ const ResourceManager = props => {
 ResourceManager.propTypes = {
   uploadTypes: PropTypes.array,
   mutate: PropTypes.func,
-  onUploaded: PropTypes.func
+  onUploaded: PropTypes.func,
+  onUploadAdded: PropTypes.func
 };
 
 export default ResourceManager;

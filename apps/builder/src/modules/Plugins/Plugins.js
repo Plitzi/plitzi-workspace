@@ -74,11 +74,41 @@ const Plugins = () => {
     [fetch, add]
   );
 
+  const handleUploadAdded = useCallback(
+    resource => {
+      if (resource.resourceType !== 'plugin') {
+        return true;
+      }
+
+      const pluginType = get(resource, 'metadata.root');
+      if (plugins[pluginType]) {
+        addToast(
+          <div>
+            Plugin <b>{get(resource, 'metadata.definition.name')}</b> already installed
+          </div>,
+          {
+            appeareance: 'info',
+            autoDismiss: true,
+            placement: 'top-right'
+          }
+        );
+      }
+
+      return !plugins[pluginType];
+    },
+    [plugins, addToast]
+  );
+
   const uploadTypesMemo = useMemo(() => ['zip'], []);
 
   return (
     <div className="flex flex-col">
-      <ResourceManager mutate={mutate} uploadTypes={uploadTypesMemo} onUploaded={handleUploaded} />
+      <ResourceManager
+        mutate={mutate}
+        uploadTypes={uploadTypesMemo}
+        onUploaded={handleUploaded}
+        onUploadAdded={handleUploadAdded}
+      />
       {pluginsData.length > 0 && (
         <div className="p-2 flex flex-col">
           {pluginsData.map((plugin, i) => {
