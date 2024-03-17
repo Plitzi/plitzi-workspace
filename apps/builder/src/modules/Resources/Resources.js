@@ -34,6 +34,26 @@ const Resources = () => {
     fetch('');
   };
 
+  // const handleResourceUpdated = type => async settings => {
+  //   const plugin = plugins[type];
+  //   if (!plugin) {
+  //     return;
+  //   }
+
+  //   if (await update({ ...plugin, settings: { ...plugin.settings, ...settings } })) {
+  //     addToast(
+  //       <div>
+  //         Plugin <b>{plugin.name}</b> Settings Updated
+  //       </div>,
+  //       {
+  //         appeareance: 'success',
+  //         autoDismiss: true,
+  //         placement: 'top-right'
+  //       }
+  //     );
+  //   }
+  // };
+
   const fetch = async search => {
     setLoading(true);
     const result = await query(

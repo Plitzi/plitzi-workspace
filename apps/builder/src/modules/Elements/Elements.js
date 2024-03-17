@@ -41,6 +41,8 @@ const Elements = () => {
     return result;
   }, [elementDefinitions, filter]);
 
+  console.log(elementDefinitions);
+
   return (
     <div className="flex flex-col p-3 overflow-y-auto grow basis-0">
       <FormControl value={filter} type="text" placeholder="Search Elements" onChange={handleChange} />

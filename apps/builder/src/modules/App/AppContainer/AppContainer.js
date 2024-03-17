@@ -5,7 +5,6 @@ import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable'
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Alias
-import Plugins from '@pmodules/Plugins';
 import Collections from '@pmodules/Collection/Collections';
 import Templates from '@pmodules/Templates';
 import Elements from '@pmodules/Elements';
@@ -58,7 +57,6 @@ const AppContainer = props => {
                 <Collections collectionId={sourceId} onSourceChange={handleSourceChange} />
               )}
               {tabSelected === 'segments' && <Segments />}
-              {tabSelected === 'plugins' && <Plugins />}
               {tabSelected === 'templates' && <Templates />}
               {tabSelected === 'pages' && <AppDirectory />}
             </ContainerResizable>

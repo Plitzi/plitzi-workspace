@@ -17,9 +17,30 @@ const ContentPlugin = props => {
     isUploaded = false
   } = props;
 
-  const finalSize = useMemo(() => formatBytes(size), [size]);
+  // const handleClickSettings = useCallback(async () => {
+  //   const response = await showModal(
+  //     <Modal.Header>
+  //       <h4>{`${name} Settings`}</h4>
+  //     </Modal.Header>,
+  //     <Modal.Body>
+  //       <PluginSettingsForm values={settings} />
+  //     </Modal.Body>,
+  //     null,
+  //     {
+  //       placement: 'center',
+  //       containerClassName: 'container',
+  //       renderFooter: false
+  //       // style: { height: '90vh', width: '100%' }
+  //     }
+  //   );
 
-  const finalVersion = useMemo(() => `v${version.replaceAll('v', '').replaceAll('V', '')}`, [version]);
+  //   if (response.result) {
+  //     const { data } = response;
+  //     onUpdate(data);
+  //   }
+  // }, [name, settings, onUpdate]);
+
+  const finalSize = useMemo(() => formatBytes(size), [size]);
 
   return (
     <div className={classNames('group flex flex-col m-2 gap-2 overflow-hidden', className)}>
@@ -34,7 +55,7 @@ const ContentPlugin = props => {
         </div>
         <div className="flex flex-col grow basis-0 font-bold">
           <div className="truncate">{name}</div>
-          <div className="text-xs">{finalVersion}</div>
+          <div className="text-xs">{version}</div>
         </div>
       </div>
       <div className="inline-flex gap-1 text-sm">

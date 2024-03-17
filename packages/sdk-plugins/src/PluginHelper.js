@@ -23,7 +23,7 @@ const getComponentDefinition = (pluginRaw, pluginManifest) => {
     } = pluginManifest;
 
     const componentDefinitions = Object.values(get(pluginManifest, 'pluginSchema', {})).reduce((acum, component) => {
-      const { definition, builder, bindingsAllowed, defaultStyle } = component;
+      const { definition, builder, bindingsAllowed, defaultStyle, attributes } = component;
       let subPlugins = [];
       if (definition.type === type) {
         subPlugins = Object.keys(omit(pluginSchema, [type]));
@@ -33,17 +33,17 @@ const getComponentDefinition = (pluginRaw, pluginManifest) => {
         ...acum,
         [definition.type]: {
           // Builder
-          name,
-          type,
-          isMain: definition.type === type,
-          market: { owner, verified, license, website, backgroundColor, icon, category: name },
-          attributes: {},
-          definition,
-          builder,
+          attributes,
           bindingsAllowed,
+          builder,
           defaultStyle,
+          definition,
+          market: { owner, verified, license, website, backgroundColor, icon, category: name },
+          // Builder - Resources
           resource,
+          isMain: definition.type === type,
           manifest: pluginManifest,
+          type,
           // SDK
           settings,
           assets: Object.values(assets).map(asset => ({ type: asset.type, url: `${resource}/${asset.src}` })),

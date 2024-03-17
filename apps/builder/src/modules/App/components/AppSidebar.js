@@ -74,17 +74,6 @@ const AppSidebar = props => {
           <i className="fas fa-database h-6 w-6 flex items-center justify-center" />
         </li>
         <li
-          id="sidebar-plugins"
-          className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
-            'text-gray-300 bg-gray-600': selected === 'plugins',
-            'text-gray-500 hover:text-gray-300 hover:bg-gray-600': selected !== 'plugins'
-          })}
-          onClick={handleClick('plugins')}
-          title="Plugins"
-        >
-          <i className="fa-solid fa-plug h-6 w-6 flex items-center justify-center" />
-        </li>
-        <li
           id="sidebar-templates"
           className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
             'text-gray-300 bg-gray-600': selected === 'templates',
