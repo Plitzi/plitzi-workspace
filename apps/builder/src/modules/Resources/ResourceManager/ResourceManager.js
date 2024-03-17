@@ -48,7 +48,7 @@ const ResourceManager = props => {
 
       setFiles(state => [...state, ...filesApproved]);
     },
-    [setFiles]
+    [setFiles, onUploadAdded, getPluginManifest]
   );
 
   const handleResourceUploaded = useCallback(

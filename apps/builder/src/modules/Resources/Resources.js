@@ -117,16 +117,20 @@ const Resources = () => {
   );
 
   const finalResources = useMemo(() => {
-    return resources.map(resource => {
-      if (resource.type === 'plugin') {
-        const plugin = Object.values(plugins).find(plugin => plugin.resource === resource.path);
+    return resources
+      .filter(resource => {
+        return resource.type !== 'plugin' || Object.values(plugins).find(plugin => plugin.resource === resource.path);
+      })
+      .map(resource => {
+        if (resource.type === 'plugin') {
+          const plugin = Object.values(plugins).find(plugin => plugin.resource === resource.path);
 
-        return { ...resource, metadata: plugin.manifest };
-      }
+          return { ...resource, metadata: plugin.manifest };
+        }
 
-      return resource;
-    });
-  }, [resources]);
+        return resource;
+      });
+  }, [resources, plugins]);
 
   return (
     <div className="w-full flex flex-col overflow-y-auto grow basis-0">
