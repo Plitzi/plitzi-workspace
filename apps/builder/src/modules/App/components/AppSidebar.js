@@ -41,15 +41,15 @@ const AppSidebar = props => {
           <i className="fa-solid fa-sitemap h-6 w-6 flex items-center justify-center" />
         </li> */}
         <li
-          id="sidebar-segments"
+          id="sidebar-pages"
           className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
-            'text-gray-300 bg-gray-600': selected === 'segments',
-            'text-gray-500 hover:text-gray-300 hover:bg-gray-600': selected !== 'segments'
+            'text-gray-300 bg-gray-600': selected === 'pages',
+            'text-gray-500 hover:text-gray-300 hover:bg-gray-600': selected !== 'pages'
           })}
-          onClick={handleClick('segments')}
-          title="Segments"
+          onClick={handleClick('pages')}
+          title="Pages"
         >
-          <i className="fas fa-cubes h-6 w-6 flex items-center justify-center" />
+          <i className="fas fa-file h-6 w-6 flex items-center justify-center" />
         </li>
         <li
           id="sidebar-assets"
@@ -60,7 +60,7 @@ const AppSidebar = props => {
           onClick={handleClick('assets')}
           title="Assets"
         >
-          <i className="fas fa-photo-video h-6 w-6 flex items-center justify-center" />
+          <i className="fas fa-box-open h-6 w-6 flex items-center justify-center" />
         </li>
         <li
           id="sidebar-collections"
@@ -74,6 +74,17 @@ const AppSidebar = props => {
           <i className="fas fa-database h-6 w-6 flex items-center justify-center" />
         </li>
         <li
+          id="sidebar-segments"
+          className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
+            'text-gray-300 bg-gray-600': selected === 'segments',
+            'text-gray-500 hover:text-gray-300 hover:bg-gray-600': selected !== 'segments'
+          })}
+          onClick={handleClick('segments')}
+          title="Segments"
+        >
+          <i className="fas fa-cubes h-6 w-6 flex items-center justify-center" />
+        </li>
+        <li
           id="sidebar-templates"
           className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
             'text-gray-300 bg-gray-600': selected === 'templates',
@@ -82,18 +93,7 @@ const AppSidebar = props => {
           onClick={handleClick('templates')}
           title="Templates"
         >
-          <i className="fas fa-box-open h-6 w-6 flex items-center justify-center" />
-        </li>
-        <li
-          id="sidebar-pages"
-          className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
-            'text-gray-300 bg-gray-600': selected === 'pages',
-            'text-gray-500 hover:text-gray-300 hover:bg-gray-600': selected !== 'pages'
-          })}
-          onClick={handleClick('pages')}
-          title="Pages"
-        >
-          <i className="fas fa-file h-6 w-6 flex items-center justify-center" />
+          <i className="fa-solid fa-pen-ruler h-6 w-6 flex items-center justify-center" />
         </li>
         {/* <li
           id="sidebar-integrations"
@@ -106,7 +106,7 @@ const AppSidebar = props => {
         >
           <i className="fa-solid fa-sliders h-6 w-6 flex items-center justify-center" />
         </li> */}
-        <li
+        {/* <li
           id="sidebar-marketplace"
           className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
             'text-gray-300 bg-gray-600': selected === 'marketplace',
@@ -116,7 +116,7 @@ const AppSidebar = props => {
           title="Marketplace"
         >
           <i className="fa-solid fa-store h-6 w-6 flex items-center justify-center" />
-        </li>
+        </li> */}
         <li
           id="sidebar-settings"
           className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
