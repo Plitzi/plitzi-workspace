@@ -1,6 +1,11 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import get from 'lodash/get';
+import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
+
+// Monorepo
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -11,11 +16,20 @@ import ResourceManager from './ResourceManager';
 
 const Resources = () => {
   const { query, mutate } = useContext(NetworkContext);
+  const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [, /* hasNextPage */ setHasNextPage] = useState(false);
   const [resources, setResources] = useState([]);
+  const { plugins, remove, add } = useContext(PluginsContext);
 
-  const handleResourceRemoved = (/* id */) => {
+  const handleResourceRemoved = resource => () => {
+    if (resource.type === 'plugin') {
+      const plugin = Object.values(plugins).find(plugin => plugin.resource === resource.path && plugin.isMain);
+      if (plugin) {
+        remove(plugin.type);
+      }
+    }
+
     fetch('');
   };
 
@@ -34,19 +48,62 @@ const Resources = () => {
     }
   };
 
-  const handleUploaded = useCallback(() => {
-    fetch('');
-  }, [fetch]);
+  const handleUploaded = useCallback(
+    resource => {
+      console.log('resource', resource);
+      if (resource.type === 'plugin') {
+        const pluginType = get(resource, 'metadata.root');
+        const path = get(resource, 'path');
+        add(pluginType, path);
+      }
+
+      fetch('');
+    },
+    [fetch]
+  );
+
+  const handleUploadAdded = useCallback(
+    resource => {
+      if (resource.resourceType !== 'plugin') {
+        return true;
+      }
+
+      const pluginType = get(resource, 'metadata.root');
+      if (plugins[pluginType]) {
+        addToast(
+          <div>
+            Plugin <b>{get(resource, 'metadata.definition.name')}</b> already installed
+          </div>,
+          {
+            appeareance: 'info',
+            autoDismiss: true,
+            placement: 'top-right'
+          }
+        );
+      }
+
+      return !plugins[pluginType];
+    },
+    [plugins, addToast]
+  );
 
   useEffect(() => {
     fetch('');
   }, []);
 
-  const uploadTypesMemo = useMemo(() => ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'mpeg', 'svg', 'webm'], []);
+  const uploadTypesMemo = useMemo(
+    () => ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'mpeg', 'svg', 'webm', 'zip'],
+    []
+  );
 
   return (
     <div className="w-full flex flex-col overflow-y-auto grow basis-0">
-      <ResourceManager mutate={mutate} uploadTypes={uploadTypesMemo} onUploaded={handleUploaded} />
+      <ResourceManager
+        mutate={mutate}
+        uploadTypes={uploadTypesMemo}
+        onUploaded={handleUploaded}
+        onUploadAdded={handleUploadAdded}
+      />
       {!loading && resources && resources.length > 0 && (
         <div className="flex flex-col px-2 basis-0 grow overflow-y-auto">
           <Heading type="h5" className="mb-2">
@@ -60,7 +117,7 @@ const Resources = () => {
                 type={resource.type}
                 title={resource.name}
                 src={resource.path}
-                onRemove={handleResourceRemoved}
+                onRemove={handleResourceRemoved(resource)}
               />
             ))}
           </div>

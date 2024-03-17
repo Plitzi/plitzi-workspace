@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import formatBytes from '../../helpers/formatBytes';
 
 const ContentPlugin = props => {
   const {
@@ -11,9 +12,11 @@ const ContentPlugin = props => {
     name = 'Plugin Name',
     version = 'v0.0.0',
     author = 'Plitzi Team',
-    size = '0KB',
+    size = 0,
     components = 'No components'
   } = props;
+
+  const finalSize = useMemo(() => formatBytes(size), [size]);
 
   const finalVersion = useMemo(() => `v${version.replaceAll('v', '').replaceAll('V', '')}`, [version]);
 
@@ -43,7 +46,7 @@ const ContentPlugin = props => {
       </div>
       <div className="inline-flex gap-1 text-xs">
         <div className="font-bold">Size:</div>
-        <div className="truncate">{size}</div>
+        <div className="truncate">{finalSize}</div>
       </div>
     </div>
   );
@@ -56,7 +59,7 @@ ContentPlugin.propTypes = {
   name: PropTypes.string,
   version: PropTypes.string,
   author: PropTypes.string,
-  size: PropTypes.string,
+  size: PropTypes.number,
   components: PropTypes.string
 };
 

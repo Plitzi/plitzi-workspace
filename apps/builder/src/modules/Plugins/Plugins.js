@@ -67,7 +67,7 @@ const Plugins = () => {
 
   const handleUploaded = useCallback(
     resource => {
-      const pluginType = get(resource, 'manifest.root');
+      const pluginType = get(resource, 'metadata.root');
       const path = get(resource, 'path');
       add(pluginType, path);
     },

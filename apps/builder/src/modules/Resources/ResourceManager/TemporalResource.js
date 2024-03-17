@@ -83,7 +83,7 @@ const TemporalResource = props => {
       setProgressUpload(0);
     } else if (type === 'plugin') {
       setIsUploaded(true);
-      onUploaded({ ...response, file, manifest: file.metadata });
+      onUploaded({ ...response, file, metadata: file.metadata });
     } else {
       setIsUploaded(true);
       onUploaded({ ...response, file });
@@ -129,7 +129,7 @@ const TemporalResource = props => {
         className
       )}
     >
-      <ResourceContent type={type} src={src} title={title} metadata={metadata} />
+      <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file.size} />
       <ResourceType type={type} />
       {(uploading || processing || hovered) && (
         <ResourceUploadStatus
