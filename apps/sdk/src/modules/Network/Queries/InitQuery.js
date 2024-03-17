@@ -54,20 +54,10 @@ const InitQuery = gql`
           cache
         }
       }
-      plugins(compact: true) {
-        plugin {
-          type
-        }
-        revisionInstalled {
-          scope
-          module
-          assets {
-            type
-            url
-          }
-        }
+      plugins {
+        type
+        resource
         settings
-        subPlugins
       }
       style {
         cache

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 // import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
@@ -21,7 +21,7 @@ const Plugins = () => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { components } = useContext(ComponentContext);
-  const { plugins, update, remove } = useContext(PluginsContext);
+  const { plugins, update, remove, add } = useContext(PluginsContext);
 
   const onUpdate = type => async settings => {
     const plugin = plugins[type];
@@ -63,15 +63,16 @@ const Plugins = () => {
     }
   };
 
-  const pluginsData = Object.values(plugins);
+  const pluginsData = Object.values(plugins).filter(plugin => plugin.isMain);
 
-  const handleUploaded = useCallback(() => {
-    // fetch('');
-  }, [fetch]);
-
-  useEffect(() => {
-    // fetch('');
-  }, []);
+  const handleUploaded = useCallback(
+    resource => {
+      const pluginType = get(resource, 'manifest.root');
+      const path = get(resource, 'path');
+      add(pluginType, path);
+    },
+    [fetch, add]
+  );
 
   const uploadTypesMemo = useMemo(() => ['zip'], []);
 
@@ -99,11 +100,11 @@ const Plugins = () => {
                 backgroundColor={backgroundColor}
                 icon={icon}
                 version={version}
-                newVersion={version !== latestVersion.version}
+                newVersion={version !== latestVersion?.version}
                 size={size}
                 settings={{ ...get(component, 'settings', {}), ...settings }}
-                onUpdate={onUpdate(plugin.type)}
-                onRemove={onRemove(plugin.type)}
+                onUpdate={onUpdate(type)}
+                onRemove={onRemove(type)}
                 showModal={showModal}
               />
             );

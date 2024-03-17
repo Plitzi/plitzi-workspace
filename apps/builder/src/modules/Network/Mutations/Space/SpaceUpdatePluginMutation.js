@@ -2,43 +2,12 @@
 import { gql } from '@apollo/client/core';
 
 const SpaceUpdatePluginMutation = gql`
-  mutation SpaceUpdatePluginMutation($environment: String!, $pluginType: String!, $pluginVersion: String!) {
-    SpaceUpdatePlugin(environment: $environment, pluginType: $pluginType, pluginVersion: $pluginVersion) {
+  mutation SpaceUpdatePluginMutation($environment: String!, $pluginType: String!, $resource: String!) {
+    SpaceUpdatePlugin(environment: $environment, pluginType: $pluginType, resource: $resource) {
       plugins {
-        plugin {
-          type
-          pluginChildren {
-            type
-          }
-          latestVersion {
-            version
-          }
-          market {
-            owner
-            verified
-            license
-            website
-            backgroundColor
-            icon
-            category {
-              name
-            }
-          }
-        }
-        revisionInstalled {
-          scope
-          module
-          manifestUrl
-          version
-          assets {
-            type
-            url
-            sizeNormal
-            sizeGzip
-          }
-        }
+        type
+        resource
         settings
-        subPlugins
       }
     }
   }

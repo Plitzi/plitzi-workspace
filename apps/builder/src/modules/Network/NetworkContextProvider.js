@@ -8,8 +8,8 @@ import cloneDeep from 'lodash/cloneDeep';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
-// Alias
-import { pluginParseDefinition, pluginCompactDefinition } from '@pmodules/Plugins/helpers/PluginHelper';
+// Monorepo
+import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 
 // Relatives
 import NetworkContext from './NetworkContext';
@@ -213,12 +213,15 @@ const NetworkContextProvider = props => {
         return;
       }
 
+      let plugins = {};
+      if (Space.plugins.length > 0) {
+        plugins = await pluginParseDefinition(Space.plugins);
+        registerDefinition(plugins);
+      }
+
       setInternalData({
         schema: { ...Space.schema, flat: Space.schema.flat.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}) },
-        plugins: Space.plugins.reduce(
-          (acum, item) => ({ ...acum, [item.plugin.type]: pluginCompactDefinition(item) }),
-          {}
-        ),
+        plugins,
         style: Space.style,
         templates: Templates.edges.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}),
         collections: Collections.edges.reduce(
@@ -241,10 +244,6 @@ const NetworkContextProvider = props => {
           }))
           .reduce((obj, segment) => ({ ...obj, [segment.identifier]: segment }), {})
       });
-
-      if (Object.keys(Space.plugins).length > 0) {
-        registerDefinition(await pluginParseDefinition(Space.plugins));
-      }
     }
 
     setLoading(false);

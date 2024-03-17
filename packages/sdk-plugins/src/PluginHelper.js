@@ -1,0 +1,116 @@
+// Packages
+import get from 'lodash/get';
+import omit from 'lodash/omit';
+import axios from 'axios';
+
+const getComponentDefinition = (pluginRaw, pluginManifest) => {
+  try {
+    const { resource, settings, type } = pluginRaw;
+    const {
+      runtime: { scope = '', module = '' },
+      definition: {
+        name = "Plitzi's Demo Plugin",
+        // description = '',
+        owner = 'Plitzi',
+        verified = false,
+        license = 'MIT',
+        website = 'https://plitzi.com',
+        backgroundColor = '#4422ee',
+        icon = 'https://cdn.plitzi.com/resources/img/favicon.svg'
+      },
+      assets,
+      pluginSchema
+    } = pluginManifest;
+
+    const componentDefinitions = Object.values(get(pluginManifest, 'pluginSchema', {})).reduce((acum, component) => {
+      const { definition, builder, bindingsAllowed, defaultStyle } = component;
+      let subPlugins = [];
+      if (definition.type === type) {
+        subPlugins = Object.keys(omit(pluginSchema, [type]));
+      }
+
+      return {
+        ...acum,
+        [definition.type]: {
+          // Builder
+          name,
+          type,
+          isMain: definition.type === type,
+          market: { owner, verified, license, website, backgroundColor, icon, category: name },
+          attributes: {},
+          definition,
+          builder,
+          bindingsAllowed,
+          defaultStyle,
+          // SDK
+          settings,
+          assets: Object.values(assets).map(asset => ({ type: asset.type, url: `${resource}/${asset.src}` })),
+          scope,
+          module,
+          subPlugins
+        }
+      };
+    }, {});
+
+    return componentDefinitions;
+  } catch (e) {
+    return {};
+  }
+};
+
+const getCompactComponentDefinition = (pluginRaw, pluginManifest) => {
+  const { resource, settings, type } = pluginRaw;
+  const { runtime: { scope, module } = {}, assets, pluginSchema } = pluginManifest;
+
+  return {
+    assets: Object.values(assets).map(asset => ({ type: asset.type, url: `${resource}/${asset.src}` })),
+    scope,
+    module,
+    settings,
+    subPlugins: Object.keys(omit(pluginSchema, [type]))
+  };
+};
+
+export const fetchPluginsManifest = async manifests => {
+  if (!Array.isArray(manifests) || manifests.length === 0) {
+    return {};
+  }
+
+  const promises = manifests.map(async pluginManifest =>
+    axios.request({ url: pluginManifest, method: 'get', headers: { 'Content-Type': 'application/json' } })
+  );
+
+  const responses = await Promise.allSettled(promises);
+
+  return responses
+    .filter(response => response.status === 'fulfilled')
+    .reduce(
+      (acum, response) => ({ ...acum, [get(response, 'value.data.root', '')]: get(response, 'value.data', {}) }),
+      {}
+    );
+};
+
+export const pluginParseDefinition = async (pluginsRaw, compact = false) => {
+  if (!Array.isArray(pluginsRaw)) {
+    pluginsRaw = [pluginsRaw];
+  }
+
+  const pluginManifests = await fetchPluginsManifest(
+    pluginsRaw.reduce((acum, plugin) => [...acum, `${plugin.resource}/plugin-manifest.json`], [])
+  );
+
+  let definitions = {};
+  pluginsRaw
+    .filter(pluginRaw => get(pluginManifests, pluginRaw.type))
+    .forEach(pluginRaw => {
+      const { type } = pluginRaw;
+      const manifest = get(pluginManifests, type);
+      if (compact) {
+        definitions[type] = getCompactComponentDefinition(pluginRaw, manifest);
+      } else {
+        definitions = { ...definitions, ...getComponentDefinition(pluginRaw, manifest) };
+      }
+    });
+
+  return definitions;
+};

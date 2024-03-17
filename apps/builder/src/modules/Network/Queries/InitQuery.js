@@ -56,44 +56,9 @@ const InitQuery = gql`
         }
       }
       plugins {
-        plugin {
-          name
-          description
-          type
-          pluginChildren {
-            name
-            description
-            type
-          }
-          latestVersion {
-            version
-          }
-          market {
-            owner
-            verified
-            license
-            website
-            backgroundColor
-            icon
-            category {
-              name
-            }
-          }
-        }
-        revisionInstalled {
-          scope
-          module
-          manifestUrl
-          version
-          assets {
-            type
-            url
-            sizeNormal
-            sizeGzip
-          }
-        }
+        type
+        resource
         settings
-        subPlugins
       }
       style {
         id

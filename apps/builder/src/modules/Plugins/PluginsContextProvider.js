@@ -10,13 +10,13 @@ import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 
 // Relatives
-import { pluginCompactDefinition, pluginParseDefinition } from './helpers/PluginHelper';
 import PluginsReducer, { PluginsActions } from './PluginsReducer';
 
 const PluginsContextProvider = props => {
@@ -35,17 +35,35 @@ const PluginsContextProvider = props => {
   const { components, registerDefinition, unregisterDefinition, unregister } = useContext(ComponentContext);
 
   const pluginsAdd = useCallback(
-    plugin => dispatchPlugins({ type: PluginsActions.PLUGINS_ADD, plugin: pluginCompactDefinition(plugin) }),
+    pluginDefinition => {
+      if (Object.keys(pluginDefinition).length > 1) {
+        dispatchPlugins({ type: PluginsActions.PLUGINS_ADD_MANY, plugins: pluginDefinition });
+      } else {
+        dispatchPlugins({ type: PluginsActions.PLUGINS_ADD, plugin: pluginDefinition });
+      }
+    },
     [dispatchPlugins]
   );
 
   const pluginsUpdate = useCallback(
-    plugin => dispatchPlugins({ type: PluginsActions.PLUGINS_UPDATE, plugin: pluginCompactDefinition(plugin) }),
+    pluginDefinition => {
+      if (Object.keys(pluginDefinition).length > 1) {
+        dispatchPlugins({ type: PluginsActions.PLUGINS_UPDATE_MANY, plugins: pluginDefinition });
+      } else {
+        dispatchPlugins({ type: PluginsActions.PLUGINS_UPDATE, plugin: pluginDefinition });
+      }
+    },
     [dispatchPlugins]
   );
 
   const pluginsRemove = useCallback(
-    pluginType => dispatchPlugins({ type: PluginsActions.PLUGINS_REMOVE, pluginType }),
+    pluginType => {
+      if (Array.isArray(pluginType)) {
+        dispatchPlugins({ type: PluginsActions.PLUGINS_REMOVE_MANY, pluginTypes: pluginType });
+      } else {
+        dispatchPlugins({ type: PluginsActions.PLUGINS_REMOVE, pluginType });
+      }
+    },
     [dispatchPlugins]
   );
 
@@ -90,14 +108,23 @@ const PluginsContextProvider = props => {
     return result;
   }, []);
 
-  const add = async (pluginType, pluginVersion) => {
-    const result = await mutate('SpaceAddPlugin', { pluginType, pluginVersion });
+  const add = async (pluginType, resource) => {
+    const result = await mutate('SpaceAddPlugin', { pluginType, resource });
     if (result) {
       const { plugins } = result;
-      const plugin = plugins.find(plug => plug.plugin.type === pluginType);
-      pluginsAdd(plugin);
-      registerDefinition(pluginParseDefinition(plugin));
-      setPluginStyleAssets(state => getStyle({ ...state, [pluginType]: pluginCompactDefinition(plugin) }));
+      if (!plugins) {
+        return false;
+      }
+
+      const plugin = plugins.find(plug => plug.type === pluginType);
+      if (!plugin) {
+        return false;
+      }
+
+      const pluginDefinition = await pluginParseDefinition(plugin);
+      pluginsAdd(pluginDefinition);
+      registerDefinition(pluginDefinition);
+      setPluginStyleAssets(state => getStyle({ ...state, ...pluginDefinition }));
 
       return true;
     }
@@ -105,12 +132,21 @@ const PluginsContextProvider = props => {
     return false;
   };
 
-  const update = async (pluginType, pluginVersion) => {
-    const result = await mutate('SpaceUpdatePlugin', { pluginType, pluginVersion });
+  const update = async (pluginType, resource) => {
+    const result = await mutate('SpaceUpdatePlugin', { pluginType, resource });
     if (result) {
       const { plugins } = result;
-      const plugin = plugins.find(plug => plug.plugin.type === pluginType);
-      pluginsUpdate(plugin);
+      if (!plugins) {
+        return false;
+      }
+
+      const plugin = plugins.find(plug => plug.type === pluginType);
+      if (!plugin) {
+        return false;
+      }
+
+      const pluginDefinition = await pluginParseDefinition(plugin);
+      pluginsUpdate(pluginDefinition);
 
       return true;
     }
@@ -142,7 +178,8 @@ const PluginsContextProvider = props => {
   const remove = async pluginType => {
     const result = await mutate('SpaceRemovePlugin', { pluginType });
     if (result) {
-      pluginsRemove(pluginType);
+      const subPlugins = get(plugins, `${pluginType}.subPlugins`, []);
+      pluginsRemove([pluginType, ...subPlugins]);
       setPluginStyleAssets(state => getStyle(omit(state, [pluginType])));
       unregisterDefinition(pluginType);
       unregister(pluginType);

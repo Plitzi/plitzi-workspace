@@ -47,9 +47,10 @@ const ResourceManager = props => {
   );
 
   const handleResourceUploaded = useCallback(
-    file => {
+    resource => {
+      const { file } = resource;
       setFiles(state => state.filter(f => f !== file));
-      onUploaded(file);
+      onUploaded(resource);
     },
     [setFiles, onUploaded]
   );

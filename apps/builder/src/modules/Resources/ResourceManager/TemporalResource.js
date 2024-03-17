@@ -81,9 +81,12 @@ const TemporalResource = props => {
     if (response instanceof Error) {
       setError(response);
       setProgressUpload(0);
+    } else if (type === 'plugin') {
+      setIsUploaded(true);
+      onUploaded({ ...response, file, manifest: file.metadata });
     } else {
       setIsUploaded(true);
-      onUploaded(file);
+      onUploaded({ ...response, file });
     }
 
     setUploading(false);

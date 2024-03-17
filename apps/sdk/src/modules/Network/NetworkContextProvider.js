@@ -6,6 +6,9 @@ import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
+
 // Relatives
 import NetworkContext from './NetworkContext';
 import Queries from './Queries';
@@ -167,15 +170,14 @@ const NetworkContextProvider = props => {
         return;
       }
 
+      let plugins = {};
+      if (Space.plugins && Space.plugins.length > 0) {
+        plugins = await pluginParseDefinition(Space.plugins, true);
+      }
+
       setInternalData({
         schema: { ...Space.schema, flat: Space.schema.flat.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}) },
-        plugins: Space.plugins.reduce(
-          (acum, { plugin: { type }, revisionInstalled: { assets, scope, module }, settings, subPlugins }) => ({
-            ...acum,
-            [type]: { assets, scope, module, settings, subPlugins }
-          }),
-          {}
-        ),
+        plugins,
         style: Space.style,
         collections: Collections.edges.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}),
         segments: Space.segments

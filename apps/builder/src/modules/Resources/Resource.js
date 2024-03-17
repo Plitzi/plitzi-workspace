@@ -150,7 +150,7 @@ Resource.propTypes = {
   className: PropTypes.string,
   id: PropTypes.string,
   file: PropTypes.object,
-  type: PropTypes.oneOf(['image', 'video', 'document']),
+  type: PropTypes.oneOf(['image', 'video', 'document', 'plugin']),
   title: PropTypes.string,
   src: PropTypes.string,
   onUploaded: PropTypes.func,

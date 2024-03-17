@@ -5,12 +5,9 @@ const SpaceRemovePluginMutation = gql`
   mutation SpaceRemovePluginMutation($environment: String!, $pluginType: String!) {
     SpaceRemovePlugin(environment: $environment, pluginType: $pluginType) {
       plugins {
-        plugin {
-          type
-          pluginChildren {
-            type
-          }
-        }
+        type
+        resource
+        settings
       }
     }
   }

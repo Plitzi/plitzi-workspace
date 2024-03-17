@@ -31,7 +31,7 @@ const ElementCategory = props => {
 
   const elementsToRender = elements.filter(element => builderElementPermissions(element, 'canDragDrop', true));
   if (elementsToRender.length === 0) {
-    return null;
+    return undefined;
   }
 
   return (
