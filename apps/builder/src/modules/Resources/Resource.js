@@ -49,6 +49,10 @@ const Resource = props => {
   }, [addToast, src]);
 
   const handleClick = useCallback(() => {
+    if (type === 'plugin') {
+      return;
+    }
+
     showModal(
       <Modal.Header>
         <h4 className="font-bold">Resource Details</h4>
@@ -152,13 +156,13 @@ const Resource = props => {
         </div>
       )}
       <ResourceType type={type} />
-      {removing && <ResourceUploadStatus processing={removing} />}
       <div
         className="absolute top-1 left-1 bg-white rounded-full aspect-square flex items-center justify-center px-1 hover:text-blue-400 cursor-pointer"
         title="Information"
       >
         <i className="fa-solid fa-circle-info" />
       </div>
+      {removing && <ResourceUploadStatus processing={removing} />}
     </div>
   );
 };
