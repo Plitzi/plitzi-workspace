@@ -1,5 +1,16 @@
 # @plitzi/plitzi-sdk
 
+## 0.20.5
+
+### Patch Changes
+
+- v0.20.5
+- Updated dependencies
+  - @plitzi/sdk-interactions@0.20.5
+  - @plitzi/sdk-shared@0.20.5
+  - @plitzi/sdk-event-bridge@0.20.5
+  - @plitzi/sdk-plugins@0.20.5
+
 ## 0.20.4
 
 ### Patch Changes

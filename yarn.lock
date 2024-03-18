@@ -36,9 +36,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.9.6":
-  version: 3.9.6
-  resolution: "@apollo/client@npm:3.9.6"
+"@apollo/client@npm:^3.9.7":
+  version: 3.9.7
+  resolution: "@apollo/client@npm:3.9.7"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.1.1"
     "@wry/caches": "npm:^1.0.0"
@@ -69,7 +69,7 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 10c0/566cbb82e5272c260f04c647a150068a328800bd2f0d492a594d6ab2a2a616e84b8e6a494d8207483a26af50552ed09a3361e52713f9b75407bca0cfd4123724
+  checksum: 10c0/4bfa3608e8f3e257269bbb4d918ed0b73dde618a5b3ac958a0d23a0f41779449a89bd17ad0298cab6ab1b63cd47a63dc226423b2de49d210d7955f9321f2f8fb
   languageName: node
   linkType: hard
 
@@ -3194,7 +3194,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-builder@workspace:apps/builder"
   dependencies:
-    "@apollo/client": "npm:^3.9.6"
+    "@apollo/client": "npm:^3.9.7"
     "@babel/compat-data": "npm:^7.23.5"
     "@babel/core": "npm:^7.24.0"
     "@babel/helper-builder-react-jsx-experimental": "npm:^7.12.11"
@@ -3214,15 +3214,15 @@ __metadata:
     "@welldone-software/why-did-you-render": "npm:^8.0.1"
     apollo-upload-client: "npm:^18.0.1"
     autoprefixer: "npm:^10.4.18"
-    axios: "npm:^1.6.7"
+    axios: "npm:^1.6.8"
     babel-loader: "npm:^9.1.3"
     classnames: "npm:^2.5.1"
     clean-webpack-plugin: "npm:^4.0.0"
     compression-webpack-plugin: "npm:^11.1.0"
     css-loader: "npm:^6.10.0"
-    cypress: "npm:^13.6.6"
+    cypress: "npm:^13.7.0"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.230.0"
+    flow-bin: "npm:^0.231.0"
     graphql: "npm:^16.8.1"
     handlebars-webpack-plugin: "npm:^2.2.1"
     html-webpack-plugin: "npm:^5.6.0"
@@ -3232,14 +3232,14 @@ __metadata:
     mini-css-extract-plugin: "npm:^2.8.1"
     moment: "npm:^2.30.1"
     node-sass: "npm:^9.0.0"
-    postcss: "npm:^8.4.35"
+    postcss: "npm:^8.4.36"
     postcss-loader: "npm:^8.1.1"
     postcss-scss: "npm:^4.0.9"
     prettier: "npm:^3.2.5"
     prop-types: "npm:^15.8.1"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
-    react-hook-form: "npm:^7.51.0"
+    react-hook-form: "npm:^7.51.1"
     react-moment: "npm:^1.1.3"
     react-refresh: "npm:^0.14.0"
     react-router-dom: "npm:^6.22.3"
@@ -3268,7 +3268,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-sdk@workspace:apps/sdk"
   dependencies:
-    "@apollo/client": "npm:^3.9.6"
+    "@apollo/client": "npm:^3.9.7"
     "@auth0/auth0-react": "npm:^2.2.4"
     "@babel/compat-data": "npm:^7.23.5"
     "@babel/core": "npm:^7.24.0"
@@ -3295,7 +3295,7 @@ __metadata:
     "@storybook/testing-library": "npm:^0.2.2"
     "@welldone-software/why-did-you-render": "npm:^8.0.1"
     autoprefixer: "npm:^10.4.18"
-    axios: "npm:^1.6.7"
+    axios: "npm:^1.6.8"
     babel-loader: "npm:^9.1.3"
     classnames: "npm:^2.5.1"
     clean-webpack-plugin: "npm:^4.0.0"
@@ -3303,7 +3303,7 @@ __metadata:
     css-loader: "npm:^6.10.0"
     dompurify: "npm:^3.0.9"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.230.0"
+    flow-bin: "npm:^0.231.0"
     graphql: "npm:^16.8.1"
     handlebars: "npm:^4.7.8"
     handlebars-webpack-plugin: "npm:^2.2.1"
@@ -3313,7 +3313,7 @@ __metadata:
     mini-css-extract-plugin: "npm:^2.8.1"
     moment: "npm:^2.30.1"
     node-sass: "npm:^9.0.0"
-    postcss: "npm:^8.4.35"
+    postcss: "npm:^8.4.36"
     postcss-loader: "npm:^8.1.1"
     postcss-scss: "npm:^4.0.9"
     react: "npm:^18.2.0"
@@ -3421,7 +3421,7 @@ __metadata:
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
     "@plitzi/sdk-shared": "npm:*"
-    axios: "npm:^1.6.7"
+    axios: "npm:^1.6.8"
     eslint: "npm:^8.57.0"
     lodash: "npm:^4.17.21"
   languageName: unknown
@@ -3475,7 +3475,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.29.1"
     eslint-plugin-jsx-a11y: "npm:^6.8.0"
     eslint-plugin-prettier: "npm:^5.1.3"
-    eslint-plugin-react: "npm:^7.34.0"
+    eslint-plugin-react: "npm:^7.34.1"
     eslint-plugin-react-hooks: "npm:^4.6.0"
     eslint-plugin-storybook: "npm:^0.8.0"
     jest-environment-jsdom: "npm:^29.7.0"
@@ -6185,6 +6185,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios@npm:^1.6.8":
+  version: 1.6.8
+  resolution: "axios@npm:1.6.8"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 10c0/0f22da6f490335479a89878bc7d5a1419484fbb437b564a80c34888fc36759ae4f56ea28d55a191695e5ed327f0bad56e7ff60fb6770c14d1be6501505d47ab9
+  languageName: node
+  linkType: hard
+
 "axobject-query@npm:^3.2.1":
   version: 3.2.1
   resolution: "axobject-query@npm:3.2.1"
@@ -7538,9 +7549,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:^13.6.6":
-  version: 13.6.6
-  resolution: "cypress@npm:13.6.6"
+"cypress@npm:^13.7.0":
+  version: 13.7.0
+  resolution: "cypress@npm:13.7.0"
   dependencies:
     "@cypress/request": "npm:^3.0.0"
     "@cypress/xvfb": "npm:^1.2.4"
@@ -7586,7 +7597,7 @@ __metadata:
     yauzl: "npm:^2.10.0"
   bin:
     cypress: bin/cypress
-  checksum: 10c0/1f152ac3708fc35c822b6fe428c0856b568c9b2d3f03a22de0526b9f21d6c345139061ae3515a652538a9570a2a632516e4548b29b39843865b9c88288b2d668
+  checksum: 10c0/de0921b5da521fb5be96ddfd2fe693ecdfe17c00fc764ebb92a9d1b35b9476e9a3f8a648533736421b5cc640ccf9b42b9e7d0fc4554ab9c8a29ea0837d544f08
   languageName: node
   linkType: hard
 
@@ -8807,9 +8818,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react@npm:^7.34.0":
-  version: 7.34.0
-  resolution: "eslint-plugin-react@npm:7.34.0"
+"eslint-plugin-react@npm:^7.34.1":
+  version: 7.34.1
+  resolution: "eslint-plugin-react@npm:7.34.1"
   dependencies:
     array-includes: "npm:^3.1.7"
     array.prototype.findlast: "npm:^1.2.4"
@@ -8831,7 +8842,7 @@ __metadata:
     string.prototype.matchall: "npm:^4.0.10"
   peerDependencies:
     eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
-  checksum: 10c0/9bf0b959373ace66e799adbbfb493a7ceae54751e8f90fcce1da1a2a67b277ee23ba845571eaa4d4f05d96dba4e4977bf938b350f18bad26201fa616ee6aa4b8
+  checksum: 10c0/7c61b1314d37a4ac2f2474f9571f801f1a1a5d81dcd4abbb5d07145406518722fb792367267757ee116bde254be9753242d6b93c9619110398b3fe1746e4848c
   languageName: node
   linkType: hard
 
@@ -9527,12 +9538,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flow-bin@npm:^0.230.0":
-  version: 0.230.0
-  resolution: "flow-bin@npm:0.230.0"
+"flow-bin@npm:^0.231.0":
+  version: 0.231.0
+  resolution: "flow-bin@npm:0.231.0"
   bin:
     flow: cli.js
-  checksum: 10c0/f179f4b8de29ab1e3e918f64853b053116042ebba77a6e8f89310730e59d0a8e675ceeb24c3588c572369fe08a6e1319279c7c810c2a21a050f897c08fd50247
+  checksum: 10c0/2809c1f07d3e2788f4a52c1d81c598a15662e1aee3ba337b9948e0e4f151576e140849e36ccbc6c9f7942028610813d7cd42ece57373b8e338aa5e0527481c1a
   languageName: node
   linkType: hard
 
@@ -9550,6 +9561,16 @@ __metadata:
     debug:
       optional: true
   checksum: 10c0/418d71688ceaf109dfd6f85f747a0c75de30afe43a294caa211def77f02ef19865b547dfb73fde82b751e1cc507c06c754120b848fe5a7400b0a669766df7615
+  languageName: node
+  linkType: hard
+
+"follow-redirects@npm:^1.15.6":
+  version: 1.15.6
+  resolution: "follow-redirects@npm:1.15.6"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: 10c0/9ff767f0d7be6aa6870c82ac79cf0368cd73e01bbc00e9eb1c2a16fbb198ec105e3c9b6628bb98e9f3ac66fe29a957b9645bcb9a490bb7aa0d35f908b6b85071
   languageName: node
   linkType: hard
 
@@ -14446,7 +14467,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.23, postcss@npm:^8.4.32, postcss@npm:^8.4.33, postcss@npm:^8.4.35":
+"postcss@npm:^8.4.23, postcss@npm:^8.4.32, postcss@npm:^8.4.33":
   version: 8.4.35
   resolution: "postcss@npm:8.4.35"
   dependencies:
@@ -14454,6 +14475,17 @@ __metadata:
     picocolors: "npm:^1.0.0"
     source-map-js: "npm:^1.0.2"
   checksum: 10c0/e8dd04e48001eb5857abc9475365bf08f4e508ddf9bc0b8525449a95d190f10d025acebc5b56ac2e94b3c7146790e4ae78989bb9633cb7ee20d1cc9b7dc909b2
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.36":
+  version: 8.4.36
+  resolution: "postcss@npm:8.4.36"
+  dependencies:
+    nanoid: "npm:^3.3.7"
+    picocolors: "npm:^1.0.0"
+    source-map-js: "npm:^1.1.0"
+  checksum: 10c0/e7c834e31d8f4e8dfd0a427df36fdc7bdc58a16e373551618e2c3ac172019eb816b24f1b4709311ebcade8d3ba31b2d75522d28ef45ecbbeb11eb01f265579fb
   languageName: node
   linkType: hard
 
@@ -14893,12 +14925,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-hook-form@npm:^7.51.0":
-  version: 7.51.0
-  resolution: "react-hook-form@npm:7.51.0"
+"react-hook-form@npm:^7.51.1":
+  version: 7.51.1
+  resolution: "react-hook-form@npm:7.51.1"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18
-  checksum: 10c0/929464db00d1bc60bb7de41ab7c05cd2b28afba1d4d4ed10b02288919fb95fa81667e467bc571cbb403bec2bb9116b465211ce9962c3c0120a49dcbf47bfa699
+  checksum: 10c0/f0acbf27fc548d3cd0e4db40b84d9dfe6c24209e4421fffbd422da15e32cc98f877ab0af9e06cb1deaf4205ec655b56020ff9f8b2bae6ada5e619890f174c374
   languageName: node
   linkType: hard
 
@@ -16052,6 +16084,13 @@ __metadata:
   version: 1.0.2
   resolution: "source-map-js@npm:1.0.2"
   checksum: 10c0/32f2dfd1e9b7168f9a9715eb1b4e21905850f3b50cf02cf476e47e4eebe8e6b762b63a64357896aa29b37e24922b4282df0f492e0d2ace572b43d15525976ff8
+  languageName: node
+  linkType: hard
+
+"source-map-js@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "source-map-js@npm:1.1.0"
+  checksum: 10c0/d1f016efe4fcf67fd92e36da0670f2889b13a36cc453329758336450e811c61164376eb451b453b4dd4e89a760f841b0a014942d54f240af31a791829bc0e336
   languageName: node
   linkType: hard
 

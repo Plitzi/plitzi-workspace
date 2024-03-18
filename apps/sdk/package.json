@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.20.4",
+  "version": "0.20.5",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -21,13 +21,13 @@
     "registry": "https://npm.pkg.github.com/plitzi"
   },
   "dependencies": {
-    "@apollo/client": "^3.9.6",
+    "@apollo/client": "^3.9.7",
     "@auth0/auth0-react": "^2.2.4",
     "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-interactions": "*",
     "@plitzi/sdk-plugins": "*",
     "@plitzi/sdk-shared": "*",
-    "axios": "^1.6.7",
+    "axios": "^1.6.8",
     "classnames": "^2.5.1",
     "dompurify": "^3.0.9",
     "graphql": "^16.8.1",
@@ -68,12 +68,12 @@
     "compression-webpack-plugin": "^11.1.0",
     "css-loader": "^6.10.0",
     "file-loader": "^6.2.0",
-    "flow-bin": "^0.230.0",
+    "flow-bin": "^0.231.0",
     "handlebars-webpack-plugin": "^2.2.1",
     "html-webpack-plugin": "^5.6.0",
     "mini-css-extract-plugin": "^2.8.1",
     "node-sass": "^9.0.0",
-    "postcss": "^8.4.35",
+    "postcss": "^8.4.36",
     "postcss-loader": "^8.1.1",
     "postcss-scss": "^4.0.9",
     "react-refresh": "^0.14.0",
