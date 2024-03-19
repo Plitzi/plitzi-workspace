@@ -37,14 +37,14 @@ const PositionAdvanced = props => {
       <GroupButtons
         className="w-full"
         classNameContainer="w-[180px]"
-        items={itemsTB}
+        items={itemsLR}
         label="X"
         onChange={handleChange}
       />
       <GroupButtons
         className="w-full"
         classNameContainer="w-[180px]"
-        items={itemsLR}
+        items={itemsTB}
         label="Y"
         onChange={handleChange}
       />
