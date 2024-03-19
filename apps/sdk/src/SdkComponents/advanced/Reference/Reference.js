@@ -26,7 +26,7 @@ const Reference = forwardRef((props, ref) => {
   } = props;
   const {
     id,
-    definition: { rootId }
+    definition: { rootId, styleSelectors }
   } = internalProps;
   const {
     settings: { previewMode, environment },
@@ -103,6 +103,7 @@ const Reference = forwardRef((props, ref) => {
     [referenceContainer, children, referenceType, referenceId, id]
   );
 
+  const internalPropsMemo = useMemo(() => ({ className: styleSelectors?.base }), [internalProps, styleSelectors]);
   if (!reference) {
     return (
       <RootElement
@@ -127,6 +128,7 @@ const Reference = forwardRef((props, ref) => {
             id={element?.id}
             rootId={rootId}
             type={elementType}
+            internalProps={internalPropsMemo}
             plitziElementLayout={plitziElementLayoutMemo}
           />
         </DataSourceContext.Provider>

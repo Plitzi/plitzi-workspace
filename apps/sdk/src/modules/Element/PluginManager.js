@@ -44,7 +44,7 @@ const PluginManager = props => {
 
     const PluginInternal = components[type];
 
-    return <PluginInternal internalProps={internalPropsMemo} />;
+    return <PluginInternal internalProps={internalPropsMemo} className={internalPropsMemo?.className} />;
   }, [components[type], internalPropsMemo]);
 
   const pluginDefinition = plugins[type] ?? getParentPlugin(type);
@@ -63,6 +63,7 @@ const PluginManager = props => {
         scope={scope}
         module={module}
         internalProps={internalPropsMemo}
+        className={internalPropsMemo?.className}
         failedFallback={components.notFound}
       />
     );
