@@ -1,6 +1,8 @@
 // Packages
 import React, { useContext, useState, useCallback } from 'react';
 import classNames from 'classnames';
+import noop from 'lodash/noop';
+import PropTypes from 'prop-types';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
@@ -27,7 +29,8 @@ import PageHeader from './PageHeader';
 import ZoomButtons from './ZoomButtons';
 import DisplayModeButtons from './DisplayModeButtons';
 
-const AppHeaher = () => {
+const AppHeaher = props => {
+  const { setTabSelected = noop } = props;
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = useContext(EventBridgeContext);
@@ -108,9 +111,9 @@ const AppHeaher = () => {
 
   return (
     <div className="h-12 flex items-center bg-white justify-between border-b border-gray-300">
-      <div className="flex h-full items-center gap-4">
-        <div className="w-14 h-12 bg-gray-700 border-b border-gray-500" id="plitzi-logo" />
-        <PageHeader />
+      <div className="flex h-full items-center gap-3">
+        <div className="w-14 h-12 bg-gray-700 border-b border-gray-500 mr-2" id="plitzi-logo" />
+        <PageHeader setTabSelected={setTabSelected} />
         <HistoryButtons />
         <BorderButton />
         <ZoomButtons />
@@ -179,6 +182,8 @@ const AppHeaher = () => {
   );
 };
 
-AppHeaher.propTypes = {};
+AppHeaher.propTypes = {
+  setTabSelected: PropTypes.func
+};
 
 export default AppHeaher;
