@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
@@ -9,8 +8,6 @@ import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-
 
 // Alias
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
-import { DISPLAY_BORDER } from '@pmodules/Builder/BuilderHelper';
-import AppContext from '@pmodules/App/AppContext';
 import StateManager from '@pmodules/StateManager/StateManager';
 // import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
 import Transform from '@pmodules/Transformers/Transform';
@@ -22,14 +19,9 @@ import BuilderContext from '../../BuilderContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 
 const BuilderAreaFooter = props => {
-  const { setDragTree = noop, displayMode = 'desktop' } = props;
+  const { setDragTree = noop } = props;
   const { existsPopup, addPopup } = usePopup();
-  const { setDisplayMode } = useContext(AppContext);
-  const { mode, mobilePreview, setMobilePreview } = useContext(BuilderContext);
-
-  const handleClickMode = displayMode => () => setDisplayMode(displayMode);
-
-  const handleMobilePreview = useCallback(() => setMobilePreview(state => !state), [setMobilePreview]);
+  const { mode } = useContext(BuilderContext);
 
   const handleClickTools = useCallback(() => {
     if (!existsPopup('element-tools')) {
@@ -148,59 +140,6 @@ const BuilderAreaFooter = props => {
 
   return (
     <div className="flex justify-center items-center gap-4">
-      {mode === BUILDER_MODE_NORMAL && (
-        <div className="p-1 flex items-center rounded bg-white shadow">
-          <Button
-            intent="custom"
-            size="custom"
-            onClick={handleMobilePreview}
-            className={classNames('relative hover:bg-gray-200 h-9 w-9 mr-2', {
-              'text-gray-500': mobilePreview,
-              'text-gray-300 hover:text-gray-500': !mobilePreview
-            })}
-            title="Mobile Preview"
-          >
-            <i className="fa-solid fa-desktop" />
-            <i className="fa-solid fa-mobile absolute text-xs bg-white bottom-1 right-1" />
-          </Button>
-          <Button
-            intent="custom"
-            size="custom"
-            onClick={handleClickMode('desktop')}
-            className={classNames('hover:bg-gray-200 h-9 w-9 mr-2', {
-              'text-gray-500': displayMode === 'desktop',
-              'text-gray-300 hover:text-gray-500': displayMode !== 'desktop'
-            })}
-            title="Mode: Desktop"
-          >
-            <i className="fas fa-desktop" />
-          </Button>
-          <Button
-            intent="custom"
-            size="custom"
-            onClick={handleClickMode('tablet')}
-            className={classNames('hover:bg-gray-200 h-9 w-9 mr-2', {
-              'text-gray-500': displayMode === 'tablet',
-              'text-gray-300 hover:text-gray-500': displayMode !== 'tablet'
-            })}
-            title="Mode: Tablet"
-          >
-            <i className="fas fa-tablet-alt" />
-          </Button>
-          <Button
-            intent="custom"
-            size="custom"
-            onClick={handleClickMode('mobile')}
-            className={classNames('hover:bg-gray-200 h-9 w-9', {
-              'text-gray-500': displayMode === 'mobile',
-              'text-gray-300 hover:text-gray-500': displayMode !== 'mobile'
-            })}
-            title="Mode: Mobile"
-          >
-            <i className="fas fa-mobile-alt" />
-          </Button>
-        </div>
-      )}
       <div className="p-1 flex items-center rounded bg-white shadow">
         <Button
           intent="custom"
@@ -262,8 +201,6 @@ const BuilderAreaFooter = props => {
 };
 
 BuilderAreaFooter.propTypes = {
-  displayBorderComponents: PropTypes.oneOf(DISPLAY_BORDER),
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
   setDragTree: PropTypes.func
 };
 

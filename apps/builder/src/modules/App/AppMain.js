@@ -31,6 +31,7 @@ const AppMain = props => {
   const [displayBorderComponents, setDisplayBorderComponents] = useState(DISPLAY_BORDER_BLACK);
   const [zoom, setZoom] = useState('1.0');
   const [displayMode, setDisplayMode] = useState('desktop');
+  const [mobilePreview, setMobilePreview] = useState(false);
 
   const appValueMemo = useMemo(
     () => ({
@@ -41,7 +42,9 @@ const AppMain = props => {
       zoom,
       setZoom,
       displayMode,
-      setDisplayMode
+      setDisplayMode,
+      mobilePreview,
+      setMobilePreview
     }),
     [
       previewMode,
@@ -51,7 +54,9 @@ const AppMain = props => {
       zoom,
       setZoom,
       displayMode,
-      setDisplayMode
+      setDisplayMode,
+      mobilePreview,
+      setMobilePreview
     ]
   );
 

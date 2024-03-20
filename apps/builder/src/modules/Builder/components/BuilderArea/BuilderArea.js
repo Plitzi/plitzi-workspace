@@ -334,13 +334,7 @@ const BuilderArea = props => {
           </ContainerFrame>
         </div>
       </div>
-      {!multiPagesMode && showFooter && (
-        <BuilderAreaFooter
-          displayMode={displayMode}
-          displayBorderComponents={displayBorderComponents}
-          setDragTree={setDragTree}
-        />
-      )}
+      {!multiPagesMode && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
     </div>
   );
 };

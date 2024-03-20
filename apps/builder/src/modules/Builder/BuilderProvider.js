@@ -56,7 +56,6 @@ const BuilderProvider = props => {
   const [selectorSelected, setSelectorSelected] = useState();
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
-  const [mobilePreview, setMobilePreview] = useState(false);
   const pages = useMemo(() => get(schema, 'pages', []), [schema]);
 
   // Manage Refs
@@ -418,8 +417,6 @@ const BuilderProvider = props => {
       schemaName,
       setMultiPagesMode,
       multiPagesMode,
-      mobilePreview,
-      setMobilePreview,
       hasMultiPages: pages.length > 1 && mode === BUILDER_MODE_NORMAL,
       baseContext,
       baseElementIdOriginal: baseElementIdProp,
@@ -432,8 +429,6 @@ const BuilderProvider = props => {
       schemaName,
       setMultiPagesMode,
       multiPagesMode,
-      mobilePreview,
-      setMobilePreview,
       pages.length,
       baseContext,
       baseElementIdProp,

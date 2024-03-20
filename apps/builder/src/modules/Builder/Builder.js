@@ -19,8 +19,8 @@ const Builder = props => {
   const { pages = pagesDefault, customCss = '', externalStyle = '' } = props;
   const builderContextValue = useContext(BuilderContext);
   const { existsPopup, addPopup } = usePopup();
-  const { multiPagesMode, builderElementPermissions, mode, hasMultiPages, mobilePreview } = builderContextValue;
-  const { displayMode, previewMode } = useContext(AppContext);
+  const { multiPagesMode, builderElementPermissions, mode, hasMultiPages } = builderContextValue;
+  const { displayMode, previewMode, mobilePreview } = useContext(AppContext);
   if (pages.length === 0 && mode === BUILDER_MODE_NORMAL) {
     return (
       <div className="flex grow basis-0 overflow-auto min-w-0 relative flex-col items-center">
@@ -74,7 +74,7 @@ const Builder = props => {
           previewMode={previewMode}
         />
       )}
-      {mobilePreview && displayMode !== 'mobile' && !previewMode && (
+      {mobilePreview && mode === BUILDER_MODE_NORMAL && displayMode !== 'mobile' && !previewMode && (
         <BuilderArea
           className="basis-[425px] mb-11"
           externalStyle={externalStyle}

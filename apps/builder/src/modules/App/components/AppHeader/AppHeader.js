@@ -25,6 +25,7 @@ import HistoryButtons from './HistoryButtons';
 import BorderButton from './BorderButton';
 import PageHeader from './PageHeader';
 import ZoomButtons from './ZoomButtons';
+import DisplayModeButtons from './DisplayModeButtons';
 
 const AppHeaher = () => {
   const { showModal } = useModal();
@@ -114,7 +115,9 @@ const AppHeaher = () => {
         <BorderButton />
         <ZoomButtons />
       </div>
-      <div className="flex h-full items-center" />
+      <div className="flex h-full items-center">
+        <DisplayModeButtons />
+      </div>
       <div className="flex h-full items-center">
         <div className="flex items-center gap-1">
           {subscriptionsCollaborators &&
