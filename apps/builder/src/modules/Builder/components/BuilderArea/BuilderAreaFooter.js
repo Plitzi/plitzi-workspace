@@ -22,7 +22,7 @@ import BuilderContext from '../../BuilderContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 
 const BuilderAreaFooter = props => {
-  const { zoom = 1.0, width = 0, height = 0, setDragTree = noop, onZoom = noop, displayMode = 'desktop' } = props;
+  const { setDragTree = noop, displayMode = 'desktop' } = props;
   const { existsPopup, addPopup } = usePopup();
   const { setDisplayMode } = useContext(AppContext);
   const { mode, mobilePreview, setMobilePreview } = useContext(BuilderContext);
@@ -147,33 +147,9 @@ const BuilderAreaFooter = props => {
   // }, [addPopup, existsPopup, mode]);
 
   return (
-    <div className="flex justify-center items-center">
-      <div className="p-1 flex items-center rounded bg-white shadow ml-4">
-        <Button
-          intent="custom"
-          size="custom"
-          onClick={onZoom('-')}
-          className="hover:bg-gray-200 h-9 w-9 mr-2 text-gray-500"
-          title="Zoom Out"
-        >
-          <i className="fas fa-search-minus" />
-        </Button>
-        <div className="text-xs flex flex-col items-center justify-center mr-2">
-          <div>{`${Math.floor(width / zoom)}*${Math.floor(height / zoom)}`}</div>
-          <div>{`${Math.round(zoom * 100)}%`}</div>
-        </div>
-        <Button
-          intent="custom"
-          size="custom"
-          onClick={onZoom('+')}
-          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
-          title="Zoom In"
-        >
-          <i className="fas fa-search-plus" />
-        </Button>
-      </div>
+    <div className="flex justify-center items-center gap-4">
       {mode === BUILDER_MODE_NORMAL && (
-        <div className="p-1 flex items-center rounded bg-white shadow ml-4">
+        <div className="p-1 flex items-center rounded bg-white shadow">
           <Button
             intent="custom"
             size="custom"
@@ -225,7 +201,7 @@ const BuilderAreaFooter = props => {
           </Button>
         </div>
       )}
-      <div className="p-1 flex items-center rounded bg-white shadow ml-4">
+      <div className="p-1 flex items-center rounded bg-white shadow">
         <Button
           intent="custom"
           size="custom"
@@ -286,13 +262,9 @@ const BuilderAreaFooter = props => {
 };
 
 BuilderAreaFooter.propTypes = {
-  zoom: PropTypes.number,
   displayBorderComponents: PropTypes.oneOf(DISPLAY_BORDER),
-  width: PropTypes.number,
-  height: PropTypes.number,
   displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
-  setDragTree: PropTypes.func,
-  onZoom: PropTypes.func
+  setDragTree: PropTypes.func
 };
 
 export default BuilderAreaFooter;

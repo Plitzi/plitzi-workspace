@@ -64,7 +64,7 @@ const BuilderArea = props => {
     mode,
     baseContext: { baseElementId }
   } = useContext(BuilderContext);
-  const { displayBorderComponents } = useContext(AppContext);
+  const { displayBorderComponents, zoom } = useContext(AppContext);
   const {
     style,
     style: { cache }
@@ -81,7 +81,6 @@ const BuilderArea = props => {
   const [heightArea, setHeightArea] = useState(0);
   const [iframeScaleX, setIframeScaleX] = useState(1);
   const [desiredWidth] = useState(1440);
-  const [zoom, setZoom] = useState(1.0);
   const { supportRealTime, subscriptionsCollaborators } = useContext(BuilderSubscriptionsContext);
   const { currentPageId } = useContext(NavigationContext);
   const { schema, builderGetBaseElement } = useContext(BuilderSchemaContext);
@@ -160,21 +159,6 @@ const BuilderArea = props => {
       }
     };
   }, [callbackRefreshDebounced]);
-
-  const handleClickZoom = useCallback(
-    type => () => {
-      if ((zoom >= 3 && type === '+') || (zoom <= 0.6 && type === '-')) {
-        return;
-      }
-
-      if (type === '+') {
-        setZoom(state => state + 0.1);
-      } else {
-        setZoom(state => state - 0.1);
-      }
-    },
-    [zoom]
-  );
 
   const setDragTree = useCallback(newDragTree => {
     if (dragTree !== newDragTree) {
@@ -352,10 +336,6 @@ const BuilderArea = props => {
       </div>
       {!multiPagesMode && showFooter && (
         <BuilderAreaFooter
-          onZoom={handleClickZoom}
-          width={widthArea}
-          height={heightArea}
-          zoom={zoom}
           displayMode={displayMode}
           displayBorderComponents={displayBorderComponents}
           setDragTree={setDragTree}

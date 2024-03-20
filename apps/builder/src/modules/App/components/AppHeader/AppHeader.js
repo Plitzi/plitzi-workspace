@@ -24,6 +24,7 @@ import PublishForm from '../../models/PublishForm';
 import HistoryButtons from './HistoryButtons';
 import BorderButton from './BorderButton';
 import PageHeader from './PageHeader';
+import ZoomButtons from './ZoomButtons';
 
 const AppHeaher = () => {
   const { showModal } = useModal();
@@ -111,6 +112,7 @@ const AppHeaher = () => {
         <PageHeader />
         <HistoryButtons />
         <BorderButton />
+        <ZoomButtons />
       </div>
       <div className="flex h-full items-center" />
       <div className="flex h-full items-center">
