@@ -9,12 +9,7 @@ import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-
 
 // Alias
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
-import {
-  DISPLAY_BORDER,
-  DISPLAY_BORDER_BLACK,
-  DISPLAY_BORDER_NONE,
-  DISPLAY_BORDER_WHITE
-} from '@pmodules/Builder/BuilderHelper';
+import { DISPLAY_BORDER } from '@pmodules/Builder/BuilderHelper';
 import AppContext from '@pmodules/App/AppContext';
 import StateManager from '@pmodules/StateManager/StateManager';
 // import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
@@ -29,21 +24,12 @@ import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 const BuilderAreaFooter = props => {
   const { zoom = 1.0, width = 0, height = 0, setDragTree = noop, onZoom = noop, displayMode = 'desktop' } = props;
   const { existsPopup, addPopup } = usePopup();
-  const { displayBorderComponents, setDisplayBorderComponents, setDisplayMode } = useContext(AppContext);
+  const { setDisplayMode } = useContext(AppContext);
   const { mode, mobilePreview, setMobilePreview } = useContext(BuilderContext);
 
   const handleClickMode = displayMode => () => setDisplayMode(displayMode);
 
   const handleMobilePreview = useCallback(() => setMobilePreview(state => !state), [setMobilePreview]);
-
-  const handleClickSetSettings = () => {
-    const pos = DISPLAY_BORDER.findIndex(item => item === displayBorderComponents);
-    if (DISPLAY_BORDER.length - 1 >= pos + 1) {
-      setDisplayBorderComponents(DISPLAY_BORDER[pos + 1]);
-    } else {
-      setDisplayBorderComponents(DISPLAY_BORDER_BLACK);
-    }
-  };
 
   const handleClickTools = useCallback(() => {
     if (!existsPopup('element-tools')) {
@@ -162,31 +148,6 @@ const BuilderAreaFooter = props => {
 
   return (
     <div className="flex justify-center items-center">
-      <div className="p-1 flex items-center rounded bg-white shadow">
-        <Button
-          intent="custom"
-          size="custom"
-          onClick={handleClickSetSettings}
-          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
-          title="Grid"
-        >
-          {displayBorderComponents === DISPLAY_BORDER_NONE && <i className="fas fa-border-none" />}
-          {displayBorderComponents === DISPLAY_BORDER_WHITE && (
-            <i className="fas fa-border-all relative">
-              <span className="absolute top-[-2px] right-[-4px] font-bold text-[9px] leading-[9px] font-sans bg-white">
-                W
-              </span>
-            </i>
-          )}
-          {displayBorderComponents === DISPLAY_BORDER_BLACK && (
-            <i className="fas fa-border-all relative">
-              <span className="absolute top-[-2px] right-[-2px] font-bold text-[10px] leading-[10px] font-sans bg-white">
-                B
-              </span>
-            </i>
-          )}
-        </Button>
-      </div>
       <div className="p-1 flex items-center rounded bg-white shadow ml-4">
         <Button
           intent="custom"

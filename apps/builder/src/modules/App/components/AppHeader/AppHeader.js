@@ -1,7 +1,6 @@
 // Packages
 import React, { useContext, useState, useCallback } from 'react';
 import classNames from 'classnames';
-import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
@@ -17,13 +16,14 @@ import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubsc
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
-import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 // Relatives
-import AppContext from '../AppContext';
-import DeployForm from '../models/DeployForm';
-import PublishForm from '../models/PublishForm';
+import AppContext from '../../AppContext';
+import DeployForm from '../../models/DeployForm';
+import PublishForm from '../../models/PublishForm';
+import HistoryButtons from './HistoryButtons';
+import BorderButton from './BorderButton';
+import PageHeader from './PageHeader';
 
 const AppHeaher = () => {
   const { showModal } = useModal();
@@ -35,25 +35,12 @@ const AppHeaher = () => {
   const { previewMode, setPreviewMode } = useContext(AppContext);
   const [loadingDeployment, setLoadingDeployment] = useState(false);
   const { subscriptionsCollaborators } = useContext(BuilderSubscriptionsContext);
-  const { pageDefinitions } = useContext(SchemaMainContext);
-  const pageLabel = get(pageDefinitions, `${currentPageId}.attributes.name`);
-  const { canRedo, canUndo, undoableRedo, undoableUndo } = useContext(UndoableContext);
 
   const handleClickPreviewMode = useCallback(() => {
     eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
     eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
     setPreviewMode(state => !state);
   }, [currentPageId, eventBridge]);
-
-  const handleClickUndo = useCallback(() => {
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
-    undoableUndo();
-  }, [undoableUndo, eventBridge]);
-
-  const handleClickRedo = useCallback(() => {
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
-    undoableRedo();
-  }, [undoableRedo, eventBridge]);
 
   const handleClickPublish = useCallback(async () => {
     const response = await showModal(
@@ -119,45 +106,11 @@ const AppHeaher = () => {
 
   return (
     <div className="h-12 flex items-center bg-white justify-between border-b border-gray-300">
-      <div className="flex h-full items-center">
-        <div className="flex items-center justify-center w-14 h-12" id="plitzi-logo" />
-        <div className="h-full px-3 flex items-center cursor-pointer select-none border-r border-gray-300">
-          <div className="font-bold">Page:</div>
-          <div className="ml-1 text-blue-400">{pageLabel}</div>
-        </div>
-        <div className="flex">
-          <Button
-            intent="custom"
-            className={classNames('hover:bg-gray-200 h-8 w-8 ml-2 rounded', {
-              'text-gray-400 cursor-not-allowed': !canUndo
-            })}
-            onClick={handleClickUndo}
-            title="Undo"
-          >
-            <i className="fa-solid fa-rotate-left" />
-          </Button>
-          <Button
-            intent="custom"
-            className={classNames('hover:bg-gray-200 h-8 w-8 ml-1 rounded', {
-              'text-gray-400 cursor-not-allowed': !canRedo
-            })}
-            onClick={handleClickRedo}
-            title="Redo"
-          >
-            <i className="fa-solid fa-rotate-right" />
-          </Button>
-          <Button
-            intent="custom"
-            className={classNames('hover:bg-gray-200 h-8 w-8 ml-1 rounded', {
-              'text-gray-400 cursor-not-allowed': true
-            })}
-            // onClick={handleClickRedo}
-            disabled
-            title="History"
-          >
-            <i className="fa-solid fa-clock-rotate-left" />
-          </Button>
-        </div>
+      <div className="flex h-full items-center gap-4">
+        <div className="w-14 h-12 bg-gray-700 border-b border-gray-500" id="plitzi-logo" />
+        <PageHeader />
+        <HistoryButtons />
+        <BorderButton />
       </div>
       <div className="flex h-full items-center" />
       <div className="flex h-full items-center">
