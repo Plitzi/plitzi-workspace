@@ -165,6 +165,7 @@ const BuilderTree = props => {
   return (
     <div
       className="builder__tree h-full relative grow basis-0 user-select-none overflow-auto group"
+      tabIndex={-1}
       onDragOver={handleDragOver}
     >
       {nodes.map((node, i) => {

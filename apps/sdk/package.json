@@ -21,7 +21,7 @@
     "registry": "https://npm.pkg.github.com/plitzi"
   },
   "dependencies": {
-    "@apollo/client": "^3.9.8",
+    "@apollo/client": "^3.9.9",
     "@auth0/auth0-react": "^2.2.4",
     "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-interactions": "*",

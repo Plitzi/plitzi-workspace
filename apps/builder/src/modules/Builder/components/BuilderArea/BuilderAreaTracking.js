@@ -246,7 +246,12 @@ const BuilderAreaTracking = props => {
 
   const handlePaste = useCallback(
     async e => {
-      if (!iframeDOM.contentWindow.document.body.contains(e.target) && document.body !== e.target) {
+      if (
+        !iframeDOM.contentWindow.document.body.contains(e.target) &&
+        document.body !== e.target &&
+        !e.target.closest('.builder__tree') &&
+        !e.target.closest('.builder__breadcrumb')
+      ) {
         return;
       }
 

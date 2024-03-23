@@ -83,6 +83,7 @@ const BuilderBreadcrumb = props => {
   return (
     <div
       ref={ref}
+      tabIndex={-1}
       className="builder__breadcrumb flex overflow-y-hidden border-b border-gray-300"
       onMouseLeave={handleMouseLeave}
     >

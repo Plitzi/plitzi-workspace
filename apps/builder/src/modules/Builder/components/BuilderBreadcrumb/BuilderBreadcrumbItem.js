@@ -23,6 +23,7 @@ const BuilderBreadcrumbItem = props => {
       )}
       onMouseEnter={handleMouseEnter}
       onClick={handleClick}
+      tabIndex={-1}
     >
       {label && <div className="truncate">{label}</div>}
       {!label && children}

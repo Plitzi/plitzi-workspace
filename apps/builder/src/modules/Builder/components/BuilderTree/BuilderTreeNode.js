@@ -299,6 +299,7 @@ const BuilderTreeNode = props => {
       onMouseOver={handleHover}
       onMouseLeave={handleMouseLeave}
       onFocus={noop}
+      tabIndex={-1}
     >
       <div className="w-full flex" style={{ paddingLeft: `${paddingRight}px` }}>
         {isOpen && isParent && <div className="line" />}

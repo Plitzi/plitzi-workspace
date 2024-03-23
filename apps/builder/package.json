@@ -15,7 +15,7 @@
   },
   "main": "dist/plitzi-builder.js",
   "dependencies": {
-    "@apollo/client": "^3.9.8",
+    "@apollo/client": "^3.9.9",
     "@plitzi/plitzi-sdk": "*",
     "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-interactions": "*",

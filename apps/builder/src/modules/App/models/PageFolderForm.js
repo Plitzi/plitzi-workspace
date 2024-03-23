@@ -48,7 +48,7 @@ const PageFolderForm = props => {
             type="text"
             name={name}
             size="md"
-            label="Page Name"
+            label="Folder Name"
             placeholder="Page Name"
             className="w-full"
             inputClassName="rounded"

@@ -45,14 +45,16 @@ const TransformerParam = props => {
   const label = useMemo(() => (!labelProp ? upperFirst(id) : labelProp), [labelProp, id]);
 
   const fieldsDataSource = useMemo(
-    () =>
-      Object.keys(dataSourceFields).reduce(
+    () => [
+      ...Object.keys(dataSourceFields).reduce(
         (acum1, source) => [
           ...acum1,
           ...dataSourceFields[source].reduce((acum2, field) => [...acum2, `${source}.${field.path}`], [])
         ],
         []
       ),
+      'source'
+    ],
     [dataSourceFields]
   );
 
