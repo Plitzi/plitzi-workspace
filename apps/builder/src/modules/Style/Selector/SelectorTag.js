@@ -1,14 +1,18 @@
 // Packages
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
+import capitalize from 'lodash/capitalize';
+import get from 'lodash/get';
+
+// Monorepo
+import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
 
 // Relatives
 import { selectorFormatter } from './SelectorHelper';
-import { StyleSelectors } from '../StyleHelper';
 import { makeId } from '../../../helpers/utils';
 
 const SelectorTag = props => {
@@ -20,18 +24,11 @@ const SelectorTag = props => {
     active = false,
     onClick = noop,
     onChange = noop,
+    onChangeState = noop,
     onAction = noop
   } = props;
-  const { value, state } = useMemo(() => {
-    if (selector.includes(':')) {
-      const [value, state] = selector.split(':');
-
-      return { value, state };
-    }
-
-    return { value: selector, state: '' };
-  }, [selector]);
   const [isVisible, setIsVisible] = useState(false);
+  const [state, setState] = useState(() => get(selector.split(':'), '1', ''));
 
   const handleClick = useCallback(
     e => {
@@ -61,29 +58,29 @@ const SelectorTag = props => {
         onChange({ name: selectorFormatter(value), type });
       }
     },
-    [value, type, onChange, state]
+    [type, onChange, state]
   );
 
   useEffect(() => {
     if (!active && state) {
-      onChange({ name: selectorFormatter(value), type }, false);
+      setState('');
     }
   }, [active]);
 
   const handleDropVisible = useCallback(isVisible => setIsVisible(isVisible), []);
 
-  const handleClickNone = useCallback(() => onChange({ name: selectorFormatter(value), type }), [onChange]);
-
-  const handleClickHover = useCallback(() => {
-    onChange({ name: `${selectorFormatter(value)}:hover`, type });
-  }, [onChange]);
-
-  const handleClickActive = useCallback(
-    () => onChange({ name: `${selectorFormatter(value)}:active`, type }),
-    [onChange]
+  const handleClickState = useCallback(
+    state => () => {
+      if (state === 'none') {
+        onChangeState('');
+        setState('');
+      } else {
+        onChangeState(state);
+        setState(state);
+      }
+    },
+    [onChangeState]
   );
-
-  const handleClickFocus = useCallback(() => onChange({ name: `${selectorFormatter(value)}:focus`, type }), [onChange]);
 
   return (
     <div
@@ -116,12 +113,15 @@ const SelectorTag = props => {
       </div>
       <div className="mx-1.5">
         {editable && (
-          <Contenteditable
-            className={classNames('text-xs truncate group-hover:mr-3', {})}
-            value={selector}
-            onChange={handleChange}
-            openMode="doubleClick"
-          />
+          <div className="flex group-hover:mr-3 truncate">
+            <Contenteditable
+              className={classNames('text-xs')}
+              value={selector}
+              onChange={handleChange}
+              openMode="doubleClick"
+            />
+            {state && <span className="text-xs">:{state}</span>}
+          </div>
         )}
         {!editable && <div className="text-xs truncate">{selector}</div>}
       </div>
@@ -157,22 +157,18 @@ const SelectorTag = props => {
             <div className="bg-gray-300 h-[1px] w-full my-2" />
             <div className="font-bold mb-1 px-2">States</div>
             <ul className="flex flex-col gap-1 px-2">
-              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickNone}>
-                {state === '' && <i className="fa-solid fa-check text-green-500" />}
-                None
-              </li>
-              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickHover}>
-                {state === 'hover' && <i className="fa-solid fa-check text-green-500" />}
-                Hover
-              </li>
-              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickActive}>
-                {state === 'active' && <i className="fa-solid fa-check text-green-500" />}
-                Active
-              </li>
-              <li className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1" onClick={handleClickFocus}>
-                {state === 'focus' && <i className="fa-solid fa-check text-green-500" />}
-                Focus
-              </li>
+              {['none', 'hover', 'active', 'focus'].map((stateItem, i) => (
+                <li
+                  key={i}
+                  className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1"
+                  onClick={handleClickState(stateItem)}
+                >
+                  {(state === stateItem || (state === '' && stateItem === 'none')) && (
+                    <i className="fa-solid fa-check text-green-500" />
+                  )}
+                  {capitalize(stateItem)}
+                </li>
+              ))}
             </ul>
           </div>
         </Dropdown.Container>
@@ -188,6 +184,7 @@ SelectorTag.propTypes = {
   active: PropTypes.bool,
   editable: PropTypes.bool,
   onChange: PropTypes.func,
+  onChangeState: PropTypes.func,
   onClick: PropTypes.func,
   onAction: PropTypes.func
 };

@@ -11,19 +11,17 @@ import { produce } from 'immer';
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { StyleConstants } from '@plitzi/sdk-style/StyleConstants';
-
-// Alias
-import AppContext from '@pmodules/App/AppContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
-
-// Relatives
 import {
   cssToSelectors,
   getReadOnlyRangesFromContent,
   formatCssFromSelector,
   makeSelector,
   StyleSelectors
-} from '../../StyleHelper';
+} from '@plitzi/sdk-style/StyleHelper';
+
+// Alias
+import AppContext from '@pmodules/App/AppContext';
+import BuilderContext from '@pmodules/Builder/BuilderContext';
 
 const selectorsDefault = [];
 

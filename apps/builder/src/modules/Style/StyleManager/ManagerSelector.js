@@ -13,6 +13,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
 import BuilderContext from '@pmodules/Builder/BuilderContext';
@@ -21,7 +22,6 @@ import AppContext from '@pmodules/App/AppContext';
 // Relatives
 import SelectorForm from '../Models/SelectorForm';
 import StyleSelectorTag from './StyleSelectorTag';
-import { StyleSelectors } from '../StyleHelper';
 
 const flatListDefault = [];
 const selectorsDefault = [];

@@ -1,8 +1,8 @@
 // Packages
 import { useMemo } from 'react';
 
-// Relatives
-import { calculateBindings } from '../StyleHelper';
+// Monorepo
+import { calculateBindings } from '@plitzi/sdk-style/StyleHelper';
 
 const useStyleBinding = props => {
   const { element } = props;

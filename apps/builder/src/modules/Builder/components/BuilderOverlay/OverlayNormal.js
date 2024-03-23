@@ -10,9 +10,7 @@ import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-
-// Alias
-import { StyleSelectors, makeSelector } from '@pmodules/Style/StyleHelper';
+import { StyleSelectors, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 // Relatives
 import OverlaySpacing from './OverlaySpacing';
@@ -30,6 +28,7 @@ const OverlayNormal = forwardRef((props, ref) => {
     hideActions = false,
     displayMode = 'desktop',
     container,
+    selector = '',
     zoom = 1,
     mode = 'hover',
     isCollaborator = false,
@@ -38,7 +37,7 @@ const OverlayNormal = forwardRef((props, ref) => {
   } = props;
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = useContext(BuilderContext);
-  const { style, selectorSelected } = useContext(BuilderStyleContext);
+  const { style } = useContext(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
   const theme = useMemo(() => {
@@ -75,7 +74,7 @@ const OverlayNormal = forwardRef((props, ref) => {
   }
 
   const {
-    definition: { label, items, parentId, type, styleSelectors }
+    definition: { label, items, parentId, type }
   } = element;
 
   const handleDragStart = useCallback(
@@ -96,29 +95,36 @@ const OverlayNormal = forwardRef((props, ref) => {
         return;
       }
 
-      if (!selectorSelected) {
-        const selector = makeSelector(type);
+      if (!selector) {
+        const newSelector = makeSelector(type);
         builderHandler(
           EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
           produce(element, draft => {
-            set(draft, 'definition.styleSelectors.base', selector);
+            set(draft, 'definition.styleSelectors.base', newSelector);
           })
         );
-        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, selector, StyleSelectors.SELECTOR_CLASS, '', {
-          width: `${width}px`,
-          height: `${height}px`
-        });
+        builderHandler(
+          EventBridgeTypes.STYLE_ADD_SELECTOR,
+          displayMode,
+          newSelector,
+          StyleSelectors.SELECTOR_CLASS,
+          '',
+          {
+            width: `${width}px`,
+            height: `${height}px`
+          }
+        );
       } else {
-        const selectorType = get(styleRef.current, `platform.${displayMode}.${selectorSelected}.type`);
-        const values = get(styleRef.current, `platform.${displayMode}.${selectorSelected}.attributes`);
-        builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selectorSelected, selectorType, '', {
+        const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`);
+        const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
+        builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, '', {
           ...values,
           width: `${width}px`,
           height: `${height}px`
         });
       }
     },
-    [id, displayMode, builderHandler, type, selectorSelected]
+    [id, displayMode, builderHandler, type, selector]
   );
 
   const handleChange = useCallback(
@@ -160,7 +166,7 @@ const OverlayNormal = forwardRef((props, ref) => {
       <OverlaySpacing
         id={id}
         hoverRemove={hoverRemove}
-        selector={get(styleSelectors, 'base', '')}
+        selector={selector}
         hasItems={!!items}
         elementDOM={elementDOM}
         iframeDOM={iframeDOM}
@@ -266,6 +272,7 @@ OverlayNormal.propTypes = {
   element: PropTypes.object,
   elementDOM: PropTypes.object,
   displayMode: PropTypes.string,
+  selector: PropTypes.string,
   zoom: PropTypes.number,
   mode: PropTypes.oneOf(['hover', 'select']),
   isCollaborator: PropTypes.bool,

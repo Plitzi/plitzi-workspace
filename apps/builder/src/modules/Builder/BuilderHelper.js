@@ -7,10 +7,10 @@ import pick from 'lodash/pick';
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import { StyleSelectors, generateCache, generateStyleSelector, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
 import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
-import { StyleSelectors, generateCache, generateStyleSelector, makeSelector } from '@pmodules/Style/StyleHelper';
 
 // Relatives
 import { generateID } from '../../helpers/utils';

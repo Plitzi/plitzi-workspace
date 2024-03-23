@@ -11,13 +11,15 @@ import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import { POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
+// Monorepo
+import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
+
 // Alias
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 
 // Relatives
 import SelectorTag from './SelectorTag';
 import { selectorFormatter } from './SelectorHelper';
-import { StyleSelectors } from '../StyleHelper';
 import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
 
@@ -25,7 +27,7 @@ const Selector = props => {
   const {
     className = '',
     value = '',
-    selectorSelected = '',
+    selectorSelected,
     displayMode = 'desktop',
     disabled = false,
     onChange = noop,
@@ -82,12 +84,27 @@ const Selector = props => {
       }
     };
 
+  const handleChangeItemState = useCallback(
+    tag => tagState => {
+      if (!tagState) {
+        onSelectorSelected(tag);
+
+        return;
+      }
+
+      const tempTag = { name: `${tag.name}:${tagState}`, type: 'state' };
+      onSelectorAdded(tempTag);
+      onSelectorSelected(tempTag);
+    },
+    [onSelectorAdded, onSelectorSelected]
+  );
+
   const handleClickAction = position => (action, value) => {
     switch (action) {
       case 'remove': {
         const finalTags = tags.filter((tag, i) => i !== position);
         const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
-        if (tags[position].name === selectorSelected) {
+        if (selectorSelected && tags[position].name === selectorSelected.name) {
           onSelectorSelected(get(finalTags, '0.name', ''));
         }
 
@@ -199,7 +216,7 @@ const Selector = props => {
       }
     },
     [addPopup, existsPopup]
-  ); // mode
+  );
 
   return (
     <Dropdown
@@ -232,13 +249,14 @@ const Selector = props => {
           {tags &&
             tags.map((tag, i) => (
               <SelectorTag
-                key={`${i}-${tag.value}`}
+                key={`${i}-${tag.name}`}
                 selector={tag.name}
                 type={tag.type}
-                active={tag.name === selectorSelected}
+                active={tag.name === selectorSelected?.name.replace(/:.*/, '')}
                 onAction={handleClickAction(i)}
                 onClick={handleClickSelector}
                 onChange={handleChangeItem(i)}
+                onChangeState={handleChangeItemState(tag)}
               />
             ))}
           <input
@@ -254,12 +272,14 @@ const Selector = props => {
         </div>
       </Dropdown.Content>
       <Dropdown.Container>
-        <SelectorSuggestions
-          selector={inputValue}
-          selectors={selectorsAvailables}
-          onSelect={handleSuggestionsSelect}
-          onCreate={handleSuggestionsCreate}
-        />
+        {popupOpened && (
+          <SelectorSuggestions
+            selector={inputValue}
+            selectors={selectorsAvailables}
+            onSelect={handleSuggestionsSelect}
+            onCreate={handleSuggestionsCreate}
+          />
+        )}
       </Dropdown.Container>
     </Dropdown>
   );
@@ -268,7 +288,7 @@ const Selector = props => {
 Selector.propTypes = {
   className: PropTypes.string,
   value: PropTypes.string,
-  selectorSelected: PropTypes.string,
+  selectorSelected: PropTypes.object,
   disabled: PropTypes.bool,
   displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
   onChange: PropTypes.func,

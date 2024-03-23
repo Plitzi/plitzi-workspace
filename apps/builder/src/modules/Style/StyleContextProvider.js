@@ -8,6 +8,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -18,7 +19,6 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 // Relatives
 import StyleReducer, { StyleActions } from './StyleReducer';
-import { makeSelector } from './StyleHelper';
 
 export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';

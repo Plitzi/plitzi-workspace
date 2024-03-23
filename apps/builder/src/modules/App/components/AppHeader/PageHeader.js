@@ -23,14 +23,14 @@ const PageHeader = props => {
 
   return (
     <div
-      className="h-full flex flex-col justify-center cursor-pointer select-none min-w-0 basis-0 grow"
+      className="h-full flex flex-col justify-center cursor-pointer select-none min-w-0 basis-0 grow text-xs"
       onClick={handleClick}
     >
-      <div className="inline text-sm max-w-[150px] truncate" title={pageLabel}>
+      <div className="inline max-w-[150px] truncate" title={pageLabel}>
         <span className="">Page: </span>
         <span className="font-bold">{pageLabel}</span>
       </div>
-      <div className="text-xs truncate max-w-[150px]">{domain || 'https://subdomain.plitzi.app'}</div>
+      <div className="truncate max-w-[150px]">{domain || 'https://subdomain.plitzi.app'}</div>
     </div>
   );
 };

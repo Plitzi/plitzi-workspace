@@ -4,9 +4,9 @@ import PropTypes from 'prop-types';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
-import { generateCache } from '@pmodules/Style/StyleHelper';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 

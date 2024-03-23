@@ -29,7 +29,7 @@ const BuilderOverlay = props => {
   const rootContainerRef = useRef();
   const element = useBuilderElement(id);
   const [container, setContainer] = useState({ width: 0, height: 0, x: 0, y: 0 });
-  const [overlayProps, setOverlayProps] = useState({ id: '', element: undefined, elementDOM: undefined, selector: '' });
+  const [overlayProps, setOverlayProps] = useState({ id: '', element: undefined, elementDOM: undefined });
 
   const handleProcessContainer = useCallback(
     elementDOM => {
@@ -58,13 +58,7 @@ const BuilderOverlay = props => {
   };
 
   useEffect(() => {
-    const elementDOM = getElementDOM(id);
-    let selector = '';
-    if (element) {
-      selector = get(element, 'definition.styleSelectors.base', '');
-    }
-
-    setOverlayProps({ id, element, elementDOM, selector });
+    setOverlayProps({ id, element, elementDOM: getElementDOM(id) });
   }, [baseElementId, element, id]);
 
   useEffect(() => {
@@ -105,14 +99,14 @@ const BuilderOverlay = props => {
     };
   }, [overlayProps?.elementDOM, overlayProps?.elementDOM?.parentNode, handleProcessContainer]);
 
-  const { style } = useContext(BuilderStyleContext);
+  const { style, selectorSelected } = useContext(BuilderStyleContext);
   const elementStyle = useMemo(() => {
-    if (!overlayProps?.selector) {
+    if (!selectorSelected?.name) {
       return {};
     }
 
-    return get(style, `platform.${displayMode}.${overlayProps?.selector}.attributes`, {});
-  }, [style, displayMode, overlayProps?.selector]);
+    return get(style, `platform.${displayMode}.${selectorSelected?.name}.attributes`, {});
+  }, [style, displayMode, selectorSelected?.name]);
 
   useEffect(() => {
     handleProcessContainer(overlayProps?.elementDOM);
@@ -145,6 +139,7 @@ const BuilderOverlay = props => {
           color={color}
           collaboratorName={collaboratorName}
           mode={mode}
+          selector={selectorSelected?.name}
           {...overlayProps}
         />
       )}

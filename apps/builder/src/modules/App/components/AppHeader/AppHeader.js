@@ -112,7 +112,18 @@ const AppHeaher = props => {
   return (
     <div className="h-12 flex items-center bg-white justify-between border-b border-gray-300">
       <div className="flex h-full items-center gap-3">
-        <div className="w-14 h-12 bg-gray-700 border-b border-gray-500 mr-2" id="plitzi-logo" />
+        <div
+          className="flex items-center justify-center w-14 h-12 bg-gray-700 border-b border-gray-500 mr-2"
+          id="plitzi-logo"
+        >
+          <a href="https://plitzi.com">
+            <img
+              src="https://cdn.plitzi.com/resources/img/favicon.svg"
+              className="w-8 h-8 invert brightness-0"
+              alt="Plitzi"
+            />
+          </a>
+        </div>
         <PageHeader setTabSelected={setTabSelected} />
         <HistoryButtons />
         <BorderButton />

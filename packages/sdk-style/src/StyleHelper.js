@@ -17,6 +17,31 @@ export const StyleSelectors = {
   SELECTOR_PARENT: 'parent'
 };
 
+export const processSelector = (selector, type, attributes) => {
+  const result = [];
+  Object.keys(attributes).forEach(key => {
+    result.push(`${key}:${attributes[key]};`);
+  });
+
+  let finalSelector = selector;
+  switch (type) {
+    case StyleSelectors.SELECTOR_CLASS:
+    case StyleSelectors.SELECTOR_STATE:
+      finalSelector = `.${selector}`;
+      break;
+
+    case StyleSelectors.SELECTOR_ID:
+      finalSelector = `#${selector}`;
+      break;
+
+    case StyleSelectors.SELECTOR_ELEMENT:
+    case StyleSelectors.SELECTOR_PARENT:
+    default:
+  }
+
+  return `${finalSelector}{${result.join('')}}`;
+};
+
 export const selectorToString = (tags, filters = [], includePrefix = true, separator = '') => {
   if (!tags || tags.length === 0) {
     return '';
@@ -32,14 +57,13 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
 
       switch (tag.type) {
         case StyleSelectors.SELECTOR_CLASS:
+        case StyleSelectors.SELECTOR_STATE:
           return `.${tag.value}`;
         case StyleSelectors.SELECTOR_ELEMENT:
         case StyleSelectors.SELECTOR_PARENT:
           return tag.value;
         case StyleSelectors.SELECTOR_ID:
           return `#${tag.value}`;
-        case StyleSelectors.SELECTOR_STATE:
-          return `:${tag.value}`;
         default:
           return '';
       }
@@ -48,72 +72,10 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
   return value.join(separator);
 };
 
-export const stringToSelector = value => {
-  const parser = /([.:#]?)([a-z0-9\-_]+)/gim;
-  const values = [];
-  if (typeof value !== 'string') {
-    return values;
-  }
-
-  const segments = value.split(' ');
-  value = segments.pop();
-  if (segments.length > 0) {
-    segments.forEach(segment => {
-      return values.push({ type: StyleSelectors.SELECTOR_PARENT, value: segment });
-    });
-  }
-
-  let match = parser.exec(value);
-  while (match) {
-    switch (match[1]) {
-      case '.':
-        values.push({ type: StyleSelectors.SELECTOR_CLASS, value: match[2] });
-
-        break;
-
-      case '#':
-        values.push({ type: StyleSelectors.SELECTOR_ID, value: match[2] });
-
-        break;
-
-      case ':':
-        values.push({ type: StyleSelectors.SELECTOR_STATE, value: match[2] });
-
-        break;
-
-      case '':
-        values.push({ type: StyleSelectors.SELECTOR_ELEMENT, value: match[2] });
-
-        break;
-
-      default:
-    }
-
-    match = parser.exec(value);
-  }
-
-  return values;
-};
-
-export const classStringFilter = (value, filters = [], includePrefix = true, separator = '') => {
-  value = stringToSelector(value);
-
-  return selectorToString(value, filters, includePrefix, separator);
-};
-
-export const processSelector = selector => {
-  const result = [];
-  Object.keys(selector).forEach(key => {
-    result.push(`${key}:${selector[key]};`);
-  });
-
-  return result.join('');
-};
-
 const getDataStyle = (element, platform, displayMode, isParent = false, componentDefinitions = {}) => {
   const metadata = { tree: [] };
   if (!element) {
-    return null;
+    return undefined;
   }
 
   const {
@@ -121,51 +83,28 @@ const getDataStyle = (element, platform, displayMode, isParent = false, componen
     definition: { type, styleSelectors }
   } = element;
 
-  let selector = get(styleSelectors, 'base', '');
-  const selectorHasState = selector.includes(':');
-  if (selectorHasState) {
-    [selector] = selector.split(':');
-  }
-
-  const selectorSegments = stringToSelector(selector);
+  const selectorSegments = Object.values(
+    pick(get(platform, displayMode, {}), get(styleSelectors, 'base', '').split(' '))
+  );
 
   // get element display mode styles (mobile -> tablet -> desktop)
   ['desktop', 'tablet', 'mobile'].forEach(mode => {
-    const style = platform[mode][btoa(selector)];
-    if (style && (mode !== displayMode || selectorHasState || isParent)) {
-      metadata.tree.push({ name: selector, displayMode: mode, style: style.attributes, isParent });
-    }
-
-    // element subclasses style EX: .test.new (we have to get .test and .new for separated)
-    if (selectorSegments.length > 1) {
-      selectorSegments.forEach(segment => {
-        const { type } = segment;
-        let { value } = segment;
-        switch (type) {
-          case StyleSelectors.SELECTOR_CLASS:
-            value = `.${value}`;
-            break;
-          case StyleSelectors.SELECTOR__ID:
-            value = `#${value}`;
-            break;
-          default:
-        }
-
-        const style = platform[mode][btoa(value)];
-        if (style) {
-          metadata.tree.push({ name: value, displayMode: mode, style: style.attributes, isParent });
-        }
-      });
-    }
+    selectorSegments.forEach(segment => {
+      const { name } = segment;
+      const style = platform[mode][name];
+      if (style) {
+        metadata.tree.push({ name, displayMode: mode, style: style.attributes, isParent });
+      }
+    });
 
     // global native type
-    if (type && platform[mode][btoa(type)]) {
-      metadata.tree.push({ name: type, displayMode: mode, style: platform[mode][btoa(type)].attributes, isParent });
-    } else if (subType && platform[mode][btoa(subType)]) {
+    if (type && platform[mode][type] && platform[mode][type].type !== 'class') {
+      metadata.tree.push({ name: type, displayMode: mode, style: platform[mode][type].attributes, isParent });
+    } else if (subType && platform[mode][subType] && platform[mode][subType].type !== 'class') {
       metadata.tree.push({
         name: subType,
         displayMode: mode,
-        style: platform[mode][btoa(subType)].attributes,
+        style: platform[mode][subType].attributes,
         isParent
       });
     }
@@ -187,7 +126,15 @@ const getDataStyle = (element, platform, displayMode, isParent = false, componen
   return metadata;
 };
 
-export const calculateInheriting = (element, flat, platform, displayMode, styleSelector, componentDefinitions) => {
+export const calculateInheriting = (
+  element,
+  flat,
+  platform,
+  displayMode,
+  styleSelector,
+  componentDefinitions,
+  skipSelectors = []
+) => {
   const metadata = { tree: [], treeData: {}, style: {} };
   if (!element) {
     return metadata;
@@ -196,10 +143,13 @@ export const calculateInheriting = (element, flat, platform, displayMode, styleS
   const { id } = element;
   while (element) {
     const styleData = getDataStyle(element, platform, displayMode, element.id !== id, componentDefinitions);
-    metadata.tree = [...metadata.tree, ...styleData.tree];
+    metadata.tree = [
+      ...metadata.tree,
+      ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isParent))
+    ];
     const parentId = get(element, 'definition.parentId');
     if (!parentId) {
-      element = null;
+      element = undefined;
 
       break;
     }
@@ -217,6 +167,10 @@ export const calculateInheriting = (element, flat, platform, displayMode, styleS
       }
 
       Object.keys(data).forEach(key => {
+        if (!inheritableAttributesBase.includes(key) && node.isParent) {
+          return;
+        }
+
         if (!finalMeta[key]) {
           finalMeta[key] = [];
         }
@@ -288,14 +242,14 @@ export const cssToSelectors = (css = '', singleSelector = false) => {
     ...css
       .replaceAll('\n', '')
       .replaceAll(' ', '')
-      .matchAll(/(?<selector>\.|#|)(?<selectorName>[a-z0-9_. -]+){(?<selectorData>[a-z0-9:; \-(),.%\n*/]+|)}/gim)
+      .matchAll(/(?<selector>\.|#|)(?<selectorName>[a-z0-9_ -]+){(?<selectorData>[a-z0-9:; (),.%\n*/#-]+|)}/gim)
   ];
   const StyleConstantsList = Object.values(StyleConstants);
   const selectors = match.map(match => {
-    const { selector, selectorName, selectorData } = match.groups;
-    const selectorResult = { name: `${selector}${selectorName}`, attributes: {}, cache: match[0] };
+    const { selectorName, selectorData } = match.groups;
+    const selectorResult = { name: selectorName, attributes: {}, cache: match[0] };
     if (selectorData) {
-      const propsMatch = [...selectorData.matchAll(/(?<propName>[a-z\- ]+):(?<propValue>[a-z0-9 ]+)/gim)];
+      const propsMatch = [...selectorData.matchAll(/(?<propName>[a-z\- ]+):(?<propValue>[a-z0-9 (),.%\n*/#-]+)/gim)];
       propsMatch
         .filter(prop => StyleConstantsList.includes(prop.groups.propName))
         .forEach(prop => {
@@ -377,15 +331,16 @@ export const formatCssFromSelector = (css, singleSelector = true, tabIndentSpace
   return selectors;
 };
 
-export const generateStyleSelector = (selector = '', values = {}) => {
+export const generateStyleSelector = (selector = '', selectorType = StyleSelectors.SELECTOR_CLASS, values = {}) => {
   if (!selector || !values || typeof values !== 'object') {
     return undefined;
   }
 
   return {
     name: selector,
+    type: selectorType,
     attributes: values,
-    cache: `${selector}{${processSelector(values)}}`
+    cache: processSelector(selector, selectorType, values)
   };
 };
 

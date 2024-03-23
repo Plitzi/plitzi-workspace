@@ -29,7 +29,7 @@ const AppMain = props => {
   } = props;
   const [previewMode, setPreviewMode] = useState(false);
   const [displayBorderComponents, setDisplayBorderComponents] = useState(DISPLAY_BORDER_BLACK);
-  const [zoom, setZoom] = useState('1.0');
+  const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
 

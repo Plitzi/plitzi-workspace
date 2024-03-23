@@ -6,9 +6,7 @@ import { produce } from 'immer';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
-
-// Alias
-import { generateCache, processSelector } from '@pmodules/Style/StyleHelper';
+import { generateCache, processSelector } from '@plitzi/sdk-style/StyleHelper';
 
 export const SegmentsActions = {
   SEGMENTS_ADD: 'SEGMENTS_ADD',

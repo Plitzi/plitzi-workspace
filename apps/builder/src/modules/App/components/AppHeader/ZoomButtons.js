@@ -8,11 +8,11 @@ import AppContext from '@pmodules/App/AppContext';
 const zooms = [...Array(26).keys()].map(i => ({ label: `${50 + i * 10}%`, value: Number(0.5 + i * 0.1).toFixed(1) }));
 
 const ZoomButtons = () => {
-  const { zoom, setZoom, displayMode } = useContext(AppContext);
+  const { zoom = 1, setZoom, displayMode } = useContext(AppContext);
 
   const handleChange = useCallback(
     e => {
-      setZoom(e.target.value);
+      setZoom(parseFloat(e.target.value));
     },
     [setZoom]
   );
@@ -38,7 +38,7 @@ const ZoomButtons = () => {
       </div>
       <Select
         size="sm"
-        value={zoom}
+        value={Number(zoom).toFixed(1)}
         onChange={handleChange}
         className="border-white active:border-gray-200 hover:border-gray-200 font-bold rounded hover:bg-gray-50"
       >

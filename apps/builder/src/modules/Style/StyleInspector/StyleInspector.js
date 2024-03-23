@@ -112,7 +112,7 @@ const StyleInspector = props => {
 
   const handleChangeStyleSelector = useCallback(e => setStyleSelector(e.target.value), []);
 
-  const handleCurrentSelector = useCallback(tag => setSelectorSelected(tag.name), []);
+  const handleCurrentSelector = useCallback(tag => setSelectorSelected(tag), []);
 
   return (
     <div className="w-full flex flex-col grow">
@@ -146,6 +146,7 @@ const StyleInspector = props => {
             size="custom"
             onClick={handleClicViewMode}
             title={viewMode === 'basic' ? 'Advanced Mode' : 'Basic Mode'}
+            disabled={selectorSelected?.name.includes(':')}
           >
             {viewMode === 'basic' && <i className="fa-solid fa-code" />}
             {viewMode === 'advanced' && <i className="fa-regular fa-hand-pointer" />}
@@ -157,12 +158,12 @@ const StyleInspector = props => {
           <InspectorModeAdvanced
             styleSelector={styleSelector}
             selectors={selectors}
-            selector={selectorSelected}
+            selector={selectorSelected?.name}
             element={element}
           />
         )}
         {viewMode === 'basic' && (
-          <InspectorModeBasic styleSelector={styleSelector} selector={selectorSelected} element={element} />
+          <InspectorModeBasic styleSelector={styleSelector} selector={selectorSelected?.name} element={element} />
         )}
       </div>
     </div>

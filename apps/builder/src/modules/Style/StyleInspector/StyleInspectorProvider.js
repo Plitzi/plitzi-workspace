@@ -114,6 +114,7 @@ import {
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
 } from '@plitzi/sdk-style/StyleConstants';
+import { StyleSelectors, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
@@ -123,7 +124,6 @@ import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives
 import StyleInspectorContext from './StyleInspectorContext';
-import { StyleSelectors, makeSelector } from '../StyleHelper';
 import useStyleBinding from '../hooks/useStyleBinding';
 
 const defaultValue = {

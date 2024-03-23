@@ -4,8 +4,8 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 import { produce } from 'immer';
 
-// Alias
-import { generateCache, processSelector } from '@pmodules/Style/StyleHelper';
+// Monorepo
+import { generateCache, processSelector } from '@plitzi/sdk-style/StyleHelper';
 
 export const StyleActions = {
   STYLE_UPDATE: 'STYLE_UPDATE',

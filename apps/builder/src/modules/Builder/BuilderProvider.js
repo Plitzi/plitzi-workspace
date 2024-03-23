@@ -19,6 +19,7 @@ import {
   EventBridgeTypesPerModule
 } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -393,11 +394,16 @@ const BuilderProvider = props => {
 
   const selector = get(schemaRef.current, `flat.${elementSelected}.definition.styleSelectors.base`, '');
   const selectorActive = useMemo(() => {
-    if (selector && selectorSelected && selector.includes(selectorSelected)) {
+    if (selector && selectorSelected && selector.includes(selectorSelected.name.replace(/:.*/, ''))) {
       return selectorSelected;
     }
 
-    return get(selector.split(' '), '0', '');
+    const name = get(selector.split(' '), '0');
+    if (!name) {
+      return undefined;
+    }
+
+    return { name, type: StyleSelectors.SELECTOR_CLASS };
   }, [selector, selectorSelected]);
 
   const builderStyleValueMemo = useMemo(
