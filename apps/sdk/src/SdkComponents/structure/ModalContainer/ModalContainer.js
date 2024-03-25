@@ -4,13 +4,16 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject, getPathsFromObeject } from '../../../helpers/utils';
+import { getPathsFromObeject } from '../../../helpers/utils';
 
 const ModalContainer = forwardRef((props, ref) => {
   const {

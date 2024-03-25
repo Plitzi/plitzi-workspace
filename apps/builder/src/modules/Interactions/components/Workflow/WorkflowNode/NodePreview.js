@@ -7,8 +7,8 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
-// Relatives
-import { emptyObject } from '../../../../../helpers/utils';
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const NodePreview = props => {
   const { className = '', preview = emptyObject, defaultPreview = emptyObject, onChange = noop } = props;

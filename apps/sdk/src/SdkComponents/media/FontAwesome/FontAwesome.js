@@ -3,13 +3,15 @@ import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../../helpers/utils';
 
 const FontAwesome = forwardRef((props, ref) => {
   const {

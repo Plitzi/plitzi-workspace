@@ -6,6 +6,9 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import set from 'lodash/set';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import JsxManager from '@modules/Element/JsxManager';
@@ -14,7 +17,6 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../../helpers/utils';
 
 const BlockJsx = forwardRef((props, ref) => {
   const {

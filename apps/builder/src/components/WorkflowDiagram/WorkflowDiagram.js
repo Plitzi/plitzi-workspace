@@ -4,10 +4,12 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import WorkflowContextProvider from './WorkflowContextProvider';
 import WorkflowContainer from './WorkflowContainer';
-import { emptyObject } from '../../helpers/utils';
 
 const nodeDefinitionsDefault = [];
 

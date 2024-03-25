@@ -11,6 +11,7 @@ import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
@@ -27,7 +28,6 @@ import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
-import { emptyObject } from '../../../../helpers/utils';
 
 const OverlayButtonContainer = props => {
   const {

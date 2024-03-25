@@ -10,9 +10,7 @@ import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/hel
 
 // Monorepo
 import utility from '@plitzi/sdk-data-source/utility';
-
-// Alias
-import { emptyObject } from '../../helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const transformersDefault = [];
 

@@ -6,8 +6,8 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
 
-// Relatives
-import { emptyObject } from '../../../../../helpers/utils';
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const StepWhen = props => {
   const { when: whenProp, dataSourceFields = emptyObject, onBack = noop, onNext = noop } = props;

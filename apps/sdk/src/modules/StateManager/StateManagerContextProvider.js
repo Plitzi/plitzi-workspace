@@ -8,13 +8,13 @@ import get from 'lodash/get';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import NetworkContext from '@modules/Network/NetworkContext';
 
 // Relatives
 import StateManagerContext from './StateManagerContext';
-import { emptyObject } from '../../helpers/utils';
 
 export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';

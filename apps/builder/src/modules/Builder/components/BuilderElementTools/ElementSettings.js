@@ -12,6 +12,7 @@ import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
@@ -26,7 +27,6 @@ import BuilderContext from '../../BuilderContext';
 import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import { defaultElementsSettings } from '../../../../SdkComponents';
-import { emptyObject } from '../../../../helpers/utils';
 
 const ElementSettings = props => {
   const { id = '', type = '', attributes = emptyObject, handleChange = noop } = props;

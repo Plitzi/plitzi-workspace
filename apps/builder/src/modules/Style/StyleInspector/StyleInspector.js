@@ -12,6 +12,7 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
@@ -22,7 +23,6 @@ import BuilderContext from '@pmodules/Builder/BuilderContext';
 import Selector from '../Selector';
 import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
 import InspectorModeBasic from './modes/InspectorModeBasic';
-import { emptyObject } from '../../../helpers/utils';
 
 const StyleInspector = props => {
   const { mode = 'element', styleSelectors = emptyObject, element, allowStyleSelector = true } = props;

@@ -3,11 +3,13 @@ import React, { useCallback, useContext, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import WorkflowNode from './WorkflowNode';
 import WorkflowAddNode from './WorkflowAddNode';
 import WorkflowContext from './WorkflowContext';
-import { emptyObject } from '../../../../helpers/utils';
 
 const WorkflowFlow = props => {
   const {

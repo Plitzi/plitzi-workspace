@@ -10,8 +10,8 @@ import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
-// Relatives
-import { emptyObject } from '../../../../../../helpers/utils';
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const optionsDefault = [];
 

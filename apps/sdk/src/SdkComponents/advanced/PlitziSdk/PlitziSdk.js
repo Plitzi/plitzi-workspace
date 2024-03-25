@@ -3,6 +3,9 @@ import React, { forwardRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import { RENDER_MODE_WIDGET } from '@modules/Sdk';
 import withElement from '@modules/Element/hocs/withElement';
@@ -11,7 +14,6 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import App from '../../../App';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../../helpers/utils';
 
 const PlitziSdk = forwardRef((props, ref) => {
   const { internalProps = emptyObject, className = '', spaceKey = '', environment = 'main' } = props;

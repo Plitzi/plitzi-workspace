@@ -20,6 +20,7 @@ import {
 } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
 import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -30,7 +31,7 @@ import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 import BuilderSchemaContext from './contexts/BuilderSchemaContext';
 import BuilderSelectedContext from './contexts/BuilderSelectedContext';
 import BuilderHoveredContext from './contexts/BuilderHoveredContext';
-import { emptyObject, isInViewport } from '../../helpers/utils';
+import { isInViewport } from '../../helpers/utils';
 import BuilderStyleContext from './contexts/BuilderStyleContext';
 import BuilderContext from './BuilderContext';
 

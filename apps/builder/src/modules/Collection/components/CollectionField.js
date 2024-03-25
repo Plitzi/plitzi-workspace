@@ -5,9 +5,11 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import { fieldTypes } from '../CollectionsConstants';
-import { emptyObject } from '../../../helpers/utils';
 
 const CollectionField = props => {
   const { name = '', machineName = '', type, params = emptyObject, onRemove = noop } = props;

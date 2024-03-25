@@ -4,6 +4,9 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import NodeDraggable from './NodeDraggable';
 import NodeConnector from './nodes/NodeConnector';
@@ -11,7 +14,6 @@ import WorkflowContext from '../WorkflowContext';
 import NodeConnectorSpot from './NodeConnectorSpot';
 import NodeHeader from './NodeHeader';
 import NodeBody from './NodeBody';
-import { emptyObject } from '../../../helpers/utils';
 
 const WorkflowNode = props => {
   const {

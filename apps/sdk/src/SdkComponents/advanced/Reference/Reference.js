@@ -5,6 +5,9 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import capitalize from 'lodash/capitalize';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
@@ -13,7 +16,6 @@ import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '@modul
 
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../../helpers/utils';
 
 const Reference = forwardRef((props, ref) => {
   const {

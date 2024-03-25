@@ -3,13 +3,15 @@ import React, { memo, useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
 
 // Relatives
 import PluginRemote from './PluginRemote';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../helpers/utils';
 
 const PluginManager = props => {
   const { id = '', rootId = '', plitziElementLayout = undefined, type = '', internalProps = emptyObject } = props;

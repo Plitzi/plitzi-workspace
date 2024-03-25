@@ -8,10 +8,10 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
+import { getDisplayName } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import NetworkContext from '../../NetworkContext';
-import { getDisplayName } from '../../../../helpers/utils';
 import { RealTimeEventTypes, RealTimeEventTypesList, RealTimeSelfEventTypesList } from '../../helpers/EventTypes';
 
 const withSubscriptions = WrappedComponent => {

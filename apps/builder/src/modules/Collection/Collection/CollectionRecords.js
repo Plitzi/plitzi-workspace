@@ -3,9 +3,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import CollectionRecord from './CollectionRecord';
-import { emptyObject } from '../../../helpers/utils';
 
 const itemsDefault = [];
 

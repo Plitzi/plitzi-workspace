@@ -5,13 +5,15 @@ import { produce } from 'immer';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
 // Relatives
 import StateManagerContext from './StateManagerContext';
-import { emptyObject } from '../../helpers/utils';
 
 export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';

@@ -3,12 +3,12 @@ import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
-
-// Relatives
-import { emptyObject } from '../../../helpers/utils';
 
 const Paragraph = forwardRef((props, ref) => {
   const { content = 'Paragraph', className = '', internalProps = emptyObject } = props;

@@ -5,13 +5,15 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import StepSource from './steps/StepSource';
 import StepSettings from './steps/StepSettings';
 import StepTransformers from './steps/StepTransformers';
 import StepPreview from './steps/StepPreview';
 import StepWhen from './steps/StepWhen';
-import { emptyObject } from '../../../../helpers/utils';
 
 const attributesDefault = [];
 

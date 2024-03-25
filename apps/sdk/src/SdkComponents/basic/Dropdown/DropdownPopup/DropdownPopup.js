@@ -3,12 +3,12 @@ import React, { forwardRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
-
-// Relative
-import { emptyObject } from '../../../../helpers/utils';
 
 const DropdownPopup = forwardRef((props, ref) => {
   const { className = '', internalProps = emptyObject, children } = props;

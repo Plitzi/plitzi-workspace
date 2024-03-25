@@ -5,11 +5,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import get from 'lodash/get';
 import { Helmet } from 'react-helmet-async';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
 // Relatives
-import { ParamsFromURL, emptyObject } from '../../helpers/utils';
+import { ParamsFromURL } from '../../helpers/utils';
 import NavigationContext from './NavigationContext';
 import { matchRoutePath } from './NavigationHelper';
 

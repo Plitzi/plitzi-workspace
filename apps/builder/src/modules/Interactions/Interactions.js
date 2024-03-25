@@ -8,12 +8,10 @@ import get from 'lodash/get';
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import utility from '@plitzi/sdk-interactions/utility';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import Workflow from './components/Workflow';
-
-// Relatives
-import { emptyObject } from '../../helpers/utils';
 
 const Interactions = props => {
   const { className = '', id = '', interactions = emptyObject, onChange = noop } = props;

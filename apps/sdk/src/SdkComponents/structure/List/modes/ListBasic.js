@@ -3,11 +3,11 @@ import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import RootElement from '@modules/Element/RootElement';
-
-// Relative
-import { emptyObject } from '../../../../helpers/utils';
 
 const ListBasic = forwardRef((props, ref) => {
   const { className = '', subType = 'ul', internalProps = emptyObject, children } = props;

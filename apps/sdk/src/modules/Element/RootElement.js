@@ -3,10 +3,12 @@ import React, { forwardRef, useCallback, useContext, useMemo, useRef } from 'rea
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 import { nativeEventsList } from './helpers/elementUtils';
-import { emptyObject } from '../../helpers/utils';
 
 const interactionBasicTriggers = { onClick: { title: 'On Click', preview: {}, params: {} } };
 

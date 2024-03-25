@@ -5,6 +5,9 @@ import classNames from 'classnames';
 import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
@@ -12,7 +15,6 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useCollectionContext from './hooks/useCollectionContext';
-import { emptyObject } from '../../../helpers/utils';
 
 const CollectionContainer = forwardRef((props, ref) => {
   const {

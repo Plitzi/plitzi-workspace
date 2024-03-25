@@ -11,10 +11,12 @@ import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import { isValidToken } from '../../../../../helpers/twigWrapper';
 import ParamBinding from './ParamBinding';
-import { emptyObject } from '../../../../../helpers/utils';
 
 const optionsDefault = [];
 

@@ -4,13 +4,15 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import camelCase from 'lodash/camelCase';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
 
 // Relatives
 import PluginRemote from './PluginRemote';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../helpers/utils';
 
 const JsxManager = props => {
   const { plitziJsxSkipHOC = false, plitziJsxType = '', plitziJsxProps = emptyObject, children } = props;

@@ -4,11 +4,13 @@ import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import { defaultElements } from '../../SdkComponents';
 import ComponentContext from './ComponentContext';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
-import { emptyObject } from '../../helpers/utils';
 
 const ComponentProvider = props => {
   const { remoteComponents: remoteComponentsProp = emptyObject, localCustomComponents = emptyObject, children } = props;

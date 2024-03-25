@@ -4,13 +4,16 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import RootElement from '@modules/Element/RootElement';
 
 // Relatives
 import usePlitziServiceContext from '../../../../../services/hooks/usePlitziServiceContext';
 import ListControlledItem from './ListControlledItem';
-import { emptyObject, getPathsFromObeject } from '../../../../../helpers/utils';
+import { getPathsFromObeject } from '../../../../../helpers/utils';
 
 const ListControlled = forwardRef((props, ref) => {
   const { className = '', internalProps = emptyObject, children, items = [] } = props;

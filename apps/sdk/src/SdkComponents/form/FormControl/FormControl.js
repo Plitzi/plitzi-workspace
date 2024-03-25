@@ -4,6 +4,9 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
@@ -17,7 +20,6 @@ import Select from './inputs/Select';
 import Textarea from './inputs/Textarea';
 import Hidden from './inputs/Hidden';
 import withFieldValue from './hocs/withFieldValue';
-import { emptyObject } from '../../../helpers/utils';
 
 const FormControl = forwardRef((props, ref) => {
   const {

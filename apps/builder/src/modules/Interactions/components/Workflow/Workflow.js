@@ -6,11 +6,13 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import WorkflowFlow from './WorkflowFlow';
 import WorkflowHeader from './WorkflowHeader';
 import WorkflowContextProvider from './WorkflowContextProvider';
-import { emptyObject } from '../../../../helpers/utils';
 
 const Workflow = props => {
   const {

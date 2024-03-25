@@ -14,6 +14,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -25,7 +26,6 @@ import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 // Relatives
 import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE } from '../../BuilderHelper';
-import { emptyObject } from '../../../../helpers/utils';
 
 // Style
 import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss'; // eslint-disable-line

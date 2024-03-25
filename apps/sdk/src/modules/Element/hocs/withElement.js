@@ -4,8 +4,10 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
+// Monorepo
+import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
+
 // Relatives
-import { emptyObject, getDisplayName } from '../../../helpers/utils';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useElementController from '../hooks/useElementController';
 

@@ -4,6 +4,9 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import MadeInPlitzi from '@components/MadeInPlitzi';
 
@@ -11,7 +14,6 @@ import MadeInPlitzi from '@components/MadeInPlitzi';
 import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceContext';
 import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
-import { emptyObject } from '../../../helpers/utils';
 
 const ShadowMode = props => {
   const { pageId = '', style = '', plitziContextValue, assets = emptyObject } = props;

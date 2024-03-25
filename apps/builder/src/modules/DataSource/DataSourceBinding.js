@@ -11,11 +11,12 @@ import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsa
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import BindingForm from './models/BindingForm';
 import BindingSelected from './BindingSelected';
-import { emptyObject, generateID } from '../../helpers/utils';
+import { generateID } from '../../helpers/utils';
 
 const DataSourceBinding = props => {
   const {

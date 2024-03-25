@@ -1,7 +1,3 @@
-export function getDisplayName(WrappedComponent) {
-  return WrappedComponent.displayName || WrappedComponent.name || 'Component';
-}
-
 export const delay = ms =>
   new Promise(res => {
     setTimeout(res, ms);
@@ -96,8 +92,3 @@ export const makeId = (length, includeMayus = true, includeNumbers = true) => {
 
   return result;
 };
-
-const emptyObject = {};
-Object.freeze(emptyObject);
-
-export { emptyObject };

@@ -6,8 +6,8 @@ import Moment from 'react-moment';
 import classNames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
 
-// Relatives
-import { emptyObject } from '../../../helpers/utils';
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const CollectionRecord = props => {
   const {

@@ -3,7 +3,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 // import noop from 'lodash/noop';
-// import emptyObject from '../../../helpers/utils';
+
+// Monorepo
+// import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const PluginSettingsForm = props => {
   const { className = '' /* , values = emptyObject, onSubmit = noop, onClose = noop */ } = props;

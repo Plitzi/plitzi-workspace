@@ -8,9 +8,11 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import { fieldTypes } from '../CollectionsConstants';
-import { emptyObject } from '../../../helpers/utils';
 
 const CollectionFieldForm = props => {
   const {

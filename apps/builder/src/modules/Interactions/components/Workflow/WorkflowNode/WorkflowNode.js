@@ -4,13 +4,16 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import NodeHeader from './NodeHeader';
 import NodeBody from './NodeBody';
 import WorkflowContext from '../WorkflowContext';
 import NodeFooter from './NodeFooter';
 import NodeWhen from './NodeWhen';
-import { emptyObject, getPathsFromObeject } from '../../../../../helpers/utils';
+import { getPathsFromObeject } from '../../../../../helpers/utils';
 import NodePreview from './NodePreview';
 
 const WorkflowNode = props => {

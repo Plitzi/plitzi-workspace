@@ -10,13 +10,14 @@ import upperFirst from 'lodash/upperFirst';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
 
 // Relatives
 import WorkflowContext from './WorkflowContext';
-import { emptyObject, generateID } from '../../../../helpers/utils';
+import { generateID } from '../../../../helpers/utils';
 
 const nodeDefinitionsDefault = [];
 

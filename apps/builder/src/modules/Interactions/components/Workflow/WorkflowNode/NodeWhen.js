@@ -7,8 +7,8 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 
-// Relatives
-import { emptyObject } from '../../../../../helpers/utils';
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const NodeWhen = props => {
   const { className = '', when, fields = emptyObject, onChange = noop } = props;

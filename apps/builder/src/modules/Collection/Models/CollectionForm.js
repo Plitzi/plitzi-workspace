@@ -8,10 +8,12 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import CollectionFieldForm from './CollectionFieldForm';
 import CollectionField from '../components/CollectionField';
-import { emptyObject } from '../../../helpers/utils';
 
 const CollectionForm = props => {
   const {

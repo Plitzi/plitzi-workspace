@@ -7,8 +7,8 @@ import startCase from 'lodash/startCase';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Select from '@plitzi/plitzi-ui-components/Select';
 
-// Relatives
-import { emptyObject } from '../../../../helpers/utils';
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const ElementDefinitionSettings = props => {
   const { type = '', definition = emptyObject, onUpdate = noop } = props;

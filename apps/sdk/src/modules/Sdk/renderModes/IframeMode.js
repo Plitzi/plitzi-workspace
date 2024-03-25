@@ -3,6 +3,9 @@ import React, { forwardRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import MadeInPlitzi from '@components/MadeInPlitzi';
 
@@ -10,7 +13,6 @@ import MadeInPlitzi from '@components/MadeInPlitzi';
 import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceContext';
 import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
-import { emptyObject } from '../../../helpers/utils';
 
 const IframeMode = forwardRef((props, ref) => {
   const { pageId = '', style = '', plitziContextValue, assets = emptyObject } = props;

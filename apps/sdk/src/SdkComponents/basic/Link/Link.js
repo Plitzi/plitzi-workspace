@@ -4,6 +4,9 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
@@ -11,7 +14,6 @@ import { getPageFullPath } from '@modules/Navigation/NavigationHelper';
 
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../../helpers/utils';
 
 const Link = forwardRef((props, ref) => {
   const { internalProps = emptyObject, children, className = '', href = '#', target = 'self', mode = 'page' } = props;

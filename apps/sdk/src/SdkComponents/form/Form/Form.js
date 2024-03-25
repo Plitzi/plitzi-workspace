@@ -7,13 +7,15 @@ import get from 'lodash/get';
 import capitalize from 'lodash/capitalize';
 import omit from 'lodash/omit';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject } from '../../../helpers/utils';
 
 const Form = forwardRef((props, ref) => {
   const {

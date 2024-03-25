@@ -1,7 +1,3 @@
-export function getDisplayName(WrappedComponent) {
-  return WrappedComponent.displayName || WrappedComponent.name || 'Component';
-}
-
 const mongoObjectId = () => {
   const timestamp = ((new Date().getTime() / 1000) | 0).toString(16); // eslint-disable-line
 
@@ -115,8 +111,3 @@ export const delay = ms =>
   new Promise(res => {
     setTimeout(res, ms);
   });
-
-const emptyObject = {};
-Object.freeze(emptyObject);
-
-export { emptyObject };

@@ -11,10 +11,10 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 // Monorepo
 import utility from '@plitzi/sdk-data-source/utility';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import TransformerParam from './TransformerParam';
-import { emptyObject } from '../../../../../../helpers/utils';
 
 const transformersDefault = [];
 

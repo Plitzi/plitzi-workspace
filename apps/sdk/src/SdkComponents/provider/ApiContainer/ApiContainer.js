@@ -6,13 +6,16 @@ import Handlebars from 'handlebars';
 import Axios from 'axios';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { emptyObject, getPathsFromObeject } from '../../../helpers/utils';
+import { getPathsFromObeject } from '../../../helpers/utils';
 
 const ApiContainer = forwardRef((props, ref) => {
   const {

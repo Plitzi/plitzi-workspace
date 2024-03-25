@@ -4,12 +4,12 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
-
-// Relatives
-import { emptyObject } from '../../../helpers/utils';
 
 const NotFound = forwardRef((props, ref) => {
   const { className = '', internalProps = emptyObject } = props;

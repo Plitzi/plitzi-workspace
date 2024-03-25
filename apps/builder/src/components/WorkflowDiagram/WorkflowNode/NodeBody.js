@@ -5,9 +5,11 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import NodeBodyParam from './NodeBodyParam';
-import { emptyObject } from '../../../helpers/utils';
 
 const NodeBody = props => {
   const { className = '', params = emptyObject, paramDefinitions = emptyObject, onChange = noop } = props;

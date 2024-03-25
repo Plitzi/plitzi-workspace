@@ -3,6 +3,9 @@ import React, { lazy, Suspense, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
 import { nestedInject, ORIGIN_REMOTE } from '@modules/Component/ComponentHelper';
@@ -10,7 +13,6 @@ import { nestedInject, ORIGIN_REMOTE } from '@modules/Component/ComponentHelper'
 // Relatives
 import withElement from './hocs/withElement'; // eslint-disable-line import/no-cycle
 import { generatePluginModule } from './helpers/elementUtils';
-import { emptyObject } from '../../helpers/utils';
 import useDynamicScript from './useDynamicScript';
 
 function loadComponent(

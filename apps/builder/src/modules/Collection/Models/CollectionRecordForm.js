@@ -7,9 +7,11 @@ import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
 import { recordStatus } from '../CollectionsConstants';
-import { emptyObject } from '../../../helpers/utils';
 
 const fieldsDefault = [];
 

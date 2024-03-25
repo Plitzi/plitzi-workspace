@@ -2,8 +2,11 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
-import { ParamsFromURL, emptyObject } from '../../helpers/utils';
+import { ParamsFromURL } from '../../helpers/utils';
 import NavigationContext from './NavigationContext';
 import { matchRoutePath } from './NavigationHelper';
 

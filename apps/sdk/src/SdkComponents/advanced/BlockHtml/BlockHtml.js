@@ -4,12 +4,12 @@ import PropTypes from 'prop-types';
 import dompurify from 'dompurify';
 import classNames from 'classnames';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
-
-// Relatives
-import { emptyObject } from '../../../helpers/utils';
 
 const BlockHtml = forwardRef((props, ref) => {
   const { content = '', className = '', internalProps = emptyObject } = props;

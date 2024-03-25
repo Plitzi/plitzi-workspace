@@ -4,8 +4,11 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import get from 'lodash/get';
 
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
-import { ParamsFromURL, emptyObject } from '../../helpers/utils';
+import { ParamsFromURL } from '../../helpers/utils';
 import NavigationContext from './NavigationContext';
 import { matchRoutePath } from './NavigationHelper';
 
