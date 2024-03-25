@@ -2970,6 +2970,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.24.1"
     "@plitzi/plitzi-sdk": "npm:*"
     "@plitzi/plitzi-webpack": "npm:^0.2.0"
+    "@plitzi/sdk-auth": "npm:*"
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-interactions": "npm:*"
     "@plitzi/sdk-plugins": "npm:*"

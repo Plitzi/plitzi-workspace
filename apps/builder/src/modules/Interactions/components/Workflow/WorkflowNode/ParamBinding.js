@@ -6,8 +6,10 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
+// Monorepo
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+
 // Relatives
-import { getPathsFromObeject } from '../../../../../helpers/utils';
 import WorkflowContext from '../WorkflowContext';
 
 const ParamBinding = props => {

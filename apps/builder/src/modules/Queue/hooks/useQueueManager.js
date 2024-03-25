@@ -5,13 +5,13 @@ import omit from 'lodash/omit';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 
+// Monorepo
+import { delay as delayFunction } from '@plitzi/sdk-shared/utils';
+
 // Alias
 import { StyleActions } from '@pmodules/Style/StyleReducer';
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
-
-// Relatives
-import { delay as delayFunction } from '../../../helpers/utils';
 
 const useQueueManager = (props = {}) => {
   const { delay = 1000, mutate = noop, maxRetries = 2, retryTimeout = 2500 } = props;

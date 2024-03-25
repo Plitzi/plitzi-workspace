@@ -5,10 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import get from 'lodash/get';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject, ParamsFromURL } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import { ParamsFromURL } from '../../helpers/utils';
 import NavigationContext from './NavigationContext';
 import { matchRoutePath } from './NavigationHelper';
 

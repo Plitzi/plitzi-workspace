@@ -5,14 +5,12 @@ import get from 'lodash/get';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
-
-// Relatives
-import { getPathsFromObeject } from '../../../../helpers/utils';
 
 const PageStateContextProvider = props => {
   const { children } = props;

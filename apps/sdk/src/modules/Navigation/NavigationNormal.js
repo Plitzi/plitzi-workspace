@@ -6,13 +6,12 @@ import get from 'lodash/get';
 import { Helmet } from 'react-helmet-async';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject, ParamsFromURL } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
 // Relatives
-import { ParamsFromURL } from '../../helpers/utils';
 import NavigationContext from './NavigationContext';
 import { matchRoutePath } from './NavigationHelper';
 

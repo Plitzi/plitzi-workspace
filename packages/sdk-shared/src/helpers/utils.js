@@ -89,3 +89,36 @@ export const getKeyDecoded = (webKey, asWebId = false) => {
 
   return payload;
 };
+
+export function ParamsFromURL(query = undefined) {
+  query = query || window.location.search;
+  const queryString = {};
+  if (!query || query.length === 0) {
+    return queryString;
+  }
+
+  const vars = query.replace('?', '').split('&');
+  for (let i = 0; i < vars.length; i++) {
+    const stringArr = vars[i].split('=');
+    const key = decodeURIComponent(stringArr[0]);
+    const value = decodeURIComponent(stringArr[1]);
+    // If first entry with this name
+    if (typeof queryString[key] === 'undefined') {
+      queryString[key] = decodeURIComponent(value);
+      // If second entry with this name
+    } else if (typeof queryString[key] === 'string') {
+      const arr = [queryString[key], decodeURIComponent(value)];
+      queryString[key] = arr;
+      // If third or later entry with this name
+    } else {
+      queryString[key].push(decodeURIComponent(value));
+    }
+  }
+
+  return queryString;
+}
+
+export const delay = ms =>
+  new Promise(res => {
+    setTimeout(res, ms);
+  });

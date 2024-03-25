@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import withElement from '@modules/Element/hocs/withElement';
@@ -13,7 +13,6 @@ import RootElement from '@modules/Element/RootElement';
 
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
-import { getPathsFromObeject } from '../../../helpers/utils';
 
 const DialogContainer = forwardRef((props, ref) => {
   const {

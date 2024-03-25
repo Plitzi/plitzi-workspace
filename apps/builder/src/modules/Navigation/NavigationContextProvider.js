@@ -6,13 +6,13 @@ import get from 'lodash/get';
 
 // Monorepo
 import UserContext from '@plitzi/sdk-auth/UserContext';
+import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
-import { ParamsFromURL } from '../../helpers/utils';
 import NavigationContext from './NavigationContext';
 import { getPaths, matchRoutePath } from './NavigationHelper';
 

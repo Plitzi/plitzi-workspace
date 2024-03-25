@@ -4,13 +4,11 @@ import PropTypes from 'prop-types';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
 import NavigationContext from '@modules/Navigation/NavigationContext';
-
-// Relatives
-import { getPathsFromObeject } from '../../../../helpers/utils';
 
 const PageStateContextProvider = props => {
   const { children } = props;
