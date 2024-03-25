@@ -8,6 +8,7 @@ import noop from 'lodash/noop';
 
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import NetworkContext from './NetworkContext';
@@ -21,6 +22,7 @@ const NetworkContextProvider = props => {
     server,
     revision,
     webKey = '',
+    webKeyDecoded = emptyObject,
     environment = 'development',
     offlineMode = false,
     offlineData,
@@ -41,24 +43,6 @@ const NetworkContextProvider = props => {
 
     return {};
   });
-  const webKeyDecoded = useMemo(() => {
-    let tokenDecoded = {};
-    if (!webKey) {
-      return tokenDecoded;
-    }
-
-    try {
-      if (typeof window !== 'undefined') {
-        tokenDecoded = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
-      } else {
-        tokenDecoded = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
-      }
-    } catch (e) {
-      return {};
-    }
-
-    return tokenDecoded;
-  }, [webKey]);
 
   const query = useCallback(
     async (queryKey, variables, fetchPolicy = 'network-first') => {
@@ -233,6 +217,7 @@ NetworkContextProvider.propTypes = {
   server: PropTypes.object,
   revision: PropTypes.number,
   webKey: PropTypes.string,
+  webKeyDecoded: PropTypes.object,
   environment: PropTypes.string,
   offlineMode: PropTypes.bool,
   offlineData: PropTypes.object,

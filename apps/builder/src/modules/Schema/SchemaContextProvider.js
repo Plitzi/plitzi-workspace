@@ -12,6 +12,7 @@ import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelp
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import FlatMap, { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -473,10 +474,14 @@ const SchemaContextProvider = props => {
     [schema.pages, schema.settings, schema.pageFolders, schema.flat]
   );
 
+  const schemaSettings = useMemo(() => schema.settings, [schema.settings]);
+
   if (type === SCHEMA_TYPE_MAIN) {
     return (
       <SchemaMainContext.Provider value={mainSchemaValueMemo}>
-        <SchemaContext.Provider value={valueMemo}>{children}</SchemaContext.Provider>
+        <SchemaSettingsContext.Provider value={schemaSettings}>
+          <SchemaContext.Provider value={valueMemo}>{children}</SchemaContext.Provider>
+        </SchemaSettingsContext.Provider>
       </SchemaMainContext.Provider>
     );
   }

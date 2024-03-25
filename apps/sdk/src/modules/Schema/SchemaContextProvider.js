@@ -6,12 +6,12 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 
 // Relatives
-import SchemaSettingsContext from './SchemaSettingsContext';
 import SchemaPagesContext from './SchemaPagesContext';
 
 export const SCHEMA_TYPE_NORMAL = 'normal';

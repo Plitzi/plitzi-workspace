@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.js",
     "./SchemaContext": "./src/SchemaContext.js",
+    "./SchemaSettingsContext": "./src/SchemaSettingsContext.js",
     "./FlatMap": "./src/helpers/FlatMap.js"
   },
   "scripts": {

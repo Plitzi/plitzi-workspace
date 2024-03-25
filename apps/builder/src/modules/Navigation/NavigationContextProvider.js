@@ -4,10 +4,12 @@ import PropTypes from 'prop-types';
 import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
 import get from 'lodash/get';
 
+// Monorepo
+import UserContext from '@plitzi/sdk-auth/UserContext';
+
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import UserContext from '@pmodules/User/UserContext';
 
 // Relatives
 import { ParamsFromURL } from '../../helpers/utils';

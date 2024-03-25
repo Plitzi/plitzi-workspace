@@ -9,6 +9,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
@@ -17,7 +18,6 @@ import NetworkContext from '@modules/Network/NetworkContext';
 import NavigationContext from '@modules/Navigation/NavigationContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
-import SchemaSettingsContext from '@modules/Schema/SchemaSettingsContext';
 
 // Relatives
 import RawMode from './renderModes/RawMode';

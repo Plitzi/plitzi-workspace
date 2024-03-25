@@ -13,6 +13,7 @@ import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContext
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -20,7 +21,6 @@ import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 import AppContext from '@pmodules/App/AppContext';
-import UserContextProvider from '@pmodules/User/UserContextProvider';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 // Relatives

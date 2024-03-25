@@ -3,10 +3,12 @@ import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
+// Monorepo
+import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
+
 // Alias
 import DataSourceBuilderContextProvider from '@pmodules/DataSource/DataSourceBuilderContextProvider';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
-import UserContextProvider from '@pmodules/User/UserContextProvider';
 import StateManagerContextProvider from '@pmodules/StateManager/StateManagerContextProvider';
 import { DISPLAY_BORDER_BLACK } from '@pmodules/Builder/BuilderHelper';
 

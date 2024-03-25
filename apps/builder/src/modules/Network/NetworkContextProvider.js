@@ -10,6 +10,7 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import NetworkContext from './NetworkContext';
@@ -20,30 +21,21 @@ import Queries from './Queries';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
 const NetworkContextProvider = props => {
-  const { children, webKey = '', userKey = '', instanceId, server, client, environment = 'development' } = props;
+  const {
+    children,
+    webKey = '',
+    webKeyDecoded = emptyObject,
+    userKey = '',
+    instanceId,
+    server,
+    client,
+    environment = 'development'
+  } = props;
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(undefined);
   const { registerDefinition } = useContext(ComponentContext);
   const [internalData, setInternalData] = useState({});
-  const webKeyDecoded = useMemo(() => {
-    let tokenDecoded = {};
-    if (!webKey) {
-      return tokenDecoded;
-    }
-
-    try {
-      if (typeof window !== 'undefined') {
-        tokenDecoded = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
-      } else {
-        tokenDecoded = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
-      }
-    } catch (e) {
-      return {};
-    }
-
-    return tokenDecoded;
-  }, [webKey]);
 
   const query = useCallback(
     async (queryKey, variables, fetchPolicy = 'network-first', silentError = false) => {
@@ -293,6 +285,7 @@ NetworkContextProvider.propTypes = {
   children: PropTypes.node,
   instanceId: PropTypes.string,
   webKey: PropTypes.string,
+  webKeyDecoded: PropTypes.object,
   environment: PropTypes.string,
   userKey: PropTypes.string,
   server: PropTypes.object,

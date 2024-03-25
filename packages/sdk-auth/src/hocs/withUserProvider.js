@@ -1,21 +1,14 @@
 // Packages
-import React, { forwardRef, useContext, useMemo } from 'react';
-import get from 'lodash/get';
+import React, { forwardRef, useContext } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
 
-// Alias
-import NetworkContext from '@modules/Network/NetworkContext';
-import SchemaSettingsContext from '@modules/Schema/SchemaSettingsContext';
-
-// Relatives
-import { getDisplayName } from '../../../helpers/utils';
-import PlitziUserContextProvider from '../userProviders/plitzi/PlitziUserContextProvider';
+// Monorepo
+import { getDisplayName } from '@plitzi/sdk-shared/utils';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 const withUserProvider = WrappedComponent => {
   const WithUserProviderComponent = forwardRef((props, ref) => {
     const { userProvider, auth0Domain, auth0ClientId } = useContext(SchemaSettingsContext);
-    const { server, webKeyDecoded } = useContext(NetworkContext);
-    const webId = useMemo(() => `${get(webKeyDecoded, 'data.spaceId', '')}`, [webKeyDecoded]);
     switch (userProvider) {
       case 'auth0':
         return (
@@ -28,13 +21,7 @@ const withUserProvider = WrappedComponent => {
           </Auth0Provider>
         );
 
-      case 'plitzi':
-        return (
-          <PlitziUserContextProvider webId={webId} server={server}>
-            <WrappedComponent {...props} ref={ref} userProvider={userProvider} />
-          </PlitziUserContextProvider>
-        );
-
+      case 'basic':
       default:
         return <WrappedComponent {...props} ref={ref} userProvider={userProvider} />;
     }

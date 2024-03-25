@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import UserContext from '@plitzi/sdk-auth/UserContext';
 
 // Alias
 import {
@@ -15,7 +16,6 @@ import {
 } from '@modules/Sdk/Sdk';
 import NetworkContext from '@modules/Network/NetworkContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
-import UserContext from '@modules/User/UserContext';
 
 // Relatives
 import NavigationWidget from './NavigationWidget';

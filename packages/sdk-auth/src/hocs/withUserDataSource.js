@@ -5,14 +5,14 @@ import omit from 'lodash/omit';
 
 // Monorepo
 import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
+import { getDisplayName, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import { getDisplayName, getPathsFromObeject } from '../../../helpers/utils';
 import RealUserContext from '../UserContext';
 
 const withUserDataSource = WrappedComponent => {
   const WithUserDataSourceComponent = forwardRef((props, ref) => {
-    const { previewMode = true, userProvider = '' } = props;
+    const { previewMode = true, userProvider = 'basic' } = props;
     const { user, authenticated } = useContext(RealUserContext);
     const userContextMemo = useMemo(() => {
       switch (userProvider) {
@@ -34,7 +34,7 @@ const withUserDataSource = WrappedComponent => {
             }
           };
 
-        case 'plitzi':
+        case 'basic':
           return {
             isAuthenticated: authenticated,
             accessToken: user?.accessToken ?? '',
@@ -57,20 +57,14 @@ const withUserDataSource = WrappedComponent => {
     const userFields = useCallback(async () => {
       switch (userProvider) {
         case 'auth0':
-        case 'plitzi':
+        case 'basic':
         case '':
         default:
           return getPathsFromObeject(userContextMemo).reduce((acum, path) => [...acum, { path, name: path }], []);
       }
     }, [userContextMemo, userProvider]);
 
-    useDataSource({
-      id: 'global',
-      source: 'user',
-      name: 'Plitzi - User State',
-      value: userContextMemo,
-      fields: userFields
-    });
+    useDataSource({ id: 'global', source: 'user', name: 'User State', value: userContextMemo, fields: userFields });
 
     return <WrappedComponent ref={ref} {...omit(props, ['userProvider'])} />;
   });
@@ -79,7 +73,7 @@ const withUserDataSource = WrappedComponent => {
 
   WithUserDataSourceComponent.propTypes = {
     previewMode: PropTypes.bool,
-    userProvider: PropTypes.oneOf(['plitzi', 'auth0', ''])
+    userProvider: PropTypes.oneOf(['basic', 'auth0', ''])
   };
 
   return WithUserDataSourceComponent;

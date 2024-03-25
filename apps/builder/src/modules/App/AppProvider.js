@@ -1,11 +1,13 @@
 // Packages
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import get from 'lodash/get';
 import { withApollo } from '@apollo/client/react/hoc';
 import ModalProvider from '@plitzi/plitzi-ui-components/Modal/ModalProvider';
 
 // Monorepo
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
+import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
 
 // Alias
 import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscriptionsContextProvider';
@@ -16,7 +18,6 @@ import CollectionContextProvider from '@pmodules/Collection/CollectionContextPro
 import PluginsContextProvider from '@pmodules/Plugins/PluginsContextProvider';
 import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';
 import SegmentsContextProvider from '@pmodules/Segments/SegmentsContextProvider';
-import UserBaseContextProvider from '@pmodules/User/UserBaseContextProvider';
 import SchemaContextProvider from '@pmodules/Schema/SchemaContextProvider';
 import NavigationContextProvider from '@pmodules/Navigation/NavigationContextProvider';
 import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
@@ -35,11 +36,33 @@ const AppProvider = props => {
     previewMode = false
   } = props;
 
+  const webKeyDecoded = useMemo(() => {
+    let tokenDecoded = {};
+    if (!webKey) {
+      return tokenDecoded;
+    }
+
+    try {
+      if (typeof window !== 'undefined') {
+        tokenDecoded = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
+      } else {
+        tokenDecoded = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
+      }
+    } catch (e) {
+      return {};
+    }
+
+    return tokenDecoded;
+  }, [webKey]);
+
+  const webId = useMemo(() => `${get(webKeyDecoded, 'data.spaceId', '')}`, [webKeyDecoded]);
+
   return (
     <NetworkContextProvider
       instanceId={instanceId}
       client={client}
       webKey={webKey}
+      webKeyDecoded={webKeyDecoded}
       environment={environment}
       userKey={userKey}
       server={server}
@@ -58,7 +81,7 @@ const AppProvider = props => {
                       <ModalProvider>
                         <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
                           <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                            <UserBaseContextProvider previewMode={previewMode}>
+                            <UserBaseContextProvider previewMode={previewMode} webId={webId}>
                               <NavigationContextProvider previewMode={previewMode}>
                                 {children}
                               </NavigationContextProvider>

@@ -1,3 +1,7 @@
+export function getDisplayName(WrappedComponent) {
+  return WrappedComponent.displayName || WrappedComponent.name || 'Component';
+}
+
 const emptyObject = {};
 Object.freeze(emptyObject);
 

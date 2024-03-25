@@ -2,9 +2,12 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
+import get from 'lodash/get';
 
 // Monorepo
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
+import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
+import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
 
 // Alias
 import Sdk, {
@@ -23,8 +26,6 @@ import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
 import StyleContextProvider from '@modules/Style/StyleContextProvider';
 import StateManagerContextProvider from '@modules/StateManager/StateManagerContextProvider';
 import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
-import UserContextProvider from '@modules/User/UserContextProvider';
-import UserBaseContextProvider from '@modules/User/UserBaseContextProvider';
 import DataSourceSdkContextProvider from '@modules/DataSource/DataSourceSdkContextProvider';
 
 const AppMain = props => {
@@ -48,11 +49,32 @@ const AppMain = props => {
     onInitStateManager = noop,
     ...sdkProps
   } = props;
+  const webKeyDecoded = useMemo(() => {
+    let tokenDecoded = {};
+    if (!webKey) {
+      return tokenDecoded;
+    }
+
+    try {
+      if (typeof window !== 'undefined') {
+        tokenDecoded = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
+      } else {
+        tokenDecoded = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
+      }
+    } catch (e) {
+      return {};
+    }
+
+    return tokenDecoded;
+  }, [webKey]);
+
+  const webId = useMemo(() => `${get(webKeyDecoded, 'data.spaceId', '')}`, [webKeyDecoded]);
 
   const childrenMemo = useMemo(
     () => (
       <NetworkContextProvider
         webKey={webKey}
+        webKeyDecoded={webKeyDecoded}
         server={server}
         offlineMode={offlineMode}
         offlineData={offlineData}
@@ -66,7 +88,7 @@ const AppMain = props => {
               <StyleContextProvider>
                 <EventBridgeContextProvider onInit={onInitEventBridge}>
                   <SegmentsContextProvider>
-                    <UserBaseContextProvider previewMode={previewMode}>
+                    <UserBaseContextProvider previewMode={previewMode} webId={webId}>
                       <NavigationContextProvider
                         renderMode={renderMode}
                         currentPageId={currentPageId}

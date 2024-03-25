@@ -16,14 +16,47 @@ const ContainerSettings = () => {
   const { eventBridge } = useContext(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp ?? {});
-  const { userProvider, auth0Domain, auth0ClientId, keepState, stateStorage } = settings;
+  const {
+    userProvider,
+    keepState,
+    stateStorage,
+    // Provider - Auth0
+    auth0Domain,
+    auth0ClientId,
+    // Provider - Basic
+    loginUrl,
+    refreshUrl,
+    detailsPath,
+    tokenPath,
+    expirationTimePath
+  } = settings;
 
   const handleChange = useCallback(
     name => e => {
       if (name === 'userProvider') {
         eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0Domain');
         eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0ClientId');
-        setSettings(state => ({ ...state, [name]: e.target.value, auth0Domain: '', auth0ClientId: '' }));
+        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'loginUrl');
+        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'refreshUrl');
+        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'detailsPath');
+        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'tokenPath');
+        eventBridge.emit(
+          EventBridgeModuleTypes.MAIN,
+          EventBridgeTypes.SCHEMA_UPDATE_SETTINGS,
+          '',
+          'expirationTimePath'
+        );
+        setSettings(state => ({
+          ...state,
+          [name]: e.target.value,
+          auth0Domain: '',
+          auth0ClientId: '',
+          loginUrl: '',
+          refreshUrl: '',
+          detailsPath: '',
+          tokenPath: '',
+          expirationTimePath: ''
+        }));
         eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.value, name);
       } else if (name === 'keepState') {
         eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'stateStorage');
@@ -41,10 +74,8 @@ const ContainerSettings = () => {
 
   return (
     <Card className="mx-[5%] grow basis-0 m-4 relative flex flex-col">
-      <div className="p-6 border-b border-gray-300">
-        <Heading className="mb-4" type="h4">
-          User Settings
-        </Heading>
+      <div className="p-6 border-b border-gray-300 gap-4 flex flex-col">
+        <Heading type="h4">User Settings</Heading>
         <FormControl
           name="userProvider"
           value={userProvider}
@@ -54,7 +85,7 @@ const ContainerSettings = () => {
           placeholder="None"
           inputClassName="rounded"
         >
-          <option value="plitzi">Plitzi</option>
+          <option value="basic">Basic</option>
           <option value="auth0">Auth0</option>
         </FormControl>
         {userProvider === 'auth0' && (
@@ -64,7 +95,6 @@ const ContainerSettings = () => {
               value={auth0Domain}
               onChange={handleChange('auth0Domain')}
               label="Auth0 Domain"
-              className="mt-4"
               inputClassName="rounded"
             />
             <FormControl
@@ -72,7 +102,45 @@ const ContainerSettings = () => {
               value={auth0ClientId}
               onChange={handleChange('auth0ClientId')}
               label="Auth0 Client ID"
-              className="mt-4"
+              inputClassName="rounded"
+            />
+          </>
+        )}
+        {userProvider === 'basic' && (
+          <>
+            <FormControl
+              name="loginUrl"
+              value={loginUrl}
+              onChange={handleChange('loginUrl')}
+              label="API Login Url"
+              inputClassName="rounded"
+            />
+            <FormControl
+              name="refreshUrl"
+              value={refreshUrl}
+              onChange={handleChange('refreshUrl')}
+              label="API Refresh Url (Optional)"
+              inputClassName="rounded"
+            />
+            <FormControl
+              name="detailsPath"
+              value={detailsPath}
+              onChange={handleChange('detailsPath')}
+              label="API Details Object Path - Default: [details] - example: [user.details]"
+              inputClassName="rounded"
+            />
+            <FormControl
+              name="tokenPath"
+              value={tokenPath}
+              onChange={handleChange('tokenPath')}
+              label="API Token Object Path - Default: [access_token] - example: [user.access_token]"
+              inputClassName="rounded"
+            />
+            <FormControl
+              name="expirationTimePath"
+              value={expirationTimePath}
+              onChange={handleChange('expirationTimePath')}
+              label="API Expiration Time Object Path - Default: [expire_at] - example: [user.expire_at]"
               inputClassName="rounded"
             />
           </>
