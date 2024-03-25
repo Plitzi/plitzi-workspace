@@ -14,7 +14,7 @@ const useAuth = props => {
     detailsPath = 'details',
     tokenPath = 'access_token',
     expirationTimePath = 'expire_at',
-    webId = ''
+    webId = 0
   } = props;
   const [cache, setCache, , clearCache] = useCache({ cacheId: `user-${webId}-state`, skipContext: true });
   const manager = useMemo(() => {
