@@ -45,9 +45,10 @@ const useAuth = props => {
           tokenPath,
           expirationTimePath
         });
+
       case '':
       default:
-        return null;
+        return undefined;
     }
   }, [provider, loginUrl, refreshUrl]);
 

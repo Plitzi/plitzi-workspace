@@ -27,8 +27,22 @@ const UserBaseContextProvider = props => {
   }
 
   const { manager } = useAuth({ provider: userProvider, loginUrl, refreshUrl, webId });
-  const valueMemo = useMemo(
-    () => ({
+  const valueMemo = useMemo(() => {
+    if (!manager) {
+      return {
+        login: () => {},
+        logout: () => {},
+        refreshDetails: () => {},
+        can: () => false,
+        authenticated: false,
+        user: {
+          details: {},
+          accessToken: ''
+        }
+      };
+    }
+
+    return {
       login: manager.login,
       logout: manager.logout,
       refreshDetails: manager.refreshDetails,
@@ -38,9 +52,8 @@ const UserBaseContextProvider = props => {
         details: manager.userDetails,
         accessToken: manager.accessToken
       }
-    }),
-    [manager, manager?.userDetails, manager?.isAuthenticated, previewMode]
-  );
+    };
+  }, [manager, manager?.userDetails, manager?.isAuthenticated, previewMode]);
 
   return <UserContext.Provider value={valueMemo}>{!loading && children}</UserContext.Provider>;
 };
