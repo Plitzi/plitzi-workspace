@@ -8,7 +8,6 @@ import noop from 'lodash/noop';
 
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import NetworkContext from './NetworkContext';
@@ -22,7 +21,7 @@ const NetworkContextProvider = props => {
     server,
     revision,
     webKey = '',
-    webKeyDecoded = emptyObject,
+    webId = 0,
     environment = 'development',
     offlineMode = false,
     offlineData,
@@ -193,8 +192,8 @@ const NetworkContextProvider = props => {
   }, [offlineMode && offlineData, offlineMode && offlineDataType, webKey, environment]);
 
   const networkValue = useMemo(
-    () => ({ query, mutate, webKey, webKeyDecoded, server }),
-    [query, mutate, webKey, webKeyDecoded, server]
+    () => ({ query, mutate, webKey, webId, server }),
+    [query, mutate, webKey, webId, server]
   );
 
   if (error) {
@@ -217,7 +216,7 @@ NetworkContextProvider.propTypes = {
   server: PropTypes.object,
   revision: PropTypes.number,
   webKey: PropTypes.string,
-  webKeyDecoded: PropTypes.object,
+  webId: PropTypes.number,
   environment: PropTypes.string,
   offlineMode: PropTypes.bool,
   offlineData: PropTypes.object,

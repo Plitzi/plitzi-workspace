@@ -20,6 +20,7 @@ import AppContainer from './AppContainer';
 const AppMain = props => {
   const {
     webKey = '',
+    webId = 0,
     userKey = '',
     instanceId = '',
     server,
@@ -67,6 +68,7 @@ const AppMain = props => {
       <AppProvider
         instanceId={instanceId}
         webKey={webKey}
+        webId={webId}
         environment={environment}
         userKey={userKey}
         server={server}
@@ -97,6 +99,7 @@ AppMain.propTypes = {
   children: PropTypes.node,
   instanceId: PropTypes.string,
   webKey: PropTypes.string,
+  webId: PropTypes.number,
   environment: PropTypes.string,
   userKey: PropTypes.string,
   server: PropTypes.object,

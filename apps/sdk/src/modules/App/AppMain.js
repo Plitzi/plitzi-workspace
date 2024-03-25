@@ -2,12 +2,12 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
-import get from 'lodash/get';
 
 // Monorepo
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
 import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
+import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import Sdk, {
@@ -49,32 +49,13 @@ const AppMain = props => {
     onInitStateManager = noop,
     ...sdkProps
   } = props;
-  const webKeyDecoded = useMemo(() => {
-    let tokenDecoded = {};
-    if (!webKey) {
-      return tokenDecoded;
-    }
-
-    try {
-      if (typeof window !== 'undefined') {
-        tokenDecoded = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
-      } else {
-        tokenDecoded = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
-      }
-    } catch (e) {
-      return {};
-    }
-
-    return tokenDecoded;
-  }, [webKey]);
-
-  const webId = useMemo(() => `${get(webKeyDecoded, 'data.spaceId', '')}`, [webKeyDecoded]);
+  const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
 
   const childrenMemo = useMemo(
     () => (
       <NetworkContextProvider
         webKey={webKey}
-        webKeyDecoded={webKeyDecoded}
+        webId={webId}
         server={server}
         offlineMode={offlineMode}
         offlineData={offlineData}

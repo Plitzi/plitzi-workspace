@@ -19,8 +19,8 @@ export const STYLE_TYPE_TEMPLATE = 'template';
 
 const StateManagerContextProvider = props => {
   const { children, state: stateProp = emptyObject } = props;
-  const { webKeyDecoded } = useContext(NetworkContext);
-  const storageId = useMemo(() => `plitzi-${get(webKeyDecoded, 'data.spaceId', '0')}-state`, [webKeyDecoded]);
+  const { webId } = useContext(NetworkContext);
+  const storageId = useMemo(() => `plitzi-${webId}-state`, [webId]);
   const { settings } = useContext(SchemaMainContext);
 
   const getCache = useCallback(

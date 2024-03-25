@@ -1,7 +1,6 @@
 // Packages
-import React, { useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import get from 'lodash/get';
 import { withApollo } from '@apollo/client/react/hoc';
 import ModalProvider from '@plitzi/plitzi-ui-components/Modal/ModalProvider';
 
@@ -27,6 +26,7 @@ const AppProvider = props => {
     children,
     instanceId,
     webKey = '',
+    webId = 0,
     environment = 'development',
     userKey = '',
     server,
@@ -36,33 +36,12 @@ const AppProvider = props => {
     previewMode = false
   } = props;
 
-  const webKeyDecoded = useMemo(() => {
-    let tokenDecoded = {};
-    if (!webKey) {
-      return tokenDecoded;
-    }
-
-    try {
-      if (typeof window !== 'undefined') {
-        tokenDecoded = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
-      } else {
-        tokenDecoded = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
-      }
-    } catch (e) {
-      return {};
-    }
-
-    return tokenDecoded;
-  }, [webKey]);
-
-  const webId = useMemo(() => `${get(webKeyDecoded, 'data.spaceId', '')}`, [webKeyDecoded]);
-
   return (
     <NetworkContextProvider
       instanceId={instanceId}
       client={client}
       webKey={webKey}
-      webKeyDecoded={webKeyDecoded}
+      webId={webId}
       environment={environment}
       userKey={userKey}
       server={server}
@@ -105,6 +84,7 @@ AppProvider.propTypes = {
   children: PropTypes.node,
   instanceId: PropTypes.string,
   webKey: PropTypes.string,
+  webId: PropTypes.number,
   environment: PropTypes.string,
   userKey: PropTypes.string,
   server: PropTypes.object,

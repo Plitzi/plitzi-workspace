@@ -19,6 +19,7 @@ import CacheProvider from '@plitzi/plitzi-ui-components/Cache/CacheProvider';
 
 // Monorepo
 import { ComponentProvider } from '@plitzi/plitzi-sdk';
+import { getKeyDecoded, emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import customFetch from '@pmodules/Network/helpers/customFetch';
@@ -27,7 +28,6 @@ import AppMain from '@pmodules/App/AppMain';
 // Relatives
 import { getEnvironmentServer } from './config';
 import { loadState, saveState } from './services/session/sessionStorage';
-import { emptyObject, getWebId } from './helpers/utils';
 
 // Builder Style
 import './assets/index.scss';
@@ -41,7 +41,7 @@ const App = props => {
     className = 'min-h-screen text-gray-700',
     builderEnvironment = 'production'
   } = props;
-  const webId = useMemo(() => getWebId(webKey), [webKey]);
+  const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   let { children } = props;
 
   useEffect(() => {
@@ -180,7 +180,7 @@ const App = props => {
 
   return (
     <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
-      <CacheProvider cacheId={`builder-${webId}-state`}>
+      <CacheProvider cacheId="builder-state">
         <BrowserRouter basename={get(server, 'basePath', '/')}>
           <ApolloProvider client={client}>
             <ComponentProvider localComponents={localComponents}>
@@ -189,6 +189,7 @@ const App = props => {
                   {...omit(props, ['children', 'server', 'builderEnvironment'])}
                   server={server}
                   instanceId={instanceId}
+                  webId={webId}
                 />
               </ToastProvider>
             </ComponentProvider>

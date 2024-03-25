@@ -23,8 +23,8 @@ export const STYLE_TYPE_SEGMENT = 'segment';
 
 const StateManagerContextProvider = props => {
   const { children, state: stateProp = emptyObject, onInit = noop } = props;
-  const { webKeyDecoded } = useContext(NetworkContext);
-  const storageId = useMemo(() => `plitzi-${get(webKeyDecoded, 'data.spaceId', '0')}-state`, [webKeyDecoded]);
+  const { webId } = useContext(NetworkContext);
+  const storageId = useMemo(() => `plitzi-${webId}-state`, [webId]);
   const { schema } = useContext(SchemaContext);
 
   const getCache = useCallback(

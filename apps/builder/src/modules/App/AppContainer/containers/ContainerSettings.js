@@ -73,8 +73,8 @@ const ContainerSettings = () => {
   const keepStateProps = useMemo(() => ({ checked: keepState }), [keepState]);
 
   return (
-    <Card className="mx-[5%] grow basis-0 m-4 relative flex flex-col">
-      <div className="p-6 border-b border-gray-300 gap-4 flex flex-col">
+    <Card className="mx-[5%] grow basis-0 m-4 relative flex overflow-y-auto">
+      <div className="p-6 border-b border-gray-300 gap-4 flex flex-col grow basis-0">
         <Heading type="h4">User Settings</Heading>
         <FormControl
           name="userProvider"
@@ -146,8 +146,8 @@ const ContainerSettings = () => {
           </>
         )}
       </div>
-      <div className="p-6 border-b border-gray-300">
-        <Heading className="mb-4" type="h4">
+      <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
+        <Heading type="h4">
           State Settings
         </Heading>
         <FormControl

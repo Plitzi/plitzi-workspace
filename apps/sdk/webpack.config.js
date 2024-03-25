@@ -56,7 +56,7 @@ const build = (env, args) => {
     },
     watch,
     resolve: {
-      symlinks: false,
+      symlinks: devMode,
       alias: {
         '@modules': path.resolve('./src/modules'),
         '@components': path.resolve('./src/components'),

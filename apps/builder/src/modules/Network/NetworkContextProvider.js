@@ -10,7 +10,6 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import NetworkContext from './NetworkContext';
@@ -24,7 +23,7 @@ const NetworkContextProvider = props => {
   const {
     children,
     webKey = '',
-    webKeyDecoded = emptyObject,
+    webId = 0,
     userKey = '',
     instanceId,
     server,
@@ -262,8 +261,8 @@ const NetworkContextProvider = props => {
   const subscriptionManager = useSubscriptionsManager({ client, environment, onMessage: handleMessage });
 
   const networkValue = useMemo(
-    () => ({ mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webKeyDecoded }),
-    [mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webKeyDecoded]
+    () => ({ mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId }),
+    [mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId]
   );
 
   if (error) {
@@ -285,7 +284,7 @@ NetworkContextProvider.propTypes = {
   children: PropTypes.node,
   instanceId: PropTypes.string,
   webKey: PropTypes.string,
-  webKeyDecoded: PropTypes.object,
+  webId: PropTypes.number,
   environment: PropTypes.string,
   userKey: PropTypes.string,
   server: PropTypes.object,

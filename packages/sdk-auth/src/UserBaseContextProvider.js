@@ -13,7 +13,7 @@ import UserContext from './UserContext';
 import useAuth from './hooks/useAuth';
 
 const UserBaseContextProvider = props => {
-  const { previewMode = true, children, webId } = props;
+  const { previewMode = true, children, webId = 0 } = props;
   const { userProvider, loginUrl, refreshUrl } = useContext(SchemaSettingsContext);
   let loading = false;
   switch (userProvider) {
@@ -47,7 +47,7 @@ const UserBaseContextProvider = props => {
 
 UserBaseContextProvider.propTypes = {
   children: PropTypes.node,
-  webId: PropTypes.string,
+  webId: PropTypes.number,
   previewMode: PropTypes.bool
 };
 

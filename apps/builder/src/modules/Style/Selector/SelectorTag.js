@@ -10,10 +10,10 @@ import get from 'lodash/get';
 
 // Monorepo
 import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
+import { makeId } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import { selectorFormatter } from './SelectorHelper';
-import { makeId } from '../../../helpers/utils';
 
 const SelectorTag = props => {
   const {

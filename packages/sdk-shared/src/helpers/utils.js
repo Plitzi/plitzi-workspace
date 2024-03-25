@@ -1,3 +1,6 @@
+// Packages
+import get from 'lodash/get';
+
 export function getDisplayName(WrappedComponent) {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 }
@@ -62,4 +65,27 @@ export const makeId = (length, includeMayus = true, includeNumbers = true) => {
   }
 
   return result;
+};
+
+export const getKeyDecoded = (webKey, asWebId = false) => {
+  if (!webKey) {
+    return 0;
+  }
+
+  let payload = {};
+  try {
+    if (typeof window !== 'undefined') {
+      payload = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
+    } else {
+      payload = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
+    }
+  } catch (e) {
+    return 0;
+  }
+
+  if (asWebId) {
+    return get(payload, 'data.spaceId', 0);
+  }
+
+  return payload;
 };

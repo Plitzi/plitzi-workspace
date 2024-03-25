@@ -1,6 +1,3 @@
-// Packages
-import get from 'lodash/get';
-
 export function getDisplayName(WrappedComponent) {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 }
@@ -40,25 +37,6 @@ export const isUrl = str => {
   }
 
   return false;
-};
-
-export const makeId = (length, includeMayus = true, includeNumbers = true) => {
-  let result = '';
-  let characters = 'abcdefghijklmnopqrstuvwxyz';
-  if (includeMayus) {
-    characters = `ABCDEFGHIJKLMNOPQRSTUVWXYZ${characters}`;
-  }
-
-  if (includeNumbers) {
-    characters = `${characters}0123456789`;
-  }
-
-  const charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-
-  return result;
 };
 
 export function ParamsFromURL(query = undefined) {
@@ -110,23 +88,6 @@ export const hexToRGB = (hex, alpha) => {
   }
 
   return `rgb(${r},${g},${b})`;
-};
-
-export const getWebId = webKey => {
-  if (!webKey) {
-    return 0;
-  }
-
-  let payload;
-  try {
-    const webKeyParts = webKey.split('.');
-    const payloadEncoded = webKeyParts[1];
-    payload = JSON.parse(atob(payloadEncoded.replace('-', '+').replace('_', '/')));
-  } catch (e) {
-    return 0;
-  }
-
-  return get(payload, 'data.spaceId', 0);
 };
 
 export const getPathsFromObeject = (object, basePath = '', glue = '.', skipArray = false) => {
