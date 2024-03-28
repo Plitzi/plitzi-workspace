@@ -5,6 +5,7 @@ import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import classNames from 'classnames';
+import pick from 'lodash/pick';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
@@ -42,7 +43,7 @@ const Settings = props => {
     contexts: { SchemaContext }
   } = usePlitziServiceContext();
   const {
-    schema: { flat, pageFolders }
+    schema: { flat, pageFolders, pages }
   } = useContext(SchemaContext);
 
   const layouts = useMemo(
@@ -60,9 +61,15 @@ const Settings = props => {
     );
   }, [flat, layout]);
 
-  const pages = useMemo(
-    () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'page'),
-    [flat]
+  const pagesParsed = useMemo(
+    () =>
+      Object.values(
+        pick(
+          flat,
+          pages.filter(page => page !== id)
+        )
+      ),
+    [flat, pages]
   );
 
   const handleChange = key => e => onUpdate(key, e.target.value);
@@ -234,8 +241,8 @@ const Settings = props => {
               className="rounded"
               placeholder="None"
             >
-              {pages &&
-                pages.map(page => (
+              {pagesParsed &&
+                pagesParsed.map(page => (
                   <option key={page.id} value={page.id}>
                     {get(page, 'attributes.name')}
                   </option>
