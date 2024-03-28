@@ -25,7 +25,7 @@ const getPageFullPath = (flat, pageFolders, pageId, asString = false) => {
     default: defaultPage
   } = get(flat, `${pageId}.attributes`, { slug: pageId, folder: '' });
   if (defaultPage && !asString) {
-    return { '/': pageId, [`/${pageId}`]: pageId, '*': pageId };
+    return { '/': pageId, [`/${pageId}`]: pageId }; // '*': pageId
   }
 
   if (defaultPage && asString) {
@@ -160,10 +160,21 @@ const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
   );
 
   if (!possibleCandidate) {
+    // Match without permission, possible redirect
     possibleCandidate = candidates.find(
       ({ path: { accessLevel } }) =>
         (accessLevel === 'authenticated' && !authenticated) || (accessLevel === 'public' && authenticated)
     );
+  }
+
+  if (!possibleCandidate) {
+    // @todo: implement a better way to handle this, because if is not found we should render the 404 page
+    // Last opportunity going to root level
+    possibleCandidate = paths.find(candidate => candidate.path === '/' && candidate.hasAccess);
+
+    if (possibleCandidate) {
+      return { action: { type: 'redirect', path: '/' }, pathMatch: undefined };
+    }
   }
 
   if (!possibleCandidate) {

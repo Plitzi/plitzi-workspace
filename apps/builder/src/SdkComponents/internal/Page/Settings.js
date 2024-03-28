@@ -232,7 +232,7 @@ const Settings = props => {
               value={unauthorizedPageRedirect}
               onChange={handleChange('unauthorizedPageRedirect')}
               className="rounded"
-              placeholder="Home Page"
+              placeholder="None"
             >
               {pages &&
                 pages.map(page => (
