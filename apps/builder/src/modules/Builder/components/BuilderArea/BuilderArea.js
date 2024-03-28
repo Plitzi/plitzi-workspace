@@ -16,11 +16,11 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';

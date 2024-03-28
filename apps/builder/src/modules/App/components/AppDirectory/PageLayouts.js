@@ -13,9 +13,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { DROP_DIRECTION_CUSTOM } from '@plitzi/sdk-schema/FlatMap';
-
-// Alias
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Relatives
 import { generateID } from '../../../../helpers/utils';

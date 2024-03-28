@@ -236,40 +236,4 @@ const build = (env, args) => {
   return modules;
 };
 
-const buildSSR = (env, args) => {
-  const modules = build(env, args);
-
-  return {
-    ...modules,
-    entry: { 'plitzi-sdk': './src/indexSSR.js' },
-    target: 'node',
-    output: {
-      ...modules.output,
-      path: `${modules.output.path}/ssr/`
-    },
-    devServer: undefined,
-    plugins: [
-      new PlitziPlugin({
-        isHost: true,
-        exposes: [
-          './src/services/hooks/usePlitziServiceContext',
-          './src/modules/Component/ComponentContext',
-          './src/modules/Component/ComponentProvider'
-        ],
-        shared: {
-          react: { singleton: true, requiredVersion: false, eager: true },
-          'react-dom': { singleton: true, requiredVersion: false, eager: true }
-        }
-      }),
-      new webpack.DefinePlugin({
-        VERSION: JSON.stringify(PACKAGE.version)
-      }),
-      new MiniCssExtractPlugin({
-        filename: '[name].css',
-        chunkFilename: 'plitzi-sdk-chunk-[name].css'
-      })
-    ]
-  };
-};
-
-module.exports = [build, buildSSR];
+module.exports = [build];

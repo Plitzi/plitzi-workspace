@@ -3,9 +3,11 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+// Monorepo
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 
 // Relatives
 import Directory from './Directory';

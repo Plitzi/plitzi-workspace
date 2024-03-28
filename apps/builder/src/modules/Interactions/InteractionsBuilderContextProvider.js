@@ -4,9 +4,9 @@ import PropTypes from 'prop-types';
 
 // Monorepo
 import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
 import PageInteractions from './sources/PageSource/PageInteractions';
 

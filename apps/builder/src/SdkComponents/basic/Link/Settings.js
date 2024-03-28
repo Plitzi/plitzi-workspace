@@ -8,8 +8,8 @@ import pick from 'lodash/pick';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Select from '@plitzi/plitzi-ui-components/Select';
 
-// Alias
-import { getPageFullPath } from '@pmodules/Navigation/NavigationHelper';
+// Monorepo
+import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
 const Settings = props => {
   const { mode = 'page', href = '#', target = 'self', onUpdate = noop } = props;

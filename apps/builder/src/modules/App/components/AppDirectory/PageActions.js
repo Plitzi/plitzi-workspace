@@ -11,9 +11,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-
-// Alias
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 const PageActions = props => {
   const { className = '', id = '', active = false, zoom = false, defaultPage = false, onZoom = noop } = props;

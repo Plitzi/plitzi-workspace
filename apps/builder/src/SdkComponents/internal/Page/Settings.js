@@ -12,8 +12,8 @@ import Select from '@plitzi/plitzi-ui-components/Select';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
 
-// Alias
-import { getPageFullPath } from '@pmodules/Navigation/NavigationHelper';
+// Monorepo
+import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
 const Settings = props => {
   const {

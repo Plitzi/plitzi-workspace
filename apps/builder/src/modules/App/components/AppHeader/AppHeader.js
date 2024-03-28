@@ -11,12 +11,12 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
 // Relatives

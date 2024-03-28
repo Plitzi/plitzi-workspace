@@ -10,12 +10,12 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 const ContainerDefault = props => {

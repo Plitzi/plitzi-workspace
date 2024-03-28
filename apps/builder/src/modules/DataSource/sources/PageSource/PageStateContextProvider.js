@@ -6,10 +6,10 @@ import get from 'lodash/get';
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
 const PageStateContextProvider = props => {

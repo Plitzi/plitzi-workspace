@@ -5,10 +5,10 @@ import PropTypes from 'prop-types';
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
-import NavigationContext from '@modules/Navigation/NavigationContext';
 
 const PageStateContextProvider = props => {
   const { children } = props;

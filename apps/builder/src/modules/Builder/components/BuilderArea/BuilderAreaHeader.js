@@ -8,9 +8,11 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
+// Monorepo
+import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import { getPageFullPath } from '@pmodules/Navigation/NavigationHelper';
 
 // Relatives
 import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';

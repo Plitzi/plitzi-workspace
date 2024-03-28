@@ -1,0 +1,20 @@
+{
+  "name": "@plitzi/sdk-navigation",
+  "version": "0.20.9",
+  "files": [],
+  "exports": {
+    ".": "./src/index.js",
+    "./NavigationHelper": "./src/NavigationHelper.js",
+    "./NavigationContext": "./src/NavigationContext.js"
+  },
+  "scripts": {
+    "lint": "eslint ./src"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "react-router-dom": "^6.22.3"
+  }
+}

@@ -1,28 +1,23 @@
 // Packages
-import React, { useMemo, useContext, useEffect, useCallback, useRef } from 'react';
+import React, { useMemo, useContext, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import get from 'lodash/get';
 
 // Monorepo
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { getPaths, matchRoutePath } from '@plitzi/sdk-navigation/NavigationHelper';
 
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
-
-// Relatives
-import NavigationContext from './NavigationContext';
-import { getPaths, matchRoutePath } from './NavigationHelper';
 
 const NavigationContextProvider = props => {
   const { previewMode = false, children } = props;
-  const { server } = useContext(NetworkContext);
   const { pages, pageDefinitions, pageFolders } = useContext(SchemaMainContext);
   const { authenticated } = useContext(UserContext);
   const location = useLocation();
-  const navigationType = useNavigationType();
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -32,14 +27,16 @@ const NavigationContextProvider = props => {
     [pages, pageFolders, authenticated, previewMode]
   );
 
-  const {
-    pattern: { path },
-    params
-  } = useMemo(() => matchRoutePath(paths, location.pathname), [paths, location.pathname]);
+  const matchResult = useMemo(
+    () => matchRoutePath(paths, location.pathname, authenticated),
+    [paths, location.pathname, authenticated]
+  );
+
+  const { pageId: currentPageId, pathMatch } = matchResult;
+  const routeParams = get(pathMatch, 'params', {});
 
   const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const currentPageId = paths[path];
 
   const handleNavigate = useCallback(
     (url, isExternal) => {
@@ -75,15 +72,9 @@ const NavigationContextProvider = props => {
     [navigate]
   );
 
-  useEffect(() => {
-    if (path === '*' && location.pathname !== '/') {
-      navigate(get(server, 'basePath', '/'));
-    }
-  }, [pages, currentPageId, path]);
-
   const navigationValue = useMemo(
-    () => ({ navigate: handleNavigate, urlSearchParams, routeParams: params, queryParams, currentPageId }),
-    [handleNavigate, urlSearchParams, params, queryParams, currentPageId, location, navigationType]
+    () => ({ navigate: handleNavigate, urlSearchParams, routeParams, queryParams, currentPageId }),
+    [handleNavigate, urlSearchParams, routeParams, queryParams, currentPageId, location]
   );
 
   return <NavigationContext.Provider value={navigationValue}>{children}</NavigationContext.Provider>;

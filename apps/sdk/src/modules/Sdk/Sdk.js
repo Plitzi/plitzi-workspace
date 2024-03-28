@@ -10,12 +10,12 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
 import CollectionContext from '@modules/Collection/CollectionContext';
 import NetworkContext from '@modules/Network/NetworkContext';
-import NavigationContext from '@modules/Navigation/NavigationContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
 

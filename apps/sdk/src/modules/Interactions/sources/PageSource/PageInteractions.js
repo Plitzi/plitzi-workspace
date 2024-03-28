@@ -7,10 +7,10 @@ import pick from 'lodash/pick';
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
-import NavigationContext from '@modules/Navigation/NavigationContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
 const PageInteractions = props => {

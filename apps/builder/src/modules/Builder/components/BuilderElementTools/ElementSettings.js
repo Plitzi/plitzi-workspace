@@ -13,9 +13,9 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import AppContext from '@pmodules/App/AppContext';

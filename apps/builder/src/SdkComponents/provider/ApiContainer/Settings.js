@@ -7,8 +7,10 @@ import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+// Monorepo
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+
 // Alias
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
 const Settings = props => {

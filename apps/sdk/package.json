@@ -10,8 +10,7 @@
   "exports": {
     ".": "./dist/plitzi-sdk.js",
     "./plitzi-sdk.css": "./dist/plitzi-sdk.css",
-    "./plitzi-sdk-extended.css": "./dist/plitzi-sdk-extended.css",
-    "./ssr": "./dist/ssr/plitzi-sdk.js"
+    "./plitzi-sdk-extended.css": "./dist/plitzi-sdk-extended.css"
   },
   "repository": {
     "type": "https",
@@ -26,6 +25,7 @@
     "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-interactions": "*",
+    "@plitzi/sdk-navigation": "*",
     "@plitzi/sdk-plugins": "*",
     "@plitzi/sdk-shared": "*",
     "axios": "^1.6.8",

@@ -4,10 +4,12 @@ import get from 'lodash/get';
 import noop from 'lodash/noop';
 import PropTypes from 'prop-types';
 
+// Monorepo
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
-import NavigationContext from '@pmodules/Navigation/NavigationContext';
 
 const PageHeader = props => {
   const { setTabSelected = noop } = props;

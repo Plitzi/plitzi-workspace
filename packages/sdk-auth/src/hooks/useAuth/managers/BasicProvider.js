@@ -35,8 +35,13 @@ class BasicProvider {
   login = async params => {
     const { mode = 'normal', username = '', password = '', token } = params;
     if (mode === 'token' && token) {
-      this.accessToken = token;
       const data = await this.refreshDetails();
+      if (!data) {
+        return undefined;
+      }
+
+      this.accessToken = token;
+      this.isAuthenticated = true;
 
       return data;
     }
@@ -62,6 +67,10 @@ class BasicProvider {
   };
 
   refreshDetails = async () => {
+    if (!this.isAuthenticated || !this.accessToken || !this.network.refreshUrl) {
+      return undefined;
+    }
+
     const response = await this.networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
     if (response && response.networkSuccess) {
       const { data } = response;
@@ -75,7 +84,7 @@ class BasicProvider {
       return data;
     }
 
-    return false;
+    return undefined;
   };
 
   logout = () => {
