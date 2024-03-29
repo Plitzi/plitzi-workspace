@@ -35,13 +35,15 @@ class BasicProvider {
   login = async params => {
     const { mode = 'normal', username = '', password = '', token } = params;
     if (mode === 'token' && token) {
-      const data = await this.refreshDetails();
-      if (!data) {
-        return undefined;
-      }
-
       this.accessToken = token;
       this.isAuthenticated = true;
+      const data = await this.refreshDetails();
+      if (!data) {
+        this.accessToken = undefined;
+        this.isAuthenticated = false;
+
+        return undefined;
+      }
 
       return data;
     }
@@ -156,13 +158,7 @@ class BasicProvider {
       });
 
       const dataOrParams = ['get', 'delete'].includes(method) ? 'params' : 'data';
-      const { data: response, status } = await axios.request({
-        url,
-        method,
-        headers,
-        withCredentials: true,
-        [dataOrParams]: params
-      });
+      const { data: response, status } = await axios.request({ url, method, headers, [dataOrParams]: params });
       result = response;
       if (status === 204 && method === 'delete') {
         result = { networkSuccess: true, data: null };
