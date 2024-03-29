@@ -161,7 +161,6 @@ const ApiContainer = forwardRef((props, ref) => {
   );
 
   useEffect(() => {
-    console.log(when);
     if (!when || when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams })) {
       processFetch(queryCompiled, method);
     } else {
