@@ -76,8 +76,8 @@ class BasicProvider {
     const response = await this.networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
     if (response && response.networkSuccess) {
       const { data } = response;
-      if (!data.success) {
-        return data;
+      if (!data) {
+        return undefined;
       }
 
       this.userDetails = get(data, this.paths.detailsPath);
@@ -167,7 +167,7 @@ class BasicProvider {
       console.error(e);
     }
 
-    return result;
+    return { networkSuccess: !!result, data: result };
   };
 }
 
