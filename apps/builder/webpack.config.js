@@ -65,7 +65,8 @@ const build = (env, args) => {
     },
     target: 'web',
     devServer: {
-      compress: false,
+      compress: true,
+      allowedHosts: 'all',
       hot: true,
       liveReload: false,
       historyApiFallback: true,
