@@ -34,7 +34,7 @@ const ListControlled = forwardRef((props, ref) => {
   useDataSource({
     id,
     source: `list-${id}`,
-    name: `Plitzi - List ${id}`,
+    name: `List ${id}`,
     value: listContextValue,
     fields: sourceFields
   });
