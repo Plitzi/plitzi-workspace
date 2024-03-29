@@ -15,14 +15,14 @@ class BasicProvider {
       tokenPath = 'access_token',
       expirationTimePath = 'expire_at'
     } = props;
-    this.userDetails = get(cache, detailsPath, undefined);
-    this.accessToken = get(cache, tokenPath, undefined);
+    this.userDetails = get(cache, 'details', undefined);
+    this.accessToken = get(cache, 'access_token', undefined);
     this.isAuthenticated = !!this.userDetails && !!this.accessToken;
-    this.expireAt = get(cache, expirationTimePath, 0);
+    this.expireAt = get(cache, 'expire_at', 0);
+    this.expireIn = get(cache, 'expire_in', 0);
     this.expireHandler = undefined;
 
     // Cache
-    // this.cache = cache;
     this.setCache = setCache;
     this.clearCache = clearCache;
 
@@ -54,7 +54,7 @@ class BasicProvider {
         return data;
       }
 
-      this.userDetails = get(data, this.paths.detailsPath);
+      this.userDetails = this.paths.detailsPath ? get(data, this.paths.detailsPath) : data;
       this.accessToken = get(data, this.paths.tokenPath);
       this.expireAt = get(data, this.paths.expirationTimePath, 0);
       this.isAuthenticated = true;
@@ -84,11 +84,7 @@ class BasicProvider {
         return undefined;
       }
 
-      this.userDetails = get(data, this.paths.detailsPath);
-      this.accessToken = get(data, this.paths.tokenPath);
-      this.expireAt = get(data, this.paths.expirationTimePath, 0);
-      this.isAuthenticated = true;
-      this.setExpiration();
+      this.userDetails = this.paths.detailsPath ? get(data, this.paths.detailsPath) : data;
       this.setCache({
         access_token: this.accessToken,
         details: this.userDetails,
