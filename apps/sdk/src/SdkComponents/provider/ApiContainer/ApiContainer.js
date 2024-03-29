@@ -25,7 +25,7 @@ const ApiContainer = forwardRef((props, ref) => {
     query = '',
     method = 'get',
     accessToken = '',
-    when,
+    when = emptyObject,
     mockData = '{}',
     subType = 'div'
   } = props;
@@ -161,7 +161,7 @@ const ApiContainer = forwardRef((props, ref) => {
   );
 
   useEffect(() => {
-    if ((when && QueryBuilderEvaluator(when, { ...routeParams, ...queryParams })) || !when) {
+    if ((when && when !== emptyObject && QueryBuilderEvaluator(when, { ...routeParams, ...queryParams })) || !when) {
       processFetch(queryCompiled, method);
     }
   }, [processFetch, queryCompiled, method, previewMode]);
