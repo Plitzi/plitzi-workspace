@@ -29,6 +29,7 @@ const processParams = (type, params, flowValues, globalValues, action) => {
     return { ...acum, [param]: value };
   }, {});
 };
+
 const processNode = async (node, callbacksAvailables = {}, flowParams = {}, globalParams = {}) => {
   let result = {};
   const postCallbacks = [];
