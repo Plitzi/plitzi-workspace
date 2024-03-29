@@ -1,6 +1,5 @@
 // Packages
 import get from 'lodash/get';
-import omit from 'lodash/omit';
 import moment from 'moment';
 import axios from 'axios';
 
@@ -60,7 +59,12 @@ class BasicProvider {
       this.expireAt = get(data, this.paths.expirationTimePath, 0);
       this.isAuthenticated = true;
       this.setExpiration();
-      this.setCache(omit(data, ['success']));
+      this.setCache({
+        access_token: this.accessToken,
+        details: this.userDetails,
+        expire_at: this.expireAt,
+        expire_in: get(data, 'expire_in', 0)
+      });
 
       return data;
     }
@@ -81,7 +85,16 @@ class BasicProvider {
       }
 
       this.userDetails = get(data, this.paths.detailsPath);
-      this.setCache(omit(data, ['success']));
+      this.accessToken = get(data, this.paths.tokenPath);
+      this.expireAt = get(data, this.paths.expirationTimePath, 0);
+      this.isAuthenticated = true;
+      this.setExpiration();
+      this.setCache({
+        access_token: this.accessToken,
+        details: this.userDetails,
+        expire_at: this.expireAt,
+        expire_in: get(data, 'expire_in', 0)
+      });
 
       return data;
     }

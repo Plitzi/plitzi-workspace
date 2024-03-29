@@ -26,9 +26,9 @@ const ContainerSettings = () => {
     // Provider - Basic
     loginUrl,
     refreshUrl,
-    detailsPath,
-    tokenPath,
-    expirationTimePath
+    detailsPath = 'details',
+    tokenPath = 'access_token',
+    expirationTimePath = 'expire_at'
   } = settings;
 
   const handleChange = useCallback(
@@ -147,9 +147,7 @@ const ContainerSettings = () => {
         )}
       </div>
       <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
-        <Heading type="h4">
-          State Settings
-        </Heading>
+        <Heading type="h4">State Settings</Heading>
         <FormControl
           name="keepState"
           inputProps={keepStateProps}

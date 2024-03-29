@@ -14,7 +14,14 @@ import useAuth from './hooks/useAuth';
 
 const UserBaseContextProvider = props => {
   const { previewMode = true, children, webId = 0 } = props;
-  const { userProvider, loginUrl, refreshUrl } = useContext(SchemaSettingsContext);
+  const {
+    userProvider,
+    loginUrl,
+    refreshUrl,
+    detailsPath = 'details',
+    tokenPath = 'access_token',
+    expirationTimePath = 'expire_at'
+  } = useContext(SchemaSettingsContext);
   let loading = false;
   switch (userProvider) {
     case 'auth0':
@@ -26,7 +33,15 @@ const UserBaseContextProvider = props => {
     default:
   }
 
-  const { manager } = useAuth({ provider: userProvider, loginUrl, refreshUrl, webId });
+  const { manager } = useAuth({
+    provider: userProvider,
+    loginUrl,
+    refreshUrl,
+    webId,
+    detailsPath,
+    tokenPath,
+    expirationTimePath
+  });
   const valueMemo = useMemo(() => {
     if (!manager) {
       return {
