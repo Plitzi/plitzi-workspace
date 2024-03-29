@@ -156,6 +156,7 @@ App.propTypes = {
   ]),
   sdkStylePath: PropTypes.string,
   previewMode: PropTypes.bool,
+  debugMode: PropTypes.bool,
   externalStyle: PropTypes.string,
   state: PropTypes.object
 };

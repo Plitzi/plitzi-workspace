@@ -35,7 +35,7 @@ export const RENDER_MODE_SSR = 'ssr';
 export const RENDER_MODE_WIDGET = 'widget';
 
 const Sdk = props => {
-  const { renderMode = RENDER_MODE_IFRAME, externalStyle = '', environment = 'main', previewMode = true } = props;
+  const { renderMode = RENDER_MODE_IFRAME, externalStyle = '', environment = 'main', previewMode = true, debugMode = false } = props;
   const { currentPageId } = useContext(NavigationContext);
   const { assets } = useContext(PluginsContext);
   const iframeRef = useRef(null);
@@ -72,6 +72,7 @@ const Sdk = props => {
     () => ({
       settings: {
         previewMode,
+        debugMode,
         currentPageId,
         renderMode,
         environment,
@@ -127,6 +128,7 @@ Sdk.propTypes = {
   children: PropTypes.node,
   environment: PropTypes.string,
   previewMode: PropTypes.bool,
+  debugMode: PropTypes.bool,
   externalStyle: PropTypes.string,
   renderMode: PropTypes.oneOf([
     RENDER_MODE_RAW,

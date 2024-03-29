@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import Handlebars from 'handlebars';
 import Axios from 'axios';
 import get from 'lodash/get';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
 
 // Monorepo
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
@@ -24,13 +25,14 @@ const ApiContainer = forwardRef((props, ref) => {
     query = '',
     method = 'get',
     accessToken = '',
+    when,
     mockData = '{}',
     subType = 'div'
   } = props;
   const { id } = internalProps;
   const [state, setState] = useState({ statusCode: 0, data: undefined });
   const {
-    settings: { previewMode },
+    settings: { previewMode, debugMode },
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = useContext(InteractionsContext);
@@ -46,12 +48,22 @@ const ApiContainer = forwardRef((props, ref) => {
     }
 
     try {
-      const template = Handlebars.compile(query);
       const handleBarsParams = { ...queryParams, ...routeParams };
+      // Check if Tokens required are defined first, if not skip fetch
+      if (debugMode) {
+        [...query.matchAll(/{{([ ]+|)(?<token>[a-zA-Z0-9-_:*/]+)([ ]+|)}}/gim)].forEach(({ groups }) => {
+          const token = groups.token.trim();
+          if (!get(handleBarsParams, token)) {
+            console.log(`Token ${token} is required`);
+          }
+        });
+      }
+
+      const template = Handlebars.compile(query);
 
       return template(handleBarsParams);
     } catch (e) {
-      // nothing to do
+      console.error(e.message);
     }
 
     return '';
@@ -149,7 +161,9 @@ const ApiContainer = forwardRef((props, ref) => {
   );
 
   useEffect(() => {
-    processFetch(queryCompiled, method);
+    if ((when && QueryBuilderEvaluator(when, { ...routeParams, ...queryParams })) || !when) {
+      processFetch(queryCompiled, method);
+    }
   }, [processFetch, queryCompiled, method, previewMode]);
 
   useDataSource({
@@ -208,6 +222,7 @@ ApiContainer.propTypes = {
   query: PropTypes.string,
   method: PropTypes.oneOf(['get', 'post']),
   accessToken: PropTypes.string,
+  when: PropTypes.object,
   mockData: PropTypes.string,
   subType: PropTypes.oneOf([
     'div',

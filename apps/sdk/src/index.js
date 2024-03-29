@@ -46,7 +46,12 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
     }, []);
 
     return (
-      <App {...params} onInitStateManager={handleInitStateManager} onInitEventBridge={handleInitEventBridge}>
+      <App
+        {...params}
+        debugMode={debugMode}
+        onInitStateManager={handleInitStateManager}
+        onInitEventBridge={handleInitEventBridge}
+      >
         {pluginKeys.map(pluginType => (
           <Sdk.Plugin key={pluginType} renderType={pluginType} component={plugins[pluginType]} />
         ))}
@@ -101,14 +106,13 @@ const PlitziSdk = props => {
   }, []);
 
   return (
-    <App renderMode={renderMode} {...otherProps} webKey={webKey} environment={environment}>
+    <App {...otherProps} renderMode={renderMode} debugMode={debugMode} webKey={webKey} environment={environment}>
       {children}
     </App>
   );
 };
 
 PlitziSdk.propTypes = {
-  debugMode: PropTypes.bool,
   // App
   className: PropTypes.string,
   children: PropTypes.node,
@@ -131,6 +135,7 @@ PlitziSdk.propTypes = {
     RENDER_MODE_SSR,
     RENDER_MODE_WIDGET
   ]),
+  debugMode: PropTypes.bool,
   previewMode: PropTypes.bool,
   externalStyle: PropTypes.string,
   state: PropTypes.object

@@ -79,7 +79,6 @@ const TransformerParam = props => {
         {type === 'checkbox' && <Checkbox onChange={handleChange} checked={value} />}
         {type === 'codemirror-text' && (
           <CodeMirror
-            className="min-h-[80px]"
             value={value}
             theme="light"
             mode="text"
