@@ -49,16 +49,12 @@ const getPageFullPath = (flat, pageFolders, pageId, asString = false) => {
     return `/${pageSlug}`;
   }
 
-  const { slug: folderSlug } = pageFolder;
-
+  const path = [recursiveFolderSlug(pageFolders, folderId), pageFolder.slug, pageSlug].filter(Boolean).join('/');
   if (asString) {
-    return `${recursiveFolderSlug(pageFolders, folderId)}/${folderSlug}/${pageSlug}`;
+    return path;
   }
 
-  return {
-    [parsePath(`${recursiveFolderSlug(pageFolders, folderId)}/${folderSlug}/${pageSlug}`)]: pageId,
-    [`/${pageId}`]: pageId
-  };
+  return { [path]: pageId, [`/${pageId}`]: pageId };
 };
 
 const isPageAuthored = (accessLevel, authenticated, previewMode = true) => {
