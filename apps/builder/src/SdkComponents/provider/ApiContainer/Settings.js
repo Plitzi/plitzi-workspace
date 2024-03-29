@@ -82,14 +82,9 @@ const Settings = props => {
           <Input value={accessToken} onChange={handleChange('accessToken')} inputClassName="rounded" />
         </div>
         <div className="flex gap-1">
-          <Switch
-            value={advancedSettings}
-            size="sm"
-            // inputClassName="rounded-tl-sm before:rounded-full"
-            className="!w-auto"
-            onChange={handleChangeEnabled}
-          />
-          <label>Advanced Settings</label>
+          <Switch value={advancedSettings} size="sm" className="!w-auto" onChange={handleChangeEnabled}>
+            Advanced Settings
+          </Switch>
         </div>
         {advancedSettings && (
           <>
