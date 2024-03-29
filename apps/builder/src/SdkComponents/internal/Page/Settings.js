@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
@@ -33,7 +33,6 @@ const Settings = props => {
     unauthorizedPageRedirect = '',
     onUpdate = noop
   } = props;
-  const slugRef = useRef(slug);
   let description = seoPageDescription;
   if (seoPageDescription.length > 160) {
     description = `${seoPageDescription.substr(0, 160)}...`;
@@ -77,7 +76,12 @@ const Settings = props => {
   const handleChangeName = useCallback(
     e => {
       onUpdate('name', e.target.value);
-      if (!slugRef.current) {
+      const nameAsSlug = name
+        .replaceAll(' ', '-')
+        .toLowerCase()
+        .replaceAll(/([^a-z0-9]+)/gi, '');
+        console.log(slug, nameAsSlug);
+      if (!slug || slug === nameAsSlug) {
         onUpdate(
           'slug',
           e.target.value
@@ -87,7 +91,7 @@ const Settings = props => {
         );
       }
     },
-    [onUpdate, slug]
+    [onUpdate, slug, name]
   );
 
   const handleChangeSlug = useCallback(
@@ -96,7 +100,6 @@ const Settings = props => {
       if (pattern.test(e.target.value) || !e.target.value) {
         const newSlug = e.target.value.replaceAll('//', '/');
         onUpdate('slug', newSlug);
-        slugRef.current = newSlug;
       }
     },
     [onUpdate]
