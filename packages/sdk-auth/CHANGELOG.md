@@ -1,5 +1,11 @@
 # @plitzi/sdk-auth
 
+## 0.20.13
+
+### Patch Changes
+
+- v0.20.13
+
 ## 0.20.12
 
 ### Patch Changes
