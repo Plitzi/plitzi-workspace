@@ -12,12 +12,10 @@ import RootElement from '@modules/Element/RootElement';
 
 const Heading = forwardRef((props, ref) => {
   const { internalProps = emptyObject, className = '', content = 'Heading', subType = 'h1' } = props;
-
   const interactionTriggers = useMemo(() => ({ onClick: { title: 'On Click', params: {} } }), []);
-
-  const contentMemo = useMemo(() => {
-    if (typeof content !== 'string' || content === '') {
-      return 'Heading';
+  const finalContent = useMemo(() => {
+    if (typeof content !== 'string' && typeof content !== 'number') {
+      return JSON.stringify(content);
     }
 
     return content;
@@ -35,7 +33,7 @@ const Heading = forwardRef((props, ref) => {
         className
       )}
     >
-      {contentMemo}
+      {finalContent || 'Heading'}
     </RootElement>
   );
 });

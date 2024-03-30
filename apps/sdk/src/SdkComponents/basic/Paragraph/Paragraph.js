@@ -1,5 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
@@ -12,6 +12,13 @@ import RootElement from '@modules/Element/RootElement';
 
 const Paragraph = forwardRef((props, ref) => {
   const { content = 'Paragraph', className = '', internalProps = emptyObject } = props;
+  const finalContent = useMemo(() => {
+    if (typeof content !== 'string' && typeof content !== 'number') {
+      return JSON.stringify(content);
+    }
+
+    return content;
+  }, [content]);
 
   return (
     <RootElement
@@ -20,7 +27,7 @@ const Paragraph = forwardRef((props, ref) => {
       internalProps={internalProps}
       className={classNames('plitzi-component__paragraph', className)}
     >
-      {content || 'Paragraph'}
+      {finalContent || 'Paragraph'}
     </RootElement>
   );
 });
