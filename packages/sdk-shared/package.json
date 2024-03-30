@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.20.13",
+  "version": "0.20.14",
   "files": [],
   "exports": {
     "./utils": "./src/helpers/utils.js",

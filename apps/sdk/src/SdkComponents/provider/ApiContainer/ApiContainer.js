@@ -71,6 +71,18 @@ const ApiContainer = forwardRef((props, ref) => {
 
   const fetch = useCallback(
     async (url, method = 'get') => {
+      if (!previewMode && mockData && mockData !== '{}') {
+        try {
+          if (typeof mockData === 'string') {
+            return { statusCode: 200, data: JSON.parse(mockData) };
+          }
+
+          return { statusCode: 200, data: mockData };
+        } catch (e) {
+          return { statusCode: 500, data: e.message };
+        }
+      }
+
       if (!url || !Axios[method] || typeof Axios[method] !== 'function') {
         return undefined;
       }
@@ -88,27 +100,14 @@ const ApiContainer = forwardRef((props, ref) => {
         return err.message;
       }
     },
-    [accessToken]
+    [accessToken, mockData]
   );
 
   const processFetch = useCallback(
     async (url, method) => {
       let statusCode = 0;
       let result;
-      if (!previewMode && mockData && mockData !== '{}') {
-        if (typeof mockData === 'string') {
-          try {
-            result = JSON.parse(mockData);
-            statusCode = 200;
-          } catch (e) {
-            result = e.message;
-            statusCode = 500;
-          }
-        } else {
-          result = mockData;
-          statusCode = 200;
-        }
-      } else if (url && method) {
+      if (url && method) {
         try {
           result = await fetch(url, method);
           const { status, data } = result;
@@ -134,15 +133,15 @@ const ApiContainer = forwardRef((props, ref) => {
         interactionsManager.interactionTrigger(id, 'onApiError', { url, method, data: result, status: statusCode });
       }
     },
-    [fetch, id, interactionsManager, previewMode, mockData]
+    [fetch, id, interactionsManager]
   );
 
   const sourceFields = useCallback(
     async (refetch = false) => {
       let data = state;
-      if (refetch && state && state.statusCode > 0 && state.statusCode <= 399) {
+      if (refetch) {
         const response = await fetch(queryCompiled, method);
-        if (response && typeof response === 'object') {
+        if (response && typeof response === 'object' && response.status < 500) {
           const { status, data: responseData } = response;
           data = { statusCode: status, data: responseData };
         }

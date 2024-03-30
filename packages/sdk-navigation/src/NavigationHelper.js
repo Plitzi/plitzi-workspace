@@ -51,10 +51,10 @@ const getPageFullPath = (flat, pageFolders, pageId, asString = false) => {
 
   const path = [recursiveFolderSlug(pageFolders, folderId), pageFolder.slug, pageSlug].filter(Boolean).join('/');
   if (asString) {
-    return path;
+    return `/${path}`;
   }
 
-  return { [path]: pageId, [`/${pageId}`]: pageId };
+  return { [`/${path}`]: pageId, [`/${pageId}`]: pageId };
 };
 
 const isPageAuthored = (accessLevel, authenticated, previewMode = true) => {

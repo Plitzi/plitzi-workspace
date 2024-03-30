@@ -64,10 +64,14 @@ const BuilderAreaHeader = props => {
     }
   }, [baseElementId, setSelected]);
 
-  const fullpath = useMemo(
-    () => getPageFullPath(flat, pageFolders, baseElementId, true),
-    [flat, pageFolders, baseElementId]
-  );
+  const fullpath = useMemo(() => {
+    const path = getPageFullPath(flat, pageFolders, baseElementId, true);
+    if (path === '/') {
+      return '';
+    }
+
+    return path;
+  }, [flat, pageFolders, baseElementId]);
 
   const title = get(element, 'attributes.name', 'Page');
   const defaultPage = get(element, 'attributes.default', false);
