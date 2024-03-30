@@ -114,7 +114,7 @@ const ModalContainer = forwardRef((props, ref) => {
   useDataSource({
     id,
     source: `modalContainer-${id}`,
-    name: `Plitzi - Modal Container ${id}`,
+    name: `Modal Container ${id}`,
     value: internalMetadata,
     fields: sourceFields
   });

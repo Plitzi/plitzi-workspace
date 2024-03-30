@@ -42,7 +42,7 @@ const PageStateContextProvider = props => {
   useDataSource({
     id: 'global',
     source: 'page',
-    name: 'Plitzi - Page State',
+    name: 'Page State',
     contextName: 'PageContext',
     value: finalState,
     fields: sourceFields

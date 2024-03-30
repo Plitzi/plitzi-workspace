@@ -138,7 +138,7 @@ const DialogContainer = forwardRef((props, ref) => {
   useDataSource({
     id,
     source: `dialogContainer-${id}`,
-    name: `Plitzi - Dialog Container ${id}`,
+    name: `Dialog Container ${id}`,
     value: internalMetadata,
     fields: sourceFields
   });

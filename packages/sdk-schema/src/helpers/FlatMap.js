@@ -267,6 +267,15 @@ const parentTree = (flat, elementId) => {
   }
 
   do {
+    const type = get(element, 'definition.type');
+    if (type === 'page') {
+      const layout = get(element, 'attributes.layout');
+      const layoutContainer = get(element, 'attributes.layoutContainer');
+      if (layout && layoutContainer) {
+        ids.push(layoutContainer, ...parentTree(flat, layoutContainer));
+      }
+    }
+
     if (elementId !== element.id) {
       ids.push(element.id);
     }

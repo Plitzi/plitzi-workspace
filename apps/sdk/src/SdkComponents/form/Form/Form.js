@@ -136,7 +136,7 @@ const Form = forwardRef((props, ref) => {
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );
 
-  useDataSource({ id, source: 'form', name: `Plitzi - Form ${id}`, fields: sourceFields, value: contextValue });
+  useDataSource({ id, source: 'form', name: `Form ${id}`, fields: sourceFields, value: contextValue });
 
   // Interactions Triggers
 
