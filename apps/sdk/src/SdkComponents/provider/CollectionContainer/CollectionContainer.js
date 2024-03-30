@@ -54,13 +54,12 @@ const CollectionContainer = forwardRef((props, ref) => {
     return fields;
   }, [collection, singleRecord]);
 
-  useDataSource({
-    id,
-    source: `collectionContainer-${id}`,
-    name: `Collection Container ${collection?.name}`,
-    value: collection,
-    fields: sourceFields
-  });
+  const sourceName = useMemo(
+    () => get(internalProps, 'definition.label', `Collection - ${collection?.name || id}`),
+    [id, internalProps?.definition?.label, collection?.name]
+  );
+
+  useDataSource({ id, source: `collectionContainer_${id}`, name: sourceName, value: collection, fields: sourceFields });
 
   const handleFetch = useCallback(
     async (/* params */) => {

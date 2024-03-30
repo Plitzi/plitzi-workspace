@@ -135,8 +135,12 @@ const Form = forwardRef((props, ref) => {
     () => ({ fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError }),
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );
+  const sourceName = useMemo(
+    () => get(internalProps, 'definition.label', `Form - ${id}`),
+    [id, internalProps?.definition?.label]
+  );
 
-  useDataSource({ id, source: 'form', name: `Form ${id}`, fields: sourceFields, value: contextValue });
+  useDataSource({ id, source: 'form', name: sourceName, fields: sourceFields, value: contextValue });
 
   // Interactions Triggers
 

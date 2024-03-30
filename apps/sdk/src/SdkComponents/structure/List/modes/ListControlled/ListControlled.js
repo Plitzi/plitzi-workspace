@@ -31,13 +31,12 @@ const ListControlled = forwardRef((props, ref) => {
 
   const listContextValue = useMemo(() => ({ items }), [items]);
 
-  useDataSource({
-    id,
-    source: `list-${id}`,
-    name: `List ${id}`,
-    value: listContextValue,
-    fields: sourceFields
-  });
+  const sourceName = useMemo(
+    () => get(internalProps, 'definition.label', `List - ${id}`),
+    [id, internalProps?.definition?.label]
+  );
+
+  useDataSource({ id, source: `list_${id}`, name: sourceName, value: listContextValue, fields: sourceFields });
 
   return (
     <RootElement

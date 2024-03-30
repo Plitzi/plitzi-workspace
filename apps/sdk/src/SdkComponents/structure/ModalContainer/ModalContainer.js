@@ -111,10 +111,15 @@ const ModalContainer = forwardRef((props, ref) => {
     }, []);
   }, [internalMetadata]);
 
+  const sourceName = useMemo(
+    () => get(internalProps, 'definition.label', `Modal - ${id}`),
+    [id, internalProps?.definition?.label]
+  );
+
   useDataSource({
     id,
-    source: `modalContainer-${id}`,
-    name: `Modal Container ${id}`,
+    source: `modalContainer_${id}`,
+    name: sourceName,
     value: internalMetadata,
     fields: sourceFields
   });

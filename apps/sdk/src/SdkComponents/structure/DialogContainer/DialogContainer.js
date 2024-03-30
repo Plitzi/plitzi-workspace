@@ -135,10 +135,15 @@ const DialogContainer = forwardRef((props, ref) => {
     }, []);
   }, [internalMetadata]);
 
+  const sourceName = useMemo(
+    () => get(internalProps, 'definition.label', `Dialog - ${id}`),
+    [id, internalProps?.definition?.label]
+  );
+
   useDataSource({
     id,
-    source: `dialogContainer-${id}`,
-    name: `Dialog Container ${id}`,
+    source: `dialogContainer_${id}`,
+    name: sourceName,
     value: internalMetadata,
     fields: sourceFields
   });

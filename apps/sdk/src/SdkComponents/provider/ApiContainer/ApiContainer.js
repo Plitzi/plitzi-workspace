@@ -172,13 +172,12 @@ const ApiContainer = forwardRef((props, ref) => {
     }
   }, [processFetch, queryCompiled, method, previewMode]);
 
-  useDataSource({
-    id,
-    source: `apiContainer-${id}`,
-    name: `Api Container ${id}`,
-    value: state,
-    fields: sourceFields
-  });
+  const sourceName = useMemo(
+    () => get(internalProps, 'definition.label', `Api - ${id}`),
+    [id, internalProps?.definition?.label]
+  );
+
+  useDataSource({ id, source: `apiContainer_${id}`, name: sourceName, value: state, fields: sourceFields });
 
   const handlePerformQuery = useCallback(
     () => processFetch(queryCompiled, method),
