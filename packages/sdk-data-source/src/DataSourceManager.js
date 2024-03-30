@@ -17,6 +17,7 @@ class DataSourceManager {
     this.schema = undefined;
     this.parentManager = undefined;
     this.childManagers = [];
+    this.currentPageId = undefined;
     this.eventBridge = new EventBridge();
   }
 
@@ -33,6 +34,13 @@ class DataSourceManager {
     let childIds = Object.keys(get(this.eventBridge, 'events.dataSource-receiver', {}));
     if (this.schema?.flat && id !== 'global') {
       childIds = FlatMap.getChildTree(this.schema.flat, id);
+      const { layout, layoutContainer } = get(this.schema, `flat.${this.currentPageId}.attributes`, {});
+      const rootId = get(this.schema, `flat.${id}.definition.rootId`);
+
+      if (layout && layoutContainer && layout === rootId) {
+        // Element in layout, get child for the whole page
+        childIds.push(this.currentPageId, ...FlatMap.getChildTree(this.schema.flat, this.currentPageId));
+      }
     }
 
     this.eventBridge.emit('dataSource-receiver', childIds, currentTime);
