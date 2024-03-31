@@ -22,14 +22,24 @@ const ListControlled = forwardRef((props, ref) => {
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
   const { useDataSource } = useContext(DataSourceContext);
+  const finalItems = useMemo(() => {
+    if (Array.isArray(items)) {
+      return items;
+    }
+
+    return [];
+  }, []);
 
   const sourceFields = useCallback(
     async () =>
-      getPathsFromObeject({ item: get(items, '0', {}) }).reduce((acum, path) => [...acum, { path, name: path }], []),
-    [items]
+      getPathsFromObeject({ item: get(finalItems, '0', {}) }).reduce(
+        (acum, path) => [...acum, { path, name: path }],
+        []
+      ),
+    [finalItems]
   );
 
-  const listContextValue = useMemo(() => ({ items }), [items]);
+  const listContextValue = useMemo(() => ({ items: finalItems }), [finalItems]);
 
   const sourceName = useMemo(
     () => get(internalProps, 'definition.label', `List - ${id}`),
@@ -46,23 +56,22 @@ const ListControlled = forwardRef((props, ref) => {
         'controlled-list--build-mode': !previewMode
       })}
     >
-      {Array.isArray(items) &&
-        items.map((item, i) => {
-          if (!children || (Array.isArray(children) && children.length === 0)) {
-            return (
-              <div className="plitzi-component__controlled-list-item controlled-list--empty" key={i}>
-                <div className="controlled-list-item__counter">{`List Item - ${i + 1}`}</div>
-              </div>
-            );
-          }
-
+      {finalItems.map((item, i) => {
+        if (!children || (Array.isArray(children) && children.length === 0)) {
           return (
-            <ListControlledItem key={i} itemCount={i} parentId={id} isTemplate={i !== 0 && !previewMode} record={item}>
-              {children}
-            </ListControlledItem>
+            <div className="plitzi-component__controlled-list-item controlled-list--empty" key={i}>
+              <div className="controlled-list-item__counter">{`List Item - ${i + 1}`}</div>
+            </div>
           );
-        })}
-      {!previewMode && Array.isArray(items) && items.length === 0 && (
+        }
+
+        return (
+          <ListControlledItem key={i} itemCount={i} parentId={id} isTemplate={i !== 0 && !previewMode} record={item}>
+            {children}
+          </ListControlledItem>
+        );
+      })}
+      {!previewMode && finalItems.length === 0 && (
         <div className="controlled-list controlled-list--empty">This list does not contain any items</div>
       )}
     </RootElement>

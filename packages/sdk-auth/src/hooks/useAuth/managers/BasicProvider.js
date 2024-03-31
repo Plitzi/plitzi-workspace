@@ -1,7 +1,6 @@
 // Packages
 import get from 'lodash/get';
 import moment from 'moment';
-import axios from 'axios';
 
 class BasicProvider {
   constructor(props = {}) {
@@ -48,7 +47,7 @@ class BasicProvider {
     }
 
     const response = await this.networkQuery(this.network.loginUrl, { username, password }, 'post');
-    if (response && response.networkSuccess) {
+    if (response) {
       const { data } = response;
       if (!data.success) {
         return data;
@@ -78,7 +77,7 @@ class BasicProvider {
     }
 
     const response = await this.networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
-    if (response && response.networkSuccess) {
+    if (response) {
       const { data } = response;
       if (!data) {
         return undefined;
@@ -166,17 +165,26 @@ class BasicProvider {
         }
       });
 
-      const dataOrParams = ['get', 'delete'].includes(method) ? 'params' : 'data';
-      const { data: response, status } = await axios.request({ url, method, headers, [dataOrParams]: params });
-      result = response;
-      if (status === 204 && method === 'delete') {
-        result = { networkSuccess: true, data: null };
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      const fetchOptions = { method, headers, body: formData };
+      if (method === 'get') {
+        delete fetchOptions.body;
+      }
+
+      const response = await fetch(url, fetchOptions);
+      result = { status: response.status, data: await response.json() };
+      if (response.status === 204 && method === 'delete') {
+        result = true;
       }
     } catch (e) {
       console.error(e);
     }
 
-    return { networkSuccess: !!result, data: result };
+    return result.data;
   };
 }
 

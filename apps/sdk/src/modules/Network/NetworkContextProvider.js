@@ -1,7 +1,7 @@
 // Packages
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { withApollo } from '@apollo/client/react/hoc';
+import { withApollo } from '@apollo/client/react/hoc/withApollo';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import noop from 'lodash/noop';

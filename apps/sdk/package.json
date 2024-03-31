@@ -28,7 +28,6 @@
     "@plitzi/sdk-navigation": "*",
     "@plitzi/sdk-plugins": "*",
     "@plitzi/sdk-shared": "*",
-    "axios": "^1.6.8",
     "classnames": "^2.5.1",
     "dompurify": "^3.0.11",
     "graphql": "^16.8.1",

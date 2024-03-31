@@ -1,5 +1,5 @@
 // Packages
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SegmentsQuery = gql`
   query SegmentsQuery($environment: String!, $filter: SegmentInput, $cursor: String, $limit: Int) {

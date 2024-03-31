@@ -2,8 +2,10 @@
 import React, { useEffect, Children, isValidElement, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { BrowserRouter } from 'react-router-dom';
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core';
-import { ApolloProvider } from '@apollo/client/react';
+import { createHttpLink } from '@apollo/client/link/http/createHttpLink';
+import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
+import { ApolloClient } from '@apollo/client/core/ApolloClient';
+import { ApolloProvider } from '@apollo/client/react/context';
 import { setContext } from '@apollo/client/link/context';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -92,10 +94,7 @@ const App = props => {
 
   if (renderMode === RENDER_MODE_WIDGET) {
     return (
-      <ContainerRoot
-        className={classNames('plitzi-sdk flex flex-col', className)}
-        ssrMode={renderMode === RENDER_MODE_SSR}
-      >
+      <ContainerRoot className={classNames('plitzi-sdk flex flex-col', className)}>
         <HelmetProvider>
           <ApolloProvider client={client}>
             <ComponentProvider localCustomComponents={localCustomComponents}>

@@ -1,5 +1,5 @@
 // Packages
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const CollectionRecordsQuery = gql`
   query CollectionRecordsQuery($collectionId: String!, $filter: JsonObject, $cursor: String, $limit: Int) {

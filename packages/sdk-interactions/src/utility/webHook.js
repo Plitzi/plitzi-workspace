@@ -1,30 +1,36 @@
-import axios from 'axios';
-
 const callback = async params => {
   const { url, authorizationToken, body } = params;
   let { method } = params;
   let response = {};
 
   try {
-    method = method.toLowerCase();
+    method = method.toUpperCase();
     const headers = {};
     if (authorizationToken) {
       headers.Authorization = `Bearer ${authorizationToken}`;
     }
 
-    const dataOrParams = ['get', 'delete'].includes(method) ? 'params' : 'data';
-    const { data, status } = await axios.request({
-      url,
-      method,
-      headers,
-      withCredentials: true,
-      [dataOrParams]: body,
-      validateStatus: () => true
+    Object.values(body).forEach(value => {
+      if (value instanceof Blob && headers['Content-Type'] !== 'multipart/form-data') {
+        headers['Content-Type'] = 'multipart/form-data';
+
+        return;
+      }
     });
-    response = { status: `${status}`, data };
-    if (status >= 200 && status < 300 && method === 'delete') {
-      response = { status: `${status}`, data: null };
+
+    const formData = new FormData();
+    Object.entries(body).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    const fetchOptions = { method, headers, body: formData };
+    if (method === 'get') {
+      delete fetchOptions.body;
     }
+
+    const res = await fetch(url, fetchOptions);
+
+    response = { statusCode: res.status, data: await res.json() };
   } catch (e) {
     console.error(e);
   } finally {

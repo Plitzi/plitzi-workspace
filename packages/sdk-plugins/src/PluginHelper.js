@@ -1,7 +1,6 @@
 // Packages
 import get from 'lodash/get';
 import omit from 'lodash/omit';
-import axios from 'axios';
 
 const getComponentDefinition = (pluginRaw, pluginManifest) => {
   try {
@@ -79,17 +78,18 @@ export const fetchPluginsManifest = async manifests => {
   }
 
   const promises = manifests.map(async pluginManifest =>
-    axios.request({ url: pluginManifest, method: 'get', headers: { 'Content-Type': 'application/json' } })
+    fetch(pluginManifest, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
   );
 
   const responses = await Promise.allSettled(promises);
 
   return responses
     .filter(response => response.status === 'fulfilled')
-    .reduce(
-      (acum, response) => ({ ...acum, [get(response, 'value.data.root', '')]: get(response, 'value.data', {}) }),
-      {}
-    );
+    .reduce(async (acum, response) => {
+      const manifestData = (await response.value?.json()) || {};
+
+      return { ...acum, [get(manifestData, 'root', '')]: manifestData };
+    }, {});
 };
 
 export const pluginParseDefinition = async (pluginsRaw, compact = false) => {

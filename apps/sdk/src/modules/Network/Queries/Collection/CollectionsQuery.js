@@ -1,5 +1,5 @@
 // Packages
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const CollectionsQuery = gql`
   query CollectionsQuery($filter: CollectionInput, $cursor: String, $limit: Int) {

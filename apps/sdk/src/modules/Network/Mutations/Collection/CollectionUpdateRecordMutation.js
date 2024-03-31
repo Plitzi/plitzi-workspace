@@ -1,5 +1,5 @@
 // Packages
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const CollectionUpdateRecordMutation = gql`
   mutation CollectionUpdateRecordMutation($id: String!, $status: String!, $values: Json!) {

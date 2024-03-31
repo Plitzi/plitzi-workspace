@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@plitzi/sdk-shared": "*",
-    "axios": "^1.6.8",
     "lodash": "^4.17.21"
   }
 }

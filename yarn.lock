@@ -3069,7 +3069,6 @@ __metadata:
     "@storybook/testing-library": "npm:^0.2.2"
     "@welldone-software/why-did-you-render": "npm:^8.0.1"
     autoprefixer: "npm:^10.4.19"
-    axios: "npm:^1.6.8"
     babel-loader: "npm:^9.1.3"
     classnames: "npm:^2.5.1"
     clean-webpack-plugin: "npm:^4.0.0"
@@ -3169,7 +3168,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    axios: "npm:^1.6.8"
     eslint: "npm:^8.57.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
@@ -3207,7 +3205,6 @@ __metadata:
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
     "@plitzi/sdk-shared": "npm:*"
-    axios: "npm:^1.6.8"
     eslint: "npm:^8.57.0"
     lodash: "npm:^4.17.21"
   languageName: unknown

@@ -1,5 +1,5 @@
 // Packages
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const CollectionRemoveMutation = gql`
   mutation CollectionRemoveMutation($id: String!) {
