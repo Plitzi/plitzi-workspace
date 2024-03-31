@@ -1,6 +1,5 @@
 // Packages
 import { useCallback, useState } from 'react';
-import axios from 'axios';
 
 const useNetwork = props => {
   const { initLoading = false, server, webKey, internalUsage = true } = props;
@@ -33,17 +32,20 @@ const useNetwork = props => {
           }
         });
 
-        const dataOrParams = ['get', 'delete'].includes(method) ? 'params' : 'data';
-        const { data: response, status } = await axios.request({
-          url: `${baseURL}${url}`,
-          method,
-          headers,
-          withCredentials: true,
-          [dataOrParams]: params
+        const formData = new FormData();
+        Object.entries(params).forEach(([key, value]) => {
+          formData.append(key, value);
         });
-        result = response;
-        if (status === 204 && method === 'delete') {
-          result = { networkSuccess: true, data: null };
+
+        const fetchOptions = { method, headers, body: formData };
+        if (method === 'get') {
+          delete fetchOptions.body;
+        }
+
+        const response = await fetch(`${baseURL}${url}`, fetchOptions);
+        result = { status: response.status, data: await response.json() };
+        if (response.status === 204 && method === 'delete') {
+          result = { networkSuccess: true, data: undefined };
         }
       } catch (e) {
         console.error(e);

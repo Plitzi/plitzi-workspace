@@ -23,7 +23,6 @@
     "@plitzi/sdk-plugins": "*",
     "@plitzi/sdk-shared": "*",
     "apollo-upload-client": "^18.0.1",
-    "axios": "^1.6.8",
     "classnames": "^2.5.1",
     "graphql": "^16.8.1",
     "immer": "^10.0.4",
