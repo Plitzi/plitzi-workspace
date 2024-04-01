@@ -274,7 +274,7 @@ export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAft
     ...css.matchAll(/(?<selector>\.|#|)(?<selectorName>[a-z0-9_. -]+){(?<selectorData>[a-z0-9:; \-(),.%\n*/]+|)}/gim)
   ].forEach(match => {
     const { selector, selectorName, selectorData } = match.groups;
-    const selectorNameCorrection = [...(selectorName.match(/[\n]/gim) ?? [])].length;
+    const selectorNameCorrection = [...(selectorName?.match(/[\n]/gim) ?? [])].length;
     const bFrom = allowPre ? match.index : 0;
     const bTo = bFrom + selector.length + selectorName.length + 1 - selectorNameCorrection;
     const aFrom = bTo + selectorData.length;
