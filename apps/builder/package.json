@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-builder",
-  "version": "0.20.16",
+  "version": "0.20.17",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -15,7 +15,7 @@
   },
   "main": "dist/plitzi-builder.js",
   "dependencies": {
-    "@apollo/client": "^3.9.9",
+    "@apollo/client": "^3.9.10",
     "@plitzi/plitzi-sdk": "*",
     "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-event-bridge": "*",

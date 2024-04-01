@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.20.16",
+  "version": "0.20.17",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -20,7 +20,7 @@
     "registry": "https://npm.pkg.github.com/plitzi"
   },
   "dependencies": {
-    "@apollo/client": "^3.9.9",
+    "@apollo/client": "^3.9.10",
     "@auth0/auth0-react": "^2.2.4",
     "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-event-bridge": "*",

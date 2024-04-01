@@ -135,6 +135,10 @@ const getPaths = (pages, flat, pageFolders, authenticated, previewMode = true, s
 };
 
 const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
+  if (!pathName) {
+    return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };
+  }
+
   const candidates = [];
   if (filter) {
     return paths.find(path => path.path === filter && path.hasAccess);

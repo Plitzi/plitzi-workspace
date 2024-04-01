@@ -91,7 +91,10 @@ export const getKeyDecoded = (webKey, asWebId = false) => {
 };
 
 export function ParamsFromURL(query = undefined) {
-  query = query || window.location.search;
+  if (!query && typeof window !== 'undefined') {
+    query = window.location.search;
+  }
+
   const queryString = {};
   if (!query || query.length === 0) {
     return queryString;

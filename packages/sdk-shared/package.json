@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.20.16",
+  "version": "0.20.17",
   "files": [],
   "exports": {
     "./utils": "./src/helpers/utils.js",
@@ -28,7 +28,7 @@
     "eslint": "^8.57.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "^1.13.0",
+    "eslint-config-turbo": "^1.13.1",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-cypress": "^2.15.1",
     "eslint-plugin-flowtype": "8.0.3",

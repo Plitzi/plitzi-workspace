@@ -42,7 +42,7 @@ const NavigationContextProvider = props => {
   );
 
   const location = useMemo(
-    () => (typeof window === 'undefined' ? get(server, 'location', {}) : window.location),
+    () => (typeof window !== 'undefined' ? window.location : get(server, 'location', { pathname: '/' })),
     [server]
   );
 
