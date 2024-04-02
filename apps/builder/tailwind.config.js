@@ -1,4 +1,7 @@
+// Packages
 import { join } from 'path';
+
+// Monorepo
 import sharedConfig from '@plitzi/sdk-shared/tailwind.config';
 
 const config = {
