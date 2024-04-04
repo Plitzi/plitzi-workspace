@@ -1,5 +1,5 @@
 // Packages
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
@@ -8,11 +8,13 @@ import ReplicaProvider from '@modules/Element/ReplicaProvider';
 
 const ListControlledItem = props => {
   const { children, className = '', isTemplate = false, itemCount = 0, parentId = '', record } = props;
+  const dataSourceValue = useMemo(() => ({ item: record }), [record]);
+
   if (isTemplate) {
     return (
       <div className={classNames('plitzi-component__controlled-list-item', className)}>
         <div className="controlled-list-item__counter">{`List Item - ${itemCount + 1}`}</div>
-        <ReplicaProvider id={parentId} source={`list_${parentId}`} dataSourceValue={{ item: record }}>
+        <ReplicaProvider id={parentId} source={`list_${parentId}`} dataSourceValue={dataSourceValue}>
           {children}
         </ReplicaProvider>
       </div>
@@ -20,7 +22,7 @@ const ListControlledItem = props => {
   }
 
   return (
-    <ReplicaProvider id={parentId} dataSourceValue={{ item: record }}>
+    <ReplicaProvider id={parentId} source={`list_${parentId}`} dataSourceValue={dataSourceValue}>
       {children}
     </ReplicaProvider>
   );
