@@ -10,7 +10,7 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 
 const ReplicaProvider = props => {
-  const { children, id = '', dataSourceValue = emptyObject } = props;
+  const { children, id = '', source = '', dataSourceValue = emptyObject } = props;
   const {
     contexts: { DataSourceContext, InteractionsContext }
   } = usePlitziServiceContext();
@@ -20,15 +20,14 @@ const ReplicaProvider = props => {
   const dataSourceContext = useContext(DataSourceContext);
   const dsManager = get(dataSourceContext, 'dataSourceManager');
   const dsManagerChild = useMemo(() => {
-    const dataSourceInstance = get(dataSourceContext.dataSourceManager, `dataSources.${id}`);
-    const source = `list-${id}`;
+    const dataSourceInstance = get(dataSourceContext.dataSourceManager, `dataSources.${id}`, {});
     const value = get(dataSourceInstance, `${source}.value`, {});
     const dsManagerChild = dataSourceContext.dataSourceManager.createChildManager(id, undefined, {
       [id]: { [source]: { ...dataSourceInstance, value: { ...value, ...dataSourceValue } } }
     });
 
     return dsManagerChild;
-  }, [dataSourceContext, id, dataSourceValue]);
+  }, [dataSourceContext, id, dataSourceValue, source]);
 
   const referenceContextSource = useMemo(
     () => ({ ...dataSourceContext, dataSourceManager: dsManagerChild }),
@@ -68,6 +67,7 @@ const ReplicaProvider = props => {
 ReplicaProvider.propTypes = {
   children: PropTypes.node,
   id: PropTypes.string,
+  source: PropTypes.string,
   dataSourceValue: PropTypes.object
 };
 

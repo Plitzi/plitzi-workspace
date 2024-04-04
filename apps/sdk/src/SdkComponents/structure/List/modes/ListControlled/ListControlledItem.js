@@ -12,7 +12,7 @@ const ListControlledItem = props => {
     return (
       <div className={classNames('plitzi-component__controlled-list-item', className)}>
         <div className="controlled-list-item__counter">{`List Item - ${itemCount + 1}`}</div>
-        <ReplicaProvider id={parentId} dataSourceValue={{ item: record }}>
+        <ReplicaProvider id={parentId} source={`list_${parentId}`} dataSourceValue={{ item: record }}>
           {children}
         </ReplicaProvider>
       </div>
