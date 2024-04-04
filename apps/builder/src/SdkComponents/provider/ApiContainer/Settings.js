@@ -102,6 +102,16 @@ const Settings = props => {
                 onChange={handleChangeHeaders}
               />
             </div>
+            <div>
+              <label>When to perform query request</label>
+              <QueryBuilder
+                ruleDirection="vertical"
+                className="w-full"
+                query={when}
+                onChange={handleChangeWhen}
+                showBranches
+              />
+            </div>
             <div className="flex flex-col">
               <label>Container Tag</label>
               <Select value={subType} onChange={handleChange('subType')} className="rounded">
@@ -117,18 +127,8 @@ const Settings = props => {
                 <option value="figure">Figure</option>
               </Select>
             </div>
-            <div>
-              <label>When to perform query request</label>
-              <QueryBuilder
-                ruleDirection="vertical"
-                className="w-full"
-                query={when}
-                onChange={handleChangeWhen}
-                showBranches
-              />
-            </div>
             <div className="h-[1px] w-full border border-gray-300 bg-gray-300 my-2" />
-            <div className="flex flex-col grow">
+            <div className="flex flex-col grow min-h-[200px]">
               <label>Mock Data (Build Mode)</label>
               <CodeMirror value={mockData} theme="light" mode="json" lineWrapping onChange={handleChangeMockData} />
             </div>

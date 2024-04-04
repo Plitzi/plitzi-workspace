@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.20.17",
+  "version": "0.20.18",
   "files": [],
   "exports": {
     ".": "./src/index.js",
