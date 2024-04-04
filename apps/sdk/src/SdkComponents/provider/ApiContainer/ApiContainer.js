@@ -26,6 +26,7 @@ const ApiContainer = forwardRef((props, ref) => {
     method = 'get',
     accessToken = '',
     when = emptyObject,
+    headers = emptyObject,
     mockData = '{}',
     subType = 'div'
   } = props;
@@ -64,11 +65,19 @@ const ApiContainer = forwardRef((props, ref) => {
     return '';
   }, [routeParams, queryParams, query]);
 
+  const customHeaders = useMemo(() => {
+    if (!accessToken) {
+      return headers;
+    }
+
+    return { ...headers, Authorization: `Bearer ${accessToken}` };
+  }, [headers, accessToken]);
+
   const { isLoading, data, refetch, error, isSuccess, isError } = useApi({
     url: queryCompiled,
     method,
     mock: !previewMode ? mockData : undefined,
-    customHeaders: { Authorization: `Bearer ${accessToken}` },
+    customHeaders,
     enabled:
       !previewMode || !when || when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams })
   });
@@ -110,7 +119,7 @@ const ApiContainer = forwardRef((props, ref) => {
     [id, internalProps?.definition?.label]
   );
 
-  useDataSource({ id, source: `apiContainer-${id}`, name: sourceName, value: data, fields: sourceFields });
+  useDataSource({ id, source: `apiContainer_${id}`, name: sourceName, value: data, fields: sourceFields });
 
   const interactionCallbacks = useMemo(() => {
     const label = get(internalProps, 'definition.label', 'Api Container');
@@ -156,6 +165,7 @@ ApiContainer.propTypes = {
   method: PropTypes.oneOf(['get', 'post']),
   accessToken: PropTypes.string,
   when: PropTypes.object,
+  headers: PropTypes.object,
   mockData: PropTypes.string,
   subType: PropTypes.oneOf([
     'div',

@@ -8,6 +8,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
+import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -22,6 +23,7 @@ const Settings = props => {
     method = 'get',
     accessToken = '',
     when = emptyObject,
+    headers = emptyObject,
     subType = 'div',
     mockData = '{}',
     onUpdate = noop
@@ -39,6 +41,8 @@ const Settings = props => {
   const handleChangeMockData = useCallback(value => onUpdate('mockData', value), [onUpdate]);
 
   const handleChangeEnabled = useCallback(e => setAdvancedSettings(e.target.checked), []);
+
+  const handleChangeHeaders = useCallback((value, valueObj) => onUpdate('headers', valueObj), [onUpdate]);
 
   const urlParams = useMemo(() => {
     const slug = get(pageDefinitions, `${currentPageId}.attributes.slug`, '');
@@ -89,6 +93,16 @@ const Settings = props => {
         {advancedSettings && (
           <>
             <div className="flex flex-col">
+              <label>Headers</label>
+              <KVEditor
+                className="rounded"
+                classNameItem="not-first:rounded-t-none rounded-t last:rounded-b"
+                classNameInput="rounded"
+                value={Object.entries(headers)}
+                onChange={handleChangeHeaders}
+              />
+            </div>
+            <div className="flex flex-col">
               <label>Container Tag</label>
               <Select value={subType} onChange={handleChange('subType')} className="rounded">
                 <option value="div">Div</option>
@@ -130,6 +144,7 @@ Settings.propTypes = {
   method: PropTypes.oneOf(['get', 'post']),
   accessToken: PropTypes.string,
   when: PropTypes.object,
+  headers: PropTypes.object,
   mockData: PropTypes.string,
   subType: PropTypes.oneOf([
     'div',

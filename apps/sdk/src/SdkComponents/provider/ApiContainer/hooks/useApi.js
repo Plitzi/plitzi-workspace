@@ -30,6 +30,10 @@ const getApiRequest = async ({
     });
   }
 
+  if (!url) {
+    return { statusCode: 400, data: 'URL is required' };
+  }
+
   Object.values(params).forEach(value => {
     if (value instanceof Blob && headers['Content-Type'] !== 'multipart/form-data') {
       headers['Content-Type'] = 'multipart/form-data';
@@ -67,7 +71,7 @@ const useApi = props => {
   const [error, setError] = useState();
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !url) {
       return;
     }
 
@@ -78,7 +82,7 @@ const useApi = props => {
         setError(undefined);
       })
       .catch(e => {
-        setError(e);
+        setError(e.message);
         setData(undefined);
       })
       .finally(() => {
