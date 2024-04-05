@@ -59,7 +59,7 @@ const withUserInteractions = WrappedComponent => {
               }
             },
             preview: {
-              errors: { mode: '', username: '', password: '' },
+              errors: { username: '', password: '', token: '' },
               success: '',
               access_token: '',
               expires_at: '',
@@ -79,6 +79,7 @@ const withUserInteractions = WrappedComponent => {
             callback: handleRefreshDetails,
             params: {},
             preview: {
+              errors: '',
               success: '',
               access_token: '',
               expires_at: '',

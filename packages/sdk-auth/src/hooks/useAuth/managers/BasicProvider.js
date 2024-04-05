@@ -10,91 +10,129 @@ class BasicProvider {
       clearCache,
       loginUrl,
       refreshUrl,
-      detailsPath = 'details',
-      tokenPath = 'access_token',
-      expirationTimePath = 'expire_at'
+      detailsPath = '',
+      tokenPath = '',
+      expirationTimePath = ''
     } = props;
-    this.userDetails = get(cache, 'details', undefined);
-    this.accessToken = get(cache, 'access_token', undefined);
-    this.isAuthenticated = !!this.userDetails && !!this.accessToken;
-    this.expireAt = get(cache, 'expire_at', 0);
-    this.expireIn = get(cache, 'expire_in', 0);
-    this.expireHandler = undefined;
+
+    // Props
+    if (cache) {
+      this.userDetails = get(cache, 'details', undefined);
+      this.accessToken = get(cache, 'access_token', undefined);
+      this.expireAt = get(cache, 'expire_at', 0);
+      this.expireIn = get(cache, 'expire_in', 0);
+      this.isAuthenticated = !!this.accessToken;
+    } else {
+      this.reset(false);
+    }
 
     // Cache
     this.setCache = setCache;
     this.clearCache = clearCache;
 
     // Others
+    this.expireHandler = undefined;
     this.network = { loginUrl, refreshUrl };
     this.paths = { detailsPath, tokenPath, expirationTimePath };
+
+    if (this.isAuthenticated) {
+      this.refreshDetails()
+        .then(data => {
+          if (!data || data.errors) {
+            this.logout();
+          }
+
+          this.setExpiration();
+        })
+        .catch(() => this.logout());
+    }
   }
+
+  #loginAsToken = async token => {
+    this.accessToken = token;
+    this.isAuthenticated = true;
+    const data = await this.refreshDetails(false);
+    if (!data || data?.errors) {
+      return {
+        errors: {
+          token: 'Invalid token'
+        }
+      };
+    }
+
+    return data;
+  };
+
+  #loginAsNormal = async (username, password) => {
+    const response = await this.networkQuery(this.network.loginUrl, { username, password }, 'post');
+    const token = get(response, this.paths.tokenPath);
+    if (!response || !token) {
+      return {
+        errors: {
+          username: 'Invalid username or password',
+          password: 'Invalid username or password'
+        }
+      };
+    }
+
+    return this.#loginAsToken(token);
+  };
 
   login = async params => {
     const { mode = 'normal', username = '', password = '', token } = params;
+    let response;
     if (mode === 'token' && token) {
-      this.accessToken = token;
-      this.isAuthenticated = true;
-      const data = await this.refreshDetails();
-      if (!data) {
-        this.accessToken = undefined;
-        this.isAuthenticated = false;
-
-        return undefined;
-      }
-
-      return data;
+      response = await this.#loginAsToken(token);
+    } else if (mode === 'normal' && username && password) {
+      response = await this.#loginAsNormal(username, password);
     }
 
-    const response = await this.networkQuery(this.network.loginUrl, { username, password }, 'post');
-    if (response) {
-      const { data } = response;
-      if (!data.success) {
-        return data;
-      }
+    if (response.errors) {
+      this.reset(false);
 
-      this.userDetails = this.paths.detailsPath ? get(data, this.paths.detailsPath) : data;
-      this.accessToken = get(data, this.paths.tokenPath);
-      this.expireAt = get(data, this.paths.expirationTimePath, 0);
-      this.isAuthenticated = true;
-      this.setExpiration();
-      this.setCache({
-        access_token: this.accessToken,
-        details: this.userDetails,
-        expire_at: this.expireAt,
-        expire_in: get(data, 'expire_in', 0)
-      });
-
-      return data;
+      return response;
     }
 
-    return undefined;
+    this.setExpiration();
+    this.syncCache();
+
+    return {
+      success: this.isAuthenticated,
+      access_token: this.accessToken,
+      expires_at: this.expireAt,
+      expires_in: this.expireIn,
+      details: this.userDetails
+    };
   };
 
-  refreshDetails = async () => {
+  refreshDetails = async (invalidateCache = true) => {
     if (!this.isAuthenticated || !this.accessToken || !this.network.refreshUrl) {
-      return undefined;
+      return { errors: 'Invalid request' };
     }
 
     const response = await this.networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
-    if (response) {
-      const { data } = response;
-      if (!data) {
-        return undefined;
-      }
-
-      this.userDetails = this.paths.detailsPath ? get(data, this.paths.detailsPath) : data;
-      this.setCache({
-        access_token: this.accessToken,
-        details: this.userDetails,
-        expire_at: this.expireAt,
-        expire_in: get(data, 'expire_in', 0)
-      });
-
-      return data;
+    if (!response) {
+      return { errors: 'Failed fetching user details' };
     }
 
-    return undefined;
+    this.userDetails = this.paths.detailsPath ? get(response, this.paths.detailsPath) : response;
+    if (!this.userDetails) {
+      return { errors: 'Invalid user details' };
+    }
+
+    this.expireAt = get(response, this.paths.expirationTimePath, 0);
+    this.expireIn = this.expireAt - Math.floor(moment.utc().valueOf() / 1000);
+    if (invalidateCache) {
+      this.syncCache();
+    }
+
+    return {
+      success: this.isAuthenticated,
+      access_token: this.accessToken,
+      expires_at: this.expireAt,
+      expires_in: this.expireIn,
+      details: this.userDetails
+    };
   };
 
   logout = () => {
@@ -102,16 +140,7 @@ class BasicProvider {
       return false;
     }
 
-    this.userDetails = undefined;
-    this.accessToken = undefined;
-    this.expireAt = 0;
-    this.isAuthenticated = false;
-    if (this.expireHandler) {
-      clearTimeout(this.expireHandler);
-      this.expireHandler = undefined;
-    }
-
-    this.clearCache();
+    this.reset();
 
     return true;
   };
@@ -123,6 +152,8 @@ class BasicProvider {
 
     return get(this.authData, 'details.permissions', []).include(permission);
   };
+
+  // Others
 
   setExpiration = () => {
     if (!this.isAuthenticated) {
@@ -146,7 +177,30 @@ class BasicProvider {
     return true;
   };
 
-  // Others
+  syncCache = () => {
+    this.setCache({
+      access_token: this.accessToken,
+      details: this.userDetails,
+      expire_at: this.expireAt,
+      expire_in: this.expireIn
+    });
+  };
+
+  reset = (invalidateCache = true) => {
+    if (invalidateCache) {
+      this.clearCache();
+    }
+
+    this.userDetails = undefined;
+    this.accessToken = undefined;
+    this.expireAt = 0;
+    this.expireIn = 0;
+    this.isAuthenticated = false;
+    if (this.expireHandler) {
+      clearTimeout(this.expireHandler);
+      this.expireHandler = undefined;
+    }
+  };
 
   networkQuery = async (url, params = {}, method = 'get', accessToken = '') => {
     let result;
