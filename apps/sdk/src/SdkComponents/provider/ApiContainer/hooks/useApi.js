@@ -66,7 +66,7 @@ const useApi = props => {
     customHeaders = emptyObject,
     enabled = true
   } = props;
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(enabled && !!url);
   const [data, setData] = useState();
   const [error, setError] = useState();
 
