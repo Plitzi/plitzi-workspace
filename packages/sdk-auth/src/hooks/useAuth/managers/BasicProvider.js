@@ -20,7 +20,6 @@ class BasicProvider {
       this.userDetails = get(cache, 'details', undefined);
       this.accessToken = get(cache, 'access_token', undefined);
       this.expireAt = get(cache, 'expire_at', 0);
-      this.expireIn = get(cache, 'expire_in', 0);
       this.isAuthenticated = !!this.accessToken;
     } else {
       this.reset(false);
@@ -100,7 +99,6 @@ class BasicProvider {
       success: this.isAuthenticated,
       access_token: this.accessToken,
       expires_at: this.expireAt,
-      expires_in: this.expireIn,
       details: this.userDetails
     };
   };
@@ -121,7 +119,6 @@ class BasicProvider {
     }
 
     this.expireAt = get(response, this.paths.expirationTimePath, 0);
-    this.expireIn = this.expireAt - Math.floor(moment.utc().valueOf() / 1000);
     if (invalidateCache) {
       this.syncCache();
     }
@@ -130,7 +127,6 @@ class BasicProvider {
       success: this.isAuthenticated,
       access_token: this.accessToken,
       expires_at: this.expireAt,
-      expires_in: this.expireIn,
       details: this.userDetails
     };
   };
@@ -181,8 +177,7 @@ class BasicProvider {
     this.setCache({
       access_token: this.accessToken,
       details: this.userDetails,
-      expire_at: this.expireAt,
-      expire_in: this.expireIn
+      expire_at: this.expireAt
     });
   };
 
@@ -194,7 +189,6 @@ class BasicProvider {
     this.userDetails = undefined;
     this.accessToken = undefined;
     this.expireAt = 0;
-    this.expireIn = 0;
     this.isAuthenticated = false;
     if (this.expireHandler) {
       clearTimeout(this.expireHandler);
@@ -232,7 +226,9 @@ class BasicProvider {
       const response = await fetch(url, fetchOptions);
       result = { status: response.status, data: await response.json() };
       if (response.status === 204 && method === 'delete') {
-        result = true;
+        result = { status: response.status, data: true };
+      } else if (response.status >= 400) {
+        result = { status: response.status, data: undefined };
       }
     } catch (e) {
       console.error(e);

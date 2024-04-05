@@ -63,7 +63,6 @@ const withUserInteractions = WrappedComponent => {
               success: '',
               access_token: '',
               expires_at: '',
-              expires_in: '',
               details: {
                 id: '',
                 username: '',
@@ -83,7 +82,6 @@ const withUserInteractions = WrappedComponent => {
               success: '',
               access_token: '',
               expires_at: '',
-              expires_in: '',
               details: {
                 id: '',
                 username: '',
