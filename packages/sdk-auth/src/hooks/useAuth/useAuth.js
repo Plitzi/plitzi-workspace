@@ -52,6 +52,11 @@ const useAuth = props => {
     }
   }, [provider, loginUrl, refreshUrl]);
 
+  if (manager) {
+    manager.setCache = setCache;
+    manager.clearCache = clearCache;
+  }
+
   return { manager };
 };
 
