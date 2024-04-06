@@ -73,13 +73,23 @@ const ApiContainer = forwardRef((props, ref) => {
     return { ...headers, Authorization: `Bearer ${accessToken}` };
   }, [headers, accessToken]);
 
+  const apiEnabled = useMemo(() => {
+    if (previewMode) {
+      return (
+        queryCompiled &&
+        (!when || when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams }))
+      );
+    }
+
+    return queryCompiled || (mockData && mockData !== '{}' && mockData !== emptyObject);
+  }, [previewMode, when, routeParams, queryParams, queryCompiled]);
+
   const { isLoading, data, refetch, isSuccess, isError } = useApi({
     url: queryCompiled,
     method,
     mock: !previewMode ? mockData : undefined,
     customHeaders,
-    enabled:
-      !previewMode || !when || when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams })
+    enabled: apiEnabled
   });
 
   useEffect(() => {
