@@ -1,7 +1,7 @@
 // Packages
 import React, { useMemo, useContext, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import get from 'lodash/get';
 
 // Monorepo
@@ -32,7 +32,7 @@ const NavigationContextProvider = props => {
     [paths, location.pathname, authenticated]
   );
 
-  const { pageId: currentPageId, pathMatch } = matchResult;
+  const { action, pageId: currentPageId, pathMatch } = matchResult;
   const routeParams = get(pathMatch, 'params', {});
 
   const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
@@ -76,6 +76,27 @@ const NavigationContextProvider = props => {
     () => ({ navigate: handleNavigate, urlSearchParams, routeParams, queryParams, currentPageId }),
     [handleNavigate, urlSearchParams, routeParams, queryParams, currentPageId, location]
   );
+
+  if (action.type === 'redirect') {
+    return <Navigate to={action.path} replace />;
+  }
+
+  if (action.type === 'notFound') {
+    // @todo: In the future this should navigate to page 404
+    // return <Navigate to="/not-found" replace />;
+    return 'Not Found';
+  }
+
+  if (action.type === 'accessDenied') {
+    // @todo: In the future this should navigate to page 403
+    // return <Navigate to="/unauthorized" replace />;
+    return 'Access Denied';
+  }
+
+  if (!currentPageId) {
+    // Rare scenario where pages are incorrectly configured and no default page is found
+    return 'Page Not Found';
+  }
 
   return <NavigationContext.Provider value={navigationValue}>{children}</NavigationContext.Provider>;
 };
