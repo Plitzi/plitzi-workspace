@@ -73,7 +73,7 @@ const ApiContainer = forwardRef((props, ref) => {
     return { ...headers, Authorization: `Bearer ${accessToken}` };
   }, [headers, accessToken]);
 
-  const { isLoading, data, refetch, error, isSuccess, isError } = useApi({
+  const { isLoading, data, refetch, isSuccess, isError } = useApi({
     url: queryCompiled,
     method,
     mock: !previewMode ? mockData : undefined,
@@ -124,16 +124,8 @@ const ApiContainer = forwardRef((props, ref) => {
 
   const interactionTriggers = useMemo(
     () => ({
-      onApiError: {
-        title: 'On Api Error',
-        params: {},
-        preview: { url: '', method: '', status: '', data: '' }
-      },
-      onApiSuccess: {
-        title: 'On Api Success',
-        params: {},
-        preview: { url: '', method: '', status: '', data: '' }
-      }
+      onApiError: { title: 'On Api Error', params: {}, preview: { url: '', method: '', status: '', data: '' } },
+      onApiSuccess: { title: 'On Api Success', params: {}, preview: { url: '', method: '', status: '', data: '' } }
     }),
     []
   );
@@ -148,7 +140,9 @@ const ApiContainer = forwardRef((props, ref) => {
       interactionCallbacks={interactionCallbacks}
     >
       {!isLoading && (!isError || !previewMode) && children}
-      {!isLoading && isError && previewMode && <div className="plitzi-component__api-container-error">{error}</div>}
+      {!isLoading && isError && previewMode && (
+        <div className="plitzi-component__api-container-error">{JSON.stringify(data?.data ?? '')}</div>
+      )}
     </RootElement>
   );
 });
