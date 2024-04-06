@@ -88,14 +88,9 @@ const ApiContainer = forwardRef((props, ref) => {
     }
 
     if (isSuccess) {
-      interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: queryCompiled, method, data, status: 200 });
+      interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: queryCompiled, method, ...data });
     } else if (isError) {
-      interactionsManager.interactionTrigger(id, 'onApiError', {
-        url: queryCompiled,
-        method,
-        data: error,
-        status: 500
-      });
+      interactionsManager.interactionTrigger(id, 'onApiError', { url: queryCompiled, method, ...data });
     }
 
     return undefined;

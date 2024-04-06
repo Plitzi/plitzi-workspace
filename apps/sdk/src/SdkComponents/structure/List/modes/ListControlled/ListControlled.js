@@ -28,7 +28,7 @@ const ListControlled = forwardRef((props, ref) => {
     }
 
     return [];
-  }, []);
+  }, [items]);
 
   const sourceFields = useCallback(
     async () =>

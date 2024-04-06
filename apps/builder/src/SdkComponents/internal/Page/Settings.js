@@ -80,7 +80,6 @@ const Settings = props => {
         .replaceAll(' ', '-')
         .toLowerCase()
         .replaceAll(/([^a-z0-9]+)/gi, '');
-        console.log(slug, nameAsSlug);
       if (!slug || slug === nameAsSlug) {
         onUpdate(
           'slug',

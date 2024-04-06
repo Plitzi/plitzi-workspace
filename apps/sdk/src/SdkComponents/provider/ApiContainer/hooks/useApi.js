@@ -13,13 +13,13 @@ const getApiRequest = async ({
 } = {}) => {
   if (mock && mock !== '{}' && mock !== emptyObject) {
     try {
-      if (typeof mockData === 'string') {
-        return JSON.parse(mock);
+      if (typeof mock === 'string') {
+        return { statusCode: 200, data: JSON.parse(mock) };
       }
 
-      return mock;
+      return { statusCode: 200, data: mock };
     } catch (e) {
-      return e.message;
+      return { statusCode: 500, data: e.message };
     }
   }
 
@@ -66,12 +66,11 @@ const useApi = props => {
     customHeaders = emptyObject,
     enabled = true
   } = props;
-  const [isLoading, setIsLoading] = useState(enabled && !!url);
+  const [isLoading, setIsLoading] = useState(enabled);
   const [data, setData] = useState();
-  const [error, setError] = useState();
 
   useEffect(() => {
-    if (!enabled || !url) {
+    if (!enabled) {
       return;
     }
 
@@ -79,11 +78,9 @@ const useApi = props => {
     getApiRequest({ url, method, mock, customHeaders, params })
       .then(response => {
         setData(response);
-        setError(undefined);
       })
       .catch(e => {
-        setError(e.message);
-        setData(undefined);
+        setData(e.message);
       })
       .finally(() => {
         setIsLoading(false);
@@ -96,9 +93,8 @@ const useApi = props => {
     isLoading,
     data,
     refetch: handleRefetch,
-    error,
-    isSuccess: !error && !isLoading,
-    isError: !!error && !isLoading
+    isSuccess: !isLoading && data.statusCode < 400,
+    isError: !isLoading && data.statusCode >= 400
   };
 };
 
