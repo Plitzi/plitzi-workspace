@@ -69,32 +69,28 @@ const useApi = props => {
   const [isLoading, setIsLoading] = useState(enabled);
   const [data, setData] = useState();
 
-  useEffect(() => {
+  const handleFetch = useCallback(() => {
     if (!enabled) {
       return;
     }
 
     setIsLoading(true);
     getApiRequest({ url, method, mock, customHeaders, params })
-      .then(response => {
-        setData(response);
-      })
-      .catch(e => {
-        setData(e.message);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [enabled, params]);
+      .then(response => setData(response))
+      .catch(e => setData(e.message))
+      .finally(() => setIsLoading(false));
+  }, [enabled, params, url, method, mock, customHeaders]);
 
-  const handleRefetch = useCallback(() => {}, []);
+  useEffect(() => {
+    handleFetch();
+  }, [enabled, params]);
 
   return {
     isLoading,
     data,
-    refetch: handleRefetch,
-    isSuccess: !isLoading && data.statusCode < 400,
-    isError: !isLoading && data.statusCode >= 400
+    refetch: handleFetch,
+    isSuccess: !isLoading && data && data.statusCode < 400,
+    isError: !isLoading && data && data.statusCode >= 400
   };
 };
 
