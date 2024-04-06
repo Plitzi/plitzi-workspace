@@ -18,7 +18,7 @@ const processContainer = (elementDOM, iframeDOM, zoom) => {
   }
 
   if (!elementDOM) {
-    return {};
+    return undefined;
   }
 
   const { width, height, top, left } = elementDOM.getBoundingClientRect();

@@ -38,11 +38,22 @@ const BuilderOverlay = props => {
       }
 
       const container = processContainer(elementDOM, iframeDOM, zoom);
-      rootContainerRef.current.style.width = `${container.width}px`;
-      rootContainerRef.current.style.height = `${container.height}px`;
-      rootContainerRef.current.style.top = `${container.y}px`;
-      rootContainerRef.current.style.left = `${container.x}px`;
-      setContainer(container);
+      if (!container) {
+        return;
+      }
+
+      const { width, height, x, y } = container;
+      rootContainerRef.current.style.width = `${width}px`;
+      rootContainerRef.current.style.height = `${height}px`;
+      rootContainerRef.current.style.top = `${y}px`;
+      rootContainerRef.current.style.left = `${x}px`;
+      setContainer(state => {
+        if (state.width === width && state.height === height && state.x === x && state.y === y) {
+          return state;
+        }
+
+        return container;
+      });
     },
     [iframeDOM, zoom]
   );
@@ -58,7 +69,15 @@ const BuilderOverlay = props => {
   };
 
   useEffect(() => {
-    setOverlayProps({ id, element, elementDOM: getElementDOM(id) });
+    const elementDOM = getElementDOM(id);
+    setOverlayProps(state => {
+      if (state.id === id) {
+        return state;
+      }
+
+      return { id, element, elementDOM };
+    });
+    handleProcessContainer(elementDOM);
   }, [baseElementId, element, id]);
 
   useEffect(() => {
