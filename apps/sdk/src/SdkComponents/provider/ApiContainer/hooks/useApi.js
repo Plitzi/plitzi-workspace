@@ -83,7 +83,7 @@ const useApi = props => {
 
   useEffect(() => {
     handleFetch();
-  }, [enabled, params]);
+  }, [enabled, params, mock]);
 
   return {
     isLoading,

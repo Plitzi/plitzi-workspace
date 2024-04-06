@@ -74,14 +74,19 @@ const ApiContainer = forwardRef((props, ref) => {
   }, [headers, accessToken]);
 
   const apiEnabled = useMemo(() => {
-    if (previewMode) {
-      return (
-        queryCompiled &&
-        (!when || when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams }))
-      );
+    if (
+      previewMode &&
+      queryCompiled &&
+      (!when || when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams }))
+    ) {
+      return true;
     }
 
-    return queryCompiled || (mockData && mockData !== '{}' && mockData !== emptyObject);
+    if (!previewMode && (queryCompiled || (mockData && mockData !== '{}' && mockData !== emptyObject))) {
+      return true;
+    }
+
+    return false;
   }, [previewMode, when, routeParams, queryParams, queryCompiled]);
 
   const { isLoading, data, refetch, isSuccess, isError } = useApi({
