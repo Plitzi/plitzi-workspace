@@ -70,13 +70,7 @@ const BuilderOverlay = props => {
 
   useEffect(() => {
     const elementDOM = getElementDOM(id);
-    setOverlayProps(state => {
-      if (state.id === id) {
-        return state;
-      }
-
-      return { id, element, elementDOM };
-    });
+    setOverlayProps(state => (state.id === id ? state : { id, element, elementDOM }));
     handleProcessContainer(elementDOM);
   }, [baseElementId, element, id]);
 
@@ -143,6 +137,28 @@ const BuilderOverlay = props => {
     elementStyle['border-left-width'],
     elementStyle['border-right-width']
   ]);
+
+  useEffect(() => {
+    if (overlayProps?.element && !overlayProps?.elementDOM && mode === 'select') {
+      // Special case where the element is not found in the DOM due lazy loading
+      let retries = 8;
+      const retryHandler = setTimeout(() => {
+        const elementDOM = getElementDOM(id);
+        if (elementDOM) {
+          setOverlayProps({ id, element, elementDOM });
+          handleProcessContainer(elementDOM);
+          clearInterval(retryHandler);
+
+          return;
+        }
+
+        retries -= 1;
+        if (retries === 0) {
+          clearTimeout(retryHandler);
+        }
+      }, 250);
+    }
+  }, [id, overlayProps?.element, overlayProps?.elementDOM]);
 
   return (
     <div ref={rootContainerRef} className={`plitzi-component--overlay-${mode}`}>

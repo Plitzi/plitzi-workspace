@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 // Relatives
@@ -13,6 +13,20 @@ const BuilderAreaOverlay = props => {
   const { elementHovered } = useContext(BuilderHoveredContext);
   const { elementSelected } = useContext(BuilderSelectedContext);
 
+  const overlaySelectMemo = useMemo(
+    () => (
+      <BuilderOverlay
+        id={elementSelected}
+        baseElementId={baseElementId}
+        mode="select"
+        iframeDOM={iframeDOM}
+        displayMode={displayMode}
+        zoom={zoom}
+      />
+    ),
+    [elementSelected, baseElementId, iframeDOM, displayMode, zoom]
+  );
+
   return (
     <>
       {elementHovered && elementHovered !== elementSelected && (
@@ -25,16 +39,7 @@ const BuilderAreaOverlay = props => {
           zoom={zoom}
         />
       )}
-      {elementSelected && (
-        <BuilderOverlay
-          id={elementSelected}
-          baseElementId={baseElementId}
-          mode="select"
-          iframeDOM={iframeDOM}
-          displayMode={displayMode}
-          zoom={zoom}
-        />
-      )}
+      {elementSelected && overlaySelectMemo}
       {!dragTree && <BuilderOverlayDrag iframeDOM={iframeDOM} zoom={zoom} />}
     </>
   );
