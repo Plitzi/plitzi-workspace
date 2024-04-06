@@ -154,10 +154,10 @@ const ApiContainer = forwardRef((props, ref) => {
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      {!isLoading && (!isError || !previewMode) && children}
-      {!isLoading && isError && previewMode && (
+      {!isLoading && children}
+      {/* {!isLoading && isError && previewMode && (
         <div className="plitzi-component__api-container-error">{JSON.stringify(data?.data ?? '')}</div>
-      )}
+      )} */}
     </RootElement>
   );
 });

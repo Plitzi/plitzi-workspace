@@ -7,29 +7,25 @@ import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
-// Alias
-import StateManagerContext from '@modules/StateManager/StateManagerContext';
-
-const PageStateContextProvider = props => {
+const NavigationSource = props => {
   const { children } = props;
-  const { state } = useContext(StateManagerContext);
   const { useDataSource } = useContext(DataSourceContext);
-  const { currentPageId } = useContext(NavigationContext);
+  const { routeParams, queryParams } = useContext(NavigationContext);
 
   const sourceFields = useCallback(
     async () => [
-      ...getPathsFromObeject(state).reduce((acum, path) => [...acum, { path, name: path }], []),
+      ...getPathsFromObeject({ routeParams, queryParams }).reduce((acum, path) => [...acum, { path, name: path }], []),
       { path: 'currentPageId', name: 'Current Page' }
     ],
-    [state, currentPageId]
+    [routeParams, queryParams]
   );
 
-  const sourceValue = useMemo(() => ({ ...state, currentPageId }), [state, currentPageId]);
+  const sourceValue = useMemo(() => ({ routeParams, queryParams }), [routeParams, queryParams]);
 
   useDataSource({
     id: 'global',
-    source: 'page',
-    name: 'Page State',
+    source: 'navigation',
+    name: 'Navigation',
     value: sourceValue,
     fields: sourceFields
   });
@@ -37,8 +33,8 @@ const PageStateContextProvider = props => {
   return children;
 };
 
-PageStateContextProvider.propTypes = {
+NavigationSource.propTypes = {
   children: PropTypes.node
 };
 
-export default PageStateContextProvider;
+export default NavigationSource;

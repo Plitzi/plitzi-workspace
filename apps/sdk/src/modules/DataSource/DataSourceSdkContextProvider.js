@@ -1,19 +1,24 @@
 // Packages
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 
 // Monorepo
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
+import NavigationSource from '@plitzi/sdk-data-source/sources/NavigationSource';
+import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
 
-// Relatives
-import PageStateContextProvider from './sources/PageSource/PageStateContextProvider';
+// Alias
+import StateManagerContext from '@modules/StateManager/StateManagerContext';
 
 const DataSourceSdkContextProvider = props => {
   const { children } = props;
+  const { state } = useContext(StateManagerContext);
 
   return (
     <DataSourceContextProvider>
-      <PageStateContextProvider>{children}</PageStateContextProvider>
+      <NavigationSource>
+        <PageStateSource state={state}>{children}</PageStateSource>
+      </NavigationSource>
     </DataSourceContextProvider>
   );
 };

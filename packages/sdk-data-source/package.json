@@ -8,7 +8,9 @@
     "./DataSourceContextProvider": "./src/DataSourceContextProvider.js",
     "./hooks/useDataSource": "./src/hooks/useDataSource.js",
     "./helpers/getBindingsDetails": "./src/helpers/getBindingsDetails.js",
-    "./utility": "./src/utility/index.js"
+    "./utility": "./src/utility/index.js",
+    "./sources/NavigationSource": "./src/sources/NavigationSource.js",
+    "./sources/PageStateSource": "./src/sources/PageStateSource.js"
   },
   "scripts": {
     "lint": "eslint ./src"
