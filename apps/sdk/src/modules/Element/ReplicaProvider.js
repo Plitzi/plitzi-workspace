@@ -21,9 +21,16 @@ const ReplicaProvider = props => {
   const dsManager = get(dataSourceContext, 'dataSourceManager');
   const dsManagerChild = useMemo(() => {
     const dataSourceInstance = get(dataSourceContext.dataSourceManager, `dataSources.${id}`, {});
-    const value = get(dataSourceInstance, `${source}.value`, {});
     const dsManagerChild = dataSourceContext.dataSourceManager.createChildManager(id, undefined, {
-      [id]: { [source]: { ...dataSourceInstance, value: { ...value, ...dataSourceValue } } }
+      [id]: {
+        [source]: {
+          ...dataSourceInstance,
+          value: {
+            ...get(dataSourceInstance, `${source}.value`, {}),
+            ...dataSourceValue
+          }
+        }
+      }
     });
 
     return dsManagerChild;

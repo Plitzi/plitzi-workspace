@@ -40,7 +40,7 @@ Button.content = {
   },
   bindingsAllowed: {
     attributes: [
-      { path: 'label', label: 'Label' },
+      { path: 'content', label: 'Content' },
       { path: 'disabled', label: 'Disabled' }
     ],
     style: [
