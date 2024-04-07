@@ -49,14 +49,14 @@ const useNetwork = props => {
 
         const res = await fetch(`${baseURL}${url}`, fetchOptions);
 
-        return { status: res.status, data: await res.json() };
+        return await res.json();
       } catch (e) {
         console.error(e);
       } finally {
         setNetworkLoading(false);
       }
 
-      return result;
+      return result?.data;
     },
     [webKey, server?.nodeServer, internalUsage]
   );
