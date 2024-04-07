@@ -3,10 +3,8 @@ import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
-// import startCase from 'lodash/startCase';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Button from '@plitzi/plitzi-ui-components/Button';
-// import Select from '@plitzi/plitzi-ui-components/Select';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
