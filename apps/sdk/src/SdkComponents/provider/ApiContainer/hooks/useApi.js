@@ -24,6 +24,7 @@ const getApiRequest = async ({
   }
 
   const headers = new Headers();
+  headers.append('Content-Type', 'application/json');
   if (customHeaders) {
     Object.keys(customHeaders).forEach(key => {
       headers.append(key, customHeaders[key]);
@@ -35,8 +36,8 @@ const getApiRequest = async ({
   }
 
   Object.values(params).forEach(value => {
-    if (value instanceof Blob && headers['Content-Type'] !== 'multipart/form-data') {
-      headers['Content-Type'] = 'multipart/form-data';
+    if (value instanceof Blob && headers.get('Content-Type') !== 'multipart/form-data') {
+      headers.set('Content-Type', 'multipart/form-data');
 
       return;
     }
@@ -48,6 +49,10 @@ const getApiRequest = async ({
   });
 
   const fetchOptions = { method, headers, body: formData };
+  if (headers.get('Content-Type') === 'application/json') {
+    fetchOptions.body = JSON.stringify(params);
+  }
+
   if (method === 'get') {
     delete fetchOptions.body;
   }

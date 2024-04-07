@@ -11,11 +11,12 @@ const useNetwork = props => {
       try {
         setNetworkLoading(true);
         method = method.toLowerCase();
-        const headers = {};
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
         if (accessToken) {
-          headers.Authorization = `Bearer ${accessToken}`;
+          headers.append('Authorization', `Bearer ${accessToken}`);
         } else if (webKey) {
-          headers.Authorization = `Bearer ${webKey}`;
+          headers.append('Authorization', `Bearer ${webKey}`);
         }
 
         let baseURL = '';
@@ -25,8 +26,8 @@ const useNetwork = props => {
         }
 
         Object.values(params).forEach(value => {
-          if (value instanceof Blob && headers['Content-Type'] !== 'multipart/form-data') {
-            headers['Content-Type'] = 'multipart/form-data';
+          if (value instanceof Blob && headers.get('Content-Type') !== 'multipart/form-data') {
+            headers.set('Content-Type', 'multipart/form-data');
 
             return;
           }
@@ -38,6 +39,10 @@ const useNetwork = props => {
         });
 
         const fetchOptions = { method, headers, body: formData };
+        if (headers.get('Content-Type') === 'application/json') {
+          fetchOptions.body = JSON.stringify(params);
+        }
+
         if (method === 'get') {
           delete fetchOptions.body;
         }
