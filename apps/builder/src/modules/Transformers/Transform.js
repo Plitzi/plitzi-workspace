@@ -48,7 +48,8 @@ const Transform = props => {
   const transformQuery = useCallback(
     async content => {
       const response = await networkQuery('/utils/transform-to-schema', { body: content, mode }, 'post');
-      if (!response || !response?.data) {
+      const data = get(response, 'data');
+      if (!data) {
         return {
           schema: { flat: {} },
           style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
@@ -56,7 +57,7 @@ const Transform = props => {
         };
       }
 
-      return response?.data;
+      return data;
     },
     [networkQuery, mode]
   );

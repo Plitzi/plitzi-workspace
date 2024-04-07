@@ -14,12 +14,12 @@ const getApiRequest = async ({
   if (mock && mock !== '{}' && mock !== emptyObject) {
     try {
       if (typeof mock === 'string') {
-        return { statusCode: 200, data: JSON.parse(mock) };
+        return { status: 200, data: JSON.parse(mock) };
       }
 
-      return { statusCode: 200, data: mock };
+      return { status: 200, data: mock };
     } catch (e) {
-      return { statusCode: 500, data: e.message };
+      return { status: 500, data: e.message };
     }
   }
 
@@ -32,7 +32,7 @@ const getApiRequest = async ({
   }
 
   if (!url) {
-    return { statusCode: 400, data: 'URL is required' };
+    return { status: 400, data: 'URL is required' };
   }
 
   Object.values(params).forEach(value => {
@@ -59,7 +59,7 @@ const getApiRequest = async ({
 
   const res = await fetch(url, fetchOptions);
 
-  return { statusCode: res.status, data: await res.json() };
+  return { status: res.status, data: await res.json() };
 };
 
 const useApi = props => {
@@ -94,8 +94,8 @@ const useApi = props => {
     isLoading,
     data,
     refetch: handleFetch,
-    isSuccess: !isLoading && data && data.statusCode < 400,
-    isError: !isLoading && data && data.statusCode >= 400
+    isSuccess: !isLoading && data && data.status < 400,
+    isError: !isLoading && data && data.status >= 400
   };
 };
 

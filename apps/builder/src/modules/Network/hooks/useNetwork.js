@@ -47,11 +47,9 @@ const useNetwork = props => {
           delete fetchOptions.body;
         }
 
-        const response = await fetch(`${baseURL}${url}`, fetchOptions);
-        result = { status: response.status, data: await response.json() };
-        if (response.status === 204 && method === 'delete') {
-          result = { networkSuccess: true, data: undefined };
-        }
+        const res = await fetch(`${baseURL}${url}`, fetchOptions);
+
+        return { status: res.status, data: await res.json() };
       } catch (e) {
         console.error(e);
       } finally {
