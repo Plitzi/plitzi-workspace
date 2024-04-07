@@ -31,7 +31,9 @@
   border-bottom-left-radius: 4px;
   border-top-left-radius: 4px;
   background-color: white;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 4px 11px;
+  box-shadow:
+    rgba(0, 0, 0, 0.1) 0px 0px 0px 1px,
+    rgba(0, 0, 0, 0.1) 0px 4px 11px;
 
   &.popup-container--no-visible {
     visibility: hidden;

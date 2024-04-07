@@ -1,5 +1,5 @@
 // Packages
-import React, { cloneElement, forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { cloneElement, forwardRef, useCallback, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import get from 'lodash/get';
@@ -31,14 +31,13 @@ const Dropdown = forwardRef((props, ref) => {
     disabled = false
   } = props;
   const { setElementState, styleSelectors } = internalProps;
-  const [parameters, setParameters] = useState({ top: 0, left: 0 });
   const {
     settings: { previewMode },
     utils: { getWindow }
   } = usePlitziServiceContext();
   const interactionTriggers = useMemo(() => ({ onClick: { title: 'On Click', params: {} } }), []);
-  const popupRef = useRef(null);
-  const backgroundContainerRef = useRef(null);
+  const popupRef = useRef();
+  const backgroundContainerRef = useRef();
   const windowInstance = useMemo(() => getWindow(), [getWindow]);
 
   const calculatePosition = useCallback(
@@ -164,43 +163,16 @@ const Dropdown = forwardRef((props, ref) => {
     };
   }, [openPopup, handleKeyDown]);
 
-  useEffect(() => {
+  const parameters = useMemo(() => {
+    let parameters = { top: 0, left: 0 };
     if (openPopup && ref.current && popupRef.current) {
       const rectParent = ref.current.getBoundingClientRect();
       const rectContent = popupRef.current.getBoundingClientRect();
-      const parameters = calculatePosition(rectParent, rectContent);
-      setParameters(state => {
-        if (state.top !== parameters.top || state.left !== parameters.left) {
-          return parameters;
-        }
-
-        return state;
-      });
-    }
-  }, [openPopup, calculatePosition]);
-
-  useEffect(() => {
-    if (openPopup && !previewMode && ref.current && popupRef.current) {
-      const intervalHandler = setInterval(() => {
-        const rectParent = ref.current.getBoundingClientRect();
-        const rectContent = popupRef.current.getBoundingClientRect();
-        const parameters = calculatePosition(rectParent, rectContent);
-        setParameters(state => {
-          if (state.top !== parameters.top || state.left !== parameters.left) {
-            return parameters;
-          }
-
-          return state;
-        });
-      }, 500);
-
-      return () => {
-        clearInterval(intervalHandler);
-      };
+      parameters = calculatePosition(rectParent, rectContent);
     }
 
-    return undefined;
-  }, [previewMode]);
+    return parameters;
+  }, [openPopup, ref, popupRef, calculatePosition]);
 
   const childrenParsed = useMemo(() => {
     if (Array.isArray(children)) {
@@ -225,7 +197,7 @@ const Dropdown = forwardRef((props, ref) => {
       ...children.props,
       internalProps: { onClick: handleClickPopup, openPopup, parameters, popupRef }
     });
-  }, [children, handleClickPopup, openPopup, parameters, popupRef]);
+  }, [children, handleClickPopup, openPopup, popupRef, previewMode, calculatePosition]);
 
   return (
     <RootElement
