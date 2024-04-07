@@ -160,7 +160,7 @@ const BuilderOverlay = props => {
     }
   }, [id, overlayProps?.element, overlayProps?.elementDOM]);
 
-  if (!overlayProps?.elementDOM || !container) {
+  if (!overlayProps?.element || !overlayProps?.elementDOM) {
     return undefined;
   }
 
