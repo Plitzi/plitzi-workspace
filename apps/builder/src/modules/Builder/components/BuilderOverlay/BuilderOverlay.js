@@ -141,7 +141,7 @@ const BuilderOverlay = props => {
   useEffect(() => {
     if (overlayProps?.element && !overlayProps?.elementDOM && mode === 'select') {
       // Special case where the element is not found in the DOM due lazy loading
-      let retries = 8;
+      let retries = 10;
       const retryHandler = setTimeout(() => {
         const elementDOM = getElementDOM(id);
         if (elementDOM) {
@@ -156,7 +156,7 @@ const BuilderOverlay = props => {
         if (retries === 0) {
           clearTimeout(retryHandler);
         }
-      }, 250);
+      }, 125);
     }
   }, [id, overlayProps?.element, overlayProps?.elementDOM]);
 
