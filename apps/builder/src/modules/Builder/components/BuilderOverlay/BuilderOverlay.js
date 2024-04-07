@@ -160,6 +160,10 @@ const BuilderOverlay = props => {
     }
   }, [id, overlayProps?.element, overlayProps?.elementDOM]);
 
+  if (!overlayProps?.elementDOM || !container) {
+    return undefined;
+  }
+
   return (
     <div ref={rootContainerRef} className={`plitzi-component--overlay-${mode}`}>
       {container && container.width !== 0 && container.height !== 0 && (
