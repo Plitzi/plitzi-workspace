@@ -126,19 +126,6 @@ const BuilderElementTools = props => {
             className={classNames(
               'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
               {
-                'border-transparent': selected !== 'definition',
-                'border-blue-400 text-blue-400': selected === 'definition'
-              }
-            )}
-            onClick={handleClickListItems('definition')}
-            title="Definition"
-          >
-            <i className="fa-solid fa-tarp" />
-          </li>
-          <li
-            className={classNames(
-              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
-              {
                 'border-transparent': selected !== 'settings',
                 'border-blue-400 text-blue-400': selected === 'settings'
               }
@@ -181,11 +168,11 @@ const BuilderElementTools = props => {
         {selected === 'style' && (
           <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
         )}
-        {selected === 'definition' && (
-          <ElementDefinitionSettings definition={tempDefinition} type={type} onUpdate={handleChange} />
-        )}
         {selected === 'settings' && (
-          <ElementSettings attributes={tempAttributes} id={elementSelected} type={type} handleChange={handleChange} />
+          <>
+            <ElementDefinitionSettings definition={tempDefinition} onUpdate={handleChange} />
+            <ElementSettings attributes={tempAttributes} id={elementSelected} type={type} handleChange={handleChange} />
+          </>
         )}
         {selected === 'bindings' && (
           <DataSourceBinding
