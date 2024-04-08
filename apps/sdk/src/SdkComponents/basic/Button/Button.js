@@ -18,7 +18,7 @@ const Button = forwardRef((props, ref) => {
   const {
     className = '',
     internalProps = emptyObject,
-    children = undefined,
+    children,
     contentPlacement = 'after',
     content: contentProp = 'Button',
     subType = 'button',
