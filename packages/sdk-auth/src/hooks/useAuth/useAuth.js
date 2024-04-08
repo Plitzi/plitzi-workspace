@@ -1,5 +1,5 @@
 // Packages
-import { useMemo } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
@@ -51,6 +51,25 @@ const useAuth = props => {
         return undefined;
     }
   }, [provider, loginUrl, refreshUrl]);
+
+  const handleWindowFocus = useCallback(async () => {
+    if (manager && manager.isAuthenticated) {
+      const data = await manager.refreshDetails().catch(() => manager.logout());
+      if (!data || data.errors) {
+        manager.logout();
+      } else {
+        manager.setExpiration();
+      }
+    }
+  }, [manager]);
+
+  useEffect(() => {
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [handleWindowFocus]);
 
   if (manager) {
     manager.setCache = setCache;

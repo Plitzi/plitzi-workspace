@@ -39,9 +39,9 @@ class BasicProvider {
         .then(data => {
           if (!data || data.errors) {
             this.logout();
+          } else {
+            this.setExpiration();
           }
-
-          this.setExpiration();
         })
         .catch(() => this.logout());
     }
