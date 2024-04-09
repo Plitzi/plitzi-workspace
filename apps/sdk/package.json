@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.20.22",
+  "version": "0.20.23",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -29,7 +29,7 @@
     "@plitzi/sdk-plugins": "*",
     "@plitzi/sdk-shared": "*",
     "classnames": "^2.5.1",
-    "dompurify": "^3.0.11",
+    "dompurify": "^3.1.0",
     "graphql": "^16.8.1",
     "handlebars": "^4.7.8",
     "immer": "^10.0.4",
@@ -66,7 +66,7 @@
     "babel-loader": "^9.1.3",
     "clean-webpack-plugin": "^4.0.0",
     "compression-webpack-plugin": "^11.1.0",
-    "css-loader": "^7.0.0",
+    "css-loader": "^7.1.0",
     "file-loader": "^6.2.0",
     "flow-bin": "^0.233.0",
     "handlebars-webpack-plugin": "^2.2.1",
