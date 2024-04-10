@@ -46,6 +46,7 @@ const WorkflowFlow = props => {
           elementId={trigger.elementId}
           title={trigger.title}
           enabled={trigger.enabled}
+          params={trigger.params}
           when={trigger.when}
           preview={trigger.preview}
           isOpened={nodesOpened[trigger.id]}
