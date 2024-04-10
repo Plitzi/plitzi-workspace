@@ -136,6 +136,7 @@ const Dropdown = forwardRef((props, ref) => {
       }
 
       e.stopPropagation();
+      e.preventDefault();
 
       setElementState(state => ({ ...state, openPopup: !state.openPopup }));
     },
