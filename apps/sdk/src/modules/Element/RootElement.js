@@ -63,16 +63,22 @@ const RootElement = forwardRef((props, ref) => {
 
   const { interactionsManager, useInteractions } = useContext(InteractionsContext);
   const processEvent = useCallback(
-    (e, id, actionName, originalCallback) => {
-      e.stopPropagation();
+    (e, id, actionName, originalCallback, propagateEvent = false) => {
+      if (!propagateEvent) {
+        e.preventDefault();
+      }
+
       if (originalCallback) {
         // If otherProps contains the same event, hook it
         originalCallback(e);
       }
 
       // Interactions Code here
-      e.preventDefault();
-      interactionsManager.interactionTrigger(id, actionName, { event: e });
+      if (!propagateEvent) {
+        e.preventDefault();
+      }
+
+      interactionsManager?.interactionTrigger(id, actionName, { event: e });
     },
     [interactionsManager]
   );
@@ -84,10 +90,14 @@ const RootElement = forwardRef((props, ref) => {
 
     return Object.values(interactions)
       .filter(node => node.type === 'trigger' && node.action && nativeEventsList.includes(node.action) && node.enabled)
-      .reduce(
-        (acum, node) => ({ ...acum, [node.action]: e => processEvent(e, id, node.action, otherProps[node.action]) }),
-        {}
-      );
+      .reduce((acum, node) => {
+        const propagateEvent = get(node, 'params.propagateEvent', false);
+
+        return {
+          ...acum,
+          [node.action]: e => processEvent(e, id, node.action, otherProps[node.action], propagateEvent)
+        };
+      }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
   const { useDataSource } = useContext(DataSourceContext);
