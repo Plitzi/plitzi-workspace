@@ -77,7 +77,7 @@ const RootElement = forwardRef((props, ref) => {
     }
 
     return Object.values(interactions)
-      .filter(node => node.type === 'trigger' && node.action && nativeEventsList.includes(node.action))
+      .filter(node => node.type === 'trigger' && node.action && nativeEventsList.includes(node.action) && node.enabled)
       .reduce(
         (acum, node) => ({ ...acum, [node.action]: e => processEvent(e, id, node.action, otherProps[node.action]) }),
         {}
