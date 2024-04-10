@@ -30,7 +30,14 @@ const callback = async params => {
 
     const res = await fetch(url, fetchOptions);
 
-    response = { status: res.status, data: await res.json() };
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      // nothing, just ignore
+    }
+
+    response = { status: res.status, data };
   } catch (e) {
     console.error(e);
   } finally {
