@@ -10,7 +10,13 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 import { nativeEventsList } from './helpers/elementUtils';
 
-const interactionBasicTriggers = { onClick: { title: 'On Click', preview: {}, params: {} } };
+const interactionBasicTriggers = {
+  onClick: {
+    title: 'On Click',
+    preview: { propagateEvent: '' },
+    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
+  }
+};
 
 const RootElement = forwardRef((props, ref) => {
   const {

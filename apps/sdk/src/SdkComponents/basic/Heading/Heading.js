@@ -12,7 +12,6 @@ import RootElement from '@modules/Element/RootElement';
 
 const Heading = forwardRef((props, ref) => {
   const { internalProps = emptyObject, className = '', content = 'Heading', subType = 'h1' } = props;
-  const interactionTriggers = useMemo(() => ({ onClick: { title: 'On Click', params: {} } }), []);
   const finalContent = useMemo(() => {
     if (typeof content !== 'string' && typeof content !== 'number') {
       return JSON.stringify(content);
@@ -26,7 +25,6 @@ const Heading = forwardRef((props, ref) => {
       ref={ref}
       internalProps={internalProps}
       tag={subType}
-      interactionTriggers={interactionTriggers}
       className={classNames(
         'plitzi-component__heading',
         { [`plitzi-component__heading-${subType}`]: subType },

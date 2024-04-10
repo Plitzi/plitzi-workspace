@@ -35,7 +35,6 @@ const Dropdown = forwardRef((props, ref) => {
     settings: { previewMode },
     utils: { getWindow }
   } = usePlitziServiceContext();
-  const interactionTriggers = useMemo(() => ({ onClick: { title: 'On Click', params: {} } }), []);
   const popupRef = useRef();
   const backgroundContainerRef = useRef();
   const windowInstance = useMemo(() => getWindow(), [getWindow]);
@@ -207,7 +206,6 @@ const Dropdown = forwardRef((props, ref) => {
       className={classNames('plitzi-component__dropdown', className, {
         'container--empty--skip': !previewMode && !children
       })}
-      interactionTriggers={interactionTriggers}
       onClick={handleClick}
     >
       {childrenParsed}
