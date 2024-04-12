@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-auth",
-  "version": "0.20.24",
+  "version": "0.21.0",
   "files": [],
   "exports": {
     ".": "./src/index.js",
