@@ -10,7 +10,7 @@ const GroupSelect = props => {
 
   return (
     <Select
-      className={classNames('rounded-md basis-0 grow border-0 text-xs px-2 py-0 m-0', className)}
+      className={classNames('rounded-md basis-0 grow border-0 rounded-none text-xs px-2 py-0 m-0', className)}
       value={value}
       size="custom"
       onChange={onChange}

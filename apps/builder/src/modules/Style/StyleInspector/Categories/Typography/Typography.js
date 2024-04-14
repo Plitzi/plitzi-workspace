@@ -170,6 +170,7 @@ const Typography = props => {
         type: 'select',
         value: textWrap,
         extraValue: { type: TEXT_WRAP },
+        keyValue: TEXT_WRAP,
         children: (
           <>
             <option value="wrap">Wrap</option>
@@ -178,18 +179,14 @@ const Typography = props => {
             <option value="pretty">Pretty</option>
             <option value="stable">Stable</option>
           </>
-        )
-      }
-    ],
-    [textWrap]
-  );
-
-  const itemsTextOverflow = useMemo(
-    () => [
+        ),
+        label: 'Wrap'
+      },
       {
         type: 'select',
         value: textOverflow,
         extraValue: { type: TEXT_OVERFLOW },
+        keyValue: TEXT_OVERFLOW,
         children: (
           <>
             <option value="clip">Clip</option>
@@ -198,10 +195,11 @@ const Typography = props => {
             <option value="initial">Initial</option>
             <option value="inherit">Inherit</option>
           </>
-        )
+        ),
+        label: 'Overflow'
       }
     ],
-    [textOverflow]
+    [textWrap, textOverflow]
   );
 
   return (
@@ -252,17 +250,8 @@ const Typography = props => {
         <GroupButtons
           className="w-full"
           classNameContainer="w-[180px]"
-          keyValue={TEXT_WRAP}
           items={itemsWrap}
-          label="Text Wrap"
-          onChange={handleChange}
-        />
-        <GroupButtons
-          className="w-full"
-          classNameContainer="w-[180px]"
-          keyValue={TEXT_OVERFLOW}
-          items={itemsTextOverflow}
-          label="Text Overflow"
+          label="Text"
           onChange={handleChange}
         />
         <TypographyTextShadow partialValue={getValue(TEXT_SHADOW)} onChange={handleChange} />
