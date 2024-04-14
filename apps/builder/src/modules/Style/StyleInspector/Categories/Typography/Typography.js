@@ -19,6 +19,7 @@ import {
   DIRECTION,
   TEXT_SHADOW,
   WHITE_SPACE,
+  TEXT_WRAP,
   TEXT_OVERFLOW
 } from '@plitzi/sdk-style/StyleConstants';
 
@@ -48,6 +49,7 @@ const dotKeys = [
   DIRECTION,
   TEXT_SHADOW,
   WHITE_SPACE,
+  TEXT_WRAP,
   TEXT_OVERFLOW
 ];
 
@@ -84,6 +86,7 @@ const Typography = props => {
   const textTransform = getValue(TEXT_TRANSFORM);
   const direction = getValue(DIRECTION);
   const whiteSpace = getValue(WHITE_SPACE);
+  const textWrap = getValue(TEXT_WRAP);
   const textOverflow = getValue(TEXT_OVERFLOW);
 
   const handleChange = useCallback(itemValue => setValue(itemValue.type, itemValue.value), [setValue]);
@@ -161,6 +164,26 @@ const Typography = props => {
     [whiteSpace]
   );
 
+  const itemsWrap = useMemo(
+    () => [
+      {
+        type: 'select',
+        value: textWrap,
+        extraValue: { type: TEXT_WRAP },
+        children: (
+          <>
+            <option value="wrap">Wrap</option>
+            <option value="nowrap">No Wrap</option>
+            <option value="balance">Balance</option>
+            <option value="pretty">Pretty</option>
+            <option value="stable">Stable</option>
+          </>
+        )
+      }
+    ],
+    [textWrap]
+  );
+
   const itemsTextOverflow = useMemo(
     () => [
       {
@@ -224,6 +247,14 @@ const Typography = props => {
           keyValue={WHITE_SPACE}
           items={itemsBreaking}
           label="Breaking"
+          onChange={handleChange}
+        />
+        <GroupButtons
+          className="w-full"
+          classNameContainer="w-[180px]"
+          keyValue={TEXT_WRAP}
+          items={itemsWrap}
+          label="Text Wrap"
           onChange={handleChange}
         />
         <GroupButtons

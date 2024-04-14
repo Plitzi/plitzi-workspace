@@ -107,6 +107,7 @@ export const TEXT_INDENT = 'text-indent';
 export const TEXT_TRANSFORM = 'text-transform';
 export const DIRECTION = 'direction';
 export const WHITE_SPACE = 'white-space';
+export const TEXT_WRAP = 'text-wrap';
 export const TEXT_OVERFLOW = 'text-overflow';
 export const TEXT_SHADOW = 'text-shadow';
 
@@ -202,6 +203,7 @@ export const StyleConstants = {
   TEXT_TRANSFORM,
   DIRECTION,
   WHITE_SPACE,
+  TEXT_WRAP,
   TEXT_OVERFLOW,
   TEXT_SHADOW
 };
@@ -287,6 +289,7 @@ export const inheritableAttributes = {
   TEXT_TRANSFORM,
   DIRECTION,
   WHITE_SPACE,
+  TEXT_WRAP,
   TEXT_OVERFLOW,
   TEXT_SHADOW
 };
@@ -305,5 +308,6 @@ export const inheritableAttributesBase = [
   TEXT_SHADOW,
   TEXT_TRANSFORM,
   WHITE_SPACE,
+  TEXT_WRAP,
   TEXT_OVERFLOW
 ];

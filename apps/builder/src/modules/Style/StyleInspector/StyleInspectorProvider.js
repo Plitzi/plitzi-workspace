@@ -27,6 +27,7 @@ import {
   DIRECTION,
   TEXT_SHADOW,
   WHITE_SPACE,
+  TEXT_WRAP,
   TEXT_OVERFLOW,
   // list
   LIST_STYLE,
@@ -140,6 +141,7 @@ const defaultValue = {
   [TEXT_TRANSFORM]: 'none',
   [DIRECTION]: 'ltr',
   [WHITE_SPACE]: 'normal',
+  [TEXT_WRAP]: 'wrap',
   [TEXT_OVERFLOW]: 'clip',
   [TEXT_SHADOW]: '',
   [LIST_STYLE]: 'disc',
