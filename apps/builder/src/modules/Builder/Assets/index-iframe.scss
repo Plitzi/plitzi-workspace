@@ -22,7 +22,7 @@ body {
 ::before,
 ::after {
   box-sizing: border-box;
-  border: none;
+  border: 0 solid;
 }
 
 .builder-iframe {

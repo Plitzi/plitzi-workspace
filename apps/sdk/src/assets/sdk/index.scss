@@ -3,3 +3,10 @@
 .plitzi-component--hidden {
   display: none !important;
 }
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border: 0 solid;
+}
