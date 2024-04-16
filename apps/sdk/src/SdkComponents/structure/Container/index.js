@@ -53,8 +53,7 @@ Container.content = {
     style: {
       base: {
         'min-width': '50px',
-        'min-height': '50px',
-        'flex-shrink': '0'
+        'min-height': '50px'
       }
     },
     subTypes: {}
