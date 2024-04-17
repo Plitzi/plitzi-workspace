@@ -10,15 +10,25 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
+// Relatives
+import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
+
 const Paragraph = forwardRef((props, ref) => {
   const { content = 'Paragraph', className = '', internalProps = emptyObject } = props;
+  const {
+    settings: { previewMode }
+  } = usePlitziServiceContext();
   const finalContent = useMemo(() => {
     if (typeof content !== 'string' && typeof content !== 'number') {
       return JSON.stringify(content);
     }
 
+    if (!content && content !== '' && !previewMode) {
+      return 'Paragraph';
+    }
+
     return content;
-  }, [content]);
+  }, [content, previewMode]);
 
   return (
     <RootElement
@@ -27,7 +37,7 @@ const Paragraph = forwardRef((props, ref) => {
       internalProps={internalProps}
       className={classNames('plitzi-component__paragraph', className)}
     >
-      {finalContent || 'Paragraph'}
+      {finalContent}
     </RootElement>
   );
 });

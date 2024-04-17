@@ -20,14 +20,13 @@ const Button = forwardRef((props, ref) => {
     internalProps = emptyObject,
     children,
     contentPlacement = 'after',
-    content: contentProp = 'Button',
+    content = 'Button',
     subType = 'button',
     disabled = false
   } = props;
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
-  const content = useMemo(() => (!contentProp ? 'Button' : contentProp), [contentProp]);
   const buttonName = useMemo(() => {
     if (content) {
       return content;
