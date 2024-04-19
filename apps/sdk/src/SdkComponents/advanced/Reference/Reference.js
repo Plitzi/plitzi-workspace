@@ -121,7 +121,7 @@ const Reference = forwardRef((props, ref) => {
   }
 
   const { element, elementType, referenceContextData } = reference;
-  if (previewMode && element) {
+  if (previewMode && element && referenceType === PARTIAL_SCHEMA_TYPE_ELEMENT) {
     return (
       <SchemaContext.Provider value={referenceContextData}>
         <DataSourceContext.Provider value={referenceContextSource}>
@@ -148,16 +148,15 @@ const Reference = forwardRef((props, ref) => {
     >
       <SchemaContext.Provider value={referenceContextData}>
         <DataSourceContext.Provider value={referenceContextSource}>
-          {!previewMode && element && (
-            <div className="reference__root">
-              <PluginManager
-                key={`${id}-${referenceId}`}
-                id={element?.id}
-                rootId={rootId}
-                type={elementType}
-                plitziElementLayout={plitziElementLayoutMemo}
-              />
-            </div>
+          {element && (
+            <PluginManager
+              key={`${id}-${referenceId}`}
+              id={element?.id}
+              rootId={rootId}
+              type={elementType}
+              internalProps={internalPropsMemo}
+              plitziElementLayout={plitziElementLayoutMemo}
+            />
           )}
         </DataSourceContext.Provider>
       </SchemaContext.Provider>
