@@ -109,16 +109,6 @@ const OverlaySpacing = props => {
 
   return (
     <div className="overlay__spacing">
-      {/* <div
-        draggable
-        style={{
-          // background: 'red',
-          pointerEvents: 'all',
-          position: 'absolute',
-          width: '100%',
-          height: '100%'
-        }}
-      /> */}
       <div className="margin--top" style={calculateSpacingMemo.margin.top} />
       <div className="margin--bottom" style={calculateSpacingMemo.margin.bottom} />
       <div className="margin--left" style={calculateSpacingMemo.margin.left} />

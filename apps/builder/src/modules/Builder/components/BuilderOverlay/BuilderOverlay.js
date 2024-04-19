@@ -160,6 +160,14 @@ const BuilderOverlay = props => {
     }
   }, [id, overlayProps?.element, overlayProps?.elementDOM]);
 
+  const selector = useMemo(() => {
+    if(mode === 'hover') {
+      return '';
+    }
+
+    return selectorSelected?.name;
+  }, [mode, selectorSelected?.name]);
+
   if (!overlayProps?.element || !overlayProps?.elementDOM) {
     return undefined;
   }
@@ -178,7 +186,7 @@ const BuilderOverlay = props => {
           color={color}
           collaboratorName={collaboratorName}
           mode={mode}
-          selector={selectorSelected?.name}
+          selector={selector}
           {...overlayProps}
         />
       )}
