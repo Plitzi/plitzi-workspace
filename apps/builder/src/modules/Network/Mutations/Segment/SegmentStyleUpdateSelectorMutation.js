@@ -7,7 +7,7 @@ const SegmentStyleUpdateSelectorMutation = gql`
     $displayMode: String!
     $selector: String!
     $type: String!
-    $path: String!
+    $path: String
     $style: Json
     $contextId: String!
   ) {

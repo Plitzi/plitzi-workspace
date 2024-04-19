@@ -273,7 +273,6 @@ const cssRegex = /(?<selector>\.|#|)(?<selectorName>[a-z0-9_ -]+){(?<selectorDat
 export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAfter = true) => {
   const ranges = [];
   [...css.matchAll(cssRegex)].forEach(match => {
-    console.log(match);
     const { selector, selectorName, selectorData } = match.groups;
     const selectorNameCorrection = [...(selectorName?.match(/[\n]/gim) ?? [])].length;
     const bFrom = allowPre ? match.index : 0;
