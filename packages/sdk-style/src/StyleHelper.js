@@ -268,11 +268,12 @@ export const cssToSelectors = (css = '', singleSelector = false) => {
   return selectors;
 };
 
+const cssRegex = /(?<selector>\.|#|)(?<selectorName>[a-z0-9_ -]+){(?<selectorData>[a-z0-9:; (),.%\n*/#-]+|)}/gim;
+
 export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAfter = true) => {
   const ranges = [];
-  [
-    ...css.matchAll(/(?<selector>\.|#|)(?<selectorName>[a-z0-9_. -]+){(?<selectorData>[a-z0-9:; \-(),.%\n*/]+|)}/gim)
-  ].forEach(match => {
+  [...css.matchAll(cssRegex)].forEach(match => {
+    console.log(match);
     const { selector, selectorName, selectorData } = match.groups;
     const selectorNameCorrection = [...(selectorName?.match(/[\n]/gim) ?? [])].length;
     const bFrom = allowPre ? match.index : 0;
@@ -286,13 +287,7 @@ export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAft
 };
 
 export const formatCssFromSelector = (css, singleSelector = true, tabIndentSpace = 2, filterProps = true) => {
-  const match = [
-    ...css
-      .replaceAll('\n', '')
-      .matchAll(
-        /(?<selector>\.|#|)(?<selectorName>[a-z0-9_. -]+){(?<selectorData>[a-z0-9:; _(),.%\n*/#%'/=+"-@]+|)}/gim
-      )
-  ];
+  const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const StyleConstantsList = Object.values(StyleConstants);
   const selectors = match.map(match => {
     const { selector, selectorName, selectorData } = match.groups;
