@@ -237,24 +237,22 @@ export const generateCache = style => {
   return cache.join('\n');
 };
 
+const cssRegex = /(?<selector>\.|#|)(?<selectorName>[a-z0-9_-]+)([ ]+|){(?<selectorData>[a-z0-9:; (),.%\n*/#-]+|)}/gim;
+const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\(.*\)|".*"|[a-z0-9 (),.%\n*/#-]+))/gim;
+
 export const cssToSelectors = (css = '', singleSelector = false) => {
-  const match = [
-    ...css
-      .replaceAll('\n', '')
-      .replaceAll(' ', '')
-      .matchAll(/(?<selector>\.|#|)(?<selectorName>[a-z0-9_ -]+){(?<selectorData>[a-z0-9:; (),.%\n*/#-]+|)}/gim)
-  ];
+  const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const StyleConstantsList = Object.values(StyleConstants);
   const selectors = match.map(match => {
     const { selectorName, selectorData } = match.groups;
-    const selectorResult = { name: selectorName, attributes: {}, cache: match[0] };
+    const selectorResult = { name: selectorName?.trim(), attributes: {}, cache: match[0] };
     if (selectorData) {
-      const propsMatch = [...selectorData.matchAll(/(?<propName>[a-z\- ]+):(?<propValue>[a-z0-9 (),.%\n*/#-]+)/gim)];
+      const propsMatch = [...selectorData.matchAll(cssPropsRegex)];
       propsMatch
         .filter(prop => StyleConstantsList.includes(prop.groups.propName))
         .forEach(prop => {
           const { propName, propValue } = prop.groups;
-          set(selectorResult, `attributes.${propName}`, `${propValue}`);
+          set(selectorResult, `attributes.${propName.trim()}`, `${propValue.trim()}`);
         });
     }
 
@@ -267,8 +265,6 @@ export const cssToSelectors = (css = '', singleSelector = false) => {
 
   return selectors;
 };
-
-const cssRegex = /(?<selector>\.|#|)(?<selectorName>[a-z0-9_ -]+){(?<selectorData>[a-z0-9:; (),.%\n*/#-]+|)}/gim;
 
 export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAfter = true) => {
   const ranges = [];
@@ -294,9 +290,7 @@ export const formatCssFromSelector = (css, singleSelector = true, tabIndentSpace
       return `${selector}${selectorName} {\n}`;
     }
 
-    const propsMatch = [
-      ...selectorData.matchAll(/(?<propName>[a-z\- ]+):([ ]+|)(?<propValue>([a-z-]+\(.*\)|".*"|[a-z0-9# %".-]+))/gim)
-    ];
+    const propsMatch = [...selectorData.matchAll(cssPropsRegex)];
     let propsString = '';
     propsMatch
       .filter(prop => !filterProps || StyleConstantsList.includes(prop.groups.propName))
