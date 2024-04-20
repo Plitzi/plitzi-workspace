@@ -37,6 +37,7 @@ const Transform = props => {
   const { elementSelected } = useContext(BuilderSelectedContext);
   const { rootDOM } = useContext(ContainerRootContext);
   const [mode, setMode] = useState('html-tailwind');
+  const [isEditorVisible, setEditorVisible] = useState(true);
   const [layoutMode, setLayoutMode] = useState('horizontal');
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const [preview, setPreview] = useState({
@@ -145,6 +146,17 @@ const Transform = props => {
 
   const handleChangeLayoutMode = useCallback(e => setLayoutMode(e.value), [setLayoutMode]);
 
+  const handleClickEditorVisible = useCallback(() => setEditorVisible(!isEditorVisible), [isEditorVisible]);
+
+  const handleClickEraser = useCallback(() => {
+    setContent('');
+    setPreview({
+      schema: { flat: {} },
+      style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
+      definition: { rootId: '' }
+    });
+  }, []);
+
   const cmMode = useMemo(() => {
     switch (mode) {
       case 'webflow':
@@ -162,49 +174,60 @@ const Transform = props => {
         <div className="flex flex-col grow basis-0 overflow-y-auto">
           <TransformPreview preview={preview} />
         </div>
-        <div
-          className={classNames('flex bg-white', {
-            'h-full': layoutMode === 'horizontal',
-            'w-full': layoutMode === 'vertical'
-          })}
-        >
-          <ContainerResizable
-            className="grow"
-            autoGrow={false}
-            minConstraintsX={layoutMode === 'horizontal' ? 200 : 100}
-            minConstraintsY={layoutMode === 'horizontal' ? 100 : 200}
-            maxConstraintsX={layoutMode === 'horizontal' ? 1200 : Infinity}
-            maxConstraintsY={layoutMode === 'horizontal' ? Infinity : 800}
-            width={layoutMode === 'horizontal' ? 200 : Infinity}
-            height={layoutMode === 'horizontal' ? Infinity : 200}
-            resizeHandles={resizeHandles}
-            parentElement={rootDOM}
-            axis={layoutMode === 'horizontal' ? 'x' : 'y'}
+        {isEditorVisible && (
+          <div
+            className={classNames('flex bg-white', {
+              'h-full': layoutMode === 'horizontal',
+              'w-full': layoutMode === 'vertical'
+            })}
           >
-            <div className={classNames('flex grow', { 'flex-col': layoutMode === 'horizontal' })} onPaste={handlePaste}>
-              <CodeMirror
-                ref={editorRef}
-                className={classNames('grow', {
-                  'h-full': layoutMode === 'horizontal',
-                  'w-full grow': layoutMode === 'vertical'
-                })}
-                value={content}
-                theme="dark"
-                mode={cmMode}
-                // autoComplete={fieldsKeys}
-                lineWrapping
-                onChange={handleChangeContent}
-              />
-            </div>
-          </ContainerResizable>
-        </div>
+            <ContainerResizable
+              className="grow"
+              autoGrow={false}
+              minConstraintsX={layoutMode === 'horizontal' ? 200 : 100}
+              minConstraintsY={layoutMode === 'horizontal' ? 100 : 200}
+              maxConstraintsX={layoutMode === 'horizontal' ? 1200 : Infinity}
+              maxConstraintsY={layoutMode === 'horizontal' ? Infinity : 800}
+              width={layoutMode === 'horizontal' ? 200 : Infinity}
+              height={layoutMode === 'horizontal' ? Infinity : 200}
+              resizeHandles={resizeHandles}
+              parentElement={rootDOM}
+              axis={layoutMode === 'horizontal' ? 'x' : 'y'}
+            >
+              <div
+                className={classNames('flex grow', { 'flex-col': layoutMode === 'horizontal' })}
+                onPaste={handlePaste}
+              >
+                <CodeMirror
+                  ref={editorRef}
+                  className={classNames('grow', {
+                    'h-full': layoutMode === 'horizontal',
+                    'w-full grow': layoutMode === 'vertical'
+                  })}
+                  value={content}
+                  theme="dark"
+                  mode={cmMode}
+                  // autoComplete={fieldsKeys}
+                  lineWrapping
+                  onChange={handleChangeContent}
+                />
+              </div>
+            </ContainerResizable>
+          </div>
+        )}
       </div>
       <div className="flex p-2 items-center justify-between border-t border-gray-400">
-        <TransformLayout layoutMode={layoutMode} onLayoutModeChange={handleChangeLayoutMode} />
+        <TransformLayout
+          layoutMode={layoutMode}
+          onLayoutModeChange={handleChangeLayoutMode}
+          isEditorVisible={isEditorVisible}
+          onClickEditorVisible={handleClickEditorVisible}
+        />
         <TransformActions
           mode={mode}
           disabled={networkLoading}
           onChangeMode={handleChangeMode}
+          onClickEraser={handleClickEraser}
           onTransform={handleClickTransform}
           onImport={handleClickImport}
         />

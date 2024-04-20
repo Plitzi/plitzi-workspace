@@ -6,7 +6,14 @@ import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 const TransformActions = props => {
-  const { mode = 'horizontal', disabled, onChangeMode = noop, onTransform = noop, onImport = noop } = props;
+  const {
+    mode = 'horizontal',
+    disabled,
+    onChangeMode = noop,
+    onClickEraser = noop,
+    onTransform = noop,
+    onImport = noop
+  } = props;
 
   const options = useMemo(
     () => [
@@ -20,6 +27,9 @@ const TransformActions = props => {
 
   return (
     <div className="flex gap-2">
+      <Button size="sm" className="rounded" title="Clean Up" onClick={onClickEraser}>
+        <i className="fa-solid fa-eraser" />
+      </Button>
       <Select2
         className="rounded w-[150px]"
         size="sm"
@@ -45,6 +55,7 @@ TransformActions.propTypes = {
   mode: PropTypes.string,
   disabled: PropTypes.bool,
   onChangeMode: PropTypes.func,
+  onClickEraser: PropTypes.func,
   onTransform: PropTypes.func,
   onImport: PropTypes.func
 };
