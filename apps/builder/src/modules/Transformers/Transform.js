@@ -6,24 +6,24 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
-import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
-import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 import BuilderContext from '@pmodules/Builder/BuilderContext';
 import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
+
+// Relatives
+import TransformActions from './TransformActions';
+import TransformLayout from './TransformLayout';
+import TransformPreview from './TransformPreview';
 
 const Transform = props => {
   const { className = '' } = props;
@@ -122,10 +122,6 @@ const Transform = props => {
     }
   });
 
-  const schemaMemo = useMemo(() => ({ schema: preview?.schema }), [preview?.schema]);
-
-  const styleMemo = useMemo(() => ({ style: preview?.style }), [preview?.style]);
-
   const resizeHandles = useMemo(() => ['w'], []);
 
   const handleChangeMode = useCallback(
@@ -138,16 +134,6 @@ const Transform = props => {
       });
     },
     [setMode]
-  );
-
-  const options = useMemo(
-    () => [
-      // { value: 'html', label: 'Html' },
-      { value: 'html-tailwind', label: 'Html + Tailwind' },
-      // { value: 'json', label: 'Json' },
-      { value: 'webflow', label: 'Webflow' }
-    ],
-    []
   );
 
   const cmMode = useMemo(() => {
@@ -165,40 +151,17 @@ const Transform = props => {
     <div className={classNames('h-full flex', className)}>
       <div className="flex flex-col grow basis-0 overflow-y-auto">
         <div className="flex grow overflow-y-auto w-full">
-          <SchemaContext.Provider value={schemaMemo}>
-            <StyleContext.Provider value={styleMemo}>
-              <BuilderAreaPreview
-                previewMode
-                className="min-h-full w-full"
-                schema={schemaMemo?.schema}
-                id={preview?.definition?.rootId}
-                styleCache={styleMemo?.style?.cache}
-              />
-            </StyleContext.Provider>
-          </SchemaContext.Provider>
+          <TransformPreview preview={preview} />
         </div>
-        <div className="flex px-4 py-2 items-center justify-end gap-4 border-t mt-2 border-gray-400">
-          <Select2
-            className="rounded w-[150px]"
-            size="sm"
-            placeholder="Select mode"
-            value={mode}
-            onChange={handleChangeMode}
-            options={options}
-            isClearable={false}
-          />
-          <Button
-            size="sm"
-            className="rounded"
+        <div className="flex px-4 py-2 items-center justify-between border-t mt-2 border-gray-400">
+          <TransformLayout />
+          <TransformActions
+            mode={mode}
             disabled={networkLoading}
-            onClick={handleClickTransform}
-            title="Transform"
-          >
-            {networkLoading ? 'Loading...' : 'Compile'}
-          </Button>
-          <Button size="sm" className="rounded" disabled={networkLoading} onClick={handleClickImport} title="Import">
-            Import
-          </Button>
+            onChangeMode={handleChangeMode}
+            onTransform={handleClickTransform}
+            onImport={handleClickImport}
+          />
         </div>
       </div>
       <div className="flex h-full bg-white">
