@@ -18,7 +18,8 @@ const TransformLayout = props => {
     <div className="flex gap-2">
       <Select2
         className="rounded w-[150px]"
-        placeholder="Layout Mode"
+        isClearable={false}
+        isSearchable={false}
         value={layoutMode}
         onChange={onLayoutModeChange}
         size="sm"

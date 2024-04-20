@@ -37,6 +37,7 @@ const Transform = props => {
   const { elementSelected } = useContext(BuilderSelectedContext);
   const { rootDOM } = useContext(ContainerRootContext);
   const [mode, setMode] = useState('html-tailwind');
+  const [layoutMode, setLayoutMode] = useState('horizontal');
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const [preview, setPreview] = useState({
     schema: { flat: {} },
@@ -136,6 +137,8 @@ const Transform = props => {
     [setMode]
   );
 
+  const handleChangeLayoutMode = useCallback(e => setLayoutMode(e.value), [setLayoutMode]);
+
   const cmMode = useMemo(() => {
     switch (mode) {
       case 'webflow':
@@ -154,7 +157,7 @@ const Transform = props => {
           <TransformPreview preview={preview} />
         </div>
         <div className="flex px-4 py-2 items-center justify-between border-t mt-2 border-gray-400">
-          <TransformLayout />
+          <TransformLayout layoutMode={layoutMode} onLayoutModeChange={handleChangeLayoutMode} />
           <TransformActions
             mode={mode}
             disabled={networkLoading}

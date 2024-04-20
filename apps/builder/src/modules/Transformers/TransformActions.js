@@ -27,6 +27,7 @@ const TransformActions = props => {
         value={mode}
         onChange={onChangeMode}
         options={options}
+        isSearchable={false}
         isClearable={false}
       />
       <Button size="sm" className="rounded" disabled={disabled} onClick={onTransform} title="Transform">
