@@ -123,7 +123,13 @@ const Transform = props => {
     }
   });
 
-  const resizeHandles = useMemo(() => ['w'], []);
+  const resizeHandles = useMemo(() => {
+    if (layoutMode === 'horizontal') {
+      return ['w'];
+    }
+
+    return ['n'];
+  }, [layoutMode]);
 
   const handleChangeMode = useCallback(
     e => {
@@ -151,46 +157,57 @@ const Transform = props => {
   }, [mode]);
 
   return (
-    <div className={classNames('h-full flex', className)}>
-      <div className="flex flex-col grow basis-0 overflow-y-auto">
-        <div className="flex grow overflow-y-auto w-full">
+    <div className={classNames('h-full flex flex-col', className)}>
+      <div className={classNames('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
+        <div className="flex flex-col grow basis-0 overflow-y-auto">
           <TransformPreview preview={preview} />
         </div>
-        <div className="flex px-4 py-2 items-center justify-between border-t mt-2 border-gray-400">
-          <TransformLayout layoutMode={layoutMode} onLayoutModeChange={handleChangeLayoutMode} />
-          <TransformActions
-            mode={mode}
-            disabled={networkLoading}
-            onChangeMode={handleChangeMode}
-            onTransform={handleClickTransform}
-            onImport={handleClickImport}
-          />
+        <div
+          className={classNames('flex bg-white', {
+            'h-full': layoutMode === 'horizontal',
+            'w-full': layoutMode === 'vertical'
+          })}
+        >
+          <ContainerResizable
+            className="grow"
+            autoGrow={false}
+            minConstraintsX={layoutMode === 'horizontal' ? 200 : 100}
+            minConstraintsY={layoutMode === 'horizontal' ? 100 : 200}
+            maxConstraintsX={layoutMode === 'horizontal' ? 1200 : Infinity}
+            maxConstraintsY={layoutMode === 'horizontal' ? Infinity : 800}
+            width={layoutMode === 'horizontal' ? 200 : Infinity}
+            height={layoutMode === 'horizontal' ? Infinity : 200}
+            resizeHandles={resizeHandles}
+            parentElement={rootDOM}
+            axis={layoutMode === 'horizontal' ? 'x' : 'y'}
+          >
+            <div className={classNames('flex grow', { 'flex-col': layoutMode === 'horizontal' })} onPaste={handlePaste}>
+              <CodeMirror
+                ref={editorRef}
+                className={classNames('grow', {
+                  'h-full': layoutMode === 'horizontal',
+                  'w-full grow': layoutMode === 'vertical'
+                })}
+                value={content}
+                theme="dark"
+                mode={cmMode}
+                // autoComplete={fieldsKeys}
+                lineWrapping
+                onChange={handleChangeContent}
+              />
+            </div>
+          </ContainerResizable>
         </div>
       </div>
-      <div className="flex h-full bg-white">
-        <ContainerResizable
-          className={className}
-          autoGrow={false}
-          minConstraintsX={400}
-          minConstraintsY={Infinity}
-          maxConstraintsX={1000}
-          width={400}
-          resizeHandles={resizeHandles}
-          parentElement={rootDOM}
-        >
-          <div className="flex flex-col grow" onPaste={handlePaste}>
-            <CodeMirror
-              ref={editorRef}
-              className="h-full grow"
-              value={content}
-              theme="dark"
-              mode={cmMode}
-              // autoComplete={fieldsKeys}
-              lineWrapping
-              onChange={handleChangeContent}
-            />
-          </div>
-        </ContainerResizable>
+      <div className="flex p-2 items-center justify-between border-t border-gray-400">
+        <TransformLayout layoutMode={layoutMode} onLayoutModeChange={handleChangeLayoutMode} />
+        <TransformActions
+          mode={mode}
+          disabled={networkLoading}
+          onChangeMode={handleChangeMode}
+          onTransform={handleClickTransform}
+          onImport={handleClickImport}
+        />
       </div>
     </div>
   );
