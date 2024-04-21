@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
-import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
+import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -91,8 +91,8 @@ const BuilderAreaPreview = props => {
   const internalProps = useMemo(() => ({ id, rootId: id }), [id]);
 
   return (
-    <ContainerShadow className={classNames('flex', className)}>
-      <ContainerShadow.Content>
+    <ContainerFrame className={classNames('flex', className)}>
+      <>
         <style>{css}</style>
         <PlitziServiceProvider value={plitziContextValue}>
           <DataSourceContextProvider>
@@ -113,8 +113,8 @@ const BuilderAreaPreview = props => {
             </InteractionsBuilderContextProvider>
           </DataSourceContextProvider>
         </PlitziServiceProvider>
-      </ContainerShadow.Content>
-    </ContainerShadow>
+      </>
+    </ContainerFrame>
   );
 };
 

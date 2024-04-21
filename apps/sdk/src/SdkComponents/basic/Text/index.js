@@ -50,10 +50,8 @@ Text.content = {
     displayMode: 'desktop',
     style: {
       base: {
-        'font-size': '14px',
-        'line-height': '16px',
-        'margin-top': '14px',
-        'margin-bottom': '14px',
+        'font-size': '14px', // browser default
+        'line-height': '24px', // browser default
         display: 'inline'
       }
     }
