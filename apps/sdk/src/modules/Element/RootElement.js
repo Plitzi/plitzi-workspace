@@ -47,6 +47,7 @@ const RootElement = forwardRef((props, ref) => {
 
     return {
       'data-id': id,
+      'data-name': definition?.label ?? definition?.type ?? 'unknown',
       'data-root-id': rootId,
       'data-type': definition?.type ?? 'unknown',
       'data-root-render-element': true
