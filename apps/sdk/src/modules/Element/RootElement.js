@@ -25,7 +25,7 @@ const RootElement = forwardRef((props, ref) => {
     className = '',
     interactionTriggers = emptyObject,
     interactionCallbacks = emptyObject,
-    internalProps,
+    internalProps = emptyObject,
     ...otherProps
   } = props;
   const { id, rootId, style, definition, interactions, interactionsBasicCallbacks } = internalProps;
