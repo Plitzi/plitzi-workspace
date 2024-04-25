@@ -1,10 +1,13 @@
 // Packages
-import React from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
+
+// Alias
+import { CodeMirror } from '@plitzi/plitzi-ui-components';
 
 const Settings = props => {
   const {
@@ -17,9 +20,11 @@ const Settings = props => {
     onUpdate = noop
   } = props;
 
-  const handleChange = key => e => onUpdate(key, e.target.value);
+  const handleChange = useCallback(key => e => onUpdate(key, e.target.value), [onUpdate]);
 
-  const handleChangeIsPlugin = e => onUpdate('isPlugin', e.target.checked);
+  const handleChangeSettings = useCallback(value => onUpdate('settings', value), [onUpdate]);
+
+  const handleChangeIsPlugin = useCallback(e => onUpdate('isPlugin', e.target.checked), [onUpdate]);
 
   return (
     <div className="flex flex-col">
@@ -33,7 +38,14 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-4">
           <label>Settings</label>
-          <TextArea value={settings} onChange={handleChange('settings')} className="rounded" />
+          <CodeMirror
+            className="min-h-[250px] rounded"
+            value={settings}
+            theme="dark"
+            mode="json"
+            lineWrapping
+            onChange={handleChangeSettings}
+          />
         </div>
         <div className="flex items-center mt-4">
           <Checkbox id="custom-is-plugin" checked={isPlugin} onChange={handleChangeIsPlugin} className="rounded mr-2" />
