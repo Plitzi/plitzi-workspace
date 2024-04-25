@@ -86,6 +86,10 @@ export const fetchPluginsManifest = async manifests => {
   return responses
     .filter(response => response.status === 'fulfilled')
     .reduce(async (acum, response) => {
+      if (!response.value || !response.value.ok) {
+        return acum;
+      }
+
       const manifestData = (await response.value?.json()) || {};
 
       return { ...acum, [get(manifestData, 'root', '')]: manifestData };

@@ -57,16 +57,13 @@ const getApiRequest = async ({
     delete fetchOptions.body;
   }
 
-  const res = await fetch(url, fetchOptions);
-
-  let data;
   try {
-    data = await res.json();
-  } catch (e) {
-    // nothing, just ignore
-  }
+    const res = await fetch(url, fetchOptions);
 
-  return { status: res.status, data };
+    return { status: res.status, data: await res.json() };
+  } catch (e) {
+    return { status: e?.statusCode ?? 500, data: e.message };
+  }
 };
 
 const useApi = props => {
