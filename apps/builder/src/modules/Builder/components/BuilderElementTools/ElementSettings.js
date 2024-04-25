@@ -111,7 +111,6 @@ const ElementSettings = props => {
 
   const schemaValueMemo = useMemo(() => ({ schema }), [schema]);
   const styleValueMemo = useMemo(() => ({ style }), [style]);
-
   const Settings = Plugin?.pluginSettings ?? defaultElementsSettings[type];
   if (Plugin && pluginStyles[type] && pluginStyles[type].length > 0) {
     return (
