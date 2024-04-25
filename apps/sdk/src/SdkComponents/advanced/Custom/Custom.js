@@ -48,9 +48,18 @@ const Custom = forwardRef((props, ref) => {
     () => ({ ...internalProps, attributes: settingsParsed }),
     [internalProps, settingsParsed]
   );
-  const assetsArray = useMemo(() => assets.split('\n').filter(asset => !!asset) ?? [], [assets]).map(asset => ({
-    url: asset
-  }));
+  const assetsArray = useMemo(() => {
+    if (!assets) {
+      return [];
+    }
+
+    return assets
+      .split('\n')
+      .filter(asset => !!asset)
+      .map(asset => ({
+        url: asset
+      }));
+  }, [assets]);
 
   useEffect(() => {
     if (Array.isArray(assetsArray) && assetsArray.length === 0) {
