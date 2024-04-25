@@ -6,6 +6,16 @@ import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
+import Input from '@plitzi/plitzi-ui-components/Input';
+import Select from '@plitzi/plitzi-ui-components/Select';
+import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
+import TextArea from '@plitzi/plitzi-ui-components/TextArea';
+import Button from '@plitzi/plitzi-ui-components/Button';
+import Select2 from '@plitzi/plitzi-ui-components/Select2';
+import Switch from '@plitzi/plitzi-ui-components/Switch';
+import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
+import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
+import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
@@ -27,6 +37,8 @@ import BuilderContext from '../../BuilderContext';
 import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import { defaultElementsSettings } from '../../../../SdkComponents';
+
+const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Select2, Switch, QueryBuilder, KVEditor };
 
 const ElementSettings = props => {
   const { id = '', type = '', attributes = emptyObject, handleChange = noop } = props;
@@ -100,6 +112,7 @@ const ElementSettings = props => {
   const schemaValueMemo = useMemo(() => ({ schema }), [schema]);
   const styleValueMemo = useMemo(() => ({ style }), [style]);
 
+  const Settings = Plugin?.pluginSettings ?? defaultElementsSettings[type];
   if (Plugin && pluginStyles[type] && pluginStyles[type].length > 0) {
     return (
       <ContainerShadow
@@ -125,8 +138,8 @@ const ElementSettings = props => {
             <SchemaContext.Provider value={schemaValueMemo}>
               <StyleContext.Provider value={styleValueMemo}>
                 <ErrorBoundary>
-                  {Plugin.pluginSettings && <Plugin.pluginSettings {...attributes} id={id} onUpdate={handleChange} />}
-                  {!Plugin.pluginSettings && <div className="element-tools--empty">Settings not available.</div>}
+                  {Settings && <Settings {...attributes} id={id} onUpdate={handleChange} uiComponents={uiComponents} />}
+                  {!Settings && <div className="element-tools--empty">Settings not available.</div>}
                 </ErrorBoundary>
               </StyleContext.Provider>
             </SchemaContext.Provider>
@@ -136,14 +149,12 @@ const ElementSettings = props => {
     );
   }
 
-  const Settings = Plugin?.pluginSettings ?? defaultElementsSettings[type];
-
   return (
     <PlitziServiceProvider value={plitziContextValue}>
       <SchemaContext.Provider value={schemaValueMemo}>
         <StyleContext.Provider value={styleValueMemo}>
           <ErrorBoundary>
-            {Settings && <Settings {...attributes} id={id} onUpdate={handleChange} />}
+            {Settings && <Settings {...attributes} id={id} onUpdate={handleChange} uiComponents={uiComponents} />}
             {!Settings && <div className="element-tools--empty">Settings not available.</div>}
           </ErrorBoundary>
         </StyleContext.Provider>

@@ -5,7 +5,7 @@ import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import Select from '@plitzi/plitzi-ui-components/Select';
-import { TextArea } from '@plitzi/plitzi-ui-components';
+import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 
 const optionsDefault = [];
 
