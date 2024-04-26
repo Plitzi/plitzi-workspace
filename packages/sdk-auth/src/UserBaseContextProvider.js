@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo, useContext } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -71,12 +70,6 @@ const UserBaseContextProvider = props => {
   }, [manager, manager?.userDetails, manager?.isAuthenticated, previewMode]);
 
   return <UserContext.Provider value={valueMemo}>{!loading && children}</UserContext.Provider>;
-};
-
-UserBaseContextProvider.propTypes = {
-  children: PropTypes.node,
-  webId: PropTypes.number,
-  previewMode: PropTypes.bool
 };
 
 export default withUserProvider(UserBaseContextProvider);

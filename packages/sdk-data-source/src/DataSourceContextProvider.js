@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
@@ -22,10 +21,6 @@ const DataSourceContextProvider = props => {
   const valueMemo = useMemo(() => ({ dataSourceManager, useDataSource }), [dataSourceManager, useDataSource]);
 
   return <DataSourceContext.Provider value={valueMemo}>{children}</DataSourceContext.Provider>;
-};
-
-DataSourceContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export default DataSourceContextProvider;

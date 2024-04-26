@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useMemo } from 'react';
 import omit from 'lodash/omit';
 
 // Monorepo
@@ -11,8 +10,8 @@ import { getDisplayName, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import RealUserContext from '../UserContext';
 
 const withUserDataSource = WrappedComponent => {
-  const WithUserDataSourceComponent = forwardRef((props, ref) => {
-    const { previewMode = true, userProvider = 'basic' } = props;
+  const WithUserDataSourceComponent = props => {
+    const { ref, previewMode = true, userProvider = 'basic' } = props;
     const { user, authenticated } = useContext(RealUserContext);
     const userContextMemo = useMemo(() => {
       switch (userProvider) {
@@ -67,14 +66,9 @@ const withUserDataSource = WrappedComponent => {
     useDataSource({ id: 'global', source: 'user', name: 'User State', value: userContextMemo, fields: userFields });
 
     return <WrappedComponent ref={ref} {...omit(props, ['userProvider'])} />;
-  });
+  };
 
   WithUserDataSourceComponent.displayName = `withUserDataSource(${getDisplayName(WrappedComponent)})`;
-
-  WithUserDataSourceComponent.propTypes = {
-    previewMode: PropTypes.bool,
-    userProvider: PropTypes.oneOf(['basic', 'auth0', ''])
-  };
 
   return WithUserDataSourceComponent;
 };

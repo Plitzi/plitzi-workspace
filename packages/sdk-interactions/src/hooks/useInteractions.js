@@ -1,6 +1,5 @@
 // Packages
 import { useContext, useLayoutEffect } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Relatives
@@ -18,14 +17,6 @@ const useInteractions = props => {
       };
     }, [id, interactions, triggers, callbacks, getAdditionalParams, interactionsManager]);
   }
-};
-
-useInteractions.propTypes = {
-  id: PropTypes.string.isRequired,
-  interactions: PropTypes.object,
-  triggers: PropTypes.object,
-  callbacks: PropTypes.object,
-  getAdditionalParams: PropTypes.func
 };
 
 export default useInteractions;

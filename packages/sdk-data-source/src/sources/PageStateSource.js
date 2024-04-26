@@ -1,6 +1,5 @@
 // Packages
 import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
@@ -40,12 +39,6 @@ const PageStateSource = props => {
   });
 
   return children;
-};
-
-PageStateSource.propTypes = {
-  children: PropTypes.node,
-  pages: PropTypes.array,
-  state: PropTypes.object
 };
 
 export default PageStateSource;

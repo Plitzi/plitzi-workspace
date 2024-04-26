@@ -1,6 +1,5 @@
 // Packages
 import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
@@ -31,10 +30,6 @@ const NavigationSource = props => {
   });
 
   return children;
-};
-
-NavigationSource.propTypes = {
-  children: PropTypes.node
 };
 
 export default NavigationSource;

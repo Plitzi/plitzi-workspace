@@ -1,5 +1,5 @@
 // Packages
-import React, { forwardRef, useContext } from 'react';
+import React, { useContext } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
 
 // Monorepo
@@ -7,8 +7,8 @@ import { getDisplayName } from '@plitzi/sdk-shared/utils';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 const withUserProvider = WrappedComponent => {
-  const WithUserProviderComponent = forwardRef((props, ref) => {
-    const { userProvider, auth0Domain, auth0ClientId } = useContext(SchemaSettingsContext);
+  const WithUserProviderComponent = props => {
+    const { ref, userProvider, auth0Domain, auth0ClientId } = useContext(SchemaSettingsContext);
     switch (userProvider) {
       case 'auth0':
         return (
@@ -25,11 +25,9 @@ const withUserProvider = WrappedComponent => {
       default:
         return <WrappedComponent {...props} ref={ref} userProvider={userProvider} />;
     }
-  });
+  };
 
   WithUserProviderComponent.displayName = `withUserProvider(${getDisplayName(WrappedComponent)})`;
-
-  WithUserProviderComponent.propTypes = {};
 
   return WithUserProviderComponent;
 };

@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import InteractionsContext from './InteractionsContext';
@@ -19,13 +18,6 @@ const InteractionsContextProvider = props => {
   const valueMemo = useMemo(() => ({ interactionsManager, useInteractions }), [interactionsManager, useInteractions]);
 
   return <InteractionsContext.Provider value={valueMemo}>{children}</InteractionsContext.Provider>;
-};
-
-InteractionsContextProvider.propTypes = {
-  children: PropTypes.node,
-  currentPageId: PropTypes.string,
-  routeParams: PropTypes.object,
-  queryParams: PropTypes.object
 };
 
 export default InteractionsContextProvider;

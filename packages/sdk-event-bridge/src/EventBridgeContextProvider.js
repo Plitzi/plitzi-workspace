@@ -1,6 +1,5 @@
 // Packages
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import EventBridgeContext from './EventBridgeContext';
@@ -19,10 +18,6 @@ const EventBridgeContextProvider = props => {
   const valueMemo = useMemo(() => ({ eventBridge }), [eventBridge]);
 
   return <EventBridgeContext.Provider value={valueMemo}>{children}</EventBridgeContext.Provider>;
-};
-
-EventBridgeContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export default EventBridgeContextProvider;
