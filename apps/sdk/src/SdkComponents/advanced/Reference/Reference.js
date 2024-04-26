@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import capitalize from 'lodash/capitalize';
@@ -17,8 +16,9 @@ import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '@modul
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Reference = forwardRef((props, ref) => {
+const Reference = props => {
   const {
+    ref,
     children,
     className = '',
     internalProps = emptyObject,
@@ -170,15 +170,6 @@ const Reference = forwardRef((props, ref) => {
       )}
     </RootElement>
   );
-});
-
-Reference.propTypes = {
-  children: PropTypes.node,
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  referenceType: PropTypes.oneOf([PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT]),
-  referenceId: PropTypes.string,
-  referenceContainer: PropTypes.string
 };
 
 export default withElement(Reference);

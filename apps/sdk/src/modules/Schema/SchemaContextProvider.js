@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo, useContext } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -54,12 +53,6 @@ const SchemaContextProvider = props => {
       </SchemaSettingsContext.Provider>
     </SchemaPagesContext.Provider>
   );
-};
-
-SchemaContextProvider.propTypes = {
-  children: PropTypes.node,
-  schema: PropTypes.object,
-  type: PropTypes.oneOf([SCHEMA_TYPE_NORMAL, SCHEMA_TYPE_PARTIAL, SCHEMA_TYPE_TEMPLATE, SCHEMA_TYPE_SEGMENT])
 };
 
 export default SchemaContextProvider;

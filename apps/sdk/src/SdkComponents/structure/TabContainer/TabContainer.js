@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useState, cloneElement } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, cloneElement } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,8 +9,8 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const TabContainer = forwardRef((props, ref) => {
-  const { className = '', internalProps = emptyObject, children } = props;
+const TabContainer = props => {
+  const { ref, className = '', internalProps = emptyObject, children } = props;
   const [tabSelected, setTabSelected] = useState(0);
 
   return (
@@ -29,12 +28,6 @@ const TabContainer = forwardRef((props, ref) => {
         )}
     </RootElement>
   );
-});
-
-TabContainer.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node
 };
 
 export default withElement(TabContainer);

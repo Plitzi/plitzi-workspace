@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
 // Monorepo
@@ -76,14 +75,6 @@ const PluginManager = props => {
   }
 
   return Plugin;
-};
-
-PluginManager.propTypes = {
-  id: PropTypes.string,
-  rootId: PropTypes.string,
-  plitziElementLayout: PropTypes.object,
-  type: PropTypes.string,
-  internalProps: PropTypes.object
 };
 
 export default memo(PluginManager);

@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useMemo } from 'react';
 import classNames from 'classnames';
 import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
@@ -16,8 +15,9 @@ import RootElement from '@modules/Element/RootElement';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useCollectionContext from './hooks/useCollectionContext';
 
-const CollectionContainer = forwardRef((props, ref) => {
+const CollectionContainer = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     source = '',
@@ -93,16 +93,6 @@ const CollectionContainer = forwardRef((props, ref) => {
       {collection && !loading && children}
     </RootElement>
   );
-});
-
-CollectionContainer.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  limit: PropTypes.string,
-  query: PropTypes.string,
-  singleRecord: PropTypes.bool,
-  source: PropTypes.string
 };
 
 export default withElement(CollectionContainer);

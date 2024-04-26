@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -15,8 +14,9 @@ import { PARTIAL_SCHEMA_TYPE_LAYOUT } from '@modules/Element/ElementConstants';
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Page = forwardRef((props, ref) => {
+const Page = props => {
   const {
+    ref,
     seoEnabled = false,
     seoPageTitle = 'Title',
     seoPageDescription = 'Description',
@@ -87,21 +87,6 @@ const Page = forwardRef((props, ref) => {
       {!layout && children}
     </RootElement>
   );
-});
-
-Page.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  enabled: PropTypes.bool,
-  name: PropTypes.string,
-  slug: PropTypes.string,
-  folder: PropTypes.string,
-  layout: PropTypes.string,
-  layoutContainer: PropTypes.string,
-  seoEnabled: PropTypes.bool,
-  seoPageTitle: PropTypes.string,
-  seoPageDescription: PropTypes.string
 };
 
 export default withElement(Page);

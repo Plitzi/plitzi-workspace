@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
 
 // Monorepo
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
@@ -21,10 +20,6 @@ const DataSourceSdkContextProvider = props => {
       </NavigationSource>
     </DataSourceContextProvider>
   );
-};
-
-DataSourceSdkContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export default DataSourceSdkContextProvider;

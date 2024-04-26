@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
@@ -196,19 +195,6 @@ const PluginsContextProvider = props => {
       <PluginsContext.Provider value={pluginsContextValue}>{children}</PluginsContext.Provider>
     </>
   );
-};
-
-PluginsContextProvider.propTypes = {
-  children: PropTypes.node,
-  plugins: PropTypes.object,
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_RAW,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ]),
-  sdkStylePath: PropTypes.string
 };
 
 export default PluginsContextProvider;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -59,21 +58,6 @@ const Input = props => {
       )}
     </div>
   );
-};
-
-Input.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  name: PropTypes.string,
-  placeholder: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
-  type: PropTypes.string,
-  autoComplete: PropTypes.bool,
-  required: PropTypes.bool,
-  disabled: PropTypes.bool,
-  readOnly: PropTypes.bool,
-  onChange: PropTypes.func,
-  onValidate: PropTypes.func
 };
 
 export default Input;

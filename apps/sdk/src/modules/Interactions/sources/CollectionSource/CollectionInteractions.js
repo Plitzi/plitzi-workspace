@@ -1,6 +1,5 @@
 // Packages
 import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -254,10 +253,6 @@ const CollectionInteractions = props => {
   useInteractions({ id: 'collection', callbacks: interactionCallbacks });
 
   return children;
-};
-
-CollectionInteractions.propTypes = {
-  children: PropTypes.node
 };
 
 export default CollectionInteractions;

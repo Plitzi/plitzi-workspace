@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext, useMemo, useRef, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Monorepo
@@ -35,7 +34,13 @@ export const RENDER_MODE_SSR = 'ssr';
 export const RENDER_MODE_WIDGET = 'widget';
 
 const Sdk = props => {
-  const { renderMode = RENDER_MODE_IFRAME, externalStyle = '', environment = 'main', previewMode = true, debugMode = false } = props;
+  const {
+    renderMode = RENDER_MODE_IFRAME,
+    externalStyle = '',
+    environment = 'main',
+    previewMode = true,
+    debugMode = false
+  } = props;
   const { currentPageId } = useContext(NavigationContext);
   const { assets } = useContext(PluginsContext);
   const iframeRef = useRef(null);
@@ -122,21 +127,6 @@ const Sdk = props => {
       ref={iframeRef}
     />
   );
-};
-
-Sdk.propTypes = {
-  children: PropTypes.node,
-  environment: PropTypes.string,
-  previewMode: PropTypes.bool,
-  debugMode: PropTypes.bool,
-  externalStyle: PropTypes.string,
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_RAW,
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ])
 };
 
 Sdk.Plugin = SdkPlugin;

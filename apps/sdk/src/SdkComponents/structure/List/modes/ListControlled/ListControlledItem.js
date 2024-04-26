@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Alias
@@ -26,15 +25,6 @@ const ListControlledItem = props => {
       {children}
     </ReplicaProvider>
   );
-};
-
-ListControlledItem.propTypes = {
-  className: PropTypes.string,
-  parentId: PropTypes.string,
-  record: PropTypes.object,
-  isTemplate: PropTypes.bool,
-  itemCount: PropTypes.number,
-  children: PropTypes.node
 };
 
 export default ListControlledItem;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
 // Monorepo
@@ -69,13 +68,6 @@ const ReplicaProvider = props => {
       <InteractionsContext.Provider value={interactionsContextSource}>{children}</InteractionsContext.Provider>
     </DataSourceContext.Provider>
   );
-};
-
-ReplicaProvider.propTypes = {
-  children: PropTypes.node,
-  id: PropTypes.string,
-  source: PropTypes.string,
-  dataSourceValue: PropTypes.object
 };
 
 export default ReplicaProvider;

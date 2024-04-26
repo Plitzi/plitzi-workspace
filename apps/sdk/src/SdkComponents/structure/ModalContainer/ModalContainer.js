@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -14,8 +13,9 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const ModalContainer = forwardRef((props, ref) => {
+const ModalContainer = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -147,14 +147,6 @@ const ModalContainer = forwardRef((props, ref) => {
       </div>
     </RootElement>
   );
-});
-
-ModalContainer.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  title: PropTypes.string,
-  autoHideAfterClick: PropTypes.bool
 };
 
 export default withElement(ModalContainer);

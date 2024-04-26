@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -12,8 +11,16 @@ import withElement from '@modules/Element/hocs/withElement';
 import ListBasic from './modes/ListBasic';
 import ListControlled from './modes/ListControlled';
 
-const List = forwardRef((props, ref) => {
-  const { className = '', subType = 'ul', internalProps = emptyObject, children, items = [], source = 'none' } = props;
+const List = props => {
+  const {
+    ref,
+    className = '',
+    subType = 'ul',
+    internalProps = emptyObject,
+    children,
+    items = [],
+    source = 'none'
+  } = props;
   switch (source) {
     case 'controlled':
       return (
@@ -30,15 +37,6 @@ const List = forwardRef((props, ref) => {
         </ListBasic>
       );
   }
-});
-
-List.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  subType: PropTypes.oneOf(['ul', 'ol']),
-  items: PropTypes.array,
-  source: PropTypes.oneOf(['none', 'controlled'])
 };
 
 export default withElement(List);

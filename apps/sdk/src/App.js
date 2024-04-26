@@ -1,6 +1,5 @@
 // Packages
 import React, { useEffect, Children, isValidElement, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { BrowserRouter } from 'react-router-dom';
 import { createHttpLink } from '@apollo/client/link/http/createHttpLink';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
@@ -16,13 +15,7 @@ import { StaticRouter } from 'react-router-dom/server';
 // Alias
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@modules/Component/ComponentProvider';
-import {
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET
-} from '@modules/Sdk';
+import { RENDER_MODE_IFRAME, RENDER_MODE_SSR, RENDER_MODE_WIDGET } from '@modules/Sdk';
 import AppMain from '@modules/App/AppMain';
 
 // Relatives
@@ -131,33 +124,31 @@ const App = props => {
   );
 };
 
-App.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  // Space
-  revision: PropTypes.number,
-  webKey: PropTypes.string,
-  environment: PropTypes.string,
-  currentPageId: PropTypes.string,
-  // Server
-  server: PropTypes.object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-  offlineMode: PropTypes.bool,
-  offlineData: PropTypes.object, // { schema, style, plugins }
-  offlineDataType: PropTypes.oneOf(['json', 'yaml']),
-  // Extra
-  sdkEnvironment: PropTypes.string,
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_RAW,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ]),
-  sdkStylePath: PropTypes.string,
-  previewMode: PropTypes.bool,
-  debugMode: PropTypes.bool,
-  externalStyle: PropTypes.string,
-  state: PropTypes.object
-};
+// className: string,
+// children: node,
+// // Space
+// revision: number,
+// webKey: string,
+// environment: string,
+// currentPageId: string,
+// // Server
+// server: object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
+// offlineMode: bool,
+// offlineData: object, // { schema, style, plugins }
+// offlineDataType: oneOf(['json', 'yaml']),
+// // Extra
+// sdkEnvironment: string,
+// renderMode: oneOf([
+//   RENDER_MODE_IFRAME,
+//   RENDER_MODE_RAW,
+//   RENDER_MODE_SHADOW,
+//   RENDER_MODE_SSR,
+//   RENDER_MODE_WIDGET
+// ]),
+// sdkStylePath: string,
+// previewMode: bool,
+// debugMode: bool,
+// externalStyle: string,
+// state: object
 
 export default App;

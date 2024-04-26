@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -15,8 +14,9 @@ import RootElement from '@modules/Element/RootElement';
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Custom = forwardRef((props, ref) => {
+const Custom = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     renderType = '',
@@ -103,17 +103,6 @@ const Custom = forwardRef((props, ref) => {
       </span>
     </RootElement>
   );
-});
-
-Custom.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  renderType: PropTypes.string,
-  settings: PropTypes.string,
-  isPlugin: PropTypes.bool,
-  pluginScope: PropTypes.string,
-  assets: PropTypes.string,
-  scriptUrl: PropTypes.string
 };
 
 export default withElement(Custom);

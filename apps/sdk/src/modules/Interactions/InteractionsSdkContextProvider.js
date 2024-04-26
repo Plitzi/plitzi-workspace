@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
 
 // Monorepo
 import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
@@ -21,11 +20,6 @@ const InteractionsSdkContextProvider = props => {
       </CollectionInteractions>
     </InteractionsContextProvider>
   );
-};
-
-InteractionsSdkContextProvider.propTypes = {
-  children: PropTypes.node,
-  previewMode: PropTypes.bool
 };
 
 export default InteractionsSdkContextProvider;

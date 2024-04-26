@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useRef } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -45,18 +44,6 @@ const Textarea = props => {
       />
     </div>
   );
-};
-
-Textarea.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  name: PropTypes.string,
-  placeholder: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
-  required: PropTypes.bool,
-  disabled: PropTypes.bool,
-  onChange: PropTypes.func,
-  onValidate: PropTypes.func
 };
 
 export default Textarea;

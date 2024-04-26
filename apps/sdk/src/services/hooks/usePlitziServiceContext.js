@@ -1,6 +1,5 @@
 // Packages
 import React, { createContext, useContext } from 'react';
-import PropTypes from 'prop-types';
 
 export const PlitziServiceContext = createContext(undefined);
 
@@ -20,11 +19,6 @@ const PlitziServiceProvider = props => {
   const { children, value } = props;
 
   return <PlitziServiceContext.Provider value={value}>{children}</PlitziServiceContext.Provider>;
-};
-
-PlitziServiceProvider.propTypes = {
-  children: PropTypes.node,
-  value: PropTypes.object
 };
 
 export { PlitziServiceProvider };

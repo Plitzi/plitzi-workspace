@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
@@ -13,13 +12,7 @@ import { getPaths, matchRoutePath } from '@plitzi/sdk-navigation/NavigationHelpe
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
-import {
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET
-} from '@modules/Sdk/Sdk';
+import { RENDER_MODE_IFRAME, RENDER_MODE_SSR, RENDER_MODE_WIDGET } from '@modules/Sdk/Sdk';
 import NetworkContext from '@modules/Network/NetworkContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
@@ -137,19 +130,6 @@ const NavigationContextProvider = props => {
   }
 
   return <NavigationContext.Provider value={navigationValue}>{children}</NavigationContext.Provider>;
-};
-
-NavigationContextProvider.propTypes = {
-  children: PropTypes.node,
-  previewMode: PropTypes.bool,
-  currentPageId: PropTypes.string,
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_RAW,
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ])
 };
 
 export default NavigationContextProvider;

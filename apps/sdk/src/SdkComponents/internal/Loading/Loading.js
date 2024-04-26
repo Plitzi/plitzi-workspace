@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,8 +9,8 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const Loading = forwardRef((props, ref) => {
-  const { className = '', internalProps = emptyObject } = props;
+const Loading = props => {
+  const { ref, className = '', internalProps = emptyObject } = props;
   const {
     definition: { label }
   } = internalProps;
@@ -23,11 +22,6 @@ const Loading = forwardRef((props, ref) => {
       </span>
     </RootElement>
   );
-});
-
-Loading.propTypes = {
-  internalProps: PropTypes.object,
-  className: PropTypes.string
 };
 
 export default withElement(Loading);

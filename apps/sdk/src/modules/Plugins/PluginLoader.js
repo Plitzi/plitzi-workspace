@@ -1,6 +1,5 @@
 // Packages
 import React, { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -98,16 +97,6 @@ const PluginLoader = props => {
   }, []);
 
   return null;
-};
-
-PluginLoader.propTypes = {
-  type: PropTypes.oneOf(['script', 'link']),
-  pluginType: PropTypes.string,
-  url: PropTypes.string,
-  entryPoint: PropTypes.string,
-  onLoad: PropTypes.func,
-  onError: PropTypes.func,
-  onUnload: PropTypes.func
 };
 
 export default React.memo(PluginLoader);

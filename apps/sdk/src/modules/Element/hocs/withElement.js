@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
@@ -72,15 +71,6 @@ const withElement = WrappedComponent => {
   };
 
   WithElementComponent.displayName = `withElement(${getDisplayName(WrappedComponent)})`;
-
-  WithElementComponent.propTypes = {
-    children: PropTypes.node,
-    className: PropTypes.string,
-    internalProps: PropTypes.object,
-    // Props from JSX
-    plitziJsxSkipHOC: PropTypes.bool,
-    plitziCustomComponent: PropTypes.bool
-  };
 
   return WithElementComponent;
 };

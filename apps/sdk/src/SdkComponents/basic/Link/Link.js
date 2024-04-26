@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useMemo, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useContext } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 
@@ -15,8 +14,16 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Link = forwardRef((props, ref) => {
-  const { internalProps = emptyObject, children, className = '', href = '#', target = 'self', mode = 'page' } = props;
+const Link = props => {
+  const {
+    ref,
+    internalProps = emptyObject,
+    children,
+    className = '',
+    href = '#',
+    target = 'self',
+    mode = 'page'
+  } = props;
   const {
     settings: { previewMode },
     contexts: { NavigationContext, SchemaContext }
@@ -80,16 +87,6 @@ const Link = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-Link.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  href: PropTypes.string,
-  target: PropTypes.oneOf(['blank', 'self', 'parent', 'top']),
-  mode: PropTypes.oneOf(['page', 'internal', 'external']),
-  linkContext: PropTypes.object
 };
 
 export default withElement(Link);

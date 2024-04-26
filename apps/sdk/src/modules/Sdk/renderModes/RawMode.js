@@ -1,7 +1,6 @@
 /* eslint-disable react/no-danger */
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Alias
 import MadeInPlitzi from '@components/MadeInPlitzi';
@@ -24,12 +23,6 @@ const RawMode = props => {
       <MadeInPlitzi pageId={pageId} />
     </SpaceContainer>
   );
-};
-
-RawMode.propTypes = {
-  plitziContextValue: PropTypes.object,
-  pageId: PropTypes.string,
-  style: PropTypes.string
 };
 
 export default RawMode;

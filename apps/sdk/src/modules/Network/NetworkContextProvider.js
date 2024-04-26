@@ -1,6 +1,5 @@
 // Packages
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import { withApollo } from '@apollo/client/react/hoc/withApollo';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
@@ -209,20 +208,6 @@ const NetworkContextProvider = props => {
       <NetworkInternalContext.Provider value={internalData}>{children}</NetworkInternalContext.Provider>
     </NetworkContext.Provider>
   );
-};
-
-NetworkContextProvider.propTypes = {
-  children: PropTypes.node,
-  server: PropTypes.object,
-  revision: PropTypes.number,
-  webKey: PropTypes.string,
-  webId: PropTypes.number,
-  environment: PropTypes.string,
-  offlineMode: PropTypes.bool,
-  offlineData: PropTypes.object,
-  offlineDataType: PropTypes.oneOf(['json', 'yaml']),
-  // hocs
-  client: PropTypes.object
 };
 
 export default withApollo(NetworkContextProvider);

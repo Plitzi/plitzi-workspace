@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -14,8 +13,9 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const DialogContainer = forwardRef((props, ref) => {
+const DialogContainer = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -193,17 +193,6 @@ const DialogContainer = forwardRef((props, ref) => {
       </div>
     </RootElement>
   );
-});
-
-DialogContainer.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  headerLabel: PropTypes.string,
-  acceptButtonLabel: PropTypes.string,
-  acceptButtonLabelLoading: PropTypes.string,
-  rejectButtonLabel: PropTypes.string,
-  autoHideAfterClick: PropTypes.bool
 };
 
 export default withElement(DialogContainer);

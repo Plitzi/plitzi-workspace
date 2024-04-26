@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import ToastProvider from '@plitzi/plitzi-ui-components/Toast/ToastProvider';
 
 // Relatives
@@ -14,10 +13,6 @@ const SpaceContainer = props => {
       <SpaceContainerInternal>{children}</SpaceContainerInternal>
     </ToastProvider>
   );
-};
-
-SpaceContainer.propTypes = {
-  children: PropTypes.node
 };
 
 export default SpaceContainer;

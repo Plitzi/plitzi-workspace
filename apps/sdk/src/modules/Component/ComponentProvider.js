@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 import get from 'lodash/get';
 
@@ -175,12 +174,6 @@ const ComponentProvider = props => {
   );
 
   return <ComponentContext.Provider value={componentsContextValue}>{children}</ComponentContext.Provider>;
-};
-
-ComponentProvider.propTypes = {
-  children: PropTypes.node,
-  localCustomComponents: PropTypes.object,
-  remoteComponents: PropTypes.object
 };
 
 export default ComponentProvider;

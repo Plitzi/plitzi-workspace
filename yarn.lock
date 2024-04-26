@@ -3049,8 +3049,8 @@ __metadata:
     postcss-scss: "npm:^4.0.9"
     prettier: "npm:^3.2.5"
     prop-types: "npm:^15.8.1"
-    react: "npm:^18.3.0"
-    react-dom: "npm:^18.3.0"
+    react: "npm:19.0.0-beta-94eed63c49-20240425"
+    react-dom: "npm:19.0.0-beta-94eed63c49-20240425"
     react-hook-form: "npm:^7.51.3"
     react-moment: "npm:^1.1.3"
     react-refresh: "npm:^0.14.1"
@@ -3129,8 +3129,8 @@ __metadata:
     postcss: "npm:^8.4.38"
     postcss-loader: "npm:^8.1.1"
     postcss-scss: "npm:^4.0.9"
-    react: "npm:^18.3.0"
-    react-dom: "npm:^18.3.0"
+    react: "npm:19.0.0-beta-94eed63c49-20240425"
+    react-dom: "npm:19.0.0-beta-94eed63c49-20240425"
     react-helmet-async: "npm:^2.0.4"
     react-refresh: "npm:^0.14.1"
     react-router-dom: "npm:^6.23.0"
@@ -3154,9 +3154,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.11.0":
-  version: 0.11.0
-  resolution: "@plitzi/plitzi-ui-components@npm:0.11.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.11.0%2Fa10da40a3fdfb29bb628afdd963f81b81bc4aae6"
+"@plitzi/plitzi-ui-components@npm:0.12.0-rc1":
+  version: 0.12.0-rc1
+  resolution: "@plitzi/plitzi-ui-components@npm:0.12.0-rc1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.12.0-rc1%2Feae992572a9f4a1dae36b4a368369c6b4cc568cf"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.16.0"
     "@codemirror/commands": "npm:^6.5.0"
@@ -3172,14 +3172,14 @@ __metadata:
     immer: "npm:^10.0.4"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
-    react: "npm:^18.3.0"
+    react: "npm:19.0.0-beta-94eed63c49-20240425"
     react-color: "npm:^2.19.3"
-    react-dom: "npm:^18.3.0"
+    react-dom: "npm:19.0.0-beta-94eed63c49-20240425"
     react-moment: "npm:^1.1.3"
     react-router-dom: "npm:^6.23.0"
     react-toastify: "npm:^10.0.5"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/80442a8e085f52e49b0b4a5ee94226ff8addfe96a671508b73b846ce4ce990e2dad99f7a21d41c739492219120045f588f1f36d3121d8f0dbf7935317b19599e
+  checksum: 10c0/82f34602fe90e5e195c46a62a60ee24639cd5268578b2aa99c3d4c04e42f40303384c08cc06a65f430f432f720d884dd74bfa1fe3187f4a22b597b4083fdb3f0
   languageName: node
   linkType: hard
 
@@ -3195,7 +3195,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.1"
-    "@plitzi/plitzi-ui-components": "npm:0.11.0"
+    "@plitzi/plitzi-ui-components": "npm:0.12.0-rc1"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"
@@ -3223,8 +3223,8 @@ __metadata:
     eslint: "npm:^8.57.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
-    react: "npm:^18.3.0"
-    react-dom: "npm:^18.3.0"
+    react: "npm:19.0.0-beta-94eed63c49-20240425"
+    react-dom: "npm:19.0.0-beta-94eed63c49-20240425"
   languageName: unknown
   linkType: soft
 
@@ -3278,7 +3278,7 @@ __metadata:
     eslint: "npm:^8.57.0"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
-    react: "npm:^18.3.0"
+    react: "npm:19.0.0-beta-94eed63c49-20240425"
   languageName: unknown
   linkType: soft
 
@@ -3324,7 +3324,7 @@ __metadata:
     immer: "npm:^10.0.4"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
-    react: "npm:^18.3.0"
+    react: "npm:19.0.0-beta-94eed63c49-20240425"
   languageName: unknown
   linkType: soft
 
@@ -14834,6 +14834,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-dom@npm:19.0.0-beta-94eed63c49-20240425":
+  version: 19.0.0-beta-94eed63c49-20240425
+  resolution: "react-dom@npm:19.0.0-beta-94eed63c49-20240425"
+  dependencies:
+    scheduler: "npm:0.25.0-beta-94eed63c49-20240425"
+  peerDependencies:
+    react: 19.0.0-beta-94eed63c49-20240425
+  checksum: 10c0/9dd0c64f82803f2ce90d8ff3a84df491ddb93aaca70ef3b19b298566d485717c0b7ed9edc0285706bf659aae5ed02a77e98572b6e4e4664172a172195b7bba15
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:^16.8.0 || ^17.0.0 || ^18.0.0":
   version: 18.2.0
   resolution: "react-dom@npm:18.2.0"
@@ -14843,18 +14854,6 @@ __metadata:
   peerDependencies:
     react: ^18.2.0
   checksum: 10c0/66dfc5f93e13d0674e78ef41f92ed21dfb80f9c4ac4ac25a4b51046d41d4d2186abc915b897f69d3d0ebbffe6184e7c5876f2af26bfa956f179225d921be713a
-  languageName: node
-  linkType: hard
-
-"react-dom@npm:^18.3.0":
-  version: 18.3.0
-  resolution: "react-dom@npm:18.3.0"
-  dependencies:
-    loose-envify: "npm:^1.1.0"
-    scheduler: "npm:^0.23.1"
-  peerDependencies:
-    react: ^18.3.0
-  checksum: 10c0/5072767a5d67e242579e5ed46094bf5665385fcfc50584e818273ba668f768348bfd9101841fa3986635635b1238a7a5b2d28b73b134ebbe58a415311afd60d4
   languageName: node
   linkType: hard
 
@@ -15027,21 +15026,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react@npm:19.0.0-beta-94eed63c49-20240425":
+  version: 19.0.0-beta-94eed63c49-20240425
+  resolution: "react@npm:19.0.0-beta-94eed63c49-20240425"
+  checksum: 10c0/027ec7fb541b8960dd0f853e7f30ce579a6a812df688a734b43b986e791f711e8ba6960981d4949ed18776aa9bd45b85526d1aeead8ebccd4cf8c002ca9a16e6
+  languageName: node
+  linkType: hard
+
 "react@npm:^16.8.0 || ^17.0.0 || ^18.0.0":
   version: 18.2.0
   resolution: "react@npm:18.2.0"
   dependencies:
     loose-envify: "npm:^1.1.0"
   checksum: 10c0/b562d9b569b0cb315e44b48099f7712283d93df36b19a39a67c254c6686479d3980b7f013dc931f4a5a3ae7645eae6386b4aa5eea933baa54ecd0f9acb0902b8
-  languageName: node
-  linkType: hard
-
-"react@npm:^18.3.0":
-  version: 18.3.0
-  resolution: "react@npm:18.3.0"
-  dependencies:
-    loose-envify: "npm:^1.1.0"
-  checksum: 10c0/ad87bbfdb0c5466148c657da18b0d5458e835389fc591d59840f0e6ec797a004073a01c8cdbff1767a8774c7219054a56f74dacd67bdbb849f1314e427999268
   languageName: node
   linkType: hard
 
@@ -15655,6 +15652,13 @@ __metadata:
   dependencies:
     xmlchars: "npm:^2.2.0"
   checksum: 10c0/3847b839f060ef3476eb8623d099aa502ad658f5c40fd60c105ebce86d244389b0d76fcae30f4d0c728d7705ceb2f7e9b34bb54717b6a7dbedaf5dad2d9a4b74
+  languageName: node
+  linkType: hard
+
+"scheduler@npm:0.25.0-beta-94eed63c49-20240425":
+  version: 0.25.0-beta-94eed63c49-20240425
+  resolution: "scheduler@npm:0.25.0-beta-94eed63c49-20240425"
+  checksum: 10c0/4d950204134df133f66e2df84f1a59119f9d672bb736fb5eae1cc18e208b46b5f282f43e82d610c748654a555a2f5459937474c13bc10512cab47bb3235f9034
   languageName: node
   linkType: hard
 

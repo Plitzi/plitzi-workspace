@@ -1,6 +1,5 @@
 // Packages
 import React, { lazy, Suspense, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
 // Monorepo
@@ -134,17 +133,6 @@ const PluginRemote = props => {
       <Component internalProps={internalProps} plitziCustomComponent={plitziCustomComponent} />
     </Suspense>
   );
-};
-
-PluginRemote.propTypes = {
-  url: PropTypes.string,
-  scope: PropTypes.string,
-  internalProps: PropTypes.object,
-  autoRegister: PropTypes.bool,
-  // Props from JSX
-  plitziJsxSkipHOC: PropTypes.bool,
-  plitziCustomComponent: PropTypes.bool,
-  plitziJsxProps: PropTypes.object
 };
 
 export default PluginRemote;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo, useContext, useRef, useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
 // Alias
@@ -55,9 +54,5 @@ const SegmentsContextProvider = props => {
   return <SegmentsContext.Provider value={valueMemo}>{children}</SegmentsContext.Provider>;
 };
 
-SegmentsContextProvider.propTypes = {
-  children: PropTypes.node,
-  segments: PropTypes.array
-};
 
 export default SegmentsContextProvider;

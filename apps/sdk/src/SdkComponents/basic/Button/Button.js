@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -14,8 +13,9 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Button = forwardRef((props, ref) => {
+const Button = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -52,16 +52,6 @@ const Button = forwardRef((props, ref) => {
       {contentPlacement === 'after' && content}
     </RootElement>
   );
-});
-
-Button.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  contentPlacement: PropTypes.oneOf(['before', 'after', 'elements']),
-  content: PropTypes.string,
-  subType: PropTypes.oneOf(['button', 'reset', 'submit']),
-  disabled: PropTypes.bool
 };
 
 export default withElement(Button);

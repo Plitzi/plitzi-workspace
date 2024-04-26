@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import camelCase from 'lodash/camelCase';
 
@@ -67,14 +66,6 @@ const JsxManager = props => {
       {children}
     </Plugin>
   );
-};
-
-JsxManager.propTypes = {
-  children: PropTypes.node,
-  // Props from JSX
-  plitziJsxSkipHOC: PropTypes.bool,
-  plitziJsxType: PropTypes.string,
-  plitziJsxProps: PropTypes.object
 };
 
 export default memo(JsxManager);

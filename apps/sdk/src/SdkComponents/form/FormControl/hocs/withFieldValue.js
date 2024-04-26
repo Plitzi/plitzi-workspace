@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -10,8 +9,8 @@ import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
 import usePlitziServiceContext from '../../../../services/hooks/usePlitziServiceContext';
 
 const withFieldValue = WrappedComponent => {
-  const WithFieldValueComponent = forwardRef((props, ref) => {
-    const { internalProps = emptyObject, name = '', subType = 'text', required = true } = props;
+  const WithFieldValueComponent = props => {
+    const { ref, internalProps = emptyObject, name = '', subType = 'text', required = true } = props;
     const { id } = internalProps;
     const {
       settings: { previewMode },
@@ -67,27 +66,9 @@ const withFieldValue = WrappedComponent => {
     );
 
     return WrappedComponentMemo;
-  });
+  };
 
   WithFieldValueComponent.displayName = `withFieldValue(${getDisplayName(WrappedComponent)})`;
-
-  WithFieldValueComponent.propTypes = {
-    internalProps: PropTypes.object,
-    name: PropTypes.string,
-    subType: PropTypes.oneOf([
-      'hidden',
-      'text',
-      'number',
-      'email',
-      'password',
-      'select',
-      'checkbox',
-      'textarea',
-      'color',
-      'switch'
-    ]),
-    required: PropTypes.bool
-  };
 
   return WithFieldValueComponent;
 };

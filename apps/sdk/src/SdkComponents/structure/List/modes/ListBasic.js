@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -9,8 +8,8 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Alias
 import RootElement from '@modules/Element/RootElement';
 
-const ListBasic = forwardRef((props, ref) => {
-  const { className = '', subType = 'ul', internalProps = emptyObject, children } = props;
+const ListBasic = props => {
+  const { ref, className = '', subType = 'ul', internalProps = emptyObject, children } = props;
 
   return (
     <RootElement
@@ -22,13 +21,6 @@ const ListBasic = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-ListBasic.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  subType: PropTypes.oneOf(['ul', 'ol']),
-  className: PropTypes.string
 };
 
 export default ListBasic;

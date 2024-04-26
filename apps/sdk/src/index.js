@@ -4,7 +4,6 @@ import './helpers/wdyr';
 // Packages
 import React, { useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import PropTypes from 'prop-types';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
@@ -112,34 +111,32 @@ const PlitziSdk = props => {
   );
 };
 
-PlitziSdk.propTypes = {
-  // App
-  className: PropTypes.string,
-  children: PropTypes.node,
-  // Space
-  revision: PropTypes.number,
-  webKey: PropTypes.string,
-  environment: PropTypes.string,
-  currentPageId: PropTypes.string,
-  // Server
-  sdkEnvironment: PropTypes.string,
-  server: PropTypes.object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-  offlineMode: PropTypes.bool,
-  offlineData: PropTypes.object, // { schema, style, plugins }
-  offlineDataType: PropTypes.oneOf(['json', 'yaml']),
-  // Extra
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_RAW,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ]),
-  debugMode: PropTypes.bool,
-  previewMode: PropTypes.bool,
-  externalStyle: PropTypes.string,
-  state: PropTypes.object
-};
+// App
+// className: string,
+// children: node,
+// // Space
+// revision: number,
+// webKey: string,
+// environment: string,
+// currentPageId: string,
+// // Server
+// sdkEnvironment: string,
+// server: object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
+// offlineMode: bool,
+// offlineData: object, // { schema, style, plugins }
+// offlineDataType: oneOf(['json', 'yaml']),
+// // Extra
+// renderMode: oneOf([
+//   RENDER_MODE_IFRAME,
+//   RENDER_MODE_RAW,
+//   RENDER_MODE_SHADOW,
+//   RENDER_MODE_SSR,
+//   RENDER_MODE_WIDGET
+// ]),
+// debugMode: bool,
+// previewMode: bool,
+// externalStyle: string,
+// state: object
 
 PlitziSdk.Plugin = Sdk.Plugin;
 

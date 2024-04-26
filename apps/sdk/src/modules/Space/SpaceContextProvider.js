@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import SpaceContext from './SpaceContext';
@@ -16,10 +15,6 @@ const SpaceContextProvider = props => {
   const valueMemo = useMemo(() => ({}), []);
 
   return <SpaceContext.Provider value={valueMemo}>{children}</SpaceContext.Provider>;
-};
-
-SpaceContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export default SpaceContextProvider;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -10,13 +9,7 @@ import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
 import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
 
 // Alias
-import Sdk, {
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET
-} from '@modules/Sdk';
+import Sdk, { RENDER_MODE_IFRAME } from '@modules/Sdk';
 import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
@@ -103,36 +96,6 @@ const AppMain = props => {
   );
 
   return childrenMemo;
-};
-
-AppMain.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  // Space
-  revision: PropTypes.number,
-  webKey: PropTypes.string,
-  environment: PropTypes.string,
-  currentPageId: PropTypes.string,
-  // Server
-  server: PropTypes.object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-  offlineMode: PropTypes.bool,
-  offlineData: PropTypes.object, // { schema, style, plugins }
-  offlineDataType: PropTypes.oneOf(['json', 'yaml']),
-  // Extra
-  sdkEnvironment: PropTypes.string,
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_RAW,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ]),
-  sdkStylePath: PropTypes.string,
-  previewMode: PropTypes.bool,
-  externalStyle: PropTypes.string,
-  state: PropTypes.object,
-  onInitEventBridge: PropTypes.func,
-  onInitStateManager: PropTypes.func
 };
 
 export default AppMain;

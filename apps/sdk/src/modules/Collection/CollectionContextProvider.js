@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Alias
 import NetworkContext from '@modules/Network/NetworkContext';
@@ -97,11 +96,6 @@ const CollectionContextProvider = props => {
   );
 
   return <CollectionContext.Provider value={collectionContextValue}>{children}</CollectionContext.Provider>;
-};
-
-CollectionContextProvider.propTypes = {
-  children: PropTypes.node,
-  collections: PropTypes.object
 };
 
 export default CollectionContextProvider;

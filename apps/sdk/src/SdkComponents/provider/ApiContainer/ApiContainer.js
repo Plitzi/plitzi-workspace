@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 import get from 'lodash/get';
@@ -17,8 +16,9 @@ import RootElement from '@modules/Element/RootElement';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useApi from './hooks/useApi';
 
-const ApiContainer = forwardRef((props, ref) => {
+const ApiContainer = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -160,30 +160,6 @@ const ApiContainer = forwardRef((props, ref) => {
       )} */}
     </RootElement>
   );
-});
-
-ApiContainer.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  query: PropTypes.string,
-  method: PropTypes.oneOf(['get', 'post']),
-  accessToken: PropTypes.string,
-  when: PropTypes.object,
-  headers: PropTypes.object,
-  mockData: PropTypes.string,
-  subType: PropTypes.oneOf([
-    'div',
-    'header',
-    'footer',
-    'nav',
-    'main',
-    'section',
-    'article',
-    'aside',
-    'address',
-    'figure'
-  ]),
-  className: PropTypes.string
 };
 
 export default withElement(ApiContainer);

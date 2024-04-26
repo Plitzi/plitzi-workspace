@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -13,8 +12,9 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Image = forwardRef((props, ref) => {
+const Image = props => {
   const {
+    ref,
     internalProps = emptyObject,
     className = '',
     src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
@@ -49,14 +49,6 @@ const Image = forwardRef((props, ref) => {
       loading={loadMode}
     />
   );
-});
-
-Image.propTypes = {
-  internalProps: PropTypes.object,
-  className: PropTypes.string,
-  src: PropTypes.string,
-  alt: PropTypes.string,
-  loadMode: PropTypes.string
 };
 
 export default withElement(Image);

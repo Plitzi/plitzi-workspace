@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -18,8 +17,9 @@ const interactionBasicTriggers = {
   }
 };
 
-const RootElement = forwardRef((props, ref) => {
+const RootElement = props => {
   const {
+    ref,
     children,
     tag: Tag = 'div',
     className = '',
@@ -131,15 +131,6 @@ const RootElement = forwardRef((props, ref) => {
       {children}
     </Tag>
   );
-});
-
-RootElement.propTypes = {
-  children: PropTypes.node,
-  internalProps: PropTypes.object,
-  className: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  interactionTriggers: PropTypes.object,
-  interactionCallbacks: PropTypes.object,
-  tag: PropTypes.string
 };
 
 export default RootElement;

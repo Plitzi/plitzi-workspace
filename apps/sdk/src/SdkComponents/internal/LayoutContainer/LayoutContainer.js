@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,8 +9,8 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const LayoutContainer = forwardRef((props, ref) => {
-  const { className = '', internalProps = emptyObject, children, subType = 'div' } = props;
+const LayoutContainer = props => {
+  const { ref, className = '', internalProps = emptyObject, children, subType = 'div' } = props;
 
   return (
     <RootElement
@@ -23,24 +22,6 @@ const LayoutContainer = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-LayoutContainer.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  subType: PropTypes.oneOf([
-    'div',
-    'header',
-    'footer',
-    'nav',
-    'main',
-    'section',
-    'article',
-    'aside',
-    'address',
-    'figure'
-  ])
 };
 
 export default withElement(LayoutContainer);

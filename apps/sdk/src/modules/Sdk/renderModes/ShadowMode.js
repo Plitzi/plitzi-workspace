@@ -1,7 +1,6 @@
 /* eslint-disable react/no-danger */
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 
 // Monorepo
@@ -36,13 +35,6 @@ const ShadowMode = props => {
       </ContainerShadow.Content>
     </ContainerShadow>
   );
-};
-
-ShadowMode.propTypes = {
-  plitziContextValue: PropTypes.object,
-  pageId: PropTypes.string,
-  assets: PropTypes.object,
-  style: PropTypes.string
 };
 
 export default ShadowMode;

@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 
 // Monorepo
@@ -14,8 +13,8 @@ import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceC
 import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
 
-const IframeMode = forwardRef((props, ref) => {
-  const { pageId = '', style = '', plitziContextValue, assets = emptyObject } = props;
+const IframeMode = props => {
+  const { pageId = '', style = '', plitziContextValue, assets = emptyObject, ref } = props;
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
 
   return (
@@ -28,13 +27,6 @@ const IframeMode = forwardRef((props, ref) => {
       </SpaceContainer>
     </ContainerFrame>
   );
-});
-
-IframeMode.propTypes = {
-  plitziContextValue: PropTypes.object,
-  assets: PropTypes.object,
-  pageId: PropTypes.string,
-  style: PropTypes.string
 };
 
 export default IframeMode;

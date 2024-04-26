@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useMemo, useState, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useMemo, useState, useContext } from 'react';
 import classNames from 'classnames';
 import { produce } from 'immer';
 import get from 'lodash/get';
@@ -17,8 +16,9 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Form = forwardRef((props, ref) => {
+const Form = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -266,17 +266,6 @@ const Form = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-Form.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  method: PropTypes.oneOf(['get', 'post']),
-  actionUrl: PropTypes.string,
-  managedByInteractions: PropTypes.bool,
-  errors: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  values: PropTypes.object
 };
 
 export default withElement(Form);

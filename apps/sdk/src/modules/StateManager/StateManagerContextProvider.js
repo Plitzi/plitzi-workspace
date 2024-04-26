@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { produce } from 'immer';
 import noop from 'lodash/noop';
 import set from 'lodash/set';
@@ -148,12 +147,6 @@ const StateManagerContextProvider = props => {
   }, [onInit, valueMemo]);
 
   return <StateManagerContext.Provider value={valueMemo}>{children}</StateManagerContext.Provider>;
-};
-
-StateManagerContextProvider.propTypes = {
-  children: PropTypes.node,
-  state: PropTypes.object,
-  onInit: PropTypes.func
 };
 
 export default StateManagerContextProvider;
