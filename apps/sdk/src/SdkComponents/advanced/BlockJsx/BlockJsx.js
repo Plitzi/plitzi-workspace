@@ -17,6 +17,17 @@ import RootElement from '@modules/Element/RootElement';
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   className: string;
+ *   props: string;
+ *   contentCache: string;
+ *   allowEmptyRender: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BlockJsx = props => {
   const {
     ref,

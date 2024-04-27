@@ -21,6 +21,36 @@ import StateManagerContextProvider from '@modules/StateManager/StateManagerConte
 import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
 import DataSourceSdkContextProvider from '@modules/DataSource/DataSourceSdkContextProvider';
 
+/**
+ * @param {{
+ *   revision?: string; // Space
+ *   webKey?: string; // Space
+ *   environment?: string; // Space
+ *   currentPageId?: string; // Space
+ *   server?: {
+ *     graphqlServer: string;
+ *     basePath?: string;
+ *     subscriptionServer?: string;
+ *     host?: string;
+ *     websocketServer?: string;
+ *   }; // Server
+ *   offlineMode?: boolean; // Server
+ *   offlineData?: {
+ *     schema: object;
+ *     style: object;
+ *     plugins: object;
+ *     segments: object[];
+ *   }; // Server
+ *   offlineDataType?: 'json' | 'yaml'; // Server
+ *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+ *   sdkStylePath?: string;
+ *   previewMode?: boolean;
+ *   state?: object;
+ *   onInitEventBridge?: Function;
+ *   onInitStateManager?: Function;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const AppMain = props => {
   const {
     // Space
@@ -37,7 +67,7 @@ const AppMain = props => {
     renderMode = RENDER_MODE_IFRAME,
     sdkStylePath = './plitzi-sdk.css',
     previewMode = true,
-    state = undefined,
+    state,
     onInitEventBridge = noop,
     onInitStateManager = noop,
     ...sdkProps

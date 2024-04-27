@@ -11,6 +11,14 @@ import { defaultElements } from '../../SdkComponents';
 import ComponentContext from './ComponentContext';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
 
+/**
+ * @param {{
+ *   remoteComponents: object;
+ *   localCustomComponents: object;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ComponentProvider = props => {
   const { remoteComponents: remoteComponentsProp = emptyObject, localCustomComponents = emptyObject, children } = props;
 

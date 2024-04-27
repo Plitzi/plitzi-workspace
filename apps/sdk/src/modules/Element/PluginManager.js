@@ -12,6 +12,16 @@ import ComponentContext from '@modules/Component/ComponentContext';
 import PluginRemote from './PluginRemote';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   rootId?: string;
+ *   plitziElementLayout?: object;
+ *   type?: string;
+ *   internalProps?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginManager = props => {
   const { id = '', rootId = '', plitziElementLayout = undefined, type = '', internalProps = emptyObject } = props;
   const { components } = useContext(ComponentContext);

@@ -13,6 +13,20 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   headerLabel: string;
+ *   acceptButtonLabel: string;
+ *   acceptButtonLabelLoading: string;
+ *   rejectButtonLabel: string;
+ *   autoHideAfterClick: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DialogContainer = props => {
   const {
     ref,

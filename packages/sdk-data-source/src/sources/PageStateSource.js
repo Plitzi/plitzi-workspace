@@ -8,6 +8,14 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 const pagesDefault = [];
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   state: object;
+ *   pages: string[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageStateSource = props => {
   const { children, state = emptyObject, pages = pagesDefault } = props;
   const { useDataSource } = useContext(DataSourceContext);

@@ -3,6 +3,15 @@ import React from 'react';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   title?: string;
+ *   className?: string;
+ *   onClick?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InputEasingButton = props => {
   const { children, title = '', className = '', onClick = noop } = props;
 

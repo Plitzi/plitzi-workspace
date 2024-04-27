@@ -13,6 +13,15 @@ import ComponentContext from '@modules/Component/ComponentContext';
 import PluginRemote from './PluginRemote';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   plitziJsxSkipHOC?: boolean;
+ *   plitziJsxType: string;
+ *   plitziJsxProps: object;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const JsxManager = props => {
   const { plitziJsxSkipHOC = false, plitziJsxType = '', plitziJsxProps = emptyObject, children } = props;
   const {

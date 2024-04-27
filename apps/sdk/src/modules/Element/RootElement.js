@@ -17,6 +17,18 @@ const interactionBasicTriggers = {
   }
 };
 
+/**
+ * @param {{
+ *   ref?: React.Ref<any>;
+ *   children?: React.ReactNode;
+ *   tag?: string;
+ *   className?: string;
+ *   interactionTriggers?: object;
+ *   interactionCallbacks?: object;
+ *   internalProps?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const RootElement = props => {
   const {
     ref,

@@ -10,6 +10,14 @@ import { getDisplayName, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import RealUserContext from '../UserContext';
 
 const withUserDataSource = WrappedComponent => {
+  /**
+   * @param {{
+   *   ref: React.RefObject;
+   *   previewMode: boolean;
+   *   userProvider: 'auth0' | 'basic' | '';
+   * }} props
+   * @returns {React.ReactElement}
+   */
   const WithUserDataSourceComponent = props => {
     const { ref, previewMode = true, userProvider = 'basic' } = props;
     const { user, authenticated } = useContext(RealUserContext);

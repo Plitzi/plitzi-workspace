@@ -4,6 +4,14 @@ import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+/**
+ * @param {{
+ *   elementSelected: string;
+ *   schema: object;
+ *   style: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleViewer = props => {
   const { elementSelected, schema, style } = props;
   const flat = useMemo(() => get(schema, 'flat', {}), [schema]);

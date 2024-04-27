@@ -11,6 +11,15 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
+/**
+ * @param {{
+ *   currentPageId: string;
+ *   className?: string;
+ *   renderMode?: 'iframe' | 'sdk';
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PlitziSdkWrapper = props => {
   const { currentPageId, className = '', renderMode = 'iframe', previewMode = true } = props;
   const { schema } = useContext(SchemaContext);

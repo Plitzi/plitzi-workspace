@@ -7,8 +7,15 @@ import { getDisplayName } from '@plitzi/sdk-shared/utils';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 const withUserProvider = WrappedComponent => {
+  /**
+   * @param {{
+   *   ref: React.RefObject;
+   * }} props
+   * @returns {React.ReactElement}
+   */
   const WithUserProviderComponent = props => {
-    const { ref, userProvider, auth0Domain, auth0ClientId } = useContext(SchemaSettingsContext);
+    const { ref } = props;
+    const { userProvider, auth0Domain, auth0ClientId } = useContext(SchemaSettingsContext);
     switch (userProvider) {
       case 'auth0':
         return (

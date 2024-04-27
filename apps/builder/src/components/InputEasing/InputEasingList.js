@@ -6,6 +6,13 @@ import classNames from 'classnames';
 // Relatives
 import InputEasingButton from './InputEasingButton';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   onChange?: (easing: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InputEasingList = props => {
   const { className = '', onChange = noop } = props;
 

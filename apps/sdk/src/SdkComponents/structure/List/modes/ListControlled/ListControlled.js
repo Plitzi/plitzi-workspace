@@ -13,6 +13,16 @@ import RootElement from '@modules/Element/RootElement';
 import usePlitziServiceContext from '../../../../../services/hooks/usePlitziServiceContext';
 import ListControlledItem from './ListControlledItem';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   items: any[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ListControlled = props => {
   const { ref, className = '', internalProps = emptyObject, children, items = [] } = props;
   const { id } = internalProps;

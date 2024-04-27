@@ -7,6 +7,17 @@ import Handlebars from 'handlebars';
 import usePlitziServiceContext from '../../../../services/hooks/usePlitziServiceContext';
 import { routeParamsParserToCollection } from '../helpers/Utils';
 
+/**
+ * @param {{
+ *   source: string;
+ *   record: string;
+ *   query: string;
+ *   limit: number;
+ *   appendResults: boolean;
+ *   singleRecord: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const useCollectionContext = (props = {}) => {
   const { source, record, query = '', limit = 1, appendResults = false, singleRecord = false } = props;
   const plitziContext = usePlitziServiceContext();

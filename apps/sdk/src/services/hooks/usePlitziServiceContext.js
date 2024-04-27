@@ -5,7 +5,6 @@ export const PlitziServiceContext = createContext(undefined);
 
 const usePlitziServiceContext = () => {
   const context = useContext(PlitziServiceContext);
-
   if (context === undefined) {
     throw new Error(
       'ServiceContext value is undefined. Make sure you use the PlitziServiceProvider before using the hook.'
@@ -15,6 +14,13 @@ const usePlitziServiceContext = () => {
   return context;
 };
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   value: any;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PlitziServiceProvider = props => {
   const { children, value } = props;
 

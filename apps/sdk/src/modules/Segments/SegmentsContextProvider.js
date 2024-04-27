@@ -9,6 +9,13 @@ import NetworkContext from '@modules/Network/NetworkContext';
 // Relatives
 import SegmentsContext from './SegmentsContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   segments: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SegmentsContextProvider = props => {
   const { children, segments: segmentsProp } = props;
   const { query } = useContext(NetworkContext);
@@ -53,6 +60,5 @@ const SegmentsContextProvider = props => {
 
   return <SegmentsContext.Provider value={valueMemo}>{children}</SegmentsContext.Provider>;
 };
-
 
 export default SegmentsContextProvider;

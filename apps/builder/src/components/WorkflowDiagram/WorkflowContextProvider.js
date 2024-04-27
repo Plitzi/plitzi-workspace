@@ -13,6 +13,19 @@ import { generateID } from '../../helpers/utils';
 
 const nodeDefinitionsDefault = [];
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   template: object;
+ *   containerRef: React.RefObject;
+ *   direction?: 'horizontal' | 'vertical';
+ *   nodeDefinitions?: object[];
+ *   addNodePositionX?: number;
+ *   addNodePositionY?: number;
+ *   onChange?: (template: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowContextProvider = props => {
   const {
     children,

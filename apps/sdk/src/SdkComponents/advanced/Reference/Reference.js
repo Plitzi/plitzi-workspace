@@ -16,6 +16,18 @@ import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '@modul
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   children: React.ReactNode;
+ *   className: string;
+ *   internalProps: object;
+ *   referenceType: string;
+ *   referenceId: string;
+ *   referenceContainer: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Reference = props => {
   const {
     ref,

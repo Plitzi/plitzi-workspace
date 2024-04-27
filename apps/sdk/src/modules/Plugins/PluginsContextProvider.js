@@ -19,6 +19,15 @@ import {
   RENDER_MODE_WIDGET
 } from '@modules/Sdk/Sdk';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+ *   plugins?: object;
+ *   sdkStylePath?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginsContextProvider = props => {
   const { children, renderMode = RENDER_MODE_IFRAME, plugins: pluginsProp, sdkStylePath = './plitzi-sdk.css' } = props;
   const [temporalCustomStyles, setTemporalCustomStyles] = useState({});

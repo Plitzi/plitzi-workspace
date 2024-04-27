@@ -13,6 +13,16 @@ import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceC
 import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
 
+/**
+ * @param {{
+ *   pageId?: string;
+ *   style?: string;
+ *   plitziContextValue: object;
+ *   assets: object;
+ *   ref: React.RefObject<HTMLElement>;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const IframeMode = props => {
   const { pageId = '', style = '', plitziContextValue, assets = emptyObject, ref } = props;
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);

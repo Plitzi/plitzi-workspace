@@ -12,6 +12,13 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageInteractions = props => {
   const { children, previewMode = true } = props;
   const { schema } = useContext(SchemaContext);

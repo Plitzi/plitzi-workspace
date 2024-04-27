@@ -7,6 +7,12 @@ import WorkflowNode from './WorkflowNode/WorkflowNode';
 import WorkflowContext from './WorkflowContext';
 import WorkflowActions from './WorkflowActions';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowContainer = props => {
   const { className = '' } = props;
   const { nodes, direction, performLayout } = useContext(WorkflowContext);

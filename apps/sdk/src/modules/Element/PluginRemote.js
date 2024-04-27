@@ -88,6 +88,18 @@ export const init = () => {
   return modules;
 };
 
+/**
+ * @param {{
+ *   url: string;
+ *   scope: string;
+ *   internalProps: object;
+ *   autoRegister: boolean;
+ *   plitziJsxSkipHOC: boolean; // Props from JSX
+ *   plitziCustomComponent: boolean; // Props from JSX
+ *   plitziJsxProps: object; // Props from JSX
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginRemote = props => {
   const {
     url = '',

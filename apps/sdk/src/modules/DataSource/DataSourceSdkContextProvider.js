@@ -9,6 +9,12 @@ import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DataSourceSdkContextProvider = props => {
   const { children } = props;
   const { state } = useContext(StateManagerContext);

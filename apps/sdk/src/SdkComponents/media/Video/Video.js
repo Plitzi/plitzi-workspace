@@ -12,6 +12,19 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   src: string;
+ *   autoPlay: boolean;
+ *   playsInline: boolean;
+ *   loop: boolean;
+ *   muted: boolean;
+ *   className: string;
+ *   internalProps: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Video = props => {
   const {
     ref,

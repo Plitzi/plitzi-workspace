@@ -10,6 +10,18 @@ import DataSourceContext from '../DataSourceContext';
 export const MODE_WRITE = 'write';
 export const MODE_READ = 'read';
 
+/**
+ * @param {{
+ *   id: string;
+ *   source: string;
+ *   name: string;
+ *   fields: object[];
+ *   value: object;
+ *   mode: 'write' | 'read';
+ *   extraElements: object[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const useDataSource = (props = {}) => {
   const { id, source, name, fields = [], value = emptyObject, mode = MODE_WRITE, extraElements = [] } = props;
   const { dataSourceManager } = useContext(DataSourceContext);

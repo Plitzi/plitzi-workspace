@@ -10,6 +10,12 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import CollectionContext from '@modules/Collection/CollectionContext';
 import { collectionFieldTypeToInteractions } from '@modules/Collection/CollectionsConstants';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionInteractions = props => {
   const { children } = props;
   const { useInteractions } = useContext(InteractionsContext);

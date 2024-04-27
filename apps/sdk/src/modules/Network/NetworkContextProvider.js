@@ -14,6 +14,21 @@ import Queries from './Queries';
 import Mutations from './Mutations';
 import NetworkInternalContext from './contexts/NetworkInternalContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   server: string;
+ *   revision: number;
+ *   webKey: string;
+ *   webId: number;
+ *   environment: 'development' | 'staging' | 'production';
+ *   offlineMode: boolean;
+ *   offlineData: object;
+ *   offlineDataType: string;
+ *   client: any; // hoc
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NetworkContextProvider = props => {
   const {
     children,

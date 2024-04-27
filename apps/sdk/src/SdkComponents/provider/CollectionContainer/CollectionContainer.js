@@ -15,6 +15,19 @@ import RootElement from '@modules/Element/RootElement';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useCollectionContext from './hooks/useCollectionContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   source: string;
+ *   children: React.ReactNode;
+ *   limit: string;
+ *   query: string;
+ *   singleRecord: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionContainer = props => {
   const {
     ref,

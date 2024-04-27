@@ -18,6 +18,15 @@ import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
 // Relatives
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   renderMode?: 'iframe' | 'ssr' | 'widget';
+ *   currentPageId?: string;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NavigationContextProvider = props => {
   const { children, renderMode = RENDER_MODE_IFRAME, currentPageId: currentPageIdProp, previewMode = true } = props;
   const { server } = useContext(NetworkContext);

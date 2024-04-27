@@ -1,6 +1,12 @@
 // Packages
 import React from 'react';
 
+/**
+ * @param {{
+ *   pageId?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const MadeInPlitzi = props => {
   const { pageId = '' } = props;
 

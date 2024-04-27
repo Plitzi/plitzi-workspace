@@ -18,6 +18,14 @@ export const SCHEMA_TYPE_PARTIAL = 'partial';
 export const SCHEMA_TYPE_TEMPLATE = 'template';
 export const SCHEMA_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   type: 'normal' | 'partial' | 'template' | 'segment';
+ *   schema: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SchemaContextProvider = props => {
   const { children, type = SCHEMA_TYPE_NORMAL, schema: schemaProp } = props;
   const internalData = useContext(NetworkInternalContext);

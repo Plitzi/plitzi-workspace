@@ -5,6 +5,12 @@ import ToastProvider from '@plitzi/plitzi-ui-components/Toast/ToastProvider';
 // Relatives
 import SpaceContainerInternal from './SpaceContainerInternal';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SpaceContainer = props => {
   const { children } = props;
 

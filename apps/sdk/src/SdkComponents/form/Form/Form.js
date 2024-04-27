@@ -16,6 +16,20 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   method: 'get' | 'post';
+ *   actionUrl: string;
+ *   managedByInteractions: boolean;
+ *   errors: object;
+ *   values: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Form = props => {
   const {
     ref,

@@ -14,6 +14,20 @@ import RootElement from '@modules/Element/RootElement';
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   renderType: string;
+ *   settings: string;
+ *   isPlugin: boolean;
+ *   pluginScope: string;
+ *   assets: string;
+ *   scriptUrl: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Custom = props => {
   const {
     ref,

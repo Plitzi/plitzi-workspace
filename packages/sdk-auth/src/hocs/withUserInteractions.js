@@ -9,6 +9,13 @@ import { getDisplayName } from '@plitzi/sdk-shared/utils';
 import UserContext from '../UserContext';
 
 const withUserInteractions = WrappedComponent => {
+  /**
+   * @param {{
+   *   ref: React.RefObject;
+   *   userProvider: 'auth0' | 'basic';
+   * }} props
+   * @returns {React.ReactElement}
+   */
   const WithUserInteractionsComponent = props => {
     const { ref, userProvider = 'basic' } = props;
     const { login, refreshDetails, logout } = useContext(UserContext);

@@ -11,6 +11,16 @@ import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceCon
 import useElementController from '../hooks/useElementController';
 
 const withElement = WrappedComponent => {
+  /**
+   * @param {{
+   *   plitziJsxSkipHOC?: boolean; // Props from JSX
+   *   plitziCustomComponent?: boolean; // Props from JSX
+   *   internalProps: object;
+   *   className: string;
+   *   children: React.ReactNode;
+   * }} props
+   * @returns {React.ReactElement}
+   */
   const WithElementComponent = props => {
     const { plitziJsxSkipHOC = false, plitziCustomComponent = false } = props;
     let { internalProps = emptyObject, className = '', children } = props;

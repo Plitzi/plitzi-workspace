@@ -16,6 +16,22 @@ import RootElement from '@modules/Element/RootElement';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useApi from './hooks/useApi';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   query: string;
+ *   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
+ *   accessToken: string;
+ *   when: object;
+ *   headers: object;
+ *   mockData: object;
+ *   subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ApiContainer = props => {
   const {
     ref,

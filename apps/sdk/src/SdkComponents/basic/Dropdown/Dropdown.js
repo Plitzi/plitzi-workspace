@@ -15,6 +15,23 @@ import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceCon
 
 const KEY_ESC = 27;
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   className: string;
+ *   popupPlacement: 'left' | 'right' | 'top' | 'bottom';
+ *   openPopup: boolean;
+ *   backgroundDisabled: boolean;
+ *   closeOnClickBackground: boolean;
+ *   closeOnClickPopup: boolean;
+ *   containerTopOffset: number;
+ *   containerLeftOffset: number;
+ *   disabled: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Dropdown = props => {
   const {
     ref,

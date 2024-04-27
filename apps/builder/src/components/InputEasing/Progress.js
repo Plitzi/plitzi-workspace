@@ -6,6 +6,17 @@ import BezierEasing from './BezierEasing';
 
 const valueDefault = [];
 
+/**
+ * @param {{
+ *   progress?: number;
+ *   xFrom?: number;
+ *   xTo?: number;
+ *   yFrom?: number;
+ *   yTo?: number;
+ *   value?: number[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Progress = props => {
   const { progress = 0, xFrom = 0, xTo = 0, yFrom = 0, yTo = 0, value = valueDefault } = props;
   const easing = useMemo(() => BezierEasing(...value), [value]);

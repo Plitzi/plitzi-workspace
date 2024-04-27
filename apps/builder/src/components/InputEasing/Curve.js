@@ -3,6 +3,16 @@ import React from 'react';
 
 const valueDefault = [];
 
+/**
+ * @param {{
+ *   value?: number[];
+ *   xFrom?: number;
+ *   xTo?: number;
+ *   yFrom?: number;
+ *   yTo?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Curve = props => {
   const { value = valueDefault, xFrom = 0, xTo = 0, yFrom = 0, yTo = 0 } = props;
 

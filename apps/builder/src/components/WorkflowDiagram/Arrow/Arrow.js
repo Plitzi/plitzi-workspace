@@ -8,6 +8,23 @@ import { interpolateCubicBezierAngle } from './helpers/interpolation';
 import { getDistance } from '../helpers/workflowUtils';
 import { getCurveHorizontal, getCurveVertical } from './helpers/arrowUtils';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   direction?: 'horizontal' | 'vertical';
+ *   dotRadius?: number;
+ *   fromRadius?: number;
+ *   curveRate?: number;
+ *   fromX?: number;
+ *   fromY?: number;
+ *   toX?: number;
+ *   toY?: number;
+ *   offsetX?: number;
+ *   offsetY?: number;
+ *   isPreview?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Arrow = props => {
   const {
     className = '',

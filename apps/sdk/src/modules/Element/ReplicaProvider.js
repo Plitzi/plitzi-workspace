@@ -8,6 +8,14 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   id: string;
+ *   source: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ReplicaProvider = props => {
   const { children, id = '', source = '', dataSourceValue = emptyObject } = props;
   const {

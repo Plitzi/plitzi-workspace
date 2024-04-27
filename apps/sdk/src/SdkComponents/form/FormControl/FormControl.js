@@ -20,6 +20,37 @@ import Textarea from './inputs/Textarea';
 import Hidden from './inputs/Hidden';
 import withFieldValue from './hocs/withFieldValue';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   subType:
+ *     | 'text'
+ *     | 'number'
+ *     | 'email'
+ *     | 'password'
+ *     | 'time'
+ *     | 'checkbox'
+ *     | 'switch'
+ *     | 'select'
+ *     | 'textarea'
+ *     | 'hidden';
+ *   name: string;
+ *   label: string;
+ *   placeholder: string;
+ *   autoComplete: boolean;
+ *   disabled: boolean;
+ *   options: { label: string; value: string }[];
+ *   required: boolean;
+ *   readOnly: boolean;
+ *   value: string;
+ *   error: string;
+ *   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ *   handleValidate: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const FormControl = props => {
   const {
     ref,

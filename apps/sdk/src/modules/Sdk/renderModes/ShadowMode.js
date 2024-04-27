@@ -14,6 +14,15 @@ import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceC
 import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
 
+/**
+ * @param {{
+ *   pageId?: string;
+ *   style?: string;
+ *   plitziContextValue: object;
+ *   assets: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ShadowMode = props => {
   const { pageId = '', style = '', plitziContextValue, assets = emptyObject } = props;
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);

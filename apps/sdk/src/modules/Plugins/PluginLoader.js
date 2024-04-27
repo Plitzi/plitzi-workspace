@@ -4,6 +4,18 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 import set from 'lodash/set';
 
+/**
+ * @param {{
+ *   type?: 'script' | 'link';
+ *   pluginType?: string;
+ *   url?: string;
+ *   entryPoint?: string;
+ *   onLoad?: (component: any, pluginType: string, type: string) => void;
+ *   onError?: (pluginType: string) => void;
+ *   onUnload?: (pluginType: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginLoader = props => {
   const {
     type = 'script',

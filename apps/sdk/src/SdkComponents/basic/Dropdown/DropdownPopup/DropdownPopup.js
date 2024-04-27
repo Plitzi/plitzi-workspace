@@ -9,6 +9,15 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   className: string;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DropdownPopup = props => {
   const { ref, className = '', internalProps = emptyObject, children } = props;
   const { onClick, openPopup, parameters, popupRef } = internalProps;

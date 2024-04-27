@@ -10,6 +10,15 @@ import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelp
 import usePlitziServiceContext from '../../../../services/hooks/usePlitziServiceContext';
 import ElementController from './helpers/ElementController';
 
+/**
+ * @param {object} internalProps
+ * @param {{
+ *   plitziCustomComponent: boolean;
+ *   children: React.ReactNode;
+ *   className: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const useElementController = (internalProps, { plitziCustomComponent, children, className }) => {
   const {
     settings: { previewMode },

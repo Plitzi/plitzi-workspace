@@ -11,6 +11,18 @@ import withElement from '@modules/Element/hocs/withElement';
 import ListBasic from './modes/ListBasic';
 import ListControlled from './modes/ListControlled';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   subType: 'ul' | 'ol';
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   items: object[];
+ *   source: 'none' | 'controlled';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const List = props => {
   const {
     ref,

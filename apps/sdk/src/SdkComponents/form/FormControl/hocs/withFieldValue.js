@@ -9,6 +9,26 @@ import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
 import usePlitziServiceContext from '../../../../services/hooks/usePlitziServiceContext';
 
 const withFieldValue = WrappedComponent => {
+  /**
+   * @param {{
+   *   ref: React.MutableRefObject<HTMLElement>;
+   *   internalProps: object;
+   *   name: string;
+   *   subType:
+   *     | 'hidden'
+   *     | 'text'
+   *     | 'number'
+   *     | 'email'
+   *     | 'password'
+   *     | 'select'
+   *     | 'checkbox'
+   *     | 'textarea'
+   *     | 'color'
+   *     | 'switch';
+   *   required: boolean;
+   * }} props
+   * @returns {React.ReactElement}
+   */
   const WithFieldValueComponent = props => {
     const { ref, internalProps = emptyObject, name = '', subType = 'text', required = true } = props;
     const { id } = internalProps;

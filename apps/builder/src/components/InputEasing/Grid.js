@@ -1,6 +1,15 @@
 // Packages
 import React from 'react';
 
+/**
+ * @param {{
+ *   xFrom?: number;
+ *   xTo?: number;
+ *   yFrom?: number;
+ *   yTo?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Grid = props => {
   const { xFrom = 0, xTo = 0, yFrom = 0, yTo = 0 } = props;
 

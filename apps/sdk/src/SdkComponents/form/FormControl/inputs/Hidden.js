@@ -2,6 +2,18 @@
 import React from 'react';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   name?: string;
+ *   value?: string;
+ *   required?: boolean;
+ *   disabled?: boolean;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Hidden = props => {
   const {
     className = '',

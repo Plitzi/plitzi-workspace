@@ -2,6 +2,18 @@
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   children: React.ReactNode;
+ *   targetInput: string;
+ *   type: string;
+ *   previewMode: boolean;
+ *   required: boolean;
+ *   className: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Label = props => {
   const { ref, children, targetInput = '', type = 'text', previewMode = true, required = true, className = '' } = props;
 

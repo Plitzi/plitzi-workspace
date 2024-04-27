@@ -4,6 +4,20 @@ import React, { useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   name?: string;
+ *   placeholder?: string;
+ *   value?: string;
+ *   required?: boolean;
+ *   disabled?: boolean;
+ *   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ *   onValidate?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Checkbox = props => {
   const {
     className = '',

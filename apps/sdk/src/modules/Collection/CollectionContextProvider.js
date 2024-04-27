@@ -8,6 +8,13 @@ import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalCon
 // Relatives
 import CollectionContext from './CollectionContext';
 
+/**
+ * @param {{
+ *  children: React.ReactNode;
+ * collections?: object;
+* }} props
+* @returns {React.ReactElement}
+*/
 const CollectionContextProvider = props => {
   const { children, collections: collectionsProp } = props;
   const { query, mutate } = useContext(NetworkContext);

@@ -15,6 +15,15 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   content: string;
+ *   className: string;
+ *   internalProps: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BlockHtml = props => {
   const { ref, content = '', className = '', internalProps = emptyObject } = props;
   const {

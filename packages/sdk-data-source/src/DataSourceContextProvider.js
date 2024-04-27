@@ -10,6 +10,12 @@ import DataSourceContext from './DataSourceContext';
 import useDataSource from './hooks/useDataSource';
 import DataSourceManager from './DataSourceManager';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DataSourceContextProvider = props => {
   const { children } = props;
   const { schema } = useContext(SchemaContext);

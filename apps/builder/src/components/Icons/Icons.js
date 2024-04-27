@@ -1,6 +1,15 @@
 // Packages
 import React, { lazy, Suspense, useMemo } from 'react';
 
+/**
+ * @param {{
+ *   width?: number;
+ *   height?: number;
+ *   type: string;
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Icons = props => {
   const { width = 20, height = 20, type, className = '', ...otherProps } = props;
 

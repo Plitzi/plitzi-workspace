@@ -13,6 +13,19 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   contentPlacement: 'before' | 'after';
+ *   content: React.ReactNode;
+ *   subType: 'button' | 'submit' | 'reset';
+ *   disabled: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Button = props => {
   const {
     ref,

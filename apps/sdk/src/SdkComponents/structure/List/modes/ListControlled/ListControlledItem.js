@@ -5,6 +5,17 @@ import classNames from 'classnames';
 // Alias
 import ReplicaProvider from '@modules/Element/ReplicaProvider';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   className: string;
+ *   isTemplate: boolean;
+ *   itemCount: number;
+ *   parentId: string;
+ *   record: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ListControlledItem = props => {
   const { children, className = '', isTemplate = false, itemCount = 0, parentId = '', record } = props;
   const dataSourceValue = useMemo(() => ({ item: record }), [record]);

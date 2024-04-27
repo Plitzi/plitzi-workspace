@@ -40,6 +40,31 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
   root.render(<Widget />);
 }
 
+/**
+ * @param {{
+ *   className?: string;
+ *   children: React.ReactNode;
+ *   webKey?: string;
+ *   environment?: string;
+ *   currentPageId?: string;
+ *   userKey?: string;
+ *   server: {
+ *     graphqlServer: string;
+ *     basePath: string;
+ *     subscriptionServer: string;
+ *     host: string;
+ *     websocketServer: string;
+ *   };
+ *   includeSubscriptions?: boolean;
+ *   includeRealTime?: boolean;
+ *   builderEnvironment?: string;
+ *   renderMode?: 'raw' | 'iframe' | 'shadow';
+ *   externalStyle?: string;
+ *   state?: object;
+ *   debugMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PlitziBuilder = props => {
   const { debugMode = false, children } = props;
 
@@ -51,24 +76,6 @@ const PlitziBuilder = props => {
 
   return <App {...omit(props, ['debugMode'])}>{children}</App>;
 };
-
-// className: string,
-// children: node,
-// // Space
-// webKey: string,
-// environment: string,
-// currentPageId: string,
-// // Server
-// userKey: string,
-// server: object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-// debugMode: bool,
-// includeSubscriptions: bool,
-// includeRealTime: bool,
-// // Extra
-// builderEnvironment: string,
-// renderMode: oneOf(['raw', 'iframe', 'shadow']),
-// externalStyle: string,
-// state: object
 
 PlitziBuilder.Plugin = Builder.Plugin;
 

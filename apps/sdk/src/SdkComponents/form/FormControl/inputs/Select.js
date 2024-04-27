@@ -3,6 +3,18 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   options?: any[];
+ *   placeholder?: string;
+ *   value?: string;
+ *   className?: string;
+ *   disabled?: boolean;
+ *   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+ *   onValidate?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Select = props => {
   const {
     options = [],

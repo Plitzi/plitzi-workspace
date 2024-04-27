@@ -31,6 +31,21 @@ import { loadState, saveState } from './services/session/sessionStorage';
 // Builder Style
 import './assets/index.scss';
 
+/**
+ * @param {{
+ *   server: {
+ *     graphqlServer: string;
+ *     subscriptionServer: string;
+ *   };
+ *   webKey: string;
+ *   includeSubscriptions: boolean;
+ *   userKey: string;
+ *   className: string;
+ *   builderEnvironment: string;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const App = props => {
   const {
     server: serverProp = emptyObject,

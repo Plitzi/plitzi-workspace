@@ -11,6 +11,14 @@ import withUserProvider from './hocs/withUserProvider';
 import UserContext from './UserContext';
 import useAuth from './hooks/useAuth';
 
+/**
+ * @param {{
+ *   previewMode: boolean;
+ *   children: React.ReactNode;
+ *   webId: string | number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const UserBaseContextProvider = props => {
   const { previewMode = true, children, webId = 0 } = props;
   const {

@@ -7,6 +7,12 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import WorkflowContext from './WorkflowContext';
 import { generateID } from '../../helpers/utils';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowActions = props => {
   const { className = '' } = props;
   const { nodes, direction, registerNode, wipeNodes, performLayout } = useContext(WorkflowContext);

@@ -12,6 +12,14 @@ export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 export const STYLE_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   style: object;
+ *   type: 'normal' | 'partial' | 'template' | 'segment';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleContextProvider = props => {
   const { children, style: styleProp, type = STYLE_TYPE_NORMAL } = props;
   const internalData = useContext(NetworkInternalContext);

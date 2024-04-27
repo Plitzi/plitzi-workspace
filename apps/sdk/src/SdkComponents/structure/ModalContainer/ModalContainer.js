@@ -13,6 +13,17 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   title: string;
+ *   autoHideAfterClick: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ModalContainer = props => {
   const {
     ref,

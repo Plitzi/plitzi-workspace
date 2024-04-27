@@ -4,6 +4,16 @@ import { useCallback, useEffect, useState } from 'react';
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
+/**
+ * @param {{
+ *   url: string;
+ *   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
+ *   params: object;
+ *   customHeaders: object;
+ *   mock: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const getApiRequest = async ({
   url = '',
   method = 'GET',

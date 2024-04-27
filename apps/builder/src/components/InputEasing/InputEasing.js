@@ -9,6 +9,20 @@ import Curve from './Curve';
 const valueDefault = [0.25, 0.25, 0.75, 0.75];
 const paddingDefault = [25, 5, 25, 18];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   value?: number[];
+ *   width?: number;
+ *   height?: number;
+ *   handleRadius?: number;
+ *   padding?: number[];
+ *   progress?: number;
+ *   readOnly?: boolean;
+ *   onChange?: (value: number[]) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 class InputEasing extends Component {
   constructor(props) {
     super(props);

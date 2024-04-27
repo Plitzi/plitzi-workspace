@@ -1,6 +1,18 @@
 // Packages
 import { useEffect, useState } from 'react';
 
+/**
+ * @param {{
+ *   init?: any;
+ *   shared?: any;
+ *   url?: string;
+ *   type?: 'text/javascript' | 'module';
+ * }} props
+ * @returns {{
+ *   ready: boolean;
+ *   failed: boolean;
+ * }}
+ */
 const useDynamicScript = ({ init, shared, url = '', type = 'text/javascript' } = {}) => {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);

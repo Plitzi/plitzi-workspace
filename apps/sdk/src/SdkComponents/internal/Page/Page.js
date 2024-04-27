@@ -14,6 +14,20 @@ import { PARTIAL_SCHEMA_TYPE_LAYOUT } from '@modules/Element/ElementConstants';
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   seoEnabled: boolean;
+ *   seoPageTitle: string;
+ *   seoPageDescription: string;
+ *   className: string;
+ *   layout: string;
+ *   layoutContainer: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Page = props => {
   const {
     ref,

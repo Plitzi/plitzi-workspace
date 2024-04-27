@@ -12,6 +12,18 @@ import WorkflowContainer from './WorkflowContainer';
 
 const nodeDefinitionsDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   direction?: 'horizontal' | 'vertical';
+ *   template?: object;
+ *   nodeDefinitions?: object[];
+ *   onChange?: (template: object) => void;
+ *   addNodePositionX?: number;
+ *   addNodePositionY?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowDiagram = props => {
   const {
     className = '',

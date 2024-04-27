@@ -5,6 +5,12 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SpaceContainerInternal = props => {
   const { children } = props;
   const { addToast } = useToast();

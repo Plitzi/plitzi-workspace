@@ -5,6 +5,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import EventBridgeContext from './EventBridgeContext';
 import EventBridge from './EventBridge';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const EventBridgeContextProvider = props => {
   const { children } = props;
   const [eventBridge] = useState(() => new EventBridge());

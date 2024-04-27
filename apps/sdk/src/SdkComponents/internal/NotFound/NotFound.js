@@ -10,6 +10,14 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NotFound = props => {
   const { ref, className = '', internalProps = emptyObject } = props;
   const label = get(internalProps, 'definition.label');

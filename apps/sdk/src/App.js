@@ -21,6 +21,38 @@ import AppMain from '@modules/App/AppMain';
 // Relatives
 import { getEnvironmentServer } from './config';
 
+/**
+ * @param {{
+*   className: string; // App
+*   children: React.ReactNode; // App
+*   revision: number; // Space
+*   webKey: string; // Space
+*   environment: string; // Space
+*   currentPageId: string; // Space
+*   sdkEnvironment: string; // Server
+*   server: {
+*     graphqlServer: string;
+*     basePath: string;
+*     subscriptionServer: string;
+*     host: string;
+*     websocketServer: string;
+*   }; // Server
+*   offlineMode: boolean; // Server
+*   offlineData: {
+*     schema: object;
+*     style: object;
+*     plugins: object;
+*     segments: object[];
+*   }; // Server
+*   offlineDataType: 'json' | 'yaml'; // Server
+*   renderMode: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+*   debugMode: boolean;
+*   previewMode: boolean;
+*   externalStyle: string;
+*   state: object;
+* }} props
+* @returns {React.ReactElement}
+*/
 const App = props => {
   const {
     className = 'min-h-screen',
@@ -123,32 +155,5 @@ const App = props => {
     </ContainerRoot>
   );
 };
-
-// className: string,
-// children: node,
-// // Space
-// revision: number,
-// webKey: string,
-// environment: string,
-// currentPageId: string,
-// // Server
-// server: object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-// offlineMode: bool,
-// offlineData: object, // { schema, style, plugins }
-// offlineDataType: oneOf(['json', 'yaml']),
-// // Extra
-// sdkEnvironment: string,
-// renderMode: oneOf([
-//   RENDER_MODE_IFRAME,
-//   RENDER_MODE_RAW,
-//   RENDER_MODE_SHADOW,
-//   RENDER_MODE_SSR,
-//   RENDER_MODE_WIDGET
-// ]),
-// sdkStylePath: string,
-// previewMode: bool,
-// debugMode: bool,
-// externalStyle: string,
-// state: object
 
 export default App;

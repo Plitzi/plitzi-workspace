@@ -12,6 +12,17 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   icon: string;
+ *   size: string;
+ *   iconAnimation: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const FontAwesome = props => {
   const {
     ref,

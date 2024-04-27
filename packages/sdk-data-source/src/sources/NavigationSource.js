@@ -6,6 +6,12 @@ import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NavigationSource = props => {
   const { children } = props;
   const { useDataSource } = useContext(DataSourceContext);

@@ -20,6 +20,14 @@ export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 export const STYLE_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   state: object;
+ *   onInit: (value: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StateManagerContextProvider = props => {
   const { children, state: stateProp = emptyObject, onInit = noop } = props;
   const { webId } = useContext(NetworkContext);

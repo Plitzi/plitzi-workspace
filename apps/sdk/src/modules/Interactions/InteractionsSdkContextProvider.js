@@ -9,6 +9,13 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
 import PageInteractions from './sources/PageSource/PageInteractions';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InteractionsSdkContextProvider = props => {
   const { children, previewMode = false } = props;
   const { currentPageId, routeParams, queryParams } = useContext(NavigationContext);

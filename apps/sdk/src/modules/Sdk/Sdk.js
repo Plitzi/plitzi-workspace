@@ -33,6 +33,16 @@ export const RENDER_MODE_SHADOW = 'shadow';
 export const RENDER_MODE_SSR = 'ssr';
 export const RENDER_MODE_WIDGET = 'widget';
 
+/**
+ * @param {{
+ *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+ *   externalStyle?: string;
+ *   environment?: string;
+ *   previewMode?: boolean;
+ *   debugMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Sdk = props => {
   const {
     renderMode = RENDER_MODE_IFRAME,
