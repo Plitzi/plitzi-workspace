@@ -7,10 +7,7 @@ import MarketPlugins from './components/MarketPlugins';
 import MarketTemplates from './components/MarketTemplates/MarketTemplates';
 import MarketNews from './components/MarketNews/MarketNews';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const Marketplace = () => {
   const [selected, setSelected] = useState('news');
 

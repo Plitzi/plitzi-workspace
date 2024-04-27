@@ -32,7 +32,7 @@ import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
  *   includeSubscriptions: boolean;
  *   includeRealTime: boolean;
  *   previewMode: boolean;
- *   client: object; // hocs
+ *   client: object;
  * }} props
  * @returns {React.ReactElement}
  */
@@ -48,7 +48,7 @@ const AppProvider = props => {
     server,
     includeSubscriptions = true,
     includeRealTime = true,
-    client,
+    client, // hocs
     previewMode = false
   } = props;
 

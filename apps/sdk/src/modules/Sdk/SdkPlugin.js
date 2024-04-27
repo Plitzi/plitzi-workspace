@@ -8,6 +8,6 @@
  * }} props
  * @returns {undefined}
  */
-const SdkPlugin = () => undefined;
+const SdkPlugin = ({ renderType, component, assets }) => undefined; // eslint-disable-line
 
 export default SdkPlugin;

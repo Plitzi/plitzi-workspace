@@ -11,10 +11,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const ContainerSettings = () => {
   const { settings: settingsProp } = useContext(SchemaMainContext);
   const { eventBridge } = useContext(EventBridgeContext);

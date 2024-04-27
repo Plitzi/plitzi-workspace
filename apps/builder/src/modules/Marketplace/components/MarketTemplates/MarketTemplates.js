@@ -1,10 +1,7 @@
 // Packages
 import React from 'react';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const MarketTemplates = () => {
   return <div className="flex flex-col grow basis-0">Coming Soon...</div>;
 };

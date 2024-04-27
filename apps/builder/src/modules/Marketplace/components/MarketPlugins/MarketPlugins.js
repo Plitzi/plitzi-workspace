@@ -13,10 +13,7 @@ import PluginList from './PluginList';
 import PluginDetails from './PluginDetails';
 import { parsePlugin } from '../../helpers/PluginHelper';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const MarketPlugins = () => {
   const [filter, setFilter] = useState({ name: { contains: '' }, owner: { contains: '' } });
   const [loading, setLoading] = useState(true);

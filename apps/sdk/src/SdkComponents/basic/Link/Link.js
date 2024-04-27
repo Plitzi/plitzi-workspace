@@ -16,13 +16,13 @@ import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceCon
 
 /**
  * @param {{
- *  ref: React.MutableRefObject<HTMLElement>;
- * internalProps: object;
- * children: React.ReactNode;
- * className: string;
- * href: string;
- * target: 'self' | 'blank' | 'parent' | 'top;
- * mode: 'page' | 'internal' | 'external';
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   className: string;
+ *   href: string;
+ *   target: 'self' | 'blank' | 'parent' | 'top';
+ *   mode: 'page' | 'internal' | 'external';
  * }} props
  * @returns {React.ReactElement}
  */

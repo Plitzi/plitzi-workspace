@@ -17,7 +17,7 @@ import { fieldTypes } from '../CollectionsConstants';
  *   machineName?: string;
  *   type?: string;
  *   params?: object;
- *   onRemove?: () => void; // Extras
+ *   onRemove?: () => void;
  * }} props
  * @returns {React.ReactElement}
  */

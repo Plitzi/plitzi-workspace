@@ -11,7 +11,7 @@ const optionsDefault = [];
 /**
  * @param {{
  *   subType?:
- *     | 'text'
+ *     'text'
  *     | 'number'
  *     | 'time'
  *     | 'email'

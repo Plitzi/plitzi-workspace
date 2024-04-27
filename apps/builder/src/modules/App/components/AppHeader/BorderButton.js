@@ -11,10 +11,7 @@ import {
   DISPLAY_BORDER_WHITE
 } from '@pmodules/Builder/BuilderHelper';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const BorderButton = () => {
   const { displayBorderComponents, setDisplayBorderComponents } = useContext(AppContext);
 

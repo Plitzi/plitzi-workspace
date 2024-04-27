@@ -26,7 +26,7 @@ import useSubscriptionsManager from './hooks/useSubscriptionsManager';
  *   userKey?: string;
  *   instanceId?: string;
  *   server?: object;
- *   client?: object; // hoc
+ *   client?: object;
  *   environment?: string;
  * }} props
  * @returns {React.ReactElement}
@@ -39,7 +39,7 @@ const NetworkContextProvider = props => {
     userKey = '',
     instanceId,
     server,
-    client,
+    client, // hoc
     environment = 'development'
   } = props;
   const { addToast } = useToast();

@@ -7,10 +7,7 @@ import Card from '@plitzi/plitzi-ui-components/Card';
 import WorkflowDiagram from '@pcomponents/WorkflowDiagram/WorkflowDiagram';
 // import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const ContainerSitemap = () => {
   // const { pages, pageDefinitions, pageFolders } = useContext(SchemaMainContext);
 

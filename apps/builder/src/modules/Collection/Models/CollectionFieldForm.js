@@ -20,8 +20,8 @@ import { fieldTypes } from '../CollectionsConstants';
  *   machineName?: string;
  *   type?: string;
  *   params?: object;
- *   onSubmit?: (values: object) => void; // Extras
- *   onValidate?: (values: object) => { key: string; message: string } | null; // Extras
+ *   onSubmit?: (values: object) => void;
+ *   onValidate?: (values: object) => { key: string; message: string } | null;
  * }} props
  * @returns {React.ReactElement}
  */

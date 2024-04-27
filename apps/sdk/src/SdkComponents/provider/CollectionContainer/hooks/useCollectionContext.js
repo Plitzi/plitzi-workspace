@@ -16,7 +16,13 @@ import { routeParamsParserToCollection } from '../helpers/Utils';
  *   appendResults: boolean;
  *   singleRecord: boolean;
  * }} props
- * @returns {React.ReactElement}
+ * @returns {{
+ *   loading: boolean;
+ *   collection: object;
+ *   hasNextPage: boolean;
+ *   handleNextPage: () => void;
+ *   fetch: () => void;
+ * }}
  */
 const useCollectionContext = (props = {}) => {
   const { source, record, query = '', limit = 1, appendResults = false, singleRecord = false } = props;

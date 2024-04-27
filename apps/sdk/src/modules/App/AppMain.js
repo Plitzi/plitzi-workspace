@@ -23,25 +23,25 @@ import DataSourceSdkContextProvider from '@modules/DataSource/DataSourceSdkConte
 
 /**
  * @param {{
- *   revision?: string; // Space
- *   webKey?: string; // Space
- *   environment?: string; // Space
- *   currentPageId?: string; // Space
+ *   revision?: string;
+ *   webKey?: string;
+ *   environment?: string;
+ *   currentPageId?: string;
  *   server?: {
  *     graphqlServer: string;
  *     basePath?: string;
  *     subscriptionServer?: string;
  *     host?: string;
  *     websocketServer?: string;
- *   }; // Server
- *   offlineMode?: boolean; // Server
+ *   };
+ *   offlineMode?: boolean;
  *   offlineData?: {
  *     schema: object;
  *     style: object;
  *     plugins: object;
  *     segments: object[];
- *   }; // Server
- *   offlineDataType?: 'json' | 'yaml'; // Server
+ *   };
+ *   offlineDataType?: 'json' | 'yaml';
  *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
  *   sdkStylePath?: string;
  *   previewMode?: boolean;

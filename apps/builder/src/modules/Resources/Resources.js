@@ -15,10 +15,7 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 import Resource from './Resource';
 import ResourceManager from './ResourceManager';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const Resources = () => {
   const { query, mutate } = useContext(NetworkContext);
   const { addToast } = useToast();

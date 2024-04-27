@@ -14,7 +14,7 @@ import NetworkContext from '../../NetworkContext';
 import { RealTimeEventTypes, RealTimeEventTypesList, RealTimeSelfEventTypesList } from '../../helpers/EventTypes';
 
 /**
- * @param {{}} props
+ * @param {React.ReactElement} WrappedComponent
  * @returns {React.ReactElement}
  */
 const withSubscriptions = WrappedComponent => {

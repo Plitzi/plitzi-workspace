@@ -15,7 +15,7 @@ const withFieldValue = WrappedComponent => {
    *   internalProps: object;
    *   name: string;
    *   subType:
-   *     | 'hidden'
+   *     'hidden'
    *     | 'text'
    *     | 'number'
    *     | 'email'

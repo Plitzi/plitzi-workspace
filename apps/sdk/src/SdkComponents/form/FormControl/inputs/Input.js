@@ -5,21 +5,21 @@ import noop from 'lodash/noop';
 
 /**
  * @param {{
- *  className?: string;
- * id?: string;
- * name?: string;
- * placeholder?: string;
- * value?: string;
- * type?: string;
- * autoComplete?: boolean;
- * required?: boolean;
- * disabled?: boolean;
- * readOnly?: boolean;
- * onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
- * onValidate?: () => void;
-* }} props
-* @returns {React.ReactElement}
-*/
+ *   className?: string;
+ *   id?: string;
+ *   name?: string;
+ *   placeholder?: string;
+ *   value?: string;
+ *   type?: string;
+ *   autoComplete?: boolean;
+ *   required?: boolean;
+ *   disabled?: boolean;
+ *   readOnly?: boolean;
+ *   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ *   onValidate?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Input = props => {
   const {
     className = '',

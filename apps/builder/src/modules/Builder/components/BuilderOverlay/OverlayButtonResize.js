@@ -9,7 +9,7 @@ import classNames from 'classnames';
  *   className?: string;
  *   width?: number;
  *   height?: number;
- *   transformScale?: number; // 0.5 if is centered and expands in both sides
+ *   transformScale?: number;
  *   elementDOM: object;
  *   iframeDOM: object;
  *   lockAspectRatio?: boolean;
@@ -28,7 +28,7 @@ const OverlayButtonResize = props => {
     className = '',
     width = -1,
     height = -1,
-    transformScale = 1,
+    transformScale = 1, // 0.5 if is centered and expands in both sides
     elementDOM,
     iframeDOM,
     lockAspectRatio = false,

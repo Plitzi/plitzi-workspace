@@ -25,7 +25,7 @@ import NetworkInternalContext from './contexts/NetworkInternalContext';
  *   offlineMode: boolean;
  *   offlineData: object;
  *   offlineDataType: string;
- *   client: any; // hoc
+ *   client: any;
  * }} props
  * @returns {React.ReactElement}
  */

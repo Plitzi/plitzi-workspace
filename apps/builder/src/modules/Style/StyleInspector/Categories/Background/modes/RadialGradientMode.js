@@ -5,13 +5,7 @@ import React from 'react';
 // import InputMetric from '../../../../InputMetric';
 // import InspectorLabel from '../../../InspectorLabel';
 
-/**
- * @param {{
- *   partialValue: object;
- *   onChange?: (value: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const RadialGradientMode = () => {
   // const { partialValue, onChange = noop } = props;
 

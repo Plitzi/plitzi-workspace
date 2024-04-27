@@ -13,7 +13,7 @@ import InteractionsContext from '../InteractionsContext';
  *   callbacks?: object;
  *   getAdditionalParams?: (params: object) => object;
  * }} props
- * @returns {React.ReactElement}
+ * @returns {void}
  */
 const useInteractions = props => {
   const { id, interactions = {}, triggers = {}, callbacks = {}, getAdditionalParams = noop } = props;

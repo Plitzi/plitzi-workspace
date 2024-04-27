@@ -94,9 +94,9 @@ export const init = () => {
  *   scope: string;
  *   internalProps: object;
  *   autoRegister: boolean;
- *   plitziJsxSkipHOC: boolean; // Props from JSX
- *   plitziCustomComponent: boolean; // Props from JSX
- *   plitziJsxProps: object; // Props from JSX
+ *   plitziJsxSkipHOC: boolean;
+ *   plitziCustomComponent: boolean;
+ *   plitziJsxProps: object;
  * }} props
  * @returns {React.ReactElement}
  */

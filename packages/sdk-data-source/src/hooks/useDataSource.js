@@ -20,7 +20,7 @@ export const MODE_READ = 'read';
  *   mode: 'write' | 'read';
  *   extraElements: object[];
  * }} props
- * @returns {React.ReactElement}
+ * @returns {object}
  */
 const useDataSource = (props = {}) => {
   const { id, source, name, fields = [], value = emptyObject, mode = MODE_WRITE, extraElements = [] } = props;

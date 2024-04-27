@@ -26,7 +26,7 @@ import withFieldValue from './hocs/withFieldValue';
  *   className: string;
  *   internalProps: object;
  *   subType:
- *     | 'text'
+ *     'text'
  *     | 'number'
  *     | 'email'
  *     | 'password'

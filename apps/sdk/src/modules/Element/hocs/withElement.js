@@ -13,8 +13,8 @@ import useElementController from '../hooks/useElementController';
 const withElement = WrappedComponent => {
   /**
    * @param {{
-   *   plitziJsxSkipHOC?: boolean; // Props from JSX
-   *   plitziCustomComponent?: boolean; // Props from JSX
+   *   plitziJsxSkipHOC?: boolean;
+   *   plitziCustomComponent?: boolean;
    *   internalProps: object;
    *   className: string;
    *   children: React.ReactNode;
@@ -22,7 +22,10 @@ const withElement = WrappedComponent => {
    * @returns {React.ReactElement}
    */
   const WithElementComponent = props => {
-    const { plitziJsxSkipHOC = false, plitziCustomComponent = false } = props;
+    const {
+      plitziJsxSkipHOC = false, // Props from JSX
+      plitziCustomComponent = false // Props from JSX
+    } = props;
     let { internalProps = emptyObject, className = '', children } = props;
     if (plitziJsxSkipHOC) {
       return useMemo(() => <WrappedComponent {...props} />, [props]);

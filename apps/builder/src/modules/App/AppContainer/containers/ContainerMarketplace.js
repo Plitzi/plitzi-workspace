@@ -5,12 +5,7 @@ import Card from '@plitzi/plitzi-ui-components/Card';
 // Alias
 import Marketplace from '@pmodules/Marketplace/Marketplace';
 
-/**
- * @param {{
- *   onSelect?: (item: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const ContainerMarketplace = () => {
   //   const { onSelect = noop } = props;
 

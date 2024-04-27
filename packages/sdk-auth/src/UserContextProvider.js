@@ -1,3 +1,6 @@
+// Packages
+import React from 'react';
+
 // Relatives
 import withUserInteractions from './hocs/withUserInteractions';
 import withUserDataSource from './hocs/withUserDataSource';

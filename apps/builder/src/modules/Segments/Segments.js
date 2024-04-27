@@ -12,10 +12,7 @@ import SegmentsContext from './SegmentsContext';
 import Segment from './Segment';
 import SegmentForm from './Models/SegmentForm';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const Segments = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ name: { contains: '' } });

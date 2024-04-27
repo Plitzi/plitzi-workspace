@@ -23,36 +23,36 @@ import { getEnvironmentServer } from './config';
 
 /**
  * @param {{
-*   className: string; // App
-*   children: React.ReactNode; // App
-*   revision: number; // Space
-*   webKey: string; // Space
-*   environment: string; // Space
-*   currentPageId: string; // Space
-*   sdkEnvironment: string; // Server
-*   server: {
-*     graphqlServer: string;
-*     basePath: string;
-*     subscriptionServer: string;
-*     host: string;
-*     websocketServer: string;
-*   }; // Server
-*   offlineMode: boolean; // Server
-*   offlineData: {
-*     schema: object;
-*     style: object;
-*     plugins: object;
-*     segments: object[];
-*   }; // Server
-*   offlineDataType: 'json' | 'yaml'; // Server
-*   renderMode: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
-*   debugMode: boolean;
-*   previewMode: boolean;
-*   externalStyle: string;
-*   state: object;
-* }} props
-* @returns {React.ReactElement}
-*/
+ *   className: string;
+ *   children: React.ReactNode;
+ *   revision: number;
+ *   webKey: string;
+ *   environment: string;
+ *   currentPageId: string;
+ *   sdkEnvironment: string;
+ *   server: {
+ *     graphqlServer: string;
+ *     basePath: string;
+ *     subscriptionServer: string;
+ *     host: string;
+ *     websocketServer: string;
+ *   };
+ *   offlineMode: boolean;
+ *   offlineData: {
+ *     schema: object;
+ *     style: object;
+ *     plugins: object;
+ *     segments: object[];
+ *   };
+ *   offlineDataType: 'json' | 'yaml';
+ *   renderMode: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+ *   debugMode: boolean;
+ *   previewMode: boolean;
+ *   externalStyle: string;
+ *   state: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const App = props => {
   const {
     className = 'min-h-screen',

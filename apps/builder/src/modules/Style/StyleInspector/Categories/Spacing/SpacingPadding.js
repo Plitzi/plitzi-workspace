@@ -13,10 +13,10 @@ import SpacingNumber from './SpacingNumber';
  * @param {{
  *   fragmentSelected?: string;
  *   partialValue?: {
- *     [PADDING_TOP]: string;
- *     [PADDING_BOTTOM]: string;
- *     [PADDING_LEFT]: string;
- *     [PADDING_RIGHT]: string;
+ *     paddingTop: string;
+ *     paddingBottom: string;
+ *     paddingLeft: string;
+ *     paddingRight: string;
  *   };
  *   onSelectFragment?: (fragment: string) => void;
  * }} props

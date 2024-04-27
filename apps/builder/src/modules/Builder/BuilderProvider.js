@@ -42,7 +42,7 @@ export const BUILDER_MODE_SEGMENT = 'segment';
  * @param {{
  *   children: React.ReactNode;
  *   baseElementId: string;
- *   mode: string; // BUILDER_MODE_NORMAL | BUILDER_MODE_TEMPLATE | BUILDER_MODE_SEGMENT
+ *   mode: string;
  *   schemaName: string;
  *   style: object;
  *   schema: object;
@@ -55,7 +55,7 @@ const BuilderProvider = props => {
   const {
     children,
     baseElementId: baseElementIdProp = '',
-    mode = BUILDER_MODE_NORMAL,
+    mode = BUILDER_MODE_NORMAL, // BUILDER_MODE_NORMAL | BUILDER_MODE_TEMPLATE | BUILDER_MODE_SEGMENT
     schemaName = '',
     style = emptyObject,
     schema = emptyObject,

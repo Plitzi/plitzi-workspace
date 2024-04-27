@@ -1,18 +1,26 @@
 /**
- * Given the definition of a cubic bezier: a start point, two control points,
- * and end point, get the point at a given time `t` (where `0 <= t <= 1`).
+ * Given the definition of a cubic bezier: a start point, two control points, and end point, get the point at a given
+ * time `t` (where `0 <= t <= 1`).
  *
- * For example, at t = 0, this function returns the point at the start of the
- * curve, at t = 0.5, it returns the point midway through the curve and at
- * t = 1 it returns the point at the end of the curve.
+ * For example, at t = 0, this function returns the point at the start of the curve, at t = 0.5, it returns the point
+ * midway through the curve and at t = 1 it returns the point at the end of the curve.
  *
- * B(t) = (1 - t)^3P0 + 3(1 - t)^2tP1 + 3(1 - t)t^2P2 + t^3P3
- * Adapted from https://github.com/pbeshai/vis-utils
+ * B(t) = (1 - t)^3P0 + 3(1 - t)^2tP1 + 3(1 - t)t^2P2 + t^3P3 Adapted from https://github.com/pbeshai/vis-utils
+ */
+
+/**
+ * @param {{
+ *   start: { x: number; y: number };
+ *   control1: { x: number; y: number };
+ *   control2: { x: number; y: number };
+ *   end: { x: number; y: number };
+ * }} bezier
+ * @param {number} t
+ * @returns {{ x: number; y: number }}
  */
 export function interpolateCubicBezier({ start, control1, control2, end }, t) {
   /**
-   * Get the point on the curve at a given t,
-   * where t is a number between 0 and 1.
+   * Get the point on the curve at a given t, where t is a number between 0 and 1.
    *
    * 0 is the start point, 1 is the end point.
    */
@@ -23,22 +31,31 @@ export function interpolateCubicBezier({ start, control1, control2, end }, t) {
 }
 
 /**
- * Given the definition of a cubic bezier: a start point, two control points,
- * and end point, get the angle at a given time `t` (where `0 <= t <= 1`).
+ * Given the definition of a cubic bezier: a start point, two control points, and end point, get the angle at a given
+ * time `t` (where `0 <= t <= 1`).
  *
- * For example, at t = 0, this function returns the angle at the start
- * point, at t = 0.5, it returns the angle midway through the curve and at
- * t = 1 it returns the angle at the end of the curve (useful for things like
- * arrowheads). The angles are in degrees.
+ * For example, at t = 0, this function returns the angle at the start point, at t = 0.5, it returns the angle midway
+ * through the curve and at t = 1 it returns the angle at the end of the curve (useful for things like arrowheads). The
+ * angles are in degrees.
  *
  * B'(t) = 3(1- t)^2(P1 - P0) + 6(1 - t)t(P2 - P1) + 3t^2(P3 - P2)
  *
  * Adapted from https://github.com/pbeshai/vis-utils
  */
+
+/**
+ * @param {{
+ *   start: { x: number; y: number };
+ *   control1: { x: number; y: number };
+ *   control2: { x: number; y: number };
+ *   end: { x: number; y: number };
+ * }} bezier
+ * @param {number} t
+ * @returns {number}
+ */
 export function interpolateCubicBezierAngle({ start, control1, control2, end }, t) {
   /**
-   * Get the angle of the point on the curve at a given t,
-   * where t is a number between 0 and 1.
+   * Get the angle of the point on the curve at a given t, where t is a number between 0 and 1.
    *
    * 0 is the start point, 1 is the end point.
    */

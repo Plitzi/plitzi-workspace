@@ -21,10 +21,7 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 // Relatives
 import TemplatesContext from './TemplatesContext';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const Templates = () => {
   const { showModal } = useModal();
   const [filter, setFilter] = useState('');

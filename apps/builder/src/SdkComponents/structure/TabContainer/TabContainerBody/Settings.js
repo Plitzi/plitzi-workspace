@@ -1,9 +1,6 @@
 // Packages
 import React from 'react';
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const Settings = () => {
   return (
     <div className="flex flex-col">

@@ -12,7 +12,13 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
  *   customHeaders: object;
  *   mock: object;
  * }} props
- * @returns {React.ReactElement}
+ * @returns {{
+ *   isLoading: boolean;
+ *   data: object;
+ *   refetch: () => void;
+ *   isSuccess: boolean;
+ *   isError: boolean;
+ * }}
  */
 const getApiRequest = async ({
   url = '',

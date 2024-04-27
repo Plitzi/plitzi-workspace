@@ -9,10 +9,7 @@ import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedCo
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const StyleViewer = () => {
   const { elementSelected } = useContext(BuilderSelectedContext);
   const {

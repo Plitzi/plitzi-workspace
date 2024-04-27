@@ -1,5 +1,5 @@
 // Packages
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 
 // Monorepo

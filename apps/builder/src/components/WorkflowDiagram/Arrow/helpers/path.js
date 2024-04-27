@@ -1,8 +1,20 @@
 import { getIdealBoxSides, isPointOnLeftOrRightSide } from './box';
 
+// Find the center of two points using rudimentary
+// linear interpolation.
 /**
- * Find the center of two points using rudimentary
- * linear interpolation.
+ * @param {{
+ *   x: number;
+ *   y: number;
+ * }} pointA
+ * @param {{
+ *   x: number;
+ *   y: number;
+ * }} pointB
+ * @returns {{
+ *   x: number;
+ *   y: number;
+ * }}
  */
 export function getLineCenter(pointA, pointB) {
   return {
@@ -11,9 +23,15 @@ export function getLineCenter(pointA, pointB) {
   };
 }
 
+// Given a cubic bezier curve, produce its corresponding SVG path string.
 /**
- * Given a cubic bezier curve, produce its corresponding
- * SVG path string.
+ * @param {{
+ *   start: { x: number; y: number };
+ *   control1: { x: number; y: number };
+ *   control2: { x: number; y: number };
+ *   end: { x: number; y: number };
+ * }} bezier
+ * @returns {string}
  */
 export function getCubicBezierSVGPath(bezier) {
   const { start, control1, control2, end } = bezier;
@@ -25,9 +43,26 @@ export function getCubicBezierSVGPath(bezier) {
   ].join(' ');
 }
 
+// Given two points, produce a cubic bezier curve that links them.
 /**
- * Given two points, produce a cubic bezier curve that
- * links them.
+ * @param {{
+ *   x: number;
+ *   y: number;
+ * }} start
+ * @param {{
+ *   x: number;
+ *   y: number;
+ * }} end
+ * @param {{
+ *   flip?: boolean;
+ * }} options
+ * @param {number} curveRate
+ * @returns {{
+ *   start: { x: number; y: number };
+ *   control1: { x: number; y: number };
+ *   control2: { x: number; y: number };
+ *   end: { x: number; y: number };
+ * }}
  */
 export function getCurve(start, end, options, curveRate) {
   if (curveRate > 1 || curveRate < 0) {
@@ -63,9 +98,24 @@ export function getCurve(start, end, options, curveRate) {
   return { start, control1: controlPoints[0], control2: controlPoints[1], end };
 }
 
+// Given two boxes, produce a cubic bezier curve that links them.
 /**
- * Given two boxes, produce a cubic bezier curve that
- * links them.
+ * @param {{
+ *   x: number;
+ *   y: number;
+ *   w: number;
+ * }} startBox
+ * @param {{
+ *   x: number;
+ *   y: number;
+ *   w: number;
+ * }} endBox
+ * @returns {{
+ *   start: { x: number; y: number };
+ *   control1: { x: number; y: number };
+ *   control2: { x: number; y: number };
+ *   end: { x: number; y: number };
+ * }}
  */
 export function getBoxToBoxCurve(startBox, endBox) {
   const { startPoint, endPoint } = getIdealBoxSides(startBox, endBox);

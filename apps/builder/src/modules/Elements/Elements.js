@@ -6,10 +6,7 @@ import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 // Relatives
 import ElementCategory from './ElementCategory';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+/** @returns {React.ReactElement} */
 const Elements = () => {
   const { components, componentDefinitions } = useContext(ComponentContext);
   const [filter, setFilter] = useState('');

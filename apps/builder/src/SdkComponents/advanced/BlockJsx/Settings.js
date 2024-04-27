@@ -17,7 +17,7 @@ import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
 /**
  * @param {{
  *   content?: string;
- *   contentCache?: string; // base64
+ *   contentCache?: string;
  *   props?: string;
  *   allowEmptyRender?: boolean;
  *   onUpdate?: (key: string, value: any) => void;
