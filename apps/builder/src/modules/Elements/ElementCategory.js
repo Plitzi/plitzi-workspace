@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
@@ -10,6 +9,13 @@ import Element from './Element';
 
 const elementsDefault = [];
 
+/**
+ * @param {{
+ *   elements?: object[];
+ *   category?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ElementCategory = props => {
   const { elements = elementsDefault, category = '' } = props;
   const { getComponentBuilderSettings } = useContext(ComponentContext);
@@ -44,11 +50,6 @@ const ElementCategory = props => {
       </div>
     </div>
   );
-};
-
-ElementCategory.propTypes = {
-  category: PropTypes.string,
-  elements: PropTypes.array
 };
 
 export default ElementCategory;

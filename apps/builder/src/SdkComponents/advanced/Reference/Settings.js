@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -9,6 +8,15 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 const REFERENCE_TYPE_ELEMENT = 'element';
 const REFERENCE_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   referenceType?: 'element' | 'segment' | '';
+ *   referenceId?: string;
+ *   referenceContainer?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { referenceType = REFERENCE_TYPE_ELEMENT, referenceId = '', referenceContainer = '', onUpdate = noop } = props;
   const {
@@ -157,13 +165,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  referenceType: PropTypes.oneOf([REFERENCE_TYPE_ELEMENT, REFERENCE_TYPE_SEGMENT, '']),
-  referenceId: PropTypes.string,
-  referenceContainer: PropTypes.string,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

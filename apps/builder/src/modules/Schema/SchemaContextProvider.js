@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo, useRef, useCallback, useContext, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -30,6 +29,15 @@ export const SCHEMA_TYPE_PARTIAL = 'partial';
 export const SCHEMA_TYPE_TEMPLATE = 'template';
 export const SCHEMA_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   type?: 'main' | 'partial' | 'template' | 'segment';
+ *   schema?: object;
+ *   includeSubscriptions?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SchemaContextProvider = props => {
   const { children, type = SCHEMA_TYPE_MAIN, schema: schemaProp, includeSubscriptions = true } = props;
   const { addToast } = useToast();
@@ -487,13 +495,6 @@ const SchemaContextProvider = props => {
   }
 
   return <SchemaContext.Provider value={valueMemo}>{children}</SchemaContext.Provider>;
-};
-
-SchemaContextProvider.propTypes = {
-  children: PropTypes.node,
-  schema: PropTypes.object,
-  includeSubscriptions: PropTypes.bool,
-  type: PropTypes.oneOf([SCHEMA_TYPE_MAIN, SCHEMA_TYPE_PARTIAL, SCHEMA_TYPE_TEMPLATE, SCHEMA_TYPE_SEGMENT])
 };
 
 export default SchemaContextProvider;

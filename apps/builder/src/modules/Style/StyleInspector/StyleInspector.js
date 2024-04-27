@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import set from 'lodash/set';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -24,6 +23,15 @@ import Selector from '../Selector';
 import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
 import InspectorModeBasic from './modes/InspectorModeBasic';
 
+/**
+ * @param {{
+ *   mode?: 'element' | 'manager';
+ *   styleSelectors?: object;
+ *   element?: object;
+ *   allowStyleSelector?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleInspector = props => {
   const { mode = 'element', styleSelectors = emptyObject, element, allowStyleSelector = true } = props;
   const { displayMode } = useContext(AppContext);
@@ -168,14 +176,6 @@ const StyleInspector = props => {
       </div>
     </div>
   );
-};
-
-StyleInspector.propTypes = {
-  className: PropTypes.string,
-  mode: PropTypes.oneOf(['element', 'manager']),
-  styleSelectors: PropTypes.object,
-  element: PropTypes.object,
-  allowStyleSelector: PropTypes.bool
 };
 
 export default StyleInspector;

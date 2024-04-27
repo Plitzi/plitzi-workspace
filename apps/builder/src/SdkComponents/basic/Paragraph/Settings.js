@@ -1,9 +1,15 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 
+/**
+ * @param {{
+ *   content?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { content = 'Paragraph', onUpdate = noop } = props;
 
@@ -22,11 +28,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  content: PropTypes.string,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import isEmpty from 'lodash/isEmpty';
@@ -221,6 +220,16 @@ const defaultValue = {
   [TRANSFORM]: 'translate3d(0px, 0px, 0px)'
 };
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   selector: string;
+ *   styleSelector: string;
+ *   element: object;
+ *   inheritData: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleInspectorProvider = props => {
   const { children, selector = '', styleSelector = 'base', element, inheritData } = props;
   const { displayMode } = useContext(AppContext);
@@ -418,14 +427,6 @@ const StyleInspectorProvider = props => {
   );
 
   return <StyleInspectorContext.Provider value={inspectorContextValue}>{children}</StyleInspectorContext.Provider>;
-};
-
-StyleInspectorProvider.propTypes = {
-  children: PropTypes.node,
-  selector: PropTypes.string,
-  styleSelector: PropTypes.string,
-  inheritData: PropTypes.object,
-  element: PropTypes.object
 };
 
 export default StyleInspectorProvider;

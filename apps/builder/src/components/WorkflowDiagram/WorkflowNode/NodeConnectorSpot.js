@@ -1,7 +1,6 @@
 // Packages
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Relatives
@@ -9,6 +8,27 @@ import { calculatePosition } from '../helpers/workflowUtils';
 import Arrow from '../Arrow/Arrow';
 import WorkflowContext from '../WorkflowContext';
 
+/**
+ * @param {{
+ *   className: string;
+ *   id: string;
+ *   parentNodeId: string;
+ *   placement: 'top' | 'bottom' | 'left' | 'right';
+ *   mode: 'in' | 'out';
+ *   width: number;
+ *   height: number;
+ *   parentWidth: number;
+ *   parentHeight: number;
+ *   posX: number;
+ *   posY: number;
+ *   step: number;
+ *   totalSteps: number;
+ *   borderWidth: number;
+ *   limit: number;
+ *   onChange: (arg0: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeConnectorSpot = props => {
   const {
     id = '',
@@ -219,25 +239,6 @@ const NodeConnectorSpot = props => {
       )}
     </div>
   );
-};
-
-NodeConnectorSpot.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  parentNodeId: PropTypes.string,
-  placement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
-  mode: PropTypes.oneOf(['in', 'out']),
-  width: PropTypes.number,
-  height: PropTypes.number,
-  parentWidth: PropTypes.number,
-  parentHeight: PropTypes.number,
-  posX: PropTypes.number,
-  posY: PropTypes.number,
-  step: PropTypes.number,
-  totalSteps: PropTypes.number,
-  borderWidth: PropTypes.number,
-  limit: PropTypes.number,
-  onChange: PropTypes.func
 };
 
 export default NodeConnectorSpot;

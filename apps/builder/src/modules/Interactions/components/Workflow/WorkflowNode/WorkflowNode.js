@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, memo } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -15,6 +14,28 @@ import NodeFooter from './NodeFooter';
 import NodeWhen from './NodeWhen';
 import NodePreview from './NodePreview';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   title?: string;
+ *   type?: 'trigger' | 'callback' | 'utility' | 'globalCallback';
+ *   canDelete?: boolean;
+ *   action?: string;
+ *   elementId?: string;
+ *   enabled?: boolean;
+ *   beforeNode?: string;
+ *   afterNode?: string;
+ *   triggerId?: string;
+ *   params?: object;
+ *   when?: object;
+ *   preview?: object;
+ *   isOpened?: boolean;
+ *   onOpened?: (id: string, isOpened: boolean) => void;
+ *   onRemove?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowNode = props => {
   const {
     className = '',
@@ -173,7 +194,7 @@ const WorkflowNode = props => {
       {isOpened && (
         <NodeBody id={id} paramDefinitions={nodeParams} params={params} fields={fields} onChange={handleChange} />
       )}
-      {isOpened && nodeDefinition && <NodeWhen id={id} when={when} fields={fields} onChange={handleChange} />}
+      {isOpened && nodeDefinition && <NodeWhen when={when} fields={fields} onChange={handleChange} />}
       {isOpened && nodeDefinition && (
         <NodePreview preview={preview} defaultPreview={defaultPreview} onChange={handleChange} />
       )}
@@ -187,26 +208,6 @@ const WorkflowNode = props => {
       )}
     </div>
   );
-};
-
-WorkflowNode.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  title: PropTypes.string,
-  type: PropTypes.oneOf(['trigger', 'callback', 'utility', 'globalCallback']),
-  action: PropTypes.string,
-  elementId: PropTypes.string,
-  beforeNode: PropTypes.string,
-  afterNode: PropTypes.string,
-  triggerId: PropTypes.string,
-  params: PropTypes.object,
-  when: PropTypes.object,
-  preview: PropTypes.object,
-  canDelete: PropTypes.bool,
-  enabled: PropTypes.bool,
-  isOpened: PropTypes.bool,
-  onOpened: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default memo(WorkflowNode);

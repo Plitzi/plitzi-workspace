@@ -1,10 +1,17 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 
+/**
+ * @param {{
+ *   title?: string;
+ *   autoHideAfterClick?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { title = 'Modal Header', autoHideAfterClick = true, onUpdate = noop } = props;
 
@@ -36,12 +43,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  title: PropTypes.string,
-  autoHideAfterClick: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

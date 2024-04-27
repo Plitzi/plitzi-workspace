@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
@@ -11,6 +10,18 @@ import upperFirst from 'lodash/upperFirst';
 import WorkflowContext from '../WorkflowContext';
 import NodeActions from './NodeActions';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   type?: 'trigger' | 'callback';
+ *   action?: string;
+ *   elementId?: string;
+ *   onChange?: (node: { type: 'trigger' | 'callback'; action: string; elementId: string; params: object }) => void;
+ *   onClickSelect?: () => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeHeader = props => {
   const {
     className = '',
@@ -99,16 +110,6 @@ const NodeHeader = props => {
       />
     </div>
   );
-};
-
-NodeHeader.propTypes = {
-  className: PropTypes.string,
-  type: PropTypes.oneOf(['trigger', 'callback']),
-  elementId: PropTypes.string,
-  action: PropTypes.string,
-  onChange: PropTypes.func,
-  onClickSelect: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default NodeHeader;

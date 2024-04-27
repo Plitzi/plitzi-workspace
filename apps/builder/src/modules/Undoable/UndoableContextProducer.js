@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useReducer, useRef } from 'react';
-import PropTypes from 'prop-types';
 
 // Alias
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
@@ -10,6 +9,12 @@ import { StyleActions } from '@pmodules/Style/StyleReducer';
 import UndoableContext from './UndoableContext';
 import UndoableReducer, { initialState, UndoableActions } from './UndoableReducer';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const UndoableContextProducer = props => {
   const { children } = props;
   const [undoable, dispatchUndoable] = useReducer(UndoableReducer, initialState);
@@ -125,10 +130,6 @@ const UndoableContextProducer = props => {
   );
 
   return <UndoableContext.Provider value={undoableValue}>{children}</UndoableContext.Provider>;
-};
-
-UndoableContextProducer.propTypes = {
-  children: PropTypes.node
 };
 
 export default UndoableContextProducer;

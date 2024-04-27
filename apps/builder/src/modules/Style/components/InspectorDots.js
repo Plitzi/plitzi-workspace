@@ -1,12 +1,17 @@
 // Packages
 import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import StyleInspectorContext from '../StyleInspector/StyleInspectorContext';
 
 const styleKeysDefault = [];
 
+/**
+ * @param {{
+ *   styleKeys?: string[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InspectorDots = props => {
   const { styleKeys = styleKeysDefault } = props;
   const { hasValue, inheritData, bindingData } = useContext(StyleInspectorContext);
@@ -32,10 +37,6 @@ const InspectorDots = props => {
       {hasBinding && <div className="h-1.5 w-1.5 rounded-full bg-purple-300" title="Has Binding" />}
     </div>
   );
-};
-
-InspectorDots.propTypes = {
-  styleKeys: PropTypes.array
 };
 
 export default InspectorDots;

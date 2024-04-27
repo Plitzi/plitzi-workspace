@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
@@ -29,6 +28,18 @@ import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   element: object;
+ *   container?: object;
+ *   width?: number;
+ *   hoverRemove?: boolean;
+ *   zoom?: number;
+ *   onHoverRemove?: (hoverRemove: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const OverlayButtonContainer = props => {
   const {
     id = '',
@@ -265,16 +276,6 @@ const OverlayButtonContainer = props => {
       )}
     </div>
   );
-};
-
-OverlayButtonContainer.propTypes = {
-  id: PropTypes.string,
-  width: PropTypes.number,
-  container: PropTypes.object,
-  element: PropTypes.object,
-  hoverRemove: PropTypes.bool,
-  zoom: PropTypes.number,
-  onHoverRemove: PropTypes.func
 };
 
 export default OverlayButtonContainer;

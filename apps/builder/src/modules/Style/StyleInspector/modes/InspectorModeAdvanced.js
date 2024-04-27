@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
@@ -25,6 +24,15 @@ import BuilderContext from '@pmodules/Builder/BuilderContext';
 
 const selectorsDefault = [];
 
+/**
+ * @param {{
+ *   element: object;
+ *   styleSelector: string;
+ *   selectors: object[];
+ *   selector: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InspectorModeAdvanced = props => {
   const { element, styleSelector = '', selectors = selectorsDefault, selector } = props;
   const { builderHandler } = useContext(BuilderContext);
@@ -135,13 +143,6 @@ const InspectorModeAdvanced = props => {
       </div>
     </div>
   );
-};
-
-InspectorModeAdvanced.propTypes = {
-  styleSelector: PropTypes.string,
-  selectors: PropTypes.array,
-  selector: PropTypes.string,
-  element: PropTypes.object
 };
 
 export default InspectorModeAdvanced;

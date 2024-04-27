@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -16,6 +15,14 @@ import Icons from '@pcomponents/Icons';
 import InspectorLabel from '../../../InspectorLabel';
 import GroupButtons from '../../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   value: string;
+ *   onChange?: (value: string) => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TransitionItem = props => {
   const { value = '', onRemove = noop, onChange = noop } = props;
   const [progress, setProgress] = useState(0);
@@ -267,12 +274,6 @@ const TransitionItem = props => {
       </Dropdown.Container>
     </Dropdown>
   );
-};
-
-TransitionItem.propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default TransitionItem;

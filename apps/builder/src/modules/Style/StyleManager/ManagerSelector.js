@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import set from 'lodash/set';
 import noop from 'lodash/noop';
 import { produce } from 'immer';
@@ -26,6 +25,15 @@ import StyleSelectorTag from './StyleSelectorTag';
 const flatListDefault = [];
 const selectorsDefault = [];
 
+/**
+ * @param {{
+ *   flatList?: any[];
+ *   selected?: string;
+ *   onSelect?: (selector: string) => void;
+ *   selectors?: any[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ManagerSelector = props => {
   const { flatList = flatListDefault, selected, onSelect = noop } = props;
   let { selectors = selectorsDefault } = props;
@@ -180,13 +188,6 @@ const ManagerSelector = props => {
       </div>
     </div>
   );
-};
-
-ManagerSelector.propTypes = {
-  selectors: PropTypes.array,
-  flatList: PropTypes.array,
-  selected: PropTypes.string,
-  onSelect: PropTypes.func
 };
 
 export default ManagerSelector;

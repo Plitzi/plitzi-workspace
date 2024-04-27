@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
@@ -13,6 +12,12 @@ import BuilderTreeNode from './BuilderTreeNode';
 import { isInViewport } from '../../../../helpers/utils';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
+/**
+ * @param {{
+ *   setDragTree?: (dragTree: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderTree = props => {
   const { setDragTree = noop } = props;
   const [, setCache, getCache] = useCache();
@@ -193,10 +198,6 @@ const BuilderTree = props => {
       })}
     </div>
   );
-};
-
-BuilderTree.propTypes = {
-  setDragTree: PropTypes.func
 };
 
 export default BuilderTree;

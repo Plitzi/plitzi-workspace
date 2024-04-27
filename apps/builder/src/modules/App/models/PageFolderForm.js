@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
@@ -9,6 +8,18 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 
 const pageFoldersDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   name?: string;
+ *   slug?: string;
+ *   parentId?: string;
+ *   pageFolders?: any[];
+ *   onClose?: () => void;
+ *   onSubmit?: (values: { name: string; slug: string; parentId: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageFolderForm = props => {
   const {
     className = '',
@@ -117,16 +128,6 @@ const PageFolderForm = props => {
       </div>
     </form>
   );
-};
-
-PageFolderForm.propTypes = {
-  className: PropTypes.string,
-  name: PropTypes.string,
-  slug: PropTypes.string,
-  parentId: PropTypes.string,
-  pageFolders: PropTypes.array,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default PageFolderForm;

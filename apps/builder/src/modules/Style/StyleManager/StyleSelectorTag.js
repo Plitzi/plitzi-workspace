@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -8,6 +7,18 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 // Alias
 import SelectorTag from '../Selector/SelectorTag';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   label?: string;
+ *   active?: boolean;
+ *   elementsCount?: number;
+ *   type?: string;
+ *   onSelect?: (id: string) => void;
+ *   onDelete?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleSelectorTag = props => {
   const {
     id,
@@ -55,16 +66,6 @@ const StyleSelectorTag = props => {
       </div>
     </div>
   );
-};
-
-StyleSelectorTag.propTypes = {
-  id: PropTypes.string,
-  label: PropTypes.string,
-  active: PropTypes.bool,
-  type: PropTypes.string,
-  elementsCount: PropTypes.number,
-  onDelete: PropTypes.func,
-  onSelect: PropTypes.func
 };
 
 export default StyleSelectorTag;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,16 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   directionValue: string;
+ *   wrapValue: string;
+ *   isReverse?: boolean;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayFlexDirection = props => {
   const { partialValue, directionValue, wrapValue, isReverse = false, onChange = noop } = props;
 
@@ -71,14 +80,6 @@ const DisplayFlexDirection = props => {
       onChange={handleChange}
     />
   );
-};
-
-DisplayFlexDirection.propTypes = {
-  partialValue: PropTypes.string,
-  isReverse: PropTypes.bool,
-  onChange: PropTypes.func,
-  directionValue: PropTypes.string,
-  wrapValue: PropTypes.string
 };
 
 export default DisplayFlexDirection;

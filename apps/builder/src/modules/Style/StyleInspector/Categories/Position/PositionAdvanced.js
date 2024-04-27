@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -9,6 +8,13 @@ import { TOP, BOTTOM, LEFT, RIGHT } from '@plitzi/sdk-style/StyleConstants';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: object;
+ *   onChange?: (value: { type: string; value: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PositionAdvanced = props => {
   const { partialValue, onChange = noop } = props;
 
@@ -50,11 +56,6 @@ const PositionAdvanced = props => {
       />
     </>
   );
-};
-
-PositionAdvanced.propTypes = {
-  partialValue: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default PositionAdvanced;

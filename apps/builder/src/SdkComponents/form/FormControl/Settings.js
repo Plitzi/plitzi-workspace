@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
@@ -9,6 +8,32 @@ import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 
 const optionsDefault = [];
 
+/**
+ * @param {{
+ *   subType?:
+ *     | 'text'
+ *     | 'number'
+ *     | 'time'
+ *     | 'email'
+ *     | 'password'
+ *     | 'select'
+ *     | 'checkbox'
+ *     | 'textarea'
+ *     | 'hidden'
+ *     | 'color'
+ *     | 'switch';
+ *   name?: string;
+ *   label?: string;
+ *   placeholder?: string;
+ *   autoComplete?: boolean;
+ *   options?: any[];
+ *   required?: boolean;
+ *   readOnly?: boolean;
+ *   disabled?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const {
     subType = 'text',
@@ -127,32 +152,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  name: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
-  label: PropTypes.string,
-  placeholder: PropTypes.string,
-  subType: PropTypes.oneOf([
-    'hidden',
-    'text',
-    'number',
-    'email',
-    'time',
-    'password',
-    'select',
-    'checkbox',
-    'textarea',
-    'color',
-    'switch'
-  ]),
-  options: PropTypes.array,
-  autoComplete: PropTypes.bool,
-  required: PropTypes.bool,
-  readOnly: PropTypes.bool,
-  disabled: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,13 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (value: { type: string; value: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TypographyAlign = props => {
   const { partialValue, onChange = noop } = props;
 
@@ -57,11 +63,6 @@ const TypographyAlign = props => {
       onChange={handleChange}
     />
   );
-};
-
-TypographyAlign.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default TypographyAlign;

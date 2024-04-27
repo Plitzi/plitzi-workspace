@@ -1,6 +1,5 @@
 // Package
 import React, { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import InputMetric from '@plitzi/plitzi-ui-components/InputMetric';
 
@@ -18,6 +17,16 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   borderTopLeft: string;
+ *   borderTopRight: string;
+ *   borderBottomLeft: string;
+ *   borderBottomRight: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BorderRadius = props => {
   const { borderTopLeft, borderTopRight, borderBottomLeft, borderBottomRight, onChange = noop } = props;
   const [showRadiusIndividuals, setShowRadiusIndividuals] = useState(false);
@@ -108,14 +117,6 @@ const BorderRadius = props => {
       )}
     </div>
   );
-};
-
-BorderRadius.propTypes = {
-  borderTopLeft: PropTypes.string,
-  borderTopRight: PropTypes.string,
-  borderBottomLeft: PropTypes.string,
-  borderBottomRight: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default BorderRadius;

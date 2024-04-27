@@ -1,9 +1,24 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
+
+// Relatives
 import formatBytes from '../../helpers/formatBytes';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   backgroundColor?: string;
+ *   icon?: string;
+ *   name?: string;
+ *   version?: string;
+ *   author?: string;
+ *   size?: number;
+ *   components?: string;
+ *   isUploaded?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ContentPlugin = props => {
   const {
     className = '',
@@ -74,18 +89,6 @@ const ContentPlugin = props => {
       )}
     </div>
   );
-};
-
-ContentPlugin.propTypes = {
-  className: PropTypes.string,
-  backgroundColor: PropTypes.string,
-  icon: PropTypes.string,
-  name: PropTypes.string,
-  version: PropTypes.string,
-  author: PropTypes.string,
-  size: PropTypes.number,
-  components: PropTypes.string,
-  isUploaded: PropTypes.bool
 };
 
 export default ContentPlugin;

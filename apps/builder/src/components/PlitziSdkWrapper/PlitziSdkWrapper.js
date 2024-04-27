@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
@@ -62,13 +61,6 @@ const PlitziSdkWrapper = props => {
       offlineData={offlineDataMemo}
     />
   );
-};
-
-PlitziSdkWrapper.propTypes = {
-  className: PropTypes.string,
-  renderMode: PropTypes.oneOf(['iframe', 'sdk']),
-  currentPageId: PropTypes.string,
-  previewMode: PropTypes.bool
 };
 
 export default PlitziSdkWrapper;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -12,6 +11,13 @@ import CollectionRecordForm from '../Models/CollectionRecordForm';
 import CollectionRecords from './CollectionRecords';
 import CollectionContext from '../CollectionContext';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   onUpdateMode?: (mode: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Collection = props => {
   const { id = '', onUpdateMode = noop } = props;
   const { showModal } = useModal();
@@ -138,11 +144,6 @@ const Collection = props => {
       )}
     </div>
   );
-};
-
-Collection.propTypes = {
-  id: PropTypes.string,
-  onUpdateMode: PropTypes.func
 };
 
 export default Collection;

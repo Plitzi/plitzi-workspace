@@ -1,10 +1,17 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Select from '@plitzi/plitzi-ui-components/Select';
 
+/**
+ * @param {{
+ *   content?: string;
+ *   subType?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { subType = 'h1', content = '', onUpdate = noop } = props;
 
@@ -34,12 +41,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  content: PropTypes.string,
-  subType: PropTypes.oneOf(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']),
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

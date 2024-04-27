@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo, useContext, useCallback, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -11,6 +10,15 @@ import Select from '@plitzi/plitzi-ui-components/Select';
 // Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
+/**
+ * @param {{
+ *   mode?: 'page' | 'internal' | 'external';
+ *   href?: string;
+ *   target?: 'blank' | 'self' | 'parent' | 'top';
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { mode = 'page', href = '#', target = 'self', onUpdate = noop } = props;
   const {
@@ -118,13 +126,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  href: PropTypes.string,
-  target: PropTypes.oneOf(['blank', 'self', 'parent', 'top']),
-  mode: PropTypes.oneOf(['page', 'internal', 'external']),
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

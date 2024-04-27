@@ -1,12 +1,18 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
 // Relatives
 import FilterCategory from './FilterCategory';
 
+/**
+ * @param {{
+ *   filter: object;
+ *   onChange?: (value: string, key: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginsFilter = props => {
   const { filter, onChange = noop } = props;
 
@@ -35,11 +41,6 @@ const PluginsFilter = props => {
       />
     </div>
   );
-};
-
-PluginsFilter.propTypes = {
-  filter: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default PluginsFilter;

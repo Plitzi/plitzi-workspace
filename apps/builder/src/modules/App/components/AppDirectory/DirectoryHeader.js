@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
@@ -17,6 +16,13 @@ import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
 const pageFoldersDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   pageFolders?: any[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DirectoryHeader = props => {
   const { className = '', pageFolders = pageFoldersDefault } = props;
   const { showModal } = useModal();
@@ -85,11 +91,6 @@ const DirectoryHeader = props => {
       </div>
     </div>
   );
-};
-
-DirectoryHeader.propTypes = {
-  className: PropTypes.string,
-  pageFolders: PropTypes.array
 };
 
 export default DirectoryHeader;

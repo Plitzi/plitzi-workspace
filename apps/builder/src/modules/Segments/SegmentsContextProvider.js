@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
@@ -21,6 +20,14 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 import SegmentsContext from './SegmentsContext';
 import SegmentsReducer, { SegmentsActions } from './SegmentsReducer';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   segments?: object;
+ *   includeSubscriptions?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SegmentsContextProvider = props => {
   const { children, segments: segmentsProp, includeSubscriptions = true } = props;
   const { query, mutate, subscriptionManager } = useContext(NetworkContext);
@@ -442,12 +449,6 @@ const SegmentsContextProvider = props => {
   );
 
   return <SegmentsContext.Provider value={segmentsContextValue}>{children}</SegmentsContext.Provider>;
-};
-
-SegmentsContextProvider.propTypes = {
-  children: PropTypes.node,
-  segments: PropTypes.object,
-  includeSubscriptions: PropTypes.bool
 };
 
 export default SegmentsContextProvider;

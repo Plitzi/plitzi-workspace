@@ -1,9 +1,18 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   children?: React.ReactNode;
+ *   intent?: 'primary' | 'danger' | 'warning' | 'success';
+ *   isActive?: boolean;
+ *   onClick?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InspectorButton = props => {
   const { children, intent = 'primary', className = '', isActive = false, onClick = noop, ...otherProps } = props;
 
@@ -23,14 +32,6 @@ const InspectorButton = props => {
       {children}
     </button>
   );
-};
-
-InspectorButton.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  isActive: PropTypes.bool,
-  intent: PropTypes.oneOf(['primary', 'danger', 'warning', 'success']),
-  onClick: PropTypes.func
 };
 
 export default InspectorButton;

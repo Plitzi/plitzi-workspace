@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import InputMetric from '@plitzi/plitzi-ui-components/InputMetric';
 
@@ -31,6 +30,14 @@ const iconsMap = {
   [PADDING_RIGHT]: 'PaddingRight'
 };
 
+/**
+ * @param {{
+ *   fragmentSelected: string;
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SpacingEditor = props => {
   const { fragmentSelected, partialValue, onChange = noop } = props;
 
@@ -91,12 +98,6 @@ const SpacingEditor = props => {
       </div>
     </div>
   );
-};
-
-SpacingEditor.propTypes = {
-  partialValue: PropTypes.string,
-  fragmentSelected: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default SpacingEditor;

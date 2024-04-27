@@ -1,8 +1,17 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   processing?: boolean;
+ *   progressUpload?: number;
+ *   isUploaded?: boolean;
+ *   onUpload?: () => void;
+ *   onCancel?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ResourceUploadStatus = props => {
   const { processing = false, progressUpload = 0, isUploaded = false, onUpload = noop, onCancel = noop } = props;
 
@@ -35,14 +44,6 @@ const ResourceUploadStatus = props => {
       </div>
     </div>
   );
-};
-
-ResourceUploadStatus.propTypes = {
-  isUploaded: PropTypes.bool,
-  processing: PropTypes.bool,
-  progressUpload: PropTypes.number,
-  onUpload: PropTypes.func,
-  onCancel: PropTypes.func
 };
 
 export default ResourceUploadStatus;

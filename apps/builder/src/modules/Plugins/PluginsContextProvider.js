@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useState, useReducer } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
@@ -19,6 +18,13 @@ import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalCo
 // Relatives
 import PluginsReducer, { PluginsActions } from './PluginsReducer';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   plugins?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginsContextProvider = props => {
   const { children, plugins: pluginsProp } = props;
   const internalData = useContext(NetworkInternalContext);
@@ -328,11 +334,6 @@ const PluginsContextProvider = props => {
   );
 
   return <PluginsContext.Provider value={pluginsContextValue}>{children}</PluginsContext.Provider>;
-};
-
-PluginsContextProvider.propTypes = {
-  children: PropTypes.node,
-  plugins: PropTypes.object
 };
 
 export default PluginsContextProvider;

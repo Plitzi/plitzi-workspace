@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
@@ -21,6 +20,16 @@ import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import BuilderElementTools from '../BuilderElementTools';
 
+/**
+ * @param {{
+ *   baseElementId: string;
+ *   element: any;
+ *   isActive?: boolean;
+ *   headerTitle?: string;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderAreaHeader = props => {
   const { baseElementId, element, isActive = false, headerTitle = '', previewMode = false } = props;
   const { existsPopup, addPopup } = usePopup();
@@ -166,14 +175,6 @@ const BuilderAreaHeader = props => {
       )}
     </div>
   );
-};
-
-BuilderAreaHeader.propTypes = {
-  headerTitle: PropTypes.string,
-  baseElementId: PropTypes.string,
-  element: PropTypes.object,
-  isActive: PropTypes.bool,
-  previewMode: PropTypes.bool
 };
 
 export default BuilderAreaHeader;

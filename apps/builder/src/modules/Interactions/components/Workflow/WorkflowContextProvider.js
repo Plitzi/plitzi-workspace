@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { produce } from 'immer';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -21,6 +20,17 @@ import { generateID } from '../../../../helpers/utils';
 
 const nodeDefinitionsDefault = [];
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   nodes: object;
+ *   direction: 'horizontal' | 'vertical';
+ *   nodeDefinitions: object[];
+ *   onChange: (nodes: object) => void;
+ *   setFlowId: (flowId: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowContextProvider = props => {
   const {
     children,
@@ -273,15 +283,6 @@ const WorkflowContextProvider = props => {
   );
 
   return <WorkflowContext.Provider value={workflowMemo}>{children}</WorkflowContext.Provider>;
-};
-
-WorkflowContextProvider.propTypes = {
-  children: PropTypes.node,
-  nodes: PropTypes.object,
-  direction: PropTypes.oneOf(['horizontal', 'vertical']),
-  nodeDefinitions: PropTypes.array,
-  onChange: PropTypes.func,
-  setFlowId: PropTypes.func
 };
 
 export default WorkflowContextProvider;

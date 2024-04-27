@@ -1,9 +1,17 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 
-const BuilderCollaboratorCursor = forwardRef((props, ref) => {
-  const { title = '', color = '#000', scale = 1 } = props;
+/**
+ * @param {{
+ *   ref: React.RefObject<HTMLDivElement>;
+ *   title?: string;
+ *   color?: string;
+ *   scale?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const BuilderCollaboratorCursor = props => {
+  const { ref, title = '', color = '#000', scale = 1 } = props;
 
   return (
     <div ref={ref} className="builder-collaborator-cursor" style={{ color, fontSize: `${16 * (1 / scale)}px` }}>
@@ -13,12 +21,6 @@ const BuilderCollaboratorCursor = forwardRef((props, ref) => {
       </div>
     </div>
   );
-});
-
-BuilderCollaboratorCursor.propTypes = {
-  title: PropTypes.string,
-  color: PropTypes.string,
-  scale: PropTypes.number
 };
 
 export default BuilderCollaboratorCursor;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
@@ -15,6 +14,20 @@ import { makeId } from '@plitzi/sdk-shared/utils';
 // Relatives
 import { selectorFormatter } from './SelectorHelper';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   selector?: string;
+ *   type?: string;
+ *   editable?: boolean;
+ *   active?: boolean;
+ *   onClick?: (selector: object) => void;
+ *   onChange?: (selector: object) => void;
+ *   onChangeState?: (state: string) => void;
+ *   onAction?: (action: string, data?: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SelectorTag = props => {
   const {
     className = '',
@@ -175,18 +188,6 @@ const SelectorTag = props => {
       </Dropdown>
     </div>
   );
-};
-
-SelectorTag.propTypes = {
-  className: PropTypes.string,
-  selector: PropTypes.string,
-  type: PropTypes.string,
-  active: PropTypes.bool,
-  editable: PropTypes.bool,
-  onChange: PropTypes.func,
-  onChangeState: PropTypes.func,
-  onClick: PropTypes.func,
-  onAction: PropTypes.func
 };
 
 export default SelectorTag;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import upperFirst from 'lodash/upperFirst';
@@ -15,6 +14,21 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 const fieldsDefault = [];
 const transformersDefault = [];
 
+/**
+ * @param {{
+ *   fields?: object[];
+ *   sources?: object;
+ *   source?: string;
+ *   category?: string;
+ *   fromPath?: string;
+ *   toPath?: string;
+ *   transformers?: object[];
+ *   when?: object;
+ *   onBack?: () => void;
+ *   onNext?: (values: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StepPreview = props => {
   const {
     fields = fieldsDefault,
@@ -103,20 +117,6 @@ const StepPreview = props => {
       </div>
     </div>
   );
-};
-
-StepPreview.propTypes = {
-  className: PropTypes.string,
-  sources: PropTypes.object,
-  fields: PropTypes.array,
-  category: PropTypes.string,
-  fromPath: PropTypes.string,
-  toPath: PropTypes.string,
-  source: PropTypes.string,
-  transformers: PropTypes.array,
-  when: PropTypes.object,
-  onBack: PropTypes.func,
-  onNext: PropTypes.func
 };
 
 export default StepPreview;

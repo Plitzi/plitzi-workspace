@@ -1,5 +1,4 @@
 import React, { Component, createRef } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -179,18 +178,5 @@ class InputEasing extends Component {
     );
   }
 }
-
-InputEasing.propTypes = {
-  children: PropTypes.node,
-  value: PropTypes.array,
-  onChange: PropTypes.func,
-  width: PropTypes.number,
-  height: PropTypes.number,
-  padding: PropTypes.array,
-  handleRadius: PropTypes.number,
-  className: PropTypes.string,
-  progress: PropTypes.number,
-  readOnly: PropTypes.bool
-};
 
 export default InputEasing;

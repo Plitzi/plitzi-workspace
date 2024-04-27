@@ -1,12 +1,22 @@
 // Packages
 import React, { useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 
 // Relatives
 import Arrow from '../../Arrow';
 import WorkflowContext from '../../WorkflowContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   from?: object;
+ *   to?: object;
+ *   offsetX?: number;
+ *   offsetY?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeConnector = props => {
   const { className = '', id = '', from, to, offsetX = 0, offsetY = 0 } = props;
   const [fromNode, setFromNode] = useState(from);
@@ -57,15 +67,6 @@ const NodeConnector = props => {
       onDoubleClick={handleDoubleClick}
     />
   );
-};
-
-NodeConnector.propTypes = {
-  id: PropTypes.string,
-  className: PropTypes.string,
-  from: PropTypes.object,
-  to: PropTypes.object,
-  offsetX: PropTypes.number,
-  offsetY: PropTypes.number
 };
 
 export default NodeConnector;

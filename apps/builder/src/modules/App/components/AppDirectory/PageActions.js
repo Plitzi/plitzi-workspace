@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -13,6 +12,17 @@ import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-brid
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   active?: boolean;
+ *   zoom?: boolean;
+ *   defaultPage?: boolean;
+ *   onZoom?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageActions = props => {
   const { className = '', id = '', active = false, zoom = false, defaultPage = false, onZoom = noop } = props;
   const {
@@ -126,15 +136,6 @@ const PageActions = props => {
       </div>
     </div>
   );
-};
-
-PageActions.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  active: PropTypes.bool,
-  zoom: PropTypes.bool,
-  defaultPage: PropTypes.bool,
-  onZoom: PropTypes.func
 };
 
 export default PageActions;

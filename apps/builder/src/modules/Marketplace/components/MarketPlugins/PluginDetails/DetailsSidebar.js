@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import Moment from 'react-moment';
 import Select from '@plitzi/plitzi-ui-components/Select';
@@ -9,6 +8,24 @@ import noop from 'lodash/noop';
 
 const revisionsDefault = [];
 
+/**
+ * @param {{
+ *   name?: string;
+ *   description?: string;
+ *   createdAt?: number;
+ *   icon?: string;
+ *   revisions?: object[];
+ *   owner?: string;
+ *   website?: string;
+ *   color?: string;
+ *   version?: string;
+ *   latestVersion?: string;
+ *   onAdd?: (version: string) => void;
+ *   onUpdate?: (version: string) => Promise<boolean>;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DetailsSidebar = props => {
   const {
     name = 'Plugin',
@@ -111,22 +128,6 @@ const DetailsSidebar = props => {
       </div>
     </div>
   );
-};
-
-DetailsSidebar.propTypes = {
-  name: PropTypes.string,
-  description: PropTypes.string,
-  icon: PropTypes.string,
-  color: PropTypes.string,
-  owner: PropTypes.string,
-  website: PropTypes.string,
-  revisions: PropTypes.array,
-  latestVersion: PropTypes.string,
-  version: PropTypes.string,
-  createdAt: PropTypes.number,
-  onAdd: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default DetailsSidebar;

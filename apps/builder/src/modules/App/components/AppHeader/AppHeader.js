@@ -2,7 +2,6 @@
 import React, { useContext, useState, useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import PropTypes from 'prop-types';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
@@ -29,6 +28,12 @@ import PageHeader from './PageHeader';
 import ZoomButtons from './ZoomButtons';
 import DisplayModeButtons from './DisplayModeButtons';
 
+/**
+ * @param {{
+ *   setTabSelected?: (tab: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const AppHeaher = props => {
   const { setTabSelected = noop } = props;
   const { showModal } = useModal();
@@ -191,10 +196,6 @@ const AppHeaher = props => {
       </div>
     </div>
   );
-};
-
-AppHeaher.propTypes = {
-  setTabSelected: PropTypes.func
 };
 
 export default AppHeaher;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo, useContext, useCallback, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import get from 'lodash/get';
 
@@ -13,6 +12,13 @@ import { getPaths, matchRoutePath } from '@plitzi/sdk-navigation/NavigationHelpe
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NavigationContextProvider = props => {
   const { previewMode = false, children } = props;
   const { pages, pageDefinitions, pageFolders } = useContext(SchemaMainContext);
@@ -99,11 +105,6 @@ const NavigationContextProvider = props => {
   }
 
   return <NavigationContext.Provider value={navigationValue}>{children}</NavigationContext.Provider>;
-};
-
-NavigationContextProvider.propTypes = {
-  children: PropTypes.node,
-  previewMode: PropTypes.bool
 };
 
 export default NavigationContextProvider;

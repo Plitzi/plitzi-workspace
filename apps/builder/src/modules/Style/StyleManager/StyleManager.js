@@ -11,6 +11,10 @@ import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContex
 import ManagerModeBasic from './modes/ManagerModeBasic';
 import ManagerSelector from './ManagerSelector';
 
+/**
+ * @param {{}} props
+ * @returns {React.ReactElement}
+ */
 const StyleManager = () => {
   const [selected, setSelected] = useState();
   const { style } = useContext(BuilderStyleContext);
@@ -32,7 +36,5 @@ const StyleManager = () => {
     </div>
   );
 };
-
-StyleManager.propTypes = {};
 
 export default StyleManager;

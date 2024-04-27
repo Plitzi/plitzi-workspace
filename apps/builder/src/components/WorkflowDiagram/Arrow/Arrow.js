@@ -1,7 +1,6 @@
 // Packages
 import React, { useMemo } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 
 // Relatives
 import { getCubicBezierSVGPath } from './helpers/path';
@@ -80,21 +79,6 @@ const Arrow = props => {
       <polygon points="0,-6 12,0, 0,6" transform={`translate(${curve.end.x},${curve.end.y}) rotate(${endAngle})`} />
     </svg>
   );
-};
-
-Arrow.propTypes = {
-  className: PropTypes.string,
-  direction: PropTypes.oneOf(['horizontal', 'vertical']),
-  curveRate: PropTypes.number,
-  fromX: PropTypes.number,
-  fromY: PropTypes.number,
-  toX: PropTypes.number,
-  toY: PropTypes.number,
-  offsetX: PropTypes.number,
-  offsetY: PropTypes.number,
-  isPreview: PropTypes.bool,
-  fromRadius: PropTypes.number,
-  dotRadius: PropTypes.number
 };
 
 export default Arrow;

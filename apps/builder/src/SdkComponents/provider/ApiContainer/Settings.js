@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
@@ -17,6 +16,19 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
+/**
+ * @param {{
+ *   query?: string;
+ *   method?: 'get' | 'post';
+ *   accessToken?: string;
+ *   when?: object;
+ *   headers?: object;
+ *   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+ *   mockData?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const {
     query = '',
@@ -137,28 +149,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  query: PropTypes.string,
-  method: PropTypes.oneOf(['get', 'post']),
-  accessToken: PropTypes.string,
-  when: PropTypes.object,
-  headers: PropTypes.object,
-  mockData: PropTypes.string,
-  subType: PropTypes.oneOf([
-    'div',
-    'header',
-    'footer',
-    'nav',
-    'main',
-    'section',
-    'article',
-    'aside',
-    'address',
-    'figure'
-  ]),
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

@@ -1,8 +1,18 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   children?: React.ReactNode;
+ *   title?: string;
+ *   theme?: 'normal';
+ *   isRemoving?: boolean;
+ *   isVisible?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TreeNodeActionButton = props => {
   const {
     className = '',
@@ -33,15 +43,6 @@ const TreeNodeActionButton = props => {
       {children}
     </button>
   );
-};
-
-TreeNodeActionButton.propTypes = {
-  className: PropTypes.string,
-  title: PropTypes.string,
-  children: PropTypes.node,
-  theme: PropTypes.oneOf(['normal']),
-  isRemoving: PropTypes.bool,
-  isVisible: PropTypes.bool
 };
 
 export default TreeNodeActionButton;

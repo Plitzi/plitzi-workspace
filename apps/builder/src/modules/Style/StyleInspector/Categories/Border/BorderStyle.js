@@ -1,6 +1,5 @@
 // Package
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Alias
@@ -10,6 +9,17 @@ import Icons from '@pcomponents/Icons';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   borderTop: string;
+ *   borderBottom: string;
+ *   borderLeft: string;
+ *   borderRight: string;
+ *   currentPlacement: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BorderStyle = props => {
   const { borderTop, borderBottom, borderLeft, borderRight, currentPlacement, onChange = noop } = props;
   const { getValue } = useContext(StyleInspectorContext);
@@ -76,15 +86,6 @@ const BorderStyle = props => {
       onChange={handleChange}
     />
   );
-};
-
-BorderStyle.propTypes = {
-  borderTop: PropTypes.string,
-  borderBottom: PropTypes.string,
-  borderLeft: PropTypes.string,
-  borderRight: PropTypes.string,
-  currentPlacement: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default BorderStyle;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import { POPUP_PLACEMENT_RIGHT } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
@@ -15,6 +14,14 @@ import BuilderElementTools from './components/BuilderElementTools/BuilderElement
 
 const pagesDefault = [];
 
+/**
+ * @param {{
+ *   pages?: string[];
+ *   customCss?: string;
+ *   externalStyle?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Builder = props => {
   const { pages = pagesDefault, customCss = '', externalStyle = '' } = props;
   const builderContextValue = useContext(BuilderContext);
@@ -100,12 +107,6 @@ const Builder = props => {
         ))}
     </div>
   );
-};
-
-Builder.propTypes = {
-  externalStyle: PropTypes.string,
-  customCss: PropTypes.string,
-  pages: PropTypes.arrayOf(PropTypes.string)
 };
 
 Builder.Plugin = () => null;

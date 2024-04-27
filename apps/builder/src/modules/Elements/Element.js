@@ -1,10 +1,24 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import useDragElement from './hooks/useDragElement';
 
+/**
+ * @param {{
+ *   element: {
+ *     market: {
+ *       icon: string;
+ *       backgroundColor: string;
+ *     };
+ *     definition: {
+ *       label: string;
+ *       type: string;
+ *     };
+ *   };
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Element = props => {
   const {
     element: {
@@ -31,10 +45,6 @@ const Element = props => {
       </div>
     </div>
   );
-};
-
-Element.propTypes = {
-  element: PropTypes.object
 };
 
 export default Element;

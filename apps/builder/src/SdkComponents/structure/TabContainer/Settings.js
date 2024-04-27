@@ -1,7 +1,10 @@
 // Packages
 import React from 'react';
-// import PropTypes from 'prop-types';
 
+/**
+ * @param {{}} props
+ * @returns {React.ReactElement}
+ */
 const Settings = () => {
   return (
     <div className="flex flex-col">
@@ -12,7 +15,5 @@ const Settings = () => {
     </div>
   );
 };
-
-Settings.propTypes = {};
 
 export default Settings;

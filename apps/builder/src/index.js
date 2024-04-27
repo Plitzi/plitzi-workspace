@@ -4,7 +4,6 @@ import './wdyr';
 // Packages
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 
 // Alias
@@ -53,25 +52,23 @@ const PlitziBuilder = props => {
   return <App {...omit(props, ['debugMode'])}>{children}</App>;
 };
 
-PlitziBuilder.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  // Space
-  webKey: PropTypes.string,
-  environment: PropTypes.string,
-  currentPageId: PropTypes.string,
-  // Server
-  userKey: PropTypes.string,
-  server: PropTypes.object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-  debugMode: PropTypes.bool,
-  includeSubscriptions: PropTypes.bool,
-  includeRealTime: PropTypes.bool,
-  // Extra
-  builderEnvironment: PropTypes.string,
-  renderMode: PropTypes.oneOf(['raw', 'iframe', 'shadow']),
-  externalStyle: PropTypes.string,
-  state: PropTypes.object
-};
+// className: string,
+// children: node,
+// // Space
+// webKey: string,
+// environment: string,
+// currentPageId: string,
+// // Server
+// userKey: string,
+// server: object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
+// debugMode: bool,
+// includeSubscriptions: bool,
+// includeRealTime: bool,
+// // Extra
+// builderEnvironment: string,
+// renderMode: oneOf(['raw', 'iframe', 'shadow']),
+// externalStyle: string,
+// state: object
 
 PlitziBuilder.Plugin = Builder.Plugin;
 

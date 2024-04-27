@@ -1,10 +1,15 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import StyleInspector from '../../StyleInspector/StyleInspector';
 
+/**
+ * @param {{
+ *   selected?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ManagerModeBasic = props => {
   const { selected } = props;
 
@@ -25,10 +30,6 @@ const ManagerModeBasic = props => {
       )}
     </div>
   );
-};
-
-ManagerModeBasic.propTypes = {
-  selected: PropTypes.string
 };
 
 export default ManagerModeBasic;

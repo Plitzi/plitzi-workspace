@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
@@ -18,6 +17,12 @@ import BuilderTree from '../BuilderTree';
 import BuilderContext from '../../BuilderContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 
+/**
+ * @param {{
+ *   setDragTree?: (dragTree: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderAreaFooter = props => {
   const { setDragTree = noop } = props;
   const { existsPopup, addPopup } = usePopup();
@@ -198,10 +203,6 @@ const BuilderAreaFooter = props => {
       </div>
     </div>
   );
-};
-
-BuilderAreaFooter.propTypes = {
-  setDragTree: PropTypes.func
 };
 
 export default BuilderAreaFooter;

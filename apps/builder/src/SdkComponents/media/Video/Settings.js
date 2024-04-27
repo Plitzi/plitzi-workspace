@@ -1,10 +1,20 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 
+/**
+ * @param {{
+ *   src?: string;
+ *   autoPlay?: boolean;
+ *   playsInline?: boolean;
+ *   loop?: boolean;
+ *   muted?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { src = '', autoPlay = false, playsInline = false, loop = false, muted = true, onUpdate = noop } = props;
 
@@ -72,15 +82,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  src: PropTypes.string,
-  autoPlay: PropTypes.bool,
-  playsInline: PropTypes.bool,
-  loop: PropTypes.bool,
-  muted: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import FileUpload from '@plitzi/plitzi-ui-components/FileUpload';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
@@ -11,6 +10,15 @@ import getPluginManifest from './helpers/getPluginManifest';
 
 const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 
+/**
+ * @param {{
+ *   uploadTypes?: string[];
+ *   mutate?: (data: any) => void;
+ *   onUploaded?: (resource: any) => void;
+ *   onUploadAdded?: (file: File) => boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ResourceManager = props => {
   const { uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop, onUploadAdded = noop } = props;
   const [files, setFiles] = useState([]);
@@ -105,13 +113,6 @@ const ResourceManager = props => {
       )}
     </div>
   );
-};
-
-ResourceManager.propTypes = {
-  uploadTypes: PropTypes.array,
-  mutate: PropTypes.func,
-  onUploaded: PropTypes.func,
-  onUploadAdded: PropTypes.func
 };
 
 export default ResourceManager;

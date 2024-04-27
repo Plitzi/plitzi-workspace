@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -26,6 +25,17 @@ import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE, processPaste } from '../../
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode;
+ *   className?: string;
+ *   iframeDOM?: HTMLIFrameElement;
+ *   isActive?: boolean;
+ *   iframeScaleX?: number;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderAreaTracking = props => {
   const {
     children,
@@ -345,15 +355,6 @@ const BuilderAreaTracking = props => {
       {children}
     </div>
   );
-};
-
-BuilderAreaTracking.propTypes = {
-  iframeDOM: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  iframeScaleX: PropTypes.number,
-  isActive: PropTypes.bool,
-  previewMode: PropTypes.bool
 };
 
 export default BuilderAreaTracking;

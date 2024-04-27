@@ -1,7 +1,6 @@
 // Packages
 import React, { useRef } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -47,16 +46,6 @@ const WorkflowDiagram = props => {
       </WorkflowContextProvider>
     </div>
   );
-};
-
-WorkflowDiagram.propTypes = {
-  className: PropTypes.string,
-  template: PropTypes.object,
-  direction: PropTypes.oneOf(['horizontal', 'vertical']),
-  nodeDefinitions: PropTypes.array,
-  addNodePositionX: PropTypes.number,
-  addNodePositionY: PropTypes.number,
-  onChange: PropTypes.func
 };
 
 export default WorkflowDiagram;

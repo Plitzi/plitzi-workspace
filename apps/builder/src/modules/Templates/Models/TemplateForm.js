@@ -1,12 +1,21 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   name?: string;
+ *   description?: string;
+ *   onClose?: () => void;
+ *   onSubmit?: (values: { name: string; description: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TemplateForm = props => {
   const { className = '', name = 'New Template', description = '', onSubmit = noop, onClose = noop } = props;
 
@@ -70,14 +79,6 @@ const TemplateForm = props => {
       </div>
     </form>
   );
-};
-
-TemplateForm.propTypes = {
-  className: PropTypes.string,
-  name: PropTypes.string,
-  description: PropTypes.string,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default TemplateForm;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useState, useRef, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import set from 'lodash/set';
 import pick from 'lodash/pick';
@@ -39,6 +38,19 @@ export const BUILDER_MODE_NORMAL = 'normal';
 export const BUILDER_MODE_TEMPLATE = 'template';
 export const BUILDER_MODE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   baseElementId: string;
+ *   mode: string; // BUILDER_MODE_NORMAL | BUILDER_MODE_TEMPLATE | BUILDER_MODE_SEGMENT
+ *   schemaName: string;
+ *   style: object;
+ *   schema: object;
+ *   onHandler: (event: string, data: any) => void;
+ *   onBaseElementChange: (baseElementId: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderProvider = props => {
   const {
     children,
@@ -456,17 +468,6 @@ const BuilderProvider = props => {
       </BuilderStyleContext.Provider>
     </BuilderSchemaContext.Provider>
   );
-};
-
-BuilderProvider.propTypes = {
-  children: PropTypes.node,
-  mode: PropTypes.oneOf([BUILDER_MODE_NORMAL, BUILDER_MODE_TEMPLATE, BUILDER_MODE_SEGMENT]),
-  schemaName: PropTypes.string,
-  baseElementId: PropTypes.string,
-  style: PropTypes.object,
-  schema: PropTypes.object,
-  onHandler: PropTypes.func,
-  onBaseElementChange: PropTypes.func
 };
 
 export default BuilderProvider;

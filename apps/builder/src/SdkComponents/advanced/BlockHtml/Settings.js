@@ -1,11 +1,17 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Alias
 import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
 
+/**
+ * @param {{
+ *   content?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { content = '', onUpdate = noop } = props;
 
@@ -19,11 +25,6 @@ const Settings = props => {
       <ElementAdvancedEditor className="grow" value={content} mode="html" onChange={handleChangeContent} />
     </div>
   );
-};
-
-Settings.propTypes = {
-  content: PropTypes.string,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

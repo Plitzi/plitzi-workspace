@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import upperFirst from 'lodash/upperFirst';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -15,6 +14,19 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const optionsDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   value?: string | number | boolean;
+ *   label?: string;
+ *   type?: 'text' | 'select' | 'textarea' | 'checkbox' | 'codemirror-text';
+ *   options?: any[];
+ *   dataSourceFields?: object;
+ *   onChange?: (id: string, value: string | number | boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TransformerParam = props => {
   const {
     className = '',
@@ -90,17 +102,6 @@ const TransformerParam = props => {
       </div>
     </div>
   );
-};
-
-TransformerParam.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
-  label: PropTypes.string,
-  type: PropTypes.oneOf(['text', 'select', 'textarea', 'checkbox', 'codemirror-text']),
-  options: PropTypes.array,
-  dataSourceFields: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default TransformerParam;

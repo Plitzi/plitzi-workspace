@@ -1,11 +1,19 @@
 // Packages
 import React, { useEffect, useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
+/**
+ * @param {{
+ *   icon?: string;
+ *   size?: 'fa-1x' | 'fa-2x' | 'fa-3x' | 'fa-4x';
+ *   iconAnimation?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { icon = '', size = 'fa-1x', iconAnimation = '', onUpdate = noop } = props;
   const [icons, setIcons] = useState({});
@@ -134,13 +142,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  icon: PropTypes.string,
-  size: PropTypes.oneOf(['fa-1x', 'fa-2x', 'fa-3x', 'fa-4x']),
-  iconAnimation: PropTypes.string,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

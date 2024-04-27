@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Relatives
@@ -8,6 +7,14 @@ import InspectorDots from './InspectorDots';
 
 const dotKeysDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   title?: string;
+ *   dotKeys?: string[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CategoryTitle = props => {
   const { className = '', title = 'Title', dotKeys = dotKeysDefault } = props;
 
@@ -17,12 +24,6 @@ const CategoryTitle = props => {
       <InspectorDots styleKeys={dotKeys} />
     </div>
   );
-};
-
-CategoryTitle.propTypes = {
-  className: PropTypes.string,
-  title: PropTypes.string,
-  dotKeys: PropTypes.array
 };
 
 export default CategoryTitle;

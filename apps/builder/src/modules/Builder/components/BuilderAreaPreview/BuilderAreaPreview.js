@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
@@ -33,6 +32,16 @@ import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder
 // SDK Style
 import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // eslint-disable-line
 
+/**
+ * @param {{
+ *   id?: string;
+ *   className?: string;
+ *   previewMode?: boolean;
+ *   schema?: object;
+ *   styleCache?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderAreaPreview = props => {
   const { id = '', className = '', previewMode = false, schema = emptyObject, styleCache = '' } = props;
   const { settings, flat } = schema;
@@ -116,14 +125,6 @@ const BuilderAreaPreview = props => {
       </>
     </ContainerFrame>
   );
-};
-
-BuilderAreaPreview.propTypes = {
-  className: PropTypes.string,
-  previewMode: PropTypes.bool,
-  id: PropTypes.string,
-  schema: PropTypes.object,
-  styleCache: PropTypes.string
 };
 
 export default BuilderAreaPreview;

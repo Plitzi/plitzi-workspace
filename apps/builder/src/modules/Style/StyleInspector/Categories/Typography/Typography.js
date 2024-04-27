@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -67,6 +66,14 @@ const weights = {
 
 const fontsDefault = [];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   fonts?: object[];
+ *   onCollapse?: (category: string, isCollapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Typography = props => {
   const { isCollapsed = true, fonts = fontsDefault, onCollapse = noop } = props;
   const { getValue, setValue } = useContext(StyleInspectorContext);
@@ -258,12 +265,6 @@ const Typography = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-Typography.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func,
-  fonts: PropTypes.array
 };
 
 export default memo(Typography);

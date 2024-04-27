@@ -1,10 +1,18 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   value?: string | number;
+ *   type?: string;
+ *   onChange?: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const GroupInput = props => {
   const { className = '', value = '', type = 'number', onChange = noop, ...otherProps } = props;
 
@@ -19,13 +27,6 @@ const GroupInput = props => {
       {...otherProps}
     />
   );
-};
-
-GroupInput.propTypes = {
-  className: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  type: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default GroupInput;

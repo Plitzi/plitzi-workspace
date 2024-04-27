@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import isEqual from 'lodash/isEqual';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -10,6 +9,12 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 // Relatives
 import StateManagerContext from './StateManagerContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StateManager = props => {
   const { className = '' } = props;
   const { state, setState } = useContext(StateManagerContext);
@@ -53,10 +58,6 @@ const StateManager = props => {
       </div>
     </div>
   );
-};
-
-StateManager.propTypes = {
-  className: PropTypes.string
 };
 
 export default StateManager;

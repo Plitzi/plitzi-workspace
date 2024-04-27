@@ -1,11 +1,19 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
+/**
+ * @param {{
+ *   layoutMode?: string;
+ *   isEditorVisible?: boolean;
+ *   onClickEditorVisible?: () => void;
+ *   onLayoutModeChange?: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TransformLayout = props => {
   const {
     layoutMode = 'horizontal',
@@ -42,13 +50,6 @@ const TransformLayout = props => {
       />
     </div>
   );
-};
-
-TransformLayout.propTypes = {
-  layoutMode: PropTypes.string,
-  isEditorVisible: PropTypes.bool,
-  onClickEditorVisible: PropTypes.func,
-  onLayoutModeChange: PropTypes.func
 };
 
 export default TransformLayout;

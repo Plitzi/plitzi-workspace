@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import set from 'lodash/set';
 import get from 'lodash/get';
@@ -18,6 +17,15 @@ import TransformerParam from './TransformerParam';
 
 const transformersDefault = [];
 
+/**
+ * @param {{
+ *   transformers?: object[];
+ *   dataSourceFields?: object;
+ *   onBack?: () => void;
+ *   onNext?: (values: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StepTransformers = props => {
   const {
     transformers: transformersProp = transformersDefault,
@@ -143,13 +151,6 @@ const StepTransformers = props => {
       </div>
     </div>
   );
-};
-
-StepTransformers.propTypes = {
-  transformers: PropTypes.array,
-  dataSourceFields: PropTypes.object,
-  onBack: PropTypes.func,
-  onNext: PropTypes.func
 };
 
 export default StepTransformers;

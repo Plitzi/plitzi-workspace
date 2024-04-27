@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { produce } from 'immer';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -400,17 +399,6 @@ const WorkflowContextProvider = props => {
   );
 
   return <WorkflowContext.Provider value={workflowMemo}>{children}</WorkflowContext.Provider>;
-};
-
-WorkflowContextProvider.propTypes = {
-  children: PropTypes.node,
-  containerRef: PropTypes.object,
-  template: PropTypes.object,
-  direction: PropTypes.oneOf(['horizontal', 'vertical']),
-  nodeDefinitions: PropTypes.array,
-  addNodePositionX: PropTypes.number,
-  addNodePositionY: PropTypes.number,
-  onChange: PropTypes.func
 };
 
 export default WorkflowContextProvider;

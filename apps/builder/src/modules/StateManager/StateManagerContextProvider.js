@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { produce } from 'immer';
 import set from 'lodash/set';
 import get from 'lodash/get';
@@ -19,6 +18,13 @@ export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   state?: Record<string, any>;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StateManagerContextProvider = props => {
   const { children, state: stateProp = emptyObject } = props;
   const { webId } = useContext(NetworkContext);
@@ -140,11 +146,6 @@ const StateManagerContextProvider = props => {
   );
 
   return <StateManagerContext.Provider value={valueMemo}>{children}</StateManagerContext.Provider>;
-};
-
-StateManagerContextProvider.propTypes = {
-  children: PropTypes.node,
-  state: PropTypes.object
 };
 
 export default StateManagerContextProvider;

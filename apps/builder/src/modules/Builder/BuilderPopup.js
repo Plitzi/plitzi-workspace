@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import PopupSidebar from '@plitzi/plitzi-ui-components/Popup/PopupSidebar';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
@@ -14,6 +13,13 @@ import Builder from '@pmodules/Builder';
 import BuilderProvider, { BUILDER_MODE_SEGMENT } from '@pmodules/Builder/BuilderProvider';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
+/**
+ * @param {{
+ *   previewMode?: boolean;
+ *   segmentIdentifier?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderPopup = props => {
   const { previewMode = false, segmentIdentifier = '' } = props;
   const { eventBridge } = useContext(EventBridgeContext);
@@ -71,11 +77,6 @@ const BuilderPopup = props => {
       </BuilderProvider>
     </div>
   );
-};
-
-BuilderPopup.propTypes = {
-  previewMode: PropTypes.bool,
-  segmentIdentifier: PropTypes.string
 };
 
 export default BuilderPopup;

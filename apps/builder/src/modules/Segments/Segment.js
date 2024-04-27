@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
@@ -19,6 +18,16 @@ import SegmentForm from './Models/SegmentForm';
 import SegmentsContext from './SegmentsContext';
 import PublishForm from './Models/PublishForm';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   identifier?: string;
+ *   name?: string;
+ *   description?: string;
+ *   onParentRefresh?: (identifier: string, segment: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Segment = props => {
   const { id = '', identifier = '', name = '', description = '', onParentRefresh = noop } = props;
   const { showModal } = useModal();
@@ -183,14 +192,6 @@ const Segment = props => {
       </div>
     </div>
   );
-};
-
-Segment.propTypes = {
-  id: PropTypes.string,
-  identifier: PropTypes.string,
-  name: PropTypes.string,
-  description: PropTypes.string,
-  onParentRefresh: PropTypes.func
 };
 
 export default Segment;

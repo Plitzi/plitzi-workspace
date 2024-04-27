@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -11,6 +10,16 @@ import WorkflowNode from './WorkflowNode';
 import WorkflowAddNode from './WorkflowAddNode';
 import WorkflowContext from './WorkflowContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   trigger?: object;
+ *   nodes?: object;
+ *   triggerTitle?: string;
+ *   callbackTitle?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowFlow = props => {
   const {
     className = '',
@@ -100,14 +109,6 @@ const WorkflowFlow = props => {
       </div>
     </div>
   );
-};
-
-WorkflowFlow.propTypes = {
-  className: PropTypes.string,
-  trigger: PropTypes.object,
-  nodes: PropTypes.object,
-  triggerTitle: PropTypes.string,
-  callbackTitle: PropTypes.string
 };
 
 export default WorkflowFlow;

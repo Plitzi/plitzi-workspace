@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,6 +9,13 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 // Alias
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   preview?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TransformPreview = props => {
   const { className = '', preview } = props;
   const schemaMemo = useMemo(() => ({ schema: preview?.schema }), [preview?.schema]);
@@ -30,11 +36,6 @@ const TransformPreview = props => {
       </SchemaContext.Provider>
     </div>
   );
-};
-
-TransformPreview.propTypes = {
-  className: PropTypes.string,
-  preview: PropTypes.object
 };
 
 export default TransformPreview;

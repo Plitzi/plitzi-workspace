@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import get from 'lodash/get';
@@ -23,6 +22,20 @@ import { selectorFormatter } from './SelectorHelper';
 import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   value?: string;
+ *   selectorSelected?: object;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ *   disabled?: boolean;
+ *   onChange?: (value: string) => void;
+ *   onSelectorSelected?: (selector: object) => void;
+ *   onSelectorAdded?: (selector: object, selectTag?: boolean, tag?: object) => void;
+ *   onSelectorRemoved?: (selector: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Selector = props => {
   const {
     className = '',
@@ -283,18 +296,6 @@ const Selector = props => {
       </Dropdown.Container>
     </Dropdown>
   );
-};
-
-Selector.propTypes = {
-  className: PropTypes.string,
-  value: PropTypes.string,
-  selectorSelected: PropTypes.object,
-  disabled: PropTypes.bool,
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
-  onChange: PropTypes.func,
-  onSelectorSelected: PropTypes.func,
-  onSelectorAdded: PropTypes.func,
-  onSelectorRemoved: PropTypes.func
 };
 
 export default memo(Selector);

@@ -2,9 +2,20 @@
 import React, { useMemo } from 'react';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   mode?: string;
+ *   disabled?: boolean;
+ *   onChangeMode?: (mode: string) => void;
+ *   onClickEraser?: () => void;
+ *   onTransform?: () => void;
+ *   onImport?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TransformActions = props => {
   const {
     mode = 'horizontal',
@@ -48,16 +59,6 @@ const TransformActions = props => {
       </Button>
     </div>
   );
-};
-
-TransformActions.propTypes = {
-  className: PropTypes.string,
-  mode: PropTypes.string,
-  disabled: PropTypes.bool,
-  onChangeMode: PropTypes.func,
-  onClickEraser: PropTypes.func,
-  onTransform: PropTypes.func,
-  onImport: PropTypes.func
 };
 
 export default TransformActions;

@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import camelCase from 'lodash/camelCase';
 import debounce from 'lodash/debounce';
@@ -16,6 +15,14 @@ import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 export const OVERLAY_MODE_NORMAL = 'normal';
 export const OVERLAY_MODE_DRAG = 'drag';
 
+/**
+ * @param {{
+ *   iframeDOM: object;
+ *   sizeOffset?: number;
+ *   zoom?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderOverlayDrag = props => {
   const { iframeDOM, sizeOffset = 2, zoom = 1 } = props;
   const elementDOM = useRef(null);
@@ -306,12 +313,6 @@ const BuilderOverlayDrag = props => {
       )}
     </div>
   );
-};
-
-BuilderOverlayDrag.propTypes = {
-  iframeDOM: PropTypes.object,
-  sizeOffset: PropTypes.number,
-  zoom: PropTypes.number
 };
 
 export default memo(BuilderOverlayDrag);

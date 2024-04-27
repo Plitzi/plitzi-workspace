@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import BezierEasing from './BezierEasing';
@@ -28,15 +27,6 @@ const Progress = props => {
   const prog = `M${px},${sy} L${px},${py} L${sx},${py}`;
 
   return <path className="fill-transparent stroke-1 stroke-blue-400" d={prog} />;
-};
-
-Progress.propTypes = {
-  value: PropTypes.array,
-  progress: PropTypes.number,
-  xFrom: PropTypes.number,
-  yFrom: PropTypes.number,
-  xTo: PropTypes.number,
-  yTo: PropTypes.number
 };
 
 export default Progress;

@@ -2,7 +2,6 @@
 import React, { useCallback, useContext, useMemo } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
@@ -19,6 +18,12 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { generateID } from '../../../../helpers/utils';
 import PageLayout from './PageLayout';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageLayouts = props => {
   const { className = '' } = props;
   const {
@@ -97,10 +102,6 @@ const PageLayouts = props => {
       </div>
     </div>
   );
-};
-
-PageLayouts.propTypes = {
-  className: PropTypes.string
 };
 
 export default PageLayouts;

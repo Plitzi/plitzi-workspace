@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import upperFirst from 'lodash/upperFirst';
 import get from 'lodash/get';
@@ -22,6 +21,20 @@ import Page from './Page';
 
 const pageFoldersDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   name?: string;
+ *   slug?: string;
+ *   parentId?: string;
+ *   pageFolders?: any[];
+ *   isRootFolder?: boolean;
+ *   currentPageId?: string;
+ *   nestedLevel?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Directory = props => {
   const {
     className = '',
@@ -185,16 +198,5 @@ const Directory = props => {
   );
 };
 
-Directory.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  name: PropTypes.string,
-  slug: PropTypes.string,
-  parentId: PropTypes.string,
-  pageFolders: PropTypes.arrayOf(PropTypes.object),
-  isRootFolder: PropTypes.bool,
-  currentPageId: PropTypes.string,
-  nestedLevel: PropTypes.number
-};
 
 export default Directory;

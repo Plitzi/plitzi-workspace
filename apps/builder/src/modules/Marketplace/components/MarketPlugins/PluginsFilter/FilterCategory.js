@@ -1,9 +1,18 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   active?: boolean;
+ *   name?: string;
+ *   onClick?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const FilterCategory = props => {
   const { className = '', id = '', active = false, name = 'Category', onClick = noop } = props;
 
@@ -21,14 +30,6 @@ const FilterCategory = props => {
       {name}
     </div>
   );
-};
-
-FilterCategory.propTypes = {
-  className: PropTypes.string,
-  active: PropTypes.bool,
-  id: PropTypes.string,
-  name: PropTypes.string,
-  onClick: PropTypes.func
 };
 
 export default FilterCategory;

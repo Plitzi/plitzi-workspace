@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
@@ -25,6 +24,15 @@ import BuilderContextSubMenu from './BuilderContextSubMenu';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
+/**
+ * @param {{
+ *   width?: number;
+ *   iframeDOM?: object;
+ *   zoom?: number;
+ *   getWindow?: () => object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderContextMenu = props => {
   const { width = 250, iframeDOM, zoom = 1, getWindow = noop } = props;
   const { showModal } = useModal();
@@ -302,13 +310,6 @@ const BuilderContextMenu = props => {
       </div>
     </Card>
   );
-};
-
-BuilderContextMenu.propTypes = {
-  width: PropTypes.number,
-  iframeDOM: PropTypes.object,
-  zoom: PropTypes.number,
-  getWindow: PropTypes.func
 };
 
 export default memo(BuilderContextMenu);

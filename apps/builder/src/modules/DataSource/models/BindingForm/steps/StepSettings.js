@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
 import classNames from 'classnames';
@@ -11,6 +10,19 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 const fieldsDefault = [];
 const attributesDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   fields?: object[];
+ *   attributes?: object[];
+ *   toPath?: string;
+ *   fromPath?: string;
+ *   allowCustomBindings?: boolean;
+ *   onBack?: () => void;
+ *   onNext?: (values: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StepSettings = props => {
   const {
     className = '',
@@ -105,17 +117,6 @@ const StepSettings = props => {
       </div>
     </form>
   );
-};
-
-StepSettings.propTypes = {
-  className: PropTypes.string,
-  fields: PropTypes.array,
-  attributes: PropTypes.array,
-  fromPath: PropTypes.string,
-  toPath: PropTypes.string,
-  allowCustomBindings: PropTypes.bool,
-  onNext: PropTypes.func,
-  onBack: PropTypes.func
 };
 
 export default StepSettings;

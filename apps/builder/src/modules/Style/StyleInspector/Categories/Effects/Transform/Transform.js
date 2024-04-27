@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -13,6 +12,13 @@ import InspectorButton from '@pmodules/Style/components/InspectorButton';
 import TransformationItem from './TransformItem';
 import InspectorLabel from '../../../InspectorLabel';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Transform = props => {
   const { onChange = noop } = props;
   let { partialValue } = props;
@@ -72,12 +78,6 @@ const Transform = props => {
       )}
     </>
   );
-};
-
-Transform.propTypes = {
-  className: PropTypes.string,
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default Transform;

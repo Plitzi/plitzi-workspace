@@ -1,10 +1,17 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import ColorPicker from '@plitzi/plitzi-ui-components/ColorPicker';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   value?: string | number;
+ *   onChange?: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const GroupColor = props => {
   const { className = '', value = '', onChange = noop, ...otherProps } = props;
 
@@ -18,12 +25,6 @@ const GroupColor = props => {
       {...otherProps}
     />
   );
-};
-
-GroupColor.propTypes = {
-  className: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onChange: PropTypes.func
 };
 
 export default GroupColor;

@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
 // Relatives
@@ -77,10 +76,6 @@ const WorkflowActions = props => {
       </Button>
     </div>
   );
-};
-
-WorkflowActions.propTypes = {
-  className: PropTypes.string
 };
 
 export default WorkflowActions;

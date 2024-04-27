@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -25,6 +24,24 @@ import useBuilderElement from '../../hooks/useBuilderElement';
 
 const treeNodePadding = 16;
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   level?: number;
+ *   isOpen?: boolean;
+ *   isParent?: boolean;
+ *   elementHovered?: boolean;
+ *   elementSelected?: boolean;
+ *   setOpened?: (id: string, isOpen: boolean) => void;
+ *   setDragMetadata?: (metadata: object) => void;
+ *   getDragMetadata?: () => object;
+ *   resetDragMetadata?: () => void;
+ *   setHovered?: (id: string) => void;
+ *   setSelected?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderTreeNode = props => {
   const {
     className = '',
@@ -362,22 +379,6 @@ const BuilderTreeNode = props => {
       </div>
     </div>
   );
-};
-
-BuilderTreeNode.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  isOpen: PropTypes.bool,
-  isParent: PropTypes.bool,
-  level: PropTypes.number,
-  elementHovered: PropTypes.bool,
-  setHovered: PropTypes.func,
-  elementSelected: PropTypes.bool,
-  setSelected: PropTypes.func,
-  setOpened: PropTypes.func,
-  setDragMetadata: PropTypes.func,
-  resetDragMetadata: PropTypes.func,
-  getDragMetadata: PropTypes.func
 };
 
 export default memo(BuilderTreeNode);

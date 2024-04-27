@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
@@ -25,6 +24,12 @@ import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
 import TransformPreview from './TransformPreview';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Transform = props => {
   const { className = '' } = props;
   const editorRef = useRef();
@@ -234,10 +239,6 @@ const Transform = props => {
       </div>
     </div>
   );
-};
-
-Transform.propTypes = {
-  className: PropTypes.string
 };
 
 export default Transform;

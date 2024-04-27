@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-// import PropTypes from 'prop-types';
 // import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
 
@@ -8,6 +7,10 @@ import Card from '@plitzi/plitzi-ui-components/Card';
 import WorkflowDiagram from '@pcomponents/WorkflowDiagram/WorkflowDiagram';
 // import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
+/**
+ * @param {{}} props
+ * @returns {React.ReactElement}
+ */
 const ContainerSitemap = () => {
   // const { pages, pageDefinitions, pageFolders } = useContext(SchemaMainContext);
 
@@ -17,7 +20,5 @@ const ContainerSitemap = () => {
     </Card>
   );
 };
-
-ContainerSitemap.propTypes = {};
 
 export default ContainerSitemap;

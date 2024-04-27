@@ -1,5 +1,5 @@
+// Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 
 const Grid = props => {
   const { xFrom = 0, xTo = 0, yFrom = 0, yTo = 0 } = props;
@@ -82,13 +82,6 @@ const Grid = props => {
       </text>
     </g>
   );
-};
-
-Grid.propTypes = {
-  xFrom: PropTypes.number,
-  yFrom: PropTypes.number,
-  xTo: PropTypes.number,
-  yTo: PropTypes.number
 };
 
 export default Grid;

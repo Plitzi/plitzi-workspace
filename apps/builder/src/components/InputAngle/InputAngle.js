@@ -1,6 +1,5 @@
 // Packages
 import React, { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import InputMetric from '@plitzi/plitzi-ui-components/InputMetric';
@@ -135,17 +134,6 @@ const InputAngle = props => {
       />
     </div>
   );
-};
-
-InputAngle.propTypes = {
-  className: PropTypes.string,
-  max: PropTypes.number,
-  min: PropTypes.number,
-  step: PropTypes.number,
-  value: PropTypes.number,
-  width: PropTypes.number,
-  height: PropTypes.number,
-  onChange: PropTypes.func
 };
 
 export default InputAngle;

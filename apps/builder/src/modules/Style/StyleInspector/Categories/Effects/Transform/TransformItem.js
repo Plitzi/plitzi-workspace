@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
@@ -10,6 +9,14 @@ import InspectorButton from '@pmodules/Style/components/InspectorButton';
 // Relatives
 import GroupButtons from '../../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   value: string;
+ *   onRemove?: () => void;
+ *   onChange?: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TransformItem = props => {
   const { value = 'translate3d(0px, 0px, 0px)', onRemove = noop, onChange = noop } = props;
   const valueParts = value.match(/[a-x0-9-.%]+/gim);
@@ -148,12 +155,6 @@ const TransformItem = props => {
       </Dropdown.Container>
     </Dropdown>
   );
-};
-
-TransformItem.propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default TransformItem;

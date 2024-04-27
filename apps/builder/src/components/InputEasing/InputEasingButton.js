@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
@@ -19,13 +18,6 @@ const InputEasingButton = props => {
       </svg>
     </button>
   );
-};
-
-InputEasingButton.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  title: PropTypes.string,
-  onClick: PropTypes.func
 };
 
 export default InputEasingButton;

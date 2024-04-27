@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -57,6 +56,13 @@ const dotKeys = [
   BORDER_RADIUS_BOTTOM_RIGHT
 ];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (category: string, collapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Border = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
   const [currentPlacement, setCurrentPlacement] = useState(BORDER_ALL);
@@ -196,11 +202,6 @@ const Border = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-Border.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default memo(Border);

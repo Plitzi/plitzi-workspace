@@ -1,12 +1,23 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+/**
+ * @param {{
+ *   renderType?: string;
+ *   settings?: string;
+ *   assets?: string;
+ *   scriptUrl?: string;
+ *   pluginScope?: string;
+ *   isPlugin?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const {
     renderType = '',
@@ -70,16 +81,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  renderType: PropTypes.string,
-  settings: PropTypes.string,
-  assets: PropTypes.string,
-  scriptUrl: PropTypes.string,
-  pluginScope: PropTypes.string,
-  isPlugin: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

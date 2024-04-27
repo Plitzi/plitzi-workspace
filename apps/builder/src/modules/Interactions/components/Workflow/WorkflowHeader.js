@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -12,6 +11,15 @@ import WorkflowContext from './WorkflowContext';
 
 const flowsDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   flows?: object[];
+ *   flowId?: string;
+ *   setFlowId?: (flowId: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowHeader = props => {
   const { className = '', flows = flowsDefault, flowId = '', setFlowId = noop } = props;
   const { addNode, removeNode } = useContext(WorkflowContext);
@@ -76,13 +84,6 @@ const WorkflowHeader = props => {
       </div>
     </div>
   );
-};
-
-WorkflowHeader.propTypes = {
-  className: PropTypes.string,
-  flows: PropTypes.array,
-  flowId: PropTypes.string,
-  setFlowId: PropTypes.func
 };
 
 export default WorkflowHeader;

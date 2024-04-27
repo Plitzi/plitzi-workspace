@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 
 // Relatives
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
@@ -9,6 +8,12 @@ import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
 import BuilderContext from '../../BuilderContext';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
+/**
+ * @param {{
+ *   limit?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderBreadcrumb = props => {
   const { limit = Infinity } = props;
   const ref = useRef(null);
@@ -122,10 +127,6 @@ const BuilderBreadcrumb = props => {
       )}
     </div>
   );
-};
-
-BuilderBreadcrumb.propTypes = {
-  limit: PropTypes.number
 };
 
 export default BuilderBreadcrumb;

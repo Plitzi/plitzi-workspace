@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -18,6 +17,16 @@ import BindingForm from './models/BindingForm';
 import BindingSelected from './BindingSelected';
 import { generateID } from '../../helpers/utils';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   bindings?: object;
+ *   bindingsAllowed?: object;
+ *   allowCustomBindings?: boolean;
+ *   onChange?: (bindings: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DataSourceBinding = props => {
   const {
     id = '',
@@ -198,14 +207,6 @@ const DataSourceBinding = props => {
       )}
     </ContainerCollapsable>
   ));
-};
-
-DataSourceBinding.propTypes = {
-  id: PropTypes.string,
-  bindings: PropTypes.object,
-  bindingsAllowed: PropTypes.object,
-  allowCustomBindings: PropTypes.bool,
-  onChange: PropTypes.func
 };
 
 export default DataSourceBinding;

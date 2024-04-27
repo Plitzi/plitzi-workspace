@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 
@@ -12,6 +11,21 @@ import OverlayNormal from './OverlayNormal';
 import useBuilderElement from '../../hooks/useBuilderElement';
 import { processContainer } from './BuilderOverlayHelper';
 
+/**
+ * @param {{
+ *   mode?: 'hover' | 'select';
+ *   id?: string;
+ *   hideActions?: boolean;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ *   baseElementId: string;
+ *   iframeDOM: object;
+ *   zoom?: number;
+ *   isCollaborator?: boolean;
+ *   color?: string;
+ *   collaboratorName?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderOverlay = props => {
   const {
     mode = 'hover',
@@ -161,7 +175,7 @@ const BuilderOverlay = props => {
   }, [id, overlayProps?.element, overlayProps?.elementDOM]);
 
   const selector = useMemo(() => {
-    if(mode === 'hover') {
+    if (mode === 'hover') {
       return '';
     }
 
@@ -192,19 +206,6 @@ const BuilderOverlay = props => {
       )}
     </div>
   );
-};
-
-BuilderOverlay.propTypes = {
-  iframeDOM: PropTypes.object,
-  id: PropTypes.string,
-  mode: PropTypes.oneOf(['hover', 'select']),
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
-  hideActions: PropTypes.bool,
-  baseElementId: PropTypes.string,
-  zoom: PropTypes.number,
-  isCollaborator: PropTypes.bool,
-  color: PropTypes.string,
-  collaboratorName: PropTypes.string
 };
 
 export default BuilderOverlay;

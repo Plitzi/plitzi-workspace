@@ -1,6 +1,5 @@
 // Packages
 import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
@@ -46,6 +45,20 @@ import styleTailwind from '!!css-loader!postcss-loader!sass-loader!../../Assets/
 // SDK Style
 import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // eslint-disable-line
 
+/**
+ * @param {{
+ *   className?: string;
+ *   customCss?: string;
+ *   externalStyle?: string;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ *   showHeader?: boolean;
+ *   headerTitle?: string;
+ *   showFooter?: boolean;
+ *   mobilePreview?: boolean;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderArea = props => {
   const {
     className = '',
@@ -337,18 +350,6 @@ const BuilderArea = props => {
       {!multiPagesMode && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
     </div>
   );
-};
-
-BuilderArea.propTypes = {
-  className: PropTypes.string,
-  externalStyle: PropTypes.string,
-  customCss: PropTypes.string,
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
-  mobilePreview: PropTypes.bool,
-  showHeader: PropTypes.bool,
-  headerTitle: PropTypes.string,
-  showFooter: PropTypes.bool,
-  previewMode: PropTypes.bool
 };
 
 export default memo(BuilderArea);

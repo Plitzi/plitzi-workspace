@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 
@@ -13,6 +12,15 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Alias
 import Workflow from './components/Workflow';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   interactions?: object;
+ *   onChange?: (interactions: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Interactions = props => {
   const { className = '', id = '', interactions = emptyObject, onChange = noop } = props;
   const { interactionsManager } = useContext(InteractionsContext);
@@ -61,13 +69,6 @@ const Interactions = props => {
       />
     </div>
   );
-};
-
-Interactions.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  interactions: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default Interactions;

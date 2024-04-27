@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -9,6 +8,13 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
+/**
+ * @param {{
+ *   definition: object;
+ *   onUpdate: (key: string, value: any, debounce?: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ElementDefinitionSettings = props => {
   const { definition = emptyObject, onUpdate = noop } = props;
   const { label, initialState } = definition;
@@ -30,12 +36,6 @@ const ElementDefinitionSettings = props => {
       </Button>
     </div>
   );
-};
-
-ElementDefinitionSettings.propTypes = {
-  type: PropTypes.string,
-  definition: PropTypes.object,
-  onUpdate: PropTypes.func
 };
 
 export default ElementDefinitionSettings;

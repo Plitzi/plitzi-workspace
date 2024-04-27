@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
@@ -40,6 +39,15 @@ import { defaultElementsSettings } from '../../../../SdkComponents';
 
 const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Select2, Switch, QueryBuilder, KVEditor };
 
+/**
+ * @param {{
+ *   id?: string;
+ *   type?: string;
+ *   attributes?: object;
+ *   handleChange?: (attributes: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ElementSettings = props => {
   const { id = '', type = '', attributes = emptyObject, handleChange = noop } = props;
   const { previewMode, displayBorderComponents } = useContext(AppContext);
@@ -160,13 +168,6 @@ const ElementSettings = props => {
       </SchemaContext.Provider>
     </PlitziServiceProvider>
   );
-};
-
-ElementSettings.propTypes = {
-  id: PropTypes.string,
-  type: PropTypes.string,
-  attributes: PropTypes.object,
-  handleChange: PropTypes.func
 };
 
 export default ElementSettings;

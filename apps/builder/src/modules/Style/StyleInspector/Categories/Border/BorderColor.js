@@ -1,12 +1,22 @@
 // Package
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Relatives
 import StyleInspectorContext from '../../StyleInspectorContext';
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   borderTop: string;
+ *   borderBottom: string;
+ *   borderLeft: string;
+ *   borderRight: string;
+ *   currentPlacement: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BorderColor = props => {
   const { borderTop, borderBottom, borderLeft, borderRight, currentPlacement, onChange = noop } = props;
   const { getValue } = useContext(StyleInspectorContext);
@@ -45,15 +55,6 @@ const BorderColor = props => {
       onChange={handleChange}
     />
   );
-};
-
-BorderColor.propTypes = {
-  borderTop: PropTypes.string,
-  borderBottom: PropTypes.string,
-  borderLeft: PropTypes.string,
-  borderRight: PropTypes.string,
-  currentPlacement: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default BorderColor;

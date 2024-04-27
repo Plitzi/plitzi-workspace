@@ -1,9 +1,16 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   selected?: string;
+ *   onSelect?: (item: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const AppSidebar = props => {
   const { className = '', selected = '', onSelect = noop } = props;
 
@@ -131,12 +138,6 @@ const AppSidebar = props => {
       </ul>
     </div>
   );
-};
-
-AppSidebar.propTypes = {
-  className: PropTypes.string,
-  selected: PropTypes.string,
-  onSelect: PropTypes.func
 };
 
 export default AppSidebar;

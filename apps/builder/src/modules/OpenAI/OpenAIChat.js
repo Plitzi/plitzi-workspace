@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -19,6 +18,12 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview'
 import useMediaRecorder from './hooks/useMediaRecorder';
 import VoiceVisualizer from './components/VoiceVisualizer';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const OpenAIChat = props => {
   const { className = '' } = props;
   const { server, webKey } = useContext(NetworkContext);
@@ -224,10 +229,6 @@ const OpenAIChat = props => {
       </div>
     </div>
   );
-};
-
-OpenAIChat.propTypes = {
-  className: PropTypes.string
 };
 
 export default OpenAIChat;

@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
@@ -8,6 +7,16 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   environment?: string;
+ *   description?: string;
+ *   onClose?: () => void;
+ *   onSubmit?: (values: { environment: string; description: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PublishForm = props => {
   const { className = '', environment = 'development', description = '', onClose = noop, onSubmit = noop } = props;
 
@@ -73,15 +82,6 @@ const PublishForm = props => {
       </div>
     </form>
   );
-};
-
-PublishForm.propTypes = {
-  children: PropTypes.node,
-  className: PropTypes.string,
-  environment: PropTypes.string,
-  description: PropTypes.string,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default PublishForm;

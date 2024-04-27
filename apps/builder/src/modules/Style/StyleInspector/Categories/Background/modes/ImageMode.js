@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 
@@ -19,6 +18,13 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: object;
+ *   onChange?: (value: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ImageMode = props => {
   const { partialValue, onChange = noop } = props;
 
@@ -235,11 +241,6 @@ const ImageMode = props => {
       />
     </>
   );
-};
-
-ImageMode.propTypes = {
-  partialValue: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default ImageMode;

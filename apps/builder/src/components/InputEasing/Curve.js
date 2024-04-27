@@ -1,5 +1,5 @@
+// Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 
 const valueDefault = [];
 
@@ -27,15 +27,6 @@ const Curve = props => {
       d={`M${sx},${sy} C${cx1},${cy1} ${cx2},${cy2} ${ex},${ey}`}
     />
   );
-};
-
-Curve.propTypes = {
-  value: PropTypes.array,
-  progress: PropTypes.number,
-  xFrom: PropTypes.number,
-  yFrom: PropTypes.number,
-  xTo: PropTypes.number,
-  yTo: PropTypes.number
 };
 
 export default Curve;

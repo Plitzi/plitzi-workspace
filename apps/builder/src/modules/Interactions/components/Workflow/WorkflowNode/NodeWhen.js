@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
@@ -10,6 +9,15 @@ import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsa
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   when?: object;
+ *   fields?: object;
+ *   onChange?: (data: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeWhen = props => {
   const { className = '', when, fields = emptyObject, onChange = noop } = props;
 
@@ -42,15 +50,6 @@ const NodeWhen = props => {
       </ContainerCollapsable>
     </div>
   );
-};
-
-NodeWhen.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  when: PropTypes.object,
-  fields: PropTypes.object,
-  onChange: PropTypes.func,
-  onClickOpen: PropTypes.func
 };
 
 export default NodeWhen;

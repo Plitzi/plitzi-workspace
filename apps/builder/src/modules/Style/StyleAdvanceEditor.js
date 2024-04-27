@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useState, useContext } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
@@ -15,6 +14,12 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleAdvanceEditor = props => {
   const { className = '' } = props;
   const {
@@ -96,10 +101,6 @@ const StyleAdvanceEditor = props => {
       </div>
     </div>
   );
-};
-
-StyleAdvanceEditor.propTypes = {
-  className: PropTypes.string
 };
 
 export default StyleAdvanceEditor;

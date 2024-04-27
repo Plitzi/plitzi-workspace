@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useContext, useEffect } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 
 // Relatives
 import WorkflowNode from './WorkflowNode/WorkflowNode';
@@ -26,10 +25,6 @@ const WorkflowContainer = props => {
       {nodes && Object.values(nodes).map((node, i) => <WorkflowNode key={i} {...node} onSelect={handleNodeSelected} />)}
     </div>
   );
-};
-
-WorkflowContainer.propTypes = {
-  className: PropTypes.string
 };
 
 export default WorkflowContainer;

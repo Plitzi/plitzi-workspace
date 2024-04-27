@@ -1,7 +1,6 @@
 // Packages
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
@@ -13,6 +12,22 @@ import ResourceUploadStatus from './ResourceUploadStatus';
 import ResourceContent from './ResourceContent';
 import ResourceType from './ResourceType';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   file?: object;
+ *   type?: 'image' | 'video' | 'document' | 'plugin';
+ *   title?: string;
+ *   src?: string;
+ *   metadata?: object;
+ *   mutate?: (data: any) => void;
+ *   onUploaded?: (resource: any) => void;
+ *   onUploadCancel?: (file: File) => void;
+ *   onError?: (e: Error) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TemporalResource = props => {
   const {
     id = '',
@@ -150,21 +165,6 @@ const TemporalResource = props => {
       )}
     </div>
   );
-};
-
-TemporalResource.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  file: PropTypes.object,
-  type: PropTypes.oneOf(['image', 'video', 'document', 'plugin']),
-  title: PropTypes.string,
-  src: PropTypes.string,
-  metadata: PropTypes.object,
-  mutate: PropTypes.func,
-  onUploaded: PropTypes.func,
-  onUploadCancel: PropTypes.func,
-  onRemove: PropTypes.func,
-  onError: PropTypes.func
 };
 
 export default TemporalResource;

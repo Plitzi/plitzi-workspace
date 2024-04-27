@@ -12,6 +12,10 @@ import SegmentsContext from './SegmentsContext';
 import Segment from './Segment';
 import SegmentForm from './Models/SegmentForm';
 
+/**
+ * @param {{}} props
+ * @returns {React.ReactElement}
+ */
 const Segments = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ name: { contains: '' } });
@@ -137,7 +141,5 @@ const Segments = () => {
     </div>
   );
 };
-
-Segments.propTypes = {};
 
 export default Segments;

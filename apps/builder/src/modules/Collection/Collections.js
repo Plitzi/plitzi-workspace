@@ -1,6 +1,5 @@
 // Packages
 import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -10,6 +9,13 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Relatives
 import CollectionContext from './CollectionContext';
 
+/**
+ * @param {{
+ *   collectionId?: string;
+ *   onSourceChange?: (collectionId?: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Collections = props => {
   const { collectionId, onSourceChange = noop } = props;
   const { showModal } = useModal();
@@ -83,11 +89,6 @@ const Collections = props => {
       </div>
     </div>
   );
-};
-
-Collections.propTypes = {
-  collectionId: PropTypes.string,
-  onSourceChange: PropTypes.func
 };
 
 export default Collections;

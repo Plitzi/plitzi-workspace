@@ -2,7 +2,6 @@
 import React, { useCallback, useContext } from 'react';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
-import PropTypes from 'prop-types';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -11,6 +10,12 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
+/**
+ * @param {{
+ *   setTabSelected?: (tab: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageHeader = props => {
   const { setTabSelected = noop } = props;
   const { pageDefinitions } = useContext(SchemaMainContext);
@@ -35,10 +40,6 @@ const PageHeader = props => {
       <div className="truncate max-w-[150px]">{domain || 'https://subdomain.plitzi.app'}</div>
     </div>
   );
-};
-
-PageHeader.propTypes = {
-  setTabSelected: PropTypes.func
 };
 
 export default PageHeader;

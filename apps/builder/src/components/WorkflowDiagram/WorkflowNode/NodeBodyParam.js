@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import upperFirst from 'lodash/upperFirst';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -9,6 +8,17 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 const optionsDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   value?: string;
+ *   type?: 'text' | 'select';
+ *   options?: any[];
+ *   onChange?: (id: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeBodyParam = props => {
   const { className = '', id = '', value = '', type = 'text', options = optionsDefault, onChange = noop } = props;
 
@@ -41,15 +51,6 @@ const NodeBodyParam = props => {
       )}
     </div>
   );
-};
-
-NodeBodyParam.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  value: PropTypes.string,
-  type: PropTypes.oneOf(['text', 'select']),
-  options: PropTypes.array,
-  onChange: PropTypes.func
 };
 
 export default NodeBodyParam;

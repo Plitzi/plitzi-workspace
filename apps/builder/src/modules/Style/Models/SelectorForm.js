@@ -1,12 +1,19 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   onClose?: () => void;
+ *   onSubmit?: (values: { name: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SelectorForm = props => {
   const { className = '', onClose = noop, onSubmit = noop } = props;
 
@@ -59,12 +66,6 @@ const SelectorForm = props => {
       </div>
     </form>
   );
-};
-
-SelectorForm.propTypes = {
-  className: PropTypes.string,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default SelectorForm;

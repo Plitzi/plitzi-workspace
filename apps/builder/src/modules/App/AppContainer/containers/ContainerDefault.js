@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import PopupSidebar from '@plitzi/plitzi-ui-components/Popup/PopupSidebar';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
@@ -17,6 +16,14 @@ import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
+
+/**
+ * @param {{
+ *   previewMode?: boolean;
+ *   externalStyle?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 
 const ContainerDefault = props => {
   const { previewMode = false, externalStyle = '' } = props;
@@ -76,11 +83,6 @@ const ContainerDefault = props => {
       </BuilderProvider>
     </div>
   );
-};
-
-ContainerDefault.propTypes = {
-  previewMode: PropTypes.bool,
-  externalStyle: PropTypes.string
 };
 
 export default ContainerDefault;

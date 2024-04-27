@@ -1,6 +1,5 @@
 // Packages
 import React, { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Monorepo
@@ -17,6 +16,22 @@ import AppContext from './AppContext';
 import AppProvider from './AppProvider';
 import AppContainer from './AppContainer';
 
+/**
+ * @param {{
+ *   webKey?: string;
+ *   webId?: number;
+ *   userKey?: string;
+ *   instanceId?: string;
+ *   server?: object;
+ *   environment?: string;
+ *   includeSubscriptions?: boolean;
+ *   includeRealTime?: boolean;
+ *   externalStyle?: string;
+ *   state?: object;
+ *   children?: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const AppMain = props => {
   const {
     webKey = '',
@@ -93,20 +108,6 @@ const AppMain = props => {
   );
 
   return <AppContext.Provider value={appValueMemo}>{childrenMemo}</AppContext.Provider>;
-};
-
-AppMain.propTypes = {
-  children: PropTypes.node,
-  instanceId: PropTypes.string,
-  webKey: PropTypes.string,
-  webId: PropTypes.number,
-  environment: PropTypes.string,
-  userKey: PropTypes.string,
-  server: PropTypes.object,
-  includeSubscriptions: PropTypes.bool,
-  includeRealTime: PropTypes.bool,
-  externalStyle: PropTypes.string,
-  state: PropTypes.object
 };
 
 export default AppMain;

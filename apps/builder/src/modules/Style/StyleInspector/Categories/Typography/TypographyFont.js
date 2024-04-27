@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,14 @@ import GroupButtons from '../../../components/GroupButtons';
 
 const fontsDefault = [];
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   fonts?: { name: string }[];
+ *   onChange?: (value: { type: string; value: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TypographyFont = props => {
   const { partialValue, onChange = noop } = props;
   let { fonts = fontsDefault } = props;
@@ -47,12 +54,6 @@ const TypographyFont = props => {
       onChange={handleChange}
     />
   );
-};
-
-TypographyFont.propTypes = {
-  partialValue: PropTypes.string,
-  fonts: PropTypes.array,
-  onChange: PropTypes.func
 };
 
 export default TypographyFont;

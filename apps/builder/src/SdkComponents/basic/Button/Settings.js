@@ -1,11 +1,20 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 
+/**
+ * @param {{
+ *   content?: string;
+ *   contentPlacement?: 'before' | 'after' | 'elements';
+ *   subType?: 'button' | 'reset' | 'submit';
+ *   disabled?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const {
     content = 'Button',
@@ -58,14 +67,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  content: PropTypes.string,
-  contentPlacement: PropTypes.oneOf(['before', 'after', 'elements']),
-  subType: PropTypes.oneOf(['button', 'reset', 'submit']),
-  disabled: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

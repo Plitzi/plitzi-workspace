@@ -1,7 +1,6 @@
 // Packages
 import React, { useState, useContext, useCallback } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
@@ -22,6 +21,18 @@ import ResourceContent from './ResourceManager/ResourceContent';
 import ResourceType from './ResourceManager/ResourceType';
 import ResourceUploadStatus from './ResourceManager/ResourceUploadStatus';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   type?: 'image' | 'video' | 'document' | 'plugin';
+ *   src?: string;
+ *   title?: string;
+ *   metadata?: object;
+ *   onRemove?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Resource = props => {
   const {
     className = '',
@@ -165,20 +176,6 @@ const Resource = props => {
       {removing && <ResourceUploadStatus processing={removing} />}
     </div>
   );
-};
-
-Resource.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  file: PropTypes.object,
-  type: PropTypes.oneOf(['image', 'video', 'document', 'plugin']),
-  title: PropTypes.string,
-  src: PropTypes.string,
-  metadata: PropTypes.object,
-  onUploaded: PropTypes.func,
-  onUploadCancel: PropTypes.func,
-  onRemove: PropTypes.func,
-  onError: PropTypes.func
 };
 
 export default Resource;

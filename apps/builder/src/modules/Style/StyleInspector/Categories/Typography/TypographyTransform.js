@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,14 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   transform: string;
+ *   direction: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TypographyTransform = props => {
   const { transform, direction, onChange = noop } = props;
 
@@ -85,12 +92,6 @@ const TypographyTransform = props => {
       />
     </>
   );
-};
-
-TypographyTransform.propTypes = {
-  transform: PropTypes.string,
-  direction: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default TypographyTransform;

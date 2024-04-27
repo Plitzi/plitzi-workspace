@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useContext, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
 
@@ -9,6 +8,13 @@ import CollectionForm from '@pmodules/Collection/Models/CollectionForm';
 import Collection from '@pmodules/Collection/Collection';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 
+/**
+ * @param {{
+ *   collectionId?: string;
+ *   onSourceChange?: (sourceId: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ContainerCollections = props => {
   const { collectionId, onSourceChange = noop } = props;
   const [updateMode, setUpdateMode] = useState(!collectionId);
@@ -44,11 +50,6 @@ const ContainerCollections = props => {
       )}
     </Card>
   );
-};
-
-ContainerCollections.propTypes = {
-  collectionId: PropTypes.string,
-  onSourceChange: PropTypes.func
 };
 
 export default ContainerCollections;

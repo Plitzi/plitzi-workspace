@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import noop from 'lodash/noop';
@@ -9,6 +8,13 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 // Relatives
 import MarketSidebarItem from './MarketSidebarItem';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   onSelect?: (option: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const MarketSidebar = props => {
   const { className = '', onSelect = noop } = props;
   const [selected, setSelected] = useState('news');
@@ -48,11 +54,6 @@ const MarketSidebar = props => {
       </Button>
     </div>
   );
-};
-
-MarketSidebar.propTypes = {
-  className: PropTypes.string,
-  onSelect: PropTypes.func
 };
 
 export default MarketSidebar;
