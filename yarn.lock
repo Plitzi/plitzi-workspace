@@ -36,7 +36,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.10.1":
+"@apollo/client@npm:^3.10.1, @apollo/client@npm:^3.9.11":
   version: 3.10.1
   resolution: "@apollo/client@npm:3.10.1"
   dependencies:
@@ -3088,7 +3088,35 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-sdk@npm:*, @plitzi/plitzi-sdk@workspace:apps/sdk":
+"@plitzi/plitzi-sdk@npm:*":
+  version: 0.21.1
+  resolution: "@plitzi/plitzi-sdk@npm:0.21.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-sdk%2F0.21.1%2F5271f2b0c2e1f58c411440e66deedca018421427"
+  dependencies:
+    "@apollo/client": "npm:^3.9.11"
+    "@auth0/auth0-react": "npm:^2.2.4"
+    "@plitzi/sdk-auth": "npm:*"
+    "@plitzi/sdk-event-bridge": "npm:*"
+    "@plitzi/sdk-interactions": "npm:*"
+    "@plitzi/sdk-navigation": "npm:*"
+    "@plitzi/sdk-plugins": "npm:*"
+    "@plitzi/sdk-shared": "npm:*"
+    classnames: "npm:^2.5.1"
+    dompurify: "npm:^3.1.0"
+    graphql: "npm:^16.8.1"
+    handlebars: "npm:^4.7.8"
+    immer: "npm:^10.0.4"
+    lodash: "npm:^4.17.21"
+    moment: "npm:^2.30.1"
+    react: "npm:^18.2.0"
+    react-dom: "npm:^18.2.0"
+    react-helmet-async: "npm:^2.0.4"
+    react-router-dom: "npm:^6.22.3"
+    twig: "npm:^1.17.1"
+  checksum: 10c0/558931862961c42f7caf8be63612b493268d7a26994862bad617dea5d15a0443270956669ac8d02f84f20dab9ced368e161a11620614310c42f0108b924f6307
+  languageName: node
+  linkType: hard
+
+"@plitzi/plitzi-sdk@workspace:apps/sdk":
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-sdk@workspace:apps/sdk"
   dependencies:
@@ -3215,7 +3243,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-auth@npm:*, @plitzi/sdk-auth@workspace:packages/sdk-auth":
+"@plitzi/sdk-auth@npm:*":
+  version: 0.21.1
+  resolution: "@plitzi/sdk-auth@npm:0.21.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fsdk-auth%2F0.21.1%2Fc0573b1b54ed6003d687b7dd0fa96b78e12bd918"
+  dependencies:
+    lodash: "npm:^4.17.21"
+    moment: "npm:^2.30.1"
+    prop-types: "npm:^15.8.1"
+  checksum: 10c0/6598aadff28f3c7b741fdad788eac08eb11d2596045ee8df461e987c4325df1292f438babb8cbc0c24f139eb979fb1ccaa5614a8e9da0a8f79eda447358fe52a
+  languageName: node
+  linkType: hard
+
+"@plitzi/sdk-auth@workspace:packages/sdk-auth":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
@@ -3240,7 +3279,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-event-bridge@npm:*, @plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge":
+"@plitzi/sdk-event-bridge@npm:*":
+  version: 0.21.1
+  resolution: "@plitzi/sdk-event-bridge@npm:0.21.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fsdk-event-bridge%2F0.21.1%2Fc0758480f17f9617765f49edd9b8e4b1d8c2c52f"
+  dependencies:
+    "@plitzi/sdk-shared": "npm:*"
+    lodash: "npm:^4.17.21"
+    prop-types: "npm:^15.8.1"
+  checksum: 10c0/d7e33db9a6bc05d1de7ff99c736963ed25ec8cf2e39b1974df5478809ea597a20514303f889e1baf2b14f2bff0fb2092f030dfc8aba936818dfad7d70533dce0
+  languageName: node
+  linkType: hard
+
+"@plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge"
   dependencies:
@@ -3251,7 +3301,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-interactions@npm:*, @plitzi/sdk-interactions@workspace:packages/sdk-interactions":
+"@plitzi/sdk-interactions@npm:*":
+  version: 0.21.1
+  resolution: "@plitzi/sdk-interactions@npm:0.21.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fsdk-interactions%2F0.21.1%2F94a554ce0ab964cb2a977d73ab3585108e5de46f"
+  dependencies:
+    "@plitzi/sdk-shared": "npm:*"
+    lodash: "npm:^4.17.21"
+  checksum: 10c0/2a024f6ccc999983adaaebdd6c3543468cada2b145cdd6a3e1874c1b4bffbea2932ec80b41caf028edf689ab43a71f0bc4e62a9fa036a33141bf5d7aa67e5330
+  languageName: node
+  linkType: hard
+
+"@plitzi/sdk-interactions@workspace:packages/sdk-interactions":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
@@ -3261,7 +3321,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-navigation@npm:*, @plitzi/sdk-navigation@workspace:packages/sdk-navigation":
+"@plitzi/sdk-navigation@npm:*":
+  version: 0.21.1
+  resolution: "@plitzi/sdk-navigation@npm:0.21.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fsdk-navigation%2F0.21.1%2Fc26cf4a304b1987daa4eeb42af55fa6821614232"
+  dependencies:
+    lodash: "npm:^4.17.21"
+    react-router-dom: "npm:^6.22.3"
+  checksum: 10c0/f4ef28e65193448ba0d5ddca05871c0d0494c8fc418d2ac65b1f2f1de745ea381cf495968fb527af078758d43b56871c4a9e304c599420b681a79174c2f98795
+  languageName: node
+  linkType: hard
+
+"@plitzi/sdk-navigation@workspace:packages/sdk-navigation":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-navigation@workspace:packages/sdk-navigation"
   dependencies:
@@ -3271,7 +3341,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-plugins@npm:*, @plitzi/sdk-plugins@workspace:packages/sdk-plugins":
+"@plitzi/sdk-plugins@npm:*":
+  version: 0.21.1
+  resolution: "@plitzi/sdk-plugins@npm:0.21.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fsdk-plugins%2F0.21.1%2F614d3f55048c86866bb735f72f9a89910ffd4cc7"
+  dependencies:
+    "@plitzi/sdk-shared": "npm:*"
+    lodash: "npm:^4.17.21"
+    prop-types: "npm:^15.8.1"
+  checksum: 10c0/7638da42b00c65009a05668495092815fe51ecbf68b2d22ea380caac6560eaccbad39a46500f49beef26019c751c2df4b6e453744133eed3ee3f58740be1e022
+  languageName: node
+  linkType: hard
+
+"@plitzi/sdk-plugins@workspace:packages/sdk-plugins":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-plugins@workspace:packages/sdk-plugins"
   dependencies:
@@ -3294,7 +3375,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-shared@npm:*, @plitzi/sdk-shared@workspace:packages/sdk-shared":
+"@plitzi/sdk-shared@npm:*":
+  version: 0.21.1
+  resolution: "@plitzi/sdk-shared@npm:0.21.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fsdk-shared%2F0.21.1%2F9f711648d3779498af16a926b9bd2d62997a9c64"
+  dependencies:
+    twig: "npm:^1.17.1"
+  checksum: 10c0/c12d6183bd0336860a8db42dcba5f7de0095cff9cdf33181d4c3cd32bc136cfde02d328d4df81eaa9bda04399a77134dc483bc7b43611601c4330ff3179884fe
+  languageName: node
+  linkType: hard
+
+"@plitzi/sdk-shared@workspace:packages/sdk-shared":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-shared@workspace:packages/sdk-shared"
   dependencies:
@@ -8115,7 +8205,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.1.1":
+"dompurify@npm:^3.1.0, dompurify@npm:^3.1.1":
   version: 3.1.1
   resolution: "dompurify@npm:3.1.1"
   checksum: 10c0/8112510b74440cec233a98da07f77464b16ee03e0c9fccfe0d65db9e6b6a8e71130da4618578abd1bf311cab41925c5e6ed5a49409c940b1d594dcf3efd36cf9
@@ -10824,7 +10914,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:^10.1.1":
+"immer@npm:^10.0.4, immer@npm:^10.1.1":
   version: 10.1.1
   resolution: "immer@npm:10.1.1"
   checksum: 10c0/b749e10d137ccae91788f41bd57e9387f32ea6d6ea8fd7eb47b23fd7766681575efc7f86ceef7fe24c3bc9d61e38ff5d2f49c2663b2b0c056e280a4510923653
@@ -15259,6 +15349,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-dom@npm:^18.2.0":
+  version: 18.3.1
+  resolution: "react-dom@npm:18.3.1"
+  dependencies:
+    loose-envify: "npm:^1.1.0"
+    scheduler: "npm:^0.23.2"
+  peerDependencies:
+    react: ^18.3.1
+  checksum: 10c0/a752496c1941f958f2e8ac56239172296fcddce1365ce45222d04a1947e0cc5547df3e8447f855a81d6d39f008d7c32eab43db3712077f09e3f67c4874973e85
+  languageName: node
+  linkType: hard
+
 "react-element-to-jsx-string@npm:^15.0.0":
   version: 15.0.0
   resolution: "react-element-to-jsx-string@npm:15.0.0"
@@ -15367,7 +15469,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^6.23.0":
+"react-router-dom@npm:^6.22.3, react-router-dom@npm:^6.23.0":
   version: 6.23.0
   resolution: "react-router-dom@npm:6.23.0"
   dependencies:
@@ -15441,6 +15543,15 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.1.0"
   checksum: 10c0/b562d9b569b0cb315e44b48099f7712283d93df36b19a39a67c254c6686479d3980b7f013dc931f4a5a3ae7645eae6386b4aa5eea933baa54ecd0f9acb0902b8
+  languageName: node
+  linkType: hard
+
+"react@npm:^18.2.0":
+  version: 18.3.1
+  resolution: "react@npm:18.3.1"
+  dependencies:
+    loose-envify: "npm:^1.1.0"
+  checksum: 10c0/283e8c5efcf37802c9d1ce767f302dd569dd97a70d9bb8c7be79a789b9902451e0d16334b05d73299b20f048cbc3c7d288bbbde10b701fa194e2089c237dbea3
   languageName: node
   linkType: hard
 
