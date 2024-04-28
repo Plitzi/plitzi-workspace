@@ -1,9 +1,20 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   label?: string;
+ *   isActive?: boolean;
+ *   children?: React.ReactNode;
+ *   className?: string;
+ *   onMouseEnter?: (id: string) => void;
+ *   onClick?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderBreadcrumbItem = props => {
   const { id, label = '', isActive = false, children, className = '', onMouseEnter = noop, onClick = noop } = props;
 
@@ -29,16 +40,6 @@ const BuilderBreadcrumbItem = props => {
       {!label && children}
     </div>
   );
-};
-
-BuilderBreadcrumbItem.propTypes = {
-  id: PropTypes.string,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  label: PropTypes.string,
-  isActive: PropTypes.bool,
-  onMouseEnter: PropTypes.func,
-  onClick: PropTypes.func
 };
 
 export default BuilderBreadcrumbItem;

@@ -1,16 +1,21 @@
 // Packages
-import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NavigationSource = props => {
   const { children } = props;
-  const { useDataSource } = useContext(DataSourceContext);
-  const { routeParams, queryParams } = useContext(NavigationContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { routeParams, queryParams } = use(NavigationContext);
 
   const sourceFields = useCallback(
     async () => [
@@ -31,10 +36,6 @@ const NavigationSource = props => {
   });
 
   return children;
-};
-
-NavigationSource.propTypes = {
-  children: PropTypes.node
 };
 
 export default NavigationSource;

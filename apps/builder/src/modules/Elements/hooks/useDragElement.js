@@ -1,5 +1,5 @@
 // Packages
-import { useCallback, useContext } from 'react';
+import { useCallback, use } from 'react';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 import set from 'lodash/set';
 import sneakCase from 'lodash/snakeCase';
@@ -15,8 +15,8 @@ import { generateID } from '../../../helpers/utils';
 
 const useDragElement = (props = {}) => {
   const { attributes, type } = props;
-  const { componentDefinitions } = useContext(ComponentContext);
-  const { eventBridge } = useContext(EventBridgeContext);
+  const { componentDefinitions } = use(ComponentContext);
+  const { eventBridge } = use(EventBridgeContext);
 
   const onDragStart = useCallback(
     e => {

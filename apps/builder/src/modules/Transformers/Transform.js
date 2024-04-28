@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
@@ -25,17 +24,23 @@ import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
 import TransformPreview from './TransformPreview';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Transform = props => {
   const { className = '' } = props;
   const editorRef = useRef();
-  const { server, webKey } = useContext(NetworkContext);
+  const { server, webKey } = use(NetworkContext);
   const { addToast } = useToast();
   const {
     builderHandler,
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
-  const { elementSelected } = useContext(BuilderSelectedContext);
-  const { rootDOM } = useContext(ContainerRootContext);
+  } = use(BuilderContext);
+  const { elementSelected } = use(BuilderSelectedContext);
+  const { rootDOM } = use(ContainerRootContext);
   const [mode, setMode] = useState('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);
   const [layoutMode, setLayoutMode] = useState('horizontal');
@@ -234,10 +239,6 @@ const Transform = props => {
       </div>
     </div>
   );
-};
-
-Transform.propTypes = {
-  className: PropTypes.string
 };
 
 export default Transform;

@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -11,8 +10,16 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const NotFound = forwardRef((props, ref) => {
-  const { className = '', internalProps = emptyObject } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const NotFound = props => {
+  const { ref, className = '', internalProps = emptyObject } = props;
   const label = get(internalProps, 'definition.label');
 
   return (
@@ -31,11 +38,6 @@ const NotFound = forwardRef((props, ref) => {
       </span>
     </RootElement>
   );
-});
-
-NotFound.propTypes = {
-  internalProps: PropTypes.object,
-  className: PropTypes.string
 };
 
 export default withElement(NotFound);

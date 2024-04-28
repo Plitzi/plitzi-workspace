@@ -1,7 +1,6 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -14,6 +13,21 @@ import WorkflowContext from '../WorkflowContext';
 import NodeConnectorSpot from './NodeConnectorSpot';
 import NodeHeader from './NodeHeader';
 import NodeBody from './NodeBody';
+
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   type?: 'trigger' | 'callback' | 'connector';
+ *   action?: string;
+ *   elementId?: string;
+ *   position?: object;
+ *   connectors?: object;
+ *   params?: object;
+ *   onSelect?: (arg0: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 
 const WorkflowNode = props => {
   const {
@@ -38,7 +52,7 @@ const WorkflowNode = props => {
     updateNode,
     performLayout,
     nodeDefinitions
-  } = useContext(WorkflowContext);
+  } = use(WorkflowContext);
   const ref = useRef();
 
   const handlePositionChanged = useCallback((x, y) => updateNodePosition(id, x, y), [id, updateNodePosition]);
@@ -150,18 +164,6 @@ const WorkflowNode = props => {
       {type === 'connector' && <NodeConnector id={id} {...otherProps} offsetX={1} offsetY={1} />}
     </>
   );
-};
-
-WorkflowNode.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  type: PropTypes.oneOf(['trigger', 'callback', 'connector']),
-  action: PropTypes.string,
-  elementId: PropTypes.string,
-  position: PropTypes.object,
-  connectors: PropTypes.object,
-  params: PropTypes.object,
-  onSelect: PropTypes.func
 };
 
 export default WorkflowNode;

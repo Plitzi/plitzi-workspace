@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -13,8 +12,20 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const FontAwesome = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   icon: string;
+ *   size: string;
+ *   iconAnimation: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const FontAwesome = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     icon = 'fas fa-flag',
@@ -45,14 +56,6 @@ const FontAwesome = forwardRef((props, ref) => {
       className={classNames('plitzi-component__fontawesome', className, icon, size, iconAnimation)}
     />
   );
-});
-
-FontAwesome.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  icon: PropTypes.string,
-  size: PropTypes.string,
-  iconAnimation: PropTypes.string
 };
 
 export default withElement(FontAwesome);

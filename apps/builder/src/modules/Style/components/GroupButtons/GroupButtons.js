@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -15,6 +14,18 @@ import GroupColor from './types/GroupColor';
 const keyValueDefault = [];
 const itemsDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   classNameContainer?: string;
+ *   label?: string;
+ *   keyValue?: string | string[];
+ *   items?: any[];
+ *   fullWidth?: boolean;
+ *   onChange?: (value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const GroupButtons = props => {
   const {
     className = '',
@@ -129,16 +140,6 @@ const GroupButtons = props => {
       )}
     </div>
   );
-};
-
-GroupButtons.propTypes = {
-  className: PropTypes.string,
-  classNameContainer: PropTypes.string,
-  label: PropTypes.string,
-  keyValue: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
-  items: PropTypes.array,
-  fullWidth: PropTypes.bool,
-  onChange: PropTypes.func
 };
 
 export default GroupButtons;

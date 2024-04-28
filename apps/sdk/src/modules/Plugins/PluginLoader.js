@@ -1,10 +1,21 @@
 // Packages
 import React, { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import set from 'lodash/set';
 
+/**
+ * @param {{
+ *   type?: 'script' | 'link';
+ *   pluginType?: string;
+ *   url?: string;
+ *   entryPoint?: string;
+ *   onLoad?: (component: any, pluginType: string, type: string) => void;
+ *   onError?: (pluginType: string) => void;
+ *   onUnload?: (pluginType: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginLoader = props => {
   const {
     type = 'script',
@@ -98,16 +109,6 @@ const PluginLoader = props => {
   }, []);
 
   return null;
-};
-
-PluginLoader.propTypes = {
-  type: PropTypes.oneOf(['script', 'link']),
-  pluginType: PropTypes.string,
-  url: PropTypes.string,
-  entryPoint: PropTypes.string,
-  onLoad: PropTypes.func,
-  onError: PropTypes.func,
-  onUnload: PropTypes.func
 };
 
 export default React.memo(PluginLoader);

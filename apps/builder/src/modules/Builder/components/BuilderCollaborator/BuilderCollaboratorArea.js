@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useContext, useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, use, useEffect, useRef, useState } from 'react';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -10,6 +9,19 @@ import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import BuilderCollaboratorCursor from './BuilderCollaboratorCursor';
 import BuilderOverlay from '../BuilderOverlay';
 
+/**
+ * @param {{
+ *   baseElementId?: string;
+ *   instanceId?: string;
+ *   color?: string;
+ *   title?: string;
+ *   iframeDOM: object;
+ *   scale?: number;
+ *   zoom?: number;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderCollaboratorArea = props => {
   const {
     baseElementId = '',
@@ -25,7 +37,7 @@ const BuilderCollaboratorArea = props => {
   const [elementHovered, setElementHovered] = useState(null);
   const refCursor = useRef(null);
   const { supportRealTime, subscriptionsRegisterCallback, subscriptionsUnregisterCallback } =
-    useContext(BuilderSubscriptionsContext);
+    use(BuilderSubscriptionsContext);
 
   const realtimeCallbackMouse = payload => {
     const { action, x, y } = payload;
@@ -126,17 +138,6 @@ const BuilderCollaboratorArea = props => {
       <BuilderCollaboratorCursor ref={refCursor} color={color} title={title} scale={scale} />
     </div>
   );
-};
-
-BuilderCollaboratorArea.propTypes = {
-  iframeDOM: PropTypes.object,
-  zoom: PropTypes.number,
-  scale: PropTypes.number,
-  title: PropTypes.string,
-  color: PropTypes.string,
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
-  instanceId: PropTypes.string,
-  baseElementId: PropTypes.string
 };
 
 export default memo(BuilderCollaboratorArea);

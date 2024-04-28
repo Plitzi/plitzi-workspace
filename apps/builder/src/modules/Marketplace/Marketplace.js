@@ -7,6 +7,7 @@ import MarketPlugins from './components/MarketPlugins';
 import MarketTemplates from './components/MarketTemplates/MarketTemplates';
 import MarketNews from './components/MarketNews/MarketNews';
 
+/** @returns {React.ReactElement} */
 const Marketplace = () => {
   const [selected, setSelected] = useState('news');
 
@@ -34,7 +35,5 @@ const Marketplace = () => {
     </div>
   );
 };
-
-Marketplace.propTypes = {};
 
 export default Marketplace;

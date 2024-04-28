@@ -1,14 +1,23 @@
 // Packages
-import { useContext, useLayoutEffect } from 'react';
-import PropTypes from 'prop-types';
+import { use, useLayoutEffect } from 'react';
 import noop from 'lodash/noop';
 
 // Relatives
 import InteractionsContext from '../InteractionsContext';
 
+/**
+ * @param {{
+ *   id: string;
+ *   interactions?: object;
+ *   triggers?: object;
+ *   callbacks?: object;
+ *   getAdditionalParams?: (params: object) => object;
+ * }} props
+ * @returns {void}
+ */
 const useInteractions = props => {
   const { id, interactions = {}, triggers = {}, callbacks = {}, getAdditionalParams = noop } = props;
-  const { interactionsManager } = useContext(InteractionsContext);
+  const { interactionsManager } = use(InteractionsContext);
   if (typeof window !== 'undefined') {
     useLayoutEffect(() => {
       interactionsManager.subscribe(id, interactions, triggers, callbacks, getAdditionalParams);
@@ -18,14 +27,6 @@ const useInteractions = props => {
       };
     }, [id, interactions, triggers, callbacks, getAdditionalParams, interactionsManager]);
   }
-};
-
-useInteractions.propTypes = {
-  id: PropTypes.string.isRequired,
-  interactions: PropTypes.object,
-  triggers: PropTypes.object,
-  callbacks: PropTypes.object,
-  getAdditionalParams: PropTypes.func
 };
 
 export default useInteractions;

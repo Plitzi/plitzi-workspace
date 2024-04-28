@@ -1,11 +1,24 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 
+/**
+ * @param {{
+ *   popupPlacement?: 'top' | 'bottom' | 'left' | 'right';
+ *   openPopup?: boolean;
+ *   backgroundDisabled?: boolean;
+ *   closeOnClickBackground?: boolean;
+ *   closeOnClickPopup?: boolean;
+ *   containerTopOffset?: number;
+ *   containerLeftOffset?: number;
+ *   disabled?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const {
     popupPlacement = 'bottom',
@@ -115,18 +128,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  popupPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
-  openPopup: PropTypes.bool,
-  backgroundDisabled: PropTypes.bool,
-  closeOnClickBackground: PropTypes.bool,
-  closeOnClickPopup: PropTypes.bool,
-  containerTopOffset: PropTypes.number,
-  containerLeftOffset: PropTypes.number,
-  disabled: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

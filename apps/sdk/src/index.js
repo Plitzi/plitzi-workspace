@@ -4,7 +4,6 @@ import './helpers/wdyr';
 // Packages
 import React, { useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import PropTypes from 'prop-types';
 
 // Alias
 import ComponentContext from '@modules/Component/ComponentContext';
@@ -86,6 +85,38 @@ if (typeof window !== 'undefined' && window.plitziCache) {
   }
 }
 
+/**
+ * @param {{
+ *   className: string;
+ *   children: React.ReactNode;
+ *   revision: number;
+ *   webKey: string;
+ *   environment: string;
+ *   currentPageId: string;
+ *   sdkEnvironment: string;
+ *   server: {
+ *     graphqlServer: string;
+ *     basePath: string;
+ *     subscriptionServer: string;
+ *     host: string;
+ *     websocketServer: string;
+ *   };
+ *   offlineMode: boolean;
+ *   offlineData: {
+ *     schema: object;
+ *     style: object;
+ *     plugins: object;
+ *     segments: object[];
+ *   };
+ *   offlineDataType: 'json' | 'yaml';
+ *   renderMode: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+ *   debugMode: boolean;
+ *   previewMode: boolean;
+ *   externalStyle: string;
+ *   state: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PlitziSdk = props => {
   const {
     debugMode = false,
@@ -110,35 +141,6 @@ const PlitziSdk = props => {
       {children}
     </App>
   );
-};
-
-PlitziSdk.propTypes = {
-  // App
-  className: PropTypes.string,
-  children: PropTypes.node,
-  // Space
-  revision: PropTypes.number,
-  webKey: PropTypes.string,
-  environment: PropTypes.string,
-  currentPageId: PropTypes.string,
-  // Server
-  sdkEnvironment: PropTypes.string,
-  server: PropTypes.object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-  offlineMode: PropTypes.bool,
-  offlineData: PropTypes.object, // { schema, style, plugins }
-  offlineDataType: PropTypes.oneOf(['json', 'yaml']),
-  // Extra
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_RAW,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ]),
-  debugMode: PropTypes.bool,
-  previewMode: PropTypes.bool,
-  externalStyle: PropTypes.string,
-  state: PropTypes.object
 };
 
 PlitziSdk.Plugin = Sdk.Plugin;

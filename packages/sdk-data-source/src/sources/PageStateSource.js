@@ -1,6 +1,5 @@
 // Packages
-import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
@@ -9,10 +8,18 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 const pagesDefault = [];
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   state: object;
+ *   pages: string[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageStateSource = props => {
   const { children, state = emptyObject, pages = pagesDefault } = props;
-  const { useDataSource } = useContext(DataSourceContext);
-  const { currentPageId } = useContext(NavigationContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { currentPageId } = use(NavigationContext);
 
   const sourceFields = useCallback(async () => {
     if (pages && pages.length > 0) {
@@ -40,12 +47,6 @@ const PageStateSource = props => {
   });
 
   return children;
-};
-
-PageStateSource.propTypes = {
-  children: PropTypes.node,
-  pages: PropTypes.array,
-  state: PropTypes.object
 };
 
 export default PageStateSource;

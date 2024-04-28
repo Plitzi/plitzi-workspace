@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import isEmpty from 'lodash/isEmpty';
 import classNames from 'classnames';
@@ -8,6 +7,15 @@ import classNames from 'classnames';
 // Relatives
 import SelectorTag from './SelectorTag';
 
+/**
+ * @param {{
+ *   onSelect?: (tag: string) => void;
+ *   onCreate?: (tag: string) => void;
+ *   selector?: string;
+ *   selectors?: { name: string; type: string }[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SelectorSuggestions = props => {
   const { onSelect = noop, onCreate = noop, selector = '', selectors = [] } = props;
 
@@ -62,13 +70,6 @@ const SelectorSuggestions = props => {
       </div>
     </div>
   );
-};
-
-SelectorSuggestions.propTypes = {
-  selector: PropTypes.string,
-  selectors: PropTypes.array,
-  onCreate: PropTypes.func,
-  onSelect: PropTypes.func
 };
 
 export default SelectorSuggestions;

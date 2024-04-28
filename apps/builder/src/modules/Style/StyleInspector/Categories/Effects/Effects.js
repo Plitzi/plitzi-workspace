@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -17,9 +16,16 @@ import GroupButtons from '../../../components/GroupButtons';
 
 const dotKeys = [OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (category: string, collapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Effects = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
   const cursor = getValue(CURSOR);
   const opacity = getValue(OPACITY);
 
@@ -114,11 +120,6 @@ const Effects = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-Effects.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default memo(Effects);

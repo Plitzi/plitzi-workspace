@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
@@ -17,6 +16,23 @@ import StepWhen from './steps/StepWhen';
 
 const attributesDefault = [];
 
+/**
+ * @param {{
+ *   category?: string;
+ *   attributes?: object[];
+ *   sources?: object;
+ *   value?: {
+ *     attribute: string;
+ *     source: string;
+ *     fromPath: string;
+ *     toPath: string;
+ *   };
+ *   allowCustomBindings?: boolean;
+ *   className?: string;
+ *   onClose?: (success: boolean, data: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BindingForm = props => {
   const {
     category = '',
@@ -156,21 +172,6 @@ const BindingForm = props => {
   }
 
   return null;
-};
-
-BindingForm.propTypes = {
-  className: PropTypes.string,
-  value: PropTypes.shape({
-    attribute: PropTypes.string,
-    source: PropTypes.string,
-    fromPath: PropTypes.string,
-    toPath: PropTypes.string
-  }),
-  category: PropTypes.string,
-  attributes: PropTypes.array,
-  sources: PropTypes.object,
-  allowCustomBindings: PropTypes.bool,
-  onClose: PropTypes.func
 };
 
 export default BindingForm;

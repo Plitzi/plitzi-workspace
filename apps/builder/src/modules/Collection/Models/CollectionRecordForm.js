@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import { useForm, Controller } from 'react-hook-form';
@@ -15,6 +14,18 @@ import { recordStatus } from '../CollectionsConstants';
 
 const fieldsDefault = [];
 
+/**
+ * @param {{
+ *   id?: string;
+ *   fields?: object[];
+ *   fieldHovered?: number;
+ *   previewMode?: boolean;
+ *   values?: object;
+ *   onClose?: () => void;
+ *   onSubmit?: (values: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionRecordForm = props => {
   const {
     id = '',
@@ -83,16 +94,6 @@ const CollectionRecordForm = props => {
       )}
     </form>
   );
-};
-
-CollectionRecordForm.propTypes = {
-  id: PropTypes.string,
-  previewMode: PropTypes.bool,
-  fieldHovered: PropTypes.number,
-  fields: PropTypes.array,
-  values: PropTypes.object,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default CollectionRecordForm;

@@ -1,8 +1,7 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
@@ -19,14 +18,20 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { generateID } from '../../../../helpers/utils';
 import PageLayout from './PageLayout';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageLayouts = props => {
   const { className = '' } = props;
   const {
     schema: { flat }
-  } = useContext(SchemaContext);
-  const { componentDefinitions } = useContext(ComponentContext);
-  const { currentPageId } = useContext(NavigationContext);
-  const { eventBridge } = useContext(EventBridgeContext);
+  } = use(SchemaContext);
+  const { componentDefinitions } = use(ComponentContext);
+  const { currentPageId } = use(NavigationContext);
+  const { eventBridge } = use(EventBridgeContext);
   const { showModal } = useModal();
 
   const handleClickRemoveLayout = layoutId => async e => {
@@ -97,10 +102,6 @@ const PageLayouts = props => {
       </div>
     </div>
   );
-};
-
-PageLayouts.propTypes = {
-  className: PropTypes.string
 };
 
 export default PageLayouts;

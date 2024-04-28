@@ -1,6 +1,5 @@
 // Packages
-import React, { cloneElement, forwardRef, useCallback, useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { cloneElement, useCallback, useEffect, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -16,8 +15,26 @@ import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceCon
 
 const KEY_ESC = 27;
 
-const Dropdown = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   className: string;
+ *   popupPlacement: 'left' | 'right' | 'top' | 'bottom';
+ *   openPopup: boolean;
+ *   backgroundDisabled: boolean;
+ *   closeOnClickBackground: boolean;
+ *   closeOnClickPopup: boolean;
+ *   containerTopOffset: number;
+ *   containerLeftOffset: number;
+ *   disabled: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Dropdown = props => {
   const {
+    ref,
     internalProps = emptyObject,
     children,
     className = '',
@@ -218,20 +235,6 @@ const Dropdown = forwardRef((props, ref) => {
       )}
     </RootElement>
   );
-});
-
-Dropdown.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  popupPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
-  openPopup: PropTypes.bool,
-  backgroundDisabled: PropTypes.bool,
-  closeOnClickBackground: PropTypes.bool,
-  closeOnClickPopup: PropTypes.bool,
-  containerTopOffset: PropTypes.number,
-  containerLeftOffset: PropTypes.number,
-  disabled: PropTypes.bool
 };
 
 export default withElement(Dropdown);

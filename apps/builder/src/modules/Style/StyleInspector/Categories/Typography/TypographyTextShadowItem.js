@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
@@ -9,6 +8,15 @@ import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import GroupButtons from '../../../components/GroupButtons';
 import InspectorButton from '../../../components/InspectorButton';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   value?: string;
+ *   onChange?: (value: string) => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TypographyTextShadowItem = props => {
   const { className = '', value, onRemove = noop, onChange = noop } = props;
 
@@ -79,13 +87,6 @@ const TypographyTextShadowItem = props => {
       </Dropdown.Container>
     </Dropdown>
   );
-};
-
-TypographyTextShadowItem.propTypes = {
-  className: PropTypes.string,
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default TypographyTextShadowItem;

@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useMemo, useState, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useMemo, useState, use } from 'react';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
@@ -15,6 +14,12 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleAdvanceEditor = props => {
   const { className = '' } = props;
   const {
@@ -22,7 +27,7 @@ const StyleAdvanceEditor = props => {
       settings: { customCss: customCssProp }
     },
     schemaUpdateSettings
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
   const [customCss, setCustomCss] = useState(() => {
     if (typeof customCssProp !== 'string') {
       return '';
@@ -31,7 +36,7 @@ const StyleAdvanceEditor = props => {
     return customCssProp ?? '';
   });
   const schemaUpdateSettingsDebounce = useMemo(() => debounce(schemaUpdateSettings, 500), [schemaUpdateSettings]);
-  const { server, webKey } = useContext(NetworkContext);
+  const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
 
   const handleChange = useCallback(
@@ -96,10 +101,6 @@ const StyleAdvanceEditor = props => {
       </div>
     </div>
   );
-};
-
-StyleAdvanceEditor.propTypes = {
-  className: PropTypes.string
 };
 
 export default StyleAdvanceEditor;

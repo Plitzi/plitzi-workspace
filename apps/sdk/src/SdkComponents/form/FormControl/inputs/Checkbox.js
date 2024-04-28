@@ -1,9 +1,23 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
+
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   name?: string;
+ *   placeholder?: string;
+ *   value?: string;
+ *   required?: boolean;
+ *   disabled?: boolean;
+ *   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ *   onValidate?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Checkbox = props => {
   const {
     className = '',
@@ -33,18 +47,6 @@ const Checkbox = props => {
       onBlur={handleBlur}
     />
   );
-};
-
-Checkbox.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  name: PropTypes.string,
-  placeholder: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
-  required: PropTypes.bool,
-  disabled: PropTypes.bool,
-  onChange: PropTypes.func,
-  onValidate: PropTypes.func
 };
 
 export default Checkbox;

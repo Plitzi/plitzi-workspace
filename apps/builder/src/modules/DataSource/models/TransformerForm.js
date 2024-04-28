@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
 import classNames from 'classnames';
@@ -10,6 +9,19 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   attributes?: object;
+ *   attribute?: string;
+ *   path?: string;
+ *   sources?: object;
+ *   source?: string;
+ *   onNext?: (values: object) => void;
+ *   onBack?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TransformerForm = props => {
   const {
     className = '',
@@ -119,17 +131,6 @@ const TransformerForm = props => {
       </div>
     </form>
   );
-};
-
-TransformerForm.propTypes = {
-  className: PropTypes.string,
-  attributes: PropTypes.object,
-  attribute: PropTypes.string,
-  path: PropTypes.string,
-  source: PropTypes.string,
-  sources: PropTypes.object,
-  onNext: PropTypes.func,
-  onBack: PropTypes.func
 };
 
 export default TransformerForm;

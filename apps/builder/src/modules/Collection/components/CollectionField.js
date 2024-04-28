@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 // import classNames from 'classnames';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
@@ -11,6 +10,17 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import { fieldTypes } from '../CollectionsConstants';
 
+/**
+ * @param {{
+ *   isNewField?: boolean;
+ *   name?: string;
+ *   machineName?: string;
+ *   type?: string;
+ *   params?: object;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionField = props => {
   const { name = '', machineName = '', type, params = emptyObject, onRemove = noop } = props;
   const fieldType = get(fieldTypes, type);
@@ -46,16 +56,6 @@ const CollectionField = props => {
       </div>
     </div>
   );
-};
-
-CollectionField.propTypes = {
-  isNewField: PropTypes.bool,
-  name: PropTypes.string,
-  machineName: PropTypes.string,
-  type: PropTypes.string,
-  params: PropTypes.object,
-  // Extras
-  onRemove: PropTypes.func
 };
 
 export default CollectionField;

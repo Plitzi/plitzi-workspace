@@ -1,17 +1,26 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
 // Relatives
 import WorkflowContext from '../WorkflowContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   canUp?: boolean;
+ *   canDown?: boolean;
+ *   onClickOpen?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeFooter = props => {
   const { className = '', id = '', canUp = false, canDown = false, onClickOpen = noop } = props;
 
-  const { moveNode } = useContext(WorkflowContext);
+  const { moveNode } = use(WorkflowContext);
 
   const handleClickUp = useCallback(() => moveNode(id, 'up'), [id, moveNode]);
 
@@ -40,14 +49,6 @@ const NodeFooter = props => {
       </div>
     </div>
   );
-};
-
-NodeFooter.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  canUp: PropTypes.bool,
-  canDown: PropTypes.bool,
-  onClickOpen: PropTypes.func
 };
 
 export default NodeFooter;

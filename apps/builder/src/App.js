@@ -1,6 +1,5 @@
 // Packages
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import isArray from 'lodash/isArray';
 import { ApolloClient, InMemoryCache, split } from '@apollo/client/core';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
@@ -32,6 +31,21 @@ import { loadState, saveState } from './services/session/sessionStorage';
 // Builder Style
 import './assets/index.scss';
 
+/**
+ * @param {{
+ *   server: {
+ *     graphqlServer: string;
+ *     subscriptionServer: string;
+ *   };
+ *   webKey: string;
+ *   includeSubscriptions: boolean;
+ *   userKey: string;
+ *   className: string;
+ *   builderEnvironment: string;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const App = props => {
   const {
     server: serverProp = emptyObject,
@@ -198,25 +212,6 @@ const App = props => {
       </CacheProvider>
     </ContainerRoot>
   );
-};
-
-App.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  // Space
-  webKey: PropTypes.string,
-  environment: PropTypes.string,
-  currentPageId: PropTypes.string,
-  // Server
-  userKey: PropTypes.string,
-  server: PropTypes.object, // { graphqlServer, basePath, subscriptionServer, domain, host, websocketServer }
-  includeSubscriptions: PropTypes.bool,
-  includeRealTime: PropTypes.bool,
-  // Extra
-  builderEnvironment: PropTypes.string,
-  renderMode: PropTypes.oneOf(['raw', 'iframe', 'shadow']),
-  externalStyle: PropTypes.string,
-  state: PropTypes.object
 };
 
 export default App;

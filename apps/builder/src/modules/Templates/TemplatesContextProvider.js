@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useReducer, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
@@ -14,10 +13,17 @@ import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalCo
 import TemplatesContext from './TemplatesContext';
 import TemplatesReducer, { TemplatesActions } from './TemplatesReducer';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   templates?: any;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TemplatesContextProvider = props => {
   const { children, templates: templatesProp } = props;
-  const { mutate } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { mutate } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const templatesPropMemo = useMemo(() => {
     if (templatesProp) {
       return templatesProp;
@@ -105,11 +111,6 @@ const TemplatesContextProvider = props => {
   );
 
   return <TemplatesContext.Provider value={templateContextValue}>{children}</TemplatesContext.Provider>;
-};
-
-TemplatesContextProvider.propTypes = {
-  children: PropTypes.node,
-  templates: PropTypes.object
 };
 
 export default TemplatesContextProvider;

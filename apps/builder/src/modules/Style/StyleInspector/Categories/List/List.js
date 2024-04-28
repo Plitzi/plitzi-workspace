@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -24,9 +23,16 @@ const LIST_ROMAN = 'lower-roman';
 
 const dotKeys = [LIST_STYLE];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (type: string, isCollapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const List = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
   const style = getValue(LIST_STYLE);
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('list', isCollapsed), [onCollapse]);
@@ -94,11 +100,6 @@ const List = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-List.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default memo(List);

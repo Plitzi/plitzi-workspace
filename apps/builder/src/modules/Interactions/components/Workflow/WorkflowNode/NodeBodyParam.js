@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import upperFirst from 'lodash/upperFirst';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -20,6 +19,22 @@ import ParamBinding from './ParamBinding';
 
 const optionsDefault = [];
 
+/**
+ * @param {{
+ *  className?: string;
+ * nodeId?: string;
+ * id?: string;
+ * label?: string;
+ * value?: string | boolean | number;
+ * type?: 'text' | 'select' | 'textarea' | 'boolean' | 'codemirror-text' | 'codemirror-json';
+ * options?: any[] | (params: object) => Promise<any[]> | (params: object) => any[];
+ * canBind?: boolean;
+ * params?: object;
+ * fields?: object;
+ * onChange?: (id: string, value: string | boolean | number) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeBodyParam = props => {
   const {
     className = '',
@@ -138,20 +153,6 @@ const NodeBodyParam = props => {
       </div>
     </div>
   );
-};
-
-NodeBodyParam.propTypes = {
-  className: PropTypes.string,
-  nodeId: PropTypes.string,
-  id: PropTypes.string,
-  label: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.number]),
-  type: PropTypes.oneOf(['text', 'select', 'textarea', 'boolean', 'codemirror-text', 'codemirror-json']),
-  options: PropTypes.oneOfType([PropTypes.array, PropTypes.func]),
-  canBind: PropTypes.bool,
-  params: PropTypes.object,
-  fields: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default NodeBodyParam;

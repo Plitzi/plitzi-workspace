@@ -1,6 +1,5 @@
 // Packages
-import React, { useMemo, useRef, useCallback, useContext, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef, useCallback, use, useEffect } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -30,11 +29,20 @@ export const SCHEMA_TYPE_PARTIAL = 'partial';
 export const SCHEMA_TYPE_TEMPLATE = 'template';
 export const SCHEMA_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   type?: 'main' | 'partial' | 'template' | 'segment';
+ *   schema?: object;
+ *   includeSubscriptions?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SchemaContextProvider = props => {
   const { children, type = SCHEMA_TYPE_MAIN, schema: schemaProp, includeSubscriptions = true } = props;
   const { addToast } = useToast();
-  const internalData = useContext(NetworkInternalContext);
-  const { eventBridge } = useContext(EventBridgeContext);
+  const internalData = use(NetworkInternalContext);
+  const { eventBridge } = use(EventBridgeContext);
   const schemaPropMemo = useMemo(() => {
     if (schemaProp) {
       return schemaProp;
@@ -52,8 +60,8 @@ const SchemaContextProvider = props => {
         return { settings: { customCss: '' }, flat: {}, pages: [] };
     }
   }, [schemaProp]);
-  const { enqueueMiddleware } = useContext(QueueContext);
-  const { undoableMiddleware } = useContext(UndoableContext);
+  const { enqueueMiddleware } = use(QueueContext);
+  const { undoableMiddleware } = use(UndoableContext);
   const middlewareMemo = useMemo(
     () => [
       {
@@ -69,7 +77,7 @@ const SchemaContextProvider = props => {
   );
   const [schema, dispatchSchema] = useReducerWithMiddleware(SchemaReducer, schemaPropMemo, middlewareMemo);
   const schemaRef = useRef(schema);
-  const { mutate, subscriptionManager } = useContext(NetworkContext);
+  const { mutate, subscriptionManager } = use(NetworkContext);
   schemaRef.current = schema;
 
   const schemaUpdate = useCallback(
@@ -487,13 +495,6 @@ const SchemaContextProvider = props => {
   }
 
   return <SchemaContext.Provider value={valueMemo}>{children}</SchemaContext.Provider>;
-};
-
-SchemaContextProvider.propTypes = {
-  children: PropTypes.node,
-  schema: PropTypes.object,
-  includeSubscriptions: PropTypes.bool,
-  type: PropTypes.oneOf([SCHEMA_TYPE_MAIN, SCHEMA_TYPE_PARTIAL, SCHEMA_TYPE_TEMPLATE, SCHEMA_TYPE_SEGMENT])
 };
 
 export default SchemaContextProvider;

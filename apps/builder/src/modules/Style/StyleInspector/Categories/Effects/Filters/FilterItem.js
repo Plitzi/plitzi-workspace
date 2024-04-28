@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
@@ -10,6 +9,14 @@ import InspectorButton from '@pmodules/Style/components/InspectorButton';
 // Relatives
 import GroupButtons from '../../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   value: string;
+ *   onChange?: (value: string) => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const FilterItem = props => {
   const { value = 'blur(5px)', onRemove = noop, onChange = noop } = props;
   const valueParts = value.match(/[a-z-]+|[0-9.-]+(px|%|deg|)/gim);
@@ -123,12 +130,6 @@ const FilterItem = props => {
       </Dropdown.Container>
     </Dropdown>
   );
-};
-
-FilterItem.propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default FilterItem;

@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState, useReducer } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useState, useReducer } from 'react';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
@@ -19,9 +18,16 @@ import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalCo
 // Relatives
 import PluginsReducer, { PluginsActions } from './PluginsReducer';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   plugins?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginsContextProvider = props => {
   const { children, plugins: pluginsProp } = props;
-  const internalData = useContext(NetworkInternalContext);
+  const internalData = use(NetworkInternalContext);
   const pluginsPropMemo = useMemo(() => {
     if (pluginsProp) {
       return pluginsProp;
@@ -31,8 +37,8 @@ const PluginsContextProvider = props => {
   }, [pluginsProp]);
   const [plugins, dispatchPlugins] = useReducer(PluginsReducer, pluginsPropMemo);
   const [temporalCustomStyles, setTemporalCustomStyles] = useState({});
-  const { mutate, query } = useContext(NetworkContext);
-  const { components, registerDefinition, unregisterDefinition, unregister } = useContext(ComponentContext);
+  const { mutate, query } = use(NetworkContext);
+  const { components, registerDefinition, unregisterDefinition, unregister } = use(ComponentContext);
 
   const pluginsAdd = useCallback(
     pluginDefinition => {
@@ -328,11 +334,6 @@ const PluginsContextProvider = props => {
   );
 
   return <PluginsContext.Provider value={pluginsContextValue}>{children}</PluginsContext.Provider>;
-};
-
-PluginsContextProvider.propTypes = {
-  children: PropTypes.node,
-  plugins: PropTypes.object
 };
 
 export default PluginsContextProvider;

@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, use, useMemo } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
@@ -8,9 +7,19 @@ import isArray from 'lodash/isArray';
 // Relatives
 import StyleInspectorContext from './StyleInspectorContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   children?: React.ReactNode;
+ *   keyValue?: string | string[];
+ *   size?: 'small' | 'medium' | 'normal' | 'custom';
+ *   sectionTitle?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InspectorLabel = props => {
   const { keyValue, children, className = '', size = 'small', sectionTitle = false } = props;
-  const { resetValue, bindingData, inheritData, hasValue } = useContext(StyleInspectorContext);
+  const { resetValue, bindingData, inheritData, hasValue } = use(StyleInspectorContext);
 
   const isActive = useMemo(() => {
     if (!keyValue) {
@@ -87,14 +96,6 @@ const InspectorLabel = props => {
       </label>
     </div>
   );
-};
-
-InspectorLabel.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  keyValue: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
-  sectionTitle: PropTypes.bool,
-  size: PropTypes.oneOf(['small', 'medium', 'normal', 'custom'])
 };
 
 export default memo(InspectorLabel);

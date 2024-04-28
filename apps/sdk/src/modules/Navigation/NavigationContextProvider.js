@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
@@ -13,28 +12,31 @@ import { getPaths, matchRoutePath } from '@plitzi/sdk-navigation/NavigationHelpe
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
-import {
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET
-} from '@modules/Sdk/Sdk';
+import { RENDER_MODE_IFRAME, RENDER_MODE_SSR, RENDER_MODE_WIDGET } from '@modules/Sdk/Sdk';
 import NetworkContext from '@modules/Network/NetworkContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
 // Relatives
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   renderMode?: 'iframe' | 'ssr' | 'widget';
+ *   currentPageId?: string;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NavigationContextProvider = props => {
   const { children, renderMode = RENDER_MODE_IFRAME, currentPageId: currentPageIdProp, previewMode = true } = props;
-  const { server } = useContext(NetworkContext);
+  const { server } = use(NetworkContext);
   const {
     schema: { pageFolders }
-  } = useContext(SchemaContext);
-  const { pageDefinitions, pages } = useContext(SchemaPagesContext);
+  } = use(SchemaContext);
+  const { pageDefinitions, pages } = use(SchemaPagesContext);
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
-  const { authenticated } = useContext(UserContext);
+  const { authenticated } = use(UserContext);
   const navigate = useNavigate();
   const paths = useMemo(
     () => getPaths(pages, pageDefinitions, pageFolders, authenticated, previewMode),
@@ -137,19 +139,6 @@ const NavigationContextProvider = props => {
   }
 
   return <NavigationContext.Provider value={navigationValue}>{children}</NavigationContext.Provider>;
-};
-
-NavigationContextProvider.propTypes = {
-  children: PropTypes.node,
-  previewMode: PropTypes.bool,
-  currentPageId: PropTypes.string,
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_RAW,
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ])
 };
 
 export default NavigationContextProvider;

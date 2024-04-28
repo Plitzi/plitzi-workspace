@@ -1,10 +1,21 @@
 // Packages
-import React, { forwardRef, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback } from 'react';
 import classNames from 'classnames';
 
-const Label = forwardRef((props, ref) => {
-  const { children, targetInput = '', type = 'text', previewMode = true, required = true, className = '' } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   children: React.ReactNode;
+ *   targetInput: string;
+ *   type: string;
+ *   previewMode: boolean;
+ *   required: boolean;
+ *   className: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Label = props => {
+  const { ref, children, targetInput = '', type = 'text', previewMode = true, required = true, className = '' } = props;
 
   const handleClick = useCallback(
     e => {
@@ -30,15 +41,6 @@ const Label = forwardRef((props, ref) => {
       {required && children && <span className="form-control__label--required">*</span>}
     </label>
   );
-});
-
-Label.propTypes = {
-  children: PropTypes.node,
-  targetInput: PropTypes.string,
-  type: PropTypes.string,
-  previewMode: PropTypes.bool,
-  required: PropTypes.bool,
-  className: PropTypes.string
 };
 
 export default Label;

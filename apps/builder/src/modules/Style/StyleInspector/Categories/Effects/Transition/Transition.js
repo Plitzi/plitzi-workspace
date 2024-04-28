@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -13,6 +12,13 @@ import InspectorButton from '@pmodules/Style/components/InspectorButton';
 import TransitionItem from './TransitionItem';
 import InspectorLabel from '../../../InspectorLabel';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Transition = props => {
   const { onChange = noop } = props;
   let { partialValue } = props;
@@ -70,11 +76,6 @@ const Transition = props => {
       )}
     </>
   );
-};
-
-Transition.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default Transition;

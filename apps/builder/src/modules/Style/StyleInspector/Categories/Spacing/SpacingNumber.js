@@ -1,9 +1,16 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   value?: string;
+ *   active?: boolean;
+ *   onClick?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SpacingNumber = props => {
   const { value = '', active = false, onClick = noop } = props;
 
@@ -19,12 +26,6 @@ const SpacingNumber = props => {
       <div className="truncate">{value.replace('px', '')}</div>
     </div>
   );
-};
-
-SpacingNumber.propTypes = {
-  value: PropTypes.string,
-  active: PropTypes.bool,
-  onClick: PropTypes.func
 };
 
 export default SpacingNumber;

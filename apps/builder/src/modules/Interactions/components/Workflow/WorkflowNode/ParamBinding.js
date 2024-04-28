@@ -1,7 +1,6 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
@@ -12,9 +11,19 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import WorkflowContext from '../WorkflowContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   nodeId?: string;
+ *   id?: string;
+ *   value?: string;
+ *   onChange?: (id: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ParamBinding = props => {
   const { className = '', nodeId: nodeIdProp = '', id = '', value = '', onChange = noop } = props;
-  const { previewData, getNode, dataSource } = useContext(WorkflowContext);
+  const { previewData, getNode, dataSource } = use(WorkflowContext);
   const nodeFullPath = useMemo(() => get(value.match(/(?<token>[a-zA-Z0-9-._]+)/gim), '0', ''), [value]);
   const [node, setNode] = useState(() => {
     const nodeValue = get(value.match(/(?<token>[a-zA-Z0-9-]+)/gim), '0', '');
@@ -141,14 +150,6 @@ const ParamBinding = props => {
       )}
     </div>
   );
-};
-
-ParamBinding.propTypes = {
-  className: PropTypes.string,
-  nodeId: PropTypes.string,
-  id: PropTypes.string,
-  value: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default ParamBinding;

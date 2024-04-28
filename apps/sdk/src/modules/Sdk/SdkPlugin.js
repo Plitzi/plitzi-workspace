@@ -1,12 +1,13 @@
 // Packages
-import PropTypes from 'prop-types';
 
-const SdkPlugin = () => null;
-
-SdkPlugin.propTypes = {
-  renderType: PropTypes.string,
-  component: PropTypes.object,
-  assets: PropTypes.arrayOf(PropTypes.object)
-};
+/**
+ * @param {{
+ *   renderType: string;
+ *   component: object;
+ *   assets: object[];
+ * }} props
+ * @returns {undefined}
+ */
+const SdkPlugin = ({ renderType, component, assets }) => undefined; // eslint-disable-line
 
 export default SdkPlugin;

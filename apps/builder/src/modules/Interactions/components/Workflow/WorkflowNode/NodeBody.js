@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 
@@ -11,6 +10,17 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import NodeBodyParam from './NodeBodyParam';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   params?: object;
+ *   paramDefinitions?: object;
+ *   fields?: object;
+ *   onChange?: (params: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeBody = props => {
   const {
     className = '',
@@ -86,15 +96,6 @@ const NodeBody = props => {
       </div>
     </div>
   );
-};
-
-NodeBody.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  paramDefinitions: PropTypes.object,
-  params: PropTypes.object,
-  fields: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default NodeBody;

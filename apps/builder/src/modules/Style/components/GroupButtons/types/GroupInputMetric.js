@@ -1,10 +1,17 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import InputMetric from '@plitzi/plitzi-ui-components/InputMetric';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   value?: string | number;
+ *   onChange?: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const GroupInputMetric = props => {
   const { className = '', value = '', onChange = noop, ...otherProps } = props;
 
@@ -20,12 +27,6 @@ const GroupInputMetric = props => {
       {...otherProps}
     />
   );
-};
-
-GroupInputMetric.propTypes = {
-  className: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onChange: PropTypes.func
 };
 
 export default GroupInputMetric;

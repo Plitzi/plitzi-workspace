@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -10,6 +9,13 @@ import { TEXT_SHADOW } from '@plitzi/sdk-style/StyleConstants';
 import InspectorLabel from '../../InspectorLabel';
 import TypographyTextShadowItem from './TypographyTextShadowItem';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const TypographyTextShadow = props => {
   const { onChange = noop } = props;
   let { partialValue } = props;
@@ -62,11 +68,6 @@ const TypographyTextShadow = props => {
       )}
     </div>
   );
-};
-
-TypographyTextShadow.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default TypographyTextShadow;

@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { use } from 'react';
 
 // Monorepo
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
@@ -10,9 +9,15 @@ import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DataSourceSdkContextProvider = props => {
   const { children } = props;
-  const { state } = useContext(StateManagerContext);
+  const { state } = use(StateManagerContext);
 
   return (
     <DataSourceContextProvider>
@@ -21,10 +26,6 @@ const DataSourceSdkContextProvider = props => {
       </NavigationSource>
     </DataSourceContextProvider>
   );
-};
-
-DataSourceSdkContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export default DataSourceSdkContextProvider;

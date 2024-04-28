@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -26,6 +25,17 @@ import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE, processPaste } from '../../
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode;
+ *   className?: string;
+ *   iframeDOM?: HTMLIFrameElement;
+ *   isActive?: boolean;
+ *   iframeScaleX?: number;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderAreaTracking = props => {
   const {
     children,
@@ -36,23 +46,23 @@ const BuilderAreaTracking = props => {
     previewMode = false,
     ...otherProps
   } = props;
-  const { supportRealTime, subscriptionsPush } = useContext(BuilderSubscriptionsContext);
-  const { elementHovered, setHovered } = useContext(BuilderHoveredContext);
-  const { elementSelected, setSelected } = useContext(BuilderSelectedContext);
+  const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
+  const { elementHovered, setHovered } = use(BuilderHoveredContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
     multiPagesMode,
     builderHandler,
     baseContext: { baseElementId },
     baseElementIdOriginal,
     builderSetBaseContext
-  } = useContext(BuilderContext);
-  const { schema, builderDropElement } = useContext(BuilderSchemaContext);
-  const { style } = useContext(BuilderStyleContext);
-  const { displayBorderComponents } = useContext(AppContext);
+  } = use(BuilderContext);
+  const { schema, builderDropElement } = use(BuilderSchemaContext);
+  const { style } = use(BuilderStyleContext);
+  const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
-  const { canRedo, canUndo, undoableRedo, undoableUndo } = useContext(UndoableContext);
-  const { mutate } = useContext(NetworkContext);
-  const { componentDefinitions } = useContext(ComponentContext);
+  const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
+  const { mutate } = use(NetworkContext);
+  const { componentDefinitions } = use(ComponentContext);
 
   const schemaRef = useRef(schema);
   schemaRef.current = schema;
@@ -345,15 +355,6 @@ const BuilderAreaTracking = props => {
       {children}
     </div>
   );
-};
-
-BuilderAreaTracking.propTypes = {
-  iframeDOM: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  iframeScaleX: PropTypes.number,
-  isActive: PropTypes.bool,
-  previewMode: PropTypes.bool
 };
 
 export default BuilderAreaTracking;

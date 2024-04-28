@@ -1,10 +1,18 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
+/**
+ * @param {{
+ *   spaceId?: string;
+ *   spaceKey?: string;
+ *   environment?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { spaceId = '', spaceKey = '', environment = 'main', onUpdate = noop } = props;
 
@@ -36,13 +44,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  spaceId: PropTypes.string,
-  spaceKey: PropTypes.string,
-  environment: PropTypes.string,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

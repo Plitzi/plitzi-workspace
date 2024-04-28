@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import { produce } from 'immer';
 import noop from 'lodash/noop';
 import set from 'lodash/set';
@@ -21,11 +20,19 @@ export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 export const STYLE_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   state: object;
+ *   onInit: (value: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StateManagerContextProvider = props => {
   const { children, state: stateProp = emptyObject, onInit = noop } = props;
-  const { webId } = useContext(NetworkContext);
+  const { webId } = use(NetworkContext);
   const storageId = useMemo(() => `plitzi-${webId}-state`, [webId]);
-  const { schema } = useContext(SchemaContext);
+  const { schema } = use(SchemaContext);
 
   const getCache = useCallback(
     (path, defaultValue = {}, storeMode = '') => {
@@ -148,12 +155,6 @@ const StateManagerContextProvider = props => {
   }, [onInit, valueMemo]);
 
   return <StateManagerContext.Provider value={valueMemo}>{children}</StateManagerContext.Provider>;
-};
-
-StateManagerContextProvider.propTypes = {
-  children: PropTypes.node,
-  state: PropTypes.object,
-  onInit: PropTypes.func
 };
 
 export default StateManagerContextProvider;

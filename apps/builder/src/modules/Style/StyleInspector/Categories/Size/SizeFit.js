@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -9,6 +8,13 @@ import { OBJECT_FIT } from '@plitzi/sdk-style/StyleConstants';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (value: { type: string; value: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SizeFit = props => {
   const { partialValue, onChange = noop } = props;
 
@@ -44,11 +50,6 @@ const SizeFit = props => {
       onChange={handleChange}
     />
   );
-};
-
-SizeFit.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default SizeFit;

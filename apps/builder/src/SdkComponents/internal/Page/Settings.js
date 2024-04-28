@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -16,6 +15,25 @@ import Alert from '@plitzi/plitzi-ui-components/Alert';
 // Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   seoEnabled?: boolean;
+ *   enabled?: boolean;
+ *   name?: string;
+ *   folder?: string;
+ *   seoPageTitle?: string;
+ *   seoPageDescription?: string;
+ *   slug?: string;
+ *   layout?: string;
+ *   layoutContainer?: string;
+ *   accessLevel?: 'public' | 'authenticated' | '';
+ *   unauthorizedBehaviour?: '' | 'redirect';
+ *   unauthorizedPageRedirect?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const {
     id = '',
@@ -43,7 +61,7 @@ const Settings = props => {
   } = usePlitziServiceContext();
   const {
     schema: { flat, pageFolders, pages }
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
 
   const layouts = useMemo(
     () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'layoutContainer'),
@@ -295,23 +313,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  slug: PropTypes.string,
-  enabled: PropTypes.bool,
-  folder: PropTypes.string,
-  layout: PropTypes.string,
-  layoutContainer: PropTypes.string,
-  seoEnabled: PropTypes.bool,
-  seoPageTitle: PropTypes.string,
-  seoPageDescription: PropTypes.string,
-  accessLevel: PropTypes.oneOf(['public', 'authenticated', '']),
-  unauthorizedBehaviour: PropTypes.oneOf(['', 'redirect']),
-  unauthorizedPageRedirect: PropTypes.string,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

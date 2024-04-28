@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
@@ -33,10 +32,20 @@ import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder
 // SDK Style
 import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // eslint-disable-line
 
+/**
+ * @param {{
+ *   id?: string;
+ *   className?: string;
+ *   previewMode?: boolean;
+ *   schema?: object;
+ *   styleCache?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderAreaPreview = props => {
   const { id = '', className = '', previewMode = false, schema = emptyObject, styleCache = '' } = props;
   const { settings, flat } = schema;
-  const { displayBorderComponents } = useContext(AppContext);
+  const { displayBorderComponents } = use(AppContext);
 
   const getWindow = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -85,7 +94,7 @@ const BuilderAreaPreview = props => {
     return `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${css}`;
   }, [settings, styleCache]);
 
-  const { components } = useContext(ComponentContext);
+  const { components } = use(ComponentContext);
   const element = useMemo(() => get(flat, id), [id, flat]);
   const Plugin = useMemo(() => get(components, get(element, 'definition.type')), [components, element]);
   const internalProps = useMemo(() => ({ id, rootId: id }), [id]);
@@ -116,14 +125,6 @@ const BuilderAreaPreview = props => {
       </>
     </ContainerFrame>
   );
-};
-
-BuilderAreaPreview.propTypes = {
-  className: PropTypes.string,
-  previewMode: PropTypes.bool,
-  id: PropTypes.string,
-  schema: PropTypes.object,
-  styleCache: PropTypes.string
 };
 
 export default BuilderAreaPreview;

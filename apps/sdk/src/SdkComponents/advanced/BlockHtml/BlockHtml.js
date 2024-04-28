@@ -1,8 +1,7 @@
 // eslint-disable-file react/no-danger
 
 // Packages
-import React, { forwardRef, useCallback, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import dompurify from 'dompurify';
 import classNames from 'classnames';
 
@@ -16,8 +15,17 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const BlockHtml = forwardRef((props, ref) => {
-  const { content = '', className = '', internalProps = emptyObject } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   content: string;
+ *   className: string;
+ *   internalProps: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const BlockHtml = props => {
+  const { ref, content = '', className = '', internalProps = emptyObject } = props;
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -100,12 +108,6 @@ const BlockHtml = forwardRef((props, ref) => {
       dangerouslySetInnerHTML={{ __html: !previewMode ? contentCleaned : content }}
     />
   );
-});
-
-BlockHtml.propTypes = {
-  internalProps: PropTypes.object,
-  className: PropTypes.string,
-  content: PropTypes.string
 };
 
 export default withElement(BlockHtml);

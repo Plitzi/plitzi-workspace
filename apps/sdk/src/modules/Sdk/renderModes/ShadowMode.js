@@ -1,7 +1,6 @@
 /* eslint-disable react/no-danger */
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 
 // Monorepo
@@ -15,6 +14,15 @@ import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceC
 import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
 
+/**
+ * @param {{
+ *   pageId?: string;
+ *   style?: string;
+ *   plitziContextValue: object;
+ *   assets: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ShadowMode = props => {
   const { pageId = '', style = '', plitziContextValue, assets = emptyObject } = props;
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
@@ -36,13 +44,6 @@ const ShadowMode = props => {
       </ContainerShadow.Content>
     </ContainerShadow>
   );
-};
-
-ShadowMode.propTypes = {
-  plitziContextValue: PropTypes.object,
-  pageId: PropTypes.string,
-  assets: PropTypes.object,
-  style: PropTypes.string
 };
 
 export default ShadowMode;

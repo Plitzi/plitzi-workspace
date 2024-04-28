@@ -1,9 +1,20 @@
 // Packages
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   topOpened?: boolean;
+ *   bottomOpened?: boolean;
+ *   concatenateTop?: boolean;
+ *   concatenateBottom?: boolean;
+ *   id?: string;
+ *   onClick?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowAddNode = props => {
   const {
     className = '',
@@ -60,16 +71,6 @@ const WorkflowAddNode = props => {
       </div>
     </div>
   );
-};
-
-WorkflowAddNode.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  topOpened: PropTypes.bool,
-  bottomOpened: PropTypes.bool,
-  concatenateTop: PropTypes.bool,
-  concatenateBottom: PropTypes.bool,
-  onClick: PropTypes.func
 };
 
 export default WorkflowAddNode;

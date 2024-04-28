@@ -1,10 +1,20 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 
+/**
+ * @param {{
+ *   acceptButtonLabel?: string;
+ *   acceptButtonLabelLoading?: string;
+ *   rejectButtonLabel?: string;
+ *   headerLabel?: string;
+ *   autoHideAfterClick?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const {
     acceptButtonLabel = 'Accept',
@@ -59,15 +69,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  headerLabel: PropTypes.string,
-  acceptButtonLabel: PropTypes.string,
-  acceptButtonLabelLoading: PropTypes.string,
-  rejectButtonLabel: PropTypes.string,
-  autoHideAfterClick: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

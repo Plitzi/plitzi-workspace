@@ -1,6 +1,5 @@
 // Packages
 import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
 import classNames from 'classnames';
@@ -12,6 +11,16 @@ import BuilderContextMenuItem from './BuilderContextMenuItem';
 
 const itemsDefault = [];
 
+/**
+ * @param {{
+ *   items?: { key: string; value: string }[];
+ *   width?: number;
+ *   iframeDOM?: object;
+ *   parentRef?: object;
+ *   onClick?: (key: string) => () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderContextSubMenu = props => {
   const { items = itemsDefault, width = 250, iframeDOM, parentRef, onClick = noop } = props;
   const [showMenu, setShowMenu] = useState(false);
@@ -77,14 +86,6 @@ const BuilderContextSubMenu = props => {
       </div>
     </div>
   );
-};
-
-BuilderContextSubMenu.propTypes = {
-  iframeDOM: PropTypes.object,
-  parentRef: PropTypes.object,
-  items: PropTypes.array,
-  width: PropTypes.number,
-  onClick: PropTypes.func
 };
 
 export default BuilderContextSubMenu;

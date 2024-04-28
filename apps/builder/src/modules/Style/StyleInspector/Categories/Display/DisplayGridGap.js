@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -9,6 +8,14 @@ import { GRID_COLUMN_GAP, GRID_ROW_GAP } from '@plitzi/sdk-style/StyleConstants'
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   rowGap: string;
+ *   columnGap: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayGridGap = props => {
   const { rowGap = '0px', columnGap = '0px', onChange = noop } = props;
 
@@ -46,12 +53,6 @@ const DisplayGridGap = props => {
       onChange={handleChange}
     />
   );
-};
-
-DisplayGridGap.propTypes = {
-  rowGap: PropTypes.string,
-  columnGap: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default DisplayGridGap;

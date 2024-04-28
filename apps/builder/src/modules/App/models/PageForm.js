@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
@@ -8,6 +7,16 @@ import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
 const pageFoldersDefault = [];
+
+/**
+ * @param {{
+ *   className?: string;
+ *   pageFolders?: any[];
+ *   onClose?: () => void;
+ *   onSubmit?: (values: { name: string; pageFolder: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 
 const PageForm = props => {
   const { className = '', pageFolders = pageFoldersDefault, onClose = noop, onSubmit = noop } = props;
@@ -77,13 +86,6 @@ const PageForm = props => {
       </div>
     </form>
   );
-};
-
-PageForm.propTypes = {
-  className: PropTypes.string,
-  pageFolders: PropTypes.array,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default PageForm;

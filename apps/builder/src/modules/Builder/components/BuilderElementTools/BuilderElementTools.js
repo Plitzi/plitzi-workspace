@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useMemo, useState, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useMemo, useState, useCallback } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
@@ -23,13 +22,19 @@ import ElementSettings from './ElementSettings';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
 import BuilderContext from '../../BuilderContext';
 
+/**
+ * @param {{
+ *   initialTab?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderElementTools = props => {
   const { initialTab = 'style' } = props;
   const [, setCache, getCache] = useCache();
   const [selected, setSelected] = useState(() => getCache('BuilderElementTools.tabSelected', initialTab));
-  const { builderHandler } = useContext(BuilderContext);
-  const { getComponent, componentDefinitions } = useContext(ComponentContext);
-  const { elementSelected } = useContext(BuilderSelectedContext);
+  const { builderHandler } = use(BuilderContext);
+  const { getComponent, componentDefinitions } = use(ComponentContext);
+  const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
   const attributes = useMemo(() => get(element, 'attributes', {}), [element]);
   const definition = useMemo(() => get(element, 'definition', {}), [element]);
@@ -189,10 +194,6 @@ const BuilderElementTools = props => {
       </div>
     </div>
   );
-};
-
-BuilderElementTools.propTypes = {
-  initialTab: PropTypes.string
 };
 
 export default BuilderElementTools;

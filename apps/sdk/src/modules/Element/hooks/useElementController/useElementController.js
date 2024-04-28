@@ -1,5 +1,5 @@
 // Packages
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { use, useEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -10,6 +10,15 @@ import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelp
 import usePlitziServiceContext from '../../../../services/hooks/usePlitziServiceContext';
 import ElementController from './helpers/ElementController';
 
+/**
+ * @param {object} internalProps
+ * @param {{
+ *   plitziCustomComponent: boolean;
+ *   children: React.ReactNode;
+ *   className: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const useElementController = (internalProps, { plitziCustomComponent, children, className }) => {
   const {
     settings: { previewMode },
@@ -17,8 +26,8 @@ const useElementController = (internalProps, { plitziCustomComponent, children, 
     contexts: { SchemaContext, DataSourceContext, EventBridgeContext }
   } = usePlitziServiceContext();
   const [, setReRender] = useState(0);
-  const { useDataSource } = useContext(DataSourceContext);
-  const { schema } = useContext(SchemaContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { schema } = use(SchemaContext);
   const { id, plitziElementLayout } = internalProps;
   const element = get(schema, `flat.${id}`);
   const dataSource = useDataSource({ id, mode: 'read' });
@@ -44,7 +53,7 @@ const useElementController = (internalProps, { plitziCustomComponent, children, 
     instance.refreshLayoutKeyIdentifier();
   }, [plitziElementLayout]);
 
-  const { prevSchema } = useContext(SchemaContext);
+  const { prevSchema } = use(SchemaContext);
   const newSchema = useMemo(() => ({ schema: prevSchema }), [prevSchema]);
   const { items } = get(element, 'definition', {});
   const itemsMemo = useMemo(

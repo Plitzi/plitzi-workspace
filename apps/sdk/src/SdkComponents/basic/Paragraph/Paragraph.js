@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -13,8 +12,17 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Paragraph = forwardRef((props, ref) => {
-  const { content = 'Paragraph', className = '', internalProps = emptyObject } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   content: string | number;
+ *   className: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Paragraph = props => {
+  const { ref, content = 'Paragraph', className = '', internalProps = emptyObject } = props;
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -40,12 +48,6 @@ const Paragraph = forwardRef((props, ref) => {
       {finalContent}
     </RootElement>
   );
-});
-
-Paragraph.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  content: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default withElement(Paragraph);

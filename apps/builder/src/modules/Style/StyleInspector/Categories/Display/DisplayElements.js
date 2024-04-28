@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,13 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayElements = props => {
   const { partialValue, onChange = noop } = props;
 
@@ -68,11 +74,6 @@ const DisplayElements = props => {
       onChange={handleChange}
     />
   );
-};
-
-DisplayElements.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default DisplayElements;

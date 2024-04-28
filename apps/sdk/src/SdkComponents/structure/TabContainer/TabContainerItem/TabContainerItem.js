@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,8 +9,17 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const TabContainerItem = forwardRef((props, ref) => {
-  const { className = '', internalProps = emptyObject, children } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const TabContainerItem = props => {
+  const { className = '', internalProps = emptyObject, children, ref } = props;
   const { tabSelected, tabIndex = 0, isHeader, onSelect } = internalProps;
 
   const handleClick = useCallback(() => {
@@ -34,13 +42,6 @@ const TabContainerItem = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-TabContainerItem.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  tabIndex: PropTypes.number,
-  className: PropTypes.string
 };
 
 export default withElement(TabContainerItem);

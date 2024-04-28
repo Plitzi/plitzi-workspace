@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import upperFirst from 'lodash/upperFirst';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -13,6 +12,25 @@ import Switch from '@plitzi/plitzi-ui-components/Switch';
 
 const nodeDefinitionsDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   title?: string;
+ *   type?: 'trigger' | 'callback' | 'utility' | 'globalCallback';
+ *   action?: string;
+ *   elementId?: string;
+ *   canDelete?: boolean;
+ *   isOpened?: boolean;
+ *   enabled?: boolean;
+ *   nodeDefinitions?: object[];
+ *   nodeDefinition?: object;
+ *   onChange?: (node: object) => void;
+ *   onClickOpen?: () => void;
+ *   onClickRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeHeader = props => {
   const {
     className = '',
@@ -193,24 +211,6 @@ const NodeHeader = props => {
       </div>
     </div>
   );
-};
-
-NodeHeader.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  title: PropTypes.string,
-  type: PropTypes.oneOf(['trigger', 'callback', 'utility', 'globalCallback']),
-  action: PropTypes.string,
-  elementId: PropTypes.string,
-  canDelete: PropTypes.bool,
-  isOpened: PropTypes.bool,
-  enabled: PropTypes.bool,
-  nodeDefinitions: PropTypes.array,
-  nodeDefinition: PropTypes.object,
-  onChange: PropTypes.func,
-  onClickOpen: PropTypes.func,
-  onClickPreview: PropTypes.func,
-  onClickRemove: PropTypes.func
 };
 
 export default NodeHeader;

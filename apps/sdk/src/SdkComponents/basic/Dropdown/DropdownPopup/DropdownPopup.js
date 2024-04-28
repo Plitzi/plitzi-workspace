@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,8 +9,17 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const DropdownPopup = forwardRef((props, ref) => {
-  const { className = '', internalProps = emptyObject, children } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   className: string;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const DropdownPopup = props => {
+  const { ref, className = '', internalProps = emptyObject, children } = props;
   const { onClick, openPopup, parameters, popupRef } = internalProps;
   const refProxy = useMemo(
     () =>
@@ -54,12 +62,6 @@ const DropdownPopup = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-DropdownPopup.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string
 };
 
 export default withElement(DropdownPopup);

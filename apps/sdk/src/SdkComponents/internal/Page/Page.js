@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -15,8 +14,23 @@ import { PARTIAL_SCHEMA_TYPE_LAYOUT } from '@modules/Element/ElementConstants';
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Page = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   seoEnabled: boolean;
+ *   seoPageTitle: string;
+ *   seoPageDescription: string;
+ *   className: string;
+ *   layout: string;
+ *   layoutContainer: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Page = props => {
   const {
+    ref,
     seoEnabled = false,
     seoPageTitle = 'Title',
     seoPageDescription = 'Description',
@@ -31,9 +45,9 @@ const Page = forwardRef((props, ref) => {
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = useContext(InteractionsContext);
-  const { Helmet, routeParams, queryParams } = useContext(NavigationContext);
-  const { components } = useContext(ComponentContext);
+  const { interactionsManager } = use(InteractionsContext);
+  const { Helmet, routeParams, queryParams } = use(NavigationContext);
+  const { components } = use(ComponentContext);
   const LayoutContainerPlugin = components.layoutContainer;
 
   const layoutInternalProps = useMemo(
@@ -87,21 +101,6 @@ const Page = forwardRef((props, ref) => {
       {!layout && children}
     </RootElement>
   );
-});
-
-Page.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  enabled: PropTypes.bool,
-  name: PropTypes.string,
-  slug: PropTypes.string,
-  folder: PropTypes.string,
-  layout: PropTypes.string,
-  layoutContainer: PropTypes.string,
-  seoEnabled: PropTypes.bool,
-  seoPageTitle: PropTypes.string,
-  seoPageDescription: PropTypes.string
 };
 
 export default withElement(Page);

@@ -6,6 +6,20 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 // Relatives
 import BasicProvider from './managers/BasicProvider';
 
+/**
+ * @param {{
+ *   provider: string;
+ *   loginUrl: string;
+ *   refreshUrl: string;
+ *   detailsPath?: string;
+ *   tokenPath?: string;
+ *   expirationTimePath?: string;
+ *   webId: number;
+ * }} props
+ * @returns {{
+ *   manager: object;
+ * }}
+ */
 const useAuth = props => {
   const {
     provider,

@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useMemo } from 'react';
 
 // Relatives
 import BuilderOverlay from '../BuilderOverlay';
@@ -8,10 +7,20 @@ import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
 import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
 
+/**
+ * @param {{
+ *   iframeDOM: object;
+ *   baseElementId?: string;
+ *   dragTree?: boolean;
+ *   zoom?: number;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderAreaOverlay = props => {
   const { iframeDOM, baseElementId = '', dragTree = false, zoom = 1, displayMode = 'desktop' } = props;
-  const { elementHovered } = useContext(BuilderHoveredContext);
-  const { elementSelected } = useContext(BuilderSelectedContext);
+  const { elementHovered } = use(BuilderHoveredContext);
+  const { elementSelected } = use(BuilderSelectedContext);
 
   const overlaySelectMemo = useMemo(
     () => (
@@ -43,14 +52,6 @@ const BuilderAreaOverlay = props => {
       {!dragTree && <BuilderOverlayDrag iframeDOM={iframeDOM} zoom={zoom} />}
     </>
   );
-};
-
-BuilderAreaOverlay.propTypes = {
-  iframeDOM: PropTypes.object,
-  dragTree: PropTypes.bool,
-  baseElementId: PropTypes.string,
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
-  zoom: PropTypes.number
 };
 
 export default BuilderAreaOverlay;

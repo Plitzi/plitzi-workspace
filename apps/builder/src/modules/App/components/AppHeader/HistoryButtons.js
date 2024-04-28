@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useCallback } from 'react';
+import React, { use, useCallback } from 'react';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
@@ -11,8 +11,8 @@ import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-brid
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 const HistoryButtons = () => {
-  const { eventBridge } = useContext(EventBridgeContext);
-  const { canRedo, canUndo, undoableRedo, undoableUndo } = useContext(UndoableContext);
+  const { eventBridge } = use(EventBridgeContext);
+  const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
 
   const handleClickUndo = useCallback(() => {
     eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);

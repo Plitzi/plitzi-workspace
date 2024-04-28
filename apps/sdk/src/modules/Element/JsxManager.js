@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use } from 'react';
 import get from 'lodash/get';
 import camelCase from 'lodash/camelCase';
 
@@ -14,14 +13,23 @@ import ComponentContext from '@modules/Component/ComponentContext';
 import PluginRemote from './PluginRemote';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   plitziJsxSkipHOC?: boolean;
+ *   plitziJsxType: string;
+ *   plitziJsxProps: object;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const JsxManager = props => {
   const { plitziJsxSkipHOC = false, plitziJsxType = '', plitziJsxProps = emptyObject, children } = props;
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
   const type = camelCase(plitziJsxType);
-  const { components } = useContext(ComponentContext);
-  const { plugins } = useContext(PluginsContext);
+  const { components } = use(ComponentContext);
+  const { plugins } = use(PluginsContext);
   if (!type) {
     return null;
   }
@@ -67,14 +75,6 @@ const JsxManager = props => {
       {children}
     </Plugin>
   );
-};
-
-JsxManager.propTypes = {
-  children: PropTypes.node,
-  // Props from JSX
-  plitziJsxSkipHOC: PropTypes.bool,
-  plitziJsxType: PropTypes.string,
-  plitziJsxProps: PropTypes.object
 };
 
 export default memo(JsxManager);

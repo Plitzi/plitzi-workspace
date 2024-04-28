@@ -1,12 +1,22 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   identifier?: string;
+ *   name?: string;
+ *   description?: string;
+ *   onClose?: () => void;
+ *   onSubmit?: (values: { identifier: string; name: string; description: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SegmentForm = props => {
   const {
     className = '',
@@ -71,15 +81,6 @@ const SegmentForm = props => {
       </div>
     </form>
   );
-};
-
-SegmentForm.propTypes = {
-  className: PropTypes.string,
-  identifier: PropTypes.string,
-  name: PropTypes.string,
-  description: PropTypes.string,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default SegmentForm;

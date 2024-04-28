@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useMemo, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, use } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 
@@ -15,16 +14,36 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Link = forwardRef((props, ref) => {
-  const { internalProps = emptyObject, children, className = '', href = '#', target = 'self', mode = 'page' } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   className: string;
+ *   href: string;
+ *   target: 'self' | 'blank' | 'parent' | 'top';
+ *   mode: 'page' | 'internal' | 'external';
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Link = props => {
+  const {
+    ref,
+    internalProps = emptyObject,
+    children,
+    className = '',
+    href = '#',
+    target = 'self',
+    mode = 'page'
+  } = props;
   const {
     settings: { previewMode },
     contexts: { NavigationContext, SchemaContext }
   } = usePlitziServiceContext();
-  const { navigate, routeParams, queryParams } = useContext(NavigationContext);
+  const { navigate, routeParams, queryParams } = use(NavigationContext);
   const {
     schema: { flat, pageFolders }
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
   const { style } = internalProps;
 
   const url = useMemo(() => {
@@ -80,16 +99,6 @@ const Link = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-Link.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  href: PropTypes.string,
-  target: PropTypes.oneOf(['blank', 'self', 'parent', 'top']),
-  mode: PropTypes.oneOf(['page', 'internal', 'external']),
-  linkContext: PropTypes.object
 };
 
 export default withElement(Link);

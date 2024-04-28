@@ -4,7 +4,6 @@ import './wdyr';
 // Packages
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 
 // Alias
@@ -41,6 +40,31 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
   root.render(<Widget />);
 }
 
+/**
+ * @param {{
+ *   className?: string;
+ *   children: React.ReactNode;
+ *   webKey?: string;
+ *   environment?: string;
+ *   currentPageId?: string;
+ *   userKey?: string;
+ *   server: {
+ *     graphqlServer: string;
+ *     basePath: string;
+ *     subscriptionServer: string;
+ *     host: string;
+ *     websocketServer: string;
+ *   };
+ *   includeSubscriptions?: boolean;
+ *   includeRealTime?: boolean;
+ *   builderEnvironment?: string;
+ *   renderMode?: 'raw' | 'iframe' | 'shadow';
+ *   externalStyle?: string;
+ *   state?: object;
+ *   debugMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PlitziBuilder = props => {
   const { debugMode = false, children } = props;
 
@@ -51,26 +75,6 @@ const PlitziBuilder = props => {
   }, []);
 
   return <App {...omit(props, ['debugMode'])}>{children}</App>;
-};
-
-PlitziBuilder.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  // Space
-  webKey: PropTypes.string,
-  environment: PropTypes.string,
-  currentPageId: PropTypes.string,
-  // Server
-  userKey: PropTypes.string,
-  server: PropTypes.object, // { graphqlServer, basePath, subscriptionServer, host, websocketServer }
-  debugMode: PropTypes.bool,
-  includeSubscriptions: PropTypes.bool,
-  includeRealTime: PropTypes.bool,
-  // Extra
-  builderEnvironment: PropTypes.string,
-  renderMode: PropTypes.oneOf(['raw', 'iframe', 'shadow']),
-  externalStyle: PropTypes.string,
-  state: PropTypes.object
 };
 
 PlitziBuilder.Plugin = Builder.Plugin;

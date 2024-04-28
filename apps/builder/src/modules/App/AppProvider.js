@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import { withApollo } from '@apollo/client/react/hoc';
 import ModalProvider from '@plitzi/plitzi-ui-components/Modal/ModalProvider';
 
@@ -21,6 +20,23 @@ import SchemaContextProvider from '@pmodules/Schema/SchemaContextProvider';
 import NavigationContextProvider from '@pmodules/Navigation/NavigationContextProvider';
 import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   instanceId: string;
+ *   webKey: string;
+ *   webId: number;
+ *   environment: string;
+ *   userKey: string;
+ *   server: object;
+ *   includeSubscriptions: boolean;
+ *   includeRealTime: boolean;
+ *   previewMode: boolean;
+ *   client: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+
 const AppProvider = props => {
   const {
     children,
@@ -32,7 +48,7 @@ const AppProvider = props => {
     server,
     includeSubscriptions = true,
     includeRealTime = true,
-    client,
+    client, // hocs
     previewMode = false
   } = props;
 
@@ -78,21 +94,6 @@ const AppProvider = props => {
       </NetworkSubscriptionsContextProvider>
     </NetworkContextProvider>
   );
-};
-
-AppProvider.propTypes = {
-  children: PropTypes.node,
-  instanceId: PropTypes.string,
-  webKey: PropTypes.string,
-  webId: PropTypes.number,
-  environment: PropTypes.string,
-  userKey: PropTypes.string,
-  server: PropTypes.object,
-  includeSubscriptions: PropTypes.bool,
-  includeRealTime: PropTypes.bool,
-  previewMode: PropTypes.bool,
-  // hocs
-  client: PropTypes.object
 };
 
 export default withApollo(AppProvider);

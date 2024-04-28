@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import capitalize from 'lodash/capitalize';
@@ -17,8 +16,21 @@ import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '@modul
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const Reference = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   children: React.ReactNode;
+ *   className: string;
+ *   internalProps: object;
+ *   referenceType: string;
+ *   referenceId: string;
+ *   referenceContainer: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Reference = props => {
   const {
+    ref,
     children,
     className = '',
     internalProps = emptyObject,
@@ -36,9 +48,9 @@ const Reference = forwardRef((props, ref) => {
   } = usePlitziServiceContext();
   const [reference, setReference] = useState();
   const [dsManagerChild, setDsManagerChild] = useState();
-  const { schema: mainSchema } = useContext(SchemaContext);
-  const { segments, segmentGet } = useContext(SegmentsContext);
-  const dataSourceContext = useContext(DataSourceContext);
+  const { schema: mainSchema } = use(SchemaContext);
+  const { segments, segmentGet } = use(SegmentsContext);
+  const dataSourceContext = use(DataSourceContext);
   const dsManager = get(dataSourceContext, 'dataSourceManager');
   let refreshReference;
   if (!previewMode && referenceType === PARTIAL_SCHEMA_TYPE_SEGMENT && segments && referenceId) {
@@ -170,15 +182,6 @@ const Reference = forwardRef((props, ref) => {
       )}
     </RootElement>
   );
-});
-
-Reference.propTypes = {
-  children: PropTypes.node,
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  referenceType: PropTypes.oneOf([PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT]),
-  referenceId: PropTypes.string,
-  referenceContainer: PropTypes.string
 };
 
 export default withElement(Reference);

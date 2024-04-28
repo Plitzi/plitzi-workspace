@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
@@ -13,6 +12,12 @@ import BuilderTreeNode from './BuilderTreeNode';
 import { isInViewport } from '../../../../helpers/utils';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
+/**
+ * @param {{
+ *   setDragTree?: (dragTree: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderTree = props => {
   const { setDragTree = noop } = props;
   const [, setCache, getCache] = useCache();
@@ -26,13 +31,13 @@ const BuilderTree = props => {
   });
   const {
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
-  const { elementHovered, setHovered: setHoverElement } = useContext(BuilderHoveredContext);
-  const { elementSelected, setSelected: setSelectElement } = useContext(BuilderSelectedContext);
+  } = use(BuilderContext);
+  const { elementHovered, setHovered: setHoverElement } = use(BuilderHoveredContext);
+  const { elementSelected, setSelected: setSelectElement } = use(BuilderSelectedContext);
 
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
+  } = use(BuilderSchemaContext);
   const baseElement = useMemo(() => flat[baseElementId], [flat, baseElementId]);
 
   const handleHover = useCallback(nodeId => setHoverElement(nodeId), [flat, setHoverElement]);
@@ -193,10 +198,6 @@ const BuilderTree = props => {
       })}
     </div>
   );
-};
-
-BuilderTree.propTypes = {
-  setDragTree: PropTypes.func
 };
 
 export default BuilderTree;

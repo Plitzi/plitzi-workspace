@@ -1,6 +1,5 @@
 // Packages
-import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -13,14 +12,21 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageInteractions = props => {
   const { children, previewMode = false } = props;
-  const { schema } = useContext(SchemaContext);
+  const { schema } = use(SchemaContext);
   const { keepState, stateStorage } = useMemo(() => get(schema, 'settings', {}), [schema]);
-  const { setStateByKey, clearCache } = useContext(StateManagerContext);
-  const { useInteractions } = useContext(InteractionsContext);
-  const { navigate } = useContext(NavigationContext);
-  const { pages: pageIds, pageDefinitions } = useContext(SchemaMainContext);
+  const { setStateByKey, clearCache } = use(StateManagerContext);
+  const { useInteractions } = use(InteractionsContext);
+  const { navigate } = use(NavigationContext);
+  const { pages: pageIds, pageDefinitions } = use(SchemaMainContext);
 
   const handleSetPageState = useCallback(
     params => {
@@ -145,11 +151,6 @@ const PageInteractions = props => {
   useInteractions({ id: 'page', callbacks: interactionCallbacks });
 
   return children;
-};
-
-PageInteractions.propTypes = {
-  children: PropTypes.node,
-  previewMode: PropTypes.bool
 };
 
 export default PageInteractions;

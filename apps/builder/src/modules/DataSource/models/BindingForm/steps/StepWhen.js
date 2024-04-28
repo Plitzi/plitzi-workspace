@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
@@ -9,6 +8,15 @@ import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
+/**
+ * @param {{
+ *   when?: object;
+ *   dataSourceFields?: object;
+ *   onBack?: () => void;
+ *   onNext?: (values: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StepWhen = props => {
   const { when: whenProp, dataSourceFields = emptyObject, onBack = noop, onNext = noop } = props;
   const [when, setWhen] = useState(whenProp);
@@ -71,14 +79,6 @@ const StepWhen = props => {
       </div>
     </div>
   );
-};
-
-StepWhen.propTypes = {
-  className: PropTypes.string,
-  when: PropTypes.object,
-  dataSourceFields: PropTypes.object,
-  onNext: PropTypes.func,
-  onBack: PropTypes.func
 };
 
 export default StepWhen;

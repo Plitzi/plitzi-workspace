@@ -1,13 +1,24 @@
 // Packages
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 export const LIMIT_MODE_PARENT = 'parent';
 export const LIMIT_MODE_WINDOW = 'window';
 export const LIMIT_MODE_NONE = 'none';
 
+/**
+ * @param {{
+ *   x?: number;
+ *   y?: number;
+ *   limitMode?: 'parent' | 'window' | 'none';
+ *   children?: React.ReactNode;
+ *   className?: string;
+ *   updateOnDragging?: boolean;
+ *   onPositionChanged?: (x: number, y: number) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeDraggable = props => {
   const {
     x = 0,
@@ -190,16 +201,6 @@ const NodeDraggable = props => {
       {children}
     </div>
   );
-};
-
-NodeDraggable.propTypes = {
-  children: PropTypes.node,
-  className: PropTypes.string,
-  x: PropTypes.number,
-  y: PropTypes.number,
-  limitMode: PropTypes.oneOf([LIMIT_MODE_WINDOW, LIMIT_MODE_PARENT, LIMIT_MODE_NONE]),
-  updateOnDragging: PropTypes.bool,
-  onPositionChanged: PropTypes.func
 };
 
 export default NodeDraggable;

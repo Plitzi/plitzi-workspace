@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
@@ -14,6 +13,18 @@ import WorkflowFlow from './WorkflowFlow';
 import WorkflowHeader from './WorkflowHeader';
 import WorkflowContextProvider from './WorkflowContextProvider';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   nodes?: object;
+ *   triggerTitle?: string;
+ *   callbackTitle?: string;
+ *   nodeDefinitions?: object;
+ *   direction?: 'horizontal' | 'vertical';
+ *   onChange?: (nodes: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Workflow = props => {
   const {
     className = '',
@@ -114,16 +125,6 @@ const Workflow = props => {
       </WorkflowContextProvider>
     </div>
   );
-};
-
-Workflow.propTypes = {
-  className: PropTypes.string,
-  nodes: PropTypes.object,
-  nodeDefinitions: PropTypes.array,
-  triggerTitle: PropTypes.string,
-  callbackTitle: PropTypes.string,
-  direction: PropTypes.oneOf(['horizontal', 'vertical']),
-  onChange: PropTypes.func
 };
 
 export default Workflow;

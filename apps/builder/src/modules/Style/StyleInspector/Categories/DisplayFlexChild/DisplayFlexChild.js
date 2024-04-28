@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 import isEqual from 'lodash/isEqual';
 
@@ -19,9 +18,16 @@ import GroupButtons from '../../../components/GroupButtons';
 
 const dotKeys = [ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (type: string, isCollapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayFlexChild = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
 
   const handleChangeValue = (type, partialValue) => setValue(type, partialValue);
 
@@ -108,11 +114,6 @@ const DisplayFlexChild = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-DisplayFlexChild.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default memo(DisplayFlexChild);

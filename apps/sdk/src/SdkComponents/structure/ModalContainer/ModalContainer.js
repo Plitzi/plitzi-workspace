@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -14,8 +13,20 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const ModalContainer = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   title: string;
+ *   autoHideAfterClick: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const ModalContainer = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -26,8 +37,8 @@ const ModalContainer = forwardRef((props, ref) => {
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = useContext(InteractionsContext);
-  const { useDataSource } = useContext(DataSourceContext);
+  const { interactionsManager } = use(InteractionsContext);
+  const { useDataSource } = use(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState({});
 
   const handleOpenModal = useCallback(
@@ -147,14 +158,6 @@ const ModalContainer = forwardRef((props, ref) => {
       </div>
     </RootElement>
   );
-});
-
-ModalContainer.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  title: PropTypes.string,
-  autoHideAfterClick: PropTypes.bool
 };
 
 export default withElement(ModalContainer);

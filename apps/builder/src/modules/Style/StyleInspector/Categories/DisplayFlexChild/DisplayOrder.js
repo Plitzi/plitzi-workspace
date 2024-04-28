@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,13 @@ import Icons from '@pcomponents/Icons/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayOrder = props => {
   const { partialValue, onChange = noop } = props;
 
@@ -45,11 +51,6 @@ const DisplayOrder = props => {
   return (
     <GroupButtons classNameContainer="w-[180px]" items={items} label="Order" keyValue={ORDER} onChange={handleChange} />
   );
-};
-
-DisplayOrder.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default DisplayOrder;

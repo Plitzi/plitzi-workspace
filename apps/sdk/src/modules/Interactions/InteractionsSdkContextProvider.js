@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { use } from 'react';
 
 // Monorepo
 import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
@@ -10,9 +9,16 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
 import PageInteractions from './sources/PageSource/PageInteractions';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InteractionsSdkContextProvider = props => {
   const { children, previewMode = false } = props;
-  const { currentPageId, routeParams, queryParams } = useContext(NavigationContext);
+  const { currentPageId, routeParams, queryParams } = use(NavigationContext);
 
   return (
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>
@@ -21,11 +27,6 @@ const InteractionsSdkContextProvider = props => {
       </CollectionInteractions>
     </InteractionsContextProvider>
   );
-};
-
-InteractionsSdkContextProvider.propTypes = {
-  children: PropTypes.node,
-  previewMode: PropTypes.bool
 };
 
 export default InteractionsSdkContextProvider;

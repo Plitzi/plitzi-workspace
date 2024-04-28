@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import { Link } from 'react-router-dom';
@@ -16,15 +15,24 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/
 // Relatives
 import PageActions from './PageActions';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   active?: boolean;
+ *   nestedLevel?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Page = props => {
   const { className = '', id = '', active = false, nestedLevel = 0 } = props;
   const {
     schema,
     schema: { flat }
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
   const {
     style: { cache }
-  } = useContext(StyleContext);
+  } = use(StyleContext);
   const [zoom, setZoom] = useState(false);
   const page = useMemo(() => get(flat, id, {}), [flat, id]);
   if (!page) {
@@ -64,13 +72,6 @@ const Page = props => {
       </Link>
     </div>
   );
-};
-
-Page.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  active: PropTypes.bool,
-  nestedLevel: PropTypes.number
 };
 
 export default Page;

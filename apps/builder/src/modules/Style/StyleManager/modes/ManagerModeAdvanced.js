@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useLayoutEffect, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -19,11 +18,18 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 
 const selectorsDefault = [];
 
+/**
+ * @param {{
+ *   selectors?: any[];
+ *   selected?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ManagerModeAdvanced = props => {
   const { selectors = selectorsDefault, selected } = props;
-  const { builderHandler } = useContext(BuilderContext);
-  const { displayMode } = useContext(AppContext);
-  const { server, webKey } = useContext(NetworkContext);
+  const { builderHandler } = use(BuilderContext);
+  const { displayMode } = use(AppContext);
+  const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const selector = useMemo(() => selectors.find(selectorAux => selectorAux.name === selected), [selected, selectors]);
   const CMRef = useRef({});
@@ -159,11 +165,6 @@ const ManagerModeAdvanced = props => {
       )}
     </div>
   );
-};
-
-ManagerModeAdvanced.propTypes = {
-  selectors: PropTypes.array,
-  selected: PropTypes.string
 };
 
 export default ManagerModeAdvanced;

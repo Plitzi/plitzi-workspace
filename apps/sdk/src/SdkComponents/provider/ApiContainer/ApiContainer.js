@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 import get from 'lodash/get';
@@ -17,8 +16,25 @@ import RootElement from '@modules/Element/RootElement';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 import useApi from './hooks/useApi';
 
-const ApiContainer = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   query: string;
+ *   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
+ *   accessToken: string;
+ *   when: object;
+ *   headers: object;
+ *   mockData: object;
+ *   subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const ApiContainer = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -35,9 +51,9 @@ const ApiContainer = forwardRef((props, ref) => {
     settings: { previewMode, debugMode },
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = useContext(InteractionsContext);
-  const { useDataSource } = useContext(DataSourceContext);
-  const { routeParams, queryParams } = useContext(NavigationContext);
+  const { interactionsManager } = use(InteractionsContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { routeParams, queryParams } = use(NavigationContext);
   const queryCompiled = useMemo(() => {
     if (!query) {
       return '';
@@ -160,30 +176,6 @@ const ApiContainer = forwardRef((props, ref) => {
       )} */}
     </RootElement>
   );
-});
-
-ApiContainer.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  query: PropTypes.string,
-  method: PropTypes.oneOf(['get', 'post']),
-  accessToken: PropTypes.string,
-  when: PropTypes.object,
-  headers: PropTypes.object,
-  mockData: PropTypes.string,
-  subType: PropTypes.oneOf([
-    'div',
-    'header',
-    'footer',
-    'nav',
-    'main',
-    'section',
-    'article',
-    'aside',
-    'address',
-    'figure'
-  ]),
-  className: PropTypes.string
 };
 
 export default withElement(ApiContainer);

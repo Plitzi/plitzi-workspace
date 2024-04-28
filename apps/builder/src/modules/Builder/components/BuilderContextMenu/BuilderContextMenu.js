@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
@@ -25,6 +24,15 @@ import BuilderContextSubMenu from './BuilderContextSubMenu';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
+/**
+ * @param {{
+ *   width?: number;
+ *   iframeDOM?: object;
+ *   zoom?: number;
+ *   getWindow?: () => object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderContextMenu = props => {
   const { width = 250, iframeDOM, zoom = 1, getWindow = noop } = props;
   const { showModal } = useModal();
@@ -34,14 +42,14 @@ const BuilderContextMenu = props => {
   const [xPos, setXPos] = useState('0px');
   const [yPos, setYPos] = useState('0px');
   const [showMenu, setShowMenu] = useState(false);
-  const { builderElementPermissions, builderHandler } = useContext(BuilderContext);
-  const builderTemplatesContext = useContext(TemplatesContext);
-  const builderSegmentsContext = useContext(SegmentsContext);
-  const { elementSelected, setSelected } = useContext(BuilderSelectedContext);
+  const { builderElementPermissions, builderHandler } = use(BuilderContext);
+  const builderTemplatesContext = use(TemplatesContext);
+  const builderSegmentsContext = use(SegmentsContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
-  const { style } = useContext(BuilderStyleContext);
+  } = use(BuilderSchemaContext);
+  const { style } = use(BuilderStyleContext);
   const element = useMemo(() => flat[elementSelected], [elementSelected]);
   const componentConfig = useMemo(() => builderElementPermissions(element), [element, builderElementPermissions]);
 
@@ -302,13 +310,6 @@ const BuilderContextMenu = props => {
       </div>
     </Card>
   );
-};
-
-BuilderContextMenu.propTypes = {
-  width: PropTypes.number,
-  iframeDOM: PropTypes.object,
-  zoom: PropTypes.number,
-  getWindow: PropTypes.func
 };
 
 export default memo(BuilderContextMenu);

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useRef, useState } from 'react';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -13,13 +13,14 @@ import PluginList from './PluginList';
 import PluginDetails from './PluginDetails';
 import { parsePlugin } from '../../helpers/PluginHelper';
 
+/** @returns {React.ReactElement} */
 const MarketPlugins = () => {
   const [filter, setFilter] = useState({ name: { contains: '' }, owner: { contains: '' } });
   const [loading, setLoading] = useState(true);
   const [pluginSelected, setPluginSelected] = useState();
   const { addToast } = useToast();
   const [data, setData] = useState({ cursor: undefined, hasNextPage: false, plugins: {} });
-  const pluginsContext = useContext(PluginsContext);
+  const pluginsContext = use(PluginsContext);
   const { plugins: pluginsInstalled } = pluginsContext;
 
   useEffect(() => {
@@ -213,7 +214,5 @@ const MarketPlugins = () => {
     </div>
   );
 };
-
-MarketPlugins.propTypes = {};
 
 export default MarketPlugins;

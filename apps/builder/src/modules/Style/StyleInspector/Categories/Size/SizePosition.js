@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -9,6 +8,13 @@ import { OBJECT_POSITION } from '@plitzi/sdk-style/StyleConstants';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (value: { type: string; value: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SizePosition = props => {
   const { onChange = noop } = props;
   let { partialValue } = props;
@@ -57,11 +63,6 @@ const SizePosition = props => {
       onChange={handleChange}
     />
   );
-};
-
-SizePosition.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default SizePosition;

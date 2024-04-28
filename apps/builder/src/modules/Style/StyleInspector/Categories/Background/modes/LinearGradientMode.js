@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -9,6 +8,13 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 import InspectorLabel from '@pmodules/Style/StyleInspector/InspectorLabel';
 import InputAngle from '@pcomponents/InputAngle/InputAngle';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const LinearGradientMode = props => {
   const { partialValue, onChange = noop } = props;
 
@@ -31,11 +37,6 @@ const LinearGradientMode = props => {
       </div>
     </>
   );
-};
-
-LinearGradientMode.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default LinearGradientMode;

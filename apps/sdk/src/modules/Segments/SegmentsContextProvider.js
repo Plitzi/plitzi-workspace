@@ -1,6 +1,5 @@
 // Packages
-import React, { useMemo, useContext, useRef, useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, use, useRef, useCallback, useState } from 'react';
 import get from 'lodash/get';
 
 // Alias
@@ -10,10 +9,17 @@ import NetworkContext from '@modules/Network/NetworkContext';
 // Relatives
 import SegmentsContext from './SegmentsContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   segments: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SegmentsContextProvider = props => {
   const { children, segments: segmentsProp } = props;
-  const { query } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { query } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const segmentsPropMemo = useMemo(() => {
     if (segmentsProp) {
       return segmentsProp;
@@ -53,11 +59,6 @@ const SegmentsContextProvider = props => {
   const valueMemo = useMemo(() => ({ segments, segmentGet }), [segments, segmentGet]);
 
   return <SegmentsContext.Provider value={valueMemo}>{children}</SegmentsContext.Provider>;
-};
-
-SegmentsContextProvider.propTypes = {
-  children: PropTypes.node,
-  segments: PropTypes.array
 };
 
 export default SegmentsContextProvider;

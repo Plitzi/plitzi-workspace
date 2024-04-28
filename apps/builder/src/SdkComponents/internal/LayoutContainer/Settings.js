@@ -1,9 +1,15 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 
+/**
+ * @param {{
+ *   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { subType = 'div', onUpdate = noop } = props;
   const handleChange = key => e => onUpdate(key, e.target.value);
@@ -32,22 +38,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  subType: PropTypes.oneOf([
-    'div',
-    'header',
-    'footer',
-    'nav',
-    'main',
-    'section',
-    'article',
-    'aside',
-    'address',
-    'figure'
-  ]),
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -13,12 +12,20 @@ import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
 import NetworkContext from './NetworkContext';
 import { RealTimeEventTypes, RealTimeEventTypesList, RealTimeSelfEventTypesList } from './helpers/EventTypes';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   includeSubscriptions?: boolean;
+ *   includeRealTime?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NetworkSubscriptionsContextProvider = props => {
   const { children, includeRealTime = true, includeSubscriptions = true } = props;
   const { addToast } = useToast();
   const [messageCallbacks, setMessageCallbacks] = useState({});
   const [collaborators, setCollaborators] = useState([]);
-  const { webKey, instanceId, server, userKey } = useContext(NetworkContext);
+  const { webKey, instanceId, server, userKey } = use(NetworkContext);
 
   const processMessage = useCallback(
     e => {
@@ -130,12 +137,6 @@ const NetworkSubscriptionsContextProvider = props => {
   return (
     <BuilderSubscriptionsContext.Provider value={subscriptionsValue}>{children}</BuilderSubscriptionsContext.Provider>
   );
-};
-
-NetworkSubscriptionsContextProvider.propTypes = {
-  children: PropTypes.node,
-  includeSubscriptions: PropTypes.bool,
-  includeRealTime: PropTypes.bool
 };
 
 export default NetworkSubscriptionsContextProvider;

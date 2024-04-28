@@ -1,6 +1,5 @@
 // Packages
-import React, { useMemo, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, use } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -19,9 +18,17 @@ export const SCHEMA_TYPE_PARTIAL = 'partial';
 export const SCHEMA_TYPE_TEMPLATE = 'template';
 export const SCHEMA_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   type: 'normal' | 'partial' | 'template' | 'segment';
+ *   schema: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SchemaContextProvider = props => {
   const { children, type = SCHEMA_TYPE_NORMAL, schema: schemaProp } = props;
-  const internalData = useContext(NetworkInternalContext);
+  const internalData = use(NetworkInternalContext);
   const schema = useMemo(() => {
     if (schemaProp) {
       return schemaProp;
@@ -54,12 +61,6 @@ const SchemaContextProvider = props => {
       </SchemaSettingsContext.Provider>
     </SchemaPagesContext.Provider>
   );
-};
-
-SchemaContextProvider.propTypes = {
-  children: PropTypes.node,
-  schema: PropTypes.object,
-  type: PropTypes.oneOf([SCHEMA_TYPE_NORMAL, SCHEMA_TYPE_PARTIAL, SCHEMA_TYPE_TEMPLATE, SCHEMA_TYPE_SEGMENT])
 };
 
 export default SchemaContextProvider;

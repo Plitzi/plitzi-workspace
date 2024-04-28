@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -37,9 +36,16 @@ import DisplayGridGap from './DisplayGridGap';
 
 const dotKeys = [DISPLAY, FLEX_WRAP, FLEX_DIRECTION, ALIGN_ITEMS, JUSTIFY_CONTENT, ALIGN_CONTENT];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (category: string, collapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Display = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
   const handleChange = (type, partialValue) => {
     setValue(type, partialValue);
   };
@@ -116,11 +122,6 @@ const Display = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-Display.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default memo(Display);

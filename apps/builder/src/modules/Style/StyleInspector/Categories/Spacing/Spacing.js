@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useState } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -32,9 +31,16 @@ const dotKeys = [
   PADDING_RIGHT
 ];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (type: string, isCollapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Spacing = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
   const [fragmentSelected, setFragmentSelected] = useState();
 
   const handleChange = (type, partialValue) => {
@@ -70,11 +76,6 @@ const Spacing = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-Spacing.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default memo(Spacing);

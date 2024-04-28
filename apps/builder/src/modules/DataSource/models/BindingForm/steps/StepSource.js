@@ -1,11 +1,19 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 
+/**
+ * @param {{
+ *   sources: object;
+ *   source: string;
+ *   onCancel: () => void;
+ *   onNext: (values: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StepSource = props => {
   const { sources, source: sourceProp = '', onCancel = noop, onNext = noop } = props;
   const [source, setSource] = useState(() => {
@@ -54,14 +62,6 @@ const StepSource = props => {
       </div>
     </div>
   );
-};
-
-StepSource.propTypes = {
-  className: PropTypes.string,
-  sources: PropTypes.object,
-  source: PropTypes.string,
-  onCancel: PropTypes.func,
-  onNext: PropTypes.func
 };
 
 export default StepSource;

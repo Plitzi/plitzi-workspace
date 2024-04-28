@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import { withApollo } from '@apollo/client/react/hoc';
@@ -19,6 +18,19 @@ import Mutations from './Mutations';
 import Queries from './Queries';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   webKey?: string;
+ *   webId?: number;
+ *   userKey?: string;
+ *   instanceId?: string;
+ *   server?: object;
+ *   client?: object;
+ *   environment?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NetworkContextProvider = props => {
   const {
     children,
@@ -27,13 +39,13 @@ const NetworkContextProvider = props => {
     userKey = '',
     instanceId,
     server,
-    client,
+    client, // hoc
     environment = 'development'
   } = props;
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(undefined);
-  const { registerDefinition } = useContext(ComponentContext);
+  const { registerDefinition } = use(ComponentContext);
   const [internalData, setInternalData] = useState({});
 
   const query = useCallback(
@@ -278,18 +290,6 @@ const NetworkContextProvider = props => {
       <NetworkInternalContext.Provider value={internalData}>{children}</NetworkInternalContext.Provider>
     </NetworkContext.Provider>
   );
-};
-
-NetworkContextProvider.propTypes = {
-  children: PropTypes.node,
-  instanceId: PropTypes.string,
-  webKey: PropTypes.string,
-  webId: PropTypes.number,
-  environment: PropTypes.string,
-  userKey: PropTypes.string,
-  server: PropTypes.object,
-  // hoc
-  client: PropTypes.object
 };
 
 export default withApollo(NetworkContextProvider);

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,15 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   isReverse?: boolean;
+ *   isRow?: boolean;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayFlexAlignContent = props => {
   const { partialValue, isReverse = false, isRow = false, onChange = noop } = props;
 
@@ -102,13 +110,6 @@ const DisplayFlexAlignContent = props => {
       onChange={handleChange}
     />
   );
-};
-
-DisplayFlexAlignContent.propTypes = {
-  partialValue: PropTypes.string,
-  isReverse: PropTypes.bool,
-  isRow: PropTypes.bool,
-  onChange: PropTypes.func
 };
 
 export default DisplayFlexAlignContent;

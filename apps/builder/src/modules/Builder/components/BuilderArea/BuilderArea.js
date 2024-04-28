@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
@@ -46,6 +45,20 @@ import styleTailwind from '!!css-loader!postcss-loader!sass-loader!../../Assets/
 // SDK Style
 import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // eslint-disable-line
 
+/**
+ * @param {{
+ *   className?: string;
+ *   customCss?: string;
+ *   externalStyle?: string;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ *   showHeader?: boolean;
+ *   headerTitle?: string;
+ *   showFooter?: boolean;
+ *   mobilePreview?: boolean;
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderArea = props => {
   const {
     className = '',
@@ -58,17 +71,17 @@ const BuilderArea = props => {
     mobilePreview = false,
     previewMode = false
   } = props;
-  const { assets } = useContext(PluginsContext);
+  const { assets } = use(PluginsContext);
   const {
     multiPagesMode,
     mode,
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
-  const { displayBorderComponents, zoom } = useContext(AppContext);
+  } = use(BuilderContext);
+  const { displayBorderComponents, zoom } = use(AppContext);
   const {
     style,
     style: { cache }
-  } = useContext(BuilderStyleContext);
+  } = use(BuilderStyleContext);
   const css = useMemo(
     () => `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${styleFrame[1][1]}\n${`${cache}\n${customCss}`}\n${externalStyle}`,
     [customCss, cache, externalStyle]
@@ -81,10 +94,10 @@ const BuilderArea = props => {
   const [heightArea, setHeightArea] = useState(0);
   const [iframeScaleX, setIframeScaleX] = useState(1);
   const [desiredWidth] = useState(1440);
-  const { supportRealTime, subscriptionsCollaborators } = useContext(BuilderSubscriptionsContext);
-  const { currentPageId } = useContext(NavigationContext);
-  const { schema, builderGetBaseElement } = useContext(BuilderSchemaContext);
-  const { rootDOM } = useContext(ContainerRootContext);
+  const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
+  const { currentPageId } = use(NavigationContext);
+  const { schema, builderGetBaseElement } = use(BuilderSchemaContext);
+  const { rootDOM } = use(ContainerRootContext);
 
   const callbackRefresh = () => {
     if (!refContainer.current || !ref.current) {
@@ -337,18 +350,6 @@ const BuilderArea = props => {
       {!multiPagesMode && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
     </div>
   );
-};
-
-BuilderArea.propTypes = {
-  className: PropTypes.string,
-  externalStyle: PropTypes.string,
-  customCss: PropTypes.string,
-  displayMode: PropTypes.oneOf(['desktop', 'tablet', 'mobile']),
-  mobilePreview: PropTypes.bool,
-  showHeader: PropTypes.bool,
-  headerTitle: PropTypes.string,
-  showFooter: PropTypes.bool,
-  previewMode: PropTypes.bool
 };
 
 export default memo(BuilderArea);

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
@@ -20,6 +19,14 @@ import Effects from '../Categories/Effects';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 import useStyleInherit from '../../hooks/useStyleInherit';
 
+/**
+ * @param {{
+ *   selector?: string;
+ *   styleSelector?: string;
+ *   element: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InspectorModeBasic = props => {
   const { selector = '', styleSelector = 'base', element } = props;
   const [cache, setCache, getCacheByKey] = useCache();
@@ -96,12 +103,6 @@ const InspectorModeBasic = props => {
       </div>
     </StyleInspectorProvider>
   );
-};
-
-InspectorModeBasic.propTypes = {
-  selector: PropTypes.string,
-  styleSelector: PropTypes.string,
-  element: PropTypes.object
 };
 
 export default InspectorModeBasic;

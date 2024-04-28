@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -11,6 +10,25 @@ import InspectorLabel from '../../InspectorLabel';
 import SpacingPadding from './SpacingPadding';
 import SpacingNumber from './SpacingNumber';
 
+/**
+ * @param {{
+ *   fragmentSelected?: string;
+ *   partialValue?: {
+ *     marginTop: string;
+ *     marginBottom: string;
+ *     marginLeft: string;
+ *     marginRight: string;
+ *   };
+ *   padding?: {
+ *     paddingTop: string;
+ *     paddingBottom: string;
+ *     paddingLeft: string;
+ *     paddingRight: string;
+ *   };
+ *   onSelectFragment?: (fragment: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SpacingMargin = props => {
   const { fragmentSelected, partialValue, padding, onSelectFragment = noop } = props;
 
@@ -78,13 +96,6 @@ const SpacingMargin = props => {
       </div>
     </div>
   );
-};
-
-SpacingMargin.propTypes = {
-  partialValue: PropTypes.object,
-  padding: PropTypes.object,
-  fragmentSelected: PropTypes.string,
-  onSelectFragment: PropTypes.func
 };
 
 export default SpacingMargin;

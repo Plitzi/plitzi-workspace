@@ -1,7 +1,12 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 
+/**
+ * @param {{
+ *   pageId?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const MadeInPlitzi = props => {
   const { pageId = '' } = props;
 
@@ -16,10 +21,6 @@ const MadeInPlitzi = props => {
       Made in Plitzi
     </a>
   );
-};
-
-MadeInPlitzi.propTypes = {
-  pageId: PropTypes.string
 };
 
 export default MadeInPlitzi;

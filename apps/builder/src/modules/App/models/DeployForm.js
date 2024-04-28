@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
@@ -12,6 +11,17 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   environment?: string;
+ *   domain?: string;
+ *   revision?: string;
+ *   onClose?: () => void;
+ *   onSubmit?: (values: { environment: string; domain: string; revision: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DeployForm = props => {
   const { className = '', environment = 'main', domain = '', revision = '', onClose = noop, onSubmit = noop } = props;
   const [loading, setLoading] = useState(false);
@@ -19,7 +29,7 @@ const DeployForm = props => {
   const [envSelected, setEnvSelected] = useState(environment);
   const [domainSelected, setDomainSelected] = useState(undefined);
   const [latestRevision, setLatestRevision] = useState(undefined);
-  const { query } = useContext(NetworkContext);
+  const { query } = use(NetworkContext);
   const { addToast } = useToast();
 
   const { control, handleSubmit, setValue } = useForm({ defaultValues: { environment, domain, revision } });
@@ -192,15 +202,6 @@ const DeployForm = props => {
       </div>
     </form>
   );
-};
-
-DeployForm.propTypes = {
-  className: PropTypes.string,
-  environment: PropTypes.string,
-  revision: PropTypes.string,
-  domain: PropTypes.string,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default DeployForm;

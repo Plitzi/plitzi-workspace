@@ -1,7 +1,6 @@
 /* eslint-disable react/no-danger */
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 // Alias
 import MadeInPlitzi from '@components/MadeInPlitzi';
@@ -11,6 +10,14 @@ import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceC
 import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
 
+/**
+ * @param {{
+ *   pageId?: string;
+ *   style?: string;
+ *   plitziContextValue: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const RawMode = props => {
   const { pageId = '', style = '', plitziContextValue } = props;
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
@@ -24,12 +31,6 @@ const RawMode = props => {
       <MadeInPlitzi pageId={pageId} />
     </SpaceContainer>
   );
-};
-
-RawMode.propTypes = {
-  plitziContextValue: PropTypes.object,
-  pageId: PropTypes.string,
-  style: PropTypes.string
 };
 
 export default RawMode;

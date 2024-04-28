@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -10,14 +9,34 @@ import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
 import usePlitziServiceContext from '../../../../services/hooks/usePlitziServiceContext';
 
 const withFieldValue = WrappedComponent => {
-  const WithFieldValueComponent = forwardRef((props, ref) => {
-    const { internalProps = emptyObject, name = '', subType = 'text', required = true } = props;
+  /**
+   * @param {{
+   *   ref: React.MutableRefObject<HTMLElement>;
+   *   internalProps: object;
+   *   name: string;
+   *   subType:
+   *     | 'hidden'
+   *     | 'text'
+   *     | 'number'
+   *     | 'email'
+   *     | 'password'
+   *     | 'select'
+   *     | 'checkbox'
+   *     | 'textarea'
+   *     | 'color'
+   *     | 'switch';
+   *   required: boolean;
+   * }} props
+   * @returns {React.ReactElement}
+   */
+  const WithFieldValueComponent = props => {
+    const { ref, internalProps = emptyObject, name = '', subType = 'text', required = true } = props;
     const { id } = internalProps;
     const {
       settings: { previewMode },
       contexts: { DataSourceContext }
     } = usePlitziServiceContext();
-    const { useDataSource } = useContext(DataSourceContext);
+    const { useDataSource } = use(DataSourceContext);
     const { form } = useDataSource({ id, mode: 'read' });
     if (!form) {
       return <WrappedComponent {...props} />;
@@ -67,27 +86,9 @@ const withFieldValue = WrappedComponent => {
     );
 
     return WrappedComponentMemo;
-  });
+  };
 
   WithFieldValueComponent.displayName = `withFieldValue(${getDisplayName(WrappedComponent)})`;
-
-  WithFieldValueComponent.propTypes = {
-    internalProps: PropTypes.object,
-    name: PropTypes.string,
-    subType: PropTypes.oneOf([
-      'hidden',
-      'text',
-      'number',
-      'email',
-      'password',
-      'select',
-      'checkbox',
-      'textarea',
-      'color',
-      'switch'
-    ]),
-    required: PropTypes.bool
-  };
 
   return WithFieldValueComponent;
 };

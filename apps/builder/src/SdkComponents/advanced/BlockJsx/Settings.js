@@ -1,7 +1,6 @@
 // Packages
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, use, useState } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -14,12 +13,23 @@ import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
 
 // content is done in builder side and injected here as child
+
+/**
+ * @param {{
+ *   content?: string;
+ *   contentCache?: string;
+ *   props?: string;
+ *   allowEmptyRender?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { content = '', props: componentProps = '{}', allowEmptyRender = false, onUpdate = noop } = props;
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
-  const { server, webKey } = useContext(NetworkContext);
+  const { server, webKey } = use(NetworkContext);
   const [error, setError] = useState(undefined);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
 
@@ -94,14 +104,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  content: PropTypes.string,
-  contentCache: PropTypes.string,
-  props: PropTypes.string,
-  allowEmptyRender: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

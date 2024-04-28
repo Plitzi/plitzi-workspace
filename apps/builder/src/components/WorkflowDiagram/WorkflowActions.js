@@ -1,16 +1,21 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
 // Relatives
 import WorkflowContext from './WorkflowContext';
 import { generateID } from '../../helpers/utils';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowActions = props => {
   const { className = '' } = props;
-  const { nodes, direction, registerNode, wipeNodes, performLayout } = useContext(WorkflowContext);
+  const { nodes, direction, registerNode, wipeNodes, performLayout } = use(WorkflowContext);
 
   const handleClickAddNode = useCallback(() => {
     const id = `node-${generateID()}`;
@@ -77,10 +82,6 @@ const WorkflowActions = props => {
       </Button>
     </div>
   );
-};
-
-WorkflowActions.propTypes = {
-  className: PropTypes.string
 };
 
 export default WorkflowActions;

@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
@@ -20,10 +19,19 @@ import {
   RENDER_MODE_WIDGET
 } from '@modules/Sdk/Sdk';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+ *   plugins?: object;
+ *   sdkStylePath?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginsContextProvider = props => {
   const { children, renderMode = RENDER_MODE_IFRAME, plugins: pluginsProp, sdkStylePath = './plitzi-sdk.css' } = props;
   const [temporalCustomStyles, setTemporalCustomStyles] = useState({});
-  const internalData = useContext(NetworkInternalContext);
+  const internalData = use(NetworkInternalContext);
   const plugins = useMemo(() => {
     if (pluginsProp) {
       return pluginsProp;
@@ -31,7 +39,7 @@ const PluginsContextProvider = props => {
 
     return internalData.plugins ?? {};
   }, [pluginsProp, internalData]);
-  const { components } = useContext(ComponentContext);
+  const { components } = use(ComponentContext);
 
   // plugins
 
@@ -196,19 +204,6 @@ const PluginsContextProvider = props => {
       <PluginsContext.Provider value={pluginsContextValue}>{children}</PluginsContext.Provider>
     </>
   );
-};
-
-PluginsContextProvider.propTypes = {
-  children: PropTypes.node,
-  plugins: PropTypes.object,
-  renderMode: PropTypes.oneOf([
-    RENDER_MODE_IFRAME,
-    RENDER_MODE_RAW,
-    RENDER_MODE_SHADOW,
-    RENDER_MODE_SSR,
-    RENDER_MODE_WIDGET
-  ]),
-  sdkStylePath: PropTypes.string
 };
 
 export default PluginsContextProvider;

@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -14,14 +13,24 @@ import RootElement from '@modules/Element/RootElement';
 import usePlitziServiceContext from '../../../../../services/hooks/usePlitziServiceContext';
 import ListControlledItem from './ListControlledItem';
 
-const ListControlled = forwardRef((props, ref) => {
-  const { className = '', internalProps = emptyObject, children, items = [] } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   items: any[];
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const ListControlled = props => {
+  const { ref, className = '', internalProps = emptyObject, children, items = [] } = props;
   const { id } = internalProps;
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = useContext(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext);
   const finalItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;
@@ -76,13 +85,6 @@ const ListControlled = forwardRef((props, ref) => {
       )}
     </RootElement>
   );
-});
-
-ListControlled.propTypes = {
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  items: PropTypes.array,
-  className: PropTypes.string
 };
 
 export default ListControlled;

@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -13,9 +12,19 @@ import ComponentContext from '@modules/Component/ComponentContext';
 import PluginRemote from './PluginRemote';
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   rootId?: string;
+ *   plitziElementLayout?: object;
+ *   type?: string;
+ *   internalProps?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginManager = props => {
   const { id = '', rootId = '', plitziElementLayout = undefined, type = '', internalProps = emptyObject } = props;
-  const { components } = useContext(ComponentContext);
+  const { components } = use(ComponentContext);
   const internalPropsMemo = useMemo(
     () => ({ id, rootId, plitziElementLayout, ...internalProps }),
     [id, rootId, plitziElementLayout, internalProps]
@@ -23,7 +32,7 @@ const PluginManager = props => {
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
-  const { plugins } = useContext(PluginsContext);
+  const { plugins } = use(PluginsContext);
   const PluginNotFound = useMemo(() => {
     const PluginInternal = components.notFound;
 
@@ -76,14 +85,6 @@ const PluginManager = props => {
   }
 
   return Plugin;
-};
-
-PluginManager.propTypes = {
-  id: PropTypes.string,
-  rootId: PropTypes.string,
-  plitziElementLayout: PropTypes.object,
-  type: PropTypes.string,
-  internalProps: PropTypes.object
 };
 
 export default memo(PluginManager);

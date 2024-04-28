@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -8,6 +7,21 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 // Relatives
 import { hexToRGB } from '../../../../helpers/utils';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   name?: string;
+ *   description?: string;
+ *   type?: string;
+ *   latestVersion?: string;
+ *   version?: string;
+ *   icon?: string;
+ *   website?: string;
+ *   color?: string;
+ *   onClick?: (type: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginItem = props => {
   const {
     className = '',
@@ -60,19 +74,6 @@ const PluginItem = props => {
       </div>
     </div>
   );
-};
-
-PluginItem.propTypes = {
-  className: PropTypes.string,
-  name: PropTypes.string,
-  description: PropTypes.string,
-  type: PropTypes.string,
-  latestVersion: PropTypes.string,
-  version: PropTypes.string,
-  icon: PropTypes.string,
-  website: PropTypes.string,
-  color: PropTypes.string,
-  onClick: PropTypes.func
 };
 
 export default PluginItem;

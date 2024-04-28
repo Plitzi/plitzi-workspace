@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -14,8 +13,23 @@ import RootElement from '@modules/Element/RootElement';
 // Relatives
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const DialogContainer = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ *   headerLabel: string;
+ *   acceptButtonLabel: string;
+ *   acceptButtonLabelLoading: string;
+ *   rejectButtonLabel: string;
+ *   autoHideAfterClick: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const DialogContainer = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     children,
@@ -29,8 +43,8 @@ const DialogContainer = forwardRef((props, ref) => {
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = useContext(InteractionsContext);
-  const { useDataSource } = useContext(DataSourceContext);
+  const { interactionsManager } = use(InteractionsContext);
+  const { useDataSource } = use(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState({});
   const [processing, setProcessing] = useState(false);
 
@@ -193,17 +207,6 @@ const DialogContainer = forwardRef((props, ref) => {
       </div>
     </RootElement>
   );
-});
-
-DialogContainer.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  headerLabel: PropTypes.string,
-  acceptButtonLabel: PropTypes.string,
-  acceptButtonLabelLoading: PropTypes.string,
-  rejectButtonLabel: PropTypes.string,
-  autoHideAfterClick: PropTypes.bool
 };
 
 export default withElement(DialogContainer);

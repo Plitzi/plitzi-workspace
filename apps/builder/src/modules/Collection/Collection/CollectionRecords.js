@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -11,6 +10,15 @@ import CollectionRecord from './CollectionRecord';
 
 const itemsDefault = [];
 
+/**
+ * @param {{
+ *   items?: any[];
+ *   fields?: object;
+ *   onUpdate?: () => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionRecords = ({ items = itemsDefault, fields = emptyObject, onUpdate = noop, onRemove = noop }) => (
   <div className="flex flex-col grow border border-gray-300 rounded">
     <div className="flex border-b border-gray-300 h-10 font-bold items-center py-3 px-4 gap-4">
@@ -38,12 +46,5 @@ const CollectionRecords = ({ items = itemsDefault, fields = emptyObject, onUpdat
     </div>
   </div>
 );
-
-CollectionRecords.propTypes = {
-  fields: PropTypes.object,
-  items: PropTypes.array,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func
-};
 
 export default CollectionRecords;

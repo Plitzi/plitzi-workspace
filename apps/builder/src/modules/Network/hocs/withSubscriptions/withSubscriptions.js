@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -14,13 +13,24 @@ import { getDisplayName } from '@plitzi/sdk-shared/utils';
 import NetworkContext from '../../NetworkContext';
 import { RealTimeEventTypes, RealTimeEventTypesList, RealTimeSelfEventTypesList } from '../../helpers/EventTypes';
 
+/**
+ * @param {React.ReactElement} WrappedComponent
+ * @returns {React.ReactElement}
+ */
 const withSubscriptions = WrappedComponent => {
+  /**
+   * @param {{
+   *   includeRealTime?: boolean;
+   *   includeSubscriptions?: boolean;
+   * }} props
+   * @returns {React.ReactElement}
+   */
   const WithSubscriptionsComponent = props => {
     const { includeRealTime = true, includeSubscriptions = true } = props;
     const { addToast } = useToast();
     const [messageCallbacks, setMessageCallbacks] = useState({});
     const [collaborators, setCollaborators] = useState([]);
-    const { webKey, instanceId, server, userKey } = useContext(NetworkContext);
+    const { webKey, instanceId, server, userKey } = use(NetworkContext);
 
     const processMessage = useCallback(
       e => {
@@ -137,11 +147,6 @@ const withSubscriptions = WrappedComponent => {
   };
 
   WithSubscriptionsComponent.displayName = `withSubscriptions(${getDisplayName(WrappedComponent)})`;
-
-  WithSubscriptionsComponent.propTypes = {
-    includeSubscriptions: PropTypes.bool,
-    includeRealTime: PropTypes.bool
-  };
 
   return memo(WithSubscriptionsComponent);
 };

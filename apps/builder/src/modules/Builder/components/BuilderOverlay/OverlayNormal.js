@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
@@ -19,8 +18,28 @@ import BuilderContext from '../../BuilderContext';
 import OverlayButtonResize from './OverlayButtonResize';
 import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 
-const OverlayNormal = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.RefObject<any>;
+ *   id?: string;
+ *   element?: object;
+ *   iframeDOM?: object;
+ *   elementDOM?: object;
+ *   hideActions?: boolean;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ *   container?: object;
+ *   selector?: string;
+ *   zoom?: number;
+ *   mode?: 'hover' | 'select';
+ *   isCollaborator?: boolean;
+ *   color?: string;
+ *   collaboratorName?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const OverlayNormal = props => {
   const {
+    ref,
     id = '',
     element,
     iframeDOM,
@@ -36,8 +55,8 @@ const OverlayNormal = forwardRef((props, ref) => {
     collaboratorName = ''
   } = props;
   const [hoverRemove, setHoverRemove] = useState(false);
-  const { builderElementPermissions, builderHandler } = useContext(BuilderContext);
-  const { style } = useContext(BuilderStyleContext);
+  const { builderElementPermissions, builderHandler } = use(BuilderContext);
+  const { style } = use(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
   const theme = useMemo(() => {
@@ -262,22 +281,6 @@ const OverlayNormal = forwardRef((props, ref) => {
       )}
     </div>
   );
-});
-
-OverlayNormal.propTypes = {
-  id: PropTypes.string,
-  container: PropTypes.object,
-  iframeDOM: PropTypes.object,
-  hideActions: PropTypes.bool,
-  element: PropTypes.object,
-  elementDOM: PropTypes.object,
-  displayMode: PropTypes.string,
-  selector: PropTypes.string,
-  zoom: PropTypes.number,
-  mode: PropTypes.oneOf(['hover', 'select']),
-  isCollaborator: PropTypes.bool,
-  color: PropTypes.string,
-  collaboratorName: PropTypes.string
 };
 
 export default OverlayNormal;

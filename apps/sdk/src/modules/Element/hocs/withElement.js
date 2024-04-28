@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
 
@@ -12,8 +11,21 @@ import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceCon
 import useElementController from '../hooks/useElementController';
 
 const withElement = WrappedComponent => {
+  /**
+   * @param {{
+   *   plitziJsxSkipHOC?: boolean;
+   *   plitziCustomComponent?: boolean;
+   *   internalProps: object;
+   *   className: string;
+   *   children: React.ReactNode;
+   * }} props
+   * @returns {React.ReactElement}
+   */
   const WithElementComponent = props => {
-    const { plitziJsxSkipHOC = false, plitziCustomComponent = false } = props;
+    const {
+      plitziJsxSkipHOC = false, // Props from JSX
+      plitziCustomComponent = false // Props from JSX
+    } = props;
     let { internalProps = emptyObject, className = '', children } = props;
     if (plitziJsxSkipHOC) {
       return useMemo(() => <WrappedComponent {...props} />, [props]);
@@ -72,15 +84,6 @@ const withElement = WrappedComponent => {
   };
 
   WithElementComponent.displayName = `withElement(${getDisplayName(WrappedComponent)})`;
-
-  WithElementComponent.propTypes = {
-    children: PropTypes.node,
-    className: PropTypes.string,
-    internalProps: PropTypes.object,
-    // Props from JSX
-    plitziJsxSkipHOC: PropTypes.bool,
-    plitziCustomComponent: PropTypes.bool
-  };
 
   return WithElementComponent;
 };

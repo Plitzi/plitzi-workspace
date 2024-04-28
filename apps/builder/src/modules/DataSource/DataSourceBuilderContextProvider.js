@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -12,10 +11,16 @@ import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DataSourceBuilderContextProvider = props => {
   const { children } = props;
-  const { state } = useContext(StateManagerContext);
-  const { pages: pageIds, pageDefinitions } = useContext(SchemaMainContext);
+  const { state } = use(StateManagerContext);
+  const { pages: pageIds, pageDefinitions } = use(SchemaMainContext);
 
   const pageOptions = useMemo(
     () =>
@@ -36,10 +41,6 @@ const DataSourceBuilderContextProvider = props => {
       </NavigationSource>
     </DataSourceContextProvider>
   );
-};
-
-DataSourceBuilderContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export default DataSourceBuilderContextProvider;

@@ -1,13 +1,14 @@
 // Packages
-import React, { useContext, useMemo, useState } from 'react';
+import React, { use, useMemo, useState } from 'react';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
 // Relatives
 import ElementCategory from './ElementCategory';
 
+/** @returns {React.ReactElement} */
 const Elements = () => {
-  const { components, componentDefinitions } = useContext(ComponentContext);
+  const { components, componentDefinitions } = use(ComponentContext);
   const [filter, setFilter] = useState('');
 
   const handleChange = e => setFilter(e.target.value);
@@ -50,7 +51,5 @@ const Elements = () => {
     </div>
   );
 };
-
-Elements.propTypes = {};
 
 export default Elements;

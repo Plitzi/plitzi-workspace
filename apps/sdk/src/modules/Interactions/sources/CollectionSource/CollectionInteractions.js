@@ -1,6 +1,5 @@
 // Packages
-import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -11,10 +10,16 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import CollectionContext from '@modules/Collection/CollectionContext';
 import { collectionFieldTypeToInteractions } from '@modules/Collection/CollectionsConstants';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionInteractions = props => {
   const { children } = props;
-  const { useInteractions } = useContext(InteractionsContext);
-  const { collections, addRecord, updateRecord, fetchRecords, removeRecord } = useContext(CollectionContext);
+  const { useInteractions } = use(InteractionsContext);
+  const { collections, addRecord, updateRecord, fetchRecords, removeRecord } = use(CollectionContext);
 
   const validateCollection = useCallback((collection, values) => {
     if (!collection) {
@@ -254,10 +259,6 @@ const CollectionInteractions = props => {
   useInteractions({ id: 'collection', callbacks: interactionCallbacks });
 
   return children;
-};
-
-CollectionInteractions.propTypes = {
-  children: PropTypes.node
 };
 
 export default CollectionInteractions;

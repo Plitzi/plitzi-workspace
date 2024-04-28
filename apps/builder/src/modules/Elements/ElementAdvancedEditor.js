@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
@@ -14,10 +13,19 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   value?: string;
+ *   mode?: 'js' | 'html';
+ *   onChange?: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ElementAdvancedEditor = props => {
   const { className = '', value = '', mode = 'js', onChange = noop } = props;
-  const { componentDefinitions } = useContext(ComponentContext);
-  const { server, webKey } = useContext(NetworkContext);
+  const { componentDefinitions } = use(ComponentContext);
+  const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const pluginsAvailables = useMemo(
     () =>
@@ -94,13 +102,6 @@ const ElementAdvancedEditor = props => {
       </div>
     </div>
   );
-};
-
-ElementAdvancedEditor.propTypes = {
-  className: PropTypes.string,
-  mode: PropTypes.oneOf(['js', 'html']),
-  value: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default ElementAdvancedEditor;

@@ -1,6 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -26,9 +25,16 @@ import GroupButtons from '../../../components/GroupButtons';
 
 const dotKeys = [WIDTH, HEIGHT, MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT, OVERFLOW, OBJECT_FIT, OBJECT_POSITION];
 
+/**
+ * @param {{
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (category: string, isCollapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Size = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('size', isCollapsed), [onCollapse]);
 
@@ -95,11 +101,6 @@ const Size = props => {
       </div>
     </CategoryContainer>
   );
-};
-
-Size.propTypes = {
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default memo(Size);

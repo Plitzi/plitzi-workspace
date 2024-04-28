@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
@@ -10,6 +9,17 @@ import CategoryTitle from './CategoryTitle';
 
 const dotKeysDefault = [];
 
+/**
+ * @param {{
+ *   className?: string;
+ *   children?: React.ReactNode;
+ *   title?: string;
+ *   dotKeys?: string[];
+ *   isCollapsed?: boolean;
+ *   onCollapse?: (collapsed: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CategoryContainer = props => {
   const {
     className = '',
@@ -33,15 +43,6 @@ const CategoryContainer = props => {
       {children}
     </ContainerCollapsable>
   );
-};
-
-CategoryContainer.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  title: PropTypes.string,
-  dotKeys: PropTypes.array,
-  isCollapsed: PropTypes.bool,
-  onCollapse: PropTypes.func
 };
 
 export default CategoryContainer;

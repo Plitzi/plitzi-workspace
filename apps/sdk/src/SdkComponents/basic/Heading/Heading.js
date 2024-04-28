@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,8 +9,18 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const Heading = forwardRef((props, ref) => {
-  const { internalProps = emptyObject, className = '', content = 'Heading', subType = 'h1' } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   className: string;
+ *   content: string | number;
+ *   subType: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Heading = props => {
+  const { ref, internalProps = emptyObject, className = '', content = 'Heading', subType = 'h1' } = props;
   const finalContent = useMemo(() => {
     if (typeof content !== 'string' && typeof content !== 'number') {
       return JSON.stringify(content);
@@ -34,13 +43,6 @@ const Heading = forwardRef((props, ref) => {
       {finalContent || 'Heading'}
     </RootElement>
   );
-});
-
-Heading.propTypes = {
-  internalProps: PropTypes.object,
-  className: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  content: PropTypes.string,
-  subType: PropTypes.oneOf(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
 };
 
 export default withElement(Heading);

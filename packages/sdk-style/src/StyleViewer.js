@@ -1,10 +1,17 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
+/**
+ * @param {{
+ *   elementSelected: string;
+ *   schema: object;
+ *   style: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleViewer = props => {
   const { elementSelected, schema, style } = props;
   const flat = useMemo(() => get(schema, 'flat', {}), [schema]);
@@ -53,12 +60,6 @@ const StyleViewer = props => {
       <CodeMirror theme="dark" readOnly value={styleStr} />
     </div>
   );
-};
-
-StyleViewer.propTypes = {
-  elementSelected: PropTypes.string,
-  schema: PropTypes.object,
-  style: PropTypes.object
 };
 
 export default StyleViewer;

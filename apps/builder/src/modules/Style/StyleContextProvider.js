@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
@@ -24,10 +23,19 @@ export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   style?: Record<string, any>;
+ *   includeSubscriptions?: boolean;
+ *   type?: 'normal' | 'partial' | 'template';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleContextProvider = props => {
   const { children, style: styleProp, includeSubscriptions = true, type = STYLE_TYPE_NORMAL } = props;
-  const { subscriptionManager } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { subscriptionManager } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const stylePropMemo = useMemo(() => {
     if (styleProp) {
       return styleProp;
@@ -40,8 +48,8 @@ const StyleContextProvider = props => {
         return { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
     }
   }, [styleProp]);
-  const { enqueueMiddleware } = useContext(QueueContext);
-  const { undoableMiddleware } = useContext(UndoableContext);
+  const { enqueueMiddleware } = use(QueueContext);
+  const { undoableMiddleware } = use(UndoableContext);
   const middlewareMemo = useMemo(
     () => [
       { middleware: undoableMiddleware, filterCallback: action => !action.fromSubscriptions },
@@ -137,13 +145,6 @@ const StyleContextProvider = props => {
   useEventBridge(EventBridgeModuleTypes.MAIN, events);
 
   return <StyleContext.Provider value={styleContextMemo}>{children}</StyleContext.Provider>;
-};
-
-StyleContextProvider.propTypes = {
-  children: PropTypes.node,
-  style: PropTypes.object,
-  includeSubscriptions: PropTypes.bool,
-  type: PropTypes.oneOf([STYLE_TYPE_NORMAL, STYLE_TYPE_PARTIAL, STYLE_TYPE_TEMPLATE])
 };
 
 export default StyleContextProvider;

@@ -1,7 +1,6 @@
 // Packages
-import React, { forwardRef, useEffect, useState, useContext, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
 import { jsx as _jsx } from 'react/jsx-runtime';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -18,8 +17,20 @@ import RootElement from '@modules/Element/RootElement';
 import ComponentContext from '../../../modules/Component/ComponentContext';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const BlockJsx = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   className: string;
+ *   props: string;
+ *   contentCache: string;
+ *   allowEmptyRender: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const BlockJsx = props => {
   const {
+    ref,
     internalProps = emptyObject,
     className = '',
     props: componentProps = '{}',
@@ -28,7 +39,7 @@ const BlockJsx = forwardRef((props, ref) => {
   } = props;
   const [JsxModule, setJsxModule] = useState(undefined);
   const [renderError, setRenderError] = useState(undefined);
-  const { components } = useContext(ComponentContext);
+  const { components } = use(ComponentContext);
   const componentPropsParsed = useMemo(() => {
     if (!componentProps) {
       return {};
@@ -95,15 +106,6 @@ const BlockJsx = forwardRef((props, ref) => {
       {renderError && <div>JSX Malformed {renderError}</div>}
     </RootElement>
   );
-});
-
-BlockJsx.propTypes = {
-  internalProps: PropTypes.object,
-  className: PropTypes.string,
-  content: PropTypes.string,
-  props: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
-  contentCache: PropTypes.string,
-  allowEmptyRender: PropTypes.bool
 };
 
 export default withElement(BlockJsx);

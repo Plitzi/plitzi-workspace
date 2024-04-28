@@ -1,6 +1,5 @@
 // Packages
-import React, { lazy, Suspense, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { lazy, Suspense, use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -89,6 +88,18 @@ export const init = () => {
   return modules;
 };
 
+/**
+ * @param {{
+ *   url: string;
+ *   scope: string;
+ *   internalProps: object;
+ *   autoRegister: boolean;
+ *   plitziJsxSkipHOC: boolean;
+ *   plitziCustomComponent: boolean;
+ *   plitziJsxProps: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginRemote = props => {
   const {
     url = '',
@@ -100,7 +111,7 @@ const PluginRemote = props => {
     plitziCustomComponent = false,
     plitziJsxProps = emptyObject
   } = props;
-  const { register, components } = useContext(ComponentContext);
+  const { register, components } = use(ComponentContext);
   const NotFoundNode = useMemo(() => components.notFound, [components]);
   const { ready, failed } = useDynamicScript({ url, shared, init });
   const Component = useMemo(
@@ -134,17 +145,6 @@ const PluginRemote = props => {
       <Component internalProps={internalProps} plitziCustomComponent={plitziCustomComponent} />
     </Suspense>
   );
-};
-
-PluginRemote.propTypes = {
-  url: PropTypes.string,
-  scope: PropTypes.string,
-  internalProps: PropTypes.object,
-  autoRegister: PropTypes.bool,
-  // Props from JSX
-  plitziJsxSkipHOC: PropTypes.bool,
-  plitziCustomComponent: PropTypes.bool,
-  plitziJsxProps: PropTypes.object
 };
 
 export default PluginRemote;

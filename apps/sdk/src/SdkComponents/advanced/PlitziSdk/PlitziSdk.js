@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { use } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -15,13 +14,23 @@ import RootElement from '@modules/Element/RootElement';
 import App from '../../../App';
 import usePlitziServiceContext from '../../../services/hooks/usePlitziServiceContext';
 
-const PlitziSdk = forwardRef((props, ref) => {
-  const { internalProps = emptyObject, className = '', spaceKey = '', environment = 'main' } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   internalProps: object;
+ *   className: string;
+ *   spaceKey: string;
+ *   environment: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const PlitziSdk = props => {
+  const { ref, internalProps = emptyObject, className = '', spaceKey = '', environment = 'main' } = props;
   const {
     settings: { previewMode },
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
-  const { server } = useContext(NetworkContext);
+  const { server } = use(NetworkContext);
 
   return (
     <RootElement
@@ -38,14 +47,6 @@ const PlitziSdk = forwardRef((props, ref) => {
       />
     </RootElement>
   );
-});
-
-PlitziSdk.propTypes = {
-  internalProps: PropTypes.object,
-  className: PropTypes.string,
-  spaceId: PropTypes.string,
-  spaceKey: PropTypes.string,
-  environment: PropTypes.string
 };
 
 export default withElement(PlitziSdk);

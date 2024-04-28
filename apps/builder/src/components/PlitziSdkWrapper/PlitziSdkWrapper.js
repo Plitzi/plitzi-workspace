@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useMemo } from 'react';
 import classNames from 'classnames';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
@@ -12,12 +11,21 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
+/**
+ * @param {{
+ *   currentPageId: string;
+ *   className?: string;
+ *   renderMode?: 'iframe' | 'sdk';
+ *   previewMode?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PlitziSdkWrapper = props => {
   const { currentPageId, className = '', renderMode = 'iframe', previewMode = true } = props;
-  const { schema } = useContext(SchemaContext);
-  const { style } = useContext(StyleContext);
-  const { plugins } = useContext(PluginsContext);
-  const { webKey, server } = useContext(NetworkContext);
+  const { schema } = use(SchemaContext);
+  const { style } = use(StyleContext);
+  const { plugins } = use(PluginsContext);
+  const { webKey, server } = use(NetworkContext);
 
   const offlineDataMemo = useMemo(() => {
     if (renderMode === 'iframe') {
@@ -62,13 +70,6 @@ const PlitziSdkWrapper = props => {
       offlineData={offlineDataMemo}
     />
   );
-};
-
-PlitziSdkWrapper.propTypes = {
-  className: PropTypes.string,
-  renderMode: PropTypes.oneOf(['iframe', 'sdk']),
-  currentPageId: PropTypes.string,
-  previewMode: PropTypes.bool
 };
 
 export default PlitziSdkWrapper;

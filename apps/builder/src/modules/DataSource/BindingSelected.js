@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import upperFirst from 'lodash/upperFirst';
@@ -14,6 +13,23 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 const transformersDefault = [];
 
+/**
+ * @param {{
+ *   id?: string;
+ *   sources?: object;
+ *   category?: string;
+ *   fromPath?: string;
+ *   toPath?: string;
+ *   source?: string;
+ *   transformers?: object[];
+ *   when?: object;
+ *   enabled?: boolean;
+ *   onEnable?: (category: string, id: string, enabled: boolean) => void;
+ *   onUpdate?: (category: string, id: string) => void;
+ *   onRemove?: (category: string, id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BindingSelected = props => {
   const {
     id = '',
@@ -156,21 +172,6 @@ const BindingSelected = props => {
       </div>
     </div>
   );
-};
-
-BindingSelected.propTypes = {
-  id: PropTypes.string,
-  sources: PropTypes.object,
-  category: PropTypes.string,
-  fromPath: PropTypes.string,
-  toPath: PropTypes.string,
-  source: PropTypes.string,
-  transformers: PropTypes.array,
-  when: PropTypes.object,
-  enabled: PropTypes.bool,
-  onEnable: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default BindingSelected;

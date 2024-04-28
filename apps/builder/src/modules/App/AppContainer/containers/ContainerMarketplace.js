@@ -1,11 +1,11 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import Card from '@plitzi/plitzi-ui-components/Card';
 
 // Alias
 import Marketplace from '@pmodules/Marketplace/Marketplace';
 
+/** @returns {React.ReactElement} */
 const ContainerMarketplace = () => {
   //   const { onSelect = noop } = props;
 
@@ -14,10 +14,6 @@ const ContainerMarketplace = () => {
       <Marketplace />
     </Card>
   );
-};
-
-ContainerMarketplace.propTypes = {
-  onSelect: PropTypes.func
 };
 
 export default ContainerMarketplace;

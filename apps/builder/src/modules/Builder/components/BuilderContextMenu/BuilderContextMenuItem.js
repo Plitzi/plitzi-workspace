@@ -1,9 +1,18 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   title?: string;
+ *   shortcut?: string;
+ *   children?: React.ReactNode;
+ *   className?: string;
+ *   onClick?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BuilderContextMenuItem = props => {
   const { title = 'Title', shortcut = '', children, className = '', onClick = noop, ...otherProps } = props;
 
@@ -23,14 +32,6 @@ const BuilderContextMenuItem = props => {
       <div className="text-xs text-[10px] opacity-80 text-gray-500">{shortcut}</div>
     </div>
   );
-};
-
-BuilderContextMenuItem.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  title: PropTypes.string,
-  shortcut: PropTypes.string,
-  onClick: PropTypes.func
 };
 
 export default BuilderContextMenuItem;

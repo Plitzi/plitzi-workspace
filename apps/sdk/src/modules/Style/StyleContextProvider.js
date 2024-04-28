@@ -1,6 +1,5 @@
 // Packages
-import React, { useMemo, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, use } from 'react';
 
 // Monorepo
 import StyleContext from '@plitzi/sdk-style/StyleContext';
@@ -13,9 +12,17 @@ export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 export const STYLE_TYPE_SEGMENT = 'segment';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   style: object;
+ *   type: 'normal' | 'partial' | 'template' | 'segment';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const StyleContextProvider = props => {
   const { children, style: styleProp, type = STYLE_TYPE_NORMAL } = props;
-  const internalData = useContext(NetworkInternalContext);
+  const internalData = use(NetworkInternalContext);
   const style = useMemo(() => {
     if (styleProp) {
       return styleProp;
@@ -32,12 +39,6 @@ const StyleContextProvider = props => {
   const valueMemo = useMemo(() => ({ style }), [style]);
 
   return <StyleContext.Provider value={valueMemo}>{children}</StyleContext.Provider>;
-};
-
-StyleContextProvider.propTypes = {
-  children: PropTypes.node,
-  style: PropTypes.object,
-  type: PropTypes.oneOf([STYLE_TYPE_NORMAL, STYLE_TYPE_PARTIAL, STYLE_TYPE_TEMPLATE, STYLE_TYPE_SEGMENT])
 };
 
 export default StyleContextProvider;

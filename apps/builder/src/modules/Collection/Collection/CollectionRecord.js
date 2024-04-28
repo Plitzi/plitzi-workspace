@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Moment from 'react-moment';
 import classNames from 'classnames';
@@ -9,6 +8,18 @@ import isEmpty from 'lodash/isEmpty';
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   values?: object;
+ *   publishedAt?: number;
+ *   status?: string;
+ *   fields?: object;
+ *   onUpdate?: () => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionRecord = props => {
   const {
     id,
@@ -70,16 +81,6 @@ const CollectionRecord = props => {
       </div>
     </div>
   );
-};
-
-CollectionRecord.propTypes = {
-  id: PropTypes.string,
-  status: PropTypes.string,
-  publishedAt: PropTypes.number,
-  values: PropTypes.object,
-  fields: PropTypes.object,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default CollectionRecord;

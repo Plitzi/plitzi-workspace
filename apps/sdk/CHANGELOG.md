@@ -1,5 +1,21 @@
 # @plitzi/plitzi-sdk
 
+## 0.22.0-rc1
+
+### Minor Changes
+
+- v0.22.0-rc1
+
+### Patch Changes
+
+- Updated dependencies
+  - @plitzi/sdk-event-bridge@0.22.0-rc1
+  - @plitzi/sdk-interactions@0.22.0-rc1
+  - @plitzi/sdk-shared@0.22.0-rc1
+  - @plitzi/sdk-auth@0.22.0-rc1
+  - @plitzi/sdk-navigation@0.22.0-rc1
+  - @plitzi/sdk-plugins@0.22.0-rc1
+
 ## 0.21.1
 
 ### Patch Changes

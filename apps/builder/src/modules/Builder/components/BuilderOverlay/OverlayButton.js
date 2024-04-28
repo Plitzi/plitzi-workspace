@@ -1,8 +1,17 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   title?: string;
+ *   children?: React.ReactNode;
+ *   theme?: 'normal';
+ *   isRemoving?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const OverlayButton = props => {
   const { className = '', children, title = 'Title', theme = 'normal', isRemoving = false, ...otherProps } = props;
 
@@ -20,14 +29,6 @@ const OverlayButton = props => {
       {children}
     </button>
   );
-};
-
-OverlayButton.propTypes = {
-  className: PropTypes.string,
-  title: PropTypes.string,
-  children: PropTypes.node,
-  theme: PropTypes.oneOf(['normal']),
-  isRemoving: PropTypes.bool
 };
 
 export default OverlayButton;

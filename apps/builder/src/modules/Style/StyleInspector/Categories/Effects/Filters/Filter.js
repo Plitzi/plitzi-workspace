@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -13,6 +12,13 @@ import InspectorButton from '@pmodules/Style/components/InspectorButton';
 import FilterItem from './FilterItem';
 import InspectorLabel from '../../../InspectorLabel';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Filter = props => {
   const { onChange = noop } = props;
   let { partialValue } = props;
@@ -70,11 +76,6 @@ const Filter = props => {
       )}
     </>
   );
-};
-
-Filter.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default Filter;

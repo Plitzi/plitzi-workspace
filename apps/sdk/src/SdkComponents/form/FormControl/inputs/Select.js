@@ -1,9 +1,20 @@
 // Packages
 import React, { useCallback, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   options?: any[];
+ *   placeholder?: string;
+ *   value?: string;
+ *   className?: string;
+ *   disabled?: boolean;
+ *   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+ *   onValidate?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Select = props => {
   const {
     options = [],
@@ -74,16 +85,6 @@ const Select = props => {
       </select>
     </div>
   );
-};
-
-Select.propTypes = {
-  className: PropTypes.string,
-  options: PropTypes.array,
-  placeholder: PropTypes.string,
-  disabled: PropTypes.bool,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onChange: PropTypes.func,
-  onValidate: PropTypes.func
 };
 
 export default Select;

@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -10,10 +9,17 @@ import { getDisplayName } from '@plitzi/sdk-shared/utils';
 import UserContext from '../UserContext';
 
 const withUserInteractions = WrappedComponent => {
-  const WithUserInteractionsComponent = forwardRef((props, ref) => {
-    const { userProvider = 'basic' } = props;
-    const { login, refreshDetails, logout } = useContext(UserContext);
-    const { useInteractions } = useContext(InteractionsContext);
+  /**
+   * @param {{
+   *   ref: React.RefObject;
+   *   userProvider: 'auth0' | 'basic';
+   * }} props
+   * @returns {React.ReactElement}
+   */
+  const WithUserInteractionsComponent = props => {
+    const { ref, userProvider = 'basic' } = props;
+    const { login, refreshDetails, logout } = use(UserContext);
+    const { useInteractions } = use(InteractionsContext);
 
     const handleLogin = useCallback(async params => login(params), [login]);
 
@@ -102,13 +108,9 @@ const withUserInteractions = WrappedComponent => {
     useInteractions({ id: 'user', callbacks: interactionCallbacks });
 
     return <WrappedComponent ref={ref} {...props} userProvider={userProvider} />;
-  });
+  };
 
   WithUserInteractionsComponent.displayName = `withUserInteractions(${getDisplayName(WrappedComponent)})`;
-
-  WithUserInteractionsComponent.propTypes = {
-    userProvider: PropTypes.oneOf(['basic', 'auth0', ''])
-  };
 
   return WithUserInteractionsComponent;
 };

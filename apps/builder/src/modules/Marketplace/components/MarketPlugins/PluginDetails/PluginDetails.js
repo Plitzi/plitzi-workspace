@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Breadcrumb from '@plitzi/plitzi-ui-components/Breadcrumb';
 
@@ -10,6 +9,26 @@ import DetailsContent from './DetailsContent';
 
 const revisionsDefault = [];
 
+/**
+ * @param {{
+ *   name?: string;
+ *   description?: string;
+ *   type?: string;
+ *   latestVersion?: string;
+ *   version?: string;
+ *   revisions?: any[];
+ *   icon?: string;
+ *   color?: string;
+ *   owner?: string;
+ *   website?: string;
+ *   createdAt?: number;
+ *   setPluginSelected?: (plugin: any) => void;
+ *   onAdd?: (version: string) => void;
+ *   onUpdate?: (version: string) => Promise<boolean>;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PluginDetails = props => {
   const {
     name = 'Plugin Name',
@@ -60,24 +79,6 @@ const PluginDetails = props => {
       </div>
     </div>
   );
-};
-
-PluginDetails.propTypes = {
-  name: PropTypes.string,
-  description: PropTypes.string,
-  type: PropTypes.string,
-  latestVersion: PropTypes.string,
-  version: PropTypes.string,
-  revisions: PropTypes.array,
-  icon: PropTypes.string,
-  color: PropTypes.string,
-  owner: PropTypes.string,
-  website: PropTypes.string,
-  createdAt: PropTypes.number,
-  setPluginSelected: PropTypes.func,
-  onAdd: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default PluginDetails;

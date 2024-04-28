@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -13,6 +12,13 @@ import InspectorButton from '@pmodules/Style/components/InspectorButton';
 import BoxShadowItem from './BoxShadowItem';
 import InspectorLabel from '../../../InspectorLabel';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BoxShadow = props => {
   const { partialValue = '', onChange = noop } = props;
   const boxShadowRegex = /,(?![^(]*\))/gim;
@@ -71,11 +77,6 @@ const BoxShadow = props => {
       )}
     </>
   );
-};
-
-BoxShadow.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default BoxShadow;

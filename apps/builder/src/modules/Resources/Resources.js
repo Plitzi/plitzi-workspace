@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -15,13 +15,14 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 import Resource from './Resource';
 import ResourceManager from './ResourceManager';
 
+/** @returns {React.ReactElement} */
 const Resources = () => {
-  const { query, mutate } = useContext(NetworkContext);
+  const { query, mutate } = use(NetworkContext);
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [, /* hasNextPage */ setHasNextPage] = useState(false);
   const [resources, setResources] = useState([]);
-  const { plugins, remove, add } = useContext(PluginsContext);
+  const { plugins, remove, add } = use(PluginsContext);
 
   const handleResourceRemoved = resource => () => {
     if (resource.type === 'plugin') {
@@ -169,7 +170,5 @@ const Resources = () => {
     </div>
   );
 };
-
-Resources.propTypes = {};
 
 export default Resources;

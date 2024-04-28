@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { use } from 'react';
 // import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -14,12 +13,21 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 // Alias
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   name?: string;
+ *   onSelect?: () => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PageLayout = props => {
   const { id = '', name = '', onSelect = noop, onRemove = noop } = props;
-  const { schema } = useContext(SchemaContext);
+  const { schema } = use(SchemaContext);
   const {
     style: { cache }
-  } = useContext(StyleContext);
+  } = use(StyleContext);
 
   return (
     <div
@@ -59,13 +67,6 @@ const PageLayout = props => {
       </div>
     </div>
   );
-};
-
-PageLayout.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  onSelect: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default PageLayout;

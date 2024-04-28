@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 
@@ -10,6 +9,14 @@ import InspectorButton from '@pmodules/Style/components/InspectorButton';
 // Relatives
 import GroupButtons from '../../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   value: string;
+ *   onChange?: (value: string) => void;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BoxShadowItem = props => {
   const { value = '1px 1px 3px 1px black', onChange = noop, onRemove = noop } = props;
   const valueParts = value.split(/ (?![^(]*\))/gim);
@@ -127,12 +134,6 @@ const BoxShadowItem = props => {
       </Dropdown.Container>
     </Dropdown>
   );
-};
-
-BoxShadowItem.propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  onRemove: PropTypes.func
 };
 
 export default BoxShadowItem;

@@ -1,10 +1,16 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
+/**
+ * @param {{
+ *   src?: string;
+ *   loadMode?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { src = '', loadMode = 'auto', onUpdate = noop } = props;
 
@@ -42,12 +48,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  src: PropTypes.string,
-  loadMode: PropTypes.string,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

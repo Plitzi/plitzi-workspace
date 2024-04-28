@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useEffect, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -9,6 +8,14 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import usePlitziServiceContext from '../../services/hooks/usePlitziServiceContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   id: string;
+ *   source: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ReplicaProvider = props => {
   const { children, id = '', source = '', dataSourceValue = emptyObject } = props;
   const {
@@ -17,7 +24,7 @@ const ReplicaProvider = props => {
 
   // Data Source
 
-  const dataSourceContext = useContext(DataSourceContext);
+  const dataSourceContext = use(DataSourceContext);
   const dsManager = get(dataSourceContext, 'dataSourceManager');
   const dsManagerChild = useMemo(() => {
     const dataSourceInstance = get(dataSourceContext.dataSourceManager, `dataSources.${id}`, {});
@@ -49,7 +56,7 @@ const ReplicaProvider = props => {
 
   // Interactions
 
-  const interactionsContext = useContext(InteractionsContext);
+  const interactionsContext = use(InteractionsContext);
   const interactionsManager = get(interactionsContext, 'interactionsManager');
   const interactionsManagerChild = useMemo(() => interactionsContext.interactionsManager.createChildManager(), [id]);
 
@@ -69,13 +76,6 @@ const ReplicaProvider = props => {
       <InteractionsContext.Provider value={interactionsContextSource}>{children}</InteractionsContext.Provider>
     </DataSourceContext.Provider>
   );
-};
-
-ReplicaProvider.propTypes = {
-  children: PropTypes.node,
-  id: PropTypes.string,
-  source: PropTypes.string,
-  dataSourceValue: PropTypes.object
 };
 
 export default ReplicaProvider;

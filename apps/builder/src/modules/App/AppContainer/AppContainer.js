@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext, useState, useMemo, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useState, useMemo, useCallback } from 'react';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
@@ -23,10 +22,16 @@ import ContainerSettings from './containers/ContainerSettings';
 import AppDirectory from '../components/AppDirectory/AppDirectory';
 // import ContainerSitemap from './containers/ContainerSitemap';
 
+/**
+ * @param {{
+ *   externalStyle?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const AppContainer = props => {
   const { externalStyle = '' } = props;
-  const { previewMode } = useContext(AppContext);
-  const { rootDOM } = useContext(ContainerRootContext);
+  const { previewMode } = use(AppContext);
+  const { rootDOM } = use(ContainerRootContext);
   const resizeHandles = useMemo(() => ['e'], []);
   const [tabSelected, setTabSelected] = useState();
   const [sourceState, setSourceState] = useState({});
@@ -77,10 +82,6 @@ const AppContainer = props => {
       </div>
     </div>
   );
-};
-
-AppContainer.propTypes = {
-  externalStyle: PropTypes.string
 };
 
 export default AppContainer;

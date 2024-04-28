@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
@@ -10,6 +9,16 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   preview?: object;
+ *   defaultPreview?: object;
+ *   onChange?: (data: object) => void;
+ *   onClickOpen?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodePreview = props => {
   const { className = '', preview = emptyObject, defaultPreview = emptyObject, onChange = noop } = props;
   const previewStr = useMemo(() => JSON.stringify(preview, null, 2), [preview]);
@@ -88,14 +97,6 @@ const NodePreview = props => {
       </ContainerCollapsable>
     </div>
   );
-};
-
-NodePreview.propTypes = {
-  className: PropTypes.string,
-  preview: PropTypes.object,
-  defaultPreview: PropTypes.object,
-  onChange: PropTypes.func,
-  onClickOpen: PropTypes.func
 };
 
 export default NodePreview;

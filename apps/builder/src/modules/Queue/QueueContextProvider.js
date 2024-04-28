@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -10,9 +9,16 @@ import QueueContext from './QueueContext';
 import useQueueManager from './hooks/useQueueManager';
 import QueueStatusContext from './QueueStatusContext';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   includeSubscriptions?: boolean;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const QueueContextProvider = props => {
   const { children, includeSubscriptions = true } = props;
-  const { mutate } = useContext(NetworkContext);
+  const { mutate } = use(NetworkContext);
 
   const { queueManager, processing } = useQueueManager({
     delay: 100,
@@ -33,11 +39,6 @@ const QueueContextProvider = props => {
       <QueueStatusContext.Provider value={processing}>{children}</QueueStatusContext.Provider>
     </QueueContext.Provider>
   );
-};
-
-QueueContextProvider.propTypes = {
-  children: PropTypes.node,
-  includeSubscriptions: PropTypes.bool
 };
 
 export default QueueContextProvider;

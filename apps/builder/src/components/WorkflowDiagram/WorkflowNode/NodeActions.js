@@ -1,10 +1,16 @@
 // Packages
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   onRemove?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const NodeActions = props => {
   const { className = '', onRemove = noop } = props;
 
@@ -23,11 +29,6 @@ const NodeActions = props => {
       </Button>
     </div>
   );
-};
-
-NodeActions.propTypes = {
-  className: PropTypes.string,
-  onRemove: PropTypes.func
 };
 
 export default NodeActions;

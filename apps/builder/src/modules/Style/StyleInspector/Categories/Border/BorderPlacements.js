@@ -1,12 +1,18 @@
 // Package
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
 // Alias
 import Icons from '@pcomponents/Icons';
 
+/**
+ * @param {{
+ *   currentPlacement: string;
+ *   setCurrentPlacement: (value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const BorderPlacements = props => {
   const { currentPlacement, setCurrentPlacement = noop } = props;
 
@@ -67,11 +73,6 @@ const BorderPlacements = props => {
       <div className="h-6 w-6" />
     </div>
   );
-};
-
-BorderPlacements.propTypes = {
-  currentPlacement: PropTypes.string,
-  setCurrentPlacement: PropTypes.func
 };
 
 export default BorderPlacements;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import snakeCase from 'lodash/snakeCase';
 import { useForm, Controller } from 'react-hook-form';
@@ -14,6 +13,18 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import { fieldTypes } from '../CollectionsConstants';
 
+/**
+ * @param {{
+ *   isNewField?: boolean;
+ *   name?: string;
+ *   machineName?: string;
+ *   type?: string;
+ *   params?: object;
+ *   onSubmit?: (values: object) => void;
+ *   onValidate?: (values: object) => { key: string; message: string } | null;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionFieldForm = props => {
   const {
     name = '',
@@ -198,17 +209,6 @@ const CollectionFieldForm = props => {
       </div>
     </form>
   );
-};
-
-CollectionFieldForm.propTypes = {
-  isNewField: PropTypes.bool,
-  name: PropTypes.string,
-  machineName: PropTypes.string,
-  type: PropTypes.string,
-  params: PropTypes.object,
-  // Extras
-  onSubmit: PropTypes.func,
-  onValidate: PropTypes.func
 };
 
 export default CollectionFieldForm;

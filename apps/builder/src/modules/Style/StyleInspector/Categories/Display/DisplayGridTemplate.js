@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -15,6 +14,18 @@ import {
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   templateAreas?: string;
+ *   templateColumns?: string;
+ *   templateRows?: string;
+ *   templateAutoFlow?: string;
+ *   templateAutoRows?: string;
+ *   templateAutoColumns?: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayGridTemplate = props => {
   const {
     templateAreas = 'none',
@@ -129,16 +140,6 @@ const DisplayGridTemplate = props => {
       />
     </>
   );
-};
-
-DisplayGridTemplate.propTypes = {
-  templateAreas: PropTypes.string,
-  templateColumns: PropTypes.string,
-  templateRows: PropTypes.string,
-  templateAutoFlow: PropTypes.string,
-  templateAutoRows: PropTypes.string,
-  templateAutoColumns: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default DisplayGridTemplate;

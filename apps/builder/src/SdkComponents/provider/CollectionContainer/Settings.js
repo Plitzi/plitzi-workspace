@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { use } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -8,12 +7,22 @@ import Select from '@plitzi/plitzi-ui-components/Select';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 
+/**
+ * @param {{
+ *   source?: string;
+ *   query?: string;
+ *   limit?: string;
+ *   singleRecord?: boolean;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { source = '', query = '', limit = '10', singleRecord = false, onUpdate = noop } = props;
   const {
     contexts: { CollectionContext }
   } = usePlitziServiceContext();
-  const { collections } = useContext(CollectionContext);
+  const { collections } = use(CollectionContext);
 
   const handleChange = key => e => onUpdate(key, e.target.value);
 
@@ -60,14 +69,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  source: PropTypes.string,
-  query: PropTypes.string,
-  limit: PropTypes.string,
-  singleRecord: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

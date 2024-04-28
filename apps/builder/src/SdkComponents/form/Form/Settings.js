@@ -1,11 +1,19 @@
 // Packages
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 
+/**
+ * @param {{
+ *   method?: 'get' | 'post';
+ *   managedByInteractions?: boolean;
+ *   actionUrl?: string;
+ *   onUpdate?: (key: string, value: any) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Settings = props => {
   const { method = 'get', managedByInteractions = false, actionUrl = '', onUpdate = noop } = props;
 
@@ -49,13 +57,6 @@ const Settings = props => {
       </div>
     </div>
   );
-};
-
-Settings.propTypes = {
-  method: PropTypes.oneOf(['get', 'post']),
-  actionUrl: PropTypes.string,
-  managedByInteractions: PropTypes.bool,
-  onUpdate: PropTypes.func
 };
 
 export default Settings;

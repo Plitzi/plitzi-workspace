@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -9,6 +8,13 @@ import { GAP } from '@plitzi/sdk-style/StyleConstants';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: string;
+ *   onChange?: (type: string, value: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const DisplayGap = props => {
   const { partialValue = '', onChange = noop } = props;
 
@@ -29,11 +35,6 @@ const DisplayGap = props => {
       onChange={handleChange}
     />
   );
-};
-
-DisplayGap.propTypes = {
-  partialValue: PropTypes.string,
-  onChange: PropTypes.func
 };
 
 export default DisplayGap;

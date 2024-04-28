@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -15,6 +14,19 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import CollectionFieldForm from './CollectionFieldForm';
 import CollectionField from '../components/CollectionField';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   name?: string;
+ *   namePlural?: string;
+ *   description?: string;
+ *   privacy?: 'public' | 'private';
+ *   fields?: object;
+ *   onCancel?: () => void;
+ *   onSubmit?: (values: object) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionForm = props => {
   const {
     id = '',
@@ -235,17 +247,6 @@ const CollectionForm = props => {
       </div>
     </div>
   );
-};
-
-CollectionForm.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  namePlural: PropTypes.string,
-  description: PropTypes.string,
-  privacy: PropTypes.oneOf(['public', 'private']),
-  fields: PropTypes.object,
-  onCancel: PropTypes.func,
-  onSubmit: PropTypes.func
 };
 
 export default CollectionForm;

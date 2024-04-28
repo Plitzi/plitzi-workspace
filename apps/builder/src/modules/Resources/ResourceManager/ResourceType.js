@@ -1,7 +1,12 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 
+/**
+ * @param {{
+ *   type?: 'image' | 'video' | 'plugin' | 'document';
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ResourceType = props => {
   const { type = 'image' } = props;
 
@@ -12,10 +17,6 @@ const ResourceType = props => {
       {type === 'plugin' && <i className="fa-solid fa-puzzle-piece" title="Plugin" />}
     </div>
   );
-};
-
-ResourceType.propTypes = {
-  type: PropTypes.oneOf(['image', 'video', 'document', 'plugin'])
 };
 
 export default ResourceType;

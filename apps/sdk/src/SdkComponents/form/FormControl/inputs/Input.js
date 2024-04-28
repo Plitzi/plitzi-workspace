@@ -1,9 +1,25 @@
 // Packages
 import React, { useCallback, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   id?: string;
+ *   name?: string;
+ *   placeholder?: string;
+ *   value?: string;
+ *   type?: string;
+ *   autoComplete?: boolean;
+ *   required?: boolean;
+ *   disabled?: boolean;
+ *   readOnly?: boolean;
+ *   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ *   onValidate?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Input = props => {
   const {
     className = '',
@@ -59,21 +75,6 @@ const Input = props => {
       )}
     </div>
   );
-};
-
-Input.propTypes = {
-  className: PropTypes.string,
-  id: PropTypes.string,
-  name: PropTypes.string,
-  placeholder: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
-  type: PropTypes.string,
-  autoComplete: PropTypes.bool,
-  required: PropTypes.bool,
-  disabled: PropTypes.bool,
-  readOnly: PropTypes.bool,
-  onChange: PropTypes.func,
-  onValidate: PropTypes.func
 };
 
 export default Input;

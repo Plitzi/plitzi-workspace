@@ -1,6 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { use } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -14,11 +13,17 @@ import Directory from './Directory';
 import DirectoryHeader from './DirectoryHeader';
 import PageLayouts from './PageLayouts';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const AppDirectory = props => {
   const { className = '' } = props;
-  const { pageFolders } = useContext(SchemaMainContext);
+  const { pageFolders } = use(SchemaMainContext);
 
-  const { currentPageId } = useContext(NavigationContext);
+  const { currentPageId } = use(NavigationContext);
 
   return (
     <div className={classNames('flex flex-col border-b border-gray-300', className)}>
@@ -35,10 +40,6 @@ const AppDirectory = props => {
       <PageLayouts className="" />
     </div>
   );
-};
-
-AppDirectory.propTypes = {
-  className: PropTypes.string
 };
 
 export default AppDirectory;

@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useContext, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { use, useEffect } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -21,8 +20,40 @@ import Textarea from './inputs/Textarea';
 import Hidden from './inputs/Hidden';
 import withFieldValue from './hocs/withFieldValue';
 
-const FormControl = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   internalProps: object;
+ *   subType:
+ *     | 'text'
+ *     | 'number'
+ *     | 'email'
+ *     | 'password'
+ *     | 'time'
+ *     | 'checkbox'
+ *     | 'switch'
+ *     | 'select'
+ *     | 'textarea'
+ *     | 'hidden';
+ *   name: string;
+ *   label: string;
+ *   placeholder: string;
+ *   autoComplete: boolean;
+ *   disabled: boolean;
+ *   options: { label: string; value: string }[];
+ *   required: boolean;
+ *   readOnly: boolean;
+ *   value: string;
+ *   error: string;
+ *   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ *   handleValidate: (e: React.ChangeEvent<HTMLInputElement>) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const FormControl = props => {
   const {
+    ref,
     className = '',
     internalProps = emptyObject,
     subType = 'text',
@@ -45,7 +76,7 @@ const FormControl = forwardRef((props, ref) => {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = useContext(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext);
   const { form } = useDataSource({ id, mode: 'read' });
   if (!form && !previewMode) {
     return (
@@ -242,37 +273,6 @@ const FormControl = forwardRef((props, ref) => {
       {error && <div className={classNames('form-control__error-message', styleSelectors.error)}>{error}</div>}
     </RootElement>
   );
-});
-
-FormControl.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  subType: PropTypes.oneOf([
-    'hidden',
-    'text',
-    'number',
-    'email',
-    'password',
-    'time',
-    'select',
-    'checkbox',
-    'textarea',
-    'color',
-    'switch'
-  ]),
-  name: PropTypes.string,
-  label: PropTypes.string,
-  placeholder: PropTypes.string,
-  autoComplete: PropTypes.bool,
-  disabled: PropTypes.bool,
-  options: PropTypes.array,
-  required: PropTypes.bool,
-  readOnly: PropTypes.bool,
-  // HOC
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]), // HOC Managed
-  error: PropTypes.oneOfType([PropTypes.string, PropTypes.array]), // HOC Managed
-  handleChange: PropTypes.func,
-  handleValidate: PropTypes.func
 };
 
 export default withElement(withFieldValue(FormControl));

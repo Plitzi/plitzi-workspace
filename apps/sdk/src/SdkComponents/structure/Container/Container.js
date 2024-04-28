@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -10,8 +9,18 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '@modules/Element/hocs/withElement';
 import RootElement from '@modules/Element/RootElement';
 
-const Container = forwardRef((props, ref) => {
-  const { className = '', subType = 'div', internalProps = emptyObject, children } = props;
+/**
+ * @param {{
+ *   ref: React.MutableRefObject<HTMLElement>;
+ *   className: string;
+ *   subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+ *   internalProps: object;
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const Container = props => {
+  const { ref, className = '', subType = 'div', internalProps = emptyObject, children } = props;
 
   return (
     <RootElement
@@ -23,24 +32,6 @@ const Container = forwardRef((props, ref) => {
       {children}
     </RootElement>
   );
-});
-
-Container.propTypes = {
-  className: PropTypes.string,
-  internalProps: PropTypes.object,
-  children: PropTypes.node,
-  subType: PropTypes.oneOf([
-    'div',
-    'header',
-    'footer',
-    'nav',
-    'main',
-    'section',
-    'article',
-    'aside',
-    'address',
-    'figure'
-  ])
 };
 
 export default withElement(Container);

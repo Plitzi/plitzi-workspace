@@ -1,15 +1,20 @@
 // Packages
-import { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo } from 'react';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const SpaceContainerInternal = props => {
   const { children } = props;
   const { addToast } = useToast();
-  const { useInteractions } = useContext(InteractionsContext);
+  const { useInteractions } = use(InteractionsContext);
 
   const handleAddNotification = useCallback(
     params => {
@@ -81,10 +86,6 @@ const SpaceContainerInternal = props => {
   useInteractions({ id: 'space', callbacks: interactionCallbacks });
 
   return children;
-};
-
-SpaceContainerInternal.propTypes = {
-  children: PropTypes.node
 };
 
 export default SpaceContainerInternal;

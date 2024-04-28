@@ -1,18 +1,20 @@
 // Packages
-import PropTypes from 'prop-types';
+import React from 'react';
 
 // Relatives
 import withUserInteractions from './hocs/withUserInteractions';
 import withUserDataSource from './hocs/withUserDataSource';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const UserContextProvider = props => {
   const { children } = props;
 
   return children;
-};
-
-UserContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export default withUserInteractions(withUserDataSource(UserContextProvider));

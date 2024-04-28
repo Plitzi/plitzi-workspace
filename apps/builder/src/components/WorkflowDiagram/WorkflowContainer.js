@@ -1,16 +1,21 @@
 // Packages
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, use, useEffect } from 'react';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 
 // Relatives
 import WorkflowNode from './WorkflowNode/WorkflowNode';
 import WorkflowContext from './WorkflowContext';
 import WorkflowActions from './WorkflowActions';
 
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const WorkflowContainer = props => {
   const { className = '' } = props;
-  const { nodes, direction, performLayout } = useContext(WorkflowContext);
+  const { nodes, direction, performLayout } = use(WorkflowContext);
 
   const handleNodeSelected = useCallback(() => {}, []);
 
@@ -26,10 +31,6 @@ const WorkflowContainer = props => {
       {nodes && Object.values(nodes).map((node, i) => <WorkflowNode key={i} {...node} onSelect={handleNodeSelected} />)}
     </div>
   );
-};
-
-WorkflowContainer.propTypes = {
-  className: PropTypes.string
 };
 
 export default WorkflowContainer;

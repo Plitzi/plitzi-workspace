@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import Card from '@plitzi/plitzi-ui-components/Card';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
@@ -11,9 +11,10 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
+/** @returns {React.ReactElement} */
 const ContainerSettings = () => {
-  const { settings: settingsProp } = useContext(SchemaMainContext);
-  const { eventBridge } = useContext(EventBridgeContext);
+  const { settings: settingsProp } = use(SchemaMainContext);
+  const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp ?? {});
   const {
@@ -173,7 +174,5 @@ const ContainerSettings = () => {
     </Card>
   );
 };
-
-ContainerSettings.propTypes = {};
 
 export default ContainerSettings;

@@ -1,9 +1,17 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   title?: string;
+ *   className?: string;
+ *   onClick?: () => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const InputEasingButton = props => {
   const { children, title = '', className = '', onClick = noop } = props;
 
@@ -19,13 +27,6 @@ const InputEasingButton = props => {
       </svg>
     </button>
   );
-};
-
-InputEasingButton.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  title: PropTypes.string,
-  onClick: PropTypes.func
 };
 
 export default InputEasingButton;

@@ -1,6 +1,5 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -12,6 +11,13 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+/**
+ * @param {{
+ *   partialValue: object;
+ *   onChange?: (value: { type: string; value: string }) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const PositionAdvancedButtons = props => {
   const { partialValue, onChange = noop } = props;
   const { [TOP]: top, [BOTTOM]: bottom, [LEFT]: left, [RIGHT]: right } = partialValue;
@@ -79,11 +85,6 @@ const PositionAdvancedButtons = props => {
   );
 
   return <GroupButtons className="w-full" fullWidth items={items} label="" onChange={handleChange} />;
-};
-
-PositionAdvancedButtons.propTypes = {
-  partialValue: PropTypes.object,
-  onChange: PropTypes.func
 };
 
 export default PositionAdvancedButtons;

@@ -1,6 +1,5 @@
 // Packages
-import React, { useMemo, useContext } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, use } from 'react';
 import get from 'lodash/get';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -12,6 +11,14 @@ import withUserProvider from './hocs/withUserProvider';
 import UserContext from './UserContext';
 import useAuth from './hooks/useAuth';
 
+/**
+ * @param {{
+ *   previewMode: boolean;
+ *   children: React.ReactNode;
+ *   webId: string | number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const UserBaseContextProvider = props => {
   const { previewMode = true, children, webId = 0 } = props;
   const {
@@ -21,7 +28,7 @@ const UserBaseContextProvider = props => {
     detailsPath = 'details',
     tokenPath = 'access_token',
     expirationTimePath = 'expire_at'
-  } = useContext(SchemaSettingsContext);
+  } = use(SchemaSettingsContext);
   let loading = false;
   switch (userProvider) {
     case 'auth0':
@@ -71,12 +78,6 @@ const UserBaseContextProvider = props => {
   }, [manager, manager?.userDetails, manager?.isAuthenticated, previewMode]);
 
   return <UserContext.Provider value={valueMemo}>{!loading && children}</UserContext.Provider>;
-};
-
-UserBaseContextProvider.propTypes = {
-  children: PropTypes.node,
-  webId: PropTypes.number,
-  previewMode: PropTypes.bool
 };
 
 export default withUserProvider(UserBaseContextProvider);

@@ -1,7 +1,15 @@
 // Packages
 import React, { lazy, Suspense, useMemo } from 'react';
-import PropTypes from 'prop-types';
 
+/**
+ * @param {{
+ *   width?: number;
+ *   height?: number;
+ *   type: string;
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const Icons = props => {
   const { width = 20, height = 20, type, className = '', ...otherProps } = props;
 
@@ -15,13 +23,6 @@ const Icons = props => {
       <Icon className={className} width={width} height={height} {...otherProps} />
     </Suspense>
   );
-};
-
-Icons.propTypes = {
-  className: PropTypes.string,
-  type: PropTypes.string,
-  width: PropTypes.number,
-  height: PropTypes.number
 };
 
 export default Icons;

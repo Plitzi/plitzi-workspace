@@ -1,11 +1,23 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
 // Alias
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   hoverRemove?: boolean;
+ *   selector?: string;
+ *   hasItems?: boolean;
+ *   iframeDOM?: object;
+ *   elementDOM?: object;
+ *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ *   zoom?: number;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const OverlaySpacing = props => {
   const {
     id = '',
@@ -18,7 +30,7 @@ const OverlaySpacing = props => {
     zoom = 1
   } = props;
   const [rawStyle, setRawStyle] = useState({});
-  const { style } = useContext(BuilderStyleContext);
+  const { style } = use(BuilderStyleContext);
   const elementStyle = useMemo(() => {
     if (!selector) {
       return {};
@@ -129,17 +141,6 @@ const OverlaySpacing = props => {
       )}
     </div>
   );
-};
-
-OverlaySpacing.propTypes = {
-  id: PropTypes.string,
-  displayMode: PropTypes.string,
-  selector: PropTypes.string,
-  hasItems: PropTypes.bool,
-  hoverRemove: PropTypes.bool,
-  iframeDOM: PropTypes.object,
-  elementDOM: PropTypes.object,
-  zoom: PropTypes.number
 };
 
 export default OverlaySpacing;

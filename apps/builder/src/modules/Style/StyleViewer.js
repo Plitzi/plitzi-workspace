@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
@@ -9,14 +9,15 @@ import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedCo
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 
+/** @returns {React.ReactElement} */
 const StyleViewer = () => {
-  const { elementSelected } = useContext(BuilderSelectedContext);
+  const { elementSelected } = use(BuilderSelectedContext);
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
+  } = use(BuilderSchemaContext);
   const {
     style: { platform }
-  } = useContext(BuilderStyleContext);
+  } = use(BuilderStyleContext);
 
   const selectorToString = useCallback(
     selector => {
@@ -61,7 +62,5 @@ const StyleViewer = () => {
     </div>
   );
 };
-
-StyleViewer.propTypes = {};
 
 export default StyleViewer;

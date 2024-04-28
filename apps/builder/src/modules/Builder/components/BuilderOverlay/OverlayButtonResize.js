@@ -1,16 +1,34 @@
 // Packages
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import noop from 'lodash/noop';
 import debounce from 'lodash/debounce';
 import classNames from 'classnames';
 
+/**
+ * @param {{
+ *   className?: string;
+ *   width?: number;
+ *   height?: number;
+ *   transformScale?: number;
+ *   elementDOM: object;
+ *   iframeDOM: object;
+ *   lockAspectRatio?: boolean;
+ *   minConstraintsX?: number;
+ *   minConstraintsY?: number;
+ *   maxConstraintsX?: number;
+ *   maxConstraintsY?: number;
+ *   resizeHandle?: 'sw' | 'nw' | 'se' | 'ne' | 's' | 'w' | 'e' | 'n';
+ *   axis?: 'both' | 'x' | 'y' | 'none';
+ *   onChange?: (width: number, height: number, isFinal: boolean) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const OverlayButtonResize = props => {
   const {
     className = '',
     width = -1,
     height = -1,
-    transformScale = 1,
+    transformScale = 1, // 0.5 if is centered and expands in both sides
     elementDOM,
     iframeDOM,
     lockAspectRatio = false,
@@ -201,37 +219,6 @@ const OverlayButtonResize = props => {
       onMouseDown={handleMouseDown(resizeHandle)}
     />
   );
-};
-
-OverlayButtonResize.propTypes = {
-  className: PropTypes.string,
-  elementDOM: PropTypes.object,
-  iframeDOM: PropTypes.object,
-  transformScale: PropTypes.number, // 0.5 if is centered and expands in both sides
-  width: PropTypes.number,
-  height: PropTypes.number,
-  lockAspectRatio: PropTypes.bool,
-  minConstraintsX: PropTypes.number,
-  minConstraintsY: PropTypes.number,
-  maxConstraintsX: PropTypes.number,
-  maxConstraintsY: PropTypes.number,
-  // Defines which resize handles should be rendered (default: 'se')
-  // 's' - South handle (bottom-center)
-  // 'w' - West handle (left-center)
-  // 'e' - East handle (right-center)
-  // 'n' - North handle (top-center)
-  // 'sw' - Southwest handle (bottom-left)
-  // 'nw' - Northwest handle (top-left)
-  // 'se' - Southeast handle (bottom-right)
-  // 'ne' - Northeast handle (top-center)
-  resizeHandle: PropTypes.oneOf(['sw', 'nw', 'se', 'ne']),
-  // Restricts resizing to a particular axis (default: 'both')
-  // 'both' - allows resizing by width or height
-  // 'x' - only allows the width to be changed
-  // 'y' - only allows the height to be changed
-  // 'none' - disables resizing altogether
-  axis: PropTypes.oneOf(['both', 'x', 'y', 'none']),
-  onChange: PropTypes.func
 };
 
 export default OverlayButtonResize;

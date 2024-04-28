@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useReducer, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useReducer, useRef } from 'react';
 import omit from 'lodash/omit';
 
 // Alias
@@ -11,10 +10,17 @@ import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalCo
 // Relatives
 import CollectionReducer, { CollectionsActions } from './CollectionReducer';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   collections?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const CollectionContextProvider = props => {
   const { children, collections: collectionsProp } = props;
-  const { query, mutate } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { query, mutate } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
     if (collectionsProp) {
       return collectionsProp;
@@ -301,11 +307,6 @@ const CollectionContextProvider = props => {
   );
 
   return <CollectionContext.Provider value={collectionContextValue}>{children}</CollectionContext.Provider>;
-};
-
-CollectionContextProvider.propTypes = {
-  children: PropTypes.node,
-  collections: PropTypes.object
 };
 
 export default CollectionContextProvider;

@@ -1,9 +1,18 @@
 // Packages
 import React from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
+/**
+ * @param {{
+ *   id?: string;
+ *   isSelected?: boolean;
+ *   className?: string;
+ *   children?: React.ReactNode;
+ *   onClick?: (id: string) => void;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const MarketSidebarItem = props => {
   const { id = '', isSelected = false, className = '', children, onClick = noop } = props;
 
@@ -20,14 +29,6 @@ const MarketSidebarItem = props => {
       {children}
     </li>
   );
-};
-
-MarketSidebarItem.propTypes = {
-  id: PropTypes.string,
-  children: PropTypes.node,
-  isSelected: PropTypes.bool,
-  className: PropTypes.string,
-  onClick: PropTypes.func
 };
 
 export default MarketSidebarItem;

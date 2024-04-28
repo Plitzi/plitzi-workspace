@@ -8,7 +8,14 @@ module.exports = {
     jest: true
   },
   parser: '@babel/eslint-parser',
-  extends: ['airbnb', 'prettier', 'plugin:storybook/recommended', 'plugin:cypress/recommended', 'eslint-config-turbo'],
+  extends: [
+    'airbnb',
+    'prettier',
+    'plugin:storybook/recommended',
+    'plugin:cypress/recommended',
+    'eslint-config-turbo',
+    'plugin:jsdoc/recommended'
+  ],
   parserOptions: {
     requireConfigFile: false,
     babelOptions: {
@@ -31,7 +38,7 @@ module.exports = {
     VERSION: true
   },
   ignorePatterns: ['**/node_modules/**', '**/dist/**'],
-  plugins: ['react', 'cypress'],
+  plugins: ['react', 'cypress', 'jsdoc'],
   settings: {
     'import/resolver': {
       node: {
@@ -53,6 +60,12 @@ module.exports = {
     }
   },
   rules: {
+    'jsdoc/require-description': 0,
+    'jsdoc/require-param': 1,
+    'jsdoc/require-jsdoc': 0, // [1, { require: { FunctionExpression: true, ClassDeclaration: true } }],
+    'jsdoc/require-returns-description': 0,
+    'jsdoc/require-param-description': 0,
+    'react/prop-types': 0, // deprecated, checking if can support jsdoc instead
     'no-restricted-syntax': 0,
     'no-await-in-loop': 0,
     'turbo/no-undeclared-env-vars': 0,

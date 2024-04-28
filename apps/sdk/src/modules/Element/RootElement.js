@@ -1,6 +1,5 @@
 // Packages
-import React, { forwardRef, useCallback, useContext, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, use, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -18,8 +17,21 @@ const interactionBasicTriggers = {
   }
 };
 
-const RootElement = forwardRef((props, ref) => {
+/**
+ * @param {{
+ *   ref?: React.Ref<any>;
+ *   children?: React.ReactNode;
+ *   tag?: string;
+ *   className?: string;
+ *   interactionTriggers?: object;
+ *   interactionCallbacks?: object;
+ *   internalProps?: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const RootElement = props => {
   const {
+    ref,
     children,
     tag: Tag = 'div',
     className = '',
@@ -62,7 +74,7 @@ const RootElement = forwardRef((props, ref) => {
     );
   }
 
-  const { interactionsManager, useInteractions } = useContext(InteractionsContext);
+  const { interactionsManager, useInteractions } = use(InteractionsContext);
   const processEvent = useCallback(
     (e, id, actionName, originalCallback, propagateEvent = false) => {
       if (!propagateEvent) {
@@ -101,7 +113,7 @@ const RootElement = forwardRef((props, ref) => {
       }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
-  const { useDataSource } = useContext(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext);
   const dataSource = useDataSource({ id, mode: 'read' });
   const dataSourceContextRef = useRef({});
   dataSourceContextRef.current = dataSource;
@@ -131,15 +143,6 @@ const RootElement = forwardRef((props, ref) => {
       {children}
     </Tag>
   );
-});
-
-RootElement.propTypes = {
-  children: PropTypes.node,
-  internalProps: PropTypes.object,
-  className: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  interactionTriggers: PropTypes.object,
-  interactionCallbacks: PropTypes.object,
-  tag: PropTypes.string
 };
 
 export default RootElement;

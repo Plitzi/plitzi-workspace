@@ -1,11 +1,21 @@
 // Packages
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Alias
 import ReplicaProvider from '@modules/Element/ReplicaProvider';
 
+/**
+ * @param {{
+ *   children: React.ReactNode;
+ *   className: string;
+ *   isTemplate: boolean;
+ *   itemCount: number;
+ *   parentId: string;
+ *   record: object;
+ * }} props
+ * @returns {React.ReactElement}
+ */
 const ListControlledItem = props => {
   const { children, className = '', isTemplate = false, itemCount = 0, parentId = '', record } = props;
   const dataSourceValue = useMemo(() => ({ item: record }), [record]);
@@ -26,15 +36,6 @@ const ListControlledItem = props => {
       {children}
     </ReplicaProvider>
   );
-};
-
-ListControlledItem.propTypes = {
-  className: PropTypes.string,
-  parentId: PropTypes.string,
-  record: PropTypes.object,
-  isTemplate: PropTypes.bool,
-  itemCount: PropTypes.number,
-  children: PropTypes.node
 };
 
 export default ListControlledItem;
