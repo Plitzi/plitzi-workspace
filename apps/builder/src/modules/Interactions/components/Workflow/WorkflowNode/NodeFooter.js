@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -20,7 +20,7 @@ import WorkflowContext from '../WorkflowContext';
 const NodeFooter = props => {
   const { className = '', id = '', canUp = false, canDown = false, onClickOpen = noop } = props;
 
-  const { moveNode } = useContext(WorkflowContext);
+  const { moveNode } = use(WorkflowContext);
 
   const handleClickUp = useCallback(() => moveNode(id, 'up'), [id, moveNode]);
 

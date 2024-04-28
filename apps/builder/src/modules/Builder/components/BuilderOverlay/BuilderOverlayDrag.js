@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import camelCase from 'lodash/camelCase';
 import debounce from 'lodash/debounce';
@@ -31,11 +31,11 @@ const BuilderOverlayDrag = props => {
   const {
     builderElementPermissions,
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
+  } = use(BuilderContext);
   const {
     builderDropElement,
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
+  } = use(BuilderSchemaContext);
   const setRerenderDebounced = useMemo(() => debounce(setRerender, 50), [setRerender]);
 
   const dragMetadata = useRef({

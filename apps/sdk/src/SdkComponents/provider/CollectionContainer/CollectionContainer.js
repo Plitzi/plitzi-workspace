@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
@@ -45,7 +45,7 @@ const CollectionContainer = props => {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = useContext(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext);
 
   const sourceFields = useCallback(() => {
     const fields = [];

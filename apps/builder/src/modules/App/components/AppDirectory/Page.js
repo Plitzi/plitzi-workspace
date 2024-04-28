@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import { Link } from 'react-router-dom';
@@ -29,10 +29,10 @@ const Page = props => {
   const {
     schema,
     schema: { flat }
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
   const {
     style: { cache }
-  } = useContext(StyleContext);
+  } = use(StyleContext);
   const [zoom, setZoom] = useState(false);
   const page = useMemo(() => get(flat, id, {}), [flat, id]);
   if (!page) {

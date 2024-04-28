@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 
 // Monorepo
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
@@ -17,7 +17,7 @@ import StateManagerContext from '@modules/StateManager/StateManagerContext';
  */
 const DataSourceSdkContextProvider = props => {
   const { children } = props;
-  const { state } = useContext(StateManagerContext);
+  const { state } = use(StateManagerContext);
 
   return (
     <DataSourceContextProvider>

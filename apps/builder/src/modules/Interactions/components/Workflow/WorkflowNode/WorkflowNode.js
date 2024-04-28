@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, memo } from 'react';
+import React, { useCallback, use, useEffect, useMemo, memo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -56,8 +56,7 @@ const WorkflowNode = props => {
     onOpened = noop,
     onRemove = noop
   } = props;
-  const { previewData, getNode, updateNode, setPreviewNode, nodeDefinitions, dataSourceContent } =
-    useContext(WorkflowContext);
+  const { previewData, getNode, updateNode, setPreviewNode, nodeDefinitions, dataSourceContent } = use(WorkflowContext);
 
   const handleClickOpen = useCallback(() => onOpened(id, !isOpened), [id, isOpened, onOpened]);
 

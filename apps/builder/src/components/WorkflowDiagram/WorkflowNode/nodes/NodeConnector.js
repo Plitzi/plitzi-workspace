@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
 // Relatives
@@ -21,7 +21,7 @@ const NodeConnector = props => {
   const { className = '', id = '', from, to, offsetX = 0, offsetY = 0 } = props;
   const [fromNode, setFromNode] = useState(from);
   const [toNode, setToNode] = useState(to);
-  const { direction, getNode, unregisterNode } = useContext(WorkflowContext);
+  const { direction, getNode, unregisterNode } = use(WorkflowContext);
 
   const handleDoubleClick = useCallback(() => {
     unregisterNode(id);

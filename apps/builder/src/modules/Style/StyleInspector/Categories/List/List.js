@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -32,7 +32,7 @@ const dotKeys = [LIST_STYLE];
  */
 const List = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
   const style = getValue(LIST_STYLE);
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('list', isCollapsed), [onCollapse]);

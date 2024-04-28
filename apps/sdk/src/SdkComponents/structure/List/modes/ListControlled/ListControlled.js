@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -30,7 +30,7 @@ const ListControlled = props => {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = useContext(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext);
   const finalItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;

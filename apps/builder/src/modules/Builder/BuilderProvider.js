@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState, useRef, useEffect } from 'react';
+import React, { useCallback, use, useMemo, useState, useRef, useEffect } from 'react';
 import get from 'lodash/get';
 import set from 'lodash/set';
 import pick from 'lodash/pick';
@@ -63,8 +63,8 @@ const BuilderProvider = props => {
     onBaseElementChange = noop
   } = props;
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
-  const { getComponentBuilderSettings, componentDefinitions, getComponent } = useContext(ComponentContext);
-  const { supportRealTime, subscriptionsPush } = useContext(BuilderSubscriptionsContext);
+  const { getComponentBuilderSettings, componentDefinitions, getComponent } = use(ComponentContext);
+  const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
   const [elementSelected, setElementSelected] = useState();
   const [elementHovered, setElementHovered] = useState();
   const [selectorSelected, setSelectorSelected] = useState();
@@ -81,7 +81,7 @@ const BuilderProvider = props => {
 
   // Builder Methods
 
-  const { eventBridge } = useContext(EventBridgeContext);
+  const { eventBridge } = use(EventBridgeContext);
 
   const builderHandler = useCallback(
     (event, ...data) => {

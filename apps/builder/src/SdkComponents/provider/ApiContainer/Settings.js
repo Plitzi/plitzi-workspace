@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
@@ -40,9 +40,9 @@ const Settings = props => {
     mockData = '{}',
     onUpdate = noop
   } = props;
-  const { pageDefinitions } = useContext(SchemaMainContext);
+  const { pageDefinitions } = use(SchemaMainContext);
   const [advancedSettings, setAdvancedSettings] = useState(false);
-  const { routeParams, queryParams, currentPageId } = useContext(NavigationContext);
+  const { routeParams, queryParams, currentPageId } = use(NavigationContext);
 
   const handleChange = key => e => onUpdate(key, e.target.value);
 

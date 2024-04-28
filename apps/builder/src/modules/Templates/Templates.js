@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo, useState } from 'react';
+import React, { use, useMemo, useState } from 'react';
 import get from 'lodash/get';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -25,10 +25,9 @@ import TemplatesContext from './TemplatesContext';
 const Templates = () => {
   const { showModal } = useModal();
   const [filter, setFilter] = useState('');
-  const { eventBridge } = useContext(EventBridgeContext);
-  const { templates, templatesAddMutation, templatesUpdateMutation, templatesRemoveMutation } =
-    useContext(TemplatesContext);
-  const { webKey, server } = useContext(NetworkContext);
+  const { eventBridge } = use(EventBridgeContext);
+  const { templates, templatesAddMutation, templatesUpdateMutation, templatesRemoveMutation } = use(TemplatesContext);
+  const { webKey, server } = use(NetworkContext);
 
   const handleDragStart = template => e => {
     e.stopPropagation();

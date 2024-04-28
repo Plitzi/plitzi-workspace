@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 
@@ -18,11 +18,11 @@ import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
  */
 const PageHeader = props => {
   const { setTabSelected = noop } = props;
-  const { pageDefinitions } = useContext(SchemaMainContext);
-  const { currentPageId } = useContext(NavigationContext);
+  const { pageDefinitions } = use(SchemaMainContext);
+  const { currentPageId } = use(NavigationContext);
   const {
     server: { domain }
-  } = useContext(NetworkContext);
+  } = use(NetworkContext);
 
   const handleClick = useCallback(() => setTabSelected('pages'), [setTabSelected]);
 

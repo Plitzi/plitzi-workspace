@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
@@ -34,14 +34,14 @@ const BuilderAreaHeader = props => {
   const { baseElementId, element, isActive = false, headerTitle = '', previewMode = false } = props;
   const { existsPopup, addPopup } = usePopup();
   const { multiPagesMode, setMultiPagesMode, hasMultiPages, builderSetBaseContext, baseElementIdOriginal, mode } =
-    useContext(BuilderContext);
+    use(BuilderContext);
   const {
     schema: { flat, pageFolders }
-  } = useContext(BuilderSchemaContext);
+  } = use(BuilderSchemaContext);
   const {
     server: { domain }
-  } = useContext(NetworkContext);
-  const { elementSelected, setSelected } = useContext(BuilderSelectedContext);
+  } = use(NetworkContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
 

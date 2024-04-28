@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useEffect } from 'react';
+import React, { useCallback, use, useMemo, useEffect } from 'react';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
@@ -35,8 +35,8 @@ const selectorsDefault = [];
  */
 const InspectorModeAdvanced = props => {
   const { element, styleSelector = '', selectors = selectorsDefault, selector } = props;
-  const { builderHandler } = useContext(BuilderContext);
-  const { displayMode } = useContext(AppContext);
+  const { builderHandler } = use(BuilderContext);
+  const { displayMode } = use(AppContext);
   const selectorInstance = useMemo(
     () => selectors.find(selectorAux => selectorAux.name === selector),
     [selector, selectors]

@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -41,7 +41,7 @@ const dotKeys = [
  */
 const Background = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
   const bgColor = getValue(BACKGROUND_COLOR);
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('background', isCollapsed), [onCollapse]);

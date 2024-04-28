@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -30,7 +30,7 @@ const withSubscriptions = WrappedComponent => {
     const { addToast } = useToast();
     const [messageCallbacks, setMessageCallbacks] = useState({});
     const [collaborators, setCollaborators] = useState([]);
-    const { webKey, instanceId, server, userKey } = useContext(NetworkContext);
+    const { webKey, instanceId, server, userKey } = use(NetworkContext);
 
     const processMessage = useCallback(
       e => {

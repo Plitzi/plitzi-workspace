@@ -1,5 +1,5 @@
 // Packages
-import { useMemo, useEffect, useState, useContext, useCallback } from 'react';
+import { useMemo, useEffect, useState, use, useCallback } from 'react';
 import isEmpty from 'lodash/isEmpty';
 import Handlebars from 'handlebars';
 
@@ -34,8 +34,8 @@ const useCollectionContext = (props = {}) => {
   const {
     contexts: { CollectionContext, NavigationContext }
   } = plitziContext;
-  const { routeParams, queryParams } = useContext(NavigationContext);
-  const { fetchRecords, fetchCollection } = useContext(CollectionContext);
+  const { routeParams, queryParams } = use(NavigationContext);
+  const { fetchRecords, fetchCollection } = use(CollectionContext);
 
   // needs to find new user cases
   const queryCompiled = useMemo(() => {

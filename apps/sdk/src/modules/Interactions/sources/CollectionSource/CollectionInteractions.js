@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -18,8 +18,8 @@ import { collectionFieldTypeToInteractions } from '@modules/Collection/Collectio
  */
 const CollectionInteractions = props => {
   const { children } = props;
-  const { useInteractions } = useContext(InteractionsContext);
-  const { collections, addRecord, updateRecord, fetchRecords, removeRecord } = useContext(CollectionContext);
+  const { useInteractions } = use(InteractionsContext);
+  const { collections, addRecord, updateRecord, fetchRecords, removeRecord } = use(CollectionContext);
 
   const validateCollection = useCallback((collection, values) => {
     if (!collection) {

@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
+import React, { use, useMemo } from 'react';
 
 // Relatives
 import StyleInspectorContext from '../StyleInspector/StyleInspectorContext';
@@ -14,7 +14,7 @@ const styleKeysDefault = [];
  */
 const InspectorDots = props => {
   const { styleKeys = styleKeysDefault } = props;
-  const { hasValue, inheritData, bindingData } = useContext(StyleInspectorContext);
+  const { hasValue, inheritData, bindingData } = use(StyleInspectorContext);
 
   const hasInherit = useMemo(() => {
     return (

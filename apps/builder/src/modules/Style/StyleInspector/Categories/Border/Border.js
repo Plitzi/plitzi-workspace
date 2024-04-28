@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useState } from 'react';
+import React, { memo, useCallback, use, useState } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -66,7 +66,7 @@ const dotKeys = [
 const Border = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
   const [currentPlacement, setCurrentPlacement] = useState(BORDER_ALL);
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
 
   const handleChange = useCallback(
     (type, partialValue) => {

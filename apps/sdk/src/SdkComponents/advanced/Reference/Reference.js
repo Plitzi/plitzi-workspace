@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import capitalize from 'lodash/capitalize';
@@ -48,9 +48,9 @@ const Reference = props => {
   } = usePlitziServiceContext();
   const [reference, setReference] = useState();
   const [dsManagerChild, setDsManagerChild] = useState();
-  const { schema: mainSchema } = useContext(SchemaContext);
-  const { segments, segmentGet } = useContext(SegmentsContext);
-  const dataSourceContext = useContext(DataSourceContext);
+  const { schema: mainSchema } = use(SchemaContext);
+  const { segments, segmentGet } = use(SegmentsContext);
+  const dataSourceContext = use(DataSourceContext);
   const dsManager = get(dataSourceContext, 'dataSourceManager');
   let refreshReference;
   if (!previewMode && referenceType === PARTIAL_SCHEMA_TYPE_SEGMENT && segments && referenceId) {

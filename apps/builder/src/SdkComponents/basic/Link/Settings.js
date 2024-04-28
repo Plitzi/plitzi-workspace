@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useContext, useCallback, useEffect } from 'react';
+import React, { useMemo, use, useCallback, useEffect } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -26,8 +26,8 @@ const Settings = props => {
   } = usePlitziServiceContext();
   const {
     schema: { pages: pageIds, flat, pageFolders }
-  } = useContext(SchemaContext);
-  const { server } = useContext(NetworkContext);
+  } = use(SchemaContext);
+  const { server } = use(NetworkContext);
   const domain = useMemo(() => get(server, 'domain', 'https://subdomain.plitzi.app'), [server]);
   const pageUrls = useMemo(() => {
     const pages = pick(flat, pageIds);

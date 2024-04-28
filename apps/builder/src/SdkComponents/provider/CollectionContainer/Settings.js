@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -22,7 +22,7 @@ const Settings = props => {
   const {
     contexts: { CollectionContext }
   } = usePlitziServiceContext();
-  const { collections } = useContext(CollectionContext);
+  const { collections } = use(CollectionContext);
 
   const handleChange = key => e => onUpdate(key, e.target.value);
 

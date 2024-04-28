@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { useCallback, use, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
@@ -33,14 +33,14 @@ import TransformPreview from './TransformPreview';
 const Transform = props => {
   const { className = '' } = props;
   const editorRef = useRef();
-  const { server, webKey } = useContext(NetworkContext);
+  const { server, webKey } = use(NetworkContext);
   const { addToast } = useToast();
   const {
     builderHandler,
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
-  const { elementSelected } = useContext(BuilderSelectedContext);
-  const { rootDOM } = useContext(ContainerRootContext);
+  } = use(BuilderContext);
+  const { elementSelected } = use(BuilderSelectedContext);
+  const { rootDOM } = use(ContainerRootContext);
   const [mode, setMode] = useState('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);
   const [layoutMode, setLayoutMode] = useState('horizontal');

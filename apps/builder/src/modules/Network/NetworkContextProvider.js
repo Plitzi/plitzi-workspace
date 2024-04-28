@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import { withApollo } from '@apollo/client/react/hoc';
@@ -45,7 +45,7 @@ const NetworkContextProvider = props => {
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(undefined);
-  const { registerDefinition } = useContext(ComponentContext);
+  const { registerDefinition } = use(ComponentContext);
   const [internalData, setInternalData] = useState({});
 
   const query = useCallback(

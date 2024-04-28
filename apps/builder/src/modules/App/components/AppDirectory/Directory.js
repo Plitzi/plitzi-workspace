@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import upperFirst from 'lodash/upperFirst';
 import get from 'lodash/get';
@@ -49,8 +49,8 @@ const Directory = props => {
   } = props;
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const { eventBridge } = useContext(EventBridgeContext);
-  const { pageDefinitions, pages } = useContext(SchemaMainContext);
+  const { eventBridge } = use(EventBridgeContext);
+  const { pageDefinitions, pages } = use(SchemaMainContext);
   const pagesMemo = useMemo(
     () =>
       pages
@@ -197,6 +197,5 @@ const Directory = props => {
     </ContainerCollapsable>
   );
 };
-
 
 export default Directory;

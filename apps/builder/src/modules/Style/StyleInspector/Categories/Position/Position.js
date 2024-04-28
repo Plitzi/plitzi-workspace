@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
@@ -36,7 +36,7 @@ const dotKeys = [POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT];
  */
 const Position = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
 
   const handleChangeInput = type => e => {
     setValue(type, e.target.value);

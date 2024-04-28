@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, use, useEffect } from 'react';
 import classNames from 'classnames';
 
 // Relatives
@@ -15,7 +15,7 @@ import WorkflowActions from './WorkflowActions';
  */
 const WorkflowContainer = props => {
   const { className = '' } = props;
-  const { nodes, direction, performLayout } = useContext(WorkflowContext);
+  const { nodes, direction, performLayout } = use(WorkflowContext);
 
   const handleNodeSelected = useCallback(() => {}, []);
 

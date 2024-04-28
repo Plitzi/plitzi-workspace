@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo, useRef, useCallback } from 'react';
+import React, { use, useMemo, useRef, useCallback } from 'react';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Monorepo
@@ -51,15 +51,15 @@ const Sdk = props => {
     previewMode = true,
     debugMode = false
   } = props;
-  const { currentPageId } = useContext(NavigationContext);
-  const { assets } = useContext(PluginsContext);
+  const { currentPageId } = use(NavigationContext);
+  const { assets } = use(PluginsContext);
   const iframeRef = useRef(null);
-  const { rootDOM } = useContext(ContainerRootContext);
-  const schemaSettings = useContext(SchemaSettingsContext);
-  const { segments } = useContext(SegmentsContext);
+  const { rootDOM } = use(ContainerRootContext);
+  const schemaSettings = use(SchemaSettingsContext);
+  const { segments } = use(SegmentsContext);
   const {
     style: { cache }
-  } = useContext(StyleContext);
+  } = use(StyleContext);
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
 

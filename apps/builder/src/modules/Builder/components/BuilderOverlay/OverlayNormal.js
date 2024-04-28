@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
@@ -55,8 +55,8 @@ const OverlayNormal = props => {
     collaboratorName = ''
   } = props;
   const [hoverRemove, setHoverRemove] = useState(false);
-  const { builderElementPermissions, builderHandler } = useContext(BuilderContext);
-  const { style } = useContext(BuilderStyleContext);
+  const { builderElementPermissions, builderHandler } = use(BuilderContext);
+  const { style } = use(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
   const theme = useMemo(() => {

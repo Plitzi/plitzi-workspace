@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
@@ -14,8 +14,8 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
  */
 const NavigationSource = props => {
   const { children } = props;
-  const { useDataSource } = useContext(DataSourceContext);
-  const { routeParams, queryParams } = useContext(NavigationContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { routeParams, queryParams } = use(NavigationContext);
 
   const sourceFields = useCallback(
     async () => [

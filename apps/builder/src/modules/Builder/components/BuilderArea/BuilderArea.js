@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
@@ -71,17 +71,17 @@ const BuilderArea = props => {
     mobilePreview = false,
     previewMode = false
   } = props;
-  const { assets } = useContext(PluginsContext);
+  const { assets } = use(PluginsContext);
   const {
     multiPagesMode,
     mode,
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
-  const { displayBorderComponents, zoom } = useContext(AppContext);
+  } = use(BuilderContext);
+  const { displayBorderComponents, zoom } = use(AppContext);
   const {
     style,
     style: { cache }
-  } = useContext(BuilderStyleContext);
+  } = use(BuilderStyleContext);
   const css = useMemo(
     () => `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${styleFrame[1][1]}\n${`${cache}\n${customCss}`}\n${externalStyle}`,
     [customCss, cache, externalStyle]
@@ -94,10 +94,10 @@ const BuilderArea = props => {
   const [heightArea, setHeightArea] = useState(0);
   const [iframeScaleX, setIframeScaleX] = useState(1);
   const [desiredWidth] = useState(1440);
-  const { supportRealTime, subscriptionsCollaborators } = useContext(BuilderSubscriptionsContext);
-  const { currentPageId } = useContext(NavigationContext);
-  const { schema, builderGetBaseElement } = useContext(BuilderSchemaContext);
-  const { rootDOM } = useContext(ContainerRootContext);
+  const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
+  const { currentPageId } = use(NavigationContext);
+  const { schema, builderGetBaseElement } = use(BuilderSchemaContext);
+  const { rootDOM } = use(ContainerRootContext);
 
   const callbackRefresh = () => {
     if (!refContainer.current || !ref.current) {

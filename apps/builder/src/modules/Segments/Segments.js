@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useRef, useState } from 'react';
 import omit from 'lodash/omit';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -18,7 +18,7 @@ const Segments = () => {
   const [filter, setFilter] = useState({ name: { contains: '' } });
   const [data, setData] = useState({ cursor: undefined, hasNextPage: false, segments: {} });
   const { showModal } = useModal();
-  const { segmentsFetch, segmentAddMutation } = useContext(SegmentsContext);
+  const { segmentsFetch, segmentAddMutation } = use(SegmentsContext);
 
   const fetch = async (search, more = false) => {
     setLoading(true);

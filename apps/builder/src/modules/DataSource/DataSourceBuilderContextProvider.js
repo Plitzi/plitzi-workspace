@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
+import React, { use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -19,8 +19,8 @@ import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
  */
 const DataSourceBuilderContextProvider = props => {
   const { children } = props;
-  const { state } = useContext(StateManagerContext);
-  const { pages: pageIds, pageDefinitions } = useContext(SchemaMainContext);
+  const { state } = use(StateManagerContext);
+  const { pages: pageIds, pageDefinitions } = use(SchemaMainContext);
 
   const pageOptions = useMemo(
     () =>

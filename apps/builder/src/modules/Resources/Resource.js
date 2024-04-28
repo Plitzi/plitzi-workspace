@@ -1,5 +1,5 @@
 // Packages
-import React, { useState, useContext, useCallback } from 'react';
+import React, { useState, use, useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -44,7 +44,7 @@ const Resource = props => {
     onRemove = noop
   } = props;
   const { onDragStart } = useDragElement({ type, attributes: { src } });
-  const { mutate } = useContext(NetworkContext);
+  const { mutate } = use(NetworkContext);
   const { showModal } = useModal();
   const [hovered, setHovered] = useState(false);
   const [removing, setRemoving] = useState(false);

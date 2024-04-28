@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useContext, useMemo } from 'react';
+import React, { memo, use, useMemo } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
@@ -19,7 +19,7 @@ import StyleInspectorContext from './StyleInspectorContext';
  */
 const InspectorLabel = props => {
   const { keyValue, children, className = '', size = 'small', sectionTitle = false } = props;
-  const { resetValue, bindingData, inheritData, hasValue } = useContext(StyleInspectorContext);
+  const { resetValue, bindingData, inheritData, hasValue } = use(StyleInspectorContext);
 
   const isActive = useMemo(() => {
     if (!keyValue) {

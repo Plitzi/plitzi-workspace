@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useContext, useRef, useCallback, useState } from 'react';
+import React, { useMemo, use, useRef, useCallback, useState } from 'react';
 import get from 'lodash/get';
 
 // Alias
@@ -18,8 +18,8 @@ import SegmentsContext from './SegmentsContext';
  */
 const SegmentsContextProvider = props => {
   const { children, segments: segmentsProp } = props;
-  const { query } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { query } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const segmentsPropMemo = useMemo(() => {
     if (segmentsProp) {
       return segmentsProp;

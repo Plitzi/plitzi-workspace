@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useMemo, useState, useContext } from 'react';
+import React, { useCallback, useMemo, useState, use } from 'react';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
@@ -27,7 +27,7 @@ const StyleAdvanceEditor = props => {
       settings: { customCss: customCssProp }
     },
     schemaUpdateSettings
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
   const [customCss, setCustomCss] = useState(() => {
     if (typeof customCssProp !== 'string') {
       return '';
@@ -36,7 +36,7 @@ const StyleAdvanceEditor = props => {
     return customCssProp ?? '';
   });
   const schemaUpdateSettingsDebounce = useMemo(() => debounce(schemaUpdateSettings, 500), [schemaUpdateSettings]);
-  const { server, webKey } = useContext(NetworkContext);
+  const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
 
   const handleChange = useCallback(

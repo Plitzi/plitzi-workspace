@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import PopupSidebar from '@plitzi/plitzi-ui-components/Popup/PopupSidebar';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
@@ -27,11 +27,11 @@ import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 const ContainerDefault = props => {
   const { previewMode = false, externalStyle = '' } = props;
-  const { eventBridge } = useContext(EventBridgeContext);
-  const schemaContext = useContext(SchemaContext);
-  const { pages, settings } = useContext(SchemaMainContext);
-  const styleContext = useContext(StyleContext);
-  const { currentPageId } = useContext(NavigationContext);
+  const { eventBridge } = use(EventBridgeContext);
+  const schemaContext = use(SchemaContext);
+  const { pages, settings } = use(SchemaMainContext);
+  const styleContext = use(StyleContext);
+  const { currentPageId } = use(NavigationContext);
   const [state, setCache, getCacheByKey] = useCache();
   const popupsActive = useMemo(() => getCacheByKey('PopupSidebar.popupsActive', []), [state]);
 
@@ -44,7 +44,7 @@ const ContainerDefault = props => {
     [eventBridge]
   );
 
-  const { segments } = useContext(SegmentsContext);
+  const { segments } = use(SegmentsContext);
 
   const customCss = useMemo(() => {
     let css = settings?.customCss ?? '';

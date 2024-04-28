@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useEffect } from 'react';
+import React, { use, useEffect } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -26,7 +26,7 @@ import withFieldValue from './hocs/withFieldValue';
  *   className: string;
  *   internalProps: object;
  *   subType:
- *     'text'
+ *     | 'text'
  *     | 'number'
  *     | 'email'
  *     | 'password'
@@ -76,7 +76,7 @@ const FormControl = props => {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = useContext(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext);
   const { form } = useDataSource({ id, mode: 'read' });
   if (!form && !previewMode) {
     return (

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -28,7 +28,7 @@ const WorkflowFlow = props => {
     triggerTitle = 'When this happens...',
     callbackTitle = 'Do this...'
   } = props;
-  const { addNode, removeNode } = useContext(WorkflowContext);
+  const { addNode, removeNode } = use(WorkflowContext);
   const callbacks = useMemo(() => Object.values(nodes).filter(node => node.type !== 'trigger'), [nodes]);
   const [nodesOpened, setNodesOpened] = useState({});
 

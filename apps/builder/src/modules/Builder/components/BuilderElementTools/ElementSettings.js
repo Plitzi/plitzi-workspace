@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
@@ -50,18 +50,18 @@ const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Se
  */
 const ElementSettings = props => {
   const { id = '', type = '', attributes = emptyObject, handleChange = noop } = props;
-  const { previewMode, displayBorderComponents } = useContext(AppContext);
-  const { getComponent } = useContext(ComponentContext);
+  const { previewMode, displayBorderComponents } = use(AppContext);
+  const { getComponent } = use(ComponentContext);
   const Plugin = getComponent(type);
-  const { pluginStyles } = useContext(PluginsContext);
-  const { currentPageId } = useContext(NavigationContext);
+  const { pluginStyles } = use(PluginsContext);
+  const { currentPageId } = use(NavigationContext);
   const {
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
-  const { rootDOM } = useContext(ContainerRootContext);
+  } = use(BuilderContext);
+  const { rootDOM } = use(ContainerRootContext);
 
-  const { schema } = useContext(BuilderSchemaContext);
-  const { style } = useContext(BuilderStyleContext);
+  const { schema } = use(BuilderSchemaContext);
+  const { style } = use(BuilderStyleContext);
 
   const getWindow = useCallback(() => {
     // if (ref.current) {

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import omit from 'lodash/omit';
 
 // Monorepo
@@ -20,7 +20,7 @@ const withUserDataSource = WrappedComponent => {
    */
   const WithUserDataSourceComponent = props => {
     const { ref, previewMode = true, userProvider = 'basic' } = props;
-    const { user, authenticated } = useContext(RealUserContext);
+    const { user, authenticated } = use(RealUserContext);
     const userContextMemo = useMemo(() => {
       switch (userProvider) {
         case 'auth0':

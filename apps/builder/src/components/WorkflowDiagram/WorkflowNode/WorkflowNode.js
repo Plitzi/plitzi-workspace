@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -52,7 +52,7 @@ const WorkflowNode = props => {
     updateNode,
     performLayout,
     nodeDefinitions
-  } = useContext(WorkflowContext);
+  } = use(WorkflowContext);
   const ref = useRef();
 
   const handlePositionChanged = useCallback((x, y) => updateNodePosition(id, x, y), [id, updateNodePosition]);

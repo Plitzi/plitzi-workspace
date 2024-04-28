@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useState, useCallback } from 'react';
+import React, { use, useState, useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -38,13 +38,13 @@ const AppHeaher = props => {
   const { setTabSelected = noop } = props;
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const { eventBridge } = useContext(EventBridgeContext);
-  const { mutate } = useContext(NetworkContext);
-  const queueProcessing = useContext(QueueStatusContext);
-  const { currentPageId } = useContext(NavigationContext);
-  const { previewMode, setPreviewMode } = useContext(AppContext);
+  const { eventBridge } = use(EventBridgeContext);
+  const { mutate } = use(NetworkContext);
+  const queueProcessing = use(QueueStatusContext);
+  const { currentPageId } = use(NavigationContext);
+  const { previewMode, setPreviewMode } = use(AppContext);
   const [loadingDeployment, setLoadingDeployment] = useState(false);
-  const { subscriptionsCollaborators } = useContext(BuilderSubscriptionsContext);
+  const { subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
 
   const handleClickPreviewMode = useCallback(() => {
     eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);

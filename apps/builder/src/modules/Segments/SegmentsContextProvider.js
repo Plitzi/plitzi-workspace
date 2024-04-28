@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
@@ -30,10 +30,10 @@ import SegmentsReducer, { SegmentsActions } from './SegmentsReducer';
  */
 const SegmentsContextProvider = props => {
   const { children, segments: segmentsProp, includeSubscriptions = true } = props;
-  const { query, mutate, subscriptionManager } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
-  const { enqueueMiddleware } = useContext(QueueContext);
-  const { undoableMiddleware } = useContext(UndoableContext);
+  const { query, mutate, subscriptionManager } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
+  const { enqueueMiddleware } = use(QueueContext);
+  const { undoableMiddleware } = use(UndoableContext);
   const segmentsPropMemo = useMemo(() => {
     if (segmentsProp) {
       return segmentsProp;

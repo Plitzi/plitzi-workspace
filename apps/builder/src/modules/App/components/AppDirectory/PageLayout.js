@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 // import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -24,10 +24,10 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/
  */
 const PageLayout = props => {
   const { id = '', name = '', onSelect = noop, onRemove = noop } = props;
-  const { schema } = useContext(SchemaContext);
+  const { schema } = use(SchemaContext);
   const {
     style: { cache }
-  } = useContext(StyleContext);
+  } = use(StyleContext);
 
   return (
     <div

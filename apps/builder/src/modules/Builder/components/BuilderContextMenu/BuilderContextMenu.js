@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
@@ -42,14 +42,14 @@ const BuilderContextMenu = props => {
   const [xPos, setXPos] = useState('0px');
   const [yPos, setYPos] = useState('0px');
   const [showMenu, setShowMenu] = useState(false);
-  const { builderElementPermissions, builderHandler } = useContext(BuilderContext);
-  const builderTemplatesContext = useContext(TemplatesContext);
-  const builderSegmentsContext = useContext(SegmentsContext);
-  const { elementSelected, setSelected } = useContext(BuilderSelectedContext);
+  const { builderElementPermissions, builderHandler } = use(BuilderContext);
+  const builderTemplatesContext = use(TemplatesContext);
+  const builderSegmentsContext = use(SegmentsContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
-  const { style } = useContext(BuilderStyleContext);
+  } = use(BuilderSchemaContext);
+  const { style } = use(BuilderStyleContext);
   const element = useMemo(() => flat[elementSelected], [elementSelected]);
   const componentConfig = useMemo(() => builderElementPermissions(element), [element, builderElementPermissions]);
 

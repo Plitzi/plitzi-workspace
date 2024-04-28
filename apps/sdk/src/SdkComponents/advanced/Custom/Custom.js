@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -43,8 +43,8 @@ const Custom = props => {
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
-  const { registerCustomAssets, unregisterCustomAssets } = useContext(PluginsContext);
-  const { components } = useContext(ComponentContext);
+  const { registerCustomAssets, unregisterCustomAssets } = use(PluginsContext);
+  const { components } = use(ComponentContext);
   const settingsParsed = useMemo(() => {
     if (!settings) {
       return {};

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import isEmpty from 'lodash/isEmpty';
@@ -232,9 +232,9 @@ const defaultValue = {
  */
 const StyleInspectorProvider = props => {
   const { children, selector = '', styleSelector = 'base', element, inheritData } = props;
-  const { displayMode } = useContext(AppContext);
-  const { builderHandler } = useContext(BuilderContext);
-  const { style } = useContext(BuilderStyleContext);
+  const { displayMode } = use(AppContext);
+  const { builderHandler } = use(BuilderContext);
+  const { style } = use(BuilderStyleContext);
   const bindingData = useStyleBinding({ element });
   const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
   const values = get(style, `platform.${displayMode}.${selector}.attributes`);

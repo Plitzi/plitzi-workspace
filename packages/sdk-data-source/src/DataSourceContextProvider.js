@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
+import React, { use, useMemo } from 'react';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
@@ -18,8 +18,8 @@ import DataSourceManager from './DataSourceManager';
  */
 const DataSourceContextProvider = props => {
   const { children } = props;
-  const { schema } = useContext(SchemaContext);
-  const { currentPageId } = useContext(NavigationContext);
+  const { schema } = use(SchemaContext);
+  const { currentPageId } = use(NavigationContext);
   const dataSourceManager = useMemo(() => new DataSourceManager(), []);
   dataSourceManager.schema = schema;
   dataSourceManager.currentPageId = currentPageId;

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useReducer, useRef } from 'react';
+import React, { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
@@ -22,8 +22,8 @@ import TemplatesReducer, { TemplatesActions } from './TemplatesReducer';
  */
 const TemplatesContextProvider = props => {
   const { children, templates: templatesProp } = props;
-  const { mutate } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { mutate } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const templatesPropMemo = useMemo(() => {
     if (templatesProp) {
       return templatesProp;

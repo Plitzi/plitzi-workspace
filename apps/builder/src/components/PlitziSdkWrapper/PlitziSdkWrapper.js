@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
+import React, { use, useMemo } from 'react';
 import classNames from 'classnames';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
@@ -22,10 +22,10 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
  */
 const PlitziSdkWrapper = props => {
   const { currentPageId, className = '', renderMode = 'iframe', previewMode = true } = props;
-  const { schema } = useContext(SchemaContext);
-  const { style } = useContext(StyleContext);
-  const { plugins } = useContext(PluginsContext);
-  const { webKey, server } = useContext(NetworkContext);
+  const { schema } = use(SchemaContext);
+  const { style } = use(StyleContext);
+  const { plugins } = use(PluginsContext);
+  const { webKey, server } = use(NetworkContext);
 
   const offlineDataMemo = useMemo(() => {
     if (renderMode === 'iframe') {

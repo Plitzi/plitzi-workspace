@@ -1,5 +1,5 @@
 // Packages
-import React, { useEffect, useState, useContext, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 import classNames from 'classnames';
 import get from 'lodash/get';
@@ -39,7 +39,7 @@ const BlockJsx = props => {
   } = props;
   const [JsxModule, setJsxModule] = useState(undefined);
   const [renderError, setRenderError] = useState(undefined);
-  const { components } = useContext(ComponentContext);
+  const { components } = use(ComponentContext);
   const componentPropsParsed = useMemo(() => {
     if (!componentProps) {
       return {};

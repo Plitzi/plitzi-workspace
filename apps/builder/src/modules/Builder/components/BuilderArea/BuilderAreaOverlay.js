@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo } from 'react';
+import React, { use, useMemo } from 'react';
 
 // Relatives
 import BuilderOverlay from '../BuilderOverlay';
@@ -19,8 +19,8 @@ import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
  */
 const BuilderAreaOverlay = props => {
   const { iframeDOM, baseElementId = '', dragTree = false, zoom = 1, displayMode = 'desktop' } = props;
-  const { elementHovered } = useContext(BuilderHoveredContext);
-  const { elementSelected } = useContext(BuilderSelectedContext);
+  const { elementHovered } = use(BuilderHoveredContext);
+  const { elementSelected } = use(BuilderSelectedContext);
 
   const overlaySelectMemo = useMemo(
     () => (

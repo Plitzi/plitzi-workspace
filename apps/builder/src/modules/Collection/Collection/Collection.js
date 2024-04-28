@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, use, useEffect, useState } from 'react';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -23,7 +23,7 @@ const Collection = props => {
   const { showModal } = useModal();
   const [cursor, setCursor] = useState(null);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const { collections, addRecord, updateRecord, removeRecord, fetchRecords } = useContext(CollectionContext);
+  const { collections, addRecord, updateRecord, removeRecord, fetchRecords } = use(CollectionContext);
   const { records, fields, name } = get(collections, id, {});
 
   const handleClickUpdateRecord = recordId => async e => {

@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useContext } from 'react';
+import React, { useMemo, use } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 
@@ -40,10 +40,10 @@ const Link = props => {
     settings: { previewMode },
     contexts: { NavigationContext, SchemaContext }
   } = usePlitziServiceContext();
-  const { navigate, routeParams, queryParams } = useContext(NavigationContext);
+  const { navigate, routeParams, queryParams } = use(NavigationContext);
   const {
     schema: { flat, pageFolders }
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
   const { style } = internalProps;
 
   const url = useMemo(() => {

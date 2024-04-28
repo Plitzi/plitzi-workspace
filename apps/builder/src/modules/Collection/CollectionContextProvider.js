@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useReducer, useRef } from 'react';
+import React, { useCallback, use, useMemo, useReducer, useRef } from 'react';
 import omit from 'lodash/omit';
 
 // Alias
@@ -19,8 +19,8 @@ import CollectionReducer, { CollectionsActions } from './CollectionReducer';
  */
 const CollectionContextProvider = props => {
   const { children, collections: collectionsProp } = props;
-  const { query, mutate } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { query, mutate } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
     if (collectionsProp) {
       return collectionsProp;

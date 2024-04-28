@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useRef, useState } from 'react';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -20,7 +20,7 @@ const MarketPlugins = () => {
   const [pluginSelected, setPluginSelected] = useState();
   const { addToast } = useToast();
   const [data, setData] = useState({ cursor: undefined, hasNextPage: false, plugins: {} });
-  const pluginsContext = useContext(PluginsContext);
+  const pluginsContext = use(PluginsContext);
   const { plugins: pluginsInstalled } = pluginsContext;
 
   useEffect(() => {

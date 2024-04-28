@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import Select from '@plitzi/plitzi-ui-components/Select';
 
 // Alias
@@ -8,7 +8,7 @@ import AppContext from '@pmodules/App/AppContext';
 const zooms = [...Array(26).keys()].map(i => ({ label: `${50 + i * 10}%`, value: Number(0.5 + i * 0.1).toFixed(1) }));
 
 const ZoomButtons = () => {
-  const { zoom = 1, setZoom, displayMode } = useContext(AppContext);
+  const { zoom = 1, setZoom, displayMode } = use(AppContext);
 
   const handleChange = useCallback(
     e => {

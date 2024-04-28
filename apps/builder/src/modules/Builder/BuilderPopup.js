@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import PopupSidebar from '@plitzi/plitzi-ui-components/Popup/PopupSidebar';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
@@ -22,8 +22,8 @@ import SegmentsContext from '@pmodules/Segments/SegmentsContext';
  */
 const BuilderPopup = props => {
   const { previewMode = false, segmentIdentifier = '' } = props;
-  const { eventBridge } = useContext(EventBridgeContext);
-  const { segments } = useContext(SegmentsContext);
+  const { eventBridge } = use(EventBridgeContext);
+  const { segments } = use(SegmentsContext);
   const segment = segments[segmentIdentifier];
   const [state, setCache, getCacheByKey] = useCache();
   const popupsActive = useMemo(() => getCacheByKey('PopupSidebar.popupsActive', []), [state]);

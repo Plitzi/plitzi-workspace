@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -23,7 +23,7 @@ import Workflow from './components/Workflow';
  */
 const Interactions = props => {
   const { className = '', id = '', interactions = emptyObject, onChange = noop } = props;
-  const { interactionsManager } = useContext(InteractionsContext);
+  const { interactionsManager } = use(InteractionsContext);
   const { triggers } = useMemo(() => interactionsManager.getSubscriptor(id) ?? {}, [id, interactionsManager]);
 
   const handleWorkflowChange = useCallback(workflow => onChange(workflow), [onChange]);

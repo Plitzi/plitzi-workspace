@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import set from 'lodash/set';
 import noop from 'lodash/noop';
 import { produce } from 'immer';
@@ -39,8 +39,8 @@ const ManagerSelector = props => {
   let { selectors = selectorsDefault } = props;
   const { showModal } = useModal();
   const [searchInput, setSearchInput] = useState('');
-  const { displayMode } = useContext(AppContext);
-  const { builderHandler } = useContext(BuilderContext);
+  const { displayMode } = use(AppContext);
+  const { builderHandler } = use(BuilderContext);
   const finalSelectors = useMemo(() => {
     if (selectors && !isEmpty(searchInput)) {
       selectors = selectors.filter(selector => selector.name?.toLowerCase().includes(searchInput.toLowerCase()));

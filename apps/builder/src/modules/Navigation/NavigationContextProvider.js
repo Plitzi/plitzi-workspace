@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useContext, useCallback, useRef } from 'react';
+import React, { useMemo, use, useCallback, useRef } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import get from 'lodash/get';
 
@@ -21,8 +21,8 @@ import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
  */
 const NavigationContextProvider = props => {
   const { previewMode = false, children } = props;
-  const { pages, pageDefinitions, pageFolders } = useContext(SchemaMainContext);
-  const { authenticated } = useContext(UserContext);
+  const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
+  const { authenticated } = use(UserContext);
   const location = useLocation();
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);

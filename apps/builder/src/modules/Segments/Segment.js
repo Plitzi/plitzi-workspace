@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
@@ -33,8 +33,8 @@ const Segment = props => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { segmentGet, segmentsRemove, segmentsUpdate } = useContext(SegmentsContext);
-  const { mutate } = useContext(NetworkContext);
+  const { segmentGet, segmentsRemove, segmentsUpdate } = use(SegmentsContext);
+  const { mutate } = use(NetworkContext);
   const { onDragStart } = useDragElement({
     type: 'reference',
     attributes: { referenceType: REFERENCE_TYPE_SEGMENT, referenceId: identifier }

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Alias
 import NetworkContext from '@modules/Network/NetworkContext';
@@ -17,8 +17,8 @@ import CollectionContext from './CollectionContext';
  */
 const CollectionContextProvider = props => {
   const { children, collections: collectionsProp } = props;
-  const { query, mutate } = useContext(NetworkContext);
-  const internalData = useContext(NetworkInternalContext);
+  const { query, mutate } = use(NetworkContext);
+  const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
     if (collectionsProp) {
       return collectionsProp;

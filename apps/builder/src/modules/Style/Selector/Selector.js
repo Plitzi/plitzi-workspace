@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import get from 'lodash/get';
@@ -50,7 +50,7 @@ const Selector = props => {
   } = props;
   const inputRef = useRef();
   const [inputValue, setInputValue] = useState('');
-  const { style } = useContext(BuilderStyleContext);
+  const { style } = use(BuilderStyleContext);
   const { existsPopup, addPopup } = usePopup();
   const tags = useMemo(
     () =>

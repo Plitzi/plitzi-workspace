@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
@@ -45,7 +45,7 @@ import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.c
 const BuilderAreaPreview = props => {
   const { id = '', className = '', previewMode = false, schema = emptyObject, styleCache = '' } = props;
   const { settings, flat } = schema;
-  const { displayBorderComponents } = useContext(AppContext);
+  const { displayBorderComponents } = use(AppContext);
 
   const getWindow = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -94,7 +94,7 @@ const BuilderAreaPreview = props => {
     return `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${css}`;
   }, [settings, styleCache]);
 
-  const { components } = useContext(ComponentContext);
+  const { components } = use(ComponentContext);
   const element = useMemo(() => get(flat, id), [id, flat]);
   const Plugin = useMemo(() => get(components, get(element, 'definition.type')), [components, element]);
   const internalProps = useMemo(() => ({ id, rootId: id }), [id]);

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
@@ -18,8 +18,8 @@ const pagesDefault = [];
  */
 const PageStateSource = props => {
   const { children, state = emptyObject, pages = pagesDefault } = props;
-  const { useDataSource } = useContext(DataSourceContext);
-  const { currentPageId } = useContext(NavigationContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { currentPageId } = use(NavigationContext);
 
   const sourceFields = useCallback(async () => {
     if (pages && pages.length > 0) {

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -22,8 +22,8 @@ const Settings = props => {
   const {
     contexts: { SchemaContext, SegmentsContext }
   } = usePlitziServiceContext();
-  const { schema } = useContext(SchemaContext);
-  const { segments, segmentGet, segmentsFetch } = useContext(SegmentsContext);
+  const { schema } = use(SchemaContext);
+  const { segments, segmentGet, segmentsFetch } = use(SegmentsContext);
 
   const handleChangeReferenceType = useCallback(
     option => {

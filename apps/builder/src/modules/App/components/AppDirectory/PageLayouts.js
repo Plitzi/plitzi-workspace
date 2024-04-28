@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -28,10 +28,10 @@ const PageLayouts = props => {
   const { className = '' } = props;
   const {
     schema: { flat }
-  } = useContext(SchemaContext);
-  const { componentDefinitions } = useContext(ComponentContext);
-  const { currentPageId } = useContext(NavigationContext);
-  const { eventBridge } = useContext(EventBridgeContext);
+  } = use(SchemaContext);
+  const { componentDefinitions } = use(ComponentContext);
+  const { currentPageId } = use(NavigationContext);
+  const { eventBridge } = use(EventBridgeContext);
   const { showModal } = useModal();
 
   const handleClickRemoveLayout = layoutId => async e => {

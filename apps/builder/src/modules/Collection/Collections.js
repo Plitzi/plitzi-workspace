@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -19,7 +19,7 @@ import CollectionContext from './CollectionContext';
 const Collections = props => {
   const { collectionId, onSourceChange = noop } = props;
   const { showModal } = useModal();
-  const { collections, removeCollection } = useContext(CollectionContext);
+  const { collections, removeCollection } = use(CollectionContext);
 
   const handleClickAddCollection = () => onSourceChange(undefined);
 

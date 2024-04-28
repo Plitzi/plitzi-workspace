@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -21,12 +21,12 @@ import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
  */
 const PageInteractions = props => {
   const { children, previewMode = true } = props;
-  const { schema } = useContext(SchemaContext);
+  const { schema } = use(SchemaContext);
   const { keepState, stateStorage } = useMemo(() => get(schema, 'settings', {}), [schema]);
-  const { setStateByKey, clearCache } = useContext(StateManagerContext);
-  const { useInteractions } = useContext(InteractionsContext);
-  const { navigate } = useContext(NavigationContext);
-  const { pages: pageIds, pageDefinitions } = useContext(SchemaPagesContext);
+  const { setStateByKey, clearCache } = use(StateManagerContext);
+  const { useInteractions } = use(InteractionsContext);
+  const { navigate } = use(NavigationContext);
+  const { pages: pageIds, pageDefinitions } = use(SchemaPagesContext);
 
   const handleSetPageState = useCallback(
     params => {

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, use, useState } from 'react';
 import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
 
@@ -18,7 +18,7 @@ import CollectionContext from '@pmodules/Collection/CollectionContext';
 const ContainerCollections = props => {
   const { collectionId, onSourceChange = noop } = props;
   const [updateMode, setUpdateMode] = useState(!collectionId);
-  const { collections, addCollection, updateCollection } = useContext(CollectionContext);
+  const { collections, addCollection, updateCollection } = use(CollectionContext);
 
   const handleCancel = useCallback(() => setUpdateMode(false), [setUpdateMode]);
 

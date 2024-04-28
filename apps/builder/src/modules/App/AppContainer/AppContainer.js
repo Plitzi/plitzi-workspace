@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useState, useMemo, useCallback } from 'react';
+import React, { use, useState, useMemo, useCallback } from 'react';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
@@ -30,8 +30,8 @@ import AppDirectory from '../components/AppDirectory/AppDirectory';
  */
 const AppContainer = props => {
   const { externalStyle = '' } = props;
-  const { previewMode } = useContext(AppContext);
-  const { rootDOM } = useContext(ContainerRootContext);
+  const { previewMode } = use(AppContext);
+  const { rootDOM } = use(ContainerRootContext);
   const resizeHandles = useMemo(() => ['e'], []);
   const [tabSelected, setTabSelected] = useState();
   const [sourceState, setSourceState] = useState({});

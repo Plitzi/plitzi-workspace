@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 
@@ -53,7 +53,7 @@ const NodeConnectorSpot = props => {
   const [TY, setTY] = useState(0);
   const [connPos, setConnPos] = useState({ x: 0, y: 0 });
   const ref = useRef();
-  const { direction, bindNodes } = useContext(WorkflowContext);
+  const { direction, bindNodes } = use(WorkflowContext);
   const posX = useMemo(() => {
     let newPosX = 0;
     const pWidth = parentWidth - borderWidth * 2;

@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useMemo } from 'react';
+import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 import isEqual from 'lodash/isEqual';
 
@@ -27,7 +27,7 @@ const dotKeys = [ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS];
  */
 const DisplayFlexChild = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
 
   const handleChangeValue = (type, partialValue) => setValue(type, partialValue);
 

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import { produce } from 'immer';
 import set from 'lodash/set';
 import get from 'lodash/get';
@@ -27,9 +27,9 @@ export const STYLE_TYPE_TEMPLATE = 'template';
  */
 const StateManagerContextProvider = props => {
   const { children, state: stateProp = emptyObject } = props;
-  const { webId } = useContext(NetworkContext);
+  const { webId } = use(NetworkContext);
   const storageId = useMemo(() => `plitzi-${webId}-state`, [webId]);
-  const { settings } = useContext(SchemaMainContext);
+  const { settings } = use(SchemaMainContext);
 
   const getCache = useCallback(
     (path, defaultValue = {}, storeMode = '') => {

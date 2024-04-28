@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
 
 // Monorepo
@@ -15,7 +15,7 @@ const withUserProvider = WrappedComponent => {
    */
   const WithUserProviderComponent = props => {
     const { ref } = props;
-    const { userProvider, auth0Domain, auth0ClientId } = useContext(SchemaSettingsContext);
+    const { userProvider, auth0Domain, auth0ClientId } = use(SchemaSettingsContext);
     switch (userProvider) {
       case 'auth0':
         return (

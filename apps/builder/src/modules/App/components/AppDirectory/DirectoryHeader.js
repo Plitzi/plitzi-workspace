@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
@@ -26,7 +26,7 @@ const pageFoldersDefault = [];
 const DirectoryHeader = props => {
   const { className = '', pageFolders = pageFoldersDefault } = props;
   const { showModal } = useModal();
-  const { eventBridge } = useContext(EventBridgeContext);
+  const { eventBridge } = use(EventBridgeContext);
 
   const handleClickAddPage = useCallback(async () => {
     const response = await showModal(

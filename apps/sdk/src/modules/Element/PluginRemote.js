@@ -1,5 +1,5 @@
 // Packages
-import React, { lazy, Suspense, useContext, useMemo } from 'react';
+import React, { lazy, Suspense, use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -111,7 +111,7 @@ const PluginRemote = props => {
     plitziCustomComponent = false,
     plitziJsxProps = emptyObject
   } = props;
-  const { register, components } = useContext(ComponentContext);
+  const { register, components } = use(ComponentContext);
   const NotFoundNode = useMemo(() => components.notFound, [components]);
   const { ready, failed } = useDynamicScript({ url, shared, init });
   const Component = useMemo(

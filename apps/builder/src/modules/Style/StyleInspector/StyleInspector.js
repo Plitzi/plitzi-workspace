@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import set from 'lodash/set';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -34,7 +34,7 @@ import InspectorModeBasic from './modes/InspectorModeBasic';
  */
 const StyleInspector = props => {
   const { mode = 'element', styleSelectors = emptyObject, element, allowStyleSelector = true } = props;
-  const { displayMode } = useContext(AppContext);
+  const { displayMode } = use(AppContext);
   const [, setCache, getCacheByKey] = useCache();
   const viewModeCache = useMemo(() => getCacheByKey('StyleInspector.viewMode', 'basic'), []);
   const [viewMode, setViewMode] = useState(viewModeCache);
@@ -42,12 +42,12 @@ const StyleInspector = props => {
     style: { platform },
     selectorSelected,
     setSelectorSelected
-  } = useContext(BuilderStyleContext);
+  } = use(BuilderStyleContext);
   const [styleSelector, setStyleSelector] = useState('base');
-  const { builderHandler } = useContext(BuilderContext);
+  const { builderHandler } = use(BuilderContext);
   const selector = useMemo(() => get(styleSelectors, `${styleSelector}`, ''), [styleSelectors, styleSelector]);
   const selectors = Object.values(get(platform, displayMode));
-  const { componentDefinitions } = useContext(ComponentContext);
+  const { componentDefinitions } = use(ComponentContext);
   const styleSelectorsAvailables = useMemo(
     () => get(componentDefinitions, `${get(element, 'definition.type', '')}.definition.styleSelectors`, {}),
     [componentDefinitions, element]

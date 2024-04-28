@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useCallback } from 'react';
+import React, { use, useCallback } from 'react';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
 // Alias
@@ -13,7 +13,7 @@ import {
 
 /** @returns {React.ReactElement} */
 const BorderButton = () => {
-  const { displayBorderComponents, setDisplayBorderComponents } = useContext(AppContext);
+  const { displayBorderComponents, setDisplayBorderComponents } = use(AppContext);
 
   const handleClick = useCallback(() => {
     const pos = DISPLAY_BORDER.findIndex(item => item === displayBorderComponents);

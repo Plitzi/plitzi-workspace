@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
@@ -7,7 +7,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import AppContext from '@pmodules/App/AppContext';
 
 const DisplayModeButtons = () => {
-  const { displayMode, setDisplayMode, mobilePreview, setMobilePreview } = useContext(AppContext);
+  const { displayMode, setDisplayMode, mobilePreview, setMobilePreview } = use(AppContext);
 
   const handleMobilePreview = useCallback(() => setMobilePreview(state => !state), [setMobilePreview]);
 

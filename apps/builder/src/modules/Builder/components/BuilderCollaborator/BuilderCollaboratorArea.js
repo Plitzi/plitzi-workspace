@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useContext, useEffect, useRef, useState } from 'react';
+import React, { memo, use, useEffect, useRef, useState } from 'react';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -37,7 +37,7 @@ const BuilderCollaboratorArea = props => {
   const [elementHovered, setElementHovered] = useState(null);
   const refCursor = useRef(null);
   const { supportRealTime, subscriptionsRegisterCallback, subscriptionsUnregisterCallback } =
-    useContext(BuilderSubscriptionsContext);
+    use(BuilderSubscriptionsContext);
 
   const realtimeCallbackMouse = payload => {
     const { action, x, y } = payload;

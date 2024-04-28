@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo } from 'react';
+import React, { useCallback, use, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 import get from 'lodash/get';
@@ -51,9 +51,9 @@ const ApiContainer = props => {
     settings: { previewMode, debugMode },
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = useContext(InteractionsContext);
-  const { useDataSource } = useContext(DataSourceContext);
-  const { routeParams, queryParams } = useContext(NavigationContext);
+  const { interactionsManager } = use(InteractionsContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { routeParams, queryParams } = use(NavigationContext);
   const queryCompiled = useMemo(() => {
     if (!query) {
       return '';

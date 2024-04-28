@@ -1,5 +1,5 @@
 // Packages
-import { useContext, useMemo } from 'react';
+import { use, useMemo } from 'react';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
@@ -12,14 +12,14 @@ import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContex
 
 const useStyleInherit = props => {
   const { element, selector, styleSelector } = props;
-  const { componentDefinitions } = useContext(ComponentContext);
-  const { displayMode } = useContext(AppContext);
+  const { componentDefinitions } = use(ComponentContext);
+  const { displayMode } = use(AppContext);
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
+  } = use(BuilderSchemaContext);
   const {
     style: { platform }
-  } = useContext(BuilderStyleContext);
+  } = use(BuilderStyleContext);
 
   const inheritData = useMemo(() => {
     const selectorsToSkip = [];

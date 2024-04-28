@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -45,9 +45,9 @@ const Page = props => {
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = useContext(InteractionsContext);
-  const { Helmet, routeParams, queryParams } = useContext(NavigationContext);
-  const { components } = useContext(ComponentContext);
+  const { interactionsManager } = use(InteractionsContext);
+  const { Helmet, routeParams, queryParams } = use(NavigationContext);
+  const { components } = use(ComponentContext);
   const LayoutContainerPlugin = components.layoutContainer;
 
   const layoutInternalProps = useMemo(

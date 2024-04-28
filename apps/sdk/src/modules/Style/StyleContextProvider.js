@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useContext } from 'react';
+import React, { useMemo, use } from 'react';
 
 // Monorepo
 import StyleContext from '@plitzi/sdk-style/StyleContext';
@@ -22,7 +22,7 @@ export const STYLE_TYPE_SEGMENT = 'segment';
  */
 const StyleContextProvider = props => {
   const { children, style: styleProp, type = STYLE_TYPE_NORMAL } = props;
-  const internalData = useContext(NetworkInternalContext);
+  const internalData = use(NetworkInternalContext);
   const style = useMemo(() => {
     if (styleProp) {
       return styleProp;

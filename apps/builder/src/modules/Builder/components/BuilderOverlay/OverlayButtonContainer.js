@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
@@ -54,15 +54,15 @@ const OverlayButtonContainer = props => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { setHovered } = useContext(BuilderHoveredContext);
-  const { elementSelected, setSelected } = useContext(BuilderSelectedContext);
-  const builderTemplatesContext = useContext(TemplatesContext);
-  const builderSegmentsContext = useContext(SegmentsContext);
+  const { setHovered } = use(BuilderHoveredContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
+  const builderTemplatesContext = use(TemplatesContext);
+  const builderSegmentsContext = use(SegmentsContext);
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
-  const { style } = useContext(BuilderStyleContext);
-  const { builderHandler, builderElementPermissions, mode } = useContext(BuilderContext);
+  } = use(BuilderSchemaContext);
+  const { style } = use(BuilderStyleContext);
+  const { builderHandler, builderElementPermissions, mode } = use(BuilderContext);
   const {
     definition: { items }
   } = element;

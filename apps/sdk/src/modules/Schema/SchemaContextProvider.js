@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useContext } from 'react';
+import React, { useMemo, use } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
@@ -28,7 +28,7 @@ export const SCHEMA_TYPE_SEGMENT = 'segment';
  */
 const SchemaContextProvider = props => {
   const { children, type = SCHEMA_TYPE_NORMAL, schema: schemaProp } = props;
-  const internalData = useContext(NetworkInternalContext);
+  const internalData = use(NetworkInternalContext);
   const schema = useMemo(() => {
     if (schemaProp) {
       return schemaProp;

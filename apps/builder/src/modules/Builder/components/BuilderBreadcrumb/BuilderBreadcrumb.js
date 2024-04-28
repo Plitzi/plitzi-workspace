@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 // Relatives
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
@@ -17,12 +17,12 @@ import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 const BuilderBreadcrumb = props => {
   const { limit = Infinity } = props;
   const ref = useRef(null);
-  const { elementSelected, setSelected } = useContext(BuilderSelectedContext);
-  const { elementHovered, setHovered } = useContext(BuilderHoveredContext);
-  const { builderElementPermissions, baseElementIdOriginal } = useContext(BuilderContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
+  const { elementHovered, setHovered } = use(BuilderHoveredContext);
+  const { builderElementPermissions, baseElementIdOriginal } = use(BuilderContext);
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
+  } = use(BuilderSchemaContext);
 
   useEffect(() => {
     if (ref.current) {

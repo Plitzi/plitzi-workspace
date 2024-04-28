@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import get from 'lodash/get';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
@@ -18,7 +18,7 @@ const elementsDefault = [];
  */
 const ElementCategory = props => {
   const { elements = elementsDefault, category = '' } = props;
-  const { getComponentBuilderSettings } = useContext(ComponentContext);
+  const { getComponentBuilderSettings } = use(ComponentContext);
 
   const builderElementPermissions = useCallback(
     (element, path = '', defaultValue = undefined) => {

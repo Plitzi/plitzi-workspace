@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 
@@ -126,7 +126,7 @@ const BuilderOverlay = props => {
     };
   }, [overlayProps?.elementDOM, overlayProps?.elementDOM?.parentNode, handleProcessContainer]);
 
-  const { style, selectorSelected } = useContext(BuilderStyleContext);
+  const { style, selectorSelected } = use(BuilderStyleContext);
   const elementStyle = useMemo(() => {
     if (!selectorSelected?.name) {
       return {};

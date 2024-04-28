@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
 // Alias
@@ -30,7 +30,7 @@ const OverlaySpacing = props => {
     zoom = 1
   } = props;
   const [rawStyle, setRawStyle] = useState({});
-  const { style } = useContext(BuilderStyleContext);
+  const { style } = use(BuilderStyleContext);
   const elementStyle = useMemo(() => {
     if (!selector) {
       return {};

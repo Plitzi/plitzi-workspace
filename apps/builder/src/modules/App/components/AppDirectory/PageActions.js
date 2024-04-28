@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -27,9 +27,9 @@ const PageActions = props => {
   const { className = '', id = '', active = false, zoom = false, defaultPage = false, onZoom = noop } = props;
   const {
     schema: { flat }
-  } = useContext(SchemaContext);
-  const { eventBridge } = useContext(EventBridgeContext);
-  const { navigate } = useContext(NavigationContext);
+  } = use(SchemaContext);
+  const { eventBridge } = use(EventBridgeContext);
+  const { navigate } = use(NavigationContext);
   const { showModal } = useModal();
   const { addToast } = useToast();
 

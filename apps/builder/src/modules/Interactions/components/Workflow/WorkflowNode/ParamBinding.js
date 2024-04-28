@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -23,7 +23,7 @@ import WorkflowContext from '../WorkflowContext';
  */
 const ParamBinding = props => {
   const { className = '', nodeId: nodeIdProp = '', id = '', value = '', onChange = noop } = props;
-  const { previewData, getNode, dataSource } = useContext(WorkflowContext);
+  const { previewData, getNode, dataSource } = use(WorkflowContext);
   const nodeFullPath = useMemo(() => get(value.match(/(?<token>[a-zA-Z0-9-._]+)/gim), '0', ''), [value]);
   const [node, setNode] = useState(() => {
     const nodeValue = get(value.match(/(?<token>[a-zA-Z0-9-]+)/gim), '0', '');

@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -30,7 +30,7 @@ const PlitziSdk = props => {
     settings: { previewMode },
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
-  const { server } = useContext(NetworkContext);
+  const { server } = use(NetworkContext);
 
   return (
     <RootElement

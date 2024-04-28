@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext } from 'react';
+import React, { memo, useCallback, use } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -45,7 +45,7 @@ const dotKeys = [DISPLAY, FLEX_WRAP, FLEX_DIRECTION, ALIGN_ITEMS, JUSTIFY_CONTEN
  */
 const Display = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = useContext(StyleInspectorContext);
+  const { getValue, setValue } = use(StyleInspectorContext);
   const handleChange = (type, partialValue) => {
     setValue(type, partialValue);
   };

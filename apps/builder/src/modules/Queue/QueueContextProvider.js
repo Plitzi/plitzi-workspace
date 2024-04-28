@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -18,7 +18,7 @@ import QueueStatusContext from './QueueStatusContext';
  */
 const QueueContextProvider = props => {
   const { children, includeSubscriptions = true } = props;
-  const { mutate } = useContext(NetworkContext);
+  const { mutate } = use(NetworkContext);
 
   const { queueManager, processing } = useQueueManager({
     delay: 100,

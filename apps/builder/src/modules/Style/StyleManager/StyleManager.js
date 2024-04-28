@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useMemo, useState } from 'react';
+import React, { use, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
 // Alias
@@ -14,12 +14,12 @@ import ManagerSelector from './ManagerSelector';
 /** @returns {React.ReactElement} */
 const StyleManager = () => {
   const [selected, setSelected] = useState();
-  const { style } = useContext(BuilderStyleContext);
-  const { displayMode } = useContext(AppContext);
+  const { style } = use(BuilderStyleContext);
+  const { displayMode } = use(AppContext);
   const selectors = Object.values(get(style, `platform.${displayMode}`));
   const {
     schema: { flat }
-  } = useContext(BuilderSchemaContext);
+  } = use(BuilderSchemaContext);
   const flatList = useMemo(() => Object.values(flat), [flat]);
 
   return (

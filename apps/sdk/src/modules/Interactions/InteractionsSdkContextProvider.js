@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 
 // Monorepo
 import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
@@ -18,7 +18,7 @@ import PageInteractions from './sources/PageSource/PageInteractions';
  */
 const InteractionsSdkContextProvider = props => {
   const { children, previewMode = false } = props;
-  const { currentPageId, routeParams, queryParams } = useContext(NavigationContext);
+  const { currentPageId, routeParams, queryParams } = use(NavigationContext);
 
   return (
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>

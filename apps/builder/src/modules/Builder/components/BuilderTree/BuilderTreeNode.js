@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -63,8 +63,8 @@ const BuilderTreeNode = props => {
     builderHandler,
     builderElementPermissions,
     baseContext: { baseElementId }
-  } = useContext(BuilderContext);
-  const { builderDropElement, builderSetElementVisibility } = useContext(BuilderSchemaContext);
+  } = use(BuilderContext);
+  const { builderDropElement, builderSetElementVisibility } = use(BuilderSchemaContext);
   const [dragHovered, setDragHovered] = useState(false);
   const [dragAllowed, setDragAllowed] = useState(false);
   const [dropPosition, setDropPosition] = useState();

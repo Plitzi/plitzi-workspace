@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
@@ -32,7 +32,7 @@ const NodeHeader = props => {
     onClickSelect = noop,
     onRemove = noop
   } = props;
-  const { nodeDefinitions } = useContext(WorkflowContext);
+  const { nodeDefinitions } = use(WorkflowContext);
 
   const handleChangeType = useCallback(
     e => {

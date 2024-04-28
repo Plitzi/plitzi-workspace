@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useCallback, use, useMemo, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
@@ -29,14 +29,14 @@ import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
  */
 const NavigationContextProvider = props => {
   const { children, renderMode = RENDER_MODE_IFRAME, currentPageId: currentPageIdProp, previewMode = true } = props;
-  const { server } = useContext(NetworkContext);
+  const { server } = use(NetworkContext);
   const {
     schema: { pageFolders }
-  } = useContext(SchemaContext);
-  const { pageDefinitions, pages } = useContext(SchemaPagesContext);
+  } = use(SchemaContext);
+  const { pageDefinitions, pages } = use(SchemaPagesContext);
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
-  const { authenticated } = useContext(UserContext);
+  const { authenticated } = use(UserContext);
   const navigate = useNavigate();
   const paths = useMemo(
     () => getPaths(pages, pageDefinitions, pageFolders, authenticated, previewMode),

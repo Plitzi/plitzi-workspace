@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
@@ -26,7 +26,7 @@ import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 const BuilderAreaFooter = props => {
   const { setDragTree = noop } = props;
   const { existsPopup, addPopup } = usePopup();
-  const { mode } = useContext(BuilderContext);
+  const { mode } = use(BuilderContext);
 
   const handleClickTools = useCallback(() => {
     if (!existsPopup('element-tools')) {

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useCallback, use, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -74,7 +74,7 @@ const RootElement = props => {
     );
   }
 
-  const { interactionsManager, useInteractions } = useContext(InteractionsContext);
+  const { interactionsManager, useInteractions } = use(InteractionsContext);
   const processEvent = useCallback(
     (e, id, actionName, originalCallback, propagateEvent = false) => {
       if (!propagateEvent) {
@@ -113,7 +113,7 @@ const RootElement = props => {
       }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
-  const { useDataSource } = useContext(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext);
   const dataSource = useDataSource({ id, mode: 'read' });
   const dataSourceContextRef = useRef({});
   dataSourceContextRef.current = dataSource;

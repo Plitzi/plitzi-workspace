@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
@@ -31,7 +31,7 @@ import {
 const PluginsContextProvider = props => {
   const { children, renderMode = RENDER_MODE_IFRAME, plugins: pluginsProp, sdkStylePath = './plitzi-sdk.css' } = props;
   const [temporalCustomStyles, setTemporalCustomStyles] = useState({});
-  const internalData = useContext(NetworkInternalContext);
+  const internalData = use(NetworkInternalContext);
   const plugins = useMemo(() => {
     if (pluginsProp) {
       return pluginsProp;
@@ -39,7 +39,7 @@ const PluginsContextProvider = props => {
 
     return internalData.plugins ?? {};
   }, [pluginsProp, internalData]);
-  const { components } = useContext(ComponentContext);
+  const { components } = use(ComponentContext);
 
   // plugins
 

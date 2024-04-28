@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useRef, useCallback, useContext, useEffect } from 'react';
+import React, { useMemo, useRef, useCallback, use, useEffect } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -41,8 +41,8 @@ export const SCHEMA_TYPE_SEGMENT = 'segment';
 const SchemaContextProvider = props => {
   const { children, type = SCHEMA_TYPE_MAIN, schema: schemaProp, includeSubscriptions = true } = props;
   const { addToast } = useToast();
-  const internalData = useContext(NetworkInternalContext);
-  const { eventBridge } = useContext(EventBridgeContext);
+  const internalData = use(NetworkInternalContext);
+  const { eventBridge } = use(EventBridgeContext);
   const schemaPropMemo = useMemo(() => {
     if (schemaProp) {
       return schemaProp;
@@ -60,8 +60,8 @@ const SchemaContextProvider = props => {
         return { settings: { customCss: '' }, flat: {}, pages: [] };
     }
   }, [schemaProp]);
-  const { enqueueMiddleware } = useContext(QueueContext);
-  const { undoableMiddleware } = useContext(UndoableContext);
+  const { enqueueMiddleware } = use(QueueContext);
+  const { undoableMiddleware } = use(UndoableContext);
   const middlewareMemo = useMemo(
     () => [
       {
@@ -77,7 +77,7 @@ const SchemaContextProvider = props => {
   );
   const [schema, dispatchSchema] = useReducerWithMiddleware(SchemaReducer, schemaPropMemo, middlewareMemo);
   const schemaRef = useRef(schema);
-  const { mutate, subscriptionManager } = useContext(NetworkContext);
+  const { mutate, subscriptionManager } = use(NetworkContext);
   schemaRef.current = schema;
 
   const schemaUpdate = useCallback(

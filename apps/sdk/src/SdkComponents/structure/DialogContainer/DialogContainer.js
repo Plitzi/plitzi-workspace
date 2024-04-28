@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 
@@ -43,8 +43,8 @@ const DialogContainer = props => {
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = useContext(InteractionsContext);
-  const { useDataSource } = useContext(DataSourceContext);
+  const { interactionsManager } = use(InteractionsContext);
+  const { useDataSource } = use(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState({});
   const [processing, setProcessing] = useState(false);
 

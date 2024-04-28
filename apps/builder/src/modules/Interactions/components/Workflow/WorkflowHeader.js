@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
@@ -22,7 +22,7 @@ const flowsDefault = [];
  */
 const WorkflowHeader = props => {
   const { className = '', flows = flowsDefault, flowId = '', setFlowId = noop } = props;
-  const { addNode, removeNode } = useContext(WorkflowContext);
+  const { addNode, removeNode } = use(WorkflowContext);
 
   const handleClickAddNode = useCallback(() => addNode('trigger'), [addNode]);
 

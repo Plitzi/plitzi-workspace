@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useMemo, useState, useContext } from 'react';
+import React, { useCallback, useMemo, useState, use } from 'react';
 import classNames from 'classnames';
 import { produce } from 'immer';
 import get from 'lodash/get';
@@ -48,8 +48,8 @@ const Form = props => {
     settings: { previewMode },
     contexts: { DataSourceContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = useContext(DataSourceContext);
-  const { interactionsManager } = useContext(InteractionsContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { interactionsManager } = use(InteractionsContext);
 
   const registerField = useCallback(field => setFields(state => ({ ...state, [field.name]: field })), [setFields]);
 

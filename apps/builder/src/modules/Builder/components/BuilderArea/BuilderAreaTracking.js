@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { use, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -46,23 +46,23 @@ const BuilderAreaTracking = props => {
     previewMode = false,
     ...otherProps
   } = props;
-  const { supportRealTime, subscriptionsPush } = useContext(BuilderSubscriptionsContext);
-  const { elementHovered, setHovered } = useContext(BuilderHoveredContext);
-  const { elementSelected, setSelected } = useContext(BuilderSelectedContext);
+  const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
+  const { elementHovered, setHovered } = use(BuilderHoveredContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
     multiPagesMode,
     builderHandler,
     baseContext: { baseElementId },
     baseElementIdOriginal,
     builderSetBaseContext
-  } = useContext(BuilderContext);
-  const { schema, builderDropElement } = useContext(BuilderSchemaContext);
-  const { style } = useContext(BuilderStyleContext);
-  const { displayBorderComponents } = useContext(AppContext);
+  } = use(BuilderContext);
+  const { schema, builderDropElement } = use(BuilderSchemaContext);
+  const { style } = use(BuilderStyleContext);
+  const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
-  const { canRedo, canUndo, undoableRedo, undoableUndo } = useContext(UndoableContext);
-  const { mutate } = useContext(NetworkContext);
-  const { componentDefinitions } = useContext(ComponentContext);
+  const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
+  const { mutate } = use(NetworkContext);
+  const { componentDefinitions } = use(ComponentContext);
 
   const schemaRef = useRef(schema);
   schemaRef.current = schema;

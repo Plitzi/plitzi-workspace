@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import { produce } from 'immer';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -40,8 +40,8 @@ const WorkflowContextProvider = props => {
     setFlowId = noop,
     onChange = noop
   } = props;
-  const { elementSelected } = useContext(BuilderSelectedContext);
-  const { dataSourceManager } = useContext(DataSourceContext);
+  const { elementSelected } = use(BuilderSelectedContext);
+  const { dataSourceManager } = use(DataSourceContext);
   const [previewData, setPreviewData] = useState({});
   const [dataSourceContent, setDataSourceContent] = useState({});
   const nodesRef = useRef(nodes);

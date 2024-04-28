@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -18,8 +18,8 @@ const withUserInteractions = WrappedComponent => {
    */
   const WithUserInteractionsComponent = props => {
     const { ref, userProvider = 'basic' } = props;
-    const { login, refreshDetails, logout } = useContext(UserContext);
-    const { useInteractions } = useContext(InteractionsContext);
+    const { login, refreshDetails, logout } = use(UserContext);
+    const { useInteractions } = use(InteractionsContext);
 
     const handleLogin = useCallback(async params => login(params), [login]);
 

@@ -9,7 +9,7 @@ import WorkflowDiagram from '@pcomponents/WorkflowDiagram/WorkflowDiagram';
 
 /** @returns {React.ReactElement} */
 const ContainerSitemap = () => {
-  // const { pages, pageDefinitions, pageFolders } = useContext(SchemaMainContext);
+  // const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
 
   return (
     <Card className="mx-[5%] grow m-4 relative flex flex-col overflow-hidden">

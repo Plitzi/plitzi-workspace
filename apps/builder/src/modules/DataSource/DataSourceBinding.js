@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -35,7 +35,7 @@ const DataSourceBinding = props => {
     allowCustomBindings = false,
     onChange = noop
   } = props;
-  const { dataSourceManager } = useContext(DataSourceContext);
+  const { dataSourceManager } = use(DataSourceContext);
   const [bindingFormValues, setBindingFormValues] = useState(() =>
     Object.keys(bindingsAllowed).reduce((acum, key) => ({ ...acum, [key]: null }), {})
   );

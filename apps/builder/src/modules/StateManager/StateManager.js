@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, use, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import isEqual from 'lodash/isEqual';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -17,7 +17,7 @@ import StateManagerContext from './StateManagerContext';
  */
 const StateManager = props => {
   const { className = '' } = props;
-  const { state, setState } = useContext(StateManagerContext);
+  const { state, setState } = use(StateManagerContext);
   const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
   const { addToast } = useToast();
 

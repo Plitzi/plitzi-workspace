@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -21,9 +21,9 @@ import PageLayouts from './PageLayouts';
  */
 const AppDirectory = props => {
   const { className = '' } = props;
-  const { pageFolders } = useContext(SchemaMainContext);
+  const { pageFolders } = use(SchemaMainContext);
 
-  const { currentPageId } = useContext(NavigationContext);
+  const { currentPageId } = use(NavigationContext);
 
   return (
     <div className={classNames('flex flex-col border-b border-gray-300', className)}>

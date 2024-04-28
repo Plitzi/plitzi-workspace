@@ -1,5 +1,5 @@
 // Packages
-import { useContext, useEffect } from 'react';
+import { use, useEffect } from 'react';
 
 // Relatives
 import EventBridgeContext from '../EventBridgeContext';
@@ -8,7 +8,7 @@ export const MODE_WRITE = 'write';
 export const MODE_READ = 'read';
 
 const useEventBridge = (module, callbacks, params = {}, context = EventBridgeContext) => {
-  const { eventBridge } = useContext(context);
+  const { eventBridge } = use(context);
 
   useEffect(() => {
     if (!eventBridge || !module || !callbacks) {

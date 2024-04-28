@@ -1,5 +1,5 @@
 // Package
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Relatives
@@ -19,7 +19,7 @@ import GroupButtons from '../../../components/GroupButtons';
  */
 const BorderWidth = props => {
   const { borderTop, borderBottom, borderLeft, borderRight, currentPlacement, onChange = noop } = props;
-  const { getValue } = useContext(StyleInspectorContext);
+  const { getValue } = use(StyleInspectorContext);
 
   let valueWidth = '0px';
   if (

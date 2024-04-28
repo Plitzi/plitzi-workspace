@@ -1,5 +1,5 @@
 // Packages
-import React, { memo, useCallback, useContext } from 'react';
+import React, { memo, useCallback, use } from 'react';
 import get from 'lodash/get';
 import camelCase from 'lodash/camelCase';
 
@@ -28,8 +28,8 @@ const JsxManager = props => {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
   const type = camelCase(plitziJsxType);
-  const { components } = useContext(ComponentContext);
-  const { plugins } = useContext(PluginsContext);
+  const { components } = use(ComponentContext);
+  const { plugins } = use(PluginsContext);
   if (!type) {
     return null;
   }

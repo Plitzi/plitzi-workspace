@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -61,7 +61,7 @@ const Settings = props => {
   } = usePlitziServiceContext();
   const {
     schema: { flat, pageFolders, pages }
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
 
   const layouts = useMemo(
     () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'layoutContainer'),

@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo } from 'react';
 import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
 import { POPUP_PLACEMENT_RIGHT } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
@@ -24,10 +24,10 @@ const pagesDefault = [];
  */
 const Builder = props => {
   const { pages = pagesDefault, customCss = '', externalStyle = '' } = props;
-  const builderContextValue = useContext(BuilderContext);
+  const builderContextValue = use(BuilderContext);
   const { existsPopup, addPopup } = usePopup();
   const { multiPagesMode, builderElementPermissions, mode, hasMultiPages } = builderContextValue;
-  const { displayMode, previewMode, mobilePreview } = useContext(AppContext);
+  const { displayMode, previewMode, mobilePreview } = use(AppContext);
   if (pages.length === 0 && mode === BUILDER_MODE_NORMAL) {
     return (
       <div className="flex grow basis-0 overflow-auto min-w-0 relative flex-col items-center">

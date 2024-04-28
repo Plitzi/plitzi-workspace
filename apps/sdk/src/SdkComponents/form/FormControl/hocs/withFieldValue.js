@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -15,7 +15,7 @@ const withFieldValue = WrappedComponent => {
    *   internalProps: object;
    *   name: string;
    *   subType:
-   *     'hidden'
+   *     | 'hidden'
    *     | 'text'
    *     | 'number'
    *     | 'email'
@@ -36,7 +36,7 @@ const withFieldValue = WrappedComponent => {
       settings: { previewMode },
       contexts: { DataSourceContext }
     } = usePlitziServiceContext();
-    const { useDataSource } = useContext(DataSourceContext);
+    const { useDataSource } = use(DataSourceContext);
     const { form } = useDataSource({ id, mode: 'read' });
     if (!form) {
       return <WrappedComponent {...props} />;

@@ -1,5 +1,5 @@
 // Packages
-import React, { useContext, useState, useEffect } from 'react';
+import React, { use, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
@@ -29,7 +29,7 @@ const DeployForm = props => {
   const [envSelected, setEnvSelected] = useState(environment);
   const [domainSelected, setDomainSelected] = useState(undefined);
   const [latestRevision, setLatestRevision] = useState(undefined);
-  const { query } = useContext(NetworkContext);
+  const { query } = use(NetworkContext);
   const { addToast } = useToast();
 
   const { control, handleSubmit, setValue } = useForm({ defaultValues: { environment, domain, revision } });

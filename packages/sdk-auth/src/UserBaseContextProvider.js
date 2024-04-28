@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useContext } from 'react';
+import React, { useMemo, use } from 'react';
 import get from 'lodash/get';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -28,7 +28,7 @@ const UserBaseContextProvider = props => {
     detailsPath = 'details',
     tokenPath = 'access_token',
     expirationTimePath = 'expire_at'
-  } = useContext(SchemaSettingsContext);
+  } = use(SchemaSettingsContext);
   let loading = false;
   switch (userProvider) {
     case 'auth0':

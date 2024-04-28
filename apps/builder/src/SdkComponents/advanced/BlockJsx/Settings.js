@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, use, useState } from 'react';
 import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
@@ -29,7 +29,7 @@ const Settings = props => {
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
-  const { server, webKey } = useContext(NetworkContext);
+  const { server, webKey } = use(NetworkContext);
   const [error, setError] = useState(undefined);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
 

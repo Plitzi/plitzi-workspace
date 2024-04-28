@@ -1,5 +1,5 @@
 // Packages
-import { useMemo, useContext, useEffect, useRef, useState } from 'react';
+import { useMemo, use, useEffect, useRef, useState } from 'react';
 
 // Monorepo
 import { emptyObject, makeId } from '@plitzi/sdk-shared/utils';
@@ -24,7 +24,7 @@ export const MODE_READ = 'read';
  */
 const useDataSource = (props = {}) => {
   const { id, source, name, fields = [], value = emptyObject, mode = MODE_WRITE, extraElements = [] } = props;
-  const { dataSourceManager } = useContext(DataSourceContext);
+  const { dataSourceManager } = use(DataSourceContext);
   const initRef = useRef();
   const uniqueIdRef = useRef(makeId(8));
   const [retriggerTime, setRetriggerTime] = useState(0);
