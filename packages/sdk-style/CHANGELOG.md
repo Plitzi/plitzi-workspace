@@ -1,6 +1,12 @@
 # @plitzi/sdk-style
 
-## 0.22.0-rc1
+## 0.22.0
+
+### Patch Changes
+
+- v0.22.0
+
+## 0.22.0
 
 ### Minor Changes
 
