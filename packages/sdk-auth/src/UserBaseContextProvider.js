@@ -77,7 +77,7 @@ const UserBaseContextProvider = props => {
     };
   }, [manager, manager?.userDetails, manager?.isAuthenticated, previewMode]);
 
-  return <UserContext.Provider value={valueMemo}>{!loading && children}</UserContext.Provider>;
+  return <UserContext value={valueMemo}>{!loading && children}</UserContext>;
 };
 
 export default withUserProvider(UserBaseContextProvider);

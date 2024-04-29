@@ -137,8 +137,8 @@ const OpenAIChat = props => {
   return (
     <div className={classNames('h-full flex', className)}>
       <div className="flex flex-col grow basis-0 p-4 overflow-y-auto">
-        <SchemaContext.Provider value={schemaMemo}>
-          <StyleContext.Provider value={styleMemo}>
+        <SchemaContext value={schemaMemo}>
+          <StyleContext value={styleMemo}>
             <BuilderAreaPreview
               previewMode
               className="h-full"
@@ -146,8 +146,8 @@ const OpenAIChat = props => {
               id={preview?.definition?.rootId}
               styleCache={styleMemo?.style?.cache}
             />
-          </StyleContext.Provider>
-        </SchemaContext.Provider>
+          </StyleContext>
+        </SchemaContext>
       </div>
       <div className="flex h-full bg-white">
         <ContainerResizable

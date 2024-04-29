@@ -16,9 +16,9 @@ export const BasicUsage = args => {
   const value = useMemo(() => ({}), []);
 
   return (
-    <ComponentContext.Provider value={value}>
+    <ComponentContext value={value}>
       <Custom {...args} />
-    </ComponentContext.Provider>
+    </ComponentContext>
   );
 };
 

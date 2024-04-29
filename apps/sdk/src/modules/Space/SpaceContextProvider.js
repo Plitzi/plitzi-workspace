@@ -20,7 +20,7 @@ const SpaceContextProvider = props => {
 
   const valueMemo = useMemo(() => ({}), []);
 
-  return <SpaceContext.Provider value={valueMemo}>{children}</SpaceContext.Provider>;
+  return <SpaceContext value={valueMemo}>{children}</SpaceContext>;
 };
 
 export default SpaceContextProvider;

@@ -142,14 +142,14 @@ const ElementSettings = props => {
         ))}
         <ContainerShadow.Content>
           <PlitziServiceProvider value={plitziContextValue}>
-            <SchemaContext.Provider value={schemaValueMemo}>
-              <StyleContext.Provider value={styleValueMemo}>
+            <SchemaContext value={schemaValueMemo}>
+              <StyleContext value={styleValueMemo}>
                 <ErrorBoundary>
                   {Settings && <Settings {...attributes} id={id} onUpdate={handleChange} uiComponents={uiComponents} />}
                   {!Settings && <div className="element-tools--empty">Settings not available.</div>}
                 </ErrorBoundary>
-              </StyleContext.Provider>
-            </SchemaContext.Provider>
+              </StyleContext>
+            </SchemaContext>
           </PlitziServiceProvider>
         </ContainerShadow.Content>
       </ContainerShadow>
@@ -158,14 +158,14 @@ const ElementSettings = props => {
 
   return (
     <PlitziServiceProvider value={plitziContextValue}>
-      <SchemaContext.Provider value={schemaValueMemo}>
-        <StyleContext.Provider value={styleValueMemo}>
+      <SchemaContext value={schemaValueMemo}>
+        <StyleContext value={styleValueMemo}>
           <ErrorBoundary>
             {Settings && <Settings {...attributes} id={id} onUpdate={handleChange} uiComponents={uiComponents} />}
             {!Settings && <div className="element-tools--empty">Settings not available.</div>}
           </ErrorBoundary>
-        </StyleContext.Provider>
-      </SchemaContext.Provider>
+        </StyleContext>
+      </SchemaContext>
     </PlitziServiceProvider>
   );
 };

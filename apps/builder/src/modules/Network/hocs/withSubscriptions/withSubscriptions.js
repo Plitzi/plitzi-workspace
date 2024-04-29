@@ -140,9 +140,9 @@ const withSubscriptions = WrappedComponent => {
     );
 
     return (
-      <BuilderSubscriptionsContext.Provider value={subscriptionsValue}>
+      <BuilderSubscriptionsContext value={subscriptionsValue}>
         <WrappedComponent {...omit(props, ['includeSubscriptions', 'includeRealTime'])} />
-      </BuilderSubscriptionsContext.Provider>
+      </BuilderSubscriptionsContext>
     );
   };
 

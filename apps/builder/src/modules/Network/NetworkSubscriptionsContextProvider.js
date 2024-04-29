@@ -134,9 +134,7 @@ const NetworkSubscriptionsContextProvider = props => {
     [includeSubscriptions, includeRealTime, push, registerCallback, unregisterCallback, collaborators]
   );
 
-  return (
-    <BuilderSubscriptionsContext.Provider value={subscriptionsValue}>{children}</BuilderSubscriptionsContext.Provider>
-  );
+  return <BuilderSubscriptionsContext value={subscriptionsValue}>{children}</BuilderSubscriptionsContext>;
 };
 
 export default NetworkSubscriptionsContextProvider;

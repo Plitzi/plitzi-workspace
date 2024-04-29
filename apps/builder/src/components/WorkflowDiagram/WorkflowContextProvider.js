@@ -411,7 +411,7 @@ const WorkflowContextProvider = props => {
     ]
   );
 
-  return <WorkflowContext.Provider value={workflowMemo}>{children}</WorkflowContext.Provider>;
+  return <WorkflowContext value={workflowMemo}>{children}</WorkflowContext>;
 };
 
 export default WorkflowContextProvider;

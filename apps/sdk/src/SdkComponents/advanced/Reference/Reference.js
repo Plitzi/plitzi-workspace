@@ -135,8 +135,8 @@ const Reference = props => {
   const { element, elementType, referenceContextData } = reference;
   if (previewMode && element && referenceType === PARTIAL_SCHEMA_TYPE_ELEMENT) {
     return (
-      <SchemaContext.Provider value={referenceContextData}>
-        <DataSourceContext.Provider value={referenceContextSource}>
+      <SchemaContext value={referenceContextData}>
+        <DataSourceContext value={referenceContextSource}>
           <PluginManager
             key={`${id}-${referenceId}`}
             id={element?.id}
@@ -145,8 +145,8 @@ const Reference = props => {
             internalProps={internalPropsMemo}
             plitziElementLayout={plitziElementLayoutMemo}
           />
-        </DataSourceContext.Provider>
-      </SchemaContext.Provider>
+        </DataSourceContext>
+      </SchemaContext>
     );
   }
 
@@ -158,8 +158,8 @@ const Reference = props => {
         'reference--build-mode': !previewMode
       })}
     >
-      <SchemaContext.Provider value={referenceContextData}>
-        <DataSourceContext.Provider value={referenceContextSource}>
+      <SchemaContext value={referenceContextData}>
+        <DataSourceContext value={referenceContextSource}>
           {element && (
             <PluginManager
               key={`${id}-${referenceId}`}
@@ -170,8 +170,8 @@ const Reference = props => {
               plitziElementLayout={plitziElementLayoutMemo}
             />
           )}
-        </DataSourceContext.Provider>
-      </SchemaContext.Provider>
+        </DataSourceContext>
+      </SchemaContext>
       {!previewMode && !element && (
         <div className="reference__label">Element Reference {capitalize(referenceType)}</div>
       )}

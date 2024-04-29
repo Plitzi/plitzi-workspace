@@ -181,7 +181,7 @@ const ComponentProvider = props => {
     ]
   );
 
-  return <ComponentContext.Provider value={componentsContextValue}>{children}</ComponentContext.Provider>;
+  return <ComponentContext value={componentsContextValue}>{children}</ComponentContext>;
 };
 
 export default ComponentProvider;

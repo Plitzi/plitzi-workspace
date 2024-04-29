@@ -38,7 +38,7 @@ const StyleContextProvider = props => {
 
   const valueMemo = useMemo(() => ({ style }), [style]);
 
-  return <StyleContext.Provider value={valueMemo}>{children}</StyleContext.Provider>;
+  return <StyleContext value={valueMemo}>{children}</StyleContext>;
 };
 
 export default StyleContextProvider;

@@ -145,7 +145,7 @@ const StateManagerContextProvider = props => {
     [state, setState, setStateByKey, clearCache]
   );
 
-  return <StateManagerContext.Provider value={valueMemo}>{children}</StateManagerContext.Provider>;
+  return <StateManagerContext value={valueMemo}>{children}</StateManagerContext>;
 };
 
 export default StateManagerContextProvider;

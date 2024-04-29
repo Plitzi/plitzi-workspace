@@ -426,7 +426,7 @@ const StyleInspectorProvider = props => {
     [getValue, setValue, resetValue, inheritData, bindingData, hasValue, getDefaultValue]
   );
 
-  return <StyleInspectorContext.Provider value={inspectorContextValue}>{children}</StyleInspectorContext.Provider>;
+  return <StyleInspectorContext value={inspectorContextValue}>{children}</StyleInspectorContext>;
 };
 
 export default StyleInspectorProvider;

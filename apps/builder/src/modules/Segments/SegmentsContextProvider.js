@@ -448,7 +448,7 @@ const SegmentsContextProvider = props => {
     ]
   );
 
-  return <SegmentsContext.Provider value={segmentsContextValue}>{children}</SegmentsContext.Provider>;
+  return <SegmentsContext value={segmentsContextValue}>{children}</SegmentsContext>;
 };
 
 export default SegmentsContextProvider;

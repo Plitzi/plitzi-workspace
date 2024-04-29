@@ -72,9 +72,9 @@ const ReplicaProvider = props => {
   }, [interactionsManagerChild]);
 
   return (
-    <DataSourceContext.Provider value={referenceContextSource}>
-      <InteractionsContext.Provider value={interactionsContextSource}>{children}</InteractionsContext.Provider>
-    </DataSourceContext.Provider>
+    <DataSourceContext value={referenceContextSource}>
+      <InteractionsContext value={interactionsContextSource}>{children}</InteractionsContext>
+    </DataSourceContext>
   );
 };
 

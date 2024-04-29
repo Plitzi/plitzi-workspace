@@ -333,7 +333,7 @@ const PluginsContextProvider = props => {
     ]
   );
 
-  return <PluginsContext.Provider value={pluginsContextValue}>{children}</PluginsContext.Provider>;
+  return <PluginsContext value={pluginsContextValue}>{children}</PluginsContext>;
 };
 
 export default PluginsContextProvider;

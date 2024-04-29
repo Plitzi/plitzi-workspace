@@ -58,7 +58,7 @@ const SegmentsContextProvider = props => {
 
   const valueMemo = useMemo(() => ({ segments, segmentGet }), [segments, segmentGet]);
 
-  return <SegmentsContext.Provider value={valueMemo}>{children}</SegmentsContext.Provider>;
+  return <SegmentsContext value={valueMemo}>{children}</SegmentsContext>;
 };
 
 export default SegmentsContextProvider;

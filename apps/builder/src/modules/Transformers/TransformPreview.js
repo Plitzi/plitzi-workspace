@@ -23,8 +23,8 @@ const TransformPreview = props => {
 
   return (
     <div className={classNames('flex grow overflow-y-auto w-full', className)}>
-      <SchemaContext.Provider value={schemaMemo}>
-        <StyleContext.Provider value={styleMemo}>
+      <SchemaContext value={schemaMemo}>
+        <StyleContext value={styleMemo}>
           <BuilderAreaPreview
             previewMode
             className="min-h-full w-full"
@@ -32,8 +32,8 @@ const TransformPreview = props => {
             id={preview?.definition?.rootId}
             styleCache={styleMemo?.style?.cache}
           />
-        </StyleContext.Provider>
-      </SchemaContext.Provider>
+        </StyleContext>
+      </SchemaContext>
     </div>
   );
 };

@@ -458,15 +458,15 @@ const BuilderProvider = props => {
   );
 
   return (
-    <BuilderSchemaContext.Provider value={builderSchemaValueMemo}>
-      <BuilderStyleContext.Provider value={builderStyleValueMemo}>
-        <BuilderSelectedContext.Provider value={selectedValueMemo}>
-          <BuilderHoveredContext.Provider value={hoveredValueMemo}>
-            <BuilderContext.Provider value={builderValue}>{children}</BuilderContext.Provider>
-          </BuilderHoveredContext.Provider>
-        </BuilderSelectedContext.Provider>
-      </BuilderStyleContext.Provider>
-    </BuilderSchemaContext.Provider>
+    <BuilderSchemaContext value={builderSchemaValueMemo}>
+      <BuilderStyleContext value={builderStyleValueMemo}>
+        <BuilderSelectedContext value={selectedValueMemo}>
+          <BuilderHoveredContext value={hoveredValueMemo}>
+            <BuilderContext value={builderValue}>{children}</BuilderContext>
+          </BuilderHoveredContext>
+        </BuilderSelectedContext>
+      </BuilderStyleContext>
+    </BuilderSchemaContext>
   );
 };
 

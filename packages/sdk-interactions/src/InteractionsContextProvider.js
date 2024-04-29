@@ -26,7 +26,7 @@ const InteractionsContextProvider = props => {
 
   const valueMemo = useMemo(() => ({ interactionsManager, useInteractions }), [interactionsManager, useInteractions]);
 
-  return <InteractionsContext.Provider value={valueMemo}>{children}</InteractionsContext.Provider>;
+  return <InteractionsContext value={valueMemo}>{children}</InteractionsContext>;
 };
 
 export default InteractionsContextProvider;

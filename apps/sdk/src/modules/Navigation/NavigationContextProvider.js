@@ -138,7 +138,7 @@ const NavigationContextProvider = props => {
     return 'Page Not Found';
   }
 
-  return <NavigationContext.Provider value={navigationValue}>{children}</NavigationContext.Provider>;
+  return <NavigationContext value={navigationValue}>{children}</NavigationContext>;
 };
 
 export default NavigationContextProvider;

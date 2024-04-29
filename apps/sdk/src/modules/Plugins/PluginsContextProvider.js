@@ -201,7 +201,7 @@ const PluginsContextProvider = props => {
         {(renderMode === RENDER_MODE_RAW || renderMode === RENDER_MODE_SSR || renderMode === RENDER_MODE_WIDGET) &&
           helmetAssets}
       </Helmet>
-      <PluginsContext.Provider value={pluginsContextValue}>{children}</PluginsContext.Provider>
+      <PluginsContext value={pluginsContextValue}>{children}</PluginsContext>
     </>
   );
 };

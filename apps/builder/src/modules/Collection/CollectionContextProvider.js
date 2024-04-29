@@ -306,7 +306,7 @@ const CollectionContextProvider = props => {
     ]
   );
 
-  return <CollectionContext.Provider value={collectionContextValue}>{children}</CollectionContext.Provider>;
+  return <CollectionContext value={collectionContextValue}>{children}</CollectionContext>;
 };
 
 export default CollectionContextProvider;

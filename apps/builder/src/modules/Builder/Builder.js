@@ -96,14 +96,14 @@ const Builder = props => {
       {multiPagesMode &&
         hasMultiPages &&
         pages.map(page => (
-          <BuilderContext.Provider key={page} value={contextsMemo[page]}>
+          <BuilderContext key={page} value={contextsMemo[page]}>
             <BuilderArea
               externalStyle={externalStyle}
               customCss={customCss}
               displayMode={displayMode}
               previewMode={previewMode}
             />
-          </BuilderContext.Provider>
+          </BuilderContext>
         ))}
     </div>
   );

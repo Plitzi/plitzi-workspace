@@ -24,7 +24,7 @@ const usePlitziServiceContext = () => {
 const PlitziServiceProvider = props => {
   const { children, value } = props;
 
-  return <PlitziServiceContext.Provider value={value}>{children}</PlitziServiceContext.Provider>;
+  return <PlitziServiceContext value={value}>{children}</PlitziServiceContext>;
 };
 
 export { PlitziServiceProvider };

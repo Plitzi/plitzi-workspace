@@ -55,11 +55,11 @@ const SchemaContextProvider = props => {
   const schemaSettings = useMemo(() => schema.settings, [schema.settings]);
 
   return (
-    <SchemaPagesContext.Provider value={schemaPages}>
-      <SchemaSettingsContext.Provider value={schemaSettings}>
-        <SchemaContext.Provider value={valueMemo}>{children}</SchemaContext.Provider>
-      </SchemaSettingsContext.Provider>
-    </SchemaPagesContext.Provider>
+    <SchemaPagesContext value={schemaPages}>
+      <SchemaSettingsContext value={schemaSettings}>
+        <SchemaContext value={valueMemo}>{children}</SchemaContext>
+      </SchemaSettingsContext>
+    </SchemaPagesContext>
   );
 };
 

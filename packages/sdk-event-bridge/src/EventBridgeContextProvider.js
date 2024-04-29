@@ -23,7 +23,7 @@ const EventBridgeContextProvider = props => {
 
   const valueMemo = useMemo(() => ({ eventBridge }), [eventBridge]);
 
-  return <EventBridgeContext.Provider value={valueMemo}>{children}</EventBridgeContext.Provider>;
+  return <EventBridgeContext value={valueMemo}>{children}</EventBridgeContext>;
 };
 
 export default EventBridgeContextProvider;

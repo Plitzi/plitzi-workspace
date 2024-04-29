@@ -144,7 +144,7 @@ const StyleContextProvider = props => {
 
   useEventBridge(EventBridgeModuleTypes.MAIN, events);
 
-  return <StyleContext.Provider value={styleContextMemo}>{children}</StyleContext.Provider>;
+  return <StyleContext value={styleContextMemo}>{children}</StyleContext>;
 };
 
 export default StyleContextProvider;

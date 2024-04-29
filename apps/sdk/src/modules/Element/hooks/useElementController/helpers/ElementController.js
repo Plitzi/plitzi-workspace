@@ -328,9 +328,7 @@ class ElementController {
       prevSchema
     ) {
       return (
-        <SchemaContext.Provider value={newSchema}>
-          {itemsParsed?.length === 1 ? itemsParsed[0] : itemsParsed}
-        </SchemaContext.Provider>
+        <SchemaContext value={newSchema}>{itemsParsed?.length === 1 ? itemsParsed[0] : itemsParsed}</SchemaContext>
       );
     }
 

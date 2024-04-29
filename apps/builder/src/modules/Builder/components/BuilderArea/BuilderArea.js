@@ -295,11 +295,11 @@ const BuilderArea = props => {
                 >
                   <SpaceContainer>
                     <PlitziServiceProvider value={plitziContextValue}>
-                      <SchemaContext.Provider value={schemaValueMemo}>
-                        <StyleContext.Provider value={styleValueMemo}>
+                      <SchemaContext value={schemaValueMemo}>
+                        <StyleContext value={styleValueMemo}>
                           <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
-                        </StyleContext.Provider>
-                      </SchemaContext.Provider>
+                        </StyleContext>
+                      </SchemaContext>
                     </PlitziServiceProvider>
                   </SpaceContainer>
 

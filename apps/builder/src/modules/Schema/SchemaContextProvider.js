@@ -486,15 +486,15 @@ const SchemaContextProvider = props => {
 
   if (type === SCHEMA_TYPE_MAIN) {
     return (
-      <SchemaMainContext.Provider value={mainSchemaValueMemo}>
-        <SchemaSettingsContext.Provider value={schemaSettings}>
-          <SchemaContext.Provider value={valueMemo}>{children}</SchemaContext.Provider>
-        </SchemaSettingsContext.Provider>
-      </SchemaMainContext.Provider>
+      <SchemaMainContext value={mainSchemaValueMemo}>
+        <SchemaSettingsContext value={schemaSettings}>
+          <SchemaContext value={valueMemo}>{children}</SchemaContext>
+        </SchemaSettingsContext>
+      </SchemaMainContext>
     );
   }
 
-  return <SchemaContext.Provider value={valueMemo}>{children}</SchemaContext.Provider>;
+  return <SchemaContext value={valueMemo}>{children}</SchemaContext>;
 };
 
 export default SchemaContextProvider;

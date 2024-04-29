@@ -110,7 +110,7 @@ const TemplatesContextProvider = props => {
     ]
   );
 
-  return <TemplatesContext.Provider value={templateContextValue}>{children}</TemplatesContext.Provider>;
+  return <TemplatesContext value={templateContextValue}>{children}</TemplatesContext>;
 };
 
 export default TemplatesContextProvider;

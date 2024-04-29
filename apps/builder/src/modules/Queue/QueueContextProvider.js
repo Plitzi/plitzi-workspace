@@ -35,9 +35,9 @@ const QueueContextProvider = props => {
   const queueValue = useMemo(() => ({ queueManager, enqueueMiddleware }), [queueManager, enqueueMiddleware]);
 
   return (
-    <QueueContext.Provider value={queueValue}>
-      <QueueStatusContext.Provider value={processing}>{children}</QueueStatusContext.Provider>
-    </QueueContext.Provider>
+    <QueueContext value={queueValue}>
+      <QueueStatusContext value={processing}>{children}</QueueStatusContext>
+    </QueueContext>
   );
 };
 

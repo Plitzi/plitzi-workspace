@@ -107,7 +107,7 @@ const AppMain = props => {
     [props]
   );
 
-  return <AppContext.Provider value={appValueMemo}>{childrenMemo}</AppContext.Provider>;
+  return <AppContext value={appValueMemo}>{childrenMemo}</AppContext>;
 };
 
 export default AppMain;

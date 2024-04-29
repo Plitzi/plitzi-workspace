@@ -129,7 +129,7 @@ const UndoableContextProducer = props => {
     ]
   );
 
-  return <UndoableContext.Provider value={undoableValue}>{children}</UndoableContext.Provider>;
+  return <UndoableContext value={undoableValue}>{children}</UndoableContext>;
 };
 
 export default UndoableContextProducer;

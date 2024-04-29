@@ -219,9 +219,9 @@ const NetworkContextProvider = props => {
   }
 
   return (
-    <NetworkContext.Provider value={networkValue}>
-      <NetworkInternalContext.Provider value={internalData}>{children}</NetworkInternalContext.Provider>
-    </NetworkContext.Provider>
+    <NetworkContext value={networkValue}>
+      <NetworkInternalContext value={internalData}>{children}</NetworkInternalContext>
+    </NetworkContext>
   );
 };
 

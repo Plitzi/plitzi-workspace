@@ -26,7 +26,7 @@ const DataSourceContextProvider = props => {
 
   const valueMemo = useMemo(() => ({ dataSourceManager, useDataSource }), [dataSourceManager, useDataSource]);
 
-  return <DataSourceContext.Provider value={valueMemo}>{children}</DataSourceContext.Provider>;
+  return <DataSourceContext value={valueMemo}>{children}</DataSourceContext>;
 };
 
 export default DataSourceContextProvider;
