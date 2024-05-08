@@ -407,7 +407,7 @@ const BuilderProvider = props => {
 
   const selector = get(schemaRef.current, `flat.${elementSelected}.definition.styleSelectors.base`, '');
   const selectorActive = useMemo(() => {
-    if (selector && selectorSelected && selector.includes(selectorSelected.name.replace(/:.*/, ''))) {
+    if (selector && selectorSelected && selector.includes(selectorSelected.name?.replace(/:.*/, ''))) {
       return selectorSelected;
     }
 
