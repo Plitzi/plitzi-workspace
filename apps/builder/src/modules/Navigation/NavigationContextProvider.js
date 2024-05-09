@@ -7,7 +7,7 @@ import get from 'lodash/get';
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { getPaths, matchRoutePath } from '@plitzi/sdk-navigation/NavigationHelper';
+import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
@@ -39,8 +39,17 @@ const NavigationContextProvider = props => {
   );
 
   const { action, pageId: currentPageId, pathMatch } = matchResult;
-  const routeParams = get(pathMatch, 'params', {});
+  const routeParams = useMemo(() => {
+    const path = paths.find(path => path.pageId === currentPageId && !path.isRaw);
+    if (!path) {
+      return get(pathMatch, 'params', {});
+    }
 
+    return {
+      ...getRouteParams(path.path).reduce((acum, param) => ({ ...acum, [param]: '' }), {}),
+      ...get(pathMatch, 'params', {})
+    };
+  }, [paths, pathMatch]);
   const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 

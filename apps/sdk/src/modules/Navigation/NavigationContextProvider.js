@@ -8,7 +8,7 @@ import get from 'lodash/get';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
-import { getPaths, matchRoutePath } from '@plitzi/sdk-navigation/NavigationHelper';
+import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
@@ -89,10 +89,21 @@ const NavigationContextProvider = props => {
     },
     [navigate]
   );
+
+  const routeParams = useMemo(() => {
+    const path = paths.find(path => path.pageId === currentPageId && !path.isRaw);
+    if (!path) {
+      return get(pathMatch, 'params', {});
+    }
+
+    return {
+      ...getRouteParams(path.path).reduce((acum, param) => ({ ...acum, [param]: '' }), {}),
+      ...get(pathMatch, 'params', {})
+    };
+  }, [paths, pathMatch]);
   const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const navigationValue = useMemo(() => {
-    const routeParams = get(pathMatch, 'params', {});
     if (renderMode === RENDER_MODE_SSR) {
       return {
         navigate: handleNavigate,
@@ -115,7 +126,7 @@ const NavigationContextProvider = props => {
       currentPageId,
       Helmet
     };
-  }, [handleNavigate, urlSearchParams, pathMatch, queryParams, currentPageId, Helmet]);
+  }, [handleNavigate, urlSearchParams, routeParams, queryParams, currentPageId, Helmet]);
 
   if (action.type === 'redirect') {
     return <Navigate to={action.path} replace />;

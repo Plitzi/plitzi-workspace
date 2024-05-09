@@ -102,6 +102,7 @@ const getPaths = (pages, flat, pageFolders, authenticated, previewMode = true, s
           path: subPath,
           accessLevel,
           enabled,
+          isRaw: `/${pageId}` === subPath,
           unauthorizedBehaviour,
           unauthorizedPageRedirect,
           hasAccess: isPageAuthored(accessLevel, authenticated, previewMode)
@@ -125,6 +126,7 @@ const getPaths = (pages, flat, pageFolders, authenticated, previewMode = true, s
         ...defaultPath,
         path: '*',
         hasAccess: false,
+        isRaw: true,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/'
       });
@@ -196,4 +198,14 @@ const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
   return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };
 };
 
-export { getPageFullPath, getPaths, matchRoutePath, isPageAuthored };
+const getRouteParams = path => {
+  if (!path || typeof path !== 'string') {
+    return [];
+  }
+
+  const params = path.match(/:[a-zA-Z0-9-_:*]+/gim) || [];
+
+  return params.map(param => param.replace(':', ''));
+};
+
+export { getPageFullPath, getPaths, matchRoutePath, isPageAuthored, getRouteParams };
