@@ -47,7 +47,46 @@ const Display = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
   const { getValue, setValue } = use(StyleInspectorContext);
   const handleChange = (type, partialValue) => {
-    setValue(type, partialValue);
+    if (type === 'display') {
+      setValue(
+        [
+          FLEX_DIRECTION,
+          FLEX_WRAP,
+          ALIGN_ITEMS,
+          JUSTIFY_CONTENT,
+          ALIGN_CONTENT,
+          GAP,
+          GRID_ROW_GAP,
+          GRID_COLUMN_GAP,
+          GRID_TEMPLATE_AREAS,
+          GRID_TEMPLATE_COLUMNS,
+          GRID_TEMPLATE_ROWS,
+          GRID_AUTO_FLOW,
+          GRID_AUTO_ROWS,
+          GRID_AUTO_COLUMNS,
+          DISPLAY
+        ],
+        {
+          [FLEX_DIRECTION]: undefined,
+          [FLEX_WRAP]: undefined,
+          [ALIGN_ITEMS]: undefined,
+          [JUSTIFY_CONTENT]: undefined,
+          [ALIGN_CONTENT]: undefined,
+          [GAP]: undefined,
+          [GRID_ROW_GAP]: undefined,
+          [GRID_COLUMN_GAP]: undefined,
+          [GRID_TEMPLATE_AREAS]: undefined,
+          [GRID_TEMPLATE_COLUMNS]: undefined,
+          [GRID_TEMPLATE_ROWS]: undefined,
+          [GRID_AUTO_FLOW]: undefined,
+          [GRID_AUTO_ROWS]: undefined,
+          [GRID_AUTO_COLUMNS]: undefined,
+          [DISPLAY]: partialValue
+        }
+      );
+    } else {
+      setValue(type, partialValue);
+    }
   };
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('display', isCollapsed), [onCollapse]);
