@@ -18,7 +18,7 @@ import ReplicaProvider from '@modules/Element/ReplicaProvider';
  */
 const ListControlledItem = props => {
   const { children, className = '', isTemplate = false, itemCount = 0, parentId = '', record } = props;
-  const dataSourceValue = useMemo(() => ({ item: record }), [record]);
+  const dataSourceValue = useMemo(() => ({ item: record, counter: itemCount }), [record, itemCount]);
 
   if (isTemplate) {
     return (
