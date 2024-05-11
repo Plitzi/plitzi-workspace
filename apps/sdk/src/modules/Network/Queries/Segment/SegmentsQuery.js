@@ -2,7 +2,7 @@
 import { gql } from 'graphql-tag';
 
 const SegmentsQuery = gql`
-  query SegmentsQuery($environment: String!, $filter: SegmentInput, $cursor: String, $limit: Int) {
+  query SegmentsQuery($environment: String!, $filter: JsonObject, $cursor: String, $limit: Int) {
     Segments(environment: $environment, filter: $filter, cursor: $cursor, limit: $limit) {
       edges {
         id

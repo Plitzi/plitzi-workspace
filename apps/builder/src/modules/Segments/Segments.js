@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, use, useEffect, useRef, useState } from 'react';
+import React, { useCallback, use, useEffect, useState, useMemo } from 'react';
 import omit from 'lodash/omit';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -15,36 +15,44 @@ import SegmentForm from './Models/SegmentForm';
 /** @returns {React.ReactElement} */
 const Segments = () => {
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState({ name: { contains: '' } });
+  const [filter, setFilter] = useState('');
   const [data, setData] = useState({ cursor: undefined, hasNextPage: false, segments: {} });
   const { showModal } = useModal();
   const { segmentsFetch, segmentAddMutation } = use(SegmentsContext);
 
-  const fetch = async (search, more = false) => {
-    setLoading(true);
-    const result = await segmentsFetch(search, data.cursor, 20);
-    if (result) {
-      const { pageInfo, edges } = result;
-      if (!edges) {
-        setLoading(false);
-
-        return;
+  const fetch = useCallback(
+    async (name, more = false) => {
+      setLoading(true);
+      const query = {};
+      if (name) {
+        query['definition.name'] = `/.*${name}.*/`;
       }
 
-      const segments = edges.reduce((acum, segment) => ({ ...acum, [segment.identifier]: segment }), {});
-      setData({
-        cursor: pageInfo.nextCursor,
-        hasNextPage: pageInfo.hasNextPage,
-        segments: more ? { ...data.segments, segments } : segments
-      });
-      setLoading(false);
-    }
-  };
+      const result = await segmentsFetch(query, data.cursor, 20);
+      if (result) {
+        const { pageInfo, edges } = result;
+        if (!edges) {
+          setLoading(false);
 
-  const fetchDebounce = useRef(debounce(fetch, 350));
+          return;
+        }
+
+        const segments = edges.reduce((acum, segment) => ({ ...acum, [segment.identifier]: segment }), {});
+        setData({
+          cursor: pageInfo.nextCursor,
+          hasNextPage: pageInfo.hasNextPage,
+          segments: more ? { ...data.segments, segments } : segments
+        });
+        setLoading(false);
+      }
+    },
+    [data, segmentsFetch]
+  );
+
+  const fetchDebounce = useMemo(() => debounce(fetch, 500), [fetch]);
 
   useEffect(() => {
-    fetch({ name: { contains: '' } });
+    fetch('');
   }, []);
 
   const handleRefresh = useCallback(
@@ -66,13 +74,10 @@ const Segments = () => {
   );
 
   const handleChange = useCallback(
-    e =>
-      setFilter(state => {
-        const newFilter = { ...state, name: { contains: e.target.value } };
-        fetchDebounce.current(newFilter);
-
-        return newFilter;
-      }),
+    e => {
+      setFilter(e.target.value);
+      fetchDebounce(e.target.value);
+    },
     [setFilter]
   );
 
@@ -93,9 +98,9 @@ const Segments = () => {
         data: { name, description }
       } = response;
       segmentAddMutation(name, description);
-      fetchDebounce.current(filter);
+      fetchDebounce(filter);
     }
-  }, [showModal, handleRefresh, segmentAddMutation, filter]);
+  }, [showModal, segmentAddMutation, filter]);
 
   const { segments } = data;
 
@@ -111,7 +116,7 @@ const Segments = () => {
         Add Segment
       </Button>
       <div className="px-4 my-2">
-        <FormControl value={filter.name.contains} type="text" placeholder="Search Segments" onChange={handleChange} />
+        <FormControl value={filter} type="text" placeholder="Search Segments" onChange={handleChange} />
       </div>
       <div className="flex flex-col px-4 my-2">
         {!loading &&

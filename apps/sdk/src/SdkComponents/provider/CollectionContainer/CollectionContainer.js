@@ -23,7 +23,7 @@ import useCollectionContext from './hooks/useCollectionContext';
  *   source: string;
  *   children: React.ReactNode;
  *   limit: string;
- *   query: string;
+ *   query: object;
  *   singleRecord: boolean;
  * }} props
  * @returns {React.ReactElement}
@@ -36,15 +36,15 @@ const CollectionContainer = props => {
     source = '',
     children,
     limit = '10',
-    query = '',
+    query = emptyObject,
     singleRecord = false
   } = props;
-  const { loading, collection, fetch } = useCollectionContext({ source, limit, query, singleRecord });
   const { id } = internalProps;
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
+  const { loading, collection, fetch } = useCollectionContext({ source, limit, query, singleRecord, previewMode });
   const { useDataSource } = use(DataSourceContext);
 
   const sourceFields = useCallback(() => {

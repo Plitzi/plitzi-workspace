@@ -2,7 +2,7 @@
 import { gql } from 'graphql-tag';
 
 const CollectionsQuery = gql`
-  query CollectionsQuery($filter: CollectionInput, $cursor: String, $limit: Int) {
+  query CollectionsQuery($filter: JsonObject, $cursor: String, $limit: Int) {
     Collections(cursor: $cursor, limit: $limit) {
       edges {
         id

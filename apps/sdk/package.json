@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.22.1",
+  "version": "0.22.2",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -38,7 +38,7 @@
     "react": "19.0.0-beta-4508873393-20240430",
     "react-dom": "19.0.0-beta-4508873393-20240430",
     "react-helmet-async": "^2.0.5",
-    "react-router-dom": "^6.23.0",
+    "react-router-dom": "^6.23.1",
     "twig": "^1.17.1"
   },
   "devDependencies": {
@@ -68,7 +68,7 @@
     "compression-webpack-plugin": "^11.1.0",
     "css-loader": "^7.1.1",
     "file-loader": "^6.2.0",
-    "flow-bin": "^0.235.1",
+    "flow-bin": "^0.236.0",
     "handlebars-webpack-plugin": "^2.2.1",
     "html-webpack-plugin": "^5.6.0",
     "mini-css-extract-plugin": "^2.9.0",

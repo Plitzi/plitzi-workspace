@@ -2,7 +2,7 @@
 import { gql } from '@apollo/client/core';
 
 const CollectionsQuery = gql`
-  query CollectionsQuery($filter: CollectionInput, $cursor: String, $limit: Int) {
+  query CollectionsQuery($filter: JsonObject, $cursor: String, $limit: Int) {
     Collections(filter: $filter, cursor: $cursor, limit: $limit) {
       edges {
         id
