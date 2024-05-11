@@ -41,7 +41,7 @@ const ListControlled = props => {
 
   const sourceFields = useCallback(
     async () =>
-      getPathsFromObeject({ item: get(finalItems, '0', {}), counter: '0' }).reduce(
+      getPathsFromObeject({ item: get(finalItems, '0', {}), index: '0' }).reduce(
         (acum, path) => [...acum, { path, name: path }],
         []
       ),
@@ -75,7 +75,13 @@ const ListControlled = props => {
         }
 
         return (
-          <ListControlledItem key={i} itemCount={i} parentId={id} isTemplate={i !== 0 && !previewMode} record={item}>
+          <ListControlledItem
+            key={i}
+            itemCount={i + 1}
+            parentId={id}
+            isTemplate={i !== 0 && !previewMode}
+            record={item}
+          >
             {children}
           </ListControlledItem>
         );

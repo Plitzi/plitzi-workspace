@@ -18,12 +18,12 @@ import ReplicaProvider from '@modules/Element/ReplicaProvider';
  */
 const ListControlledItem = props => {
   const { children, className = '', isTemplate = false, itemCount = 0, parentId = '', record } = props;
-  const dataSourceValue = useMemo(() => ({ item: record, counter: itemCount }), [record, itemCount]);
+  const dataSourceValue = useMemo(() => ({ item: record, index: `${itemCount}` }), [record, itemCount]);
 
   if (isTemplate) {
     return (
       <div className={classNames('plitzi-component__controlled-list-item', className)}>
-        <div className="controlled-list-item__counter">{`List Item - ${itemCount + 1}`}</div>
+        <div className="controlled-list-item__counter">{`List Item - ${itemCount}`}</div>
         <ReplicaProvider id={parentId} source={`list_${parentId}`} dataSourceValue={dataSourceValue}>
           {children}
         </ReplicaProvider>
