@@ -46,7 +46,7 @@ const Settings = props => {
     }
 
     return getPathsFromObeject({ values: record.values, routeParams, queryParams, _id: record.id }).reduce(
-      (acum, path) => ({ ...acum, [path]: { name: path, label: path.replace('_', ''), placeholder: `Enter ${path}` } }),
+      (acum, path) => ({ ...acum, [path]: { name: path, label: path.replace('_', ' '), placeholder: `Enter ${path}` } }),
       {}
     );
   }, [collections, source]);
