@@ -16,7 +16,7 @@ import GroupButtons from '../../../components/GroupButtons';
  * }} props
  * @returns {React.ReactElement}
  */
-const DisplayGridGap = props => {
+const DisplayGap = props => {
   const { rowGap = '0px', columnGap = '0px', onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
@@ -55,4 +55,4 @@ const DisplayGridGap = props => {
   );
 };
 
-export default DisplayGridGap;
+export default DisplayGap;
