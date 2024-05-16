@@ -10,7 +10,8 @@ import {
   ALIGN_ITEMS,
   JUSTIFY_CONTENT,
   ALIGN_CONTENT,
-  GAP,
+  COLUMN_GAP,
+  ROW_GAP,
   GRID_ROW_GAP,
   GRID_COLUMN_GAP,
   GRID_TEMPLATE_AREAS,
@@ -29,7 +30,7 @@ import DisplayFlexJustify from './DisplayFlexJustify';
 import DisplayFlex from './DisplayFlex';
 import DisplayFlexAlignContent from './DisplayFlexAlignContent';
 import StyleInspectorContext from '../../StyleInspectorContext';
-import DisplayGap from './DIsplayGap';
+import DisplayGap from './DisplayGap';
 import CategoryContainer from '../../../components/CategoryContainer';
 import DisplayGridTemplate from './DisplayGridTemplate';
 import DisplayGridGap from './DisplayGridGap';
@@ -55,7 +56,8 @@ const Display = props => {
           ALIGN_ITEMS,
           JUSTIFY_CONTENT,
           ALIGN_CONTENT,
-          GAP,
+          COLUMN_GAP,
+          ROW_GAP,
           GRID_ROW_GAP,
           GRID_COLUMN_GAP,
           GRID_TEMPLATE_AREAS,
@@ -72,7 +74,8 @@ const Display = props => {
           [ALIGN_ITEMS]: undefined,
           [JUSTIFY_CONTENT]: undefined,
           [ALIGN_CONTENT]: undefined,
-          [GAP]: undefined,
+          [ROW_GAP]: undefined,
+          [COLUMN_GAP]: undefined,
           [GRID_ROW_GAP]: undefined,
           [GRID_COLUMN_GAP]: undefined,
           [GRID_TEMPLATE_AREAS]: undefined,
@@ -129,16 +132,11 @@ const Display = props => {
               onChange={handleChange}
               isReverse={isReverseWrap}
             />
-            <DisplayGap partialValue={getValue(GAP)} onChange={handleChange} />
+            <DisplayGap rowGap={getValue(ROW_GAP)} columnGap={getValue(COLUMN_GAP)} onChange={handleChange} />
           </>
         )}
         {displayValue === 'grid' && (
           <>
-            <DisplayGridGap
-              rowGap={getValue(GRID_ROW_GAP)}
-              columnGap={getValue(GRID_COLUMN_GAP)}
-              onChange={handleChange}
-            />
             <DisplayGridTemplate
               templateAreas={getValue(GRID_TEMPLATE_AREAS)}
               templateColumns={getValue(GRID_TEMPLATE_COLUMNS)}
@@ -146,6 +144,11 @@ const Display = props => {
               templateAutoFlow={getValue(GRID_AUTO_FLOW)}
               templateAutoRows={getValue(GRID_AUTO_ROWS)}
               templateAutoColumns={getValue(GRID_AUTO_COLUMNS)}
+              onChange={handleChange}
+            />
+            <DisplayGridGap
+              rowGap={getValue(GRID_ROW_GAP)}
+              columnGap={getValue(GRID_COLUMN_GAP)}
               onChange={handleChange}
             />
           </>

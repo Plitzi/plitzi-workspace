@@ -5,7 +5,8 @@ export const FLEX_DIRECTION = 'flex-direction';
 export const ALIGN_ITEMS = 'align-items';
 export const JUSTIFY_CONTENT = 'justify-content';
 export const ALIGN_CONTENT = 'align-content';
-export const GAP = 'gap';
+export const ROW_GAP = 'row-gap';
+export const COLUMN_GAP = 'column-gap';
 export const GRID_ROW_GAP = 'grid-row-gap';
 export const GRID_COLUMN_GAP = 'grid-column-gap';
 export const GRID_TEMPLATE_AREAS = 'grid-template-areas';
@@ -119,7 +120,8 @@ export const StyleConstants = {
   ALIGN_ITEMS,
   JUSTIFY_CONTENT,
   ALIGN_CONTENT,
-  GAP,
+  ROW_GAP,
+  COLUMN_GAP,
   // DisplayFlexChild
   ALIGN_SELF,
   ORDER,
@@ -215,7 +217,8 @@ export const inheritableAttributes = {
   ALIGN_ITEMS,
   JUSTIFY_CONTENT,
   ALIGN_CONTENT,
-  GAP,
+  ROW_GAP,
+  COLUMN_GAP,
   ALIGN_SELF,
   ORDER,
   FLEX_GROW,
