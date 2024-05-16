@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
-import TextArea from '@plitzi/plitzi-ui-components/TextArea';
+import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
@@ -50,13 +50,13 @@ const Settings = props => {
     [onUpdate, networkQuery]
   );
 
-  const handleChange = key => e => onUpdate(key, e.target.value);
-
   const handleClick = useCallback(() => generateJSX(content), [generateJSX]);
 
   const handleChangeAllowEmpty = key => e => onUpdate(key, e.target.checked);
 
   const handleChangeContent = useCallback(value => onUpdate('content', value), [onUpdate]);
+
+  const handleChangeProps = useCallback(value => onUpdate('props', value), [onUpdate]);
 
   return (
     <div className="flex flex-col grow">
@@ -99,7 +99,14 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-4">
           <label>Properties</label>
-          <TextArea value={componentProps} onChange={handleChange('props')} className="rounded" />
+          <CodeMirror
+            className="min-h-[200px] p-0"
+            value={componentProps}
+            theme="dark"
+            mode="json"
+            lineWrapping
+            onChange={handleChangeProps}
+          />
         </div>
       </div>
     </div>
