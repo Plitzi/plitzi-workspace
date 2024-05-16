@@ -64,7 +64,7 @@ const Settings = props => {
         <h1 className="text-white m-0">Block JSX Settings</h1>
       </div>
       <ElementAdvancedEditor className="grow" value={content} mode="js" onChange={handleChangeContent} />
-      <div className="flex flex-col p-2">
+      <div className="flex flex-col pt-2">
         {error && (
           <Alert className="text-white mb-4" containerClassName="overflow-x-auto" iconClassName="" intent="danger">
             <div className="flex flex-col text-xs">
@@ -75,7 +75,7 @@ const Settings = props => {
             </div>
           </Alert>
         )}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-2">
           <div className="flex items-center">
             <Checkbox
               id="custom-is-plugin"
@@ -98,7 +98,7 @@ const Settings = props => {
           </Button>
         </div>
         <div className="flex flex-col mt-4">
-          <label>Properties</label>
+          <label className="px-2">Properties</label>
           <CodeMirror
             className="min-h-[200px] p-0"
             value={componentProps}
