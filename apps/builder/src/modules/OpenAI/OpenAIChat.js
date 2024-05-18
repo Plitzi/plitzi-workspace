@@ -25,9 +25,7 @@ const OpenAIChat = props => {
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const [, setCache, getCacheByKey] = useCache();
-  const [threadId, setThreadId] = useState(() =>
-    getCacheByKey('assistantAI.threadId', 'thread_BrjclqslTbCRzSUFSbadon4F')
-  );
+  const [threadId, setThreadId] = useState(() => getCacheByKey('assistantAI.threadId', ''));
   const [conversation, setConversation] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [retrieveMessagePending, setRetrieveMessagePending] = useTransition();
@@ -134,6 +132,12 @@ const OpenAIChat = props => {
     [handleClickAsk, retrieveMessagePending]
   );
 
+  const handleClickClearConversation = useCallback(() => {
+    setConversation([]);
+    setCache('', 'assistantAI.threadId');
+    initAssistant();
+  }, [initAssistant, setCache]);
+
   useEffect(() => {
     if (!threadId) {
       initAssistant();
@@ -158,8 +162,8 @@ const OpenAIChat = props => {
       <div className="flex flex-col grow border-b border-gray-300">
         <Chat className="flex basis-0 grow m-3" messages={conversation} ref={chatRef} />
       </div>
-      <div className="flex p-4">
-        <div className="flex grow basis-0">
+      <div className="flex p-4 gap-2">
+        <div className="flex grow basis-0 gap-4">
           {!recording && (
             <Input
               className="min-w-0 basis-0 grow"
@@ -182,7 +186,7 @@ const OpenAIChat = props => {
           )}
         </div>
         {recording && (
-          <div className="flex ml-2 rounded overflow-hidden">
+          <div className="flex rounded overflow-hidden">
             <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
               {!paused && <i className="fa-solid fa-pause" />}
               {paused && <i className="fa-solid fa-play" />}
@@ -194,7 +198,7 @@ const OpenAIChat = props => {
         )}
         {!recording && (
           <Button
-            className="rounded mx-2 w-[38px]"
+            className="rounded w-[38px]"
             size="sm"
             intent={recording ? 'danger' : 'primary'}
             disabled={loading}
@@ -210,6 +214,16 @@ const OpenAIChat = props => {
             {loading && <i className="fa-solid fa-sync fa-spin" />}
           </Button>
         )}
+        <Button
+          size="sm"
+          intent="danger"
+          className="rounded w-[38px]"
+          disabled={loading}
+          onClick={handleClickClearConversation}
+          title="Clear the conversation"
+        >
+          <i className="fa-solid fa-eraser" />
+        </Button>
       </div>
     </div>
   );

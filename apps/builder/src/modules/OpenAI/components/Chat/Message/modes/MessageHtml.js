@@ -122,7 +122,7 @@ const MessageHtml = props => {
       <div
         className={classNames('flex w-full overflow-x-auto', {
           'p-4 border border-gray-300 rounded': viewMode === 'preview' && !fullScreen,
-          'absolute top-0 left-0 right-0 bottom-0 z-10': fullScreen
+          'absolute top-0 left-0 right-0 bottom-0 z-10 bg-white': fullScreen
         })}
       >
         {viewMode === 'code' && <Markdown className="w-full">{content}</Markdown>}
