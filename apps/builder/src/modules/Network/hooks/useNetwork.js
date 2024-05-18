@@ -25,18 +25,21 @@ const useNetwork = props => {
           baseURL = nodeServer;
         }
 
-        Object.values(params).forEach(value => {
+        let formData = params;
+        (params instanceof FormData ? params.values() : Object.values(params)).forEach(value => {
           if (value instanceof Blob && headers.get('Content-Type') !== 'multipart/form-data') {
-            headers.set('Content-Type', 'multipart/form-data');
+            headers.delete('Content-Type');
 
             return;
           }
         });
 
-        const formData = new FormData();
-        Object.entries(params).forEach(([key, value]) => {
-          formData.append(key, value);
-        });
+        if (!(formData instanceof FormData)) {
+          formData = new FormData();
+          Object.entries(params).forEach(([key, value]) => {
+            formData.append(key, value);
+          });
+        }
 
         const fetchOptions = { method, headers, body: formData };
         if (headers.get('Content-Type') === 'application/json') {

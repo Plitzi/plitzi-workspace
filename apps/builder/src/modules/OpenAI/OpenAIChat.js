@@ -211,7 +211,6 @@ const OpenAIChat = props => {
           </Button>
         )}
       </div>
-      <div className="text-sm flex items-center justify-center px-1 pb-1">{threadId}</div>
     </div>
   );
 };

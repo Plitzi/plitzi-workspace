@@ -16,6 +16,7 @@ import BuilderElementTools from '../BuilderElementTools';
 import BuilderTree from '../BuilderTree';
 import BuilderContext from '../../BuilderContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
+import { featureFlag } from '../../../../config';
 
 /**
  * @param {{
@@ -181,7 +182,7 @@ const BuilderAreaFooter = props => {
         >
           <i className="fas fa-code" />
         </Button>
-        <Button
+        {featureFlag.assistanceAI && <Button
           intent="custom"
           size="custom"
           onClick={handleClickAssistant}
@@ -189,7 +190,7 @@ const BuilderAreaFooter = props => {
           title="Assistant"
         >
           <i className="fa-solid fa-star" />
-        </Button>
+        </Button>}
         <Button
           intent="custom"
           size="custom"
