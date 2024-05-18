@@ -1,22 +1,17 @@
 // Packages
-import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useEffect, useState, useTransition, useRef } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
-import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
-
-// Monorepo
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 import useMediaRecorder from './hooks/useMediaRecorder';
 import VoiceVisualizer from './components/VoiceVisualizer';
+import Chat from './components/Chat';
 
 /**
  * @param {{
@@ -26,25 +21,25 @@ import VoiceVisualizer from './components/VoiceVisualizer';
  */
 const OpenAIChat = props => {
   const { className = '' } = props;
+  const chatRef = useRef();
   const { server, webKey } = use(NetworkContext);
-  const { rootDOM } = use(ContainerRootContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
-  const [assistantThread, setAssistantThread] = useState(null);
+  const [, setCache, getCacheByKey] = useCache();
+  const [threadId, setThreadId] = useState(() =>
+    getCacheByKey('assistantAI.threadId', 'thread_BrjclqslTbCRzSUFSbadon4F')
+  );
   const [conversation, setConversation] = useState([]);
-  const [preview, setPreview] = useState({
-    schema: { flat: {} },
-    style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-    definition: { rootId: '' }
-  });
-  const [message, setMessage] = useState('');
+  const [messageInput, setMessageInput] = useState('');
+  const [retrieveMessagePending, setRetrieveMessagePending] = useTransition();
 
   const getThreadMessages = useCallback(
     async threadId => {
       const response = await networkQuery('/assistant/thread-messages', { threadId }, 'post');
-      if (!response || !response?.reply) {
+      if (!response || !response?.messages) {
         return;
       }
-      setConversation(state => [...state, response?.reply]);
+
+      setConversation(response?.messages.reverse());
     },
     [networkQuery]
   );
@@ -55,33 +50,36 @@ const OpenAIChat = props => {
       return;
     }
 
-    const threadId = get(response, 'threadId', '');
-    setAssistantThread(threadId);
-    await getThreadMessages(threadId);
-  }, [getThreadMessages]);
+    const threadIdResponse = get(response, 'threadId', '');
+    setThreadId(threadIdResponse);
+    await getThreadMessages(threadIdResponse);
+    setCache(threadIdResponse, 'assistantAI.threadId');
+  }, [getThreadMessages, threadId]);
 
   const askToAssistant = useCallback(
-    async content => {
-      const response = await networkQuery('/assistant/ask', { threadId: assistantThread, message: content }, 'post');
-      if (!response || !response?.reply) {
-        return {
-          schema: { flat: {} },
-          style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-          definition: { rootId: '' }
-        };
-      }
+    message => {
+      setRetrieveMessagePending(async () => {
+        const responseAsk = await networkQuery('/assistant/ask', { threadId, message }, 'post');
+        if (!responseAsk || !responseAsk?.message) {
+          return;
+        }
 
-      return response?.reply;
+        setConversation(state => [...state, responseAsk?.message]);
+        const responseRetrieve = await networkQuery('/assistant/retrieve-message', { threadId }, 'post');
+        if (!responseRetrieve || !responseRetrieve?.messages) {
+          return;
+        }
+
+        setConversation(responseRetrieve?.messages.reverse());
+      });
     },
-    [assistantThread]
+    [threadId]
   );
 
   const handleClickAsk = useCallback(async () => {
-    setConversation(state => [...state, message]);
-    const reply = await askToAssistant(message);
-    setMessage('');
-    setPreview(reply);
-  }, [assistantThread, message, askToAssistant]);
+    setMessageInput('');
+    askToAssistant(messageInput);
+  }, [messageInput, askToAssistant, threadId]);
 
   const onFinishRecording = useCallback(
     async (audioUrl, audioBlob) => {
@@ -92,7 +90,7 @@ const OpenAIChat = props => {
         return;
       }
 
-      setMessage(response.transcript);
+      setMessageInput(response.transcript);
       // setConversation(state => [...state, response.transcript]);
       // const reply = await askToAssistant(response.transcript);
       // setPreview(reply);
@@ -124,109 +122,96 @@ const OpenAIChat = props => {
     stop();
   }, [start, stop, recording]);
 
+  const handleChangeMessage = useCallback(e => setMessageInput(e.target.value), []);
+
+  const handleMessageKeyDown = useCallback(
+    e => {
+      console.log(e.ctrlKey, e);
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !retrieveMessagePending) {
+        handleClickAsk();
+      }
+    },
+    [handleClickAsk, retrieveMessagePending]
+  );
+
   useEffect(() => {
-    initAssistant();
+    if (!threadId) {
+      initAssistant();
+    } else {
+      getThreadMessages(threadId);
+    }
   }, []);
 
-  const schemaMemo = useMemo(() => ({ schema: preview?.schema }), [preview?.schema]);
+  useEffect(() => {
+    const id = get(conversation, `${conversation.length - 1}.id`);
+    if (!id) {
+      return;
+    }
 
-  const styleMemo = useMemo(() => ({ style: preview?.style }), [preview?.style]);
+    document.getElementById(id).scrollIntoView({ behavior: 'instant', block: 'end', inline: 'nearest' });
+  }, [conversation]);
 
-  const resizeHandles = useMemo(() => ['w'], []);
+  const loading = retrieveMessagePending || networkLoading;
 
   return (
-    <div className={classNames('h-full flex', className)}>
-      <div className="flex flex-col grow basis-0 p-4 overflow-y-auto">
-        <SchemaContext value={schemaMemo}>
-          <StyleContext value={styleMemo}>
-            <BuilderAreaPreview
-              previewMode
-              className="h-full"
-              schema={schemaMemo?.schema}
-              id={preview?.definition?.rootId}
-              styleCache={styleMemo?.style?.cache}
+    <div className={classNames('h-full flex flex-col min-h-0 relative', className)}>
+      <div className="flex flex-col grow border-b border-gray-300">
+        <Chat className="flex basis-0 grow m-3" messages={conversation} ref={chatRef} />
+      </div>
+      <div className="flex p-4">
+        <div className="flex grow basis-0">
+          {!recording && (
+            <Input
+              className="min-w-0 basis-0 grow"
+              inputClassName="rounded min-w-0 basis-0"
+              value={messageInput}
+              onChange={handleChangeMessage}
+              onKeyDown={handleMessageKeyDown}
             />
-          </StyleContext>
-        </SchemaContext>
-      </div>
-      <div className="flex h-full bg-white">
-        <ContainerResizable
-          className={className}
-          autoGrow={false}
-          minConstraintsX={280}
-          minConstraintsY={Infinity}
-          maxConstraintsX={500}
-          width={280}
-          resizeHandles={resizeHandles}
-          parentElement={rootDOM}
-        >
-          <div className="flex flex-col grow px-4 py-2 overflow-y-auto border-b border-gray-300">
-            {conversation.map((message, index) => (
-              <div key={index} className="py-2">
-                {JSON.stringify(message)}
-              </div>
-            ))}
+          )}
+          {recording && (
+            <VoiceVisualizer
+              className="h-[38px] pr-2"
+              backgroundColor="transparent"
+              mainBarColor="#7290e7"
+              barWidth={2}
+              fullscreen
+              isRecording={recording}
+              audioData={audioData}
+            />
+          )}
+        </div>
+        {recording && (
+          <div className="flex ml-2 rounded overflow-hidden">
+            <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
+              {!paused && <i className="fa-solid fa-pause" />}
+              {paused && <i className="fa-solid fa-play" />}
+            </Button>
+            <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickTranscript}>
+              <i className="fa-solid fa-stop" />
+            </Button>
           </div>
-          <div className="flex p-4">
-            <div className="flex grow basis-0">
-              {!recording && (
-                <Input
-                  className="min-w-0 basis-0 grow"
-                  inputClassName="rounded min-w-0 basis-0"
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                />
-              )}
-              {recording && (
-                <VoiceVisualizer
-                  className="h-[38px] pr-2"
-                  backgroundColor="transparent"
-                  mainBarColor="#7290e7"
-                  barWidth={2}
-                  fullscreen
-                  isRecording={recording}
-                  audioData={audioData}
-                />
-              )}
-            </div>
-            {recording && (
-              <div className="flex ml-2 rounded overflow-hidden">
-                <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
-                  {!paused && <i className="fa-solid fa-pause" />}
-                  {paused && <i className="fa-solid fa-play" />}
-                </Button>
-                <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickTranscript}>
-                  <i className="fa-solid fa-stop" />
-                </Button>
-              </div>
-            )}
-            {!recording && (
-              <Button
-                className="rounded mx-2 w-[38px]"
-                size="sm"
-                intent={recording ? 'danger' : 'primary'}
-                disabled={networkLoading}
-                onClick={handleClickTranscript}
-              >
-                {!recording && <i className="fa-solid fa-microphone" />}
-                {recording && <i className="fa-solid fa-stop" />}
-              </Button>
-            )}
-            {!recording && (
-              <Button
-                size="sm"
-                className="rounded w-[38px]"
-                disabled={networkLoading}
-                onClick={handleClickAsk}
-                title="Ask"
-              >
-                {!networkLoading && <i className="fa-solid fa-star" />}
-                {networkLoading && <i className="fa-solid fa-sync fa-spin" />}
-              </Button>
-            )}
-          </div>
-        </ContainerResizable>
+        )}
+        {!recording && (
+          <Button
+            className="rounded mx-2 w-[38px]"
+            size="sm"
+            intent={recording ? 'danger' : 'primary'}
+            disabled={loading}
+            onClick={handleClickTranscript}
+          >
+            {!recording && <i className="fa-solid fa-microphone" />}
+            {recording && <i className="fa-solid fa-stop" />}
+          </Button>
+        )}
+        {!recording && (
+          <Button size="sm" className="rounded w-[38px]" disabled={loading} onClick={handleClickAsk} title="Ask">
+            {!loading && <i className="fa-solid fa-star" />}
+            {loading && <i className="fa-solid fa-sync fa-spin" />}
+          </Button>
+        )}
       </div>
+      <div className="text-sm flex items-center justify-center px-1 pb-1">{threadId}</div>
     </div>
   );
 };

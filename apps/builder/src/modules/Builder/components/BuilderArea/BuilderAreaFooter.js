@@ -8,7 +8,7 @@ import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-
 // Alias
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
 import StateManager from '@pmodules/StateManager/StateManager';
-// import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
+import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
 import Transform from '@pmodules/Transformers/Transform';
 
 // Relatives
@@ -123,25 +123,24 @@ const BuilderAreaFooter = props => {
     }
   }, [addPopup, existsPopup, mode]);
 
-  // const handleClickAssistant = useCallback(() => {
-  //   if (!existsPopup('assistant')) {
-  //     const title = (
-  //       <>
-  //         <i className="fa-solid fa-star m-1 text-base" />
-  //         Assistant
-  //       </>
-  //     );
-  //     addPopup('assistant', <OpenAIChat />, {
-  //       title,
-  //       height: 400,
-  //       width: 600,
-  //       allowLeftSide: mode === BUILDER_MODE_NORMAL,
-  //       allowRightSide: mode === BUILDER_MODE_NORMAL,
-  //       placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
-  //       resizeHandles: ['se']
-  //     });
-  //   }
-  // }, [addPopup, existsPopup, mode]);
+  const handleClickAssistant = useCallback(() => {
+    if (!existsPopup('assistant')) {
+      const title = (
+        <>
+          <i className="fa-solid fa-star m-1 text-base" />
+          Assistant
+        </>
+      );
+      addPopup('assistant', <OpenAIChat />, {
+        title,
+        width: 400,
+        allowLeftSide: mode === BUILDER_MODE_NORMAL,
+        allowRightSide: mode === BUILDER_MODE_NORMAL,
+        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
+        resizeHandles: ['se']
+      });
+    }
+  }, [addPopup, existsPopup, mode]);
 
   return (
     <div className="flex justify-center items-center gap-4">
@@ -182,7 +181,7 @@ const BuilderAreaFooter = props => {
         >
           <i className="fas fa-code" />
         </Button>
-        {/* <Button
+        <Button
           intent="custom"
           size="custom"
           onClick={handleClickAssistant}
@@ -190,7 +189,7 @@ const BuilderAreaFooter = props => {
           title="Assistant"
         >
           <i className="fa-solid fa-star" />
-        </Button> */}
+        </Button>
         <Button
           intent="custom"
           size="custom"
