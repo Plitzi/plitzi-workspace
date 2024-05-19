@@ -6,9 +6,15 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
+// Monorepo
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
+import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
+
+// Relatives
 import useMediaRecorder from './hooks/useMediaRecorder';
 import VoiceVisualizer from './components/VoiceVisualizer';
 import Chat from './components/Chat';
@@ -24,6 +30,8 @@ const OpenAIChat = props => {
   const chatRef = useRef();
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
+  const { currentPageId } = use(NavigationContext);
+  const { elementSelected } = use(BuilderSelectedContext);
   const [, setCache, getCacheByKey] = useCache();
   const [threadId, setThreadId] = useState(() => getCacheByKey('assistantAI.threadId', ''));
   const [conversation, setConversation] = useState([]);
@@ -32,7 +40,7 @@ const OpenAIChat = props => {
 
   const getThreadMessages = useCallback(
     async threadId => {
-      const response = await networkQuery('/assistant/thread-messages', { threadId }, 'post');
+      const response = await networkQuery(`/assistant/thread/messages?threadId=${threadId}`);
       if (!response || !response?.messages) {
         return;
       }
@@ -43,7 +51,7 @@ const OpenAIChat = props => {
   );
 
   const initAssistant = useCallback(async () => {
-    const response = await networkQuery('/assistant/generate-thread');
+    const response = await networkQuery('/assistant/thread', {}, 'post');
     if (!response) {
       return;
     }
@@ -57,21 +65,21 @@ const OpenAIChat = props => {
   const askToAssistant = useCallback(
     message => {
       setRetrieveMessagePending(async () => {
-        const responseAsk = await networkQuery('/assistant/ask', { threadId, message }, 'post');
-        if (!responseAsk || !responseAsk?.message) {
+        const responseAsk = await networkQuery('/assistant/thread/message', { threadId, message }, 'post');
+        if (!responseAsk?.message) {
           return;
         }
 
-        setConversation(state => [...state, responseAsk?.message]);
-        const responseRetrieve = await networkQuery('/assistant/retrieve-message', { threadId }, 'post');
-        if (!responseRetrieve || !responseRetrieve?.messages) {
+        setConversation(state => [...state, responseAsk.message]);
+        const responseRetrieve = await networkQuery('/assistant/thread/retrieve-message', { threadId }, 'post');
+        if (!responseRetrieve?.messages) {
           return;
         }
 
-        setConversation(responseRetrieve?.messages.reverse());
+        setConversation(state => [...state, ...responseRetrieve.messages]);
       });
     },
-    [threadId]
+    [threadId, networkQuery, currentPageId, elementSelected, setRetrieveMessagePending]
   );
 
   const handleClickAsk = useCallback(async () => {
@@ -124,7 +132,6 @@ const OpenAIChat = props => {
 
   const handleMessageKeyDown = useCallback(
     e => {
-      console.log(e.ctrlKey, e);
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !retrieveMessagePending) {
         handleClickAsk();
       }
@@ -154,6 +161,16 @@ const OpenAIChat = props => {
 
     document.getElementById(id).scrollIntoView({ behavior: 'instant', block: 'end', inline: 'nearest' });
   }, [conversation]);
+
+  // useEffect(() => {
+  //   if (threadId) {
+  //     networkQuery(
+  //       '/assistant/thread/message',
+  //       { threadId, context: { currentPageId, elementSelected }, isContext: true },
+  //       'post'
+  //     );
+  //   }
+  // }, [currentPageId, elementSelected, threadId]);
 
   const loading = retrieveMessagePending || networkLoading;
 
