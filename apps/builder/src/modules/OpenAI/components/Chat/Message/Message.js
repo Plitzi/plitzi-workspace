@@ -45,11 +45,11 @@ const Message = props => {
     <div className={classNames('flex flex-col gap-4', className)}>
       {messageParsed.map((messageItem, index) => {
         const { type, content } = messageItem;
-        if (type === 'text') {
-          return <MessageText key={index} content={content} />;
+        if (type === 'html') {
+          return <MessageHtml key={index} content={content} />;
         }
 
-        return <MessageHtml key={index} content={content} />;
+        return <MessageText key={index} content={content} />;
       })}
     </div>
   );
