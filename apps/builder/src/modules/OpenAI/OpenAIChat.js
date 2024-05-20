@@ -71,7 +71,11 @@ const OpenAIChat = props => {
         }
 
         setConversation(state => [...state, responseAsk.message]);
-        const responseRetrieve = await networkQuery('/assistant/thread/retrieve-message', { threadId }, 'post');
+        const responseRetrieve = await networkQuery(
+          '/assistant/thread/retrieve-message',
+          { threadId, context: { currentPageId, elementSelected } },
+          'post'
+        );
         if (!responseRetrieve?.messages) {
           return;
         }
@@ -162,16 +166,6 @@ const OpenAIChat = props => {
     document.getElementById(id).scrollIntoView({ behavior: 'instant', block: 'end', inline: 'nearest' });
   }, [conversation]);
 
-  // useEffect(() => {
-  //   if (threadId) {
-  //     networkQuery(
-  //       '/assistant/thread/message',
-  //       { threadId, context: { currentPageId, elementSelected }, isContext: true },
-  //       'post'
-  //     );
-  //   }
-  // }, [currentPageId, elementSelected, threadId]);
-
   const loading = retrieveMessagePending || networkLoading;
 
   return (
@@ -242,6 +236,7 @@ const OpenAIChat = props => {
           <i className="fa-solid fa-eraser" />
         </Button>
       </div>
+      <div className="flex items-center justify-center mb-1 text-xs">{threadId}</div>
     </div>
   );
 };
