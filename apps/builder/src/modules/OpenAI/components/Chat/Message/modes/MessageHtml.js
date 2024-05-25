@@ -126,7 +126,7 @@ const MessageHtml = props => {
         })}
       >
         {viewMode === 'code' && <Markdown className="w-full">{content}</Markdown>}
-        {viewMode === 'preview' && <TransformPreview className='' preview={preview} />}
+        {viewMode === 'preview' && <TransformPreview className="" preview={preview} />}
       </div>
       <div className="flex flex-col gap-2 mx-2">
         {viewMode === 'preview' && (
