@@ -1,7 +1,6 @@
 // Packages
 import React from 'react';
 import Markdown from '@plitzi/plitzi-ui-components/Markdown';
-import classNames from 'classnames';
 
 /**
  * @param {{
@@ -13,7 +12,7 @@ import classNames from 'classnames';
 const MessageText = props => {
   const { className = '', content = '' } = props;
 
-  return <Markdown className={classNames('text-justify', className)}>{content}</Markdown>;
+  return <Markdown className={className}>{content}</Markdown>;
 };
 
 export default MessageText;
