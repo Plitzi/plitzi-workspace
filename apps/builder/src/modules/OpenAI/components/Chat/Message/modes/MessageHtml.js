@@ -128,7 +128,7 @@ const MessageHtml = props => {
         {viewMode === 'code' && <Markdown className="w-full">{content}</Markdown>}
         {viewMode === 'preview' && <TransformPreview className="" preview={preview} />}
       </div>
-      <div className="flex flex-col gap-2 mx-2">
+      <div className="flex flex-col gap-2 ml-2">
         {viewMode === 'preview' && (
           <Button size="sm" className="rounded h-6 w-6" title="Code" onClick={handleClickCode}>
             <i className="fas fa-code" />
