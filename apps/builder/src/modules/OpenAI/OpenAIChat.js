@@ -173,13 +173,14 @@ const OpenAIChat = props => {
       <div className="flex flex-col grow border-b border-gray-300">
         <Chat className="flex basis-0 grow m-3" messages={conversation} ref={chatRef} />
       </div>
-      <div className="flex p-4 gap-2">
+      <div className="flex p-2 gap-2">
         <div className="flex grow basis-0 gap-4">
           {!recording && (
             <Input
               className="min-w-0 basis-0 grow"
               inputClassName="rounded min-w-0 basis-0"
               value={messageInput}
+              size="sm"
               onChange={handleChangeMessage}
               onKeyDown={handleMessageKeyDown}
             />
@@ -236,7 +237,7 @@ const OpenAIChat = props => {
           <i className="fa-solid fa-eraser" />
         </Button>
       </div>
-      <div className="flex items-center justify-center mb-1 text-xs">{threadId}</div>
+      <div className="flex items-center justify-end mx-2 text-xs">{threadId}</div>
     </div>
   );
 };

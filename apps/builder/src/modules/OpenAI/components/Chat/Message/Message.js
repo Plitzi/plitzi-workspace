@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo } from 'react';
-import classNames from 'classnames';
 
 // Relatives
 import MessageHtml from './modes/MessageHtml';
@@ -42,14 +41,14 @@ const Message = props => {
   );
 
   return (
-    <div className={classNames('flex flex-col gap-4', className)}>
+    <div className="flex flex-col gap-4">
       {messageParsed.map((messageItem, index) => {
         const { type, content } = messageItem;
         if (type === 'html') {
-          return <MessageHtml key={index} content={content} />;
+          return <MessageHtml className={className} key={index} content={content} />;
         }
 
-        return <MessageText key={index} content={content} />;
+        return <MessageText className={className} key={index} content={content} />;
       })}
     </div>
   );

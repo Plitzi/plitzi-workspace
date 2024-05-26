@@ -18,7 +18,7 @@ const Chat = props => {
 
   return (
     <div className={classNames('flex min-h-0', className)} ref={ref}>
-      <div className="flex flex-col w-full overflow-y-auto gap-6">
+      <div className="flex flex-col w-full overflow-y-auto gap-4">
         {messagesParsed.map(message => (
           <ChatMessage
             key={message.id}

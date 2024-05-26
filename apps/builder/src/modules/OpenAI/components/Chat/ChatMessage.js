@@ -33,7 +33,7 @@ const ChatMessage = props => {
   return (
     <div className={classNames('flex flex-col text-sm', className)} id={id}>
       <div className="flex gap-1 font-medium text-gray-900">{roleLabel}</div>
-      <Message message={message} />
+      <Message className="text-sm" message={message} />
     </div>
   );
 };
