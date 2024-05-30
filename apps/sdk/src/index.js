@@ -5,10 +5,20 @@ import './helpers/wdyr';
 import React, { useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 
+// Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
+import RootElement from '@plitzi/sdk-elements/RootElement';
+import withElement from '@plitzi/sdk-elements/withElement';
+import JsxManager from '@plitzi/sdk-elements/JsxManager';
+import PluginRemote from '@plitzi/sdk-elements/PluginRemote';
+import PluginManager from '@plitzi/sdk-elements/PluginManager';
+import ReplicaProvider from '@plitzi/sdk-elements/ReplicaProvider';
+import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '@plitzi/sdk-elements/ElementConstants';
+import { generatePluginPromises } from '@plitzi/sdk-elements/elementUtils';
+import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+
 // Alias
-import ComponentContext from '@modules/Component/ComponentContext';
-import ComponentProvider from '@modules/Component/ComponentProvider';
-import RootElement from '@modules/Element/RootElement';
 import Sdk, {
   RENDER_MODE_IFRAME,
   RENDER_MODE_RAW,
@@ -16,11 +26,10 @@ import Sdk, {
   RENDER_MODE_SSR,
   RENDER_MODE_WIDGET
 } from '@modules/Sdk';
-import { generatePluginPromises } from '@modules/Element/helpers/elementUtils';
+import sdkComponents from '@modules/Element';
 
 // Relatives
 import { disableReactDevTools } from './helpers/security';
-import usePlitziServiceContext, { PlitziServiceProvider } from './services/hooks/usePlitziServiceContext';
 import App from './App';
 
 // SDK Style
@@ -151,11 +160,19 @@ export {
   usePlitziServiceContext,
   PlitziServiceProvider,
   RootElement,
+  withElement,
+  JsxManager,
+  PluginManager,
+  PluginRemote,
+  ReplicaProvider,
   RENDER_MODE_IFRAME,
   RENDER_MODE_RAW,
   RENDER_MODE_SHADOW,
   RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET
+  RENDER_MODE_WIDGET,
+  PARTIAL_SCHEMA_TYPE_ELEMENT,
+  PARTIAL_SCHEMA_TYPE_SEGMENT,
+  sdkComponents
 };
 
 export const version = VERSION;

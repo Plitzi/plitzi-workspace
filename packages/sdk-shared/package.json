@@ -3,6 +3,7 @@
   "version": "0.22.3",
   "files": [],
   "exports": {
+    "./usePlitziServiceContext": "./src/hooks/usePlitziServiceContext.js",
     "./utils": "./src/helpers/utils.js",
     "./twigWrapper": "./src/helpers/twigWrapper.js",
     "./.eslintrc": "./.eslintrc.js",

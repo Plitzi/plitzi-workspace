@@ -6,7 +6,6 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 
 /**
  * @param {{
- *   spaceId?: string;
  *   spaceKey?: string;
  *   environment?: string;
  *   onUpdate?: (key: string, value: any) => void;
@@ -14,7 +13,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
  * @returns {React.ReactElement}
  */
 const Settings = props => {
-  const { spaceId = '', spaceKey = '', environment = 'main', onUpdate = noop } = props;
+  const { spaceKey = '', environment = 'main', onUpdate = noop } = props;
 
   const handleChange = key => e => onUpdate(key, e.target.value);
 
@@ -24,10 +23,6 @@ const Settings = props => {
         <h1 className="text-white m-0">Plitzi Sdk Settings</h1>
       </div>
       <div className="flex flex-col p-2">
-        <div className="flex flex-col mt-2">
-          <label>Space ID</label>
-          <Input value={spaceId} onChange={handleChange('spaceId')} inputClassName="rounded" />
-        </div>
         <div className="flex flex-col mt-2">
           <label>Space Key</label>
           <Input value={spaceKey} onChange={handleChange('spaceKey')} inputClassName="rounded" />

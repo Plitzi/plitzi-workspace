@@ -23,6 +23,7 @@
     "@apollo/client": "^3.10.4",
     "@auth0/auth0-react": "^2.2.4",
     "@plitzi/sdk-auth": "*",
+    "@plitzi/sdk-elements": "*",
     "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-interactions": "*",
     "@plitzi/sdk-navigation": "*",

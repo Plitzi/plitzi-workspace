@@ -12,11 +12,14 @@ import { HelmetProvider } from 'react-helmet-async';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
 import { StaticRouter } from 'react-router-dom/server';
 
+// Monorepo
+import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
+
 // Alias
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
-import ComponentProvider from '@modules/Component/ComponentProvider';
 import { RENDER_MODE_IFRAME, RENDER_MODE_SSR, RENDER_MODE_WIDGET } from '@modules/Sdk';
 import AppMain from '@modules/App/AppMain';
+import sdkComponents from '@modules/Element';
 
 // Relatives
 import { getEnvironmentServer } from './config';
@@ -146,7 +149,7 @@ const App = props => {
       <HelmetProvider>
         <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
           <ApolloProvider client={client}>
-            <ComponentProvider localCustomComponents={localCustomComponents}>
+            <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
               <AppMain server={finalServer} webKey={webKey} renderMode={renderMode} {...sdkProps} />
             </ComponentProvider>
           </ApolloProvider>

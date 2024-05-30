@@ -4,13 +4,13 @@ import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { Page } from '@plitzi/sdk-elements/components';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Alias
 import MadeInPlitzi from '@components/MadeInPlitzi';
 
 // Relatives
-import { PlitziServiceProvider } from '../../../services/hooks/usePlitziServiceContext';
-import Page from '../../../SdkComponents/internal/Page/Page';
 import SpaceContainer from '../../Space/SpaceContainer';
 
 /**

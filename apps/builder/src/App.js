@@ -17,7 +17,7 @@ import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
 import CacheProvider from '@plitzi/plitzi-ui-components/Cache/CacheProvider';
 
 // Monorepo
-import { ComponentProvider } from '@plitzi/plitzi-sdk';
+import { ComponentProvider, sdkComponents } from '@plitzi/plitzi-sdk';
 import { getKeyDecoded, emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
@@ -161,15 +161,15 @@ const App = props => {
   );
 
   const [localComponents] = useState(() => {
+    const localComponents = {};
     if (!children) {
-      return {};
+      return localComponents;
     }
 
     if (!isArray(children)) {
       children = [children];
     }
 
-    const localComponents = {};
     children.forEach(child => {
       const { renderType, component } = child.props;
       if (!renderType || !component) {
@@ -197,7 +197,7 @@ const App = props => {
       <CacheProvider cacheId="builder-state">
         <BrowserRouter basename={get(server, 'basePath', '/')}>
           <ApolloProvider client={client}>
-            <ComponentProvider localComponents={localComponents}>
+            <ComponentProvider localCustomComponents={localComponents} localComponents={sdkComponents}>
               <ToastProvider>
                 <AppMain
                   {...omit(props, ['children', 'server', 'builderEnvironment'])}

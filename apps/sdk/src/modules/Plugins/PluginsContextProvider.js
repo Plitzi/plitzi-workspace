@@ -7,9 +7,9 @@ import omit from 'lodash/omit';
 
 // Monorepo
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 
 // Alias
-import ComponentContext from '@modules/Component/ComponentContext';
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import {
   RENDER_MODE_IFRAME,

@@ -11,8 +11,10 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
+// Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+
 // Alias
-import ComponentContext from '@modules/Component/ComponentContext';
 import CollectionContext from '@modules/Collection/CollectionContext';
 import NetworkContext from '@modules/Network/NetworkContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
