@@ -85,7 +85,7 @@ const Custom = props => {
     };
   }, [assetsArray, registerCustomAssets, unregisterCustomAssets]);
 
-  if (isPlugin) {
+  if (isPlugin && scriptUrl && pluginScope) {
     return (
       <PluginRemote
         url={scriptUrl}
