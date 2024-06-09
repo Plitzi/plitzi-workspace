@@ -152,7 +152,7 @@ const Form = props => {
     [id, internalProps?.definition?.label]
   );
 
-  useDataSource({ id, source: 'form', name: sourceName, fields: sourceFields, value: contextValue });
+  const [FormContext] = useDataSource({ id, source: 'form', name: sourceName, fields: sourceFields });
 
   // Interactions Triggers
 
@@ -275,7 +275,7 @@ const Form = props => {
       onReset={handleReset}
       action={actionUrl}
     >
-      {children}
+      <FormContext value={contextValue}>{children}</FormContext>
     </RootElement>
   );
 };

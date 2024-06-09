@@ -42,14 +42,11 @@ const Reference = props => {
   } = internalProps;
   const {
     settings: { previewMode, environment },
-    contexts: { SchemaContext, SegmentsContext, DataSourceContext }
+    contexts: { SchemaContext, SegmentsContext }
   } = usePlitziServiceContext();
   const [reference, setReference] = useState();
-  const [dsManagerChild, setDsManagerChild] = useState();
   const { schema: mainSchema } = use(SchemaContext);
   const { segments, segmentGet } = use(SegmentsContext);
-  const dataSourceContext = use(DataSourceContext);
-  const dsManager = get(dataSourceContext, 'dataSourceManager');
   let refreshReference;
   if (!previewMode && referenceType === PARTIAL_SCHEMA_TYPE_SEGMENT && segments && referenceId) {
     refreshReference = segments[referenceId];
@@ -86,19 +83,7 @@ const Reference = props => {
       elementType: get(element, 'definition.type'),
       referenceContextData: { schema: referenceSchema, prevSchema: mainSchema }
     });
-    setDsManagerChild(dataSourceContext.dataSourceManager.createChildManager(id, referenceSchema));
   }, [referenceType, referenceId, segmentGet, refreshReference, mainSchema]);
-
-  useEffect(() => {
-    return () => {
-      dsManager.removeChildManager(dsManagerChild);
-    };
-  }, [dsManagerChild]);
-
-  const referenceContextSource = useMemo(
-    () => ({ ...dataSourceContext, dataSourceManager: dsManagerChild }),
-    [dataSourceContext, dsManagerChild]
-  );
 
   useEffect(() => {
     loadReference();
@@ -134,16 +119,14 @@ const Reference = props => {
   if (previewMode && element && referenceType === PARTIAL_SCHEMA_TYPE_ELEMENT) {
     return (
       <SchemaContext value={referenceContextData}>
-        <DataSourceContext value={referenceContextSource}>
-          <PluginManager
-            key={`${id}-${referenceId}`}
-            id={element?.id}
-            rootId={rootId}
-            type={elementType}
-            internalProps={internalPropsMemo}
-            plitziElementLayout={plitziElementLayoutMemo}
-          />
-        </DataSourceContext>
+        <PluginManager
+          key={`${id}-${referenceId}`}
+          id={element?.id}
+          rootId={rootId}
+          type={elementType}
+          internalProps={internalPropsMemo}
+          plitziElementLayout={plitziElementLayoutMemo}
+        />
       </SchemaContext>
     );
   }
@@ -157,18 +140,16 @@ const Reference = props => {
       })}
     >
       <SchemaContext value={referenceContextData}>
-        <DataSourceContext value={referenceContextSource}>
-          {element && (
-            <PluginManager
-              key={`${id}-${referenceId}`}
-              id={element?.id}
-              rootId={rootId}
-              type={elementType}
-              internalProps={internalPropsMemo}
-              plitziElementLayout={plitziElementLayoutMemo}
-            />
-          )}
-        </DataSourceContext>
+        {element && (
+          <PluginManager
+            key={`${id}-${referenceId}`}
+            id={element?.id}
+            rootId={rootId}
+            type={elementType}
+            internalProps={internalPropsMemo}
+            plitziElementLayout={plitziElementLayoutMemo}
+          />
+        )}
       </SchemaContext>
       {!previewMode && !element && (
         <div className="reference__label">Element Reference {capitalize(referenceType)}</div>

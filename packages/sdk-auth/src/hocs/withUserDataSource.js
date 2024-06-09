@@ -71,9 +71,13 @@ const withUserDataSource = WrappedComponent => {
       }
     }, [userContextMemo, userProvider]);
 
-    useDataSource({ id: 'global', source: 'user', name: 'User State', value: userContextMemo, fields: userFields });
+    const [UserContext] = useDataSource({ id: 'global', source: 'user', name: 'User State', fields: userFields });
 
-    return <WrappedComponent ref={ref} {...omit(props, ['userProvider'])} />;
+    return (
+      <UserContext value={userContextMemo}>
+        <WrappedComponent ref={ref} {...omit(props, ['userProvider'])} />
+      </UserContext>
+    );
   };
 
   WithUserDataSourceComponent.displayName = `withUserDataSource(${getDisplayName(WrappedComponent)})`;

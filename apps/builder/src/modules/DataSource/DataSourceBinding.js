@@ -35,12 +35,14 @@ const DataSourceBinding = props => {
     allowCustomBindings = false,
     onChange = noop
   } = props;
-  const { dataSourceManager } = use(DataSourceContext);
+  const { getSources } = use(DataSourceContext);
   const [bindingFormValues, setBindingFormValues] = useState(() =>
     Object.keys(bindingsAllowed).reduce((acum, key) => ({ ...acum, [key]: null }), {})
   );
-
-  const sources = useMemo(() => dataSourceManager.getSources(id, true, false), [id, dataSourceManager]);
+  const sources = useMemo(
+    () => Object.values(getSources()).reduce((acum, source) => ({ ...acum, [source.meta.source]: source.meta }), {}),
+    [getSources]
+  );
 
   useEffect(() => {
     setBindingFormValues(Object.keys(bindingsAllowed).reduce((acum, key) => ({ ...acum, [key]: null }), {}));
@@ -127,7 +129,7 @@ const DataSourceBinding = props => {
     setBindingFormValues(state => ({ ...state, [category]: null }));
   };
 
-  if (Object.keys(sources).length === 0) {
+  if (!sources || Object.keys(sources).length === 0) {
     return (
       <div className="m-3 p-3 border-2 border-gray-300 border-dashed rounded text-center">
         Sources not found, Check if you have sources added

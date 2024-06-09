@@ -37,20 +37,24 @@ const StepSource = props => {
       </Heading>
       <div className="flex flex-col">
         {sources &&
-          Object.keys(sources).map((srcKey, i) => (
-            <div
-              key={i}
-              className="group w-full hover:bg-blue-400 border rounded flex px-2 py-1 items-center cursor-pointer overflow-hidden not-first:mt-2 select-none"
-              title={sources[srcKey].name}
-              onClick={handleClickSource(srcKey)}
-            >
-              <i className="fas fa-database text-blue-400 group-hover:text-white" />
-              <div className="truncate text-xs w-full px-1 group-hover:text-white">{sources[srcKey].name}</div>
-              {source === srcKey && (
-                <i className="fa-solid fa-check text-blue-400 group-hover:text-white" title="Selected" />
-              )}
-            </div>
-          ))}
+          Object.keys(sources).map((srcKey, i) => {
+            const name = get(sources, `${srcKey}.name`, '');
+
+            return (
+              <div
+                key={i}
+                className="group w-full hover:bg-blue-400 border rounded flex px-2 py-1 items-center cursor-pointer overflow-hidden not-first:mt-2 select-none"
+                title={name}
+                onClick={handleClickSource(srcKey)}
+              >
+                <i className="fas fa-database text-blue-400 group-hover:text-white" />
+                <div className="truncate text-xs w-full px-1 group-hover:text-white">{name}</div>
+                {source === srcKey && (
+                  <i className="fa-solid fa-check text-blue-400 group-hover:text-white" title="Selected" />
+                )}
+              </div>
+            );
+          })}
       </div>
       <div className="flex justify-between mt-4">
         <Button onClick={handleClickCancel} className="mr-4 rounded-md text-xs">

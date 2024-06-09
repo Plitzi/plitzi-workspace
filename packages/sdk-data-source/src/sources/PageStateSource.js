@@ -37,16 +37,15 @@ const PageStateSource = props => {
 
   const finalState = useMemo(() => ({ ...state, currentPageId }), [state, currentPageId]);
 
-  useDataSource({
+  const [PageStateContext] = useDataSource({
     id: 'global',
     source: 'page',
     name: 'Page State',
     contextName: 'PageContext',
-    value: finalState,
     fields: sourceFields
   });
 
-  return children;
+  return <PageStateContext value={finalState}>{children}</PageStateContext>;
 };
 
 export default PageStateSource;

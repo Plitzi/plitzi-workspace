@@ -125,13 +125,7 @@ const ModalContainer = props => {
     [id, internalProps?.definition?.label]
   );
 
-  useDataSource({
-    id,
-    source: `modalContainer_${id}`,
-    name: sourceName,
-    value: internalMetadata,
-    fields: sourceFields
-  });
+  const [ModalContext] = useDataSource({ id, source: `modalContainer_${id}`, name: sourceName, fields: sourceFields });
 
   return (
     <RootElement
@@ -152,7 +146,9 @@ const ModalContainer = props => {
           </div>
           <i className="fa-solid fa-xmark" title="Close" onClick={handleClickClose} />
         </div>
-        <div className={classNames('modal-container__body', styleSelectors.bodyContainer)}>{children}</div>
+        <div className={classNames('modal-container__body', styleSelectors.bodyContainer)}>
+          <ModalContext value={internalMetadata}>{children}</ModalContext>
+        </div>
       </div>
     </RootElement>
   );

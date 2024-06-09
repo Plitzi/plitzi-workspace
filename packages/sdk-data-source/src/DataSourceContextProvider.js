@@ -1,14 +1,10 @@
 // Packages
-import React, { use, useMemo } from 'react';
-
-// Monorepo
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import React, { createContext, useCallback, useMemo, useRef } from 'react';
+import omit from 'lodash/omit';
 
 // Relatives
 import DataSourceContext from './DataSourceContext';
 import useDataSource from './hooks/useDataSource';
-import DataSourceManager from './DataSourceManager';
 
 /**
  * @param {{
@@ -18,13 +14,45 @@ import DataSourceManager from './DataSourceManager';
  */
 const DataSourceContextProvider = props => {
   const { children } = props;
-  const { schema } = use(SchemaContext);
-  const { currentPageId } = use(NavigationContext);
-  const dataSourceManager = useMemo(() => new DataSourceManager(), []);
-  dataSourceManager.schema = schema;
-  dataSourceManager.currentPageId = currentPageId;
+  const sourcesRef = useRef({});
+  const handleAddSource = useCallback((id, meta = {}) => {
+    const existingSource = Object.values(sourcesRef.current).find(source => source.meta.source === meta.source);
+    let context;
+    if (existingSource) {
+      ({ context } = existingSource);
+    } else {
+      context = createContext();
+    }
 
-  const valueMemo = useMemo(() => ({ dataSourceManager, useDataSource }), [dataSourceManager, useDataSource]);
+    sourcesRef.current[id] = { id, meta, context };
+
+    return context;
+  }, []);
+
+  const handleGetSources = useCallback(
+    id => {
+      if (id) {
+        return sourcesRef.current[id];
+      }
+
+      return sourcesRef.current;
+    },
+    [sourcesRef]
+  );
+
+  const handleRemoveSource = useCallback(id => {
+    sourcesRef.current = omit(sourcesRef.current, id);
+  }, []);
+
+  const valueMemo = useMemo(
+    () => ({
+      useDataSource,
+      addSource: handleAddSource,
+      removeSource: handleRemoveSource,
+      getSources: handleGetSources
+    }),
+    [useDataSource, handleAddSource, handleRemoveSource, handleGetSources]
+  );
 
   return <DataSourceContext value={valueMemo}>{children}</DataSourceContext>;
 };

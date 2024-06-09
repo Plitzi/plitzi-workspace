@@ -27,15 +27,14 @@ const NavigationSource = props => {
 
   const sourceValue = useMemo(() => ({ routeParams, queryParams }), [routeParams, queryParams]);
 
-  useDataSource({
+  const [NavigationSourceContext] = useDataSource({
     id: 'global',
     source: 'navigation',
     name: 'Navigation',
-    value: sourceValue,
     fields: sourceFields
   });
 
-  return children;
+  return <NavigationSourceContext value={sourceValue}>{children}</NavigationSourceContext>;
 };
 
 export default NavigationSource;

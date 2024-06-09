@@ -152,11 +152,10 @@ const DialogContainer = props => {
     [id, internalProps?.definition?.label]
   );
 
-  useDataSource({
+  const [DialogContianerContext] = useDataSource({
     id,
     source: `dialogContainer_${id}`,
     name: sourceName,
-    value: internalMetadata,
     fields: sourceFields
   });
 
@@ -179,7 +178,9 @@ const DialogContainer = props => {
           </div>
           <i className="fa-solid fa-xmark" title="Close" onClick={handleClickCancel} />
         </div>
-        <div className={classNames('dialog-container__body', styleSelectors.body)}>{children}</div>
+        <div className={classNames('dialog-container__body', styleSelectors.body)}>
+          <DialogContianerContext value={internalMetadata}>{children}</DialogContianerContext>
+        </div>
         <div className={classNames('dialog-container__footer', styleSelectors.footerContainer)}>
           <button
             className={classNames('footer__button button--accept', styleSelectors.acceptButton)}

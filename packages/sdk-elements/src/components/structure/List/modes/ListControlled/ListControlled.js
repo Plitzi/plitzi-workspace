@@ -53,7 +53,12 @@ const ListControlled = props => {
     [id, internalProps?.definition?.label]
   );
 
-  useDataSource({ id, source: `list_${id}`, name: sourceName, value: listContextValue, fields: sourceFields });
+  const [ListContext, listContextId] = useDataSource({
+    id,
+    source: `list_${id}`,
+    name: sourceName,
+    fields: sourceFields
+  });
 
   return (
     <RootElement
@@ -63,27 +68,30 @@ const ListControlled = props => {
         'controlled-list--build-mode': !previewMode
       })}
     >
-      {finalItems.map((item, i) => {
-        if (!children || (Array.isArray(children) && children.length === 0)) {
-          return (
-            <div className="plitzi-component__controlled-list-item controlled-list--empty" key={i}>
-              <div className="controlled-list-item__counter">{`List Item - ${i + 1}`}</div>
-            </div>
-          );
-        }
+      <ListContext value={listContextValue}>
+        {finalItems.map((item, i) => {
+          if (!children || (Array.isArray(children) && children.length === 0)) {
+            return (
+              <div className="plitzi-component__controlled-list-item controlled-list--empty" key={i}>
+                <div className="controlled-list-item__counter">{`List Item - ${i + 1}`}</div>
+              </div>
+            );
+          }
 
-        return (
-          <ListControlledItem
-            key={i}
-            itemCount={i + 1}
-            parentId={id}
-            isTemplate={i !== 0 && !previewMode}
-            record={item}
-          >
-            {children}
-          </ListControlledItem>
-        );
-      })}
+          return (
+            <ListControlledItem
+              key={i}
+              itemCount={i + 1}
+              parentId={id}
+              isTemplate={i !== 0 && !previewMode}
+              record={item}
+              listContextId={listContextId}
+            >
+              {children}
+            </ListControlledItem>
+          );
+        })}
+      </ListContext>
       {!previewMode && finalItems.length === 0 && (
         <div className="controlled-list controlled-list--empty">This list does not contain any items</div>
       )}

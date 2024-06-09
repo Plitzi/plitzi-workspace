@@ -1,8 +1,8 @@
 // Packages
-import { useMemo, use, useEffect, useRef, useState } from 'react';
+import { use, useEffect, useMemo, useRef } from 'react';
 
 // Monorepo
-import { emptyObject, makeId } from '@plitzi/sdk-shared/utils';
+import { makeId } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import DataSourceContext from '../DataSourceContext';
@@ -23,59 +23,35 @@ export const MODE_READ = 'read';
  * @returns {object}
  */
 const useDataSource = (props = {}) => {
-  const { id, source, name, fields = [], value = emptyObject, mode = MODE_WRITE, extraElements = [] } = props;
-  const { dataSourceManager } = use(DataSourceContext);
+  const { id, source, name, fields = [], mode = MODE_WRITE } = props;
+  const { addSource, getSources, removeSource } = use(DataSourceContext);
   const initRef = useRef();
-  const uniqueIdRef = useRef(makeId(8));
-  const [retriggerTime, setRetriggerTime] = useState(0);
-  const updateRequiredRef = useRef(false);
-
+  const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
+  const context = useRef(undefined);
   if (mode === MODE_WRITE && !initRef.current) {
     initRef.current = true;
-    dataSourceManager.registerSource(`${id}-${uniqueIdRef.current}`, source, name, value, fields);
-  } else if (mode === MODE_READ && !initRef.current) {
-    initRef.current = true;
-    dataSourceManager.registerReceiver(`${id}-${uniqueIdRef.current}`, setRetriggerTime);
-  } else if (mode === MODE_WRITE && initRef.current) {
-    // Update Source Value
-    updateRequiredRef.current = dataSourceManager.setSourceValue(`${id}-${uniqueIdRef.current}`, source, value);
+    context.current = addSource(uniqueId, { id, source, name, fields });
   }
 
   useEffect(() => {
-    if (mode === MODE_WRITE && initRef.current) {
-      dataSourceManager.refreshSourceFields(id, source, fields);
+    if (mode === MODE_WRITE && !initRef.current) {
+      initRef.current = true;
+      context.current = addSource(uniqueId, { id, source, name, fields });
     }
-  }, [fields, mode, dataSourceManager]);
 
-  useEffect(() => {
     return () => {
-      if (mode === MODE_WRITE && initRef.current) {
-        dataSourceManager.unregisterSource(`${id}-${uniqueIdRef.current}`, source);
-        initRef.current = undefined;
-      } else if (mode === MODE_READ && initRef.current) {
-        dataSourceManager.unregisterReceiver(`${id}-${uniqueIdRef.current}`, setRetriggerTime);
-        initRef.current = undefined;
-      }
+      initRef.current = false;
+      removeSource(uniqueId);
     };
-  }, [dataSourceManager]);
-
-  useEffect(() => {
-    dataSourceManager.updateSource(`${id}-${uniqueIdRef.current}`, source, name);
-  }, [name]);
-
-  useEffect(() => {
-    if (updateRequiredRef.current) {
-      dataSourceManager.refreshReceivers(`${id}-${uniqueIdRef.current}`);
-    }
-  }, [value]);
+  }, [uniqueId]);
 
   if (mode === MODE_WRITE) {
-    return undefined;
+    return [context.current, uniqueId];
   }
 
-  return useMemo(
-    () => dataSourceManager.getSources(id, extraElements),
-    [id, dataSourceManager, extraElements, retriggerTime]
+  return Object.values(getSources()).reduce(
+    (acum, { meta, context }) => ({ ...acum, [meta.source]: use(context) }),
+    {}
   );
 };
 

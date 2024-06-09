@@ -4,7 +4,6 @@ import get from 'lodash/get';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 /**
  * @param {{
@@ -15,42 +14,10 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
  * @returns {React.ReactElement}
  */
 const ReplicaProvider = props => {
-  const { children, id = '', source = '', dataSourceValue = emptyObject } = props;
+  const { children, id = '' } = props;
   const {
-    contexts: { DataSourceContext, InteractionsContext }
+    contexts: { InteractionsContext }
   } = usePlitziServiceContext();
-
-  // Data Source
-
-  const dataSourceContext = use(DataSourceContext);
-  const dsManager = get(dataSourceContext, 'dataSourceManager');
-  const dsManagerChild = useMemo(() => {
-    const dataSourceInstance = get(dataSourceContext.dataSourceManager, `dataSources.${id}`, {});
-    const dsManagerChild = dataSourceContext.dataSourceManager.createChildManager(id, undefined, {
-      [id]: {
-        [source]: {
-          ...dataSourceInstance,
-          value: {
-            ...get(dataSourceInstance, `${source}.value`, {}),
-            ...dataSourceValue
-          }
-        }
-      }
-    });
-
-    return dsManagerChild;
-  }, [dataSourceContext, id, dataSourceValue, source]);
-
-  const referenceContextSource = useMemo(
-    () => ({ ...dataSourceContext, dataSourceManager: dsManagerChild }),
-    [dataSourceContext, dsManagerChild]
-  );
-
-  useEffect(() => {
-    return () => {
-      dsManager.removeChildManager(dsManagerChild);
-    };
-  }, [dsManagerChild]);
 
   // Interactions
 
@@ -69,11 +36,7 @@ const ReplicaProvider = props => {
     };
   }, [interactionsManagerChild]);
 
-  return (
-    <DataSourceContext value={referenceContextSource}>
-      <InteractionsContext value={interactionsContextSource}>{children}</InteractionsContext>
-    </DataSourceContext>
-  );
+  return <InteractionsContext value={interactionsContextSource}>{children}</InteractionsContext>;
 };
 
 export default ReplicaProvider;

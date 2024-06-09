@@ -105,7 +105,7 @@ const BindingForm = props => {
         default:
       }
     },
-    [step, data]
+    [step, data, onClose]
   );
 
   const processFields = useCallback(async () => {

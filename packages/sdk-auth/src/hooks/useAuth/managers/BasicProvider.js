@@ -63,8 +63,8 @@ class BasicProvider {
   };
 
   #loginAsNormal = async (username, password) => {
-    const response = await this.networkQuery(this.network.loginUrl, { username, password }, 'post');
-    const token = get(response, this.paths.tokenPath);
+    const response = await this.#networkQuery(this.network.loginUrl, { username, password }, 'post');
+    const token = get(response, `data.${this.paths.tokenPath}`);
     if (!response || !token) {
       return {
         errors: {
@@ -108,12 +108,16 @@ class BasicProvider {
       return { errors: 'Invalid request' };
     }
 
-    const response = await this.networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
+    const response = await this.#networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
     if (!response) {
       return { errors: 'Failed fetching user details' };
     }
 
-    this.userDetails = this.paths.detailsPath ? get(response, this.paths.detailsPath) : response;
+    if (response.status === 500) {
+      return { skip: true };
+    }
+
+    this.userDetails = this.paths.detailsPath ? get(response, `data.${this.paths.detailsPath}`) : get(response, 'data');
     if (!this.userDetails) {
       return { errors: 'Invalid user details' };
     }
@@ -196,7 +200,7 @@ class BasicProvider {
     }
   };
 
-  networkQuery = async (url, params = {}, method = 'get', accessToken = '') => {
+  #networkQuery = async (url, params = {}, method = 'get', accessToken = '') => {
     let result;
     try {
       method = method.toLowerCase();
@@ -231,10 +235,11 @@ class BasicProvider {
         result = { status: response.status, data: undefined };
       }
     } catch (e) {
+      result = { status: 500, data: undefined };
       console.error(e);
     }
 
-    return result.data;
+    return result;
   };
 }
 

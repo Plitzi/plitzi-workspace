@@ -71,7 +71,12 @@ const CollectionContainer = props => {
     [id, internalProps?.definition?.label, collection?.name]
   );
 
-  useDataSource({ id, source: `collectionContainer_${id}`, name: sourceName, value: collection, fields: sourceFields });
+  const [CollectionContext] = useDataSource({
+    id,
+    source: `collectionContainer_${id}`,
+    name: sourceName,
+    fields: sourceFields
+  });
 
   const handleFetch = useCallback(
     async (/* params */) => {
@@ -102,7 +107,7 @@ const CollectionContainer = props => {
       })}
     >
       {!collection && <div className="collection-container__message">Source Not Selected</div>}
-      {collection && !loading && children}
+      {collection && !loading && <CollectionContext>{children}</CollectionContext>}
     </RootElement>
   );
 };

@@ -143,7 +143,12 @@ const ApiContainer = props => {
     [id, internalProps?.definition?.label]
   );
 
-  useDataSource({ id, source: `apiContainer_${id}`, name: sourceName, value: data, fields: sourceFields });
+  const [ApiContainerContext] = useDataSource({
+    id,
+    source: `apiContainer_${id}`,
+    name: sourceName,
+    fields: sourceFields
+  });
 
   const interactionCallbacks = useMemo(() => {
     const label = get(internalProps, 'definition.label', 'Api Container');
@@ -168,7 +173,7 @@ const ApiContainer = props => {
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      {!isLoading && children}
+      <ApiContainerContext value={data}>{!isLoading && children}</ApiContainerContext>
       {/* {!isLoading && isError && previewMode && (
         <div className="plitzi-component__api-container-error">{JSON.stringify(data?.data ?? '')}</div>
       )} */}
