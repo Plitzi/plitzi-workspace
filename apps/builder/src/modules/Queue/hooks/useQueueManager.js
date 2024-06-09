@@ -82,6 +82,24 @@ const useQueueManager = (props = {}) => {
           return mutate('SpaceRemovePageFolder', { pageFolderId });
         }
 
+        case SchemaActions.SCHEMA_ADD_VARIABLE: {
+          const { variable } = itemParsed.data;
+
+          return mutate('SpaceAddVariable', { variable });
+        }
+
+        case SchemaActions.SCHEMA_UPDATE_VARIABLE: {
+          const { variable } = itemParsed.data;
+
+          return mutate('SpaceUpdateVariable', { variable });
+        }
+
+        case SchemaActions.SCHEMA_REMOVE_VARIABLE: {
+          const { name } = itemParsed.data;
+
+          return mutate('SpaceRemoveVariable', { name });
+        }
+
         case SchemaActions.SCHEMA_ADD_ELEMENT: {
           const { data, to, dropPosition, initialItems } = itemParsed.data;
 
