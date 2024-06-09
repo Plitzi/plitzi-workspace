@@ -12,6 +12,9 @@ import SpaceRemovePageSubscription from './Space/pages/SpaceRemovePageSubscripti
 import SpaceAddPageFolderSubscription from './Space/folders/SpaceAddPageFolderSubscription';
 import SpaceUpdatePageFolderSubscription from './Space/folders/SpaceUpdatePageFolderSubscription';
 import SpaceRemovePageFolderSubscription from './Space/folders/SpaceRemovePageFolderSubscription';
+import SpaceAddVariableSubscription from './Space/variables/SpaceAddVariableSubscription';
+import SpaceUpdateVariableSubscription from './Space/variables/SpaceUpdateVariableSubscription';
+import SpaceRemoveVariableSubscription from './Space/variables/SpaceRemoveVariableSubscription';
 import SpaceAddElementSubscription from './Space/SpaceAddElementSubscription';
 import SpaceUpdateElementSubscription from './Space/SpaceUpdateElementSubscription';
 import SpaceRemoveElementSubscription from './Space/SpaceRemoveElementSubscription';
@@ -47,6 +50,9 @@ const Subscriptions = {
   SpaceAddPageFolder: SpaceAddPageFolderSubscription,
   SpaceUpdatePageFolder: SpaceUpdatePageFolderSubscription,
   SpaceRemovePageFolder: SpaceRemovePageFolderSubscription,
+  SpaceAddVariable: SpaceAddVariableSubscription,
+  SpaceUpdateVariable: SpaceUpdateVariableSubscription,
+  SpaceRemoveVariable: SpaceRemoveVariableSubscription,
   SpaceAddElement: SpaceAddElementSubscription,
   SpaceUpdateElement: SpaceUpdateElementSubscription,
   SpaceRemoveElement: SpaceRemoveElementSubscription,
