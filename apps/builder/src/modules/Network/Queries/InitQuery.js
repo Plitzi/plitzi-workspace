@@ -30,8 +30,8 @@ const InitQuery = gql`
         }
         variables {
           name
-          category
           description
+          category
           type
           value
           when

@@ -6,6 +6,9 @@ import SpaceRemovePageMutation from './Space/pages/SpaceRemovePageMutation';
 import SpaceAddPageFolderMutation from './Space/folders/SpaceAddPageFolderMutation';
 import SpaceUpdatePageFolderMutation from './Space/folders/SpaceUpdatePageFolderMutation';
 import SpaceRemovePageFolderMutation from './Space/folders/SpaceRemovePageFolderMutation';
+import SpaceAddVariableMutation from './Space/variables/SpaceAddVariableMutation';
+import SpaceUpdateVariableMutation from './Space/variables/SpaceUpdateVariableMutation';
+import SpaceRemoveVariableMutation from './Space/variables/SpaceRemoveVariableMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceUpdateElementMutation from './Space/SpaceUpdateElementMutation';
 import SpaceRemoveElementMutation from './Space/SpaceRemoveElementMutation';
@@ -65,6 +68,9 @@ const Mutations = {
   SpaceAddPageFolder: SpaceAddPageFolderMutation,
   SpaceUpdatePageFolder: SpaceUpdatePageFolderMutation,
   SpaceRemovePageFolder: SpaceRemovePageFolderMutation,
+  SpaceAddVariable: SpaceAddVariableMutation,
+  SpaceUpdateVariable: SpaceUpdateVariableMutation,
+  SpaceRemoveVariable: SpaceRemoveVariableMutation,
   SpaceAddElement: SpaceAddElementMutation,
   SpaceUpdateElement: SpaceUpdateElementMutation,
   SpaceRemoveElement: SpaceRemoveElementMutation,
