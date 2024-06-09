@@ -28,6 +28,11 @@ const InitQuery = gql`
           slug
           parentId
         }
+        variables {
+          name
+          value
+          when
+        }
       }
       segments {
         id

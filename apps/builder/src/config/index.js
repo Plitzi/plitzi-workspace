@@ -49,9 +49,11 @@ export const getEnvironmentServer = (env, server) => {
   }
 };
 
-// Experimental Functionality Flag @todo: make this based on the user later and add launchDarkly
+// Experimental Functionality Flag
+// @todo: make this based on the user later and add launchDarkly
 const featureFlag = {
-  assistanceAI: true
+  assistanceAI: true,
+  variables: true
 };
 
 export { featureFlag };

@@ -20,6 +20,7 @@ import ContainerMarketplace from './containers/ContainerMarketplace';
 import ContainerIntegrations from './containers/ContainerIntegrations';
 import ContainerSettings from './containers/ContainerSettings';
 import AppDirectory from '../components/AppDirectory/AppDirectory';
+import { featureFlag } from '../../../config';
 // import ContainerSitemap from './containers/ContainerSitemap';
 
 /**
@@ -64,6 +65,7 @@ const AppContainer = props => {
               {tabSelected === 'segments' && <Segments />}
               {tabSelected === 'templates' && <Templates />}
               {tabSelected === 'pages' && <AppDirectory />}
+              {tabSelected === 'variables' && featureFlag.variables && <div>Variables</div>}
             </ContainerResizable>
           </div>
         )}

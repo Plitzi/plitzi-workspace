@@ -3,6 +3,9 @@ import React from 'react';
 import noop from 'lodash/noop';
 import classNames from 'classnames';
 
+// Relatives
+import { featureFlag } from '../../../config';
+
 /**
  * @param {{
  *   className?: string;
@@ -58,6 +61,19 @@ const AppSidebar = props => {
         >
           <i className="fas fa-file h-6 w-6 flex items-center justify-center" />
         </li>
+        {featureFlag.variables && (
+          <li
+            id="sidebar-variables"
+            className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
+              'text-gray-300 bg-gray-600': selected === 'variables',
+              'text-gray-500 hover:text-gray-300 hover:bg-gray-600': selected !== 'variables'
+            })}
+            onClick={handleClick('variables')}
+            title="Variables"
+          >
+            <i className="fa-solid fa-swatchbook h-6 w-6 flex items-center justify-center" />
+          </li>
+        )}
         <li
           id="sidebar-assets"
           className={classNames('py-2 px-2 my-1 flex flex-col items-center rounded-lg cursor-pointer', {
