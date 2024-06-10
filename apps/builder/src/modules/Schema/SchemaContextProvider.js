@@ -213,6 +213,36 @@ const SchemaContextProvider = props => {
     [dispatchSchema]
   );
 
+  // Variables
+
+  const schemaAddVariable = useCallback(
+    async (variable, fromSubscriptions = false) => {
+      const result = await mutate('SpaceAddVariable', variable);
+      if (result instanceof Error) {
+        addToast(result.message, {
+          appeareance: 'danger',
+          autoDismiss: true,
+          placement: 'top-right'
+        });
+      } else if (result) {
+        dispatchSchema({ type: SchemaActions.SCHEMA_ADD_VARIABLE, variable: result, fromSubscriptions });
+      }
+    },
+    [dispatchSchema]
+  );
+
+  const schemaUpdateVariable = useCallback(
+    (variable, fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_UPDATE_VARIABLE, variable, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
+  const schemaRemoveVariable = useCallback(
+    (name, fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_REMOVE_VARIABLE, name, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
   // Others
 
   const schemaAddTemplate = useCallback(
@@ -299,6 +329,23 @@ const SchemaContextProvider = props => {
           }
         );
 
+        // Variables
+
+        subscriptionManager.subscribe('SpaceAddVariable', SubscriptionEventTypes.SPACE_ADD_VARIABLE, {}, data => {
+          const { variable } = get(data, 'data.SpaceAddVariable', {});
+          schemaAddVariable(variable, true);
+        });
+
+        subscriptionManager.subscribe('SpaceUpdateVariable', SubscriptionEventTypes.SPACE_UPDATE_VARIABLE, {}, data => {
+          const { variable } = get(data, 'data.SpaceUpdateVariable', {});
+          schemaUpdateVariable(variable, true);
+        });
+
+        subscriptionManager.subscribe('SpaceRemoveVariable', SubscriptionEventTypes.SPACE_REMOVE_VARIABLE, {}, data => {
+          const { name } = get(data, 'data.SpaceRemoveVariable', {});
+          schemaRemoveVariable(name, true);
+        });
+
         // Others
 
         subscriptionManager.subscribe('SpaceUpdateSettings', SubscriptionEventTypes.SPACE_UPDATE_SETTINGS, {}, data => {
@@ -377,6 +424,9 @@ const SchemaContextProvider = props => {
         schemaAddPageFolder,
         schemaUpdatePageFolder,
         schemaRemovePageFolder,
+        schemaAddVariable,
+        schemaUpdateVariable,
+        schemaRemoveVariable,
         schemaUpdateSettings
       }),
       [
@@ -387,6 +437,9 @@ const SchemaContextProvider = props => {
         schemaAddPageFolder,
         schemaUpdatePageFolder,
         schemaRemovePageFolder,
+        schemaAddVariable,
+        schemaUpdateVariable,
+        schemaRemoveVariable,
         schemaUpdateSettings
       ]
     );
@@ -435,6 +488,9 @@ const SchemaContextProvider = props => {
         schemaAddPageFolder,
         schemaUpdatePageFolder,
         schemaRemovePageFolder,
+        schemaAddVariable,
+        schemaUpdateVariable,
+        schemaRemoveVariable,
         schemaAddTemplate,
         schemaUpdateSettings
       };
@@ -468,6 +524,9 @@ const SchemaContextProvider = props => {
     schemaAddPageFolder,
     schemaUpdatePageFolder,
     schemaRemovePageFolder,
+    schemaAddVariable,
+    schemaUpdateVariable,
+    schemaRemoveVariable,
     schemaAddTemplate,
     schemaUpdateSettings
   ]);
@@ -477,9 +536,10 @@ const SchemaContextProvider = props => {
       pages: get(schema, 'pages', []),
       pageDefinitions: pick(get(schema, 'flat', {}), get(schema, 'pages', [])),
       pageFolders: get(schema, 'pageFolders', []),
-      settings: get(schema, 'settings', {})
+      settings: get(schema, 'settings', {}),
+      variables: get(schema, 'variables', [])
     }),
-    [schema.pages, schema.settings, schema.pageFolders, schema.flat]
+    [schema.pages, schema.settings, schema.pageFolders, schema.variables, schema.flat]
   );
 
   const schemaSettings = useMemo(() => schema.settings, [schema.settings]);

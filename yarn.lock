@@ -3375,6 +3375,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-variables@workspace:packages/sdk-variables":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-variables@workspace:packages/sdk-variables"
+  dependencies:
+    "@plitzi/sdk-shared": "npm:*"
+    eslint: "npm:^8.57.0"
+    lodash: "npm:^4.17.21"
+  languageName: unknown
+  linkType: soft
+
 "@pmmmwh/react-refresh-webpack-plugin@npm:^0.5.15":
   version: 0.5.15
   resolution: "@pmmmwh/react-refresh-webpack-plugin@npm:0.5.15"

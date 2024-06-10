@@ -120,6 +120,35 @@ const SchemaReducer = (state, action = {}) => {
       });
     }
 
+    case SchemaActions.SCHEMA_ADD_VARIABLE: {
+      const { variable } = action;
+
+      return produce(state, draft => {
+        draft.variables.push(variable);
+      });
+    }
+
+    case SchemaActions.SCHEMA_UPDATE_VARIABLE: {
+      const { variable } = action;
+
+      return produce(state, draft => {
+        const index = draft.variables.findIndex(v => v.id === variable.id);
+        if (index === -1) {
+          return;
+        }
+
+        draft.variables[index] = variable;
+      });
+    }
+
+    case SchemaActions.SCHEMA_REMOVE_VARIABLE: {
+      const { variableId } = action;
+
+      return produce(state, draft => {
+        draft.variables = draft.variables.filter(variable => variable.id !== variableId);
+      });
+    }
+
     case SchemaActions.SCHEMA_ADD_TEMPLATE:
     case SchemaActions.SCHEMA_ADD_ELEMENT: {
       const { to, data, dropPosition, initialItems } = action;
