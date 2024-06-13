@@ -10,7 +10,8 @@
     "./helpers/getBindingsDetails": "./src/helpers/getBindingsDetails.js",
     "./utility": "./src/utility/index.js",
     "./sources/NavigationSource": "./src/sources/NavigationSource.js",
-    "./sources/PageStateSource": "./src/sources/PageStateSource.js"
+    "./sources/PageStateSource": "./src/sources/PageStateSource.js",
+    "./sources/VariablesSource": "./src/sources/VariablesSource.js"
   },
   "scripts": {
     "lint": "eslint ./src"

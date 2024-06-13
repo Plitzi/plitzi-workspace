@@ -14,9 +14,9 @@ import BuilderPopup from '@pmodules/Builder/BuilderPopup';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
-import SegmentForm from './Models/SegmentForm';
+import SegmentForm from './models/SegmentForm';
 import SegmentsContext from './SegmentsContext';
-import PublishForm from './Models/PublishForm';
+import PublishForm from './models/PublishForm';
 
 /**
  * @param {{

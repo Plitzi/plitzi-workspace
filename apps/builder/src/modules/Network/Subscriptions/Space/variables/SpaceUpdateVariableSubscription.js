@@ -6,11 +6,9 @@ const SpaceUpdateVariableSubscription = gql`
     SpaceUpdateVariable(environment: $environment) {
       variable {
         name
-        description
         category
         type
         value
-        when
       }
     }
   }

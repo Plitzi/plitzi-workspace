@@ -5,6 +5,8 @@ import React, { use } from 'react';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import NavigationSource from '@plitzi/sdk-data-source/sources/NavigationSource';
 import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
+import VariablesSource from '@plitzi/sdk-data-source/sources/VariablesSource';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
@@ -18,12 +20,19 @@ import StateManagerContext from '@modules/StateManager/StateManagerContext';
 const DataSourceSdkContextProvider = props => {
   const { children } = props;
   const { state } = use(StateManagerContext);
+  const {
+    schema: { variables }
+  } = use(SchemaContext);
 
   return (
     <DataSourceContextProvider>
-      <NavigationSource>
-        <PageStateSource state={state}>{children}</PageStateSource>
-      </NavigationSource>
+      <VariablesSource variables={variables}>
+        <NavigationSource>
+          <PageStateSource state={state}>
+            {children}
+          </PageStateSource>
+        </NavigationSource>
+      </VariablesSource>
     </DataSourceContextProvider>
   );
 };

@@ -6,6 +6,8 @@ import get from 'lodash/get';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import NavigationSource from '@plitzi/sdk-data-source/sources/NavigationSource';
 import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
+import VariablesSource from '@plitzi/sdk-data-source/sources/VariablesSource';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
@@ -21,6 +23,9 @@ const DataSourceBuilderContextProvider = props => {
   const { children } = props;
   const { state } = use(StateManagerContext);
   const { pages: pageIds, pageDefinitions } = use(SchemaMainContext);
+  const {
+    schema: { variables }
+  } = use(SchemaContext);
 
   const pageOptions = useMemo(
     () =>
@@ -34,11 +39,13 @@ const DataSourceBuilderContextProvider = props => {
 
   return (
     <DataSourceContextProvider>
-      <NavigationSource>
-        <PageStateSource state={state} pages={pageOptions}>
-          {children}
-        </PageStateSource>
-      </NavigationSource>
+      <VariablesSource variables={variables}>
+        <NavigationSource>
+          <PageStateSource state={state} pages={pageOptions}>
+            {children}
+          </PageStateSource>
+        </NavigationSource>
+      </VariablesSource>
     </DataSourceContextProvider>
   );
 };

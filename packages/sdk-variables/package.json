@@ -3,7 +3,8 @@
   "version": "0.22.3",
   "files": [],
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./VariablesContext": "./src/VariablesContext.js"
   },
   "scripts": {
     "lint": "eslint ./src"

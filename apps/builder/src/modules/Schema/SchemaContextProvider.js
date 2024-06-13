@@ -217,16 +217,7 @@ const SchemaContextProvider = props => {
 
   const schemaAddVariable = useCallback(
     async (variable, fromSubscriptions = false) => {
-      const result = await mutate('SpaceAddVariable', variable);
-      if (result instanceof Error) {
-        addToast(result.message, {
-          appeareance: 'danger',
-          autoDismiss: true,
-          placement: 'top-right'
-        });
-      } else if (result) {
-        dispatchSchema({ type: SchemaActions.SCHEMA_ADD_VARIABLE, variable: result, fromSubscriptions });
-      }
+      dispatchSchema({ type: SchemaActions.SCHEMA_ADD_VARIABLE, variable, fromSubscriptions });
     },
     [dispatchSchema]
   );

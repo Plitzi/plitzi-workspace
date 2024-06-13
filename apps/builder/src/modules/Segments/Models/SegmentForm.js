@@ -62,7 +62,7 @@ const SegmentForm = props => {
             name={name}
             size="md"
             label="Segment Description"
-            placeholder="Segment Name"
+            placeholder="Segment Description"
             className="w-full mt-4"
             inputClassName="rounded"
             onChange={e => onChange(e.target.value)}

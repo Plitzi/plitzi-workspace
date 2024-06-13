@@ -30,11 +30,9 @@ const InitQuery = gql`
         }
         variables {
           name
-          description
           category
           type
           value
-          when
         }
       }
       segments {

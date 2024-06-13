@@ -31,7 +31,6 @@ const InitQuery = gql`
         variables {
           name
           value
-          when
         }
       }
       segments {

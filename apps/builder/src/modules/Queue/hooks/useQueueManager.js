@@ -85,7 +85,7 @@ const useQueueManager = (props = {}) => {
         case SchemaActions.SCHEMA_ADD_VARIABLE: {
           const { variable } = itemParsed.data;
 
-          return mutate('SpaceAddVariable', { variable });
+          return mutate('SpaceAddVariable', variable);
         }
 
         case SchemaActions.SCHEMA_UPDATE_VARIABLE: {

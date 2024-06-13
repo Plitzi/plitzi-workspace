@@ -142,10 +142,10 @@ const SchemaReducer = (state, action = {}) => {
     }
 
     case SchemaActions.SCHEMA_REMOVE_VARIABLE: {
-      const { variableId } = action;
+      const { name } = action;
 
       return produce(state, draft => {
-        draft.variables = draft.variables.filter(variable => variable.id !== variableId);
+        draft.variables = draft.variables.filter(variable => variable.name !== name);
       });
     }
 

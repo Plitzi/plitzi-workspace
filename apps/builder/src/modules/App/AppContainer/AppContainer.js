@@ -9,6 +9,7 @@ import Templates from '@pmodules/Templates';
 import Elements from '@pmodules/Elements';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
+import Variables from '@pmodules/Variables';
 
 // Relatives
 import AppHeader from '../components/AppHeader';
@@ -65,7 +66,7 @@ const AppContainer = props => {
               {tabSelected === 'segments' && <Segments />}
               {tabSelected === 'templates' && <Templates />}
               {tabSelected === 'pages' && <AppDirectory />}
-              {tabSelected === 'variables' && featureFlag.variables && <div>Variables</div>}
+              {tabSelected === 'variables' && featureFlag.variables && <Variables />}
             </ContainerResizable>
           </div>
         )}

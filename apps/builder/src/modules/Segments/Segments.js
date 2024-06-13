@@ -10,7 +10,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Relatives
 import SegmentsContext from './SegmentsContext';
 import Segment from './Segment';
-import SegmentForm from './Models/SegmentForm';
+import SegmentForm from './models/SegmentForm';
 
 /** @returns {React.ReactElement} */
 const Segments = () => {

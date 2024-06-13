@@ -15,7 +15,7 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
 import TemplatesContext from '@pmodules/Templates/TemplatesContext';
-import SegmentForm from '@pmodules/Segments/Models/SegmentForm';
+import SegmentForm from '@pmodules/Segments/models/SegmentForm';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 // Relatives
