@@ -9,8 +9,8 @@ const SpaceAddVariableMutation = gql`
     $type: String!
     $value: String
     $when: Json
-    $whenYesValue: String
-    $whenNoValue: String
+    $whenSuccessValue: String
+    $whenFailValue: String
   ) {
     SpaceAddVariable(
       environment: $environment
@@ -19,16 +19,16 @@ const SpaceAddVariableMutation = gql`
       type: $type
       value: $value
       when: $when
-      whenYesValue: $whenYesValue
-      whenNoValue: $whenNoValue
+      whenSuccessValue: $whenSuccessValue
+      whenFailValue: $whenFailValue
     ) {
       name
       category
       type
       value
       when
-      whenYesValue
-      whenNoValue
+      whenSuccessValue
+      whenFailValue
     }
   }
 `;

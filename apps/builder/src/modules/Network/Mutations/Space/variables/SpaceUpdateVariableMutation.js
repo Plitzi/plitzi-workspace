@@ -9,8 +9,8 @@ const SpaceUpdateVariableMutation = gql`
       type
       value
       when
-      whenYesValue
-      whenNoValue
+      whenSuccessValue
+      whenFailValue
     }
   }
 `;

@@ -32,8 +32,8 @@ const InitQuery = gql`
           name
           value
           when
-          whenYesValue
-          whenNoValue
+          whenSuccessValue
+          whenFailValue
         }
       }
       segments {

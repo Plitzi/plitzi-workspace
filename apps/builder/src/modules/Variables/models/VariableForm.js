@@ -19,8 +19,8 @@ import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
  *   value?: string;
  *   type?: string;
  *   when?: object;
- *   whenYesValue?: string;
- *   whenNoValue?: string;
+ *   whenSuccessValue?: string;
+ *   whenFailValue?: string;
  *   routeParams?: object;
  *   queryParams?: object;
  *   hostname?: string;
@@ -37,8 +37,8 @@ const VariableForm = props => {
     value = '',
     type = 'text',
     when,
-    whenYesValue = '',
-    whenNoValue = '',
+    whenSuccessValue = '',
+    whenFailValue = '',
     routeParams = emptyObject,
     queryParams = emptyObject,
     hostname = '',
@@ -47,7 +47,7 @@ const VariableForm = props => {
   } = props;
 
   const { control, handleSubmit, watch, resetField } = useForm({
-    defaultValues: { name, category, value, type, when, whenYesValue, whenNoValue }
+    defaultValues: { name, category, value, type, when, whenSuccessValue, whenFailValue }
   });
   const currentType = watch('type');
   const currentWhen = watch('when');
@@ -115,8 +115,8 @@ const VariableForm = props => {
               onChange={option => {
                 onChange(option?.value ?? 'text');
                 resetField('value', '');
-                resetField('whenYesValue', '');
-                resetField('whenNoValue', '');
+                resetField('whenSuccessValue', '');
+                resetField('whenFailValue', '');
               }}
               value={value}
               error={error}
@@ -191,7 +191,7 @@ const VariableForm = props => {
           <Controller
             control={control}
             rules={{ required: false }}
-            name="whenYesValue"
+            name="whenSuccessValue"
             render={({ field: { onChange, value, name }, fieldState: { error } }) => {
               return (
                 <FormControl
@@ -228,7 +228,7 @@ const VariableForm = props => {
           <Controller
             control={control}
             rules={{ required: false }}
-            name="whenNoValue"
+            name="whenFailValue"
             render={({ field: { onChange, value, name }, fieldState: { error } }) => {
               return (
                 <FormControl

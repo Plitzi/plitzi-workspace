@@ -10,8 +10,8 @@ const SpaceUpdateVariableSubscription = gql`
         type
         value
         when
-        whenYesValue
-        whenNoValue
+        whenSuccessValue
+        whenFailValue
       }
     }
   }

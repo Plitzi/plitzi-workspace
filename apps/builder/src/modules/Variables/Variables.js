@@ -45,9 +45,9 @@ const Variables = () => {
     );
 
     if (response.result) {
-      const { name, category, value, type, when, whenYesValue, whenNoValue } = get(response, 'data', {});
+      const { name, category, value, type, when, whenSuccessValue, whenFailValue } = get(response, 'data', {});
       if (!variables.find(variable => variable.name === name)) {
-        schemaAddVariable({ name, category, value, type, when, whenYesValue, whenNoValue });
+        schemaAddVariable({ name, category, value, type, when, whenSuccessValue, whenFailValue });
       } else {
         addToast(
           <span>
