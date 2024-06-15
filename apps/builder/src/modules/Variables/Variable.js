@@ -56,6 +56,7 @@ const Variable = props => {
           value={valueInternal}
           className="grow basis-0"
           onChange={handleChange}
+          placeholder={editMode ? 'Value' : ''}
           inputClassName={classNames('rounded', { 'border-transparent': !editMode })}
         />
       </div>
