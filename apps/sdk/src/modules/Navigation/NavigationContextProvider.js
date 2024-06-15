@@ -102,6 +102,7 @@ const NavigationContextProvider = props => {
     };
   }, [paths, pathMatch]);
   const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
+  const hostname = useMemo(() => location.hostname ?? 'localhost', [location.hostname]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const navigationValue = useMemo(() => {
     if (renderMode === RENDER_MODE_SSR) {
@@ -110,6 +111,7 @@ const NavigationContextProvider = props => {
         urlSearchParams,
         routeParams,
         queryParams,
+        hostname,
         currentPageId
       };
     }
@@ -123,6 +125,7 @@ const NavigationContextProvider = props => {
       urlSearchParams,
       routeParams,
       queryParams,
+      hostname,
       currentPageId,
       Helmet
     };

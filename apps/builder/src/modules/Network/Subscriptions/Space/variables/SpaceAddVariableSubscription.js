@@ -9,6 +9,9 @@ const SpaceAddVariableSubscription = gql`
         category
         type
         value
+        when
+        whenYesValue
+        whenNoValue
       }
     }
   }

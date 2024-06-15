@@ -33,6 +33,9 @@ const InitQuery = gql`
           category
           type
           value
+          when
+          whenYesValue
+          whenNoValue
         }
       }
       segments {

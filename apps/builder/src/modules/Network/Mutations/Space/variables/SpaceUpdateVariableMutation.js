@@ -8,6 +8,9 @@ const SpaceUpdateVariableMutation = gql`
       category
       type
       value
+      when
+      whenYesValue
+      whenNoValue
     }
   }
 `;

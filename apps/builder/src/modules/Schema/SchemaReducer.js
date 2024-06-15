@@ -132,7 +132,7 @@ const SchemaReducer = (state, action = {}) => {
       const { variable } = action;
 
       return produce(state, draft => {
-        const index = draft.variables.findIndex(v => v.id === variable.id);
+        const index = draft.variables.findIndex(v => v.name === variable.name);
         if (index === -1) {
           return;
         }

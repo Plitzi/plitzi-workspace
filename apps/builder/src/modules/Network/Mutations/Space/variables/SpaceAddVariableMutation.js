@@ -8,12 +8,27 @@ const SpaceAddVariableMutation = gql`
     $category: String
     $type: String!
     $value: String
+    $when: Json
+    $whenYesValue: String
+    $whenNoValue: String
   ) {
-    SpaceAddVariable(environment: $environment, name: $name, category: $category, type: $type, value: $value) {
+    SpaceAddVariable(
+      environment: $environment
+      name: $name
+      category: $category
+      type: $type
+      value: $value
+      when: $when
+      whenYesValue: $whenYesValue
+      whenNoValue: $whenNoValue
+    ) {
       name
       category
       type
       value
+      when
+      whenYesValue
+      whenNoValue
     }
   }
 `;

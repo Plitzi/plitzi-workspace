@@ -1,12 +1,15 @@
 // Packages
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
+import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
+import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Relatives
@@ -16,12 +19,15 @@ import Variable from './Variable';
 /** @returns {React.ReactElement} */
 const Variables = () => {
   const { showModal } = useModal();
+  const { addToast } = useToast();
   const {
     schemaAddVariable,
     schemaUpdateVariable,
     schemaRemoveVariable,
     schema: { variables }
-  } = useContext(SchemaContext);
+  } = use(SchemaContext);
+  const { routeParams, queryParams, hostname } = use(NavigationContext);
+
   const [filter, setFilter] = useState('');
 
   const handleChangeFilter = useCallback(e => setFilter(e.target.value), [setFilter]);
@@ -32,34 +38,33 @@ const Variables = () => {
         <h4>Add Variable</h4>
       </Modal.Header>,
       <Modal.Body>
-        <VariableForm />
+        <VariableForm variables={variables} routeParams={routeParams} queryParams={queryParams} hostname={hostname} />
       </Modal.Body>,
       null,
       { placement: 'center', renderFooter: false }
     );
 
     if (response.result) {
-      const {
-        data: { name = 'variable', category = '', value = '', type = 'text' }
-      } = response;
-      schemaAddVariable({ name, category, value, type });
+      const { name, category, value, type, when, whenYesValue, whenNoValue } = get(response, 'data', {});
+      if (!variables.find(variable => variable.name === name)) {
+        schemaAddVariable({ name, category, value, type, when, whenYesValue, whenNoValue });
+      } else {
+        addToast(
+          <span>
+            Variable with the name <b>{name}</b> already exists
+          </span>,
+          { appeareance: 'warning', autoDismiss: true, placement: 'top-right' }
+        );
+      }
     }
-  }, [showModal, schemaAddVariable]);
+  }, [showModal, schemaAddVariable, variables, routeParams, queryParams, hostname, addToast]);
 
   const handleClickRemove = useCallback(name => schemaRemoveVariable(name), [schemaRemoveVariable]);
 
-  const handleChange = useCallback(
-    (name, value) => {
-      schemaUpdateVariable({ name, value });
-    },
-    [schemaUpdateVariable]
-  );
+  const handleChange = useCallback((name, value) => schemaUpdateVariable({ name, value }), [schemaUpdateVariable]);
 
   const variablesFiltered = useMemo(
-    () =>
-      Object.values(variables).filter(variable => {
-        return variable.name.toLowerCase().includes(filter.toLowerCase());
-      }),
+    () => Object.values(variables).filter(variable => variable.name.toLowerCase().includes(filter.toLowerCase())),
     [variables, filter]
   );
 
@@ -83,8 +88,8 @@ const Variables = () => {
           onChange={handleChangeFilter}
         />
       </div>
-      <div className="flex flex-col px-4 my-2 gap-3">
-        <div className="flex gap-2 mr-[30px]">
+      <div className="flex flex-col px-4 my-2">
+        <div className="flex gap-1 mr-[30px]">
           <Heading type="h5" className="w-[100px]">
             Name
           </Heading>
@@ -92,14 +97,13 @@ const Variables = () => {
             Value
           </Heading>
         </div>
-        {variablesFiltered.map((segment, key) => {
-          const { name, category, type, value } = segment;
+        {variablesFiltered.map(segment => {
+          const { name, type, value } = segment;
 
           return (
             <Variable
-              key={key}
+              key={name}
               name={name}
-              category={category}
               type={type}
               value={value}
               onChange={handleChange}

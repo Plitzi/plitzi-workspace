@@ -49,7 +49,7 @@ const Settings = props => {
       (acum, path) => ({ ...acum, [path]: { name: path, label: path, placeholder: `Enter ${path}` } }),
       {}
     );
-  }, [collections, source]);
+  }, [collections, source, routeParams, queryParams]);
 
   return (
     <div className="flex flex-col">
