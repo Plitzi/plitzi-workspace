@@ -36,7 +36,7 @@ const VariablesSource = props => {
 
       return { ...acum, [name]: !whenFailValue ? value : whenFailValue };
     }, {});
-  }, [variables]);
+  }, [variables, whenData]);
 
   const sourceFields = useCallback(
     async () => [...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: path }], [])],
