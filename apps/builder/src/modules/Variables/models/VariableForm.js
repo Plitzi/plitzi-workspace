@@ -173,7 +173,7 @@ const VariableForm = props => {
         name="when"
         render={({ field: { onChange, value } }) => {
           return (
-            <div>
+            <div className="flex flex-col">
               <label className="mb-1 font-medium text-gray-500 text-xs">When</label>
               <QueryBuilder
                 ruleDirection="vertical"

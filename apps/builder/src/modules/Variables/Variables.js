@@ -36,8 +36,14 @@ const Variables = () => {
       <Modal.Header>
         <h4>Add Variable</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <VariableForm variables={variables} routeParams={routeParams} queryParams={queryParams} hostname={hostname} />
+      <Modal.Body className="max-h-[450px] overflow-y-auto">
+        <VariableForm
+          className="p-3"
+          variables={variables}
+          routeParams={routeParams}
+          queryParams={queryParams}
+          hostname={hostname}
+        />
       </Modal.Body>,
       null,
       { placement: 'center', renderFooter: false }
