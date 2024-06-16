@@ -273,8 +273,8 @@ const NetworkContextProvider = props => {
   const subscriptionManager = useSubscriptionsManager({ client, environment, onMessage: handleMessage });
 
   const networkValue = useMemo(
-    () => ({ mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId }),
-    [mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId]
+    () => ({ mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId, environment }),
+    [mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId, environment]
   );
 
   if (error) {

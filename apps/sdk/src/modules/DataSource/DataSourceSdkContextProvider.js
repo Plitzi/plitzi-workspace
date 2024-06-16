@@ -11,6 +11,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
+import NetworkContext from '@modules/Network/NetworkContext';
 
 /**
  * @param {{
@@ -25,15 +26,17 @@ const DataSourceSdkContextProvider = props => {
     schema: { variables }
   } = use(SchemaContext);
   const { routeParams, queryParams, hostname } = use(NavigationContext);
-  const variablesData = useMemo(() => ({ routeParams, queryParams, hostname }), [routeParams, queryParams, hostname]);
+  const { environment } = use(NetworkContext);
+  const variablesData = useMemo(
+    () => ({ routeParams, queryParams, hostname, environment }),
+    [routeParams, queryParams, hostname, environment]
+  );
 
   return (
     <DataSourceContextProvider>
       <VariablesSource variables={variables} whenData={variablesData}>
         <NavigationSource>
-          <PageStateSource state={state}>
-            {children}
-          </PageStateSource>
+          <PageStateSource state={state}>{children}</PageStateSource>
         </NavigationSource>
       </VariablesSource>
     </DataSourceContextProvider>

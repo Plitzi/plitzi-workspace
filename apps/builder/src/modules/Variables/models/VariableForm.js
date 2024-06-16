@@ -21,9 +21,7 @@ import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
  *   when?: object;
  *   whenSuccessValue?: string;
  *   whenFailValue?: string;
- *   routeParams?: object;
- *   queryParams?: object;
- *   hostname?: string;
+ *   whenData?: object;
  *   isNewRecord?: boolean;
  *   onClose?: () => void;
  *   onSubmit?: (values: { name: string; category: string; value: string; type: string; when: object }) => void;
@@ -40,9 +38,7 @@ const VariableForm = props => {
     when,
     whenSuccessValue = '',
     whenFailValue = '',
-    routeParams = emptyObject,
-    queryParams = emptyObject,
-    hostname = '',
+    whenData = emptyObject,
     isNewRecord = false,
     onSubmit = noop,
     onClose = noop
@@ -58,11 +54,11 @@ const VariableForm = props => {
 
   const fieldsDataSource = useMemo(
     () =>
-      getPathsFromObeject({ routeParams, queryParams, hostname }).reduce(
+      getPathsFromObeject(whenData).reduce(
         (acum, path) => ({ ...acum, [path]: { name: path, label: path, placeholder: `Enter ${path}` } }),
         {}
       ),
-    [routeParams, queryParams, hostname]
+    [whenData]
   );
 
   const hasWhen = currentWhen && currentWhen?.rules?.length > 0;

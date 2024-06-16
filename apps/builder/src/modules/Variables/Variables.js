@@ -11,6 +11,9 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
+// Alias
+import NetworkContext from '@pmodules/Network/NetworkContext';
+
 // Relatives
 import VariableForm from './models/VariableForm';
 import Variable from './Variable';
@@ -25,9 +28,13 @@ const Variables = () => {
     schemaRemoveVariable,
     schema: { variables }
   } = use(SchemaContext);
+  const { environment } = use(NetworkContext);
   const { routeParams, queryParams, hostname } = use(NavigationContext);
-
   const [filter, setFilter] = useState('');
+  const whenData = useMemo(
+    () => ({ routeParams, queryParams, hostname, environment }),
+    [routeParams, queryParams, hostname, environment]
+  );
 
   const handleChangeFilter = useCallback(e => setFilter(e.target.value), [setFilter]);
 
@@ -37,14 +44,7 @@ const Variables = () => {
         <h4>Add Variable</h4>
       </Modal.Header>,
       <Modal.Body className="max-h-[500px] overflow-y-auto">
-        <VariableForm
-          className="p-3"
-          variables={variables}
-          routeParams={routeParams}
-          queryParams={queryParams}
-          hostname={hostname}
-          isNewRecord
-        />
+        <VariableForm className="p-3" whenData={whenData} isNewRecord />
       </Modal.Body>,
       null,
       { placement: 'center', renderFooter: false }
@@ -108,9 +108,7 @@ const Variables = () => {
               when={when}
               whenSuccessValue={whenSuccessValue}
               whenFailValue={whenFailValue}
-              routeParams={routeParams}
-              queryParams={queryParams}
-              hostname={hostname}
+              whenData={whenData}
               onChange={handleChange}
               onRemove={handleClickRemove}
             />

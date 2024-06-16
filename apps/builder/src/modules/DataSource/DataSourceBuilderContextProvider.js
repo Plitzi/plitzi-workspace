@@ -13,6 +13,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 
 /**
  * @param {{
@@ -27,8 +28,12 @@ const DataSourceBuilderContextProvider = props => {
   const {
     schema: { variables }
   } = use(SchemaContext);
+  const { environment } = use(NetworkContext);
   const { routeParams, queryParams, hostname } = use(NavigationContext);
-  const variablesData = useMemo(() => ({ routeParams, queryParams, hostname }), [routeParams, queryParams, hostname]);
+  const variablesData = useMemo(
+    () => ({ routeParams, queryParams, hostname, environment }),
+    [routeParams, queryParams, hostname, environment]
+  );
   const pageOptions = useMemo(
     () =>
       pageIds.reduce((acum, pageId) => {

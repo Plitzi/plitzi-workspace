@@ -21,9 +21,7 @@ import VariableForm from './models/VariableForm';
  *   when?: object;
  *   whenSuccessValue?: string;
  *   whenFailValue?: string;
- *   routeParams?: object;
- *   queryParams?: object;
- *   hostname?: string;
+ *   whenData?: object;
  *   onChange?: (name: string, value: string) => void;
  *   onRemove: (name: string) => void;
  *   onParentRefresh?: (identifier: string, segment: object) => void;
@@ -39,9 +37,7 @@ const Variable = props => {
     when = emptyObject,
     whenSuccessValue = '',
     whenFailValue = '',
-    routeParams = emptyObject,
-    queryParams = emptyObject,
-    hostname = '',
+    whenData = emptyObject,
     onChange = noop,
     onRemove = noop
   } = props;
@@ -90,9 +86,7 @@ const Variable = props => {
           when={when}
           whenSuccessValue={whenSuccessValue}
           whenFailValue={whenFailValue}
-          routeParams={routeParams}
-          queryParams={queryParams}
-          hostname={hostname}
+          whenData={whenData}
           onSubmit={handleClickSubmit}
           onClose={handleClickCancel}
         />

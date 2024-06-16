@@ -206,8 +206,8 @@ const NetworkContextProvider = props => {
   }, [offlineMode && offlineData, offlineMode && offlineDataType, webKey, environment]);
 
   const networkValue = useMemo(
-    () => ({ query, mutate, webKey, webId, server }),
-    [query, mutate, webKey, webId, server]
+    () => ({ query, mutate, webKey, webId, server, environment }),
+    [query, mutate, webKey, webId, server, environment]
   );
 
   if (error) {
