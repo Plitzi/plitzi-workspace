@@ -75,7 +75,7 @@ const VariableForm = props => {
           rules={{
             required: true,
             pattern: {
-              value: /^(?:\w+\s+|)([a-zA-Z_][a-zA-Z0-9]+)$/i,
+              value: /^(?:\w+\s+|)([a-zA-Z_][a-zA-Z0-9_]+)$/i,
               message: 'Invalid variable name'
             }
           }}
