@@ -210,6 +210,8 @@ export const StyleConstants = {
   TEXT_SHADOW
 };
 
+export const StyleBindingsAllowed = Object.values(StyleConstants).map(attr => ({ path: attr, label: attr }));
+
 export const inheritableAttributes = {
   DISPLAY,
   FLEX_WRAP,

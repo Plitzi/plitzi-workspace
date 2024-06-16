@@ -35,7 +35,6 @@ NotFound.content = {
   },
   bindingsAllowed: {
     attributes: [],
-    style: [],
     initialState: []
   },
   defaultStyle: {

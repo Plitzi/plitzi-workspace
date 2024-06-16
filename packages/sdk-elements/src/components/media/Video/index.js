@@ -41,7 +41,6 @@ Video.content = {
   },
   bindingsAllowed: {
     attributes: [{ path: 'src', label: 'Source' }],
-    style: [],
     initialState: [
       { path: 'visibility', label: 'Visibility' },
       { path: 'styleSelectors.base', label: 'Selector - Base' }

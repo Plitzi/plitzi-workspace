@@ -41,7 +41,6 @@ CollectionContainer.content = {
   },
   bindingsAllowed: {
     attributes: [],
-    style: [],
     initialState: [
       { path: 'visibility', label: 'Visibility' },
       { path: 'styleSelectors.base', label: 'Selector - Base' }

@@ -42,7 +42,6 @@ BlockJsx.content = {
   },
   bindingsAllowed: {
     attributes: [{ path: 'props', label: 'Properties' }],
-    style: [],
     initialState: [
       { path: 'visibility', label: 'Visibility' },
       { path: 'styleSelectors.base', label: 'Selector - Base' }

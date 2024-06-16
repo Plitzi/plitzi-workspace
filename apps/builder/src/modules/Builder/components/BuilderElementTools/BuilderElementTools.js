@@ -8,6 +8,7 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { StyleBindingsAllowed } from '@plitzi/sdk-style/StyleConstants';
 
 // Alias
 import StyleInspector from '@pmodules/Style/StyleInspector';
@@ -33,7 +34,7 @@ const BuilderElementTools = props => {
   const [, setCache, getCache] = useCache();
   const [selected, setSelected] = useState(() => getCache('BuilderElementTools.tabSelected', initialTab));
   const { builderHandler } = use(BuilderContext);
-  const { getComponent, componentDefinitions } = use(ComponentContext);
+  const { componentDefinitions } = use(ComponentContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
   const attributes = useMemo(() => get(element, 'attributes', {}), [element]);
@@ -92,6 +93,19 @@ const BuilderElementTools = props => {
     [builderHandler, element]
   );
 
+  const bindingsAllowed = useMemo(() => {
+    if (!element) {
+      return {};
+    }
+
+    const type = get(element, 'definition.type', '');
+    if (!type) {
+      return {};
+    }
+
+    return { ...get(componentDefinitions, `${type}.bindingsAllowed`, {}), style: StyleBindingsAllowed };
+  }, [componentDefinitions, element]);
+
   if (!element) {
     return (
       <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded text-center">
@@ -103,12 +117,6 @@ const BuilderElementTools = props => {
   const {
     definition: { type, bindings, interactions }
   } = element;
-  const Plugin = getComponent(type);
-  if (!Plugin) {
-    return null;
-  }
-
-  const { bindingsAllowed } = componentDefinitions[type];
 
   return (
     <div className={classNames('flex flex-col grow', { [`element-${type}`]: type })}>

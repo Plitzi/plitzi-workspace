@@ -38,7 +38,6 @@ FontAwesome.content = {
   },
   bindingsAllowed: {
     attributes: [{ path: 'icon', label: 'Icon' }],
-    style: [],
     initialState: [
       { path: 'visibility', label: 'Visibility' },
       { path: 'styleSelectors.base', label: 'Selector - Base' }

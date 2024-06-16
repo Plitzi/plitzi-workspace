@@ -49,10 +49,6 @@ DialogContainer.content = {
   },
   bindingsAllowed: {
     attributes: [],
-    style: [
-      { path: 'color', label: 'Color' },
-      { path: 'background-color', label: 'Background Color' }
-    ],
     initialState: [
       { path: 'visibility', label: 'Visibility' },
       { path: 'styleSelectors.base', label: 'Selector - Base' },

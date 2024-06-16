@@ -35,7 +35,6 @@ Loading.content = {
   },
   bindingsAllowed: {
     attributes: [],
-    style: [],
     initialState: []
   },
   defaultStyle: {

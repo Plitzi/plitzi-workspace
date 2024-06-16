@@ -34,10 +34,6 @@ DropdownPopup.content = {
   },
   bindingsAllowed: {
     attributes: [],
-    style: [
-      { path: 'color', label: 'Color' },
-      { path: 'background-color', label: 'Background Color' }
-    ],
     initialState: [{ path: 'styleSelectors.base', label: 'Selector - Base' }]
   },
   defaultStyle: {

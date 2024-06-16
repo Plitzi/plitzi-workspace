@@ -36,7 +36,6 @@ BlockHtml.content = {
   },
   bindingsAllowed: {
     attributes: [{ path: 'content', label: 'Content' }],
-    style: [],
     initialState: [
       { path: 'visibility', label: 'Visibility' },
       { path: 'styleSelectors.base', label: 'Selector - Base' }

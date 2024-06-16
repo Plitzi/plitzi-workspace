@@ -45,7 +45,6 @@ ApiContainer.content = {
       { path: 'accessToken', label: 'Access Token' },
       { path: 'query', label: 'Query' }
     ],
-    style: [],
     initialState: [
       { path: 'visibility', label: 'Visibility' },
       { path: 'styleSelectors.base', label: 'Selector - Base' }
