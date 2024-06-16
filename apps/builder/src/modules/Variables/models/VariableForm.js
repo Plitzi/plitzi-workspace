@@ -72,7 +72,13 @@ const VariableForm = props => {
       <div className="flex gap-2">
         <Controller
           control={control}
-          rules={{ required: true }}
+          rules={{
+            required: true,
+            pattern: {
+              value: /^(?:\w+\s+|)([a-zA-Z_][a-zA-Z0-9]+)$/i,
+              message: 'Invalid variable name'
+            }
+          }}
           name="name"
           render={({ field: { onChange, value, name }, fieldState: { error } }) => (
             <FormControl
