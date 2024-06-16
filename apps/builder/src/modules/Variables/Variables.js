@@ -5,7 +5,6 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
-import Heading from '@plitzi/plitzi-ui-components/Heading';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
@@ -61,7 +60,7 @@ const Variables = () => {
 
   const handleClickRemove = useCallback(name => schemaRemoveVariable(name), [schemaRemoveVariable]);
 
-  const handleChange = useCallback((name, value) => schemaUpdateVariable({ name, value }), [schemaUpdateVariable]);
+  const handleChange = useCallback((name, values) => schemaUpdateVariable({ name, ...values }), [schemaUpdateVariable]);
 
   const variablesFiltered = useMemo(
     () => Object.values(variables).filter(variable => variable.name.toLowerCase().includes(filter.toLowerCase())),
@@ -88,24 +87,23 @@ const Variables = () => {
           onChange={handleChangeFilter}
         />
       </div>
-      <div className="flex flex-col px-4 my-2">
-        <div className="flex gap-1 mr-[30px]">
-          <Heading type="h5" className="w-[100px]">
-            Name
-          </Heading>
-          <Heading type="h5" className="grow px-2">
-            Value
-          </Heading>
-        </div>
+      <div className="flex flex-col px-4 my-2 gap-2">
         {variablesFiltered.map(segment => {
-          const { name, type, value } = segment;
+          const { name, type, value, category, when, whenSuccessValue, whenFailValue } = segment;
 
           return (
             <Variable
               key={name}
               name={name}
+              category={category}
               type={type}
               value={value}
+              when={when}
+              whenSuccessValue={whenSuccessValue}
+              whenFailValue={whenFailValue}
+              routeParams={routeParams}
+              queryParams={queryParams}
+              hostname={hostname}
               onChange={handleChange}
               onRemove={handleClickRemove}
             />

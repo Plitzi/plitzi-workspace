@@ -24,6 +24,7 @@ import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
  *   routeParams?: object;
  *   queryParams?: object;
  *   hostname?: string;
+ *   isNewRecord?: boolean;
  *   onClose?: () => void;
  *   onSubmit?: (values: { name: string; category: string; value: string; type: string; when: object }) => void;
  * }} props
@@ -42,6 +43,7 @@ const VariableForm = props => {
     routeParams = emptyObject,
     queryParams = emptyObject,
     hostname = '',
+    isNewRecord = false,
     onSubmit = noop,
     onClose = noop
   } = props;
@@ -63,11 +65,11 @@ const VariableForm = props => {
     [routeParams, queryParams, hostname]
   );
 
-  const hasWhen = currentWhen && currentWhen?.rules.length > 0;
+  const hasWhen = currentWhen && currentWhen?.rules?.length > 0;
 
   return (
-    <form className={classNames('flex flex-col p-3 gap-4', className)} onSubmit={handleSubmit(handleSubmitInternal)}>
-      <div className="flex gap-4">
+    <form className={classNames('flex flex-col gap-2', className)} onSubmit={handleSubmit(handleSubmitInternal)}>
+      <div className="flex gap-2">
         <Controller
           control={control}
           rules={{ required: true }}
@@ -77,12 +79,14 @@ const VariableForm = props => {
               type="text"
               name={name}
               label="Name"
+              size="sm"
               placeholder="Name"
               className="w-full"
               inputClassName="rounded"
               onChange={e => onChange(e.target.value)}
               value={value}
               error={error}
+              disabled={!isNewRecord}
             />
           )}
         />
@@ -93,6 +97,7 @@ const VariableForm = props => {
           render={({ field: { onChange, value, name }, fieldState: { error } }) => (
             <FormControl
               type="select2"
+              size="sm"
               inputProps={{
                 options: [
                   { value: 'text', label: 'Text' },
@@ -137,6 +142,7 @@ const VariableForm = props => {
               placeholder={hasWhen ? 'Default Value' : 'Value'}
               className="w-full"
               inputClassName="rounded"
+              size="sm"
               onChange={e => {
                 switch (currentType) {
                   case 'color':
@@ -168,7 +174,7 @@ const VariableForm = props => {
         render={({ field: { onChange, value } }) => {
           return (
             <div>
-              <label className="mb-1 font-medium text-gray-500 text-sm">When</label>
+              <label className="mb-1 font-medium text-gray-500 text-xs">When</label>
               <QueryBuilder
                 ruleDirection="vertical"
                 className="w-full"
@@ -187,7 +193,7 @@ const VariableForm = props => {
         </Alert>
       )}
       {hasWhen && (
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <Controller
             control={control}
             rules={{ required: false }}
@@ -197,6 +203,7 @@ const VariableForm = props => {
                 <FormControl
                   type={currentType}
                   name={name}
+                  size="sm"
                   label="When logic success"
                   placeholder="Value"
                   className="w-full"
@@ -236,6 +243,7 @@ const VariableForm = props => {
                   name={name}
                   label="When logic fail"
                   placeholder="Value"
+                  size="sm"
                   className="w-full"
                   inputClassName="rounded"
                   onChange={e => {
@@ -266,10 +274,10 @@ const VariableForm = props => {
       )}
 
       <div className="flex justify-end">
-        <Button onClick={onClose} className="mr-3 rounded-md">
+        <Button onClick={onClose} className="mr-3 rounded-md" size="sm">
           Cancel
         </Button>
-        <Button type="submit" className="rounded-md">
+        <Button type="submit" className="rounded-md" size="sm">
           Submit
         </Button>
       </div>

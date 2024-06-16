@@ -1,16 +1,28 @@
 // Packages
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import noop from 'lodash/noop';
-import classNames from 'classnames';
-import debounce from 'lodash/debounce';
-import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Button from '@plitzi/plitzi-ui-components/Button';
+import omit from 'lodash/omit';
+import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
+
+// Monorepo
+import { emptyObject } from '@plitzi/sdk-shared/utils';
+
+// Relatives
+import VariableForm from './models/VariableForm';
+
 /**
  * @param {{
  *   name?: string;
  *   category?: string;
  *   value?: string;
  *   type?: string;
+ *   when?: object;
+ *   whenSuccessValue?: string;
+ *   whenFailValue?: string;
+ *   routeParams?: object;
+ *   queryParams?: object;
+ *   hostname?: string;
  *   onChange?: (name: string, value: string) => void;
  *   onRemove: (name: string) => void;
  *   onParentRefresh?: (identifier: string, segment: object) => void;
@@ -18,55 +30,107 @@ import Button from '@plitzi/plitzi-ui-components/Button';
  * @returns {React.ReactElement}
  */
 const Variable = props => {
-  const { name = 'variable', value = '', type = 'text', onChange = noop, onRemove = noop } = props;
-  const [editMode, setEditMode] = useState(true);
-  const [valueInternal, setValueInternal] = useState(value);
+  const {
+    name = 'variable',
+    value = '',
+    type = 'text',
+    category = '',
+    when = emptyObject,
+    whenSuccessValue = '',
+    whenFailValue = '',
+    routeParams = emptyObject,
+    queryParams = emptyObject,
+    hostname = '',
+    onChange = noop,
+    onRemove = noop
+  } = props;
+  const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
-    setValueInternal(value);
-  }, [value]);
+  const whenString = useMemo(() => {
+    if (!when) {
+      return 'None';
+    }
+
+    const str = QueryBuilderFormatter(when);
+    if (str) {
+      return str;
+    }
+
+    return 'None';
+  }, [when]);
 
   const handleClickRemove = useCallback(() => {
     onRemove(name);
   }, [onRemove, name]);
 
-  const handleMouseEnter = useCallback(() => setEditMode(true), []);
+  const handleClickUpdate = useCallback(() => {
+    setEditMode(true);
+  }, [onChange, name]);
 
-  const handleMouseLeave = useCallback(() => setEditMode(false), []);
-
-  const debounceChange = useMemo(() => debounce(onChange, 250), [onChange]);
-
-  const handleChange = useCallback(
-    e => {
-      setValueInternal(e.target.value);
-      debounceChange(name, e.target.value);
+  const handleClickSubmit = useCallback(
+    values => {
+      onChange(name, omit(values, ['name']));
+      setEditMode(false);
     },
-    [onChange, name, value]
+    [onChange, name, setEditMode]
   );
 
-  return (
-    <div className="flex items-center gap-2 " onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <div className="flex gap-1 grow items-center">
-        <div className="w-[100px] truncate text-sm" title={name}>
-          {name}
-        </div>
-        <FormControl
+  const handleClickCancel = useCallback(() => setEditMode(false), [setEditMode]);
+
+  if (editMode) {
+    return (
+      <div className="border border-gray-300 rounded p-2">
+        <VariableForm
+          name={name}
+          category={category}
           type={type}
-          size="sm"
-          value={valueInternal}
-          className="grow basis-0"
-          onChange={handleChange}
-          placeholder={editMode ? 'Value' : ''}
-          inputClassName={classNames('rounded', { 'border-transparent': !editMode })}
+          value={value}
+          when={when}
+          whenSuccessValue={whenSuccessValue}
+          whenFailValue={whenFailValue}
+          routeParams={routeParams}
+          queryParams={queryParams}
+          hostname={hostname}
+          onSubmit={handleClickSubmit}
+          onClose={handleClickCancel}
         />
       </div>
-      <div className={classNames('flex', { invisible: !editMode, visible: editMode })}>
+    );
+  }
+
+  const hasWhen = when && when?.rules?.length > 0;
+
+  return (
+    <div className="group flex items-center gap-2 border px-2 border-gray-300 rounded">
+      <div className="flex gap-1 grow py-1">
+        <div className="flex flex-col grow basis-0 text-sm" title={name}>
+          <div className="font-bold">Name</div>
+          <div className="truncate">{name}</div>
+        </div>
+        <div className="grow basis-0 flex flex-col text-sm" title={value}>
+          <div className="flex items-center gap-1 font-bold">
+            Value
+            {hasWhen && <i className="fa-solid fa-circle-info text-xs" title={`Condition: ${whenString}`} />}
+          </div>
+          <div className="truncate">{value}</div>
+        </div>
+      </div>
+      <div className="flex flex-col group-hover:visible invisible">
+        <Button
+          intent="custom"
+          size="custom"
+          onClick={handleClickUpdate}
+          title="Update"
+          className="px-1 py-1 hover:text-blue-400 text-xs"
+        >
+          <i className="fas fa-pen" />
+        </Button>
         <Button
           intent="custom"
           size="custom"
           onClick={handleClickRemove}
           title="Remove"
-          className="text-red-400 hover:text-red-500 px-1 py-2"
+          className="text-red-400 hover:text-red-500 px-1 py-1 text-xs"
         >
           <i className="fas fa-trash-alt" />
         </Button>
