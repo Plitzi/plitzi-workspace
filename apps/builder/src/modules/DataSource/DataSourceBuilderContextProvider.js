@@ -8,6 +8,7 @@ import NavigationSource from '@plitzi/sdk-data-source/sources/NavigationSource';
 import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
 import VariablesSource from '@plitzi/sdk-data-source/sources/VariablesSource';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
 import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
@@ -26,7 +27,8 @@ const DataSourceBuilderContextProvider = props => {
   const {
     schema: { variables }
   } = use(SchemaContext);
-
+  const { routeParams, queryParams, hostname } = use(NavigationContext);
+  const variablesData = useMemo(() => ({ routeParams, queryParams, hostname }), [routeParams, queryParams, hostname]);
   const pageOptions = useMemo(
     () =>
       pageIds.reduce((acum, pageId) => {
@@ -39,7 +41,7 @@ const DataSourceBuilderContextProvider = props => {
 
   return (
     <DataSourceContextProvider>
-      <VariablesSource variables={variables}>
+      <VariablesSource variables={variables} whenData={variablesData}>
         <NavigationSource>
           <PageStateSource state={state} pages={pageOptions}>
             {children}
