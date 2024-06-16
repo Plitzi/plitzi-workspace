@@ -24,7 +24,7 @@ export const MODE_READ = 'read';
  */
 const useDataSource = (props = {}) => {
   const { id, source, name, fields = [], mode = MODE_WRITE } = props;
-  const { addSource, getSources, removeSource } = use(DataSourceContext);
+  const { addSource, getSources, updateFields, removeSource } = use(DataSourceContext);
   const initRef = useRef();
   const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
   const context = useRef(undefined);
@@ -44,6 +44,12 @@ const useDataSource = (props = {}) => {
       removeSource(uniqueId);
     };
   }, [uniqueId]);
+
+  useEffect(() => {
+    if (mode === MODE_WRITE) {
+      updateFields(uniqueId, fields);
+    }
+  }, [fields, uniqueId, updateFields]);
 
   if (mode === MODE_WRITE) {
     return [context.current, uniqueId];

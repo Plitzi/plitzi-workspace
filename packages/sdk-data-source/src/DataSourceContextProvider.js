@@ -1,6 +1,8 @@
 // Packages
-import React, { createContext, useCallback, useMemo, useRef } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 import omit from 'lodash/omit';
+import set from 'lodash/set';
+import get from 'lodash/get';
 
 // Relatives
 import DataSourceContext from './DataSourceContext';
@@ -15,43 +17,75 @@ import useDataSource from './hooks/useDataSource';
 const DataSourceContextProvider = props => {
   const { children } = props;
   const sourcesRef = useRef({});
-  const handleAddSource = useCallback((id, meta = {}) => {
-    const existingSource = Object.values(sourcesRef.current).find(source => source.meta.source === meta.source);
-    let context;
-    if (existingSource) {
-      ({ context } = existingSource);
-    } else {
-      context = createContext();
+  const initRef = useRef();
+  const [refreshRender, setRefreshRender] = React.useState(0);
+
+  useEffect(() => {
+    if (!initRef.current) {
+      initRef.current = true;
     }
-
-    sourcesRef.current[id] = { id, meta, context };
-
-    return context;
   }, []);
 
-  const handleGetSources = useCallback(
-    id => {
-      if (id) {
-        return sourcesRef.current[id];
+  const handleAddSource = useCallback(
+    (id, meta = {}) => {
+      const existingSource = Object.values(sourcesRef.current).find(source => source.meta.source === meta.source);
+      let context;
+      if (existingSource) {
+        ({ context } = existingSource);
+      } else {
+        context = createContext();
       }
 
-      return sourcesRef.current;
+      sourcesRef.current[id] = { id, meta, context };
+      if (initRef.current) {
+        setRefreshRender(Math.random());
+      }
+
+      return context;
     },
     [sourcesRef]
   );
 
-  const handleRemoveSource = useCallback(id => {
-    sourcesRef.current = omit(sourcesRef.current, id);
-  }, []);
+  const handleUpdateFields = useCallback(
+    (id, fields) => {
+      set(sourcesRef.current, `${id}.meta.fields`, fields);
+      if (initRef.current) {
+        setRefreshRender(Math.random());
+      }
+    },
+    [sourcesRef]
+  );
+
+  const handleGetSources = useCallback(
+    id => {
+      if (id) {
+        return get(sourcesRef.current, id);
+      }
+
+      return sourcesRef.current;
+    },
+    [sourcesRef, refreshRender]
+  );
+
+  const handleRemoveSource = useCallback(
+    id => {
+      sourcesRef.current = omit(sourcesRef.current, id);
+      if (initRef.current) {
+        setRefreshRender(Math.random());
+      }
+    },
+    [sourcesRef]
+  );
 
   const valueMemo = useMemo(
     () => ({
       useDataSource,
       addSource: handleAddSource,
+      updateFields: handleUpdateFields,
       removeSource: handleRemoveSource,
       getSources: handleGetSources
     }),
-    [useDataSource, handleAddSource, handleRemoveSource, handleGetSources]
+    [useDataSource, handleAddSource, handleRemoveSource, handleGetSources, handleUpdateFields, refreshRender]
   );
 
   return <DataSourceContext value={valueMemo}>{children}</DataSourceContext>;
