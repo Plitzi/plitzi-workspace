@@ -48,7 +48,7 @@ const VariableForm = props => {
     onClose = noop
   } = props;
 
-  const { control, handleSubmit, watch, resetField } = useForm({
+  const { control, handleSubmit, watch, setValue } = useForm({
     defaultValues: { name, category, value, type, when, whenSuccessValue, whenFailValue }
   });
   const currentType = watch('type');
@@ -119,9 +119,9 @@ const VariableForm = props => {
               inputClassName="rounded"
               onChange={option => {
                 onChange(option?.value ?? 'text');
-                resetField('value', '');
-                resetField('whenSuccessValue', '');
-                resetField('whenFailValue', '');
+                setValue('value', '');
+                setValue('whenSuccessValue', '');
+                setValue('whenFailValue', '');
               }}
               value={value}
               error={error}
