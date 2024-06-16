@@ -1,8 +1,9 @@
 // Packages
 import React, { useCallback, useMemo, useState } from 'react';
+import classNames from 'classnames';
 import noop from 'lodash/noop';
-import Button from '@plitzi/plitzi-ui-components/Button';
 import omit from 'lodash/omit';
+import Button from '@plitzi/plitzi-ui-components/Button';
 import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
 
 // Monorepo
@@ -44,6 +45,7 @@ const Variable = props => {
     onChange = noop,
     onRemove = noop
   } = props;
+  const hasWhen = when && when?.rules?.length > 0;
   const [editMode, setEditMode] = useState(false);
 
   const whenString = useMemo(() => {
@@ -98,24 +100,21 @@ const Variable = props => {
     );
   }
 
-  const hasWhen = when && when?.rules?.length > 0;
-
   return (
-    <div className="group flex items-center gap-2 border px-2 border-gray-300 rounded">
+    <div className="group flex items-center gap-1 border px-1 border-gray-300 rounded">
+      <i
+        className={classNames('fa-solid fa-circle-info text-xs', { visible: hasWhen, invisible: !hasWhen })}
+        title={`Condition: ${whenString}`}
+      />
       <div className="flex gap-1 grow py-1">
-        <div className="flex flex-col grow basis-0 text-sm" title={name}>
-          <div className="font-bold">Name</div>
-          <div className="truncate">{name}</div>
+        <div className="flex grow basis-0 min-w-0 items-center text-sm bold" title={name}>
+          <div className="truncate font-bold">{name}</div>
         </div>
-        <div className="grow basis-0 flex flex-col text-sm" title={value}>
-          <div className="flex items-center gap-1 font-bold">
-            Value
-            {hasWhen && <i className="fa-solid fa-circle-info text-xs" title={`Condition: ${whenString}`} />}
-          </div>
+        <div className="flex grow basis-0 min-w-0 text-sm gap-1" title={value}>
           <div className="truncate">{value}</div>
         </div>
       </div>
-      <div className="flex flex-col group-hover:visible invisible">
+      <div className="flex group-hover:visible invisible">
         <Button
           intent="custom"
           size="custom"
