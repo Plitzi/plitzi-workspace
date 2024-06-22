@@ -147,8 +147,8 @@ const VariableForm = props => {
       </div>
       <VariableValue valueType={currentType} control={control} hasSubValues={hasSubValues} name="value" />
       {hasSubValues && (
-        <Alert intent="info" className="text-white text-sm" containerClassName="items-center">
-          Based on the logic the variable will take one of these values
+        <Alert intent="info" className="text-white text-xs" containerClassName="items-center">
+          Based on the logic the variable will take one of these values from top to down
         </Alert>
       )}
       <div className="flex flex-col gap-2">

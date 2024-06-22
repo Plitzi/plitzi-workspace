@@ -29,14 +29,11 @@ const VariableSubValue = props => {
   );
 
   return (
-    <div className="border border-gray-300 rounded p-2 flex flex-col gap-2 grow">
+    <div className="border border-gray-300 rounded p-2 flex flex-col gap-2 grow basis-0 min-w-0">
       <VariableValue valueType={valueType} control={control} name={`subValues.${index}.value`} />
       <Controller
         control={control}
-        rules={{
-          required: true,
-          validate: value => (value?.rules?.length > 0 ? true : 'This field is required')
-        }}
+        rules={{ required: true, validate: value => (value?.rules?.length > 0 ? true : 'This field is required') }}
         name={`subValues.${index}.when`}
         render={({ field: { onChange, value }, fieldState: { error } }) => {
           let errorMessage = '';

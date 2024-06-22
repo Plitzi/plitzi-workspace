@@ -3216,9 +3216,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.13.8":
-  version: 0.13.8
-  resolution: "@plitzi/plitzi-ui-components@npm:0.13.8::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.8%2Fbe8393fbcb1a25d29dc12d5ae97e3dc48b85b462"
+"@plitzi/plitzi-ui-components@npm:0.13.9":
+  version: 0.13.9
+  resolution: "@plitzi/plitzi-ui-components@npm:0.13.9::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.9%2Fb706f1591eb3061c44f5ba73068725bb1b748dcb"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.16.3"
     "@codemirror/commands": "npm:^6.6.0"
@@ -3243,7 +3243,7 @@ __metadata:
     react-syntax-highlighter: "npm:^15.5.0"
     react-toastify: "npm:^10.0.5"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/0754b31d67b91b4b7ef9507346f92a67784fb4ae227652517a40f882a24fd2287d87438c7a07894dcf2f8de1cb37b99f44d32a589ab124e97937816aa37160f0
+  checksum: 10c0/f44b58cb48000d12b8b04899b101323274ed435c38a292bafbd5b4f6294902f45bfbd2f74bfbeab80925d19240a96a2e4ad9760470c773a05319f1fe579792f9
   languageName: node
   linkType: hard
 
@@ -3259,7 +3259,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.5"
-    "@plitzi/plitzi-ui-components": "npm:0.13.8"
+    "@plitzi/plitzi-ui-components": "npm:0.13.9"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"

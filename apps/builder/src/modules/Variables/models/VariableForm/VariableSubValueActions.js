@@ -17,17 +17,17 @@ const VariableSubValueActions = props => {
         size="custom"
         onClick={onClickRemove}
         title="Remove"
-        className="text-red-400 hover:text-red-500 px-1 py-1"
+        className="text-red-400 hover:text-red-500 p-1"
       >
         <i className="fas fa-trash-alt" />
       </Button>
       {index > 0 && (
-        <Button size="custom" className="rounded px-2 py-1 text-xs" title="Up" onClick={onClickUp}>
+        <Button size="custom" className="rounded p-1 text-xs" title="Up" onClick={onClickUp}>
           <i className="fa-solid fa-arrow-up" />
         </Button>
       )}
       {index < fields.length - 1 && (
-        <Button size="custom" className="rounded px-2 py-1 text-xs" title="Down" onClick={onClickDown}>
+        <Button size="custom" className="rounded p-1 text-xs" title="Down" onClick={onClickDown}>
           <i className="fa-solid fa-arrow-down" />
         </Button>
       )}

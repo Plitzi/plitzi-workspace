@@ -85,7 +85,7 @@ const Variables = () => {
         <i className="fa-solid fa-swatchbook fa-2x mr-4 text-white" />
         Add Variable
       </Button>
-      <div className="px-4 my-2">
+      <div className="p-2">
         <FormControl
           value={filter}
           type="text"
@@ -94,7 +94,7 @@ const Variables = () => {
           onChange={handleChangeFilter}
         />
       </div>
-      <div className="flex flex-col px-4 my-2 gap-2">
+      <div className="flex flex-col px-2 my-2 gap-2">
         {variablesFiltered.map(segment => {
           const { name, type, value, category, subValues } = segment;
 

@@ -20,7 +20,7 @@ const subValuesDefault = [];
  *   category?: string;
  *   value?: string;
  *   type?: string;
- *   subValues?: [object];
+ *   subValues?: [{ value: string; when: object }];
  *   whenData?: object;
  *   onChange?: (name: string, value: string) => void;
  *   onRemove: (name: string) => void;
