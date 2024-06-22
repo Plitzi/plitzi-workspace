@@ -25,16 +25,17 @@ const VariablesSource = props => {
 
   const variablesParsed = useMemo(() => {
     return variables.reduce((acum, variable) => {
-      const { name, value, when, whenSuccessValue, whenFailValue } = variable;
-      if (!when) {
+      const { name, value, subValues } = variable;
+      if (!Array.isArray(subValues) || subValues.length === 0) {
         return { ...acum, [name]: value };
       }
 
-      if (QueryBuilderEvaluator(when, whenData)) {
-        return { ...acum, [name]: !whenSuccessValue ? value : whenSuccessValue };
+      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
+      if(subValue) {
+        return { ...acum, [name]: subValue.value };
       }
 
-      return { ...acum, [name]: !whenFailValue ? value : whenFailValue };
+      return { ...acum, [name]: value };
     }, {});
   }, [variables, whenData]);
 

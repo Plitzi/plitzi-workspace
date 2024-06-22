@@ -9,9 +9,10 @@ const SpaceAddVariableSubscription = gql`
         category
         type
         value
-        when
-        whenSuccessValue
-        whenFailValue
+        subValues {
+          when
+          value
+        }
       }
     }
   }

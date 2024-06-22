@@ -31,9 +31,10 @@ const InitQuery = gql`
         variables {
           name
           value
-          when
-          whenSuccessValue
-          whenFailValue
+          subValues {
+            when
+            value
+          }
         }
       }
       segments {

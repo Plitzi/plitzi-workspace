@@ -51,9 +51,9 @@ const Variables = () => {
     );
 
     if (response.result) {
-      const { name, category, value, type, when, whenSuccessValue, whenFailValue } = get(response, 'data', {});
+      const { name, category, value, type, subValues } = get(response, 'data', {});
       if (!variables.find(variable => variable.name === name)) {
-        schemaAddVariable({ name, category, value, type, when, whenSuccessValue, whenFailValue });
+        schemaAddVariable({ name, category, value, type, subValues });
       } else {
         addToast(
           <span>
@@ -96,7 +96,7 @@ const Variables = () => {
       </div>
       <div className="flex flex-col px-4 my-2 gap-2">
         {variablesFiltered.map(segment => {
-          const { name, type, value, category, when, whenSuccessValue, whenFailValue } = segment;
+          const { name, type, value, category, subValues } = segment;
 
           return (
             <Variable
@@ -105,9 +105,7 @@ const Variables = () => {
               category={category}
               type={type}
               value={value}
-              when={when}
-              whenSuccessValue={whenSuccessValue}
-              whenFailValue={whenFailValue}
+              subValues={subValues}
               whenData={whenData}
               onChange={handleChange}
               onRemove={handleClickRemove}

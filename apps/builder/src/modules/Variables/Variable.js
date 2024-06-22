@@ -12,15 +12,15 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import VariableForm from './models/VariableForm';
 
+const subValuesDefault = [];
+
 /**
  * @param {{
  *   name?: string;
  *   category?: string;
  *   value?: string;
  *   type?: string;
- *   when?: object;
- *   whenSuccessValue?: string;
- *   whenFailValue?: string;
+ *   subValues?: [object];
  *   whenData?: object;
  *   onChange?: (name: string, value: string) => void;
  *   onRemove: (name: string) => void;
@@ -34,28 +34,25 @@ const Variable = props => {
     value = '',
     type = 'text',
     category = '',
-    when = emptyObject,
-    whenSuccessValue = '',
-    whenFailValue = '',
+    subValues = subValuesDefault,
     whenData = emptyObject,
     onChange = noop,
     onRemove = noop
   } = props;
-  const hasWhen = when && when?.rules?.length > 0;
   const [editMode, setEditMode] = useState(false);
-
+  const hasSubValues = subValues && subValues?.length > 0;
   const whenString = useMemo(() => {
-    if (!when) {
+    if (!subValues || subValues.length === 0) {
       return 'None';
     }
 
-    const str = QueryBuilderFormatter(when);
-    if (str) {
-      return str;
+    const strs = subValues.map(subValue => QueryBuilderFormatter(subValue.when));
+    if (strs && strs.length > 0) {
+      return strs.join(', ');
     }
 
     return 'None';
-  }, [when]);
+  }, [hasSubValues]);
 
   const handleClickRemove = useCallback(() => {
     onRemove(name);
@@ -83,9 +80,7 @@ const Variable = props => {
           category={category}
           type={type}
           value={value}
-          when={when}
-          whenSuccessValue={whenSuccessValue}
-          whenFailValue={whenFailValue}
+          subValues={subValues}
           whenData={whenData}
           onSubmit={handleClickSubmit}
           onClose={handleClickCancel}
@@ -97,7 +92,7 @@ const Variable = props => {
   return (
     <div className="group flex items-center gap-1 border px-1 border-gray-300 rounded">
       <i
-        className={classNames('fa-solid fa-circle-info text-xs', { visible: hasWhen, invisible: !hasWhen })}
+        className={classNames('fa-solid fa-circle-info text-xs', { visible: hasSubValues, invisible: !hasSubValues })}
         title={`Condition: ${whenString}`}
       />
       <div className="flex gap-1 grow py-1">

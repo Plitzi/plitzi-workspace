@@ -33,9 +33,10 @@ const InitQuery = gql`
           category
           type
           value
-          when
-          whenSuccessValue
-          whenFailValue
+          subValues {
+            when
+            value
+          }
         }
       }
       segments {
