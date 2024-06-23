@@ -23,7 +23,7 @@ const processTwig = (template, variables = {}, keepEmptyTokens = false) => {
 
     return template.render(variables);
   } catch (e) {
-    return undefined;
+    return template;
   }
 };
 
