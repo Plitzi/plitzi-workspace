@@ -1,12 +1,12 @@
 // Packages
 import React, { useMemo, use, useCallback, useRef } from 'react';
-import { Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import get from 'lodash/get';
 
 // Monorepo
 import UserContext from '@plitzi/sdk-auth/UserContext';
-import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import useNavigation from '@plitzi/sdk-navigation/useNavigation';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 
 // Alias
@@ -23,7 +23,7 @@ const NavigationContextProvider = props => {
   const { previewMode = false, children } = props;
   const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
   const { authenticated } = use(UserContext);
-  const location = useLocation();
+  const { queryParams, hostname, location } = useNavigation();
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -50,8 +50,6 @@ const NavigationContextProvider = props => {
       ...get(pathMatch, 'params', {})
     };
   }, [paths, pathMatch]);
-  const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
-  const hostname = useMemo(() => location.hostname ?? 'localhost', [location.hostname]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const handleNavigate = useCallback(

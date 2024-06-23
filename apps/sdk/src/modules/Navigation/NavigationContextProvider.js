@@ -7,9 +7,11 @@ import get from 'lodash/get';
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import UserContext from '@plitzi/sdk-auth/UserContext';
-import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+
+// Monorepo
+import useNavigation from '@plitzi/sdk-navigation/useNavigation';
 
 // Alias
 import { RENDER_MODE_IFRAME, RENDER_MODE_SSR, RENDER_MODE_WIDGET } from '@modules/Sdk/Sdk';
@@ -34,6 +36,7 @@ const NavigationContextProvider = props => {
     schema: { pageFolders }
   } = use(SchemaContext);
   const { pageDefinitions, pages } = use(SchemaPagesContext);
+  const { queryParams, hostname, location } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
   const { authenticated } = use(UserContext);
@@ -41,11 +44,6 @@ const NavigationContextProvider = props => {
   const paths = useMemo(
     () => getPaths(pages, pageDefinitions, pageFolders, authenticated, previewMode),
     [pages, pageFolders, authenticated, previewMode]
-  );
-
-  const location = useMemo(
-    () => (typeof window !== 'undefined' ? window.location : get(server, 'location', { pathname: '/' })),
-    [server]
   );
 
   const matchResult = useMemo(
@@ -101,8 +99,6 @@ const NavigationContextProvider = props => {
       ...get(pathMatch, 'params', {})
     };
   }, [paths, pathMatch]);
-  const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
-  const hostname = useMemo(() => location.hostname ?? 'localhost', [location.hostname]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const navigationValue = useMemo(() => {
     if (renderMode === RENDER_MODE_SSR) {

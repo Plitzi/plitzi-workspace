@@ -8,6 +8,10 @@ const isValidToken = token => !!token.match(tokenRegex);
 const hasTokens = template => !!template.replaceAll(' ', '').match(/{{.*}}/gim);
 
 const processTwig = (template, variables = {}, keepEmptyTokens = false) => {
+  if (typeof template !== 'string') {
+    return template;
+  }
+
   try {
     if (keepEmptyTokens) {
       [...template.matchAll(tokenRegex)].forEach(token => {

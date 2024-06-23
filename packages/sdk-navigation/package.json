@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.js",
     "./NavigationHelper": "./src/NavigationHelper.js",
-    "./NavigationContext": "./src/NavigationContext.js"
+    "./NavigationContext": "./src/NavigationContext.js",
+    "./useNavigation": "./src/hooks/useNavigation.js"
   },
   "scripts": {
     "lint": "eslint ./src"
