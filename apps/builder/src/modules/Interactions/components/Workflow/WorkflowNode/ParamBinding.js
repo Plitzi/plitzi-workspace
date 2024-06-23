@@ -65,7 +65,11 @@ const ParamBinding = props => {
   );
 
   const fieldsDataSource = useMemo(
-    () => Object.keys(dataSource).reduce((acum1, source) => [...acum1, { value: source, label: source }], []),
+    () =>
+      Object.keys(dataSource).reduce(
+        (acum1, source) => [...acum1, { value: source, label: dataSource[source].name }],
+        []
+      ),
     [dataSource]
   );
 

@@ -1,5 +1,5 @@
 const getItemName = id => {
-  return `web-${id}-state`;
+  return `web_${id}_state`;
 };
 
 export const loadState = id => {

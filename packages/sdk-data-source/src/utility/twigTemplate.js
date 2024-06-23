@@ -5,7 +5,7 @@ const callback = (source, params, dataSources = {}) => {
   const { template } = params;
   let content = source;
   try {
-    content = processTwig(template, { source, ...dataSources }, true);
+    content = processTwig(template, { source, ...dataSources });
   } catch (e) {
     content = source;
   }

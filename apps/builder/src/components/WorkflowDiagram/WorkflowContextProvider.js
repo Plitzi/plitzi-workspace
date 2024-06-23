@@ -121,7 +121,7 @@ const WorkflowContextProvider = props => {
               delete currentNode.connectors[connectorIn.id];
             } else if (currentNode.type !== 'callback' && node.type === 'callback') {
               if (!connectorIn) {
-                const idConnectorIn = `connector-${generateID()}`;
+                const idConnectorIn = `connector_${generateID()}`;
                 set(draft, `${node.id}.connectors.${idConnectorIn}`, {
                   id: idConnectorIn,
                   mode: 'in',
@@ -131,7 +131,7 @@ const WorkflowContextProvider = props => {
               }
 
               if (!connectorOut) {
-                const idConnectorOut = `connector-${generateID()}`;
+                const idConnectorOut = `connector_${generateID()}`;
                 set(draft, `${node.id}.connectors.${idConnectorOut}`, {
                   id: idConnectorOut,
                   mode: 'out',

@@ -262,7 +262,7 @@ const Selector = props => {
           {tags &&
             tags.map((tag, i) => (
               <SelectorTag
-                key={`${i}-${tag.name}`}
+                key={`${i}_${tag.name}`}
                 selector={tag.name}
                 type={tag.type}
                 active={tag.name === selectorSelected?.name.replace(/:.*/, '')}

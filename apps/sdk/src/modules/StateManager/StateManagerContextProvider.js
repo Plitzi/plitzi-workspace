@@ -31,7 +31,7 @@ export const STYLE_TYPE_SEGMENT = 'segment';
 const StateManagerContextProvider = props => {
   const { children, state: stateProp = emptyObject, onInit = noop } = props;
   const { webId } = use(NetworkContext);
-  const storageId = useMemo(() => `plitzi-${webId}-state`, [webId]);
+  const storageId = useMemo(() => `plitzi_${webId}_state`, [webId]);
   const { schema } = use(SchemaContext);
 
   const getCache = useCallback(

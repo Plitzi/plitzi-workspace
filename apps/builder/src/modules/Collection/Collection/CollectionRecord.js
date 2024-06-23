@@ -48,7 +48,7 @@ const CollectionRecord = props => {
           const valueEmpty = isEmpty(values[fieldKey]);
 
           return (
-            <div key={`${id}-${i}`} className="items-center grow basis-0 truncate" title={values[fieldKey]}>
+            <div key={`${id}_${i}`} className="items-center grow basis-0 truncate" title={values[fieldKey]}>
               {['text', 'email', 'textarea', 'richText', 'link', 'phone', 'number', 'date'].includes(type) &&
                 values[fieldKey]}
               {type === 'image' && (

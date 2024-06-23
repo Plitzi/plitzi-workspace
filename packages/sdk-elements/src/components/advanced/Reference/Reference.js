@@ -120,7 +120,7 @@ const Reference = props => {
     return (
       <SchemaContext value={referenceContextData}>
         <PluginManager
-          key={`${id}-${referenceId}`}
+          key={`${id}_${referenceId}`}
           id={element?.id}
           rootId={rootId}
           type={elementType}
@@ -142,7 +142,7 @@ const Reference = props => {
       <SchemaContext value={referenceContextData}>
         {element && (
           <PluginManager
-            key={`${id}-${referenceId}`}
+            key={`${id}_${referenceId}`}
             id={element?.id}
             rootId={rootId}
             type={elementType}

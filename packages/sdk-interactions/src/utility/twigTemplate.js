@@ -6,7 +6,7 @@ const callback = params => {
   const { template, returnMode } = params;
   let content = '';
   try {
-    content = processTwig(template, params, true);
+    content = processTwig(template, params);
   } catch (e) {
     console.error(e);
   }
@@ -65,7 +65,7 @@ const delayTime = {
     let { template } = params;
     if (returnMode === 'jsonObject') {
       try {
-        template = JSON.parse(processTwig(template, params, true));
+        template = JSON.parse(processTwig(template, params));
         if (template && typeof template === 'object') {
           return {
             template: '',

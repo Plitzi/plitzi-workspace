@@ -19,8 +19,8 @@ const WorkflowActions = props => {
 
   const handleClickAddNode = useCallback(() => {
     const id = `node_${generateID()}`;
-    const idConnectorToIn = `connector-${generateID()}`;
-    const idConnectorToOut = `connector-${generateID()}`;
+    const idConnectorToIn = `connector_${generateID()}`;
+    const idConnectorToOut = `connector_${generateID()}`;
     if (Object.keys(nodes).length === 0) {
       registerNode({
         id,

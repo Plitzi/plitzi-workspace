@@ -147,7 +147,7 @@ const DataSourceBinding = props => {
 
   return Object.keys(bindingsAllowed).map((fkey, i) => (
     <ContainerCollapsable
-      key={`${id}-${i}`}
+      key={`${id}_${i}`}
       title={<div className="px-4 py-2">{upperFirst(fkey)}</div>}
       collapsed={!(bindings && bindings[fkey] && bindings[fkey].length > 0)}
     >
@@ -160,7 +160,7 @@ const DataSourceBinding = props => {
 
               return (
                 <BindingSelected
-                  key={`${i}-${j}`}
+                  key={`${i}_${j}`}
                   id={id}
                   sources={sources}
                   category={fkey}

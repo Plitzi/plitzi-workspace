@@ -122,7 +122,7 @@ const FormControl = props => {
     >
       {!isCheck && label && (
         <Label
-          targetInput={`${rootId}-${id}`}
+          targetInput={`${rootId}_${id}`}
           previewMode={previewMode}
           className={styleSelectors.label}
           type={subType}
@@ -133,7 +133,7 @@ const FormControl = props => {
       )}
       {isCheck && label && (
         <Label
-          targetInput={`${rootId}-${id}`}
+          targetInput={`${rootId}_${id}`}
           previewMode={previewMode}
           className={styleSelectors.label}
           type={subType}
@@ -141,7 +141,7 @@ const FormControl = props => {
         >
           {subType === 'checkbox' && (
             <Checkbox
-              id={`${rootId}-${id}`}
+              id={`${rootId}_${id}`}
               name={name}
               value={value}
               type={subType}
@@ -156,7 +156,7 @@ const FormControl = props => {
           )}
           {/* {subType === 'switch' && (
             <Switch
-              id={`${rootId}-${id}`}
+              id={`${rootId}_${id}`}
               name={name}
               onChange={handleChange}
               value={value}
@@ -171,7 +171,7 @@ const FormControl = props => {
       )}
       {subType === 'checkbox' && !label && (
         <Checkbox
-          id={`${rootId}-${id}`}
+          id={`${rootId}_${id}`}
           name={name}
           value={value}
           type={subType}
@@ -188,7 +188,7 @@ const FormControl = props => {
         <Switch
           {...inputProps}
           ref={ref}
-          id={`${rootId}-${id}`}
+          id={`${rootId}_${id}`}
           name={name}
           onChange={handleChange}
           value={value}
@@ -200,7 +200,7 @@ const FormControl = props => {
       )} */}
       {subType && ['text', 'number', 'email', 'password', 'time'].includes(subType) && (
         <Input
-          id={`${rootId}-${id}`}
+          id={`${rootId}_${id}`}
           name={name}
           value={value}
           type={subType}
@@ -217,7 +217,7 @@ const FormControl = props => {
       )}
       {subType === 'hidden' && (
         <Hidden
-          id={`${rootId}-${id}`}
+          id={`${rootId}_${id}`}
           name={name}
           value={value}
           required={required}
@@ -227,7 +227,7 @@ const FormControl = props => {
       )}
       {subType === 'select' && (
         <Select
-          id={`${rootId}-${id}`}
+          id={`${rootId}_${id}`}
           name={name}
           onChange={handleChange}
           onValidate={handleValidate}
@@ -240,7 +240,7 @@ const FormControl = props => {
       )}
       {subType === 'textarea' && (
         <Textarea
-          id={`${rootId}-${id}`}
+          id={`${rootId}_${id}`}
           name={name}
           value={value}
           className={styleSelectors.input}
@@ -256,7 +256,7 @@ const FormControl = props => {
         <ColorPicker
           {...inputProps}
           ref={ref}
-          id={`${rootId}-${id}`}
+          id={`${rootId}_${id}`}
           name={name}
           onChange={onChange}
           value={value}

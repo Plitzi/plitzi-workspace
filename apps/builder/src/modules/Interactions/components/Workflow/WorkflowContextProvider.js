@@ -234,14 +234,14 @@ const WorkflowContextProvider = props => {
     }
   }, []);
 
-  const dataSource = useMemo(() => getSources(), [elementSelected, getSources]);
+  const dataSource = useMemo(
+    () => Object.values(getSources()).reduce((acum, source) => ({ ...acum, [source.meta.source]: source.meta }), {}),
+    [elementSelected, getSources]
+  );
 
   const loadSources = useCallback(async () => {
     const sourcesLoaded = await Object.keys(dataSource).reduce(
-      async (acum, sourceKey) => ({
-        ...(await acum),
-        [sourceKey]: (await get(dataSource, `${sourceKey}.meta.fields`, noop)(true)) ?? {}
-      }),
+      async (acum, sourceKey) => ({ ...(await acum), [sourceKey]: (await dataSource[sourceKey].fields(true)) ?? {} }),
       Promise.resolve({})
     );
     setDataSourceContent(sourcesLoaded);

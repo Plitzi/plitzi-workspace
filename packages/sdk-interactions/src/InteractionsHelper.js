@@ -9,8 +9,6 @@ import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 // Relatives
 import utility from './utility';
 
-const isValidTokenNode = tokenName => !!tokenName.replaceAll(' ', '').match(/^{{node-[a-z0-9]+(.*|)}}$/gim);
-
 const processParams = (type, params, flowValues, globalValues, action) => {
   if (type === 'utility' && action === 'twigTemplate') {
     return params;
@@ -21,7 +19,7 @@ const processParams = (type, params, flowValues, globalValues, action) => {
     if (type !== 'trigger') {
       let timeout = 5;
       while (typeof value === 'string' && hasTokens(value) && timeout > 0) {
-        value = processTwig(value, { ...flowValues, ...globalValues }, !isValidTokenNode(value));
+        value = processTwig(value, { ...flowValues, ...globalValues });
         timeout--;
       }
     }

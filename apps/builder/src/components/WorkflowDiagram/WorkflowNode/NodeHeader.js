@@ -66,7 +66,7 @@ const NodeHeader = props => {
       Object.values(nodeDefinitions)
         .filter(node => node.type === type)
         .map(nodeDefinition => ({
-          value: `${nodeDefinition.elementId ? `${nodeDefinition.elementId}-` : ''}${nodeDefinition.action}`,
+          value: `${nodeDefinition.elementId ? `${nodeDefinition.elementId}_` : ''}${nodeDefinition.action}`,
           label: nodeDefinition.title
         })),
     [nodeDefinitions]
@@ -104,7 +104,7 @@ const NodeHeader = props => {
         className="rounded w-full"
         size="sm"
         placeholder={`Select a ${upperFirst(type)}`}
-        value={`${elementId ? `${elementId}-` : ''}${action}`}
+        value={`${elementId ? `${elementId}_` : ''}${action}`}
         onChange={handleChangeAction}
         options={optionsMemo}
       />

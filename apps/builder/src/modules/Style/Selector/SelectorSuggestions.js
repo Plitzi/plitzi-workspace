@@ -55,7 +55,7 @@ const SelectorSuggestions = props => {
           {finalSelectors.map((selector, index) => (
             <SelectorTag
               className="cursor-pointer"
-              key={`${selector.name}-${index}`}
+              key={`${selector.name}_${index}`}
               selector={selector.name}
               type={selector.type}
               editable={false}

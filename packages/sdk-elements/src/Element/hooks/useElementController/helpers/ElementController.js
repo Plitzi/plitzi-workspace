@@ -7,6 +7,7 @@ import noop from 'lodash/noop';
 
 // Monorepo
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
+import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 
 // Alias
 import PluginManager from '../../../PluginManager';
@@ -171,6 +172,25 @@ class ElementController {
     };
   };
 
+  parseVariables = variables => {
+    if (!variables || typeof variables !== 'object' || Object.keys(variables).length === 0) {
+      return this.internalProps;
+    }
+
+    const { attributes } = this.internalProps;
+    const attributesWithVariables = Object.keys(attributes).reduce((acum, key) => {
+      if (typeof attributes[key] === 'string' && hasTokens(attributes[key])) {
+        return { ...acum, [key]: processTwig(attributes[key], variables) };
+      }
+
+      return { ...acum, [key]: attributes[key] };
+    }, {});
+
+    this.internalProps = { ...this.internalProps, attributes: { ...attributes, ...attributesWithVariables } };
+
+    return this.internalProps;
+  };
+
   parse = dataSourceContext => {
     const { attributes: baseAttributes, definition: baseDefinition } = this.baseInternalProps;
     const { attributesBinded, stateBinded } = this.cache;
@@ -199,7 +219,7 @@ class ElementController {
       style
     };
 
-    return this.internalProps;
+    return this.parseVariables(dataSourceContext?.variables);
   };
 
   // State
@@ -297,7 +317,7 @@ class ElementController {
 
         return (
           <PluginManager
-            key={!previewMode && plitziElementLayout ? `${itemId}-${layoutKeyIdentifier}` : itemId}
+            key={!previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId}
             id={itemId}
             rootId={finalRootId}
             plitziElementLayout={plitziElementLayout}

@@ -30,7 +30,7 @@ const useAuth = props => {
     expirationTimePath = 'expire_at',
     webId = 0
   } = props;
-  const [cache, setCache, , clearCache] = useCache({ cacheId: `user-${webId}-state`, skipContext: true });
+  const [cache, setCache, , clearCache] = useCache({ cacheId: `user_${webId}_state`, skipContext: true });
   const manager = useMemo(() => {
     switch (provider) {
       case 'auth0': {

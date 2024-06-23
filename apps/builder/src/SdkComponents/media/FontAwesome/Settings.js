@@ -65,7 +65,7 @@ const Settings = props => {
               )}
               onClick={handleClick(iconClass)}
             >
-              <i key={`${ic}-${iconStyle}`} className={classNames(iconClass)} title={`${label} - [${ic}]`} />
+              <i key={`${ic}_${iconStyle}`} className={classNames(iconClass)} title={`${label} - [${ic}]`} />
             </div>
           );
         });
