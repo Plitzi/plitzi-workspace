@@ -12,7 +12,6 @@ import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContext
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
@@ -106,19 +105,17 @@ const BuilderAreaPreview = props => {
         <PlitziServiceProvider value={plitziContextValue}>
           <DataSourceContextProvider>
             <InteractionsBuilderContextProvider>
-              <UserContextProvider>
-                <div
-                  className={classNames('builder-iframe', {
-                    'builder--display-component-border display-component-border--black':
-                      displayBorderComponents === DISPLAY_BORDER_BLACK,
-                    'builder--display-component-border display-component-border--white':
-                      displayBorderComponents === DISPLAY_BORDER_WHITE
-                  })}
-                  style={{ width: '100%', display: 'flex' }}
-                >
-                  {Plugin && <Plugin internalProps={internalProps} />}
-                </div>
-              </UserContextProvider>
+              <div
+                className={classNames('builder-iframe', {
+                  'builder--display-component-border display-component-border--black':
+                    displayBorderComponents === DISPLAY_BORDER_BLACK,
+                  'builder--display-component-border display-component-border--white':
+                    displayBorderComponents === DISPLAY_BORDER_WHITE
+                })}
+                style={{ width: '100%', display: 'flex' }}
+              >
+                {Plugin && <Plugin internalProps={internalProps} />}
+              </div>
             </InteractionsBuilderContextProvider>
           </DataSourceContextProvider>
         </PlitziServiceProvider>

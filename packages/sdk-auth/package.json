@@ -5,7 +5,6 @@
   "exports": {
     ".": "./src/index.js",
     "./UserContext": "./src/UserContext.js",
-    "./UserContextProvider": "./src/UserContextProvider.js",
     "./UserBaseContextProvider": "./src/UserBaseContextProvider.js"
   },
   "scripts": {
