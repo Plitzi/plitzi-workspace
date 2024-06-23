@@ -1,6 +1,5 @@
 // Packages
-import React, { useCallback, useMemo, useState } from 'react';
-import classNames from 'classnames';
+import React, { useCallback, useState } from 'react';
 import noop from 'lodash/noop';
 import omit from 'lodash/omit';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -41,18 +40,6 @@ const Variable = props => {
   } = props;
   const [editMode, setEditMode] = useState(false);
   const hasSubValues = subValues && subValues?.length > 0;
-  const whenString = useMemo(() => {
-    if (!subValues || subValues.length === 0) {
-      return 'None';
-    }
-
-    const strs = subValues.map(subValue => QueryBuilderFormatter(subValue.when));
-    if (strs && strs.length > 0) {
-      return strs.join(', ');
-    }
-
-    return 'None';
-  }, [hasSubValues]);
 
   const handleClickRemove = useCallback(() => {
     onRemove(name);
@@ -90,38 +77,57 @@ const Variable = props => {
   }
 
   return (
-    <div className="group flex items-center gap-1 border px-1 border-gray-300 rounded">
-      <i
-        className={classNames('fa-solid fa-circle-info text-xs', { visible: hasSubValues, invisible: !hasSubValues })}
-        title={`Condition: ${whenString}`}
-      />
-      <div className="flex gap-1 grow py-1">
-        <div className="flex grow basis-0 min-w-0 items-center text-sm bold" title={name}>
-          <div className="truncate font-bold">{name}</div>
+    <div className="group flex items-center gap-1 border p-1 border-gray-300 rounded">
+      <div className="flex flex-col w-full">
+        <div className="flex basis-0 grow">
+          <div className="flex flex-col gap-1 min-w-0 grow">
+            <div className="flex grow basis-0 min-w-0 gap-1 items-center text-sm bold" title={name}>
+              <div className="font-bold whitespace-nowrap">Name:</div>
+              <div className="truncate">{`{{${name}}}`}</div>
+            </div>
+            <div className="flex grow basis-0 min-w-0 text-sm gap-1" title={value}>
+              <div className="font-bold whitespace-nowrap">{hasSubValues ? 'Fallback Value:' : 'Value:'}</div>
+              <div className="truncate">{value}</div>
+            </div>
+          </div>
+          <div className="flex flex-col group-hover:visible invisible">
+            <Button
+              intent="custom"
+              size="custom"
+              onClick={handleClickUpdate}
+              title="Update"
+              className="px-1 py-1 hover:text-blue-400 text-xs"
+            >
+              <i className="fas fa-pen" />
+            </Button>
+            <Button
+              intent="custom"
+              size="custom"
+              onClick={handleClickRemove}
+              title="Remove"
+              className="text-red-400 hover:text-red-500 px-1 py-1 text-xs"
+            >
+              <i className="fas fa-trash-alt" />
+            </Button>
+          </div>
         </div>
-        <div className="flex grow basis-0 min-w-0 text-sm gap-1" title={value}>
-          <div className="truncate">{value}</div>
-        </div>
-      </div>
-      <div className="flex group-hover:visible invisible">
-        <Button
-          intent="custom"
-          size="custom"
-          onClick={handleClickUpdate}
-          title="Update"
-          className="px-1 py-1 hover:text-blue-400 text-xs"
-        >
-          <i className="fas fa-pen" />
-        </Button>
-        <Button
-          intent="custom"
-          size="custom"
-          onClick={handleClickRemove}
-          title="Remove"
-          className="text-red-400 hover:text-red-500 px-1 py-1 text-xs"
-        >
-          <i className="fas fa-trash-alt" />
-        </Button>
+        {hasSubValues && (
+          <div className="flex flex-col w-full mt-2 gap-1">
+            <div className="font-bold text-sm">Conditional Values:</div>
+            {subValues.map((subValue, index) => (
+              <div key={index} className="flex flex-col gap-1 text-xs border border-gray-300 rounded w-full">
+                <div className="flex gap-1 px-1">
+                  <div className="font-bold">Value:</div>
+                  <div>{subValue.value}</div>
+                </div>
+                <div className="flex gap-1 px-1 border-t border-gray-300">
+                  <div className="font-bold">When:</div>
+                  {QueryBuilderFormatter(subValue.when)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

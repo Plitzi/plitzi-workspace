@@ -18,7 +18,6 @@ const DataSourceContextProvider = props => {
   const { children } = props;
   const sourcesRef = useRef({});
   const initRef = useRef();
-  const [refreshRender, setRefreshRender] = React.useState(0);
 
   useEffect(() => {
     if (!initRef.current) {
@@ -37,9 +36,6 @@ const DataSourceContextProvider = props => {
       }
 
       sourcesRef.current[id] = { id, meta, context };
-      if (initRef.current) {
-        setRefreshRender(Math.random());
-      }
 
       return context;
     },
@@ -47,12 +43,7 @@ const DataSourceContextProvider = props => {
   );
 
   const handleUpdateFields = useCallback(
-    (id, fields) => {
-      set(sourcesRef.current, `${id}.meta.fields`, fields);
-      if (initRef.current) {
-        setRefreshRender(Math.random());
-      }
-    },
+    (id, fields) => set(sourcesRef.current, `${id}.meta.fields`, fields),
     [sourcesRef]
   );
 
@@ -64,15 +55,12 @@ const DataSourceContextProvider = props => {
 
       return sourcesRef.current;
     },
-    [sourcesRef, refreshRender]
+    [sourcesRef]
   );
 
   const handleRemoveSource = useCallback(
     id => {
       sourcesRef.current = omit(sourcesRef.current, id);
-      if (initRef.current) {
-        setRefreshRender(Math.random());
-      }
     },
     [sourcesRef]
   );
@@ -85,7 +73,7 @@ const DataSourceContextProvider = props => {
       removeSource: handleRemoveSource,
       getSources: handleGetSources
     }),
-    [useDataSource, handleAddSource, handleRemoveSource, handleGetSources, handleUpdateFields, refreshRender]
+    [useDataSource, handleAddSource, handleRemoveSource, handleGetSources, handleUpdateFields]
   );
 
   return <DataSourceContext value={valueMemo}>{children}</DataSourceContext>;
