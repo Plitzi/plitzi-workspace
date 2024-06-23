@@ -13,15 +13,16 @@ const processTwig = (template, variables = {}, keepEmptyTokens = false) => {
   }
 
   try {
+    let templateParsed = template;
     if (keepEmptyTokens) {
-      [...template.matchAll(tokenRegex)].forEach(token => {
-        template = template.replace(token[0], `{{ ${token.groups.token} | default('${token[0]}') }}`);
+      [...templateParsed.matchAll(tokenRegex)].forEach(token => {
+        templateParsed = templateParsed.replace(token[0], `{{ ${token.groups.token} | default('${token[0]}') }}`);
       });
     }
 
-    template = Twig.twig({ data: template });
+    templateParsed = Twig.twig({ data: templateParsed });
 
-    return template.render(variables);
+    return templateParsed.render(variables);
   } catch (e) {
     return template;
   }
