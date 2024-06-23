@@ -233,7 +233,7 @@ const WorkflowContextProvider = props => {
             return;
           }
 
-          const id = `node-${generateID()}`;
+          const id = `node_${generateID()}`;
           draft[id] = {
             id,
             title: 'Connector',

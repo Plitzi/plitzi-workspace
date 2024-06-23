@@ -49,7 +49,7 @@ const WorkflowContextProvider = props => {
 
   const addNode = useCallback(
     (nodeType, siblingNodeId = '', flowId = '') => {
-      const id = `node-${generateID()}`;
+      const id = `node_${generateID()}`;
       onChange(
         produce(nodesRef.current, draft => {
           if (siblingNodeId && !draft[siblingNodeId]) {

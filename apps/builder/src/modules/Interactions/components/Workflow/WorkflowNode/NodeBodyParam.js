@@ -12,7 +12,7 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
-import {isValidToken} from '@plitzi/sdk-shared/twigWrapper'
+import { isValidToken } from '@plitzi/sdk-shared/twigWrapper';
 
 // Relatives
 import ParamBinding from './ParamBinding';

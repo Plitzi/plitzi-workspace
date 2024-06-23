@@ -92,7 +92,7 @@ const ParamBinding = props => {
     }
 
     let paths = [];
-    if (!node.value.startsWith('node-') && dataSource[node.value]) {
+    if (!node.value.startsWith('node_') && dataSource[node.value]) {
       // Its Data Source
       paths = new Promise(async resolve => {
         let { fields } = dataSource[node.value];
