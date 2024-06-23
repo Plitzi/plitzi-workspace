@@ -3216,9 +3216,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.13.9":
-  version: 0.13.9
-  resolution: "@plitzi/plitzi-ui-components@npm:0.13.9::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.9%2Fb706f1591eb3061c44f5ba73068725bb1b748dcb"
+"@plitzi/plitzi-ui-components@npm:0.13.10":
+  version: 0.13.10
+  resolution: "@plitzi/plitzi-ui-components@npm:0.13.10::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.10%2F708b9956ad0720fe1afc18c69a744747550a8dd4"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.16.3"
     "@codemirror/commands": "npm:^6.6.0"
@@ -3243,7 +3243,7 @@ __metadata:
     react-syntax-highlighter: "npm:^15.5.0"
     react-toastify: "npm:^10.0.5"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/f44b58cb48000d12b8b04899b101323274ed435c38a292bafbd5b4f6294902f45bfbd2f74bfbeab80925d19240a96a2e4ad9760470c773a05319f1fe579792f9
+  checksum: 10c0/e468043e1350e076286912428407b4506f04dd5b881a9bd0c3e388e3e12a86d0787ccff0c72c9cc4c610c697a45f45c828909138ebb915b28c0ba1bd64cd19e0
   languageName: node
   linkType: hard
 
@@ -3259,7 +3259,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.5"
-    "@plitzi/plitzi-ui-components": "npm:0.13.9"
+    "@plitzi/plitzi-ui-components": "npm:0.13.10"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"
@@ -3379,7 +3379,7 @@ __metadata:
     eslint-plugin-cypress: "npm:^3.3.0"
     eslint-plugin-flowtype: "npm:8.0.3"
     eslint-plugin-import: "npm:^2.29.1"
-    eslint-plugin-jsdoc: "npm:^48.2.13"
+    eslint-plugin-jsdoc: "npm:^48.2.15"
     eslint-plugin-jsx-a11y: "npm:^6.9.0"
     eslint-plugin-prettier: "npm:^5.1.3"
     eslint-plugin-react: "npm:^7.34.3"
@@ -9274,9 +9274,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^48.2.13":
-  version: 48.2.13
-  resolution: "eslint-plugin-jsdoc@npm:48.2.13"
+"eslint-plugin-jsdoc@npm:^48.2.15":
+  version: 48.2.15
+  resolution: "eslint-plugin-jsdoc@npm:48.2.15"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.43.1"
     are-docs-informative: "npm:^0.0.2"
@@ -9288,7 +9288,7 @@ __metadata:
     spdx-expression-parse: "npm:^4.0.0"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/dffe67e9879c7114fefa0b53e721f7c907ea78b2439a5999af4d9685ccc48ff22f991789fae8b7256f363a88973c7116b22cdc59da0f747a68cc92e1d36b2557
+  checksum: 10c0/44dfbdbf4899f7fa34da3219e76f1d686b71cce0f0ccbd34b70f1f2720c8e848d0e8e86196154d64d746d9d94d314616b5e429661c1b277aa96eb9fa1a648ed1
   languageName: node
   linkType: hard
 
