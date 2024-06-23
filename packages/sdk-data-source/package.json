@@ -11,7 +11,8 @@
     "./utility": "./src/utility/index.js",
     "./sources/NavigationSource": "./src/sources/NavigationSource.js",
     "./sources/PageStateSource": "./src/sources/PageStateSource.js",
-    "./sources/VariablesSource": "./src/sources/VariablesSource.js"
+    "./sources/VariablesSource": "./src/sources/VariablesSource.js",
+    "./sources/UserSource": "./src/sources/UserSource.js"
   },
   "scripts": {
     "lint": "eslint ./src"

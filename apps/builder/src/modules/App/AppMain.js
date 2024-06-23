@@ -2,9 +2,6 @@
 import React, { useState, useMemo } from 'react';
 import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
-// Monorepo
-import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
-
 // Alias
 import DataSourceBuilderContextProvider from '@pmodules/DataSource/DataSourceBuilderContextProvider';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
@@ -94,11 +91,9 @@ const AppMain = props => {
         <StateManagerContextProvider state={state}>
           <DataSourceBuilderContextProvider>
             <InteractionsBuilderContextProvider previewMode={previewMode}>
-              <UserContextProvider previewMode={previewMode}>
-                <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
-                  <AppContainer externalStyle={externalStyle} />
-                </PopupProvider>
-              </UserContextProvider>
+              <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
+                <AppContainer externalStyle={externalStyle} />
+              </PopupProvider>
             </InteractionsBuilderContextProvider>
           </DataSourceBuilderContextProvider>
         </StateManagerContextProvider>

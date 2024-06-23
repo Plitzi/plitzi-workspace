@@ -6,8 +6,10 @@ import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContext
 import NavigationSource from '@plitzi/sdk-data-source/sources/NavigationSource';
 import PageStateSource from '@plitzi/sdk-data-source/sources/PageStateSource';
 import VariablesSource from '@plitzi/sdk-data-source/sources/VariablesSource';
+import UserSource from '@plitzi/sdk-data-source/sources/UserSource';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 // Alias
 import StateManagerContext from '@modules/StateManager/StateManagerContext';
@@ -26,6 +28,7 @@ const DataSourceSdkContextProvider = props => {
     schema: { variables }
   } = use(SchemaContext);
   const { routeParams, queryParams, hostname } = use(NavigationContext);
+  const { userProvider } = use(SchemaSettingsContext);
   const { environment } = use(NetworkContext);
   const variablesData = useMemo(
     () => ({ routeParams, queryParams, hostname, environment }),
@@ -34,11 +37,13 @@ const DataSourceSdkContextProvider = props => {
 
   return (
     <DataSourceContextProvider>
-      <VariablesSource variables={variables} whenData={variablesData}>
-        <NavigationSource>
-          <PageStateSource state={state}>{children}</PageStateSource>
-        </NavigationSource>
-      </VariablesSource>
+      <UserSource userProvider={userProvider}>
+        <VariablesSource variables={variables} whenData={variablesData}>
+          <NavigationSource>
+            <PageStateSource state={state}>{children}</PageStateSource>
+          </NavigationSource>
+        </VariablesSource>
+      </UserSource>
     </DataSourceContextProvider>
   );
 };

@@ -4,7 +4,6 @@ import noop from 'lodash/noop';
 
 // Monorepo
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
-import UserContextProvider from '@plitzi/sdk-auth/UserContextProvider';
 import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
 import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
 
@@ -101,14 +100,12 @@ const AppMain = props => {
                         <StateManagerContextProvider state={state} onInit={onInitStateManager}>
                           <DataSourceSdkContextProvider>
                             <InteractionsSdkContextProvider previewMode={previewMode}>
-                              <UserContextProvider previewMode={previewMode}>
-                                <Sdk
-                                  renderMode={renderMode}
-                                  previewMode={previewMode}
-                                  environment={environment}
-                                  {...sdkProps}
-                                />
-                              </UserContextProvider>
+                              <Sdk
+                                renderMode={renderMode}
+                                previewMode={previewMode}
+                                environment={environment}
+                                {...sdkProps}
+                              />
                             </InteractionsSdkContextProvider>
                           </DataSourceSdkContextProvider>
                         </StateManagerContextProvider>

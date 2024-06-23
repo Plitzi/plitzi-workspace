@@ -8,7 +8,8 @@
     "./InteractionsContext": "./src/InteractionsContext.js",
     "./InteractionsContextProvider": "./src/InteractionsContextProvider.js",
     "./InteractionsHelper": "./src/InteractionsHelper.js",
-    "./useInteractions": "./src/hooks/useInteractions.js"
+    "./useInteractions": "./src/hooks/useInteractions.js",
+    "./sources/UserSource/UserInteractions": "./src/sources/UserSource/UserInteractions.js"
   },
   "scripts": {
     "lint": "eslint ./src"

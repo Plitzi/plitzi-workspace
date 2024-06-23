@@ -36,7 +36,14 @@ const SchemaContextProvider = props => {
 
     switch (type) {
       case SCHEMA_TYPE_NORMAL:
-        return { settings: { customCss: '' }, flat: {}, pages: [], ...internalData.schema };
+        return {
+          settings: { customCss: '' },
+          flat: {},
+          pages: [],
+          pageFolders: [],
+          variables: [],
+          ...internalData.schema
+        };
       default:
         return { settings: { customCss: '' }, flat: {}, pages: [] };
     }
