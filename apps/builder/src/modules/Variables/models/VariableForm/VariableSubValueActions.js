@@ -4,11 +4,17 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import noop from 'lodash/noop';
 
 /**
- * @param {{}} props
+ * @param {{
+ *   indexLimit?: number;
+ *   index?: number;
+ *   onClickRemove?: () => void;
+ *   onClickUp?: () => void;
+ *   onClickDown?: () => void;
+ * }} props
  * @returns {React.ReactElement}
  */
 const VariableSubValueActions = props => {
-  const { fields, index, onClickRemove = noop, onClickUp = noop, onClickDown = noop } = props;
+  const { indexLimit = 0, index = 0, onClickRemove = noop, onClickUp = noop, onClickDown = noop } = props;
 
   return (
     <div className="flex flex-col gap-2">
@@ -26,7 +32,7 @@ const VariableSubValueActions = props => {
           <i className="fa-solid fa-arrow-up" />
         </Button>
       )}
-      {index < fields.length - 1 && (
+      {index < indexLimit && (
         <Button size="custom" className="rounded p-1 text-xs" title="Down" onClick={onClickDown}>
           <i className="fa-solid fa-arrow-down" />
         </Button>

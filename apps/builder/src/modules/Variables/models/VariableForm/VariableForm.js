@@ -157,8 +157,8 @@ const VariableForm = props => {
             <div key={field.id} className="flex gap-2">
               <VariableSubValue index={index} whenData={whenData} control={control} valueType={currentType} />
               <VariableSubValueActions
-                fields={fields}
                 index={index}
+                indexLimit={fields.length - 1}
                 onClickRemove={handleClickFieldRemove(index)}
                 onClickUp={handleClickFieldUp(index)}
                 onClickDown={handleClickFieldDown(index)}
