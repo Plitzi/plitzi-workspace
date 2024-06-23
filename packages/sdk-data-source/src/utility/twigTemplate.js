@@ -13,7 +13,7 @@ const callback = (source, params, dataSources = {}) => {
   return content;
 };
 
-const delayTime = {
+const twigTemplate = {
   action: 'twigTemplate',
   title: 'Twig Template',
   type: 'utility',
@@ -28,4 +28,4 @@ const delayTime = {
   callback
 };
 
-export default delayTime;
+export default twigTemplate;
