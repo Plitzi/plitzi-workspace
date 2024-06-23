@@ -41,7 +41,7 @@ const WorkflowContextProvider = props => {
     onChange = noop
   } = props;
   const { elementSelected } = use(BuilderSelectedContext);
-  const { dataSourceManager } = use(DataSourceContext);
+  const { getSources } = use(DataSourceContext);
   const [previewData, setPreviewData] = useState({});
   const [dataSourceContent, setDataSourceContent] = useState({});
   const nodesRef = useRef(nodes);
@@ -234,14 +234,14 @@ const WorkflowContextProvider = props => {
     }
   }, []);
 
-  const dataSource = useMemo(
-    () => dataSourceManager.getSources(elementSelected, [], false),
-    [elementSelected, dataSourceManager]
-  );
+  const dataSource = useMemo(() => getSources(), [elementSelected, getSources]);
 
   const loadSources = useCallback(async () => {
     const sourcesLoaded = await Object.keys(dataSource).reduce(
-      async (acum, sourceKey) => ({ ...(await acum), [sourceKey]: await dataSource[sourceKey].fields(true) }),
+      async (acum, sourceKey) => ({
+        ...(await acum),
+        [sourceKey]: (await get(dataSource, `${sourceKey}.meta.fields`, noop)(true)) ?? {}
+      }),
       Promise.resolve({})
     );
     setDataSourceContent(sourcesLoaded);
