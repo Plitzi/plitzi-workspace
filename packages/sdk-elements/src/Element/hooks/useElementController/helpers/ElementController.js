@@ -180,7 +180,7 @@ class ElementController {
     const { attributes } = this.internalProps;
     const attributesWithVariables = Object.keys(attributes).reduce((acum, key) => {
       if (typeof attributes[key] === 'string' && hasTokens(attributes[key])) {
-        return { ...acum, [key]: processTwig(attributes[key], variables) };
+        return { ...acum, [key]: processTwig(attributes[key], variables, true) };
       }
 
       return { ...acum, [key]: attributes[key] };
