@@ -76,7 +76,7 @@ const AppProvider = props => {
                       <ModalProvider>
                         <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
                           <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                            <UserBaseContextProvider previewMode={previewMode} webId={webId}>
+                            <UserBaseContextProvider previewMode={previewMode} webId={webId} environment={environment}>
                               <NavigationContextProvider previewMode={previewMode}>
                                 {children}
                               </NavigationContextProvider>

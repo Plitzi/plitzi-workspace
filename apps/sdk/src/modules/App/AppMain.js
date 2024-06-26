@@ -91,7 +91,7 @@ const AppMain = props => {
               <StyleContextProvider>
                 <EventBridgeContextProvider onInit={onInitEventBridge}>
                   <SegmentsContextProvider>
-                    <UserBaseContextProvider previewMode={previewMode} webId={webId}>
+                    <UserBaseContextProvider previewMode={previewMode} webId={webId} environment={environment}>
                       <NavigationContextProvider
                         renderMode={renderMode}
                         currentPageId={currentPageId}

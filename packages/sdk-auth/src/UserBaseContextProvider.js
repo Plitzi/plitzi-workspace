@@ -24,11 +24,12 @@ import useAuth from './hooks/useAuth';
  *   children: React.ReactNode;
  *   webId: string | number;
  *   server?: object;
+ *   environment?: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const UserBaseContextProvider = props => {
-  const { previewMode = true, children, webId = 0, server = emptyObject } = props;
+  const { previewMode = true, children, webId = 0, server = emptyObject, environment = 'live' } = props;
   const {
     userProvider,
     loginUrl,
@@ -52,7 +53,10 @@ const UserBaseContextProvider = props => {
     default:
   }
 
-  const variablesWhenData = useMemo(() => ({ queryParams, hostname }), [queryParams, hostname]);
+  const variablesWhenData = useMemo(
+    () => ({ queryParams, hostname, environment }),
+    [queryParams, hostname, environment]
+  );
   const variablesParsed = useMemo(() => {
     return variables.reduce((acum, variable) => {
       const { name, value, subValues } = variable;
