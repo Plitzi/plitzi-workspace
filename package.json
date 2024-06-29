@@ -28,10 +28,10 @@
     "@plitzi/sdk-shared": "*"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.5",
+    "@changesets/cli": "^2.27.6",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
-    "turbo": "^2.0.4"
+    "turbo": "^2.0.6"
   },
   "engines": {
     "node": ">=20"
