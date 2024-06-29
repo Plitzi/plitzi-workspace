@@ -42,8 +42,8 @@ const NavigationContextProvider = props => {
   const { authenticated } = use(UserContext);
   const navigate = useNavigate();
   const paths = useMemo(
-    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, previewMode),
-    [pages, pageFolders, authenticated, previewMode]
+    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server?.basePath, previewMode),
+    [pages, pageFolders, authenticated, previewMode, server?.basePath]
   );
 
   const matchResult = useMemo(

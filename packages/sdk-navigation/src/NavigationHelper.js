@@ -77,7 +77,7 @@ const isPageAuthored = (accessLevel, authenticated, previewMode = true) => {
   return !accessLevel;
 };
 
-const getPaths = (pages, flat, pageFolders, authenticated, previewMode = true, strictMode = true) => {
+const getPaths = (pages, flat, pageFolders, authenticated, basePath = '', previewMode = true, strictMode = true) => {
   const paths = pages
     .reduce((acum, pageId) => {
       const {
@@ -99,7 +99,7 @@ const getPaths = (pages, flat, pageFolders, authenticated, previewMode = true, s
       const subPathsParsed = Object.keys(subPaths).map(subPath => {
         return {
           pageId,
-          path: subPath,
+          path: `${basePath}${subPath}`.replaceAll('//', '/'),
           accessLevel,
           enabled,
           isRaw: `/${pageId}` === subPath,
@@ -185,6 +185,7 @@ const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
 
   const {
     pageId,
+    matchResult,
     path: { hasAccess, unauthorizedBehaviour, unauthorizedPageRedirect }
   } = possibleCandidate;
   if (!hasAccess && unauthorizedBehaviour === 'redirect' && unauthorizedPageRedirect) {
@@ -192,7 +193,7 @@ const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
   }
 
   if (hasAccess) {
-    return { action: { type: 'normal', path: undefined }, pathMatch: possibleCandidate.matchResult, pageId };
+    return { action: { type: 'normal', path: undefined }, pathMatch: matchResult, pageId };
   }
 
   return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };

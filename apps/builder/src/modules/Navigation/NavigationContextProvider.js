@@ -10,6 +10,7 @@ import useNavigation from '@plitzi/sdk-navigation/useNavigation';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 
 // Alias
+import NetworkContext from '@pmodules/Network/NetworkContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
 /**
@@ -22,15 +23,16 @@ import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 const NavigationContextProvider = props => {
   const { previewMode = false, children } = props;
   const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
+  const { server } = use(NetworkContext);
   const { authenticated } = use(UserContext);
-  const { queryParams, hostname, location } = useNavigation();
+  const { queryParams, hostname, location } = useNavigation({ server });
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
 
   const paths = useMemo(
-    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, previewMode),
-    [pages, pageFolders, authenticated, previewMode]
+    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server?.basePath, previewMode),
+    [pages, pageFolders, authenticated, previewMode, server?.basePath]
   );
 
   const matchResult = useMemo(
