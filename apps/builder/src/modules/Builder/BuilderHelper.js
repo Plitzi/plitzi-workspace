@@ -203,7 +203,7 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
       metadata: { size }
     } = data;
     const type = file.type.split('/')[0];
-    const selector = makeSelector(type);
+    const selector = size ? makeSelector(type) : '';
     const elementDefinition = getElementDefinition(componentDefinitions, type, {}, { base: selector });
     mutate('SpaceAddResource', { resource: file, type }, false, false, { customFetch: true }).then(result => {
       if (result instanceof Error) {
@@ -214,11 +214,14 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
       builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...elementDefinition, attributes: { src } });
     });
 
-    if (size) {
+    if (size && selector) {
       set(
         templateData,
         `style.platform.desktop.${selector}`,
-        generateStyleSelector(selector, StyleSelectors.SELECTOR_CLASS, { height: `${size?.height}px`, width: `${size?.width}px` })
+        generateStyleSelector(selector, StyleSelectors.SELECTOR_CLASS, {
+          height: `${size?.height}px`,
+          width: `${size?.width}px`
+        })
       );
       set(templateData, 'style.cache', generateCache({ platform: get(templateData, 'style.platform') }));
     }

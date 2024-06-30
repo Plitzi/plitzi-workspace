@@ -134,7 +134,11 @@ const OverlayNormal = props => {
           }
         );
       } else {
-        const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`);
+        const selectorType = get(
+          styleRef.current,
+          `platform.${displayMode}.${selector}.type`,
+          StyleSelectors.SELECTOR_CLASS
+        );
         const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
         builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, '', {
           ...values,
