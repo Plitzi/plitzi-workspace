@@ -205,7 +205,7 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
     const type = file.type.split('/')[0];
     const selector = makeSelector(type);
     const elementDefinition = getElementDefinition(componentDefinitions, type, {}, { base: selector });
-    mutate('SpaceAddResource', { resource: file }, false, false, { customFetch: true }).then(result => {
+    mutate('SpaceAddResource', { resource: file, type }, false, false, { customFetch: true }).then(result => {
       if (result instanceof Error) {
         return;
       }
