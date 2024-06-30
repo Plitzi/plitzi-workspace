@@ -99,7 +99,7 @@ const BuilderAreaPreview = props => {
   const internalProps = useMemo(() => ({ id, rootId: id }), [id]);
 
   return (
-    <ContainerFrame className={classNames('flex', className)}>
+    <ContainerFrame className={classNames('flex builder-area', className)}>
       <>
         <style>{css}</style>
         <PlitziServiceProvider value={plitziContextValue}>

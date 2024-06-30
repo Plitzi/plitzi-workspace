@@ -13,7 +13,19 @@ import withElement from '../../../Element/hocs/withElement';
  * @param {{
  *   ref: React.MutableRefObject<HTMLElement>;
  *   className: string;
- *   subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+ *   subType: 'div'
+ *     | 'header'
+ *     | 'footer'
+ *     | 'nav'
+ *     | 'main'
+ *     | 'section'
+ *     | 'article'
+ *     | 'aside'
+ *     | 'address'
+ *     | 'figure'
+ *     | 'dl'
+ *     | 'dt'
+ *     | 'dd';
  *   internalProps: object;
  *   children: React.ReactNode;
  * }} props

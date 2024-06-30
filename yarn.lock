@@ -3075,7 +3075,7 @@ __metadata:
     mini-css-extract-plugin: "npm:^2.9.0"
     moment: "npm:^2.30.1"
     node-sass: "npm:^9.0.0"
-    postcss: "npm:^8.4.38"
+    postcss: "npm:^8.4.39"
     postcss-loader: "npm:^8.1.1"
     postcss-scss: "npm:^4.0.9"
     prettier: "npm:^3.3.2"
@@ -3159,7 +3159,7 @@ __metadata:
     mini-css-extract-plugin: "npm:^2.9.0"
     moment: "npm:^2.30.1"
     node-sass: "npm:^9.0.0"
-    postcss: "npm:^8.4.38"
+    postcss: "npm:^8.4.39"
     postcss-loader: "npm:^8.1.1"
     postcss-scss: "npm:^4.0.9"
     react: "npm:19.0.0-rc-6230622a1a-20240610"
@@ -3187,9 +3187,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.13.10":
-  version: 0.13.10
-  resolution: "@plitzi/plitzi-ui-components@npm:0.13.10::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.10%2F708b9956ad0720fe1afc18c69a744747550a8dd4"
+"@plitzi/plitzi-ui-components@npm:0.13.11":
+  version: 0.13.11
+  resolution: "@plitzi/plitzi-ui-components@npm:0.13.11::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.11%2Fa01da81a62b6093aa955edd550b72ac9f344f58e"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.16.3"
     "@codemirror/commands": "npm:^6.6.0"
@@ -3214,7 +3214,7 @@ __metadata:
     react-syntax-highlighter: "npm:^15.5.0"
     react-toastify: "npm:^10.0.5"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/e468043e1350e076286912428407b4506f04dd5b881a9bd0c3e388e3e12a86d0787ccff0c72c9cc4c610c697a45f45c828909138ebb915b28c0ba1bd64cd19e0
+  checksum: 10c0/0209e3748fbf447797f3867bcf53d46cfafe004e8d8329554f2bf20a05c4b71b96c445bc5dcbcaf0e6ec68b3548f56c26fdeec27adf8d9f6b6a93acf71d64e97
   languageName: node
   linkType: hard
 
@@ -3230,7 +3230,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.6"
-    "@plitzi/plitzi-ui-components": "npm:0.13.10"
+    "@plitzi/plitzi-ui-components": "npm:0.13.11"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"
@@ -3692,13 +3692,6 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/9bf87ece1845c038ed95863cfccf9d75f557c2400d606343bab0ab3192b9806b9840e6aa0a0333fdf3e83cf9982632852192f3e68d7d8367bc8c788dfdf8e62b
-  languageName: node
-  linkType: hard
-
-"@remix-run/router@npm:1.16.1":
-  version: 1.16.1
-  resolution: "@remix-run/router@npm:1.16.1"
-  checksum: 10c0/5f1b0aef4924830eeab9c86dcaa5af8157066e5de65b449e7fdf406532b2384828a46a447c31b0735fd713a06938dd88bfd4e566d9989be70c770457dda16c92
   languageName: node
   linkType: hard
 
@@ -15558,6 +15551,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss@npm:^8.4.39":
+  version: 8.4.39
+  resolution: "postcss@npm:8.4.39"
+  dependencies:
+    nanoid: "npm:^3.3.7"
+    picocolors: "npm:^1.0.1"
+    source-map-js: "npm:^1.2.0"
+  checksum: 10c0/16f5ac3c4e32ee76d1582b3c0dcf1a1fdb91334a45ad755eeb881ccc50318fb8d64047de4f1601ac96e30061df203f0f2e2edbdc0bfc49b9c57bc9fb9bedaea3
+  languageName: node
+  linkType: hard
+
 "preferred-pm@npm:^3.0.0":
   version: 3.1.3
   resolution: "preferred-pm@npm:3.1.3"
@@ -16158,20 +16162,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^6.23.1":
-  version: 6.23.1
-  resolution: "react-router-dom@npm:6.23.1"
-  dependencies:
-    "@remix-run/router": "npm:1.16.1"
-    react-router: "npm:6.23.1"
-  peerDependencies:
-    react: ">=16.8"
-    react-dom: ">=16.8"
-  checksum: 10c0/01b954d7d0ff4c53bb2edbc816458f3fad1ce9ee49a4dfdc5c866065c23026c9cce429b46b754cbaebb83b22cfe5f605bbf441acf515e3c377cbdf021b0bec4c
-  languageName: node
-  linkType: hard
-
-"react-router-dom@npm:^6.24.0":
+"react-router-dom@npm:^6.23.1, react-router-dom@npm:^6.24.0":
   version: 6.24.0
   resolution: "react-router-dom@npm:6.24.0"
   dependencies:
@@ -16181,17 +16172,6 @@ __metadata:
     react: ">=16.8"
     react-dom: ">=16.8"
   checksum: 10c0/2cb41120c1ff58fd1e187807214cf581e78e2845e5f411aa6a04f4748bd100431fd1ac5f8a45db281ea03d0d2354b66896b938c0b77adf7b343a6c1be52411de
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.23.1":
-  version: 6.23.1
-  resolution: "react-router@npm:6.23.1"
-  dependencies:
-    "@remix-run/router": "npm:1.16.1"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 10c0/091949805745136350ab049b2a96281bf38742c9d3651019fb48ea79c5eafbfb0379f1d3e636602dd56b0ef278389e8fd25be983dc2c0ffd1103d06dfa8019f3
   languageName: node
   linkType: hard
 
