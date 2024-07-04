@@ -55,11 +55,11 @@ const Spacing = props => {
       }
 
       if ([MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT].includes(type)) {
-        setValue([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT], {
-          [PADDING_TOP]: partialValue,
-          [PADDING_BOTTOM]: partialValue,
-          [PADDING_LEFT]: partialValue,
-          [PADDING_RIGHT]: partialValue
+        setValue([MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT], {
+          [MARGIN_TOP]: partialValue,
+          [MARGIN_BOTTOM]: partialValue,
+          [MARGIN_LEFT]: partialValue,
+          [MARGIN_RIGHT]: partialValue
         });
       }
 
