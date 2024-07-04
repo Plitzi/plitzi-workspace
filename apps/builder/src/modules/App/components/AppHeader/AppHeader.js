@@ -1,5 +1,5 @@
 // Packages
-import React, { use, useState, useCallback } from 'react';
+import React, { use, useState, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
@@ -114,6 +114,12 @@ const AppHeaher = props => {
     }
   }, [addToast, mutate, showModal]);
 
+  const origin = useMemo(() => {
+    const { origin } = new URL(window.location.origin);
+
+    return origin;
+  }, []);
+
   return (
     <div className="h-12 flex items-center bg-white justify-between border-b border-gray-300">
       <div className="flex h-full items-center gap-3">
@@ -121,7 +127,7 @@ const AppHeaher = props => {
           className="flex items-center justify-center w-14 h-12 bg-gray-700 border-b border-gray-500 mr-2"
           id="plitzi-logo"
         >
-          <a href="https://plitzi.com">
+          <a href={origin}>
             <img
               src="https://cdn.plitzi.com/resources/img/favicon.svg"
               className="w-8 h-8 invert brightness-0"
