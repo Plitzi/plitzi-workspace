@@ -2,6 +2,7 @@
 import React, { use, useState, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
+import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
@@ -115,9 +116,11 @@ const AppHeaher = props => {
   }, [addToast, mutate, showModal]);
 
   const origin = useMemo(() => {
-    const { origin } = new URL(window.location.origin ?? 'https://plitzi.com');
+    if (typeof window !== 'undefined') {
+      return get(window, 'location.origin', 'https://plitzi.com');
+    }
 
-    return origin;
+    return 'https://plitzi.com';
   }, []);
 
   return (
