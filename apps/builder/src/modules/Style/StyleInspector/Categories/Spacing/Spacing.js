@@ -40,12 +40,40 @@ const dotKeys = [
  */
 const Spacing = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
+  const [isLinked, setIsLinked] = useState(false);
   const { getValue, setValue } = use(StyleInspectorContext);
   const [fragmentSelected, setFragmentSelected] = useState();
 
-  const handleChange = (type, partialValue) => {
-    setValue(type, partialValue);
-  };
+  const handleChangeLink = useCallback(() => setIsLinked(state => !state), [setIsLinked]);
+
+  const handleChange = useCallback(
+    (type, partialValue) => {
+      if (!isLinked) {
+        setValue(type, partialValue);
+
+        return;
+      }
+
+      if ([MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT].includes(type)) {
+        setValue([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT], {
+          [PADDING_TOP]: partialValue,
+          [PADDING_BOTTOM]: partialValue,
+          [PADDING_LEFT]: partialValue,
+          [PADDING_RIGHT]: partialValue
+        });
+      }
+
+      if ([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT].includes(type)) {
+        setValue([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT], {
+          [PADDING_TOP]: partialValue,
+          [PADDING_BOTTOM]: partialValue,
+          [PADDING_LEFT]: partialValue,
+          [PADDING_RIGHT]: partialValue
+        });
+      }
+    },
+    [isLinked, setValue]
+  );
 
   const handleSelectFragment = useCallback(
     fragmentSelected => setFragmentSelected(fragmentSelected),
@@ -54,17 +82,16 @@ const Spacing = props => {
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('spacing', isCollapsed), [onCollapse]);
 
-  const margin = getValue([MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT]);
-  const padding = getValue([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT]);
-
   return (
     <CategoryContainer title="Spacing" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="flex flex-col p-2">
         <SpacingMargin
-          partialValue={margin}
-          padding={padding}
+          partialValue={getValue([MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT])}
+          padding={getValue([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT])}
           fragmentSelected={fragmentSelected}
           onSelectFragment={handleSelectFragment}
+          isLinked={isLinked}
+          onLinkSelected={handleChangeLink}
         />
         {fragmentSelected && (
           <SpacingEditor

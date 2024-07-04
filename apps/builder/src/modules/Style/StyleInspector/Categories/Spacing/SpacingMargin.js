@@ -25,12 +25,21 @@ import SpacingNumber from './SpacingNumber';
  *     paddingLeft: string;
  *     paddingRight: string;
  *   };
+ *   isLinked?: boolean;
+ *   onLinkSelected?: () => void;
  *   onSelectFragment?: (fragment: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const SpacingMargin = props => {
-  const { fragmentSelected, partialValue, padding, onSelectFragment = noop } = props;
+  const {
+    fragmentSelected,
+    partialValue,
+    padding,
+    isLinked = false,
+    onLinkSelected = noop,
+    onSelectFragment = noop
+  } = props;
 
   const handleClickSelect = type => () => {
     const { fragmentSelected, onSelectFragment } = props;
@@ -78,6 +87,8 @@ const SpacingMargin = props => {
           partialValue={padding}
           fragmentSelected={fragmentSelected}
           onSelectFragment={onSelectFragment}
+          isLinked={isLinked}
+          onLinkSelected={onLinkSelected}
         />
         <div className="px-0.5 flex items-center justify-center">
           <SpacingNumber

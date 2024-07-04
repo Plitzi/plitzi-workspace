@@ -18,12 +18,14 @@ import SpacingNumber from './SpacingNumber';
  *     paddingLeft: string;
  *     paddingRight: string;
  *   };
+ *   isLinked?: boolean;
+ *   onLinkSelected?: () => void;
  *   onSelectFragment?: (fragment: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const SpacingPadding = props => {
-  const { fragmentSelected, partialValue, onSelectFragment = noop } = props;
+  const { fragmentSelected, partialValue, isLinked = false, onLinkSelected = noop, onSelectFragment = noop } = props;
   const handleClickSelect = type => () => {
     if (type === fragmentSelected) {
       onSelectFragment(undefined);
@@ -65,7 +67,13 @@ const SpacingPadding = props => {
             onClick={handleClickSelect(PADDING_LEFT)}
           />
         </div>
-        <div className="h-4 bg-slate-100 grow border border-gray-300 rounded-md" />
+        <div
+          className="flex items-center justify-center py-1 bg-slate-100 grow border border-gray-300 rounded-md"
+          onClick={onLinkSelected}
+        >
+          {isLinked && <i className="fa-solid fa-link text-sm" />}
+          {!isLinked && <i className="fa-solid fa-link-slash text-sm" />}
+        </div>
         <div className="px-0.5 flex items-center justify-center">
           <SpacingNumber
             value={paddingRight}
