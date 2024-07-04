@@ -115,7 +115,7 @@ const AppHeaher = props => {
   }, [addToast, mutate, showModal]);
 
   const origin = useMemo(() => {
-    const { origin } = new URL(window.location.origin);
+    const { origin } = new URL(window.location.origin ?? 'https://plitzi.com');
 
     return origin;
   }, []);
