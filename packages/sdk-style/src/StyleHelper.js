@@ -234,8 +234,8 @@ export const generateCache = style => {
   return cache.join('\n');
 };
 
-const cssRegex = /(?<selector>\.|#|)(?<selectorName>[a-z0-9_-]+)([ ]+|){(?<selectorData>[a-z0-9:; (),.%\n*/#-]+|)}/gim;
-const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\(.*\)|".*"|[a-z0-9 (),.%\n*/#-]+))/gim;
+const cssRegex = /(?<selector>\.|#|)(?<selectorName>[a-z0-9_-]+)([ ]+|){(?<selectorData>[a-z0-9:; (),.%\n*/#+-]+|)}/gim;
+const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\(.*\)|".*"|[a-z0-9 (),.%\n*/#+-]+))/gim;
 
 export const cssToSelectors = (css = '', singleSelector = false) => {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
