@@ -72,7 +72,7 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
   return value.join(separator);
 };
 
-const getDataStyle = (element, platform, displayMode, isParent = false, componentDefinitions = {}) => {
+const getDataStyle = (element, platform, isParent = false, componentDefinitions = {}) => {
   const metadata = { tree: [] };
   if (!element) {
     return undefined;
@@ -83,12 +83,9 @@ const getDataStyle = (element, platform, displayMode, isParent = false, componen
     definition: { type, styleSelectors }
   } = element;
 
-  const selectorSegments = Object.values(
-    pick(get(platform, displayMode, {}), get(styleSelectors, 'base', '').split(' '))
-  );
-
   // get element display mode styles (mobile -> tablet -> desktop)
   ['desktop', 'tablet', 'mobile'].forEach(mode => {
+    const selectorSegments = Object.values(pick(get(platform, mode, {}), get(styleSelectors, 'base', '').split(' ')));
     selectorSegments.forEach(segment => {
       const { name } = segment;
       const style = platform[mode][name];
@@ -142,7 +139,7 @@ export const calculateInheriting = (
 
   const { id } = element;
   while (element) {
-    const styleData = getDataStyle(element, platform, displayMode, element.id !== id, componentDefinitions);
+    const styleData = getDataStyle(element, platform, element.id !== id, componentDefinitions);
     metadata.tree = [
       ...metadata.tree,
       ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isParent))
