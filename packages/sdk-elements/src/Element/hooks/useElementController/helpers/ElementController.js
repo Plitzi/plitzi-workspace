@@ -9,7 +9,7 @@ import noop from 'lodash/noop';
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 
-// Alias
+// Relatives
 import PluginManager from '../../../PluginManager';
 import { PARTIAL_SCHEMA_TYPE_SEGMENT } from '../../../ElementConstants';
 

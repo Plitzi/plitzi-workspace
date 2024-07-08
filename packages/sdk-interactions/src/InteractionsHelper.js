@@ -19,7 +19,7 @@ const processParams = (type, params, flowValues, globalValues, action) => {
     if (type !== 'trigger') {
       let timeout = 5;
       while (typeof value === 'string' && hasTokens(value) && timeout > 0) {
-        value = processTwig(value, { ...flowValues, ...globalValues });
+        value = processTwig(value, { ...flowValues, ...globalValues }, false, true);
         timeout--;
       }
     }

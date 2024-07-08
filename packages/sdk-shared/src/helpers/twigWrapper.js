@@ -1,13 +1,15 @@
 // Packages
 import Twig from 'twig';
 
+Twig.extendFilter('object_as_json', value => (typeof value === 'object' ? JSON.stringify(value) : value));
+
 const tokenRegex = /{{([ ]+|)(?<token>[a-zA-Z][a-zA-Z0-9._-]+)([ ]+|)}}/gim;
 
 const isValidToken = token => !!token.match(tokenRegex);
 
 const hasTokens = template => !!template.replaceAll(' ', '').match(/{{.*}}/gim);
 
-const processTwig = (template, variables = {}, keepEmptyTokens = false) => {
+const processTwig = (template, variables = {}, keepEmptyTokens = false, asRaw = false) => {
   if (typeof template !== 'string') {
     return template;
   }
@@ -20,9 +22,27 @@ const processTwig = (template, variables = {}, keepEmptyTokens = false) => {
       });
     }
 
-    templateParsed = Twig.twig({ data: templateParsed });
+    if (asRaw) {
+      [...templateParsed.matchAll(tokenRegex)].forEach(token => {
+        templateParsed = templateParsed.replace(token[0], `{{ ${token.groups.token} | object_as_json }}`);
+      });
+    }
 
-    return templateParsed.render(variables);
+    templateParsed = Twig.twig({ data: templateParsed });
+    const result = templateParsed.render(variables);
+    if (!asRaw) {
+      return result;
+    }
+
+    try {
+      if (JSON.parse(result)) {
+        return JSON.parse(result);
+      }
+
+      return result;
+    } catch (e) {
+      return result;
+    }
   } catch (e) {
     return template;
   }
