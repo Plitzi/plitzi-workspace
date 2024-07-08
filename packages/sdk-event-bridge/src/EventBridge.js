@@ -75,7 +75,7 @@ class EventBridge {
     ).reduce((acum, item) => [...acum, ...item], []);
   }
 
-  emit(module, events, ...data) {
+  emit(module, events = [], ...data) {
     if (!Array.isArray(events) && events) {
       events = [events];
     }
