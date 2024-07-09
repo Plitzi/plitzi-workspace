@@ -10,6 +10,9 @@ import DataSourceContext from '../DataSourceContext';
 export const MODE_WRITE = 'write';
 export const MODE_READ = 'read';
 
+export const FILTER_MODE_SOFT = 'soft';
+export const FILTER_MODE_HARD = 'hard';
+
 /**
  * @param {{
  *   id: string;
@@ -19,11 +22,13 @@ export const MODE_READ = 'read';
  *   value: object;
  *   mode: 'write' | 'read';
  *   extraElements: object[];
+ *   sourceFilter?: string[];
+ *   filterMode?: 'soft' | 'hard';
  * }} props
  * @returns {object}
  */
 const useDataSource = (props = {}) => {
-  const { id, source, name, fields = [], mode = MODE_WRITE } = props;
+  const { id, source, name, fields = [], mode = MODE_WRITE, sourceFilter = [], filterMode = FILTER_MODE_SOFT } = props;
   const { addSource, getSources, updateFields, removeSource } = use(DataSourceContext);
   const initRef = useRef();
   const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
@@ -55,10 +60,16 @@ const useDataSource = (props = {}) => {
     return [context.current, uniqueId];
   }
 
-  return Object.values(getSources()).reduce(
-    (acum, { meta, context }) => ({ ...acum, [meta.source]: use(context) }),
-    {}
-  );
+  if (filterMode === FILTER_MODE_HARD && !sourceFilter.length) {
+    return {};
+  }
+
+  let sources = Object.values(getSources());
+  if (sourceFilter.length) {
+    sources = sources.filter(source => !sourceFilter?.length || sourceFilter.includes(source.meta.source));
+  }
+
+  return sources.reduce((acum, { meta, context }) => ({ ...acum, [meta.source]: use(context) }), {});
 };
 
 export default useDataSource;

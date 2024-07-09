@@ -1,5 +1,5 @@
 // Packages
-import React, { use, useEffect, useMemo, useRef, useState } from 'react';
+import React, { use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
@@ -8,7 +8,10 @@ import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives
-import ElementController from './helpers/ElementController';
+import useInternalProps from '../useInternalProps';
+import useInternalItems from '../useInternalItems';
+import useInternalClassName from '../useInternalClassName';
+import useElementProps from '../useElementProps';
 
 /**
  * @param {object} internalProps
@@ -25,58 +28,57 @@ const useElementController = (internalProps, { plitziCustomComponent, children, 
     root: { baseElementId },
     contexts: { SchemaContext, DataSourceContext, EventBridgeContext }
   } = usePlitziServiceContext();
-  const [, setReRender] = useState(0);
   const { useDataSource } = use(DataSourceContext);
   const { schema } = use(SchemaContext);
-  const { id, plitziElementLayout } = internalProps;
-  const element = get(schema, `flat.${id}`);
-  const dataSource = useDataSource({ id, mode: 'read' });
-  const instance = useMemo(
-    () =>
-      new ElementController(setReRender, id, internalProps, schema, {
-        isCustomComponent: plitziCustomComponent,
-        previewMode,
-        baseElementId
-      }),
-    [element, internalProps, previewMode]
+  const { id } = internalProps;
+  const { prevSchema } = use(SchemaContext);
+  const newSchema = useMemo(() => ({ schema: prevSchema }), [prevSchema]);
+  const element = useElementProps(id, schema);
+
+  const sourceFilter = useMemo(() => {
+    const bindings = get(element, 'definition.bindings', {});
+    if (!bindings) {
+      return ['variables'];
+    }
+
+    const filter = Object.values(bindings)
+      .flat()
+      .reduce((acc, binding) => (binding?.source ? [...acc, binding.source] : acc), []);
+    if (!filter.includes('variables')) {
+      filter.push('variables');
+    }
+
+    return filter;
+  }, [element?.definition]);
+
+  const dataSource = useDataSource({ id, mode: 'read', sourceFilter });
+
+  const { internalProps: internalPropsParsed } = useInternalProps({
+    element,
+    internalProps,
+    plitziCustomComponent,
+    dataSource,
+    previewMode
+  });
+  const eventCallbacks = useMemo(
+    () => ({ [`${id}_setState`]: internalPropsParsed.handleState }),
+    [internalPropsParsed.handleState]
   );
-
-  useMemo(() => instance.parse(dataSource), [instance.parse, dataSource, instance.state]);
-
-  const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: instance.handleState }), [instance.handleState]);
 
   useEventBridge(EventBridgeModuleTypes.ELEMENT, eventCallbacks, {}, EventBridgeContext);
 
-  // Items
-
-  useMemo(() => {
-    instance.refreshLayoutKeyIdentifier();
-  }, [plitziElementLayout]);
-
-  const { prevSchema } = use(SchemaContext);
-  const newSchema = useMemo(() => ({ schema: prevSchema }), [prevSchema]);
-  const { items } = get(element, 'definition', {});
-  const itemsMemo = useMemo(
-    () => instance.parseItems(schema, children, SchemaContext, prevSchema, newSchema),
-    [children, prevSchema, newSchema, items, previewMode, plitziElementLayout]
-  );
-
-  // Others
-
-  const initRef = useRef(false);
-  useEffect(() => {
-    if (initRef.current) {
-      instance.initInteractions();
-      setReRender(Date.now());
-    } else {
-      initRef.current = true;
-    }
-  }, [get(element, 'definition.label', id)]);
-
   return {
-    internalProps: instance.internalProps,
-    children: itemsMemo,
-    className: instance.getClassName(className)
+    internalProps: internalPropsParsed,
+    children: useInternalItems({
+      internalProps: internalPropsParsed,
+      schema,
+      children,
+      SchemaContext,
+      prevSchema,
+      newSchema,
+      previewMode
+    }),
+    className: useInternalClassName({ className, internalProps: internalPropsParsed, previewMode, baseElementId })
   };
 };
 

@@ -5,6 +5,7 @@ import get from 'lodash/get';
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { FILTER_MODE_HARD, FILTER_MODE_SOFT } from '@plitzi/sdk-data-source/hooks/useDataSource';
 
 // Relatives
 import { nativeEventsList } from './helpers/elementUtils';
@@ -114,7 +115,14 @@ const RootElement = props => {
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
   const { useDataSource } = use(DataSourceContext);
-  const dataSource = useDataSource({ id, mode: 'read' });
+  const filterMode = useMemo(() => {
+    if (!definition?.interactions || !Object.keys(definition.interactions).length) {
+      return FILTER_MODE_HARD;
+    }
+
+    return FILTER_MODE_SOFT;
+  }, [internalProps?.interactions]);
+  const dataSource = useDataSource({ id, mode: 'read', filterMode });
   const dataSourceContextRef = useRef({});
   dataSourceContextRef.current = dataSource;
 

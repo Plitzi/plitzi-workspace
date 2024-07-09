@@ -70,7 +70,7 @@ const withElement = WrappedComponent => {
         <ErrorBoundary>
           <WrappedComponent
             {...internalProps.attributes}
-            className={classNames(className, definition.styleSelectors?.base)}
+            className={classNames(className, definition?.styleSelectors?.base)}
             // Plitzi
             ref={refProxy}
             internalProps={internalProps}
