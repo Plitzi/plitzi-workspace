@@ -53,7 +53,7 @@ const PageInteractions = props => {
     if (keepState && stateStorage) {
       clearCache(stateStorage);
     }
-  }, [clearCache]);
+  }, [clearCache, stateStorage, keepState]);
 
   const pageUrls = useMemo(() => {
     const pages = pick(pageDefinitions, pageIds);

@@ -114,10 +114,12 @@ const StateManagerContextProvider = props => {
   const clearCache = useCallback(
     storeMode => {
       try {
-        if (localStorage && storeMode === 'localStorage') {
+        if (localStorage && storeMode === 'local') {
           localStorage.removeItem(storageId);
-        } else if (sessionStorage && storeMode === 'sessionStorage') {
+          setState({});
+        } else if (sessionStorage && storeMode === 'session') {
           sessionStorage.removeItem(storageId);
+          setState({});
         }
       } catch (err) {
         // Nothing to do here
