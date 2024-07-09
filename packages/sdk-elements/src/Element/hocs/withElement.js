@@ -8,7 +8,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext'
 import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import useElementController from '../hooks/useElementController';
+import useElement from '../hooks/useElement';
 
 const withElement = WrappedComponent => {
   /**
@@ -31,7 +31,7 @@ const withElement = WrappedComponent => {
       return useMemo(() => <WrappedComponent {...props} />, [props]);
     }
 
-    ({ internalProps, children, className } = useElementController(internalProps, {
+    ({ internalProps, children, className } = useElement(internalProps, {
       plitziCustomComponent,
       children,
       className

@@ -8,10 +8,10 @@ import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives
-import useInternalProps from '../useInternalProps';
-import useInternalItems from '../useInternalItems';
-import useInternalClassName from '../useInternalClassName';
-import useElementProps from '../useElementProps';
+import useInternalProps from './useInternalProps';
+import useInternalItems from './useInternalItems';
+import useInternalClassName from './useInternalClassName';
+import useElementProps from './useElementProps';
 
 /**
  * @param {object} internalProps
@@ -22,7 +22,7 @@ import useElementProps from '../useElementProps';
  * }} props
  * @returns {React.ReactElement}
  */
-const useElementController = (internalProps, { plitziCustomComponent, children, className }) => {
+const useElement = (internalProps, { plitziCustomComponent, children, className }) => {
   const {
     settings: { previewMode },
     root: { baseElementId },
@@ -82,4 +82,4 @@ const useElementController = (internalProps, { plitziCustomComponent, children, 
   };
 };
 
-export default useElementController;
+export default useElement;
