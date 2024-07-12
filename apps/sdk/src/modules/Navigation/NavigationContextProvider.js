@@ -127,10 +127,6 @@ const NavigationContextProvider = props => {
     };
   }, [handleNavigate, urlSearchParams, routeParams, queryParams, currentPageId, Helmet]);
 
-  if (action.type === 'redirect') {
-    return <Navigate to={action.path} replace />;
-  }
-
   if (action.type === 'notFound') {
     // @todo: In the future this should navigate to page 404
     // return <Navigate to="/not-found" replace />;
@@ -143,12 +139,12 @@ const NavigationContextProvider = props => {
     return 'Access Denied';
   }
 
-  if (!currentPageId) {
-    // Rare scenario where pages are incorrectly configured and no default page is found
-    return 'Page Not Found';
-  }
-
-  return <NavigationContext value={navigationValue}>{children}</NavigationContext>;
+  return (
+    <NavigationContext value={navigationValue}>
+      {action?.type === 'redirect' && <Navigate to={action.path} replace />}
+      {children}
+    </NavigationContext>
+  );
 };
 
 export default NavigationContextProvider;
