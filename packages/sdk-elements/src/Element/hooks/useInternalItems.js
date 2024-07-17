@@ -11,11 +11,12 @@ const useInternalItems = props => {
   const { id, definition, plitziElementLayout } = internalProps;
   const { items } = definition;
   const layoutKeyIdentifier = useMemo(() => Math.round(Math.random() * 100), [plitziElementLayout]);
-  if (!plitziElementLayout && !children && (!items || items.length === 0)) {
-    return undefined;
-  }
 
   return useMemo(() => {
+    if (!plitziElementLayout && !children && (!items || items.length === 0)) {
+      return undefined;
+    }
+
     // Process items
     const flat = get(schema, 'flat', {});
     const itemsParsed = (items ?? [])
