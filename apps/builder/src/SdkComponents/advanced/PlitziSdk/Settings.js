@@ -29,7 +29,7 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-2">
           <label>Environment</label>
-          <Select value={environment} onChange={handleChange('environment')} inputClassName="rounded">
+          <Select value={environment} onChange={handleChange('environment')} className="rounded">
             <option value="main">Main</option>
             <option value="development">Development</option>
             <option value="staging">Staging</option>
