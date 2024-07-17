@@ -1,8 +1,5 @@
-// eslint-disable-file react/no-danger
-
 // Packages
-import React, { useCallback, useEffect, useMemo } from 'react';
-import dompurify from 'dompurify';
+import React, { useCallback, useEffect } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
@@ -27,7 +24,6 @@ const BlockHtml = props => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
-  const contentCleaned = useMemo(() => dompurify.sanitize(content), [content]);
 
   const insertScript = useCallback(sourceScript => {
     return new Promise((resolve, reject) => {
@@ -103,7 +99,7 @@ const BlockHtml = props => {
       className={classNames('plitzi-component__block-html', className, {
         'block-html--empty': content === '' || !content
       })}
-      dangerouslySetInnerHTML={{ __html: !previewMode ? contentCleaned : content }}
+      dangerouslySetInnerHTML={{ __html: content }}
     />
   );
 };
