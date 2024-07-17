@@ -9,6 +9,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 
 // Monorepo
+import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
@@ -35,13 +36,18 @@ const DataSourceBinding = props => {
     allowCustomBindings = false,
     onChange = noop
   } = props;
-  const { getSources } = use(DataSourceContext);
+  const { getSourcesByElementId } = use(DataSourceContext);
+  const { schema } = use(BuilderSchemaContext);
   const [bindingFormValues, setBindingFormValues] = useState(() =>
     Object.keys(bindingsAllowed).reduce((acum, key) => ({ ...acum, [key]: null }), {})
   );
   const sources = useMemo(
-    () => Object.values(getSources()).reduce((acum, source) => ({ ...acum, [source.meta.source]: source.meta }), {}),
-    [getSources]
+    () =>
+      Object.values(getSourcesByElementId(schema?.flat, id)).reduce(
+        (acum, source) => ({ ...acum, [source.meta.source]: source.meta }),
+        {}
+      ),
+    [getSourcesByElementId, id]
   );
 
   useEffect(() => {

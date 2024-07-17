@@ -4,6 +4,9 @@ import omit from 'lodash/omit';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
+// Monorepo
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
+
 // Relatives
 import DataSourceContext from './DataSourceContext';
 import useDataSource from './hooks/useDataSource';
@@ -58,6 +61,22 @@ const DataSourceContextProvider = props => {
     [sourcesRef]
   );
 
+  const handleGetSourcesByElementId = useCallback(
+    (schemaFlat, id) => {
+      if (!id || !schemaFlat) {
+        return {};
+      }
+
+      const ids = FlatMap.getParentTree(schemaFlat, id);
+      const sources = Object.values(sourcesRef.current)
+        .filter(source => ids.includes(source.meta.id) || source.meta.id === 'global')
+        .reduce((acum, source) => ({ ...acum, [source.id]: source }), {});
+
+      return sources;
+    },
+    [sourcesRef]
+  );
+
   const handleRemoveSource = useCallback(
     id => {
       sourcesRef.current = omit(sourcesRef.current, id);
@@ -71,7 +90,8 @@ const DataSourceContextProvider = props => {
       addSource: handleAddSource,
       updateFields: handleUpdateFields,
       removeSource: handleRemoveSource,
-      getSources: handleGetSources
+      getSources: handleGetSources,
+      getSourcesByElementId: handleGetSourcesByElementId
     }),
     [useDataSource, handleAddSource, handleRemoveSource, handleGetSources, handleUpdateFields]
   );
