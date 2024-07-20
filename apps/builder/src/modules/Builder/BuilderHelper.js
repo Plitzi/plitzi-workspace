@@ -6,7 +6,6 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import FlatMap from '@plitzi/sdk-schema/FlatMap';
 import { StyleSelectors, generateCache, generateStyleSelector, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
@@ -231,10 +230,8 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
     const {
       payload: { elements, style }
     } = data;
-    const { acum, item } = FlatMap.cloneNested(elements.item.id, elements.acum);
-    delete acum[item.id];
-
-    templateData = { elements: acum, baseElement: item, style };
+    delete elements.acum[elements.item.id];
+    templateData = { elements: elements.acum, baseElement: elements.item, style };
   } else if (dataType === 'text' && Array.isArray(data) && data.length > 1) {
     const elementContainerDefinition = getElementDefinition(componentDefinitions, 'container');
     data.forEach(paragraph => {

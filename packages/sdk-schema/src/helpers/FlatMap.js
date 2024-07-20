@@ -1,7 +1,6 @@
 // Packages
 import get from 'lodash/get';
 import set from 'lodash/set';
-import cloneDeep from 'lodash/cloneDeep';
 
 // Monorepo
 import { generateID } from '@plitzi/sdk-shared/utils';
@@ -194,40 +193,32 @@ const moveElement = (flat, from, to, elementId, dropPosition = DROP_DIRECTION_IN
   return flat;
 };
 
-const nestedElements = (elementId, flat, parentId, acum = {}) => {
-  const element = flat[elementId];
-  if (!element) {
-    return { item: undefined, acum };
+const nestedElements = (elementId, flat) => {
+  const elementsId = childTree(flat, elementId);
+  const mapIds = {};
+  let elements = [elementId, ...elementsId]
+    .map(id => flat[id])
+    .filter(Boolean)
+    .reduce((acum, element) => {
+      mapIds[element.id] = generateID(element.id);
+
+      return { ...acum, [element.id]: element };
+    }, {});
+
+  try {
+    let elementsStr = JSON.stringify(elements);
+    elementsStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), elementsStr);
+    elements = JSON.parse(elementsStr);
+  } catch (e) {
+    console.error('Error parsing elements', e);
+
+    return { acum: {}, item: undefined };
   }
 
-  const {
-    definition: { items }
-  } = element;
-
-  const newId = generateID();
-  if (!items || items.length === 0) {
-    acum[newId] = { ...element, definition: { ...element.definition, parentId }, id: newId };
-
-    return { item: acum[newId], acum };
-  }
-
-  let newItems = [];
-  items.forEach(item => {
-    const nestedItems = nestedElements(item, flat, newId);
-    if (!nestedItems.item) {
-      return;
-    }
-
-    acum = { ...acum, ...nestedItems.acum };
-    newItems = [...newItems, nestedItems.item.id];
-  });
-
-  acum[newId] = { ...element, definition: { ...element.definition, items: newItems, parentId }, id: newId };
-
-  return { item: acum[newId], acum };
+  return { acum: elements, item: elements[mapIds[elementId]] };
 };
 
-const cloneNested = (baseElementId, elements) => nestedElements(baseElementId, cloneDeep(elements));
+const cloneNested = (baseElementId, elements) => nestedElements(baseElementId, elements);
 
 const cloneElement = (flat, elementId, targetId) => {
   if (!flat[elementId]) {

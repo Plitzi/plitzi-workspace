@@ -1,6 +1,8 @@
 // Packages
 import get from 'lodash/get';
 
+export const isTestMode = () => typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test';
+
 export function getDisplayName(WrappedComponent) {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 }
@@ -23,8 +25,16 @@ const mongoObjectId = () => {
   );
 };
 
-export const generateID = () => {
-  return mongoObjectId();
+export const generateID = (prevId = '') => {
+  if (!isTestMode()) {
+    return mongoObjectId();
+  }
+
+  if (!prevId) {
+    return 'id_000000';
+  }
+
+  return `id_${prevId.substring(prevId.length - 6)}`;
 };
 
 export const getPathsFromObeject = (object, basePath = '', glue = '.', skipArray = false) => {
