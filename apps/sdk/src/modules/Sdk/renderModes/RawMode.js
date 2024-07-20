@@ -1,9 +1,12 @@
 /* eslint-disable react/no-danger */
 // Packages
-import React, { useMemo } from 'react';
+import React, { useMemo, use } from 'react';
+import get from 'lodash/get';
 
 // Monorepo
 import { Page } from '@plitzi/sdk-elements/components';
+import PluginManager from '@plitzi/sdk-elements/PluginManager';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Alias
@@ -11,9 +14,11 @@ import MadeInPlitzi from '@components/MadeInPlitzi';
 
 // Relatives
 import SpaceContainer from '../../Space/SpaceContainer';
+import { RENDER_MODE_RAW, RENDER_MODE_WIDGET } from '../Sdk';
 
 /**
  * @param {{
+ *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
  *   pageId?: string;
  *   style?: string;
  *   plitziContextValue: object;
@@ -21,14 +26,29 @@ import SpaceContainer from '../../Space/SpaceContainer';
  * @returns {React.ReactElement}
  */
 const RawMode = props => {
-  const { pageId = '', style = '', plitziContextValue } = props;
+  const { pageId = '', style = '', plitziContextValue, renderMode = RENDER_MODE_RAW } = props;
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
+  let schema;
+  if (renderMode === RENDER_MODE_WIDGET) {
+    ({ schema } = use(SchemaContext));
+  }
+
+  const type = useMemo(() => {
+    if (schema && pageId) {
+      return get(schema, `flat.${pageId}.definition.type`, 'page');
+    }
+
+    return 'page';
+  }, [pageId]);
 
   return (
     <SpaceContainer>
       <style dangerouslySetInnerHTML={{ __html: style }} />
       <PlitziServiceProvider value={plitziContextValue}>
-        {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
+        {pageId && renderMode !== RENDER_MODE_WIDGET && <Page key={pageId} internalProps={pageValueMemo}/>}
+        {pageId && renderMode === RENDER_MODE_WIDGET && (
+          <PluginManager key={pageId} id={pageId} rootId={pageId} type={type} internalProps={pageValueMemo} />
+        )}
       </PlitziServiceProvider>
       <MadeInPlitzi pageId={pageId} />
     </SpaceContainer>

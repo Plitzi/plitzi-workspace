@@ -121,7 +121,14 @@ const Sdk = props => {
   );
 
   if (renderMode === RENDER_MODE_RAW || renderMode === RENDER_MODE_SSR || renderMode === RENDER_MODE_WIDGET) {
-    return <RawMode style={styleParsed} plitziContextValue={plitziContextValue} pageId={currentPageId} />;
+    return (
+      <RawMode
+        renderMode={renderMode}
+        style={styleParsed}
+        plitziContextValue={plitziContextValue}
+        pageId={currentPageId}
+      />
+    );
   }
 
   if (renderMode === RENDER_MODE_SHADOW) {

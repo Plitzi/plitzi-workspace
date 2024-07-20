@@ -3,6 +3,7 @@ import React, { useCallback, use, useMemo, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
+import noop from 'lodash/noop';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
@@ -40,16 +41,23 @@ const NavigationContextProvider = props => {
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
   const { authenticated } = use(UserContext);
-  const navigate = useNavigate();
+  let navigate = noop;
+  if (renderMode !== RENDER_MODE_WIDGET) {
+    navigate = useNavigate();
+  }
+
   const paths = useMemo(
     () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server?.basePath, previewMode),
     [pages, pageFolders, authenticated, previewMode, server?.basePath]
   );
 
-  const matchResult = useMemo(
-    () => matchRoutePath(paths, location.pathname, authenticated, renderMode === RENDER_MODE_WIDGET ? '*' : ''),
-    [paths, location.pathname, authenticated]
-  );
+  const matchResult = useMemo(() => {
+    if (renderMode === RENDER_MODE_WIDGET) {
+      return { action: {}, pageId: currentPageIdProp };
+    }
+
+    return matchRoutePath(paths, location.pathname, authenticated);
+  }, [paths, location.pathname, authenticated, renderMode, currentPageIdProp]);
 
   const { action, pageId, pathMatch } = matchResult;
   const currentPageId = currentPageIdProp || pageId;

@@ -164,11 +164,11 @@ const Templates = () => {
                 <div className="flex flex-col relative overflow-hidden rounded-lg border">
                   <ContainerAutoScale className="page-list-item__content flex items-center justify-center h-[150px] w-full overflow-hidden">
                     <PlitziSdk
-                      className="h-full w-full"
+                      className="h-full w-full pointer-events-none"
                       offlineMode
+                      renderMode="widget"
                       currentPageId={baseElementId}
                       previewMode={false}
-                      externalStyle="body{overflow:hidden; pointer-events: none; user-select: none}"
                       offlineData={offlineData}
                       server={server}
                       webKey={webKey}
