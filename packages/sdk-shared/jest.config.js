@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   testEnvironment: 'jest-environment-jsdom',
   coverageReporters: ['clover', 'json', 'lcov', 'text', 'html'],
@@ -6,8 +8,7 @@ module.exports = {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1'
   },
-  // preset: 'babel-jest',
   transform: {
-    '^.+\\.(js|jsx)$': 'babel-jest'
+    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: path.resolve(__dirname, './babel.config.js') }]
   }
 };

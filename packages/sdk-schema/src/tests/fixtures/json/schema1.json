@@ -1,0 +1,105 @@
+{
+  "flat": {
+    "657425e280b5b09c93b4a284": {
+      "id": "657425e280b5b09c93b4a284",
+      "definition": {
+        "label": "Page",
+        "type": "page",
+        "initialState": null,
+        "styleSelectors": { "base": "page-u7af" },
+        "bindings": null,
+        "interactions": null,
+        "parentId": null,
+        "rootId": "657425e280b5b09c93b4a284",
+        "items": ["669b33d56e29e1297a6ccde1"]
+      },
+      "attributes": { "slug": "test", "default": false, "name": "Test", "folder": "" }
+    },
+    "669b33d56e29e1297a6ccde1": {
+      "id": "669b33d56e29e1297a6ccde1",
+      "attributes": { "subType": "div" },
+      "definition": {
+        "label": "Container",
+        "type": "container",
+        "description": "Group things together into groups, also nestable.",
+        "items": ["669b33dbcdca21b2f0e21bc6", "669b33dcf636e501810d3d1d"],
+        "bindings": {},
+        "styleSelectors": { "base": "" },
+        "initialState": { "visibility": true },
+        "rootId": "657425e280b5b09c93b4a284",
+        "parentId": "657425e280b5b09c93b4a284"
+      }
+    },
+    "669b33dbcdca21b2f0e21bc6": {
+      "id": "669b33dbcdca21b2f0e21bc6",
+      "definition": {
+        "label": "Button",
+        "type": "button",
+        "initialState": { "visibility": true },
+        "styleSelectors": { "base": "" },
+        "bindings": {},
+        "interactions": {
+          "node_669b33e1847b3149e1223886": {
+            "id": "node_669b33e1847b3149e1223886",
+            "title": "New Trigger",
+            "type": "trigger",
+            "action": "onClick",
+            "params": { "propagateEvent": false },
+            "preview": { "propagateEvent": "" },
+            "elementId": "669b33dbcdca21b2f0e21bc6",
+            "beforeNode": "",
+            "afterNode": "node_669b33e73090472c339a0b52",
+            "flowId": "node_669b33e1847b3149e1223886",
+            "enabled": true
+          },
+          "node_669b33e73090472c339a0b52": {
+            "id": "node_669b33e73090472c339a0b52",
+            "title": "New Callback",
+            "type": "callback",
+            "action": "setState",
+            "params": { "category": "attribute", "key": "content", "value": "Nice one", "revertOnFinish": false },
+            "preview": {},
+            "elementId": "669b33dcf636e501810d3d1d",
+            "beforeNode": "node_669b33e1847b3149e1223886",
+            "afterNode": "",
+            "flowId": "node_669b33e1847b3149e1223886",
+            "enabled": true
+          }
+        },
+        "parentId": "669b33d56e29e1297a6ccde1",
+        "rootId": "657425e280b5b09c93b4a284",
+        "items": []
+      },
+      "attributes": { "contentPlacement": "after", "content": "Button", "subType": "button", "disabled": false }
+    },
+    "669b33dcf636e501810d3d1d": {
+      "id": "669b33dcf636e501810d3d1d",
+      "attributes": { "content": "Heading", "subType": "h1" },
+      "definition": {
+        "label": "Nice Heading",
+        "type": "heading",
+        "bindings": {},
+        "styleSelectors": { "base": "" },
+        "initialState": { "visibility": true },
+        "rootId": "657425e280b5b09c93b4a284",
+        "parentId": "669b33d56e29e1297a6ccde1"
+      }
+    }
+  },
+  "settings": {
+    "customCss": "",
+    "userProvider": "",
+    "auth0Domain": "",
+    "auth0ClientId": "",
+    "loginUrl": "",
+    "refreshUrl": "",
+    "detailsPath": "",
+    "tokenPath": "",
+    "expirationTimePath": "",
+    "keepState": true,
+    "stateStorage": "local"
+  },
+  "pages": ["657425e280b5b09c93b4a284"],
+  "pageFolders": [],
+  "variables": []
+}

@@ -9,7 +9,9 @@
     "./FlatMap": "./src/helpers/FlatMap.js"
   },
   "scripts": {
-    "lint": "eslint ./src"
+    "lint": "eslint ./src",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "devDependencies": {
     "eslint": "^8.57.0"
