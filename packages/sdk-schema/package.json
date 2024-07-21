@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-schema",
-  "version": "0.22.8",
+  "version": "0.22.9",
   "files": [],
   "exports": {
     ".": "./src/index.js",
@@ -19,7 +19,6 @@
   "dependencies": {
     "@plitzi/sdk-shared": "*",
     "lodash": "^4.17.21",
-    "prop-types": "^15.8.1",
-    "react": "19.0.0-rc-6230622a1a-20240610"
+    "prop-types": "^15.8.1"
   }
 }

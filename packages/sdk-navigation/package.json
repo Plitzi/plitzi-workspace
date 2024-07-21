@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.22.8",
+  "version": "0.22.9",
   "files": [],
   "exports": {
     ".": "./src/index.js",
@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "react-router-dom": "^6.24.1"
+    "react-router-dom": "^6.25.1"
   }
 }
