@@ -24,14 +24,14 @@
     "changeset": "changeset"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui-components": "0.13.12",
+    "@plitzi/plitzi-ui-components": "0.13.13",
     "@plitzi/sdk-shared": "*"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.7",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
-    "turbo": "^2.0.9"
+    "turbo": "^2.0.11"
   },
   "engines": {
     "node": ">=20"

@@ -15,7 +15,8 @@ $border-radius: '4px';
 .plitzi-builder {
   font-family: 'Rubik', sans-serif;
 
-  &.resizing {
+  &.resizing,
+  &.moving {
     .builder-area {
       pointer-events: none;
     }
