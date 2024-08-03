@@ -2473,7 +2473,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.28.6":
+"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0":
   version: 6.28.6
   resolution: "@codemirror/view@npm:6.28.6"
   dependencies:
@@ -2481,6 +2481,17 @@ __metadata:
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
   checksum: 10c0/aaf0cd3959d846bb70cb760832c6dd2b74531d7d45d79b7bc10360ab8b0543234db3c04f6e56cee2d99b33057fc229f977e0f0f0c52be4cbd855b779d86e5a68
+  languageName: node
+  linkType: hard
+
+"@codemirror/view@npm:^6.29.1":
+  version: 6.29.1
+  resolution: "@codemirror/view@npm:6.29.1"
+  dependencies:
+    "@codemirror/state": "npm:^6.4.0"
+    style-mod: "npm:^4.1.0"
+    w3c-keyname: "npm:^2.2.4"
+  checksum: 10c0/f5cc5aed853ab5c0ca2fcb3337b7332650bcbc403faddd436fd7d57bc811901b28fd505bd9301e067b2fefd7f36382f0f67977c2866b2b5b905c01e4ef666476
   languageName: node
   linkType: hard
 
@@ -3567,9 +3578,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.13.13":
-  version: 0.13.13
-  resolution: "@plitzi/plitzi-ui-components@npm:0.13.13::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.13%2F6ac6e64ebca8d8840ca80c03d55b3022fd3ba11c"
+"@plitzi/plitzi-ui-components@npm:0.13.14":
+  version: 0.13.14
+  resolution: "@plitzi/plitzi-ui-components@npm:0.13.14::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.14%2Fa62cdfab1b27392e689f788e22b4e595a85fb2f3"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.17.0"
     "@codemirror/commands": "npm:^6.6.0"
@@ -3580,7 +3591,7 @@ __metadata:
     "@codemirror/search": "npm:^6.5.6"
     "@codemirror/state": "npm:^6.4.1"
     "@codemirror/theme-one-dark": "npm:^6.1.2"
-    "@codemirror/view": "npm:^6.28.6"
+    "@codemirror/view": "npm:^6.29.1"
     classnames: "npm:^2.5.1"
     immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"
@@ -3590,11 +3601,11 @@ __metadata:
     react-dom: "npm:19.0.0-rc-6230622a1a-20240610"
     react-markdown: "npm:^9.0.1"
     react-moment: "npm:^1.1.3"
-    react-router-dom: "npm:^6.25.1"
+    react-router-dom: "npm:^6.26.0"
     react-syntax-highlighter: "npm:^15.5.0"
     react-toastify: "npm:^10.0.5"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/394af72e6080567542584682ccc2067319295d59318987abeccab245a12de615dc6dc1e9dd71044dfe363b76ca92a397c5b25e837477be28080ef3a54b09ec79
+  checksum: 10c0/d57e332ddca9e1e155f3e59c1974867221de72da900a5c0eca1683bdcc3ce06de042d513abb2077ac7f8e5c42aae99f11e69f762d4c95ce9b0da66e3fc422c7b
   languageName: node
   linkType: hard
 
@@ -3610,7 +3621,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.7"
-    "@plitzi/plitzi-ui-components": "npm:0.13.13"
+    "@plitzi/plitzi-ui-components": "npm:0.13.14"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"
@@ -3802,13 +3813,6 @@ __metadata:
   version: 1.0.0-next.25
   resolution: "@polka/url@npm:1.0.0-next.25"
   checksum: 10c0/ef61f0a0fe94bb6e1143fc5b9d5a12e6ca9dbd2c57843ebf81db432c21b9f1005c09e8a1ef8b6d5ddfa42146ca65b640feb2d353bd0d3546da46ba59e48a5349
-  languageName: node
-  linkType: hard
-
-"@remix-run/router@npm:1.18.0":
-  version: 1.18.0
-  resolution: "@remix-run/router@npm:1.18.0"
-  checksum: 10c0/3ec7e441a0e54932a3d3bf932432094420f2c117715d80a5454bc7e55d13b91250749942aab032cd07aee191f1c1de33fede8682025bfd3a453dd207c016e140
   languageName: node
   linkType: hard
 
@@ -15507,19 +15511,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^6.25.1":
-  version: 6.25.1
-  resolution: "react-router-dom@npm:6.25.1"
-  dependencies:
-    "@remix-run/router": "npm:1.18.0"
-    react-router: "npm:6.25.1"
-  peerDependencies:
-    react: ">=16.8"
-    react-dom: ">=16.8"
-  checksum: 10c0/15e2b5bf89a26db9a108d19a4e0e2054180bfb1f5f62662dd93ad697ee1bdc91a8041efd762d552c95e65fc06ca0cb0c1e88acdeeaf03aba37f7a29e470c7cc4
-  languageName: node
-  linkType: hard
-
 "react-router-dom@npm:^6.26.0":
   version: 6.26.0
   resolution: "react-router-dom@npm:6.26.0"
@@ -15530,17 +15521,6 @@ __metadata:
     react: ">=16.8"
     react-dom: ">=16.8"
   checksum: 10c0/f59a5b72b1dab6480f97f20fa49b601cb1366e6e1c8def7fd727ccbc4e8cf527f64f7aedd2889534de222dc86634a23e2ed108b99e5443e7b5401a4db104e611
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.25.1":
-  version: 6.25.1
-  resolution: "react-router@npm:6.25.1"
-  dependencies:
-    "@remix-run/router": "npm:1.18.0"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 10c0/a7e824c1f6d9641beabc23111865ddd2525b3794403e07b297fc2bdd4cddec93e166aacdb9d2602768864d70f3bf490f59eeab8474a04ae1f13a832f305eeec3
   languageName: node
   linkType: hard
 

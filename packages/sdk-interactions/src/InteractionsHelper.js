@@ -140,11 +140,7 @@ const flowTrigger = async (
   postCallbacksTotal = []
 ) => {
   const { action, enabled, when } = triggerNode;
-  if (!action || !enabled) {
-    return;
-  }
-
-  if (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams })) {
+  if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
     return;
   }
 
