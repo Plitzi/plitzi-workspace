@@ -3068,6 +3068,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.24.7"
     "@plitzi/plitzi-webpack": "npm:^0.2.0"
     "@plitzi/sdk-auth": "npm:*"
+    "@plitzi/sdk-dev-tools": "npm:*"
     "@plitzi/sdk-elements": "npm:*"
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-interactions": "npm:*"
@@ -3200,6 +3201,15 @@ __metadata:
     eslint: "npm:^8.57.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/sdk-dev-tools@npm:*, @plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
+  dependencies:
+    eslint: "npm:^8.57.0"
+    lodash: "npm:^4.17.21"
   languageName: unknown
   linkType: soft
 

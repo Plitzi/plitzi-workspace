@@ -1,3 +1,7 @@
+// @import 'tailwindcss/base'; // @tailwind base;
+@import 'tailwindcss/components'; // @tailwind components;
+@import 'tailwindcss/utilities'; // @tailwind utilities;
+
 @import './sdk';
 
 @import '@plitzi/plitzi-ui-components/Toast/Assets/index.scss';
@@ -58,6 +62,7 @@ body {
     'Noto Color Emoji';
   font-size: 12px;
   text-decoration: none;
+  user-select: none;
   box-shadow:
     rgba(0, 0, 0, 0) 0px 0px 0px 0px,
     rgba(0, 0, 0, 0) 0px 0px 0px 0px,

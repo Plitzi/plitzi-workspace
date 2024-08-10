@@ -90,7 +90,10 @@ if (typeof window !== 'undefined' && window.plitziCache) {
       );
     });
   } else {
-    ReactDOM.hydrateRoot(document.getElementById('plitzi-sdk-root'), <App {...window.plitziCache} />);
+    ReactDOM.hydrateRoot(
+      document.getElementById('plitzi-sdk-root'),
+      <App {...window.plitziCache} debugMode={debugMode} />
+    );
   }
 }
 
