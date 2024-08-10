@@ -224,6 +224,7 @@ const useInternalProps = props => {
       return;
     }
 
+    prevStateRef.current = prevState;
     setState(prevState);
   }, []);
 
