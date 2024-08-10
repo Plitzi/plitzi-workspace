@@ -1,0 +1,20 @@
+{
+  "name": "@plitzi/sdk-state",
+  "version": "0.22.9",
+  "files": [],
+  "exports": {
+    ".": "./src/index.js",
+    "./StateManagerContext": "./src/StateManagerContext.js",
+    "./StateManagerContextProvider": "./src/StateManagerContextProvider.js"
+  },
+  "scripts": {
+    "lint": "eslint ./src"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "dependencies": {
+    "@plitzi/sdk-shared": "*",
+    "lodash": "^4.17.21"
+  }
+}

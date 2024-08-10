@@ -10,15 +10,13 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-
-// Monorepo
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 // Alias
 import CollectionContext from '@modules/Collection/CollectionContext';
 import NetworkContext from '@modules/Network/NetworkContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
-import StateManagerContext from '@modules/StateManager/StateManagerContext';
 
 // Relatives
 import RawMode from './renderModes/RawMode';

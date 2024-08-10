@@ -16,6 +16,7 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
@@ -25,7 +26,6 @@ import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';

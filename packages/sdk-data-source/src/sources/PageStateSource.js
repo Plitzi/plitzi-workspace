@@ -1,25 +1,35 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
+import get from 'lodash/get';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import { getPathsFromObeject, emptyObject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-
-const pagesDefault = [];
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 /**
  * @param {{
  *   children: React.ReactNode;
- *   state: object;
  *   pages: string[];
  * }} props
  * @returns {React.ReactElement}
  */
 const PageStateSource = props => {
-  const { children, state = emptyObject, pages = pagesDefault } = props;
+  const { children } = props;
   const { useDataSource } = use(DataSourceContext);
   const { currentPageId } = use(NavigationContext);
+  const { schema } = use(SchemaContext);
+  const { state } = use(StateManagerContext);
+  const pages = useMemo(
+    () =>
+      get(schema, 'pages', []).reduce(
+        (acum, pageId) => [...acum, { value: pageId, label: get(schema, `flat.${pageId}.attributes.name`, pageId) }],
+        []
+      ),
+    [schema.pages, schema.flat]
+  );
 
   const sourceFields = useCallback(async () => {
     if (pages && pages.length > 0) {

@@ -1,26 +1,41 @@
 // Packages
-import React, { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, use } from 'react';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Relatives
 import DataSourceContext from './DataSourceContext';
 import useDataSource from './hooks/useDataSource';
+import UserSource from './sources/UserSource';
+import VariablesSource from './sources/VariablesSource';
+import NavigationSource from './sources/NavigationSource';
+import PageStateSource from './sources/PageStateSource';
 
 /**
  * @param {{
  *   children: React.ReactNode;
+ *   environment: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const DataSourceContextProvider = props => {
-  const { children } = props;
+  const { children, environment } = props;
   const sourcesRef = useRef({});
   const initRef = useRef();
+  const {
+    schema: { variables }
+  } = use(SchemaContext);
+  const { routeParams, queryParams, hostname } = use(NavigationContext);
+  const variablesData = useMemo(
+    () => ({ routeParams, queryParams, hostname, environment }),
+    [routeParams, queryParams, hostname, environment]
+  );
 
   useEffect(() => {
     if (!initRef.current) {
@@ -96,7 +111,17 @@ const DataSourceContextProvider = props => {
     [useDataSource, handleAddSource, handleRemoveSource, handleGetSources, handleUpdateFields]
   );
 
-  return <DataSourceContext value={valueMemo}>{children}</DataSourceContext>;
+  return (
+    <DataSourceContext value={valueMemo}>
+      <UserSource>
+        <VariablesSource variables={variables} whenData={variablesData}>
+          <NavigationSource>
+            <PageStateSource>{children}</PageStateSource>
+          </NavigationSource>
+        </VariablesSource>
+      </UserSource>
+    </DataSourceContext>
+  );
 };
 
 export default DataSourceContextProvider;

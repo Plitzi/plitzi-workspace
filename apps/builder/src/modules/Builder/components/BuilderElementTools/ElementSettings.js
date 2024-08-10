@@ -23,12 +23,12 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 // Alias
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import AppContext from '@pmodules/App/AppContext';
-import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 // Relatives

@@ -14,10 +14,10 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 import AppContext from '@pmodules/App/AppContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';

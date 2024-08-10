@@ -7,9 +7,9 @@ import pick from 'lodash/pick';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 // Alias
-import StateManagerContext from '@pmodules/StateManager/StateManagerContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
 /**

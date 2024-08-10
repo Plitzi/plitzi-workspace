@@ -22,6 +22,7 @@
     "@plitzi/sdk-interactions": "*",
     "@plitzi/sdk-plugins": "*",
     "@plitzi/sdk-shared": "*",
+    "@plitzi/sdk-state": "*",
     "apollo-upload-client": "^18.0.1",
     "classnames": "^2.5.1",
     "graphql": "^16.9.0",

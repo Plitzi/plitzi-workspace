@@ -5,18 +5,19 @@ import React, { useCallback, use, useMemo } from 'react';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import UserContext from '@plitzi/sdk-auth/UserContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 /**
  * @param {{
  *   children: React.ReactNode;
- *   userProvider: 'auth0' | 'basic' | '';
  * }} props
  * @returns {React.ReactElement}
  */
 const UserSource = props => {
-  const { children, userProvider = 'basic' } = props;
+  const { children } = props;
   const { useDataSource } = use(DataSourceContext);
   const { user, authenticated } = use(UserContext);
+  const { userProvider = 'basic' } = use(SchemaSettingsContext);
   const userContextMemo = useMemo(() => {
     switch (userProvider) {
       case 'auth0':

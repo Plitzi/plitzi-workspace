@@ -6,8 +6,8 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
-// Relatives
-import StateManagerContext from './StateManagerContext';
+// Monorepo
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 /**
  * @param {{

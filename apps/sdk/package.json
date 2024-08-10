@@ -29,6 +29,7 @@
     "@plitzi/sdk-navigation": "*",
     "@plitzi/sdk-plugins": "*",
     "@plitzi/sdk-shared": "*",
+    "@plitzi/sdk-state": "*",
     "classnames": "^2.5.1",
     "graphql": "^16.9.0",
     "handlebars": "^4.7.8",

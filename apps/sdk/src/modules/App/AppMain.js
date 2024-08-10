@@ -6,6 +6,8 @@ import noop from 'lodash/noop';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
 import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
+import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
+import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 
 // Alias
 import Sdk, { RENDER_MODE_IFRAME } from '@modules/Sdk';
@@ -16,9 +18,7 @@ import CollectionContextProvider from '@modules/Collection/CollectionContextProv
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
 import StyleContextProvider from '@modules/Style/StyleContextProvider';
-import StateManagerContextProvider from '@modules/StateManager/StateManagerContextProvider';
 import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
-import DataSourceSdkContextProvider from '@modules/DataSource/DataSourceSdkContextProvider';
 
 /**
  * @param {{
@@ -97,8 +97,8 @@ const AppMain = props => {
                         currentPageId={currentPageId}
                         previewMode={previewMode}
                       >
-                        <StateManagerContextProvider state={state} onInit={onInitStateManager}>
-                          <DataSourceSdkContextProvider>
+                        <StateManagerContextProvider webId={webId} state={state} onInit={onInitStateManager}>
+                          <DataSourceContextProvider environment={environment}>
                             <InteractionsSdkContextProvider previewMode={previewMode}>
                               <Sdk
                                 renderMode={renderMode}
@@ -107,7 +107,7 @@ const AppMain = props => {
                                 {...sdkProps}
                               />
                             </InteractionsSdkContextProvider>
-                          </DataSourceSdkContextProvider>
+                          </DataSourceContextProvider>
                         </StateManagerContextProvider>
                       </NavigationContextProvider>
                     </UserBaseContextProvider>

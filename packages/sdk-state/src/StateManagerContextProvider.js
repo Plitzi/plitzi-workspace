@@ -6,11 +6,8 @@ import set from 'lodash/set';
 import get from 'lodash/get';
 
 // Monorepo
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
-
-// Alias
-import NetworkContext from '@modules/Network/NetworkContext';
 
 // Relatives
 import StateManagerContext from './StateManagerContext';
@@ -23,16 +20,16 @@ export const STYLE_TYPE_SEGMENT = 'segment';
 /**
  * @param {{
  *   children: React.ReactNode;
- *   state: object;
+ *   webId: number;
+ *   state?: Record<string, any>;
  *   onInit: (value: object) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const StateManagerContextProvider = props => {
-  const { children, state: stateProp = emptyObject, onInit = noop } = props;
-  const { webId } = use(NetworkContext);
+  const { children, webId, state: stateProp = emptyObject, onInit = noop } = props;
   const storageId = useMemo(() => `plitzi_${webId}_state`, [webId]);
-  const { schema } = use(SchemaContext);
+  const settings = use(SchemaSettingsContext);
 
   const getCache = useCallback(
     (path, defaultValue = {}, storeMode = '') => {
@@ -65,8 +62,8 @@ const StateManagerContextProvider = props => {
   );
 
   const [state, setState] = useState(() => {
-    const keepState = get(schema, 'settings.keepState', false);
-    const storeMode = get(schema, 'settings.stateStorage', '');
+    const keepState = get(settings, 'keepState', false);
+    const storeMode = get(settings, 'stateStorage', '');
     if (keepState && storeMode) {
       return { ...stateProp, ...getCache('', {}, storeMode) };
     }
