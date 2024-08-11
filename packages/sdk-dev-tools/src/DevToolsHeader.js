@@ -26,10 +26,10 @@ const DevToolsHeader = props => {
   }, [orientation, onChangeOrientation]);
 
   return (
-    <div className="flex justify-between grow border border-b-gray-300 px-2 py-1">
+    <div className="flex justify-between grow border-b border-b-gray-300 px-2 py-1 bg-gray-200">
       <div className="flex gap-4">
-        <div>Data Sources</div>
         <div>Interactions</div>
+        <div>Data Sources</div>
       </div>
       <div className="flex">
         <button onClick={handleClickOrientation}>Orientation</button>

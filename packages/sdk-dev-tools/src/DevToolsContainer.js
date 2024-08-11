@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 // Relatives
 import DevToolsPanel, { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from './DevToolsPanel';
+import DevToolsContextProvider from './DevToolsContextProvider';
 
 /**
  * @param {{
@@ -24,10 +25,17 @@ const DevToolsContainer = props => {
   }
 
   return (
-    <div className={classNames('flex grow', { 'flex-col': orientation === ORIENTATION_HORIZONTAL })}>
-      <div className="basis-0 grow">{children}</div>
-      {enabled && <DevToolsPanel orientation={orientation} onChangeOrientation={handleChangeOrientation} />}
-    </div>
+    <DevToolsContextProvider>
+      <div
+        className={classNames('flex grow overflow-auto select-none', {
+          'flex-col': orientation === ORIENTATION_HORIZONTAL,
+          'h-screen': orientation === ORIENTATION_VERTICAL
+        })}
+      >
+        <div className="basis-0 grow overflow-auto">{children}</div>
+        {enabled && <DevToolsPanel orientation={orientation} onChangeOrientation={handleChangeOrientation} />}
+      </div>
+    </DevToolsContextProvider>
   );
 };
 

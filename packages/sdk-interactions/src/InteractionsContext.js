@@ -1,3 +1,4 @@
+// Package
 import { createContext } from 'react';
 
 const InteractionsContext = createContext();

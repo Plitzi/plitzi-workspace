@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.js",
     "./DevToolsContainer": "./src/DevToolsContainer.js",
-    "./DevToolsPanel": "./src/DevToolsPanel.js"
+    "./DevToolsPanel": "./src/DevToolsPanel.js",
+    "./PlitziLog": "./src/utils/PlitziLog.js"
   },
   "scripts": {
     "lint": "eslint ./src"
