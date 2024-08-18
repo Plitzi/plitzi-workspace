@@ -27,7 +27,7 @@ const DevToolsContainer = props => {
   return (
     <DevToolsContextProvider>
       <div
-        className={classNames('flex grow overflow-auto select-none', {
+        className={classNames('flex grow overflow-auto', {
           'flex-col': orientation === ORIENTATION_HORIZONTAL,
           'h-screen': orientation === ORIENTATION_VERTICAL
         })}

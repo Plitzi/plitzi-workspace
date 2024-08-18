@@ -16,7 +16,7 @@ const Logs = props => {
 
   return (
     <div className="flex flex-col w-full">
-      {items && items.reverse().map((item, i) => <Log key={i} {...item} message={item.message} />)}
+      {items && items.map((item, i) => <Log key={i} {...item} message={item.message} />)}
     </div>
   );
 };

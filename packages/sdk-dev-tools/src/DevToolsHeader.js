@@ -26,7 +26,7 @@ const DevToolsHeader = props => {
   }, [orientation, onChangeOrientation]);
 
   return (
-    <div className="flex justify-between grow border-b border-b-gray-300 px-2 py-1 bg-gray-200">
+    <div className="flex justify-between grow border-b border-b-gray-300 px-2 py-1 bg-gray-200 select-none">
       <div className="flex gap-4">
         <div>Interactions</div>
         <div>Data Sources</div>
