@@ -123,8 +123,9 @@ const flowCallbacks = async (
     return executionResults;
   }
 
+  const startTime = pConsole.getTime().valueOf();
   const { status, result, postCallbacks } = await processNode(node, callbacksAvailables, flowParams, globalParams);
-  executionResults[node.id] = { node, status, result, postCallbacks };
+  executionResults[node.id] = { node, status, result, postCallbacks, startTime, endTime: pConsole.getTime().valueOf() };
   postCallbacksTotal.push(...(postCallbacks ?? []));
 
   return {
@@ -149,6 +150,7 @@ const flowTrigger = async (
   globalParams = {},
   postCallbacksTotal = []
 ) => {
+  const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
   if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
     pConsole.info(
@@ -156,7 +158,13 @@ const flowTrigger = async (
       <span>
         Interaction <b>{triggerNode.title} </b> Skipped
       </span>,
-      { status: 'skipped', triggerNode, executionResults: { [triggerNode.id]: triggerNode } }
+      {
+        status: 'skipped',
+        triggerNode,
+        executionResults: { [triggerNode.id]: triggerNode },
+        startTime,
+        endTime: pConsole.getTime().valueOf()
+      }
     );
 
     return;
@@ -175,7 +183,13 @@ const flowTrigger = async (
     <span>
       Interaction <b>{triggerNode.title} </b> Completed
     </span>,
-    { status: 'completed', triggerNode, executionResults: { ...executionResults, [triggerNode.id]: triggerNode } }
+    {
+      status: 'completed',
+      triggerNode,
+      executionResults: { ...executionResults, [triggerNode.id]: triggerNode },
+      startTime,
+      endTime: pConsole.getTime().valueOf()
+    }
   );
 };
 

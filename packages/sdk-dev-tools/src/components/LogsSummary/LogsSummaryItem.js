@@ -24,7 +24,7 @@ const LogsSummaryItem = props => {
 
   return (
     <div
-      className={classNames('flex items-center gap-3 px-2 py-1 cursor-pointer', className, {
+      className={classNames('flex items-center gap-3 px-2 py-1 cursor-pointer text-sm', className, {
         'bg-gray-200': selected,
         'hover:bg-gray-200': !selected
       })}

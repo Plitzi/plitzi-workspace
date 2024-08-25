@@ -23,12 +23,20 @@ class PlitziConsole {
     this.callbackInternal = callback;
   }
 
+  getTime(asString = false) {
+    if (!asString) {
+      return moment();
+    }
+
+    return moment().format('HH:mm:ss.SSS');
+  }
+
   #log(logType, category, message, params) {
     if (!this.callbackInternal) {
       return;
     }
 
-    const time = moment().format('HH:mm:ss.SSS');
+    const time = this.getTime(true);
     if (!this.listening) {
       this.callbackInternal(logType, category, message, params, time);
     } else {
