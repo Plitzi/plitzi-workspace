@@ -6,7 +6,7 @@
     ".": "./src/index.js",
     "./DevToolsContainer": "./src/DevToolsContainer.js",
     "./DevToolsPanel": "./src/DevToolsPanel.js",
-    "./PlitziLog": "./src/utils/PlitziLog.js"
+    "./PlitziConsole": "./src/utils/PlitziConsole.js"
   },
   "scripts": {
     "lint": "eslint ./src"

@@ -37,7 +37,8 @@ const build = (env, args) => {
       '@babel/preset-react',
       '@babel/plugin-proposal-class-properties',
       '@babel/plugin-transform-runtime',
-      '@babel/plugin-transform-async-to-generator'
+      '@babel/plugin-transform-async-to-generator',
+      '@babel/plugin-transform-private-methods'
     ]
   );
 
@@ -95,6 +96,7 @@ const build = (env, args) => {
                   '@babel/plugin-proposal-class-properties',
                   '@babel/plugin-transform-runtime',
                   '@babel/plugin-transform-async-to-generator',
+                  '@babel/plugin-transform-private-methods',
                   env.WEBPACK_SERVE && 'react-refresh/babel'
                 ].filter(Boolean)
               }

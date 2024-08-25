@@ -38,7 +38,8 @@ const build = (env, args) => {
       '@babel/preset-env',
       '@babel/preset-react',
       '@babel/plugin-proposal-class-properties',
-      '@babel/plugin-transform-runtime'
+      '@babel/plugin-transform-runtime',
+      '@babel/plugin-transform-private-methods'
     ]
   );
 
@@ -95,6 +96,7 @@ const build = (env, args) => {
                 plugins: [
                   '@babel/plugin-proposal-class-properties',
                   '@babel/plugin-transform-runtime',
+                  '@babel/plugin-transform-private-methods',
                   env.WEBPACK_SERVE && 'react-refresh/babel'
                 ].filter(Boolean)
               }

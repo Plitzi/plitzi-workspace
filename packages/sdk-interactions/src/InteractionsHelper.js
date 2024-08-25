@@ -5,7 +5,7 @@ import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/hel
 
 // Monorepo
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
-import PlitziLog from '@plitzi/sdk-dev-tools/PlitziLog';
+import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 
 // Relatives
 import utility from './utility';
@@ -38,7 +38,7 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
   }
 
   if (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams, [id]: params })) {
-    PlitziLog('interactions', `callback[skipped]`, { result, node, paramsToCallback });
+    pConsole.info('interactions', `callback[skipped]`, { result, node, paramsToCallback });
 
     return { result, postCallbacks };
   }
@@ -88,7 +88,7 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     default:
   }
 
-  PlitziLog('interactions', `callback[success]`, { result, node, paramsToCallback });
+  pConsole.info('interactions', `callback[success]`, { result, node, paramsToCallback });
 
   return { result, postCallbacks };
 };
@@ -97,7 +97,7 @@ const processPostCallbacks = async (postCallbacks = []) => {
   postCallbacks.reverse().forEach(async postCallback => {
     const { id, callback, params } = postCallback;
     const result = await callback(omit(params, [id]), params[id]);
-    PlitziLog('interactions', 'postCallback', { result, node: undefined, paramsToCallback: params[id] });
+    pConsole.info('interactions', 'postCallback', { result, node: undefined, paramsToCallback: params[id] });
   });
 
   return;
@@ -147,12 +147,12 @@ const flowTrigger = async (
 ) => {
   const { action, enabled, when } = triggerNode;
   if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
-    PlitziLog('interactions', 'trigger[skipped]', { node: triggerNode });
+    pConsole.info('interactions', 'trigger[skipped]', { node: triggerNode });
 
     return;
   }
 
-  PlitziLog('interactions', 'trigger[success]', { node: triggerNode });
+  pConsole.info('interactions', 'trigger[success]', { node: triggerNode });
   await flowCallbacks(triggerNode, nodes, callbacksAvailables, flowParams, globalParams, postCallbacksTotal);
 };
 
