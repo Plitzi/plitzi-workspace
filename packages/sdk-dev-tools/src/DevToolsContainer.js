@@ -16,7 +16,7 @@ import DevToolsContextProvider from './DevToolsContextProvider';
  */
 const DevToolsContainer = props => {
   const { children, enabled = false } = props;
-  const [orientation, setOrientation] = useState(ORIENTATION_VERTICAL);
+  const [orientation, setOrientation] = useState(ORIENTATION_HORIZONTAL);
 
   const handleChangeOrientation = useCallback(orientation => setOrientation(orientation), []);
 
