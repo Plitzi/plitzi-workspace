@@ -8,6 +8,12 @@ export const LOG_TYPE_DANGER = 'danger';
 class PlitziConsole {
   callbackInternal = undefined;
 
+  listening = false;
+
+  listeningCategory = '';
+
+  logsListened = [];
+
   constructor(callback) {
     this.callbackInternal = callback;
   }
@@ -22,7 +28,11 @@ class PlitziConsole {
     }
 
     const time = moment().format('h:m:ss.SSS');
-    this.callbackInternal(logType, category, message, params, time);
+    if (!this.listening) {
+      this.callbackInternal(logType, category, message, params, time);
+    } else {
+      this.logsListened.push({ logType, category, message, params, time });
+    }
   }
 
   info(category, message, params) {
@@ -35,6 +45,26 @@ class PlitziConsole {
 
   danger(category, message, params) {
     this.#log(LOG_TYPE_DANGER, category, message, params);
+  }
+
+  begin(category = '') {
+    this.listening = true;
+    this.listeningParams = { category };
+  }
+
+  end() {
+    this.listening = false;
+    if (this.listeningCategory && this.logsListened.length > 0) {
+      this.callbackInternal(
+        LOG_TYPE_INFO,
+        this.listeningCategory,
+        `${this.logsListened.length} Log${this.logsListened === 1 ? '' : 's'}`,
+        { logs: this.logsListened }
+      );
+    }
+
+    this.logsListened = [];
+    this.listeningCategory = '';
   }
 }
 
