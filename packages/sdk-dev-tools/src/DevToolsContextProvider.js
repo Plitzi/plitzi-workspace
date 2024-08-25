@@ -16,9 +16,12 @@ const DevToolsContextProvider = props => {
   const [logs, setLogs] = useState([]);
   const valueMemo = useMemo(() => ({ logs, setLogs }), [logs, setLogs]);
 
-  const handleAddLog = useCallback((logType, category, message, params, time) => {
-    setLogs(state => [...state, { logType, category, message, time, params }]);
-  }, []);
+  const handleAddLog = useCallback(
+    (logType, category, message, params, time) => {
+      setLogs(state => [...state, { logType, category, message, time, params }]);
+    },
+    [setLogs]
+  );
 
   useEffect(() => {
     pConsole.setCallback(handleAddLog);

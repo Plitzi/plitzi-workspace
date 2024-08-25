@@ -1,37 +1,31 @@
-/* eslint-disable react/no-danger */
 // Packages
-import React, { useMemo } from 'react';
-import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
+import React from 'react';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
-import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
+
+// Relatives
+import LogInteraction from './categories/LogInteraction';
 
 /**
  * @param {{
  *   className?: string;
+ *   category: string;
+ *   logType: string;
+ *   time: string;
  *   message?: string;
  *   params?: object;
  * }} props
  * @returns {React.ReactElement}
  */
 const Log = props => {
-  const { message, params = emptyObject } = props;
-
-  console.log(params?.node?.when);
-
-  const content = useMemo(() => syntaxHighlight(JSON.stringify({ ...(params?.node ?? {}) }, null, 2)), [params.node]);
+  const { category, message, params = emptyObject } = props;
 
   return (
-    <ContainerCollapsable
-      className="w-full border-b last:border-b-none border-gray-300 px-2 py-1"
-      title={message}
-      collapsed
-    >
-      <div className="flex whitespace-pre">
-        <pre dangerouslySetInnerHTML={{ __html: content }} />
-      </div>
-    </ContainerCollapsable>
+    <>
+      {category === 'interactions' && <LogInteraction message={message} params={params} />}
+      {/* {category === 'dataSources' && <LogDataSource message={message} params={params} />} */}
+    </>
   );
 };
 

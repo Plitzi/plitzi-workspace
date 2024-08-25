@@ -88,7 +88,13 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     default:
   }
 
-  pConsole.info('interactions', 'Callback Success', { status: 'success', result, node, paramsToCallback });
+  pConsole.info('interactions', 'Callback Success', {
+    nodeType: 'trigger',
+    status: 'success',
+    result,
+    node,
+    paramsToCallback
+  });
 
   return { result, postCallbacks };
 };
@@ -97,7 +103,12 @@ const processPostCallbacks = async (postCallbacks = []) => {
   postCallbacks.reverse().forEach(async postCallback => {
     const { id, callback, params } = postCallback;
     const result = await callback(omit(params, [id]), params[id]);
-    pConsole.info('interactions', 'postCallback Success', { result, node: undefined, paramsToCallback: params[id] });
+    pConsole.info('interactions', 'postCallback Success', {
+      nodeType: 'trigger',
+      result,
+      node: undefined,
+      paramsToCallback: params[id]
+    });
   });
 
   return;
@@ -147,12 +158,12 @@ const flowTrigger = async (
 ) => {
   const { action, enabled, when } = triggerNode;
   if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
-    pConsole.info('interactions', 'Trigger Skipped', { status: 'skipped', node: triggerNode });
+    pConsole.info('interactions', 'Trigger Skipped', { nodeType: 'trigger', status: 'skipped', node: triggerNode });
 
     return;
   }
 
-  pConsole.info('interactions', 'Trigger Success', { status: 'success', node: triggerNode });
+  pConsole.info('interactions', 'Trigger Success', { nodeType: 'trigger', status: 'success', node: triggerNode });
   await flowCallbacks(triggerNode, nodes, callbacksAvailables, flowParams, globalParams, postCallbacksTotal);
 };
 

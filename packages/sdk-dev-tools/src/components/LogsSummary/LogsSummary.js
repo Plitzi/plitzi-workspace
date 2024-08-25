@@ -10,16 +10,16 @@ import LogsSummaryItem from './LogsSummaryItem';
 /**
  * @param {{
  *   className?: string;
- *   logs: object[];
+ *   items: object[];
  *   logTypeSelected: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const LogsSummary = props => {
-  const { className, logs, logTypeSelected, onClick = noop } = props;
+  const { className, items, logTypeSelected, onClick = noop } = props;
 
   const summary = useMemo(() => {
-    return logs.reduce((acc, log) => {
+    return items.reduce((acc, log) => {
       const { logType } = log;
       if (!acc[logType]) {
         acc[logType] = 0;
@@ -27,13 +27,13 @@ const LogsSummary = props => {
 
       return { ...acc, [logType]: ++acc[logType] };
     }, {});
-  }, [logs]);
+  }, [items]);
 
   const handleClick = useCallback(logType => onClick(logType), [onClick]);
 
   return (
-    <div className={classNames('flex flex-col border-r border-gray-300', className)}>
-      <LogsSummaryItem onClick={handleClick} amount={logs.length} selected={!logTypeSelected} />
+    <div className={classNames('flex flex-col border-r border-gray-300 select-none', className)}>
+      <LogsSummaryItem onClick={handleClick} amount={items.length} selected={!logTypeSelected} />
       <LogsSummaryItem
         onClick={handleClick}
         amount={summary[LOG_TYPE_DANGER]}

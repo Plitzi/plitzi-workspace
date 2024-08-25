@@ -25,15 +25,15 @@ class PlitziConsole {
     this.callbackInternal(logType, category, message, params, time);
   }
 
-  info(category, message, ...params) {
+  info(category, message, params) {
     this.#log(LOG_TYPE_INFO, category, message, params);
   }
 
-  warning(category, message, ...params) {
+  warning(category, message, params) {
     this.#log(LOG_TYPE_WARNING, category, message, params);
   }
 
-  danger(category, message, ...params) {
+  danger(category, message, params) {
     this.#log(LOG_TYPE_DANGER, category, message, params);
   }
 }

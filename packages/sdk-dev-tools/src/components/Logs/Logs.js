@@ -22,7 +22,7 @@ const Logs = props => {
 
   return (
     <div className="flex min-h-full w-full">
-      <LogsSummary className="h-full" logTypeSelected={logTypeSelected} logs={items} onClick={handleClickSummary} />
+      <LogsSummary className="h-full" logTypeSelected={logTypeSelected} items={items} onClick={handleClickSummary} />
       <div className="flex flex-col grow h-full overflow-y-auto">
         {items &&
           items
