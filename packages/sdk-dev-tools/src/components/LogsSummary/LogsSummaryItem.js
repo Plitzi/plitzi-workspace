@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 
 // Relatives
-import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_WARNING } from '../../utils/PlitziConsole';
+import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../utils/PlitziConsole';
 
 /**
  * @param {{
@@ -34,7 +34,8 @@ const LogsSummaryItem = props => {
         className={classNames({
           'fa-regular fa-circle-xmark text-red-400': logType === LOG_TYPE_DANGER,
           'fa-solid fa-triangle-exclamation text-orange-400': logType === LOG_TYPE_WARNING,
-          'fa-solid fa-circle-info text-purple-400': logType === LOG_TYPE_INFO,
+          'fa-solid fa-circle-info text-blue-400': logType === LOG_TYPE_INFO,
+          'fa-solid fa-check text-green-400': logType === LOG_TYPE_SUCCESS,
           'fa-solid fa-list': !logType
         })}
       />

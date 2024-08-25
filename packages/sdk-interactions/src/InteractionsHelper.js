@@ -1,4 +1,5 @@
 // Packages
+import React from 'react';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
@@ -34,13 +35,11 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
   const postCallbacks = [];
   const { id, action, enabled, params, elementId, type, when } = node;
   if (!action || !enabled) {
-    return { result, postCallbacks };
+    return { status: 'disabled', result, postCallbacks };
   }
 
   if (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams, [id]: params })) {
-    pConsole.info('interactions', 'Callback Skipped', { status: 'skipped', result, node, paramsToCallback });
-
-    return { result, postCallbacks };
+    return { status: 'skipped', result, postCallbacks };
   }
 
   const paramsToCallback = {
@@ -52,12 +51,12 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     case 'callback':
     case 'globalCallback': {
       if (!elementId) {
-        return { result, postCallbacks };
+        return { status: 'failed', result, postCallbacks };
       }
 
       const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`);
       if (!receptorCallback) {
-        return { result, postCallbacks };
+        return { status: 'failed', result, postCallbacks };
       }
 
       const { callback, postCallback } = receptorCallback;
@@ -88,30 +87,18 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     default:
   }
 
-  pConsole.info('interactions', 'Callback Success', {
-    nodeType: 'trigger',
-    status: 'success',
-    result,
-    node,
-    paramsToCallback
-  });
-
-  return { result, postCallbacks };
+  return { status: 'success', result, postCallbacks };
 };
 
 const processPostCallbacks = async (postCallbacks = []) => {
+  const results = {};
   postCallbacks.reverse().forEach(async postCallback => {
     const { id, callback, params } = postCallback;
     const result = await callback(omit(params, [id]), params[id]);
-    pConsole.info('interactions', 'postCallback Success', {
-      nodeType: 'trigger',
-      result,
-      node: undefined,
-      paramsToCallback: params[id]
-    });
+    results[id] = result;
   });
 
-  return;
+  return results;
 };
 
 const flowCallbacks = async (
@@ -120,10 +107,11 @@ const flowCallbacks = async (
   callbacksAvailables = {},
   flowParams = {},
   globalParams = {},
-  postCallbacksTotal = []
+  postCallbacksTotal = [],
+  executionResults = {}
 ) => {
   if (!parentNode) {
-    return;
+    return executionResults;
   }
 
   const node = get(nodes, parentNode.afterNode);
@@ -132,20 +120,25 @@ const flowCallbacks = async (
   }
 
   if (!node) {
-    return;
+    return executionResults;
   }
 
-  const { result, postCallbacks } = await processNode(node, callbacksAvailables, flowParams, globalParams);
+  const { status, result, postCallbacks } = await processNode(node, callbacksAvailables, flowParams, globalParams);
+  executionResults[node.id] = { node, status, result, postCallbacks };
   postCallbacksTotal.push(...(postCallbacks ?? []));
 
-  await flowCallbacks(
-    node,
-    nodes,
-    callbacksAvailables,
-    { ...flowParams, [node.id]: result },
-    globalParams,
-    postCallbacksTotal
-  );
+  return {
+    ...executionResults,
+    ...(await flowCallbacks(
+      node,
+      nodes,
+      callbacksAvailables,
+      { ...flowParams, [node.id]: result },
+      globalParams,
+      postCallbacksTotal,
+      executionResults
+    ))
+  };
 };
 
 const flowTrigger = async (
@@ -158,13 +151,32 @@ const flowTrigger = async (
 ) => {
   const { action, enabled, when } = triggerNode;
   if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
-    pConsole.info('interactions', 'Trigger Skipped', { nodeType: 'trigger', status: 'skipped', node: triggerNode });
+    pConsole.info(
+      'interactions',
+      <span>
+        Interaction <b>{triggerNode.title} </b> Skipped
+      </span>,
+      { status: 'skipped', triggerNode, executionResults: { [triggerNode.id]: triggerNode } }
+    );
 
     return;
   }
 
-  pConsole.info('interactions', 'Trigger Success', { nodeType: 'trigger', status: 'success', node: triggerNode });
-  await flowCallbacks(triggerNode, nodes, callbacksAvailables, flowParams, globalParams, postCallbacksTotal);
+  const executionResults = await flowCallbacks(
+    triggerNode,
+    nodes,
+    callbacksAvailables,
+    flowParams,
+    globalParams,
+    postCallbacksTotal
+  );
+  pConsole.info(
+    'interactions',
+    <span>
+      Interaction <b>{triggerNode.title} </b> Completed
+    </span>,
+    { status: 'completed', triggerNode, executionResults: { ...executionResults, [triggerNode.id]: triggerNode } }
+  );
 };
 
 export { flowTrigger };

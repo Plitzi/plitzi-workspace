@@ -19,11 +19,13 @@ import LogInteraction from './categories/LogInteraction';
  * @returns {React.ReactElement}
  */
 const Log = props => {
-  const { category, message, params = emptyObject } = props;
+  const { category, message, time, logType, params = emptyObject } = props;
 
   return (
     <>
-      {category === 'interactions' && <LogInteraction message={message} params={params} />}
+      {category === 'interactions' && (
+        <LogInteraction message={message} params={params} time={time} logType={logType} />
+      )}
       {/* {category === 'dataSources' && <LogDataSource message={message} params={params} />} */}
     </>
   );

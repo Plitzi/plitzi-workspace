@@ -4,6 +4,7 @@ import moment from 'moment';
 export const LOG_TYPE_INFO = 'info';
 export const LOG_TYPE_WARNING = 'warning';
 export const LOG_TYPE_DANGER = 'danger';
+export const LOG_TYPE_SUCCESS = 'success';
 
 class PlitziConsole {
   callbackInternal = undefined;
@@ -27,7 +28,7 @@ class PlitziConsole {
       return;
     }
 
-    const time = moment().format('h:m:ss.SSS');
+    const time = moment().format('HH:mm:ss.SSS');
     if (!this.listening) {
       this.callbackInternal(logType, category, message, params, time);
     } else {
@@ -45,6 +46,10 @@ class PlitziConsole {
 
   danger(category, message, params) {
     this.#log(LOG_TYPE_DANGER, category, message, params);
+  }
+
+  success(category, message, params) {
+    this.#log(LOG_TYPE_SUCCESS, category, message, params);
   }
 
   begin(category = '') {
