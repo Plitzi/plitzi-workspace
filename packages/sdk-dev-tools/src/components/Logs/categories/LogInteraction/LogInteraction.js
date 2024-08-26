@@ -1,4 +1,3 @@
-/* eslint-disable react/no-danger */
 // Packages
 import React, { useMemo } from 'react';
 import moment from 'moment';
@@ -6,10 +5,10 @@ import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsa
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
-import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
 
 // Relatives
-import LogInteractionTitle from './LogInteractionTitle';
+import LogInteractionHeader from './LogInteractionHeader';
+import LogInteractionBody from './LogInteractionBody';
 
 export const LOG_INTERACTION_STATUS_SUCCESS = 'success';
 export const LOG_INTERACTION_STATUS_FAILED = 'failed';
@@ -34,7 +33,6 @@ const LogInteraction = props => {
     params: { status, node = emptyObject, nodes = emptyObject, startTime = 0, endTime = 0 } = emptyObject
   } = props;
 
-  const content = useMemo(() => syntaxHighlight(JSON.stringify(node, null, 2)), [node]);
   const duration = useMemo(
     () => `${moment.duration(moment(endTime).diff(startTime)).asSeconds()}s`,
     [startTime, endTime]
@@ -49,14 +47,10 @@ const LogInteraction = props => {
       iconClassName="flex items-center justify-center mr-1 w-4 h-4"
       iconCollapsed={iconCollapsed}
       iconExpanded={iconExpanded}
-      title={<LogInteractionTitle status={status} message={message} nodes={nodes} time={time} duration={duration} />}
+      title={<LogInteractionHeader status={status} message={message} nodes={nodes} time={time} duration={duration} />}
       collapsed
     >
-      <div>
-        <div className="flex whitespace-pre">
-          <pre dangerouslySetInnerHTML={{ __html: content }} />
-        </div>
-      </div>
+      <LogInteractionBody node={node} startTime={startTime} endTime={endTime} duration={duration} />
     </ContainerCollapsable>
   );
 };

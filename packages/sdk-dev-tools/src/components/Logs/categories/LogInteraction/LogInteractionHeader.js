@@ -16,7 +16,7 @@ import { LOG_TYPE_CUSTOM, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../..
  * }} props
  * @returns {React.ReactElement}
  */
-const LogInteractionTitle = props => {
+const LogInteractionHeader = props => {
   const { status, message, nodes, time, duration } = props;
   const nodesSkipped = Object.values(nodes).filter(node => node.status === 'skipped').length;
   const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
@@ -48,4 +48,4 @@ const LogInteractionTitle = props => {
   );
 };
 
-export default LogInteractionTitle;
+export default LogInteractionHeader;

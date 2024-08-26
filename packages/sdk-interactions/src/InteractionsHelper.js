@@ -156,7 +156,7 @@ const flowTrigger = async (
     pConsole.info(
       'interactions',
       <span>
-        Interaction <b>{triggerNode.title}</b> Skipped
+        Interaction <b>{triggerNode.title}</b> Completed
       </span>,
       {
         status: 'skipped',
