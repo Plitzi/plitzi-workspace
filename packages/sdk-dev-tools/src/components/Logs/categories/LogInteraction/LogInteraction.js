@@ -9,7 +9,11 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
 
 // Relatives
-import LogStatus from '../LogStatus';
+import LogInteractionTitle from './LogInteractionTitle';
+
+export const LOG_INTERACTION_STATUS_SUCCESS = 'success';
+export const LOG_INTERACTION_STATUS_FAILED = 'failed';
+export const LOG_INTERACTION_STATUS_SKIPPED = 'skipped';
 
 const iconCollapsed = <i className="fa-solid fa-angle-right" />;
 const iconExpanded = <i className="fa-solid fa-angle-down" />;
@@ -20,30 +24,20 @@ const iconExpanded = <i className="fa-solid fa-angle-down" />;
  *   message?: string;
  *   params: object;
  *   time: string;
- *   logType: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const LogInteraction = props => {
-  const { time, message, params: { node = emptyObject, startTime = 0, endTime = 0 } = emptyObject, logType } = props;
+  const {
+    time,
+    message,
+    params: { status, node = emptyObject, nodes = emptyObject, startTime = 0, endTime = 0 } = emptyObject
+  } = props;
 
   const content = useMemo(() => syntaxHighlight(JSON.stringify(node, null, 2)), [node]);
   const duration = useMemo(
     () => `${moment.duration(moment(endTime).diff(startTime)).asSeconds()}s`,
     [startTime, endTime]
-  );
-  const title = useMemo(
-    () => (
-      <div className="flex justify-between w-full">
-        <div className="flex items-center gap-2">
-          <span className="font-bold">{time}</span>
-          <LogStatus logType={logType} />
-          {message}
-        </div>
-        {duration}
-      </div>
-    ),
-    [duration, message, logType, time]
   );
 
   // console.log(params?.node?.when);
@@ -55,7 +49,7 @@ const LogInteraction = props => {
       iconClassName="flex items-center justify-center mr-1 w-4 h-4"
       iconCollapsed={iconCollapsed}
       iconExpanded={iconExpanded}
-      title={title}
+      title={<LogInteractionTitle status={status} message={message} nodes={nodes} time={time} duration={duration} />}
       collapsed
     >
       <div>

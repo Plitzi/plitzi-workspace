@@ -5,6 +5,7 @@ export const LOG_TYPE_INFO = 'info';
 export const LOG_TYPE_WARNING = 'warning';
 export const LOG_TYPE_DANGER = 'danger';
 export const LOG_TYPE_SUCCESS = 'success';
+export const LOG_TYPE_CUSTOM = 'custom';
 
 class PlitziConsole {
   callbackInternal = undefined;

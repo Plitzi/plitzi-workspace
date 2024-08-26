@@ -156,12 +156,21 @@ const flowTrigger = async (
     pConsole.info(
       'interactions',
       <span>
-        Interaction <b>{triggerNode.title} </b> Skipped
+        Interaction <b>{triggerNode.title}</b> Skipped
       </span>,
       {
         status: 'skipped',
         triggerNode,
-        executionResults: { [triggerNode.id]: triggerNode },
+        nodes: {
+          [triggerNode.id]: {
+            node: triggerNode,
+            status: 'skipped',
+            result: undefined,
+            postCallbacks: [],
+            startTime,
+            endTime: pConsole.getTime().valueOf()
+          }
+        },
         startTime,
         endTime: pConsole.getTime().valueOf()
       }
@@ -170,7 +179,7 @@ const flowTrigger = async (
     return;
   }
 
-  const executionResults = await flowCallbacks(
+  const nodesProcessed = await flowCallbacks(
     triggerNode,
     nodes,
     callbacksAvailables,
@@ -181,12 +190,22 @@ const flowTrigger = async (
   pConsole.info(
     'interactions',
     <span>
-      Interaction <b>{triggerNode.title} </b> Completed
+      Interaction <b>{triggerNode.title}</b> Completed
     </span>,
     {
       status: 'completed',
       triggerNode,
-      executionResults: { ...executionResults, [triggerNode.id]: triggerNode },
+      nodes: {
+        ...nodesProcessed,
+        [triggerNode.id]: {
+          node: triggerNode,
+          status: 'success',
+          result: undefined,
+          postCallbacks: [],
+          startTime,
+          endTime: pConsole.getTime().valueOf()
+        }
+      },
       startTime,
       endTime: pConsole.getTime().valueOf()
     }

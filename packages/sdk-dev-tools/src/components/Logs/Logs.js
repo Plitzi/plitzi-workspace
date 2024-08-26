@@ -27,7 +27,9 @@ const Logs = props => {
         {items &&
           items
             .filter(item => !logTypeSelected || item.logType === logTypeSelected)
-            .map((item, i) => <Log key={i} {...item} message={item.message} />)}
+            .map((item, i) => (
+              <Log key={i} category={item.category} time={item.time} params={item.params} message={item.message} />
+            ))}
       </div>
     </div>
   );
