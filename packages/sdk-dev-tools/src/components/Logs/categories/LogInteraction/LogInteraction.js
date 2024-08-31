@@ -50,7 +50,7 @@ const LogInteraction = props => {
       title={<LogInteractionHeader status={status} message={message} nodes={nodes} time={time} duration={duration} />}
       collapsed
     >
-      <LogInteractionBody node={node} startTime={startTime} endTime={endTime} duration={duration} />
+      <LogInteractionBody node={node} nodes={nodes} startTime={startTime} endTime={endTime} duration={duration} />
     </ContainerCollapsable>
   );
 };

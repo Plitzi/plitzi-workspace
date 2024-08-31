@@ -142,6 +142,38 @@ const flowCallbacks = async (
   };
 };
 
+const storeLog = (triggerNode, startTime, nodes = {}, status = '') => {
+  const endTime = pConsole.getTime().valueOf();
+  let nodeStatus = 'skipped';
+  if (status === 'completed') {
+    nodeStatus = 'success';
+  }
+
+  pConsole.info(
+    'interactions',
+    <span>
+      Interaction <b>{triggerNode.title}</b> Completed
+    </span>,
+    {
+      status,
+      node: triggerNode,
+      nodes: {
+        ...nodes,
+        [triggerNode.id]: {
+          node: triggerNode,
+          status: nodeStatus,
+          result: undefined,
+          postCallbacks: [],
+          startTime,
+          endTime
+        }
+      },
+      startTime,
+      endTime
+    }
+  );
+};
+
 const flowTrigger = async (
   triggerNode,
   nodes = {},
@@ -153,28 +185,7 @@ const flowTrigger = async (
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
   if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
-    pConsole.info(
-      'interactions',
-      <span>
-        Interaction <b>{triggerNode.title}</b> Completed
-      </span>,
-      {
-        status: 'skipped',
-        triggerNode,
-        nodes: {
-          [triggerNode.id]: {
-            node: triggerNode,
-            status: 'skipped',
-            result: undefined,
-            postCallbacks: [],
-            startTime,
-            endTime: pConsole.getTime().valueOf()
-          }
-        },
-        startTime,
-        endTime: pConsole.getTime().valueOf()
-      }
-    );
+    storeLog(triggerNode, startTime, {}, 'skipped');
 
     return;
   }
@@ -187,29 +198,7 @@ const flowTrigger = async (
     globalParams,
     postCallbacksTotal
   );
-  pConsole.info(
-    'interactions',
-    <span>
-      Interaction <b>{triggerNode.title}</b> Completed
-    </span>,
-    {
-      status: 'completed',
-      triggerNode,
-      nodes: {
-        ...nodesProcessed,
-        [triggerNode.id]: {
-          node: triggerNode,
-          status: 'success',
-          result: undefined,
-          postCallbacks: [],
-          startTime,
-          endTime: pConsole.getTime().valueOf()
-        }
-      },
-      startTime,
-      endTime: pConsole.getTime().valueOf()
-    }
-  );
+  storeLog(triggerNode, startTime, nodesProcessed, 'completed');
 };
 
 export { flowTrigger };
