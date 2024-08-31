@@ -22,7 +22,7 @@ const LogInteractionHeader = props => {
   const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
 
   return (
-    <div className="flex justify-between w-full">
+    <div className="flex justify-between w-full text-sm">
       <div className="flex items-center gap-2">
         <span className="font-bold">{time}</span>
         {status === 'completed' && <LogStatus logType={LOG_TYPE_SUCCESS}>Completed</LogStatus>}
