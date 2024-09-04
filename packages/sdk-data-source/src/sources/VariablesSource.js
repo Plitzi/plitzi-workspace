@@ -40,7 +40,7 @@ const VariablesSource = props => {
   }, [variables, whenData]);
 
   const sourceFields = useCallback(
-    async () => [...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: path }], [])],
+    async () => [...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: `variables.${path}` }], [])],
     [variablesParsed]
   );
 

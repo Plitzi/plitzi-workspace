@@ -64,7 +64,7 @@ const UserSource = props => {
       case 'basic':
       case '':
       default:
-        return getPathsFromObeject(userContextMemo).reduce((acum, path) => [...acum, { path, name: path }], []);
+        return getPathsFromObeject(userContextMemo).reduce((acum, path) => [...acum, { path, name: `user.${path}` }], []);
     }
   }, [userContextMemo, userProvider]);
 

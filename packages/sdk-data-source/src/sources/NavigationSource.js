@@ -19,7 +19,10 @@ const NavigationSource = props => {
 
   const sourceFields = useCallback(
     async () => [
-      ...getPathsFromObeject({ routeParams, queryParams }).reduce((acum, path) => [...acum, { path, name: path }], []),
+      ...getPathsFromObeject({ routeParams, queryParams }).reduce(
+        (acum, path) => [...acum, { path, name: `navigation.${path}` }],
+        []
+      ),
       { path: 'currentPageId', name: 'Current Page' }
     ],
     [routeParams, queryParams]

@@ -34,13 +34,13 @@ const PageStateSource = props => {
   const sourceFields = useCallback(async () => {
     if (pages && pages.length > 0) {
       return [
-        ...getPathsFromObeject(state).reduce((acum, path) => [...acum, { path, name: path }], []),
+        ...getPathsFromObeject(state).reduce((acum, path) => [...acum, { path, name: `page.${path}` }], []),
         { path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages }
       ];
     }
 
     return [
-      ...getPathsFromObeject(state).reduce((acum, path) => [...acum, { path, name: path }], []),
+      ...getPathsFromObeject(state).reduce((acum, path) => [...acum, { path, name: `page.${path}` }], []),
       { path: 'currentPageId', name: 'Current Page' }
     ];
   }, [state, currentPageId, pages]);

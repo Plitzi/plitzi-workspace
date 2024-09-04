@@ -119,7 +119,7 @@ const WorkflowNode = props => {
             ...acum2,
             [`${source}_${path.replaceAll('.', '_')}`]: {
               name: `${source}.${path}`,
-              label,
+              label: `${source}.${path}`,
               placeholder: `Enter ${label}`,
               group: `Data Sources - ${source}`
             }
