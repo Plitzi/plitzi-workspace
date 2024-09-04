@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.22.9",
+  "version": "0.22.10",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -20,7 +20,7 @@
     "registry": "https://npm.pkg.github.com/plitzi"
   },
   "dependencies": {
-    "@apollo/client": "^3.11.4",
+    "@apollo/client": "^3.11.6",
     "@auth0/auth0-react": "^2.2.4",
     "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-dev-tools": "*",
@@ -37,8 +37,8 @@
     "immer": "^10.1.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "react": "19.0.0-rc-6230622a1a-20240610",
-    "react-dom": "19.0.0-rc-6230622a1a-20240610",
+    "react": "19.0.0-rc-7771d3a7-20240827",
+    "react-dom": "19.0.0-rc-7771d3a7-20240827",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^6.26.1",
     "twig": "^1.17.1"
@@ -71,12 +71,12 @@
     "compression-webpack-plugin": "^11.1.0",
     "css-loader": "^7.1.2",
     "file-loader": "^6.2.0",
-    "flow-bin": "^0.244.0",
+    "flow-bin": "^0.245.1",
     "handlebars-webpack-plugin": "^2.2.1",
     "html-webpack-plugin": "^5.6.0",
     "mini-css-extract-plugin": "^2.9.1",
     "node-sass": "^9.0.0",
-    "postcss": "^8.4.41",
+    "postcss": "^8.4.45",
     "postcss-loader": "^8.1.1",
     "postcss-scss": "^4.0.9",
     "react-refresh": "^0.14.2",
@@ -84,9 +84,9 @@
     "sass-loader": "^16.0.1",
     "speed-measure-webpack-plugin": "^1.5.0",
     "storybook": "^8.2.9",
-    "stylelint": "^16.8.2",
+    "stylelint": "^16.9.0",
     "stylelint-order": "^6.0.4",
-    "stylelint-scss": "^6.5.0",
+    "stylelint-scss": "^6.5.1",
     "terser-webpack-plugin": "^5.3.10",
     "thread-loader": "^4.0.2",
     "url-loader": "^4.1.1",
@@ -94,7 +94,7 @@
     "webpack-assets-manifest": "^5.2.1",
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.4",
+    "webpack-dev-server": "^5.1.0",
     "webpack-subresource-integrity": "^5.2.0-rc.1"
   },
   "scripts": {

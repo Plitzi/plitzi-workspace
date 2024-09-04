@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-style",
-  "version": "0.22.9",
+  "version": "0.22.10",
   "files": [],
   "exports": {
     ".": "./src/index.js",
