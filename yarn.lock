@@ -29,9 +29,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.11.6":
-  version: 3.11.6
-  resolution: "@apollo/client@npm:3.11.6"
+"@apollo/client@npm:^3.11.8":
+  version: 3.11.8
+  resolution: "@apollo/client@npm:3.11.8"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.1.1"
     "@wry/caches": "npm:^1.0.0"
@@ -62,7 +62,7 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 10c0/ca96b2b10d82e3db74236f79c51d98fdd6a6f6d2058bb2b62f06b6f6cdcac03b6b3e4f4e688aea8300d42f3745f2f2c783ff7d1c4a0523e398b4069d2cac513c
+  checksum: 10c0/a9b697460aa6a5d7e59685132509871675995af14b5fc69213ca22f973600cfe3391b27b7b871579c5b4e18a0d6755ffd1076a2d8dd970a54a43973feaa99ffa
   languageName: node
   linkType: hard
 
@@ -2966,7 +2966,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-builder@workspace:apps/builder"
   dependencies:
-    "@apollo/client": "npm:^3.11.6"
+    "@apollo/client": "npm:^3.11.8"
     "@babel/compat-data": "npm:^7.25.4"
     "@babel/core": "npm:^7.25.2"
     "@babel/helper-builder-react-jsx-experimental": "npm:^7.12.11"
@@ -2994,9 +2994,9 @@ __metadata:
     clean-webpack-plugin: "npm:^4.0.0"
     compression-webpack-plugin: "npm:^11.1.0"
     css-loader: "npm:^7.1.2"
-    cypress: "npm:13.14.1"
+    cypress: "npm:13.14.2"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.245.1"
+    flow-bin: "npm:^0.245.2"
     graphql: "npm:^16.9.0"
     handlebars-webpack-plugin: "npm:^2.2.1"
     html-webpack-plugin: "npm:^5.6.0"
@@ -3043,7 +3043,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-sdk@workspace:apps/sdk"
   dependencies:
-    "@apollo/client": "npm:^3.11.6"
+    "@apollo/client": "npm:^3.11.8"
     "@auth0/auth0-react": "npm:^2.2.4"
     "@babel/compat-data": "npm:^7.25.4"
     "@babel/core": "npm:^7.25.2"
@@ -3082,7 +3082,7 @@ __metadata:
     compression-webpack-plugin: "npm:^11.1.0"
     css-loader: "npm:^7.1.2"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.245.1"
+    flow-bin: "npm:^0.245.2"
     graphql: "npm:^16.9.0"
     handlebars: "npm:^4.7.8"
     handlebars-webpack-plugin: "npm:^2.2.1"
@@ -3120,9 +3120,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.13.15":
-  version: 0.13.15
-  resolution: "@plitzi/plitzi-ui-components@npm:0.13.15::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.15%2F88ef835f9f29a80d049953f362f52953f39686e1"
+"@plitzi/plitzi-ui-components@npm:0.13.16":
+  version: 0.13.16
+  resolution: "@plitzi/plitzi-ui-components@npm:0.13.16::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.13.16%2F2fa3b5eed1f977e30da477011ba08dc5e64163d1"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.18.0"
     "@codemirror/commands": "npm:^6.6.1"
@@ -3147,7 +3147,7 @@ __metadata:
     react-syntax-highlighter: "npm:^15.5.0"
     react-toastify: "npm:^10.0.5"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/fa4a0ed2ab7be651f3c6a692fcaa5384ed81abb7da13710cd7e35b38c3884299dfc33f35597bf00917ff376f0873aa7243c0ba36cbe42a32bf2b4b19e35a3691
+  checksum: 10c0/058cfe1a6d7c55709802e4c84c11b32802407f540915ceebf9c9b39d9124e83e0e16ac569ab6283095bf7068aeb2a5e616e00666beb325c41b424e8ad78b9df1
   languageName: node
   linkType: hard
 
@@ -3163,7 +3163,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.8"
-    "@plitzi/plitzi-ui-components": "npm:0.13.15"
+    "@plitzi/plitzi-ui-components": "npm:0.13.16"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"
@@ -3278,7 +3278,7 @@ __metadata:
     "@babel/plugin-syntax-flow": "npm:^7.24.7"
     "@babel/plugin-transform-react-jsx": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.4"
-    "@tailwindcss/forms": "npm:^0.5.8"
+    "@tailwindcss/forms": "npm:^0.5.9"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.5.0"
     "@testing-library/react": "npm:^16.0.1"
@@ -3958,14 +3958,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tailwindcss/forms@npm:^0.5.8":
-  version: 0.5.8
-  resolution: "@tailwindcss/forms@npm:0.5.8"
+"@tailwindcss/forms@npm:^0.5.9":
+  version: 0.5.9
+  resolution: "@tailwindcss/forms@npm:0.5.9"
   dependencies:
     mini-svg-data-uri: "npm:^1.2.3"
   peerDependencies:
     tailwindcss: ">=3.0.0 || >= 3.0.0-alpha.1 || >= 4.0.0-alpha.20"
-  checksum: 10c0/c6f95edb6253730d1eed4a6e2aa1cd699f2b39c47963082469133677e8d0495be814f0171c6c440582cf593a7efddc76bac0474e7c7a16b6416b9c03bde189a0
+  checksum: 10c0/c7b99bc41ec548a27b68735ae459f5102535b3577020db3d9f348c88d997a623405e0833cf59beff5ca1bac7e7e2c55d5948ab374706277937e512e934947210
   languageName: node
   linkType: hard
 
@@ -7109,9 +7109,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:13.14.1":
-  version: 13.14.1
-  resolution: "cypress@npm:13.14.1"
+"cypress@npm:13.14.2":
+  version: 13.14.2
+  resolution: "cypress@npm:13.14.2"
   dependencies:
     "@cypress/request": "npm:^3.0.1"
     "@cypress/xvfb": "npm:^1.2.4"
@@ -7157,7 +7157,7 @@ __metadata:
     yauzl: "npm:^2.10.0"
   bin:
     cypress: bin/cypress
-  checksum: 10c0/1f9c18a6ae5ebfdb4f1d0c6d85e47c90cab8ef89a992b7dff8c142316b1e3abd94aef78b41d2a593ff5ce226ecda5ea456850426123fcc124a46653e9bd7e7b5
+  checksum: 10c0/ca838bbf878c46aa643e879c83c1532250cb3ec12cdc4e94e9c483bf042179a8de2b9d30fcc7777820793d71c44627c75c35c472b9de8b8dd39500ffbea75a34
   languageName: node
   linkType: hard
 
@@ -9093,12 +9093,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flow-bin@npm:^0.245.1":
-  version: 0.245.1
-  resolution: "flow-bin@npm:0.245.1"
+"flow-bin@npm:^0.245.2":
+  version: 0.245.2
+  resolution: "flow-bin@npm:0.245.2"
   bin:
     flow: cli.js
-  checksum: 10c0/f2b41f0c38830d9b5d42cff5a11c9c6e83caa199bf908d45fabf4ba8d89ae1d827216c54c8c5fba433294abedc13bdadba09f3525f2675f9e5f797ce8e3d8a9a
+  checksum: 10c0/e93d960260f8f2d30811add061190fd9a6efc6da8354b9aeb1047f1184724e1e20d50d5a4eba35edf792fa226ccd4d6ef7e21d3ebb804201968dea5de1f2b9aa
   languageName: node
   linkType: hard
 

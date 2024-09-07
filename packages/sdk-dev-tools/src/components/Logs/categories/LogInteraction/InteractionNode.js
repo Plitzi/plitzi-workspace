@@ -31,7 +31,7 @@ const InteractionNode = props => {
 
   return (
     <div className="flex flex-col w-full">
-      <Heading type="h4" className="mb-0">
+      <Heading type="h4" className="m-0">
         {name}
       </Heading>
       <div className="flex gap-1 justify-between">

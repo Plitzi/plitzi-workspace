@@ -26,7 +26,7 @@ const ExecutionWhen = props => {
 
   return (
     <div className="flex flex-col">
-      <Heading type="h5" className="mb-0">Condition to execute</Heading>
+      <Heading type="h5" className="mt-2 mb-0">Condition to execute</Heading>
       {whenStr}
     </div>
   );
