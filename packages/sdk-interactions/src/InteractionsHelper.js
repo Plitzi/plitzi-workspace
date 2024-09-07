@@ -128,18 +128,15 @@ const flowCallbacks = async (
   executionResults[node.id] = { node, status, result, postCallbacks, startTime, endTime: pConsole.getTime().valueOf() };
   postCallbacksTotal.push(...(postCallbacks ?? []));
 
-  return {
-    ...executionResults,
-    ...(await flowCallbacks(
-      node,
-      nodes,
-      callbacksAvailables,
-      { ...flowParams, [node.id]: result },
-      globalParams,
-      postCallbacksTotal,
-      executionResults
-    ))
-  };
+  return flowCallbacks(
+    node,
+    nodes,
+    callbacksAvailables,
+    { ...flowParams, [node.id]: result },
+    globalParams,
+    postCallbacksTotal,
+    executionResults
+  );
 };
 
 const storeLog = (triggerNode, startTime, nodes = {}, status = '') => {

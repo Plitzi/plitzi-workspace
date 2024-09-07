@@ -10,6 +10,10 @@ export const LOG_TYPE_CUSTOM = 'custom';
 class PlitziConsole {
   callbackInternal = undefined;
 
+  callbackAddProvider = undefined;
+
+  callbackRemoveProvider = undefined;
+
   listening = false;
 
   listeningCategory = '';
@@ -20,17 +24,21 @@ class PlitziConsole {
     this.callbackInternal = callback;
   }
 
+  // Integration
+
   setCallback(callback) {
     this.callbackInternal = callback;
   }
 
-  getTime(asString = false) {
-    if (!asString) {
-      return moment();
-    }
-
-    return moment().format('HH:mm:ss.SSS');
+  setCallbackAddProvider(callback) {
+    this.callbackAddProvider = callback;
   }
+
+  setCallbackRemoveProvider(callback) {
+    this.callbackRemoveProvider = callback;
+  }
+
+  // Private Methods
 
   #log(logType, category, message, params) {
     if (!this.callbackInternal) {
@@ -43,6 +51,26 @@ class PlitziConsole {
     } else {
       this.logsListened.push({ logType, category, message, params, time });
     }
+  }
+
+  // Methods providers
+
+  addProviderMethod(methodName, callback) {
+    this.callbackAddProvider(methodName, callback);
+  }
+
+  removeProviderMethod(methodName) {
+    this.callbackRemoveProvider(methodName);
+  }
+
+  // Methods
+
+  getTime(asString = false) {
+    if (!asString) {
+      return moment();
+    }
+
+    return moment().format('HH:mm:ss.SSS');
   }
 
   info(category, message, params) {

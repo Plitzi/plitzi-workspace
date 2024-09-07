@@ -1,11 +1,12 @@
 // Packages
-import React, { useMemo, use } from 'react';
+import React, { useMemo, use, useEffect, useCallback } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
@@ -48,9 +49,7 @@ const SchemaContextProvider = props => {
         return { settings: { customCss: '' }, flat: {}, pages: [] };
     }
   }, [schemaProp, internalData]);
-
   const valueMemo = useMemo(() => ({ schema }), [schema]);
-
   const schemaPages = useMemo(
     () => ({
       pages: get(schema, 'pages', []),
@@ -58,8 +57,17 @@ const SchemaContextProvider = props => {
     }),
     [schema.pages]
   );
-
   const schemaSettings = useMemo(() => schema.settings, [schema.settings]);
+
+  const handleGetElement = useCallback(elementId => get(schema, `flat.${elementId}`), [schema]);
+
+  useEffect(() => {
+    pConsole.addProviderMethod('getElement', handleGetElement);
+
+    return () => {
+      pConsole.removeProviderMethod('getElement');
+    };
+  }, [handleGetElement]);
 
   return (
     <SchemaPagesContext value={schemaPages}>

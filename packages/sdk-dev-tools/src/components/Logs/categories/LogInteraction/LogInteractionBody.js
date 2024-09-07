@@ -31,7 +31,13 @@ const LogInteractionBody = props => {
 
   return (
     <div className="flex flex-col m-2 gap-4">
-      <BodyHeader triggerName={node.title} startTime={startTime} endTime={endTime} duration={duration} />
+      <BodyHeader
+        triggerName={node.title}
+        startTime={startTime}
+        endTime={endTime}
+        duration={duration}
+        elementId={node.elementId}
+      />
       <div className="border-t border-gray-300" />
       <div className="flex gap-4">
         <ExecutionTree

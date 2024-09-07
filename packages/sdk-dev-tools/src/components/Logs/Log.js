@@ -1,5 +1,5 @@
 // Packages
-import React from 'react';
+import React, { memo } from 'react';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -28,4 +28,4 @@ const Log = props => {
   );
 };
 
-export default Log;
+export default memo(Log);

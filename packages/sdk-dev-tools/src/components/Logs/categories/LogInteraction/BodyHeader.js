@@ -1,6 +1,9 @@
 // Packages
-import React from 'react';
+import React, { use, useMemo } from 'react';
 import Moment from 'react-moment';
+
+// Relatives
+import DevToolsContext from '../../../../DevToolsContext';
 
 /**
  * @param {{
@@ -9,15 +12,18 @@ import Moment from 'react-moment';
  *   startTime: string;
  *   endTime: string;
  *   duration?: string;
+ *   elementId?: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const BodyHeader = props => {
-  const { triggerName, startTime, endTime, duration } = props;
+  const { triggerName, startTime, endTime, duration, elementId } = props;
+  const { getData } = use(DevToolsContext);
+  const element = useMemo(() => getData('getElement', elementId), [getData, elementId]);
 
   return (
     <div className="flex gap-4 justify-around">
-      <div className="flex flex-col grow gap-2">
+      <div className="flex flex-col grow basis-0 gap-2">
         <div className="flex items-center gap-1 font-bold">
           <i className="fa-regular fa-clock" />
           Times
@@ -38,7 +44,7 @@ const BodyHeader = props => {
         </div>
       </div>
       <div className="border-r border-gray-300" />
-      <div className="flex flex-col grow gap-2">
+      <div className="flex flex-col grow basis-0 gap-2">
         <div className="flex items-center gap-1">
           <i className="fa-solid fa-circle-info" />
           Details
@@ -52,10 +58,12 @@ const BodyHeader = props => {
             <span>Trigger:</span>
             <span>{triggerName}</span>
           </div>
-          {/* <div className="flex gap-1">
-            <span>ID:</span>
-            <span>some id here</span>
-          </div> */}
+          <div className="flex gap-1">
+            <span>Element:</span>
+            <span>
+              {element?.definition.label} [{elementId}]
+            </span>
+          </div>
         </div>
       </div>
     </div>
