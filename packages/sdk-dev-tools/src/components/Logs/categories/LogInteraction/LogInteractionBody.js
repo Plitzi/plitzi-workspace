@@ -43,7 +43,7 @@ const LogInteractionBody = props => {
         />
         <div className="border-r border-gray-300" />
         {nodeSelectedId && (
-          <div className="flex grow basis-0">
+          <div className="flex grow basis-0 min-w-0">
             <InteractionNode
               status={nodeSelected.status}
               name={nodeSelected.node.title}

@@ -16,7 +16,7 @@ const BodyHeader = props => {
   const { triggerName, startTime, endTime, duration } = props;
 
   return (
-    <div className="flex justify-around items-start">
+    <div className="flex gap-4 justify-around">
       <div className="flex flex-col grow gap-2">
         <div className="flex items-center gap-1 font-bold">
           <i className="fa-regular fa-clock" />
@@ -37,6 +37,7 @@ const BodyHeader = props => {
           </div>
         </div>
       </div>
+      <div className="border-r border-gray-300" />
       <div className="flex flex-col grow gap-2">
         <div className="flex items-center gap-1">
           <i className="fa-solid fa-circle-info" />
