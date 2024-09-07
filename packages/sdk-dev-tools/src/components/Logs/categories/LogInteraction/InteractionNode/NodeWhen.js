@@ -12,7 +12,7 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
  * }} props
  * @returns {React.ReactElement}
  */
-const ExecutionWhen = props => {
+const NodeWhen = props => {
   const { when } = props;
 
   const whenStr = useMemo(() => {
@@ -26,10 +26,12 @@ const ExecutionWhen = props => {
 
   return (
     <div className="flex flex-col break-all">
-      <Heading type="h5" className="mt-2 mb-0">Condition to execute</Heading>
+      <Heading type="h5" className="mt-2 mb-0">
+        Condition to execute
+      </Heading>
       {whenStr}
     </div>
   );
 };
 
-export default ExecutionWhen;
+export default NodeWhen;

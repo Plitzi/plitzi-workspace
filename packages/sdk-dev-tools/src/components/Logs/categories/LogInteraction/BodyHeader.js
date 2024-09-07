@@ -21,6 +21,8 @@ const BodyHeader = props => {
   const { getData } = use(DevToolsContext);
   const element = useMemo(() => getData('getElement', elementId), [getData, elementId]);
 
+  console.log('re-render');
+
   return (
     <div className="flex gap-4 justify-around">
       <div className="flex flex-col grow basis-0 gap-2">

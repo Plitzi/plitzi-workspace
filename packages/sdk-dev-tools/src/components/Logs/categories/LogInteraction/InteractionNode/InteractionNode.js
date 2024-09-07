@@ -7,7 +7,7 @@ import moment from 'moment';
 // import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
 
 // Relatives
-import ExecutionWhen from './ExecutionWhen';
+import NodeWhen from './NodeWhen';
 
 /**
  * @param {{
@@ -47,7 +47,7 @@ const InteractionNode = props => {
       {/* <div className="flex grow whitespace-pre text-xs">
           <pre dangerouslySetInnerHTML={{ __html: content }} />
         </div> */}
-      <ExecutionWhen when={when} />
+      <NodeWhen when={when} />
     </div>
   );
 };

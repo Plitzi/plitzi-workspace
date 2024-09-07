@@ -19,7 +19,6 @@ import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from '../../DevToolsPane
  */
 const LogsSummary = props => {
   const { className, orientation = ORIENTATION_HORIZONTAL, items, logTypeSelected, onClick = noop } = props;
-
   const summary = useMemo(() => {
     return items.reduce((acc, log) => {
       const { logType } = log;
