@@ -35,7 +35,7 @@ const DevToolsPanel = props => {
     <ContainerResizable
       className={classNames('component__container-resizable-sidebar', className)}
       minConstraintsX={orientation === ORIENTATION_VERTICAL ? 400 : Infinity}
-      maxConstraintsX={orientation === ORIENTATION_VERTICAL ? 600 : Infinity}
+      maxConstraintsX={orientation === ORIENTATION_VERTICAL ? 1000 : Infinity}
       minConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 200}
       maxConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 500}
       width={orientation === ORIENTATION_VERTICAL ? 400 : Infinity}
@@ -44,7 +44,7 @@ const DevToolsPanel = props => {
       autoGrow={false}
     >
       <DevToolsHeader orientation={orientation} onChangeOrientation={onChangeOrientation} />
-      <DevToolsBody />
+      <DevToolsBody orientation={orientation} />
     </ContainerResizable>
   );
 };

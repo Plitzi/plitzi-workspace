@@ -6,17 +6,19 @@ import noop from 'lodash/noop';
 // Relatives
 import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_WARNING } from '../../utils/PlitziConsole';
 import LogsSummaryItem from './LogsSummaryItem';
+import { ORIENTATION_HORIZONTAL } from '../../DevToolsPanel';
 
 /**
  * @param {{
  *   className?: string;
  *   items: object[];
  *   logTypeSelected: string;
+ *   orientation: 'horizontal' | 'vertical';
  * }} props
  * @returns {React.ReactElement}
  */
 const LogsSummary = props => {
-  const { className, items, logTypeSelected, onClick = noop } = props;
+  const { className, orientation = ORIENTATION_HORIZONTAL, items, logTypeSelected, onClick = noop } = props;
 
   const summary = useMemo(() => {
     return items.reduce((acc, log) => {
@@ -32,7 +34,11 @@ const LogsSummary = props => {
   const handleClick = useCallback(logType => onClick(logType), [onClick]);
 
   return (
-    <div className={classNames('flex flex-col border-r border-gray-300 select-none', className)}>
+    <div
+      className={classNames('flex border-r border-gray-300 select-none', className, {
+        'flex-col': orientation === ORIENTATION_HORIZONTAL
+      })}
+    >
       <LogsSummaryItem onClick={handleClick} amount={items.length} selected={!logTypeSelected} />
       <LogsSummaryItem
         onClick={handleClick}

@@ -34,7 +34,8 @@ const ExecutionTreeNode = props => {
       <div
         className={classNames('w-2.5 h-2.5 rounded-full', {
           'bg-green-500': status === 'success',
-          'bg-gray-500': status === 'skipped' || status === 'disabled'
+          'bg-orange-500': status === 'skipped',
+          'bg-gray-500': status === 'disabled'
         })}
         title={status}
       />

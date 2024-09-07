@@ -1,19 +1,22 @@
 // Packages
 import React, { useState, useCallback } from 'react';
+import classNames from 'classnames';
 
 // Relatives
 import Log from './Log';
 import LogsSummary from '../LogsSummary';
+import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from '../../DevToolsPanel';
 
 /**
  * @param {{
  *   className?: string;
  *   items: object[];
+ *   orientation: 'horizontal' | 'vertical';
  * }} props
  * @returns {React.ReactElement}
  */
 const Logs = props => {
-  const { items = [] } = props;
+  const { items = [], orientation = ORIENTATION_HORIZONTAL } = props;
   const [logTypeSelected, setLogTypeSelected] = useState();
 
   const handleClickSummary = useCallback(logType => {
@@ -21,8 +24,14 @@ const Logs = props => {
   }, []);
 
   return (
-    <div className="flex min-h-full w-full">
-      <LogsSummary className="h-full" logTypeSelected={logTypeSelected} items={items} onClick={handleClickSummary} />
+    <div className={classNames('flex min-h-full w-full', { 'flex-col': orientation === ORIENTATION_VERTICAL })}>
+      <LogsSummary
+        className={classNames({ 'h-full': orientation === ORIENTATION_HORIZONTAL })}
+        logTypeSelected={logTypeSelected}
+        items={items}
+        orientation={orientation}
+        onClick={handleClickSummary}
+      />
       <div className="flex flex-col grow h-full overflow-y-auto">
         {items &&
           items
