@@ -29,8 +29,6 @@ const InteractionNode = props => {
     [startTime, endTime]
   );
 
-  console.log(when);
-
   return (
     <div className="flex flex-col w-full">
       <Heading type="h4" className="mb-0">

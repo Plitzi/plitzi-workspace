@@ -38,8 +38,6 @@ const LogInteraction = props => {
     [startTime, endTime]
   );
 
-  // console.log(params?.node?.when);
-
   return (
     <ContainerCollapsable
       className="w-full border-b last:border-b-none border-gray-300 px-2 py-1"

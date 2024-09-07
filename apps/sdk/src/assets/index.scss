@@ -31,6 +31,12 @@ body {
   iframe {
     border: none;
   }
+
+  &.resizing,
+  &.moving {
+    pointer-events: none;
+    user-select: none;
+  }
 }
 
 .made-in-plitzi {

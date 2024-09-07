@@ -6,7 +6,7 @@ import noop from 'lodash/noop';
 // Relatives
 import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_WARNING } from '../../utils/PlitziConsole';
 import LogsSummaryItem from './LogsSummaryItem';
-import { ORIENTATION_HORIZONTAL } from '../../DevToolsPanel';
+import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from '../../DevToolsPanel';
 
 /**
  * @param {{
@@ -35,8 +35,9 @@ const LogsSummary = props => {
 
   return (
     <div
-      className={classNames('flex border-r border-gray-300 select-none', className, {
-        'flex-col': orientation === ORIENTATION_HORIZONTAL
+      className={classNames('flex border-gray-300 select-none', className, {
+        'flex-col border-r': orientation === ORIENTATION_HORIZONTAL,
+        'border-b': orientation === ORIENTATION_VERTICAL
       })}
     >
       <LogsSummaryItem onClick={handleClick} amount={items.length} selected={!logTypeSelected} />

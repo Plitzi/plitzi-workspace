@@ -23,24 +23,26 @@ export const ORIENTATION_HORIZONTAL = 'horizontal';
  */
 const DevToolsPanel = props => {
   const { className, orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop } = props;
-  const resizeHandles = useMemo(() => {
-    if (orientation === ORIENTATION_VERTICAL) {
-      return ['w'];
+  const resizeHandles = useMemo(() => (orientation === ORIENTATION_VERTICAL ? ['w'] : ['n']), [orientation]);
+  const parentElement = useMemo(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
     }
 
-    return ['n'];
-  }, [orientation]);
+    return document.getElementsByClassName('plitzi-sdk')?.[0];
+  }, []);
 
   return (
     <ContainerResizable
       className={classNames('component__container-resizable-sidebar', className)}
-      minConstraintsX={orientation === ORIENTATION_VERTICAL ? 400 : Infinity}
+      minConstraintsX={orientation === ORIENTATION_VERTICAL ? 500 : Infinity}
       maxConstraintsX={orientation === ORIENTATION_VERTICAL ? 1000 : Infinity}
       minConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 200}
       maxConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 500}
-      width={orientation === ORIENTATION_VERTICAL ? 400 : Infinity}
+      width={orientation === ORIENTATION_VERTICAL ? 500 : Infinity}
       height={orientation === ORIENTATION_VERTICAL ? Infinity : 200}
       resizeHandles={resizeHandles}
+      parentElement={parentElement}
       autoGrow={false}
     >
       <DevToolsHeader orientation={orientation} onChangeOrientation={onChangeOrientation} />
