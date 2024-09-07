@@ -14,7 +14,6 @@ import { pConsole } from './utils/PlitziConsole';
 const DevToolsContextProvider = props => {
   const { children } = props;
   const [logs, setLogs] = useState([]);
-  const valueMemo = useMemo(() => ({ logs, setLogs }), [logs, setLogs]);
 
   const handleAddLog = useCallback(
     (logType, category, message, params, time) => {
@@ -23,6 +22,8 @@ const DevToolsContextProvider = props => {
     [setLogs]
   );
 
+  const handleClearLogs = useCallback(() => setLogs([]), []);
+
   useEffect(() => {
     pConsole.setCallback(handleAddLog);
 
@@ -30,6 +31,8 @@ const DevToolsContextProvider = props => {
       pConsole.setCallback(undefined);
     };
   }, [handleAddLog]);
+
+  const valueMemo = useMemo(() => ({ logs, clearLogs: handleClearLogs, setLogs }), [logs, setLogs, handleClearLogs]);
 
   return <DevToolsContext value={valueMemo}>{children}</DevToolsContext>;
 };
