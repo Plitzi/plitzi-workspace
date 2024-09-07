@@ -1,5 +1,5 @@
 // Packages
-import React, { use, useMemo } from 'react';
+import React, { use, useCallback, useMemo } from 'react';
 import Moment from 'react-moment';
 
 // Relatives
@@ -20,12 +20,29 @@ const BodyHeader = props => {
   const { triggerName, startTime, endTime, duration, elementId } = props;
   const { getData } = use(DevToolsContext);
   const element = useMemo(() => getData('getElement', elementId), [getData, elementId]);
+  const elementDOM = useMemo(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
 
-  console.log('re-render');
+    return document.querySelector(`[data-id="${elementId}"]`);
+  }, [elementId]);
+
+  const handleClick = useCallback(() => {
+    elementDOM?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  }, [elementDOM]);
+
+  const handleMouseEnter = useCallback(() => {
+    elementDOM?.classList.add('devtools-element-hovered');
+  }, [elementDOM]);
+
+  const handleMouseLeave = useCallback(() => {
+    elementDOM?.classList.remove('devtools-element-hovered');
+  }, [elementDOM]);
 
   return (
     <div className="flex gap-4 justify-around">
-      <div className="flex flex-col grow basis-0 gap-2">
+      <div className="flex flex-col grow basis-0 gap-2 min-w-0">
         <div className="flex items-center gap-1 font-bold">
           <i className="fa-regular fa-clock" />
           Times
@@ -46,7 +63,7 @@ const BodyHeader = props => {
         </div>
       </div>
       <div className="border-r border-gray-300" />
-      <div className="flex flex-col grow basis-0 gap-2">
+      <div className="flex flex-col grow basis-0 gap-2 min-w-0">
         <div className="flex items-center gap-1">
           <i className="fa-solid fa-circle-info" />
           Details
@@ -58,11 +75,16 @@ const BodyHeader = props => {
           </div>
           <div className="flex gap-1">
             <span>Trigger:</span>
-            <span>{triggerName}</span>
+            <span className="truncate">{triggerName}</span>
           </div>
           <div className="flex gap-1">
             <span>Element:</span>
-            <span>
+            <span
+              className="truncate text-blue-500 cursor-pointer"
+              onClick={handleClick}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
               {element?.definition.label} [{elementId}]
             </span>
           </div>

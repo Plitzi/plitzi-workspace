@@ -37,6 +37,13 @@ body {
     pointer-events: none;
     user-select: none;
   }
+
+  &.sdk-debug-mode {
+    .devtools-element-hovered {
+      outline: rgb(91, 107, 223) solid 2px;
+      animation: pulse 2s infinite;
+    }
+  }
 }
 
 .made-in-plitzi {
@@ -74,4 +81,21 @@ body {
     rgba(0, 0, 0, 0) 0px 0px 0px 0px,
     rgba(0, 0, 0, 0.1) 0px 1px 3px 0px,
     rgba(0, 0, 0, 0) 0px 1px 2px -1px;
+}
+
+@keyframes pulse {
+  0% {
+    // transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  70% {
+    // transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
+
+  100% {
+    // transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
 }

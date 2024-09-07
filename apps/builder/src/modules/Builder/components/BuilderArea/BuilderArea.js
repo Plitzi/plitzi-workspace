@@ -56,6 +56,7 @@ import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.c
  *   showFooter?: boolean;
  *   mobilePreview?: boolean;
  *   previewMode?: boolean;
+ *   debugMode?: boolean;
  * }} props
  * @returns {React.ReactElement}
  */
@@ -69,7 +70,8 @@ const BuilderArea = props => {
     headerTitle = '',
     showFooter = true,
     mobilePreview = false,
-    previewMode = false
+    previewMode = false,
+    debugMode = false
   } = props;
   const { assets } = use(PluginsContext);
   const {
@@ -191,7 +193,7 @@ const BuilderArea = props => {
 
   const plitziContextValue = useMemo(
     () => ({
-      settings: { previewMode, currentPageId, environment: 'main' },
+      settings: { previewMode, debugMode, currentPageId, environment: 'main' },
       root: { baseElementId },
       utils: { displayBorderComponents, getWindow, rootDOM },
       customContexts: {},

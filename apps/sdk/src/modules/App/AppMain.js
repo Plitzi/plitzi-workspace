@@ -44,6 +44,7 @@ import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSd
  *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
  *   sdkStylePath?: string;
  *   previewMode?: boolean;
+ *   debugMode?: boolean;
  *   state?: object;
  *   onInitEventBridge?: Function;
  *   onInitStateManager?: Function;
@@ -66,6 +67,7 @@ const AppMain = props => {
     renderMode = RENDER_MODE_IFRAME,
     sdkStylePath = './plitzi-sdk.css',
     previewMode = true,
+    debugMode = false,
     state,
     onInitEventBridge = noop,
     onInitStateManager = noop,
@@ -103,6 +105,7 @@ const AppMain = props => {
                               <Sdk
                                 renderMode={renderMode}
                                 previewMode={previewMode}
+                                debugMode={debugMode}
                                 environment={environment}
                                 {...sdkProps}
                               />

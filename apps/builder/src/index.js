@@ -4,7 +4,6 @@ import './wdyr';
 // Packages
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import omit from 'lodash/omit';
 
 // Alias
 import Builder from '@pmodules/Builder';
@@ -24,7 +23,7 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
     }
 
     return (
-      <App {...params}>
+      <App {...params} debugMode={debugMode}>
         {pluginKeys.map(pluginType => (
           <Builder.Plugin key={pluginType} renderType={pluginType} component={plugins[pluginType]} />
         ))}
@@ -74,7 +73,7 @@ const PlitziBuilder = props => {
     }
   }, []);
 
-  return <App {...omit(props, ['debugMode'])}>{children}</App>;
+  return <App {...props}>{children}</App>;
 };
 
 PlitziBuilder.Plugin = Builder.Plugin;

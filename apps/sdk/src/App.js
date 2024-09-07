@@ -125,12 +125,18 @@ const App = props => {
 
   if (renderMode === RENDER_MODE_WIDGET) {
     return (
-      <ContainerRoot className={classNames('plitzi-sdk flex', className)}>
+      <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
         <DevToolsContainer enabled={debugMode}>
           <HelmetProvider>
             <ApolloProvider client={client}>
               <ComponentProvider localCustomComponents={localCustomComponents}>
-                <AppMain server={finalServer} webKey={webKey} renderMode={renderMode} {...sdkProps} />
+                <AppMain
+                  server={finalServer}
+                  webKey={webKey}
+                  renderMode={renderMode}
+                  debugMode={debugMode}
+                  {...sdkProps}
+                />
               </ComponentProvider>
             </ApolloProvider>
           </HelmetProvider>
@@ -147,13 +153,22 @@ const App = props => {
   }
 
   return (
-    <ContainerRoot className={classNames('plitzi-sdk flex', className)} ssrMode={renderMode === RENDER_MODE_SSR}>
+    <ContainerRoot
+      className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
+      ssrMode={renderMode === RENDER_MODE_SSR}
+    >
       <DevToolsContainer enabled={debugMode}>
         <HelmetProvider>
           <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
             <ApolloProvider client={client}>
               <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                <AppMain server={finalServer} webKey={webKey} renderMode={renderMode} {...sdkProps} />
+                <AppMain
+                  server={finalServer}
+                  webKey={webKey}
+                  renderMode={renderMode}
+                  debugMode={debugMode}
+                  {...sdkProps}
+                />
               </ComponentProvider>
             </ApolloProvider>
           </ReactRouter>

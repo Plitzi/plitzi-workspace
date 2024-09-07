@@ -44,6 +44,7 @@ const RootElement = props => {
   const { id, rootId, style, definition, interactions, interactionsBasicCallbacks } = internalProps;
   const plitziContextData = usePlitziServiceContext();
   const previewMode = get(plitziContextData, 'settings.previewMode', true);
+  const debugMode = get(plitziContextData, 'settings.debugMode', false);
   const InteractionsContext = get(plitziContextData, 'contexts.InteractionsContext');
   const DataSourceContext = get(plitziContextData, 'contexts.DataSourceContext');
   const baseElementId = get(plitziContextData, 'root.baseElementId');
@@ -54,7 +55,7 @@ const RootElement = props => {
   }
 
   const params = useMemo(() => {
-    if (previewMode || !definition?.type || rootId !== baseElementId) {
+    if (!debugMode && (previewMode || !definition?.type || rootId !== baseElementId)) {
       return {};
     }
 
@@ -65,7 +66,7 @@ const RootElement = props => {
       'data-type': definition?.type ?? 'unknown',
       'data-root-render-element': true
     };
-  }, [id, rootId, definition, previewMode, baseElementId]);
+  }, [id, rootId, definition, previewMode, baseElementId, debugMode]);
 
   if (!InteractionsContext) {
     return (

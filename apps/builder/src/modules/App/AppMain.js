@@ -28,6 +28,7 @@ import AppContainer from './AppContainer';
  *   externalStyle?: string;
  *   state?: object;
  *   children?: React.ReactNode;
+ *   debugMode?: boolean;
  * }} props
  * @returns {React.ReactElement}
  */
@@ -42,7 +43,8 @@ const AppMain = props => {
     includeSubscriptions = true,
     includeRealTime = true,
     externalStyle = '',
-    state
+    state,
+    debugMode = false
   } = props;
   const [previewMode, setPreviewMode] = useState(false);
   const [displayBorderComponents, setDisplayBorderComponents] = useState(DISPLAY_BORDER_BLACK);
@@ -53,6 +55,7 @@ const AppMain = props => {
   const appValueMemo = useMemo(
     () => ({
       previewMode,
+      debugMode,
       setPreviewMode,
       displayBorderComponents,
       setDisplayBorderComponents,
@@ -65,6 +68,7 @@ const AppMain = props => {
     }),
     [
       previewMode,
+      debugMode,
       setPreviewMode,
       displayBorderComponents,
       setDisplayBorderComponents,
