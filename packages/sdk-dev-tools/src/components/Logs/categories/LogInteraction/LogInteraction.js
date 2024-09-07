@@ -40,9 +40,10 @@ const LogInteraction = props => {
 
   return (
     <ContainerCollapsable
-      className="w-full border-b last:border-b-none border-gray-300 px-2 py-1"
+      className="w-full border-b last:border-b-none border-gray-300 px-2 py-1 basis-0 grow"
       iconPlacement="left"
       iconClassName="flex items-center justify-center mr-1 w-4 h-4"
+      titleClassName="overflow-hidden"
       iconCollapsed={iconCollapsed}
       iconExpanded={iconExpanded}
       title={<LogInteractionHeader status={status} message={message} nodes={nodes} time={time} duration={duration} />}

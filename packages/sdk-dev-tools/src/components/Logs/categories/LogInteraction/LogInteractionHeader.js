@@ -23,10 +23,10 @@ const LogInteractionHeader = props => {
   const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
 
   return (
-    <div className="flex justify-between w-full text-sm">
-      <div className="flex items-center gap-2">
+    <div className="flex justify-between w-full text-sm basis-0 grow">
+      <div className="flex items-center gap-3 basis-0 grow min-w-0">
+        <span className="font-bold">{time}</span>
         <div className="flex">
-          <span className="font-bold">{time}</span>
           {status === 'completed' && <LogStatus logType={LOG_TYPE_SUCCESS}>Completed</LogStatus>}
           {status === 'skipped' && (
             <LogStatus
@@ -38,9 +38,7 @@ const LogInteractionHeader = props => {
             </LogStatus>
           )}
         </div>
-        <div className="flex basis-0 grow">
-          <div className="truncate">{message} qweqw eqwe qwe qwe </div>
-        </div>
+        <div className="grow basis-0 truncate">{message}</div>
       </div>
       <div className="flex gap-3">
         {status === 'completed' && !!nodesSkipped && (

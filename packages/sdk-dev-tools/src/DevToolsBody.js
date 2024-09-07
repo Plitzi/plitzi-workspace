@@ -9,18 +9,20 @@ import Logs from './components/Logs/Logs';
 /**
  * @param {{
  *   className?: string;
+ *   tabSelected?: string;
  *   orientation: 'horizontal' | 'vertical';
  * }} props
  * @returns {React.ReactElement}
  */
 const DevToolsBody = props => {
-  const { className, orientation } = props;
+  const { className, tabSelected, orientation } = props;
   const { logs } = use(DevToolsContext);
 
   return (
     <div className={classNames('flex grow h-full bg-gray-50 w-full overflow-auto', className)}>
       <div className="flex flex-col gap-2 w-full">
-        <Logs items={logs} orientation={orientation} />
+        {tabSelected === 'interactions' && <Logs items={logs} orientation={orientation} />}
+        {tabSelected === 'dataSources' && <div className='flex items-center justify-center h-full w-full'>Coming Soon...</div>}
       </div>
     </div>
   );

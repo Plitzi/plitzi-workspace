@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import noop from 'lodash/noop';
@@ -23,6 +23,7 @@ export const ORIENTATION_HORIZONTAL = 'horizontal';
  */
 const DevToolsPanel = props => {
   const { className, orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop } = props;
+  const [tabSelected, setTabSelected] = useState('interactions');
   const resizeHandles = useMemo(() => (orientation === ORIENTATION_VERTICAL ? ['w'] : ['n']), [orientation]);
   const parentElement = useMemo(() => {
     if (typeof document === 'undefined') {
@@ -31,6 +32,8 @@ const DevToolsPanel = props => {
 
     return document.getElementsByClassName('plitzi-sdk')?.[0];
   }, []);
+
+  const handleTabSelect = useCallback(tabIndex => setTabSelected(tabIndex), []);
 
   return (
     <ContainerResizable
@@ -45,8 +48,13 @@ const DevToolsPanel = props => {
       parentElement={parentElement}
       autoGrow={false}
     >
-      <DevToolsHeader orientation={orientation} onChangeOrientation={onChangeOrientation} />
-      <DevToolsBody orientation={orientation} />
+      <DevToolsHeader
+        orientation={orientation}
+        onChangeOrientation={onChangeOrientation}
+        onTabSelect={handleTabSelect}
+        tabSelected={tabSelected}
+      />
+      <DevToolsBody orientation={orientation} tabSelected={tabSelected} />
     </ContainerResizable>
   );
 };

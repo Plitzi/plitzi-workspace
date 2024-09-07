@@ -1,6 +1,7 @@
 // Packages
 import React, { useCallback } from 'react';
 import noop from 'lodash/noop';
+import classNames from 'classnames';
 
 // Relatives
 import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from './DevToolsPanel';
@@ -9,13 +10,15 @@ import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from './DevToolsPanel';
  * @param {{
  *   className?: string;
  *   children: React.ReactNode;
+ *   tabSelected?: string;
  *   orientation: 'vertical' | 'horizontal';
  *   onChangeOrientation: (orientation: 'horizontal' | 'vertical') => void;
+ *   onTabSelect?: (tabIndex: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DevToolsHeader = props => {
-  const { orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop } = props;
+  const { tabSelected = 0, orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop, onTabSelect = noop } = props;
 
   const handleClickOrientation = useCallback(() => {
     if (orientation === ORIENTATION_HORIZONTAL) {
@@ -25,11 +28,29 @@ const DevToolsHeader = props => {
     }
   }, [orientation, onChangeOrientation]);
 
+  const handleClickTab = useCallback(tabIndex => () => onTabSelect(tabIndex), [onTabSelect]);
+
   return (
-    <div className="flex justify-between grow border-b border-b-gray-300 px-2 py-1 bg-gray-200 select-none">
-      <div className="flex gap-4">
-        <div>Interactions</div>
-        <div>Data Sources</div>
+    <div className="flex justify-between grow border-b border-b-gray-300 bg-gray-200 select-none">
+      <div className="flex">
+        <div
+          className={classNames('px-2 py-1 border-b-4 cursor-pointer hover:text-inherit hover:bg-gray-100', {
+            'text-purple-500 border-purple-500': tabSelected === 'interactions',
+            'border-transparent': tabSelected !== 'interactions'
+          })}
+          onClick={handleClickTab('interactions')}
+        >
+          Interactions
+        </div>
+        <div
+          className={classNames('px-2 py-1 border-b-4 cursor-pointer hover:text-inherit hover:bg-gray-100', {
+            'text-purple-500 border-purple-500': tabSelected === 'dataSources',
+            'border-transparent': tabSelected !== 'dataSources'
+          })}
+          onClick={handleClickTab('dataSources')}
+        >
+          Data Sources
+        </div>
       </div>
       <div className="flex">
         <button onClick={handleClickOrientation}>Orientation</button>
