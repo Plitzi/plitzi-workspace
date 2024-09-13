@@ -4,10 +4,12 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import moment from 'moment';
 
 // Monorepo
-// import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import NodeWhen from './NodeWhen';
+import NodeMetadata from './NodeMetadata';
+import NodeHeader from './NodeHeader';
 
 /**
  * @param {{
@@ -17,12 +19,19 @@ import NodeWhen from './NodeWhen';
  *   endTime?: number;
  *   status?: string;
  *   when?: string;
+ *   whenParams?: object;
  * }} props
  * @returns {React.ReactElement}
  */
 const InteractionNode = props => {
-  const { name = 'Node Title', startTime = 0, endTime = 0, status = 'notStarted', when } = props;
-  // const content = useMemo(() => syntaxHighlight(JSON.stringify(node, null, 2)), [node]);
+  const {
+    whenParams = emptyObject,
+    name = 'Node Title',
+    startTime = 0,
+    endTime = 0,
+    status = 'notStarted',
+    when
+  } = props;
 
   const duration = useMemo(
     () => `${moment.duration(moment(endTime).diff(startTime)).asSeconds()}s`,
@@ -34,20 +43,9 @@ const InteractionNode = props => {
       <Heading type="h4" className="m-0">
         {name}
       </Heading>
-      <div className="flex gap-1 justify-between">
-        <div className="flex gap-1">
-          <div className="font-bold">Duration:</div>
-          {duration}
-        </div>
-        <div className="flex gap-1">
-          <div className="font-bold">Status:</div>
-          {status}
-        </div>
-      </div>
-      {/* <div className="flex grow whitespace-pre text-xs">
-          <pre dangerouslySetInnerHTML={{ __html: content }} />
-        </div> */}
+      <NodeHeader duration={duration} status={status} />
       <NodeWhen when={when} />
+      <NodeMetadata when={when} whenParams={whenParams} />
     </div>
   );
 };

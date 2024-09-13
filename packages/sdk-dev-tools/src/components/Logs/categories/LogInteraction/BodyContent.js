@@ -23,7 +23,7 @@ const BodyContent = props => {
   const handleSelect = useCallback(id => setSelectedNodeId(id), []);
 
   return (
-    <div className={classNames("flex", className)}>
+    <div className={classNames('flex', className)}>
       <ExecutionTree
         className="grow basis-0"
         nodeId={node.id}
@@ -35,6 +35,7 @@ const BodyContent = props => {
       {nodeSelectedId && (
         <div className="flex grow basis-0 min-w-0">
           <InteractionNode
+            whenParams={nodeSelected.whenParams}
             status={nodeSelected.status}
             name={nodeSelected.node.title}
             startTime={nodeSelected.startTime}

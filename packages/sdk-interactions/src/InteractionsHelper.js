@@ -38,8 +38,9 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     return { status: 'disabled', result, postCallbacks };
   }
 
-  if (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams, [id]: params })) {
-    return { status: 'skipped', result, postCallbacks };
+  const whenParams = { ...globalParams, ...flowParams, [id]: params };
+  if (when && !QueryBuilderEvaluator(when, whenParams)) {
+    return { status: 'skipped', result, postCallbacks, whenParams };
   }
 
   const paramsToCallback = {
@@ -51,12 +52,12 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     case 'callback':
     case 'globalCallback': {
       if (!elementId) {
-        return { status: 'failed', result, postCallbacks };
+        return { status: 'failed', result, postCallbacks, whenParams };
       }
 
       const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`);
       if (!receptorCallback) {
-        return { status: 'failed', result, postCallbacks };
+        return { status: 'failed', result, postCallbacks, whenParams };
       }
 
       const { callback, postCallback } = receptorCallback;
@@ -87,7 +88,7 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     default:
   }
 
-  return { status: 'success', result, postCallbacks };
+  return { status: 'success', result, postCallbacks, whenParams };
 };
 
 const processPostCallbacks = async (postCallbacks = []) => {
@@ -124,8 +125,21 @@ const flowCallbacks = async (
   }
 
   const startTime = pConsole.getTime().valueOf();
-  const { status, result, postCallbacks } = await processNode(node, callbacksAvailables, flowParams, globalParams);
-  executionResults[node.id] = { node, status, result, postCallbacks, startTime, endTime: pConsole.getTime().valueOf() };
+  const { status, result, postCallbacks, whenParams } = await processNode(
+    node,
+    callbacksAvailables,
+    flowParams,
+    globalParams
+  );
+  executionResults[node.id] = {
+    node,
+    status,
+    result,
+    postCallbacks,
+    whenParams,
+    startTime,
+    endTime: pConsole.getTime().valueOf()
+  };
   postCallbacksTotal.push(...(postCallbacks ?? []));
 
   return flowCallbacks(
