@@ -53,7 +53,7 @@ const DevToolsContextProvider = props => {
 
     return () => {
       pConsole.setCallback(undefined);
-      pConsole.setCallAddbackProvider(undefined);
+      pConsole.setCallbackAddProvider(undefined);
       pConsole.setCallbackRemoveProvider(undefined);
     };
   }, [handleAddLog]);

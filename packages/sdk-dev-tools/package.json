@@ -5,7 +5,6 @@
   "exports": {
     ".": "./src/index.js",
     "./DevToolsContainer": "./src/DevToolsContainer.js",
-    "./DevToolsPanel": "./src/DevToolsPanel.js",
     "./PlitziConsole": "./src/utils/PlitziConsole.js"
   },
   "scripts": {
