@@ -56,11 +56,15 @@ class PlitziConsole {
   // Methods providers
 
   addProviderMethod(methodName, callback) {
-    this.callbackAddProvider(methodName, callback);
+    if (typeof this.callbackAddProvider === 'function') {
+      this.callbackAddProvider(methodName, callback);
+    }
   }
 
   removeProviderMethod(methodName) {
-    this.callbackRemoveProvider(methodName);
+    if (typeof this.callbackRemoveProvider === 'function') {
+      this.callbackRemoveProvider(methodName);
+    }
   }
 
   // Methods
