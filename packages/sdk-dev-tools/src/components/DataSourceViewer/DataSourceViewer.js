@@ -73,6 +73,7 @@ const DataSourceViewer = props => {
     }
 
     const elementDOM = document.querySelector(`[data-id="${id}"]`);
+    console.log(elementDOM)
     elementDOM?.classList.add('devtools-element-hovered');
 
     return () => {
