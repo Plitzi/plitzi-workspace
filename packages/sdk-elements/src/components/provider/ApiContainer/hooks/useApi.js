@@ -108,7 +108,7 @@ const useApi = props => {
 
   useEffect(() => {
     handleFetch();
-  }, [enabled, params, mock]);
+  }, [enabled, params, mock, url]);
 
   return {
     isLoading,
