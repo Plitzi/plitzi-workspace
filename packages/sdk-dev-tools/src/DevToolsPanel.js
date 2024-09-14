@@ -23,7 +23,7 @@ export const ORIENTATION_HORIZONTAL = 'horizontal';
  */
 const DevToolsPanel = props => {
   const { className, orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop } = props;
-  const [tabSelected, setTabSelected] = useState('interactions');
+  const [tabSelected, setTabSelected] = useState('logs');
   const resizeHandles = useMemo(() => (orientation === ORIENTATION_VERTICAL ? ['w'] : ['n']), [orientation]);
   const parentElement = useMemo(() => {
     if (typeof document === 'undefined') {

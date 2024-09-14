@@ -22,7 +22,7 @@ const DataSourceViewer = props => {
   const { getData } = use(DevToolsContext);
   const [selectorEnabled, setSelectorEnabled] = useState(false);
   const { currentPageId } = use(NavigationContext);
-  const [id, setId] = useState(currentPageId);
+  const [id, setId] = useState();
   const dataSource = useMemo(() => {
     if (!id || !getData) {
       return {};
@@ -64,8 +64,13 @@ const DataSourceViewer = props => {
 
   const handleClickClearIcon = useCallback(() => {
     setSelectorEnabled(false);
+    setId();
+  }, [setId]);
+
+  const handleClickPage = useCallback(() => {
+    setSelectorEnabled(false);
     setId(currentPageId);
-  }, [setId, currentPageId]);
+  }, [currentPageId]);
 
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -73,7 +78,6 @@ const DataSourceViewer = props => {
     }
 
     const elementDOM = document.querySelector(`[data-id="${id}"]`);
-    console.log(elementDOM)
     elementDOM?.classList.add('devtools-element-hovered');
 
     return () => {
@@ -102,17 +106,27 @@ const DataSourceViewer = props => {
 
   return (
     <div className={classNames('flex flex-col h-full w-full', className)}>
-      <div className="flex border-b border-gray-300 px-2 py-1 gap-2 items-center">
+      <div className="flex border-b border-gray-300 px-2 py-1 gap-2 items-center justify-between">
+        <div className="flex gap-2">
+          <i
+            className={classNames(
+              'fa-regular w-6 h-6 flex items-center justify-center fa-hand-pointer border border-dotted p-0.5 cursor-pointer',
+              {
+                'border-gray-500 hover:text-purple-500 hover:border-purple-500': !selectorEnabled,
+                'text-purple-500 border-purple-500': selectorEnabled
+              }
+            )}
+            title="Select an element in the page to inspect it"
+            onClick={handleClickSelectorIcon}
+          />
+          <i
+            className="fa-regular fa-file w-6 h-6 flex items-center justify-center border border-dotted p-0.5 cursor-pointer hover:text-purple-500 hover:border-purple-500"
+            title="Current Page"
+            onClick={handleClickPage}
+          />
+        </div>
         <i
-          className={classNames('fa-regular fa-hand-pointer border border-dotted p-0.5 cursor-pointer', {
-            'border-gray-500 hover:text-purple-500 hover:border-purple-500': !selectorEnabled,
-            'text-purple-500 border-purple-500': selectorEnabled
-          })}
-          title="Select an element in the page to inspect it"
-          onClick={handleClickSelectorIcon}
-        />
-        <i
-          className="fa-solid fa-ban border border-dotted p-0.5 cursor-pointer hover:text-purple-500 hover:border-purple-500"
+          className="fa-solid fa-ban w-6 h-6 flex items-center justify-center border border-dotted p-0.5 cursor-pointer hover:text-purple-500 hover:border-purple-500"
           onClick={handleClickClearIcon}
           title="Clear"
         />

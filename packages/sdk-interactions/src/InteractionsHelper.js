@@ -168,6 +168,7 @@ const storeLog = (triggerNode, startTime, nodes = {}, status = '') => {
     {
       status,
       node: triggerNode,
+      elementId: triggerNode?.elementId,
       nodes: {
         ...nodes,
         [triggerNode.id]: {

@@ -22,7 +22,9 @@ const Log = props => {
 
   return (
     <>
-      {category === 'interactions' && <LogInteraction message={message} params={params} time={time} />}
+      {(category === 'interactions' || category === 'navigation') && (
+        <LogInteraction message={message} params={params} time={time} />
+      )}
       {/* {category === 'dataSources' && <LogDataSource message={message} params={params} />} */}
     </>
   );

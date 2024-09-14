@@ -35,12 +35,12 @@ const DevToolsHeader = props => {
       <div className="flex">
         <div
           className={classNames('px-2 py-1 border-b-4 cursor-pointer hover:text-inherit hover:bg-gray-100', {
-            'text-purple-500 border-purple-500': tabSelected === 'interactions',
-            'border-transparent': tabSelected !== 'interactions'
+            'text-purple-500 border-purple-500': tabSelected === 'logs',
+            'border-transparent': tabSelected !== 'logs'
           })}
-          onClick={handleClickTab('interactions')}
+          onClick={handleClickTab('logs')}
         >
-          Interactions
+          Logs
         </div>
         <div
           className={classNames('px-2 py-1 border-b-4 cursor-pointer hover:text-inherit hover:bg-gray-100', {

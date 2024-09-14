@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, use, useMemo, useRef } from 'react';
+import React, { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
@@ -10,6 +10,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 
 // Monorepo
 import useNavigation from '@plitzi/sdk-navigation/useNavigation';
@@ -61,6 +62,16 @@ const NavigationContextProvider = props => {
 
   const { action, pageId, pathMatch } = matchResult;
   const currentPageId = currentPageIdProp || pageId;
+
+  useEffect(() => {
+    pConsole.info(
+      'navigation',
+      <span>
+        Navigated to page <b>{get(pageDefinitions, `${currentPageId}.attributes.name`, currentPageId)}</b>
+      </span>,
+      { elementId: currentPageId }
+    );
+  }, [currentPageId]);
 
   const handleNavigate = useCallback(
     (url, isExternal) => {

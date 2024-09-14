@@ -30,7 +30,7 @@ const LogInteraction = props => {
   const {
     time,
     message,
-    params: { status, node = emptyObject, nodes = emptyObject, startTime = 0, endTime = 0 } = emptyObject
+    params: { elementId, status, node = emptyObject, nodes = emptyObject, startTime = 0, endTime = 0 } = emptyObject
   } = props;
 
   const duration = useMemo(
@@ -49,7 +49,14 @@ const LogInteraction = props => {
       title={<LogInteractionHeader status={status} message={message} nodes={nodes} time={time} duration={duration} />}
       collapsed
     >
-      <LogInteractionBody node={node} nodes={nodes} startTime={startTime} endTime={endTime} duration={duration} />
+      <LogInteractionBody
+        elementId={elementId}
+        node={node}
+        nodes={nodes}
+        startTime={startTime}
+        endTime={endTime}
+        duration={duration}
+      />
     </ContainerCollapsable>
   );
 };

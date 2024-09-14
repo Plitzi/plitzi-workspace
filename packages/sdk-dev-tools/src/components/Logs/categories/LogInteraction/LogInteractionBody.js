@@ -17,11 +17,12 @@ import BodyContent from './BodyContent';
  *   startTime: string;
  *   endTime: string;
  *   duration?: string;
+ *   elementId?: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const LogInteractionBody = props => {
-  const { node, nodes = emptyObject, startTime, endTime, duration } = props;
+  const { node, nodes = emptyObject, startTime, endTime, duration, elementId } = props;
 
   return (
     <div className="flex flex-col m-2 gap-4">
@@ -30,7 +31,7 @@ const LogInteractionBody = props => {
         startTime={startTime}
         endTime={endTime}
         duration={duration}
-        elementId={node.elementId}
+        elementId={elementId}
       />
       <div className="border-t border-gray-300" />
       <BodyContent node={node} nodes={nodes} className="gap-4" />
