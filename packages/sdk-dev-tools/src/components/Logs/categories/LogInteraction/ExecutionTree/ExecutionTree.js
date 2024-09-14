@@ -29,7 +29,7 @@ const ExecutionTree = props => {
         break;
       }
 
-      const duration = `${moment.duration(moment(endTime).diff(startTime)).asSeconds()}s`;
+      const duration = `${moment.duration(moment(endTime).diff(startTime)).asMilliseconds()}ms`;
       const level = node.id === nodeId ? 0 : 1;
       tree.push({ id: node.id, title: node.title, status: auxNode.status, level, duration });
       auxNode = get(nodes, node.afterNode);

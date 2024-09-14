@@ -34,7 +34,7 @@ const LogInteraction = props => {
   } = props;
 
   const duration = useMemo(
-    () => `${moment.duration(moment(endTime).diff(startTime)).asSeconds()}s`,
+    () => `${moment.duration(moment(endTime).diff(startTime)).asMilliseconds()}ms`,
     [startTime, endTime]
   );
 
