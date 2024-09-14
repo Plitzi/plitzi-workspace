@@ -40,8 +40,9 @@ body {
 
   &.sdk-debug-mode {
     .devtools-element-hovered {
-      outline: rgb(91, 107, 223) solid 2px;
       animation: pulse 2s infinite;
+      outline: rgb(91, 107, 223) solid 2px;
+      outline-offset: -2px;
     }
   }
 }
