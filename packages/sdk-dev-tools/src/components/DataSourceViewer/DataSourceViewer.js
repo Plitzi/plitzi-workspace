@@ -9,6 +9,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Relatives
 import DevToolsContext from '../../DevToolsContext';
+import DataSourceViewerButton from './DataSourceViewerButton';
 
 /**
  * @param {{
@@ -108,28 +109,15 @@ const DataSourceViewer = props => {
     <div className={classNames('flex flex-col h-full w-full', className)}>
       <div className="flex border-b border-gray-300 px-2 py-1 gap-2 items-center justify-between">
         <div className="flex gap-2">
-          <i
-            className={classNames(
-              'fa-regular w-6 h-6 flex items-center justify-center fa-hand-pointer border border-dotted p-0.5 cursor-pointer',
-              {
-                'border-gray-500 hover:text-purple-500 hover:border-purple-500': !selectorEnabled,
-                'text-purple-500 border-purple-500': selectorEnabled
-              }
-            )}
+          <DataSourceViewerButton
+            iconClassName="fa-regular fa-hand-pointer"
             title="Select an element in the page to inspect it"
             onClick={handleClickSelectorIcon}
+            isSelected={selectorEnabled}
           />
-          <i
-            className="fa-regular fa-file w-6 h-6 flex items-center justify-center border border-dotted p-0.5 cursor-pointer hover:text-purple-500 hover:border-purple-500"
-            title="Current Page"
-            onClick={handleClickPage}
-          />
+          <DataSourceViewerButton iconClassName="fa-regular fa-file" title="Current Page" onClick={handleClickPage} />
         </div>
-        <i
-          className="fa-solid fa-ban w-6 h-6 flex items-center justify-center border border-dotted p-0.5 cursor-pointer hover:text-purple-500 hover:border-purple-500"
-          onClick={handleClickClearIcon}
-          title="Clear"
-        />
+        <DataSourceViewerButton iconClassName="fa-solid fa-ban" onClick={handleClickClearIcon} title="Clear" />
       </div>
       <ReactJson
         style={{ width: '100%', height: '100%', overflow: 'auto', padding: '8px', fontSize: '12px' }}
