@@ -33,13 +33,13 @@ const useDataSource = (props = {}) => {
   const initRef = useRef();
   const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
   const context = useRef(undefined);
-  if (mode === MODE_WRITE && !initRef.current) {
+  if (mode === MODE_WRITE && !initRef.current && addSource) {
     initRef.current = true;
     context.current = addSource(uniqueId, { id, source, name, fields });
   }
 
   useEffect(() => {
-    if (mode === MODE_WRITE && !initRef.current) {
+    if (mode === MODE_WRITE && !initRef.current && addSource) {
       initRef.current = true;
       context.current = addSource(uniqueId, { id, source, name, fields });
     }
@@ -51,7 +51,7 @@ const useDataSource = (props = {}) => {
   }, [uniqueId]);
 
   useEffect(() => {
-    if (mode === MODE_WRITE) {
+    if (mode === MODE_WRITE && updateFields) {
       updateFields(uniqueId, fields);
     }
   }, [fields, uniqueId, updateFields]);
