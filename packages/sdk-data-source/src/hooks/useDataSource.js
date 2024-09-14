@@ -60,7 +60,7 @@ const useDataSource = (props = {}) => {
     return [context.current, uniqueId];
   }
 
-  if (filterMode === FILTER_MODE_HARD && !sourceFilter.length) {
+  if ((filterMode === FILTER_MODE_HARD && !sourceFilter.length) || !getSources) {
     return {};
   }
 
