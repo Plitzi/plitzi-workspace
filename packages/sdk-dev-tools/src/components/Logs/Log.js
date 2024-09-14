@@ -6,6 +6,7 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import LogInteraction from './categories/LogInteraction';
+import LogNavigation from './categories/LogNavigation';
 
 /**
  * @param {{
@@ -22,9 +23,8 @@ const Log = props => {
 
   return (
     <>
-      {(category === 'interactions' || category === 'navigation') && (
-        <LogInteraction message={message} params={params} time={time} />
-      )}
+      {category === 'interactions' && <LogInteraction message={message} params={params} time={time} />}
+      {category === 'navigation' && <LogNavigation message={message} params={params} time={time} />}
       {/* {category === 'dataSources' && <LogDataSource message={message} params={params} />} */}
     </>
   );

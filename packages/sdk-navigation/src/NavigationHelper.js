@@ -2,6 +2,14 @@
 import { matchPath } from 'react-router-dom';
 import get from 'lodash/get';
 
+export const ACCESS_LEVEL_PUBLIC = 'public';
+export const ACCESS_LEVEL_AUTHENTICATED = 'authenticated';
+
+export const ACTION_TYPE_ACCESS_DENIED = 'accessDenied';
+export const ACTION_TYPE_NORMAL = 'normal';
+export const ACTION_TYPE_REDIRECT = 'redirect';
+export const ACTION_TYPE_NOT_FOUND = 'notFound';
+
 const parsePath = path => path.replace(/{{([a-zA-Z0-9-_:*/]+)}}/i, ':$1').replaceAll(/[/]+/gim, '/');
 
 const recursiveFolderSlug = (pageFolders, pageFolderId) => {
@@ -62,15 +70,15 @@ const isPageAuthored = (accessLevel, authenticated, previewMode = true) => {
     return true;
   }
 
-  if (authenticated && accessLevel === 'authenticated') {
+  if (authenticated && accessLevel === ACCESS_LEVEL_AUTHENTICATED) {
     return true;
   }
 
-  if (!authenticated && accessLevel === 'public') {
+  if (!authenticated && accessLevel === ACCESS_LEVEL_PUBLIC) {
     return true;
   }
 
-  if (authenticated && accessLevel === 'public') {
+  if (authenticated && accessLevel === ACCESS_LEVEL_PUBLIC) {
     return false;
   }
 
@@ -113,7 +121,7 @@ const getPaths = (pages, flat, pageFolders, authenticated, basePath = '', previe
     .filter(path => path.path !== '*' || path.hasAccess)
     .sort((pathA, pathB) => {
       if (pathA.path === pathB.path) {
-        return pathA.accessLevel === 'authenticated' ? -1 : 1;
+        return pathA.accessLevel === ACCESS_LEVEL_AUTHENTICATED ? -1 : 1;
       }
 
       return pathA.path > pathB.path ? -1 : 1;
@@ -138,7 +146,7 @@ const getPaths = (pages, flat, pageFolders, authenticated, basePath = '', previe
 
 const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
   if (!pathName) {
-    return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };
+    return { action: { type: ACTION_TYPE_ACCESS_DENIED, path: undefined }, pathMatch: undefined };
   }
 
   const candidates = [];
@@ -158,14 +166,17 @@ const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
   // Find the best match
   let possibleCandidate = candidates.find(
     ({ path: { accessLevel } }) =>
-      (accessLevel === 'authenticated' && authenticated) || (accessLevel === 'public' && !authenticated) || !accessLevel
+      (accessLevel === ACCESS_LEVEL_AUTHENTICATED && authenticated) ||
+      (accessLevel === ACCESS_LEVEL_PUBLIC && !authenticated) ||
+      !accessLevel
   );
 
   if (!possibleCandidate) {
     // Match without permission, possible redirect
     possibleCandidate = candidates.find(
       ({ path: { accessLevel } }) =>
-        (accessLevel === 'authenticated' && !authenticated) || (accessLevel === 'public' && authenticated)
+        (accessLevel === ACCESS_LEVEL_AUTHENTICATED && !authenticated) ||
+        (accessLevel === ACCESS_LEVEL_PUBLIC && authenticated)
     );
   }
 
@@ -175,12 +186,12 @@ const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
     possibleCandidate = paths.find(candidate => candidate.path === '/' && candidate.hasAccess);
 
     if (possibleCandidate) {
-      return { action: { type: 'redirect', path: '/' }, pathMatch: undefined };
+      return { action: { type: ACTION_TYPE_REDIRECT, path: '/' }, pathMatch: undefined };
     }
   }
 
   if (!possibleCandidate) {
-    return { action: { type: 'notFound', path: undefined }, pathMatch: undefined };
+    return { action: { type: ACTION_TYPE_NOT_FOUND, path: undefined }, pathMatch: undefined };
   }
 
   const {
@@ -189,14 +200,14 @@ const matchRoutePath = (paths, pathName, authenticated, filter = '') => {
     path: { hasAccess, unauthorizedBehaviour, unauthorizedPageRedirect }
   } = possibleCandidate;
   if (!hasAccess && unauthorizedBehaviour === 'redirect' && unauthorizedPageRedirect) {
-    return { action: { type: 'redirect', path: unauthorizedPageRedirect }, pathMatch: undefined };
+    return { action: { type: ACTION_TYPE_REDIRECT, path: unauthorizedPageRedirect }, pathMatch: undefined };
   }
 
   if (hasAccess) {
-    return { action: { type: 'normal', path: undefined }, pathMatch: matchResult, pageId };
+    return { action: { type: ACTION_TYPE_NORMAL, path: undefined }, pathMatch: matchResult, pageId };
   }
 
-  return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };
+  return { action: { type: ACTION_TYPE_ACCESS_DENIED, path: undefined }, pathMatch: undefined };
 };
 
 const getRouteParams = path => {

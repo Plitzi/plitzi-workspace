@@ -67,9 +67,9 @@ const NavigationContextProvider = props => {
     pConsole.info(
       'navigation',
       <span>
-        Navigated to page <b>{get(pageDefinitions, `${currentPageId}.attributes.name`, currentPageId)}</b>
+        Navigated to page <b>{get(pageDefinitions, `${currentPageId}.attributes.name`, currentPageId ?? 'Unknown')}</b>
       </span>,
-      { elementId: currentPageId }
+      { status: action.type, elementId: currentPageId }
     );
   }, [currentPageId]);
 
