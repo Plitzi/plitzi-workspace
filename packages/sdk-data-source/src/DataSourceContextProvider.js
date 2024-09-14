@@ -8,7 +8,6 @@ import get from 'lodash/get';
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 
 // Relatives
 import DataSourceContext from './DataSourceContext';
@@ -111,14 +110,6 @@ const DataSourceContextProvider = props => {
     }),
     [useDataSource, handleAddSource, handleRemoveSource, handleGetSources, handleUpdateFields]
   );
-
-  useEffect(() => {
-    pConsole.addProviderMethod('useDataSource', useDataSource);
-
-    return () => {
-      pConsole.removeProviderMethod('useDataSource');
-    };
-  }, [handleGetSources]);
 
   return (
     <DataSourceContext value={valueMemo}>

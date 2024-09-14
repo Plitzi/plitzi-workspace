@@ -8,6 +8,7 @@ import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
 import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
+import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 
 // Alias
 import Sdk, { RENDER_MODE_IFRAME } from '@modules/Sdk';
@@ -102,13 +103,15 @@ const AppMain = props => {
                         <StateManagerContextProvider webId={webId} state={state} onInit={onInitStateManager}>
                           <DataSourceContextProvider environment={environment}>
                             <InteractionsSdkContextProvider previewMode={previewMode}>
-                              <Sdk
-                                renderMode={renderMode}
-                                previewMode={previewMode}
-                                debugMode={debugMode}
-                                environment={environment}
-                                {...sdkProps}
-                              />
+                              <DevToolsContainer enabled={debugMode}>
+                                <Sdk
+                                  renderMode={renderMode}
+                                  previewMode={previewMode}
+                                  debugMode={debugMode}
+                                  environment={environment}
+                                  {...sdkProps}
+                                />
+                              </DevToolsContainer>
                             </InteractionsSdkContextProvider>
                           </DataSourceContextProvider>
                         </StateManagerContextProvider>
