@@ -46,7 +46,9 @@ const useDataSource = (props = {}) => {
 
     return () => {
       initRef.current = false;
-      removeSource(uniqueId);
+      if (removeSource) {
+        removeSource(uniqueId);
+      }
     };
   }, [uniqueId]);
 
