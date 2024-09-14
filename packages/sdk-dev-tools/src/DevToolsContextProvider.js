@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import omit from 'lodash/omit';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
@@ -18,6 +18,7 @@ const DevToolsContextProvider = props => {
   const { children } = props;
   const [logs, setLogs] = useState([]);
   const [providers, setProviders] = useState({});
+  const initRef = useRef(false);
 
   const handleAddLog = useCallback(
     (logType, category, message, params, time) => {
@@ -45,6 +46,13 @@ const DevToolsContextProvider = props => {
   );
 
   const handleClearLogs = useCallback(() => setLogs([]), []);
+
+  if (!initRef.current) {
+    pConsole.setCallback(handleAddLog);
+    pConsole.setCallbackAddProvider(handleAddProvider);
+    pConsole.setCallbackRemoveProvider(handleRemoveProvider);
+    initRef.current = true;
+  }
 
   useEffect(() => {
     pConsole.setCallback(handleAddLog);

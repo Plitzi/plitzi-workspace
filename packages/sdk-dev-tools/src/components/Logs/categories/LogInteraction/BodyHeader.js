@@ -1,9 +1,10 @@
 // Packages
 import React, { use, useCallback, useMemo } from 'react';
 import Moment from 'react-moment';
+import get from 'lodash/get';
 
-// Relatives
-import DevToolsContext from '../../../../DevToolsContext';
+// Monorepo
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 /**
  * @param {{
@@ -18,8 +19,8 @@ import DevToolsContext from '../../../../DevToolsContext';
  */
 const BodyHeader = props => {
   const { triggerName, startTime, endTime, duration, elementId } = props;
-  const { getData } = use(DevToolsContext);
-  const element = useMemo(() => getData('getElement', elementId), [getData, elementId]);
+  const { schema } = use(SchemaContext);
+  const element = useMemo(() => get(schema, `flat.${elementId}`), [schema, elementId]);
   const elementDOM = useMemo(() => {
     if (typeof document === 'undefined') {
       return undefined;

@@ -1,11 +1,12 @@
 // Packages
-import React, { useCallback, use, useMemo, useRef } from 'react';
+import React, { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 import { FILTER_MODE_HARD, FILTER_MODE_SOFT } from '@plitzi/sdk-data-source/hooks/useDataSource';
+import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 
 // Relatives
 import { nativeEventsList } from './helpers/elementUtils';
@@ -117,12 +118,12 @@ const RootElement = props => {
 
   const { useDataSource } = use(DataSourceContext);
   const filterMode = useMemo(() => {
-    if (!definition?.interactions || !Object.keys(definition.interactions).length) {
+    if (!debugMode && (!definition?.interactions || !Object.keys(definition.interactions).length)) {
       return FILTER_MODE_HARD;
     }
 
     return FILTER_MODE_SOFT;
-  }, [internalProps?.interactions]);
+  }, [internalProps?.interactions, debugMode]);
   const dataSource = useDataSource({ id, mode: 'read', filterMode });
   const dataSourceContextRef = useRef({});
   dataSourceContextRef.current = dataSource;
@@ -146,6 +147,18 @@ const RootElement = props => {
     callbacks: interactionCallbacksMemo,
     getAdditionalParams
   });
+
+  useEffect(() => {
+    if (!debugMode) {
+      return () => {};
+    }
+
+    pConsole.addProviderMethod(`getElementDataSource-${id}`, () => dataSourceContextRef.current);
+
+    return () => {
+      pConsole.removeProviderMethod(`getElementDataSource-${id}`);
+    };
+  }, [debugMode, dataSourceContextRef]);
 
   return (
     <Tag ref={ref} style={style} className={className} {...otherProps} {...params} {...eventsAttached}>
