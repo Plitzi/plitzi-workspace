@@ -334,7 +334,7 @@ const SegmentsContextProvider = props => {
       });
       subscriptionManager.subscribe(
         'SegmentStyleAddSelector',
-        SubscriptionEventTypes.SEGMENT_STYLE_SELECTOR_ADD,
+        SubscriptionEventTypes.SEGMENT_STYLE_ADD_SELECTOR,
         {},
         data => {
           const { displayMode, selector, type, path, style, contextId } = get(data, 'data.SegmentStyleAddSelector', {});
@@ -343,7 +343,7 @@ const SegmentsContextProvider = props => {
       );
       subscriptionManager.subscribe(
         'SegmentStyleUpdateSelector',
-        SubscriptionEventTypes.SEGMENT_STYLE_SELECTOR_UPDATE,
+        SubscriptionEventTypes.SEGMENT_STYLE_UPDATE_SELECTOR,
         {},
         data => {
           const { displayMode, selector, type, path, style, contextId } = get(
@@ -356,7 +356,7 @@ const SegmentsContextProvider = props => {
       );
       subscriptionManager.subscribe(
         'SegmentStyleRemoveSelector',
-        SubscriptionEventTypes.SEGMENT_STYLE_SELECTOR_REMOVE,
+        SubscriptionEventTypes.SEGMENT_STYLE_REMOVE_SELECTOR,
         {},
         data => {
           const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {});
