@@ -20,6 +20,7 @@ const SegmentStyleAddSelectorMutation = gql`
       style: $style
       contextId: $contextId
     ) {
+      variables
       platform
       cache
     }

@@ -25,6 +25,7 @@ const SegmentUpdateMutation = gql`
         }
       }
       style {
+        variables
         platform
         cache
       }

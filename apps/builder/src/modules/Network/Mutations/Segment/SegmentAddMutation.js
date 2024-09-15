@@ -37,6 +37,7 @@ const SegmentAddMutation = gql`
         }
       }
       style {
+        variables
         platform
         cache
       }
