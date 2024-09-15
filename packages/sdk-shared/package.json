@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.22.10",
+  "version": "0.22.11",
   "files": [],
   "exports": {
     "./usePlitziServiceContext": "./src/hooks/usePlitziServiceContext.js",

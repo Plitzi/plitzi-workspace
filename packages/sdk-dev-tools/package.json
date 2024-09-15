@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-dev-tools",
-  "version": "0.22.10",
+  "version": "0.22.11",
   "files": [],
   "exports": {
     ".": "./src/index.js",
@@ -18,6 +18,6 @@
     "classnames": "^2.5.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "react": "19.0.0-rc-94e652d5-20240912"
+    "react": "19.0.0-rc-206df66e-20240912"
   }
 }

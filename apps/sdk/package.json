@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.22.10",
+  "version": "0.22.11",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -37,8 +37,8 @@
     "immer": "^10.1.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "react": "19.0.0-rc-94e652d5-20240912",
-    "react-dom": "19.0.0-rc-94e652d5-20240912",
+    "react": "19.0.0-rc-206df66e-20240912",
+    "react-dom": "19.0.0-rc-206df66e-20240912",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^6.26.2",
     "twig": "^1.17.1"
@@ -71,12 +71,12 @@
     "compression-webpack-plugin": "^11.1.0",
     "css-loader": "^7.1.2",
     "file-loader": "^6.2.0",
-    "flow-bin": "^0.245.2",
+    "flow-bin": "^0.246.0",
     "handlebars-webpack-plugin": "^2.2.1",
     "html-webpack-plugin": "^5.6.0",
     "mini-css-extract-plugin": "^2.9.1",
     "node-sass": "^9.0.0",
-    "postcss": "^8.4.45",
+    "postcss": "^8.4.47",
     "postcss-loader": "^8.1.1",
     "postcss-scss": "^4.0.9",
     "react-refresh": "^0.14.2",
