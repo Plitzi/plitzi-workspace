@@ -17,9 +17,10 @@ $border-radius: '4px';
 
   &.resizing,
   &.moving {
+    user-select: none;
+
     .builder-area {
       pointer-events: none;
-      user-select: none;
     }
   }
 }

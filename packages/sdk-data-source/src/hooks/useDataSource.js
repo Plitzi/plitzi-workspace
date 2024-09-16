@@ -2,7 +2,7 @@
 import { use, useEffect, useMemo, useRef } from 'react';
 
 // Monorepo
-import { makeId } from '@plitzi/sdk-shared/utils';
+import { makeId, emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import DataSourceContext from '../DataSourceContext';
@@ -33,6 +33,7 @@ const useDataSource = (props = {}) => {
   const initRef = useRef();
   const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
   const context = useRef(undefined);
+  const sourcesRef = useRef({});
   if (mode === MODE_WRITE && !initRef.current && addSource) {
     initRef.current = true;
     context.current = addSource(uniqueId, { id, source, name, fields });
@@ -63,7 +64,7 @@ const useDataSource = (props = {}) => {
   }
 
   if ((filterMode === FILTER_MODE_HARD && !sourceFilter.length) || !getSources) {
-    return {};
+    return emptyObject;
   }
 
   let sources = Object.values(getSources());
@@ -71,7 +72,15 @@ const useDataSource = (props = {}) => {
     sources = sources.filter(source => !sourceFilter?.length || sourceFilter.includes(source.meta.source));
   }
 
-  return sources.reduce((acum, { meta, context }) => ({ ...acum, [meta.source]: use(context) }), {});
+  // To prevent re-rendering we will keep the same object and just override the sources internally
+  Object.keys(sourcesRef.current).forEach(source => {
+    delete sourcesRef.current[source];
+  });
+  sources.forEach(({ meta, context }) => {
+    sourcesRef.current[meta.source] = use(context);
+  });
+
+  return sourcesRef.current;
 };
 
 export default useDataSource;

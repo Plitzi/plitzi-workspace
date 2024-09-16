@@ -6,6 +6,7 @@ import omit from 'lodash/omit';
 // Monorepo
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Helpers
 
@@ -140,7 +141,13 @@ const getInteraction = (attributes, definition, callback, postCallback) => ({
 });
 
 const useInternalProps = props => {
-  const { element, internalProps = {}, plitziCustomComponent = false, dataSource = {}, previewMode = false } = props;
+  const {
+    element,
+    internalProps = emptyObject,
+    plitziCustomComponent = false,
+    dataSource = emptyObject,
+    previewMode = false
+  } = props;
   const prevStateRef = useRef({});
   const [state, setState] = useState({});
   const cache = useMemo(() => getCache(element?.definition), [element?.definition]);
@@ -241,6 +248,8 @@ const useInternalProps = props => {
       interactionsBasicCallbacks: getInteraction(attributes, definition, setStateCallback, setStatePostCallback)
     };
   }, [
+    element?.definition,
+    element?.attributes,
     internalProps,
     plitziCustomComponent,
     state,

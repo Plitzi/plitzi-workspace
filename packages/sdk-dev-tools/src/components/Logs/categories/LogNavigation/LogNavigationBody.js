@@ -57,12 +57,14 @@ const LogNavigationBody = props => {
             <span>Trigger:</span>
             <span className="truncate">-</span>
           </div>
-          <div className="flex gap-1">
-            <span>Element:</span>
-            <span className="truncate text-blue-500 cursor-pointer">
-              {element?.definition.label} [{elementId}]
-            </span>
-          </div>
+          {element && (
+            <div className="flex gap-1">
+              <span>Element:</span>
+              <span className="truncate text-blue-500 cursor-pointer">
+                {element.definition.label} [{elementId}]
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

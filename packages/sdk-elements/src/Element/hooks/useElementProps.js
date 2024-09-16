@@ -1,17 +1,15 @@
 // Packages
 import { useMemo } from 'react';
 import get from 'lodash/get';
+import pick from 'lodash/pick';
 
 const useElementProps = (id, schema) => {
-  const { attributes, definition } = useMemo(
-    () => get(schema, `flat.${id}`, { attributes: {}, definition: {} }),
+  const elementProps = useMemo(
+    () => pick(get(schema, `flat.${id}`, { attributes: {}, definition: {} }), ['attributes', 'definition']),
     [schema, id]
   );
 
-  return {
-    attributes,
-    definition
-  };
+  return elementProps;
 };
 
 export default useElementProps;
