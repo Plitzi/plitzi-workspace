@@ -234,35 +234,10 @@ const SegmentsContextProvider = props => {
     [dispatchSegments]
   );
 
-  const segmentAddVariable = useCallback(
-    (segmentId, variable, value, fromSubscriptions = false) =>
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_ADD_VARIABLE, segmentId, variable, value, fromSubscriptions }),
-    [dispatchSegments]
-  );
-
-  const segmentUpdateVariable = useCallback(
-    (segmentId, variable, value, fromSubscriptions = false) =>
-      dispatchSegments({
-        type: SegmentsActions.SEGMENTS_UPDATE_VARIABLE,
-        segmentId,
-        variable,
-        value,
-        fromSubscriptions
-      }),
-    [dispatchSegments]
-  );
-
-  const segmentRemoveVariable = useCallback(
-    (segmentId, variable, fromSubscriptions = false) =>
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE_VARIABLE, segmentId, variable, fromSubscriptions }),
-    [dispatchSegments]
-  );
-
   const elementAsSegment = useCallback(
     async (flat, style, name, description, element) => {
       const elements = FlatMap.getNested(element.id, flat, element.definition.parentId);
       const elementsStyle = {
-        variables: {},
         platform: {
           desktop: {},
           tablet: {},
@@ -388,34 +363,6 @@ const SegmentsContextProvider = props => {
           segmentRemoveSelector(contextId, selector, true);
         }
       );
-
-      subscriptionManager.subscribe(
-        'SegmentStyleAddVariable',
-        SubscriptionEventTypes.SEGMENT_STYLE_ADD_VARIABLE,
-        {},
-        data => {
-          const { variable, value, contextId } = get(data, 'data.SegmentStyleAddVariable', {});
-          segmentAddVariable(contextId, variable, value, true);
-        }
-      );
-      subscriptionManager.subscribe(
-        'SegmentStyleUpdateVariable',
-        SubscriptionEventTypes.SEGMENT_STYLE_UPDATE_VARIABLE,
-        {},
-        data => {
-          const { variable, value, contextId } = get(data, 'data.SegmentStyleUpdateVariable', {});
-          segmentUpdateVariable(contextId, variable, value, true);
-        }
-      );
-      subscriptionManager.subscribe(
-        'SegmentStyleRemoveVariable',
-        SubscriptionEventTypes.SEGMENT_STYLE_REMOVE_VARIABLE,
-        {},
-        data => {
-          const { variable, contextId } = get(data, 'data.SegmentStyleRemoveVariable', {});
-          segmentRemoveVariable(contextId, variable, true);
-        }
-      );
     }
   }, [subscriptionManager, includeSubscriptions]);
 
@@ -444,9 +391,6 @@ const SegmentsContextProvider = props => {
       [EventBridgeTypes.STYLE_ADD_SELECTOR]: segmentAddSelector,
       [EventBridgeTypes.STYLE_UPDATE_SELECTOR]: segmentUpdateSelector,
       [EventBridgeTypes.STYLE_REMOVE_SELECTOR]: segmentRemoveSelector,
-      [EventBridgeTypes.STYLE_ADD_VARIABLE]: segmentAddVariable,
-      [EventBridgeTypes.STYLE_UPDATE_VARIABLE]: segmentUpdateVariable,
-      [EventBridgeTypes.STYLE_REMOVE_VARIABLE]: segmentRemoveVariable,
       [EventBridgeTypes.STYLE_ADD_TEMPLATE]: segmentAddTemplate
     }),
     [
@@ -459,10 +403,7 @@ const SegmentsContextProvider = props => {
       segmentRemoveElement,
       segmentAddSelector,
       segmentUpdateSelector,
-      segmentRemoveSelector,
-      segmentAddVariable,
-      segmentUpdateVariable,
-      segmentRemoveVariable
+      segmentRemoveSelector
     ]
   );
 
@@ -484,9 +425,6 @@ const SegmentsContextProvider = props => {
       segmentAddSelector,
       segmentUpdateSelector,
       segmentRemoveSelector,
-      segmentAddVariable,
-      segmentUpdateVariable,
-      segmentRemoveVariable,
       elementAsSegment,
       segmentAddMutation
     }),
@@ -505,9 +443,6 @@ const SegmentsContextProvider = props => {
       segmentAddSelector,
       segmentUpdateSelector,
       segmentRemoveSelector,
-      segmentAddVariable,
-      segmentUpdateVariable,
-      segmentRemoveVariable,
       elementAsSegment,
       segmentAddMutation
     ]

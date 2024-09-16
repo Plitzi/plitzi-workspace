@@ -6,7 +6,6 @@ import get from 'lodash/get';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Relatives
@@ -31,11 +30,6 @@ const DataSourceContextProvider = props => {
   const {
     schema: { variables }
   } = use(SchemaContext);
-  const { routeParams, queryParams, hostname } = use(NavigationContext);
-  const variablesData = useMemo(
-    () => ({ routeParams, queryParams, hostname, environment }),
-    [routeParams, queryParams, hostname, environment]
-  );
 
   useEffect(() => {
     if (!initRef.current) {
@@ -114,7 +108,7 @@ const DataSourceContextProvider = props => {
   return (
     <DataSourceContext value={valueMemo}>
       <UserSource>
-        <VariablesSource variables={variables} whenData={variablesData}>
+        <VariablesSource variables={variables} environment={environment}>
           <NavigationSource>
             <PageStateSource>{children}</PageStateSource>
           </NavigationSource>

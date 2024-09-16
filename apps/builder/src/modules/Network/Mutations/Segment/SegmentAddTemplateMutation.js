@@ -41,7 +41,6 @@ const SegmentAddTemplateMutation = gql`
         }
       }
       style {
-        variables
         platform
         cache
       }

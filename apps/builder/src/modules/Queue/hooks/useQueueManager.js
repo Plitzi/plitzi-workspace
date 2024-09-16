@@ -181,24 +181,6 @@ const useQueueManager = (props = {}) => {
           return mutate('StyleRemoveSelector', { selector });
         }
 
-        case StyleActions.STYLE_ADD_VARIABLE: {
-          const { variable, value } = itemParsed.data;
-
-          return mutate('StyleAddVariable', { variable, value });
-        }
-
-        case StyleActions.STYLE_UPDATE_VARIABLE: {
-          const { variable, value } = itemParsed.data;
-
-          return mutate('StyleUpdateVariable', { variable, value });
-        }
-
-        case StyleActions.STYLE_REMOVE_VARIABLE: {
-          const { variable } = itemParsed.data;
-
-          return mutate('StyleRemoveVariable', { variable });
-        }
-
         case StyleActions.STYLE_UPDATE: {
           const { style, queryFailed } = itemParsed.data;
           if (queryFailed) {
@@ -296,24 +278,6 @@ const useQueueManager = (props = {}) => {
           const { selector, segmentId } = itemParsed.data;
 
           return mutate('SegmentStyleRemoveSelector', { selector, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_ADD_VARIABLE: {
-          const { variable, value, segmentId } = itemParsed.data;
-
-          return mutate('SegmentStyleAddVariable', { variable, value, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_UPDATE_VARIABLE: {
-          const { variable, value, segmentId } = itemParsed.data;
-
-          return mutate('SegmentStyleUpdateVariable', { variable, value, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_REMOVE_VARIABLE: {
-          const { variable, segmentId } = itemParsed.data;
-
-          return mutate('SegmentStyleRemoveVariable', { variable, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {

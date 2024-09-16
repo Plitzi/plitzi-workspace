@@ -25,7 +25,6 @@ const SegmentQuery = gql`
         }
       }
       style {
-        variables
         platform
         cache
       }

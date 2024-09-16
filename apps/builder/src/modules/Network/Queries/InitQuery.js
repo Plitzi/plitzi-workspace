@@ -61,7 +61,6 @@ const InitQuery = gql`
           }
         }
         style {
-          variables
           platform
           cache
         }
@@ -74,7 +73,6 @@ const InitQuery = gql`
       style {
         id
         platform
-        variables
         cache
       }
     }

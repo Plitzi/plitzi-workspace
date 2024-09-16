@@ -5,7 +5,6 @@ const StyleRemoveSelectorMutation = gql`
   mutation StyleRemoveSelectorMutation($environment: String!, $selector: String!) {
     StyleRemoveSelector(environment: $environment, selector: $selector) {
       id
-      variables
       platform
       cache
     }

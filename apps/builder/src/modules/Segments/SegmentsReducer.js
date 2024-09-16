@@ -20,10 +20,7 @@ export const SegmentsActions = {
   SEGMENTS_UPDATE_ELEMENT: 'SEGMENTS_UPDATE_ELEMENT',
   SEGMENTS_ADD_SELECTOR: 'SEGMENTS_ADD_SELECTOR',
   SEGMENTS_UPDATE_SELECTOR: 'SEGMENTS_UPDATE_SELECTOR',
-  SEGMENTS_REMOVE_SELECTOR: 'SEGMENTS_REMOVE_SELECTOR',
-  SEGMENTS_ADD_VARIABLE: 'SEGMENTS_ADD_VARIABLE',
-  SEGMENTS_UPDATE_VARIABLE: 'SEGMENTS_UPDATE_VARIABLE',
-  SEGMENTS_REMOVE_VARIABLE: 'SEGMENTS_REMOVE_VARIABLE'
+  SEGMENTS_REMOVE_SELECTOR: 'SEGMENTS_REMOVE_SELECTOR'
 };
 
 const SegmentsReducer = (state, action = {}) => {
@@ -158,29 +155,6 @@ const SegmentsReducer = (state, action = {}) => {
         });
         set(draft, `${identifier}.style.platform`, platform);
         set(draft, `${identifier}.style.cache`, generateCache({ platform }));
-      });
-    }
-
-    case SegmentsActions.SEGMENTS_ADD_VARIABLE:
-    case SegmentsActions.SEGMENTS_UPDATE_VARIABLE: {
-      const { variable, value } = action;
-
-      return produce(state, draft => {
-        if (!variable) {
-          return;
-        }
-
-        set(draft, `${identifier}.style.variables.${variable}`, value);
-      });
-    }
-
-    case SegmentsActions.SEGMENTS_REMOVE_VARIABLE: {
-      const { variable } = action;
-
-      return produce(state, draft => {
-        if (draft[identifier].style.variables[variable]) {
-          delete draft[identifier].style.variables[variable];
-        }
       });
     }
 

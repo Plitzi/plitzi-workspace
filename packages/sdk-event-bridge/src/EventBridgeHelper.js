@@ -32,9 +32,6 @@ const EventBridgeTypes = {
   STYLE_ADD_SELECTOR: 'styleAddSelector',
   STYLE_UPDATE_SELECTOR: 'styleUpdateSelector',
   STYLE_REMOVE_SELECTOR: 'styleRemoveSelector',
-  STYLE_ADD_VARIABLE: 'styleAddVariable',
-  STYLE_UPDATE_VARIABLE: 'styleUpdateVariable',
-  STYLE_REMOVE_VARIABLE: 'styleRemoveVariable',
   STYLE_ADD_TEMPLATE: 'styleAddTemplate',
 
   // Builder
@@ -64,9 +61,6 @@ const EventBridgeTypesPerModule = {
     EventBridgeTypes.STYLE_ADD_SELECTOR,
     EventBridgeTypes.STYLE_UPDATE_SELECTOR,
     EventBridgeTypes.STYLE_REMOVE_SELECTOR,
-    EventBridgeTypes.STYLE_ADD_VARIABLE,
-    EventBridgeTypes.STYLE_UPDATE_VARIABLE,
-    EventBridgeTypes.STYLE_REMOVE_VARIABLE,
     EventBridgeTypes.STYLE_ADD_TEMPLATE
   ],
   [EventBridgeModuleTypes.BUILDER]: [

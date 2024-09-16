@@ -26,9 +26,6 @@ import SpaceUpdateSettingsSubscription from './Space/SpaceUpdateSettingsSubscrip
 import StyleAddSelectorSubscription from './Style/StyleAddSelectorSubscription';
 import StyleUpdateSelectorSubscription from './Style/StyleUpdateSelectorSubscription';
 import StyleRemoveSelectorSubscription from './Style/StyleRemoveSelectorSubscription';
-import StyleAddVariableSubscription from './Style/StyleAddVariableSubscription';
-import StyleUpdateVariableSubscription from './Style/StyleUpdateVariableSubscription';
-import StyleRemoveVariableSubscription from './Style/StyleRemoveVariableSubscription';
 
 import SegmentAddElementSubscription from './Segment/SegmentAddElementSubscription';
 import SegmentUpdateElementSubscription from './Segment/SegmentUpdateElementSubscription';
@@ -39,9 +36,6 @@ import SegmentAddTemplateSubscription from './Segment/SegmentAddTemplateSubscrip
 import SegmentStyleAddSelectorSubscription from './Segment/SegmentStyleAddSelectorSubscription';
 import SegmentStyleUpdateSelectorSubscription from './Segment/SegmentStyleUpdateSelectorSubscription';
 import SegmentStyleRemoveSelectorSubscription from './Segment/SegmentStyleRemoveSelectorSubscription';
-import SegmentStyleAddVariableSubscription from './Segment/SegmentStyleAddVariableSubscription';
-import SegmentStyleUpdateVariableSubscription from './Segment/SegmentStyleUpdateVariableSubscription';
-import SegmentStyleRemoveVariableSubscription from './Segment/SegmentStyleRemoveVariableSubscription';
 
 const Subscriptions = {
   CollaboratorConnected: CollaboratorConnectedSubscription,
@@ -70,9 +64,6 @@ const Subscriptions = {
   StyleAddSelector: StyleAddSelectorSubscription,
   StyleUpdateSelector: StyleUpdateSelectorSubscription,
   StyleRemoveSelector: StyleRemoveSelectorSubscription,
-  StyleAddVariable: StyleAddVariableSubscription,
-  StyleUpdateVariable: StyleUpdateVariableSubscription,
-  StyleRemoveVariable: StyleRemoveVariableSubscription,
 
   SegmentAddElement: SegmentAddElementSubscription,
   SegmentUpdateElement: SegmentUpdateElementSubscription,
@@ -82,10 +73,7 @@ const Subscriptions = {
   SegmentAddTemplate: SegmentAddTemplateSubscription,
   SegmentStyleAddSelector: SegmentStyleAddSelectorSubscription,
   SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorSubscription,
-  SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorSubscription,
-  SegmentStyleAddVariable: SegmentStyleAddVariableSubscription,
-  SegmentStyleUpdateVariable: SegmentStyleUpdateVariableSubscription,
-  SegmentStyleRemoveVariable: SegmentStyleRemoveVariableSubscription
+  SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorSubscription
 };
 
 export default Subscriptions;
