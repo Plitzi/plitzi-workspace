@@ -4,24 +4,28 @@ import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/hel
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 /**
  * @param {{
  *   children: React.ReactNode;
- *   variables: {
- *     name: string;
- *     value: string;
- *   }[];
- *   whenData: {
- *     [key: string]: any;
- *   };
+ *   environment: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const VariablesSource = props => {
-  const { children, variables = [], whenData = emptyObject } = props;
+  const { children, environment } = props;
   const { useDataSource } = use(DataSourceContext);
+  const {
+    schema: { variables }
+  } = use(SchemaContext);
+  const { routeParams, queryParams, hostname } = use(NavigationContext);
+  const whenData = useMemo(
+    () => ({ routeParams, queryParams, hostname, environment }),
+    [routeParams, queryParams, hostname, environment]
+  );
 
   const variablesParsed = useMemo(() => {
     return variables.reduce((acum, variable) => {
@@ -31,7 +35,7 @@ const VariablesSource = props => {
       }
 
       const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
-      if(subValue) {
+      if (subValue) {
         return { ...acum, [name]: subValue.value };
       }
 
@@ -40,7 +44,9 @@ const VariablesSource = props => {
   }, [variables, whenData]);
 
   const sourceFields = useCallback(
-    async () => [...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: `variables.${path}` }], [])],
+    async () => [
+      ...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: `variables.${path}` }], [])
+    ],
     [variablesParsed]
   );
 

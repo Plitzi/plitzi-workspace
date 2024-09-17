@@ -1,13 +1,11 @@
 // Packages
-import React, { createContext, useCallback, useEffect, useMemo, useRef, use } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Relatives
 import DataSourceContext from './DataSourceContext';
@@ -28,14 +26,6 @@ const DataSourceContextProvider = props => {
   const { children, environment } = props;
   const sourcesRef = useRef({});
   const initRef = useRef();
-  const {
-    schema: { variables }
-  } = use(SchemaContext);
-  const { routeParams, queryParams, hostname } = use(NavigationContext);
-  const variablesData = useMemo(
-    () => ({ routeParams, queryParams, hostname, environment }),
-    [routeParams, queryParams, hostname, environment]
-  );
 
   useEffect(() => {
     if (!initRef.current) {
@@ -114,7 +104,7 @@ const DataSourceContextProvider = props => {
   return (
     <DataSourceContext value={valueMemo}>
       <UserSource>
-        <VariablesSource variables={variables} whenData={variablesData}>
+        <VariablesSource environment={environment}>
           <NavigationSource>
             <PageStateSource>{children}</PageStateSource>
           </NavigationSource>
