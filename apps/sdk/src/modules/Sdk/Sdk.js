@@ -12,6 +12,7 @@ import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
 // Alias
 import CollectionContext from '@modules/Collection/CollectionContext';
@@ -57,14 +58,18 @@ const Sdk = props => {
   const { rootDOM } = use(ContainerRootContext);
   const schemaSettings = use(SchemaSettingsContext);
   const { segments } = use(SegmentsContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { variables } = useDataSource({ id: '', mode: 'read' });
+
   const {
     style: { cache }
   } = use(StyleContext);
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
+    const cssVariables = variablesToCss(variables);
 
-    return `${cache}${segmentsCss.join('')}\n${schemaSettings?.customCss}`;
-  }, [schemaSettings?.customCss, segments, cache]);
+    return `.plitzi-sdk{${cssVariables}}\n${cache}${segmentsCss.join('')}\n${schemaSettings?.customCss}`;
+  }, [schemaSettings?.customCss, segments, cache, variables]);
   const styleParsed = useMemo(
     () => `${style[0][1]}\n${style[1][1]}\n${css}\n${externalStyle}`,
     [style, css, externalStyle]

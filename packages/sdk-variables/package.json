@@ -4,7 +4,8 @@
   "files": [],
   "exports": {
     ".": "./src/index.js",
-    "./VariablesContext": "./src/VariablesContext.js"
+    "./VariablesContext": "./src/VariablesContext.js",
+    "./VariablesHelper": "./src/VariablesHelper.js"
   },
   "scripts": {
     "lint": "eslint ./src"

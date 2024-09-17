@@ -17,6 +17,7 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
@@ -84,10 +85,13 @@ const BuilderArea = props => {
     style,
     style: { cache }
   } = use(BuilderStyleContext);
-  const css = useMemo(
-    () => `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${styleFrame[1][1]}\n${`${cache}\n${customCss}`}\n${externalStyle}`,
-    [customCss, cache, externalStyle]
-  );
+  const { useDataSource } = use(DataSourceContext);
+  const { variables } = useDataSource({ id: '', mode: 'read' });
+  const css = useMemo(() => {
+    const cssVariables = variablesToCss(variables);
+
+    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${styleFrame[1][1]}\n${`${cache}\n${customCss}`}\n${externalStyle}`;
+  }, [customCss, cache, externalStyle, variables]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const [dragTree, setDragTreeState] = useState(false);
   const ref = useRef(null);
