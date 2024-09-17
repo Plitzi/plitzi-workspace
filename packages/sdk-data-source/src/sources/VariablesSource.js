@@ -4,8 +4,7 @@ import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/hel
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 /**
  * @param {{
@@ -14,18 +13,15 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
  *     name: string;
  *     value: string;
  *   }[];
- *   environment: string;
+ *   whenData: {
+ *     [key: string]: any;
+ *   };
  * }} props
  * @returns {React.ReactElement}
  */
 const VariablesSource = props => {
-  const { children, variables = [], environment } = props;
+  const { children, variables = [], whenData = emptyObject } = props;
   const { useDataSource } = use(DataSourceContext);
-  const { routeParams, queryParams, hostname } = use(NavigationContext);
-  const variablesData = useMemo(
-    () => ({ routeParams, queryParams, hostname, environment }),
-    [routeParams, queryParams, hostname, environment]
-  );
 
   const variablesParsed = useMemo(() => {
     return variables.reduce((acum, variable) => {
@@ -34,19 +30,17 @@ const VariablesSource = props => {
         return { ...acum, [name]: value };
       }
 
-      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, variablesData));
-      if (subValue) {
+      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
+      if(subValue) {
         return { ...acum, [name]: subValue.value };
       }
 
       return { ...acum, [name]: value };
     }, {});
-  }, [variables, variablesData]);
+  }, [variables, whenData]);
 
   const sourceFields = useCallback(
-    async () => [
-      ...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: `variables.${path}` }], [])
-    ],
+    async () => [...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: `variables.${path}` }], [])],
     [variablesParsed]
   );
 

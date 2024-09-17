@@ -45,7 +45,7 @@ const StyleContextProvider = props => {
       case STYLE_TYPE_NORMAL:
         return internalData.style;
       default:
-        return { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
+        return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
     }
   }, [styleProp]);
   const { enqueueMiddleware } = use(QueueContext);
@@ -105,6 +105,24 @@ const StyleContextProvider = props => {
     [dispatchStyle]
   );
 
+  const styleAddVariable = useCallback(
+    (variable, value, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_ADD_VARIABLE, variable, value, fromSubscriptions }),
+    [dispatchStyle]
+  );
+
+  const styleUpdateVariable = useCallback(
+    (variable, value, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_UPDATE_VARIABLE, variable, value, fromSubscriptions }),
+    [dispatchStyle]
+  );
+
+  const styleRemoveVariable = useCallback(
+    (variable, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_REMOVE_VARIABLE, variable, fromSubscriptions }),
+    []
+  );
+
   const styleAddTemplate = useCallback(
     (platform, fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_ADD_TEMPLATE, platform, fromSubscriptions }),
@@ -132,6 +150,21 @@ const StyleContextProvider = props => {
         const { selector } = get(data, 'data.StyleRemoveSelector', {});
         styleRemoveSelector(selector, true);
       });
+
+      subscriptionManager.subscribe('StyleAddVariable', SubscriptionEventTypes.STYLE_ADD_VARIABLE, {}, data => {
+        const { variable, value } = get(data, 'data.StyleAddVariable', {});
+        styleAddVariable(variable, value, true);
+      });
+
+      subscriptionManager.subscribe('StyleUpdateVariable', SubscriptionEventTypes.STYLE_UPDATE_VARIABLE, {}, data => {
+        const { variable, value } = get(data, 'data.StyleUpdateVariable', {});
+        styleUpdateVariable(variable, value, true);
+      });
+
+      subscriptionManager.subscribe('StyleRemoveVariable', SubscriptionEventTypes.STYLE_REMOVE_VARIABLE, {}, data => {
+        const { variable } = get(data, 'data.StyleRemoveVariable', {});
+        styleRemoveVariable(variable, true);
+      });
     }
   }, [subscriptionManager, includeSubscriptions]);
 
@@ -143,9 +176,21 @@ const StyleContextProvider = props => {
       styleAddSelector,
       styleUpdateSelector,
       styleRemoveSelector,
+      styleAddVariable,
+      styleUpdateVariable,
+      styleRemoveVariable,
       styleAddTemplate
     }),
-    [styleUpdate, styleAddSelector, styleUpdateSelector, styleRemoveSelector, styleAddTemplate]
+    [
+      styleUpdate,
+      styleAddSelector,
+      styleUpdateSelector,
+      styleRemoveSelector,
+      styleAddVariable,
+      styleUpdateVariable,
+      styleRemoveVariable,
+      styleAddTemplate
+    ]
   );
 
   useEventBridge(EventBridgeModuleTypes.MAIN, events);

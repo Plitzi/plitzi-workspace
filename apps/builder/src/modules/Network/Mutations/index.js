@@ -26,6 +26,9 @@ import SpaceUpdateSettingsMutation from './Space/SpaceUpdateSettingsMutation';
 import StyleAddSelectorMutation from './Style/StyleAddSelectorMutation';
 import StyleUpdateSelectorMutation from './Style/StyleUpdateSelectorMutation';
 import StyleRemoveSelectorMutation from './Style/StyleRemoveSelectorMutation';
+import StyleAddVariableMutation from './Style/StyleAddVariableMutation';
+import StyleUpdateVariableMutation from './Style/StyleUpdateVariableMutation';
+import StyleRemoveVariableMutation from './Style/StyleRemoveVariableMutation';
 import StyleUpdateMutation from './Style/StyleUpdateMutation';
 
 import SegmentAddMutation from './Segment/SegmentAddMutation';
@@ -40,6 +43,9 @@ import SegmentAddTemplateMutation from './Segment/SegmentAddTemplateMutation';
 import SegmentStyleAddSelectorMutation from './Segment/SegmentStyleAddSelectorMutation';
 import SegmentStyleUpdateSelectorMutation from './Segment/SegmentStyleUpdateSelectorMutation';
 import SegmentStyleRemoveSelectorMutation from './Segment/SegmentStyleRemoveSelectorMutation';
+import SegmentStyleAddVariableMutation from './Segment/SegmentStyleAddVariableMutation';
+import SegmentStyleUpdateVariableMutation from './Segment/SegmentStyleUpdateVariableMutation';
+import SegmentStyleRemoveVariableMutation from './Segment/SegmentStyleRemoveVariableMutation';
 import SegmentPublishMutation from './Segment/SegmentPublishMutation';
 
 import TemplateAddMutation from './Template/TemplateAddMutation';
@@ -89,6 +95,9 @@ const Mutations = {
   StyleAddSelector: StyleAddSelectorMutation,
   StyleUpdateSelector: StyleUpdateSelectorMutation,
   StyleRemoveSelector: StyleRemoveSelectorMutation,
+  StyleAddVariable: StyleAddVariableMutation,
+  StyleUpdateVariable: StyleUpdateVariableMutation,
+  StyleRemoveVariable: StyleRemoveVariableMutation,
   StyleUpdate: StyleUpdateMutation,
 
   SegmentAdd: SegmentAddMutation,
@@ -103,6 +112,9 @@ const Mutations = {
   SegmentStyleAddSelector: SegmentStyleAddSelectorMutation,
   SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorMutation,
   SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorMutation,
+  SegmentStyleAddVariable: SegmentStyleAddVariableMutation,
+  SegmentStyleUpdateVariable: SegmentStyleUpdateVariableMutation,
+  SegmentStyleRemoveVariable: SegmentStyleRemoveVariableMutation,
   SegmentPublish: SegmentPublishMutation,
 
   TemplateAdd: TemplateAddMutation,

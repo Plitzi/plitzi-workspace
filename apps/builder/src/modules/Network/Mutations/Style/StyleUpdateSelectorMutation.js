@@ -19,6 +19,7 @@ const StyleUpdateSelectorMutation = gql`
       style: $style
     ) {
       id
+      variables
       platform
       cache
     }

@@ -12,6 +12,9 @@ export const StyleActions = {
   STYLE_ADD_SELECTOR: 'STYLE_ADD_SELECTOR',
   STYLE_UPDATE_SELECTOR: 'STYLE_UPDATE_SELECTOR',
   STYLE_REMOVE_SELECTOR: 'STYLE_REMOVE_SELECTOR',
+  STYLE_ADD_VARIABLE: 'STYLE_ADD_VARIABLE',
+  STYLE_UPDATE_VARIABLE: 'STYLE_UPDATE_VARIABLE',
+  STYLE_REMOVE_VARIABLE: 'STYLE_REMOVE_VARIABLE',
   STYLE_ADD_TEMPLATE: 'STYLE_ADD_TEMPLATE'
 };
 
@@ -82,6 +85,29 @@ const StyleReducer = (state, action = {}) => {
         });
         draft.platform = platform;
         draft.cache = generateCache({ platform });
+      });
+    }
+
+    case StyleActions.STYLE_ADD_VARIABLE:
+    case StyleActions.STYLE_UPDATE_VARIABLE: {
+      const { variable, value } = action;
+
+      return produce(state, draft => {
+        if (!variable) {
+          return;
+        }
+
+        set(draft, `variables.${variable}`, value);
+      });
+    }
+
+    case StyleActions.STYLE_REMOVE_VARIABLE: {
+      const { variable } = action;
+
+      return produce(state, draft => {
+        if (draft.variables[variable]) {
+          delete draft.variables[variable];
+        }
       });
     }
 
