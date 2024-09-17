@@ -11,7 +11,7 @@ import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import { DROP_DIRECTION_INSIDE, EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
@@ -45,11 +45,7 @@ const Transform = props => {
   const [isEditorVisible, setEditorVisible] = useState(true);
   const [layoutMode, setLayoutMode] = useState('horizontal');
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
-  const [preview, setPreview] = useState({
-    schema: { flat: {} },
-    style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-    definition: { rootId: '' }
-  });
+  const [preview, setPreview] = useState(EMPTY_SCHEMA);
   const [content, setContent] = useState('');
 
   const transformQuery = useCallback(
@@ -57,11 +53,7 @@ const Transform = props => {
       const response = await networkQuery('/utils/transform-to-schema', { body: content, mode }, 'post');
       const data = get(response, 'data');
       if (!data) {
-        return {
-          schema: { flat: {} },
-          style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-          definition: { rootId: '' }
-        };
+        return EMPTY_SCHEMA;
       }
 
       return data;
@@ -140,11 +132,7 @@ const Transform = props => {
   const handleChangeMode = useCallback(
     e => {
       setMode(e.value);
-      setPreview({
-        schema: { flat: {} },
-        style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-        definition: { rootId: '' }
-      });
+      setPreview(EMPTY_SCHEMA);
     },
     [setMode]
   );
@@ -155,11 +143,7 @@ const Transform = props => {
 
   const handleClickEraser = useCallback(() => {
     setContent('');
-    setPreview({
-      schema: { flat: {} },
-      style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-      definition: { rootId: '' }
-    });
+    setPreview(EMPTY_SCHEMA);
   }, []);
 
   const cmMode = useMemo(() => {

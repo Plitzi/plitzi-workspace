@@ -10,7 +10,7 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import { DROP_DIRECTION_INSIDE, EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
@@ -33,11 +33,7 @@ const MessageHtml = props => {
   const [viewMode, setViewMode] = useState('preview');
   const [fullScreen, setFullScreen] = useState(false);
   const { addToast } = useToast();
-  const [preview, setPreview] = useState({
-    schema: { flat: {} },
-    style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-    definition: { rootId: '' }
-  });
+  const [preview, setPreview] = useState(EMPTY_SCHEMA);
   const {
     builderHandler,
     baseContext: { baseElementId }
@@ -53,11 +49,7 @@ const MessageHtml = props => {
       );
       const data = get(response, 'data');
       if (!data) {
-        setPreview({
-          schema: { flat: {} },
-          style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-          definition: { rootId: '' }
-        });
+        setPreview(EMPTY_SCHEMA);
       } else {
         setPreview(data);
       }

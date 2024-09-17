@@ -115,7 +115,12 @@ const DataSourceViewer = props => {
             onClick={handleClickSelectorIcon}
             isSelected={selectorEnabled}
           />
-          <DataSourceViewerButton iconClassName="fa-regular fa-file" title="Current Page" onClick={handleClickPage} />
+          <DataSourceViewerButton
+            iconClassName="fa-regular fa-file"
+            title="Current Page"
+            onClick={handleClickPage}
+            isSelected={id === currentPageId}
+          />
         </div>
         <DataSourceViewerButton iconClassName="fa-solid fa-ban" onClick={handleClickClearIcon} title="Clear" />
       </div>

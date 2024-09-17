@@ -28,19 +28,21 @@ const VariablesSource = props => {
   );
 
   const variablesParsed = useMemo(() => {
-    return variables.reduce((acum, variable) => {
-      const { name, value, subValues } = variable;
-      if (!Array.isArray(subValues) || subValues.length === 0) {
+    return (
+      variables?.reduce((acum, variable) => {
+        const { name, value, subValues } = variable;
+        if (!Array.isArray(subValues) || subValues.length === 0) {
+          return { ...acum, [name]: value };
+        }
+
+        const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
+        if (subValue) {
+          return { ...acum, [name]: subValue.value };
+        }
+
         return { ...acum, [name]: value };
-      }
-
-      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
-      if (subValue) {
-        return { ...acum, [name]: subValue.value };
-      }
-
-      return { ...acum, [name]: value };
-    }, {});
+      }, {}) ?? {}
+    );
   }, [variables, whenData]);
 
   const sourceFields = useCallback(

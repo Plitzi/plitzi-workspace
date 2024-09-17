@@ -24,6 +24,9 @@ const DevToolsBody = props => {
       <div className="flex flex-col gap-2 w-full">
         {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
         {tabSelected === 'dataSources' && <DataSourceViewer />}
+        {tabSelected === 'variables' && (
+          <div className="flex items-center justify-center h-full w-full">Coming Soon</div>
+        )}
       </div>
     </div>
   );

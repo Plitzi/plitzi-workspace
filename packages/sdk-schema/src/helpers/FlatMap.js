@@ -13,6 +13,12 @@ export const DROP_DIRECTION_RIGHT = 'right';
 export const DROP_DIRECTION_INSIDE = 'inside';
 export const DROP_DIRECTION_CUSTOM = 'custom';
 
+export const EMPTY_SCHEMA = {
+  schema: { flat: {}, variables: [] },
+  style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
+  definition: { rootId: '' }
+};
+
 const addElement = (flat, to, data, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}) => {
   let parent;
   if (dropPosition !== DROP_DIRECTION_CUSTOM) {

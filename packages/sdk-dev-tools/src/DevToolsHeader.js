@@ -51,6 +51,15 @@ const DevToolsHeader = props => {
         >
           Data Sources
         </div>
+        <div
+          className={classNames('px-2 py-1 border-b-4 cursor-pointer hover:text-inherit hover:bg-gray-100', {
+            'text-purple-500 border-purple-500': tabSelected === 'variables',
+            'border-transparent': tabSelected !== 'variables'
+          })}
+          onClick={handleClickTab('variables')}
+        >
+          Variables
+        </div>
       </div>
       <div className="flex">
         <button onClick={handleClickOrientation}>Orientation</button>
