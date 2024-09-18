@@ -21,7 +21,7 @@ const LogNavigationBody = props => {
   const element = useMemo(() => get(schema, `flat.${elementId}`), [schema, elementId]);
 
   return (
-    <div className="flex gap-4 justify-around">
+    <div className="flex gap-4 justify-around m-2">
       <div className="flex flex-col grow basis-0 gap-2 min-w-0">
         <div className="flex items-center gap-1 font-bold">
           <i className="fa-regular fa-clock" />
