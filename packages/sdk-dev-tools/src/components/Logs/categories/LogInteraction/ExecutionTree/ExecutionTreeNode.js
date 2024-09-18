@@ -7,6 +7,7 @@ import noop from 'lodash/noop';
  * @param {{
  *   className?: string;
  *   id: string;
+ *   action?: string;
  *   title: string;
  *   duration: string;
  *   level: number;
@@ -18,13 +19,13 @@ import noop from 'lodash/noop';
  */
 
 const ExecutionTreeNode = props => {
-  const { className, title, duration, status, level, id, isSelected, onClick = noop } = props;
+  const { className, title, action, duration, status, level, id, isSelected, onClick = noop } = props;
 
   const handleClick = useCallback(() => onClick(id), [id, onClick]);
 
   return (
     <div
-      className={classNames('flex gap-1 items-center cursor-pointer', className, {
+      className={classNames('flex gap-1 items-center cursor-pointer px-2', className, {
         'pl-4': level === 1,
         'bg-gray-300': isSelected,
         'hover:bg-gray-200': !isSelected
@@ -39,7 +40,12 @@ const ExecutionTreeNode = props => {
         })}
         title={status}
       />
-      {title} ({duration})
+      <div className="flex justify-between w-full">
+        <div className="flex">
+          {title} ({duration})
+        </div>
+        <div className="flex">[{action}]</div>
+      </div>
     </div>
   );
 };

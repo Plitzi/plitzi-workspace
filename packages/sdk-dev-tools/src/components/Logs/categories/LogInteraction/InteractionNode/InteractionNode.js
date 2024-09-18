@@ -20,6 +20,8 @@ import NodeHeader from './NodeHeader';
  *   status?: string;
  *   when?: string;
  *   whenParams?: object;
+ *   type?: string;
+ *   action?: string;
  * }} props
  * @returns {React.ReactElement}
  */
@@ -30,7 +32,9 @@ const InteractionNode = props => {
     startTime = 0,
     endTime = 0,
     status = 'notStarted',
-    when
+    when,
+    type,
+    action
   } = props;
 
   const duration = useMemo(
@@ -43,7 +47,7 @@ const InteractionNode = props => {
       <Heading type="h4" className="m-0">
         {name}
       </Heading>
-      <NodeHeader duration={duration} status={status} />
+      <NodeHeader duration={duration} status={status} type={type} action={action} />
       <NodeWhen when={when} />
       <NodeMetadata when={when} whenParams={whenParams} />
     </div>

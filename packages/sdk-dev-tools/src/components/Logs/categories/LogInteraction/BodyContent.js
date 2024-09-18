@@ -41,6 +41,8 @@ const BodyContent = props => {
             startTime={nodeSelected.startTime}
             endTime={nodeSelected.endTime}
             when={nodeSelected.node.when}
+            type={nodeSelected.node.type}
+            action={nodeSelected.node.action}
           />
         </div>
       )}

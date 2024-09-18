@@ -31,7 +31,7 @@ const ExecutionTree = props => {
 
       const duration = `${moment.duration(moment(endTime).diff(startTime)).asMilliseconds()}ms`;
       const level = node.id === nodeId ? 0 : 1;
-      tree.push({ id: node.id, title: node.title, status: auxNode.status, level, duration });
+      tree.push({ id: node.id, action: node.action, title: node.title, status: auxNode.status, level, duration });
       auxNode = get(nodes, node.afterNode);
     }
 
@@ -50,6 +50,7 @@ const ExecutionTree = props => {
           <ExecutionTreeNode
             key={i}
             id={treeNode.id}
+            action={treeNode.action}
             title={treeNode.title}
             duration={treeNode.duration}
             status={treeNode.status}
