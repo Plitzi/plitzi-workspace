@@ -26,12 +26,16 @@ const Logs = props => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-full w-full">
+    <div className="flex flex-col h-full w-full">
       <div className="flex border-b border-gray-300 px-2 py-1 gap-2 justify-between">
         <div />
         <button onClick={onClear}>Clear Logs</button>
       </div>
-      <div className={classNames('flex min-h-full w-full', { 'flex-col': orientation === ORIENTATION_VERTICAL })}>
+      <div
+        className={classNames('flex w-full overflow-hidden', {
+          'flex-col basis-0 grow': orientation === ORIENTATION_VERTICAL
+        })}
+      >
         <LogsSummary
           className={classNames({ 'h-full': orientation === ORIENTATION_HORIZONTAL })}
           logTypeSelected={logTypeSelected}
@@ -39,7 +43,7 @@ const Logs = props => {
           orientation={orientation}
           onClick={handleClickSummary}
         />
-        <div className="flex flex-col grow basis-0 h-full w-full overflow-y-auto">
+        <div className="flex flex-col w-full overflow-y-auto">
           {items &&
             items
               .filter(item => !logTypeSelected || item.logType === logTypeSelected)
