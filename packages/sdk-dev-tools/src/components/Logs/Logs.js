@@ -43,7 +43,7 @@ const Logs = props => {
           orientation={orientation}
           onClick={handleClickSummary}
         />
-        <div className="flex flex-col w-full overflow-y-auto">
+        <div className="flex flex-col basis-0 grow overflow-y-auto">
           {items &&
             items
               .filter(item => !logTypeSelected || item.logType === logTypeSelected)
