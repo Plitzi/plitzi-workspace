@@ -30,6 +30,7 @@ const InitQuery = gql`
         }
         variables {
           name
+          type
           value
           subValues {
             when

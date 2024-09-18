@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import DevToolsContext from './DevToolsContext';
 import Logs from './components/Logs/Logs';
 import DataSourceViewer from './components/DataSourceViewer';
+import VariablesViewer from './components/VariablesViewer';
 
 /**
  * @param {{
@@ -24,9 +25,7 @@ const DevToolsBody = props => {
       <div className="flex flex-col gap-2 w-full">
         {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
         {tabSelected === 'dataSources' && <DataSourceViewer />}
-        {tabSelected === 'variables' && (
-          <div className="flex items-center justify-center h-full w-full">Coming Soon</div>
-        )}
+        {tabSelected === 'variables' && <VariablesViewer />}
       </div>
     </div>
   );
