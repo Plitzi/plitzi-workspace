@@ -1,56 +1,70 @@
 // Package
-import React, { useCallback, use, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 
+// Monorepo
+import {
+  BORDER_TOP_COLOR,
+  BORDER_BOTTOM_COLOR,
+  BORDER_LEFT_COLOR,
+  BORDER_RIGHT_COLOR
+} from '@plitzi/sdk-style/StyleConstants';
+
 // Relatives
-import StyleInspectorContext from '../../StyleInspectorContext';
 import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   borderTop: string;
- *   borderBottom: string;
- *   borderLeft: string;
- *   borderRight: string;
+ *   values: object;
  *   currentPlacement: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const BorderColor = props => {
-  const { borderTop, borderBottom, borderLeft, borderRight, currentPlacement, onChange = noop } = props;
-  const { getValue } = use(StyleInspectorContext);
+  const { values, currentPlacement, onChange = noop } = props;
+  const value = useMemo(() => {
+    const {
+      [BORDER_TOP_COLOR]: borderTop,
+      [BORDER_BOTTOM_COLOR]: borderBottom,
+      [BORDER_LEFT_COLOR]: borderLeft,
+      [BORDER_RIGHT_COLOR]: borderRight
+    } = values;
+    switch (currentPlacement) {
+      case 'all' && borderTop === borderBottom && borderTop === borderLeft && borderTop === borderRight:
+      case 'top' && borderTop:
+        return borderTop;
 
-  let valueColor = '#000000';
-  if (
-    currentPlacement === 'all' &&
-    borderTop === borderBottom &&
-    borderTop === borderLeft &&
-    borderTop === borderRight
-  ) {
-    valueColor = borderTop;
-  } else if (currentPlacement !== 'all') {
-    valueColor = getValue(`border-${currentPlacement}-color`);
-  }
+      case 'bottom' && borderBottom:
+        return borderBottom;
 
-  const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
+      case 'left' && borderLeft:
+        return borderLeft;
 
-  const items = useMemo(() => [{ type: 'color', value: valueColor, extraValue: { type: 'color' } }], [valueColor]);
+      case 'right' && borderRight:
+        return borderRight;
 
+      default:
+        return '#000000';
+    }
+  }, [values, currentPlacement]);
+  const items = useMemo(() => [{ type: 'color', value, extraValue: { type: 'color' } }], [value]);
   const keyValues = useMemo(() => {
     if (currentPlacement === 'all') {
-      return ['border-top-color', 'border-bottom-color', 'border-left-color', 'border-right-color'];
+      return [BORDER_TOP_COLOR, BORDER_BOTTOM_COLOR, BORDER_LEFT_COLOR, BORDER_RIGHT_COLOR];
     }
 
     return `border-${currentPlacement}-color`;
   }, [currentPlacement]);
+
+  const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
   return (
     <GroupButtons
       className="w-full"
       classNameContainer="w-[180px]"
       items={items}
-      label="Width"
+      label="Color"
       keyValue={keyValues}
       onChange={handleChange}
     />

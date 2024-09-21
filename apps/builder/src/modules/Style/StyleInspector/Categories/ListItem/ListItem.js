@@ -12,6 +12,7 @@ import Icons from '@pcomponents/Icons';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const LIST_ITEM_NONE = 'none';
 const LIST_ITEM_DISC = 'disc';
@@ -32,8 +33,8 @@ const dotKeys = [LIST_ITEM_TYPE];
  */
 const ListItem = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
-  const style = getValue(LIST_ITEM_TYPE);
+  const { setValue } = use(StyleInspectorContext);
+  const listItemStyle = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('list', isCollapsed), [onCollapse]);
 
@@ -45,46 +46,46 @@ const ListItem = props => {
         value: { value: LIST_ITEM_NONE, type: LIST_ITEM_TYPE },
         children: <Icons width={16} height={16} type="XMark" />,
         description: '',
-        active: style === LIST_ITEM_NONE
+        active: listItemStyle === LIST_ITEM_NONE
       },
       {
         value: { value: LIST_ITEM_DISC, type: LIST_ITEM_TYPE },
         children: <Icons width={16} height={16} type="ListDots" />,
         description: '',
-        active: style === LIST_ITEM_DISC
+        active: listItemStyle === LIST_ITEM_DISC
       },
       {
         value: { value: LIST_ITEM_CIRCLE, type: LIST_ITEM_TYPE },
         children: <Icons width={16} height={16} type="ListCircles" />,
         description: '',
-        active: style === LIST_ITEM_CIRCLE
+        active: listItemStyle === LIST_ITEM_CIRCLE
       },
       {
         value: { value: LIST_ITEM_SQUARES, type: LIST_ITEM_TYPE },
         children: <Icons width={16} height={16} type="ListSquares" />,
         description: '',
-        active: style === LIST_ITEM_SQUARES
+        active: listItemStyle === LIST_ITEM_SQUARES
       },
       {
         value: { value: LIST_ITEM_DECIMAL, type: LIST_ITEM_TYPE },
         children: <Icons width={16} height={16} type="ListNumbers" />,
         description: '',
-        active: style === LIST_ITEM_DECIMAL
+        active: listItemStyle === LIST_ITEM_DECIMAL
       },
       {
         value: { value: LIST_ITEM_LETTERS, type: LIST_ITEM_TYPE },
         children: <Icons width={16} height={16} type="ListLetters" />,
         description: '',
-        active: style === LIST_ITEM_LETTERS
+        active: listItemStyle === LIST_ITEM_LETTERS
       },
       {
         value: { value: LIST_ITEM_ROMAN, type: LIST_ITEM_TYPE },
         children: <Icons width={16} height={16} type="ListRoman" />,
         description: '',
-        active: style === LIST_ITEM_ROMAN
+        active: listItemStyle === LIST_ITEM_ROMAN
       }
     ],
-    [style]
+    [listItemStyle]
   );
 
   return (

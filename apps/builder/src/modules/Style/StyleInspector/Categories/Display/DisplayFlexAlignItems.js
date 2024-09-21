@@ -13,7 +13,7 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   isReverse?: boolean;
  *   isRow?: boolean;
  *   onChange?: (type: string, value: string) => void;
@@ -21,7 +21,7 @@ import GroupButtons from '../../../components/GroupButtons';
  * @returns {React.ReactElement}
  */
 const DisplayFlexAlignItems = props => {
-  const { partialValue, isReverse = false, isRow = false, onChange = noop } = props;
+  const { value, isReverse = false, isRow = false, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -38,7 +38,7 @@ const DisplayFlexAlignItems = props => {
           </>
         ),
         description: 'Align Start',
-        active: partialValue === 'flex-start'
+        active: value === 'flex-start'
       },
       {
         value: { value: 'center', type: ALIGN_ITEMS },
@@ -51,7 +51,7 @@ const DisplayFlexAlignItems = props => {
           </>
         ),
         description: 'Align Center',
-        active: partialValue === 'center'
+        active: value === 'center'
       },
       {
         value: { value: 'flex-end', type: ALIGN_ITEMS },
@@ -64,7 +64,7 @@ const DisplayFlexAlignItems = props => {
           </>
         ),
         description: 'Align End',
-        active: partialValue === 'flex-end'
+        active: value === 'flex-end'
       },
       {
         value: { value: 'stretch', type: ALIGN_ITEMS },
@@ -75,7 +75,7 @@ const DisplayFlexAlignItems = props => {
           </>
         ),
         description: 'Align Stretch',
-        active: partialValue === 'stretch'
+        active: value === 'stretch'
       },
       {
         value: { value: 'baseline', type: ALIGN_ITEMS },
@@ -88,10 +88,10 @@ const DisplayFlexAlignItems = props => {
           </>
         ),
         description: 'Align Baseline',
-        active: partialValue === 'space-between'
+        active: value === 'space-between'
       }
     ],
-    [partialValue, isReverse, isRow]
+    [value, isReverse, isRow]
   );
 
   return (

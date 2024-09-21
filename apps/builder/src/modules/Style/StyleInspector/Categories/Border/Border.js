@@ -30,6 +30,7 @@ import BorderPlacements from './BorderPlacements';
 import BorderWidth from './BorderWidth';
 import BorderColor from './BorderColor';
 import CategoryContainer from '../../../components/CategoryContainer';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const BORDER_TOP = 'top';
 const BORDER_BOTTOM = 'bottom';
@@ -66,7 +67,8 @@ const dotKeys = [
 const Border = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
   const [currentPlacement, setCurrentPlacement] = useState(BORDER_ALL);
-  const { getValue, setValue } = use(StyleInspectorContext);
+  const { setValue } = use(StyleInspectorContext);
+  const values = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleChange = useCallback(
     (type, partialValue) => {
@@ -122,15 +124,15 @@ const Border = props => {
                 [`border-${BORDER_LEFT}-${type}`]: partialValue,
                 [`border-${BORDER_RIGHT}-${type}`]: partialValue,
 
-                [`border-${BORDER_TOP}-${options[0]}`]: getValue(`border-${BORDER_TOP}-${options[0]}`),
-                [`border-${BORDER_BOTTOM}-${options[0]}`]: getValue(`border-${BORDER_BOTTOM}-${options[0]}`),
-                [`border-${BORDER_LEFT}-${options[0]}`]: getValue(`border-${BORDER_LEFT}-${options[0]}`),
-                [`border-${BORDER_RIGHT}-${options[0]}`]: getValue(`border-${BORDER_RIGHT}-${options[0]}`),
+                [`border-${BORDER_TOP}-${options[0]}`]: values[`border-${BORDER_TOP}-${options[0]}`],
+                [`border-${BORDER_BOTTOM}-${options[0]}`]: values[`border-${BORDER_BOTTOM}-${options[0]}`],
+                [`border-${BORDER_LEFT}-${options[0]}`]: values[`border-${BORDER_LEFT}-${options[0]}`],
+                [`border-${BORDER_RIGHT}-${options[0]}`]: values[`border-${BORDER_RIGHT}-${options[0]}`],
 
-                [`border-${BORDER_TOP}-${options[1]}`]: getValue(`border-${BORDER_RIGHT}-${options[1]}`),
-                [`border-${BORDER_BOTTOM}-${options[1]}`]: getValue(`border-${BORDER_BOTTOM}-${options[1]}`),
-                [`border-${BORDER_LEFT}-${options[1]}`]: getValue(`border-${BORDER_LEFT}-${options[1]}`),
-                [`border-${BORDER_RIGHT}-${options[1]}`]: getValue(`border-${BORDER_RIGHT}-${options[1]}`)
+                [`border-${BORDER_TOP}-${options[1]}`]: values[`border-${BORDER_RIGHT}-${options[1]}`],
+                [`border-${BORDER_BOTTOM}-${options[1]}`]: values[`border-${BORDER_BOTTOM}-${options[1]}`],
+                [`border-${BORDER_LEFT}-${options[1]}`]: values[`border-${BORDER_LEFT}-${options[1]}`],
+                [`border-${BORDER_RIGHT}-${options[1]}`]: values[`border-${BORDER_RIGHT}-${options[1]}`]
               }
             );
           } else {
@@ -142,8 +144,8 @@ const Border = props => {
               ],
               {
                 [`border-${currentPlacement}-${type}`]: partialValue,
-                [`border-${currentPlacement}-${options[0]}`]: getValue(`border-${currentPlacement}-${options[0]}`),
-                [`border-${currentPlacement}-${options[1]}`]: getValue(`border-${currentPlacement}-${options[1]}`)
+                [`border-${currentPlacement}-${options[0]}`]: values[`border-${currentPlacement}-${options[0]}`],
+                [`border-${currentPlacement}-${options[1]}`]: values[`border-${currentPlacement}-${options[1]}`]
               }
             );
           }
@@ -155,7 +157,7 @@ const Border = props => {
           break;
       }
     },
-    [currentPlacement, getValue, setValue]
+    [currentPlacement, values, setValue]
   );
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('border', isCollapsed), [onCollapse]);
@@ -163,40 +165,13 @@ const Border = props => {
   return (
     <CategoryContainer title="Border" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="flex flex-col p-2 gap-2">
-        <BorderRadius
-          borderTopLeft={getValue(BORDER_RADIUS_TOP_LEFT)}
-          borderTopRight={getValue(BORDER_RADIUS_TOP_RIGHT)}
-          borderBottomLeft={getValue(BORDER_RADIUS_BOTTOM_LEFT)}
-          borderBottomRight={getValue(BORDER_RADIUS_BOTTOM_RIGHT)}
-          onChange={handleChange}
-        />
+        <BorderRadius values={values} onChange={handleChange} />
         <div className="flex flex-col w-full gap-2">
           <BorderPlacements currentPlacement={currentPlacement} setCurrentPlacement={setCurrentPlacement} />
           <div className="flex flex-col w-full gap-2">
-            <BorderStyle
-              borderTop={getValue(BORDER_TOP_STYLE)}
-              borderBottom={getValue(BORDER_BOTTOM_STYLE)}
-              borderLeft={getValue(BORDER_LEFT_STYLE)}
-              borderRight={getValue(BORDER_RIGHT_STYLE)}
-              currentPlacement={currentPlacement}
-              onChange={handleChange}
-            />
-            <BorderWidth
-              borderTop={getValue(BORDER_TOP_WIDTH)}
-              borderBottom={getValue(BORDER_BOTTOM_WIDTH)}
-              borderLeft={getValue(BORDER_LEFT_WIDTH)}
-              borderRight={getValue(BORDER_RIGHT_WIDTH)}
-              currentPlacement={currentPlacement}
-              onChange={handleChange}
-            />
-            <BorderColor
-              borderTop={getValue(BORDER_TOP_COLOR)}
-              borderBottom={getValue(BORDER_BOTTOM_COLOR)}
-              borderLeft={getValue(BORDER_LEFT_COLOR)}
-              borderRight={getValue(BORDER_RIGHT_COLOR)}
-              currentPlacement={currentPlacement}
-              onChange={handleChange}
-            />
+            <BorderStyle values={values} currentPlacement={currentPlacement} onChange={handleChange} />
+            <BorderWidth values={values} currentPlacement={currentPlacement} onChange={handleChange} />
+            <BorderColor values={values} currentPlacement={currentPlacement} onChange={handleChange} />
           </div>
         </div>
       </div>

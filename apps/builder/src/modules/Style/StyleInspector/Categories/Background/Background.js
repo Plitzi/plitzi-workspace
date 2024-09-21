@@ -22,6 +22,7 @@ import RadialGradientMode from './modes/RadialGradientMode';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const dotKeys = [
   BACKGROUND_COLOR,
@@ -41,13 +42,22 @@ const dotKeys = [
  */
 const Background = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
-  const bgColor = getValue(BACKGROUND_COLOR);
+  const { setValue } = use(StyleInspectorContext);
+  const values = useInspectorValues({
+    keys: [BACKGROUND_COLOR, BACKGROUND_SIZE, BACKGROUND_ATTACHMENT, BACKGROUND_POSITION, BACKGROUND_REPEAT],
+    asValue: true
+  });
+  const bgImage = useInspectorValues({
+    keys: [BACKGROUND_IMAGE],
+    asValue: true,
+    strictMode: true
+  });
+
+  const bgColor = values[BACKGROUND_COLOR];
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('background', isCollapsed), [onCollapse]);
 
   let imgType = 'none';
-  const bgImage = getValue(BACKGROUND_IMAGE, undefined, true);
   if (bgImage && bgImage.includes('url')) {
     imgType = 'image';
   } else if (bgImage && bgImage.includes('linear-gradient')) {
@@ -146,18 +156,7 @@ const Background = props => {
           keyValue={keyValueMemo}
           onChange={handleChange}
         />
-        {imgType === 'image' && (
-          <ImageMode
-            partialValue={getValue([
-              BACKGROUND_IMAGE,
-              BACKGROUND_SIZE,
-              BACKGROUND_ATTACHMENT,
-              BACKGROUND_POSITION,
-              BACKGROUND_REPEAT
-            ])}
-            onChange={handleChange}
-          />
-        )}
+        {imgType === 'image' && <ImageMode onChange={handleChange} />}
         {imgType === 'linear-gradient' && <LinearGradientMode partialValue={bgImage} />}
         {imgType === 'radial-gradient' && <RadialGradientMode partialValue={bgImage} />}
         {imgType === 'none' && (

@@ -13,7 +13,7 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   isReverse?: boolean;
  *   isRow?: boolean;
  *   onChange?: (type: string, value: string) => void;
@@ -21,7 +21,7 @@ import GroupButtons from '../../../components/GroupButtons';
  * @returns {React.ReactElement}
  */
 const DisplayFlexAlignContent = props => {
-  const { partialValue, isReverse = false, isRow = false, onChange = noop } = props;
+  const { value, isReverse = false, isRow = false, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -38,7 +38,7 @@ const DisplayFlexAlignContent = props => {
           </>
         ),
         description: 'Align Rows: Start',
-        active: partialValue === 'flex-start'
+        active: value === 'flex-start'
       },
       {
         value: { value: 'center', type: ALIGN_CONTENT },
@@ -49,7 +49,7 @@ const DisplayFlexAlignContent = props => {
           </>
         ),
         description: 'Align Rows: Center',
-        active: partialValue === 'center'
+        active: value === 'center'
       },
       {
         value: { value: 'flex-end', type: ALIGN_CONTENT },
@@ -62,7 +62,7 @@ const DisplayFlexAlignContent = props => {
           </>
         ),
         description: 'Align Rows: End',
-        active: partialValue === 'flex-end'
+        active: value === 'flex-end'
       },
       {
         value: { value: 'stretch', type: ALIGN_CONTENT },
@@ -73,7 +73,7 @@ const DisplayFlexAlignContent = props => {
           </>
         ),
         description: 'Align Rows: Stretch',
-        active: partialValue === 'stretch'
+        active: value === 'stretch'
       },
       {
         value: { value: 'space-between', type: ALIGN_CONTENT },
@@ -84,7 +84,7 @@ const DisplayFlexAlignContent = props => {
           </>
         ),
         description: 'Align Rows: Space Between',
-        active: partialValue === 'space-between'
+        active: value === 'space-between'
       },
       {
         value: { value: 'space-around', type: ALIGN_CONTENT },
@@ -95,10 +95,10 @@ const DisplayFlexAlignContent = props => {
           </>
         ),
         description: 'Align Rows: Space Around',
-        active: partialValue === 'space-around'
+        active: value === 'space-around'
       }
     ],
-    [partialValue, isReverse, isRow]
+    [value, isReverse, isRow]
   );
 
   return (

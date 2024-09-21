@@ -13,13 +13,13 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (value: { type: string; value: string }) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const SizeOverflow = props => {
-  const { partialValue, onChange = noop } = props;
+  const { value, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue), [onChange]);
 
@@ -29,28 +29,28 @@ const SizeOverflow = props => {
         value: { value: 'visible', type: OVERFLOW },
         children: <Icons width={16} height={16} type="Eye" />,
         description: 'Visible',
-        active: partialValue === 'visible'
+        active: value === 'visible'
       },
       {
         value: { value: 'hidden', type: OVERFLOW },
         children: <Icons width={16} height={16} type="EyeOff" />,
         description: 'Hidden',
-        active: partialValue === 'hidden'
+        active: value === 'hidden'
       },
       {
         value: { value: 'scroll', type: OVERFLOW },
         children: <Icons width={16} height={16} type="SizeOverflowScroll" />,
         description: 'Scroll',
-        active: partialValue === 'scroll'
+        active: value === 'scroll'
       },
       {
         value: { value: 'auto', type: OVERFLOW },
         children: <div className="text-xs select-none px-1">Auto</div>,
         description: '',
-        active: partialValue === 'auto'
+        active: value === 'auto'
       }
     ],
-    [partialValue]
+    [value]
   );
 
   return (

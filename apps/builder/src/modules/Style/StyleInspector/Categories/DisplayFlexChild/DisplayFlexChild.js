@@ -15,6 +15,7 @@ import DisplayOrder from './DisplayOrder';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const dotKeys = [ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS];
 
@@ -27,20 +28,24 @@ const dotKeys = [ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS];
  */
 const DisplayFlexChild = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
+  const { setValue } = use(StyleInspectorContext);
+  const {
+    [FLEX_GROW]: flexGrow,
+    [FLEX_SHRINK]: flexShrink,
+    [FLEX_BASIS]: flexBasis,
+    [ALIGN_SELF]: alignSelf,
+    [ORDER]: order
+  } = useInspectorValues({ keys: dotKeys, asValue: true });
 
-  const handleChangeValue = (type, partialValue) => setValue(type, partialValue);
+  const handleChangeValue = useCallback((type, partialValue) => setValue(type, partialValue), [setValue]);
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('displayFlexChild', isCollapsed), [onCollapse]);
 
-  const grow = getValue(FLEX_GROW);
-  const shrink = getValue(FLEX_SHRINK);
-  const basis = getValue(FLEX_BASIS);
   let customSizing = false;
   if (
-    !(grow === '0' && shrink === '1' && isEqual(basis, 'auto')) &&
-    !(grow === '1' && shrink === '1' && isEqual(basis, '0%')) &&
-    !(grow === '0' && shrink === '0' && isEqual(basis, 'auto'))
+    !(flexGrow === '0' && flexShrink === '1' && isEqual(flexBasis, 'auto')) &&
+    !(flexGrow === '1' && flexShrink === '1' && isEqual(flexBasis, '0%')) &&
+    !(flexGrow === '0' && flexShrink === '0' && isEqual(flexBasis, 'auto'))
   ) {
     customSizing = true;
   }
@@ -58,7 +63,7 @@ const DisplayFlexChild = props => {
         },
         children: <Icons width={16} height={16} type="FlexShrinkRow" />,
         description: 'Shrink if needed',
-        active: !customSizing && grow === '0' && shrink === '1' && isEqual(basis, 'auto')
+        active: !customSizing && FLEX_GROW === '0' && flexShrink === '1' && isEqual(flexBasis, 'auto')
       },
       {
         value: {
@@ -67,7 +72,7 @@ const DisplayFlexChild = props => {
         },
         children: <Icons width={16} height={16} type="FlexGrowRow" />,
         description: 'Grow if possible',
-        active: !customSizing && grow === '1' && shrink === '1' && isEqual(basis, '0%')
+        active: !customSizing && FLEX_GROW === '1' && flexShrink === '1' && isEqual(flexBasis, '0%')
       },
       {
         value: {
@@ -76,19 +81,19 @@ const DisplayFlexChild = props => {
         },
         children: <Icons width={16} height={16} type="FlexNoneRow" />,
         description: "Don't shrink or grow",
-        active: !customSizing && grow === '0' && shrink === '0' && isEqual(basis, 'auto')
+        active: !customSizing && FLEX_GROW === '0' && flexShrink === '0' && isEqual(flexBasis, 'auto')
       }
     ],
-    [customSizing, grow, shrink, basis]
+    [customSizing, FLEX_GROW, flexShrink, flexBasis]
   );
 
   const items = useMemo(
     () => [
-      { type: 'input', value: grow, extraValue: { type: FLEX_GROW }, label: 'Grow' },
-      { type: 'input', value: shrink, extraValue: { type: FLEX_SHRINK }, label: 'Shrink' },
-      { type: 'inputMetric', value: basis, extraValue: { type: FLEX_BASIS }, label: 'Basis' }
+      { type: 'input', value: FLEX_GROW, extraValue: { type: FLEX_GROW }, label: 'Grow' },
+      { type: 'input', value: flexShrink, extraValue: { type: FLEX_SHRINK }, label: 'Shrink' },
+      { type: 'inputMetric', value: flexBasis, extraValue: { type: FLEX_BASIS }, label: 'Basis' }
     ],
-    [grow, shrink, basis]
+    [FLEX_GROW, flexShrink, flexBasis]
   );
 
   return (
@@ -109,8 +114,8 @@ const DisplayFlexChild = props => {
           keyValue={keyValueMemo}
           onChange={handleChange}
         />
-        <DisplayAlignSelf partialValue={getValue(ALIGN_SELF)} onChange={handleChangeValue} />
-        <DisplayOrder partialValue={getValue(ORDER)} onChange={handleChangeValue} />
+        <DisplayAlignSelf value={alignSelf} onChange={handleChangeValue} />
+        <DisplayOrder value={order} onChange={handleChangeValue} />
       </div>
     </CategoryContainer>
   );

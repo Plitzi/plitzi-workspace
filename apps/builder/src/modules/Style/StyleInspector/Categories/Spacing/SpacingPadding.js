@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -9,10 +9,12 @@ import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@plitz
 import InspectorLabel from '../../InspectorLabel';
 import SpacingNumber from './SpacingNumber';
 
+const keyValue = [PADDING_TOP, PADDING_LEFT, PADDING_RIGHT, PADDING_BOTTOM];
+
 /**
  * @param {{
  *   fragmentSelected?: string;
- *   partialValue?: {
+ *   values?: {
  *     paddingTop: string;
  *     paddingBottom: string;
  *     paddingLeft: string;
@@ -25,29 +27,31 @@ import SpacingNumber from './SpacingNumber';
  * @returns {React.ReactElement}
  */
 const SpacingPadding = props => {
-  const { fragmentSelected, partialValue, isLinked = false, onLinkSelected = noop, onSelectFragment = noop } = props;
-  const handleClickSelect = type => () => {
-    if (type === fragmentSelected) {
-      onSelectFragment(undefined);
-    } else {
-      onSelectFragment(type);
-    }
-  };
+  const { fragmentSelected, values, isLinked = false, onLinkSelected = noop, onSelectFragment = noop } = props;
+
+  const handleClickSelect = useCallback(
+    type => () => {
+      if (type === fragmentSelected) {
+        onSelectFragment(undefined);
+      } else {
+        onSelectFragment(type);
+      }
+    },
+    [onSelectFragment, fragmentSelected]
+  );
 
   const {
     [PADDING_TOP]: paddingTop,
     [PADDING_BOTTOM]: paddingBottom,
     [PADDING_LEFT]: paddingLeft,
     [PADDING_RIGHT]: paddingRight
-  } = partialValue;
-
-  const keyValueMemo = useMemo(() => [PADDING_TOP, PADDING_LEFT, PADDING_RIGHT, PADDING_BOTTOM], []);
+  } = values;
 
   return (
     <div className="relative border rounded-md border-gray-300 grow">
       <div className="flex justify-center items-center py-0.5">
         <InspectorLabel
-          keyValue={keyValueMemo}
+          keyValue={keyValue}
           className="top-0 left-0 absolute text-[10px] overflow-hidden rounded-br-md !p-0"
           size="custom"
         >

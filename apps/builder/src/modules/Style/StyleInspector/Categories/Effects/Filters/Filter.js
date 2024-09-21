@@ -14,45 +14,45 @@ import InspectorLabel from '../../../InspectorLabel';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const Filter = props => {
   const { onChange = noop } = props;
-  let { partialValue } = props;
-  if (partialValue && partialValue !== '') {
-    partialValue = partialValue.split(' ');
+  let { value } = props;
+  if (value && value !== '') {
+    value = value.split(' ');
   } else {
-    partialValue = [];
+    value = [];
   }
 
   const handleClickRemoveItem = index => e => {
     e.stopPropagation();
     e.preventDefault();
-    partialValue.splice(index, 1);
-    if (partialValue.length > 0) {
-      onChange({ type: FILTER, value: partialValue.join(' ') });
+    value.splice(index, 1);
+    if (value.length > 0) {
+      onChange({ type: FILTER, value: value.join(' ') });
     } else {
       onChange({ type: FILTER, value: undefined });
     }
   };
 
   const handleChangeItem = index => filterItemValue => {
-    if (filterItemValue !== partialValue[index]) {
-      partialValue[index] = filterItemValue;
-      onChange({ type: FILTER, value: partialValue.join(' ') });
+    if (filterItemValue !== value[index]) {
+      value[index] = filterItemValue;
+      onChange({ type: FILTER, value: value.join(' ') });
     }
   };
 
   const handleClickAddItem = useCallback(() => {
-    if (partialValue && partialValue.length > 0) {
-      onChange({ type: FILTER, value: `${partialValue.join(' ')} blur(5px)` });
+    if (value && value.length > 0) {
+      onChange({ type: FILTER, value: `${value.join(' ')} blur(5px)` });
     } else {
       onChange({ type: FILTER, value: 'blur(5px)' });
     }
-  }, [partialValue, onChange]);
+  }, [value, onChange]);
 
   return (
     <>
@@ -62,9 +62,9 @@ const Filter = props => {
           <i className="fas fa-plus" />
         </InspectorButton>
       </div>
-      {partialValue && partialValue.length > 0 && (
+      {value && value.length > 0 && (
         <div className="flex flex-col">
-          {partialValue.map((filter, index) => (
+          {value.map((filter, index) => (
             <FilterItem
               key={index}
               value={filter}

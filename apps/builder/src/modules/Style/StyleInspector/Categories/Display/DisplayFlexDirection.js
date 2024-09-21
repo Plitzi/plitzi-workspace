@@ -13,38 +13,35 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
- *   directionValue: string;
- *   wrapValue: string;
+ *   value: string;
  *   isReverse?: boolean;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DisplayFlexDirection = props => {
-  const { partialValue, directionValue, wrapValue, isReverse = false, onChange = noop } = props;
+  const { value, isReverse = false, onChange = noop } = props;
 
   const handleChange = useCallback(
     itemValue => {
-      const { value, type } = itemValue;
-      switch (type) {
+      switch (itemValue.type) {
         case 'reverseDirection': {
-          if (value) {
-            onChange(FLEX_DIRECTION, `${directionValue}-reverse`);
+          if (itemValue.value) {
+            onChange(FLEX_DIRECTION, `${value}-reverse`);
           } else {
-            onChange(FLEX_DIRECTION, directionValue.replace('-reverse', ''));
+            onChange(FLEX_DIRECTION, value.replace('-reverse', ''));
           }
 
           break;
         }
 
         default:
-          onChange(type, value);
+          onChange(itemValue.type, itemValue.value);
 
           break;
       }
     },
-    [onChange, directionValue, wrapValue]
+    [onChange, value]
   );
 
   const items = useMemo(
@@ -53,13 +50,13 @@ const DisplayFlexDirection = props => {
         value: { value: isReverse ? 'row-reverse' : 'row', type: FLEX_DIRECTION },
         children: <div className="text-xs select-none px-1">Horizontal</div>,
         description: '',
-        active: partialValue === 'row' || partialValue === 'row-reverse'
+        active: value === 'row' || value === 'row-reverse'
       },
       {
         value: { value: isReverse ? 'column-reverse' : 'column', type: FLEX_DIRECTION },
         children: <div className="text-xs select-none px-1">Vertical</div>,
         description: '',
-        active: partialValue === 'column' || partialValue === 'column-reverse'
+        active: value === 'column' || value === 'column-reverse'
       },
       {
         value: { value: !isReverse, type: 'reverseDirection' },
@@ -68,7 +65,7 @@ const DisplayFlexDirection = props => {
         active: isReverse
       }
     ],
-    [partialValue, isReverse]
+    [value, isReverse]
   );
 
   return (

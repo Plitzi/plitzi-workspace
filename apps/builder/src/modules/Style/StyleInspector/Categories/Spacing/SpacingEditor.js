@@ -33,13 +33,13 @@ const iconsMap = {
 /**
  * @param {{
  *   fragmentSelected: string;
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const SpacingEditor = props => {
-  const { fragmentSelected, partialValue, onChange = noop } = props;
+  const { fragmentSelected, value, onChange = noop } = props;
 
   const handleClick = partialValue => () => {
     onChange(fragmentSelected, partialValue);
@@ -58,7 +58,7 @@ const SpacingEditor = props => {
           <Icons className="mr-1" type={iconsMap[fragmentSelected]} />
           <div className="text-xs truncate">{fragmentSelected.split('-').join(' ')}</div>
         </div>
-        <InputMetric value={partialValue} size="sm" onChange={handleChange} className="rounded" />
+        <InputMetric value={value} size="sm" onChange={handleChange} className="rounded" />
       </div>
       <div className="flex">
         {segment === 'margin' && (

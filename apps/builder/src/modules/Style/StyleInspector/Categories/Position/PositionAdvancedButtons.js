@@ -13,14 +13,14 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: object;
+ *   value: object;
  *   onChange?: (value: { type: string; value: string }) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const PositionAdvancedButtons = props => {
-  const { partialValue, onChange = noop } = props;
-  const { [TOP]: top, [BOTTOM]: bottom, [LEFT]: left, [RIGHT]: right } = partialValue;
+  const { value, onChange = noop } = props;
+  const { [TOP]: top, [BOTTOM]: bottom, [LEFT]: left, [RIGHT]: right } = value;
 
   const handleChange = useCallback(itemValue => onChange(itemValue), [onChange]);
 

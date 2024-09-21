@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
@@ -10,16 +10,16 @@ import InspectorLabel from '../../InspectorLabel';
 import SpacingPadding from './SpacingPadding';
 import SpacingNumber from './SpacingNumber';
 
+const keyValue = [MARGIN_TOP, MARGIN_LEFT, MARGIN_RIGHT, MARGIN_BOTTOM];
+
 /**
  * @param {{
  *   fragmentSelected?: string;
- *   partialValue?: {
+ *   values?: {
  *     marginTop: string;
  *     marginBottom: string;
  *     marginLeft: string;
  *     marginRight: string;
- *   };
- *   padding?: {
  *     paddingTop: string;
  *     paddingBottom: string;
  *     paddingLeft: string;
@@ -32,32 +32,26 @@ import SpacingNumber from './SpacingNumber';
  * @returns {React.ReactElement}
  */
 const SpacingMargin = props => {
-  const {
-    fragmentSelected,
-    partialValue,
-    padding,
-    isLinked = false,
-    onLinkSelected = noop,
-    onSelectFragment = noop
-  } = props;
+  const { fragmentSelected, values, isLinked = false, onLinkSelected = noop, onSelectFragment = noop } = props;
 
-  const handleClickSelect = type => () => {
-    const { fragmentSelected, onSelectFragment } = props;
-    if (type === fragmentSelected) {
-      onSelectFragment(undefined);
-    } else {
-      onSelectFragment(type);
-    }
-  };
+  const handleClickSelect = useCallback(
+    type => () => {
+      const { fragmentSelected, onSelectFragment } = props;
+      if (type === fragmentSelected) {
+        onSelectFragment(undefined);
+      } else {
+        onSelectFragment(type);
+      }
+    },
+    [fragmentSelected, onSelectFragment]
+  );
 
   const {
     [MARGIN_TOP]: marginTop,
     [MARGIN_BOTTOM]: marginBottom,
     [MARGIN_LEFT]: marginLeft,
     [MARGIN_RIGHT]: marginRight
-  } = partialValue;
-
-  const keyValueMemo = useMemo(() => [MARGIN_TOP, MARGIN_LEFT, MARGIN_RIGHT, MARGIN_BOTTOM], []);
+  } = values;
 
   return (
     <div className="flex flex-col bg-white border border-gray-300 rounded-md relative cursor-pointer select-none">
@@ -65,7 +59,7 @@ const SpacingMargin = props => {
         <InspectorLabel
           className="top-0 left-0 absolute text-[10px] overflow-hidden rounded-br-md !p-0"
           size="custom"
-          keyValue={keyValueMemo}
+          keyValue={keyValue}
         >
           MARGIN
         </InspectorLabel>
@@ -84,7 +78,7 @@ const SpacingMargin = props => {
           />
         </div>
         <SpacingPadding
-          partialValue={padding}
+          values={values}
           fragmentSelected={fragmentSelected}
           onSelectFragment={onSelectFragment}
           isLinked={isLinked}

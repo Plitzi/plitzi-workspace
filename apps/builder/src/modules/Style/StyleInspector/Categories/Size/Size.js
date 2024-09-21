@@ -22,8 +22,13 @@ import SizeFit from './SizeFit';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const dotKeys = [WIDTH, HEIGHT, MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT, OVERFLOW, OBJECT_FIT, OBJECT_POSITION];
+
+const keyValueSize = [WIDTH, HEIGHT];
+const keyValueSizeMin = [MIN_WIDTH, MIN_HEIGHT];
+const keyValueSizeMax = [MAX_WIDTH, MAX_HEIGHT];
 
 /**
  * @param {{
@@ -34,16 +39,20 @@ const dotKeys = [WIDTH, HEIGHT, MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT, OV
  */
 const Size = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
+  const { setValue } = use(StyleInspectorContext);
+  const {
+    [WIDTH]: width,
+    [HEIGHT]: height,
+    [MIN_WIDTH]: minWidth,
+    [MIN_HEIGHT]: minHeight,
+    [MAX_WIDTH]: maxWidth,
+    [MAX_HEIGHT]: maxHeight,
+    [OVERFLOW]: overflow,
+    [OBJECT_POSITION]: objectPosition,
+    [OBJECT_FIT]: objectFit
+  } = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('size', isCollapsed), [onCollapse]);
-
-  const width = getValue(WIDTH);
-  const height = getValue(HEIGHT);
-  const minWidth = getValue(MIN_WIDTH);
-  const minHeight = getValue(MIN_HEIGHT);
-  const maxWidth = getValue(MAX_WIDTH);
-  const maxHeight = getValue(MAX_HEIGHT);
 
   const handleChange = useCallback(itemValue => setValue(itemValue.type, itemValue.value), [setValue]);
 
@@ -78,6 +87,7 @@ const Size = props => {
           className="w-full"
           classNameContainer="w-[180px]"
           items={itemsSize}
+          keyValue={keyValueSize}
           label="Size"
           onChange={handleChange}
         />
@@ -85,6 +95,7 @@ const Size = props => {
           className="w-full"
           classNameContainer="w-[180px]"
           items={itemsMinSize}
+          keyValue={keyValueSizeMin}
           label="Min Size"
           onChange={handleChange}
         />
@@ -92,12 +103,13 @@ const Size = props => {
           className="w-full"
           classNameContainer="w-[180px]"
           items={itemsMaxSize}
+          keyValue={keyValueSizeMax}
           label="Max Size"
           onChange={handleChange}
         />
-        <SizeOverflow partialValue={getValue(OVERFLOW)} onChange={handleChange} />
-        <SizePosition partialValue={getValue(OBJECT_POSITION)} onChange={handleChange} />
-        <SizeFit partialValue={getValue(OBJECT_FIT)} onChange={handleChange} />
+        <SizeOverflow value={overflow} onChange={handleChange} />
+        <SizePosition value={objectPosition} onChange={handleChange} />
+        <SizeFit value={objectFit} onChange={handleChange} />
       </div>
     </CategoryContainer>
   );

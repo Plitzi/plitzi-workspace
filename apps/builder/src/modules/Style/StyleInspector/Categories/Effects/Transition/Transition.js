@@ -21,34 +21,34 @@ import InspectorLabel from '../../../InspectorLabel';
  */
 const Transition = props => {
   const { onChange = noop } = props;
-  let { partialValue } = props;
-  if (partialValue && partialValue !== '') {
-    partialValue = partialValue.split(/,(?![^()]*\))/gim);
+  let { value } = props;
+  if (value && value !== '') {
+    value = value.split(/,(?![^()]*\))/gim);
   } else {
-    partialValue = [];
+    value = [];
   }
 
   const handleClickRemoveItem = index => e => {
     e.stopPropagation();
     e.preventDefault();
-    partialValue.splice(index, 1);
-    if (partialValue.length > 0) {
-      onChange({ type: TRANSITION, value: partialValue.join(',') });
+    value.splice(index, 1);
+    if (value.length > 0) {
+      onChange({ type: TRANSITION, value: value.join(',') });
     } else {
       onChange({ type: TRANSITION, value: undefined });
     }
   };
 
   const handleChangeItem = index => transitionItemValue => {
-    if (transitionItemValue !== partialValue[index]) {
-      partialValue[index] = transitionItemValue;
-      onChange({ type: TRANSITION, value: partialValue.join(',') });
+    if (transitionItemValue !== value[index]) {
+      value[index] = transitionItemValue;
+      onChange({ type: TRANSITION, value: value.join(',') });
     }
   };
 
   const handleClickAddItem = () => {
-    if (partialValue && partialValue.length > 0) {
-      onChange({ type: TRANSITION, value: `${partialValue},opacity 200ms ease 0ms` });
+    if (value && value.length > 0) {
+      onChange({ type: TRANSITION, value: `${value},opacity 200ms ease 0ms` });
     } else {
       onChange({ type: TRANSITION, value: 'opacity 200ms ease 0ms' });
     }
@@ -62,9 +62,9 @@ const Transition = props => {
           <i className="fas fa-plus" />
         </InspectorButton>
       </div>
-      {partialValue && partialValue.length > 0 && (
+      {value && value.length > 0 && (
         <div className="flex flex-col">
-          {partialValue.map((transition, index) => (
+          {value.map((transition, index) => (
             <TransitionItem
               key={index}
               value={transition}

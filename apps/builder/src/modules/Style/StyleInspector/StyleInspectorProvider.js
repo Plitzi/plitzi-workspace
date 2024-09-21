@@ -1,15 +1,12 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
-import pick from 'lodash/pick';
 import isEmpty from 'lodash/isEmpty';
 import set from 'lodash/set';
 import omit from 'lodash/omit';
 import { produce } from 'immer';
 
 // Monorepo
-// import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
-// import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
 import {
   // typography
   FONT_FAMILY,
@@ -241,46 +238,6 @@ const StyleInspectorProvider = props => {
   const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
   const values = get(style, `platform.${displayMode}.${selector}.attributes`);
 
-  const getValue = useCallback(
-    (key, defaultValueOptional = undefined, strictMode = false) => {
-      if (!key) {
-        return values;
-      }
-
-      if (Array.isArray(key)) {
-        const value = {};
-        if (defaultValueOptional === undefined) {
-          defaultValueOptional = {};
-        }
-
-        key.forEach(k => {
-          if (!defaultValueOptional[k] && defaultValue[k]) {
-            defaultValueOptional[k] = defaultValue[k];
-          }
-
-          value[k] = get(values, k, get(inheritData, `style.${k}.0.value`, defaultValueOptional[k]));
-        });
-
-        return value;
-      }
-
-      if (strictMode) {
-        return get(values, key);
-      }
-
-      if (defaultValueOptional === undefined && defaultValue[key] !== undefined && defaultValue[key] !== undefined) {
-        defaultValueOptional = defaultValue[key];
-      }
-
-      return get(
-        values,
-        key,
-        get(inheritData, `style.${key}.0.value`, get(bindingData, `style.${key}.0.value`, defaultValueOptional))
-      );
-    },
-    [defaultValue, inheritData, bindingData, values]
-  );
-
   const setValue = useCallback(
     (styleKey, value = undefined) => {
       if (typeof styleKey === 'object') {
@@ -396,36 +353,43 @@ const StyleInspectorProvider = props => {
     [setValue, values]
   );
 
-  const hasValue = useCallback(
-    attributeKey => {
-      if (!values) {
-        return false;
-      }
+  const rawValues = get(style, `platform.${displayMode}.${selector}.attributes`);
+  const finalValues = useMemo(() => {
+    const inheritValues = Object.keys(inheritData?.style ?? {}).reduce(
+      (acum, styleKey) => ({ ...acum, [styleKey]: get(inheritData, `style.${styleKey}.0.value`) }),
+      {}
+    );
+    const bindingValues = Object.keys(bindingData?.style ?? {}).reduce(
+      (acum, styleKey) => ({ ...acum, [styleKey]: get(bindingData, `style.${styleKey}.0.value`) }),
+      {}
+    );
 
-      if (Array.isArray(attributeKey)) {
-        return Object.keys(pick(values, attributeKey)).length > 0;
-      }
-
-      if (attributeKey) {
-        return !!get(values, attributeKey);
-      }
-
-      return Object.keys(values).length > 0;
-    },
-    [values]
-  );
+    return { ...defaultValue, ...bindingValues, ...inheritValues, ...rawValues };
+  }, [rawValues, inheritData, bindingData]);
 
   const inspectorContextValue = useMemo(
     () => ({
-      getValue,
+      rawValues: values,
+      values: finalValues,
+      displayMode,
+      selector,
       setValue,
       resetValue,
       inheritData: get(inheritData, 'style', {}),
       bindingData: get(bindingData, 'style', {}),
-      hasValue,
       getDefaultValue
     }),
-    [getValue, setValue, resetValue, inheritData, bindingData, hasValue, getDefaultValue]
+    [
+      displayMode,
+      selector,
+      setValue,
+      resetValue,
+      inheritData,
+      bindingData,
+      getDefaultValue,
+      values,
+      finalValues
+    ]
   );
 
   return <StyleInspectorContext value={inspectorContextValue}>{children}</StyleInspectorContext>;

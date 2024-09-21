@@ -10,13 +10,13 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (value: { type: string; value: string }) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const SizeFit = props => {
-  const { partialValue, onChange = noop } = props;
+  const { value, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue), [onChange]);
 
@@ -24,7 +24,7 @@ const SizeFit = props => {
     () => [
       {
         type: 'select',
-        value: partialValue,
+        value,
         extraValue: { type: OBJECT_FIT },
         children: (
           <>
@@ -37,7 +37,7 @@ const SizeFit = props => {
         )
       }
     ],
-    [partialValue]
+    [value]
   );
 
   return (

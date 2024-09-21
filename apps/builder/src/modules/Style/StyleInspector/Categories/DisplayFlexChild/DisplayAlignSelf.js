@@ -13,13 +13,13 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DisplayAlignSelf = props => {
-  const { partialValue, onChange = noop } = props;
+  const { value, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -29,40 +29,40 @@ const DisplayAlignSelf = props => {
         value: { value: 'auto', type: ALIGN_SELF },
         children: <Icons width={16} height={16} type="XMark" />,
         description: 'Align Auto',
-        active: partialValue === 'auto'
+        active: value === 'auto'
       },
       {
         value: { value: 'flex-start', type: ALIGN_SELF },
         children: <Icons width={16} height={16} type="AlignSelfStartRow" />,
         description: 'Align Start',
-        active: partialValue === 'flex-start'
+        active: value === 'flex-start'
       },
       {
         value: { value: 'center', type: ALIGN_SELF },
         children: <Icons width={16} height={16} type="AlignSelfCenterRow" />,
         description: 'Align Center',
-        active: partialValue === 'center'
+        active: value === 'center'
       },
       {
         value: { value: 'flex-end', type: ALIGN_SELF },
         children: <Icons width={16} height={16} type="AlignSelfEndRow" />,
         description: 'Align End',
-        active: partialValue === 'flex-end'
+        active: value === 'flex-end'
       },
       {
         value: { value: 'stretch', type: ALIGN_SELF },
         children: <Icons width={16} height={16} type="AlignSelfStretchRow" />,
         description: 'Align Stretch',
-        active: partialValue === 'stretch'
+        active: value === 'stretch'
       },
       {
         value: { value: 'baseline', type: ALIGN_SELF },
         children: <Icons width={16} height={16} type="AlignSelfBaselineRow" />,
         description: 'Align Baseline',
-        active: partialValue === 'baseline'
+        active: value === 'baseline'
       }
     ],
-    [partialValue]
+    [value]
   );
 
   return (

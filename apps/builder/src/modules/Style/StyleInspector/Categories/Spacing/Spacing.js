@@ -19,6 +19,7 @@ import SpacingMargin from './SpacingMargin';
 import SpacingEditor from './SpacingEditor';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const dotKeys = [
   MARGIN_TOP,
@@ -41,7 +42,8 @@ const dotKeys = [
 const Spacing = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
   const [isLinked, setIsLinked] = useState(false);
-  const { getValue, setValue } = use(StyleInspectorContext);
+  const { setValue } = use(StyleInspectorContext);
+  const values = useInspectorValues({ keys: dotKeys, asValue: true });
   const [fragmentSelected, setFragmentSelected] = useState();
 
   const handleChangeLink = useCallback(() => setIsLinked(state => !state), [setIsLinked]);
@@ -86,19 +88,14 @@ const Spacing = props => {
     <CategoryContainer title="Spacing" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="flex flex-col p-2">
         <SpacingMargin
-          partialValue={getValue([MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT])}
-          padding={getValue([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT])}
+          values={values}
           fragmentSelected={fragmentSelected}
           onSelectFragment={handleSelectFragment}
           isLinked={isLinked}
           onLinkSelected={handleChangeLink}
         />
         {fragmentSelected && (
-          <SpacingEditor
-            fragmentSelected={fragmentSelected}
-            onChange={handleChange}
-            partialValue={getValue(fragmentSelected)}
-          />
+          <SpacingEditor fragmentSelected={fragmentSelected} onChange={handleChange} value={values[fragmentSelected]} />
         )}
       </div>
     </CategoryContainer>

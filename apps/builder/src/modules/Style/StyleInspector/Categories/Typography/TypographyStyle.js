@@ -14,13 +14,13 @@ import GroupButtons from '../../../components/GroupButtons';
 /**
  * @param {{
  *   fontStyle: string;
- *   fontDecoration: string;
+ *   textDecoration: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const TypographyStyle = props => {
-  const { fontStyle, fontDecoration, onChange = noop } = props;
+  const { fontStyle, textDecoration, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue), [onChange]);
 
@@ -48,28 +48,28 @@ const TypographyStyle = props => {
         value: { value: 'none', type: TEXT_DECORATION },
         children: <Icons width={16} height={16} type="XMark" />,
         description: 'None',
-        active: fontDecoration === 'none'
+        active: textDecoration === 'none'
       },
       {
         value: { value: 'line-through', type: TEXT_DECORATION },
         children: <Icons width={16} height={16} type="TextDecorationStrike" />,
         description: 'Strikethrough',
-        active: fontDecoration === 'line-through'
+        active: textDecoration === 'line-through'
       },
       {
         value: { value: 'underline', type: TEXT_DECORATION },
         children: <Icons width={16} height={16} type="TextDecorationUnderline" />,
         description: 'Underline',
-        active: fontDecoration === 'underline'
+        active: textDecoration === 'underline'
       },
       {
         value: { value: 'overline', type: TEXT_DECORATION },
         children: <Icons width={16} height={16} type="TextDecorationOverline" />,
         description: 'Overline',
-        active: fontDecoration === 'overline'
+        active: textDecoration === 'overline'
       }
     ],
-    [fontDecoration]
+    [textDecoration]
   );
 
   return (

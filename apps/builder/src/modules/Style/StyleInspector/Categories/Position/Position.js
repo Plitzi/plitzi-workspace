@@ -18,6 +18,7 @@ import PositionAdvanced from './PositionAdvanced';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const STATIC = 'static';
 const RELATIVE = 'relative';
@@ -26,6 +27,7 @@ const FIXED = 'fixed';
 const STICKY = 'sticky';
 
 const dotKeys = [POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT];
+const keyValue = [POSITION, TOP, BOTTOM, LEFT, RIGHT];
 
 /**
  * @param {{
@@ -36,18 +38,24 @@ const dotKeys = [POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT];
  */
 const Position = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
+  const { setValue } = use(StyleInspectorContext);
+  const {
+    [POSITION]: position,
+    [TOP]: top,
+    [BOTTOM]: bottom,
+    [LEFT]: left,
+    [RIGHT]: right,
+    [FLOAT]: float,
+    [CLEAR]: clear,
+    [ZINDEX]: zIndex
+  } = useInspectorValues({ keys: dotKeys, asValue: true });
+  const advancedbuttons = useMemo(() => ({ top, bottom, left, right }), [top, bottom, left, right]);
 
   const handleChangeInput = type => e => {
     setValue(type, e.target.value);
   };
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('position', isCollapsed), [onCollapse]);
-
-  const position = getValue(POSITION);
-  const advancedbuttons = getValue([TOP, BOTTOM, LEFT, RIGHT]);
-
-  const keyValueMemo = useMemo(() => [POSITION, TOP, BOTTOM, LEFT, RIGHT], []);
 
   const handleChange = useCallback(
     itemValue => {
@@ -105,15 +113,15 @@ const Position = props => {
           classNameContainer="w-[180px]"
           items={items}
           label="Position"
-          keyValue={keyValueMemo}
+          keyValue={keyValue}
           onChange={handleChange}
         />
         {(position === FIXED || position === ABSOLUTE) && (
-          <PositionAdvancedButtons partialValue={advancedbuttons} onChange={handleChange} />
+          <PositionAdvancedButtons value={advancedbuttons} onChange={handleChange} />
         )}
-        <PositionAdvanced partialValue={advancedbuttons} onChange={handleChange} />
-        <PositionFloat partialValue={getValue(FLOAT)} onChange={handleChange} />
-        <PositionClear partialValue={getValue(CLEAR)} onChange={handleChange} />
+        <PositionAdvanced value={advancedbuttons} onChange={handleChange} />
+        <PositionFloat value={float} onChange={handleChange} />
+        <PositionClear value={clear} onChange={handleChange} />
         <div className="w-full flex items-center justify-between">
           <InspectorLabel keyValue={ZINDEX}>z-index</InspectorLabel>
           <Input
@@ -121,7 +129,7 @@ const Position = props => {
             className="!w-[180px]"
             size="sm"
             inputClassName="rounded-md"
-            value={getValue(ZINDEX)}
+            value={zIndex}
             onChange={handleChangeInput(ZINDEX)}
           />
         </div>

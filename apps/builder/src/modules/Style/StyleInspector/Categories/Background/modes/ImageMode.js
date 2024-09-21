@@ -17,24 +17,26 @@ import Icons from '@pcomponents/Icons';
 
 // Relatives
 import GroupButtons from '../../../../components/GroupButtons';
+import useInspectorValues from '../../../hooks/useInspectorValues';
 
 /**
  * @param {{
- *   partialValue: object;
  *   onChange?: (value: object) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const ImageMode = props => {
-  const { partialValue, onChange = noop } = props;
-
+  const { onChange = noop } = props;
   const {
     [BACKGROUND_IMAGE]: bgImage,
     [BACKGROUND_SIZE]: backgroundSize,
     [BACKGROUND_ATTACHMENT]: backgroundAttachment,
     [BACKGROUND_POSITION]: backgroundPosition,
     [BACKGROUND_REPEAT]: backgroundRepeat
-  } = partialValue;
+  } = useInspectorValues({
+    keys: [BACKGROUND_IMAGE, BACKGROUND_SIZE, BACKGROUND_ATTACHMENT, BACKGROUND_POSITION, BACKGROUND_REPEAT],
+    asValue: true
+  });
 
   const backgroundImage = useMemo(() => get(bgImage.match(/\("(?<content>.*)"\)/im), 'groups.content', ''), [bgImage]);
 

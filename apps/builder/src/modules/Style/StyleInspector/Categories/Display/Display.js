@@ -34,8 +34,26 @@ import DisplayGap from './DisplayGap';
 import CategoryContainer from '../../../components/CategoryContainer';
 import DisplayGridTemplate from './DisplayGridTemplate';
 import DisplayGridGap from './DisplayGridGap';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
-const dotKeys = [DISPLAY, FLEX_WRAP, FLEX_DIRECTION, ALIGN_ITEMS, JUSTIFY_CONTENT, ALIGN_CONTENT];
+const dotKeys = [
+  FLEX_DIRECTION,
+  FLEX_WRAP,
+  ALIGN_ITEMS,
+  JUSTIFY_CONTENT,
+  ALIGN_CONTENT,
+  COLUMN_GAP,
+  ROW_GAP,
+  GRID_ROW_GAP,
+  GRID_COLUMN_GAP,
+  GRID_TEMPLATE_AREAS,
+  GRID_TEMPLATE_COLUMNS,
+  GRID_TEMPLATE_ROWS,
+  GRID_AUTO_FLOW,
+  GRID_AUTO_ROWS,
+  GRID_AUTO_COLUMNS,
+  DISPLAY
+];
 
 /**
  * @param {{
@@ -46,116 +64,109 @@ const dotKeys = [DISPLAY, FLEX_WRAP, FLEX_DIRECTION, ALIGN_ITEMS, JUSTIFY_CONTEN
  */
 const Display = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
-  const handleChange = (type, partialValue) => {
-    if (type === 'display') {
-      setValue(
-        [
-          FLEX_DIRECTION,
-          FLEX_WRAP,
-          ALIGN_ITEMS,
-          JUSTIFY_CONTENT,
-          ALIGN_CONTENT,
-          COLUMN_GAP,
-          ROW_GAP,
-          GRID_ROW_GAP,
-          GRID_COLUMN_GAP,
-          GRID_TEMPLATE_AREAS,
-          GRID_TEMPLATE_COLUMNS,
-          GRID_TEMPLATE_ROWS,
-          GRID_AUTO_FLOW,
-          GRID_AUTO_ROWS,
-          GRID_AUTO_COLUMNS,
-          DISPLAY
-        ],
-        {
-          [FLEX_DIRECTION]: undefined,
-          [FLEX_WRAP]: undefined,
-          [ALIGN_ITEMS]: undefined,
-          [JUSTIFY_CONTENT]: undefined,
-          [ALIGN_CONTENT]: undefined,
-          [ROW_GAP]: undefined,
-          [COLUMN_GAP]: undefined,
-          [GRID_ROW_GAP]: undefined,
-          [GRID_COLUMN_GAP]: undefined,
-          [GRID_TEMPLATE_AREAS]: undefined,
-          [GRID_TEMPLATE_COLUMNS]: undefined,
-          [GRID_TEMPLATE_ROWS]: undefined,
-          [GRID_AUTO_FLOW]: undefined,
-          [GRID_AUTO_ROWS]: undefined,
-          [GRID_AUTO_COLUMNS]: undefined,
-          [DISPLAY]: partialValue
-        }
-      );
-    } else {
-      setValue(type, partialValue);
-    }
-  };
+  const { setValue } = use(StyleInspectorContext);
+  const {
+    [DISPLAY]: display,
+    [FLEX_DIRECTION]: flexDirection,
+    [FLEX_WRAP]: flexWrap,
+    [ALIGN_ITEMS]: alignItems,
+    [JUSTIFY_CONTENT]: justifyContent,
+    [ROW_GAP]: rowGap,
+    [COLUMN_GAP]: columnGap,
+    [GRID_TEMPLATE_AREAS]: gridTemplateAreas,
+    [GRID_TEMPLATE_COLUMNS]: gridTemplateColumns,
+    [GRID_TEMPLATE_ROWS]: gridTemplateRows,
+    [GRID_AUTO_FLOW]: gridAutoFlow,
+    [GRID_AUTO_ROWS]: gridAutoRows,
+    [GRID_AUTO_COLUMNS]: gridAutoColumns,
+    [GRID_ROW_GAP]: gridRowGap,
+    [GRID_COLUMN_GAP]: gridColumnGap,
+    [ALIGN_CONTENT]: alignContent
+  } = useInspectorValues({ keys: dotKeys, asValue: true });
+  const handleChange = useCallback(
+    (type, partialValue) => {
+      if (type === 'display') {
+        setValue(
+          [
+            FLEX_DIRECTION,
+            FLEX_WRAP,
+            ALIGN_ITEMS,
+            JUSTIFY_CONTENT,
+            ALIGN_CONTENT,
+            COLUMN_GAP,
+            ROW_GAP,
+            GRID_ROW_GAP,
+            GRID_COLUMN_GAP,
+            GRID_TEMPLATE_AREAS,
+            GRID_TEMPLATE_COLUMNS,
+            GRID_TEMPLATE_ROWS,
+            GRID_AUTO_FLOW,
+            GRID_AUTO_ROWS,
+            GRID_AUTO_COLUMNS,
+            DISPLAY
+          ],
+          {
+            [FLEX_DIRECTION]: undefined,
+            [FLEX_WRAP]: undefined,
+            [ALIGN_ITEMS]: undefined,
+            [JUSTIFY_CONTENT]: undefined,
+            [ALIGN_CONTENT]: undefined,
+            [ROW_GAP]: undefined,
+            [COLUMN_GAP]: undefined,
+            [GRID_ROW_GAP]: undefined,
+            [GRID_COLUMN_GAP]: undefined,
+            [GRID_TEMPLATE_AREAS]: undefined,
+            [GRID_TEMPLATE_COLUMNS]: undefined,
+            [GRID_TEMPLATE_ROWS]: undefined,
+            [GRID_AUTO_FLOW]: undefined,
+            [GRID_AUTO_ROWS]: undefined,
+            [GRID_AUTO_COLUMNS]: undefined,
+            [DISPLAY]: partialValue
+          }
+        );
+      } else {
+        setValue(type, partialValue);
+      }
+    },
+    [setValue]
+  );
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('display', isCollapsed), [onCollapse]);
 
-  const directionValue = getValue(FLEX_DIRECTION);
-  const wrapValue = getValue(FLEX_WRAP);
-  const isReverse = directionValue.includes('reverse');
-  const isRow = directionValue.includes('row');
-  const isReverseWrap = wrapValue.includes('reverse');
-  const displayValue = getValue(DISPLAY);
+  const isReverse = flexDirection.includes('reverse');
+  const isRow = flexDirection.includes('row');
+  const isReverseWrap = flexWrap.includes('reverse');
 
   return (
     <CategoryContainer title="Layout" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="p-2 flex flex-col gap-2">
-        <DisplayElements partialValue={displayValue} directionValue={directionValue} onChange={handleChange} />
-        {displayValue === 'flex' && (
+        <DisplayElements value={display} directionValue={flexDirection} onChange={handleChange} />
+        {display === 'flex' && (
           <>
-            <DisplayFlexDirection
-              partialValue={getValue(FLEX_DIRECTION)}
-              directionValue={directionValue}
-              wrapValue={wrapValue}
-              onChange={handleChange}
-              isReverse={isReverse}
-            />
-            <DisplayFlexAlignItems
-              partialValue={getValue(ALIGN_ITEMS)}
-              onChange={handleChange}
-              isReverse={isReverse}
-              isRow={isRow}
-            />
-            <DisplayFlexJustify
-              partialValue={getValue(JUSTIFY_CONTENT)}
-              onChange={handleChange}
-              isReverse={isReverse}
-              isRow={isRow}
-            />
-            <DisplayFlex
-              partialValue={wrapValue}
-              wrapValue={wrapValue}
-              onChange={handleChange}
-              isReverse={isReverseWrap}
-            />
-            <DisplayGap rowGap={getValue(ROW_GAP)} columnGap={getValue(COLUMN_GAP)} onChange={handleChange} />
+            <DisplayFlexDirection value={flexDirection} onChange={handleChange} isReverse={isReverse} />
+            <DisplayFlexAlignItems value={alignItems} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
+            <DisplayFlexJustify value={justifyContent} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
+            <DisplayFlex value={flexWrap} onChange={handleChange} isReverse={isReverseWrap} />
+            <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} />
           </>
         )}
-        {displayValue === 'grid' && (
+        {display === 'grid' && (
           <>
             <DisplayGridTemplate
-              templateAreas={getValue(GRID_TEMPLATE_AREAS)}
-              templateColumns={getValue(GRID_TEMPLATE_COLUMNS)}
-              templateRows={getValue(GRID_TEMPLATE_ROWS)}
-              templateAutoFlow={getValue(GRID_AUTO_FLOW)}
-              templateAutoRows={getValue(GRID_AUTO_ROWS)}
-              templateAutoColumns={getValue(GRID_AUTO_COLUMNS)}
+              templateAreas={gridTemplateAreas}
+              templateColumns={gridTemplateColumns}
+              templateRows={gridTemplateRows}
+              templateAutoFlow={gridAutoFlow}
+              templateAutoRows={gridAutoRows}
+              templateAutoColumns={gridAutoColumns}
               onChange={handleChange}
             />
-            <DisplayGridGap
-              rowGap={getValue(GRID_ROW_GAP)}
-              columnGap={getValue(GRID_COLUMN_GAP)}
-              onChange={handleChange}
-            />
+            <DisplayGridGap rowGap={gridRowGap} columnGap={gridColumnGap} onChange={handleChange} />
           </>
         )}
-        {displayValue === 'flex' && (wrapValue === 'wrap' || wrapValue === 'wrap-reverse') && (
+        {display === 'flex' && (flexWrap === 'wrap' || flexWrap === 'wrap-reverse') && (
           <DisplayFlexAlignContent
-            partialValue={getValue(ALIGN_CONTENT)}
+            value={alignContent}
             onChange={handleChange}
             isReverse={isReverseWrap}
             isRow={isRow}

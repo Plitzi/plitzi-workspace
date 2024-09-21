@@ -13,35 +13,33 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
- *   wrapValue: string;
+ *   value: string;
  *   isReverse: boolean;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DisplayFlex = props => {
-  const { partialValue, wrapValue, isReverse = false, onChange = noop } = props;
+  const { value, isReverse = false, onChange = noop } = props;
 
   const handleChange = useCallback(
     itemValue => {
-      const { value, type } = itemValue;
-      switch (type) {
+      switch (itemValue.type) {
         case 'reverseWrap': {
-          if (value) {
-            onChange(FLEX_WRAP, `${wrapValue}-reverse`);
+          if (itemValue.value) {
+            onChange(FLEX_WRAP, `${value}-reverse`);
           } else {
-            onChange(FLEX_WRAP, wrapValue.replace('-reverse', ''));
+            onChange(FLEX_WRAP, value.replace('-reverse', ''));
           }
 
           break;
         }
         default:
-          onChange(type, value);
+          onChange(itemValue.type, itemValue.value);
           break;
       }
     },
-    [onChange, partialValue, wrapValue]
+    [onChange, value]
   );
 
   const items = useMemo(
@@ -50,13 +48,13 @@ const DisplayFlex = props => {
         value: { value: isReverse ? 'nowrap-reverse' : 'nowrap', type: FLEX_WRAP },
         children: <div className="text-xs whitespace-nowrap select-none px-1">Don&apos;t Wrap</div>,
         description: '',
-        active: partialValue === 'nowrap' || partialValue === 'nowrap-reverse'
+        active: value === 'nowrap' || value === 'nowrap-reverse'
       },
       {
         value: { value: isReverse ? 'wrap-reverse' : 'wrap', type: FLEX_WRAP },
         children: <div className="text-xs select-none px-1">Wrap</div>,
         description: '',
-        active: partialValue === 'wrap' || partialValue === 'wrap-reverse'
+        active: value === 'wrap' || value === 'wrap-reverse'
       },
       {
         value: { value: !isReverse, type: 'reverseWrap' },
@@ -65,7 +63,7 @@ const DisplayFlex = props => {
         active: isReverse
       }
     ],
-    [partialValue, isReverse]
+    [value, isReverse]
   );
 
   return (

@@ -13,14 +13,14 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   transform: string;
+ *   textTransform: string;
  *   direction: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const TypographyTransform = props => {
-  const { transform, direction, onChange = noop } = props;
+  const { textTransform, direction, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -30,28 +30,28 @@ const TypographyTransform = props => {
         value: { value: 'none', type: TEXT_TRANSFORM },
         children: <Icons width={16} height={16} type="XMark" />,
         description: 'None',
-        active: transform === 'none'
+        active: textTransform === 'none'
       },
       {
         value: { value: 'uppercase', type: TEXT_TRANSFORM },
         children: <Icons width={16} height={16} type="TextTransformCapitalize" />,
         description: 'All Caps',
-        active: transform === 'uppercase'
+        active: textTransform === 'uppercase'
       },
       {
         value: { value: 'capitalize', type: TEXT_TRANSFORM },
         children: <Icons width={16} height={16} type="TextTransformSentence" />,
         description: 'Capitalize Every Word',
-        active: transform === 'capitalize'
+        active: textTransform === 'capitalize'
       },
       {
         value: { value: 'lowercase', type: TEXT_TRANSFORM },
         children: <Icons width={16} height={16} type="TextTransformLowercase" />,
         description: 'Lower Case',
-        active: transform === 'lowercase'
+        active: textTransform === 'lowercase'
       }
     ],
-    [transform]
+    [textTransform]
   );
 
   const itemsDirection = useMemo(

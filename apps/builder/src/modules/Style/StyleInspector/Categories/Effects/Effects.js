@@ -13,6 +13,7 @@ import Transform from './Transform/Transform';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const dotKeys = [OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM];
 
@@ -25,9 +26,27 @@ const dotKeys = [OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM];
  */
 const Effects = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
-  const cursor = getValue(CURSOR);
-  const opacity = getValue(OPACITY);
+  const { setValue } = use(StyleInspectorContext);
+  const {
+    [OPACITY]: opacity,
+    [CURSOR]: cursor,
+    [TRANSITION]: transition,
+    [BOX_SHADOW]: boxShadow,
+    [FILTER]: filter,
+    [TRANSFORM]: transform
+  } = useInspectorValues({
+    keys: dotKeys,
+    asValue: true,
+    strictMode: true,
+    defaultValues: {
+      [OPACITY]: '1',
+      [CURSOR]: 'auto',
+      [TRANSITION]: undefined,
+      [BOX_SHADOW]: undefined,
+      [FILTER]: undefined,
+      [TRANSFORM]: undefined
+    }
+  });
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('effects', isCollapsed), [onCollapse]);
 
@@ -113,10 +132,10 @@ const Effects = props => {
           label="Cursor"
           onChange={handleChange}
         />
-        <BoxShadow onChange={handleChange} partialValue={getValue(BOX_SHADOW, undefined, true)} />
-        <Transform onChange={handleChange} partialValue={getValue(TRANSFORM, undefined, true)} />
-        <Transition onChange={handleChange} partialValue={getValue(TRANSITION, undefined, true)} />
-        <Filter onChange={handleChange} partialValue={getValue(FILTER, undefined, true)} />
+        <BoxShadow onChange={handleChange} value={boxShadow} />
+        <Transform onChange={handleChange} value={transform} />
+        <Transition onChange={handleChange} value={transition} />
+        <Filter onChange={handleChange} value={filter} />
       </div>
     </CategoryContainer>
   );

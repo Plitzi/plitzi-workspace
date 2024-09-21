@@ -13,13 +13,13 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DisplayElements = props => {
-  const { partialValue, onChange = noop } = props;
+  const { value, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -29,40 +29,40 @@ const DisplayElements = props => {
         value: { value: 'block', type: DISPLAY },
         children: <Icons type="DisplayBlock" width={16} height={16} />,
         description: 'Block elements start on a new line and take up the full available width.',
-        active: partialValue === 'block'
+        active: value === 'block'
       },
       {
         value: { value: 'flex', type: DISPLAY },
         children: <Icons type="DisplayFlex" width={16} height={16} />,
         description: 'Flex lays out its child elements on a horizontal or vertical axis.',
-        active: partialValue === 'flex'
+        active: value === 'flex'
       },
       {
         value: { value: 'grid', type: DISPLAY },
         children: <Icons type="DisplayGrid" width={16} height={16} />,
         description: 'None hides elements.',
-        active: partialValue === 'grid'
+        active: value === 'grid'
       },
       {
         value: { value: 'inline-block', type: DISPLAY },
         children: <Icons type="DisplayInlineBlock" width={16} height={16} />,
         description: 'Inline-block behaves like inline, but accepts width and height properties.',
-        active: partialValue === 'inline-block'
+        active: value === 'inline-block'
       },
       {
         value: { value: 'inline', type: DISPLAY },
         children: <Icons type="DisplayInline" width={16} height={16} />,
         description: "Inline is the default for text content. The text's font size and line height determine its size",
-        active: partialValue === 'inline'
+        active: value === 'inline'
       },
       {
         value: { value: 'none', type: DISPLAY },
         children: <Icons type="EyeOff" width={16} height={16} />,
         description: 'None hides elements.',
-        active: partialValue === 'none'
+        active: value === 'none'
       }
     ],
-    [partialValue]
+    [value]
   );
 
   return (

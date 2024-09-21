@@ -14,43 +14,43 @@ import InspectorLabel from '../../../InspectorLabel';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const Transform = props => {
   const { onChange = noop } = props;
-  let { partialValue } = props;
-  if (partialValue && partialValue !== '') {
-    partialValue = partialValue.match(
+  let { value } = props;
+  if (value && value !== '') {
+    value = value.match(
       /((translate3d|scale3d|skew)\([0-9a-z-, .%]+\))|(rotateX.*rotateZ\([0-9a-z%]+\))/gim
     );
   } else {
-    partialValue = [];
+    value = [];
   }
 
   const handleClickRemoveItem = index => e => {
     e.stopPropagation();
     e.preventDefault();
-    partialValue.splice(index, 1);
-    if (partialValue.length > 0) {
-      onChange({ type: TRANSFORM, value: partialValue.join(' ') });
+    value.splice(index, 1);
+    if (value.length > 0) {
+      onChange({ type: TRANSFORM, value: value.join(' ') });
     } else {
       onChange({ type: TRANSFORM, value: undefined });
     }
   };
 
   const handleChangeItem = index => transformItemValue => {
-    if (transformItemValue !== partialValue[index]) {
-      partialValue[index] = transformItemValue;
-      onChange({ type: TRANSFORM, value: partialValue.join(' ') });
+    if (transformItemValue !== value[index]) {
+      value[index] = transformItemValue;
+      onChange({ type: TRANSFORM, value: value.join(' ') });
     }
   };
 
   const handleClickAddItem = () => {
-    if (partialValue) {
-      onChange({ type: TRANSFORM, value: `${partialValue} translate3d(0px, 0px, 0px)` });
+    if (value) {
+      onChange({ type: TRANSFORM, value: `${value} translate3d(0px, 0px, 0px)` });
     } else {
       onChange({ type: TRANSFORM, value: 'translate3d(0px, 0px, 0px)' });
     }
@@ -64,9 +64,9 @@ const Transform = props => {
           <i className="fas fa-plus" />
         </InspectorButton>
       </div>
-      {partialValue && partialValue.length > 0 && (
+      {value && value.length > 0 && (
         <div className="flex flex-col">
-          {partialValue.map((transform, index) => (
+          {value.map((transform, index) => (
             <TransformationItem
               key={index}
               value={transform}

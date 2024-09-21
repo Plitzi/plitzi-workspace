@@ -13,7 +13,7 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   isReverse?: boolean;
  *   isRow?: boolean;
  *   onChange?: (type: string, value: string) => void;
@@ -21,7 +21,7 @@ import GroupButtons from '../../../components/GroupButtons';
  * @returns {React.ReactElement}
  */
 const DisplayFlexJustify = props => {
-  const { partialValue, isReverse = false, isRow = false, onChange = noop } = props;
+  const { value, isReverse = false, isRow = false, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -38,7 +38,7 @@ const DisplayFlexJustify = props => {
           </>
         ),
         description: 'Justify Start',
-        active: partialValue === 'flex-start'
+        active: value === 'flex-start'
       },
       {
         value: { value: 'center', type: JUSTIFY_CONTENT },
@@ -49,7 +49,7 @@ const DisplayFlexJustify = props => {
           </>
         ),
         description: 'Justify Center',
-        active: partialValue === 'center'
+        active: value === 'center'
       },
       {
         value: { value: 'flex-end', type: JUSTIFY_CONTENT },
@@ -62,7 +62,7 @@ const DisplayFlexJustify = props => {
           </>
         ),
         description: 'Justify End',
-        active: partialValue === 'flex-end'
+        active: value === 'flex-end'
       },
       {
         value: { value: 'space-between', type: JUSTIFY_CONTENT },
@@ -73,7 +73,7 @@ const DisplayFlexJustify = props => {
           </>
         ),
         description: 'Justify Space Between - distribute evenly from start to end',
-        active: partialValue === 'space-between'
+        active: value === 'space-between'
       },
       {
         value: { value: 'space-around', type: JUSTIFY_CONTENT },
@@ -84,10 +84,10 @@ const DisplayFlexJustify = props => {
           </>
         ),
         description: 'Justify Space Around - distribute evenly, why space around all children',
-        active: partialValue === 'space-around'
+        active: value === 'space-around'
       }
     ],
-    [partialValue, isReverse, isRow]
+    [value, isReverse, isRow]
   );
 
   return (

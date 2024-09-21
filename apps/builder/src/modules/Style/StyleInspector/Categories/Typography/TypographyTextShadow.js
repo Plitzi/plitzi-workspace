@@ -11,39 +11,39 @@ import TypographyTextShadowItem from './TypographyTextShadowItem';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const TypographyTextShadow = props => {
   const { onChange = noop } = props;
-  let { partialValue } = props;
-  if (partialValue !== '') {
-    partialValue = partialValue.split(',');
+  let { value } = props;
+  if (value !== '') {
+    value = value.split(',');
   } else {
-    partialValue = [];
+    value = [];
   }
 
   const handleClickRemoveItem = index => e => {
     e.stopPropagation();
     e.preventDefault();
-    partialValue.splice(index, 1);
-    if (partialValue.length > 0) {
-      onChange({ type: TEXT_SHADOW, value: partialValue.join(',') });
+    value.splice(index, 1);
+    if (value.length > 0) {
+      onChange({ type: TEXT_SHADOW, value: value.join(',') });
     } else {
       onChange({ type: TEXT_SHADOW, value: '' });
     }
   };
 
   const handleChangeItem = index => shadowItemValue => {
-    partialValue[index] = shadowItemValue;
-    onChange({ type: TEXT_SHADOW, value: partialValue.join(',') });
+    value[index] = shadowItemValue;
+    onChange({ type: TEXT_SHADOW, value: value.join(',') });
   };
 
   const handleClickAddItem = () => {
-    partialValue.push('2px 2px 5px black');
-    onChange({ type: TEXT_SHADOW, value: partialValue.join(',') });
+    value.push('2px 2px 5px black');
+    onChange({ type: TEXT_SHADOW, value: value.join(',') });
   };
 
   return (
@@ -54,9 +54,9 @@ const TypographyTextShadow = props => {
           <i className="fas fa-plus" />
         </button>
       </div>
-      {partialValue.length > 0 && (
+      {value.length > 0 && (
         <div className="mt-1">
-          {partialValue.map((textShadow, index) => (
+          {value.map((textShadow, index) => (
             <TypographyTextShadowItem
               key={index}
               value={textShadow}

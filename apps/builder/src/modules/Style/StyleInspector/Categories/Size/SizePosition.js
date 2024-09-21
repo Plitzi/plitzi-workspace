@@ -10,47 +10,49 @@ import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (value: { type: string; value: string }) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const SizePosition = props => {
   const { onChange = noop } = props;
-  let { partialValue } = props;
-
-  partialValue = partialValue.split(' ');
+  let { value } = props;
+  value = value.split(' ');
 
   const handleChange = useCallback(
     itemValue => {
-      const { subType, type, value } = itemValue;
+      const { subType, type } = itemValue;
+      const valueAux = value.split(' ');
       if (subType === 'left') {
-        partialValue[0] = value;
+        valueAux[0] = itemValue.value;
       } else if (subType === 'top') {
-        partialValue[1] = value;
+        valueAux[1] = itemValue.value;
       }
 
-      onChange({ type, value: partialValue.join(' ') });
+      onChange({ type, value: valueAux.join(' ') });
     },
-    [onChange, partialValue]
+    [onChange, value]
   );
 
   const itemsSize = useMemo(
     () => [
       {
         type: 'inputMetric',
-        value: partialValue[0],
+        value: value[0],
         extraValue: { type: OBJECT_POSITION, subType: 'left' },
+        keyValue: OBJECT_POSITION,
         label: 'Left'
       },
       {
         type: 'inputMetric',
-        value: partialValue[1],
+        value: value[1],
         extraValue: { type: OBJECT_POSITION, subType: 'top' },
+        keyValue: OBJECT_POSITION,
         label: 'Top'
       }
     ],
-    [partialValue[0], partialValue[1]]
+    [value[0], value[1]]
   );
 
   return (

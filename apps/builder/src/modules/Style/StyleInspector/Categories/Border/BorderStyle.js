@@ -1,40 +1,56 @@
 // Package
-import React, { useCallback, use, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
+
+// Monorepo
+import {
+  BORDER_TOP_STYLE,
+  BORDER_BOTTOM_STYLE,
+  BORDER_LEFT_STYLE,
+  BORDER_RIGHT_STYLE
+} from '@plitzi/sdk-style/StyleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';
 
 // Relatives
-import StyleInspectorContext from '../../StyleInspectorContext';
 import GroupButtons from '../../../components/GroupButtons';
 
 /**
  * @param {{
- *   borderTop: string;
- *   borderBottom: string;
- *   borderLeft: string;
- *   borderRight: string;
+ *   values: object;
  *   currentPlacement: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const BorderStyle = props => {
-  const { borderTop, borderBottom, borderLeft, borderRight, currentPlacement, onChange = noop } = props;
-  const { getValue } = use(StyleInspectorContext);
+  const { values, currentPlacement, onChange = noop } = props;
+  const value = useMemo(() => {
+    const {
+      [BORDER_TOP_STYLE]: borderTop,
+      [BORDER_BOTTOM_STYLE]: borderBottom,
+      [BORDER_LEFT_STYLE]: borderLeft,
+      [BORDER_RIGHT_STYLE]: borderRight
+    } = values;
+    switch (currentPlacement) {
+      case 'all' && borderTop === borderBottom && borderTop === borderLeft && borderTop === borderRight:
+      case 'top' && borderTop:
+        return borderTop;
 
-  let valueStyle = 'solid';
-  if (
-    currentPlacement === 'all' &&
-    borderTop === borderBottom &&
-    borderTop === borderLeft &&
-    borderTop === borderRight
-  ) {
-    valueStyle = borderTop;
-  } else if (currentPlacement !== 'all') {
-    valueStyle = getValue(`border-${currentPlacement}-style`);
-  }
+      case 'bottom' && borderBottom:
+        return borderBottom;
+
+      case 'left' && borderLeft:
+        return borderLeft;
+
+      case 'right' && borderRight:
+        return borderRight;
+
+      default:
+        return 'solid';
+    }
+  }, [values, currentPlacement]);
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -44,33 +60,33 @@ const BorderStyle = props => {
         value: { value: 'none', type: 'style' },
         children: <Icons width={16} height={16} type="XMark" />,
         description: '',
-        active: valueStyle === 'none'
+        active: value === 'none'
       },
       {
         value: { value: 'solid', type: 'style' },
         children: <Icons width={16} height={16} type="BorderStyleSolid" />,
         description: '',
-        active: valueStyle === 'solid'
+        active: value === 'solid'
       },
       {
         value: { value: 'dashed', type: 'style' },
         children: <Icons width={16} height={16} type="BorderStyleDashed" />,
         description: '',
-        active: valueStyle === 'dashed'
+        active: value === 'dashed'
       },
       {
         value: { value: 'dotted', type: 'style' },
         children: <Icons width={16} height={16} type="BorderStyleDotted" />,
         description: '',
-        active: valueStyle === 'dotted'
+        active: value === 'dotted'
       }
     ],
-    [valueStyle]
+    [value]
   );
 
   const keyValues = useMemo(() => {
     if (currentPlacement === 'all') {
-      return ['border-top-style', 'border-bottom-style', 'border-left-style', 'border-right-style'];
+      return [BORDER_TOP_STYLE, BORDER_BOTTOM_STYLE, BORDER_LEFT_STYLE, BORDER_RIGHT_STYLE];
     }
 
     return `border-${currentPlacement}-style`;

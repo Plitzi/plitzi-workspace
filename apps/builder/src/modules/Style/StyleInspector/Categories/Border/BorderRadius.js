@@ -17,35 +17,50 @@ import Icons from '@pcomponents/Icons';
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';
 
+const keyValue = [
+  BORDER_RADIUS_TOP_LEFT,
+  BORDER_RADIUS_TOP_RIGHT,
+  BORDER_RADIUS_BOTTOM_LEFT,
+  BORDER_RADIUS_BOTTOM_RIGHT
+];
+
 /**
  * @param {{
- *   borderTopLeft: string;
- *   borderTopRight: string;
- *   borderBottomLeft: string;
- *   borderBottomRight: string;
+ *   values: object;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const BorderRadius = props => {
-  const { borderTopLeft, borderTopRight, borderBottomLeft, borderBottomRight, onChange = noop } = props;
+  const { values, onChange = noop } = props;
   const [showRadiusIndividuals, setShowRadiusIndividuals] = useState(false);
+  const {
+    [BORDER_RADIUS_TOP_LEFT]: borderTopLeft,
+    [BORDER_RADIUS_TOP_RIGHT]: borderTopRight,
+    [BORDER_RADIUS_BOTTOM_LEFT]: borderBottomLeft,
+    [BORDER_RADIUS_BOTTOM_RIGHT]: borderBottomRight
+  } = values;
 
-  const handleChange = type => partialValue => {
-    onChange(type, partialValue);
-  };
+  const handleChangeTopLeft = useCallback(partialValue => onChange(BORDER_RADIUS_TOP_LEFT, partialValue), [onChange]);
+
+  const handleChangeTopRight = useCallback(partialValue => onChange(BORDER_RADIUS_TOP_RIGHT, partialValue), [onChange]);
+
+  const handleChangeBottomLeft = useCallback(
+    partialValue => onChange(BORDER_RADIUS_BOTTOM_LEFT, partialValue),
+    [onChange]
+  );
+
+  const handleChangeBottomRight = useCallback(
+    partialValue => onChange(BORDER_RADIUS_BOTTOM_RIGHT, partialValue),
+    [onChange]
+  );
 
   let all = '0px';
   if (borderTopLeft === borderTopRight && borderTopLeft === borderBottomLeft && borderTopLeft === borderBottomRight) {
     all = borderTopLeft;
   }
 
-  const keyValueMemo = useMemo(
-    () => [BORDER_RADIUS_TOP_LEFT, BORDER_RADIUS_TOP_RIGHT, BORDER_RADIUS_BOTTOM_LEFT, BORDER_RADIUS_BOTTOM_RIGHT],
-    []
-  );
-
-  const handleChange2 = useCallback(
+  const handleChange = useCallback(
     itemValue => {
       if (itemValue.type === 'showRadiusIndividuals') {
         setShowRadiusIndividuals(itemValue.value);
@@ -84,34 +99,26 @@ const BorderRadius = props => {
         classNameContainer="w-[180px]"
         items={items}
         label="Radius"
-        keyValue={keyValueMemo}
-        onChange={handleChange2}
+        keyValue={keyValue}
+        onChange={handleChange}
       />
       {showRadiusIndividuals && (
         <div className="grid grid-cols-2 grid-rows-2 gap-2 bg-gray-50 border border-gray-300 rounded p-2">
           <div className="flex items-center">
             <Icons type="BorderRadiusTopLeft" className="mr-1" />
-            <InputMetric onChange={handleChange(BORDER_RADIUS_TOP_LEFT)} value={borderTopLeft} className="rounded" />
+            <InputMetric onChange={handleChangeTopLeft} value={borderTopLeft} className="rounded" />
           </div>
           <div className="flex items-center">
             <Icons type="BorderRadiusTopRight" className="mr-1" />
-            <InputMetric onChange={handleChange(BORDER_RADIUS_TOP_RIGHT)} value={borderTopRight} className="rounded" />
+            <InputMetric onChange={handleChangeTopRight} value={borderTopRight} className="rounded" />
           </div>
           <div className="flex items-center">
             <Icons type="BorderRadiusBottomLeft" className="mr-1" />
-            <InputMetric
-              onChange={handleChange(BORDER_RADIUS_BOTTOM_LEFT)}
-              value={borderBottomLeft}
-              className="rounded"
-            />
+            <InputMetric onChange={handleChangeBottomLeft} value={borderBottomLeft} className="rounded" />
           </div>
           <div className="flex items-center">
             <Icons type="BorderRadiusBottomRight" className="mr-1" />
-            <InputMetric
-              onChange={handleChange(BORDER_RADIUS_BOTTOM_RIGHT)}
-              value={borderBottomRight}
-              className="rounded"
-            />
+            <InputMetric onChange={handleChangeBottomRight} value={borderBottomRight} className="rounded" />
           </div>
         </div>
       )}

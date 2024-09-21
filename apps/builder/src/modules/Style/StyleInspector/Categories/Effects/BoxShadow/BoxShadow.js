@@ -14,15 +14,15 @@ import InspectorLabel from '../../../InspectorLabel';
 
 /**
  * @param {{
- *   partialValue: string;
+ *   value: string;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const BoxShadow = props => {
-  const { partialValue = '', onChange = noop } = props;
+  const { value = '', onChange = noop } = props;
   const boxShadowRegex = /,(?![^(]*\))/gim;
-  let boxShadows = partialValue;
+  let boxShadows = value;
   if (boxShadows && boxShadows !== '') {
     boxShadows = boxShadows.split(boxShadowRegex);
   } else {
@@ -48,12 +48,12 @@ const BoxShadow = props => {
   };
 
   const handleClickAddItem = useCallback(() => {
-    if (partialValue) {
-      onChange({ type: BOX_SHADOW, value: `${partialValue},1px 1px 3px 1px black` });
+    if (value) {
+      onChange({ type: BOX_SHADOW, value: `${value},1px 1px 3px 1px black` });
     } else {
       onChange({ type: BOX_SHADOW, value: '1px 1px 3px 1px black' });
     }
-  }, [partialValue, onChange]);
+  }, [value, onChange]);
 
   return (
     <>

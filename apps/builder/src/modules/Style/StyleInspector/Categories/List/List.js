@@ -12,6 +12,7 @@ import Icons from '@pcomponents/Icons';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const LIST_NONE = 'none';
 const LIST_CIRCLE = 'circle';
@@ -32,8 +33,8 @@ const dotKeys = [LIST_STYLE];
  */
 const List = props => {
   const { isCollapsed = true, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
-  const style = getValue(LIST_STYLE);
+  const { setValue } = use(StyleInspectorContext);
+  const listStyle = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('list', isCollapsed), [onCollapse]);
 
@@ -45,46 +46,46 @@ const List = props => {
         value: { value: LIST_NONE, type: LIST_STYLE },
         children: <Icons width={16} height={16} type="XMark" />,
         description: '',
-        active: style === LIST_NONE
+        active: listStyle === LIST_NONE
       },
       {
         value: { value: LIST_DISC, type: LIST_STYLE },
         children: <Icons width={16} height={16} type="ListDots" />,
         description: '',
-        active: style === LIST_DISC
+        active: listStyle === LIST_DISC
       },
       {
         value: { value: LIST_CIRCLE, type: LIST_STYLE },
         children: <Icons width={16} height={16} type="ListCircles" />,
         description: '',
-        active: style === LIST_CIRCLE
+        active: listStyle === LIST_CIRCLE
       },
       {
         value: { value: LIST_SQUARES, type: LIST_STYLE },
         children: <Icons width={16} height={16} type="ListSquares" />,
         description: '',
-        active: style === LIST_SQUARES
+        active: listStyle === LIST_SQUARES
       },
       {
         value: { value: LIST_DECIMAL, type: LIST_STYLE },
         children: <Icons width={16} height={16} type="ListNumbers" />,
         description: '',
-        active: style === LIST_DECIMAL
+        active: listStyle === LIST_DECIMAL
       },
       {
         value: { value: LIST_LETTERS, type: LIST_STYLE },
         children: <Icons width={16} height={16} type="ListLetters" />,
         description: '',
-        active: style === LIST_LETTERS
+        active: listStyle === LIST_LETTERS
       },
       {
         value: { value: LIST_ROMAN, type: LIST_STYLE },
         children: <Icons width={16} height={16} type="ListRoman" />,
         description: '',
-        active: style === LIST_ROMAN
+        active: listStyle === LIST_ROMAN
       }
     ],
-    [style]
+    [listStyle]
   );
 
   return (

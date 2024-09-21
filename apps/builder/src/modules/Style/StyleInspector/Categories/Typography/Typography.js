@@ -32,6 +32,7 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 import { defaultFonts } from './TypographyConstants';
 import CategoryContainer from '../../../components/CategoryContainer';
 import GroupButtons from '../../../components/GroupButtons';
+import useInspectorValues from '../../hooks/useInspectorValues';
 
 const dotKeys = [
   FONT_FAMILY,
@@ -66,6 +67,9 @@ const weights = {
 
 const fontsDefault = [];
 
+const keyValueLetter = [LETTER_SPACING, TEXT_INDENT];
+const keyValueWrap = [TEXT_WRAP, TEXT_OVERFLOW];
+
 /**
  * @param {{
  *   isCollapsed?: boolean;
@@ -76,25 +80,29 @@ const fontsDefault = [];
  */
 const Typography = props => {
   const { isCollapsed = true, fonts = fontsDefault, onCollapse = noop } = props;
-  const { getValue, setValue } = use(StyleInspectorContext);
+  const { setValue } = use(StyleInspectorContext);
+  const {
+    [FONT_FAMILY]: fontFamily,
+    [FONT_WEIGHT]: fontWeight,
+    [FONT_SIZE]: fontSize,
+    [FONT_STYLE]: fontStyle,
+    [TEXT_ALIGN]: textAlign,
+    [TEXT_DECORATION]: textDecoration,
+    [TEXT_INDENT]: textIndent,
+    [TEXT_TRANSFORM]: textTransform,
+    [TEXT_SHADOW]: textShadow,
+    [WHITE_SPACE]: whiteSpace,
+    [TEXT_WRAP]: textWrap,
+    [TEXT_OVERFLOW]: textOverflow,
+    [LINE_HEIGHT]: lineHeight,
+    [COLOR]: color,
+    [LETTER_SPACING]: letterSpacing,
+    [DIRECTION]: direction
+  } = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleCollapse = useCallback(isCollapsed => onCollapse('typography', isCollapsed), [onCollapse]);
 
-  const fontWeight = getValue(FONT_WEIGHT);
-  const family = getValue(FONT_FAMILY);
-  const fontSelected = [...fonts, ...defaultFonts].find(font => font.name === family);
-  const size = getValue(FONT_SIZE);
-  const lineHeight = getValue(LINE_HEIGHT);
-  const fontColor = getValue(COLOR);
-  const letterSpacing = getValue(LETTER_SPACING);
-  const textIndent = getValue(TEXT_INDENT);
-  const fontStyle = getValue(FONT_STYLE);
-  const fontDecoration = getValue(TEXT_DECORATION);
-  const textTransform = getValue(TEXT_TRANSFORM);
-  const direction = getValue(DIRECTION);
-  const whiteSpace = getValue(WHITE_SPACE);
-  const textWrap = getValue(TEXT_WRAP);
-  const textOverflow = getValue(TEXT_OVERFLOW);
+  const fontSelected = [...fonts, ...defaultFonts].find(font => font.name === fontFamily);
 
   const handleChange = useCallback(itemValue => setValue(itemValue.type, itemValue.value), [setValue]);
 
@@ -114,11 +122,11 @@ const Typography = props => {
     [fontWeight, fontSelected]
   );
 
-  const itemsColor = useMemo(() => [{ type: 'color', value: fontColor, extraValue: { type: COLOR } }], [fontColor]);
+  const itemsColor = useMemo(() => [{ type: 'color', value: color, extraValue: { type: COLOR } }], [color]);
 
   const itemsSize = useMemo(
     () => [
-      { type: 'inputMetric', value: size, extraValue: { type: FONT_SIZE }, keyValue: FONT_SIZE, label: 'Size' },
+      { type: 'inputMetric', value: fontSize, extraValue: { type: FONT_SIZE }, keyValue: FONT_SIZE, label: 'Size' },
       {
         type: 'inputMetric',
         value: lineHeight,
@@ -127,7 +135,7 @@ const Typography = props => {
         label: 'Line Height'
       }
     ],
-    [size, lineHeight]
+    [fontSize, lineHeight]
   );
 
   const itemsSpacing = useMemo(
@@ -212,8 +220,8 @@ const Typography = props => {
   return (
     <CategoryContainer title="Typography" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="flex flex-wrap p-2 gap-2">
-        <TypographyAlign partialValue={getValue(TEXT_ALIGN)} onChange={handleChange} />
-        <TypographyFont partialValue={getValue(FONT_FAMILY)} fonts={fonts} onChange={handleChange} />
+        <TypographyAlign partialValue={textAlign} onChange={handleChange} />
+        <TypographyFont partialValue={fontFamily} fonts={fonts} onChange={handleChange} />
         <GroupButtons
           className="w-full"
           classNameContainer="w-[180px]"
@@ -237,15 +245,16 @@ const Typography = props => {
           label="Color"
           onChange={handleChange}
         />
-        <TypographyStyle fontStyle={fontStyle} fontDecoration={fontDecoration} onChange={handleChange} />
+        <TypographyStyle fontStyle={fontStyle} textDecoration={textDecoration} onChange={handleChange} />
         <GroupButtons
           className="w-full"
           classNameContainer="w-[180px]"
           items={itemsSpacing}
+          keyValue={keyValueLetter}
           label="Letter"
           onChange={handleChange}
         />
-        <TypographyTransform transform={textTransform} direction={direction} onChange={handleChange} />
+        <TypographyTransform textTransform={textTransform} direction={direction} onChange={handleChange} />
         <GroupButtons
           className="w-full"
           classNameContainer="w-[180px]"
@@ -258,10 +267,11 @@ const Typography = props => {
           className="w-full"
           classNameContainer="w-[180px]"
           items={itemsWrap}
+          keyValue={keyValueWrap}
           label="Text"
           onChange={handleChange}
         />
-        <TypographyTextShadow partialValue={getValue(TEXT_SHADOW)} onChange={handleChange} />
+        <TypographyTextShadow value={textShadow} onChange={handleChange} />
       </div>
     </CategoryContainer>
   );
