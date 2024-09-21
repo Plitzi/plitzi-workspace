@@ -32,7 +32,7 @@ const Logs = props => {
         <button onClick={onClear}>Clear Logs</button>
       </div>
       <div
-        className={classNames('flex w-full overflow-hidden', {
+        className={classNames('flex h-full w-full overflow-hidden', {
           'flex-col basis-0 grow': orientation === ORIENTATION_VERTICAL
         })}
       >

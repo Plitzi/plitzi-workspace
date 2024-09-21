@@ -17,11 +17,13 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
  */
 const NodeMetadata = props => {
   const { when = emptyObject, whenParams = emptyObject } = props;
+  const content = useMemo(() => {
+    if (Object.keys(when).length === 0) {
+      return '';
+    }
 
-  const content = useMemo(
-    () => syntaxHighlight(JSON.stringify(getValuesRequired(when, whenParams, null), null, 2)),
-    [whenParams, when]
-  );
+    return syntaxHighlight(JSON.stringify(getValuesRequired(when, whenParams, null), null, 2));
+  }, [whenParams, when]);
 
   return (
     <div className="flex grow whitespace-pre text-xs">
