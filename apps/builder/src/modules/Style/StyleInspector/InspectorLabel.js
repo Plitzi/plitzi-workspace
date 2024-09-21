@@ -53,9 +53,9 @@ const InspectorLabel = props => {
           'px-1': !sectionTitle,
           'px-2 border rounded-tr rounded-tl bg-gray-100 border-gray-300 font-bold': sectionTitle,
           'text-blue-400 bg-blue-200 cursor-pointer': hasValues && !hasBinding && !hasVariables,
-          'text-green-400 bg-green-200 cursor-pointer': hasValues && hasVariables,
+          'text-green-400 bg-green-200 cursor-pointer': hasVariables,
           'text-purple-400 bg-purple-200 cursor-pointer': hasBinding,
-          'text-orange-400 bg-orange-200 cursor-pointer': hasInherit && !hasValues
+          'text-orange-400 bg-orange-200 cursor-pointer': hasInherit && !hasValues && !hasVariables
         })}
         onClick={handleClickResetValue}
       >

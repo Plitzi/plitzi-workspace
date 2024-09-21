@@ -241,11 +241,11 @@ const useInspectorValues = props => {
     throw new Error('keys is not an array');
   }
 
-  let { inheritData, bindingData, rawValues } = {};
+  let { inheritData, bindingData, values } = {};
   if (skipContext) {
-    ({ inheritData, bindingData, rawValues } = context);
+    ({ inheritData, bindingData, values } = context);
   } else {
-    ({ inheritData, bindingData, rawValues } = use(StyleInspectorContext));
+    ({ inheritData, bindingData, values } = use(StyleInspectorContext));
   }
 
   const hasInherit = useMemo(() => {
@@ -270,10 +270,9 @@ const useInspectorValues = props => {
     () =>
       !!keys &&
       !asValue &&
-      Object.keys(pick(rawValues, keys)).filter(
-        key => typeof rawValues[key] === 'string' && rawValues[key].includes('var(')
-      ).length > 0,
-    [keys, rawValues, asValue]
+      Object.keys(pick(values, keys)).filter(key => typeof values[key] === 'string' && values[key].includes('var('))
+        .length > 0,
+    [keys, values, asValue]
   );
 
   const hasValues = useMemo(() => {
@@ -282,11 +281,18 @@ const useInspectorValues = props => {
     }
 
     if (keys.length > 0) {
-      return !asValue && Object.keys(pick(rawValues, keys)).length > 0;
+      return (
+        !asValue &&
+        Object.keys(pick(values, keys)).filter(key => typeof values[key] === 'string' && !values[key].includes('var('))
+          .length > 0
+      );
     }
 
-    return !asValue && Object.keys(rawValues).length > 0;
-  }, [keys, rawValues, asValue]);
+    return (
+      !asValue &&
+      Object.keys(values).filter(key => typeof values[key] === 'string' && !values[key].includes('var(')).length > 0
+    );
+  }, [keys, values, asValue]);
 
   const valuesParsed = useMemo(() => {
     const valuesParsedAux = {};
@@ -296,10 +302,10 @@ const useInspectorValues = props => {
 
     keys.forEach(key => {
       if (strictMode) {
-        valuesParsedAux[key] = get(rawValues, key);
+        valuesParsedAux[key] = get(values, key);
       } else {
         valuesParsedAux[key] = get(
-          rawValues,
+          values,
           key,
           get(
             inheritData,
@@ -315,7 +321,7 @@ const useInspectorValues = props => {
     }
 
     return valuesParsedAux;
-  }, [keys, rawValues, defaultValues, strictMode]);
+  }, [keys, values, defaultValues, strictMode]);
   if (asValue) {
     return valuesParsed;
   }

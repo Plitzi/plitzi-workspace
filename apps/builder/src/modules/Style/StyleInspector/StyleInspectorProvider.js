@@ -353,8 +353,7 @@ const StyleInspectorProvider = props => {
     [setValue, values]
   );
 
-  const rawValues = get(style, `platform.${displayMode}.${selector}.attributes`);
-  const finalValues = useMemo(() => {
+  const valuesParsed = useMemo(() => {
     const inheritValues = Object.keys(inheritData?.style ?? {}).reduce(
       (acum, styleKey) => ({ ...acum, [styleKey]: get(inheritData, `style.${styleKey}.0.value`) }),
       {}
@@ -364,13 +363,13 @@ const StyleInspectorProvider = props => {
       {}
     );
 
-    return { ...defaultValue, ...bindingValues, ...inheritValues, ...rawValues };
-  }, [rawValues, inheritData, bindingData]);
+    return { ...defaultValue, ...bindingValues, ...inheritValues, ...values };
+  }, [values, inheritData, bindingData]);
 
   const inspectorContextValue = useMemo(
     () => ({
-      rawValues: values,
-      values: finalValues,
+      values,
+      valuesParsed,
       displayMode,
       selector,
       setValue,
@@ -379,17 +378,7 @@ const StyleInspectorProvider = props => {
       bindingData: get(bindingData, 'style', {}),
       getDefaultValue
     }),
-    [
-      displayMode,
-      selector,
-      setValue,
-      resetValue,
-      inheritData,
-      bindingData,
-      getDefaultValue,
-      values,
-      finalValues
-    ]
+    [displayMode, selector, setValue, resetValue, inheritData, bindingData, getDefaultValue, values, valuesParsed]
   );
 
   return <StyleInspectorContext value={inspectorContextValue}>{children}</StyleInspectorContext>;
