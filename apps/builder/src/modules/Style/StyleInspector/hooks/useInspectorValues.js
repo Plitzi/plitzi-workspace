@@ -241,11 +241,11 @@ const useInspectorValues = props => {
     throw new Error('keys is not an array');
   }
 
-  let { inheritData, bindingData, values } = {};
+  let { inheritData, bindingData, values, variables } = {};
   if (skipContext) {
-    ({ inheritData, bindingData, values } = context);
+    ({ inheritData, bindingData, values, variables } = context);
   } else {
-    ({ inheritData, bindingData, values } = use(StyleInspectorContext));
+    ({ inheritData, bindingData, values, variables } = use(StyleInspectorContext));
   }
 
   const hasInherit = useMemo(() => {
@@ -294,10 +294,11 @@ const useInspectorValues = props => {
     }
 
     keys.forEach(key => {
+      let value;
       if (strictMode) {
-        valuesParsedAux[key] = get(values, key);
+        value = get(values, key);
       } else {
-        valuesParsedAux[key] = get(
+        value = get(
           values,
           key,
           get(
@@ -307,6 +308,14 @@ const useInspectorValues = props => {
           )
         );
       }
+
+      if (typeof value === 'string' && value.includes('var(')) {
+        [...value.matchAll(/var\(--(?<token>[a-z0-9_-]+)\)/gi)].forEach(match => {
+          value = value.replace(match[0], get(variables, match.groups.token, match[0]));
+        });
+      }
+
+      valuesParsedAux[key] = value;
     });
 
     if (keys.length === 1) {
@@ -314,7 +323,7 @@ const useInspectorValues = props => {
     }
 
     return valuesParsedAux;
-  }, [keys, values, defaultValues, strictMode]);
+  }, [keys, values, defaultValues, strictMode, variables]);
   if (asValue) {
     return valuesParsed;
   }

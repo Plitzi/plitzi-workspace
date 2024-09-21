@@ -113,6 +113,7 @@ import {
   GRID_AUTO_COLUMNS
 } from '@plitzi/sdk-style/StyleConstants';
 import { StyleSelectors, makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
@@ -237,6 +238,8 @@ const StyleInspectorProvider = props => {
   const bindingData = useStyleBinding({ element });
   const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
   const values = get(style, `platform.${displayMode}.${selector}.attributes`);
+  const { useDataSource } = use(DataSourceContext);
+  const { variables } = useDataSource({ id: '', mode: 'read' });
 
   const setValue = useCallback(
     (styleKey, value = undefined) => {
@@ -369,6 +372,7 @@ const StyleInspectorProvider = props => {
   const inspectorContextValue = useMemo(
     () => ({
       values,
+      variables,
       valuesParsed,
       displayMode,
       selector,
@@ -378,7 +382,18 @@ const StyleInspectorProvider = props => {
       bindingData: get(bindingData, 'style', {}),
       getDefaultValue
     }),
-    [displayMode, selector, setValue, resetValue, inheritData, bindingData, getDefaultValue, values, valuesParsed]
+    [
+      displayMode,
+      selector,
+      setValue,
+      resetValue,
+      inheritData,
+      bindingData,
+      getDefaultValue,
+      values,
+      valuesParsed,
+      variables
+    ]
   );
 
   return <StyleInspectorContext value={inspectorContextValue}>{children}</StyleInspectorContext>;
