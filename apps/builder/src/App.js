@@ -1,9 +1,10 @@
 // Packages
 import React, { useEffect, useMemo, useState } from 'react';
 import isArray from 'lodash/isArray';
-import { ApolloClient, InMemoryCache, split } from '@apollo/client/core';
+import { ApolloClient, split } from '@apollo/client/core';
+// import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
-import { ApolloProvider } from '@apollo/client/react';
+import { ApolloProvider } from '@apollo/client/react/context';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { WebSocketLink } from '@apollo/client/link/ws';
 import { setContext } from '@apollo/client/link/context';
@@ -86,9 +87,7 @@ const App = props => {
     if (!includeSubscriptions) {
       return new ApolloClient({
         link: authLink.concat(httpWithUploadLink),
-        cache: new InMemoryCache({
-          addTypename: false
-        })
+        cache: undefined // new InMemoryCache({ addTypename: false })
       });
     }
 
@@ -133,9 +132,7 @@ const App = props => {
 
     const client = new ApolloClient({
       link,
-      cache: new InMemoryCache({
-        addTypename: false
-      })
+      cache: undefined // new InMemoryCache({ addTypename: false })
     });
 
     client.wsLink = wsLink;

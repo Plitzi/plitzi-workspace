@@ -2,7 +2,7 @@
 import React, { useEffect, Children, isValidElement, useMemo } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { createHttpLink } from '@apollo/client/link/http/createHttpLink';
-import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
+// import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
 import { ApolloClient } from '@apollo/client/core/ApolloClient';
 import { ApolloProvider } from '@apollo/client/react/context';
 import { setContext } from '@apollo/client/link/context';
@@ -92,7 +92,7 @@ const App = props => {
 
     const client = new ApolloClient({
       link: authLink.concat(httpLink),
-      cache: new InMemoryCache({ addTypename: false })
+      cache: undefined // new InMemoryCache({ addTypename: false })
     });
 
     return client;
