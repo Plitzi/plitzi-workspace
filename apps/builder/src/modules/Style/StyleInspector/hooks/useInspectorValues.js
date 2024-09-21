@@ -281,17 +281,10 @@ const useInspectorValues = props => {
     }
 
     if (keys.length > 0) {
-      return (
-        !asValue &&
-        Object.keys(pick(values, keys)).filter(key => typeof values[key] === 'string' && !values[key].includes('var('))
-          .length > 0
-      );
+      return !asValue && Object.keys(pick(values, keys)).length > 0;
     }
 
-    return (
-      !asValue &&
-      Object.keys(values).filter(key => typeof values[key] === 'string' && !values[key].includes('var(')).length > 0
-    );
+    return !asValue && Object.keys(values).length > 0;
   }, [keys, values, asValue]);
 
   const valuesParsed = useMemo(() => {
