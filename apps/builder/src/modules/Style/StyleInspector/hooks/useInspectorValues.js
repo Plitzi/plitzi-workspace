@@ -230,14 +230,14 @@ const baseDefaultValue = {
  */
 const useInspectorValues = props => {
   const {
-    keys = [],
+    keys,
     skipContext = false,
     context = {},
     asValue = false,
     defaultValues = emptyObject,
     strictMode = false
   } = props;
-  if (!Array.isArray(keys)) {
+  if (keys && !Array.isArray(keys)) {
     throw new Error('keys is not an array');
   }
 
@@ -250,6 +250,7 @@ const useInspectorValues = props => {
 
   const hasInherit = useMemo(() => {
     return (
+      !!keys &&
       !asValue &&
       inheritData &&
       Object.keys(inheritData).filter(key => keys.includes(key) || keys.length === 0).length > 0
@@ -258,6 +259,7 @@ const useInspectorValues = props => {
 
   const hasBinding = useMemo(() => {
     return (
+      !!keys &&
       !asValue &&
       bindingData &&
       Object.keys(bindingData).filter(key => keys.includes(key) || keys.length === 0).length > 0
@@ -266,6 +268,7 @@ const useInspectorValues = props => {
 
   const hasVariables = useMemo(
     () =>
+      !!keys &&
       !asValue &&
       Object.keys(pick(rawValues, keys)).filter(
         key => typeof rawValues[key] === 'string' && rawValues[key].includes('var(')
@@ -274,6 +277,10 @@ const useInspectorValues = props => {
   );
 
   const hasValues = useMemo(() => {
+    if (!keys) {
+      return false;
+    }
+
     if (keys.length > 0) {
       return !asValue && Object.keys(pick(rawValues, keys)).length > 0;
     }
@@ -283,6 +290,10 @@ const useInspectorValues = props => {
 
   const valuesParsed = useMemo(() => {
     const valuesParsedAux = {};
+    if (!keys) {
+      return valuesParsedAux;
+    }
+
     keys.forEach(key => {
       if (strictMode) {
         valuesParsedAux[key] = get(rawValues, key);

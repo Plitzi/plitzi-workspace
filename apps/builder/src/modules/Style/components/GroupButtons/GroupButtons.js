@@ -11,7 +11,6 @@ import GroupInputMetric from './types/GroupInputMetric';
 import GroupSelect from './types/GroupSelect';
 import GroupColor from './types/GroupColor';
 
-const keyValueDefault = [];
 const itemsDefault = [];
 
 /**
@@ -31,7 +30,7 @@ const GroupButtons = props => {
     className = '',
     classNameContainer = '',
     label = 'Title',
-    keyValue = keyValueDefault,
+    keyValue,
     items = itemsDefault,
     fullWidth = false,
     onChange = noop
