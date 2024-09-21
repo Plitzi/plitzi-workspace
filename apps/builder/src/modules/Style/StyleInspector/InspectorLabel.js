@@ -19,7 +19,6 @@ import useInspectorValues from './hooks/useInspectorValues';
 const InspectorLabel = props => {
   const { keyValue, children, className = '', size = 'small', sectionTitle = false } = props;
   const { resetValue } = use(StyleInspectorContext);
-
   const keyValueMemo = useMemo(() => {
     if (keyValue && !Array.isArray(keyValue)) {
       return [keyValue];

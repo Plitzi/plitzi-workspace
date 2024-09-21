@@ -122,7 +122,7 @@ import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives
 import StyleInspectorContext from './StyleInspectorContext';
-import useStyleBinding from '../hooks/useStyleBinding';
+import useStyleBinding from './hooks/useStyleBinding';
 
 const defaultValue = {
   [FONT_FAMILY]: 'Arial',

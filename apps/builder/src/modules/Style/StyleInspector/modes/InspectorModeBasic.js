@@ -17,7 +17,7 @@ import Background from '../Categories/Background';
 import Border from '../Categories/Border';
 import Effects from '../Categories/Effects';
 import StyleInspectorProvider from '../StyleInspectorProvider';
-import useStyleInherit from '../../hooks/useStyleInherit';
+import useStyleInherit from '../hooks/useStyleInherit';
 
 /**
  * @param {{
