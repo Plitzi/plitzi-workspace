@@ -127,7 +127,6 @@ export const calculateInheriting = (
   element,
   flat,
   platform,
-  displayMode,
   styleSelector,
   componentDefinitions,
   skipSelectors = []
