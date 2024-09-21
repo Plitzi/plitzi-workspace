@@ -17,6 +17,7 @@ import {
   makeSelector,
   StyleSelectors
 } from '@plitzi/sdk-style/StyleHelper';
+import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
@@ -37,6 +38,8 @@ const InspectorModeAdvanced = props => {
   const { element, styleSelector = '', selectors = selectorsDefault, selector } = props;
   const { builderHandler } = use(BuilderContext);
   const { displayMode } = use(AppContext);
+  const { useDataSource } = use(DataSourceContext);
+  const { variables } = useDataSource({ id: '', mode: 'read' });
   const selectorInstance = useMemo(
     () => selectors.find(selectorAux => selectorAux.name === selector),
     [selector, selectors]
@@ -44,6 +47,10 @@ const InspectorModeAdvanced = props => {
   const CMValue = useMemo(
     () => (selectorInstance ? formatCssFromSelector(selectorInstance?.cache, true, 2, false) : ''),
     [selectorInstance?.cache, selectorInstance?.name]
+  );
+  const variablesNames = useMemo(
+    () => Object.keys(variables).reduce((acum, variableKey) => [...acum, variableKey], []),
+    [variables]
   );
 
   const sync = useCallback(
@@ -112,6 +119,7 @@ const InspectorModeAdvanced = props => {
         theme="dark"
         lineWrapping
         onChange={handleChange}
+        autoComplete={variablesNames}
         getReadOnlyRanges={getReadOnlyRanges}
       />
       <div className="flex absolute top-3 right-3">
