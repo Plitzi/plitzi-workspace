@@ -118,13 +118,13 @@ const Templates = () => {
     const temp = [];
     templatesFiltered.forEach(template => {
       const {
-        schema: { flat },
+        schema: { flat, variables },
         style
       } = template;
 
       temp.push({
         ...template,
-        offlineData: { style, schema: { settings: { title: 'Default', customCss: '' }, flat } }
+        offlineData: { style, schema: { settings: { title: 'Default', customCss: '' }, flat, variables } }
       });
     });
 

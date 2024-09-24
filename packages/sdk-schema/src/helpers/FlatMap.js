@@ -220,7 +220,7 @@ const getElementVariables = (flat, elementId, variables, style) => {
             .forEach(attribute => {
               [...attribute.matchAll(VARIABLE_REGEX)].forEach(match => {
                 const variableFound = variables.find(variable => variable.name === match?.groups?.token);
-                if (variableFound && !variablesFound.find(variable => variable.name !== variableFound.name)) {
+                if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
                   variablesFound.push(variableFound);
                 }
               });
