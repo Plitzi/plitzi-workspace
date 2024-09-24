@@ -3217,6 +3217,7 @@ __metadata:
   dependencies:
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^8.57.0"
+    jest: "npm:^29.7.0"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
   languageName: unknown

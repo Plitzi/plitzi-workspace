@@ -1,1 +1,27 @@
-{ "platform": { "desktop": {}, "tablet": {}, "mobile": {} }, "cache": "" }
+{
+  "platform": {
+    "desktop": {
+      "heading-rdGM": {
+        "name": "heading-rdGM",
+        "type": "class",
+        "attributes": {
+          "color": "var(--fancyVariableColor)",
+          "background-color": "var(--primaryColor)"
+        },
+        "cache": ".heading-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}"
+      },
+      "button-rdGM": {
+        "name": "button-rdGM",
+        "type": "class",
+        "attributes": {
+          "color": "var(--fancyVariableColor)",
+          "background-color": "var(--primaryColor)"
+        },
+        "cache": ".button-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}"
+      }
+    },
+    "tablet": {},
+    "mobile": {}
+  },
+  "cache": ".heading-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}.button-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}"
+}

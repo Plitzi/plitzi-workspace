@@ -13,6 +13,8 @@ export const DROP_DIRECTION_RIGHT = 'right';
 export const DROP_DIRECTION_INSIDE = 'inside';
 export const DROP_DIRECTION_CUSTOM = 'custom';
 
+export const VARIABLE_REGEX = /var\(--(?<token>[a-z0-9_-]+)\)/gi;
+
 export const EMPTY_SCHEMA = {
   schema: { flat: {}, variables: [] },
   style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
@@ -199,6 +201,36 @@ const moveElement = (flat, from, to, elementId, dropPosition = DROP_DIRECTION_IN
   return flat;
 };
 
+const getElementVariables = (flat, elementId, variables, style) => {
+  const variablesFound = [];
+  const selectors = get(flat, `${elementId}.definition.styleSelectors`);
+  if (!selectors) {
+    return variablesFound;
+  }
+
+  Object.values(selectors)
+    .filter(Boolean)
+    .forEach(selector => {
+      Object.values(style?.platform ?? {})
+        .filter(platform => platform && selector && !!platform[selector])
+        .forEach(platform => {
+          const elementStyle = platform[selector];
+          Object.values(elementStyle.attributes)
+            .filter(attribute => typeof attribute === 'string' && attribute.includes('var('))
+            .forEach(attribute => {
+              [...attribute.matchAll(VARIABLE_REGEX)].forEach(match => {
+                const variableFound = variables.find(variable => variable.name === match?.groups?.token);
+                if (variableFound && !variablesFound.find(variable => variable.name !== variableFound.name)) {
+                  variablesFound.push(variableFound);
+                }
+              });
+            });
+        });
+    });
+
+  return variablesFound;
+};
+
 const nestedElements = (elementId, flat) => {
   const elementsId = childTree(flat, elementId);
   const mapIds = {};
@@ -330,26 +362,35 @@ const isValidElement = element => {
   return true;
 };
 
-const flatAsTemplate = (flat, style, elementId, excludeRoot = false) => {
+const flatAsTemplate = (schema, style, elementId, excludeRoot = false) => {
   const elementsStyle = { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
-
-  const element = get(flat, elementId);
-  if (!element) {
-    return { elements: { acum: {}, item: undefined }, elementsStyle };
+  let variables = [];
+  if (!schema || !style || !elementId) {
+    return { elements, elementsStyle, variables };
   }
 
-  const elements = nestedElements(elementId, flat, element.definition.parentId);
+  const element = get(schema, `flat.${elementId}`);
+  if (!element) {
+    return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
+  }
 
-  Object.values(elements.acum).forEach(e => {
-    const { id } = e;
+  const elements = nestedElements(elementId, schema.flat, element.definition.parentId);
+  Object.values(elements.acum).forEach(element => {
+    const { id } = element;
     set(elements.acum, `${id}.definition.rootId`, elements.item.id);
-    const calculatedStyle = calculateInheriting(e, flat, style.platform);
+    const calculatedStyle = calculateInheriting(element, schema.flat, style.platform);
     calculatedStyle.tree.forEach(item => {
       const { displayMode, name } = item;
       if (!elementsStyle.platform[displayMode][name] && style.platform[displayMode][name]) {
         elementsStyle.platform[displayMode][name] = style.platform[displayMode][name];
       }
     });
+
+    // Variables
+    if (schema?.variables?.length > 0) {
+      const elementVariables = getElementVariables(elements.acum, id, schema.variables, style);
+      variables = [...variables, ...elementVariables];
+    }
   });
 
   set(elements.acum, `${elements.item.id}.definition.parentId`, null);
@@ -358,7 +399,12 @@ const flatAsTemplate = (flat, style, elementId, excludeRoot = false) => {
     delete elements.acum[elements.item.id];
   }
 
-  return { elements, elementsStyle };
+  // Remove duplicated variables
+  if (variables.length > 1) {
+    variables = [...new Set(variables)];
+  }
+
+  return { elements, elementsStyle, variables };
 };
 
 const FlatMap = {
@@ -366,6 +412,7 @@ const FlatMap = {
   remove: removeElement,
   move: moveElement,
   clone: cloneElement,
+  getElementVariables,
   cloneNested,
   isValid: isValidElement,
   getNested: nestedElements,

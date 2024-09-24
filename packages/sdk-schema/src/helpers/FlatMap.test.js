@@ -12,12 +12,12 @@ import styleSchema1 from '../tests/fixtures/json/styleSchema1.json';
 describe('Testing FlatMap', () => {
   // yarn test FlatMap.test.js -t cloneNested
   test('cloneNested', () => {
-    const { elements, elementsStyle } = FlatMap.flatAsTemplate(
-      get(schema1, 'flat', {}),
+    const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(
+      schema1,
       styleSchema1 ?? { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
       '669b33d56e29e1297a6ccde1'
     );
-    expect({ elements, elementsStyle }).toStrictEqual({
+    expect({ elements, elementsStyle, variables }).toStrictEqual({
       elements: {
         acum: {
           id_0d3d1d: {
@@ -34,7 +34,7 @@ describe('Testing FlatMap', () => {
               parentId: 'id_6ccde1',
               rootId: 'id_6ccde1',
               styleSelectors: {
-                base: ''
+                base: 'heading-rdGM'
               },
               type: 'heading'
             },
@@ -115,7 +115,7 @@ describe('Testing FlatMap', () => {
               parentId: 'id_6ccde1',
               rootId: 'id_6ccde1',
               styleSelectors: {
-                base: ''
+                base: 'button-rdGM'
               },
               type: 'button'
             },
@@ -147,11 +147,123 @@ describe('Testing FlatMap', () => {
       elementsStyle: {
         cache: '',
         platform: {
-          desktop: {},
+          desktop: {
+            'heading-rdGM': {
+              attributes: {
+                'background-color': 'var(--primaryColor)',
+                color: 'var(--fancyVariableColor)'
+              },
+              cache: '.heading-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}',
+              name: 'heading-rdGM',
+              type: 'class'
+            },
+            'button-rdGM': {
+              name: 'button-rdGM',
+              type: 'class',
+              attributes: {
+                color: 'var(--fancyVariableColor)',
+                'background-color': 'var(--primaryColor)'
+              },
+              cache: '.button-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}'
+            }
+          },
           mobile: {},
           tablet: {}
         }
-      }
+      },
+      variables: [
+        {
+          name: 'fancyVariableColor',
+          category: '',
+          type: 'color',
+          value: 'green',
+          subValues: [
+            {
+              when: {
+                id: '1109c974-3bd1-49cc-85ac-1b7826c887e0',
+                combinator: 'and',
+                rules: [
+                  {
+                    id: '7ec37a9f-9e85-4413-b16e-f42ac439407e',
+                    field: 'queryParams.test',
+                    operator: '=',
+                    value: 'test',
+                    enabled: true
+                  }
+                ]
+              },
+              value: 'red'
+            },
+            {
+              value: 'orange',
+              when: {
+                id: 'b29c4db6-2b5f-42e1-9799-5ce0ccb90ab0',
+                combinator: 'and',
+                rules: [
+                  {
+                    id: '1273f0b3-7361-464f-8d63-ae93ac39c79a',
+                    field: 'queryParams.test',
+                    operator: '=',
+                    value: 'test2',
+                    enabled: true
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
     });
+  });
+
+  test('FlatMap getElementVariables', () => {
+    const variables = FlatMap.getElementVariables(
+      get(schema1, 'flat', {}),
+      '669b33dcf636e501810d3d1d',
+      get(schema1, 'variables', []),
+      styleSchema1
+    );
+    expect(variables).toEqual([
+      {
+        name: 'fancyVariableColor',
+        category: '',
+        type: 'color',
+        value: 'green',
+        subValues: [
+          {
+            when: {
+              id: '1109c974-3bd1-49cc-85ac-1b7826c887e0',
+              combinator: 'and',
+              rules: [
+                {
+                  id: '7ec37a9f-9e85-4413-b16e-f42ac439407e',
+                  field: 'queryParams.test',
+                  operator: '=',
+                  value: 'test',
+                  enabled: true
+                }
+              ]
+            },
+            value: 'red'
+          },
+          {
+            value: 'orange',
+            when: {
+              id: 'b29c4db6-2b5f-42e1-9799-5ce0ccb90ab0',
+              combinator: 'and',
+              rules: [
+                {
+                  id: '1273f0b3-7361-464f-8d63-ae93ac39c79a',
+                  field: 'queryParams.test',
+                  operator: '=',
+                  value: 'test2',
+                  enabled: true
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]);
   });
 });

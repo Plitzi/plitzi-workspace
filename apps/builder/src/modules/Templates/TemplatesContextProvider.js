@@ -71,13 +71,18 @@ const TemplatesContextProvider = props => {
   }, []);
 
   const elementAsTemplate = useCallback(
-    async (flat, style, name, description, element) => {
-      const { elements, elementsStyle } = FlatMap.flatAsTemplate(flat, style, element?.id);
+    async (schema, style, name, description, element) => {
+      if (!schema) {
+        return;
+      }
+
+      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, element?.id);
       const result = await mutate('TemplateAdd', {
         name,
         description,
         baseElementId: elements.item.id,
         elements: elements.acum,
+        variables,
         style: { ...elementsStyle, cache: generateCache(elementsStyle) }
       });
       if (result) {

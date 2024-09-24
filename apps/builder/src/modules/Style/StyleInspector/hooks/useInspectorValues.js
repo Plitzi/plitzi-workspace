@@ -5,6 +5,7 @@ import get from 'lodash/get';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { VARIABLE_REGEX } from '@plitzi/sdk-schema/FlatMap';
 import {
   // typography
   FONT_FAMILY,
@@ -310,7 +311,7 @@ const useInspectorValues = props => {
       }
 
       if (typeof value === 'string' && value.includes('var(')) {
-        [...value.matchAll(/var\(--(?<token>[a-z0-9_-]+)\)/gi)].forEach(match => {
+        [...value.matchAll(VARIABLE_REGEX)].forEach(match => {
           value = value.replace(match[0], get(variables, match.groups.token, match[0]));
         });
       }

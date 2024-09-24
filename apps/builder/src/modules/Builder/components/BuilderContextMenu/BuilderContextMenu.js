@@ -47,6 +47,7 @@ const BuilderContextMenu = props => {
   const builderSegmentsContext = use(SegmentsContext);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
+    schema,
     schema: { flat }
   } = use(BuilderSchemaContext);
   const { style } = use(BuilderStyleContext);
@@ -186,7 +187,7 @@ const BuilderContextMenu = props => {
       const {
         data: { name, description }
       } = response;
-      builderTemplatesContext.elementAsTemplate(flat, style, name, description, element);
+      builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
     }
   };
 

@@ -59,6 +59,7 @@ const OverlayButtonContainer = props => {
   const builderTemplatesContext = use(TemplatesContext);
   const builderSegmentsContext = use(SegmentsContext);
   const {
+    schema,
     schema: { flat }
   } = use(BuilderSchemaContext);
   const { style } = use(BuilderStyleContext);
@@ -126,7 +127,7 @@ const OverlayButtonContainer = props => {
       const {
         data: { name, description }
       } = response;
-      builderTemplatesContext.elementAsTemplate(flat, style, name, description, element);
+      builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
       addToast(
         <div>
           Template <b>{name}</b> Created

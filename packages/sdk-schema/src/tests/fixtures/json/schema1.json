@@ -36,7 +36,7 @@
         "label": "Button",
         "type": "button",
         "initialState": { "visibility": true },
-        "styleSelectors": { "base": "" },
+        "styleSelectors": { "base": "button-rdGM"  },
         "bindings": {},
         "interactions": {
           "node_669b33e1847b3149e1223886": {
@@ -79,7 +79,7 @@
         "label": "Nice Heading",
         "type": "heading",
         "bindings": {},
-        "styleSelectors": { "base": "" },
+        "styleSelectors": { "base": "heading-rdGM" },
         "initialState": { "visibility": true },
         "rootId": "657425e280b5b09c93b4a284",
         "parentId": "669b33d56e29e1297a6ccde1"
@@ -101,5 +101,77 @@
   },
   "pages": ["657425e280b5b09c93b4a284"],
   "pageFolders": [],
-  "variables": []
+  "variables": [
+    {
+      "name": "apiUrl",
+      "category": "",
+      "type": "text",
+      "value": "http://localhost",
+      "subValues": [
+        {
+          "when": {
+            "id": "f9eb6fd6-eaa8-4994-a7ea-6652b505f915",
+            "combinator": "and",
+            "rules": [
+              {
+                "id": "8b41902b-731d-4d63-92ff-251eb93a3100",
+                "field": "hostname",
+                "operator": "=",
+                "value": "plitzi.com",
+                "enabled": true
+              }
+            ]
+          },
+          "value": "https://api.plitzi.com"
+        }
+      ]
+    },
+    {
+      "name": "fancyVariableColor",
+      "category": "",
+      "type": "color",
+      "value": "green",
+      "subValues": [
+        {
+          "when": {
+            "id": "1109c974-3bd1-49cc-85ac-1b7826c887e0",
+            "combinator": "and",
+            "rules": [
+              {
+                "id": "7ec37a9f-9e85-4413-b16e-f42ac439407e",
+                "field": "queryParams.test",
+                "operator": "=",
+                "value": "test",
+                "enabled": true
+              }
+            ]
+          },
+          "value": "red"
+        },
+        {
+          "value": "orange",
+          "when": {
+            "id": "b29c4db6-2b5f-42e1-9799-5ce0ccb90ab0",
+            "combinator": "and",
+            "rules": [
+              {
+                "id": "1273f0b3-7361-464f-8d63-ae93ac39c79a",
+                "field": "queryParams.test",
+                "operator": "=",
+                "value": "test2",
+                "enabled": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "primaryColor",
+      "category": "",
+      "type": "text",
+      "value": "purple",
+      "subValues": []
+    }
+  ]
 }

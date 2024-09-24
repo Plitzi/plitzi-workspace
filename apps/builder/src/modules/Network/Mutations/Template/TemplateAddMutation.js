@@ -7,6 +7,7 @@ const TemplateAddMutation = gql`
     $description: String!
     $baseElementId: String
     $elements: Json
+    $variables: [SpaceVariableInput]
     $style: Json
   ) {
     TemplateAdd(
@@ -14,6 +15,7 @@ const TemplateAddMutation = gql`
       description: $description
       baseElementId: $baseElementId
       elements: $elements
+      variables: $variables
       style: $style
     ) {
       id

@@ -239,7 +239,7 @@ const BuilderAreaTracking = props => {
       }
 
       const { elements, elementsStyle } = FlatMap.flatAsTemplate(
-        get(schemaRef, 'current.flat', {}),
+        schemaRef.current,
         get(styleRef, 'current', { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' }),
         elementSelected
       );
