@@ -17,7 +17,7 @@ import {
   EventBridgeTypes,
   EventBridgeTypesPerModule
 } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import FlatMap, { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
 import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
@@ -94,13 +94,7 @@ const BuilderProvider = props => {
     [mode, eventBridge, onHandler]
   );
 
-  const getElement = useCallback((elementId, strict = false) => {
-    if (!elementId && !strict) {
-      return schemaRef.current.flat;
-    }
-
-    return schemaRef.current.flat[elementId];
-  }, []);
+  const getElement = useCallback(elementId => FlatMap.get(schemaRef.current.flat, elementId), []);
 
   const builderElementPermissions = useCallback(
     (element, path = '', defaultValue = undefined) => {
@@ -264,7 +258,7 @@ const BuilderProvider = props => {
     async (type, data, dropPosition, toElementId, rootId) => {
       const toElement = getElement(toElementId);
       const toParentId = get(toElement, 'definition.parentId');
-      const toParentElement = getElement(toParentId, true);
+      const toParentElement = getElement(toParentId);
       if (!toElement || !type) {
         return false;
       }

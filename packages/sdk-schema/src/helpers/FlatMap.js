@@ -201,6 +201,14 @@ const moveElement = (flat, from, to, elementId, dropPosition = DROP_DIRECTION_IN
   return flat;
 };
 
+const getElement = (flat, elementId) => {
+  if (!elementId || !flat) {
+    return undefined;
+  }
+
+  return get(flat, `${elementId}`);
+};
+
 const getElementVariables = (flat, elementId, variables, style) => {
   const variablesFound = [];
   const selectors = get(flat, `${elementId}.definition.styleSelectors`);
@@ -412,6 +420,7 @@ const FlatMap = {
   remove: removeElement,
   move: moveElement,
   clone: cloneElement,
+  get: getElement,
   getElementVariables,
   cloneNested,
   isValid: isValidElement,
