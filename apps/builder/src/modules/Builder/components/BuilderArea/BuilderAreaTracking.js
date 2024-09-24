@@ -238,14 +238,17 @@ const BuilderAreaTracking = props => {
         return;
       }
 
-      const { elements, elementsStyle } = FlatMap.flatAsTemplate(
+      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(
         schemaRef.current,
         get(styleRef, 'current', { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' }),
         elementSelected
       );
       e.clipboardData.setData(
         'application/json',
-        JSON.stringify({ type: 'add##plitzi-template', payload: { elements, style: elementsStyle, assets: [] } })
+        JSON.stringify({
+          type: 'add##plitzi-template',
+          payload: { elements, style: elementsStyle, assets: [], variables }
+        })
       );
 
       addToast('Element copied into the clipboard', { appeareance: 'info', autoDismiss: true, placement: 'top-right' });
