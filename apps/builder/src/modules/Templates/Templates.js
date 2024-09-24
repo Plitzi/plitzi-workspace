@@ -33,13 +33,19 @@ const Templates = () => {
     e.stopPropagation();
     eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
     const flat = get(template, 'schema.flat', {});
+    const variables = get(template, 'schema.variables', []);
     const templateBaseElementId = get(template, 'definition.baseElementId');
     const itemsToAdd = FlatMap.cloneNested(templateBaseElementId, flat);
     delete itemsToAdd.acum[itemsToAdd.item.id];
     e.dataTransfer.setDragImage(e.currentTarget.getElementsByClassName('page-list-item__content')[0], -5, -5);
     e.dataTransfer.setData(
       'add##plitzi-template',
-      JSON.stringify({ elements: itemsToAdd.acum, baseElement: itemsToAdd.item, style: get(template, 'style', {}) })
+      JSON.stringify({
+        elements: itemsToAdd.acum,
+        baseElement: itemsToAdd.item,
+        style: get(template, 'style', {}),
+        variables
+      })
     );
   };
 
