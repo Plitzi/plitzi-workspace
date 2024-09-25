@@ -115,8 +115,8 @@ const SegmentsContextProvider = props => {
   // General Actions
 
   const segmentAddTemplate = useCallback(
-    (segmentId, to, data, dropPosition, initialItems, templatePlatform, fromSubscriptions = false) =>
-      dispatchSegments({
+    (segmentId, to, data, dropPosition, initialItems, templatePlatform, variables, fromSubscriptions = false) => {
+      return dispatchSegments({
         type: SegmentsActions.SEGMENTS_ADD_TEMPLATE,
         segmentId,
         to,
@@ -124,8 +124,10 @@ const SegmentsContextProvider = props => {
         dropPosition,
         initialItems,
         templatePlatform,
+        variables,
         fromSubscriptions
-      }),
+      });
+    },
     [dispatchSegments]
   );
 
@@ -259,41 +261,19 @@ const SegmentsContextProvider = props => {
   );
 
   const elementAsSegment = useCallback(
-    async (flat, style, name, description, element) => {
-      const elements = FlatMap.getNested(element.id, flat, element.definition.parentId);
-      const elementsStyle = {
-        variables: {},
-        platform: {
-          desktop: {},
-          tablet: {},
-          mobile: {}
-        },
-        cache: ''
-      };
+    async (schema, style, name, description, element) => {
+      if (!element) {
+        return;
+      }
 
-      Object.values(elements.acum).forEach(e => {
-        const {
-          definition: { styleSelectors }
-        } = e;
-
-        Object.values(styleSelectors).forEach(selector => {
-          ['desktop', 'tablet', 'mobile'].forEach(mode => {
-            if (style.platform[mode][selector]) {
-              elementsStyle.platform[mode][selector] = style.platform[mode][selector];
-            }
-          });
-        });
-      });
-
+      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, element.id);
       const result = await mutate('SegmentAdd', {
         name,
         description,
         baseElementId: elements.item.id,
         elements: elements.acum,
-        style: {
-          ...elementsStyle,
-          cache: generateCache(elementsStyle)
-        }
+        style: { ...elementsStyle, cache: generateCache(elementsStyle) },
+        variables
       });
       if (result) {
         segmentsAdd(result);
@@ -345,6 +325,7 @@ const SegmentsContextProvider = props => {
           to,
           dropPosition,
           initialItems = [],
+          variables = [],
           contextId
         } = get(data, 'data.SegmentAddTemplate', {});
         segmentAddTemplate(
@@ -354,6 +335,7 @@ const SegmentsContextProvider = props => {
           dropPosition,
           initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
           styles,
+          variables,
           true
         );
       });
@@ -422,8 +404,8 @@ const SegmentsContextProvider = props => {
   // Mutations
 
   const segmentAddMutation = useCallback(
-    async (name, description, schema, style) => {
-      const result = await mutate('SegmentAdd', { name, description, schema, style });
+    async (name, description, schema, style, variables = []) => {
+      const result = await mutate('SegmentAdd', { name, description, schema, style, variables });
       if (result) {
         segmentsAdd(result);
       }
@@ -487,6 +469,7 @@ const SegmentsContextProvider = props => {
       segmentAddVariable,
       segmentUpdateVariable,
       segmentRemoveVariable,
+      segmentAddTemplate,
       elementAsSegment,
       segmentAddMutation
     }),
@@ -508,6 +491,7 @@ const SegmentsContextProvider = props => {
       segmentAddVariable,
       segmentUpdateVariable,
       segmentRemoveVariable,
+      segmentAddTemplate,
       elementAsSegment,
       segmentAddMutation
     ]

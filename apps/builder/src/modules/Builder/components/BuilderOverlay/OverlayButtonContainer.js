@@ -58,10 +58,7 @@ const OverlayButtonContainer = props => {
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const builderTemplatesContext = use(TemplatesContext);
   const builderSegmentsContext = use(SegmentsContext);
-  const {
-    schema,
-    schema: { flat }
-  } = use(BuilderSchemaContext);
+  const { schema } = use(BuilderSchemaContext);
   const { style } = use(BuilderStyleContext);
   const { builderHandler, builderElementPermissions, mode } = use(BuilderContext);
   const {
@@ -157,7 +154,7 @@ const OverlayButtonContainer = props => {
       const {
         data: { name, description }
       } = response;
-      builderSegmentsContext.elementAsSegment(flat, style, name, description, element);
+      builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
       addToast(
         <div>
           Segment <b>{name}</b> Created

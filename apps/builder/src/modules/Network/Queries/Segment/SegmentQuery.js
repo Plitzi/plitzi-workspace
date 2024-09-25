@@ -8,6 +8,16 @@ const SegmentQuery = gql`
       identifier
       definition
       schema {
+        variables {
+          name
+          category
+          type
+          value
+          subValues {
+            value
+            when
+          }
+        }
         flat {
           id
           definition {

@@ -82,8 +82,8 @@ const TemplatesContextProvider = props => {
         description,
         baseElementId: elements.item.id,
         elements: elements.acum,
-        variables,
-        style: { ...elementsStyle, cache: generateCache(elementsStyle) }
+        style: { ...elementsStyle, cache: generateCache(elementsStyle) },
+        variables
       });
       if (result) {
         templatesAdd(result);

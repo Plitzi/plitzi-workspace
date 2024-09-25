@@ -318,7 +318,7 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform, segmentId } = itemParsed.data;
+          const { data, dropPosition, initialItems, to, templatePlatform, variables, segmentId } = itemParsed.data;
 
           return mutate('SegmentAddTemplate', {
             element: data,
@@ -326,6 +326,7 @@ const useQueueManager = (props = {}) => {
             to,
             dropPosition,
             initialItems: Object.values(initialItems),
+            variables,
             contextId: segmentId
           });
         }

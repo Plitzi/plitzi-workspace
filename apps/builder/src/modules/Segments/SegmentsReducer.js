@@ -185,7 +185,7 @@ const SegmentsReducer = (state, action = {}) => {
     }
 
     case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {
-      const { to, data, dropPosition, initialItems, templatePlatform } = action;
+      const { to, data, dropPosition, initialItems, templatePlatform, variables } = action;
       const newState = produce(state, draft => {
         if (!draft[identifier]) {
           return;
@@ -193,10 +193,16 @@ const SegmentsReducer = (state, action = {}) => {
 
         FlatMap.add(get(draft, `${identifier}.schema.flat`), to, data, dropPosition, initialItems);
         const platform = get(draft, `${identifier}.style.platform`);
+        const currentVariables = get(draft, `${identifier}.schema.variables`, []);
         Object.keys(templatePlatform).forEach(mode => {
           platform[mode] = { ...get(platform, mode, {}), ...templatePlatform[mode] };
         });
         set(draft, `${identifier}.style.cache`, generateCache({ platform }));
+
+        if (variables?.length > 0) {
+          const variablesToAppend = variables.filter(variable => !currentVariables.find(v => v.name === variable.name));
+          set(draft, `${identifier}.schema.variables`, [...currentVariables, ...variablesToAppend]);
+        }
       });
 
       return newState;

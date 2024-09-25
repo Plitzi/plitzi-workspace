@@ -8,6 +8,7 @@ const SegmentAddMutation = gql`
     $baseElementId: String
     $elements: Json
     $style: Json
+    $variables: [SpaceVariableInput]
   ) {
     SegmentAdd(
       name: $name
@@ -15,11 +16,22 @@ const SegmentAddMutation = gql`
       baseElementId: $baseElementId
       elements: $elements
       style: $style
+      variables: $variables
     ) {
       id
       identifier
       definition
       schema {
+        variables {
+          name
+          category
+          type
+          value
+          subValues {
+            value
+            when
+          }
+        }
         flat {
           id
           definition {

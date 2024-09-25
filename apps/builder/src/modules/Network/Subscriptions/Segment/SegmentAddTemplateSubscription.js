@@ -23,6 +23,16 @@ const SegmentAddTemplateSubscription = gql`
       dropPosition
       to
       initialItems
+      variables {
+        name
+        category
+        type
+        value
+        subValues {
+          value
+          when
+        }
+      }
       contextId
     }
   }

@@ -207,7 +207,7 @@ const BuilderContextMenu = props => {
       const {
         data: { name, description }
       } = response;
-      builderSegmentsContext.elementAsSegment(flat, style, name, description, element);
+      builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
     }
   };
 
