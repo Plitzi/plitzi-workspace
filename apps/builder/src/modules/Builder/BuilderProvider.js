@@ -285,7 +285,8 @@ const BuilderProvider = props => {
           pick(data.baseElement, ['id', 'definition', 'attributes']),
           dropPosition,
           data.elements,
-          data.style.platform
+          data.style.platform,
+          data.variables
         );
 
         return true;

@@ -151,10 +151,14 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_ADD_TEMPLATE:
     case SchemaActions.SCHEMA_ADD_ELEMENT: {
-      const { to, data, dropPosition, initialItems } = action;
+      const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
         FlatMap.add(draft.flat, to, data, dropPosition, initialItems);
+        if (variables?.length > 0) {
+          const variablesToAppend = variables.filter(variable => !draft.variables.find(v => v.name === variable.name));
+          set(draft, 'variables', [...draft.variables, ...variablesToAppend]);
+        }
       });
     }
 

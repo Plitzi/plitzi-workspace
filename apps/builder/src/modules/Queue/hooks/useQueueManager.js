@@ -217,14 +217,15 @@ const useQueueManager = (props = {}) => {
         // Schema + Style
 
         case SchemaActions.SCHEMA_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform } = itemParsed.data;
+          const { data, dropPosition, initialItems, to, templatePlatform, variables } = itemParsed.data;
 
           return mutate('SpaceAddTemplate', {
             element: data,
             styles: templatePlatform,
             to,
             dropPosition,
-            initialItems: Object.values(initialItems)
+            initialItems: Object.values(initialItems),
+            variables
           });
         }
 

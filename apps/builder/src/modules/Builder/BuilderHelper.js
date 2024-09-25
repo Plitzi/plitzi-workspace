@@ -228,10 +228,10 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
     set(templateData, 'baseElement', elementDefinition);
   } else if (dataType === 'template') {
     const {
-      payload: { elements, style }
+      payload: { elements, style, variables }
     } = data;
     delete elements.acum[elements.item.id];
-    templateData = { elements: elements.acum, baseElement: elements.item, style };
+    templateData = { elements: elements.acum, baseElement: elements.item, style, variables };
   } else if (dataType === 'text' && Array.isArray(data) && data.length > 1) {
     const elementContainerDefinition = getElementDefinition(componentDefinitions, 'container');
     data.forEach(paragraph => {

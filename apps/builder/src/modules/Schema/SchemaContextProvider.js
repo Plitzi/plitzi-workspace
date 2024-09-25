@@ -243,6 +243,7 @@ const SchemaContextProvider = props => {
       dropPosition = DROP_DIRECTION_INSIDE,
       initialItems = {},
       templatePlatform = null,
+      variables = [],
       fromSubscriptions = false
     ) => {
       dispatchSchema({
@@ -252,6 +253,7 @@ const SchemaContextProvider = props => {
         dropPosition,
         initialItems,
         templatePlatform,
+        variables,
         fromSubscriptions
       });
 
@@ -392,13 +394,21 @@ const SchemaContextProvider = props => {
       });
 
       subscriptionManager.subscribe('SpaceAddTemplate', SubscriptionEventTypes.SPACE_ADD_TEMPLATE, {}, data => {
-        const { element, styles, to, dropPosition, initialItems = [] } = get(data, 'data.SpaceAddTemplate', {});
+        const {
+          element,
+          styles,
+          to,
+          dropPosition,
+          initialItems = [],
+          variables = []
+        } = get(data, 'data.SpaceAddTemplate', {});
         schemaAddTemplate(
           to,
           element,
           dropPosition,
           initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
           styles,
+          variables,
           true
         );
       });
