@@ -13,8 +13,17 @@ import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-brid
 // Relatives
 import { generateID } from '../../../helpers/utils';
 
+/**
+ * @param {{
+ *   attributes?: { [key: string]: any };
+ *   type?: string;
+ *   variables?: object[];
+ *   onParentRefresh?: (identifier: string, segment: object) => void;
+ * }} props
+ * @returns {{ onDragStart: (e: any) => void }}
+ */
 const useDragElement = (props = {}) => {
-  const { attributes, type } = props;
+  const { attributes, type, variables = [] } = props;
   const { componentDefinitions } = use(ComponentContext);
   const { eventBridge } = use(EventBridgeContext);
 
@@ -62,7 +71,8 @@ const useDragElement = (props = {}) => {
         `add##${sneakCase(element.definition.type)}`,
         JSON.stringify({
           id: generateID(),
-          element
+          element,
+          variables
         })
       );
     },

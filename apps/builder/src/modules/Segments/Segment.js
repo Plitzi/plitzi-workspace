@@ -24,12 +24,13 @@ import PublishForm from './models/PublishForm';
  *   identifier?: string;
  *   name?: string;
  *   description?: string;
+ *   variables?: object[];
  *   onParentRefresh?: (identifier: string, segment: object) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const Segment = props => {
-  const { id = '', identifier = '', name = '', description = '', onParentRefresh = noop } = props;
+  const { id = '', identifier = '', name = '', description = '', variables = [], onParentRefresh = noop } = props;
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
@@ -37,7 +38,8 @@ const Segment = props => {
   const { mutate } = use(NetworkContext);
   const { onDragStart } = useDragElement({
     type: 'reference',
-    attributes: { referenceType: REFERENCE_TYPE_SEGMENT, referenceId: identifier }
+    attributes: { referenceType: REFERENCE_TYPE_SEGMENT, referenceId: identifier },
+    variables
   });
 
   const handleClickUpdateSegment = useCallback(

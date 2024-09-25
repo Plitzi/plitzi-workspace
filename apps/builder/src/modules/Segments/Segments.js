@@ -125,7 +125,8 @@ const Segments = () => {
             const {
               id,
               identifier,
-              definition: { name, description }
+              definition: { name, description },
+              schema: { variables }
             } = segment;
 
             return (
@@ -135,6 +136,7 @@ const Segments = () => {
                 identifier={identifier}
                 name={name}
                 description={description}
+                variables={variables}
                 onParentRefresh={handleRefresh}
               />
             );
