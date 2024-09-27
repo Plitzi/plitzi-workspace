@@ -101,13 +101,14 @@ const useQueueManager = (props = {}) => {
         }
 
         case SchemaActions.SCHEMA_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems } = itemParsed.data;
+          const { data, to, dropPosition, initialItems, variables } = itemParsed.data;
 
           return mutate('SpaceAddElement', {
             element: data,
             to,
             dropPosition,
-            initialItems: Object.values(initialItems)
+            initialItems: Object.values(initialItems),
+            variables
           });
         }
 
@@ -238,13 +239,14 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems, segmentId } = itemParsed.data;
+          const { data, to, dropPosition, initialItems, variables, segmentId } = itemParsed.data;
 
           return mutate('SegmentAddElement', {
             element: data,
             to,
             dropPosition,
             initialItems: Object.values(initialItems),
+            variables,
             contextId: segmentId
           });
         }

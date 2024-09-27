@@ -8,6 +8,7 @@ const SegmentAddElementMutation = gql`
     $to: String!
     $dropPosition: String!
     $initialItems: [Json]!
+    $variables: [SpaceVariableInput]
     $contextId: String!
   ) {
     SegmentAddElement(
@@ -17,6 +18,7 @@ const SegmentAddElementMutation = gql`
       dropPosition: $dropPosition
       initialItems: $initialItems
       contextId: $contextId
+      variables: $variables
     ) {
       id
       definition {

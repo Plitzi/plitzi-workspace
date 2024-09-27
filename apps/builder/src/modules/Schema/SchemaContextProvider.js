@@ -93,15 +93,17 @@ const SchemaContextProvider = props => {
   // Elements
 
   const schemaAddElement = useCallback(
-    (to, data, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}, fromSubscriptions = false) =>
+    (to, data, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}, variables = [], fromSubscriptions = false) => {
       dispatchSchema({
         type: SchemaActions.SCHEMA_ADD_ELEMENT,
         to,
         data,
         dropPosition,
         initialItems,
+        variables,
         fromSubscriptions
-      }),
+      });
+    },
     [dispatchSchema]
   );
 
@@ -350,12 +352,13 @@ const SchemaContextProvider = props => {
       // Elements
 
       subscriptionManager.subscribe('SpaceAddElement', SubscriptionEventTypes.SPACE_ADD_ELEMENT, {}, data => {
-        const { element, to, dropPosition, initialItems = [] } = get(data, 'data.SpaceAddElement', {});
+        const { element, to, dropPosition, initialItems = [], variables = [] } = get(data, 'data.SpaceAddElement', {});
         schemaAddElement(
           to,
           element,
           dropPosition,
           initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
+          variables,
           true
         );
       });

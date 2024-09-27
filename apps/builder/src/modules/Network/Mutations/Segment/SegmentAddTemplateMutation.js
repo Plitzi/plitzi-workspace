@@ -9,6 +9,7 @@ const SegmentAddTemplateMutation = gql`
     $dropPosition: String!
     $to: String!
     $initialItems: [Json]!
+    $variables: [SpaceVariableInput]
     $contextId: String!
   ) {
     SegmentAddTemplate(
@@ -18,6 +19,7 @@ const SegmentAddTemplateMutation = gql`
       dropPosition: $dropPosition
       to: $to
       initialItems: $initialItems
+      variables: $variables
       contextId: $contextId
     ) {
       id

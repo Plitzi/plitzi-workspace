@@ -22,6 +22,16 @@ const SpaceAddElementSubscription = gql`
       dropPosition
       to
       initialItems
+      variables {
+        name
+        category
+        type
+        value
+        subValues {
+          value
+          when
+        }
+      }
     }
   }
 `;

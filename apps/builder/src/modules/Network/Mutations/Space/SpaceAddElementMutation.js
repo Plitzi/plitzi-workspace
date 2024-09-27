@@ -8,6 +8,7 @@ const SpaceAddElementMutation = gql`
     $to: String!
     $dropPosition: String!
     $initialItems: [Json]!
+    $variables: [SpaceVariableInput]
   ) {
     SpaceAddElement(
       environment: $environment
@@ -15,6 +16,7 @@ const SpaceAddElementMutation = gql`
       to: $to
       dropPosition: $dropPosition
       initialItems: $initialItems
+      variables: $variables
     ) {
       id
       definition {

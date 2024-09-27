@@ -134,7 +134,15 @@ const SegmentsContextProvider = props => {
   // Schema Actions
 
   const segmentAddElement = useCallback(
-    (segmentId, to, data, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}, fromSubscriptions = false) =>
+    (
+      segmentId,
+      to,
+      data,
+      dropPosition = DROP_DIRECTION_INSIDE,
+      initialItems = {},
+      variables = [],
+      fromSubscriptions = false
+    ) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_ADD_ELEMENT,
         segmentId,
@@ -142,6 +150,7 @@ const SegmentsContextProvider = props => {
         data,
         dropPosition,
         initialItems,
+        variables,
         fromSubscriptions
       }),
     [dispatchSegments]
@@ -285,13 +294,21 @@ const SegmentsContextProvider = props => {
   useEffect(() => {
     if (includeSubscriptions) {
       subscriptionManager.subscribe('SegmentAddElement', SubscriptionEventTypes.SEGMENT_ADD_ELEMENT, {}, data => {
-        const { element, to, dropPosition, initialItems = [], contextId } = get(data, 'data.SegmentAddElement', {});
+        const {
+          element,
+          to,
+          dropPosition,
+          initialItems = [],
+          variables = [],
+          contextId
+        } = get(data, 'data.SegmentAddElement', {});
         segmentAddElement(
           contextId,
           to,
           element,
           dropPosition,
           initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
+          variables,
           true
         );
       });

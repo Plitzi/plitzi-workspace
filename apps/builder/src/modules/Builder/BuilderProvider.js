@@ -323,7 +323,8 @@ const BuilderProvider = props => {
             toElementId,
             pick(element, ['id', 'attributes', 'definition']),
             dropPosition,
-            itemsToAdd.items
+            itemsToAdd.items,
+            get(data, 'variables', [])
           );
           setSelected(data.id, undefined, true);
         }
