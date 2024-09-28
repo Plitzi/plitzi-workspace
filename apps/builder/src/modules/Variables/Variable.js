@@ -43,9 +43,21 @@ const Variable = props => {
   const [editMode, setEditMode] = useState(false);
   const [selected, setSelected] = useState(false);
 
-  const handleClickRemove = useCallback(() => onRemove(name), [onRemove, name]);
+  const handleClickRemove = useCallback(
+    e => {
+      e.stopPropagation();
+      onRemove(name);
+    },
+    [onRemove, name]
+  );
 
-  const handleClickUpdate = useCallback(() => setEditMode(true), [onChange, name]);
+  const handleClickUpdate = useCallback(
+    e => {
+      e.stopPropagation();
+      setEditMode(true);
+    },
+    [onChange, name]
+  );
 
   const handleClickCancel = useCallback(() => setEditMode(false), [setEditMode]);
 
@@ -78,15 +90,17 @@ const Variable = props => {
 
   return (
     <div className="group flex flex-col border p-1 border-gray-300 rounded text-sm">
-      <div className="flex w-full items-center gap-3 cursor-pointer" onClick={handleClick}>
-        <div className="flex basis-0 gap-2 min-w-0 grow justify-between">
-          <div className="truncate font-bold" title={name}>
-            {name}
+      <div className="flex w-full items-center gap-2 cursor-pointer" onClick={handleClick}>
+        <div className="flex w-full">
+          {subValues?.length > 0 && <i className="fa-solid fa-code-merge text-sm px-1" title="Has Variations" />}
+          <div className="flex basis-0 gap-2 min-w-0 grow justify-between">
+            <div className="truncate font-bold" title={name}>
+              {name}
+            </div>
+            <VariableValue type={type} value={value} />
           </div>
-          <VariableValue type={type} value={value} />
         </div>
         <div className={classNames('items-center text-xs', { flex: selected, 'group-hover:flex hidden': !selected })}>
-          {subValues?.length > 0 && <i className="fa-solid fa-code-merge text-sm px-1" title="Has Variations" />}
           <Button
             intent="custom"
             size="custom"
