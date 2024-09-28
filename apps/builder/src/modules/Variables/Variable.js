@@ -1,15 +1,17 @@
 // Packages
 import React, { useCallback, useState } from 'react';
+import classNames from 'classnames';
 import noop from 'lodash/noop';
 import omit from 'lodash/omit';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import VariableForm from './models/VariableForm';
+import VariableDetails from './VariableDetails';
+import VariableValue from './VariableValue';
 
 const subValuesDefault = [];
 
@@ -39,15 +41,13 @@ const Variable = props => {
     onRemove = noop
   } = props;
   const [editMode, setEditMode] = useState(false);
-  const hasSubValues = subValues && subValues?.length > 0;
+  const [selected, setSelected] = useState(false);
 
-  const handleClickRemove = useCallback(() => {
-    onRemove(name);
-  }, [onRemove, name]);
+  const handleClickRemove = useCallback(() => onRemove(name), [onRemove, name]);
 
-  const handleClickUpdate = useCallback(() => {
-    setEditMode(true);
-  }, [onChange, name]);
+  const handleClickUpdate = useCallback(() => setEditMode(true), [onChange, name]);
+
+  const handleClickCancel = useCallback(() => setEditMode(false), [setEditMode]);
 
   const handleClickSubmit = useCallback(
     values => {
@@ -57,7 +57,7 @@ const Variable = props => {
     [onChange, name, setEditMode]
   );
 
-  const handleClickCancel = useCallback(() => setEditMode(false), [setEditMode]);
+  const handleClick = useCallback(() => setSelected(state => !state), []);
 
   if (editMode) {
     return (
@@ -77,58 +77,37 @@ const Variable = props => {
   }
 
   return (
-    <div className="group flex items-center gap-1 border p-1 border-gray-300 rounded">
-      <div className="flex flex-col w-full">
-        <div className="flex basis-0 grow">
-          <div className="flex flex-col gap-1 min-w-0 grow">
-            <div className="flex grow basis-0 min-w-0 gap-1 items-center text-sm bold" title={name}>
-              <div className="font-bold whitespace-nowrap">Name:</div>
-              <div className="truncate">{`{{${name}}}`}</div>
-            </div>
-            <div className="flex grow basis-0 min-w-0 text-sm gap-1" title={value}>
-              <div className="font-bold whitespace-nowrap">{hasSubValues ? 'Fallback Value:' : 'Value:'}</div>
-              <div className="truncate">{value}</div>
-            </div>
+    <div className="group flex flex-col border p-1 border-gray-300 rounded text-sm">
+      <div className="flex w-full items-center gap-3 cursor-pointer" onClick={handleClick}>
+        <div className="flex basis-0 gap-2 min-w-0 grow justify-between">
+          <div className="truncate font-bold" title={name}>
+            {name}
           </div>
-          <div className="flex flex-col group-hover:visible invisible">
-            <Button
-              intent="custom"
-              size="custom"
-              onClick={handleClickUpdate}
-              title="Update"
-              className="px-1 py-1 hover:text-blue-400 text-xs"
-            >
-              <i className="fas fa-pen" />
-            </Button>
-            <Button
-              intent="custom"
-              size="custom"
-              onClick={handleClickRemove}
-              title="Remove"
-              className="text-red-400 hover:text-red-500 px-1 py-1 text-xs"
-            >
-              <i className="fas fa-trash-alt" />
-            </Button>
-          </div>
+          <VariableValue type={type} value={value} />
         </div>
-        {hasSubValues && (
-          <div className="flex flex-col w-full mt-2 gap-1">
-            <div className="font-bold text-sm">Conditional Values:</div>
-            {subValues.map((subValue, index) => (
-              <div key={index} className="flex flex-col gap-1 text-xs border border-gray-300 rounded w-full">
-                <div className="flex gap-1 px-1">
-                  <div className="font-bold">Value:</div>
-                  <div>{subValue.value}</div>
-                </div>
-                <div className="flex gap-1 px-1 border-t border-gray-300">
-                  <div className="font-bold">When:</div>
-                  {QueryBuilderFormatter(subValue.when)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className={classNames('items-center text-xs', { flex: selected, 'group-hover:flex hidden': !selected })}>
+          {subValues?.length > 0 && <i className="fa-solid fa-code-merge text-sm px-1" title="Has Variations" />}
+          <Button
+            intent="custom"
+            size="custom"
+            onClick={handleClickUpdate}
+            title="Update"
+            className="p-1 hover:text-blue-400"
+          >
+            <i className="fas fa-pen" />
+          </Button>
+          <Button
+            intent="custom"
+            size="custom"
+            onClick={handleClickRemove}
+            title="Remove"
+            className="text-red-400 hover:text-red-500 p-1"
+          >
+            <i className="fas fa-trash-alt" />
+          </Button>
+        </div>
       </div>
+      {selected && <VariableDetails name={name} type={type} subValues={subValues} />}
     </div>
   );
 };
