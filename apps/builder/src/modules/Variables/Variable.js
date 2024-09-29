@@ -89,7 +89,7 @@ const Variable = props => {
   }
 
   return (
-    <div className="group flex flex-col border px-1 py-0.5 border-gray-300 rounded text-sm">
+    <div className="group flex flex-col border px-2 py-1 border-gray-300 rounded text-sm">
       <div className="flex w-full items-center gap-2 cursor-pointer" onClick={handleClick}>
         <div className="flex w-full">
           {subValues?.length > 0 && <i className="fa-solid fa-code-merge text-sm px-1" title="Has Variations" />}
