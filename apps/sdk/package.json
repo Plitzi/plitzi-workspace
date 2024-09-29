@@ -10,7 +10,7 @@
   "exports": {
     ".": "./dist/plitzi-sdk.js",
     "./plitzi-sdk.css": "./dist/plitzi-sdk.css",
-    "./plitzi-sdk-extended.css": "./dist/plitzi-sdk-extended.css"
+    "./ssr": "./dist/ssr/plitzi-sdk.js"
   },
   "repository": {
     "type": "https",
