@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-schema",
-  "version": "0.22.11",
+  "version": "0.22.12",
   "files": [],
   "exports": {
     ".": "./src/index.js",
@@ -14,7 +14,7 @@
     "test:coverage": "jest --coverage"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.1",
     "jest": "^29.7.0"
   },
   "dependencies": {
