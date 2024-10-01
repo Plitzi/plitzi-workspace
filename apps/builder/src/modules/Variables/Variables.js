@@ -94,7 +94,7 @@ const Variables = () => {
           onChange={handleChangeFilter}
         />
       </div>
-      <div className="flex flex-col px-2 my-2 gap-2">
+      <div className="flex flex-col px-2 my-2 gap-1">
         {variablesFiltered.map(segment => {
           const { name, type, value, category, subValues } = segment;
 

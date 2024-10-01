@@ -12,8 +12,8 @@ const VariableValue = props => {
   const { type, value } = props;
 
   return (
-    <div className="flex gap-1 items-center">
-      {type === 'color' && <div className="min-w-3 min-h-3 rounded" title={value} style={{ backgroundColor: value }} />}
+    <div className="flex gap-1 items-center text-xs">
+      {type === 'color' && <div className="min-w-2.5 min-h-2.5 rounded" title={value} style={{ backgroundColor: value }} />}
       <div className="truncate" title={value}>
         {value}
       </div>
