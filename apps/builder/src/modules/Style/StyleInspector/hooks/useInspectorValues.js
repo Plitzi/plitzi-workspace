@@ -304,8 +304,8 @@ const useInspectorValues = props => {
           key,
           get(
             inheritData,
-            `style.${key}.0.value`,
-            get(bindingData, `style.${key}.0.value`, get(defaultValues, key, baseDefaultValue[key]))
+            `${key}.0.value`,
+            get(bindingData, `${key}.0.value`, get(defaultValues, key, baseDefaultValue[key]))
           )
         );
       }
@@ -324,7 +324,7 @@ const useInspectorValues = props => {
     }
 
     return valuesParsedAux;
-  }, [keys, values, defaultValues, strictMode, variables]);
+  }, [keys, values, defaultValues, strictMode, variables, inheritData]);
   if (asValue) {
     return valuesParsed;
   }
