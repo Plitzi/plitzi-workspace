@@ -114,6 +114,7 @@ import {
 } from '@plitzi/sdk-style/StyleConstants';
 import { StyleSelectors, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
@@ -378,8 +379,8 @@ const StyleInspectorProvider = props => {
       selector,
       setValue,
       resetValue,
-      inheritData: get(inheritData, 'style', {}),
-      bindingData: get(bindingData, 'style', {}),
+      inheritData: get(inheritData, 'style', emptyObject),
+      bindingData: get(bindingData, 'style', emptyObject),
       getDefaultValue
     }),
     [
