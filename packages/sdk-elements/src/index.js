@@ -5,6 +5,7 @@ import Button from './components/basic/Button';
 import Link from './components/basic/Link';
 import Heading from './components/basic/Heading';
 import Dropdown from './components/basic/Dropdown';
+import Markdown from './components/basic/Markdown';
 
 // Structure
 import Container from './components/structure/Container';
@@ -61,6 +62,7 @@ const defaultElements = {
   text: Text,
   list: List,
   link: Link,
+  markdown: Markdown,
   form: Form,
   formControl: FormControl,
   apiContainer: ApiContainer,

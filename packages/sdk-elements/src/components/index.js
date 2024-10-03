@@ -5,6 +5,7 @@ export { default as Button } from './basic/Button';
 export { default as Link } from './basic/Link';
 export { default as Heading } from './basic/Heading';
 export { default as Dropdown } from './basic/Dropdown';
+export { default as Markdown } from './basic/Markdown';
 
 // Structure
 export { default as Container } from './structure/Container';

@@ -5,6 +5,7 @@ import Button from './basic/Button/Settings';
 import Link from './basic/Link/Settings';
 import Heading from './basic/Heading/Settings';
 import Dropdown from './basic/Dropdown/Settings';
+import Markdown from './basic/Markdown/Settings';
 
 // Structure
 import Container from './structure/Container/Settings';
@@ -59,6 +60,7 @@ const defaultElementsSettings = {
   button: Button,
   paragraph: Paragraph,
   text: Text,
+  markdown: Markdown,
   list: List,
   link: Link,
   form: Form,
