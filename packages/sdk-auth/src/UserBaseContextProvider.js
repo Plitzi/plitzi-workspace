@@ -102,10 +102,7 @@ const UserBaseContextProvider = props => {
         refreshDetails: () => {},
         can: () => false,
         authenticated: false,
-        user: {
-          details: {},
-          accessToken: ''
-        }
+        user: { details: {}, accessToken: '' }
       };
     }
 
