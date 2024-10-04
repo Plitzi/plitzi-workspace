@@ -297,7 +297,7 @@ const useInspectorValues = props => {
     keys.forEach(key => {
       let value;
       if (strictMode) {
-        value = get(values, key);
+        value = get(values, key, get(defaultValues, key));
       } else {
         value = get(
           values,
