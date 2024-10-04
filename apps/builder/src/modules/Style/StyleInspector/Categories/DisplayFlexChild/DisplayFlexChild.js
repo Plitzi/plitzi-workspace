@@ -89,11 +89,11 @@ const DisplayFlexChild = props => {
 
   const items = useMemo(
     () => [
-      { type: 'input', value: FLEX_GROW, extraValue: { type: FLEX_GROW }, label: 'Grow' },
+      { type: 'input', value: flexGrow, extraValue: { type: FLEX_GROW }, label: 'Grow' },
       { type: 'input', value: flexShrink, extraValue: { type: FLEX_SHRINK }, label: 'Shrink' },
       { type: 'inputMetric', value: flexBasis, extraValue: { type: FLEX_BASIS }, label: 'Basis' }
     ],
-    [FLEX_GROW, flexShrink, flexBasis]
+    [flexGrow, flexShrink, flexBasis]
   );
 
   return (
