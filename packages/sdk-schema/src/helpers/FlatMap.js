@@ -16,7 +16,7 @@ export const DROP_DIRECTION_CUSTOM = 'custom';
 export const VARIABLE_REGEX = /var\(--(?<token>[a-z0-9_-]+)\)/gi;
 
 export const EMPTY_SCHEMA = {
-  schema: { flat: {}, variables: [] },
+  schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] },
   style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
   definition: { rootId: '' }
 };

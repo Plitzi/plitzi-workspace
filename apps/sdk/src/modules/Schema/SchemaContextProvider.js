@@ -6,6 +6,7 @@ import pick from 'lodash/pick';
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
@@ -36,16 +37,9 @@ const SchemaContextProvider = props => {
 
     switch (type) {
       case SCHEMA_TYPE_NORMAL:
-        return {
-          settings: { customCss: '' },
-          flat: {},
-          pages: [],
-          pageFolders: [],
-          variables: [],
-          ...internalData.schema
-        };
+        return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
       default:
-        return { settings: { customCss: '' }, flat: {}, pages: [] };
+        return EMPTY_SCHEMA.schema;
     }
   }, [schemaProp, internalData]);
   const valueMemo = useMemo(() => ({ schema }), [schema]);

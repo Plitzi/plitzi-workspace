@@ -9,7 +9,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import FlatMap, { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import FlatMap, { DROP_DIRECTION_INSIDE, EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
@@ -50,14 +50,12 @@ const SchemaContextProvider = props => {
 
     switch (type) {
       case SCHEMA_TYPE_MAIN:
-        return internalData.schema;
+        return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
 
       case SCHEMA_TYPE_PARTIAL:
       case SCHEMA_TYPE_TEMPLATE:
-        return { flat: {} };
-
       default:
-        return { settings: { customCss: '' }, flat: {}, pages: [] };
+        return EMPTY_SCHEMA.schema;
     }
   }, [schemaProp]);
   const { enqueueMiddleware } = use(QueueContext);

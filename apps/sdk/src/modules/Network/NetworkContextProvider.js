@@ -7,6 +7,7 @@ import noop from 'lodash/noop';
 
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
 
 // Relatives
 import NetworkContext from './NetworkContext';
@@ -173,7 +174,11 @@ const NetworkContextProvider = props => {
       }
 
       setInternalData({
-        schema: { ...Space.schema, flat: Space.schema.flat.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}) },
+        schema: {
+          ...EMPTY_SCHEMA.schema,
+          ...Space.schema,
+          flat: Space.schema.flat?.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}) ?? {}
+        },
         plugins,
         style: Space.style,
         collections: Collections.edges.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}),
