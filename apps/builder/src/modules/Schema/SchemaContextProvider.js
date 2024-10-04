@@ -45,7 +45,7 @@ const SchemaContextProvider = props => {
   const { eventBridge } = use(EventBridgeContext);
   const schemaPropMemo = useMemo(() => {
     if (schemaProp) {
-      return schemaProp;
+      return { ...EMPTY_SCHEMA.schema, ...schemaProp };
     }
 
     switch (type) {

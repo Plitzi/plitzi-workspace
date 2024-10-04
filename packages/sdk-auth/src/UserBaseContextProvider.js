@@ -58,6 +58,10 @@ const UserBaseContextProvider = props => {
     [queryParams, hostname, environment]
   );
   const variablesParsed = useMemo(() => {
+    if (!variables) {
+      return {};
+    }
+
     return variables.reduce((acum, variable) => {
       const { name, value, subValues } = variable;
       if (!Array.isArray(subValues) || subValues.length === 0) {

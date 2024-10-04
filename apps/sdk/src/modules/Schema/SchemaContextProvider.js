@@ -32,7 +32,7 @@ const SchemaContextProvider = props => {
   const internalData = use(NetworkInternalContext);
   const schema = useMemo(() => {
     if (schemaProp) {
-      return schemaProp;
+      return { ...EMPTY_SCHEMA.schema, ...schemaProp };
     }
 
     switch (type) {
