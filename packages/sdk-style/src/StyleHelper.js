@@ -98,12 +98,7 @@ const getDataStyle = (element, platform, isParent = false, componentDefinitions 
     if (type && platform[mode][type] && platform[mode][type].type !== 'class') {
       metadata.tree.push({ name: type, displayMode: mode, style: platform[mode][type].attributes, isParent });
     } else if (subType && platform[mode][subType] && platform[mode][subType].type !== 'class') {
-      metadata.tree.push({
-        name: subType,
-        displayMode: mode,
-        style: platform[mode][subType].attributes,
-        isParent
-      });
+      metadata.tree.push({ name: subType, displayMode: mode, style: platform[mode][subType].attributes, isParent });
     }
   });
 
@@ -117,7 +112,7 @@ const getDataStyle = (element, platform, isParent = false, componentDefinitions 
   }
 
   if (global) {
-    metadata.tree.push({ ...global, isParent });
+    metadata.tree.push({ ...global, style: get(global, 'style.base', {}), isParent });
   }
 
   return metadata;
@@ -131,26 +126,18 @@ export const calculateInheriting = (
   componentDefinitions,
   skipSelectors = []
 ) => {
-  const metadata = { tree: [], treeData: {}, style: {} };
+  const metadata = { tree: [], style: {}, parentStyle: {} };
   if (!element) {
     return metadata;
   }
 
-  const { id } = element;
+  const parentId = get(element, 'definition.parentId');
   while (element) {
-    const styleData = getDataStyle(element, platform, element.id !== id, componentDefinitions);
-    metadata.tree = [
-      ...metadata.tree,
+    const styleData = getDataStyle(element, platform, element.id === parentId, componentDefinitions);
+    metadata.tree.push(
       ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isParent))
-    ];
-    const parentId = get(element, 'definition.parentId');
-    if (!parentId) {
-      element = undefined;
-
-      break;
-    }
-
-    element = flat[element.definition.parentId];
+    );
+    element = get(flat, get(element, 'definition.parentId'));
   }
 
   const finalMeta = {};
@@ -176,11 +163,17 @@ export const calculateInheriting = (
     }
   });
 
-  return { ...metadata, style: finalMeta };
+  return {
+    ...metadata,
+    style: finalMeta,
+    parentStyle: metadata.tree
+      .filter(node => node.isParent)
+      .reduce((acum, node) => ({ ...acum, ...get(node, 'style', {}) }), {})
+  };
 };
 
 export const calculateBindings = element => {
-  const metadata = { tree: [], treeData: {}, style: {} };
+  const metadata = { tree: [], style: {} };
   if (!element) {
     return metadata;
   }
