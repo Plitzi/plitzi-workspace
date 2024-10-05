@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.22.17",
+  "version": "0.22.18",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -55,7 +55,7 @@
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.25.7",
     "@babel/preset-react": "^7.25.7",
-    "@plitzi/plitzi-webpack": "^0.3.1",
+    "@plitzi/plitzi-webpack": "^0.3.2",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@storybook/addon-essentials": "^8.3.5",
     "@storybook/addon-interactions": "^8.3.5",

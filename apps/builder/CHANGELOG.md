@@ -1,5 +1,19 @@
 # @plitzi/plitzi-builder
 
+## 0.22.18
+
+### Patch Changes
+
+- v0.22.18
+- Updated dependencies
+  - @plitzi/plitzi-sdk@0.22.18
+  - @plitzi/sdk-auth@0.22.18
+  - @plitzi/sdk-event-bridge@0.22.18
+  - @plitzi/sdk-interactions@0.22.18
+  - @plitzi/sdk-plugins@0.22.18
+  - @plitzi/sdk-shared@0.22.18
+  - @plitzi/sdk-state@0.22.18
+
 ## 0.22.17
 
 ### Patch Changes
