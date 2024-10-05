@@ -63,7 +63,7 @@ const DisplayFlexChild = props => {
         },
         children: <Icons width={16} height={16} type="FlexShrinkRow" />,
         description: 'Shrink if needed',
-        active: !customSizing && FLEX_GROW === '0' && flexShrink === '1' && isEqual(flexBasis, 'auto')
+        active: !customSizing && flexGrow === '0' && flexShrink === '1' && isEqual(flexBasis, 'auto')
       },
       {
         value: {
@@ -72,7 +72,7 @@ const DisplayFlexChild = props => {
         },
         children: <Icons width={16} height={16} type="FlexGrowRow" />,
         description: 'Grow if possible',
-        active: !customSizing && FLEX_GROW === '1' && flexShrink === '1' && isEqual(flexBasis, '0%')
+        active: !customSizing && flexGrow === '1' && flexShrink === '1' && isEqual(flexBasis, '0%')
       },
       {
         value: {
@@ -81,10 +81,10 @@ const DisplayFlexChild = props => {
         },
         children: <Icons width={16} height={16} type="FlexNoneRow" />,
         description: "Don't shrink or grow",
-        active: !customSizing && FLEX_GROW === '0' && flexShrink === '0' && isEqual(flexBasis, 'auto')
+        active: !customSizing && flexGrow === '0' && flexShrink === '0' && isEqual(flexBasis, 'auto')
       }
     ],
-    [customSizing, FLEX_GROW, flexShrink, flexBasis]
+    [customSizing, flexGrow, flexShrink, flexBasis]
   );
 
   const items = useMemo(
