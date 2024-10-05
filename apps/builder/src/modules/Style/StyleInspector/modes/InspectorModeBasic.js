@@ -59,10 +59,6 @@ const InspectorModeBasic = props => {
       return true;
     }
 
-    if (!inheritData || !inheritData.tree || !inheritData.tree.length === 0) {
-      return false;
-    }
-
     return get(inheritData, 'parentStyle.display', 'block') === 'flex';
   }, [inheritData, showAllOptions]);
 
