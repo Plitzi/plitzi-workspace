@@ -72,7 +72,7 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
   return value.join(separator);
 };
 
-const getDataStyle = (element, platform, isParent = false, componentDefinitions = {}) => {
+const getDataStyle = (element, platform, isParent = false, isSubParent = false, componentDefinitions = {}) => {
   const metadata = { tree: [] };
   if (!element) {
     return undefined;
@@ -90,15 +90,27 @@ const getDataStyle = (element, platform, isParent = false, componentDefinitions 
       const { name } = segment;
       const style = platform[mode][name];
       if (style) {
-        metadata.tree.push({ name, displayMode: mode, style: style.attributes, isParent });
+        metadata.tree.push({ name, displayMode: mode, style: style.attributes, isParent, isSubParent });
       }
     });
 
     // global native type
     if (type && platform[mode][type] && platform[mode][type].type !== 'class') {
-      metadata.tree.push({ name: type, displayMode: mode, style: platform[mode][type].attributes, isParent });
+      metadata.tree.push({
+        name: type,
+        displayMode: mode,
+        style: platform[mode][type].attributes,
+        isParent,
+        isSubParent
+      });
     } else if (subType && platform[mode][subType] && platform[mode][subType].type !== 'class') {
-      metadata.tree.push({ name: subType, displayMode: mode, style: platform[mode][subType].attributes, isParent });
+      metadata.tree.push({
+        name: subType,
+        displayMode: mode,
+        style: platform[mode][subType].attributes,
+        isParent,
+        isSubParent
+      });
     }
   });
 
@@ -112,7 +124,7 @@ const getDataStyle = (element, platform, isParent = false, componentDefinitions 
   }
 
   if (global) {
-    metadata.tree.push({ ...global, style: get(global, 'style.base', {}), isParent });
+    metadata.tree.push({ ...global, style: get(global, 'style.base', {}), isParent, isSubParent });
   }
 
   return metadata;
@@ -131,36 +143,36 @@ export const calculateInheriting = (
     return metadata;
   }
 
+  const { id } = element;
   const parentId = get(element, 'definition.parentId');
   while (element) {
-    const styleData = getDataStyle(element, platform, element.id === parentId, componentDefinitions);
+    const styleData = getDataStyle(element, platform, element.id === parentId, id !== element.id, componentDefinitions);
     metadata.tree.push(
-      ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isParent))
+      ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isSubParent))
     );
     element = get(flat, get(element, 'definition.parentId'));
   }
 
   const finalMeta = {};
   metadata.tree.forEach(node => {
-    const styleData = get(node, `style.${styleSelector}`, node.style);
-    if (styleData) {
-      let data = styleData;
-      if (node.isParent) {
-        data = pick(styleData, inheritableAttributesBase);
-      }
+    let styleData = get(node, `style.${styleSelector}`, node.style);
+    if (!styleData) {
+      return;
+    }
 
-      Object.keys(data).forEach(key => {
-        if (!inheritableAttributesBase.includes(key) && node.isParent) {
-          return;
-        }
+    if (node.isSubParent) {
+      styleData = pick(styleData, inheritableAttributesBase);
+    }
 
+    Object.keys(styleData)
+      .filter(key => (inheritableAttributesBase.includes(key) && node.isSubParent) || !node.isSubParent)
+      .forEach(key => {
         if (!finalMeta[key]) {
           finalMeta[key] = [];
         }
 
-        finalMeta[key].push({ key: node.name, value: data[key], displayMode: node.displayMode });
+        finalMeta[key].push({ key: node.name, value: styleData[key], displayMode: node.displayMode });
       });
-    }
   });
 
   return {
