@@ -68,9 +68,7 @@ const InspectorModeBasic = props => {
       return false;
     }
 
-    const display = get(parent, 'style.base.display', 'block');
-
-    return display === 'flex';
+    return get(parent, 'style.display', 'block') === 'flex';
   }, [inheritData, showAllOptions]);
 
   return (
