@@ -110,9 +110,12 @@ const Custom = props => {
       internalProps={internalPropsMemo}
       className={classNames('plitzi-component__custom', className)}
     >
-      <span>
-        Custom Component <b>{renderType}</b> Not Found
-      </span>
+      {renderType && (
+        <span>
+          Custom Component <b>{renderType}</b> Not Found
+        </span>
+      )}
+      {!renderType && <span>Custom Component</span>}
     </RootElement>
   );
 };
