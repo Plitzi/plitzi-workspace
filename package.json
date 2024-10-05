@@ -28,7 +28,7 @@
     "@plitzi/sdk-shared": "*"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.8",
+    "@changesets/cli": "^2.27.9",
     "eslint": "^8.57.1",
     "jest": "^29.7.0",
     "turbo": "^2.1.3"

@@ -1,11 +1,12 @@
 // Packages
 import get from 'lodash/get';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Relatives
-import { init, shared } from '../PluginRemote';
 import ComponentContext from '../../Component/ComponentContext';
 import ComponentProvider from '../../Component/ComponentProvider';
 import RootElement from '../RootElement';
@@ -21,6 +22,12 @@ export const generatePluginModule = async (url, asES6 = true, pluginScope = '') 
       RootElement
     };
 
+    const externals = {
+      __WEBPACK_EXTERNAL_MODULE_react__: React,
+      __WEBPACK_EXTERNAL_MODULE_react_dom__: ReactDOM,
+      __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules
+    };
+
     if (asES6) {
       const response = await fetch(url, { 'no-cors': true });
       const moduleBlob = new Blob([await response.text()], { type: 'text/javascript' });
@@ -31,7 +38,7 @@ export const generatePluginModule = async (url, asES6 = true, pluginScope = '') 
       }
 
       // Pass down SDK webpack context
-      Module = await ModuleWrapper.default(init, shared, plitziModules);
+      Module = await ModuleWrapper.default(plitziModules, undefined, externals);
     } else {
       const ModuleWrapper = get(window, `plitziPlugins.${pluginScope}`);
       if (!ModuleWrapper || typeof ModuleWrapper !== 'function') {
@@ -39,7 +46,7 @@ export const generatePluginModule = async (url, asES6 = true, pluginScope = '') 
       }
 
       // Pass down SDK webpack context
-      Module = await ModuleWrapper(init, shared, plitziModules);
+      Module = await ModuleWrapper(plitziModules, undefined, externals);
     }
   } catch (e) {
     console.log(e);
@@ -59,13 +66,6 @@ export const generatePluginPromises = async (pluginScripts = {}) => {
           script.src = url;
           script.type = 'text/javascript';
           script.async = true;
-          if (init) {
-            script.init = init;
-          }
-
-          if (shared) {
-            script.shared = shared;
-          }
 
           script.onload = async () => {
             window.document.head.removeChild(script);

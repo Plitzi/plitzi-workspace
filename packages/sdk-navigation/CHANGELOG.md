@@ -1,5 +1,11 @@
 # @plitzi/sdk-navigation
 
+## 0.22.17
+
+### Patch Changes
+
+- v0.22.17
+
 ## 0.22.16
 
 ### Patch Changes

@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react';
 
 /**
  * @param {{
- *   init?: any;
- *   shared?: any;
  *   url?: string;
  *   type?: 'text/javascript' | 'module';
  * }} props
@@ -13,7 +11,7 @@ import { useEffect, useState } from 'react';
  *   failed: boolean;
  * }}
  */
-const useDynamicScript = ({ init, shared, url = '', type = 'text/javascript' } = {}) => {
+const useDynamicScript = ({ url = '', type = 'text/javascript' } = {}) => {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -24,13 +22,6 @@ const useDynamicScript = ({ init, shared, url = '', type = 'text/javascript' } =
       script.src = url;
       script.type = type;
       script.async = true;
-      if (init) {
-        script.init = init;
-      }
-
-      if (shared) {
-        script.shared = shared;
-      }
 
       setReady(false);
       setFailed(false);

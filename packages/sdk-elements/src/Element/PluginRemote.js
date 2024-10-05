@@ -53,39 +53,6 @@ function loadComponent(
   };
 }
 
-export const shared = () => __webpack_require__.S; // eslint-disable-line
-
-export const init = () => {
-  const modules = {};
-  // eslint-disable-next-line
-  if (!__webpack_require__.S || !__webpack_require__.S.default) {
-    return modules;
-  }
-
-  // const webpackModules = __webpack_require__.S.default; // eslint-disable-line
-  // Object.keys(webpackModules)
-  //   .filter(mKey => mKey.includes('plitziSdkFederation') && webpackModules[mKey][0] && webpackModules[mKey][0].get)
-  //   .forEach(mKey => {
-  //     const versions = Object.keys(webpackModules[mKey]);
-  //     if (versions.length === 0) {
-  //       return;
-  //     }
-
-  //     const mVersion = Object.keys(webpackModules[mKey])[0];
-  //     if (!webpackModules[mKey][mVersion].get) {
-  //       return;
-  //     }
-
-  //     const mIdentifier = mKey.includes('plitziSdkFederation') ? `webpack/container/remote/${mKey}` : mKey;
-  //     modules[mIdentifier] = module => {
-  //       const factory = webpackModules[mKey][mVersion].get();
-  //       module.exports = factory();
-  //     };
-  //   });
-
-  return modules;
-};
-
 /**
  * @param {{
  *   url: string;
@@ -111,7 +78,7 @@ const PluginRemote = props => {
   } = props;
   const { register, components } = use(ComponentContext);
   const NotFoundNode = useMemo(() => components.notFound, [components]);
-  const { ready, failed } = useDynamicScript({ url, shared, init });
+  const { ready, failed } = useDynamicScript({ url });
   const Component = useMemo(
     () => lazy(loadComponent(url, scope, register, NotFoundNode, autoRegister, plitziJsxSkipHOC)),
     [url, scope]
