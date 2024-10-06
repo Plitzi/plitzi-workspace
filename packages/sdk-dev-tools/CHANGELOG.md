@@ -1,5 +1,11 @@
 # @plitzi/sdk-dev-tools
 
+## 0.22.19
+
+### Patch Changes
+
+- v0.22.19
+
 ## 0.22.18
 
 ### Patch Changes
