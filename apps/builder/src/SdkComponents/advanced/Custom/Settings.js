@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
@@ -34,6 +34,19 @@ const Settings = props => {
   const handleChangeSettings = useCallback(value => onUpdate('settings', value), [onUpdate]);
 
   const handleChangeIsPlugin = useCallback(e => onUpdate('isPlugin', e.target.checked), [onUpdate]);
+
+  useEffect(() => {
+    if (!onUpdate || !settings) {
+      return;
+    }
+
+    try {
+      // Format settings
+      onUpdate('settings', JSON.stringify(JSON.parse(settings), null, 2));
+    } catch (e) {
+      // Nothing to do
+    }
+  }, [onUpdate]);
 
   return (
     <div className="flex flex-col">

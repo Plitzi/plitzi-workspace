@@ -113,4 +113,4 @@ export const generatePluginPromises = async (pluginScripts = {}) => {
   return pluginsProcessed;
 };
 
-export const nativeEventsList = ['onClick', 'onFocus', 'onBlur'];
+export const nativeEventsList = ['onClick', 'onFocus', 'onBlur', 'onMouseEnter', 'onMouseLeave'];

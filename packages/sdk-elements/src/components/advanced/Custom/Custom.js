@@ -51,7 +51,7 @@ const Custom = props => {
     try {
       return JSON.parse(settings);
     } catch (err) {
-      console.log(err);
+      // Nothing here
     }
 
     return {};

@@ -16,6 +16,21 @@ const interactionBasicTriggers = {
     title: 'On Click',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
+  },
+  onMouseEnter: {
+    title: 'On Mouse Enter',
+    preview: { propagateEvent: '' },
+    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
+  },
+  onMouseLeave: {
+    title: 'On Mouse Leave',
+    preview: { propagateEvent: '' },
+    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
+  },
+  onHover: {
+    title: 'On Hover',
+    preview: { propagateEvent: '' },
+    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   }
 };
 
