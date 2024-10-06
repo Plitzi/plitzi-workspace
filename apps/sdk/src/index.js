@@ -2,8 +2,9 @@
 import './helpers/wdyr';
 
 // Packages
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
+import noop from 'lodash/noop';
 
 // Monorepo
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
@@ -37,9 +38,11 @@ import './assets/index.scss';
 
 let stateManager;
 let eventBridge;
+let setDebugModeInternal = noop;
 
 export function render(widgetContainer, params = {}, plugins = {}, debugMode = false) {
   const Widget = () => {
+    const [debugModeState, setDebugModeState] = useState(debugMode);
     const pluginKeys = Object.keys(plugins);
     if (process.env.NODE_ENV === 'production' && !debugMode) {
       disableReactDevTools();
@@ -53,10 +56,14 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
       eventBridge = instance;
     }, []);
 
+    useEffect(() => {
+      setDebugModeInternal = setDebugModeState;
+    }, []);
+
     return (
       <App
         {...params}
-        debugMode={debugMode}
+        debugMode={debugModeState}
         onInitStateManager={handleInitStateManager}
         onInitEventBridge={handleInitEventBridge}
       >
@@ -186,6 +193,10 @@ export const getStateManager = () => {
 
 export const getEventBridge = () => {
   return eventBridge;
+};
+
+export const setDebugMode = debugMode => {
+  setDebugModeInternal(debugMode);
 };
 
 export default PlitziSdk;

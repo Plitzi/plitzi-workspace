@@ -1,5 +1,5 @@
 // Packages
-import React, { use, useMemo, useState, useCallback } from 'react';
+import React, { use, useMemo, useState, useCallback, useRef } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
@@ -39,6 +39,8 @@ const BuilderElementTools = props => {
   const element = useBuilderElement(elementSelected);
   const attributes = useMemo(() => get(element, 'attributes', {}), [element]);
   const definition = useMemo(() => get(element, 'definition', {}), [element]);
+  const elementRef = useRef(element);
+  elementRef.current = element;
 
   const handleClickListItems = item => () => {
     setSelected(item);
@@ -48,8 +50,8 @@ const BuilderElementTools = props => {
   const [tempAttributes, setTempAttributes] = useStateDebounce(
     attributes,
     useCallback(
-      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...element, attributes: state }),
-      [builderHandler, element]
+      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...elementRef.current, attributes: state }),
+      [builderHandler]
     ),
     500
   );
@@ -57,8 +59,8 @@ const BuilderElementTools = props => {
   const [tempDefinition, setTempDefinition] = useStateDebounce(
     definition,
     useCallback(
-      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...element, definition: state }),
-      [builderHandler, element]
+      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...elementRef.current, definition: state }),
+      [builderHandler]
     ),
     500
   );
