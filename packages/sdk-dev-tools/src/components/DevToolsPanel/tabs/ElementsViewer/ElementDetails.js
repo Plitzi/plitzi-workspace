@@ -15,10 +15,23 @@ import ContainerTabs from '../../../ContainerTabs';
 const ElementDetails = props => {
   const { className, element } = props;
 
+  // terminar esto
+
   return (
     <div className={classNames('flex flex-col p-4', className)}>
       <ContainerTabs>
-        <ContainerTabs.Tabs items={[{ label: 'Definition' }, { label: 'Attributes' }, { label: 'Style' }]} />
+        <ContainerTabs.Tabs
+          items={[
+            { id: 'definition', label: 'Definition' },
+            { id: 'attributes', label: 'Attributes' },
+            { id: 'style', label: 'Style' }
+          ]}
+        />
+        <div>
+          {/* <ContainerTabs.Content id="definition">Definition</ContainerTabs.Content>
+          <ContainerTabs.Content id="attributes">Attributes</ContainerTabs.Content>
+          <ContainerTabs.Content id="style">Style</ContainerTabs.Content> */}
+        </div>
       </ContainerTabs>
     </div>
   );
