@@ -39,7 +39,7 @@ const ElementsViewer = props => {
         elementSelected={elementSelected}
         onSelect={handleElementSelected}
       />
-      {elementSelected && <ElementDetails element={element} />}
+      {elementSelected && <ElementDetails className="grow" element={element} />}
     </div>
   );
 };

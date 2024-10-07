@@ -1,5 +1,9 @@
 // Packages
 import React from 'react';
+import classNames from 'classnames';
+
+// Relatives
+import ContainerTabs from '../../../ContainerTabs';
 
 /**
  * @param {{
@@ -9,13 +13,15 @@ import React from 'react';
  * @returns {React.ReactElement}
  */
 const ElementDetails = props => {
-  const { element } = props;
+  const { className, element } = props;
 
-  return <div className="flex flex-col">
-    <div>
-      
+  return (
+    <div className={classNames('flex flex-col p-4', className)}>
+      <ContainerTabs>
+        <ContainerTabs.Tabs items={[{ label: 'Definition' }, { label: 'Attributes' }, { label: 'Style' }]} />
+      </ContainerTabs>
     </div>
-  </div>;
+  );
 };
 
 export default ElementDetails;
