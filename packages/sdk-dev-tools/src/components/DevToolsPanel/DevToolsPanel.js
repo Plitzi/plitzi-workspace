@@ -49,9 +49,9 @@ const DevToolsPanel = props => {
       minConstraintsX={orientation === ORIENTATION_VERTICAL ? 500 : Infinity}
       maxConstraintsX={orientation === ORIENTATION_VERTICAL ? 1000 : Infinity}
       minConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 34}
-      maxConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 500}
+      maxConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 600}
       width={orientation === ORIENTATION_VERTICAL ? 500 : Infinity}
-      height={orientation === ORIENTATION_VERTICAL ? Infinity : 300}
+      height={orientation === ORIENTATION_VERTICAL ? Infinity : 34}
       resizeHandles={resizeHandles}
       parentElement={parentElement}
       autoGrow={false}
