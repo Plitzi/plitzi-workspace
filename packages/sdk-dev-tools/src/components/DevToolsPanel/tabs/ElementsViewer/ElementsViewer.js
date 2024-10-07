@@ -29,10 +29,12 @@ const ElementsViewer = props => {
 
   const handleElementSelected = useCallback(id => onElementSelect(id), [onElementSelect]);
 
+  console.log(elements);
+
   return (
     <div className={classNames('flex h-full w-full', className)}>
       <ElementsList
-        className="p-2"
+        className="p-2 w-[200px]"
         elements={elements}
         elementSelected={elementSelected}
         onSelect={handleElementSelected}

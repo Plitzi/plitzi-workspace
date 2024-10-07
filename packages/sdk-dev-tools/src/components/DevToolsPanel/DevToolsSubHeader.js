@@ -71,11 +71,11 @@ const DevToolsSubHeader = props => {
       return undefined;
     }
 
-    const elementDOM = document.querySelector(`[data-id="${elementSelected}"]`);
-    elementDOM?.classList.add('devtools-element-hovered');
+    const elementsDOM = document.querySelectorAll(`[data-id="${elementSelected}"]`);
+    elementsDOM?.forEach(elementDOM => elementDOM.classList.add('devtools-element-hovered'));
 
     return () => {
-      elementDOM?.classList.remove('devtools-element-hovered');
+      elementsDOM?.forEach(elementDOM => elementDOM.classList.remove('devtools-element-hovered'));
     };
   }, [elementSelected]);
 
@@ -116,7 +116,7 @@ const DevToolsSubHeader = props => {
           isSelected={elementSelected === currentPageId}
         />
       </div>
-      <DevToolsButton iconClassName="fa-solid fa-ban" onClick={handleClickClear} title="Clear" />
+      <DevToolsButton iconClassName="fa-solid fa-ban" onClick={handleClickClear} title="Clear" isSelected={!!elementSelected} />
     </div>
   );
 };
