@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Relatives
-import DevToolsContext from '../../DevToolsContext';
+import DevToolsContext from '../../../../DevToolsContext';
 import DataSourceViewerButton from './DataSourceViewerButton';
 
 /**
@@ -37,7 +37,8 @@ const DataSourceViewer = props => {
     setId(elementId);
   }, []);
 
-  const callbackPositionDebounced = useMemo(() => throttle(handleElementHovered, 50), [handleElementHovered]);
+  const handleElementHoveredDebounced = useMemo(() => throttle(handleElementHovered, 100), [handleElementHovered]);
+
   const handleMouseMove = useCallback(
     e => {
       const closest = e.target.closest('.plitzi-sdk');
@@ -45,9 +46,9 @@ const DataSourceViewer = props => {
         return;
       }
 
-      callbackPositionDebounced(e.target);
+      handleElementHoveredDebounced(e.target.closest('[data-id]'));
     },
-    [callbackPositionDebounced]
+    [handleElementHoveredDebounced]
   );
 
   const handleClick = useCallback(e => {

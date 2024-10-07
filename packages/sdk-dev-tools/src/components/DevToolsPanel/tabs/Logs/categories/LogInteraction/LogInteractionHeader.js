@@ -3,7 +3,7 @@ import React from 'react';
 
 // Relatives
 import LogStatus from '../../LogStatus';
-import { LOG_TYPE_CUSTOM, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../utils/PlitziConsole';
+import { LOG_TYPE_CUSTOM, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole';
 import LogStatusIcon from '../../LogStatusIcon';
 
 /**

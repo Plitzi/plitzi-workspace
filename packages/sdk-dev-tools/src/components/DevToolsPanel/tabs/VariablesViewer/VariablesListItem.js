@@ -1,6 +1,9 @@
 // Packags
 import React from 'react';
 
+// Relatives
+import VariableValue from './VariableValue';
+
 /**
  * @param {{
  *   className?: string;
@@ -20,7 +23,7 @@ const VariablesListItem = props => {
         <div className="text-sm">({type})</div>
       </div>
       <div className="flex gap-1">
-        <div>{value}</div>
+        <VariableValue value={value} type={type} />
       </div>
     </div>
   );

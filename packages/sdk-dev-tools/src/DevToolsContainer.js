@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import classNames from 'classnames';
 
 // Relatives
-import DevToolsPanel, { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from './DevToolsPanel';
+import DevToolsPanel, { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from './components/DevToolsPanel';
 import DevToolsContextProvider from './DevToolsContextProvider';
 
 /**

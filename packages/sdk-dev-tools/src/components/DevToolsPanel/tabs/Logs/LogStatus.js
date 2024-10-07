@@ -3,7 +3,7 @@ import React from 'react';
 import classNames from 'classnames';
 
 // Relatives
-import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../utils/PlitziConsole';
+import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../utils/PlitziConsole';
 
 /**
  * @param {{

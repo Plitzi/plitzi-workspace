@@ -39,7 +39,7 @@ const VariableDetails = props => {
           <div key={index} className="flex flex-col gap-1 text-xs border border-gray-300 rounded w-full">
             <div className="flex gap-1 px-1">
               <div className="font-bold">Value:</div>
-              <VariableValue value={subValue.value} type={type} />
+              <VariableValue className="text-xs" value={subValue.value} type={type} />
             </div>
             <div className="flex gap-1 px-1 border-t border-gray-300">
               <div className="font-bold">When:</div>

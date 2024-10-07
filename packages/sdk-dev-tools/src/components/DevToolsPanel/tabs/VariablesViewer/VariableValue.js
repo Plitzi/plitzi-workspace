@@ -4,13 +4,14 @@ import classNames from 'classnames';
 
 /**
  * @param {{
+ *   className?: string;
  *   value?: string;
  *   type?: string;
  * }} props
  * @returns {React.ReactElement}
  */
 const VariableValue = props => {
-  const { className, type, value } = props;
+  const { className = '', type, value } = props;
 
   return (
     <div className={classNames('flex gap-1 items-center', className)}>

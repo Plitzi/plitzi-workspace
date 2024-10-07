@@ -97,7 +97,7 @@ const Variable = props => {
             <div className="truncate font-bold" title={name}>
               {name}
             </div>
-            <VariableValue type={type} value={value} />
+            <VariableValue className="text-xs" type={type} value={value} />
           </div>
         </div>
         <div className={classNames('items-center text-xs', { flex: selected, 'group-hover:flex hidden': !selected })}>

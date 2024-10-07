@@ -3,10 +3,11 @@ import React, { use } from 'react';
 import classNames from 'classnames';
 
 // Relatives
-import DevToolsContext from './DevToolsContext';
-import Logs from './components/Logs/Logs';
-import DataSourceViewer from './components/DataSourceViewer';
-import VariablesViewer from './components/VariablesViewer';
+import DevToolsContext from '../../DevToolsContext';
+import Logs from './tabs/Logs';
+import DataSourceViewer from './tabs/DataSourceViewer';
+import VariablesViewer from './tabs/VariablesViewer';
+import ElementsViewer from './tabs/ElementsViewer';
 
 /**
  * @param {{
@@ -26,6 +27,7 @@ const DevToolsBody = props => {
         {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
         {tabSelected === 'dataSources' && <DataSourceViewer />}
         {tabSelected === 'variables' && <VariablesViewer />}
+        {tabSelected === 'elements' && <ElementsViewer />}
       </div>
     </div>
   );
