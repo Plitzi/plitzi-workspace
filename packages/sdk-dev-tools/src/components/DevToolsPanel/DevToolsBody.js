@@ -1,6 +1,7 @@
 // Packages
 import React, { use } from 'react';
 import classNames from 'classnames';
+import noop from 'lodash/noop';
 
 // Relatives
 import DevToolsContext from '../../DevToolsContext';
@@ -14,20 +15,24 @@ import ElementsViewer from './tabs/ElementsViewer';
  *   className?: string;
  *   tabSelected?: string;
  *   orientation: 'horizontal' | 'vertical';
+ *   elementSelected?: string;
+ *   onElementSelect: (id: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DevToolsBody = props => {
-  const { className, tabSelected, orientation } = props;
+  const { className, tabSelected, orientation, elementSelected, onElementSelect = noop } = props;
   const { logs, clearLogs } = use(DevToolsContext);
 
   return (
     <div className={classNames('flex grow h-full bg-gray-50 w-full overflow-auto', className)}>
       <div className="flex flex-col gap-2 w-full">
         {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
-        {tabSelected === 'dataSources' && <DataSourceViewer />}
+        {tabSelected === 'dataSources' && <DataSourceViewer elementSelected={elementSelected} />}
         {tabSelected === 'variables' && <VariablesViewer />}
-        {tabSelected === 'elements' && <ElementsViewer />}
+        {tabSelected === 'elements' && (
+          <ElementsViewer elementSelected={elementSelected} onElementSelect={onElementSelect} />
+        )}
       </div>
     </div>
   );

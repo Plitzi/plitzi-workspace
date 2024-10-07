@@ -14,7 +14,7 @@ import noop from 'lodash/noop';
  * }} props
  * @returns {React.ReactElement}
  */
-const DataSourceViewerButton = props => {
+const DevToolsButton = props => {
   const { className, iconClassName, title, isSelected = false, onClick = noop } = props;
 
   return (
@@ -34,4 +34,4 @@ const DataSourceViewerButton = props => {
   );
 };
 
-export default DataSourceViewerButton;
+export default DevToolsButton;

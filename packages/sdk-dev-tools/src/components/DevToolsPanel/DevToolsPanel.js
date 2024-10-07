@@ -1,12 +1,16 @@
 // Packages
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, use } from 'react';
 import classNames from 'classnames';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import noop from 'lodash/noop';
 
+// Monorepo
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+
 // Relatives
 import DevToolsHeader from './DevToolsHeader';
 import DevToolsBody from './DevToolsBody';
+import DevToolsSubHeader from './DevToolsSubHeader';
 
 export const ORIENTATION_VERTICAL = 'vertical';
 export const ORIENTATION_HORIZONTAL = 'horizontal';
@@ -24,6 +28,8 @@ export const ORIENTATION_HORIZONTAL = 'horizontal';
 const DevToolsPanel = props => {
   const { className, orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop } = props;
   const [tabSelected, setTabSelected] = useState('logs');
+  const { currentPageId } = use(NavigationContext);
+  const [elementSelected, setElementSelected] = useState('');
   const resizeHandles = useMemo(() => (orientation === ORIENTATION_VERTICAL ? ['w'] : ['n']), [orientation]);
   const parentElement = useMemo(() => {
     if (typeof document === 'undefined') {
@@ -34,6 +40,8 @@ const DevToolsPanel = props => {
   }, []);
 
   const handleTabSelect = useCallback(tabIndex => setTabSelected(tabIndex), []);
+
+  const handleElementSelected = useCallback(id => setElementSelected(id), [setElementSelected]);
 
   return (
     <ContainerResizable
@@ -54,7 +62,19 @@ const DevToolsPanel = props => {
         onTabSelect={handleTabSelect}
         tabSelected={tabSelected}
       />
-      <DevToolsBody orientation={orientation} tabSelected={tabSelected} />
+      {['dataSources', 'elements'].includes(tabSelected) && (
+        <DevToolsSubHeader
+          elementSelected={elementSelected}
+          onElementSelect={handleElementSelected}
+          currentPageId={currentPageId}
+        />
+      )}
+      <DevToolsBody
+        orientation={orientation}
+        tabSelected={tabSelected}
+        elementSelected={elementSelected}
+        onElementSelect={handleElementSelected}
+      />
     </ContainerResizable>
   );
 };
