@@ -9,6 +9,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Relatives
 import ElementsList from './ElementsList';
+import ElementDetails from './ElementDetails';
 
 /**
  * @param {{
@@ -26,10 +27,9 @@ const ElementsViewer = props => {
     () => Object.values(schema.flat).filter(element => element.definition.rootId === currentPageId),
     [schema.flat, currentPageId]
   );
+  const element = useMemo(() => elements.find(element => element.id === elementSelected), [elements]);
 
   const handleElementSelected = useCallback(id => onElementSelect(id), [onElementSelect]);
-
-  console.log(elements);
 
   return (
     <div className={classNames('flex h-full w-full', className)}>
@@ -39,6 +39,7 @@ const ElementsViewer = props => {
         elementSelected={elementSelected}
         onSelect={handleElementSelected}
       />
+      {elementSelected && <ElementDetails element={element} />}
     </div>
   );
 };
