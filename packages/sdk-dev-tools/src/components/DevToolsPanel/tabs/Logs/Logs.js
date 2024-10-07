@@ -5,7 +5,7 @@ import noop from 'lodash/noop';
 
 // Relatives
 import Log from './Log';
-import LogsSummary from '../LogsSummary';
+import LogsSummary from './LogsSummary';
 import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from '../../DevToolsPanel';
 
 /**

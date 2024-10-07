@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 
 // Relatives
-import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../utils/PlitziConsole';
+import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../utils/PlitziConsole';
 
 /**
  * @param {{
