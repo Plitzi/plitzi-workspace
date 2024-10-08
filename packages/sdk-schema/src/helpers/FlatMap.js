@@ -239,10 +239,9 @@ const getElementVariables = (flat, elementId, variables, style) => {
   return variablesFound;
 };
 
-const nestedElements = (elementId, flat) => {
-  const elementsId = childTree(flat, elementId);
+const cloneElements = (elementId, flat, parentId = '', excludeRoot = false) => {
   const mapIds = {};
-  let elements = [elementId, ...elementsId]
+  const elements = [elementId, ...childTree(flat, elementId)]
     .map(id => flat[id])
     .filter(Boolean)
     .reduce((acum, element) => {
@@ -251,17 +250,27 @@ const nestedElements = (elementId, flat) => {
       return { ...acum, [element.id]: element };
     }, {});
 
+  const result = { acum: {}, item: undefined };
   try {
     let elementsStr = JSON.stringify(elements);
     elementsStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), elementsStr);
-    elements = JSON.parse(elementsStr);
+    result.acum = JSON.parse(elementsStr);
+    result.item = result.acum[mapIds[elementId]];
   } catch (e) {
     console.error('Error parsing elements', e);
 
     return { acum: {}, item: undefined };
   }
 
-  return { acum: elements, item: elements[mapIds[elementId]] };
+  if (excludeRoot) {
+    delete result.acum[mapIds[elementId]];
+  }
+
+  if (parentId && result.item) {
+    set(result, 'item.definition.parentId', parentId);
+  }
+
+  return result;
 };
 
 const cloneElement = (flat, elementId, targetId) => {
@@ -286,9 +295,9 @@ const cloneElement = (flat, elementId, targetId) => {
   } = targetParent;
   let newItems = {};
   if (targetItems) {
-    newItems = nestedElements(elementId, flat, targetId);
+    newItems = cloneElements(elementId, flat, targetId);
   } else {
-    newItems = nestedElements(elementId, flat, parentId);
+    newItems = cloneElements(elementId, flat, parentId);
   }
 
   return newItems;
@@ -380,7 +389,7 @@ const flatAsTemplate = (schema, style, elementId, excludeRoot = false) => {
     return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
   }
 
-  const elements = nestedElements(elementId, schema.flat, element.definition.parentId);
+  const elements = cloneElements(elementId, schema.flat, element.definition.parentId);
   Object.values(elements.acum).forEach(element => {
     const { id } = element;
     set(elements.acum, `${id}.definition.rootId`, elements.item.id);
@@ -421,7 +430,7 @@ const FlatMap = {
   get: getElement,
   getElementVariables,
   isValid: isValidElement,
-  getNested: nestedElements,
+  getNested: cloneElements,
   getParentTree: parentTree,
   getChildTree: childTree,
   flatAsTemplate

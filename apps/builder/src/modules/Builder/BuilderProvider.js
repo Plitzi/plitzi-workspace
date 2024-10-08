@@ -273,6 +273,17 @@ const BuilderProvider = props => {
       }
 
       if (type[1] === 'plitzi-template') {
+        const dataCloned = FlatMap.getNested(
+          data.baseElement.id,
+          { [data.baseElement.id]: data.baseElement, ...data.elements },
+          '',
+          true
+        );
+
+        if (!dataCloned.item) {
+          return false;
+        }
+
         set(data.baseElement, 'definition.rootId', baseElementId);
         Object.values(data.elements).forEach(e => {
           set(data.elements, `${e.id}.definition.rootId`, baseElementId);
@@ -282,9 +293,9 @@ const BuilderProvider = props => {
         builderHandler(
           EventBridgeTypes.SCHEMA_ADD_TEMPLATE,
           toElementId,
-          pick(data.baseElement, ['id', 'definition', 'attributes']),
+          pick(dataCloned.item, ['id', 'definition', 'attributes']),
           dropPosition,
-          data.elements,
+          dataCloned.acum,
           data.style.platform,
           data.variables
         );

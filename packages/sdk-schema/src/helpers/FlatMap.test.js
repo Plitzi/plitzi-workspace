@@ -211,6 +211,13 @@ describe('Testing FlatMap', () => {
               }
             }
           ]
+        },
+        {
+          category: '',
+          name: 'primaryColor',
+          subValues: [],
+          type: 'text',
+          value: 'purple'
         }
       ]
     });
@@ -263,6 +270,13 @@ describe('Testing FlatMap', () => {
             }
           }
         ]
+      },
+      {
+        category: '',
+        name: 'primaryColor',
+        subValues: [],
+        type: 'text',
+        value: 'purple'
       }
     ]);
   });
