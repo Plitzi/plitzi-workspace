@@ -264,8 +264,6 @@ const nestedElements = (elementId, flat) => {
   return { acum: elements, item: elements[mapIds[elementId]] };
 };
 
-const cloneNested = (baseElementId, elements) => nestedElements(baseElementId, elements);
-
 const cloneElement = (flat, elementId, targetId) => {
   if (!flat[elementId]) {
     return flat;
@@ -422,7 +420,6 @@ const FlatMap = {
   clone: cloneElement,
   get: getElement,
   getElementVariables,
-  cloneNested,
   isValid: isValidElement,
   getNested: nestedElements,
   getParentTree: parentTree,

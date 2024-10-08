@@ -10,8 +10,8 @@ import schema1 from '../tests/fixtures/json/schema1.json';
 import styleSchema1 from '../tests/fixtures/json/styleSchema1.json';
 
 describe('Testing FlatMap', () => {
-  // yarn test FlatMap.test.js -t cloneNested
-  test('cloneNested', () => {
+  // yarn test FlatMap.test.js -t flatAsTemplate
+  test('flatAsTemplate', () => {
     const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(
       schema1,
       styleSchema1 ?? { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
