@@ -30,18 +30,21 @@ const BorderColor = props => {
       [BORDER_LEFT_COLOR]: borderLeft,
       [BORDER_RIGHT_COLOR]: borderRight
     } = values;
-    switch (currentPlacement) {
-      case 'all' && borderTop === borderBottom && borderTop === borderLeft && borderTop === borderRight:
-      case 'top' && borderTop:
+    switch (true) {
+      case currentPlacement === 'all' &&
+        borderTop === borderBottom &&
+        borderTop === borderLeft &&
+        borderTop === borderRight:
+      case currentPlacement === 'top' && borderTop:
         return borderTop;
 
-      case 'bottom' && borderBottom:
+      case currentPlacement === 'bottom' && borderBottom:
         return borderBottom;
 
-      case 'left' && borderLeft:
+      case currentPlacement === 'left' && borderLeft:
         return borderLeft;
 
-      case 'right' && borderRight:
+      case currentPlacement === 'right' && borderRight:
         return borderRight;
 
       default:
