@@ -22,12 +22,13 @@ const dotKeys = [ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS];
 /**
  * @param {{
  *   isCollapsed?: boolean;
+ *   isFlexVertical: boolean;
  *   onCollapse?: (type: string, isCollapsed: boolean) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DisplayFlexChild = props => {
-  const { isCollapsed = true, onCollapse = noop } = props;
+  const { isCollapsed = true, isFlexVertical = false, onCollapse = noop } = props;
   const { setValue } = use(StyleInspectorContext);
   const {
     [FLEX_GROW]: flexGrow,
@@ -114,7 +115,7 @@ const DisplayFlexChild = props => {
           keyValue={keyValueMemo}
           onChange={handleChange}
         />
-        <DisplayAlignSelf value={alignSelf} onChange={handleChangeValue} />
+        <DisplayAlignSelf value={alignSelf} isFlexVertical={isFlexVertical} onChange={handleChangeValue} />
         <DisplayOrder value={order} onChange={handleChangeValue} />
       </div>
     </CategoryContainer>

@@ -1,6 +1,7 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
+import classNames from 'classnames';
 
 // Monorepo
 import { ALIGN_SELF } from '@plitzi/sdk-style/StyleConstants';
@@ -14,12 +15,13 @@ import GroupButtons from '../../../components/GroupButtons';
 /**
  * @param {{
  *   value: string;
+ *   isFlexVertical?: boolean;
  *   onChange?: (type: string, value: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DisplayAlignSelf = props => {
-  const { value, onChange = noop } = props;
+  const { value, isFlexVertical = false, onChange = noop } = props;
 
   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
 
@@ -33,25 +35,53 @@ const DisplayAlignSelf = props => {
       },
       {
         value: { value: 'flex-start', type: ALIGN_SELF },
-        children: <Icons width={16} height={16} type="AlignSelfStartRow" />,
+        children: (
+          <Icons
+            width={16}
+            height={16}
+            type="AlignSelfStartRow"
+            className={classNames({ '-rotate-90': isFlexVertical })}
+          />
+        ),
         description: 'Align Start',
         active: value === 'flex-start'
       },
       {
         value: { value: 'center', type: ALIGN_SELF },
-        children: <Icons width={16} height={16} type="AlignSelfCenterRow" />,
+        children: (
+          <Icons
+            width={16}
+            height={16}
+            type="AlignSelfCenterRow"
+            className={classNames({ '-rotate-90': isFlexVertical })}
+          />
+        ),
         description: 'Align Center',
         active: value === 'center'
       },
       {
         value: { value: 'flex-end', type: ALIGN_SELF },
-        children: <Icons width={16} height={16} type="AlignSelfEndRow" />,
+        children: (
+          <Icons
+            width={16}
+            height={16}
+            type="AlignSelfEndRow"
+            className={classNames({ '-rotate-90': isFlexVertical })}
+          />
+        ),
         description: 'Align End',
         active: value === 'flex-end'
       },
       {
         value: { value: 'stretch', type: ALIGN_SELF },
-        children: <Icons width={16} height={16} type="AlignSelfStretchRow" />,
+        children: (
+          <Icons
+            width={16}
+            height={16}
+            type="AlignSelfStretchRow"
+            className={classNames({ '-rotate-90': isFlexVertical })}
+          />
+        ),
         description: 'Align Stretch',
         active: value === 'stretch'
       },

@@ -62,6 +62,11 @@ const InspectorModeBasic = props => {
     return get(inheritData, 'parentStyle.display', 'block') === 'flex';
   }, [inheritData, showAllOptions]);
 
+  const isFlexVertical = useMemo(
+    () => get(inheritData, 'parentStyle.flex-direction', 'row') === 'column',
+    [inheritData]
+  );
+
   return (
     <StyleInspectorProvider
       styleSelector={styleSelector}
@@ -75,7 +80,11 @@ const InspectorModeBasic = props => {
           {isList && <ListItem isCollapsed={collapsedCache.listItem ?? true} onCollapse={handleChangeCollapse} />}
           <Display isCollapsed={collapsedCache.display ?? true} onCollapse={handleChangeCollapse} />
           {isFlexChild && (
-            <DisplayFlexChild isCollapsed={collapsedCache.displayFlexChild ?? true} onCollapse={handleChangeCollapse} />
+            <DisplayFlexChild
+              isCollapsed={collapsedCache.displayFlexChild ?? true}
+              isFlexVertical={isFlexVertical}
+              onCollapse={handleChangeCollapse}
+            />
           )}
           <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
           <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
