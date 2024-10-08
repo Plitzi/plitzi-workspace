@@ -24,10 +24,10 @@ const processContainer = (elementDOM, iframeDOM, zoom) => {
   const { width, height, top, left } = elementDOM.getBoundingClientRect();
 
   return {
-    width,
-    height,
-    x: left + scrollX / zoom,
-    y: top + scrollY / zoom,
+    width: width / zoom,
+    height: height / zoom,
+    x: (left + scrollX) / zoom,
+    y: (top + scrollY) / zoom,
     scrollX,
     scrollY,
     innerHeight: innerHeight / zoom,
