@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.22.20",
+  "version": "0.23.0",
   "files": [],
   "exports": {
     ".": "./src/index.js",
