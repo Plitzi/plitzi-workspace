@@ -6,9 +6,9 @@ import classNames from 'classnames';
 /**
  * @param {{
  *   className?: string;
- *   index?: number;
  *   label?: object;
- *   tabSelected?: boolean;
+ *   tabSelected?: number;
+ *   index?: number;
  *   onSelect?: (index: number) => void;
  * }} props
  * @returns {React.ReactElement}

@@ -21,7 +21,7 @@ const Tabs = props => {
   return (
     <div className={classNames('flex bg-gray-200 rounded w-[80%] mx-auto p-1 select-none', className)}>
       {items.map((item, i) => (
-        <Tab key={i} index={i} label={item.label} tabSelected={tabSelected === i} onSelect={onSelect} />
+        <Tab key={i} label={item.label} tabSelected={tabSelected === i} index={i} onSelect={onSelect} />
       ))}
     </div>
   );
