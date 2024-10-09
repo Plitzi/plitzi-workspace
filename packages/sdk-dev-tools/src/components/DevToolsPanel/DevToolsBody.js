@@ -16,12 +16,12 @@ import ElementsViewer from './tabs/ElementsViewer';
  *   tabSelected?: string;
  *   orientation: 'horizontal' | 'vertical';
  *   elementSelected?: string;
- *   onElementSelect: (id: string) => void;
+ *   onSelectElement: (id: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DevToolsBody = props => {
-  const { className, tabSelected, orientation, elementSelected, onElementSelect = noop } = props;
+  const { className, tabSelected, orientation, elementSelected, onSelectElement = noop } = props;
   const { logs, clearLogs } = use(DevToolsContext);
 
   return (
@@ -31,7 +31,7 @@ const DevToolsBody = props => {
         {tabSelected === 'dataSources' && <DataSourceViewer elementSelected={elementSelected} />}
         {tabSelected === 'variables' && <VariablesViewer />}
         {tabSelected === 'elements' && (
-          <ElementsViewer elementSelected={elementSelected} onElementSelect={onElementSelect} />
+          <ElementsViewer elementSelected={elementSelected} onSelectElement={onSelectElement} />
         )}
       </div>
     </div>

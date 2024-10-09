@@ -41,7 +41,7 @@ const DevToolsPanel = props => {
 
   const handleTabSelect = useCallback(tabIndex => setTabSelected(tabIndex), []);
 
-  const handleElementSelected = useCallback(id => setElementSelected(id), [setElementSelected]);
+  const handleSelectElement = useCallback(id => setElementSelected(id), [setElementSelected]);
 
   return (
     <ContainerResizable
@@ -65,7 +65,7 @@ const DevToolsPanel = props => {
       {['dataSources', 'elements'].includes(tabSelected) && (
         <DevToolsSubHeader
           elementSelected={elementSelected}
-          onElementSelect={handleElementSelected}
+          onSelectElement={handleSelectElement}
           currentPageId={currentPageId}
         />
       )}
@@ -73,7 +73,7 @@ const DevToolsPanel = props => {
         orientation={orientation}
         tabSelected={tabSelected}
         elementSelected={elementSelected}
-        onElementSelect={handleElementSelected}
+        onSelectElement={handleSelectElement}
       />
     </ContainerResizable>
   );

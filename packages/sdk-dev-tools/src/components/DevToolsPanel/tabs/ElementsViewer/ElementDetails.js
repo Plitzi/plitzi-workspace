@@ -1,39 +1,38 @@
 // Packages
 import React from 'react';
 import classNames from 'classnames';
+import noop from 'lodash/noop';
 
 // Relatives
 import ContainerTabs from '../../../ContainerTabs';
+import DetailsDefinition from './DetailsDefinition';
+import DetailsAttributes from './DetailsAttributes';
+
+const tabs = [{ label: 'Definition' }, { label: 'Attributes' }]; // , { label: 'Style' }
 
 /**
  * @param {{
  *   className?: string;
- *   element?: object;
+ *   definition?: object;
+ *   attributes?: object;
+ *   onSelectElement: (id: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const ElementDetails = props => {
-  const { className, element } = props;
-
-  // terminar esto
+  const { className, definition, attributes, onSelectElement = noop } = props;
 
   return (
-    <div className={classNames('flex flex-col p-4', className)}>
-      <ContainerTabs>
-        <ContainerTabs.Tabs
-          items={[
-            { id: 'definition', label: 'Definition' },
-            { id: 'attributes', label: 'Attributes' },
-            { id: 'style', label: 'Style' }
-          ]}
-        />
-        <div>
-          {/* <ContainerTabs.Content id="definition">Definition</ContainerTabs.Content>
-          <ContainerTabs.Content id="attributes">Attributes</ContainerTabs.Content>
-          <ContainerTabs.Content id="style">Style</ContainerTabs.Content> */}
-        </div>
-      </ContainerTabs>
-    </div>
+    <ContainerTabs className={classNames('flex flex-col p-4 w-full overflow-hidden gap-4', className)}>
+      <ContainerTabs.Tabs items={tabs} />
+      <ContainerTabs.TabContent className="flex flex-col">
+        <DetailsDefinition definition={definition} onSelectElement={onSelectElement} />
+      </ContainerTabs.TabContent>
+      <ContainerTabs.TabContent>
+        <DetailsAttributes attributes={attributes} />
+      </ContainerTabs.TabContent>
+      {/* <ContainerTabs.TabContent>Style</ContainerTabs.TabContent> */}
+    </ContainerTabs>
   );
 };
 

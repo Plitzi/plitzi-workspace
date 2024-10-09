@@ -13,20 +13,20 @@ import DevToolsButton from './DevToolsButton';
  *   currentPageId?: string;
  *   children: React.ReactNode;
  *   elementSelected?: string;
- *   onElementSelect: (id: string) => void;
+ *   onSelectElement: (id: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const DevToolsSubHeader = props => {
-  const { className, elementSelected, currentPageId, onElementSelect = noop } = props;
+  const { className, elementSelected, currentPageId, onSelectElement = noop } = props;
   const [selectorEnabled, setSelectorEnabled] = useState(false);
 
   const handleElementHovered = useCallback(
     elementDOM => {
       const { id: elementId } = elementDOM?.dataset ?? {};
-      onElementSelect(elementId);
+      onSelectElement(elementId);
     },
-    [onElementSelect]
+    [onSelectElement]
   );
 
   const handleElementHoveredDebounced = useMemo(() => throttle(handleElementHovered, 100), [handleElementHovered]);
@@ -58,13 +58,13 @@ const DevToolsSubHeader = props => {
 
   const handleClickPage = useCallback(() => {
     setSelectorEnabled(false);
-    onElementSelect(currentPageId);
-  }, [currentPageId, onElementSelect]);
+    onSelectElement(currentPageId);
+  }, [currentPageId, onSelectElement]);
 
   const handleClickClear = useCallback(() => {
     setSelectorEnabled(false);
-    onElementSelect('');
-  }, [onElementSelect]);
+    onSelectElement('');
+  }, [onSelectElement]);
 
   useEffect(() => {
     if (typeof document === 'undefined') {

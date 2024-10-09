@@ -15,31 +15,38 @@ import ElementDetails from './ElementDetails';
  * @param {{
  *   className?: string;
  *   elementSelected?: string;
- *   onElementSelect: (id: string) => void;
+ *   onSelectElement: (id: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const ElementsViewer = props => {
-  const { className, elementSelected, onElementSelect = noop } = props;
+  const { className, elementSelected, onSelectElement = noop } = props;
   const { currentPageId } = use(NavigationContext);
   const { schema } = use(SchemaContext);
   const elements = useMemo(
     () => Object.values(schema.flat).filter(element => element.definition.rootId === currentPageId),
     [schema.flat, currentPageId]
   );
-  const element = useMemo(() => elements.find(element => element.id === elementSelected), [elements]);
+  const element = useMemo(() => elements.find(element => element.id === elementSelected), [elements, elementSelected]);
 
-  const handleElementSelected = useCallback(id => onElementSelect(id), [onElementSelect]);
+  const handleElementSelected = useCallback(id => onSelectElement(id), [onSelectElement]);
 
   return (
     <div className={classNames('flex h-full w-full', className)}>
       <ElementsList
-        className="p-2 w-[200px]"
+        className="p-2 w-[300px]"
         elements={elements}
         elementSelected={elementSelected}
         onSelect={handleElementSelected}
       />
-      {elementSelected && <ElementDetails className="grow" element={element} />}
+      {elementSelected && (
+        <ElementDetails
+          className="grow"
+          definition={element?.definition}
+          attributes={element?.attributes}
+          onSelectElement={onSelectElement}
+        />
+      )}
     </div>
   );
 };
