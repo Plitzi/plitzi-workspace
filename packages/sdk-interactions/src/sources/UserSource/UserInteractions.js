@@ -1,5 +1,5 @@
 // Packages
-import React, { use, useCallback, useMemo } from 'react';
+import { use, useCallback, useMemo } from 'react';
 
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';

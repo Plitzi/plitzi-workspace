@@ -8,7 +8,7 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import ComponentContext from '../Component/ComponentContext';
 import { nestedInject, ORIGIN_REMOTE } from '../Component/ComponentHelper';
-import withElement from './hocs/withElement'; // eslint-disable-line import/no-cycle
+import withElement from './hocs/withElement';
 import { generatePluginModule } from './helpers/elementUtils';
 import useDynamicScript from './hooks/useDynamicScript';
 

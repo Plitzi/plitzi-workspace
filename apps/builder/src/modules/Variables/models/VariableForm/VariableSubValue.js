@@ -1,6 +1,6 @@
 // Packages
 import React, { useMemo } from 'react';
-import { Controller, UseFormMethods } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
 
 // Monorepo
@@ -10,7 +10,7 @@ import VariableValue from './VariableValue';
 /**
  * @param {{
  *   index?: number;
- *   control: UseFormMethods;
+ *   control: import('react-hook-form').UseFormMethods;
  *   valueType?: string;
  *   whenData?: object;
  * }} props

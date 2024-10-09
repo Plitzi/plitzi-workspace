@@ -26,7 +26,7 @@ import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE } from '../../BuilderHelper';
 
 // Style
-import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss'; // eslint-disable-line
+import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss';
 
 // SDK Style
 import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // eslint-disable-line

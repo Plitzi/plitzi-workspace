@@ -60,7 +60,7 @@ const BlockJsx = props => {
     let jsxModule;
     let error;
     try {
-      jsxModule = await import(/*webpackIgnore:true*/ `data:text/javascript;base64,${data}`); // eslint-disable-line
+      jsxModule = await import(/*webpackIgnore:true*/ `data:text/javascript;base64,${data}`);
     } catch (e) {
       console.log(e);
       error = e.message;

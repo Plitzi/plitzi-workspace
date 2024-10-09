@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 

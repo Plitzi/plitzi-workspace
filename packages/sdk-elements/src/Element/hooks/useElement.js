@@ -1,5 +1,5 @@
 // Packages
-import React, { use, useMemo } from 'react';
+import { use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo

@@ -1,4 +1,3 @@
-/* eslint-disable react/no-danger */
 // Packages
 import React, { useMemo } from 'react';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';

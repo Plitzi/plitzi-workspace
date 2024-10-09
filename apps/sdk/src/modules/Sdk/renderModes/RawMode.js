@@ -1,4 +1,3 @@
-/* eslint-disable react/no-danger */
 // Packages
 import React, { useMemo, use } from 'react';
 import get from 'lodash/get';
@@ -45,7 +44,7 @@ const RawMode = props => {
     <SpaceContainer>
       <style dangerouslySetInnerHTML={{ __html: style }} />
       <PlitziServiceProvider value={plitziContextValue}>
-        {pageId && renderMode !== RENDER_MODE_WIDGET && <Page key={pageId} internalProps={pageValueMemo}/>}
+        {pageId && renderMode !== RENDER_MODE_WIDGET && <Page key={pageId} internalProps={pageValueMemo} />}
         {pageId && renderMode === RENDER_MODE_WIDGET && (
           <PluginManager key={pageId} id={pageId} rootId={pageId} type={type} internalProps={pageValueMemo} />
         )}

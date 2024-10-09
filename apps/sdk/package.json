@@ -37,8 +37,8 @@
     "immer": "^10.1.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "react": "19.0.0-rc-3edc000d-20240926",
-    "react-dom": "19.0.0-rc-3edc000d-20240926",
+    "react": "19.0.0-rc-2d16326d-20240930",
+    "react-dom": "19.0.0-rc-2d16326d-20240930",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^6.26.2",
     "twig": "^1.17.1"

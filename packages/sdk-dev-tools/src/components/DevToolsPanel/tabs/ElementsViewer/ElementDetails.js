@@ -2,9 +2,9 @@
 import React from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
+import ContainerTabs from '@plitzi/plitzi-ui-components/ContainerTabs';
 
 // Relatives
-import ContainerTabs from '../../../ContainerTabs';
 import DetailsDefinition from './DetailsDefinition';
 import DetailsAttributes from './DetailsAttributes';
 

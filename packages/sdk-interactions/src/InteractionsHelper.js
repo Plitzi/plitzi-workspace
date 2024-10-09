@@ -214,3 +214,7 @@ const flowTrigger = async (
 };
 
 export { flowTrigger };
+
+const InteractionsHelper = { flowTrigger };
+
+export default InteractionsHelper;

@@ -1,11 +1,11 @@
 // Packages
 import React from 'react';
-import { Controller, UseFormMethods } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
 /**
  * @param {{
- *   control: UseFormMethods;
+ *   control: import('react-hook-form').UseFormMethods;
  *   valueType?: string;
  *   hasSubValues?: boolean;
  *   name?: string;

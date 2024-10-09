@@ -1,4 +1,3 @@
-/* eslint-disable react/no-danger */
 // Packages
 import React from 'react';
 
