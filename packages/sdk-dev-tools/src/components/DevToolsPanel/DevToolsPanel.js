@@ -45,7 +45,7 @@ const DevToolsPanel = props => {
 
   return (
     <ContainerResizable
-      className={classNames('component__container-resizable-sidebar', className)}
+      className={classNames('component__container-resizable-sidebar text-sm', className)}
       minConstraintsX={orientation === ORIENTATION_VERTICAL ? 500 : Infinity}
       maxConstraintsX={orientation === ORIENTATION_VERTICAL ? 1000 : Infinity}
       minConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 34}
