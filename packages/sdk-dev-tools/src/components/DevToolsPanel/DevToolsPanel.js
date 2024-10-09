@@ -27,7 +27,7 @@ export const ORIENTATION_HORIZONTAL = 'horizontal';
  */
 const DevToolsPanel = props => {
   const { className, orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop } = props;
-  const [tabSelected, setTabSelected] = useState('elements');
+  const [tabSelected, setTabSelected] = useState('logs');
   const { currentPageId } = use(NavigationContext);
   const [elementSelected, setElementSelected] = useState(currentPageId);
   const resizeHandles = useMemo(() => (orientation === ORIENTATION_VERTICAL ? ['w'] : ['n']), [orientation]);
@@ -51,7 +51,7 @@ const DevToolsPanel = props => {
       minConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 34}
       maxConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 600}
       width={orientation === ORIENTATION_VERTICAL ? 500 : Infinity}
-      height={orientation === ORIENTATION_VERTICAL ? Infinity : 350}
+      height={orientation === ORIENTATION_VERTICAL ? Infinity : 34}
       resizeHandles={resizeHandles}
       parentElement={parentElement}
       autoGrow={false}
