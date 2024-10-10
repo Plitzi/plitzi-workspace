@@ -1,5 +1,13 @@
 # @plitzi/sdk-interactions
 
+## 0.23.1
+
+### Patch Changes
+
+- v0.23.1
+- Updated dependencies
+  - @plitzi/sdk-shared@0.23.1
+
 ## 0.23.0
 
 ### Minor Changes
