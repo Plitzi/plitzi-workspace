@@ -301,25 +301,23 @@ const BuilderAreaTracking = props => {
   );
 
   useLayoutEffect(() => {
-    if (iframeDOM && !previewMode) {
+    if (previewMode) {
+      return;
+    }
+
+    window.document.addEventListener('copy', handleCopy);
+    window.document.addEventListener('paste', handlePaste);
+    if (iframeDOM) {
       iframeDOM.contentWindow.document.addEventListener('copy', handleCopy);
       iframeDOM.contentWindow.document.addEventListener('paste', handlePaste);
     }
 
-    if (!previewMode) {
-      window.document.addEventListener('copy', handleCopy);
-      window.document.addEventListener('paste', handlePaste);
-    }
-
     return () => {
-      if (iframeDOM && !previewMode) {
+      window.document.removeEventListener('copy', handleCopy);
+      window.document.removeEventListener('paste', handlePaste);
+      if (iframeDOM) {
         iframeDOM.contentWindow.document.removeEventListener('copy', handleCopy);
         iframeDOM.contentWindow.document.removeEventListener('paste', handlePaste);
-      }
-
-      if (!previewMode) {
-        window.document.removeEventListener('copy', handleCopy);
-        window.document.removeEventListener('paste', handlePaste);
       }
     };
   }, [iframeDOM, handleCopy, handlePaste, previewMode]);
