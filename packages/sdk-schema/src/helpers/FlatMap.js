@@ -239,7 +239,7 @@ const getElementVariables = (flat, elementId, variables, style) => {
   return variablesFound;
 };
 
-const cloneElements = (elementId, flat, parentId = '', rootId = '', excludeRoot = false) => {
+const cloneElements = (flat, elementId, parentId = '', rootId = '', excludeRoot = false) => {
   const result = { acum: {}, item: undefined };
   const mapIds = {};
 
@@ -373,7 +373,7 @@ const flatAsTemplate = (schema, style, elementId, excludeRoot = false) => {
     return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
   }
 
-  const elements = cloneElements(elementId, schema.flat, element.definition.parentId);
+  const elements = cloneElements(schema.flat, elementId, element.definition.parentId);
   Object.values(elements.acum).forEach(element => {
     const { id } = element;
     set(elements.acum, `${id}.definition.rootId`, elements.item.id);
@@ -414,7 +414,6 @@ const FlatMap = {
   get: getElement,
   getElementVariables,
   isValid: isValidElement,
-  getNested: cloneElements,
   getParentTree: parentTree,
   getChildTree: childTree,
   flatAsTemplate

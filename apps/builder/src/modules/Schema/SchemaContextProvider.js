@@ -120,7 +120,7 @@ const SchemaContextProvider = props => {
   const schemaCloneElement = useCallback(
     (elementId, targetId, fromSubscriptions = false) => {
       const flat = get(schemaRef.current, 'flat');
-      const elements = FlatMap.clone(elementId, flat, targetId);
+      const elements = FlatMap.clone(flat, elementId, targetId);
       if (!elements || !elements.item) {
         return;
       }

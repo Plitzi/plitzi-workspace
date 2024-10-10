@@ -273,9 +273,9 @@ const BuilderProvider = props => {
       }
 
       if (type[1] === 'plitzi-template') {
-        const dataCloned = FlatMap.getNested(
-          data.baseElement.id,
+        const dataCloned = FlatMap.clone(
           { [data.baseElement.id]: data.baseElement, ...data.elements },
+          data.baseElement.id,
           '',
           rootId,
           true
