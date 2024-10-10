@@ -156,11 +156,14 @@ const BuilderAreaTracking = props => {
         case 'Delete':
         case 'Backspace': {
           if (
-            elementSelected &&
-            iframeDOM.contentWindow.document.body.contains(e.target) &&
-            elementSelected !== baseElementId &&
-            get(schemaRef, `current.flat.${elementSelected}`)
+            !elementSelected ||
+            elementSelected === baseElementId ||
+            !get(schemaRef, `current.flat.${elementSelected}`)
           ) {
+            break;
+          }
+
+          if (iframeDOM.contentWindow.document.body.contains(e.target) || e.target.closest('.builder__breadcrumb')) {
             builderHandler(EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, elementSelected);
           }
 
@@ -322,21 +325,19 @@ const BuilderAreaTracking = props => {
   }, [iframeDOM, handleCopy, handlePaste, previewMode]);
 
   useLayoutEffect(() => {
-    if (iframeDOM && !previewMode && !multiPagesMode) {
+    if (previewMode || multiPagesMode) {
+      return;
+    }
+
+    window.document.addEventListener('keydown', handleKeyDown);
+    if (iframeDOM) {
       iframeDOM.contentWindow.document.addEventListener('keydown', handleKeyDown);
     }
 
-    if (!previewMode && !multiPagesMode) {
-      window.document.addEventListener('keydown', handleKeyDown);
-    }
-
     return () => {
-      if (iframeDOM && !previewMode && !multiPagesMode) {
+      window.document.removeEventListener('keydown', handleKeyDown);
+      if (iframeDOM) {
         iframeDOM.contentWindow.document.removeEventListener('keydown', handleKeyDown);
-      }
-
-      if (!previewMode && !multiPagesMode) {
-        window.document.removeEventListener('keydown', handleKeyDown);
       }
     };
   }, [previewMode, handleKeyDown, iframeDOM]);
