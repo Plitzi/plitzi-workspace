@@ -277,6 +277,7 @@ const BuilderProvider = props => {
           data.baseElement.id,
           { [data.baseElement.id]: data.baseElement, ...data.elements },
           '',
+          rootId,
           true
         );
 

@@ -239,18 +239,27 @@ const getElementVariables = (flat, elementId, variables, style) => {
   return variablesFound;
 };
 
-const cloneElements = (elementId, flat, parentId = '', excludeRoot = false) => {
+const cloneElements = (elementId, flat, parentId = '', rootId = '', excludeRoot = false) => {
+  const result = { acum: {}, item: undefined };
   const mapIds = {};
+
+  const element = flat[elementId];
+  if (!element) {
+    return result;
+  }
+
   const elements = [elementId, ...childTree(flat, elementId)]
     .map(id => flat[id])
     .filter(Boolean)
     .reduce((acum, element) => {
       mapIds[element.id] = generateID(element.id);
+      if (!rootId) {
+        return { ...acum, [element.id]: element };
+      }
 
-      return { ...acum, [element.id]: element };
+      return { ...acum, [element.id]: { ...element, definition: { ...element.definition, rootId } } };
     }, {});
 
-  const result = { acum: {}, item: undefined };
   try {
     let elementsStr = JSON.stringify(elements);
     elementsStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), elementsStr);
@@ -266,41 +275,16 @@ const cloneElements = (elementId, flat, parentId = '', excludeRoot = false) => {
     delete result.acum[mapIds[elementId]];
   }
 
+  const parentElement = flat[parentId];
+  if (!parentElement || !Array.isArray(get(parentElement, 'definition.items'))) {
+    parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId'));
+  }
+
   if (parentId && result.item) {
     set(result, 'item.definition.parentId', parentId);
   }
 
   return result;
-};
-
-const cloneElement = (flat, elementId, targetId) => {
-  if (!flat[elementId]) {
-    return flat;
-  }
-
-  const {
-    definition: { parentId }
-  } = flat[elementId];
-  if (!parentId) {
-    return flat;
-  }
-
-  if (!targetId) {
-    targetId = parentId;
-  }
-
-  const targetParent = flat[targetId];
-  const {
-    definition: { items: targetItems }
-  } = targetParent;
-  let newItems = {};
-  if (targetItems) {
-    newItems = cloneElements(elementId, flat, targetId);
-  } else {
-    newItems = cloneElements(elementId, flat, parentId);
-  }
-
-  return newItems;
 };
 
 const parentTree = (flat, elementId) => {
@@ -426,7 +410,7 @@ const FlatMap = {
   add: addElement,
   remove: removeElement,
   move: moveElement,
-  clone: cloneElement,
+  clone: cloneElements,
   get: getElement,
   getElementVariables,
   isValid: isValidElement,
