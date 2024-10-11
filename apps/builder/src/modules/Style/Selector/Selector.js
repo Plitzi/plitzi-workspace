@@ -150,7 +150,6 @@ const Selector = props => {
     switch (e.key) {
       case 'Enter': {
         const { value } = e.target;
-
         if (value !== '' && !tags.find(tag => tag.name === value)) {
           setTimeout(() => setInputValue(''), 0);
           const tag = { name: selectorFormatter(value), type: StyleSelectors.SELECTOR_CLASS };
@@ -165,6 +164,18 @@ const Selector = props => {
           e.target.blur();
           onSelectorSelected(tag);
         }
+
+        break;
+      }
+
+      case 'ArrowUp': {
+        setPopupOpened(false);
+
+        break;
+      }
+
+      case 'ArrowDown': {
+        setPopupOpened(true);
 
         break;
       }
@@ -285,14 +296,12 @@ const Selector = props => {
         </div>
       </Dropdown.Content>
       <Dropdown.Container>
-        {popupOpened && (
-          <SelectorSuggestions
-            selector={inputValue}
-            selectors={selectorsAvailables}
-            onSelect={handleSuggestionsSelect}
-            onCreate={handleSuggestionsCreate}
-          />
-        )}
+        <SelectorSuggestions
+          selector={inputValue}
+          selectors={selectorsAvailables}
+          onSelect={handleSuggestionsSelect}
+          onCreate={handleSuggestionsCreate}
+        />
       </Dropdown.Container>
     </Dropdown>
   );
