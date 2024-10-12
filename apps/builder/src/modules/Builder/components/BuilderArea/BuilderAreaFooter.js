@@ -31,16 +31,11 @@ const BuilderAreaFooter = props => {
 
   const handleClickTools = useCallback(() => {
     if (!existsPopup('element-tools')) {
-      const title = (
-        <>
-          <i className="fas fa-tools m-1 text-base" />
-          Tools
-        </>
-      );
       addPopup('element-tools', <BuilderElementTools />, {
+        icon: <i className="fas fa-tools text-base" />,
+        title: 'Tools',
         resizeHandles: ['se'],
         width: 350,
-        title,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
         placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT
@@ -50,14 +45,9 @@ const BuilderAreaFooter = props => {
 
   const handleClickLayerManayer = useCallback(() => {
     if (!existsPopup('layerManager')) {
-      const title = (
-        <>
-          <i className="fas fa-stream m-1 text-base" />
-          Layer Manager
-        </>
-      );
       addPopup('layerManager', <BuilderTree setDragTree={setDragTree} />, {
-        title,
+        icon: <i className="fas fa-stream text-base" />,
+        title: 'Layer Manager',
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
         placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
@@ -68,14 +58,9 @@ const BuilderAreaFooter = props => {
 
   const handleClickAdvanceStyle = useCallback(() => {
     if (!existsPopup('advance-style')) {
-      const title = (
-        <>
-          <i className="fas fa-code m-1 text-base" />
-          Advance Style
-        </>
-      );
       addPopup('advance-style', <StyleAdvanceEditor />, {
-        title,
+        icon: <i className="fas fa-code text-base" />,
+        title: 'Advance Style',
         resizeHandles: ['se'],
         height: 400,
         width: 600,
@@ -88,14 +73,9 @@ const BuilderAreaFooter = props => {
 
   const handleClickStateManager = useCallback(() => {
     if (!existsPopup('stateManager')) {
-      const title = (
-        <>
-          <i className="fa-solid fa-sliders m-1 text-base" />
-          State Manager
-        </>
-      );
       addPopup('stateManager', <StateManager />, {
-        title,
+        icon: <i className="fa-solid fa-sliders text-base" />,
+        title: 'State Manager',
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
         placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
@@ -106,14 +86,9 @@ const BuilderAreaFooter = props => {
 
   const handleClickTransform = useCallback(() => {
     if (!existsPopup('transform')) {
-      const title = (
-        <>
-          <i className="fa-brands fa-nfc-symbol m-1 text-base" />
-          Import And Transform
-        </>
-      );
       addPopup('transform', <Transform />, {
-        title,
+        icon: <i className="fa-brands fa-nfc-symbol text-base" />,
+        title: 'Import And Transform',
         height: 400,
         width: 800,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
@@ -126,14 +101,9 @@ const BuilderAreaFooter = props => {
 
   const handleClickAssistant = useCallback(() => {
     if (!existsPopup('assistant')) {
-      const title = (
-        <>
-          <i className="fa-solid fa-star m-1 text-base" />
-          Assistant
-        </>
-      );
       addPopup('assistant', <OpenAIChat />, {
-        title,
+        icon: <i className="fa-solid fa-star text-base" />,
+        title: 'Assistant',
         width: 400,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
@@ -182,15 +152,17 @@ const BuilderAreaFooter = props => {
         >
           <i className="fas fa-code" />
         </Button>
-        {featureFlag.assistanceAI && <Button
-          intent="custom"
-          size="custom"
-          onClick={handleClickAssistant}
-          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
-          title="Assistant"
-        >
-          <i className="fa-solid fa-star" />
-        </Button>}
+        {featureFlag.assistanceAI && (
+          <Button
+            intent="custom"
+            size="custom"
+            onClick={handleClickAssistant}
+            className="hover:bg-gray-200 h-9 w-9 text-gray-500"
+            title="Assistant"
+          >
+            <i className="fa-solid fa-star" />
+          </Button>
+        )}
         <Button
           intent="custom"
           size="custom"

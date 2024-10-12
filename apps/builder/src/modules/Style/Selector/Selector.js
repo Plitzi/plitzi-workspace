@@ -223,15 +223,10 @@ const Selector = props => {
       e.preventDefault();
       e.stopPropagation();
       if (!existsPopup('styleManager')) {
-        const title = (
-          <>
-            <i className="fas fa-swatchbook m-1 text-base" />
-            Style Manager
-          </>
-        );
         addPopup('styleManager', <StyleManager />, {
+          icon: <i className="fas fa-swatchbook text-base" />,
+          title: 'Style Manager',
           resizeHandles: ['se'],
-          title,
           allowLeftSide: true,
           allowRightSide: true,
           placement: POPUP_PLACEMENT_FLOATING,

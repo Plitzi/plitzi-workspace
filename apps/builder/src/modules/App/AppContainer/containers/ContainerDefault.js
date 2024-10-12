@@ -33,11 +33,24 @@ const ContainerDefault = props => {
   const styleContext = use(StyleContext);
   const { currentPageId } = use(NavigationContext);
   const [state, setCache, getCacheByKey] = useCache();
-  const popupsActive = useMemo(() => getCacheByKey('PopupSidebar.popupsActive', []), [state]);
+  const popupsActive = useMemo(
+    () => getCacheByKey('PopupSidebar.popupsActive', { left: [], right: [] }),
+    [state, getCacheByKey]
+  );
 
-  const handleClickSelect = useCallback((popupId, popups) => setCache(popups, 'PopupSidebar.popupsActive'), []);
+  const handleClickSelectLeft = useCallback(
+    (popupId, popups) => setCache(popups, 'PopupSidebar.popupsActive.left'),
+    [setCache]
+  );
 
-  const handleLoadPopups = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive'), []);
+  const handleClickSelectRight = useCallback(
+    (popupId, popups) => setCache(popups, 'PopupSidebar.popupsActive.right'),
+    [setCache]
+  );
+
+  const handleLoadPopupsLeft = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive.left'), [setCache]);
+
+  const handleLoadPopupsRight = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive.right'), [setCache]);
 
   const builderHandler = useCallback(
     (event, data) => eventBridge.emit(EventBridgeModuleTypes.MAIN, event, ...data),
@@ -63,20 +76,35 @@ const ContainerDefault = props => {
         baseElementId={currentPageId}
         onHandler={builderHandler}
       >
-        <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
+        <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
+          {!previewMode && (
+            <PopupSidebar
+              className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
+              placementTabs="left"
+              placement="left"
+              minWidth={335}
+              maxWidth={540}
+              canHide
+              multiSelect
+              popupsActive={popupsActive.left}
+              onSelect={handleClickSelectLeft}
+              onLoadPopups={handleLoadPopupsLeft}
+            />
+          )}
           <Builder externalStyle={externalStyle} customCss={customCss} pages={pages} />
 
           {!previewMode && (
             <PopupSidebar
               className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
               placementTabs="right"
+              placement="right"
               minWidth={335}
               maxWidth={540}
               canHide
               multiSelect
-              popupsActive={popupsActive}
-              onSelect={handleClickSelect}
-              onLoadPopups={handleLoadPopups}
+              popupsActive={popupsActive.right}
+              onSelect={handleClickSelectRight}
+              onLoadPopups={handleLoadPopupsRight}
             />
           )}
         </PopupProvider>

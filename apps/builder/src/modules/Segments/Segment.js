@@ -97,17 +97,12 @@ const Segment = props => {
       e.stopPropagation();
       const segment = await segmentGet(identifier);
       if (!existsPopup('segment-builder') && segment) {
-        const title = (
-          <>
-            <i className="fa-solid fa-puzzle-piece m-1 text-base" />
-            Segment - {name}
-          </>
-        );
         addPopup('segment-builder', <BuilderPopup segmentIdentifier={identifier} />, {
+          icon: <i className="fa-solid fa-puzzle-piece text-base" />,
+          title: `Segment - ${name}`,
           resizeHandles: ['se'],
           width: 800,
           height: 500,
-          title,
           allowRightSide: false,
           allowExternal: false,
           placement: 'POPUP_PLACEMENT_FLOATING'

@@ -42,16 +42,11 @@ const Builder = props => {
 
   useEffect(() => {
     if (!existsPopup('element-tools')) {
-      const title = (
-        <>
-          <i className="fas fa-tools m-1 text-base" />
-          Tools
-        </>
-      );
       addPopup('element-tools', <BuilderElementTools />, {
+        icon: <i className="fas fa-tools text-base" />,
+        title: 'Tools',
         resizeHandles: ['se'],
         width: 350,
-        title,
         allowLeftSide: true,
         allowRightSide: true,
         placement: POPUP_PLACEMENT_RIGHT
