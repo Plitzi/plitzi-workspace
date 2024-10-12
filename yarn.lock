@@ -85,6 +85,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/cli@npm:^7.25.7":
+  version: 7.25.7
+  resolution: "@babel/cli@npm:7.25.7"
+  dependencies:
+    "@jridgewell/trace-mapping": "npm:^0.3.25"
+    "@nicolo-ribaudo/chokidar-2": "npm:2.1.8-no-fsevents.3"
+    chokidar: "npm:^3.6.0"
+    commander: "npm:^6.2.0"
+    convert-source-map: "npm:^2.0.0"
+    fs-readdir-recursive: "npm:^1.1.0"
+    glob: "npm:^7.2.0"
+    make-dir: "npm:^2.1.0"
+    slash: "npm:^2.0.0"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  dependenciesMeta:
+    "@nicolo-ribaudo/chokidar-2":
+      optional: true
+    chokidar:
+      optional: true
+  bin:
+    babel: ./bin/babel.js
+    babel-external-helpers: ./bin/babel-external-helpers.js
+  checksum: 10c0/bbbc53eef15844b0bfb737d7d134f979d42c51a269e2aee994b02eb9216a22e8dd3d790d5ae9f5b5c003e01eccfc164c14aaa1ad989695e0154f66a588f77d42
+  languageName: node
+  linkType: hard
+
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.10.4, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.16.7, @babel/code-frame@npm:^7.24.7":
   version: 7.24.7
   resolution: "@babel/code-frame@npm:7.24.7"
@@ -3133,6 +3160,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nicolo-ribaudo/chokidar-2@npm:2.1.8-no-fsevents.3":
+  version: 2.1.8-no-fsevents.3
+  resolution: "@nicolo-ribaudo/chokidar-2@npm:2.1.8-no-fsevents.3"
+  checksum: 10c0/27dcabaa0c9a29b3a60217bd3fff87a22cb43ed77863da570c6828e4d0b8f1c6ee52582cd3d439275a2b1f2051005e648ed866b981f2a03b61c645b7e4806ba7
+  languageName: node
+  linkType: hard
+
 "@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1":
   version: 5.1.1-v1
   resolution: "@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1"
@@ -3279,7 +3313,7 @@ __metadata:
     css-loader: "npm:^7.1.2"
     cypress: "npm:13.15.0"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.248.0"
+    flow-bin: "npm:^0.248.1"
     graphql: "npm:^16.9.0"
     handlebars-webpack-plugin: "npm:^2.2.1"
     html-webpack-plugin: "npm:^5.6.0"
@@ -3365,7 +3399,7 @@ __metadata:
     compression-webpack-plugin: "npm:^11.1.0"
     css-loader: "npm:^7.1.2"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.248.0"
+    flow-bin: "npm:^0.248.1"
     graphql: "npm:^16.9.0"
     handlebars: "npm:^4.7.8"
     handlebars-webpack-plugin: "npm:^2.2.1"
@@ -3462,6 +3496,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
@@ -3473,6 +3509,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-data-source@workspace:packages/sdk-data-source"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
@@ -3485,12 +3523,16 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@microlink/react-json-view": "npm:^1.23.3"
+    "@plitzi/sdk-shared": "npm:*"
     classnames: "npm:^2.5.1"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
     react: "npm:19.0.0-rc-2d16326d-20240930"
+    react-dom: "npm:19.0.0-rc-2d16326d-20240930"
   languageName: unknown
   linkType: soft
 
@@ -3498,6 +3540,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
@@ -3508,6 +3552,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
@@ -3519,6 +3565,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
@@ -3529,8 +3577,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-navigation@workspace:packages/sdk-navigation"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
+    "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
+    react: "npm:19.0.0-rc-2d16326d-20240930"
+    react-dom: "npm:19.0.0-rc-2d16326d-20240930"
     react-router-dom: "npm:^6.27.0"
   languageName: unknown
   linkType: soft
@@ -3539,6 +3592,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-plugins@workspace:packages/sdk-plugins"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
@@ -3550,6 +3605,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     jest: "npm:^29.7.0"
@@ -3562,6 +3619,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-shared@workspace:packages/sdk-shared"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
     "@babel/eslint-parser": "npm:^7.25.8"
     "@babel/plugin-syntax-flow": "npm:^7.25.7"
@@ -3591,6 +3649,10 @@ __metadata:
     eslint-plugin-react-refresh: "npm:^0.4.12"
     eslint-plugin-storybook: "npm:^0.9.0"
     jest-environment-jsdom: "npm:^29.7.0"
+    postcss: "npm:^8.4.47"
+    prettier: "npm:^3.3.3"
+    react: "npm:19.0.0-rc-2d16326d-20240930"
+    react-dom: "npm:19.0.0-rc-2d16326d-20240930"
     tailwindcss: "npm:^3.4.13"
     twig: "npm:^1.17.1"
   languageName: unknown
@@ -3600,6 +3662,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-state@workspace:packages/sdk-state"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
@@ -3610,6 +3674,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
+    "@babel/cli": "npm:^7.25.7"
+    "@babel/core": "npm:^7.25.8"
     eslint: "npm:^9.12.0"
     immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"
@@ -6983,7 +7049,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^6.2.1":
+"commander@npm:^6.2.0, commander@npm:^6.2.1":
   version: 6.2.1
   resolution: "commander@npm:6.2.1"
   checksum: 10c0/85748abd9d18c8bc88febed58b98f66b7c591d9b5017cad459565761d7b29ca13b7783ea2ee5ce84bf235897333706c4ce29adf1ce15c8252780e7000e2ce9ea
@@ -9407,12 +9473,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flow-bin@npm:^0.248.0":
-  version: 0.248.0
-  resolution: "flow-bin@npm:0.248.0"
+"flow-bin@npm:^0.248.1":
+  version: 0.248.1
+  resolution: "flow-bin@npm:0.248.1"
   bin:
     flow: cli.js
-  checksum: 10c0/0ed283b02dc8f6ea24f0e479ba6673ad19b383d471727cc512ebf814c5b472017ac312dd21ac2ddde933d8e8f761d35225ac135c15e657e7d7ffc3bfa3901989
+  checksum: 10c0/bcd4944db4970bc6361cc7701eca3e86c6fef96904368d417747c05f21c90e686c5a26f55e713da1a9c50bc65c50e53f6d7312c9a4332675c71c9946b87e6901
   languageName: node
   linkType: hard
 
@@ -9624,6 +9690,13 @@ __metadata:
   version: 1.0.6
   resolution: "fs-monkey@npm:1.0.6"
   checksum: 10c0/6f2508e792a47e37b7eabd5afc79459c1ea72bce2a46007d2b7ed0bfc3a4d64af38975c6eb7e93edb69ac98bbb907c13ff1b1579b2cf52d3d02dbc0303fca79f
+  languageName: node
+  linkType: hard
+
+"fs-readdir-recursive@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "fs-readdir-recursive@npm:1.1.0"
+  checksum: 10c0/7e190393952143e674b6d1ad4abcafa1b5d3e337fcc21b0cb051079a7140a54617a7df193d562ef9faf21bd7b2148a38601b3d5c16261fa76f278d88dc69989c
   languageName: node
   linkType: hard
 
@@ -9858,7 +9931,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^7.0.0, glob@npm:^7.0.3, glob@npm:^7.1.3, glob@npm:^7.1.4":
+"glob@npm:^7.0.0, glob@npm:^7.0.3, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.2.0":
   version: 7.2.3
   resolution: "glob@npm:7.2.3"
   dependencies:
@@ -12666,6 +12739,16 @@ __metadata:
   dependencies:
     "@jridgewell/sourcemap-codec": "npm:^1.5.0"
   checksum: 10c0/b9eb370773d0bd90ca11a848753409d8e5309b1ad56d2a1aa49d6649da710a6d2fe7237ad1a643c5a5d3800de2b9946ed9690acdfc00e6cc1aeafff3ab1752c4
+  languageName: node
+  linkType: hard
+
+"make-dir@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "make-dir@npm:2.1.0"
+  dependencies:
+    pify: "npm:^4.0.1"
+    semver: "npm:^5.6.0"
+  checksum: 10c0/ada869944d866229819735bee5548944caef560d7a8536ecbc6536edca28c72add47cc4f6fc39c54fb25d06b58da1f8994cf7d9df7dadea047064749efc085d8
   languageName: node
   linkType: hard
 
@@ -16224,7 +16307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:2 || 3 || 4 || 5":
+"semver@npm:2 || 3 || 4 || 5, semver@npm:^5.6.0":
   version: 5.7.2
   resolution: "semver@npm:5.7.2"
   bin:
@@ -16467,6 +16550,13 @@ __metadata:
   version: 1.0.5
   resolution: "sisteransi@npm:1.0.5"
   checksum: 10c0/230ac975cca485b7f6fe2b96a711aa62a6a26ead3e6fb8ba17c5a00d61b8bed0d7adc21f5626b70d7c33c62ff4e63933017a6462942c719d1980bb0b1207ad46
+  languageName: node
+  linkType: hard
+
+"slash@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "slash@npm:2.0.0"
+  checksum: 10c0/f83dbd3cb62c41bb8fcbbc6bf5473f3234b97fa1d008f571710a9d3757a28c7169e1811cad1554ccb1cc531460b3d221c9a7b37f549398d9a30707f0a5af9193
   languageName: node
   linkType: hard
 

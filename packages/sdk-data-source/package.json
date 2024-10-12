@@ -15,7 +15,9 @@
     "./sources/UserSource": "./src/sources/UserSource.js"
   },
   "scripts": {
-    "lint": "eslint ./src"
+    "lint": "eslint ./src",
+    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "dependencies": {
     "@plitzi/sdk-event-bridge": "*",
@@ -24,6 +26,8 @@
     "moment": "^2.30.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.25.7",
+    "@babel/core": "^7.25.8",
     "eslint": "^9.12.0"
   }
 }

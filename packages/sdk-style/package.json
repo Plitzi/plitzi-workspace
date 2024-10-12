@@ -9,9 +9,13 @@
     "./StyleConstants": "./src/StyleConstants.js"
   },
   "scripts": {
-    "lint": "eslint ./src"
+    "lint": "eslint ./src",
+    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "devDependencies": {
+    "@babel/cli": "^7.25.7",
+    "@babel/core": "^7.25.8",
     "eslint": "^9.12.0"
   },
   "dependencies": {
