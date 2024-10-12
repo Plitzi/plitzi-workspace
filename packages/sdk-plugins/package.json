@@ -1,11 +1,13 @@
 {
   "name": "@plitzi/sdk-plugins",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./PluginsContext": "./src/PluginsContext.js",
-    "./PluginHelper": "./src/PluginHelper.js"
+    ".": "./dist/index.js",
+    "./PluginsContext": "./dist/PluginsContext.js",
+    "./PluginHelper": "./dist/PluginHelper.js"
   },
   "scripts": {
     "lint": "eslint ./src",

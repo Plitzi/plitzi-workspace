@@ -1,12 +1,14 @@
 {
   "name": "@plitzi/sdk-navigation",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./NavigationHelper": "./src/NavigationHelper.js",
-    "./NavigationContext": "./src/NavigationContext.js",
-    "./useNavigation": "./src/hooks/useNavigation.js"
+    ".": "./dist/index.js",
+    "./NavigationHelper": "./dist/NavigationHelper.js",
+    "./NavigationContext": "./dist/NavigationContext.js",
+    "./useNavigation": "./dist/hooks/useNavigation.js"
   },
   "scripts": {
     "lint": "eslint ./src",

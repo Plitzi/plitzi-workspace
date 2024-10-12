@@ -1,3 +1,6 @@
+// Relatives
+// No relatives due that this is exporting all plitzi elements
+
 // Basic
 import Text from './components/basic/Text';
 import Paragraph from './components/basic/Paragraph';

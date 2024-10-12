@@ -1,13 +1,15 @@
 {
   "name": "@plitzi/sdk-event-bridge",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./EventBridgeContextProvider": "./src/EventBridgeContextProvider.js",
-    "./EventBridgeContext": "./src/EventBridgeContext.js",
-    "./EventBridgeHelper": "./src/EventBridgeHelper.js",
-    "./hooks/useEventBridge": "./src/hooks/useEventBridge.js"
+    ".": "./dist/index.js",
+    "./EventBridgeContextProvider": "./dist/EventBridgeContextProvider.js",
+    "./EventBridgeContext": "./dist/EventBridgeContext.js",
+    "./EventBridgeHelper": "./dist/EventBridgeHelper.js",
+    "./hooks/useEventBridge": "./dist/hooks/useEventBridge.js"
   },
   "scripts": {
     "lint": "eslint ./src",

@@ -1,20 +1,22 @@
 {
   "name": "@plitzi/sdk-elements",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./ComponentContext": "./src/Component/ComponentContext.js",
-    "./ComponentProvider": "./src/Component/ComponentProvider.js",
-    "./RootElement": "./src/Element/RootElement.js",
-    "./ReplicaProvider": "./src/Element/ReplicaProvider.js",
-    "./withElement": "./src/Element/hocs/withElement.js",
-    "./JsxManager": "./src/Element/JsxManager.js",
-    "./PluginRemote": "./src/Element/PluginRemote.js",
-    "./PluginManager": "./src/Element/PluginManager.js",
-    "./ElementConstants": "./src/Element/ElementConstants.js",
-    "./elementUtils": "./src/Element/helpers/elementUtils.js",
-    "./components": "./src/components/index.js"
+    ".": "./dist/index.js",
+    "./ComponentContext": "./dist/Component/ComponentContext.js",
+    "./ComponentProvider": "./dist/Component/ComponentProvider.js",
+    "./RootElement": "./dist/Element/RootElement.js",
+    "./ReplicaProvider": "./dist/Element/ReplicaProvider.js",
+    "./withElement": "./dist/Element/hocs/withElement.js",
+    "./JsxManager": "./dist/Element/JsxManager.js",
+    "./PluginRemote": "./dist/Element/PluginRemote.js",
+    "./PluginManager": "./dist/Element/PluginManager.js",
+    "./ElementConstants": "./dist/Element/ElementConstants.js",
+    "./elementUtils": "./dist/Element/helpers/elementUtils.js",
+    "./components": "./dist/components/index.js"
   },
   "scripts": {
     "lint": "eslint ./src",

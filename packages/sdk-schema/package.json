@@ -1,12 +1,14 @@
 {
   "name": "@plitzi/sdk-schema",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./SchemaContext": "./src/SchemaContext.js",
-    "./SchemaSettingsContext": "./src/SchemaSettingsContext.js",
-    "./FlatMap": "./src/helpers/FlatMap.js"
+    ".": "./dist/index.js",
+    "./SchemaContext": "./dist/SchemaContext.js",
+    "./SchemaSettingsContext": "./dist/SchemaSettingsContext.js",
+    "./FlatMap": "./dist/helpers/FlatMap.js"
   },
   "scripts": {
     "lint": "eslint ./src",

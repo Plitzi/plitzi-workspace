@@ -1,12 +1,14 @@
 {
   "name": "@plitzi/sdk-style",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./StyleContext": "./src/StyleContext.js",
-    "./StyleHelper": "./src/StyleHelper.js",
-    "./StyleConstants": "./src/StyleConstants.js"
+    ".": "./dist/index.js",
+    "./StyleContext": "./dist/StyleContext.js",
+    "./StyleHelper": "./dist/StyleHelper.js",
+    "./StyleConstants": "./dist/StyleConstants.js"
   },
   "scripts": {
     "lint": "eslint ./src",

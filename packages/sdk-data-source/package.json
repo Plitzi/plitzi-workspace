@@ -1,18 +1,20 @@
 {
   "name": "@plitzi/sdk-data-source",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./DataSourceContext": "./src/DataSourceContext.js",
-    "./DataSourceContextProvider": "./src/DataSourceContextProvider.js",
-    "./hooks/useDataSource": "./src/hooks/useDataSource.js",
-    "./helpers/getBindingsDetails": "./src/helpers/getBindingsDetails.js",
-    "./utility": "./src/utility/index.js",
-    "./sources/NavigationSource": "./src/sources/NavigationSource.js",
-    "./sources/PageStateSource": "./src/sources/PageStateSource.js",
-    "./sources/VariablesSource": "./src/sources/VariablesSource.js",
-    "./sources/UserSource": "./src/sources/UserSource.js"
+    ".": "./dist/index.js",
+    "./DataSourceContext": "./dist/DataSourceContext.js",
+    "./DataSourceContextProvider": "./dist/DataSourceContextProvider.js",
+    "./hooks/useDataSource": "./dist/hooks/useDataSource.js",
+    "./helpers/getBindingsDetails": "./dist/helpers/getBindingsDetails.js",
+    "./utility": "./dist/utility/index.js",
+    "./sources/NavigationSource": "./dist/sources/NavigationSource.js",
+    "./sources/PageStateSource": "./dist/sources/PageStateSource.js",
+    "./sources/VariablesSource": "./dist/sources/VariablesSource.js",
+    "./sources/UserSource": "./dist/sources/UserSource.js"
   },
   "scripts": {
     "lint": "eslint ./src",

@@ -1,11 +1,13 @@
 {
   "name": "@plitzi/sdk-auth",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./UserContext": "./src/UserContext.js",
-    "./UserBaseContextProvider": "./src/UserBaseContextProvider.js"
+    ".": "./dist/index.js",
+    "./UserContext": "./dist/UserContext.js",
+    "./UserBaseContextProvider": "./dist/UserBaseContextProvider.js"
   },
   "scripts": {
     "lint": "eslint ./src",

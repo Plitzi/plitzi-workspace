@@ -1,15 +1,17 @@
 {
   "name": "@plitzi/sdk-interactions",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./utility": "./src/utility/index.js",
-    "./InteractionsContext": "./src/InteractionsContext.js",
-    "./InteractionsContextProvider": "./src/InteractionsContextProvider.js",
-    "./InteractionsHelper": "./src/InteractionsHelper.js",
-    "./useInteractions": "./src/hooks/useInteractions.js",
-    "./sources/UserSource/UserInteractions": "./src/sources/UserSource/UserInteractions.js"
+    ".": "./dist/index.js",
+    "./utility": "./dist/utility/index.js",
+    "./InteractionsContext": "./dist/InteractionsContext.js",
+    "./InteractionsContextProvider": "./dist/InteractionsContextProvider.js",
+    "./InteractionsHelper": "./dist/InteractionsHelper.js",
+    "./useInteractions": "./dist/hooks/useInteractions.js",
+    "./sources/UserSource/UserInteractions": "./dist/sources/UserSource/UserInteractions.js"
   },
   "scripts": {
     "lint": "eslint ./src",

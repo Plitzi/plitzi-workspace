@@ -1,19 +1,27 @@
 {
   "name": "@plitzi/sdk-shared",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist",
+    "eslint.config.mjs",
+    "jest.config.js",
+    "jest.setup.js",
+    "tailwind.config.js"
+  ],
   "exports": {
-    "./usePlitziServiceContext": "./src/hooks/usePlitziServiceContext.js",
-    "./utils": "./src/helpers/utils.js",
-    "./syntaxHighlight": "./src/helpers/syntaxHighlight.js",
-    "./twigWrapper": "./src/helpers/twigWrapper.js",
+    "./usePlitziServiceContext": "./dist/hooks/usePlitziServiceContext.js",
+    "./utils": "./dist/helpers/utils.js",
+    "./syntaxHighlight": "./dist/helpers/syntaxHighlight.js",
+    "./twigWrapper": "./dist/helpers/twigWrapper.js",
     "./eslint.config.mjs": "./eslint.config.mjs",
     "./jest.config": "./jest.config.js",
     "./jest.setup": "./jest.setup.js",
     "./tailwind.config": "./tailwind.config.js"
   },
   "scripts": {
-    "lint": "eslint ./src"
+    "lint": "eslint ./src",
+    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "devDependencies": {
     "@babel/cli": "^7.25.7",

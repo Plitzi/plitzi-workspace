@@ -1,11 +1,13 @@
 {
   "name": "@plitzi/sdk-dev-tools",
   "version": "0.23.2",
-  "files": [],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.js",
-    "./DevToolsContainer": "./src/DevToolsContainer.js",
-    "./PlitziConsole": "./src/utils/PlitziConsole.js"
+    ".": "./dist/index.js",
+    "./DevToolsContainer": "./dist/DevToolsContainer.js",
+    "./PlitziConsole": "./dist/utils/PlitziConsole.js"
   },
   "scripts": {
     "lint": "eslint ./src",
