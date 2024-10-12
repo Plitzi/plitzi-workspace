@@ -18,7 +18,7 @@ export const VARIABLE_REGEX = /var\(--(?<token>[a-z0-9_-]+)\)/gi;
 export const EMPTY_SCHEMA = {
   schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] },
   style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
-  definition: { rootId: '' }
+  definition: { rootId: '' } // for segments and templates
 };
 
 const addElement = (flat, to, data, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}) => {

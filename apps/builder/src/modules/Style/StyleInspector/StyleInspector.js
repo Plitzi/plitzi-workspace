@@ -140,14 +140,14 @@ const StyleInspector = props => {
         <div className={classNames('flex w-full', { 'mt-2': allowStyleSelector })}>
           <Selector
             className="w-full min-h-[34px]"
-            onChange={handleChangeSelector}
-            onSelectorAdded={handleAddSelector}
-            onSelectorRemoved={handleRemoveSelector}
-            onSelectorSelected={handleCurrentSelector}
             disabled={mode === 'manager'}
             value={selector}
             selectorSelected={selectorSelected}
             displayMode={displayMode}
+            onChange={handleChangeSelector}
+            onSelectorAdded={handleAddSelector}
+            onSelectorRemoved={handleRemoveSelector}
+            onSelectorSelected={handleCurrentSelector}
           />
           <Button
             className="rounded ml-2 w-10 text-sm"

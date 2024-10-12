@@ -8,9 +8,9 @@ import SuggestionsList from './SuggestionsList';
 
 /**
  * @param {{
+ *   selector?: string;
  *   onSelect?: (tag: string) => void;
  *   onCreate?: (tag: string) => void;
- *   selector?: string;
  *   selectors?: { name: string; type: string }[];
  * }} props
  * @returns {React.ReactElement}
