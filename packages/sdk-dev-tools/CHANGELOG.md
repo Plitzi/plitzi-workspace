@@ -1,5 +1,13 @@
 # @plitzi/sdk-dev-tools
 
+## 0.23.3
+
+### Patch Changes
+
+- v0.23.3
+- Updated dependencies
+  - @plitzi/sdk-shared@0.23.3
+
 ## 0.23.2
 
 ### Patch Changes
