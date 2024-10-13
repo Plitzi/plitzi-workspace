@@ -15,7 +15,7 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "devDependencies": {
@@ -24,6 +24,9 @@
     "eslint": "^9.12.0"
   },
   "dependencies": {
+    "@plitzi/sdk-auth": "*",
+    "@plitzi/sdk-dev-tools": "*",
+    "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-shared": "*",
     "lodash": "^4.17.21"
   }

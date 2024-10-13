@@ -11,7 +11,7 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "devDependencies": {

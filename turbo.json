@@ -38,8 +38,9 @@
       "outputs": ["dist/**"]
     },
     "build-assets:dev-watch": {
-      "dependsOn": ["^build-assets:dev-watch"],
+      "dependsOn": [],
       "cache": false,
+      "persistent": true,
       "outputs": ["dist/**"]
     },
     "build-assets:dev-measure": {
@@ -63,8 +64,9 @@
       "outputs": ["dist/**"]
     },
     "build-assets:prod-watch": {
-      "dependsOn": ["^build-assets:prod-watch"],
+      "dependsOn": [],
       "cache": false,
+      "persistent": true,
       "outputs": ["dist/**"]
     },
     "build-assets:prod-measure": {

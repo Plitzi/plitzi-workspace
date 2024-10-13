@@ -3299,9 +3299,13 @@ __metadata:
     "@plitzi/sdk-auth": "npm:*"
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-interactions": "npm:*"
+    "@plitzi/sdk-navigation": "npm:*"
     "@plitzi/sdk-plugins": "npm:*"
+    "@plitzi/sdk-schema": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     "@plitzi/sdk-state": "npm:*"
+    "@plitzi/sdk-style": "npm:*"
+    "@plitzi/sdk-variables": "npm:*"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:^0.5.15"
     "@welldone-software/why-did-you-render": "npm:^8.0.3"
     apollo-upload-client: "npm:^18.0.1"
@@ -3381,8 +3385,11 @@ __metadata:
     "@plitzi/sdk-interactions": "npm:*"
     "@plitzi/sdk-navigation": "npm:*"
     "@plitzi/sdk-plugins": "npm:*"
+    "@plitzi/sdk-schema": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     "@plitzi/sdk-state": "npm:*"
+    "@plitzi/sdk-style": "npm:*"
+    "@plitzi/sdk-variables": "npm:*"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:^0.5.15"
     "@storybook/addon-essentials": "npm:^8.3.5"
     "@storybook/addon-interactions": "npm:^8.3.5"
@@ -3498,6 +3505,9 @@ __metadata:
   dependencies:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
+    "@plitzi/sdk-navigation": "npm:*"
+    "@plitzi/sdk-schema": "npm:*"
+    "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
@@ -3505,14 +3515,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-data-source@workspace:packages/sdk-data-source":
+"@plitzi/sdk-data-source@npm:*, @plitzi/sdk-data-source@workspace:packages/sdk-data-source":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-data-source@workspace:packages/sdk-data-source"
   dependencies:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
+    "@plitzi/sdk-auth": "npm:*"
     "@plitzi/sdk-event-bridge": "npm:*"
+    "@plitzi/sdk-navigation": "npm:*"
+    "@plitzi/sdk-schema": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
+    "@plitzi/sdk-state": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
@@ -3526,6 +3540,9 @@ __metadata:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
     "@microlink/react-json-view": "npm:^1.23.3"
+    "@plitzi/sdk-data-source": "npm:*"
+    "@plitzi/sdk-navigation": "npm:*"
+    "@plitzi/sdk-schema": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     classnames: "npm:^2.5.1"
     eslint: "npm:^9.12.0"
@@ -3542,6 +3559,9 @@ __metadata:
   dependencies:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
+    "@plitzi/sdk-data-source": "npm:*"
+    "@plitzi/sdk-dev-tools": "npm:*"
+    "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
@@ -3567,6 +3587,9 @@ __metadata:
   dependencies:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
+    "@plitzi/sdk-auth": "npm:*"
+    "@plitzi/sdk-dev-tools": "npm:*"
+    "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
@@ -3601,13 +3624,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-schema@workspace:packages/sdk-schema":
+"@plitzi/sdk-schema@npm:*, @plitzi/sdk-schema@workspace:packages/sdk-schema":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
   dependencies:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
     "@plitzi/sdk-shared": "npm:*"
+    "@plitzi/sdk-style": "npm:*"
     eslint: "npm:^9.12.0"
     jest: "npm:^29.7.0"
     lodash: "npm:^4.17.21"
@@ -3664,18 +3688,20 @@ __metadata:
   dependencies:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
+    "@plitzi/sdk-schema": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     lodash: "npm:^4.17.21"
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-style@workspace:packages/sdk-style":
+"@plitzi/sdk-style@npm:*, @plitzi/sdk-style@workspace:packages/sdk-style":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
     "@babel/cli": "npm:^7.25.7"
     "@babel/core": "npm:^7.25.8"
+    "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.12.0"
     immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"
@@ -3683,7 +3709,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-variables@workspace:packages/sdk-variables":
+"@plitzi/sdk-variables@npm:*, @plitzi/sdk-variables@workspace:packages/sdk-variables":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-variables@workspace:packages/sdk-variables"
   dependencies:

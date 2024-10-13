@@ -11,7 +11,7 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "devDependencies": {
@@ -21,6 +21,9 @@
   },
   "dependencies": {
     "@microlink/react-json-view": "^1.23.3",
+    "@plitzi/sdk-data-source": "*",
+    "@plitzi/sdk-navigation": "*",
+    "@plitzi/sdk-schema": "*",
     "@plitzi/sdk-shared": "*",
     "classnames": "^2.5.1",
     "lodash": "^4.17.21",

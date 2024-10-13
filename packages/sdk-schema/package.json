@@ -14,7 +14,7 @@
     "lint": "eslint ./src",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "devDependencies": {
@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@plitzi/sdk-shared": "*",
+    "@plitzi/sdk-style": "*",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1"
   }

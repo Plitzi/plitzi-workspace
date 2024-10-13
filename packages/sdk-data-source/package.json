@@ -18,12 +18,16 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
+    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "dependencies": {
+    "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-event-bridge": "*",
+    "@plitzi/sdk-navigation": "*",
+    "@plitzi/sdk-schema": "*",
     "@plitzi/sdk-shared": "*",
+    "@plitzi/sdk-state": "*",
     "lodash": "^4.17.21",
     "moment": "^2.30.1"
   },
