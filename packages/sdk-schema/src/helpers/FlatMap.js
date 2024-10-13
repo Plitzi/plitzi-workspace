@@ -21,402 +21,448 @@ export const EMPTY_SCHEMA = {
   definition: { rootId: '' } // for segments and templates
 };
 
-const addElement = (flat, to, data, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}) => {
-  let parent;
-  if (dropPosition !== DROP_DIRECTION_CUSTOM) {
-    if (dropPosition !== DROP_DIRECTION_INSIDE) {
-      const element = flat[to];
-      parent = flat[element.definition.parentId];
-    } else {
-      parent = flat[to];
+class FlatMap {
+  constructor(props = {}) {
+    const { flat, variables } = props;
+    if (!flat) {
+      throw new Error('Flat is required');
     }
 
-    if (!parent) {
-      return flat;
+    this.flat = flat;
+    this.variables = variables ?? [];
+  }
+
+  addElement = (data, to, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}) => {
+    let parent;
+    if (dropPosition !== DROP_DIRECTION_CUSTOM) {
+      if (dropPosition !== DROP_DIRECTION_INSIDE) {
+        const element = this.flat[to];
+        if (!element) {
+          return false;
+        }
+
+        parent = this.flat[element.definition.parentId];
+      } else {
+        parent = this.flat[to];
+      }
+
+      if (!parent) {
+        return false;
+      }
     }
-  }
 
-  if (
-    dropPosition !== DROP_DIRECTION_CUSTOM &&
-    (!flat || flat[data.id] || !Array.isArray(get(parent, 'definition.items')))
-  ) {
-    return flat;
-  }
+    if (
+      dropPosition !== DROP_DIRECTION_CUSTOM &&
+      (!this.flat || this.flat[data.id] || !Array.isArray(get(parent, 'definition.items')))
+    ) {
+      return false;
+    }
 
-  if (!isValidElement(data)) {
-    return flat;
-  }
+    if (!this.isValidElement(data)) {
+      return false;
+    }
 
-  set(flat, data.id, data);
-  switch (dropPosition) {
-    case DROP_DIRECTION_LEFT:
-    case DROP_DIRECTION_TOP: {
-      const items = get(parent, 'definition.items', []);
-      items.splice(
-        items.findIndex(i => i === to),
-        0,
-        data.id
+    set(this.flat, data.id, data);
+    switch (dropPosition) {
+      case DROP_DIRECTION_LEFT:
+      case DROP_DIRECTION_TOP: {
+        const items = get(parent, 'definition.items', []);
+        items.splice(
+          items.findIndex(i => i === to),
+          0,
+          data.id
+        );
+
+        set(this.flat, `${parent.id}.definition.items`, items);
+        set(this.flat, `${data.id}.definition.parentId`, parent.id);
+        set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
+
+        break;
+      }
+
+      case DROP_DIRECTION_RIGHT:
+      case DROP_DIRECTION_BOTTOM: {
+        const items = get(parent, 'definition.items', []);
+        items.splice(items.findIndex(i => i === to) + 1, 0, data.id);
+        set(this.flat, `${parent.id}.definition.items`, items);
+        set(this.flat, `${data.id}.definition.parentId`, parent.id);
+        set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
+
+        break;
+      }
+
+      case DROP_DIRECTION_INSIDE: {
+        const items = get(parent, 'definition.items', []);
+        set(this.flat, `${to}.definition.items`, [...items, data.id]);
+        set(this.flat, `${data.id}.definition.parentId`, to);
+        set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
+
+        break;
+      }
+
+      case DROP_DIRECTION_CUSTOM: {
+        break;
+      }
+
+      default:
+        return false;
+    }
+
+    if (initialItems && Object.keys(initialItems).length > 0) {
+      Object.keys(initialItems).forEach(itemKey => {
+        this.flat[itemKey] = initialItems[itemKey];
+      });
+    }
+
+    return true;
+  };
+
+  updateElement = element => {
+    if (!element || !this.flat[element.id]) {
+      return false;
+    }
+
+    this.flat[element.id] = element;
+
+    return true;
+  };
+
+  moveElement = (from, to, elementId, dropPosition = DROP_DIRECTION_INSIDE) => {
+    if (elementId === to || !this.flat[from] || !this.flat[to]) {
+      return false;
+    }
+
+    // Verify if the receptor is child from the sender
+    let element = this.flat[to];
+    while (element) {
+      const parentId = get(element, 'definition.parentId');
+      if (!parentId) {
+        break;
+      }
+
+      if (element.id === elementId) {
+        return false;
+      }
+
+      element = this.flat[parentId];
+    }
+
+    // Do the swap
+    const fromItems = get(this.flat, `${from}.definition.items`, []).filter(item => item !== elementId);
+    if ([DROP_DIRECTION_LEFT, DROP_DIRECTION_TOP, DROP_DIRECTION_RIGHT, DROP_DIRECTION_BOTTOM].includes(dropPosition)) {
+      const element = this.flat[to];
+      const parent = this.flat[element.definition.parentId];
+      if (!parent) {
+        return false;
+      }
+
+      let parentItems = get(parent, 'definition.items', []);
+      if (parent.id === from) {
+        parentItems = fromItems;
+      }
+
+      let dropPositionIndex = parentItems.findIndex(i => i === to);
+      if ([DROP_DIRECTION_RIGHT, DROP_DIRECTION_BOTTOM].includes(dropPosition)) {
+        dropPositionIndex++;
+      }
+
+      parentItems.splice(dropPositionIndex, 0, elementId);
+
+      set(this.flat, `${from}.definition.items`, fromItems);
+      set(this.flat, `${parent.id}.definition.items`, parentItems);
+      set(this.flat, `${elementId}.definition.parentId`, parent.id);
+    } else if (dropPosition === DROP_DIRECTION_INSIDE) {
+      const parent = this.flat[to];
+      if (!parent) {
+        return false;
+      }
+
+      let toItems = get(this.flat, `${to}.definition.items`, []);
+      if (from === to) {
+        toItems = fromItems;
+      }
+
+      toItems = [...toItems, elementId];
+
+      set(this.flat, `${from}.definition.items`, fromItems);
+      set(this.flat, `${to}.definition.items`, toItems);
+      set(this.flat, `${elementId}.definition.parentId`, to);
+    }
+
+    return true;
+  };
+
+  getElement = elementId => get(this.flat, elementId);
+
+  cloneElements = (elementId, parentId = '', rootId = '', excludeRoot = false) => {
+    const result = { acum: {}, item: undefined };
+    const mapIds = {};
+
+    const element = this.flat[elementId];
+    if (!element) {
+      return result;
+    }
+
+    const elements = [elementId, ...this.childTree(elementId)]
+      .map(id => this.flat[id])
+      .filter(Boolean)
+      .reduce((acum, element) => {
+        mapIds[element.id] = generateID(element.id);
+        if (!rootId) {
+          return { ...acum, [element.id]: element };
+        }
+
+        return { ...acum, [element.id]: { ...element, definition: { ...element.definition, rootId } } };
+      }, {});
+
+    try {
+      let dataStr = JSON.stringify(elements);
+      dataStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), dataStr);
+      result.acum = JSON.parse(dataStr);
+      result.item = result.acum[mapIds[elementId]];
+    } catch (e) {
+      console.error('Error parsing elements', e);
+
+      return { acum: {}, item: undefined };
+    }
+
+    if (excludeRoot) {
+      delete result.acum[mapIds[elementId]];
+    }
+
+    const parentElement = this.flat[parentId];
+    if (!parentElement || !Array.isArray(get(parentElement, 'definition.items'))) {
+      parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId'));
+    }
+
+    if (parentId && result.item) {
+      set(result, 'item.definition.parentId', parentId);
+    }
+
+    return result;
+  };
+
+  removeElement = (elementId, removePage = false) => {
+    const element = this.flat[elementId];
+    if (!element || (element.definition.type === 'page' && !removePage)) {
+      return false;
+    }
+
+    const elementItems = get(element, 'definition.items', []);
+    const parentId = get(element, 'definition.parentId');
+    if (elementItems && elementItems.length > 0) {
+      elementItems.forEach(id => this.removeElement(id));
+    }
+
+    const parent = this.flat[parentId];
+    if (parent) {
+      const {
+        definition: { items }
+      } = parent;
+
+      set(
+        parent,
+        'definition.items',
+        items.filter(id => id !== elementId)
       );
 
-      set(flat, `${parent.id}.definition.items`, items);
-      set(flat, `${data.id}.definition.parentId`, parent.id);
-      set(flat, `${data.id}.definition.rootId`, parent.definition.rootId);
-
-      break;
+      this.flat[parentId] = parent;
     }
 
-    case DROP_DIRECTION_RIGHT:
-    case DROP_DIRECTION_BOTTOM: {
-      const items = get(parent, 'definition.items', []);
-      items.splice(items.findIndex(i => i === to) + 1, 0, data.id);
-      set(flat, `${parent.id}.definition.items`, items);
-      set(flat, `${data.id}.definition.parentId`, parent.id);
-      set(flat, `${data.id}.definition.rootId`, parent.definition.rootId);
+    delete this.flat[elementId];
 
-      break;
+    return true;
+  };
+
+  // Extra Methods
+
+  parentTree = elementId => {
+    let element = this.flat[elementId];
+    const ids = [];
+    if (!element) {
+      return ids;
     }
 
-    case DROP_DIRECTION_INSIDE: {
-      const items = get(parent, 'definition.items', []);
-      set(flat, `${to}.definition.items`, [...items, data.id]);
-      set(flat, `${data.id}.definition.parentId`, to);
-      set(flat, `${data.id}.definition.rootId`, parent.definition.rootId);
-
-      break;
-    }
-
-    case DROP_DIRECTION_CUSTOM: {
-      break;
-    }
-
-    default:
-      return flat;
-  }
-
-  if (initialItems && Object.keys(initialItems).length > 0) {
-    Object.keys(initialItems).forEach(itemKey => {
-      flat[itemKey] = initialItems[itemKey];
-    });
-  }
-
-  return flat;
-};
-
-const removeElement = (flat, elementId, removePage = false) => {
-  const element = flat[elementId];
-  if (!element || (element.definition.type === 'page' && !removePage)) {
-    return flat;
-  }
-
-  const elementItems = get(element, 'definition.items', []);
-  const parentId = get(element, 'definition.parentId');
-  if (elementItems && elementItems.length > 0) {
-    elementItems.forEach(id => {
-      flat = removeElement(flat, id);
-    });
-  }
-
-  const parent = flat[parentId];
-  if (parent) {
-    const {
-      definition: { items }
-    } = parent;
-
-    set(
-      parent,
-      'definition.items',
-      items.filter(id => id !== elementId)
-    );
-
-    flat[parentId] = parent;
-  }
-
-  delete flat[elementId];
-
-  return flat;
-};
-
-const moveElement = (flat, from, to, elementId, dropPosition = DROP_DIRECTION_INSIDE) => {
-  if (elementId === to || !flat[from] || !flat[to]) {
-    return flat;
-  }
-
-  // Verify if the receptor is child from the sender
-  let element = flat[to];
-  while (element) {
-    const parentId = get(element, 'definition.parentId');
-    if (!parentId) {
-      break;
-    }
-
-    if (element.id === elementId) {
-      return flat;
-    }
-
-    element = flat[parentId];
-  }
-
-  // Do the swap
-  const fromItems = get(flat, `${from}.definition.items`, []).filter(item => item !== elementId);
-  if ([DROP_DIRECTION_LEFT, DROP_DIRECTION_TOP, DROP_DIRECTION_RIGHT, DROP_DIRECTION_BOTTOM].includes(dropPosition)) {
-    const element = flat[to];
-    const parent = flat[element.definition.parentId];
-    if (!parent) {
-      return flat;
-    }
-
-    let parentItems = get(parent, 'definition.items', []);
-    if (parent.id === from) {
-      parentItems = fromItems;
-    }
-
-    let dropPositionIndex = parentItems.findIndex(i => i === to);
-    if ([DROP_DIRECTION_RIGHT, DROP_DIRECTION_BOTTOM].includes(dropPosition)) {
-      dropPositionIndex++;
-    }
-
-    parentItems.splice(dropPositionIndex, 0, elementId);
-
-    set(flat, `${from}.definition.items`, fromItems);
-    set(flat, `${parent.id}.definition.items`, parentItems);
-    set(flat, `${elementId}.definition.parentId`, parent.id);
-  } else if (dropPosition === DROP_DIRECTION_INSIDE) {
-    const parent = flat[to];
-    if (!parent) {
-      return flat;
-    }
-
-    let toItems = get(flat, `${to}.definition.items`, []);
-    if (from === to) {
-      toItems = fromItems;
-    }
-
-    toItems = [...toItems, elementId];
-
-    set(flat, `${from}.definition.items`, fromItems);
-    set(flat, `${to}.definition.items`, toItems);
-    set(flat, `${elementId}.definition.parentId`, to);
-  }
-
-  return flat;
-};
-
-const getElement = (flat, elementId) => {
-  if (!elementId || !flat) {
-    return undefined;
-  }
-
-  return get(flat, `${elementId}`);
-};
-
-const getElementVariables = (flat, elementId, variables, style) => {
-  const variablesFound = [];
-  const selectors = get(flat, `${elementId}.definition.styleSelectors`);
-  if (!selectors) {
-    return variablesFound;
-  }
-
-  Object.values(selectors)
-    .filter(Boolean)
-    .forEach(selector => {
-      Object.values(style?.platform ?? {})
-        .filter(platform => platform && selector && !!platform[selector])
-        .forEach(platform => {
-          const elementStyle = platform[selector];
-          Object.values(elementStyle.attributes)
-            .filter(attribute => typeof attribute === 'string' && attribute.includes('var('))
-            .forEach(attribute => {
-              [...attribute.matchAll(VARIABLE_REGEX)].forEach(match => {
-                const variableFound = variables.find(variable => variable.name === match?.groups?.token);
-                if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
-                  variablesFound.push(variableFound);
-                }
-              });
-            });
-        });
-    });
-
-  return variablesFound;
-};
-
-const cloneElements = (flat, elementId, parentId = '', rootId = '', excludeRoot = false) => {
-  const result = { acum: {}, item: undefined };
-  const mapIds = {};
-
-  const element = flat[elementId];
-  if (!element) {
-    return result;
-  }
-
-  const elements = [elementId, ...childTree(flat, elementId)]
-    .map(id => flat[id])
-    .filter(Boolean)
-    .reduce((acum, element) => {
-      mapIds[element.id] = generateID(element.id);
-      if (!rootId) {
-        return { ...acum, [element.id]: element };
+    do {
+      const type = get(element, 'definition.type');
+      if (type === 'page') {
+        const layout = get(element, 'attributes.layout');
+        const layoutContainer = get(element, 'attributes.layoutContainer');
+        if (layout && layoutContainer) {
+          ids.push(layoutContainer, ...this.parentTree(this.flat, layoutContainer));
+        }
       }
 
-      return { ...acum, [element.id]: { ...element, definition: { ...element.definition, rootId } } };
-    }, {});
-
-  try {
-    let elementsStr = JSON.stringify(elements);
-    elementsStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), elementsStr);
-    result.acum = JSON.parse(elementsStr);
-    result.item = result.acum[mapIds[elementId]];
-  } catch (e) {
-    console.error('Error parsing elements', e);
-
-    return { acum: {}, item: undefined };
-  }
-
-  if (excludeRoot) {
-    delete result.acum[mapIds[elementId]];
-  }
-
-  const parentElement = flat[parentId];
-  if (!parentElement || !Array.isArray(get(parentElement, 'definition.items'))) {
-    parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId'));
-  }
-
-  if (parentId && result.item) {
-    set(result, 'item.definition.parentId', parentId);
-  }
-
-  return result;
-};
-
-const parentTree = (flat, elementId) => {
-  let element = flat[elementId];
-  const ids = [];
-  if (!element) {
-    return ids;
-  }
-
-  do {
-    const type = get(element, 'definition.type');
-    if (type === 'page') {
-      const layout = get(element, 'attributes.layout');
-      const layoutContainer = get(element, 'attributes.layoutContainer');
-      if (layout && layoutContainer) {
-        ids.push(layoutContainer, ...parentTree(flat, layoutContainer));
+      if (elementId !== element.id) {
+        ids.push(element.id);
       }
-    }
 
-    if (elementId !== element.id) {
-      ids.push(element.id);
-    }
+      element = get(this.flat, get(element, 'definition.parentId'));
+    } while (element);
 
-    element = get(flat, get(element, 'definition.parentId'));
-  } while (element);
-
-  return ids;
-};
-
-const childTree = (flat, elementId) => {
-  const element = flat[elementId];
-  if (!element) {
-    return [];
-  }
-
-  const ids = [];
-  const children = get(element, 'definition.items');
-  if (!children) {
     return ids;
-  }
+  };
 
-  children.forEach(childId => {
-    ids.push(childId);
-    ids.push(...childTree(flat, childId));
-  });
+  childTree = elementId => {
+    const element = this.flat[elementId];
+    if (!element) {
+      return [];
+    }
 
-  return ids;
-};
+    const ids = [];
+    const children = get(element, 'definition.items');
+    if (!children) {
+      return ids;
+    }
 
-const isValidElement = element => {
-  if (!element) {
-    return false;
-  }
+    children.forEach(childId => ids.push(childId, ...this.childTree(childId)));
 
-  const { id, attributes, definition } = element;
-  if (!id || !definition || !attributes) {
-    return false;
-  }
+    return ids;
+  };
 
-  const { type, label, styleSelectors, rootId } = definition;
-  if (
-    !type ||
-    label === undefined ||
-    label === null ||
-    typeof styleSelectors !== 'object' ||
-    styleSelectors === undefined ||
-    styleSelectors === null ||
-    rootId === undefined ||
-    rootId === null
-  ) {
-    return false;
-  }
+  isValidElement = element => {
+    if (!element) {
+      return false;
+    }
 
-  return true;
-};
+    const { id, attributes, definition } = element;
+    if (!id || !definition || !attributes) {
+      return false;
+    }
 
-const flatAsTemplate = (schema, style, elementId, excludeRoot = false) => {
-  const elementsStyle = { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
-  let variables = [];
-  if (!schema || !style || !elementId) {
+    const { type, label, styleSelectors, rootId } = definition;
+    if (
+      !type ||
+      label === undefined ||
+      label === null ||
+      typeof styleSelectors !== 'object' ||
+      styleSelectors === undefined ||
+      styleSelectors === null ||
+      rootId === undefined ||
+      rootId === null
+    ) {
+      return false;
+    }
+
+    return true;
+  };
+
+  flatAsTemplate = (style, elementId, excludeRoot = false) => {
+    const elementsStyle = { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
+    let variables = [];
+    if (!style || !elementId) {
+      return { elements, elementsStyle, variables };
+    }
+
+    const element = get(this.flat, elementId);
+    if (!element) {
+      return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
+    }
+
+    const elements = this.cloneElements(elementId, element.definition.parentId);
+    Object.values(elements.acum).forEach(element => {
+      const { id } = element;
+      set(elements.acum, `${id}.definition.rootId`, elements.item.id);
+      const calculatedStyle = calculateInheriting(element, this.flat, style.platform);
+      calculatedStyle.tree.forEach(item => {
+        const { displayMode, name } = item;
+        if (!elementsStyle.platform[displayMode][name] && style.platform[displayMode][name]) {
+          elementsStyle.platform[displayMode][name] = style.platform[displayMode][name];
+        }
+      });
+
+      // Variables
+      if (this.variables.length > 0) {
+        const elementVariables = this.getElementVariables(style, id, elements.acum);
+        variables = [...variables, ...elementVariables];
+      }
+    });
+
+    set(elements.acum, `${elements.item.id}.definition.parentId`, null);
+
+    if (excludeRoot) {
+      delete elements.acum[elements.item.id];
+    }
+
+    // Remove duplicated variables
+    if (variables.length > 1) {
+      variables = [...new Set(variables)];
+    }
+
     return { elements, elementsStyle, variables };
-  }
+  };
 
-  const element = get(schema, `flat.${elementId}`);
-  if (!element) {
-    return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
-  }
+  // Semi - Static
 
-  const elements = cloneElements(schema.flat, elementId, element.definition.parentId);
-  Object.values(elements.acum).forEach(element => {
-    const { id } = element;
-    set(elements.acum, `${id}.definition.rootId`, elements.item.id);
-    const calculatedStyle = calculateInheriting(element, schema.flat, style.platform);
-    calculatedStyle.tree.forEach(item => {
-      const { displayMode, name } = item;
-      if (!elementsStyle.platform[displayMode][name] && style.platform[displayMode][name]) {
-        elementsStyle.platform[displayMode][name] = style.platform[displayMode][name];
-      }
-    });
-
-    // Variables
-    if (schema?.variables?.length > 0) {
-      const elementVariables = getElementVariables(elements.acum, id, schema.variables, style);
-      variables = [...variables, ...elementVariables];
+  getElementVariables = (style, elementId, flat = this.flat, variables = this.variables) => {
+    const variablesFound = [];
+    const selectors = get(flat, `${elementId}.definition.styleSelectors`);
+    if (!selectors) {
+      return variablesFound;
     }
-  });
 
-  set(elements.acum, `${elements.item.id}.definition.parentId`, null);
+    Object.values(selectors)
+      .filter(Boolean)
+      .forEach(selector => {
+        Object.values(style?.platform ?? {})
+          .filter(platform => platform && selector && !!platform[selector])
+          .forEach(platform => {
+            const elementStyle = platform[selector];
+            Object.values(elementStyle.attributes)
+              .filter(attribute => typeof attribute === 'string' && attribute.includes('var('))
+              .forEach(attribute => {
+                [...attribute.matchAll(VARIABLE_REGEX)].forEach(match => {
+                  const variableFound = variables.find(variable => variable.name === match?.groups?.token);
+                  if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
+                    variablesFound.push(variableFound);
+                  }
+                });
+              });
+          });
+      });
 
-  if (excludeRoot) {
-    delete elements.acum[elements.item.id];
-  }
+    return variablesFound;
+  };
 
-  // Remove duplicated variables
-  if (variables.length > 1) {
-    variables = [...new Set(variables)];
-  }
+  // ===  Static ===
 
-  return { elements, elementsStyle, variables };
-};
+  static getInstance = props => new this(props);
 
-const FlatMap = {
-  add: addElement,
-  remove: removeElement,
-  move: moveElement,
-  clone: cloneElements,
-  get: getElement,
-  getElementVariables,
-  isValid: isValidElement,
-  getParentTree: parentTree,
-  getChildTree: childTree,
-  flatAsTemplate
-};
+  static addElement = (flat, data, to, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}) =>
+    this.getInstance({ flat }).addElement(data, to, dropPosition, initialItems);
+
+  static updateElement = (flat, element) => this.getInstance({ flat }).updateElement(element);
+
+  static moveElement = (flat, from, to, elementId, dropPosition = DROP_DIRECTION_INSIDE) =>
+    this.getInstance({ flat }).moveElement(from, to, elementId, dropPosition);
+
+  static getElement = (flat, elementId) => this.getInstance({ flat }).getElement(elementId);
+
+  static cloneElements = (flat, elementId, parentId = '', rootId = '', excludeRoot = false) =>
+    this.getInstance({ flat }).cloneElements(elementId, parentId, rootId, excludeRoot);
+
+  static removeElement = (flat, elementId, removePage = false) =>
+    this.getInstance({ flat }).removeElement(elementId, removePage);
+
+  // Extra Methods - Static
+
+  static parentTree = (flat, elementId) => this.getInstance({ flat }).parentTree(elementId);
+
+  static childTree = (flat, elementId) => this.getInstance({ flat }).childTree(elementId);
+
+  static isValidElement = (flat, element) => this.getInstance({ flat }).isValidElement(element);
+
+  static flatAsTemplate = (schema, style, elementId, excludeRoot = false) => {
+    const { flat, variables } = schema;
+
+    return this.getInstance({ flat, variables }).flatAsTemplate(style, elementId, excludeRoot);
+  };
+
+  static getElementVariables = (schema, style, elementId) => {
+    const { flat, variables } = schema;
+
+    return this.getInstance({ flat, variables }).getElementVariables(style, elementId);
+  };
+}
 
 export default FlatMap;

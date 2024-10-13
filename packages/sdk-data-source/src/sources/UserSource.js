@@ -2,10 +2,12 @@
 import React, { useCallback, use, useMemo } from 'react';
 
 // Monorepo
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+
+// Relatives
+import DataSourceContext from '../DataSourceContext';
 
 /**
  * @param {{

@@ -3,11 +3,13 @@ import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 
 // Monorepo
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+
+// Relatives
+import DataSourceContext from '../DataSourceContext';
 
 /**
  * @param {{

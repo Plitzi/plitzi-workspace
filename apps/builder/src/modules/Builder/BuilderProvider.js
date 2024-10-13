@@ -94,7 +94,7 @@ const BuilderProvider = props => {
     [mode, eventBridge, onHandler]
   );
 
-  const getElement = useCallback(elementId => FlatMap.get(schemaRef.current.flat, elementId), []);
+  const getElement = useCallback(elementId => FlatMap.getElement(schemaRef.current.flat, elementId), []);
 
   const builderElementPermissions = useCallback(
     (element, path = '', defaultValue = undefined) => {
@@ -273,7 +273,7 @@ const BuilderProvider = props => {
       }
 
       if (type[1] === 'plitzi-template') {
-        const dataCloned = FlatMap.clone(
+        const dataCloned = FlatMap.cloneElements(
           { [data.baseElement.id]: data.baseElement, ...data.elements },
           data.baseElement.id,
           '',

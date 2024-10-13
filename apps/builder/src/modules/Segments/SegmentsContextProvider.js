@@ -171,7 +171,7 @@ const SegmentsContextProvider = props => {
   // const segmentCloneElement = useCallback(
   //   (segmentId, elementId, targetId, fromSubscriptions = false) => {
   //     const flat = get(getState(), `${segmentId}.schema.flat`);
-  //     const elements = FlatMap.clone(elementId, flat, targetId);
+  //     const elements = FlatMap.cloneElements(flat, elementId, targetId);
   //     if (!elements || !elements.item) {
   //       return null;
   //     }

@@ -3,7 +3,7 @@ import { expect, describe, test } from '@jest/globals';
 import cloneDeep from 'lodash/cloneDeep';
 
 // Relatives
-import FlatMap from './FlatMapV2';
+import FlatMap from './FlatMap';
 
 // Fixtures
 import schema1 from '../tests/fixtures/json/schema1.json';

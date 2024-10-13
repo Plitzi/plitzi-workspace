@@ -86,7 +86,7 @@ const SchemaReducer = (state, action = {}) => {
       const { pageId } = action;
 
       return produce(state, draft => {
-        FlatMap.remove(draft.flat, pageId, pageId, true);
+        FlatMap.removeElement(draft.flat, pageId, pageId, true);
         draft.pages = draft.pages.filter(p => p !== pageId);
       });
     }
@@ -154,7 +154,7 @@ const SchemaReducer = (state, action = {}) => {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
-        FlatMap.add(draft.flat, to, data, dropPosition, initialItems);
+        FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
         if (variables?.length > 0) {
           const variablesToAppend = variables.filter(variable => !draft.variables.find(v => v.name === variable.name));
           set(draft, 'variables', [...draft.variables, ...variablesToAppend]);
@@ -166,7 +166,7 @@ const SchemaReducer = (state, action = {}) => {
       const { elementId } = action;
 
       return produce(state, draft => {
-        FlatMap.remove(draft.flat, elementId);
+        FlatMap.removeElement(draft.flat, elementId);
       });
     }
 
@@ -174,7 +174,7 @@ const SchemaReducer = (state, action = {}) => {
       const { from, to, elementId, dropPosition } = action;
 
       return produce(state, draft => {
-        FlatMap.move(draft.flat, from, to, elementId, dropPosition);
+        FlatMap.moveElement(draft.flat, from, to, elementId, dropPosition);
       });
     }
 
@@ -182,7 +182,7 @@ const SchemaReducer = (state, action = {}) => {
       const { to, data, dropPosition, initialItems } = action;
 
       return produce(state, draft => {
-        FlatMap.add(draft.flat, to, data, dropPosition, initialItems);
+        FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
       });
     }
 

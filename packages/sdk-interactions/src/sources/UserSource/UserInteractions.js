@@ -2,8 +2,10 @@
 import { use, useCallback, useMemo } from 'react';
 
 // Monorepo
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import UserContext from '@plitzi/sdk-auth/UserContext';
+
+// Relatives
+import InteractionsContext from '../../InteractionsContext';
 
 /**
  * @param {{

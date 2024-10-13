@@ -35,7 +35,7 @@ const Templates = () => {
     const flat = get(template, 'schema.flat', {});
     const variables = get(template, 'schema.variables', []);
     const templateBaseElementId = get(template, 'definition.baseElementId');
-    const itemsToAdd = FlatMap.clone(flat, templateBaseElementId);
+    const itemsToAdd = FlatMap.cloneElements(flat, templateBaseElementId);
     delete itemsToAdd.acum[itemsToAdd.item.id];
     e.dataTransfer.setDragImage(e.currentTarget.getElementsByClassName('page-list-item__content')[0], -5, -5);
     e.dataTransfer.setData(

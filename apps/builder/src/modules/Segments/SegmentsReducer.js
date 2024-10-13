@@ -53,7 +53,7 @@ const SegmentsReducer = (state, action = {}) => {
       const { to, data, dropPosition, initialItems } = action;
 
       return produce(state, draft => {
-        FlatMap.add(get(draft, `${identifier}.schema.flat`), to, data, dropPosition, initialItems);
+        FlatMap.addElement(get(draft, `${identifier}.schema.flat`), data, to, dropPosition, initialItems);
       });
     }
 
@@ -61,7 +61,7 @@ const SegmentsReducer = (state, action = {}) => {
       const { elementId } = action;
 
       return produce(state, draft => {
-        FlatMap.remove(get(draft, `${identifier}.schema.flat`), elementId);
+        FlatMap.removeElement(get(draft, `${identifier}.schema.flat`), elementId);
       });
     }
 
@@ -69,7 +69,7 @@ const SegmentsReducer = (state, action = {}) => {
       const { to, data, dropPosition, initialItems } = action;
 
       return produce(state, draft => {
-        FlatMap.add(get(draft, `${identifier}.schema.flat`), to, data, dropPosition, initialItems);
+        FlatMap.addElement(get(draft, `${identifier}.schema.flat`), data, to, dropPosition, initialItems);
       });
     }
 
@@ -77,7 +77,7 @@ const SegmentsReducer = (state, action = {}) => {
       const { from, to, elementId, dropPosition } = action;
 
       return produce(state, draft => {
-        FlatMap.move(get(draft, `${identifier}.schema.flat`), from, to, elementId, dropPosition);
+        FlatMap.moveElement(get(draft, `${identifier}.schema.flat`), from, to, elementId, dropPosition);
       });
     }
 
@@ -191,7 +191,7 @@ const SegmentsReducer = (state, action = {}) => {
           return;
         }
 
-        FlatMap.add(get(draft, `${identifier}.schema.flat`), to, data, dropPosition, initialItems);
+        FlatMap.addElement(get(draft, `${identifier}.schema.flat`), data, to, dropPosition, initialItems);
         const platform = get(draft, `${identifier}.style.platform`);
         const currentVariables = get(draft, `${identifier}.schema.variables`, []);
         Object.keys(templatePlatform).forEach(mode => {

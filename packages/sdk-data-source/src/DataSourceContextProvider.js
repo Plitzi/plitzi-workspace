@@ -72,7 +72,7 @@ const DataSourceContextProvider = props => {
         return {};
       }
 
-      const ids = FlatMap.getParentTree(schemaFlat, id);
+      const ids = FlatMap.parentTree(schemaFlat, id);
       const sources = Object.values(sourcesRef.current)
         .filter(source => ids.includes(source.meta.id) || source.meta.id === 'global')
         .reduce((acum, source) => ({ ...acum, [source.id]: source }), {});
