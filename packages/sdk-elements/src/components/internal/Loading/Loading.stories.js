@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import Loading from './Loading';
+import Loading from './Loading.js';
 
 export default {
   component: Loading,

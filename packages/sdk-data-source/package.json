@@ -21,6 +21,7 @@
     "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
+  "type": "module",
   "dependencies": {
     "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-event-bridge": "*",

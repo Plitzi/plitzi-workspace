@@ -1,5 +1,5 @@
 // Packages
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 const isAuthenticated = (authData, userProvider = '', previewMode = true) => {
   let authenticated = false;

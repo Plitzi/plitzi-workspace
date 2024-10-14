@@ -1,5 +1,5 @@
 // Relatives
-import DropdownPopup from './DropdownPopup';
+import DropdownPopup from './DropdownPopup.js';
 
 DropdownPopup.content = {
   attributes: {},

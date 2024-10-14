@@ -1,15 +1,15 @@
 // Packages
 import React, { useMemo } from 'react';
-import Heading from '@plitzi/plitzi-ui-components/Heading';
+import Heading from '@plitzi/plitzi-ui-components/Heading/index.js';
 import moment from 'moment';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import NodeWhen from './NodeWhen';
-import NodeMetadata from './NodeMetadata';
-import NodeHeader from './NodeHeader';
+import NodeWhen from './NodeWhen.js';
+import NodeMetadata from './NodeMetadata.js';
+import NodeHeader from './NodeHeader.js';
 
 /**
  * @param {{

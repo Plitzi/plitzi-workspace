@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import VariableValue from './VariableValue';
+import VariableValue from './VariableValue.js';
 
 /**
  * @param {{

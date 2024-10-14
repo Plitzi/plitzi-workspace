@@ -1,13 +1,13 @@
 // Packages
-import get from 'lodash/get';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import pick from 'lodash/pick.js';
+import set from 'lodash/set.js';
 
 // Monorepo
 import { makeId } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
+import { StyleConstants, inheritableAttributesBase } from './StyleConstants.js';
 
 export const StyleSelectors = {
   SELECTOR_CLASS: 'class',

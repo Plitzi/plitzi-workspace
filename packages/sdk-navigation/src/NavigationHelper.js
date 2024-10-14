@@ -1,6 +1,6 @@
 // Packages
 import { matchPath } from 'react-router-dom';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 export const ACCESS_LEVEL_PUBLIC = 'public';
 export const ACCESS_LEVEL_AUTHENTICATED = 'authenticated';

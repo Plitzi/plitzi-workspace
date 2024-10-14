@@ -5,7 +5,7 @@ import React from 'react';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Relatives
-import { Text } from './Text';
+import { Text } from './Text.js';
 
 export default {
   title: 'Components/Text',

@@ -1,7 +1,7 @@
 // Packages
 import { useMemo, useState, useCallback, useRef } from 'react';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
+import get from 'lodash/get.js';
+import omit from 'lodash/omit.js';
 
 // Monorepo
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';

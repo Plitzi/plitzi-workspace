@@ -1,5 +1,5 @@
 // Relatives
-import Paragraph from './Paragraph';
+import Paragraph from './Paragraph.js';
 
 Paragraph.content = {
   attributes: {

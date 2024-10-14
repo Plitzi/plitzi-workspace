@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { LayoutContainer } from './LayoutContainer';
+import { LayoutContainer } from './LayoutContainer.js';
 
 export default {
   title: 'Components/LayoutContainer',

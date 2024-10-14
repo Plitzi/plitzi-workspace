@@ -1,5 +1,5 @@
 // Relatives
-import TabContainerHeader from './TabContainerHeader';
+import TabContainerHeader from './TabContainerHeader.js';
 
 TabContainerHeader.content = {
   attributes: {},

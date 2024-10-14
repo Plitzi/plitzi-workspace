@@ -1,6 +1,6 @@
 // Packages
 import React, { useCallback, use, useMemo, useRef, useEffect } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
@@ -9,7 +9,7 @@ import { FILTER_MODE_HARD, FILTER_MODE_SOFT } from '@plitzi/sdk-data-source/hook
 import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 
 // Relatives
-import { nativeEventsList } from './helpers/elementUtils';
+import { nativeEventsList } from './helpers/elementUtils.js';
 
 const interactionBasicTriggers = {
   onClick: {

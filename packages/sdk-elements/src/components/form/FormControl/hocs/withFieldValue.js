@@ -1,6 +1,6 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';

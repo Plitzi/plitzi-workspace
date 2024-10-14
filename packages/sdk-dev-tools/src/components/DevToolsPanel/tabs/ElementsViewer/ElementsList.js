@@ -1,12 +1,12 @@
 // Packages
 import React, { useCallback, useMemo, useState } from 'react';
 import classNames from 'classnames';
-import get from 'lodash/get';
-import noop from 'lodash/noop';
-import Input from '@plitzi/plitzi-ui-components/Input';
+import get from 'lodash/get.js';
+import noop from 'lodash/noop.js';
+import Input from '@plitzi/plitzi-ui-components/Input/index.js';
 
 // Relatives
-import ElementsListItem from './ElementsListItem';
+import ElementsListItem from './ElementsListItem.js';
 
 /**
  * @param {{

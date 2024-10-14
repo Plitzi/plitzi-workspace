@@ -4,7 +4,7 @@ import ReactJson from '@microlink/react-json-view';
 import classNames from 'classnames';
 
 // Relatives
-import DevToolsContext from '../../../../DevToolsContext';
+import DevToolsContext from '../../../../DevToolsContext.js';
 
 /**
  * @param {{

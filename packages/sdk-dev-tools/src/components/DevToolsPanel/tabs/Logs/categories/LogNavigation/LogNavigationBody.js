@@ -1,6 +1,6 @@
 // Packages
 import React, { use, useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';

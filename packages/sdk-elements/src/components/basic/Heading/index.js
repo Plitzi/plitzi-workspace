@@ -1,5 +1,5 @@
 // Relatives
-import Heading from './Heading';
+import Heading from './Heading.js';
 
 Heading.content = {
   attributes: {

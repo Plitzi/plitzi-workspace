@@ -1,5 +1,5 @@
 // Relatives
-import Link from './Link';
+import Link from './Link.js';
 
 Link.content = {
   attributes: {

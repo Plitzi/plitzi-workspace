@@ -1,5 +1,5 @@
 // Relatives
-import withElement from '../Element/hocs/withElement';
+import withElement from '../Element/hocs/withElement.js';
 
 export const ORIGIN_LOCAL = 'local';
 export const ORIGIN_LOCAL_CUSTOM = 'local-custom';

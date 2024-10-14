@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 // Relatives
 import ComponentContext from '../../../Component/ComponentContext';
-import { Custom } from './Custom';
+import { Custom } from './Custom.js';
 
 export default {
   title: 'Components/Custom',

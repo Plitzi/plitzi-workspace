@@ -1,18 +1,18 @@
 // Packages
 import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
-import get from 'lodash/get';
-import capitalize from 'lodash/capitalize';
+import get from 'lodash/get.js';
+import capitalize from 'lodash/capitalize.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '../../../Element/ElementConstants';
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
-import PluginManager from '../../../Element/PluginManager';
+import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '../../../Element/ElementConstants.js';
+import RootElement from '../../../Element/RootElement.js';
+import withElement from '../../../Element/hocs/withElement.js';
+import PluginManager from '../../../Element/PluginManager.js';
 
 /**
  * @param {{

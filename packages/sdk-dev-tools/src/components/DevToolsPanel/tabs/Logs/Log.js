@@ -5,8 +5,8 @@ import React, { memo } from 'react';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import LogInteraction from './categories/LogInteraction';
-import LogNavigation from './categories/LogNavigation';
+import LogInteraction from './categories/LogInteraction/index.js';
+import LogNavigation from './categories/LogNavigation/index.js';
 
 /**
  * @param {{

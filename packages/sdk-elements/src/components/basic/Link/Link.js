@@ -9,8 +9,8 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
 // Relatives
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement.js';
+import withElement from '../../../Element/hocs/withElement.js';
 
 /**
  * @param {{

@@ -1,14 +1,14 @@
 // Packages
 import React, { useMemo } from 'react';
 import classNames from 'classnames';
-import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
+import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary/index.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import useElement from '../hooks/useElement';
+import useElement from '../hooks/useElement.js';
 
 const withElement = WrappedComponent => {
   /**

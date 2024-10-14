@@ -1,7 +1,7 @@
 // Packages
 import React, { useCallback, useMemo, useRef } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 /**
  * @param {{

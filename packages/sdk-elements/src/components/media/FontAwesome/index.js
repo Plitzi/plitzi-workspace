@@ -1,5 +1,5 @@
 // Relatives
-import FontAwesome from './FontAwesome';
+import FontAwesome from './FontAwesome.js';
 
 FontAwesome.content = {
   attributes: {

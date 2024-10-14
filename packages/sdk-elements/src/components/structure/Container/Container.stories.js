@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { Container } from './Container';
+import { Container } from './Container.js';
 
 export default {
   title: 'Components/Container',

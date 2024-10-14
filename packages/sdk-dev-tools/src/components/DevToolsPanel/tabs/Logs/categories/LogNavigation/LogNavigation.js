@@ -1,13 +1,13 @@
 // Packages
 import React from 'react';
-import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
+import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable/index.js';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import LogNavigationHeader from './LogNavigationHeader';
-import LogNavigationBody from './LogNavigationBody';
+import LogNavigationHeader from './LogNavigationHeader.js';
+import LogNavigationBody from './LogNavigationBody.js';
 
 const iconCollapsed = <i className="fa-solid fa-angle-right" />;
 const iconExpanded = <i className="fa-solid fa-angle-down" />;

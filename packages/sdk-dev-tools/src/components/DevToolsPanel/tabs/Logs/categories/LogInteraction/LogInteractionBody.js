@@ -5,8 +5,8 @@ import React from 'react';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import BodyHeader from './BodyHeader';
-import BodyContent from './BodyContent';
+import BodyHeader from './BodyHeader.js';
+import BodyContent from './BodyContent.js';
 
 /**
  * @param {{

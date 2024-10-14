@@ -3,7 +3,7 @@ import React from 'react';
 import classNames from 'classnames';
 
 // Relatives
-import DetailsValue from './DetailsValue';
+import DetailsValue from './DetailsValue.js';
 
 /**
  * @param {{

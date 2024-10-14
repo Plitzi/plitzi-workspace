@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { List } from './List';
+import { List } from './List.js';
 
 export default {
   title: 'Components/List',

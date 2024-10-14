@@ -1,5 +1,5 @@
 // Relatives
-import LayoutContainer from './LayoutContainer';
+import LayoutContainer from './LayoutContainer.js';
 
 LayoutContainer.content = {
   attributes: {

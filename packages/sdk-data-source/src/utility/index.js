@@ -1,8 +1,8 @@
 // Relatives
-import twigTemplate from './twigTemplate';
-import dateConverter from './dateConverter';
-import staticValue from './staticValue';
-import capitalize from './capitalize';
-import arrayMap from './arrayMap';
+import twigTemplate from './twigTemplate.js';
+import dateConverter from './dateConverter.js';
+import staticValue from './staticValue.js';
+import capitalize from './capitalize.js';
+import arrayMap from './arrayMap.js';
 
 export default { twigTemplate, dateConverter, staticValue, capitalize, arrayMap };

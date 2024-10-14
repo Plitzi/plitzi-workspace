@@ -1,5 +1,5 @@
 // Relatives
-import Loading from './Loading';
+import Loading from './Loading.js';
 
 Loading.content = {
   attributes: {},

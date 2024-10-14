@@ -1,5 +1,5 @@
 // Relatives
-import NotFound from './NotFound';
+import NotFound from './NotFound.js';
 
 NotFound.content = {
   attributes: {},

@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { ApiContainer } from './ApiContainer';
+import { ApiContainer } from './ApiContainer.js';
 
 export default {
   title: 'Components/ApiContainer',

@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { Video } from './Video';
+import { Video } from './Video.js';
 
 export default {
   title: 'Components/Video',

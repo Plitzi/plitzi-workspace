@@ -1,5 +1,5 @@
 // Relatives
-import CollectionContainer from './CollectionContainer';
+import CollectionContainer from './CollectionContainer.js';
 
 CollectionContainer.content = {
   attributes: {

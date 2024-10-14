@@ -1,6 +1,6 @@
 // Packages
 import React, { useMemo } from 'react';
-import { getValuesRequired } from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
+import { getValuesRequired } from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
 
 // Monorepo
 import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';

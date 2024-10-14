@@ -1,4 +1,4 @@
 // Relatives
-import ExecutionTree from './ExecutionTree';
+import ExecutionTree from './ExecutionTree.js';
 
 export default ExecutionTree;

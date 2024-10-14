@@ -1,8 +1,8 @@
 // Relatives
-import delayTime from './delayTime';
-import twigTemplate from './twigTemplate';
-// import dateConverter from './dateConverter';
-import webHook from './webHook';
-// import transformer from './transformer';
+import delayTime from './delayTime.js';
+import twigTemplate from './twigTemplate.js';
+// import dateConverter from './dateConverter.js';
+import webHook from './webHook.js';
+// import transformer from './transformer.js';
 
 export default { delayTime, twigTemplate, webHook }; // , dateConverter, transformer

@@ -1,4 +1,4 @@
 // Relatives
-import EventBridge from './EventBridge';
+import EventBridge from './EventBridge.js';
 
 export default EventBridge;

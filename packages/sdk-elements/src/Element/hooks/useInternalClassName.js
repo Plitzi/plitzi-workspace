@@ -1,6 +1,6 @@
 // Packages
 import { useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import classNames from 'classnames';
 
 const useInternalClassName = props => {

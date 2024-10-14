@@ -1,14 +1,14 @@
 // Packages
 import React from 'react';
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement.js';
+import withElement from '../../../Element/hocs/withElement.js';
 
 /**
  * @param {{

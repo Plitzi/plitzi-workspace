@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { Dropdown } from './Dropdown';
+import { Dropdown } from './Dropdown.js';
 
 export default {
   title: 'Components/Dropdown',

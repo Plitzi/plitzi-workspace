@@ -1,16 +1,16 @@
 // Packages
 import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import { produce } from 'immer';
-import noop from 'lodash/noop';
-import set from 'lodash/set';
-import get from 'lodash/get';
+import noop from 'lodash/noop.js';
+import set from 'lodash/set.js';
+import get from 'lodash/get.js';
 
 // Monorepo
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import StateManagerContext from './StateManagerContext';
+import StateManagerContext from './StateManagerContext.js';
 
 export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';

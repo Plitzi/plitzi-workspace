@@ -1,4 +1,4 @@
-module.exports = {
+const config = {
   env: {
     test: {
       presets: [
@@ -7,10 +7,7 @@ module.exports = {
       ]
     },
     development: {
-      presets: [
-        ['@babel/preset-react', { runtime: 'automatic' }],
-        ['@babel/preset-env', { modules: false }]
-      ],
+      presets: [['@babel/preset-react', { runtime: 'automatic' }], ['@babel/preset-env', { modules: false }], 'minify'],
       plugins: [
         '@babel/plugin-proposal-class-properties',
         '@babel/plugin-transform-runtime',
@@ -19,10 +16,7 @@ module.exports = {
       ]
     },
     production: {
-      presets: [
-        ['@babel/preset-react', { runtime: 'automatic' }],
-        ['@babel/preset-env', { modules: false }]
-      ],
+      presets: [['@babel/preset-react', { runtime: 'automatic' }], ['@babel/preset-env', { modules: false }], 'minify'],
       plugins: [
         '@babel/plugin-proposal-class-properties',
         '@babel/plugin-transform-runtime',
@@ -32,3 +26,5 @@ module.exports = {
     }
   }
 };
+
+export default config;

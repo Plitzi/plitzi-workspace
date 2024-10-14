@@ -1,5 +1,5 @@
 // Relatives
-import ApiContainer from './ApiContainer';
+import ApiContainer from './ApiContainer.js';
 
 ApiContainer.content = {
   attributes: {

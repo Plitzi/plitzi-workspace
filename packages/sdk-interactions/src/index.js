@@ -1,8 +1,8 @@
 // Relatives
-import utility from './utility';
-import InteractionsContext from './InteractionsContext';
-import InteractionsContextProvider from './InteractionsContextProvider';
-import InteractionsHelper from './InteractionsHelper';
-import useInteractions from './hooks/useInteractions';
+import utility from './utility/index.js';
+import InteractionsContext from './InteractionsContext.js';
+import InteractionsContextProvider from './InteractionsContextProvider.js';
+import InteractionsHelper from './InteractionsHelper.js';
+import useInteractions from './hooks/useInteractions.js';
 
 export { utility, InteractionsContext, InteractionsContextProvider, InteractionsHelper, useInteractions };

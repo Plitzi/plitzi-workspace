@@ -1,5 +1,5 @@
 // Relatives
-import Image from './Image';
+import Image from './Image.js';
 
 Image.content = {
   attributes: {

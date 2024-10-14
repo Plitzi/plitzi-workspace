@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import NotFound from './NotFound';
+import NotFound from './NotFound.js';
 
 export default {
   component: NotFound,

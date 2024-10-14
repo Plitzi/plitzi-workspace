@@ -1,6 +1,6 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
@@ -9,7 +9,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 // Relatives
-import DataSourceContext from '../DataSourceContext';
+import DataSourceContext from '../DataSourceContext.js';
 
 /**
  * @param {{

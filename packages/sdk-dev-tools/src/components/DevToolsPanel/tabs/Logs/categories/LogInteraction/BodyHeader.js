@@ -1,7 +1,7 @@
 // Packages
 import React, { use, useCallback, useMemo } from 'react';
 import Moment from 'react-moment';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';

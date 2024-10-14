@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { Page } from './Page';
+import { Page } from './Page.js';
 
 export default {
   title: 'Components/Page',

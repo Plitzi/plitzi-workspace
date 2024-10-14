@@ -1,5 +1,5 @@
 // Packages
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -7,9 +7,9 @@ import * as ReactDOM from 'react-dom';
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Relatives
-import ComponentContext from '../../Component/ComponentContext';
-import ComponentProvider from '../../Component/ComponentProvider';
-import RootElement from '../RootElement';
+import ComponentContext from '../../Component/ComponentContext.js';
+import ComponentProvider from '../../Component/ComponentProvider.js';
+import RootElement from '../RootElement.js';
 
 export const generatePluginModule = async (url, asES6 = true, pluginScope = '') => {
   let Module;

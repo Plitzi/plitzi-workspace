@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { BlockJsx } from './BlockJsx';
+import { BlockJsx } from './BlockJsx.js';
 
 export default {
   title: 'Components/BlockJsx',

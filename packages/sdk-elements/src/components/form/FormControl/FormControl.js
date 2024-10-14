@@ -1,29 +1,30 @@
 // Packages
 import React, { use, useEffect } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
-import Input from './inputs/Input';
-import Checkbox from './inputs/Checkbox';
-import Label from './components/Label';
-import Select from './inputs/Select';
-import Textarea from './inputs/Textarea';
-import Hidden from './inputs/Hidden';
-import withFieldValue from './hocs/withFieldValue';
+import RootElement from '../../../Element/RootElement.js';
+import withElement from '../../../Element/hocs/withElement.js';
+import Input from './inputs/Input.js';
+import Checkbox from './inputs/Checkbox.js';
+import Label from './components/Label.js';
+import Select from './inputs/Select.js';
+import Textarea from './inputs/Textarea.js';
+import Hidden from './inputs/Hidden.js';
+import withFieldValue from './hocs/withFieldValue.js';
 
 /**
  * @param {{
  *   ref: React.MutableRefObject<HTMLElement>;
  *   className: string;
  *   internalProps: object;
- *   subType: 'text'
+ *   subType:
+ *     | 'text'
  *     | 'number'
  *     | 'email'
  *     | 'password'

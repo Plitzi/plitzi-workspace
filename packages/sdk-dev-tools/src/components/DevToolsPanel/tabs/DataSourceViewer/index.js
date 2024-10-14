@@ -1,4 +1,4 @@
 // Relatives
-import DataSourceViewer from './DataSourceViewer';
+import DataSourceViewer from './DataSourceViewer.js';
 
 export default DataSourceViewer;

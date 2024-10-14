@@ -1,5 +1,5 @@
 // Relatives
-import Custom from './Custom';
+import Custom from './Custom.js';
 
 Custom.content = {
   attributes: {

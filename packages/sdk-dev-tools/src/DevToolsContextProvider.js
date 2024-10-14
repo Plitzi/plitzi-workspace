@@ -1,12 +1,12 @@
 // Packages
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import omit from 'lodash/omit';
-import get from 'lodash/get';
-import noop from 'lodash/noop';
+import omit from 'lodash/omit.js';
+import get from 'lodash/get.js';
+import noop from 'lodash/noop.js';
 
 // Relatives
-import DevToolsContext from './DevToolsContext';
-import { pConsole } from './utils/PlitziConsole';
+import DevToolsContext from './DevToolsContext.js';
+import { pConsole } from './utils/PlitziConsole.js';
 
 /**
  * @param {{

@@ -3,7 +3,7 @@
 // import PlitziSdk from '@plitzi/plitzi-sdk';
 
 // Relatives
-import CollectionContainer from './CollectionContainer';
+import CollectionContainer from './CollectionContainer.js';
 
 export default {
   title: 'Example/CollectionContainer',

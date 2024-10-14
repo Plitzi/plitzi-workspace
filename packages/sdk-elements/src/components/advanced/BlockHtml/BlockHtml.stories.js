@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { BlockHtml } from './BlockHtml';
+import { BlockHtml } from './BlockHtml.js';
 
 export default {
   title: 'Components/BlockHtml',

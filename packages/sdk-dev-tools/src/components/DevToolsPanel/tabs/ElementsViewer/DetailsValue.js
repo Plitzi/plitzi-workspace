@@ -1,8 +1,8 @@
 // Packages
 import React, { useMemo, use, useCallback } from 'react';
 import classNames from 'classnames';
-import get from 'lodash/get';
-import noop from 'lodash/noop';
+import get from 'lodash/get.js';
+import noop from 'lodash/noop.js';
 
 // MOnorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';

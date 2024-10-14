@@ -1,5 +1,5 @@
 // Packages
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import moment from 'moment';
 
 class BasicProvider {

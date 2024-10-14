@@ -1,6 +1,6 @@
 // Packages
-import noop from 'lodash/noop';
-import pick from 'lodash/pick';
+import noop from 'lodash/noop.js';
+import pick from 'lodash/pick.js';
 
 class EventBridge {
   constructor(props) {

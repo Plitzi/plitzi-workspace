@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { TabContainer } from './TabContainer';
+import { TabContainer } from './TabContainer.js';
 
 export default {
   title: 'Components/TabContainer',

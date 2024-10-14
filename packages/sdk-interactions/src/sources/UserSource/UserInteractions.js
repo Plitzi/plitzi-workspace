@@ -5,7 +5,7 @@ import { use, useCallback, useMemo } from 'react';
 import UserContext from '@plitzi/sdk-auth/UserContext';
 
 // Relatives
-import InteractionsContext from '../../InteractionsContext';
+import InteractionsContext from '../../InteractionsContext.js';
 
 /**
  * @param {{

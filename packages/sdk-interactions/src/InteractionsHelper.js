@@ -1,15 +1,15 @@
 // Packages
 import React from 'react';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
+import get from 'lodash/get.js';
+import omit from 'lodash/omit.js';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
 
 // Monorepo
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 
 // Relatives
-import utility from './utility';
+import utility from './utility/index.js';
 
 const processParams = (type, params, flowValues, globalValues, action) => {
   if (type === 'utility' && action === 'twigTemplate') {

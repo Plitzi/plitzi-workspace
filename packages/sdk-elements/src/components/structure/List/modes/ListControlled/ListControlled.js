@@ -1,15 +1,15 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import RootElement from '../../../../../Element/RootElement';
-import ListControlledItem from './ListControlledItem';
+import RootElement from '../../../../../Element/RootElement.js';
+import ListControlledItem from './ListControlledItem.js';
 
 /**
  * @param {{

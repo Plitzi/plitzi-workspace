@@ -1,5 +1,5 @@
 // Relatives
-import TabContainerItem from './TabContainerItem';
+import TabContainerItem from './TabContainerItem.js';
 
 TabContainerItem.content = {
   attributes: {},

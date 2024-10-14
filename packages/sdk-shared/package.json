@@ -16,6 +16,7 @@
     "./eslint.config.mjs": "./eslint.config.mjs",
     "./jest.config": "./jest.config.js",
     "./jest.setup": "./jest.setup.js",
+    "./babel.config.mjs": "./babel.config.mjs",
     "./tailwind.config": "./tailwind.config.js"
   },
   "scripts": {
@@ -23,6 +24,7 @@
     "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
+  "type": "module",
   "devDependencies": {
     "@babel/cli": "^7.25.7",
     "@babel/core": "^7.25.8",
@@ -37,6 +39,7 @@
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.5.2",
     "autoprefixer": "^10.4.20",
+    "babel-minify": "^0.5.2",
     "eslint": "^9.12.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^9.1.0",

@@ -1,5 +1,5 @@
 // Relatives
-import DialogContainer from './DialogContainer';
+import DialogContainer from './DialogContainer.js';
 
 DialogContainer.content = {
   attributes: {

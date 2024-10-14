@@ -1,6 +1,6 @@
 // Packages
-import get from 'lodash/get';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 
 // Monorepo
 import { generateID } from '@plitzi/sdk-shared/utils';

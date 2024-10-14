@@ -1,10 +1,10 @@
 // Packages
 import React, { isValidElement, useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Relatives
-import PluginManager from '../PluginManager';
-import { PARTIAL_SCHEMA_TYPE_SEGMENT } from '../ElementConstants';
+import PluginManager from '../PluginManager.js';
+import { PARTIAL_SCHEMA_TYPE_SEGMENT } from '../ElementConstants.js';
 
 const useInternalItems = props => {
   const { internalProps, schema, children, SchemaContext, prevSchema, newSchema, previewMode } = props;

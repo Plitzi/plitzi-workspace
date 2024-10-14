@@ -7,10 +7,10 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext'
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
-import { PARTIAL_SCHEMA_TYPE_LAYOUT } from '../../../Element/ElementConstants';
-import ComponentContext from '../../../Component/ComponentContext';
+import RootElement from '../../../Element/RootElement.js';
+import withElement from '../../../Element/hocs/withElement.js';
+import { PARTIAL_SCHEMA_TYPE_LAYOUT } from '../../../Element/ElementConstants.js';
+import ComponentContext from '../../../Component/ComponentContext.js';
 
 /**
  * @param {{

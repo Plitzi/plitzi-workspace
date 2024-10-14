@@ -1,8 +1,8 @@
 // Packages
-import omit from 'lodash/omit';
+import omit from 'lodash/omit.js';
 
 // Relatives
-import FormControl from './FormControl';
+import FormControl from './FormControl.js';
 
 const defaultInputStyle = {
   width: '100%',

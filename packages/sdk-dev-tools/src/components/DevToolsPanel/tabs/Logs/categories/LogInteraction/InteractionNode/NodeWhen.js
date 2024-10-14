@@ -1,9 +1,7 @@
 // Packages
 import React, { useMemo } from 'react';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
-
-// Monorepo
-import Heading from '@plitzi/plitzi-ui-components/Heading';
+import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter.js';
+import Heading from '@plitzi/plitzi-ui-components/Heading/index.js';
 
 /**
  * @param {{

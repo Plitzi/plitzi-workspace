@@ -2,9 +2,9 @@
 import React, { useMemo } from 'react';
 
 // Relatives
-import InteractionsContext from './InteractionsContext';
-import useInteractions from './hooks/useInteractions';
-import InteractionsManager from './InteractionsManager';
+import InteractionsContext from './InteractionsContext.js';
+import useInteractions from './hooks/useInteractions.js';
+import InteractionsManager from './InteractionsManager.js';
 
 /**
  * @param {{

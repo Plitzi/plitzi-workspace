@@ -1,13 +1,13 @@
 // Packages
-import isEmpty from 'lodash/isEmpty';
-import camelCase from 'lodash/camelCase';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import isEmpty from 'lodash/isEmpty.js';
+import camelCase from 'lodash/camelCase.js';
+import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 import { produce } from 'immer';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
 
 // Relatives
-import utility from '../utility';
+import utility from '../utility/index.js';
 
 const getValue = (dataSource, source, path, result, bkey, attrKey) => {
   if (bkey === 'initialState') {

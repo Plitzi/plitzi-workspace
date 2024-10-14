@@ -1,16 +1,16 @@
 // Packages
 import React, { lazy, Suspense, use, useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import ComponentContext from '../Component/ComponentContext';
-import { nestedInject, ORIGIN_REMOTE } from '../Component/ComponentHelper';
-import withElement from './hocs/withElement';
-import { generatePluginModule } from './helpers/elementUtils';
-import useDynamicScript from './hooks/useDynamicScript';
+import ComponentContext from '../Component/ComponentContext.js';
+import { nestedInject, ORIGIN_REMOTE } from '../Component/ComponentHelper.js';
+import withElement from './hocs/withElement.js';
+import { generatePluginModule } from './helpers/elementUtils.js';
+import useDynamicScript from './hooks/useDynamicScript.js';
 
 function loadComponent(
   url,

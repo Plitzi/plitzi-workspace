@@ -2,8 +2,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 // Relatives
-import EventBridgeContext from './EventBridgeContext';
-import EventBridge from './EventBridge';
+import EventBridgeContext from './EventBridgeContext.js';
+import EventBridge from './EventBridge.js';
 
 /**
  * @param {{

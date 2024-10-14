@@ -1,5 +1,5 @@
 // Relatives
-import Form from './Form';
+import Form from './Form.js';
 
 Form.content = {
   attributes: {

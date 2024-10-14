@@ -1,12 +1,12 @@
 // Packages
 import React, { useMemo, useCallback } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Relatives
-import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_WARNING } from '../../../../../utils/PlitziConsole';
-import LogsSummaryItem from './LogsSummaryItem';
-import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from '../../../DevToolsPanel';
+import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_WARNING } from '../../../../../utils/PlitziConsole.js';
+import LogsSummaryItem from './LogsSummaryItem.js';
+import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from '../../../DevToolsPanel.js';
 
 /**
  * @param {{

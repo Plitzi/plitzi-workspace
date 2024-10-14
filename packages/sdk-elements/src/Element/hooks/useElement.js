@@ -1,6 +1,6 @@
 // Packages
 import { use, useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
@@ -8,10 +8,10 @@ import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives
-import useInternalProps from './useInternalProps';
-import useInternalItems from './useInternalItems';
-import useInternalClassName from './useInternalClassName';
-import useElementProps from './useElementProps';
+import useInternalProps from './useInternalProps.js';
+import useInternalItems from './useInternalItems.js';
+import useInternalClassName from './useInternalClassName.js';
+import useElementProps from './useElementProps.js';
 
 /**
  * @param {object} internalProps

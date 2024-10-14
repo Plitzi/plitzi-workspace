@@ -10,8 +10,8 @@ import {
 } from '@plitzi/sdk-navigation/NavigationHelper';
 
 // Relatives
-import LogStatus from '../../LogStatus';
-import { LOG_TYPE_CUSTOM, LOG_TYPE_DANGER, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole';
+import LogStatus from '../../LogStatus.js';
+import { LOG_TYPE_CUSTOM, LOG_TYPE_DANGER, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole.js';
 
 /**
  * @param {{

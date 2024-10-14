@@ -1,8 +1,8 @@
 // Relatives
-import TabContainer from './TabContainer';
-import TabContainerItem from './TabContainerItem';
-import TabContainerBody from './TabContainerBody';
-import TabContainerHeader from './TabContainerHeader';
+import TabContainer from './TabContainer.js';
+import TabContainerItem from './TabContainerItem/index.js';
+import TabContainerBody from './TabContainerBody/index.js';
+import TabContainerHeader from './TabContainerHeader/index.js';
 
 TabContainer.content = {
   attributes: {},

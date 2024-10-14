@@ -1,14 +1,14 @@
 // Packages
 import React, { useMemo } from 'react';
 import moment from 'moment';
-import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
+import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable/index.js';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import LogInteractionHeader from './LogInteractionHeader';
-import LogInteractionBody from './LogInteractionBody';
+import LogInteractionHeader from './LogInteractionHeader.js';
+import LogInteractionBody from './LogInteractionBody.js';
 
 export const LOG_INTERACTION_STATUS_SUCCESS = 'success';
 export const LOG_INTERACTION_STATUS_FAILED = 'failed';

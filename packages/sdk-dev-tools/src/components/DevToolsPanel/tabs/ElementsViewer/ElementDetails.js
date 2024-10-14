@@ -1,12 +1,12 @@
 // Packages
 import React from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
-import ContainerTabs from '@plitzi/plitzi-ui-components/ContainerTabs';
+import noop from 'lodash/noop.js';
+import ContainerTabs from '@plitzi/plitzi-ui-components/ContainerTabs/index.js';
 
 // Relatives
-import DetailsDefinition from './DetailsDefinition';
-import DetailsAttributes from './DetailsAttributes';
+import DetailsDefinition from './DetailsDefinition.js';
+import DetailsAttributes from './DetailsAttributes.js';
 
 const tabs = [{ label: 'Definition' }, { label: 'Attributes' }]; // , { label: 'Style' }
 

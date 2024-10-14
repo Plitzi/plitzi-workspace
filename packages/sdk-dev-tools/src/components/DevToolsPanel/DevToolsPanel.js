@@ -1,16 +1,16 @@
 // Packages
 import React, { useCallback, useMemo, useState, use } from 'react';
 import classNames from 'classnames';
-import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
-import noop from 'lodash/noop';
+import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable/index.js';
+import noop from 'lodash/noop.js';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Relatives
-import DevToolsHeader from './DevToolsHeader';
-import DevToolsBody from './DevToolsBody';
-import DevToolsSubHeader from './DevToolsSubHeader';
+import DevToolsHeader from './DevToolsHeader.js';
+import DevToolsBody from './DevToolsBody.js';
+import DevToolsSubHeader from './DevToolsSubHeader.js';
 
 export const ORIENTATION_VERTICAL = 'vertical';
 export const ORIENTATION_HORIZONTAL = 'horizontal';

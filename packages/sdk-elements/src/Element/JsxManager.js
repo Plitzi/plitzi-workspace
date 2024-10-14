@@ -1,15 +1,15 @@
 // Packages
 import React, { memo, useCallback, use } from 'react';
-import get from 'lodash/get';
-import camelCase from 'lodash/camelCase';
+import get from 'lodash/get.js';
+import camelCase from 'lodash/camelCase.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import ComponentContext from '../Component/ComponentContext';
-import PluginRemote from './PluginRemote';
+import ComponentContext from '../Component/ComponentContext.js';
+import PluginRemote from './PluginRemote.js';
 
 /**
  * @param {{

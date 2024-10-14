@@ -1,15 +1,15 @@
 // Packages
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import omit from 'lodash/omit';
-import get from 'lodash/get';
+import omit from 'lodash/omit.js';
+import get from 'lodash/get.js';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import defaultElements from '../index';
-import ComponentContext from './ComponentContext';
-import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
+import defaultElements from '../index.js';
+import ComponentContext from './ComponentContext.js';
+import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper.js';
 
 /**
  * @param {{

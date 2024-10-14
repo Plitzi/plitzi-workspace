@@ -7,7 +7,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
 
 // Relatives
-import VariablesList from './VariablesList';
+import VariablesList from './VariablesList.js';
 
 /**
  * @param {{

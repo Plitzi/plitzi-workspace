@@ -1,11 +1,11 @@
 // Packages
-import get from 'lodash/get';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 import { produce } from 'immer';
-import has from 'lodash/has';
+import has from 'lodash/has.js';
 
 // Relatives
-import FlatMap from './helpers/FlatMap';
+import FlatMap from './helpers/FlatMap.js';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',

@@ -1,5 +1,5 @@
 // Relatives
-import ListItem from './ListItem';
+import ListItem from './ListItem.js';
 
 ListItem.content = {
   attributes: {},

@@ -6,7 +6,7 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Relatives
-import DataSourceContext from '../DataSourceContext';
+import DataSourceContext from '../DataSourceContext.js';
 /**
  * @param {{
  *   children: React.ReactNode;

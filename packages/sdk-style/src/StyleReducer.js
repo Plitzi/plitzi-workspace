@@ -1,11 +1,11 @@
 // Packages
-import omit from 'lodash/omit';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import omit from 'lodash/omit.js';
+import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 import { produce } from 'immer';
 
 // Relative
-import { generateCache, processSelector } from './StyleHelper';
+import { generateCache, processSelector } from './StyleHelper.js';
 
 export const StyleActions = {
   STYLE_UPDATE: 'STYLE_UPDATE',

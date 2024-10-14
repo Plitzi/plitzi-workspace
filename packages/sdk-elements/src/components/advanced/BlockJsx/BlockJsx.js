@@ -2,18 +2,18 @@
 import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 import classNames from 'classnames';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import withElement from '../../../Element/hocs/withElement';
-import RootElement from '../../../Element/RootElement';
-import JsxManager from '../../../Element/JsxManager';
-import ComponentContext from '../../../Component/ComponentContext';
+import withElement from '../../../Element/hocs/withElement.js';
+import RootElement from '../../../Element/RootElement.js';
+import JsxManager from '../../../Element/JsxManager.js';
+import ComponentContext from '../../../Component/ComponentContext.js';
 
 /**
  * @param {{

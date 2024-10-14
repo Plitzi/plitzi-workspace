@@ -1,22 +1,20 @@
 // Packages
 import React, { useMemo, use } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useAuth0 } from '@auth0/auth0-react';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
 
 // Monorepo
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
-
-// Packages
 import useNavigation from '@plitzi/sdk-navigation/useNavigation';
 
 // Relatives
-import withUserProvider from './hocs/withUserProvider';
-import UserContext from './UserContext';
-import useAuth from './hooks/useAuth';
+import withUserProvider from './hocs/withUserProvider.js';
+import UserContext from './UserContext.js';
+import useAuth from './hooks/useAuth/index.js';
 
 /**
  * @param {{

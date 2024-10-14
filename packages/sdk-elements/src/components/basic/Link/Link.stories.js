@@ -5,7 +5,7 @@ import React from 'react';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Relatives
-import { Link } from './Link';
+import { Link } from './Link.js';
 
 export default {
   title: 'Components/Link',

@@ -1,5 +1,5 @@
 // Relatives
-import Button from './Button';
+import Button from './Button.js';
 
 Button.content = {
   attributes: {

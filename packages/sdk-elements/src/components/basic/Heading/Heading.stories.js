@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { Heading } from './Heading';
+import { Heading } from './Heading.js';
 
 export default {
   title: 'Components/Heading',

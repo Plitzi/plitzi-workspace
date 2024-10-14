@@ -1,4 +1,4 @@
 // Relatives
-import ElementsViewer from './ElementsViewer';
+import ElementsViewer from './ElementsViewer.js';
 
 export default ElementsViewer;

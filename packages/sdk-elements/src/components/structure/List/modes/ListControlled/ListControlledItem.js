@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Relatives
-import ReplicaProvider from '../../../../../Element/ReplicaProvider';
+import ReplicaProvider from '../../../../../Element/ReplicaProvider.js';
 
 /**
  * @param {{

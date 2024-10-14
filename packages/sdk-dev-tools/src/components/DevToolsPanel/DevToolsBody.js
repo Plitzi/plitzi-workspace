@@ -1,14 +1,14 @@
 // Packages
 import React, { use } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Relatives
-import DevToolsContext from '../../DevToolsContext';
-import Logs from './tabs/Logs';
-import DataSourceViewer from './tabs/DataSourceViewer';
-import VariablesViewer from './tabs/VariablesViewer';
-import ElementsViewer from './tabs/ElementsViewer';
+import DevToolsContext from '../../DevToolsContext.js';
+import Logs from './tabs/Logs/index.js';
+import DataSourceViewer from './tabs/DataSourceViewer/index.js';
+import VariablesViewer from './tabs/VariablesViewer/index.js';
+import ElementsViewer from './tabs/ElementsViewer/index.js';
 
 /**
  * @param {{

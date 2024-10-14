@@ -7,10 +7,10 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext'
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import PluginRemote from '../../../Element/PluginRemote';
-import withElement from '../../../Element/hocs/withElement';
-import RootElement from '../../../Element/RootElement';
-import ComponentContext from '../../../Component/ComponentContext';
+import PluginRemote from '../../../Element/PluginRemote.js';
+import withElement from '../../../Element/hocs/withElement.js';
+import RootElement from '../../../Element/RootElement.js';
+import ComponentContext from '../../../Component/ComponentContext.js';
 
 /**
  * @param {{

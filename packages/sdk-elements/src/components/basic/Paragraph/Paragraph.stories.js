@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { Paragraph } from './Paragraph';
+import { Paragraph } from './Paragraph.js';
 
 export default {
   title: 'Components/Paragraph',

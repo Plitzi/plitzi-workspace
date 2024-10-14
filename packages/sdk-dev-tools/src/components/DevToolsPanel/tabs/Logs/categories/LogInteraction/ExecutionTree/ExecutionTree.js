@@ -1,12 +1,12 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import classNames from 'classnames';
 import moment from 'moment';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Relatives
-import ExecutionTreeNode from './ExecutionTreeNode';
+import ExecutionTreeNode from './ExecutionTreeNode.js';
 
 /**
  * @param {{

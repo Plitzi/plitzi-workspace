@@ -1,5 +1,5 @@
 // Relatives
-import Video from './Video';
+import Video from './Video.js';
 
 Video.content = {
   attributes: {

@@ -1,10 +1,10 @@
 // Packages
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Relatives
-import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../utils/PlitziConsole';
+import { LOG_TYPE_DANGER, LOG_TYPE_INFO, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../utils/PlitziConsole.js';
 
 /**
  * @param {{

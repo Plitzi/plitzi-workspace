@@ -1,10 +1,10 @@
 // Packages
 import { useMemo, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
+import useCache from '@plitzi/plitzi-ui-components/Cache/useCache.js';
 
 // Relatives
-import BasicProvider from './managers/BasicProvider';
+import BasicProvider from './managers/BasicProvider.js';
 
 /**
  * @param {{

@@ -2,17 +2,17 @@
 import React, { useCallback, use, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
-import get from 'lodash/get';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator';
+import get from 'lodash/get.js';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
-import useApi from './hooks/useApi';
+import RootElement from '../../../Element/RootElement.js';
+import withElement from '../../../Element/hocs/withElement.js';
+import useApi from './hooks/useApi.js';
 
 /**
  * @param {{

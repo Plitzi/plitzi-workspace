@@ -1,6 +1,6 @@
 // Relative
-import Reference from './Reference';
-import { PARTIAL_SCHEMA_TYPE_ELEMENT } from '../../../Element/ElementConstants';
+import Reference from './Reference.js';
+import { PARTIAL_SCHEMA_TYPE_ELEMENT } from '../../../Element/ElementConstants.js';
 
 Reference.content = {
   attributes: {

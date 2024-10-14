@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import { Button } from './Button';
+import { Button } from './Button.js';
 
 export default {
   title: 'Components/Button',

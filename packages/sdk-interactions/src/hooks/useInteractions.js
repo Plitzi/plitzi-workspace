@@ -1,9 +1,9 @@
 // Packages
 import { use, useLayoutEffect } from 'react';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Relatives
-import InteractionsContext from '../InteractionsContext';
+import InteractionsContext from '../InteractionsContext.js';
 
 /**
  * @param {{

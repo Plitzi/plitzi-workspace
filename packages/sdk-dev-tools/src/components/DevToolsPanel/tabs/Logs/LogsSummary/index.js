@@ -1,4 +1,4 @@
 // Relatives
-import LogsSummary from './LogsSummary';
+import LogsSummary from './LogsSummary.js';
 
 export default LogsSummary;

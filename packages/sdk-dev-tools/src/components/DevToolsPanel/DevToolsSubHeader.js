@@ -1,11 +1,11 @@
 // Packages
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import noop from 'lodash/noop';
-import throttle from 'lodash/throttle';
+import noop from 'lodash/noop.js';
+import throttle from 'lodash/throttle.js';
 import classNames from 'classnames';
 
 // Relatives
-import DevToolsButton from './DevToolsButton';
+import DevToolsButton from './DevToolsButton.js';
 
 /**
  * @param {{

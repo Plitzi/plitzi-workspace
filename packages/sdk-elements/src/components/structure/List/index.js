@@ -1,6 +1,6 @@
 // Relatives
-import List from './List';
-import ListItem from './ListItem';
+import List from './List.js';
+import ListItem from './ListItem/index.js';
 
 List.content = {
   attributes: {

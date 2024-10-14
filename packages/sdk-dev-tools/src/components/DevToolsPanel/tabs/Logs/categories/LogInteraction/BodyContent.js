@@ -1,11 +1,11 @@
 // Packages
 import React, { useCallback, useMemo, useState } from 'react';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import classNames from 'classnames';
 
 // Relatives
-import ExecutionTree from './ExecutionTree';
-import InteractionNode from './InteractionNode';
+import ExecutionTree from './ExecutionTree/index.js';
+import InteractionNode from './InteractionNode/index.js';
 
 /**
  * @param {{

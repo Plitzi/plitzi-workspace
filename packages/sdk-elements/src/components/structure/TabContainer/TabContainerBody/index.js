@@ -1,5 +1,5 @@
 // Relatives
-import TabContainerBody from './TabContainerBody';
+import TabContainerBody from './TabContainerBody.js';
 
 TabContainerBody.content = {
   attributes: {},

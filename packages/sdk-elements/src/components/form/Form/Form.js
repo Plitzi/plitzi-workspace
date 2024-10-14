@@ -2,17 +2,17 @@
 import React, { useCallback, useMemo, useState, use } from 'react';
 import classNames from 'classnames';
 import { produce } from 'immer';
-import get from 'lodash/get';
-import capitalize from 'lodash/capitalize';
-import omit from 'lodash/omit';
+import get from 'lodash/get.js';
+import capitalize from 'lodash/capitalize.js';
+import omit from 'lodash/omit.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement.js';
+import withElement from '../../../Element/hocs/withElement.js';
 
 /**
  * @param {{

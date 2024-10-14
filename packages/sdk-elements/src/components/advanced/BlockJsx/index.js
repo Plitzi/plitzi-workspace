@@ -1,6 +1,6 @@
 /* eslint no-template-curly-in-string: 0 */
 // Relatives
-import BlockJsx from './BlockJsx';
+import BlockJsx from './BlockJsx.js';
 
 BlockJsx.content = {
   attributes: {

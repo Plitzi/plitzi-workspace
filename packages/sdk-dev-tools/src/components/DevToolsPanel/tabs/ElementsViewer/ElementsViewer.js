@@ -1,15 +1,15 @@
 // Packages
 import React, { useMemo, use, useCallback } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 // Relatives
-import ElementsList from './ElementsList';
-import ElementDetails from './ElementDetails';
+import ElementsList from './ElementsList.js';
+import ElementDetails from './ElementDetails.js';
 
 /**
  * @param {{

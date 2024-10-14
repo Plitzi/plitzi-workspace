@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Relatives
-import VariablesListItem from './VariablesListItem';
+import VariablesListItem from './VariablesListItem.js';
 
 /**
  * @param {{

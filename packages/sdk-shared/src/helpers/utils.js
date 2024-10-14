@@ -1,5 +1,5 @@
 // Packages
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 export const isTestMode = () => typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test';
 

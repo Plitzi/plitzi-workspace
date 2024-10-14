@@ -1,10 +1,10 @@
 // Packages
 import React from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 
 // Relatives
-import DetailsValue from './DetailsValue';
+import DetailsValue from './DetailsValue.js';
 
 /**
  * @param {{

@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import RootElement from '../../../../Element/RootElement';
+import RootElement from '../../../../Element/RootElement.js';
 
 /**
  * @param {{

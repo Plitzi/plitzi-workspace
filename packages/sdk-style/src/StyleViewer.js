@@ -1,7 +1,7 @@
 // Packages
 import React, { useCallback, useMemo } from 'react';
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
+import get from 'lodash/get.js';
+import isEmpty from 'lodash/isEmpty.js';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 /**

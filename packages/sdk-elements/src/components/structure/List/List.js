@@ -5,9 +5,9 @@ import React from 'react';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import withElement from '../../../Element/hocs/withElement';
-import ListBasic from './modes/ListBasic';
-import ListControlled from './modes/ListControlled';
+import withElement from '../../../Element/hocs/withElement.js';
+import ListBasic from './modes/ListBasic.js';
+import ListControlled from './modes/ListControlled/index.js';
 
 /**
  * @param {{

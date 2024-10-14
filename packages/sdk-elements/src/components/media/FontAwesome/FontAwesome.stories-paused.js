@@ -3,8 +3,8 @@
 // // import PlitziSdk, { PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 
 // // Relatives
-// import FontAwesome from './FontAwesome';
-// import Settings from './Settings';
+// import FontAwesome from './FontAwesome.js';
+// import Settings from './Settings.js';
 
 // export default {
 //   title: 'Example/FontAwesome',

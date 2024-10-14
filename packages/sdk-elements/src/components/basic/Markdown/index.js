@@ -1,5 +1,5 @@
 // Relatives
-import Markdown from './Markdown';
+import Markdown from './Markdown.js';
 
 Markdown.content = {
   attributes: {

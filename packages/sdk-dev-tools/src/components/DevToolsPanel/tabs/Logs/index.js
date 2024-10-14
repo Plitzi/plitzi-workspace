@@ -1,4 +1,4 @@
 // Relatives
-import Logs from './Logs';
+import Logs from './Logs.js';
 
 export default Logs;

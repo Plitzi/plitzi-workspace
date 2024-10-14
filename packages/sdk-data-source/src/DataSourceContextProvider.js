@@ -1,19 +1,19 @@
 // Packages
 import React, { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
-import omit from 'lodash/omit';
-import set from 'lodash/set';
-import get from 'lodash/get';
+import omit from 'lodash/omit.js';
+import set from 'lodash/set.js';
+import get from 'lodash/get.js';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 // Relatives
-import DataSourceContext from './DataSourceContext';
-import useDataSource from './hooks/useDataSource';
-import UserSource from './sources/UserSource';
-import VariablesSource from './sources/VariablesSource';
-import NavigationSource from './sources/NavigationSource';
-import PageStateSource from './sources/PageStateSource';
+import DataSourceContext from './DataSourceContext.js';
+import useDataSource from './hooks/useDataSource.js';
+import UserSource from './sources/UserSource.js';
+import VariablesSource from './sources/VariablesSource.js';
+import NavigationSource from './sources/NavigationSource.js';
+import PageStateSource from './sources/PageStateSource.js';
 
 /**
  * @param {{

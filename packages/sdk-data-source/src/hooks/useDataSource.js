@@ -5,7 +5,7 @@ import { use, useEffect, useMemo, useRef } from 'react';
 import { makeId, emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import DataSourceContext from '../DataSourceContext';
+import DataSourceContext from '../DataSourceContext.js';
 
 export const MODE_WRITE = 'write';
 export const MODE_READ = 'read';

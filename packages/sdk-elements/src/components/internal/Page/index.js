@@ -1,5 +1,5 @@
 // Relatives
-import Page from './Page';
+import Page from './Page.js';
 
 Page.content = {
   attributes: {

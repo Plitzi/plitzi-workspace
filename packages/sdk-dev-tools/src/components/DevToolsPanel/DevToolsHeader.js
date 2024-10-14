@@ -1,10 +1,10 @@
 // Packages
 import React, { useCallback } from 'react';
-import noop from 'lodash/noop';
+import noop from 'lodash/noop.js';
 import classNames from 'classnames';
 
 // Relatives
-import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from './DevToolsPanel';
+import { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL } from './DevToolsPanel.js';
 
 /**
  * @param {{

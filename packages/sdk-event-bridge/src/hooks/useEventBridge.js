@@ -2,7 +2,7 @@
 import { use, useEffect } from 'react';
 
 // Relatives
-import EventBridgeContext from '../EventBridgeContext';
+import EventBridgeContext from '../EventBridgeContext.js';
 
 export const MODE_WRITE = 'write';
 export const MODE_READ = 'read';

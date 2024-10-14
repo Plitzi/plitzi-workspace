@@ -7,7 +7,7 @@ import UserContext from '@plitzi/sdk-auth/UserContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 // Relatives
-import DataSourceContext from '../DataSourceContext';
+import DataSourceContext from '../DataSourceContext.js';
 
 /**
  * @param {{

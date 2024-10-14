@@ -1,5 +1,5 @@
 // Relatives
-import ModalContainer from './ModalContainer';
+import ModalContainer from './ModalContainer.js';
 
 ModalContainer.content = {
   attributes: {

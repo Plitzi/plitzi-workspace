@@ -1,5 +1,5 @@
 // Relatives
-import BlockHtml from './BlockHtml';
+import BlockHtml from './BlockHtml.js';
 
 BlockHtml.content = {
   attributes: {
