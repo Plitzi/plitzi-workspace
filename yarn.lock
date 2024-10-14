@@ -3657,7 +3657,6 @@ __metadata:
     "@testing-library/user-event": "npm:^14.5.2"
     autoprefixer: "npm:^10.4.20"
     babel-minify: "npm:^0.5.2"
-    babel-plugin-minify-mangle-names: "npm:^0.5.1"
     eslint: "npm:^9.12.0"
     eslint-config-airbnb: "npm:^19.0.4"
     eslint-config-prettier: "npm:^9.1.0"
