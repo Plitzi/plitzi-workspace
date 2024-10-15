@@ -5,7 +5,8 @@ import set from 'lodash/set';
 import { produce } from 'immer';
 
 // Monorepo
-import { generateCache, processSelector } from '@plitzi/sdk-style/StyleHelper';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import StyleMap from '@plitzi/sdk-style/StyleMap';
 
 export const StyleActions = {
   STYLE_UPDATE: 'STYLE_UPDATE',
@@ -24,54 +25,23 @@ const StyleReducer = (state, action = {}) => {
       return { ...state, ...action.style };
     }
 
-    case StyleActions.STYLE_ADD_SELECTOR:
-    case StyleActions.STYLE_UPDATE_SELECTOR: {
+    case StyleActions.STYLE_ADD_SELECTOR: {
       const { displayMode, selector, path, selectorType = 'class', value } = action;
-      if (!path) {
-        return produce(state, draft => {
-          const selectorInstance = get(draft, `platform.${displayMode}.${selector}`, {
-            name: selector,
-            type: selectorType,
-            attributes: {},
-            cache: ''
-          });
-
-          if (value) {
-            set(selectorInstance, 'attributes', value);
-          }
-
-          set(draft, `platform.${displayMode}.${selector}`, {
-            ...selectorInstance,
-            cache: processSelector(selector, selectorType, selectorInstance.attributes)
-          });
-
-          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') }));
-        });
-      }
 
       return produce(state, draft => {
-        const selectorInstance = get(draft, `platform.${displayMode}.${selector}`, {
-          name: selector,
-          type: selectorType,
-          attributes: {},
-          cache: ''
-        });
-
-        if (!value) {
-          let newPath = ['attributes', ...path.split('.')];
-          const pathToRemove = newPath.pop();
-          newPath = newPath.join('.');
-          set(selectorInstance, newPath, omit(get(selectorInstance, newPath, {}), [pathToRemove]));
-        } else {
-          set(selectorInstance, `attributes.${path}`, value);
+        if (StyleMap.addSelector(draft.platform, displayMode, selector, selectorType, path, value)) {
+          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') }));
         }
+      });
+    }
 
-        set(draft, `platform.${displayMode}.${selector}`, {
-          ...selectorInstance,
-          cache: processSelector(selector, selectorType, selectorInstance.attributes)
-        });
+    case StyleActions.STYLE_UPDATE_SELECTOR: {
+      const { displayMode, selector, path, selectorType = 'class', value } = action;
 
-        set(draft, 'cache', generateCache({ platform: get(draft, 'platform') }));
+      return produce(state, draft => {
+        if (StyleMap.updateSelector(draft.platform, displayMode, selector, selectorType, path, value)) {
+          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') }));
+        }
       });
     }
 
@@ -79,12 +49,9 @@ const StyleReducer = (state, action = {}) => {
       const { selector } = action;
 
       return produce(state, draft => {
-        const platform = omit(get(draft, 'platform', {}));
-        Object.keys(platform).forEach(pkey => {
-          platform[pkey] = omit(platform[pkey], [selector]);
-        });
-        draft.platform = platform;
-        draft.cache = generateCache({ platform });
+        if (StyleMap.removeSelector(draft.platform, selector)) {
+          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') }));
+        }
       });
     }
 

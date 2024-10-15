@@ -8,6 +8,7 @@
     ".": "./dist/index.js",
     "./StyleContext": "./dist/StyleContext.js",
     "./StyleHelper": "./dist/StyleHelper.js",
+    "./StyleMap": "./dist/StyleMap.js",
     "./StyleConstants": "./dist/StyleConstants.js"
   },
   "scripts": {
