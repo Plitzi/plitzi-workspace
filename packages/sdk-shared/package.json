@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.23.5",
+  "version": "0.23.6",
   "files": [
     "dist",
     "eslint.config.mjs",

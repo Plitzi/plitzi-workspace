@@ -1,5 +1,13 @@
 # @plitzi/sdk-navigation
 
+## 0.23.6
+
+### Patch Changes
+
+- v0.23.6
+- Updated dependencies
+  - @plitzi/sdk-shared@0.23.6
+
 ## 0.23.5
 
 ### Patch Changes
