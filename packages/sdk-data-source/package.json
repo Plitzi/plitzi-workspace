@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-data-source",
-  "version": "0.23.8",
+  "version": "0.23.9",
   "files": [
     "dist"
   ],
