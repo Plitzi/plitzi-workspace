@@ -5,7 +5,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary/index.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
 import useElement from '../hooks/useElement.js';
@@ -83,7 +83,7 @@ const withElement = WrappedComponent => {
     );
   };
 
-  WithElementComponent.displayName = `withElement(${getDisplayName(WrappedComponent)})`;
+  WithElementComponent.displayName = WrappedComponent.displayName || WrappedComponent.name;
 
   return WithElementComponent;
 };

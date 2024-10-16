@@ -15,6 +15,8 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 import Resource from './Resource';
 import ResourceManager from './ResourceManager';
 
+const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'mpeg', 'svg', 'webm', 'zip', 'json'];
+
 /** @returns {React.ReactElement} */
 const Resources = () => {
   const { query, mutate } = use(NetworkContext);
@@ -112,11 +114,6 @@ const Resources = () => {
     fetch('');
   }, []);
 
-  const uploadTypesMemo = useMemo(
-    () => ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'mpeg', 'svg', 'webm', 'zip'],
-    []
-  );
-
   const finalResources = useMemo(() => {
     return resources
       .filter(resource => {
@@ -137,7 +134,7 @@ const Resources = () => {
     <div className="w-full flex flex-col overflow-y-auto grow basis-0">
       <ResourceManager
         mutate={mutate}
-        uploadTypes={uploadTypesMemo}
+        uploadTypes={uploadTypes}
         onUploaded={handleUploaded}
         onUploadAdded={handleUploadAdded}
       />

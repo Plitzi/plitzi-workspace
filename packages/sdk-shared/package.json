@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.23.6",
+  "version": "0.23.7",
   "files": [
     "dist",
     "eslint.config.mjs",
@@ -49,7 +49,7 @@
     "eslint-plugin-flowtype": "8.0.3",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "^28.8.3",
-    "eslint-plugin-jsdoc": "^50.3.2",
+    "eslint-plugin-jsdoc": "^50.4.1",
     "eslint-plugin-jsx-a11y": "^6.10.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.1",
@@ -59,7 +59,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
-    "tailwindcss": "^3.4.13"
+    "tailwindcss": "^3.4.14"
   },
   "dependencies": {
     "react": "19.0.0-rc-2d16326d-20240930",
