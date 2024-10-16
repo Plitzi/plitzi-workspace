@@ -1,5 +1,6 @@
 // Packages
 import React, { useMemo } from 'react';
+import classNames from 'classnames';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -49,6 +50,11 @@ const ResourceContent = props => {
           size={size}
           isUploaded={isUploaded}
         />
+      )}
+      {!['image', 'video', 'plugin'].includes(type) && (
+        <div className={classNames('flex items-center justify-center', className)}>
+          <i className="fa-solid fa-file fa-3x text-gray-300" title="Plugin" />
+        </div>
       )}
     </>
   );

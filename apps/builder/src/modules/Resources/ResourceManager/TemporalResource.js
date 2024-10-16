@@ -17,7 +17,7 @@ import ResourceType from './ResourceType';
  *   className?: string;
  *   id?: string;
  *   file?: object;
- *   type?: 'image' | 'video' | 'document' | 'plugin';
+ *   type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
  *   title?: string;
  *   src?: string;
  *   metadata?: object;
@@ -146,6 +146,13 @@ const TemporalResource = props => {
     >
       <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file.size} />
       <ResourceType type={type} />
+      {file?.name && (
+        <div className="absolute bottom-0 left-0 bg-gray-300 p-1 rounded-tr flex items-center text-xs px-2 truncate max-w-[200px] overflow-hidden">
+          <div className="truncate" title={file.name}>
+            {file.name}
+          </div>
+        </div>
+      )}
       {(uploading || processing || hovered) && (
         <ResourceUploadStatus
           isUploaded={isUploaded}

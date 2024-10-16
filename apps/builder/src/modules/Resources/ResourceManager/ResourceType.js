@@ -15,6 +15,7 @@ const ResourceType = props => {
       {type === 'image' && <i className="fa-solid fa-image" title="Image" />}
       {type === 'video' && <i className="fa-solid fa-film" title="Video" />}
       {type === 'plugin' && <i className="fa-solid fa-puzzle-piece" title="Plugin" />}
+      {!['image', 'video', 'plugin'].includes(type) && <i className="fa-solid fa-file" title="Plugin" />}
     </div>
   );
 };

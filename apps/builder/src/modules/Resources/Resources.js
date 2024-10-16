@@ -15,7 +15,21 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 import Resource from './Resource';
 import ResourceManager from './ResourceManager';
 
-const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'mpeg', 'svg', 'webm', 'zip', 'json'];
+const uploadTypes = [
+  'jpg',
+  'jpeg',
+  'png',
+  'bmp',
+  'gif',
+  'mp3',
+  'mp4',
+  'webp',
+  'mpeg',
+  'svg',
+  'webm',
+  'zip',
+  'json'
+];
 
 /** @returns {React.ReactElement} */
 const Resources = () => {

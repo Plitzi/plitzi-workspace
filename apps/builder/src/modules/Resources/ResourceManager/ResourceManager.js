@@ -30,13 +30,24 @@ const ResourceManager = props => {
       for (const file of files) {
         file.id = Date.now() + Math.floor(Math.random() * 200);
         const { type } = file;
-        switch (type.split('/')[0]) {
-          case 'image':
-          case 'video':
+        switch (type) {
+          case 'image/gif':
+          case 'image/bmp':
+          case 'image/x-ms-bmp':
+          case 'image/jpg':
+          case 'image/jpeg':
+          case 'image/png':
+          case 'image/webp':
+          case 'video/webm':
+          case 'video/mp4':
+          case 'video/mpeg':
+          case 'image/svg+xml':
+          case 'application/json':
             [file.resourceType] = type.split('/');
             break;
 
-          case 'application': {
+          case 'application/zip': {
+            [file.resourceType] = type.split('/');
             const pluginManifest = await getPluginManifest(file);
             if (pluginManifest) {
               file.resourceType = 'plugin';
