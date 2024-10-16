@@ -20,6 +20,7 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 import ResourceContent from './ResourceManager/ResourceContent';
 import ResourceType from './ResourceManager/ResourceType';
 import ResourceUploadStatus from './ResourceManager/ResourceUploadStatus';
+import ResourceName from './ResourceManager/ResourceName';
 
 /**
  * @param {{
@@ -154,7 +155,7 @@ const Resource = props => {
       onDragStart={type !== 'plugin' ? onDragStart : undefined}
       draggable={type !== 'plugin'}
       className={classNames(
-        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden',
+        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden min-h-[70px]',
         { 'cursor-grabbing': type !== 'plugin' },
         className
       )}
@@ -167,6 +168,7 @@ const Resource = props => {
         </div>
       )}
       <ResourceType type={type} />
+      {title && <ResourceName name={title} />}
       <div
         className="absolute top-1 left-1 bg-white rounded-full aspect-square flex items-center justify-center px-1 hover:text-blue-400 cursor-pointer"
         title="Information"

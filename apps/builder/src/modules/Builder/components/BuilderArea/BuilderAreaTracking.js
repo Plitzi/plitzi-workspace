@@ -233,7 +233,7 @@ const BuilderAreaTracking = props => {
         return;
       }
 
-      if (elementSelected === baseElementId) {
+      if (elementSelected === baseElementId || !schemaRef.current || !styleRef.current) {
         return;
       }
 
@@ -242,8 +242,8 @@ const BuilderAreaTracking = props => {
       }
 
       const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(
-        schemaRef,
-        get(styleRef, 'current', { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' }),
+        schemaRef.current,
+        styleRef.current,
         elementSelected
       );
       e.clipboardData.setData(

@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import noop from 'lodash/noop';
 import FileUpload from '@plitzi/plitzi-ui-components/FileUpload';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
+import classNames from 'classnames';
 
 // Relatives
 import TemporalResource from './TemporalResource';
@@ -12,6 +13,7 @@ const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 
 /**
  * @param {{
+ *   className?: string;
  *   uploadTypes?: string[];
  *   mutate?: (data: any) => void;
  *   onUploaded?: (resource: any) => void;
@@ -20,7 +22,7 @@ const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
  * @returns {React.ReactElement}
  */
 const ResourceManager = props => {
-  const { uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop, onUploadAdded = noop } = props;
+  const { className, uploadTypes = defaultUploadTypes, mutate = noop, onUploaded = noop, onUploadAdded = noop } = props;
   const [files, setFiles] = useState([]);
 
   const handleChange = useCallback(
@@ -87,7 +89,7 @@ const ResourceManager = props => {
   );
 
   return (
-    <div className="w-full flex flex-col overflow-y-auto">
+    <div className={classNames('w-full flex flex-col overflow-y-auto', className)}>
       <FileUpload
         multiple
         canDragAndDrop

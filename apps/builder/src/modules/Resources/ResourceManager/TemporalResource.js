@@ -11,6 +11,7 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import ResourceUploadStatus from './ResourceUploadStatus';
 import ResourceContent from './ResourceContent';
 import ResourceType from './ResourceType';
+import ResourceName from './ResourceName';
 
 /**
  * @param {{
@@ -146,13 +147,7 @@ const TemporalResource = props => {
     >
       <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file.size} />
       <ResourceType type={type} />
-      {file?.name && (
-        <div className="absolute bottom-0 left-0 bg-gray-300 p-1 rounded-tr flex items-center text-xs px-2 truncate max-w-[200px] overflow-hidden">
-          <div className="truncate" title={file.name}>
-            {file.name}
-          </div>
-        </div>
-      )}
+      {file?.name && <ResourceName name={file.name} />}
       {(uploading || processing || hovered) && (
         <ResourceUploadStatus
           isUploaded={isUploaded}
