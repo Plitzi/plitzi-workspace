@@ -40,7 +40,7 @@ const DisplayElements = props => {
       {
         value: { value: 'grid', type: DISPLAY },
         children: <Icons type="DisplayGrid" width={16} height={16} />,
-        description: 'None hides elements.',
+        description: 'Grid lets place you items within rows and columns.',
         active: value === 'grid'
       },
       {
