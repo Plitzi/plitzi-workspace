@@ -196,7 +196,6 @@ const Transform = props => {
                   value={content}
                   theme="dark"
                   mode={cmMode}
-                  // autoComplete={fieldsKeys}
                   lineWrapping
                   onChange={handleChangeContent}
                 />

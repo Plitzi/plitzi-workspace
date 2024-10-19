@@ -8,7 +8,7 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -93,7 +93,10 @@ const NodeBodyParam = props => {
   }, [options, params]);
 
   const finalLabel = useMemo(() => (!label ? upperFirst(id) : label), [label, id]);
-  const fieldsKeys = useMemo(() => Object.values(fields).reduce((acum, field) => [...acum, field.name], []), [fields]);
+  const fieldsKeys = useMemo(
+    () => Object.values(fields).reduce((acum, field) => [...acum, { type: CODEMIRROR_TOKEN, value: field.name }], []),
+    [fields]
+  );
 
   return (
     <div className={classNames('flex flex-col w-full not-first:mt-2', className)}>

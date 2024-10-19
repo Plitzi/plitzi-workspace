@@ -24,7 +24,7 @@
     "changeset": "changeset"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui-components": "0.14.4",
+    "@plitzi/plitzi-ui-components": "0.14.5",
     "@plitzi/sdk-shared": "*"
   },
   "devDependencies": {
