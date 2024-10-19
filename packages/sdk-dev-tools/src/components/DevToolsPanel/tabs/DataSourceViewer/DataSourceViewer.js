@@ -1,10 +1,20 @@
 // Packages
 import React, { useMemo, use } from 'react';
-import ReactJson from '@microlink/react-json-view';
 import classNames from 'classnames';
+import JsonView from '@uiw/react-json-view';
+import { vscodeTheme } from '@uiw/react-json-view/vscode';
 
 // Relatives
 import DevToolsContext from '../../../../DevToolsContext.js';
+
+const jsonViewStyle = {
+  ...vscodeTheme,
+  width: '100%',
+  height: '100%',
+  overflow: 'auto',
+  padding: '8px',
+  fontSize: '14px'
+};
 
 /**
  * @param {{
@@ -27,14 +37,7 @@ const DataSourceViewer = props => {
 
   return (
     <div className={classNames('flex flex-col h-full w-full', className)}>
-      <ReactJson
-        style={{ width: '100%', height: '100%', overflow: 'auto', padding: '8px', fontSize: '12px' }}
-        enableClipboard={false}
-        indentWidth={2}
-        collapsed={1}
-        src={dataSource}
-        theme="monokai"
-      />
+      <JsonView value={dataSource} style={jsonViewStyle} enableClipboard={false} indentWidth={2} collapsed={2} />
     </div>
   );
 };

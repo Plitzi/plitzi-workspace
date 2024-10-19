@@ -1,5 +1,5 @@
 // Packages
-import React, { useEffect, Children, isValidElement, useMemo } from 'react';
+import React, { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { createHttpLink } from '@apollo/client/link/http/createHttpLink';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
@@ -68,9 +68,10 @@ const App = props => {
     // Extra
     sdkEnvironment = 'production',
     renderMode = RENDER_MODE_IFRAME,
-    debugMode = false,
+    debugMode: debugModeProp = false,
     ...sdkProps
   } = props;
+  const [debugMode, setDebugMode] = useState(debugModeProp);
 
   useEffect(() => {
     console.log(
@@ -78,6 +79,20 @@ const App = props => {
       'background: linear-gradient(60deg, #01d0e2 0%, #4422ee 100%);\n  color: white;\n  display: block;\n  line-height: 25px;\n  height: 25px;\n  padding: 5px;'
     );
   }, []);
+
+  const handleKeyDown = useCallback(e => {
+    if (e.shiftKey && e.keyCode === 123) {
+      setDebugMode(state => !state);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!debugModeProp) {
+      return;
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown, debugModeProp]);
 
   const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);
 

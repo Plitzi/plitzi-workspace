@@ -98,27 +98,33 @@ const BuilderTreeNode = props => {
 
   const parentElement = useBuilderElement(parentId);
 
-  const handleClick = e => {
-    e.stopPropagation();
-    setOpened(id, !isOpen);
-  };
+  const handleClick = useCallback(
+    e => {
+      e.stopPropagation();
+      setOpened(id, !isOpen);
+    },
+    [id, isOpen, setOpened]
+  );
 
-  const handleClickSelect = () => {
+  const handleClickSelect = useCallback(() => {
     setSelected(id);
-  };
+  }, [setSelected, id]);
 
-  const handleClickTools = e => {
-    e.stopPropagation();
-    if (!existsPopup('element-tools')) {
-      addPopup('element-tools', <BuilderElementTools />, {
-        icon: <i className="fas fa-tools text-base" />,
-        title: 'Tools',
-        resizeHandles: ['se'],
-        width: 350,
-        placement: 'POPUP_PLACEMENT_FLOATING'
-      });
-    }
-  };
+  const handleClickTools = useCallback(
+    e => {
+      e.stopPropagation();
+      if (!existsPopup('element-tools')) {
+        addPopup('element-tools', <BuilderElementTools />, {
+          icon: <i className="fas fa-tools text-base" />,
+          title: 'Tools',
+          resizeHandles: ['se'],
+          width: 350,
+          placement: 'POPUP_PLACEMENT_FLOATING'
+        });
+      }
+    },
+    [existsPopup, addPopup]
+  );
 
   const handleClickVisibility = useCallback(() => {
     builderSetElementVisibility(id, !isVisible);
