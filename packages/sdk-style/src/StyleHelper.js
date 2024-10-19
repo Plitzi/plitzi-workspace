@@ -241,15 +241,16 @@ export const generateCache = style => {
 const cssRegex =
   /(?<selector>\.|#|)(?<selectorName>[a-z0-9_-]+)([ ]+|){(?<selectorData>[a-z0-9:; (),.%\n*/#+"'-]+|)}/gim;
 const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\([^;]\)|".*"|[a-z0-9 (),.%\n*/#+"':-]+))/gim;
+const cssIsCommentRegex = /(\/\*.*\*\/)/gim;
+const StyleConstantsList = Object.values(StyleConstants);
 
 export const cssToSelectors = (css = '', singleSelector = false) => {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
-  const StyleConstantsList = Object.values(StyleConstants);
   const selectors = match.map(match => {
     const { selectorName, selectorData } = match.groups;
     const selectorResult = { name: selectorName?.trim(), attributes: {}, cache: match[0] };
     if (selectorData) {
-      const propsMatch = [...selectorData.matchAll(cssPropsRegex)];
+      const propsMatch = [...selectorData.replaceAll(cssIsCommentRegex, '').trim().matchAll(cssPropsRegex)];
       propsMatch
         .filter(prop => StyleConstantsList.includes(prop.groups.propName))
         .forEach(prop => {
@@ -285,7 +286,6 @@ export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAft
 
 export const formatCssFromSelector = (css, singleSelector = true, tabIndentSpace = 2, filterProps = true) => {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
-  const StyleConstantsList = Object.values(StyleConstants);
   const selectors = match.map(match => {
     const { selector, selectorName, selectorData } = match.groups;
     if (!selectorData) {

@@ -130,20 +130,18 @@ const InspectorModeAdvanced = props => {
             </Button>
           </Dropdown.Content>
           <Dropdown.Container>
-            <div className="w-60 flex flex-col justify-center p-4">
+            <div className="w-60 flex flex-col justify-center p-4 gap-1 text-xs ">
               <p className="text-xs">Add your own CSS code here to customize the appearance and layout of your site.</p>
-              <div>
-                Properties Allowed
-                <ul className="text-xs border border-gray-300 rounded h-[100px] overflow-auto flex flex-col mt-4">
-                  {Object.values(StyleConstants).map(property => (
-                    <li key={property} className="px-1.5 py-1 not-last:border-b border-gray-300 w-full">
-                      {property}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <p className="mt-4 text-xs">
-                <span className="font-bold">Ctrl + Space</span> to autocomplete.
+              <span className="font-bold">Properties Allowed</span>
+              <ul className="text-xs border border-gray-300 rounded h-[100px] overflow-auto flex flex-col">
+                {Object.values(StyleConstants).map(property => (
+                  <li key={property} className="px-1.5 py-1 not-last:border-b border-gray-300 w-full">
+                    {property}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs">
+                <span className="font-bold">Tab</span> to autocomplete.
               </p>
             </div>
           </Dropdown.Container>
