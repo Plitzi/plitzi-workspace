@@ -148,15 +148,17 @@ const Resource = props => {
 
   const handleMouseLeave = () => setHovered(false);
 
+  const canDrag = ['video', 'image'].includes(type);
+
   return (
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onDragStart={type !== 'plugin' ? onDragStart : undefined}
-      draggable={type !== 'plugin'}
+      onDragStart={canDrag ? onDragStart : undefined}
+      draggable={canDrag}
       className={classNames(
-        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden min-h-[70px]',
-        { 'cursor-grabbing': type !== 'plugin' },
+        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden',
+        { 'min-h-[164px]': type === 'plugin', 'min-h-[80px]': type !== 'plugin', 'cursor-grabbing': !canDrag },
         className
       )}
       onClick={handleClick}
