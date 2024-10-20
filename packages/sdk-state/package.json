@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-state",
-  "version": "0.23.11",
+  "version": "0.23.12",
   "files": [
     "dist"
   ],
