@@ -26,7 +26,7 @@ const Paragraph = props => {
     settings: { previewMode },
     contexts: { BuilderContext }
   } = usePlitziServiceContext();
-  const builderContext = use(BuilderContext);
+  const builderContext = BuilderContext ? use(BuilderContext) : undefined;
   const finalContent = useMemo(() => {
     if (typeof content !== 'string' && typeof content !== 'number') {
       return JSON.stringify(content);
