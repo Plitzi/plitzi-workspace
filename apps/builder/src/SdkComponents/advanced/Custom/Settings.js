@@ -64,7 +64,11 @@ const Settings = props => {
 
     try {
       // Format settings
-      onUpdate('settings', JSON.stringify(JSON.parse(settings), null, 2));
+      const newSettings = JSON.stringify(JSON.parse(settings), null, 2);
+      if (newSettings !== settings) {
+        onUpdate('settings', newSettings);
+      }
+
       setJsonValid(true);
     } catch (e) {
       // Nothing to do
