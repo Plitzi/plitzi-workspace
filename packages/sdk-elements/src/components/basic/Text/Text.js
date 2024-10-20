@@ -1,6 +1,7 @@
 // Packages
-import React, { useMemo } from 'react';
+import React, { useMemo, use, useCallback } from 'react';
 import classNames from 'classnames';
+import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable/index.js';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
@@ -22,8 +23,10 @@ import withElement from '../../../Element/hocs/withElement.js';
 const Text = props => {
   const { ref, content = 'Text', className = '', internalProps = emptyObject } = props;
   const {
-    settings: { previewMode }
+    settings: { previewMode },
+    contexts: { BuilderContext }
   } = usePlitziServiceContext();
+  const builderContext = use(BuilderContext);
   const finalContent = useMemo(() => {
     if (typeof content !== 'string' && typeof content !== 'number') {
       return JSON.stringify(content);
@@ -34,11 +37,24 @@ const Text = props => {
     }
 
     return content;
-  }, [content, previewMode]);
+  }, [content]);
+
+  const handleChange = useCallback(
+    value => builderContext?.updateElement(internalProps.id, 'content', value),
+    [builderContext?.updateElement, previewMode, internalProps.id]
+  );
 
   return (
     <RootElement ref={ref} internalProps={internalProps} className={classNames('plitzi-component__text', className)}>
-      {finalContent}
+      {previewMode && finalContent}
+      {!previewMode && (
+        <Contenteditable
+          className="focus-visible:outline-none"
+          value={finalContent}
+          onChange={handleChange}
+          openMode="doubleClick"
+        />
+      )}
     </RootElement>
   );
 };

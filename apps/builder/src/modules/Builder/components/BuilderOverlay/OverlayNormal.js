@@ -220,9 +220,8 @@ const OverlayNormal = props => {
         >
           {isVisible && <i className="fas fa-eye" />}
           {!isVisible && <i className="fas fa-eye-slash" />}
-          {/* {label} */}
           <Contenteditable
-            className={classNames('name-editable-container')}
+            className="name-editable-container"
             value={label}
             myWindow={iframeDOM.contentWindow}
             onChange={handleChange}

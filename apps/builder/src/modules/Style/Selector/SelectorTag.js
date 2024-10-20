@@ -128,7 +128,7 @@ const SelectorTag = props => {
         {editable && (
           <div className="flex group-hover:mr-3 truncate">
             <Contenteditable
-              className={classNames('text-xs')}
+              className="focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1 text-xs"
               value={selector}
               onChange={handleChange}
               openMode="doubleClick"

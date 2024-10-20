@@ -66,6 +66,8 @@ const BuilderProvider = props => {
   const { getComponentBuilderSettings, componentDefinitions, getComponent } = use(ComponentContext);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
   const [elementSelected, setElementSelected] = useState();
+  const elementSelectedRef = useRef(elementSelected);
+  elementSelectedRef.current = elementSelected;
   const [elementHovered, setElementHovered] = useState();
   const [selectorSelected, setSelectorSelected] = useState();
   const { baseElementId } = baseContext;
@@ -388,6 +390,21 @@ const BuilderProvider = props => {
     [baseElementId, getComponent, getElement]
   );
 
+  const updateElement = useCallback(
+    (elementId, attributeKey, attributeValue, category = 'attributes') => {
+      const element = getElement(elementId);
+      if (!element || elementId !== elementSelectedRef.current) {
+        return;
+      }
+
+      builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, {
+        ...element,
+        [category]: { ...element[category], [attributeKey]: attributeValue }
+      });
+    },
+    [getElement]
+  );
+
   useEffect(() => {
     if (baseElementId) {
       setHovered(undefined);
@@ -449,7 +466,8 @@ const BuilderProvider = props => {
       baseElementIdOriginal: baseElementIdProp,
       builderSetBaseContext,
       builderElementPermissions,
-      builderHandler
+      builderHandler,
+      updateElement
     }),
     [
       mode,
@@ -461,7 +479,8 @@ const BuilderProvider = props => {
       baseElementIdProp,
       builderSetBaseContext,
       builderElementPermissions,
-      builderHandler
+      builderHandler,
+      updateElement
     ]
   );
 

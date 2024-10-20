@@ -213,7 +213,8 @@ const BuilderArea = props => {
         DataSourceContext,
         StateManagerContext,
         InteractionsContext,
-        EventBridgeContext
+        EventBridgeContext,
+        BuilderContext
       }
     }),
     [
@@ -232,7 +233,8 @@ const BuilderArea = props => {
       NetworkContext,
       StateManagerContext,
       InteractionsContext,
-      EventBridgeContext
+      EventBridgeContext,
+      BuilderContext
     ]
   );
 

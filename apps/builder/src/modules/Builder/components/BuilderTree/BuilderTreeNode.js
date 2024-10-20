@@ -335,10 +335,9 @@ const BuilderTreeNode = props => {
         <div ref={ref} className="flex relative grow basis-0 overflow-hidden" onClick={handleClickSelect}>
           <Contenteditable
             className={classNames(
+              'focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1',
               'truncate focus-visible:text-clip focus-visible:overflow-auto focus-visible:text-black focus-visible:outline-blue-500',
-              {
-                'opacity-30': dragHovered
-              }
+              { 'opacity-30': dragHovered }
             )}
             value={label}
             onChange={handleChange}

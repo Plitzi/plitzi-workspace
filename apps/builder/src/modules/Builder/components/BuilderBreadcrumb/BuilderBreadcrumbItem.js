@@ -1,7 +1,11 @@
 // Packages
-import React from 'react';
+import React, { use, useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
+import ContentEditable from '@plitzi/plitzi-ui-components/ContentEditable';
+
+// Alias
+import BuilderContext from '@pmodules/Builder/BuilderContext';
 
 /**
  * @param {{
@@ -17,10 +21,13 @@ import noop from 'lodash/noop';
  */
 const BuilderBreadcrumbItem = props => {
   const { id, label = '', isActive = false, children, className = '', onMouseEnter = noop, onClick = noop } = props;
+  const { updateElement } = use(BuilderContext);
 
-  const handleMouseEnter = () => onMouseEnter(id);
+  const handleMouseEnter = useCallback(() => onMouseEnter(id), [onMouseEnter, id]);
 
-  const handleClick = () => onClick(id);
+  const handleClick = useCallback(() => onClick(id), [onClick, id]);
+
+  const handleChange = useCallback(value => updateElement(id, 'label', value, 'definition'), [updateElement, id]);
 
   return (
     <div
@@ -36,7 +43,16 @@ const BuilderBreadcrumbItem = props => {
       onClick={handleClick}
       tabIndex={-1}
     >
-      {label && <div className="truncate">{label}</div>}
+      {label && (
+        <div className="truncate">
+          <ContentEditable
+            className="focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1"
+            value={label}
+            onChange={handleChange}
+            openMode="doubleClick"
+          />
+        </div>
+      )}
       {!label && children}
     </div>
   );

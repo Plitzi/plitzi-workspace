@@ -1,8 +1,10 @@
 // Packages
-import React, { useMemo } from 'react';
+import React, { useMemo, use, useCallback } from 'react';
 import classNames from 'classnames';
+import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable/index.js';
 
 // Monorepo
+import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
@@ -21,13 +23,27 @@ import withElement from '../../../Element/hocs/withElement.js';
  */
 const Heading = props => {
   const { ref, internalProps = emptyObject, className = '', content = 'Heading', subType = 'h1' } = props;
+  const {
+    settings: { previewMode },
+    contexts: { BuilderContext }
+  } = usePlitziServiceContext();
+  const builderContext = use(BuilderContext);
   const finalContent = useMemo(() => {
     if (typeof content !== 'string' && typeof content !== 'number') {
       return JSON.stringify(content);
     }
 
+    if (!content && content !== '' && !previewMode) {
+      return 'Heading';
+    }
+
     return content;
   }, [content]);
+
+  const handleChange = useCallback(
+    value => builderContext?.updateElement(internalProps.id, 'content', value),
+    [builderContext?.updateElement, previewMode, internalProps.id]
+  );
 
   return (
     <RootElement
@@ -40,7 +56,10 @@ const Heading = props => {
         className
       )}
     >
-      {finalContent || 'Heading'}
+      {previewMode && finalContent}
+      {!previewMode && (
+        <Contenteditable className="" value={finalContent} onChange={handleChange} openMode="doubleClick" />
+      )}
     </RootElement>
   );
 };
