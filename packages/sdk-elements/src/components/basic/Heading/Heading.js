@@ -49,7 +49,7 @@ const Heading = props => {
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      tag={subType}
+      tag={!previewMode ? 'div' : subType}
       className={classNames(
         'plitzi-component__heading',
         { [`plitzi-component__heading-${subType}`]: subType },

@@ -47,7 +47,7 @@ const Paragraph = props => {
   return (
     <RootElement
       ref={ref}
-      tag="p"
+      tag={!previewMode ? 'div' : 'p'}
       internalProps={internalProps}
       className={classNames('plitzi-component__paragraph', className)}
     >
