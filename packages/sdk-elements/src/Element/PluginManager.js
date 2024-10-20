@@ -42,7 +42,7 @@ const PluginManager = props => {
   }
 
   const getParentPlugin = useCallback(
-    subPlugin => Object.values(plugins).find(plugin => plugin.subPlugins.find(type => type === subPlugin)),
+    subPlugin => Object.values(plugins).find(plugin => plugin?.subPlugins?.find(type => type === subPlugin)),
     [plugins]
   );
 
