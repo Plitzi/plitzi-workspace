@@ -71,7 +71,7 @@ const App = props => {
     debugMode: debugModeProp = false,
     ...sdkProps
   } = props;
-  const [debugMode, setDebugMode] = useState(debugModeProp);
+  const [debugMode, setDebugMode] = useState(false);
 
   useEffect(() => {
     console.log(

@@ -29,7 +29,7 @@ const DevToolsPanel = props => {
   const { className, orientation = ORIENTATION_VERTICAL, onChangeOrientation = noop } = props;
   const [tabSelected, setTabSelected] = useState('logs');
   const { currentPageId } = use(NavigationContext);
-  const [elementSelected, setElementSelected] = useState(currentPageId);
+  const [elementSelected, setElementSelected] = useState('');
   const resizeHandles = useMemo(() => (orientation === ORIENTATION_VERTICAL ? ['w'] : ['n']), [orientation]);
   const parentElement = useMemo(() => {
     if (typeof document === 'undefined') {
@@ -51,7 +51,7 @@ const DevToolsPanel = props => {
       minConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 34}
       maxConstraintsY={orientation === ORIENTATION_VERTICAL ? Infinity : 600}
       width={orientation === ORIENTATION_VERTICAL ? 500 : Infinity}
-      height={orientation === ORIENTATION_VERTICAL ? Infinity : 34}
+      height={orientation === ORIENTATION_VERTICAL ? Infinity : 200}
       resizeHandles={resizeHandles}
       parentElement={parentElement}
       autoGrow={false}

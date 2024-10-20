@@ -1,10 +1,11 @@
 // Packages
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import Alert from '@plitzi/plitzi-ui-components/Alert';
 
 /**
  * @param {{
@@ -28,23 +29,46 @@ const Settings = props => {
     pluginScope = '',
     onUpdate = noop
   } = props;
+  const [jsonValid, setJsonValid] = useState(true);
 
   const handleChange = useCallback(key => e => onUpdate(key, e.target.value), [onUpdate]);
 
-  const handleChangeSettings = useCallback(value => onUpdate('settings', value), [onUpdate]);
+  const handleChangeSettings = useCallback(
+    value => {
+      if (!value) {
+        value = '{}';
+      }
+
+      try {
+        onUpdate('settings', value);
+        // Format settings
+        JSON.stringify(JSON.parse(value));
+        setJsonValid(true);
+      } catch (e) {
+        // Nothing to do
+        setJsonValid(false);
+      }
+    },
+    [onUpdate]
+  );
 
   const handleChangeIsPlugin = useCallback(e => onUpdate('isPlugin', e.target.checked), [onUpdate]);
 
   useEffect(() => {
     if (!onUpdate || !settings) {
+      onUpdate('settings', '{}');
+      setJsonValid(true);
+
       return;
     }
 
     try {
       // Format settings
       onUpdate('settings', JSON.stringify(JSON.parse(settings), null, 2));
+      setJsonValid(true);
     } catch (e) {
       // Nothing to do
+      setJsonValid(false);
     }
   }, [onUpdate]);
 
@@ -69,6 +93,11 @@ const Settings = props => {
             onChange={handleChangeSettings}
           />
         </div>
+        {!jsonValid && (
+          <Alert className="text-white mt-1" intent="warning">
+            <div className="flex items-center h-full w-full">This json is invalid</div>
+          </Alert>
+        )}
         <div className="flex items-center mt-4">
           <Checkbox id="custom-is-plugin" checked={isPlugin} onChange={handleChangeIsPlugin} className="rounded mr-2" />
           <label htmlFor="custom-is-plugin" className="cursor-pointer select-none">

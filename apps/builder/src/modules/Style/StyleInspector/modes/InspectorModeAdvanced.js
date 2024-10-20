@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, use, useMemo, useEffect } from 'react';
+import React, { useCallback, use, useMemo, useEffect, useState } from 'react';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
@@ -36,6 +36,7 @@ const selectorsDefault = [];
  */
 const InspectorModeAdvanced = props => {
   const { element, styleSelector = '', selectors = selectorsDefault, selector } = props;
+  const [reRender, setReRender] = useState(false);
   const { builderHandler } = use(BuilderContext);
   const { displayMode } = use(AppContext);
   const { useDataSource } = use(DataSourceContext);
@@ -46,7 +47,7 @@ const InspectorModeAdvanced = props => {
   );
   const CMValue = useMemo(
     () => (selectorInstance ? formatCssFromSelector(selectorInstance?.cache, true, 2, false) : ''),
-    [selectorInstance?.cache, selectorInstance?.name]
+    [selectorInstance?.name, reRender]
   );
   const variablesNames = useMemo(
     () =>
@@ -84,6 +85,8 @@ const InspectorModeAdvanced = props => {
   const syncDebounced = useMemo(() => debounce(sync, 500), [sync]);
 
   const handleChange = useCallback(newValue => syncDebounced(newValue), [selectors]);
+
+  const handleFormat = useCallback(async () => setReRender(state => !state), []);
 
   const getReadOnlyRanges = useCallback(targetState => {
     const content = targetState.doc.text.reduce((acum, line) => `${acum}${acum ? '\n' : ''}${line}`, '');
@@ -126,7 +129,7 @@ const InspectorModeAdvanced = props => {
         autoComplete={variablesNames}
         getReadOnlyRanges={getReadOnlyRanges}
       />
-      <div className="flex absolute top-3 right-3">
+      <div className="flex flex-col absolute top-3 right-3 gap-1">
         <Dropdown showIcon={false} containerLeftOffset={-208}>
           <Dropdown.Content>
             <Button intent="custom" size="custom" className="p-2 bg-white rounded">
@@ -150,6 +153,16 @@ const InspectorModeAdvanced = props => {
             </div>
           </Dropdown.Container>
         </Dropdown>
+        <Button
+          intent="custom"
+          size="custom"
+          className="p-2 bg-white rounded"
+          onClick={handleFormat}
+          tilte="Auto format"
+          // disabled={networkLoading}
+        >
+          <i className="fa-solid fa-wand-magic-sparkles" />
+        </Button>
       </div>
     </div>
   );
