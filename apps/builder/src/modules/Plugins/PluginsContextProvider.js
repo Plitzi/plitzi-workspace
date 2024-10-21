@@ -41,11 +41,16 @@ const PluginsContextProvider = props => {
   const { components, registerDefinition, unregisterDefinition, unregister } = use(ComponentContext);
 
   const pluginsAdd = useCallback(
-    pluginDefinition => {
-      if (Object.keys(pluginDefinition).length > 1) {
-        dispatchPlugins({ type: PluginsActions.PLUGINS_ADD_MANY, plugins: pluginDefinition });
+    plugins => {
+      if (!plugins || typeof plugins !== 'object') {
+        return;
+      }
+
+      const pluginsArr = Object.values(plugins);
+      if (plugins.length > 1) {
+        dispatchPlugins({ type: PluginsActions.PLUGINS_ADD_MANY, plugins });
       } else {
-        dispatchPlugins({ type: PluginsActions.PLUGINS_ADD, plugin: pluginDefinition });
+        dispatchPlugins({ type: PluginsActions.PLUGINS_ADD, plugin: pluginsArr[0] });
       }
     },
     [dispatchPlugins]
