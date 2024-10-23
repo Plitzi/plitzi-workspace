@@ -162,24 +162,8 @@
   font-size: 14px;
   user-select: none;
   outline: none;
-
-  .input-container__textarea {
-    height: 100%;
-    width: 100%;
-    padding: 0;
-    display: block;
-    border: none;
-    background-color: inherit;
-    line-height: inherit;
-    font-family: inherit;
-    font-size: inherit;
-    box-shadow: none;
-    resize: vertical;
-
-    &:focus-visible {
-      outline: inherit;
-    }
-  }
+  // Extra
+  resize: vertical;
 }
 
 // Checkbox

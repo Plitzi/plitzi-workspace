@@ -72,7 +72,14 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
   return value.join(separator);
 };
 
-const getDataStyle = (element, platform, isParent = false, isSubParent = false, componentDefinitions = {}) => {
+const getDataStyle = (
+  element,
+  platform,
+  styleSelector = 'base',
+  isParent = false,
+  isSubParent = false,
+  componentDefinitions = {}
+) => {
   const metadata = { tree: [] };
   if (!element) {
     return undefined;
@@ -85,7 +92,9 @@ const getDataStyle = (element, platform, isParent = false, isSubParent = false, 
 
   // get element display mode styles (mobile -> tablet -> desktop)
   ['desktop', 'tablet', 'mobile'].forEach(mode => {
-    const selectorSegments = Object.values(pick(get(platform, mode, {}), get(styleSelectors, 'base', '').split(' ')));
+    const selectorSegments = Object.values(
+      pick(get(platform, mode, {}), get(styleSelectors, styleSelector, '').split(' '))
+    );
     selectorSegments.forEach(segment => {
       const { name } = segment;
       const style = platform[mode][name];
@@ -124,7 +133,7 @@ const getDataStyle = (element, platform, isParent = false, isSubParent = false, 
   }
 
   if (global) {
-    metadata.tree.push({ ...global, style: get(global, 'style.base', {}), isParent, isSubParent });
+    metadata.tree.push({ ...global, style: get(global, `style.${styleSelector}`, {}), isParent, isSubParent });
   }
 
   return metadata;
@@ -146,7 +155,14 @@ export const calculateInheriting = (
   const { id } = element;
   const parentId = get(element, 'definition.parentId');
   while (element) {
-    const styleData = getDataStyle(element, platform, element.id === parentId, id !== element.id, componentDefinitions);
+    const styleData = getDataStyle(
+      element,
+      platform,
+      styleSelector,
+      element.id === parentId,
+      id !== element.id,
+      componentDefinitions
+    );
     metadata.tree.push(
       ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isSubParent))
     );

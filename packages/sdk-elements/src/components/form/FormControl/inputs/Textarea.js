@@ -31,10 +31,6 @@ const Textarea = props => {
   } = props;
   const inputRef = useRef();
 
-  const handleClickContainer = useCallback(() => {
-    inputRef.current.focus();
-  }, [inputRef]);
-
   const handleClickInput = useCallback(e => {
     e.stopPropagation();
   }, []);
@@ -42,21 +38,19 @@ const Textarea = props => {
   const handleBlur = useCallback(() => onValidate(), [onValidate]);
 
   return (
-    <div className={classNames('form-control__textarea-container', className)} onClick={handleClickContainer}>
-      <textarea
-        ref={inputRef}
-        className="input-container__textarea"
-        id={id}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        required={required}
-        disabled={disabled}
-        onChange={onChange}
-        onBlur={handleBlur}
-        onClick={handleClickInput}
-      />
-    </div>
+    <textarea
+      ref={inputRef}
+      className={classNames('form-control__textarea-container', className)}
+      id={id}
+      name={name}
+      placeholder={placeholder}
+      value={value}
+      required={required}
+      disabled={disabled}
+      onChange={onChange}
+      onBlur={handleBlur}
+      onClick={handleClickInput}
+    />
   );
 };
 
