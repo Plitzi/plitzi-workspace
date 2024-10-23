@@ -12,7 +12,9 @@ const withFieldValue = WrappedComponent => {
    *   ref: React.MutableRefObject<HTMLElement>;
    *   internalProps: object;
    *   name: string;
-   *   subType: 'hidden'
+   *   defaultValue?: string;
+   *   subType:
+   *     | 'hidden'
    *     | 'text'
    *     | 'number'
    *     | 'email'
@@ -27,7 +29,7 @@ const withFieldValue = WrappedComponent => {
    * @returns {React.ReactElement}
    */
   const WithFieldValueComponent = props => {
-    const { ref, internalProps = emptyObject, name = '', subType = 'text', required = true } = props;
+    const { ref, internalProps = emptyObject, name = '', subType = 'text', defaultValue = '', required = true } = props;
     const { id } = internalProps;
     const {
       settings: { previewMode },
@@ -40,7 +42,7 @@ const withFieldValue = WrappedComponent => {
     }
 
     const { setFieldValue, setFieldError, errors, values } = form;
-    const value = useMemo(() => get(values, name, ''), [values, name]);
+    const value = useMemo(() => get(values, name, defaultValue), [values, name, defaultValue]);
     const error = useMemo(() => {
       if (!previewMode) {
         return 'This is an error message';

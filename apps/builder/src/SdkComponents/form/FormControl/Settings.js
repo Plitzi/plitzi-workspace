@@ -11,7 +11,7 @@ const optionsDefault = [];
 /**
  * @param {{
  *   subType?:
- *     'text'
+ *     | 'text'
  *     | 'number'
  *     | 'time'
  *     | 'email'
@@ -26,6 +26,7 @@ const optionsDefault = [];
  *   label?: string;
  *   placeholder?: string;
  *   autoComplete?: boolean;
+ *   defaultValue?: string;
  *   options?: any[];
  *   required?: boolean;
  *   readOnly?: boolean;
@@ -39,6 +40,7 @@ const Settings = props => {
     subType = 'text',
     name = '',
     label = 'Label',
+    defaultValue = '',
     placeholder = '',
     autoComplete = true,
     options = optionsDefault,
@@ -54,7 +56,15 @@ const Settings = props => {
 
   const handleChangePlaceholder = useCallback(e => onUpdate('placeholder', e.target.value), [onUpdate]);
 
-  const handleChangeType = useCallback(e => onUpdate('subType', e.target.value), [onUpdate]);
+  const handleChangeType = useCallback(
+    e => {
+      onUpdate('subType', e.target.value);
+      onUpdate('defaultValue', '');
+    },
+    [onUpdate]
+  );
+
+  const handleChangeDefaultValue = useCallback(e => onUpdate('defaultValue', e.target.value), [onUpdate]);
 
   const handleChangeAutoComplete = useCallback(e => onUpdate('autoComplete', e.target.checked), [onUpdate]);
 
@@ -115,6 +125,10 @@ const Settings = props => {
             {/* <option value="switch">Switch</option> */}
           </Select>
         </div>
+        <div className="flex flex-col mt-5">
+          <label>Default Value</label>
+          <TextArea value={defaultValue} onChange={handleChangeDefaultValue} className="rounded" />
+        </div>
         {/* <div className="flex flex-col mt-4">
           <label>Value</label>
           <Input value={value} onChange={handleChangeValue} />
@@ -138,7 +152,7 @@ const Settings = props => {
         {subType === 'select' && (
           <div className="flex flex-col mt-4">
             <label>Options</label>
-            <TextArea value={optionsString} onChange={handleChangeOptions} />
+            <TextArea value={optionsString} onChange={handleChangeOptions} className="rounded" />
           </div>
         )}
         <div className="flex flex-col mt-4">

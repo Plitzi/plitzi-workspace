@@ -58,6 +58,7 @@ FormControl.content = {
     name: '',
     label: 'Label',
     placeholder: '',
+    defaultValue: '',
     autoComplete: true,
     disabled: false,
     options: [],
