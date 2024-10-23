@@ -325,6 +325,7 @@ const useInspectorValues = props => {
 
     return valuesParsedAux;
   }, [keys, values, defaultValues, strictMode, variables, inheritData]);
+
   if (asValue) {
     return valuesParsed;
   }

@@ -61,7 +61,7 @@ const Size = props => {
       { type: 'inputMetric', value: width, extraValue: { type: WIDTH }, keyValue: WIDTH, label: 'Width' },
       { type: 'inputMetric', value: height, extraValue: { type: HEIGHT }, keyValue: HEIGHT, label: 'Height' }
     ],
-    [width]
+    [width, height]
   );
 
   const itemsMinSize = useMemo(

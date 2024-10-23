@@ -41,9 +41,10 @@ const StyleInspector = props => {
   const {
     style: { platform },
     selectorSelected,
-    setSelectorSelected
+    setSelectorSelected,
+    styleSelector,
+    setStyleSelector
   } = use(BuilderStyleContext);
-  const [styleSelector, setStyleSelector] = useState('base');
   const { builderHandler } = use(BuilderContext);
   const selector = useMemo(() => get(styleSelectors, `${styleSelector}`, ''), [styleSelectors, styleSelector]);
   const selectors = Object.values(get(platform, displayMode));

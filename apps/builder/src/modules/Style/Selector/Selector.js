@@ -50,6 +50,7 @@ const Selector = props => {
   } = props;
   const inputRef = useRef();
   const [inputValue, setInputValue] = useState('');
+  const [popupOpened, setPopupOpened] = useState(false);
   const { style } = use(BuilderStyleContext);
   const { existsPopup, addPopup } = usePopup();
   const tags = useMemo(
@@ -63,7 +64,6 @@ const Selector = props => {
     () => Object.values(omit(get(style, `platform.${displayMode}`), value.split(' '))),
     [style, displayMode]
   );
-  const [popupOpened, setPopupOpened] = useState(false);
 
   const handleChange = useCallback(e => {
     setPopupOpened(e.target.value.length > 0);
@@ -249,7 +249,7 @@ const Selector = props => {
     >
       <Dropdown.Content className={classNames('w-full', { 'z-[51]': popupOpened })}>
         <div
-          className={classNames('flex flex-wrap border border-gray-300 rounded relative p-1 gap-1 flex', className, {
+          className={classNames('flex-wrap border border-gray-300 rounded relative p-1 gap-1 flex', className, {
             'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
             'cursor-pointer': !disabled
           })}

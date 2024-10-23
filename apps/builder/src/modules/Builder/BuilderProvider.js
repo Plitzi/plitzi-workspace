@@ -70,6 +70,7 @@ const BuilderProvider = props => {
   elementSelectedRef.current = elementSelected;
   const [elementHovered, setElementHovered] = useState();
   const [selectorSelected, setSelectorSelected] = useState();
+  const [styleSelector, setStyleSelector] = useState('base');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const pages = useMemo(() => get(schema, 'pages', []), [schema]);
@@ -430,7 +431,7 @@ const BuilderProvider = props => {
     [getBaseElement, drop, setVisibility, schema]
   );
 
-  const selector = get(schemaRef.current, `flat.${elementSelected}.definition.styleSelectors.base`, '');
+  const selector = get(schemaRef.current, `flat.${elementSelected}.definition.styleSelectors.${styleSelector}`, '');
   const selectorActive = useMemo(() => {
     if (selector && selectorSelected && selector.includes(selectorSelected.name?.replace(/:.*/, ''))) {
       return selectorSelected;
@@ -445,8 +446,8 @@ const BuilderProvider = props => {
   }, [selector, selectorSelected]);
 
   const builderStyleValueMemo = useMemo(
-    () => ({ style, selectorSelected: selectorActive, setSelectorSelected }),
-    [style, selectorActive, setSelectorSelected]
+    () => ({ style, selectorSelected: selectorActive, setSelectorSelected, styleSelector, setStyleSelector }),
+    [style, selectorActive, setSelectorSelected, styleSelector, setStyleSelector]
   );
 
   const events = useMemo(
