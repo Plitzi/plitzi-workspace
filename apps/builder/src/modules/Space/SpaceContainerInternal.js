@@ -24,7 +24,13 @@ const SpaceContainerInternal = props => {
         content = JSON.stringify(content);
       }
 
-      addToast(content, { appeareance, autoDismiss, placement, transitionDuration, autoDismissTimeout });
+      addToast(<div className="whitespace-break-spaces">{content}</div>, {
+        appeareance,
+        autoDismiss,
+        placement,
+        transitionDuration,
+        autoDismissTimeout
+      });
     },
     [addToast]
   );

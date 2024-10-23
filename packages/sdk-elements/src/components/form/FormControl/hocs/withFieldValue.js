@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, use, useMemo } from 'react';
+import React, { useCallback, use, useMemo, useEffect } from 'react';
 import get from 'lodash/get.js';
 
 // Monorepo
@@ -50,6 +50,12 @@ const withFieldValue = WrappedComponent => {
 
       return errors[name];
     }, [previewMode, errors, name]);
+
+    useEffect(() => {
+      if (defaultValue && value && name) {
+        setFieldValue(name, value);
+      }
+    }, []);
 
     const handleChange = useCallback(
       e => {
