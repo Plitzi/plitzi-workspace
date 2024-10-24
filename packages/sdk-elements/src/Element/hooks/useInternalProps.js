@@ -1,7 +1,10 @@
 // Packages
 import { useMemo, useState, useCallback, useRef } from 'react';
 import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 import omit from 'lodash/omit.js';
+import capitalize from 'lodash/capitalize.js';
+import { produce } from 'immer';
 
 // Monorepo
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
@@ -24,6 +27,14 @@ const getCache = definition => {
   }
 
   return { stateBinded, attributesBinded };
+};
+
+const sanityValue = value => {
+  if (value === 'true' || value === 'false' || value === 'yes' || value === 'no') {
+    value = value === 'true' || value === 'yes';
+  }
+
+  return value;
 };
 
 // Methods
@@ -99,10 +110,13 @@ const getInteraction = (attributes, definition, callback, postCallback) => ({
           }
 
           if (category === 'state') {
-            return Object.keys(definition.initialState).map(attributeState => ({
-              value: attributeState,
-              label: attributeState
-            }));
+            return [
+              { path: 'visibility', label: 'Visibility' },
+              ...Object.keys(definition.styleSelectors).map(styleSelector => ({
+                value: `styleSelectors.${styleSelector}`,
+                label: `Selector - ${capitalize(styleSelector)}`
+              }))
+            ];
           }
 
           return [];
@@ -158,34 +172,38 @@ const useInternalProps = props => {
         return false;
       }
 
+      // Scenario 1 when is a function
       if (typeof params === 'function') {
-        setState(prevState => ({ ...prevState, ...omit(params(prevState), cache.attributesBinded) }));
+        setState(prevState => produce(prevState, draft => omit(params(draft) ?? {}, cache.attributesBinded)));
 
         return true;
       }
 
-      let auxState = params;
+      // Scenario 2 when is an object (key / value)
       if (params?.key && params?.value !== undefined) {
         const { key } = params;
         let { value } = params;
-        if (value === 'true' || value === 'false' || value === 'yes' || value === 'no') {
-          value = value === 'true' || value === 'yes';
-        }
-
-        setState(prevState => {
-          if (typeof value === 'boolean' || value || value === '' || value === 0) {
-            auxState = { ...prevState, [key]: value };
-          } else {
-            auxState = omit(prevState, [key]);
-          }
-
-          return auxState;
-        });
+        value = sanityValue(value);
+        setState(prevState =>
+          produce(prevState, draft => {
+            if (typeof value === 'boolean' || value || value === '' || value === 0) {
+              set(draft, key, value);
+            } else {
+              draft = omit(draft, [key]);
+            }
+          })
+        );
 
         return true;
       }
 
-      setState(omit(params, cache.attributesBinded));
+      // Scenario 3, its an object
+      const auxState = {};
+      Object.keys(params).forEach(key => {
+        set(auxState, key, params[key]);
+      });
+
+      setState(omit(auxState, cache.attributesBinded));
 
       return true;
     },
@@ -194,27 +212,24 @@ const useInternalProps = props => {
 
   const setStateCallback = useCallback(params => {
     const prevState = prevStateRef.current;
-    let auxState = params;
     if (!params || !params.key || !params.value) {
       return { prevState, nextState: prevState };
     }
 
     const { key } = params;
     let { value } = params;
-    if (value === 'true' || value === 'false' || value === 'yes' || value === 'no') {
-      value = value === 'true' || value === 'yes';
-    }
-
+    value = sanityValue(value);
+    let newState = {};
     if (typeof value === 'boolean' || value || value === '' || value === 0) {
-      auxState = { ...prevState, [key]: value };
+      newState = { ...prevState, [key]: value };
     } else {
-      auxState = omit(prevState, [key]);
+      newState = omit(prevState, [key]);
     }
 
-    if (setElementState(auxState)) {
-      prevStateRef.current = auxState;
+    if (setElementState(newState)) {
+      prevStateRef.current = newState;
 
-      return { prevState, nextState: auxState };
+      return { prevState, nextState: newState };
     }
 
     return { prevState, nextState: prevState };
