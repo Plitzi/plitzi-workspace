@@ -182,7 +182,7 @@ const NodeHeader = props => {
               <div className="truncate">{title}</div>
             </div>
           )}
-          {isOpened && <Input size="sm" value={title} onChange={handleChangeTitle} inputClassName="rounded" />}
+          {isOpened && <Input size="sm" value={title} onChange={handleChangeTitle} inputClassName="rounded !text-sm" />}
           {!nodeDefinition && elementId && (
             <i className="fa-solid fa-triangle-exclamation text-orange-400 ml-2" title="Node Not Found" />
           )}

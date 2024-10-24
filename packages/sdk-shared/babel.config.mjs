@@ -7,7 +7,7 @@ const config = {
       ]
     },
     development: {
-      presets: [['@babel/preset-react', { runtime: 'automatic' }], ['@babel/preset-env', { modules: false }], 'minify'],
+      presets: [['@babel/preset-react', { runtime: 'automatic' }], ['@babel/preset-env', { modules: false }]],
       plugins: [
         '@babel/plugin-proposal-class-properties',
         '@babel/plugin-transform-runtime',
