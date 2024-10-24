@@ -70,23 +70,27 @@ const WorkflowContextProvider = props => {
             enabled: false
           };
 
-          const siblingNode = draft[siblingNodeId];
-          if (!siblingNode) {
+          const siblingNodeBefore = draft[siblingNodeId];
+          if (!siblingNodeBefore) {
             draft[id] = newNode;
 
             return;
           }
 
-          if (!siblingNode.afterNode) {
-            // Add after sibling
-            newNode.beforeNode = siblingNode.id;
-            siblingNode.afterNode = id;
-          } else {
-            // Add Before sibling
-            newNode.afterNode = siblingNode.afterNode;
-            newNode.beforeNode = siblingNode.id;
-            siblingNode.afterNode = newNode.id;
+          // Nodes
+          const siblingNodeAfter = draft[siblingNodeBefore.afterNode];
+
+          // Update Before Node
+          siblingNodeBefore.afterNode = id;
+
+          // Update After sibling
+          if (siblingNodeAfter) {
+            siblingNodeAfter.beforeNode = id;
           }
+
+          // Set Node relationship
+          newNode.afterNode = siblingNodeAfter?.id ?? '';
+          newNode.beforeNode = siblingNodeBefore.id;
 
           draft[id] = newNode;
         })

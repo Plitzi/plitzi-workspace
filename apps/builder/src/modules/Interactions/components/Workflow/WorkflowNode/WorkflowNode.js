@@ -174,7 +174,7 @@ const WorkflowNode = props => {
       )}
     >
       <NodeHeader
-        className={classNames('mt-2', { 'border-b-2 border-gray-300 border-dotted': isOpened })}
+        className={classNames({ 'border-b-2 border-gray-300 border-dotted': isOpened })}
         id={id}
         title={title}
         type={type}

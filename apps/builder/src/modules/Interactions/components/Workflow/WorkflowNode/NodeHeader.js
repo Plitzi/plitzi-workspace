@@ -140,11 +140,11 @@ const NodeHeader = props => {
   }, [optionsMemo, elementId, action, type]);
 
   return (
-    <div className={classNames('flex p-2', className)}>
+    <div className={classNames('flex p-2 gap-2', className)}>
       <div className="flex flex-col items-center justify-center">
         <div
           className={classNames(
-            'flex items-center justify-center border border-gray-300 rounded-xl h-12 w-12 cursor-pointer',
+            'flex items-center justify-center border border-gray-300 rounded h-9 w-9 cursor-pointer',
             {
               'bg-blue-400 text-white': type === 'trigger',
               'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
@@ -164,34 +164,32 @@ const NodeHeader = props => {
           onChange={handleChangeEnabled}
         />
       </div>
-      <div className="flex flex-col ml-2 overflow-hidden w-full">
+      <div className="flex flex-col overflow-hidden w-full justify-between">
         <div className="flex items-center">
-          {!isOpened && <div className="grow basis-0 truncate">{title}</div>}
-          {isOpened && (
-            <Input
-              size="custom"
-              value={title}
-              onChange={handleChangeTitle}
-              inputClassName="rounded py-1 px-2 text-md"
-            />
+          {!isOpened && (
+            <div className="grow basis-0 truncate text-sm h-7 flex items-center">
+              <div className="truncate">{title}</div>
+            </div>
           )}
+          {isOpened && <Input size="sm" value={title} onChange={handleChangeTitle} inputClassName="rounded" />}
           {!nodeDefinition && elementId && (
             <i className="fa-solid fa-triangle-exclamation text-orange-400 ml-2" title="Node Not Found" />
           )}
         </div>
         <Select2
-          className="rounded truncate mt-2"
+          className="rounded truncate"
           placeholder={`Select a ${upperFirst(type)}`}
           value={optionValue}
           onChange={handleChangeAction}
           options={optionsMemo}
+          size="sm"
         />
       </div>
-      <div className="flex flex-col items-center justify-center ml-2">
+      <div className="flex flex-col items-center justify-center">
         <Button
           intent="custom"
           size="custom"
-          className="flex items-start flex items-center w-6 h-6 text-blue-400 hover:text-blue-500"
+          className="flex items-center justify-center w-6 h-6 text-blue-400 hover:text-blue-500"
           onClick={handleClickCopyId}
           title="Copy ID"
         >
@@ -201,7 +199,7 @@ const NodeHeader = props => {
           <Button
             intent="custom"
             size="custom"
-            className="flex items-start flex items-center w-6 h-6 text-red-400 hover:text-red-500 mt-2"
+            className="flex items-center justify-center w-6 h-6 text-red-400 hover:text-red-500 mt-2"
             onClick={onClickRemove}
             title="Remove"
           >
