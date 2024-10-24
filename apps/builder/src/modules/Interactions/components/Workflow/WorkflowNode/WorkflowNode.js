@@ -186,6 +186,8 @@ const WorkflowNode = props => {
         isOpened={isOpened}
         isFirstNode={!beforeNode || beforeNode === triggerId}
         enabled={enabled}
+        canUp={!!beforeNode && beforeNode !== triggerId}
+        canDown={!!afterNode}
         onChange={handleChange}
         onClickOpen={handleClickOpen}
         onClickRemove={handleClickRemove}
@@ -197,14 +199,7 @@ const WorkflowNode = props => {
       {isOpened && nodeDefinition && (
         <NodePreview preview={preview} defaultPreview={defaultPreview} onChange={handleChange} />
       )}
-      {isOpened && (
-        <NodeFooter
-          id={id}
-          canUp={!!beforeNode && beforeNode !== triggerId}
-          canDown={!!afterNode}
-          onClickOpen={handleClickOpen}
-        />
-      )}
+      {isOpened && <NodeFooter onClickOpen={handleClickOpen} />}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, use } from 'react';
 import classNames from 'classnames';
 import upperFirst from 'lodash/upperFirst';
 import noop from 'lodash/noop';
@@ -9,6 +9,7 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
+import WorkflowContext from '../WorkflowContext';
 
 const nodeDefinitionsDefault = [];
 
@@ -25,6 +26,8 @@ const nodeDefinitionsDefault = [];
  *   enabled?: boolean;
  *   nodeDefinitions?: object[];
  *   nodeDefinition?: object;
+ *   canUp?: boolean;
+ *   canDown?: boolean;
  *   onChange?: (node: object) => void;
  *   onClickOpen?: () => void;
  *   onClickRemove?: () => void;
@@ -44,10 +47,18 @@ const NodeHeader = props => {
     enabled = false,
     nodeDefinitions = nodeDefinitionsDefault,
     nodeDefinition,
+    canUp = false,
+    canDown = false,
     onChange = noop,
     onClickOpen = noop,
     onClickRemove = noop
   } = props;
+
+  const { moveNode } = use(WorkflowContext);
+
+  const handleClickUp = useCallback(() => moveNode(id, 'up'), [id, moveNode]);
+
+  const handleClickDown = useCallback(() => moveNode(id, 'down'), [id, moveNode]);
 
   const handleChangeAction = useCallback(
     option => {
@@ -175,6 +186,18 @@ const NodeHeader = props => {
           {!nodeDefinition && elementId && (
             <i className="fa-solid fa-triangle-exclamation text-orange-400 ml-2" title="Node Not Found" />
           )}
+          <div className="flex ml-2 basis-0 gap-1 grow justify-end">
+            {canUp && (
+              <Button size="custom" className="rounded px-1.5 py-1 text-xs" title="Up" onClick={handleClickUp}>
+                <i className="fa-solid fa-arrow-up" />
+              </Button>
+            )}
+            {canDown && (
+              <Button size="custom" className="rounded px-1.5 py-1 text-xs" title="Down" onClick={handleClickDown}>
+                <i className="fa-solid fa-arrow-down" />
+              </Button>
+            )}
+          </div>
         </div>
         <Select2
           className="rounded truncate"
