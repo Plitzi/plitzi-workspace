@@ -221,7 +221,7 @@ const useInternalProps = props => {
     value = sanityValue(value);
     let newState = {};
     if (typeof value === 'boolean' || value || value === '' || value === 0) {
-      newState = { ...prevState, [key]: value };
+      newState = produce(prevState, draft => set(draft, key, value));
     } else {
       newState = omit(prevState, [key]);
     }
@@ -237,15 +237,11 @@ const useInternalProps = props => {
 
   const setStatePostCallback = useCallback((params, callbackResult) => {
     const { revertOnFinish } = params;
-    if (!callbackResult || !callbackResult?.prevState) {
+    if (!revertOnFinish || !callbackResult || !callbackResult?.prevState) {
       return;
     }
 
     const { prevState } = callbackResult;
-    if (!revertOnFinish) {
-      return;
-    }
-
     prevStateRef.current = prevState;
     setState(prevState);
   }, []);
