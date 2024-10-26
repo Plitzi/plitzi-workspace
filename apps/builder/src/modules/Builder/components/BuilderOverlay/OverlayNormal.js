@@ -2,7 +2,6 @@
 import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
-import noop from 'lodash/noop';
 import { produce } from 'immer';
 import set from 'lodash/set';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
@@ -164,7 +163,7 @@ const OverlayNormal = props => {
 
   useEffect(() => {
     if (!canMove || !elementDOM || mode !== 'select') {
-      return noop;
+      return;
     }
 
     elementDOM.addEventListener('dragstart', handleDragStart);
