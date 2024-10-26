@@ -72,13 +72,25 @@ const useDataSource = (props = {}) => {
     sources = sources.filter(source => !sourceFilter?.length || sourceFilter.includes(source.meta.source));
   }
 
-  // To prevent re-rendering we will keep the same object and just override the sources internally
-  Object.keys(sourcesRef.current).forEach(source => {
-    delete sourcesRef.current[source];
-  });
-  sources.forEach(({ meta, context }) => {
-    sourcesRef.current[meta.source] = use(context);
-  });
+  const sourcesData = sources
+    .map(source => ({ ...source, value: use(source.context) }))
+    .reduce((acum, source) => ({ ...acum, [source.meta.source]: source.value }), {});
+
+  const shouldReRender =
+    Object.entries(sourcesRef.current).filter(([source, value]) => value !== sourcesData[source]).length > 0 ||
+    Object.keys(sourcesData).length !== Object.keys(sourcesRef.current).length;
+
+  if (shouldReRender) {
+    sourcesRef.current = sourcesData;
+  } else {
+    // To prevent re-rendering we will keep the same object and just override the sources internally
+    Object.keys(sourcesRef.current).forEach(source => {
+      delete sourcesRef.current[source];
+    });
+    Object.entries(sourcesData).forEach(([source, value]) => {
+      sourcesRef.current[source] = value;
+    });
+  }
 
   return sourcesRef.current;
 };

@@ -84,9 +84,15 @@ const BuilderOverlay = props => {
 
   useEffect(() => {
     const elementDOM = getElementDOM(id);
-    setOverlayProps(state => (state.id === id ? state : { id, element, elementDOM }));
+    setOverlayProps(state => {
+      if (state.id === id && state?.element?.definition?.parentId === element?.definition?.parentId) {
+        return state;
+      }
+
+      return { id, element, elementDOM };
+    });
     handleProcessContainer(elementDOM);
-  }, [baseElementId, element, id]);
+  }, [baseElementId, element?.definition?.parentId, id]);
 
   useEffect(() => {
     const { elementDOM } = overlayProps;
@@ -153,25 +159,31 @@ const BuilderOverlay = props => {
   ]);
 
   useEffect(() => {
-    if (overlayProps?.element && !overlayProps?.elementDOM && mode === 'select') {
-      // Special case where the element is not found in the DOM due lazy loading
-      let retries = 10;
-      const retryHandler = setTimeout(() => {
-        const elementDOM = getElementDOM(id);
-        if (elementDOM) {
-          setOverlayProps({ id, element, elementDOM });
-          handleProcessContainer(elementDOM);
-          clearInterval(retryHandler);
-
-          return;
-        }
-
-        retries -= 1;
-        if (retries === 0) {
-          clearTimeout(retryHandler);
-        }
-      }, 125);
+    if (!overlayProps?.element || overlayProps?.elementDOM || mode !== 'select') {
+      return;
     }
+
+    // Special case where the element is not found in the DOM due lazy loading
+    let retries = 10;
+    const retryHandler = setTimeout(() => {
+      const elementDOM = getElementDOM(id);
+      if (elementDOM) {
+        setOverlayProps({ id, element, elementDOM });
+        handleProcessContainer(elementDOM);
+        clearInterval(retryHandler);
+
+        return;
+      }
+
+      retries -= 1;
+      if (retries === 0) {
+        clearTimeout(retryHandler);
+      }
+    }, 125);
+
+    return () => {
+      clearTimeout(retryHandler);
+    };
   }, [id, overlayProps?.element, overlayProps?.elementDOM]);
 
   const selector = useMemo(() => {
