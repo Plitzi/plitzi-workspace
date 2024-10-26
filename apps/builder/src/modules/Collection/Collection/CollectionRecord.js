@@ -1,7 +1,7 @@
 // Packages
-import React from 'react';
+import React, { useMemo } from 'react';
 import noop from 'lodash/noop';
-import Moment from 'react-moment';
+import moment from 'moment';
 import classNames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
 
@@ -30,15 +30,13 @@ const CollectionRecord = props => {
     onUpdate = noop,
     onRemove = noop
   } = props;
+  const publishedAtParsed = useMemo(() => {
+    if (!publishedAt) {
+      return 'Not Set';
+    }
 
-  const timeTemplate = value =>
-    value ? (
-      <Moment format="MMMM DD, YYYY" unix>
-        {value}
-      </Moment>
-    ) : (
-      'Not Set'
-    );
+    return moment(publishedAt).format('MMMM DD, YYYY');
+  }, [publishedAt]);
 
   return (
     <div className="flex items-center border-b border-gray-300 last:border-b-0 py-3 px-4 gap-4 text-xs">
@@ -53,7 +51,7 @@ const CollectionRecord = props => {
                 values[fieldKey]}
               {type === 'image' && (
                 <div
-                  className="h-12 w-20 flex items-center bg-cover justify-center bg-gray-300 bg-white bg-no-repeat rounded"
+                  className="h-12 w-20 flex items-center bg-cover justify-center bg-gray-300 bg-no-repeat rounded"
                   style={{ backgroundImage: `url(${values[fieldKey]})` }}
                 >
                   {valueEmpty && <i className="fas fa-image fa-2x" />}
@@ -73,7 +71,7 @@ const CollectionRecord = props => {
           {status}
         </div>
       </div>
-      <div className="flex w-32 items-start">{timeTemplate(publishedAt)}</div>
+      <div className="flex w-32 items-start">{publishedAtParsed}</div>
       <div className="flex w-20 items-start justify-center text-base">
         {/* <i className="fas fa-ellipsis-v" /> */}
         <i className="fa-solid fa-pencil mr-3 hover:text-blue-400 cursor-pointer" title="Update" onClick={onUpdate} />

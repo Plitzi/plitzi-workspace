@@ -1,7 +1,7 @@
 // Packages
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
-import Moment from 'react-moment';
+import moment from 'moment';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import noop from 'lodash/noop';
@@ -42,6 +42,7 @@ const DetailsSidebar = props => {
     onUpdate = noop,
     onRemove = noop
   } = props;
+  const createdAtParsed = useMemo(() => () => moment(createdAt).format('DD MMMM, YYYY'), [createdAt]);
   const [versionSelected, setVersionSelected] = useState(() => {
     let versionSelected = versionInstalled;
     if (!versionInstalled) {
@@ -122,7 +123,7 @@ const DetailsSidebar = props => {
           </div>
           <div className="flex items-center justify-between mt-2">
             <div className="font-bold">Published At</div>
-            <Moment date={createdAt} unix format="DD MMMM, YYYY" />
+            {createdAtParsed}
           </div>
         </div>
       </div>

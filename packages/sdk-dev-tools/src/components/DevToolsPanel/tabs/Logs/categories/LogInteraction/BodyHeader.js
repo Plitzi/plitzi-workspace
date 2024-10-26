@@ -1,6 +1,6 @@
 // Packages
 import React, { use, useCallback, useMemo } from 'react';
-import Moment from 'react-moment';
+import moment from 'moment';
 import get from 'lodash/get.js';
 
 // Monorepo
@@ -21,6 +21,8 @@ const BodyHeader = props => {
   const { triggerName, startTime, endTime, duration, elementId } = props;
   const { schema } = use(SchemaContext);
   const element = useMemo(() => get(schema, `flat.${elementId}`), [schema, elementId]);
+  const startTimeParsed = useMemo(() => moment(startTime).format('HH:mm:ss.SSS'), [startTime]);
+  const endTimeParsed = useMemo(() => moment(endTime).format('HH:mm:ss.SSS'), [endTime]);
   const elementDOM = useMemo(() => {
     if (typeof document === 'undefined') {
       return undefined;
@@ -51,11 +53,11 @@ const BodyHeader = props => {
         <div className="flex flex-col">
           <div className="flex gap-1">
             <span>Started:</span>
-            <Moment format="HH:mm:ss.SSS">{startTime}</Moment>
+            {startTimeParsed}
           </div>
           <div className="flex gap-1">
             <span>End:</span>
-            <Moment format="HH:mm:ss.SSS">{endTime}</Moment>
+            {endTimeParsed}
           </div>
           <div className="flex gap-1">
             <span>Duration:</span>

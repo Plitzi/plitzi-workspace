@@ -2973,7 +2973,6 @@ __metadata:
     react: "npm:19.0.0-rc-69d4b800-20241021"
     react-dom: "npm:19.0.0-rc-69d4b800-20241021"
     react-hook-form: "npm:^7.53.1"
-    react-moment: "npm:^1.1.3"
     react-refresh: "npm:^0.14.2"
     react-router-dom: "npm:^6.27.0"
     react-test-renderer: "npm:^18.3.1"
@@ -3083,9 +3082,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.14.7":
-  version: 0.14.7
-  resolution: "@plitzi/plitzi-ui-components@npm:0.14.7::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.14.7%2Fb2ebf824d7c6a972ea0e1b054edccc586f2f5ba8"
+"@plitzi/plitzi-ui-components@npm:0.14.8":
+  version: 0.14.8
+  resolution: "@plitzi/plitzi-ui-components@npm:0.14.8::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.14.8%2Fd46815b95c8e66612220244c3aa4e5acd475e2fd"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.18.1"
     "@codemirror/commands": "npm:^6.7.1"
@@ -3105,14 +3104,13 @@ __metadata:
     react-color: "npm:^2.19.3"
     react-dom: "npm:19.0.0-rc-69d4b800-20241021"
     react-markdown: "npm:^9.0.1"
-    react-moment: "npm:^1.1.3"
     react-router-dom: "npm:^6.27.0"
     react-syntax-highlighter: "npm:^15.6.1"
     react-toastify: "npm:^10.0.6"
     rehype-raw: "npm:^7.0.0"
     remark-gfm: "npm:^4.0.0"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/32d59de874414494d5e95f555c46a0f17dbd00004a9cc535eecdc6165177a86dc93f8e77fdeb28a9030a50bc0510707d1cca03684addda40197f57665e4e6bcc
+  checksum: 10c0/0a012aa55437e3901b9b64910b5f636c57e1bc7a5b28f8ebc3b90c0383c7c2f615060927224755e30dd11061970fd716c8d4a4f282c89464ec805106e9eae7f6
   languageName: node
   linkType: hard
 
@@ -3128,7 +3126,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.9"
-    "@plitzi/plitzi-ui-components": "npm:0.14.7"
+    "@plitzi/plitzi-ui-components": "npm:0.14.8"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.13.0"
     jest: "npm:^29.7.0"
@@ -15160,17 +15158,6 @@ __metadata:
     "@types/react": ">=18"
     react: ">=18"
   checksum: 10c0/3a3895dbd56647bc864b8da46dd575e71a9e609eb1e43fea8e8e6209d86e208eddd5b07bf8d7b5306a194b405440760a8d134aebd5a4ce5dc7dee4299e84db96
-  languageName: node
-  linkType: hard
-
-"react-moment@npm:^1.1.3":
-  version: 1.1.3
-  resolution: "react-moment@npm:1.1.3"
-  peerDependencies:
-    moment: ^2.29.0
-    prop-types: ^15.7.0
-    react: ^16.0 || ^17.0.0 || ^18.0.0
-  checksum: 10c0/e2e2e262c516ce3c5bb8d56c04b6ab634e78b9ef1a38c0c1822eff060bbdf76fe22c64877e7429acb0c8b0d254ac3323ce7a2b6ba6b50d3114aba897613abcf8
   languageName: node
   linkType: hard
 
