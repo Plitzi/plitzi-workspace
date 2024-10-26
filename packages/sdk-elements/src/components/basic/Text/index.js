@@ -34,13 +34,6 @@ Text.content = {
     backgroundColor: '#4422ee',
     icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
   },
-  bindingsAllowed: {
-    attributes: [{ path: 'content', label: 'Content' }],
-    initialState: [
-      { path: 'visibility', label: 'Visibility' },
-      { path: 'styleSelectors.base', label: 'Selector - Base' }
-    ]
-  },
   defaultStyle: {
     name: 'Text',
     displayMode: 'desktop',

@@ -40,13 +40,6 @@ BlockJsx.content = {
     backgroundColor: '#4422ee',
     icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
   },
-  bindingsAllowed: {
-    attributes: [{ path: 'props', label: 'Properties' }],
-    initialState: [
-      { path: 'visibility', label: 'Visibility' },
-      { path: 'styleSelectors.base', label: 'Selector - Base' }
-    ]
-  },
   defaultStyle: {
     name: 'Block JSX',
     displayMode: 'desktop',

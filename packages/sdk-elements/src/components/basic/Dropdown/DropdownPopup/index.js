@@ -32,10 +32,6 @@ DropdownPopup.content = {
     backgroundColor: '#4422ee',
     icon: ''
   },
-  bindingsAllowed: {
-    attributes: [],
-    initialState: [{ path: 'styleSelectors.base', label: 'Selector - Base' }]
-  },
   defaultStyle: {
     name: 'Dropdown Popup',
     displayMode: 'desktop',

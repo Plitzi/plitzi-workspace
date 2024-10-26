@@ -37,13 +37,6 @@ TabContainer.content = {
     backgroundColor: '#4422ee',
     icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
   },
-  bindingsAllowed: {
-    attributes: [],
-    initialState: [
-      { path: 'visibility', label: 'Visibility' },
-      { path: 'styleSelectors.base', label: 'Selector - Base' }
-    ]
-  },
   defaultStyle: {
     name: 'Tab Container',
     displayMode: 'desktop',

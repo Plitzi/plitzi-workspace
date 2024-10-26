@@ -2,13 +2,11 @@
 import React, { use, useMemo, useState, useCallback, useRef } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useStateDebounce from '@plitzi/plitzi-ui-components/hooks/useStateDebounce';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { StyleBindingsAllowed } from '@plitzi/sdk-style/StyleConstants';
 
 // Alias
 import StyleInspector from '@pmodules/Style/StyleInspector';
@@ -25,7 +23,7 @@ import BuilderContext from '../../BuilderContext';
 
 /**
  * @param {{
- *   initialTab?: string;
+ *   initialTab?: string;r
  * }} props
  * @returns {React.ReactElement}
  */
@@ -34,7 +32,6 @@ const BuilderElementTools = props => {
   const [, setCache, getCache] = useCache();
   const [selected, setSelected] = useState(() => getCache('BuilderElementTools.tabSelected', initialTab));
   const { builderHandler } = use(BuilderContext);
-  const { componentDefinitions } = use(ComponentContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
   const attributes = useMemo(() => get(element, 'attributes', {}), [element]);
@@ -94,19 +91,6 @@ const BuilderElementTools = props => {
     },
     [builderHandler, element]
   );
-
-  const bindingsAllowed = useMemo(() => {
-    if (!element) {
-      return {};
-    }
-
-    const type = get(element, 'definition.type', '');
-    if (!type) {
-      return {};
-    }
-
-    return { ...get(componentDefinitions, `${type}.bindingsAllowed`, {}), style: StyleBindingsAllowed };
-  }, [componentDefinitions, element]);
 
   if (!element) {
     return (
@@ -194,8 +178,8 @@ const BuilderElementTools = props => {
             onChange={handleChangeBinding}
             id={elementSelected}
             bindings={bindings}
-            bindingsAllowed={bindingsAllowed}
             allowCustomBindings={type === 'custom' || type === 'blockJsx' || type === 'blockHtml'}
+            element={element}
           />
         )}
         {selected === 'interactions' && (

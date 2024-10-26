@@ -44,17 +44,6 @@ Dropdown.content = {
     backgroundColor: '#4422ee',
     icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
   },
-  bindingsAllowed: {
-    attributes: [
-      { path: 'openPopup', label: 'Open Popup' },
-      { path: 'disabled', label: 'Disabled' }
-    ],
-    initialState: [
-      { path: 'visibility', label: 'Visibility' },
-      { path: 'styleSelectors.base', label: 'Selector - Base' },
-      { path: 'styleSelectors.backgroundContainer', label: 'Selector - Background Container' }
-    ]
-  },
   defaultStyle: {
     name: 'Dropdown',
     displayMode: 'desktop',

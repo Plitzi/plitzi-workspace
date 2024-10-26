@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import upperFirst from 'lodash/upperFirst';
+import capitalize from 'lodash/capitalize';
 import { produce } from 'immer';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
@@ -18,12 +19,14 @@ import BindingForm from './models/BindingForm';
 import BindingSelected from './BindingSelected';
 import { generateID } from '../../helpers/utils';
 
+const bindingCategories = ['attributes', 'style', 'initialState'];
+
 /**
  * @param {{
  *   id?: string;
  *   bindings?: object;
- *   bindingsAllowed?: object;
  *   allowCustomBindings?: boolean;
+ *   attributes?: object;
  *   onChange?: (bindings: object) => void;
  * }} props
  * @returns {React.ReactElement}
@@ -32,14 +35,15 @@ const DataSourceBinding = props => {
   const {
     id = '',
     bindings = emptyObject,
-    bindingsAllowed = emptyObject,
     allowCustomBindings = false,
+    element = emptyObject,
     onChange = noop
   } = props;
   const { getSourcesByElementId } = use(DataSourceContext);
   const { schema } = use(BuilderSchemaContext);
+  const { attributes, definition } = element;
   const [bindingFormValues, setBindingFormValues] = useState(() =>
-    Object.keys(bindingsAllowed).reduce((acum, key) => ({ ...acum, [key]: null }), {})
+    Object.keys(attributes).reduce((acum, key) => ({ ...acum, [key]: null }), {})
   );
   const sources = useMemo(
     () =>
@@ -51,8 +55,8 @@ const DataSourceBinding = props => {
   );
 
   useEffect(() => {
-    setBindingFormValues(Object.keys(bindingsAllowed).reduce((acum, key) => ({ ...acum, [key]: null }), {}));
-  }, [id]);
+    setBindingFormValues(Object.keys(attributes).reduce((acum, key) => ({ ...acum, [key]: null }), {}));
+  }, [id, attributes]);
 
   const handleClickAddBinding = category => () => {
     setBindingFormValues(state => ({
@@ -135,6 +139,21 @@ const DataSourceBinding = props => {
     setBindingFormValues(state => ({ ...state, [category]: null }));
   };
 
+  const bindingsAvailables = useMemo(
+    () => ({
+      attributes: Object.keys(attributes).map(attributeKey => ({ path: attributeKey, label: attributeKey })),
+      style: [],
+      initialState: [
+        { path: 'visibility', label: 'Visibility' },
+        ...Object.keys(definition.styleSelectors).map(styleSelector => ({
+          path: `styleSelectors.${styleSelector}`,
+          label: `Selector - ${capitalize(styleSelector)}`
+        }))
+      ]
+    }),
+    [attributes, definition]
+  );
+
   if (!sources || Object.keys(sources).length === 0) {
     return (
       <div className="m-3 p-3 border-2 border-gray-300 border-dashed rounded text-center">
@@ -143,15 +162,7 @@ const DataSourceBinding = props => {
     );
   }
 
-  if (Object.keys(bindingsAllowed).length === 0) {
-    return (
-      <div className="m-3 p-3 border-2 border-gray-300 border-dashed rounded text-center">
-        There are not bindings allowed
-      </div>
-    );
-  }
-
-  return Object.keys(bindingsAllowed).map((fkey, i) => (
+  return bindingCategories.map((fkey, i) => (
     <ContainerCollapsable
       key={`${id}_${i}`}
       title={<div className="px-4 py-2">{upperFirst(fkey)}</div>}
@@ -188,14 +199,14 @@ const DataSourceBinding = props => {
         <div
           className={classNames('border-t border-gray-300 py-4 px-4', {
             'mt-4': bindings && bindings[fkey] && Object.keys(bindings[fkey]).length > 0,
-            'border-b': i !== Object.keys(bindingsAllowed).length - 1
+            'border-b': i !== bindingCategories.length - 1
           })}
         >
           <BindingForm
             value={bindingFormValues}
             category={fkey}
             onClose={handleClickCloseForm(fkey)}
-            attributes={bindingsAllowed[fkey]}
+            attributes={bindingsAvailables[fkey]}
             sources={sources}
             allowCustomBindings={fkey === 'attributes' && allowCustomBindings}
           />

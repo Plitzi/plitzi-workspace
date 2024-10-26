@@ -34,13 +34,6 @@ TabContainerBody.content = {
     backgroundColor: '#4422ee',
     icon: ''
   },
-  bindingsAllowed: {
-    attributes: [],
-    initialState: [
-      { path: 'visibility', label: 'Visibility' },
-      { path: 'styleSelectors.base', label: 'Selector - Base' }
-    ]
-  },
   defaultStyle: {
     name: 'Tab Container Body',
     displayMode: 'desktop',

@@ -33,10 +33,6 @@ NotFound.content = {
     backgroundColor: '#4422ee',
     icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
   },
-  bindingsAllowed: {
-    attributes: [],
-    initialState: []
-  },
   defaultStyle: {
     name: 'Not Found',
     displayMode: 'desktop',

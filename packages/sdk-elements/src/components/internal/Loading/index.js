@@ -33,10 +33,6 @@ Loading.content = {
     backgroundColor: '#4422ee',
     icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
   },
-  bindingsAllowed: {
-    attributes: [],
-    initialState: []
-  },
   defaultStyle: {
     name: 'Loading',
     displayMode: 'desktop',

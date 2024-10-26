@@ -98,22 +98,6 @@ FormControl.content = {
     backgroundColor: '#4422ee',
     icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
   },
-  bindingsAllowed: {
-    attributes: [
-      { path: 'name', label: 'Name' },
-      { path: 'label', label: 'Label' },
-      { path: 'placeholder', label: 'Placeholder' },
-      { path: 'autoComplete', label: 'Auto Complete' },
-      { path: 'disabled', label: 'Disabled' },
-      { path: 'error', label: 'Error' },
-      { path: 'options', label: 'Options' },
-      { path: 'required', label: 'Required' }
-    ],
-    initialState: [
-      { path: 'visibility', label: 'Visibility' },
-      { path: 'styleSelectors.base', label: 'Selector - Base' }
-    ]
-  },
   defaultStyle: {
     name: 'Form Control',
     displayMode: 'desktop',

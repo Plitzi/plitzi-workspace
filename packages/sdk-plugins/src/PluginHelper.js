@@ -22,7 +22,7 @@ const getComponentDefinition = (pluginRaw, pluginManifest) => {
     } = pluginManifest;
 
     const componentDefinitions = Object.values(get(pluginManifest, 'pluginSchema', {})).reduce((acum, component) => {
-      const { definition, builder, bindingsAllowed, defaultStyle, attributes } = component;
+      const { definition, builder, defaultStyle, attributes } = component;
       let subPlugins = [];
       if (definition.type === type) {
         subPlugins = Object.keys(omit(pluginSchema, [type]));
@@ -33,7 +33,6 @@ const getComponentDefinition = (pluginRaw, pluginManifest) => {
         [definition.type]: {
           // Builder
           attributes,
-          bindingsAllowed,
           builder,
           defaultStyle,
           definition,
