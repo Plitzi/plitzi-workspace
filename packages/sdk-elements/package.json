@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-elements",
-  "version": "0.23.12",
+  "version": "0.23.13",
   "files": [
     "dist"
   ],
@@ -34,6 +34,7 @@
     "@plitzi/sdk-dev-tools": "*",
     "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-shared": "*",
+    "immer": "^10.1.1",
     "lodash": "^4.17.21"
   }
 }

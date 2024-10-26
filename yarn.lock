@@ -3199,6 +3199,7 @@ __metadata:
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.13.0"
+    immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"
   languageName: unknown
   linkType: soft
