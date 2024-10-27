@@ -40,7 +40,7 @@ class StyleMap {
 
   updateSelector = (displayMode, selector, type, path, style) => {
     if (!get(this.platform, `${displayMode}.${selector}`)) {
-      return this.addSelectorToSchema(displayMode, selector, path, style);
+      return this.addSelector(displayMode, selector, type, path, style);
     }
 
     if (path && style) {

@@ -25,7 +25,7 @@ const SelectorSuggestions = props => {
 
   const finalSelectors = useMemo(() => {
     let finalSelectors = selectors;
-    if (selectors && !selector) {
+    if (selectors && selector) {
       finalSelectors = finalSelectors.filter(token => token.name?.toLowerCase().includes(selector.toLowerCase()));
     }
 
