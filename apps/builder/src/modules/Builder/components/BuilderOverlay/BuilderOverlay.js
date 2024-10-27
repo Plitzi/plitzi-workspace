@@ -74,13 +74,16 @@ const BuilderOverlay = props => {
 
   const throttledHandleProcessContainer = useCallback(throttle(handleProcessContainer, 50), [handleProcessContainer]);
 
-  const getElementDOM = id => {
-    if (iframeDOM) {
-      return iframeDOM.contentWindow.document.querySelector(`[data-id="${id}"][data-root-id="${baseElementId}"]`);
-    }
+  const getElementDOM = useCallback(
+    eId => {
+      if (iframeDOM) {
+        return iframeDOM.contentWindow.document.querySelector(`[data-id="${eId}"][data-root-id="${baseElementId}"]`);
+      }
 
-    return window.document.querySelector(`[data-id="${id}"][data-root-id="${baseElementId}"]`);
-  };
+      return window.document.querySelector(`[data-id="${eId}"][data-root-id="${baseElementId}"]`);
+    },
+    [iframeDOM, baseElementId]
+  );
 
   useEffect(() => {
     const elementDOM = getElementDOM(id);
@@ -91,12 +94,19 @@ const BuilderOverlay = props => {
 
       return { id, element, elementDOM };
     });
-    handleProcessContainer(elementDOM);
-  }, [baseElementId, element?.definition?.parentId, id]);
+  }, [baseElementId, element?.definition?.parentId, id, getElementDOM]);
+
+  useEffect(() => {
+    if (!overlayProps || !overlayProps.elementDOM) {
+      return;
+    }
+
+    handleProcessContainer(overlayProps.elementDOM);
+  }, [overlayProps]);
 
   useEffect(() => {
     const { elementDOM } = overlayProps;
-    if (!elementDOM) {
+    if (!elementDOM || mode !== 'select') {
       return undefined;
     }
 
@@ -130,7 +140,7 @@ const BuilderOverlay = props => {
         iframeDOM?.contentWindow?.removeEventListener('resize', scrollCallback, true);
       }
     };
-  }, [overlayProps?.elementDOM, overlayProps?.elementDOM?.parentNode, handleProcessContainer]);
+  }, [mode, overlayProps?.elementDOM, overlayProps?.elementDOM?.parentNode, handleProcessContainer]);
 
   const { style, selectorSelected } = use(BuilderStyleContext);
   const elementStyle = useMemo(() => {
@@ -142,8 +152,13 @@ const BuilderOverlay = props => {
   }, [style, displayMode, selectorSelected?.name]);
 
   useEffect(() => {
+    if (mode !== 'select') {
+      return;
+    }
+
     handleProcessContainer(overlayProps?.elementDOM);
   }, [
+    mode,
     elementStyle['margin-top'],
     elementStyle['margin-bottom'],
     elementStyle['margin-left'],
@@ -184,7 +199,7 @@ const BuilderOverlay = props => {
     return () => {
       clearTimeout(retryHandler);
     };
-  }, [id, overlayProps?.element, overlayProps?.elementDOM]);
+  }, [id, overlayProps?.element, overlayProps?.elementDOM, getElementDOM]);
 
   const selector = useMemo(() => {
     if (mode === 'hover') {
