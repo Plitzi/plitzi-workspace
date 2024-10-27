@@ -27,8 +27,8 @@ const StyleManager = () => {
       {/* <div className="m-1 flex justify-between items-center border-b border-gray-300" /> */}
       <div className="flex grow overflow-auto">
         <ManagerSelector selectors={selectors} flatList={flatList} selected={selected} onSelect={setSelected} />
-        <ManagerModeBasic selected={selected} />
-        {/* {mode === 'advanced' && <ManagerModeAdvanced selectors={selectors} selected={selected} />} */}
+        <ManagerModeBasic selected={selected} displayMode={displayMode} />
+        {/* {mode === 'advanced' && <ManagerModeAdvanced selected={selected} displayMode={displayMode} />} */}
       </div>
     </div>
   );
