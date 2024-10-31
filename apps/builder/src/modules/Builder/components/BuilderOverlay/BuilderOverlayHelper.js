@@ -237,7 +237,7 @@ const calculateDistances = (rectSelected, rectHovered) => {
   }
 
   const quadrants = calculateQuadrants(rectSelected, rectHovered);
-  const isInside = calculateIsInside(rectSelected, rectHovered);
+  const isInside = calculateIsInside(rectSelected, rectHovered) || calculateIsInside(rectHovered, rectSelected);
   const distances = placements
     .filter(placement => !!quadrants[placement])
     .map(placement => calculateDistance(placement, rectSelected, rectHovered, quadrants, isInside))
