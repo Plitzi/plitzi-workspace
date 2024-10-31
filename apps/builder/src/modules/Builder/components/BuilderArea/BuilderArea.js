@@ -318,6 +318,7 @@ const BuilderArea = props => {
                       dragTree={dragTree}
                       displayMode={displayMode}
                       zoom={zoom}
+                      previewMode={previewMode}
                     />
                   )}
                   {supportRealTime &&

@@ -1,11 +1,12 @@
 // Packages
-import React, { use, useMemo } from 'react';
+import React, { use, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
 // Relatives
 import BuilderOverlay from '../BuilderOverlay';
 import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
 import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
+import BuilderOverlayDistance from '../BuilderOverlay/BuilderOverlayDistance';
 
 /**
  * @param {{
@@ -14,13 +15,22 @@ import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
  *   dragTree?: boolean;
  *   zoom?: number;
  *   displayMode?: 'desktop' | 'tablet' | 'mobile';
+ *   previewMode?: boolean;
  * }} props
  * @returns {React.ReactElement}
  */
 const BuilderAreaOverlay = props => {
-  const { iframeDOM, baseElementId = '', dragTree = false, zoom = 1, displayMode = 'desktop' } = props;
+  const {
+    iframeDOM,
+    baseElementId = '',
+    previewMode = false,
+    dragTree = false,
+    zoom = 1,
+    displayMode = 'desktop'
+  } = props;
   const { elementHovered } = use(BuilderHoveredContext);
   const { elementSelected } = use(BuilderSelectedContext);
+  const [showDistance, setShowDistance] = useState(false);
 
   const overlaySelectMemo = useMemo(
     () => (
@@ -31,10 +41,56 @@ const BuilderAreaOverlay = props => {
         iframeDOM={iframeDOM}
         displayMode={displayMode}
         zoom={zoom}
+        hideActions={showDistance}
       />
     ),
-    [elementSelected, baseElementId, iframeDOM, displayMode, zoom]
+    [elementSelected, baseElementId, iframeDOM, displayMode, zoom, showDistance]
   );
+
+  const handleKeyDown = useCallback(async e => {
+    switch (e.key) {
+      case 'Alt': {
+        setShowDistance(true);
+        break;
+      }
+
+      default:
+        break;
+    }
+  }, []);
+
+  const handleKeyUp = useCallback(async e => {
+    switch (e.key) {
+      case 'Alt': {
+        setShowDistance(false);
+
+        break;
+      }
+      default:
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (previewMode) {
+      return;
+    }
+
+    window.document.addEventListener('keydown', handleKeyDown);
+    window.document.addEventListener('keyup', handleKeyUp);
+    if (iframeDOM) {
+      iframeDOM.contentWindow.document.addEventListener('keydown', handleKeyDown);
+      iframeDOM.contentWindow.document.addEventListener('keyup', handleKeyUp);
+    }
+
+    return () => {
+      window.document.removeEventListener('keydown', handleKeyDown);
+      window.document.removeEventListener('keyup', handleKeyUp);
+      if (iframeDOM) {
+        iframeDOM.contentWindow.document.removeEventListener('keydown', handleKeyDown);
+        iframeDOM.contentWindow.document.removeEventListener('keyup', handleKeyUp);
+      }
+    };
+  }, [previewMode, handleKeyDown, handleKeyUp, iframeDOM]);
 
   return (
     <>
@@ -50,6 +106,15 @@ const BuilderAreaOverlay = props => {
       )}
       {elementSelected && overlaySelectMemo}
       {!dragTree && <BuilderOverlayDrag iframeDOM={iframeDOM} zoom={zoom} />}
+      {showDistance && elementSelected && elementHovered && elementHovered !== elementSelected && (
+        <BuilderOverlayDistance
+          baseElementId={baseElementId}
+          iframeDOM={iframeDOM}
+          zoom={zoom}
+          elementHovered={elementHovered}
+          elementSelected={elementSelected}
+        />
+      )}
     </>
   );
 };

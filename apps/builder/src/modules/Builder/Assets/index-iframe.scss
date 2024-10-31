@@ -65,10 +65,41 @@ body {
   }
 
   .plitzi-component--overlay-select,
-  .plitzi-component--overlay-hover {
+  .plitzi-component--overlay-hover,
+  .plitzi-component--overlay-distance,
+  .plitzi-component--overlay-distance-selected,
+  .plitzi-component--overlay-distance-hovered,
+  .plitzi-component--overlay-distance-node,
+  .plitzi-component--overlay-distance-node-projection {
     position: absolute;
     z-index: $overlayZIndex;
     pointer-events: none;
+  }
+
+  .plitzi-component--overlay-distance {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+  }
+
+  .plitzi-component--overlay-distance-node {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid red;
+
+    .overlay-distance-node-value {
+      background-color: red;
+      color: white;
+      font-size: 10px;
+      line-height: 10px;
+      padding: 2px;
+    }
+  }
+
+  .plitzi-component--overlay-distance-node-projection {
+    border: 1px dashed red;
   }
 }
 
