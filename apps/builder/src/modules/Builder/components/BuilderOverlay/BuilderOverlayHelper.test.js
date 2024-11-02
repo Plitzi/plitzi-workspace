@@ -33,7 +33,7 @@ describe('Testing BuilderOverlayHelper', () => {
       distances: [
         {
           isCentered: false,
-          isOverlaped: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 16, left: 720, top: 221.5, width: 2 },
           value: 16
@@ -68,7 +68,7 @@ describe('Testing BuilderOverlayHelper', () => {
       distances: [
         {
           isCentered: true,
-          isOverlaped: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 16, left: 720, top: 221.5, width: 2 },
           value: 16
@@ -93,7 +93,7 @@ describe('Testing BuilderOverlayHelper', () => {
       distances: [
         {
           isCentered: false,
-          isOverlaped: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 16, left: 720, top: 221.5, width: 2 },
           value: 16
@@ -286,7 +286,7 @@ describe('Testing BuilderOverlayHelper', () => {
       distances: [
         {
           isCentered: false,
-          isOverlaped: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 130, left: 720, top: 69, width: 2 },
           value: 130
@@ -296,12 +296,12 @@ describe('Testing BuilderOverlayHelper', () => {
           isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 149.90625, top: 315, width: 454.09375 },
-          value: 454.09375
+          value: 454.09
         }
       ],
       projections: [
         { position: { height: 2, left: 149.90625, top: 67, width: 570.09375 }, placement: 'top' },
-        { position: { height: 246, left: 149.90625, top: 69, width: 2 }, placement: 'left' }
+        { position: { height: 246, left: 149.91000000000003, top: 69, width: 2 }, placement: 'left' }
       ]
     });
 
@@ -321,7 +321,7 @@ describe('Testing BuilderOverlayHelper', () => {
       distances: [
         {
           isCentered: false,
-          isOverlaped: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 130, left: 720, top: 69, width: 2 },
           value: 130
@@ -331,12 +331,12 @@ describe('Testing BuilderOverlayHelper', () => {
           isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 836, top: 315, width: 454.09375 },
-          value: 454.09375
+          value: 454.09
         }
       ],
       projections: [
         { position: { height: 2, left: 720, top: 67, width: 570.09375 }, placement: 'top' },
-        { position: { height: 246, left: 1290.09375, top: 69, width: 2 }, placement: 'right' }
+        { position: { height: 246, left: 1290.09, top: 69, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -366,12 +366,12 @@ describe('Testing BuilderOverlayHelper', () => {
           isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 149.90625, top: 315, width: 454.09375 },
-          value: 454.09375
+          value: 454.09
         }
       ],
       projections: [
         { position: { height: 2, left: 149.90625, top: 561, width: 570.09375 }, placement: 'bottom' },
-        { position: { height: 246, left: 149.90625, top: 315, width: 2 }, placement: 'left' }
+        { position: { height: 246, left: 149.91000000000003, top: 315, width: 2 }, placement: 'left' }
       ]
     });
 
@@ -401,12 +401,12 @@ describe('Testing BuilderOverlayHelper', () => {
           isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 836, top: 315, width: 454.09375 },
-          value: 454.09375
+          value: 454.09
         }
       ],
       projections: [
         { position: { height: 2, left: 720, top: 561, width: 570.09375 }, placement: 'bottom' },
-        { position: { height: 246, left: 1290.09375, top: 315, width: 2 }, placement: 'right' }
+        { position: { height: 246, left: 1290.09, top: 315, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -426,21 +426,21 @@ describe('Testing BuilderOverlayHelper', () => {
       distances: [
         {
           isCentered: true,
-          isOverlaped: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 44.5, left: 720, top: 154.5, width: 2 },
           value: 44.5
         },
         {
           isCentered: false,
-          isOverlaped: false,
+          isOverlaped: true,
           placement: 'left',
           position: { height: 2, left: 604, top: 132.5, width: 41 },
           value: 41
         },
         {
           isCentered: false,
-          isOverlaped: false,
+          isOverlaped: true,
           placement: 'right',
           position: { height: 2, left: 795, top: 132.5, width: 41 },
           value: 41
@@ -475,14 +475,14 @@ describe('Testing BuilderOverlayHelper', () => {
         },
         {
           isCentered: false,
-          isOverlaped: false,
+          isOverlaped: true,
           placement: 'left',
           position: { height: 2, left: 604, top: 522.5, width: 41 },
           value: 41
         },
         {
           isCentered: false,
-          isOverlaped: false,
+          isOverlaped: true,
           placement: 'right',
           position: { height: 2, left: 795, top: 522.5, width: 41 },
           value: 41
@@ -896,7 +896,7 @@ describe('Testing BuilderOverlayHelper', () => {
           isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 714.5, top: 315, width: 332.59375 },
-          value: 332.59375
+          value: 332.59
         }
       ],
       projections: [

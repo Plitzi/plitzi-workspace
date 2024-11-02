@@ -71,15 +71,24 @@ const PLACEMENT_LEFT = 'left';
 const PLACEMENT_RIGHT = 'right';
 const placements = [PLACEMENT_TOP, PLACEMENT_BOTTOM, PLACEMENT_LEFT, PLACEMENT_RIGHT];
 
-const calculateIsOverlaped = (rectSelected, rectHovered, placement) => {
-  // const overlapLeft = Math.max(rectSelected.left, rectHovered.left);
-  // const overlapRight = Math.min(rectSelected.right, rectHovered.right);
-  // const overlapTop = Math.max(rectSelected.top, rectHovered.top);
-  // const overlapBottom = Math.min(rectSelected.bottom, rectHovered.bottom);
+const calculateIsOverlaped = (rectSelected, rectHovered, placement, fullOverlapping = false) => {
+  const overlapLeft = Math.max(rectSelected.left, rectHovered.left);
+  const overlapRight = Math.min(rectSelected.right, rectHovered.right);
+  const overlapTop = Math.max(rectSelected.top, rectHovered.top);
+  const overlapBottom = Math.min(rectSelected.bottom, rectHovered.bottom);
 
-  // // overlap inside &&, overlap external ||
-  // const isOverlapping = overlapLeft < overlapRight && overlapTop < overlapBottom;
-  // console.log(isOverlapping);
+  let isOverlapping = false;
+  if (fullOverlapping) {
+    isOverlapping = overlapLeft < overlapRight && overlapTop < overlapBottom;
+  } else {
+    isOverlapping =
+      (overlapLeft < overlapRight && [PLACEMENT_LEFT, PLACEMENT_RIGHT].includes(placement)) ||
+      (overlapTop < overlapBottom && [PLACEMENT_TOP, PLACEMENT_BOTTOM].includes(placement));
+  }
+
+  // console.log(placement, isOverlapping);
+  return isOverlapping;
+
   // if (!isOverlapping) {
   //   return false;
   // }
@@ -96,63 +105,45 @@ const calculateIsOverlaped = (rectSelected, rectHovered, placement) => {
   //   default:
   //     return false;
   // }
-  switch (placement) {
-    case PLACEMENT_TOP:
-      return rectHovered.bottom > rectSelected.top;
-    case PLACEMENT_BOTTOM:
-      return rectHovered.top < rectSelected.top;
-    case PLACEMENT_LEFT:
-      return rectHovered.right > rectSelected.left;
-    case PLACEMENT_RIGHT:
-      return rectHovered.left < rectSelected.right;
-    default:
-      return false;
-  }
 };
 
 const calculateQuadrants = (rectSelected, rectHovered, isInside = false) => {
   const quadrants = {};
-  // const isOverlapedTop = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_TOP);
-  const isOverlapedTop = rectSelected.centerY > rectHovered.centerY && rectSelected.centerY > rectHovered.top;
+  const isOverlapedTop = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_TOP);
   if (rectSelected.centerY > rectHovered.bottom || isOverlapedTop || isInside) {
     quadrants[PLACEMENT_TOP] = {
       placement: PLACEMENT_TOP,
       isCentered: rectSelected.centerX === rectHovered.centerX,
-      isOverlaped: isOverlapedTop
+      isOverlaped: isOverlapedTop && !isInside
     };
   }
 
-  // const isOverlapedBottom = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_BOTTOM);
-  const isOverlapedBottom = rectSelected.centerY > rectHovered.centerY && rectSelected.centerY < rectHovered.bottom;
+  const isOverlapedBottom = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_BOTTOM);
   if (rectSelected.centerY < rectHovered.centerY || isOverlapedBottom || isInside) {
     quadrants[PLACEMENT_BOTTOM] = {
       placement: PLACEMENT_BOTTOM,
       isCentered: rectSelected.centerX === rectHovered.centerX,
-      isOverlaped: isOverlapedBottom
+      isOverlaped: isOverlapedBottom && !isInside
     };
   }
 
-  // const isOverlapedLeft = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_LEFT);
-  const isOverlapedLeft = false;
+  const isOverlapedLeft = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_LEFT);
   if (rectSelected.centerX > rectHovered.left || isOverlapedLeft || isInside) {
     quadrants[PLACEMENT_LEFT] = {
       placement: PLACEMENT_LEFT,
       isCentered: rectSelected.centerY === rectHovered.centerY,
-      isOverlaped: isOverlapedLeft
+      isOverlaped: isOverlapedLeft && !isInside
     };
   }
 
-  // const isOverlapedRight = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_RIGHT);
-  const isOverlapedRight = false;
+  const isOverlapedRight = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_RIGHT);
   if (rectSelected.centerX < rectHovered.right || isOverlapedRight || isInside) {
     quadrants[PLACEMENT_RIGHT] = {
       placement: PLACEMENT_RIGHT,
       isCentered: rectSelected.centerY === rectHovered.centerY,
-      isOverlaped: isOverlapedRight
+      isOverlaped: isOverlapedRight && !isInside
     };
   }
-
-  console.log(quadrants);
 
   return quadrants;
 };
@@ -299,19 +290,13 @@ const calculateDistance = (placement, rectSelected, rectHovered, quadrants, isIn
     quadrants = calculateQuadrants(rectSelected, rectHovered, isInside);
   }
 
-  const sameQuadrant = quadrants[placement] && !isInside;
-  const isOverlaped = calculateIsOverlaped(rectSelected, rectHovered, placement);
+  const { isOverlaped, isCentered } = quadrants[placement];
+  const sameQuadrant = !!quadrants[placement] && !isInside;
   let value = calculateDelta(rectSelected?.[placement], rectHovered?.[placement]);
   let position = { top: 0, left: 0, width: 0, height: 0 };
   ({ position, value } = distanceFn[placement](rectSelected, rectHovered, value, sameQuadrant, isOverlaped));
 
-  return {
-    placement,
-    position,
-    value: Math.abs(value),
-    isCentered: quadrants[placement].isCentered,
-    isOverlaped: quadrants[placement].isOverlaped
-  };
+  return { placement, position, value: Number(Math.abs(value).toFixed(2)), isCentered, isOverlaped };
 };
 
 const calculateDistances = (rectSelected, rectHovered) => {
