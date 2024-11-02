@@ -339,19 +339,22 @@ const calculateProjectionBottom = (rectSelected, rectHovered, value, distancesOb
 
 const calculateProjectionLeft = (rectSelected, rectHovered, value, distancesObj) => {
   const distanceTop = distancesObj[PLACEMENT_TOP]?.value;
+  const selectedIsBigger = rectSelected.left < rectHovered.left;
   let top = rectSelected.centerY;
   let deltaY = 0;
-  if (distanceTop) {
+  if (distanceTop && !selectedIsBigger) {
     deltaY = calculateDelta(rectHovered.bottom, rectSelected.centerY);
     top -= deltaY;
-  } else {
+  } else if (!selectedIsBigger) {
     deltaY = calculateDelta(rectSelected.centerY, rectHovered.top);
+  } else {
+    deltaY = calculateDelta(rectSelected.top, rectHovered.centerY);
   }
 
   return {
     position: {
-      top,
-      left: rectSelected.left - value,
+      top: selectedIsBigger ? rectHovered.centerY : top,
+      left: selectedIsBigger ? rectSelected.left : rectSelected.left - value,
       width: borderSize,
       height: deltaY
     }
@@ -360,19 +363,22 @@ const calculateProjectionLeft = (rectSelected, rectHovered, value, distancesObj)
 
 const calculateProjectionRight = (rectSelected, rectHovered, value, distancesObj) => {
   const distanceTop = distancesObj[PLACEMENT_TOP]?.value;
+  const selectedIsBigger = rectSelected.right > rectHovered.right;
   let top = rectSelected.centerY;
   let deltaY = 0;
-  if (distanceTop) {
+  if (distanceTop && !selectedIsBigger) {
     deltaY = calculateDelta(rectHovered.bottom, rectSelected.centerY);
     top -= deltaY;
-  } else {
+  } else if (!selectedIsBigger) {
     deltaY = calculateDelta(rectSelected.centerY, rectHovered.top);
+  } else {
+    deltaY = calculateDelta(rectSelected.top, rectHovered.centerY);
   }
 
   return {
     position: {
-      top,
-      left: rectSelected.right + value,
+      top: selectedIsBigger ? rectHovered.centerY : top,
+      left: selectedIsBigger ? rectSelected.right - borderSize : rectSelected.right + value,
       width: borderSize,
       height: deltaY
     }
