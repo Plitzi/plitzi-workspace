@@ -16,10 +16,7 @@
     "./eslint.config.mjs": "./eslint.config.mjs",
     "./jest.config": "./jest.config.js",
     "./jest.setup": "./jest.setup.js",
-    "./babel.config": {
-      "import": "./babel.config.mjs",
-      "require": "./babel.config.cjs"
-    },
+    "./babel.config": "./babel.config.mjs",
     "./tailwind.config": "./tailwind.config.js"
   },
   "scripts": {

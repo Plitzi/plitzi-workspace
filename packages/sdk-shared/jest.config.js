@@ -14,7 +14,7 @@ export default {
     '^@components/(.*)$': '<rootDir>/src/components/$1'
   },
   transform: {
-    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: path.resolve(__dirname, './babel.config.cjs') }]
+    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: path.resolve(__dirname, './babel-jest.config.cjs') }]
   },
   transformIgnorePatterns: []
 };
