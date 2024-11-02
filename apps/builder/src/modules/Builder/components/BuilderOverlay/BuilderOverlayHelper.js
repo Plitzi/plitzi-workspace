@@ -76,7 +76,10 @@ const calculateIsOverlaped = (rectSelected, rectHovered, placement) => {
   // const overlapRight = Math.min(rectSelected.right, rectHovered.right);
   // const overlapTop = Math.max(rectSelected.top, rectHovered.top);
   // const overlapBottom = Math.min(rectSelected.bottom, rectHovered.bottom);
+
+  // // overlap inside &&, overlap external ||
   // const isOverlapping = overlapLeft < overlapRight && overlapTop < overlapBottom;
+  // console.log(isOverlapping);
   // if (!isOverlapping) {
   //   return false;
   // }
@@ -95,11 +98,11 @@ const calculateIsOverlaped = (rectSelected, rectHovered, placement) => {
   // }
   switch (placement) {
     case PLACEMENT_TOP:
-      return rectHovered.top + rectHovered.height > rectSelected.top;
+      return rectHovered.bottom > rectSelected.top;
     case PLACEMENT_BOTTOM:
       return rectHovered.top < rectSelected.top;
     case PLACEMENT_LEFT:
-      return rectHovered.left + rectHovered.width > rectSelected.left;
+      return rectHovered.right > rectSelected.left;
     case PLACEMENT_RIGHT:
       return rectHovered.left < rectSelected.right;
     default:
