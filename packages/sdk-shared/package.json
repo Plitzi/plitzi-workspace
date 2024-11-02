@@ -14,9 +14,12 @@
     "./syntaxHighlight": "./dist/helpers/syntaxHighlight.js",
     "./twigWrapper": "./dist/helpers/twigWrapper.js",
     "./eslint.config.mjs": "./eslint.config.mjs",
-    "./jest.config": "./jest.config.mjs",
-    "./jest.setup": "./jest.setup.mjs",
-    "./babel.config.mjs": "./babel.config.mjs",
+    "./jest.config": "./jest.config.js",
+    "./jest.setup": "./jest.setup.js",
+    "./babel.config": {
+      "import": "./babel.config.mjs",
+      "require": "./babel.config.cjs"
+    },
     "./tailwind.config": "./tailwind.config.js"
   },
   "scripts": {
