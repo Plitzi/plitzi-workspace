@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 $background-color: #eee;
 $background-color-black: #23282d;
 $border-color: #ddd;
@@ -22,18 +24,22 @@ $font-color-light-1: #b0b3b8;
 $danger-color: #dc3545;
 $danger-color--hover: #bd2130;
 
+$border-radius: '4px';
+
 :root {
   --pl-primary-color: #4422ee;
-  --pl-primary-color-dark-3: #{darken($primary-color, 30%)};
-  --pl-primary-color-dark-2-5: #{darken($primary-color, 25%)};
-  --pl-primary-color-dark-2: #{darken($primary-color, 20%)};
-  --pl-primary-color-dark-1-5: #{darken($primary-color, 15%)};
-  --pl-primary-color-dark-1: #{darken($primary-color, 10%)};
-  --pl-primary-color-light-3: #{lighten($primary-color, 30%)};
-  --pl-primary-color-light-2-5: #{lighten($primary-color, 25%)};
-  --pl-primary-color-light-2: #{lighten($primary-color, 20%)};
-  --pl-primary-color-light-1-5: #{lighten($primary-color, 15%)};
-  --pl-primary-color-light-1: #{lighten($primary-color, 10%)};
+  --pl-primary-color-dark-3: #{color.adjust($primary-color, $lightness: -30%)};
+  --pl-primary-color-dark-2-5: #{color.adjust($primary-color, $lightness: -25%)};
+  --pl-primary-color-dark-2: #{color.adjust($primary-color, $lightness: -20%)};
+  --pl-primary-color-dark-1-5: #{color.adjust($primary-color, $lightness: -15%)};
+  --pl-primary-color-dark-1: #{color.adjust($primary-color, $lightness: -10%)};
+  --pl-primary-color-light-3: #{color.adjust($primary-color, $lightness: 30%)};
+  --pl-primary-color-light-2-5: #{color.adjust($primary-color, $lightness: 25%)};
+  --pl-primary-color-light-2: #{color.adjust($primary-color, $lightness: 20%)};
+  --pl-primary-color-light-1-5: #{color.adjust($primary-color, $lightness: 15%)};
+  --pl-primary-color-light-1: #{color.adjust($primary-color, $lightness: 10%)};
+
+  --pl-danger-color: #{$danger-color};
 
   --pl-gray-1: #f8f9fc;
 

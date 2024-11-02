@@ -1,10 +1,10 @@
-// @import 'tailwindcss/base'; // @tailwind base;
-@import 'tailwindcss/components'; // @tailwind components;
-@import 'tailwindcss/utilities'; // @tailwind utilities;
+// @use 'tailwindcss/base'; // @tailwind base;
+@use 'tailwindcss/components'; // @tailwind components;
+@use 'tailwindcss/utilities'; // @tailwind utilities;
 
-@import './sdk';
+@use './sdk';
 
-@import '@plitzi/plitzi-ui-components/Toast/Assets/index.scss';
+@use '@plitzi/plitzi-ui-components/Toast/Assets/index.scss';
 
 body {
   margin: 0;

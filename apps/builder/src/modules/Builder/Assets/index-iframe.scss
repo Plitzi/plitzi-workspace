@@ -1,4 +1,4 @@
-@import '@plitzi/plitzi-ui-components/Toast/Assets/index.scss';
+@use '@plitzi/plitzi-ui-components/Toast/Assets/index.scss';
 
 $overlayZIndex: 750;
 body {
@@ -77,29 +77,29 @@ body {
   }
 
   .plitzi-component--overlay-distance {
-    top: 0;
     left: 0;
-    bottom: 0;
     right: 0;
+    top: 0;
+    bottom: 0;
   }
 
   .plitzi-component--overlay-distance-node {
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     border: 1px solid red;
 
     .overlay-distance-node-value {
+      padding: 2px;
       background-color: red;
       color: white;
-      font-size: 10px;
       line-height: 10px;
-      padding: 2px;
+      font-size: 10px;
     }
   }
 
   .plitzi-component--overlay-distance-node-projection {
-    border: 1px dashed red;
+    border: 1px dashed green;
   }
 }
 

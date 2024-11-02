@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 .plitzi-component__collection-container {
   &.collection-container--context-empty {
     .collection-container__message {
@@ -6,7 +8,7 @@
       justify-content: center;
       align-items: center;
       border: 1px solid #7290e7;
-      background-color: transparentize(#7290e7, 0.92);
+      background-color: color.adjust(#7290e7, $alpha: 0.92);
       color: #7290e7;
       font-weight: bold;
     }

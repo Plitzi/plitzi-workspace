@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 .plitzi-component__list {
   min-height: 50px;
   min-width: 50px;
@@ -40,7 +42,7 @@
     align-items: center;
     border: 1px solid #7290e7;
     border-radius: 4px;
-    background-color: transparentize(#7290e7, 0.92);
+    background-color: color.adjust(#7290e7, $alpha: 0.92);
     color: #7290e7;
     font-weight: bold;
   }
@@ -60,7 +62,7 @@
       position: absolute;
       display: none;
       border: 1px solid #7290e7;
-      background-color: lighten(#7290e7, 10%);
+      background-color: color.adjust(#7290e7, $lightness: 10%);
       color: white;
       line-height: 14px;
       font-size: 12px;
@@ -72,7 +74,7 @@
   .plitzi-component__controlled-list {
     .plitzi-component__controlled-list-item {
       border: 1px solid #7290e7;
-      background-color: transparentize(#7290e7, 0.92);
+      background-color: color.adjust(#ffb3cb, $alpha: 0.92);
 
       .controlled-list-item__counter {
         display: block;

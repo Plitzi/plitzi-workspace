@@ -1,3 +1,5 @@
+@use 'sass:meta';
+
 // Components
-@import '../components/BuilderBreadcrumb/Assets';
-@import '../components/BuilderTree/Assets';
+@include meta.load-css('../components/BuilderBreadcrumb/Assets');
+@include meta.load-css('../components/BuilderTree/Assets');

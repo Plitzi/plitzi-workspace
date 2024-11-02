@@ -51,7 +51,16 @@ const processContainerDistance = (elementDOM, iframeDOM, zoom) => {
 
   const { width, height, x, y } = container;
 
-  return { top: y, bottom: y + height, left: x, right: x + width, width, height };
+  return {
+    top: y,
+    bottom: y + height,
+    left: x,
+    right: x + width,
+    centerX: x + width / 2,
+    centerY: y + height / 2,
+    width,
+    height
+  };
 };
 
 // Distance - Helpers
@@ -91,12 +100,35 @@ const calculateIsInside = (rectSelected, rectHovered) =>
   rectSelected.top >= rectHovered.top &&
   rectSelected.bottom <= rectHovered.bottom;
 
+const calculateDelta = (position1 = 0, position2 = 0, absolute = true) => {
+  if (absolute) {
+    return parseFloat(Math.abs(position1 - position2));
+  }
+
+  return parseFloat(position1 - position2);
+};
+
+const calculateIsOverlaped = (rectSelected, rectHovered, placement) => {
+  switch (placement) {
+    case PLACEMENT_TOP:
+      return rectHovered.top + rectHovered.height > rectSelected.top;
+    case PLACEMENT_BOTTOM:
+      return rectHovered.top < rectSelected.top;
+    case PLACEMENT_LEFT:
+      return rectHovered.left + rectHovered.width > rectSelected.left;
+    case PLACEMENT_RIGHT:
+      return rectHovered.left < rectSelected.right;
+    default:
+      return false;
+  }
+};
+
 const borderSize = 2;
 
 // Distance
 
 const calculateDistanceTop = (rectSelected, rectHovered, value, sameQuadrant = false) => {
-  if (sameQuadrant) {
+  if (sameQuadrant && !calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_TOP)) {
     value = value - rectHovered?.height;
   }
 
@@ -152,7 +184,7 @@ const calculateDistanceBottom = (rectSelected, rectHovered, value, sameQuadrant 
 };
 
 const calculateDistanceLeft = (rectSelected, rectHovered, value, sameQuadrant = false) => {
-  if (sameQuadrant) {
+  if (sameQuadrant && !calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_LEFT)) {
     value = value - rectHovered?.width;
   }
 
@@ -180,7 +212,7 @@ const calculateDistanceLeft = (rectSelected, rectHovered, value, sameQuadrant = 
 };
 
 const calculateDistanceRight = (rectSelected, rectHovered, value, sameQuadrant = false) => {
-  if (sameQuadrant) {
+  if (sameQuadrant && !calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_RIGHT)) {
     value = value - rectHovered?.width;
   }
 
@@ -224,7 +256,7 @@ const calculateDistance = (placement, rectSelected, rectHovered, quadrants = {},
     !!quadrants[placement] &&
     !isInside &&
     (!Object.values(quadrants).find(quadrant => quadrant.isCentered) || isCentered);
-  let value = parseFloat(Math.abs((rectSelected?.[placement] ?? 0) - (rectHovered?.[placement] ?? 0)));
+  let value = calculateDelta(rectSelected?.[placement], rectHovered?.[placement]);
   let position = { top: 0, left: 0, width: 0, height: 0 };
   ({ position, value } = distanceFn[placement](rectSelected, rectHovered, value, sameQuadrant));
 
@@ -238,6 +270,7 @@ const calculateDistances = (rectSelected, rectHovered) => {
 
   const quadrants = calculateQuadrants(rectSelected, rectHovered);
   const isInside = calculateIsInside(rectSelected, rectHovered) || calculateIsInside(rectHovered, rectSelected);
+  console.log(quadrants, isInside);
   const distances = placements
     .filter(placement => !!quadrants[placement])
     .map(placement => calculateDistance(placement, rectSelected, rectHovered, quadrants, isInside))
@@ -255,26 +288,26 @@ const calculateDistances = (rectSelected, rectHovered) => {
 
 // Distance - Projection
 
+// pos initial = (x1, y1)
+// pos end = (x2, y2)
+// angle (y2 - y1) / (x2 - x1)
+
 const calculateProjectionTop = (rectSelected, rectHovered, value, distancesObj) => {
   const distanceLeft = distancesObj[PLACEMENT_LEFT]?.value;
-  const distanceRight = distancesObj[PLACEMENT_RIGHT]?.value;
-  const width = distanceLeft ?? distanceRight ?? 0;
-  if (rectSelected.top < rectHovered.top) {
-    return {
-      position: {
-        top: rectHovered.top - value,
-        left: distanceLeft ? rectHovered.left + rectHovered.width / 2 : rectSelected.right,
-        width: width + rectHovered.width / 2 + borderSize,
-        height: borderSize
-      }
-    };
+  let left = rectSelected.centerX;
+  let deltaX = 0;
+  if (distanceLeft) {
+    deltaX = calculateDelta(rectHovered.right, rectSelected.centerX);
+    left -= deltaX;
+  } else {
+    deltaX = calculateDelta(rectSelected.centerX, rectHovered.left);
   }
 
   return {
     position: {
       top: rectSelected.top - value - borderSize,
-      left: distanceLeft ? rectSelected.left - distanceLeft : rectSelected.left + rectSelected.width / 2,
-      width: width + rectSelected.width / 2 + borderSize,
+      left,
+      width: deltaX,
       height: borderSize
     }
   };
@@ -282,24 +315,20 @@ const calculateProjectionTop = (rectSelected, rectHovered, value, distancesObj) 
 
 const calculateProjectionBottom = (rectSelected, rectHovered, value, distancesObj) => {
   const distanceLeft = distancesObj[PLACEMENT_LEFT]?.value;
-  const distanceRight = distancesObj[PLACEMENT_RIGHT]?.value;
-  const width = distanceLeft ?? distanceRight ?? 0;
-  if (rectSelected.bottom > rectHovered.bottom) {
-    return {
-      position: {
-        top: rectHovered.bottom + value - borderSize,
-        left: distanceLeft ? rectHovered.left + rectHovered.width / 2 : rectSelected.right,
-        width: width + rectHovered.width / 2 + borderSize,
-        height: borderSize
-      }
-    };
+  let left = rectSelected.centerX;
+  let deltaX = 0;
+  if (distanceLeft) {
+    deltaX = calculateDelta(rectHovered.right, rectSelected.centerX);
+    left -= deltaX;
+  } else {
+    deltaX = calculateDelta(rectSelected.centerX, rectHovered.left);
   }
 
   return {
     position: {
       top: rectSelected.bottom + value,
-      left: distanceLeft ? rectSelected.left - distanceLeft : rectSelected.left + rectSelected.width / 2,
-      width: width + rectSelected.width / 2 + borderSize,
+      left,
+      width: deltaX,
       height: borderSize
     }
   };
@@ -307,50 +336,42 @@ const calculateProjectionBottom = (rectSelected, rectHovered, value, distancesOb
 
 const calculateProjectionLeft = (rectSelected, rectHovered, value, distancesObj) => {
   const distanceTop = distancesObj[PLACEMENT_TOP]?.value;
-  const distanceBottom = distancesObj[PLACEMENT_BOTTOM]?.value;
-  const height = distanceTop ?? distanceBottom ?? 0;
-  if (rectSelected.left < rectHovered.left) {
-    return {
-      position: {
-        top: distanceTop ? rectHovered.top + rectHovered.height / 2 : rectSelected.bottom,
-        left: rectHovered.left - value,
-        width: borderSize,
-        height: height + rectHovered.height / 2 + borderSize
-      }
-    };
+  let top = rectSelected.centerY;
+  let deltaY = 0;
+  if (distanceTop) {
+    deltaY = calculateDelta(rectHovered.bottom, rectSelected.centerY);
+    top -= deltaY;
+  } else {
+    deltaY = calculateDelta(rectSelected.centerY, rectHovered.top);
   }
 
   return {
     position: {
-      top: distanceTop ? rectSelected.top - distanceTop : rectSelected.top + rectSelected.height / 2,
+      top,
       left: rectSelected.left - value,
       width: borderSize,
-      height: height + rectSelected.height / 2 + borderSize
+      height: deltaY
     }
   };
 };
 
 const calculateProjectionRight = (rectSelected, rectHovered, value, distancesObj) => {
   const distanceTop = distancesObj[PLACEMENT_TOP]?.value;
-  const distanceBottom = distancesObj[PLACEMENT_BOTTOM]?.value;
-  const height = distanceTop ?? distanceBottom ?? 0;
-  if (rectSelected.right > rectHovered.right) {
-    return {
-      position: {
-        top: distanceTop ? rectHovered.top + rectHovered.height / 2 : rectSelected.bottom,
-        left: rectHovered.right + value - borderSize,
-        width: borderSize,
-        height: height + rectHovered.height / 2 + borderSize
-      }
-    };
+  let top = rectSelected.centerY;
+  let deltaY = 0;
+  if (distanceTop) {
+    deltaY = calculateDelta(rectHovered.bottom, rectSelected.centerY);
+    top -= deltaY;
+  } else {
+    deltaY = calculateDelta(rectSelected.centerY, rectHovered.top);
   }
 
   return {
     position: {
-      top: distanceTop ? rectSelected.top - distanceTop : rectSelected.top + rectSelected.height / 2,
-      left: rectSelected.right + value - borderSize,
+      top,
+      left: rectSelected.right + value,
       width: borderSize,
-      height: height + rectSelected.height / 2 + borderSize
+      height: deltaY
     }
   };
 };
