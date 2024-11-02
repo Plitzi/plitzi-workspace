@@ -55,6 +55,9 @@ const build = (env, args) => {
       publicPath: 'auto'
     },
     watch,
+    watchOptions: {
+      ignored: ['**/*.test.js', '**/*.spec.js']
+    },
     resolve: {
       symlinks: false,
       alias: {
