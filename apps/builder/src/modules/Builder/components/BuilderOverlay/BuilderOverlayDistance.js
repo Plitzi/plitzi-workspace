@@ -77,12 +77,20 @@ const BuilderOverlayDistance = props => {
         style={{ border: '2px solid red' }}
       />
       {distances.map((distance, i) => (
-        <div key={i} className="plitzi-component--overlay-distance-node" style={distance.position}>
+        <div
+          key={`${distance.placement}-${i}`}
+          className="plitzi-component--overlay-distance-node"
+          style={distance.position}
+        >
           <div className="overlay-distance-node-value">{distance.value}</div>
         </div>
       ))}
       {projections.map((projection, i) => (
-        <div key={i} className="plitzi-component--overlay-distance-node-projection" style={projection.position} />
+        <div
+          key={`${projection.placement}-${i}`}
+          className="plitzi-component--overlay-distance-node-projection"
+          style={projection.position}
+        />
       ))}
     </div>
   );

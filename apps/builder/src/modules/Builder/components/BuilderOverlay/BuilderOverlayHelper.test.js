@@ -47,8 +47,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 654, top: 219.5, width: 66 } },
-        { position: { height: 66, left: 654, top: 221.5, width: 2 } }
+        { position: { height: 2, left: 654, top: 219.5, width: 66 }, placement: 'top' },
+        { position: { height: 66, left: 654, top: 221.5, width: 2 }, placement: 'left' }
       ]
     });
 
@@ -107,8 +107,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 720, top: 219.5, width: 66 } },
-        { position: { height: 66, left: 786, top: 221.5, width: 2 } }
+        { position: { height: 2, left: 720, top: 219.5, width: 66 }, placement: 'top' },
+        { position: { height: 66, left: 786, top: 221.5, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -167,8 +167,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 720, top: 353.5, width: 66 } },
-        { position: { height: 66, left: 786, top: 287.5, width: 2 } }
+        { position: { height: 2, left: 720, top: 353.5, width: 66 }, placement: 'bottom' },
+        { position: { height: 66, left: 786, top: 287.5, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -227,8 +227,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 654, top: 353.5, width: 66 } },
-        { position: { height: 66, left: 654, top: 287.5, width: 2 } }
+        { position: { height: 2, left: 654, top: 353.5, width: 66 }, placement: 'bottom' },
+        { position: { height: 66, left: 654, top: 287.5, width: 2 }, placement: 'left' }
       ]
     });
 
@@ -300,8 +300,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 149.90625, top: 67, width: 570.09375 } },
-        { position: { height: 246, left: 149.90625, top: 69, width: 2 } }
+        { position: { height: 2, left: 149.90625, top: 67, width: 570.09375 }, placement: 'top' },
+        { position: { height: 246, left: 149.90625, top: 69, width: 2 }, placement: 'left' }
       ]
     });
 
@@ -335,8 +335,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 720, top: 67, width: 570.09375 } },
-        { position: { height: 246, left: 1290.09375, top: 69, width: 2 } }
+        { position: { height: 2, left: 720, top: 67, width: 570.09375 }, placement: 'top' },
+        { position: { height: 246, left: 1290.09375, top: 69, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -370,8 +370,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 149.90625, top: 561, width: 570.09375 } },
-        { position: { height: 246, left: 149.90625, top: 315, width: 2 } }
+        { position: { height: 2, left: 149.90625, top: 561, width: 570.09375 }, placement: 'bottom' },
+        { position: { height: 246, left: 149.90625, top: 315, width: 2 }, placement: 'left' }
       ]
     });
 
@@ -405,8 +405,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 720, top: 561, width: 570.09375 } },
-        { position: { height: 246, left: 1290.09375, top: 315, width: 2 } }
+        { position: { height: 2, left: 720, top: 561, width: 570.09375 }, placement: 'bottom' },
+        { position: { height: 246, left: 1290.09375, top: 315, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -447,8 +447,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 66.5, left: 604, top: 132.5, width: 2 } },
-        { position: { height: 66.5, left: 834, top: 132.5, width: 2 } }
+        { position: { height: 66.5, left: 604, top: 132.5, width: 2 }, placement: 'left' },
+        { position: { height: 66.5, left: 834, top: 132.5, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -489,8 +489,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 91.5, left: 604, top: 431, width: 2 } },
-        { position: { height: 91.5, left: 834, top: 431, width: 2 } }
+        { position: { height: 91.5, left: 604, top: 431, width: 2 }, placement: 'left' },
+        { position: { height: 91.5, left: 834, top: 431, width: 2 }, placement: 'right' }
       ]
     });
   });
@@ -900,8 +900,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 598.5, top: 149, width: 448.59375 } },
-        { position: { height: 2, left: 714.5, top: 429, width: 407.546875 } }
+        { position: { height: 2, left: 598.5, top: 149, width: 448.59375 }, placement: 'top' },
+        { position: { height: 2, left: 714.5, top: 429, width: 407.546875 }, placement: 'bottom' }
       ]
     });
   });
