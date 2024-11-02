@@ -32,11 +32,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: true,
           placement: 'top',
           position: { height: 16, left: 720, top: 221.5, width: 2 },
           value: 16
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 654, top: 287.5, width: 16 },
           value: 16
@@ -63,6 +67,8 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: true,
+          isOverlaped: true,
           placement: 'top',
           position: { height: 16, left: 720, top: 221.5, width: 2 },
           value: 16
@@ -86,11 +92,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: true,
           placement: 'top',
           position: { height: 16, left: 720, top: 221.5, width: 2 },
           value: 16
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 770, top: 287.5, width: 16 },
           value: 16
@@ -117,6 +127,8 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 770, top: 287.5, width: 16 },
           value: 16
@@ -140,11 +152,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 16, left: 720, top: 337.5, width: 2 },
           value: 16
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 770, top: 287.5, width: 16 },
           value: 16
@@ -171,6 +187,8 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 16, left: 720, top: 337.5, width: 2 },
           value: 16
@@ -194,11 +212,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 16, left: 720, top: 337.5, width: 2 },
           value: 16
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 654, top: 287.5, width: 16 },
           value: 16
@@ -225,6 +247,8 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 654, top: 287.5, width: 16 },
           value: 16
@@ -261,11 +285,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: true,
           placement: 'top',
           position: { height: 130, left: 720, top: 69, width: 2 },
           value: 130
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 149.90625, top: 315, width: 454.09375 },
           value: 454.09375
@@ -292,11 +320,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: true,
           placement: 'top',
           position: { height: 130, left: 720, top: 69, width: 2 },
           value: 130
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 836, top: 315, width: 454.09375 },
           value: 454.09375
@@ -323,11 +355,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 130, left: 720, top: 431, width: 2 },
           value: 130
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 149.90625, top: 315, width: 454.09375 },
           value: 454.09375
@@ -354,11 +390,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 130, left: 720, top: 431, width: 2 },
           value: 130
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 836, top: 315, width: 454.09375 },
           value: 454.09375
@@ -367,6 +407,90 @@ describe('Testing BuilderOverlayHelper', () => {
       projections: [
         { position: { height: 2, left: 720, top: 561, width: 570.09375 } },
         { position: { height: 246, left: 1290.09375, top: 315, width: 2 } }
+      ]
+    });
+
+    // Scenario 5 (selected and hovered are top-centered, hovered is smaller than selected)
+    hovered = {
+      top: 110.5,
+      bottom: 154.5,
+      left: 645,
+      right: 795,
+      centerX: 720,
+      centerY: 132.5,
+      width: 150,
+      height: 44
+    };
+    distances = calculateDistances(selected, hovered);
+    expect(distances).toStrictEqual({
+      distances: [
+        {
+          isCentered: true,
+          isOverlaped: true,
+          placement: 'top',
+          position: { height: 44.5, left: 720, top: 154.5, width: 2 },
+          value: 44.5
+        },
+        {
+          isCentered: false,
+          isOverlaped: false,
+          placement: 'left',
+          position: { height: 2, left: 604, top: 132.5, width: 41 },
+          value: 41
+        },
+        {
+          isCentered: false,
+          isOverlaped: false,
+          placement: 'right',
+          position: { height: 2, left: 795, top: 132.5, width: 41 },
+          value: 41
+        }
+      ],
+      projections: [
+        { position: { height: 66.5, left: 604, top: 132.5, width: 2 } },
+        { position: { height: 66.5, left: 834, top: 132.5, width: 2 } }
+      ]
+    });
+
+    // Scenario 6 (selected and hovered are bottom-centered, hovered is smaller than selected)
+    hovered = {
+      top: 500.5,
+      bottom: 544.5,
+      left: 645,
+      right: 795,
+      centerX: 720,
+      centerY: 522.5,
+      width: 150,
+      height: 44
+    };
+    distances = calculateDistances(selected, hovered);
+    expect(distances).toStrictEqual({
+      distances: [
+        {
+          isCentered: true,
+          isOverlaped: false,
+          placement: 'bottom',
+          position: { height: 69.5, left: 720, top: 431, width: 2 },
+          value: 69.5
+        },
+        {
+          isCentered: false,
+          isOverlaped: false,
+          placement: 'left',
+          position: { height: 2, left: 604, top: 522.5, width: 41 },
+          value: 41
+        },
+        {
+          isCentered: false,
+          isOverlaped: false,
+          placement: 'right',
+          position: { height: 2, left: 795, top: 522.5, width: 41 },
+          value: 41
+        }
+      ],
+      projections: [
+        { position: { height: 91.5, left: 604, top: 431, width: 2 } },
+        { position: { height: 91.5, left: 834, top: 431, width: 2 } }
       ]
     });
   });
@@ -398,21 +522,29 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 66, left: 720, top: 171.5, width: 2 },
           value: 66
         },
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 66, left: 720, top: 337.5, width: 2 },
           value: 66
         },
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 604, top: 287.5, width: 66 },
           value: 66
         },
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 770, top: 287.5, width: 66 },
           value: 66
@@ -449,12 +581,16 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 182, left: 629, top: 221.5, width: 2 },
           value: 182
         },
         {
+          isCentered: false,
           placement: 'right',
+          isOverlaped: false,
           position: { height: 2, left: 654, top: 196.5, width: 182 },
           value: 182
         }
@@ -477,16 +613,22 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 182, left: 720, top: 221.5, width: 2 },
           value: 182
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 604, top: 196.5, width: 66 },
           value: 66
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 770, top: 196.5, width: 66 },
           value: 66
@@ -510,11 +652,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 182, left: 811, top: 221.5, width: 2 },
           value: 182
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 604, top: 196.5, width: 182 },
           value: 182
@@ -538,16 +684,22 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 66, left: 811, top: 171.5, width: 2 },
           value: 66
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 66, left: 811, top: 337.5, width: 2 },
           value: 66
         },
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 604, top: 287.5, width: 182 },
           value: 182
@@ -571,11 +723,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 182, left: 811, top: 171.5, width: 2 },
           value: 182
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 604, top: 378.5, width: 182 },
           value: 182
@@ -599,16 +755,22 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 182, left: 720, top: 171.5, width: 2 },
           value: 182
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'left',
           position: { height: 2, left: 604, top: 378.5, width: 66 },
           value: 66
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 770, top: 378.5, width: 66 },
           value: 66
@@ -632,11 +794,15 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 182, left: 629, top: 171.5, width: 2 },
           value: 182
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 654, top: 378.5, width: 182 },
           value: 182
@@ -660,16 +826,22 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'top',
           position: { height: 66, left: 629, top: 171.5, width: 2 },
           value: 66
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'bottom',
           position: { height: 66, left: 629, top: 337.5, width: 2 },
           value: 66
         },
         {
+          isCentered: true,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 654, top: 287.5, width: 182 },
           value: 182
@@ -706,16 +878,22 @@ describe('Testing BuilderOverlayHelper', () => {
     expect(distances).toStrictEqual({
       distances: [
         {
+          isCentered: false,
+          isOverlaped: true,
           placement: 'top',
           position: { height: 48, left: 598.5, top: 151, width: 2 },
           value: 48
         },
         {
+          isCentered: false,
+          isOverlaped: true,
           placement: 'bottom',
           position: { height: 48, left: 1122.046875, top: 383, width: 2 },
           value: 48
         },
         {
+          isCentered: false,
+          isOverlaped: false,
           placement: 'right',
           position: { height: 2, left: 714.5, top: 315, width: 332.59375 },
           value: 332.59375
@@ -723,7 +901,7 @@ describe('Testing BuilderOverlayHelper', () => {
       ],
       projections: [
         { position: { height: 2, left: 598.5, top: 149, width: 448.59375 } },
-        { position: { height: 68, left: 1047.09375, top: 247, width: 2 } }
+        { position: { height: 2, left: 714.5, top: 429, width: 407.546875 } }
       ]
     });
   });
