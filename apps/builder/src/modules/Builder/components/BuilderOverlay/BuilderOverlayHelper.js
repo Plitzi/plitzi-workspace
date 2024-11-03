@@ -168,7 +168,7 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       } else if (delta1 < delta2 && rectSelected.centerX + delta1 <= rectSelected.right) {
         delta = delta1;
       } else if (rectSelected.centerX - delta2 >= rectSelected.left) {
-        delta = -delta2;
+        delta = -delta2 - borderSize;
       }
 
       break;
@@ -181,7 +181,7 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       } else if (delta1 < delta2 && rectSelected.centerY + delta1 <= rectSelected.bottom) {
         delta = delta1;
       } else if (rectSelected.centerY - delta2 >= rectSelected.top) {
-        delta = -delta2;
+        delta = -delta2 - borderSize;
       }
 
       break;

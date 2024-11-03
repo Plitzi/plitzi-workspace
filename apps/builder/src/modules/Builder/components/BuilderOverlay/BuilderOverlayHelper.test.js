@@ -937,7 +937,7 @@ describe('Testing BuilderOverlayHelper', () => {
           isCentered: false,
           isOverlaped: false,
           placement: 'right',
-          position: { height: 2, left: 714.5, top: 231, width: 93.203125 },
+          position: { height: 2, left: 714.5, top: 229, width: 93.203125 },
           value: 93.2
         }
       ],
