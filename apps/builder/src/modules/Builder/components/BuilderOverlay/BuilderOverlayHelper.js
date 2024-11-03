@@ -513,9 +513,10 @@ const calculateProjections = (distances = [], rectSelected, rectHovered) => {
 
   const distancesObj = distances.reduce((acum, distance) => ({ ...acum, [distance.placement]: distance }), {});
   distances = distances.filter(distance => !distance.isCentered);
+  const hasOverlaped = distances.find(distance => distance.isOverlaped);
 
   return distances
-    .filter(distance => distances.length !== 3 || (distances.length === 3 && distance.isOverlaped))
+    .filter(distance => !hasOverlaped || distance.isOverlaped)
     .map(distance => ({
       ...projectionFn[distance.placement](rectSelected, rectHovered, distance.value, distancesObj),
       placement: distance.placement
