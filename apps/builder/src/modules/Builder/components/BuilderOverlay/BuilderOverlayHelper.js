@@ -147,6 +147,10 @@ const calculateDelta = (position1 = 0, position2 = 0, absolute = true) => {
 };
 
 const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside = false) => {
+  if (!rectSelected || !rectHovered) {
+    return 0;
+  }
+
   let delta = 0;
   let delta1 = 0;
   let delta2 = 0;
@@ -401,7 +405,7 @@ const calculateProjectionTop = (rectSelected, rectHovered, value, distancesObj) 
 
   return {
     position: {
-      top: rectSelected.top - value - borderSize,
+      top: selectedIsBigger ? rectSelected.top - value - borderSize : rectSelected.top,
       left,
       width: deltaX,
       height: borderSize
