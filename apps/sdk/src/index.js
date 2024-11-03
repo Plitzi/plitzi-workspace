@@ -1,6 +1,3 @@
-// Debugger helper
-import './helpers/wdyr';
-
 // Packages
 import React, { useCallback } from 'react';
 import ReactDOM from 'react-dom/client';
