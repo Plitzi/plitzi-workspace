@@ -189,7 +189,7 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       return delta;
   }
 
-  if (delta1 === delta2) {
+  if (Math.floor(delta1) === Math.floor(delta2)) {
     return 0;
   }
 
