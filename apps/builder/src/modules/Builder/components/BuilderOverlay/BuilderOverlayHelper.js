@@ -166,7 +166,7 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       if (rectSelected.centerY <= rectHovered.right && rectSelected.centerY >= rectHovered.left) {
         delta = 0;
       } else if (delta1 < delta2 && rectSelected.centerX + delta1 <= rectSelected.right) {
-        delta = delta1;
+        delta = delta1 - borderSize;
       } else if (rectSelected.centerX - delta2 >= rectSelected.left) {
         delta = -delta2 - borderSize;
       }
@@ -179,7 +179,7 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       if (rectSelected.centerY <= rectHovered.bottom && rectSelected.centerY >= rectHovered.top) {
         delta = 0;
       } else if (delta1 < delta2 && rectSelected.centerY + delta1 <= rectSelected.bottom) {
-        delta = delta1;
+        delta = delta1 - borderSize;
       } else if (rectSelected.centerY - delta2 >= rectSelected.top) {
         delta = -delta2 - borderSize;
       }
