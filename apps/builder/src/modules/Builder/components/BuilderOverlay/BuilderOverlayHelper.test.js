@@ -47,7 +47,7 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 654, top: 219.5, width: 66 }, placement: 'top' },
+        { position: { height: 2, left: 654, top: 221.5, width: 66 }, placement: 'top' },
         { position: { height: 66, left: 654, top: 221.5, width: 2 }, placement: 'left' }
       ]
     });
@@ -107,7 +107,7 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 720, top: 219.5, width: 66 }, placement: 'top' },
+        { position: { height: 2, left: 720, top: 221.5, width: 66 }, placement: 'top' },
         { position: { height: 66, left: 786, top: 221.5, width: 2 }, placement: 'right' }
       ]
     });
@@ -300,7 +300,7 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 149.90625, top: 67, width: 570.09375 }, placement: 'top' },
+        { position: { height: 2, left: 149.90625, top: 69, width: 570.09375 }, placement: 'top' },
         { position: { height: 246, left: 149.91000000000003, top: 69, width: 2 }, placement: 'left' }
       ]
     });
@@ -335,7 +335,7 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 720, top: 67, width: 570.09375 }, placement: 'top' },
+        { position: { height: 2, left: 720, top: 69, width: 570.09375 }, placement: 'top' },
         { position: { height: 246, left: 1290.09, top: 69, width: 2 }, placement: 'right' }
       ]
     });
@@ -448,7 +448,7 @@ describe('Testing BuilderOverlayHelper', () => {
       ],
       projections: [
         { position: { height: 66.5, left: 604, top: 132.5, width: 2 }, placement: 'left' },
-        { position: { height: 66.5, left: 834, top: 132.5, width: 2 }, placement: 'right' }
+        { position: { height: 66.5, left: 836, top: 132.5, width: 2 }, placement: 'right' }
       ]
     });
 
@@ -490,7 +490,7 @@ describe('Testing BuilderOverlayHelper', () => {
       ],
       projections: [
         { position: { height: 91.5, left: 604, top: 431, width: 2 }, placement: 'left' },
-        { position: { height: 91.5, left: 834, top: 431, width: 2 }, placement: 'right' }
+        { position: { height: 91.5, left: 836, top: 431, width: 2 }, placement: 'right' }
       ]
     });
   });
@@ -900,8 +900,8 @@ describe('Testing BuilderOverlayHelper', () => {
         }
       ],
       projections: [
-        { position: { height: 2, left: 598.5, top: 149, width: 448.59375 }, placement: 'top' },
-        { position: { height: 2, left: 714.5, top: 429, width: 407.546875 }, placement: 'bottom' }
+        { position: { height: 2, left: 598.5, top: 151, width: 448.59375 }, placement: 'top' },
+        { position: { height: 2, left: 714.5, top: 431, width: 407.546875 }, placement: 'bottom' }
       ]
     });
 
@@ -937,13 +937,13 @@ describe('Testing BuilderOverlayHelper', () => {
           isCentered: false,
           isOverlaped: false,
           placement: 'right',
-          position: { height: 2, left: 714.5, top: 229, width: 93.203125 },
+          position: { height: 2, left: 714.5, top: 231, width: 93.203125 },
           value: 93.2
         }
       ],
       projections: [
-        { placement: 'top', position: { height: 2, left: 598.5, top: 185, width: 209.203125 } },
-        { placement: 'bottom', position: { height: 2, left: 714.5, top: 429, width: 168.15625 } }
+        { placement: 'top', position: { height: 2, left: 598.5, top: 187, width: 209.203125 } },
+        { placement: 'bottom', position: { height: 2, left: 714.5, top: 431, width: 168.15625 } }
       ]
     });
 
@@ -985,7 +985,7 @@ describe('Testing BuilderOverlayHelper', () => {
       ],
       projections: [
         { placement: 'top', position: { height: 2, left: 714.5, top: 199, width: 168.15625 } },
-        { placement: 'bottom', position: { height: 2, left: 714.5, top: 429, width: 168.15625 } }
+        { placement: 'bottom', position: { height: 2, left: 714.5, top: 431, width: 168.15625 } }
       ]
     });
 
@@ -1027,7 +1027,7 @@ describe('Testing BuilderOverlayHelper', () => {
       ],
       projections: [
         { placement: 'top', position: { height: 2, left: 74.953125, top: 199, width: 407.546875 } },
-        { placement: 'bottom', position: { height: 2, left: 74.953125, top: 429, width: 407.546875 } }
+        { placement: 'bottom', position: { height: 2, left: 74.953125, top: 431, width: 407.546875 } }
       ]
     });
   });
