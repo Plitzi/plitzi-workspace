@@ -41,10 +41,9 @@ const BuilderAreaOverlay = props => {
         iframeDOM={iframeDOM}
         displayMode={displayMode}
         zoom={zoom}
-        hideActions={showDistance}
       />
     ),
-    [elementSelected, baseElementId, iframeDOM, displayMode, zoom, showDistance]
+    [elementSelected, baseElementId, iframeDOM, displayMode, zoom]
   );
 
   const handleKeyDown = useCallback(async e => {
@@ -94,7 +93,7 @@ const BuilderAreaOverlay = props => {
 
   return (
     <>
-      {elementHovered && elementHovered !== elementSelected && (
+      {!showDistance && elementHovered && elementHovered !== elementSelected && (
         <BuilderOverlay
           id={elementHovered}
           baseElementId={baseElementId}
@@ -104,7 +103,7 @@ const BuilderAreaOverlay = props => {
           zoom={zoom}
         />
       )}
-      {elementSelected && overlaySelectMemo}
+      {!showDistance && elementSelected && overlaySelectMemo}
       {!dragTree && <BuilderOverlayDrag iframeDOM={iframeDOM} zoom={zoom} />}
       {showDistance && elementSelected && elementHovered && elementHovered !== elementSelected && (
         <BuilderOverlayDistance
@@ -115,56 +114,6 @@ const BuilderAreaOverlay = props => {
           elementSelected={elementSelected}
         />
       )}
-      {/* <BuilderOverlayDistance
-        baseElementId={baseElementId}
-        iframeDOM={iframeDOM}
-        zoom={zoom}
-        elementHovered="6724b16f4daa35fd532e75df"
-        elementSelected="67220a59b29a2873a7370b41"
-      />
-      <BuilderOverlayDistance
-        baseElementId={baseElementId}
-        iframeDOM={iframeDOM}
-        zoom={zoom}
-        elementHovered="672384168b6e52238b6d5a98"
-        elementSelected="67220a59b29a2873a7370b41"
-      /> */}
-
-      {/* <BuilderOverlayDistance
-        baseElementId={baseElementId}
-        iframeDOM={iframeDOM}
-        zoom={zoom}
-        elementHovered="67220a787004d9496e74dd52"
-        elementSelected="67220a80c63afafcd66be45d"
-      />
-      <BuilderOverlayDistance
-        baseElementId={baseElementId}
-        iframeDOM={iframeDOM}
-        zoom={zoom}
-        elementHovered="67220ab18e32c78dc53e8786"
-        elementSelected="67220a80c63afafcd66be45d"
-      />
-      <BuilderOverlayDistance
-        baseElementId={baseElementId}
-        iframeDOM={iframeDOM}
-        zoom={zoom}
-        elementHovered="67220a6d49d302012a3137a7"
-        elementSelected="67220a80c63afafcd66be45d"
-      />
-      <BuilderOverlayDistance
-        baseElementId={baseElementId}
-        iframeDOM={iframeDOM}
-        zoom={zoom}
-        elementHovered="67220ab92f3152ed411539f8"
-        elementSelected="67220a80c63afafcd66be45d"
-      /> */}
-      {/* <BuilderOverlayDistance
-        baseElementId={baseElementId}
-        iframeDOM={iframeDOM}
-        zoom={zoom}
-        elementHovered="6724d1597cfb3f39c6f02967"
-        elementSelected="67220a59b29a2873a7370b41"
-      /> */}
     </>
   );
 };

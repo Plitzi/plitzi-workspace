@@ -66,16 +66,8 @@ const BuilderOverlayDistance = props => {
 
   return (
     <div className={`plitzi-component--overlay-distance`}>
-      <div
-        ref={containerSelectedRef}
-        className={`plitzi-component--overlay-distance-selected`}
-        style={{ border: '2px solid red' }}
-      />
-      <div
-        ref={containerHoveredRef}
-        className={`plitzi-component--overlay-distance-hovered`}
-        style={{ border: '2px solid red' }}
-      />
+      <div ref={containerSelectedRef} className={`plitzi-component--overlay-distance-selected`} />
+      <div ref={containerHoveredRef} className={`plitzi-component--overlay-distance-hovered`} />
       {distances.map((distance, i) => (
         <div
           key={`${distance.placement}-${i}`}

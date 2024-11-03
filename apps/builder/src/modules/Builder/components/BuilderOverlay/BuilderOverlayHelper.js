@@ -168,7 +168,7 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       } else if (delta1 < delta2 && rectSelected.centerX + delta1 <= rectSelected.right) {
         delta = delta1;
       } else if (rectSelected.centerX - delta2 >= rectSelected.left) {
-        delta = -delta2 - borderSize;
+        delta = -delta2;
       }
 
       break;
@@ -181,7 +181,7 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       } else if (delta1 < delta2 && rectSelected.centerY + delta1 <= rectSelected.bottom) {
         delta = delta1;
       } else if (rectSelected.centerY - delta2 >= rectSelected.top) {
-        delta = -delta2 - borderSize;
+        delta = -delta2;
       }
 
       break;
@@ -366,7 +366,6 @@ const calculateDistances = (rectSelected, rectHovered) => {
 
   const isInside = calculateIsInside(rectSelected, rectHovered) || calculateIsInside(rectHovered, rectSelected);
   const quadrants = calculateQuadrants(rectSelected, rectHovered, isInside);
-
   const distances = placements
     .filter(placement => !!quadrants[placement])
     .map(placement => calculateDistance(placement, rectSelected, rectHovered, quadrants, isInside))
@@ -390,8 +389,8 @@ const calculateProjectionTop = (rectSelected, rectHovered, value, distancesObj) 
   let left = 0;
   let deltaX = 0;
   if (distanceLeft && !selectedIsBigger) {
-    deltaX = calculateDelta(rectHovered.right, rectSelected.centerX);
-    left = rectHovered.bottom;
+    deltaX = calculateDelta(rectHovered.centerX, rectSelected.left);
+    left = rectHovered.centerX;
   } else if (distanceLeft && selectedIsBigger) {
     deltaX = calculateDelta(rectHovered.right, rectSelected.centerX);
     left = rectHovered.right;
@@ -405,7 +404,7 @@ const calculateProjectionTop = (rectSelected, rectHovered, value, distancesObj) 
 
   return {
     position: {
-      top: selectedIsBigger ? rectSelected.top - value - borderSize : rectSelected.top,
+      top: selectedIsBigger ? rectSelected.top - value : rectSelected.top,
       left,
       width: deltaX,
       height: borderSize
@@ -419,8 +418,8 @@ const calculateProjectionBottom = (rectSelected, rectHovered, value, distancesOb
   let left = 0;
   let deltaX = 0;
   if (distanceLeft && !selectedIsBigger) {
-    deltaX = calculateDelta(rectHovered.right, rectSelected.centerX);
-    left = rectHovered.bottom;
+    deltaX = calculateDelta(rectHovered.centerX, rectSelected.left);
+    left = rectHovered.centerX;
   } else if (distanceLeft && selectedIsBigger) {
     deltaX = calculateDelta(rectHovered.right, rectSelected.centerX);
     left = rectHovered.right;
@@ -434,7 +433,7 @@ const calculateProjectionBottom = (rectSelected, rectHovered, value, distancesOb
 
   return {
     position: {
-      top: selectedIsBigger ? rectSelected.bottom + value : rectSelected.bottom - borderSize,
+      top: selectedIsBigger ? rectSelected.bottom + value : rectSelected.bottom,
       left,
       width: deltaX,
       height: borderSize
@@ -493,7 +492,7 @@ const calculateProjectionRight = (rectSelected, rectHovered, value, distancesObj
   return {
     position: {
       top,
-      left: selectedIsBigger ? rectSelected.right - borderSize : rectSelected.right + value,
+      left: selectedIsBigger ? rectSelected.right : rectSelected.right + value,
       width: borderSize,
       height: deltaY
     }

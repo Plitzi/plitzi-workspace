@@ -76,6 +76,12 @@ body {
     pointer-events: none;
   }
 
+  .plitzi-component--overlay-distance-selected,
+  .plitzi-component--overlay-distance-hovered {
+    outline: 2px solid red;
+    outline-offset: -2px;
+  }
+
   .plitzi-component--overlay-distance {
     left: 0;
     right: 0;
