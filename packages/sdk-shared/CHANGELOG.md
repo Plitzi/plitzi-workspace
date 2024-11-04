@@ -1,5 +1,11 @@
 # @plitzi/sdk-shared
 
+## 0.23.15
+
+### Patch Changes
+
+- v0.23.15
+
 ## 0.23.14
 
 ### Patch Changes
