@@ -77,7 +77,13 @@ const Selector = props => {
 
   const handleClickSelector = useCallback(
     selector => {
-      onSelectorSelected(selector);
+      onSelectorSelected(state => {
+        if (state && state?.name === selector?.name) {
+          return undefined;
+        }
+
+        return selector;
+      });
     },
     [onSelectorSelected]
   );
@@ -118,7 +124,7 @@ const Selector = props => {
         const finalTags = tags.filter((tag, i) => i !== position);
         const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
         if (selectorSelected && tags[position].name === selectorSelected.name) {
-          onSelectorSelected(get(finalTags, '0.name', ''));
+          onSelectorSelected(get(finalTags, '0'));
         }
 
         onChange(finalValue);
@@ -146,52 +152,55 @@ const Selector = props => {
     }
   };
 
-  const handleKeyDown = e => {
-    switch (e.key) {
-      case 'Enter': {
-        const { value } = e.target;
-        if (value !== '' && !tags.find(tag => tag.name === value)) {
-          setTimeout(() => setInputValue(''), 0);
-          const tag = { name: selectorFormatter(value), type: StyleSelectors.SELECTOR_CLASS };
-          const finalValue = [...tags, tag]
-            .filter(tag => !!tag?.name)
-            .reduce((acum, tag) => `${acum} ${tag.name}`, '')
-            .trim();
+  const handleKeyDown = useCallback(
+    e => {
+      switch (e.key) {
+        case 'Enter': {
+          const { value: newValue } = e.target;
+          if (newValue !== '' && !tags.find(tag => tag.name === newValue)) {
+            setTimeout(() => setInputValue(''), 0);
+            const tag = { name: selectorFormatter(newValue), type: StyleSelectors.SELECTOR_CLASS };
+            const finalValue = [...tags, tag]
+              .filter(tag => !!tag?.name)
+              .reduce((acum, tag) => `${acum} ${tag.name}`, '')
+              .trim();
 
-          onSelectorAdded(tag);
-          onChange(finalValue);
-          setPopupOpened(false);
-          e.target.blur();
-          onSelectorSelected(tag);
+            onSelectorAdded(tag);
+            onChange(finalValue);
+            setPopupOpened(false);
+            e.target.blur();
+            onSelectorSelected(tag);
+          }
+
+          break;
         }
 
-        break;
+        case 'ArrowUp': {
+          setPopupOpened(false);
+
+          break;
+        }
+
+        case 'ArrowDown': {
+          setPopupOpened(true);
+
+          break;
+        }
+
+        case 'Escape': {
+          e.stopPropagation();
+          setInputValue('');
+          e.target.blur();
+
+          break;
+        }
+
+        default:
+          break;
       }
-
-      case 'ArrowUp': {
-        setPopupOpened(false);
-
-        break;
-      }
-
-      case 'ArrowDown': {
-        setPopupOpened(true);
-
-        break;
-      }
-
-      case 'Escape': {
-        e.stopPropagation();
-        setInputValue('');
-        e.target.blur();
-
-        break;
-      }
-
-      default:
-        break;
-    }
-  };
+    },
+    [onSelectorAdded, onChange, tags]
+  );
 
   const handleDropdownVisible = useCallback(visible => setPopupOpened(visible), []);
 

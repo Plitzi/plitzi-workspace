@@ -235,7 +235,7 @@ const StyleInspectorProvider = props => {
   const { children, selector = '', styleSelector = 'base', element, inheritData } = props;
   const { displayMode } = use(AppContext);
   const { builderHandler } = use(BuilderContext);
-  const { style } = use(BuilderStyleContext);
+  const { style, setSelectorSelected } = use(BuilderStyleContext);
   const bindingData = useStyleBinding({ element });
   const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
   const values = get(style, `platform.${displayMode}.${selector}.attributes`);
@@ -298,11 +298,16 @@ const StyleInspectorProvider = props => {
         definition: { type }
       } = element;
 
+      const existingClasses = get(element, `definition.styleSelectors.${styleSelector}`);
       const customClass = makeSelector(type, styleSelector);
       builderHandler(
         EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
         produce(element, draft => {
-          set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
+          if (existingClasses) {
+            set(draft, `definition.styleSelectors.${styleSelector}`, `${existingClasses} ${customClass}`);
+          } else {
+            set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
+          }
         })
       );
 
@@ -325,6 +330,8 @@ const StyleInspectorProvider = props => {
           value
         );
       }
+
+      setSelectorSelected({ name: customClass, type: StyleSelectors.SELECTOR_CLASS });
     },
     [values, displayMode, bindingData, element, builderHandler, builderHandler, selector, selectorType, styleSelector]
   );

@@ -134,6 +134,7 @@ const BuilderProvider = props => {
       setElementSelected(state => {
         if (force) {
           setSelectorSelected(undefined);
+          setStyleSelector('base');
 
           return elementId;
         }
@@ -173,7 +174,14 @@ const BuilderProvider = props => {
           }
         }
 
-        setSelectorSelected(undefined);
+        const selector = get(element, 'definition.styleSelectors.base', '');
+        const name = get(selector.split(' '), '0');
+        setStyleSelector('base');
+        if (name) {
+          setSelectorSelected({ name, type: StyleSelectors.SELECTOR_CLASS });
+        } else {
+          setSelectorSelected(undefined);
+        }
 
         return elementId;
       });
@@ -224,6 +232,7 @@ const BuilderProvider = props => {
       setBaseContext(state => {
         setHovered(undefined);
         setSelectorSelected(undefined);
+        setStyleSelector('base');
         if (state.baseElementId === id) {
           return state;
         }
@@ -410,6 +419,7 @@ const BuilderProvider = props => {
     if (baseElementId) {
       setHovered(undefined);
       setSelectorSelected(undefined);
+      setStyleSelector('base');
       setSelected(undefined);
       if (baseContext.baseElementId !== baseElementId && mode !== BUILDER_MODE_NORMAL) {
         builderSetBaseContext(baseElementId);
@@ -431,23 +441,9 @@ const BuilderProvider = props => {
     [getBaseElement, drop, setVisibility, schema]
   );
 
-  const selector = get(schemaRef.current, `flat.${elementSelected}.definition.styleSelectors.${styleSelector}`, '');
-  const selectorActive = useMemo(() => {
-    if (selector && selectorSelected && selector.includes(selectorSelected.name?.replace(/:.*/, ''))) {
-      return selectorSelected;
-    }
-
-    const name = get(selector.split(' '), '0');
-    if (!name) {
-      return undefined;
-    }
-
-    return { name, type: StyleSelectors.SELECTOR_CLASS };
-  }, [selector, selectorSelected]);
-
   const builderStyleValueMemo = useMemo(
-    () => ({ style, selectorSelected: selectorActive, setSelectorSelected, styleSelector, setStyleSelector }),
-    [style, selectorActive, setSelectorSelected, styleSelector, setStyleSelector]
+    () => ({ style, selectorSelected, setSelectorSelected, styleSelector, setStyleSelector }),
+    [style, selectorSelected, setSelectorSelected, styleSelector, setStyleSelector]
   );
 
   const events = useMemo(

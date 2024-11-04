@@ -1,5 +1,5 @@
 // Packages
-import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo, useState } from 'react';
 import set from 'lodash/set';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -53,12 +53,6 @@ const StyleInspector = props => {
     () => get(componentDefinitions, `${get(element, 'definition.type', '')}.definition.styleSelectors`, {}),
     [componentDefinitions, element]
   );
-
-  useEffect(() => {
-    if (styleSelector !== 'base') {
-      setStyleSelector('base');
-    }
-  }, [element?.id]);
 
   const handleChangeSelector = useCallback(
     value => {
@@ -119,9 +113,9 @@ const StyleInspector = props => {
     [setViewMode]
   );
 
-  const handleChangeStyleSelector = useCallback(e => setStyleSelector(e.target.value), []);
+  const handleChangeStyleSelector = useCallback(e => setStyleSelector(e.target.value), [setStyleSelector]);
 
-  const handleCurrentSelector = useCallback(tag => setSelectorSelected(tag), []);
+  const handleCurrentSelector = useCallback(tag => setSelectorSelected(tag), [setSelectorSelected]);
 
   return (
     <div className="w-full flex flex-col grow">
