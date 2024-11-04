@@ -11,23 +11,23 @@ import ComponentContext from '../../Component/ComponentContext.js';
 import ComponentProvider from '../../Component/ComponentProvider.js';
 import RootElement from '../RootElement.js';
 
+const plitziModules = {
+  default: undefined, // we dont need default export, normally should be PlitziSdk
+  ComponentProvider,
+  ComponentContext,
+  usePlitziServiceContext,
+  RootElement
+};
+
+const externals = {
+  __WEBPACK_EXTERNAL_MODULE_react__: React,
+  __WEBPACK_EXTERNAL_MODULE_react_dom__: ReactDOM,
+  __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules
+};
+
 export const generatePluginModule = async (url, asES6 = true, pluginScope = '') => {
   let Module;
   try {
-    const plitziModules = {
-      default: undefined, // we dont need default export, normally should be PlitziSdk
-      ComponentProvider,
-      ComponentContext,
-      usePlitziServiceContext,
-      RootElement
-    };
-
-    const externals = {
-      __WEBPACK_EXTERNAL_MODULE_react__: React,
-      __WEBPACK_EXTERNAL_MODULE_react_dom__: ReactDOM,
-      __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules
-    };
-
     if (asES6) {
       const response = await fetch(url, { 'no-cors': true });
       const moduleBlob = new Blob([await response.text()], { type: 'text/javascript' });
