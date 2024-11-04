@@ -158,7 +158,7 @@ const Selector = props => {
         case 'Enter': {
           const { value: newValue } = e.target;
           if (newValue !== '' && !tags.find(tag => tag.name === newValue)) {
-            setTimeout(() => setInputValue(''), 0);
+            setInputValue('');
             const tag = { name: selectorFormatter(newValue), type: StyleSelectors.SELECTOR_CLASS };
             const finalValue = [...tags, tag]
               .filter(tag => !!tag?.name)
@@ -171,6 +171,10 @@ const Selector = props => {
             e.target.blur();
             onSelectorSelected(tag);
           }
+
+          setTimeout(() => {
+            inputRef.current.focus();
+          }, 0);
 
           break;
         }
