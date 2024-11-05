@@ -149,7 +149,7 @@ const StyleInspector = props => {
             size="custom"
             onClick={handleClicViewMode}
             title={viewMode === 'basic' ? 'Advanced Mode' : 'Basic Mode'}
-            disabled={selectorSelected?.name.includes(':')}
+            disabled={selectorSelected?.name?.includes(':')}
           >
             {viewMode === 'basic' && <i className="fa-solid fa-code" />}
             {viewMode === 'advanced' && <i className="fa-regular fa-hand-pointer" />}
