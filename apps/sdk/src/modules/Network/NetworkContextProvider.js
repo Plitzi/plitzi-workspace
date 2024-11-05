@@ -46,17 +46,7 @@ const NetworkContextProvider = props => {
   } = props;
   const [loading, setLoading] = useState(!(offlineMode && offlineData));
   const [error, setError] = useState(false);
-  const [internalData, setInternalData] = useState(() => {
-    if (offlineMode && offlineData && offlineData.schema && offlineDataType === 'json') {
-      return offlineData;
-    }
-
-    if (offlineMode && offlineData && offlineDataType === 'yaml') {
-      return {}; // @todo: helper to transform yaml to json
-    }
-
-    return {};
-  });
+  const [internalData, setInternalData] = useState({});
 
   const query = useCallback(
     async (queryKey, variables, fetchPolicy = 'network-first') => {
@@ -197,6 +187,22 @@ const NetworkContextProvider = props => {
     setLoading(false);
   };
 
+  const initOfflineData = async () => {
+    let data = {};
+    if (offlineMode && offlineData && offlineData.schema && offlineDataType === 'json') {
+      data = offlineData;
+    } else if (offlineMode && offlineData && offlineDataType === 'yaml') {
+      data = {}; // @todo: helper to transform yaml to json
+    }
+
+    let plugins = {};
+    if (data.plugins && data.plugins.length > 0) {
+      plugins = await pluginParseDefinition(data.plugins, true);
+    }
+
+    setInternalData({ ...data, plugins });
+  };
+
   useEffect(() => {
     if (!offlineMode || !offlineData) {
       setLoading(state => {
@@ -207,6 +213,8 @@ const NetworkContextProvider = props => {
         return state;
       });
       initQuery();
+    } else if (offlineMode && offlineData) {
+      initOfflineData();
     }
   }, [offlineMode && offlineData, offlineMode && offlineDataType, webKey, environment]);
 

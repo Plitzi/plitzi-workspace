@@ -95,16 +95,16 @@ export const fetchPluginsManifest = async manifests => {
     }, {});
 };
 
-export const pluginParseDefinition = async (pluginsRaw, compact = false) => {
+export const pluginParseDefinition = async (pluginsRaw = [], compact = false) => {
+  let definitions = {};
   if (!Array.isArray(pluginsRaw)) {
-    pluginsRaw = [pluginsRaw];
+    return definitions;
   }
 
   const pluginManifests = await fetchPluginsManifest(
     pluginsRaw.reduce((acum, plugin) => [...acum, `${plugin.resource}/plugin-manifest.json`], [])
   );
 
-  let definitions = {};
   pluginsRaw
     .filter(pluginRaw => get(pluginManifests, pluginRaw.type))
     .forEach(pluginRaw => {
