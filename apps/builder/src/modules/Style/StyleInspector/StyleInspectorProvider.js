@@ -255,7 +255,7 @@ const StyleInspectorProvider = props => {
         return;
       }
 
-      if (selector !== '' && (!isEmpty(value) || typeof value === 'number')) {
+      if (selector !== '' && (!isEmpty(value) || typeof value === 'number') && selectorType) {
         if (typeof styleKey === 'string') {
           builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, styleKey, value);
         } else if (Array.isArray(styleKey)) {
@@ -272,7 +272,7 @@ const StyleInspectorProvider = props => {
       }
 
       // // Value empty, remove it
-      if (selector !== '') {
+      if (selector !== '' && selectorType) {
         if (styleKey && typeof styleKey === 'string') {
           builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, styleKey, value);
         } else if (styleKey && Array.isArray(styleKey)) {
