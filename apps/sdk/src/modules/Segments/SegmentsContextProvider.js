@@ -1,5 +1,5 @@
 // Packages
-import React, { useMemo, use, useRef, useCallback, useState } from 'react';
+import React, { useMemo, use, useRef, useCallback, useState, useEffect } from 'react';
 import get from 'lodash/get';
 
 // Alias
@@ -31,6 +31,10 @@ const SegmentsContextProvider = props => {
   const [segments, setSegments] = useState(segmentsPropMemo);
   const segmentsRef = useRef(segmentsPropMemo);
   segmentsRef.current = segmentsPropMemo;
+
+  useEffect(() => {
+    setSegments(segmentsPropMemo);
+  }, [segmentsPropMemo]);
 
   const segmentGet = useCallback(
     async identifier => {

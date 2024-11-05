@@ -44,7 +44,7 @@ const NetworkContextProvider = props => {
     // hocs
     client
   } = props;
-  const [loading, setLoading] = useState(!(offlineMode && offlineData));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [internalData, setInternalData] = useState({});
 
@@ -201,6 +201,7 @@ const NetworkContextProvider = props => {
     }
 
     setInternalData({ ...data, plugins });
+    setLoading(false);
   };
 
   useEffect(() => {
