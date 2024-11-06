@@ -1,3 +1,5 @@
+@use '../../../../../assets/variables' as v;
+
 .builder__tree {
   .tree__node {
     &.node--dragging {
@@ -20,7 +22,7 @@
             border: 5px solid transparent;
             border-radius: 0;
             border-radius: 0;
-            border-bottom: 5px solid var(--pl-primary-color);
+            border-bottom: 5px solid #{v.$primary-color};
           }
         }
 
@@ -33,28 +35,28 @@
             border: 5px solid transparent;
             border-radius: 0;
             border-radius: 0;
-            border-top: 5px solid var(--pl-primary-color);
+            border-top: 5px solid #{v.$primary-color};
           }
         }
 
         &.drop-indicator--not-allowed {
-          background-color: var(--pl-danger-color);
+          background-color: #{v.$danger-color} #{v.$primary-color};
 
           &.drop-indicator--bottom {
             &::after {
-              border-top-color: var(--pl-danger-color);
+              border-top-color: #{v.$primary-color};
             }
           }
 
           &.drop-indicator--top {
             &::after {
-              border-bottom-color: var(--pl-danger-color);
+              border-bottom-color: #{v.$primary-color};
             }
           }
 
           &.drop-indicator--inside {
             &::after {
-              border-color: var(--pl-danger-color);
+              border-color: #{v.$primary-color};
             }
           }
         }
@@ -66,7 +68,7 @@
       width: 100%;
       padding: 0;
       position: absolute;
-      background-color: var(--pl-primary-color);
+      background-color: #{v.$primary-color};
 
       &::after {
         height: 8px;
@@ -74,7 +76,7 @@
         left: -6px;
         top: -3px;
         position: absolute;
-        border: 2px solid var(--pl-primary-color);
+        border: 2px solid #{v.$primary-color};
         border-radius: 50%;
         background-color: transparent;
         content: '';
