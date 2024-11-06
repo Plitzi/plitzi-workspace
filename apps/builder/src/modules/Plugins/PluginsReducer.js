@@ -21,6 +21,9 @@ const PluginsReducer = (state, action = {}) => {
     case PluginsActions.PLUGINS_ADD:
     case PluginsActions.PLUGINS_UPDATE: {
       const { plugin } = action;
+      if (!plugin) {
+        return state;
+      }
 
       return { ...state, [plugin.type]: plugin };
     }

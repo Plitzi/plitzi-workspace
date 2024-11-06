@@ -15,21 +15,7 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 import Resource from './Resource';
 import ResourceManager from './ResourceManager';
 
-const uploadTypes = [
-  'jpg',
-  'jpeg',
-  'png',
-  'bmp',
-  'gif',
-  'mp3',
-  'mp4',
-  'webp',
-  'mpeg',
-  'svg',
-  'webm',
-  'zip',
-  'json'
-];
+const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
 /** @returns {React.ReactElement} */
 const Resources = () => {
@@ -129,25 +115,26 @@ const Resources = () => {
   }, []);
 
   const finalResources = useMemo(() => {
-    return resources
-      .filter(resource => {
-        return resource.type !== 'plugin' || Object.values(plugins).find(plugin => plugin.resource === resource.path);
-      })
-      .map(resource => {
-        if (resource.type === 'plugin') {
-          const plugin = Object.values(plugins).find(plugin => plugin.resource === resource.path);
+    const pluginsArr = Object.values(plugins);
 
-          return { ...resource, metadata: plugin.manifest };
+    return resources.map(resource => {
+      if (resource.type === 'plugin') {
+        const plugin = pluginsArr.find(plugin => plugin.resource === resource.path);
+        if (!plugin) {
+          return resource;
         }
 
-        return resource;
-      });
+        return { ...resource, metadata: plugin.manifest };
+      }
+
+      return resource;
+    });
   }, [resources, plugins]);
 
   return (
     <div className="w-full flex flex-col overflow-y-auto grow basis-0">
       <ResourceManager
-       className="shrink-0"
+        className="shrink-0"
         mutate={mutate}
         uploadTypes={uploadTypes}
         onUploaded={handleUploaded}

@@ -71,28 +71,29 @@ const getCompactComponentDefinition = (pluginRaw, pluginManifest) => {
   };
 };
 
-export const fetchPluginsManifest = async manifests => {
+const fetchPluginsManifest = async pluginManifest => {
+  let responseContent;
+  try {
+    const response = await fetch(pluginManifest, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    responseContent = await response.json();
+
+    return responseContent;
+  } catch (err) {
+    return responseContent;
+  }
+};
+
+export const fetchPluginsManifests = async manifests => {
   if (!Array.isArray(manifests) || manifests.length === 0) {
     return {};
   }
 
-  const promises = manifests.map(async pluginManifest =>
-    fetch(pluginManifest, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
-  );
-
+  const promises = manifests.map(pluginManifest => fetchPluginsManifest(pluginManifest));
   const responses = await Promise.allSettled(promises);
 
   return responses
-    .filter(response => response.status === 'fulfilled')
-    .reduce(async (acum, response) => {
-      if (!response.value || !response.value.ok) {
-        return acum;
-      }
-
-      const manifestData = (await response.value?.json()) || {};
-
-      return { ...acum, [get(manifestData, 'root', '')]: manifestData };
-    }, {});
+    .filter(response => response.status === 'fulfilled' && response.value)
+    .reduce((acum, response) => ({ ...acum, [get(response.value, 'root', '')]: response.value }), {});
 };
 
 export const pluginParseDefinition = async (pluginsRaw = [], compact = false) => {
@@ -101,7 +102,7 @@ export const pluginParseDefinition = async (pluginsRaw = [], compact = false) =>
     return definitions;
   }
 
-  const pluginManifests = await fetchPluginsManifest(
+  const pluginManifests = await fetchPluginsManifests(
     pluginsRaw.reduce((acum, plugin) => [...acum, `${plugin.resource}/plugin-manifest.json`], [])
   );
 
