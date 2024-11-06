@@ -241,7 +241,7 @@ const OverlayNormal = props => {
           {collaboratorName}
         </div>
       )}
-      {mode === 'select' && canMove && (
+      {mode === 'select' && canMove && !hideActions && (
         <>
           <OverlayButtonResize
             width={container.rounded.width}
