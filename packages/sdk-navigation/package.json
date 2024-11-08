@@ -24,8 +24,8 @@
   "dependencies": {
     "@plitzi/sdk-shared": "*",
     "lodash": "^4.17.21",
-    "react": "19.0.0-rc-02c0e824-20241028",
-    "react-dom": "19.0.0-rc-02c0e824-20241028",
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106",
     "react-router-dom": "^6.28.0"
   }
 }

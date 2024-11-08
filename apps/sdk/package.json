@@ -22,7 +22,7 @@
   "dependencies": {
     "@apollo/client": "^3.11.9",
     "@auth0/auth0-react": "^2.2.4",
-    "@plitzi/plitzi-ui-components": "0.14.12",
+    "@plitzi/plitzi-ui-components": "0.14.13",
     "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-dev-tools": "*",
     "@plitzi/sdk-elements": "*",
@@ -41,8 +41,8 @@
     "immer": "^10.1.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "react": "19.0.0-rc-02c0e824-20241028",
-    "react-dom": "19.0.0-rc-02c0e824-20241028",
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^6.28.0",
     "twig": "^1.17.1"
