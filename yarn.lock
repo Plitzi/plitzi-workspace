@@ -1914,7 +1914,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.34.1":
+"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0":
   version: 6.34.1
   resolution: "@codemirror/view@npm:6.34.1"
   dependencies:
@@ -1922,6 +1922,17 @@ __metadata:
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
   checksum: 10c0/cbb562ee7d6a443214e7f7c9822e207b506ef41ce31f331374aa9065931da8b40d6284081e21076579c2e6ea7c2d7b4e7ddf4b12058a667841428d29c5ae9a3e
+  languageName: node
+  linkType: hard
+
+"@codemirror/view@npm:^6.34.2":
+  version: 6.34.2
+  resolution: "@codemirror/view@npm:6.34.2"
+  dependencies:
+    "@codemirror/state": "npm:^6.4.0"
+    style-mod: "npm:^4.1.0"
+    w3c-keyname: "npm:^2.2.4"
+  checksum: 10c0/5ab469476a640b6e9b98ef1342e2e58fb3f09112e408cc51128fecdc06328ae534b090cc573e9854eebc8793ea67e04104cae5acacb98f366bb21c20d58cecd2
   languageName: node
   linkType: hard
 
@@ -1967,7 +1978,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/request@npm:^3.0.4":
+"@cypress/request@npm:^3.0.6":
   version: 3.0.6
   resolution: "@cypress/request@npm:3.0.6"
   dependencies:
@@ -3038,9 +3049,9 @@ __metadata:
     clean-webpack-plugin: "npm:^4.0.0"
     compression-webpack-plugin: "npm:^11.1.0"
     css-loader: "npm:^7.1.2"
-    cypress: "npm:13.15.1"
+    cypress: "npm:13.15.2"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.251.1"
+    flow-bin: "npm:^0.252.0"
     graphql: "npm:^16.9.0"
     handlebars-webpack-plugin: "npm:^2.2.1"
     html-webpack-plugin: "npm:^5.6.3"
@@ -3060,7 +3071,7 @@ __metadata:
     react-dom: "npm:19.0.0-rc-02c0e824-20241028"
     react-hook-form: "npm:^7.53.1"
     react-refresh: "npm:^0.14.2"
-    react-router-dom: "npm:^6.27.0"
+    react-router-dom: "npm:^6.28.0"
     react-test-renderer: "npm:^18.3.1"
     sass: "npm:^1.80.6"
     sass-loader: "npm:^16.0.3"
@@ -3100,7 +3111,7 @@ __metadata:
     "@babel/polyfill": "npm:^7.12.1"
     "@babel/preset-env": "npm:^7.26.0"
     "@babel/preset-react": "npm:^7.25.9"
-    "@plitzi/plitzi-ui-components": "npm:0.14.11"
+    "@plitzi/plitzi-ui-components": "npm:0.14.12"
     "@plitzi/plitzi-webpack": "npm:^0.3.2"
     "@plitzi/sdk-auth": "npm:*"
     "@plitzi/sdk-dev-tools": "npm:*"
@@ -3129,7 +3140,7 @@ __metadata:
     compression-webpack-plugin: "npm:^11.1.0"
     css-loader: "npm:^7.1.2"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.251.1"
+    flow-bin: "npm:^0.252.0"
     graphql: "npm:^16.9.0"
     handlebars: "npm:^4.7.8"
     handlebars-webpack-plugin: "npm:^2.2.1"
@@ -3147,7 +3158,7 @@ __metadata:
     react-dom: "npm:19.0.0-rc-02c0e824-20241028"
     react-helmet-async: "npm:^2.0.5"
     react-refresh: "npm:^0.14.2"
-    react-router-dom: "npm:^6.27.0"
+    react-router-dom: "npm:^6.28.0"
     react-test-renderer: "npm:^18.3.1"
     sass: "npm:^1.80.6"
     sass-loader: "npm:^16.0.3"
@@ -3169,9 +3180,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.14.11":
-  version: 0.14.11
-  resolution: "@plitzi/plitzi-ui-components@npm:0.14.11::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.14.11%2Fda0765cb384faa7bae14b17aa7646a5ff4deac31"
+"@plitzi/plitzi-ui-components@npm:0.14.12":
+  version: 0.14.12
+  resolution: "@plitzi/plitzi-ui-components@npm:0.14.12::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.14.12%2Fa168d7e118b4d83d782d4a726cb8bfd984040150"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.18.2"
     "@codemirror/commands": "npm:^6.7.1"
@@ -3182,7 +3193,7 @@ __metadata:
     "@codemirror/search": "npm:^6.5.7"
     "@codemirror/state": "npm:^6.4.1"
     "@codemirror/theme-one-dark": "npm:^6.1.2"
-    "@codemirror/view": "npm:^6.34.1"
+    "@codemirror/view": "npm:^6.34.2"
     classnames: "npm:^2.5.1"
     immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"
@@ -3191,13 +3202,13 @@ __metadata:
     react-color: "npm:^2.19.3"
     react-dom: "npm:19.0.0-rc-02c0e824-20241028"
     react-markdown: "npm:^9.0.1"
-    react-router-dom: "npm:^6.27.0"
+    react-router-dom: "npm:^6.28.0"
     react-syntax-highlighter: "npm:^15.6.1"
     react-toastify: "npm:^10.0.6"
     rehype-raw: "npm:^7.0.0"
     remark-gfm: "npm:^4.0.0"
     tinycolor2: "npm:^1.6.0"
-  checksum: 10c0/bc4f79976bda367661097d51cbeee19d8ac60e7e6b775848041609c55bd805430b3c7c82e5ef0c0b5b0130d837d6405458273ce47c03f74bf101c65803f9c266
+  checksum: 10c0/458ff08fd0d2def777db73fa5dcede2b0ab8232a3ae7ecef4f1d2e1318ded7b22bc6d438af60d11e88975b515016bfd299d40a252f3c04f82f00895bc3aa9f30
   languageName: node
   linkType: hard
 
@@ -3213,7 +3224,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.27.9"
-    "@plitzi/plitzi-ui-components": "npm:0.14.11"
+    "@plitzi/plitzi-ui-components": "npm:0.14.12"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.14.0"
     jest: "npm:^29.7.0"
@@ -3330,7 +3341,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     react: "npm:19.0.0-rc-02c0e824-20241028"
     react-dom: "npm:19.0.0-rc-02c0e824-20241028"
-    react-router-dom: "npm:^6.27.0"
+    react-router-dom: "npm:^6.28.0"
   languageName: unknown
   linkType: soft
 
@@ -3388,7 +3399,7 @@ __metadata:
     eslint-plugin-cypress: "npm:^4.1.0"
     eslint-plugin-flowtype: "npm:8.0.3"
     eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-jest: "npm:^28.8.3"
+    eslint-plugin-jest: "npm:^28.9.0"
     eslint-plugin-jsdoc: "npm:^50.4.3"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
     eslint-plugin-prettier: "npm:^5.2.1"
@@ -3489,10 +3500,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/router@npm:1.20.0":
-  version: 1.20.0
-  resolution: "@remix-run/router@npm:1.20.0"
-  checksum: 10c0/2e017dea530717a6e93a16d478714c4c9165313a1c48e39172ec609bc20324ca6362e8ee2243602df6343644c9268d82a3f50f154d3bb8a17dddde6c37be6e83
+"@remix-run/router@npm:1.21.0":
+  version: 1.21.0
+  resolution: "@remix-run/router@npm:1.21.0"
+  checksum: 10c0/570792211c083a1c7146613b79cbb8e0d1e14f34e974052e060e7f9dcad38c800d80fe0a18bf42811bc278ab12c0e8fd62cfce649e905046c4e55bd5a09eafdc
   languageName: node
   linkType: hard
 
@@ -6562,6 +6573,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ci-info@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "ci-info@npm:4.0.0"
+  checksum: 10c0/ecc003e5b60580bd081d83dd61d398ddb8607537f916313e40af4667f9c92a1243bd8e8a591a5aa78e418afec245dbe8e90a0e26e39ca0825129a99b978dd3f9
+  languageName: node
+  linkType: hard
+
 "cjs-module-lexer@npm:^1.0.0, cjs-module-lexer@npm:^1.2.3":
   version: 1.4.1
   resolution: "cjs-module-lexer@npm:1.4.1"
@@ -7139,11 +7157,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:13.15.1":
-  version: 13.15.1
-  resolution: "cypress@npm:13.15.1"
+"cypress@npm:13.15.2":
+  version: 13.15.2
+  resolution: "cypress@npm:13.15.2"
   dependencies:
-    "@cypress/request": "npm:^3.0.4"
+    "@cypress/request": "npm:^3.0.6"
     "@cypress/xvfb": "npm:^1.2.4"
     "@types/sinonjs__fake-timers": "npm:8.1.1"
     "@types/sizzle": "npm:^2.3.2"
@@ -7154,6 +7172,7 @@ __metadata:
     cachedir: "npm:^2.3.0"
     chalk: "npm:^4.1.0"
     check-more-types: "npm:^2.24.0"
+    ci-info: "npm:^4.0.0"
     cli-cursor: "npm:^3.1.0"
     cli-table3: "npm:~0.6.1"
     commander: "npm:^6.2.1"
@@ -7168,7 +7187,6 @@ __metadata:
     figures: "npm:^3.2.0"
     fs-extra: "npm:^9.1.0"
     getos: "npm:^3.2.1"
-    is-ci: "npm:^3.0.1"
     is-installed-globally: "npm:~0.4.0"
     lazy-ass: "npm:^1.6.0"
     listr2: "npm:^3.8.3"
@@ -7188,7 +7206,7 @@ __metadata:
     yauzl: "npm:^2.10.0"
   bin:
     cypress: bin/cypress
-  checksum: 10c0/9deb474949cbd4c87e9b26a0b51c29f86f7c8ecdf865848f9e41bf7359f1887908856864b0fd722e4aa78e263fa4e0ff8bb5190495ff5f89fed89a6b3d38bb27
+  checksum: 10c0/07b1019a82941f3a5986d38dcd630a3ad08398dcd53c2e9bd316dad822b65fa7e4d9822be4e0cc8229747ac1b2bb4fc29747f0b509ff13b1853218a2ce2427aa
   languageName: node
   linkType: hard
 
@@ -8305,9 +8323,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jest@npm:^28.8.3":
-  version: 28.8.3
-  resolution: "eslint-plugin-jest@npm:28.8.3"
+"eslint-plugin-jest@npm:^28.9.0":
+  version: 28.9.0
+  resolution: "eslint-plugin-jest@npm:28.9.0"
   dependencies:
     "@typescript-eslint/utils": "npm:^6.0.0 || ^7.0.0 || ^8.0.0"
   peerDependencies:
@@ -8319,7 +8337,7 @@ __metadata:
       optional: true
     jest:
       optional: true
-  checksum: 10c0/beacf85c2fbb39ef9b9839472a8a837cdbab6549b29abaff8999034ac41021e1f06d1779db3ea9d0f966be52e5daeacfd05c239d686370d8b8cb9c68d60e59b6
+  checksum: 10c0/56b0d2fb18a32bf56b0eb8c7790c355513535a239451d9d00184829cbd0ba35b6c68eec64e850a6299453f9c37338b6797d3184594c0326c8fdcc029024065b8
   languageName: node
   linkType: hard
 
@@ -9103,12 +9121,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flow-bin@npm:^0.251.1":
-  version: 0.251.1
-  resolution: "flow-bin@npm:0.251.1"
+"flow-bin@npm:^0.252.0":
+  version: 0.252.0
+  resolution: "flow-bin@npm:0.252.0"
   bin:
     flow: cli.js
-  checksum: 10c0/eff0a30bc9330a1b101ae280590160f6817ec39c68dc7db133ff0dbd226072582aab0b86737da56d50b6b785a5efa629deca8af86bae9a39775988fabc69082f
+  checksum: 10c0/a2e912fd4cb1f8da97e7d7ba87d37c209b4503cbb7707fa27fb2870fa2681dad154d0fbf14482e922e15d9569761874fe255d7dab7d079b7f4597d12c0b8e250
   languageName: node
   linkType: hard
 
@@ -10469,17 +10487,6 @@ __metadata:
   version: 1.2.7
   resolution: "is-callable@npm:1.2.7"
   checksum: 10c0/ceebaeb9d92e8adee604076971dd6000d38d6afc40bb843ea8e45c5579b57671c3f3b50d7f04869618242c6cee08d1b67806a8cb8edaaaf7c0748b3720d6066f
-  languageName: node
-  linkType: hard
-
-"is-ci@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "is-ci@npm:3.0.1"
-  dependencies:
-    ci-info: "npm:^3.2.0"
-  bin:
-    is-ci: bin.js
-  checksum: 10c0/0e81caa62f4520d4088a5bef6d6337d773828a88610346c4b1119fb50c842587ed8bef1e5d9a656835a599e7209405b5761ddf2339668f2d0f4e889a92fe6051
   languageName: node
   linkType: hard
 
@@ -14508,27 +14515,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^6.27.0":
-  version: 6.27.0
-  resolution: "react-router-dom@npm:6.27.0"
+"react-router-dom@npm:^6.28.0":
+  version: 6.28.0
+  resolution: "react-router-dom@npm:6.28.0"
   dependencies:
-    "@remix-run/router": "npm:1.20.0"
-    react-router: "npm:6.27.0"
+    "@remix-run/router": "npm:1.21.0"
+    react-router: "npm:6.28.0"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
-  checksum: 10c0/7db48ffd0b387af0eed060ceaf42075d074e63fbd30f4cf60993526b3610883a9ff82615965001165ed69d2bf2f1bce05c594a21c8d0d845e7b9bf203201116e
+  checksum: 10c0/e2930cf83e8c843a932b008c7ce11059fd83390502a433f0e41f192e3cb80081a621d069eeda7af3cf4bf74d7f8029f0141cdce741bca3f0af82d4bbbc7f7f10
   languageName: node
   linkType: hard
 
-"react-router@npm:6.27.0":
-  version: 6.27.0
-  resolution: "react-router@npm:6.27.0"
+"react-router@npm:6.28.0":
+  version: 6.28.0
+  resolution: "react-router@npm:6.28.0"
   dependencies:
-    "@remix-run/router": "npm:1.20.0"
+    "@remix-run/router": "npm:1.21.0"
   peerDependencies:
     react: ">=16.8"
-  checksum: 10c0/440d6ee00890cec92a0c2183164149fbb96363efccf52bb132a964f44e51aec2f4b5a0520c67f6f17faddaa4097090fd76f7efe58263947532fceeb11dd4cdf3
+  checksum: 10c0/b435510de78fd882bf6ca9800a73cd90cee418bd1d19efd91b8dcaebde36929bbb589e25d9f7eec24ceb84255e8d538bc1fe54e6ddb5c43c32798e2b720fa76d
   languageName: node
   linkType: hard
 

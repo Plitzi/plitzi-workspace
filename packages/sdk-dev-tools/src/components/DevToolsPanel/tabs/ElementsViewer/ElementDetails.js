@@ -23,9 +23,9 @@ const ElementDetails = props => {
   const { className, definition, attributes, onSelectElement = noop } = props;
 
   return (
-    <ContainerTabs className={classNames('flex flex-col p-4 w-full overflow-hidden gap-4', className)}>
+    <ContainerTabs className={classNames('p-4 w-full overflow-hidden gap-4', className)}>
       <ContainerTabs.Tabs items={tabs} />
-      <ContainerTabs.TabContent className="flex flex-col">
+      <ContainerTabs.TabContent className="flex-col">
         <DetailsDefinition definition={definition} onSelectElement={onSelectElement} />
       </ContainerTabs.TabContent>
       <ContainerTabs.TabContent>
