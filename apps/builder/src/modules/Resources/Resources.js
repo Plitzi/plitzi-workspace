@@ -28,7 +28,7 @@ const Resources = () => {
 
   const handleResourceRemoved = resource => () => {
     if (resource.type === 'plugin') {
-      const plugin = Object.values(plugins).find(plugin => plugin.resource === resource.path && plugin.isMain);
+      const plugin = Object.values(plugins).find(plugin => plugin.type === resource?.metadata?.root && plugin.isMain);
       if (plugin) {
         remove(plugin.type);
       }
@@ -77,7 +77,9 @@ const Resources = () => {
       if (resource.type === 'plugin') {
         const pluginType = get(resource, 'metadata.root');
         const path = get(resource, 'path');
-        add(pluginType, path);
+        if (pluginType && path) {
+          add(pluginType, path);
+        }
       }
 
       fetch('');

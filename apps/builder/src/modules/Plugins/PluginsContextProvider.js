@@ -132,7 +132,7 @@ const PluginsContextProvider = props => {
         return false;
       }
 
-      const pluginDefinition = await pluginParseDefinition(plugin);
+      const pluginDefinition = await pluginParseDefinition([plugin]);
       pluginsAdd(pluginDefinition);
       registerDefinition(pluginDefinition);
       setPluginStyleAssets(state => getStyle({ ...state, ...pluginDefinition }));
