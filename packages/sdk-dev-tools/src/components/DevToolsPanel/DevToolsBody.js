@@ -9,6 +9,7 @@ import Logs from './tabs/Logs/index.js';
 import DataSourceViewer from './tabs/DataSourceViewer/index.js';
 import VariablesViewer from './tabs/VariablesViewer/index.js';
 import ElementsViewer from './tabs/ElementsViewer/index.js';
+import PluginsViewer from './tabs/PluginsViewer/PluginsViewer.js';
 
 /**
  * @param {{
@@ -33,6 +34,7 @@ const DevToolsBody = props => {
         {tabSelected === 'elements' && (
           <ElementsViewer elementSelected={elementSelected} onSelectElement={onSelectElement} />
         )}
+        {tabSelected === 'plugins' && <PluginsViewer />}
       </div>
     </div>
   );

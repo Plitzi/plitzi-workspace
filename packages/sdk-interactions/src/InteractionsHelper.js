@@ -163,7 +163,7 @@ const storeLog = (triggerNode, startTime, nodes = {}, status = '') => {
   pConsole.info(
     'interactions',
     <span>
-      Interaction <b>{triggerNode.title}</b> Completed
+      Interaction <b>{`${triggerNode.title} [${triggerNode.action}]`}</b> Completed
     </span>,
     {
       status,
