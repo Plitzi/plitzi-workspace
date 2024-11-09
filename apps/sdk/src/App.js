@@ -6,6 +6,7 @@ import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
 import { ApolloClient } from '@apollo/client/core/ApolloClient';
 import { ApolloProvider } from '@apollo/client/react/context';
 import { setContext } from '@apollo/client/link/context';
+// import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { HelmetProvider } from 'react-helmet-async';
@@ -14,6 +15,7 @@ import { StaticRouter } from 'react-router-dom/server';
 
 // Monorepo
 import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
+import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
 
 // Alias
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
@@ -71,7 +73,10 @@ const App = props => {
     debugMode: debugModeProp = false,
     ...sdkProps
   } = props;
+  const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [debugMode, setDebugMode] = useState(false);
+  const [client, setClient] = useState();
+  // const [, setPersistor] = useState();
 
   useEffect(() => {
     console.log(
@@ -96,22 +101,46 @@ const App = props => {
 
   const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);
 
-  const client = useMemo(() => {
-    const httpLink = createHttpLink({
-      uri: finalServer.graphqlServer
-    });
+  const initClient = useCallback(async () => {
+    const httpLink = createHttpLink({ uri: finalServer.graphqlServer });
+    const cache = new InMemoryCache({ addTypename: false });
+    // const newPersistor = new CachePersistor({
+    //   key: `cache-${webId}`,
+    //   cache,
+    //   storage: new LocalStorageWrapper(window.localStorage),
+    //   debug: true,
+    //   trigger: 'write'
+    // });
 
+    // // Invalidate Cache
+    // const currentTime = new Date().valueOf();
+    // const TTL = parseInt(localStorage.getItem(`cache-${webId}-TTL`) ?? 0);
+    // const TTLFuture = currentTime + 60 * 1000; // 1 minute
+    // if (!TTL) {
+    //   localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
+    // } else if (currentTime > TTL) {
+    //   localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
+    //   newPersistor.purge();
+    // }
+
+    // await newPersistor.restore();
+    // setPersistor(newPersistor);
+
+    // Init Auth Link
     const authLink = setContext((_, { headers }) => ({
       headers: { ...headers, 'sdk-version': VERSION, authorization: webKey ? `Bearer ${webKey}` : '' }
     }));
 
-    const client = new ApolloClient({
-      link: authLink.concat(httpLink),
-      cache: new InMemoryCache({ addTypename: false })
-    });
+    // Init Client
+    const client = new ApolloClient({ link: authLink.concat(httpLink), cache });
+    setClient(client);
+  }, [finalServer, VERSION, webKey, webId]);
 
-    return client;
-  }, [finalServer, VERSION, webKey]);
+  useEffect(() => {
+    initClient().catch(console.error);
+
+    return () => {};
+  }, [initClient]);
 
   const localCustomComponents = useMemo(() => {
     const components = {};
@@ -141,17 +170,20 @@ const App = props => {
     return (
       <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
         <HelmetProvider>
-          <ApolloProvider client={client}>
-            <ComponentProvider localCustomComponents={localCustomComponents}>
-              <AppMain
-                server={finalServer}
-                webKey={webKey}
-                renderMode={renderMode}
-                debugMode={debugMode}
-                {...sdkProps}
-              />
-            </ComponentProvider>
-          </ApolloProvider>
+          {client && (
+            <ApolloProvider client={client}>
+              <ComponentProvider localCustomComponents={localCustomComponents}>
+                <AppMain
+                  server={finalServer}
+                  webKey={webKey}
+                  renderMode={renderMode}
+                  debugMode={debugMode}
+                  webId={webId}
+                  {...sdkProps}
+                />
+              </ComponentProvider>
+            </ApolloProvider>
+          )}
         </HelmetProvider>
       </ContainerRoot>
     );
@@ -171,17 +203,20 @@ const App = props => {
     >
       <HelmetProvider>
         <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
-          <ApolloProvider client={client}>
-            <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-              <AppMain
-                server={finalServer}
-                webKey={webKey}
-                renderMode={renderMode}
-                debugMode={debugMode}
-                {...sdkProps}
-              />
-            </ComponentProvider>
-          </ApolloProvider>
+          {client && (
+            <ApolloProvider client={client}>
+              <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                <AppMain
+                  server={finalServer}
+                  webKey={webKey}
+                  renderMode={renderMode}
+                  debugMode={debugMode}
+                  webId={webId}
+                  {...sdkProps}
+                />
+              </ComponentProvider>
+            </ApolloProvider>
+          )}
         </ReactRouter>
       </HelmetProvider>
     </ContainerRoot>

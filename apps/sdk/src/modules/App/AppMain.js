@@ -5,7 +5,6 @@ import noop from 'lodash/noop';
 // Monorepo
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
-import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
@@ -25,6 +24,7 @@ import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSd
  * @param {{
  *   revision?: string;
  *   webKey?: string;
+ *   webId?: number;
  *   environment?: string;
  *   currentPageId?: string;
  *   server?: {
@@ -57,6 +57,7 @@ const AppMain = props => {
     // Space
     revision,
     webKey = '',
+    webId = 0,
     environment = 'development',
     currentPageId,
     // Server
@@ -74,7 +75,6 @@ const AppMain = props => {
     onInitStateManager = noop,
     ...sdkProps
   } = props;
-  const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
 
   const childrenMemo = useMemo(
     () => (

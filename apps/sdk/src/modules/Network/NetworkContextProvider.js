@@ -130,7 +130,7 @@ const NetworkContextProvider = props => {
       revisionAux = undefined;
     }
 
-    const response = await query('Init', { environment, revision: revisionAux, limit: 99 }, 'network-first', true);
+    const response = await query('Init', { environment, revision: revisionAux, limit: 99 }, 'cache-first', true);
     if (response instanceof Error) {
       setLoading(false);
       if (response.networkError && response.networkError.statusCode === 401) {

@@ -3140,6 +3140,7 @@ __metadata:
     "@storybook/react": "npm:^8.4.2"
     "@storybook/react-webpack5": "npm:^8.4.2"
     "@storybook/testing-library": "npm:^0.2.2"
+    apollo3-cache-persist: "npm:^0.15.0"
     autoprefixer: "npm:^10.4.20"
     babel-loader: "npm:^9.2.1"
     classnames: "npm:^2.5.1"
@@ -5315,6 +5316,15 @@ __metadata:
     "@apollo/client": ^3.8.0
     graphql: 14 - 16
   checksum: 10c0/30803d91df5ee32231afc8e15fa52be2a46b11c827255e8028b4f49149bcc8e4b4d4469e33d4331e63e12aa697e9a5e359a32ae3608335c51a76dbe62ad55bcb
+  languageName: node
+  linkType: hard
+
+"apollo3-cache-persist@npm:^0.15.0":
+  version: 0.15.0
+  resolution: "apollo3-cache-persist@npm:0.15.0"
+  peerDependencies:
+    "@apollo/client": ^3.7.17
+  checksum: 10c0/6470fcdf218ac0ee60cfeb08f9e65ff79a69746b9b40ec1ca60a171bce38cc12cfb5a32122e3e8420a789854d64adeea19ca450e7ffab122ec79b875f84350eb
   languageName: node
   linkType: hard
 
