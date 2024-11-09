@@ -300,34 +300,26 @@ const StyleInspectorProvider = props => {
 
       const existingClasses = get(element, `definition.styleSelectors.${styleSelector}`);
       const customClass = makeSelector(type, styleSelector);
-      builderHandler(
-        EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
-        produce(element, draft => {
-          if (existingClasses) {
-            set(draft, `definition.styleSelectors.${styleSelector}`, `${existingClasses} ${customClass}`);
-          } else {
-            set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
-          }
-        })
-      );
 
-      if (styleKey && typeof styleKey === 'string') {
+      if (styleKey) {
         builderHandler(
           EventBridgeTypes.STYLE_ADD_SELECTOR,
           displayMode,
           customClass,
           StyleSelectors.SELECTOR_CLASS,
-          styleKey,
+          typeof styleKey === 'string' ? styleKey : '',
           value
         );
-      } else if (styleKey && Array.isArray(styleKey)) {
+
         builderHandler(
-          EventBridgeTypes.STYLE_ADD_SELECTOR,
-          displayMode,
-          customClass,
-          StyleSelectors.SELECTOR_CLASS,
-          '',
-          value
+          EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
+          produce(element, draft => {
+            if (existingClasses) {
+              set(draft, `definition.styleSelectors.${styleSelector}`, `${existingClasses} ${customClass}`);
+            } else {
+              set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
+            }
+          })
         );
       }
 
