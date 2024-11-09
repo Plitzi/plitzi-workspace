@@ -122,16 +122,14 @@ const build = (env, args) => {
         {
           test: /\.(sa|sc|c)ss$/,
           use: [
-            {
-              loader: MiniCssExtractPlugin.loader,
-              options: {}
-            },
+            { loader: MiniCssExtractPlugin.loader, options: {} },
             { loader: 'css-loader', options: {} },
-            'postcss-loader',
             {
               loader: 'sass-loader',
               options: {
-                sourceMap: devMode
+                implementation: require('sass-embedded'),
+                sourceMap: devMode,
+                sassOptions: { quietDeps: true }
               }
             }
           ],
@@ -270,4 +268,8 @@ const buildSSR = (env, args) => {
   };
 };
 
-module.exports = [build, buildSSR];
+if (process.argv.includes('measure') || process.argv.includes('watch')) {
+  module.exports = [build];
+} else {
+  module.exports = [build, buildSSR];
+}

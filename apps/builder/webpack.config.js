@@ -125,21 +125,15 @@ const build = (env, args) => {
         {
           test: /\.(sa|sc)ss$/,
           use: [
-            {
-              loader: MiniCssExtractPlugin.loader,
-              options: {}
-            },
-            {
-              loader: 'css-loader',
-              options: {
-                url: false
-              }
-            },
-            'postcss-loader',
+            { loader: MiniCssExtractPlugin.loader, options: {} },
+            { loader: 'css-loader', options: {} },
+            // 'postcss-loader',
             {
               loader: 'sass-loader',
               options: {
-                sourceMap: devMode
+                implementation: require('sass-embedded'),
+                sourceMap: devMode,
+                sassOptions: { quietDeps: true }
               }
             }
           ],
@@ -148,43 +142,10 @@ const build = (env, args) => {
         {
           test: /\.(c)ss$/,
           use: [
-            {
-              loader: MiniCssExtractPlugin.loader,
-              options: {}
-            },
-            // 'style-loader',
-            {
-              loader: 'css-loader',
-              options: {
-                url: false
-              }
-            },
+            { loader: MiniCssExtractPlugin.loader, options: {} },
+            { loader: 'css-loader', options: { url: false } },
             'postcss-loader'
           ]
-        },
-        {
-          test: /\.module.(sa|sc|c)ss$/,
-          use: [
-            {
-              loader: MiniCssExtractPlugin.loader,
-              options: {}
-            },
-            {
-              loader: 'css-loader',
-              options: {
-                url: false,
-                modules: true
-              }
-            },
-            'postcss-loader',
-            {
-              loader: 'sass-loader',
-              options: {
-                sourceMap: devMode
-              }
-            }
-          ],
-          exclude: /(node_modules|bower_components)/
         }
       ]
     },
