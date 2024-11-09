@@ -54,7 +54,6 @@ const build = (env, args) => {
       globalObject: "(typeof self !== 'undefined' ? self : this)",
       publicPath: 'auto'
     },
-    watch,
     watchOptions: {
       ignored: ['**/*.test.js', '**/*.spec.js']
     },

@@ -55,7 +55,6 @@ const build = (env, args) => {
       globalObject: "(typeof self !== 'undefined' ? self : this)",
       publicPath: 'auto'
     },
-    watch,
     resolve: {
       symlinks: devMode,
       alias: {
