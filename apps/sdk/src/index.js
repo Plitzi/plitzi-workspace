@@ -98,6 +98,7 @@ if (typeof window !== 'undefined' && window.plitziCache) {
  * @param {{
  *   className: string;
  *   children: React.ReactNode;
+ *   cacheTimeout?: number;
  *   revision: number;
  *   webKey: string;
  *   environment: string;

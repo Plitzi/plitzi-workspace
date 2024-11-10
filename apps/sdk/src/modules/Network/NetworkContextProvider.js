@@ -18,6 +18,7 @@ import NetworkInternalContext from './contexts/NetworkInternalContext';
 /**
  * @param {{
  *   children: React.ReactNode;
+ *   cacheTimeout?: number;
  *   server: string;
  *   revision: number;
  *   webKey: string;
@@ -33,6 +34,7 @@ import NetworkInternalContext from './contexts/NetworkInternalContext';
 const NetworkContextProvider = props => {
   const {
     children,
+    cacheTimeout = 0,
     server,
     revision,
     webKey = '',
@@ -130,7 +132,11 @@ const NetworkContextProvider = props => {
       revisionAux = undefined;
     }
 
-    const response = await query('Init', { environment, revision: revisionAux, limit: 99 }, 'cache-first', true);
+    const response = await query(
+      'Init',
+      { environment, revision: revisionAux, limit: 99 },
+      cacheTimeout === 0 ? 'network-first' : 'cache-first'
+    );
     if (response instanceof Error) {
       setLoading(false);
       if (response.networkError && response.networkError.statusCode === 401) {

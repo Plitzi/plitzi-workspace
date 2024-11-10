@@ -54,6 +54,7 @@ import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSd
  */
 const AppMain = props => {
   const {
+    cacheTimeout = 0,
     // Space
     revision,
     webKey = '',
@@ -79,6 +80,7 @@ const AppMain = props => {
   const childrenMemo = useMemo(
     () => (
       <NetworkContextProvider
+        cacheTimeout={cacheTimeout}
         webKey={webKey}
         webId={webId}
         server={server}

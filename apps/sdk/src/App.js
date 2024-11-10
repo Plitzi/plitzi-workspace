@@ -6,7 +6,7 @@ import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
 import { ApolloClient } from '@apollo/client/core/ApolloClient';
 import { ApolloProvider } from '@apollo/client/react/context';
 import { setContext } from '@apollo/client/link/context';
-// import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
+import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { HelmetProvider } from 'react-helmet-async';
@@ -30,6 +30,7 @@ import { getEnvironmentServer } from './config';
  * @param {{
  *   className: string;
  *   children: React.ReactNode;
+ *   cacheTimeout?: number;
  *   revision: number;
  *   webKey: string;
  *   environment: string;
@@ -63,6 +64,7 @@ const App = props => {
   const {
     className = 'min-h-screen',
     children,
+    cacheTimeout = 0,
     // Space
     webKey = '',
     // Server
@@ -76,7 +78,7 @@ const App = props => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [debugMode, setDebugMode] = useState(false);
   const [client, setClient] = useState();
-  // const [, setPersistor] = useState();
+  const [, setPersistor] = useState();
 
   useEffect(() => {
     console.log(
@@ -104,27 +106,29 @@ const App = props => {
   const initClient = useCallback(async () => {
     const httpLink = createHttpLink({ uri: finalServer.graphqlServer });
     const cache = new InMemoryCache({ addTypename: false });
-    // const newPersistor = new CachePersistor({
-    //   key: `cache-${webId}`,
-    //   cache,
-    //   storage: new LocalStorageWrapper(window.localStorage),
-    //   debug: true,
-    //   trigger: 'write'
-    // });
+    if (cacheTimeout) {
+      const newPersistor = new CachePersistor({
+        key: `cache-${webId}`,
+        cache,
+        storage: new LocalStorageWrapper(window.localStorage),
+        debug: true,
+        trigger: 'write'
+      });
 
-    // // Invalidate Cache
-    // const currentTime = new Date().valueOf();
-    // const TTL = parseInt(localStorage.getItem(`cache-${webId}-TTL`) ?? 0);
-    // const TTLFuture = currentTime + 60 * 1000; // 1 minute
-    // if (!TTL) {
-    //   localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
-    // } else if (currentTime > TTL) {
-    //   localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
-    //   newPersistor.purge();
-    // }
+      // Invalidate Cache
+      const currentTime = new Date().valueOf();
+      const TTL = parseInt(localStorage.getItem(`cache-${webId}-TTL`) ?? 0);
+      const TTLFuture = currentTime + cacheTimeout * 1000; // 1 minute
+      if (!TTL) {
+        localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
+      } else if (currentTime > TTL) {
+        localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
+        newPersistor.purge();
+      }
 
-    // await newPersistor.restore();
-    // setPersistor(newPersistor);
+      await newPersistor.restore();
+      setPersistor(newPersistor);
+    }
 
     // Init Auth Link
     const authLink = setContext((_, { headers }) => ({
@@ -134,7 +138,7 @@ const App = props => {
     // Init Client
     const client = new ApolloClient({ link: authLink.concat(httpLink), cache });
     setClient(client);
-  }, [finalServer, VERSION, webKey, webId]);
+  }, [finalServer, VERSION, webKey, webId, cacheTimeout]);
 
   useEffect(() => {
     initClient().catch(console.error);
@@ -174,6 +178,7 @@ const App = props => {
             <ApolloProvider client={client}>
               <ComponentProvider localCustomComponents={localCustomComponents}>
                 <AppMain
+                  cacheTimeout={cacheTimeout}
                   server={finalServer}
                   webKey={webKey}
                   renderMode={renderMode}
@@ -207,6 +212,7 @@ const App = props => {
             <ApolloProvider client={client}>
               <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
                 <AppMain
+                  cacheTimeout={cacheTimeout}
                   server={finalServer}
                   webKey={webKey}
                   renderMode={renderMode}
