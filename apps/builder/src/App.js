@@ -32,6 +32,8 @@ import { loadState, saveState } from './services/session/sessionStorage';
 // Builder Style
 import './assets/index.scss';
 
+const ReactRouterFF = { v7_startTransition: true, v7_relativeSplatPath: true };
+
 /**
  * @param {{
  *   server: {
@@ -192,7 +194,7 @@ const App = props => {
   return (
     <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
       <CacheProvider cacheId="builder-state">
-        <BrowserRouter basename={get(server, 'basePath', '/')}>
+        <BrowserRouter basename={get(server, 'basePath', '/')} future={ReactRouterFF}>
           <ApolloProvider client={client}>
             <ComponentProvider localCustomComponents={localComponents} localComponents={sdkComponents}>
               <ToastProvider>
