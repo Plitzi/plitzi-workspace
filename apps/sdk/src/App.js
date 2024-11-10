@@ -26,7 +26,7 @@ import sdkComponents from '@modules/Element';
 // Relatives
 import { getEnvironmentServer } from './config';
 
-const ReactRouterFF = { v7_startTransition: false, v7_relativeSplatPath: false };
+const ReactRouterFF = { v7_startTransition: true, v7_relativeSplatPath: true };
 
 /**
  * @param {{
