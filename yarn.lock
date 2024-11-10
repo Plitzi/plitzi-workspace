@@ -3036,7 +3036,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.26.0"
     "@babel/preset-react": "npm:^7.25.9"
     "@plitzi/plitzi-sdk": "npm:*"
-    "@plitzi/plitzi-webpack": "npm:^0.3.3"
+    "@plitzi/plitzi-webpack": "npm:^0.3.4"
     "@plitzi/sdk-auth": "npm:*"
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-interactions": "npm:*"
@@ -3119,7 +3119,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.26.0"
     "@babel/preset-react": "npm:^7.25.9"
     "@plitzi/plitzi-ui-components": "npm:0.14.13"
-    "@plitzi/plitzi-webpack": "npm:^0.3.3"
+    "@plitzi/plitzi-webpack": "npm:^0.3.4"
     "@plitzi/sdk-auth": "npm:*"
     "@plitzi/sdk-dev-tools": "npm:*"
     "@plitzi/sdk-elements": "npm:*"
@@ -3221,10 +3221,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@plitzi/plitzi-webpack@npm:^0.3.3":
-  version: 0.3.3
-  resolution: "@plitzi/plitzi-webpack@npm:0.3.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-webpack%2F0.3.3%2F86c7c555e7080ca27df4aa897220b04c54b74d69"
-  checksum: 10c0/cded9ca8250594d935a7a44eaa400ed267590ab69ba803363095e01a889fe517c0c0b09cfd74b223e6ebd9119c8adb2dfefb08530ac4df0479d14e2c2f81a5f1
+"@plitzi/plitzi-webpack@npm:^0.3.4":
+  version: 0.3.4
+  resolution: "@plitzi/plitzi-webpack@npm:0.3.4::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-webpack%2F0.3.4%2F9a8ab14fc10f33f2ee4a59c8c1d6e1ea244eae95"
+  checksum: 10c0/0304a8278446a5fe45a25230956d3ff3983b713e75eae8f54bc54ce57148287484acaf93037f6fe42492940de38eb9010969e72a7233e7a9c1fb4d6dab9d95e2
   languageName: node
   linkType: hard
 
