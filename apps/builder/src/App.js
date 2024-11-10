@@ -32,7 +32,7 @@ import { loadState, saveState } from './services/session/sessionStorage';
 // Builder Style
 import './assets/index.scss';
 
-const ReactRouterFF = { v7_startTransition: true, v7_relativeSplatPath: true };
+const ReactRouterFF = { v7_startTransition: false, v7_relativeSplatPath: false };
 
 /**
  * @param {{

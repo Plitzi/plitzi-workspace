@@ -1,5 +1,13 @@
 # @plitzi/sdk-event-bridge
 
+## 0.23.22
+
+### Patch Changes
+
+- v0.23.22
+- Updated dependencies
+  - @plitzi/sdk-shared@0.23.22
+
 ## 0.23.21
 
 ### Patch Changes
