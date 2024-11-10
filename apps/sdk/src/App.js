@@ -1,6 +1,7 @@
 // Packages
 import React, { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { StaticRouter } from 'react-router-dom/server';
 import { createHttpLink } from '@apollo/client/link/http/createHttpLink';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
 import { ApolloClient } from '@apollo/client/core/ApolloClient';
@@ -11,7 +12,6 @@ import get from 'lodash/get';
 import classNames from 'classnames';
 import { HelmetProvider } from 'react-helmet-async';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
-import { StaticRouter } from 'react-router-dom/server';
 
 // Monorepo
 import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
@@ -25,6 +25,8 @@ import sdkComponents from '@modules/Element';
 
 // Relatives
 import { getEnvironmentServer } from './config';
+
+const ReactRouterFF = { v7_startTransition: true, v7_relativeSplatPath: true };
 
 /**
  * @param {{
@@ -207,7 +209,7 @@ const App = props => {
       ssrMode={renderMode === RENDER_MODE_SSR}
     >
       <HelmetProvider>
-        <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
+        <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams} future={ReactRouterFF}>
           {client && (
             <ApolloProvider client={client}>
               <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
