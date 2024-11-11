@@ -1,7 +1,7 @@
 // Monorepo
-const sharedConfig = require('@plitzi/sdk-shared/jest.config');
+import sharedConfig from '@plitzi/sdk-shared/jest.config';
 
-module.exports = {
+export default {
   ...sharedConfig,
   moduleNameMapper: {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
