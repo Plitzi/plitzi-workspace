@@ -7,6 +7,7 @@ import noop from 'lodash/noop.js';
  * @param {{
  *   className?: string;
  *   id?: string;
+ *   label?: string;
  *   name?: string;
  *   isSelected?: boolean;
  *   onSelect?: (string) => void;
@@ -14,7 +15,7 @@ import noop from 'lodash/noop.js';
  * @returns {React.ReactElement}
  */
 const ListItem = props => {
-  const { name, id, isSelected, className, onSelect = noop } = props;
+  const { name, label, id, isSelected, className, onSelect = noop } = props;
 
   const handleClick = useCallback(() => onSelect(id), [onSelect, id]);
 
@@ -28,7 +29,7 @@ const ListItem = props => {
       onClick={handleClick}
     >
       <div className="truncate" title={name}>
-        {name}
+        {label ?? name}
       </div>
     </div>
   );

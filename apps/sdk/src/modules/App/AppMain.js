@@ -89,6 +89,7 @@ const AppMain = props => {
         offlineDataType={offlineDataType}
         environment={environment}
         revision={revision}
+        debugMode={debugMode}
       >
         <SchemaContextProvider>
           <CollectionContextProvider>

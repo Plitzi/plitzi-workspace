@@ -28,6 +28,7 @@ import NetworkInternalContext from './contexts/NetworkInternalContext';
  *   offlineData: object;
  *   offlineDataType: string;
  *   client: any;
+ *   debugMode?: boolean;
  * }} props
  * @returns {React.ReactElement}
  */
@@ -43,6 +44,7 @@ const NetworkContextProvider = props => {
     offlineMode = false,
     offlineData,
     offlineDataType = 'json',
+    debugMode = false,
     // hocs
     client
   } = props;
@@ -166,7 +168,7 @@ const NetworkContextProvider = props => {
 
       let plugins = {};
       if (Space.plugins && Space.plugins.length > 0) {
-        plugins = await pluginParseDefinition(Space.plugins, true);
+        plugins = await pluginParseDefinition(Space.plugins, !debugMode);
       }
 
       setInternalData({
@@ -203,7 +205,7 @@ const NetworkContextProvider = props => {
 
     let plugins = {};
     if (data.plugins && data.plugins.length > 0) {
-      plugins = await pluginParseDefinition(data.plugins, true);
+      plugins = await pluginParseDefinition(data.plugins, !debugMode);
     }
 
     setInternalData({ ...data, plugins });
@@ -223,7 +225,7 @@ const NetworkContextProvider = props => {
     } else if (offlineMode && offlineData) {
       initOfflineData();
     }
-  }, [offlineMode && offlineData, offlineMode && offlineDataType, webKey, environment]);
+  }, [offlineMode && offlineData, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
   const networkValue = useMemo(
     () => ({ query, mutate, webKey, webId, server, environment }),

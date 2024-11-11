@@ -21,11 +21,22 @@ const PluginsViewer = props => {
   const { plugins } = use(PluginsContext);
   const pluginsParsed = useMemo(
     () =>
-      Object.keys(plugins).map(pluginKey => ({
-        ...(plugins[pluginKey] ?? {}),
-        id: pluginKey,
-        label: capitalize(pluginKey)
-      })),
+      Object.keys(plugins).map(pluginKey => {
+        const plugin = plugins[pluginKey] ?? {};
+        const label = capitalize(pluginKey);
+
+        return {
+          ...plugin,
+          id: pluginKey,
+          name: label,
+          label: (
+            <div className="flex flex-col">
+              {label}
+              <span className="text-xs text-gray-500">{plugin.manifest.version}</span>
+            </div>
+          )
+        };
+      }),
     [plugins]
   );
   const [plugin, setPlugin] = useState();
@@ -38,9 +49,10 @@ const PluginsViewer = props => {
       {plugin && (
         <PluginDetails
           className="grow"
-          // definition={element?.definition}
-          // attributes={element?.attributes}
-          // onSelectElement={onSelectElement}
+          label={plugin.name}
+          version={plugin.manifest.version}
+          author={plugin.manifest.author}
+          settings={plugin.settings}
         />
       )}
     </div>
