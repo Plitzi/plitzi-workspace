@@ -58,7 +58,7 @@ export default [
       plugin
     },
     settings,
-    ignores: ['**/node_modules/**'],
+    ignores: ['**/node_modules/**', '**/dist/**'],
     // files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     languageOptions: {
       ecmaVersion: 'latest',
