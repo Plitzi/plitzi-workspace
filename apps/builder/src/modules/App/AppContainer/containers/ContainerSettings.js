@@ -3,6 +3,7 @@ import React, { useCallback, use, useMemo, useState } from 'react';
 import Card from '@plitzi/plitzi-ui-components/Card';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
+// import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
 
 // Monorepo
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
@@ -18,6 +19,7 @@ const ContainerSettings = () => {
 
   const [settings, setSettings] = useState(settingsProp ?? {});
   const {
+    // head = '', // @todo: pending to implement
     userProvider,
     keepState,
     stateStorage,
@@ -63,6 +65,9 @@ const ContainerSettings = () => {
         eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'stateStorage');
         setSettings(state => ({ ...state, [name]: e.target.checked }));
         eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.checked, name);
+      } else if (name === 'head') {
+        // setSettings(state => ({ ...state, [name]: e }));
+        // eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e, name);
       } else {
         setSettings(state => ({ ...state, [name]: e.target.value }));
         eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.value, name);
@@ -74,7 +79,7 @@ const ContainerSettings = () => {
   const keepStateProps = useMemo(() => ({ checked: keepState }), [keepState]);
 
   return (
-    <Card className="mx-[5%] grow basis-0 m-4 relative flex overflow-y-auto">
+    <Card className="mx-[5%] grow basis-0 m-4 relative flex flex-col overflow-y-auto">
       <div className="p-6 border-b border-gray-300 gap-4 flex flex-col grow basis-0">
         <Heading type="h4">User Settings</Heading>
         <FormControl
@@ -171,6 +176,17 @@ const ContainerSettings = () => {
           </FormControl>
         )}
       </div>
+      {/* <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
+        <Heading type="h4">Space Settings</Heading>
+        <CodeMirror
+          value={head}
+          theme="dark"
+          className="min-h-[300px]"
+          lineWrapping
+          onChange={handleChange('head')}
+          mode="html"
+        />
+      </div> */}
     </Card>
   );
 };
