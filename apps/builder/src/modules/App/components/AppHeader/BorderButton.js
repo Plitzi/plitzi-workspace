@@ -27,7 +27,7 @@ const BorderButton = () => {
   }, [displayBorderComponents, setDisplayBorderComponents]);
 
   return (
-    <Icon size="lg" onClick={handleClick} title="Grid" cursor="pointer">
+    <Icon className="h-5 w-5" onClick={handleClick} title="Grid" cursor="pointer">
       {displayBorderComponents === DISPLAY_BORDER_NONE && <i className="fas fa-border-none" />}
       {displayBorderComponents === DISPLAY_BORDER_WHITE && <BorderWhite />}
       {displayBorderComponents === DISPLAY_BORDER_BLACK && <BorderBlack />}

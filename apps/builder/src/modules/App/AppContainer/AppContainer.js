@@ -44,7 +44,7 @@ const AppContainer = props => {
   return (
     <div className="flex flex-col grow overflow-auto">
       <AppHeader setTabSelected={setTabSelected} />
-      <div className="flex relative basis-0 grow bg-grayviolet-200 max-w-[100vw]">
+      <div className="flex relative basis-0 grow bg-grayviolet-200 max-w-[100vw] overflow-hidden">
         {!previewMode && <AppSidebar onSelect={setTabSelected} selected={tabSelected} />}
         {!previewMode && tabSelected && !['marketplace', 'integrations', 'settings'].includes(tabSelected) && (
           <div className="flex h-full bg-white">
