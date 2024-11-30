@@ -21,7 +21,9 @@ const PageHeader = props => {
   const { pageDefinitions } = use(SchemaMainContext);
   const { currentPageId } = use(NavigationContext);
 
-  const handleClick = useCallback(() => setTabSelected?.('pages'), [setTabSelected]);
+  const handleClick = useCallback(() => {
+    setTabSelected?.(state => (state === 'pages' ? '' : 'pages'));
+  }, [setTabSelected]);
 
   const pageLabel = get(pageDefinitions, `${currentPageId}.attributes.name`, '');
   const isHome = get(pageDefinitions, `${currentPageId}.attributes.default`, false);
@@ -29,7 +31,7 @@ const PageHeader = props => {
   return (
     <div
       className={classNames(
-        'flex items-center select-none min-w-0 basis-0 grow text-xs gap-1 max-w-[150px]',
+        'flex items-center select-none min-w-0 basis-0 grow text-xs gap-1 max-w-[150px] cursor-pointer',
         className
       )}
       title={pageLabel}

@@ -1,7 +1,7 @@
 // Packages
 import React, { use, useCallback } from 'react';
+import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import classNames from 'classnames';
-import Button from '@plitzi/plitzi-ui-components/Button';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -32,39 +32,24 @@ const HistoryButtons = props => {
   }, [undoableRedo, eventBridge]);
 
   return (
-    <div className={classNames('flex bg-gray-50 border border-gray-200 rounded', className)}>
-      <Button
-        intent="custom"
-        className={classNames('hover:bg-gray-100 h-8 w-8 rounded', {
-          'text-gray-400 cursor-not-allowed': !canUndo
-        })}
-        onClick={handleClickUndo}
+    <IconGroup className={classNames('h-[26px]', className)} size="lg" gap={3}>
+      <IconGroup.Icon
+        icon="fa-solid fa-rotate-left"
         title="Undo"
-      >
-        <i className="fa-solid fa-rotate-left" />
-      </Button>
-      <Button
-        intent="custom"
-        className={classNames('hover:bg-gray-200 h-8 w-8 rounded', {
-          'text-gray-400 cursor-not-allowed': !canRedo
-        })}
-        onClick={handleClickRedo}
+        cursor="pointer"
+        disabled={!canUndo}
+        onClick={handleClickUndo}
+      />
+      <IconGroup.Icon
+        icon="fa-solid fa-rotate-right"
         title="Redo"
-      >
-        <i className="fa-solid fa-rotate-right" />
-      </Button>
-      <Button
-        intent="custom"
-        className={classNames('hover:bg-gray-200 h-8 w-8 rounded', {
-          'text-gray-400 cursor-not-allowed': true
-        })}
-        // onClick={handleClickRedo}
-        disabled
-        title="History"
-      >
-        <i className="fa-solid fa-clock-rotate-left" />
-      </Button>
-    </div>
+        cursor="pointer"
+        disabled={!canRedo}
+        onClick={handleClickRedo}
+      />
+      <IconGroup.Separator />
+      <IconGroup.Icon icon="fa-solid fa-clock-rotate-left" title="History" cursor="pointer" disabled />
+    </IconGroup>
   );
 };
 

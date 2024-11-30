@@ -18,7 +18,7 @@ const DisplayModeButtons = () => {
   const handleClickModeMobile = useCallback(() => setDisplayMode('mobile'), [setDisplayMode]);
 
   return (
-    <IconGroup size="lg" gap={4}>
+    <IconGroup size="lg" gap={3}>
       <IconGroup.Icon className="relative" cursor="pointer" active={mobilePreview} onClick={handleMobilePreview}>
         <DesktopWithMobile />
       </IconGroup.Icon>
