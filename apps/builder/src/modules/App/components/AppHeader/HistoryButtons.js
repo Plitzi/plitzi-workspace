@@ -10,7 +10,14 @@ import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-brid
 // Alias
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-const HistoryButtons = () => {
+/**
+ * @param {{
+ *   className?: string;
+ * }} props
+ * @returns {React.ReactElement}
+ */
+const HistoryButtons = props => {
+  const { className } = props;
   const { eventBridge } = use(EventBridgeContext);
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
 
@@ -25,7 +32,7 @@ const HistoryButtons = () => {
   }, [undoableRedo, eventBridge]);
 
   return (
-    <div className="flex bg-gray-50 border border-gray-200 rounded">
+    <div className={classNames('flex bg-gray-50 border border-gray-200 rounded', className)}>
       <Button
         intent="custom"
         className={classNames('hover:bg-gray-100 h-8 w-8 rounded', {

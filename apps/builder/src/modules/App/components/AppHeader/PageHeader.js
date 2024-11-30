@@ -1,43 +1,43 @@
 // Packages
 import React, { useCallback, use } from 'react';
 import get from 'lodash/get';
-import noop from 'lodash/noop';
+import classNames from 'classnames';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
 
 /**
  * @param {{
+ *   className?: string;
  *   setTabSelected?: (tab: string) => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const PageHeader = props => {
-  const { setTabSelected = noop } = props;
+  const { className, setTabSelected } = props;
   const { pageDefinitions } = use(SchemaMainContext);
   const { currentPageId } = use(NavigationContext);
-  const {
-    server: { domain }
-  } = use(NetworkContext);
 
-  const handleClick = useCallback(() => setTabSelected('pages'), [setTabSelected]);
+  const handleClick = useCallback(() => setTabSelected?.('pages'), [setTabSelected]);
 
-  const pageLabel = get(pageDefinitions, `${currentPageId}.attributes.name`);
+  const pageLabel = get(pageDefinitions, `${currentPageId}.attributes.name`, '');
+  const isHome = get(pageDefinitions, `${currentPageId}.attributes.default`, false);
 
   return (
     <div
-      className="h-full flex flex-col justify-center cursor-pointer select-none min-w-0 basis-0 grow text-xs"
+      className={classNames(
+        'flex items-center select-none min-w-0 basis-0 grow text-xs gap-1 max-w-[150px]',
+        className
+      )}
+      title={pageLabel}
       onClick={handleClick}
     >
-      <div className="inline max-w-[150px] truncate" title={pageLabel}>
-        <span className="">Page: </span>
-        <span className="font-bold">{pageLabel}</span>
-      </div>
-      <div className="truncate max-w-[150px]">{domain || 'https://subdomain.plitzi.app'}</div>
+      {!isHome && <i className="fa-solid fa-file" />}
+      {isHome && <i className="fas fa-home" />}
+      <span className="font-bold truncate">{pageLabel}</span>
     </div>
   );
 };

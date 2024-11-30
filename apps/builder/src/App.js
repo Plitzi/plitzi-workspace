@@ -16,6 +16,7 @@ import classNames from 'classnames';
 import ToastProvider from '@plitzi/plitzi-ui-components/Toast/ToastProvider';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
 import CacheProvider from '@plitzi/plitzi-ui-components/Cache/CacheProvider';
+import ThemeProvider from '@plitzi/plitzi-ui/ThemeProvider/index.cjs';
 
 // Monorepo
 import { ComponentProvider, sdkComponents } from '@plitzi/plitzi-sdk';
@@ -31,8 +32,6 @@ import { loadState, saveState } from './services/session/sessionStorage';
 
 // Builder Style
 import './assets/index.scss';
-
-const ReactRouterFF = { v7_startTransition: true, v7_relativeSplatPath: true };
 
 /**
  * @param {{
@@ -192,24 +191,26 @@ const App = props => {
   }, [client]);
 
   return (
-    <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
-      <CacheProvider cacheId="builder-state">
-        <BrowserRouter basename={get(server, 'basePath', '/')} future={ReactRouterFF}>
-          <ApolloProvider client={client}>
-            <ComponentProvider localCustomComponents={localComponents} localComponents={sdkComponents}>
-              <ToastProvider>
-                <AppMain
-                  {...omit(props, ['children', 'server', 'builderEnvironment'])}
-                  server={server}
-                  instanceId={instanceId}
-                  webId={webId}
-                />
-              </ToastProvider>
-            </ComponentProvider>
-          </ApolloProvider>
-        </BrowserRouter>
-      </CacheProvider>
-    </ContainerRoot>
+    <ThemeProvider>
+      <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
+        <CacheProvider cacheId="builder-state">
+          <BrowserRouter basename={get(server, 'basePath', '/')}>
+            <ApolloProvider client={client}>
+              <ComponentProvider localCustomComponents={localComponents} localComponents={sdkComponents}>
+                <ToastProvider>
+                  <AppMain
+                    {...omit(props, ['children', 'server', 'builderEnvironment'])}
+                    server={server}
+                    instanceId={instanceId}
+                    webId={webId}
+                  />
+                </ToastProvider>
+              </ComponentProvider>
+            </ApolloProvider>
+          </BrowserRouter>
+        </CacheProvider>
+      </ContainerRoot>
+    </ThemeProvider>
   );
 };
 

@@ -19,7 +19,7 @@ delete GLOBALS_BROWSER_FIX['AudioWorkletGlobalScope '];
 
 const settings = {
   'import/resolver': {
-    node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+    node: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.es', '.mjs', '.cjs'] },
     alias: {
       map: [
         [
@@ -29,9 +29,13 @@ const settings = {
         [
           '@plitzi/plitzi-ui-components',
           path.resolve('../../node_modules/@plitzi/plitzi-ui-components/dist/components')
-        ]
+        ],
+        ['@plitzi/plitzi-ui/icons', path.resolve('../../node_modules/@plitzi/plitzi-ui/dist/src/icons')],
+        ['@plitzi/plitzi-ui/hooks', path.resolve('../../node_modules/@plitzi/plitzi-ui/dist/src/hooks')],
+        ['@plitzi/plitzi-ui/tailwind', path.resolve('../../node_modules/@plitzi/plitzi-ui/dist/src/tailwind')],
+        ['@plitzi/plitzi-ui', path.resolve('../../node_modules/@plitzi/plitzi-ui/dist/src/components')]
       ],
-      extensions: ['.ts', '.js', '.jsx', '.json', '.stores.js']
+      extensions: ['.ts', '.js', '.jsx', '.json', '.stores.js', '.cjs', '.es', '.mjs']
     }
   },
   react: {

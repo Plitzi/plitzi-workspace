@@ -2,10 +2,13 @@
 import colors from 'tailwindcss/colors';
 import defaultTheme from 'tailwindcss/defaultTheme';
 import plugin from 'tailwindcss/plugin';
+import colorsUI from '@plitzi/plitzi-ui/tailwind/colors.cjs';
 
 const config = {
   theme: {
-    extend: {},
+    extend: {
+      colors: colorsUI
+    },
     groups: ['1', '2', '3', '4', '5'],
     fontFamily: {
       ...defaultTheme.fontFamily,
@@ -15,18 +18,6 @@ const config = {
       ...defaultTheme.colors({ colors }),
       transparent: 'transparent',
       current: 'currentColor',
-      primary: {
-        50: '',
-        100: '',
-        200: '',
-        300: '',
-        400: '',
-        500: '',
-        600: '',
-        700: '',
-        800: '',
-        900: ''
-      },
       blue: {
         50: '#f7fafb',
         100: '#e3f1fc',
@@ -150,7 +141,6 @@ const config = {
     }
   },
   plugins: [
-    // eslint-disable-next-line global-require
     require('@tailwindcss/forms'),
     plugin(function ({ addVariant, e }) {
       addVariant('not-first', ({ modifySelectors, separator }) => {

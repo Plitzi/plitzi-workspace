@@ -59,6 +59,7 @@ const build = (env, args) => {
     },
     resolve: {
       symlinks: false,
+      extensions: ['.js', '.mjs', '.ts', '.tsx', '.cjs', '.es'],
       alias: {
         '@node_modules': path.resolve('node_modules'),
         '@pmodules': path.resolve('./src/modules'),
@@ -155,6 +156,7 @@ const build = (env, args) => {
         shared: {
           react: { singleton: true, requiredVersion: false, eager: true },
           'react-dom': { singleton: true, requiredVersion: false, eager: true },
+          'react-router': { singleton: true, requiredVersion: false, eager: true },
           'react-router-dom': { singleton: true, requiredVersion: false, eager: true }
         }
       }),

@@ -1,12 +1,12 @@
 // Packages
 import React, { use, useState, useCallback, useMemo } from 'react';
-import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -124,29 +124,26 @@ const AppHeaher = props => {
   }, []);
 
   return (
-    <div className="h-12 flex items-center bg-white justify-between border-b border-gray-300">
-      <div className="flex h-full items-center gap-3">
+    <div className="h-14 px-4 py-3 flex items-center bg-white justify-between border-b border-gray-200">
+      <div className="flex h-full items-center">
         <div
-          className="flex items-center justify-center w-14 h-12 bg-gray-700 border-b border-gray-500 mr-2"
+          className="flex items-center justify-between w-20 px-3 h-8 bg-grayviolet-200 rounded-lg mr-6"
           id="plitzi-logo"
         >
           <a href={origin}>
-            <img
-              src="https://cdn.plitzi.com/resources/img/favicon.svg"
-              className="w-8 h-8 invert brightness-0"
-              alt="Plitzi"
-            />
+            <img src="https://cdn.plitzi.com/resources/img/favicon.svg" className="w-6 h-6" alt="Plitzi" />
           </a>
+          <i className="fa-solid fa-chevron-down" />
         </div>
-        <PageHeader setTabSelected={setTabSelected} />
-        <HistoryButtons />
+        <PageHeader className="mr-9" setTabSelected={setTabSelected} />
+        <HistoryButtons className="mr-4" />
         <BorderButton />
+      </div>
+      <div className="flex h-full items-center gap-4">
+        <DisplayModeButtons />
         <ZoomButtons />
       </div>
-      <div className="flex h-full items-center">
-        <DisplayModeButtons />
-      </div>
-      <div className="flex h-full items-center">
+      <div className="flex h-full items-center gap-6">
         <div className="flex items-center gap-1">
           {subscriptionsCollaborators &&
             subscriptionsCollaborators.map((collaborator, i) => {
@@ -158,50 +155,37 @@ const AppHeaher = props => {
               return <BuilderCollaboratorHeaderUser key={i} color={color} firstName={firstName} surName={surName} />;
             })}
         </div>
-        <div className="h-full px-3 flex items-center text-blue-400 select-none">
-          {!queueProcessing && (
-            <>
-              <i className="fas fa-check-circle mr-1" />
-              <div className="font-bold">Saved</div>
-            </>
-          )}
-          {queueProcessing && <i className="fas fa-sync fa-spin mr-1 fa-2x" />}
+        <IconGroup size="xl" gap={4}>
+          <IconGroup.Icon
+            icon={queueProcessing ? 'fas fa-sync fa-spin' : 'fas fa-check'}
+            title="Mode: Desktop"
+            intent="custom"
+            className="text-green-500"
+          />
+          <IconGroup.Icon
+            icon={previewMode ? 'fa-solid fa-pause' : 'fa-solid fa-play'}
+            cursor="pointer"
+            onClick={handleClickPreviewMode}
+          />
+        </IconGroup>
+        <div className='flex gap-4'>
+          <Button
+            id="header-publish"
+            size="sm"
+            title="Publish: Click Publish to go live with your latest changes."
+            onClick={handleClickPublish}
+            intent="secondary"
+            content="Snapshot"
+          />
+          <Button
+            id="header-deploy"
+            size="sm"
+            title="Deploy: Click Deploy to go with the environment selected."
+            onClick={handleClickDeploy}
+            disabled={loadingDeployment}
+            content={!loadingDeployment ? 'Publish' : <i className="fa-solid fa-sync fa-spin fa-2x" />}
+          />
         </div>
-        <Button
-          id="header-preview"
-          intent="custom"
-          size="custom"
-          title="Preview: See what your site looks like on desktop and mobile before go live."
-          className={classNames('h-full text-sm px-2 border-l border-gray-300', {
-            'hover:text-blue-400 hover:bg-blue-100': !previewMode,
-            'text-blue-400 bg-blue-100 hover:text-gray-700 hover:bg-white': previewMode
-          })}
-          onClick={handleClickPreviewMode}
-        >
-          {previewMode && <i className="fa-solid fa-eye mr-2" />}
-          {!previewMode && <i className="fa-solid fa-eye-slash mr-2" />}
-          Preview
-        </Button>
-        <Button
-          id="header-publish"
-          size="custom"
-          title="Publish: Click Publish to go live with your latest changes."
-          className="h-full text-sm px-2 min-w-[100px]"
-          onClick={handleClickPublish}
-        >
-          Snapshot
-        </Button>
-        <Button
-          id="header-deploy"
-          size="custom"
-          title="Deploy: Click Deploy to go with the environment selected."
-          className="h-full text-sm px-2 border-l border-blue-500 min-w-[100px]"
-          onClick={handleClickDeploy}
-          disabled={loadingDeployment}
-        >
-          {!loadingDeployment && 'Publish'}
-          {loadingDeployment && <i className="fa-solid fa-sync fa-spin fa-2x" />}
-        </Button>
       </div>
     </div>
   );

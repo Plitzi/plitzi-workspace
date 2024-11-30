@@ -1,7 +1,7 @@
 // Packages
 import React, { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { StaticRouter } from 'react-router-dom/server';
+import { StaticRouter } from 'react-router';
 import { createHttpLink } from '@apollo/client/link/http/createHttpLink';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
 import { ApolloClient } from '@apollo/client/core/ApolloClient';
@@ -25,8 +25,6 @@ import sdkComponents from '@modules/Element';
 
 // Relatives
 import { getEnvironmentServer } from './config';
-
-const ReactRouterFF = { v7_startTransition: true, v7_relativeSplatPath: true };
 
 /**
  * @param {{
@@ -209,7 +207,7 @@ const App = props => {
       ssrMode={renderMode === RENDER_MODE_SSR}
     >
       <HelmetProvider>
-        <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams} future={ReactRouterFF}>
+        <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
           {client && (
             <ApolloProvider client={client}>
               <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>

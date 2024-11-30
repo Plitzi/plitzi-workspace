@@ -27,15 +27,11 @@ const ZoomButtons = () => {
     }
 
     return 425;
-  });
+  }, [displayMode]);
 
   return (
-    <div className="flex items-center gap-1">
-      <div className="text-xs flex items-center justify-center gap-2">
-        <div className="inline">
-          <span className="font-bold">{Math.floor(width / zoom)}</span> PX
-        </div>
-      </div>
+    <div className="flex items-center gap-4">
+      <div className="text-xs inline font-bold">{Math.floor(width / zoom)} PX</div>
       <Select
         size="sm"
         value={Number(zoom).toFixed(1)}
