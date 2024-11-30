@@ -4,6 +4,13 @@ import noop from 'lodash/noop';
 import classNames from 'classnames';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Variable from '@plitzi/plitzi-ui/icons/Variable';
+import StateManager from '@plitzi/plitzi-ui/icons/StateManager';
+import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
+import { POPUP_PLACEMENT_LEFT } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+
+// Alias
+import BuilderTree from '@pmodules/Builder/components/BuilderTree';
+import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
 
 // Relatives
 import { featureFlag } from '../../../config';
@@ -18,6 +25,7 @@ import { featureFlag } from '../../../config';
  */
 const AppSidebar = props => {
   const { className = '', selected = '', onSelect = noop } = props;
+  const { existsPopup, addPopup } = usePopup();
 
   const handleClick = useCallback(
     item => () => {
@@ -29,6 +37,47 @@ const AppSidebar = props => {
     },
     [onSelect, selected]
   );
+
+  const handleClickLayerManayer = useCallback(() => {
+    if (!existsPopup('layerManager')) {
+      addPopup('layerManager', <BuilderTree />, {
+        icon: <i className="fas fa-stream text-base" />,
+        title: 'Layer Manager',
+        allowLeftSide: true,
+        allowRightSide: true,
+        placement: POPUP_PLACEMENT_LEFT,
+        resizeHandles: ['se']
+      });
+    }
+  }, [addPopup, existsPopup]);
+
+  const handleClickAdvanceStyle = useCallback(() => {
+    if (!existsPopup('advance-style')) {
+      addPopup('advance-style', <StyleAdvanceEditor />, {
+        icon: <i className="fas fa-code text-base" />,
+        title: 'Advance Style',
+        resizeHandles: ['se'],
+        height: 400,
+        width: 600,
+        allowLeftSide: true,
+        allowRightSide: true,
+        placement: POPUP_PLACEMENT_LEFT
+      });
+    }
+  }, [addPopup, existsPopup]);
+
+  const handleClickStateManager = useCallback(() => {
+    if (!existsPopup('stateManager')) {
+      addPopup('stateManager', <StateManager />, {
+        icon: <i className="fa-solid fa-sliders text-base" />,
+        title: 'State Manager',
+        allowLeftSide: true,
+        allowRightSide: true,
+        placement: POPUP_PLACEMENT_LEFT,
+        resizeHandles: ['se']
+      });
+    }
+  }, [addPopup, existsPopup]);
 
   return (
     <div
@@ -140,6 +189,35 @@ const AppSidebar = props => {
         onClick={handleClick('marketplace')}
         title="Marketplace"
       /> */}
+      <div className="w-6 bg-gray-200 h-px shrink-0" />
+      <Icon
+        className="h-10 w-10 p-2 rounded-lg shrink-0"
+        size="lg"
+        cursor="pointer"
+        intent="tertiary"
+        icon="fa-solid fa-layer-group"
+        onClick={handleClickLayerManayer}
+        title="Layers"
+      />
+      <Icon
+        className="h-10 w-10 p-2 rounded-lg shrink-0"
+        size="lg"
+        cursor="pointer"
+        intent="tertiary"
+        icon="fa-solid fa-file-code"
+        onClick={handleClickAdvanceStyle}
+        title="ADvance Style"
+      />
+      <Icon
+        className="h-10 w-10 p-2 rounded-lg shrink-0"
+        size="lg"
+        cursor="pointer"
+        intent="tertiary"
+        onClick={handleClickStateManager}
+        title="State Manager"
+      >
+        <StateManager />
+      </Icon>
       <div className="w-6 bg-gray-200 h-px shrink-0" />
       <Icon
         className="h-10 w-10 p-2 rounded-lg shrink-0"
