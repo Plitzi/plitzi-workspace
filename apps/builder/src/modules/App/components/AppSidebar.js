@@ -33,7 +33,7 @@ const AppSidebar = props => {
   return (
     <div
       className={classNames(
-        'flex flex-col gap-6 py-4 border-r border-gray-200 border-solid bg-white w-14 items-center overflow-y-auto shrink-0',
+        'flex flex-col gap-5 py-4 border-r border-gray-200 border-solid bg-white w-14 items-center overflow-y-auto shrink-0',
         className
       )}
     >
