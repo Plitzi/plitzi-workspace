@@ -28,7 +28,7 @@ const BuilderPopup = props => {
   const [state, setCache, getCacheByKey] = useCache();
   const popupsActive = useMemo(() => getCacheByKey('PopupSidebar.popupsActive', { left: [], right: [] }), [state]);
 
-  const handleClickSelect = useCallback((popupId, popups) => setCache(popups, 'PopupSidebar.popupsActive'), []);
+  const handleChange = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive'), []);
 
   const handleLoadPopups = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive'), []);
 
@@ -68,8 +68,8 @@ const BuilderPopup = props => {
               maxWidth={540}
               canHide
               multiSelect
-              popupsActive={popupsActive['right']}
-              onSelect={handleClickSelect}
+              value={popupsActive['right']}
+              onChange={handleChange}
               onLoadPopups={handleLoadPopups}
             />
           )}

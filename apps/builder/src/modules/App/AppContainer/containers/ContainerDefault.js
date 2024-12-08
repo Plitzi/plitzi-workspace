@@ -25,15 +25,9 @@ const ContainerDefault = props => {
     [state, getCacheByKey]
   );
 
-  const handleClickSelectLeft = useCallback(
-    (popupId, popups) => setCache(popups, 'PopupSidebar.popupsActive.left'),
-    [setCache]
-  );
+  const handleChangeLeft = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive.left'), [setCache]);
 
-  const handleClickSelectRight = useCallback(
-    (popupId, popups) => setCache(popups, 'PopupSidebar.popupsActive.right'),
-    [setCache]
-  );
+  const handleChangeRight = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive.right'), [setCache]);
 
   const handleLoadPopupsLeft = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive.left'), [setCache]);
 
@@ -61,8 +55,8 @@ const ContainerDefault = props => {
           maxWidth={540}
           canHide
           multiSelect
-          popupsActive={popupsActive.left}
-          onSelect={handleClickSelectLeft}
+          value={popupsActive.left}
+          onChange={handleChangeLeft}
           onLoadPopups={handleLoadPopupsLeft}
         />
       )}
@@ -77,8 +71,8 @@ const ContainerDefault = props => {
           maxWidth={540}
           canHide
           multiSelect
-          popupsActive={popupsActive.right}
-          onSelect={handleClickSelectRight}
+          value={popupsActive.right}
+          onChange={handleChangeRight}
           onLoadPopups={handleLoadPopupsRight}
         />
       )}
