@@ -1,6 +1,6 @@
 // Packages
 import React, { useState, useMemo } from 'react';
-import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
 
 // Monorepo
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';

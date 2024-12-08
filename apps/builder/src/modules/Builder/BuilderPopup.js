@@ -1,8 +1,8 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
-import PopupSidebar from '@plitzi/plitzi-ui-components/Popup/PopupSidebar';
+import PopupSidebar from '@plitzi/plitzi-ui/Popup/PopupSidebar';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
-import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

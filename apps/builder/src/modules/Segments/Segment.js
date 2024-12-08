@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
-import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
+import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Alias

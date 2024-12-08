@@ -4,8 +4,7 @@ import get from 'lodash/get';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
-import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
 // Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
@@ -63,7 +62,7 @@ const BuilderAreaHeader = props => {
         width: 350,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
       });
     }
   }, [baseElementId, setSelected]);

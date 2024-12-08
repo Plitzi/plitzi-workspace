@@ -2,8 +2,7 @@
 import React, { useCallback, use } from 'react';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
-import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
 // Alias
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
@@ -38,7 +37,7 @@ const BuilderAreaFooter = props => {
         width: 350,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
       });
     }
   }, [addPopup, existsPopup, mode]);
@@ -50,7 +49,7 @@ const BuilderAreaFooter = props => {
         title: 'Layer Manager',
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }
@@ -66,7 +65,7 @@ const BuilderAreaFooter = props => {
         width: 600,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
       });
     }
   }, [addPopup, existsPopup, mode]);
@@ -78,7 +77,7 @@ const BuilderAreaFooter = props => {
         title: 'State Manager',
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }
@@ -93,7 +92,7 @@ const BuilderAreaFooter = props => {
         width: 800,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }
@@ -107,7 +106,7 @@ const BuilderAreaFooter = props => {
         width: 400,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT,
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }

@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import camelCase from 'lodash/camelCase';
-import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
+import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo

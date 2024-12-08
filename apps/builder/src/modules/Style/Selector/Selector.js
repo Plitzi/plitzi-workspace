@@ -7,8 +7,7 @@ import pick from 'lodash/pick';
 import omit from 'lodash/omit';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
-import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
-import { POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
 // Monorepo
 import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
@@ -242,7 +241,7 @@ const Selector = props => {
           resizeHandles: ['se'],
           allowLeftSide: true,
           allowRightSide: true,
-          placement: POPUP_PLACEMENT_FLOATING,
+          placement: 'floating',
           width: 600
         });
       }

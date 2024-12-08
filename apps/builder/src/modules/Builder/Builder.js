@@ -1,7 +1,6 @@
 // Packages
 import React, { use, useEffect, useMemo } from 'react';
-import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
-import { POPUP_PLACEMENT_RIGHT } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
@@ -49,7 +48,7 @@ const Builder = props => {
         width: 350,
         allowLeftSide: true,
         allowRightSide: true,
-        placement: POPUP_PLACEMENT_RIGHT
+        placement: 'right'
       });
     }
   }, []);

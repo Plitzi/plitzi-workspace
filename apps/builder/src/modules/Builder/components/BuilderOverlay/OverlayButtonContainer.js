@@ -2,11 +2,10 @@
 import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import usePopup from '@plitzi/plitzi-ui-components/Popup/usePopup';
+import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
-import { POPUP_PLACEMENT_RIGHT, POPUP_PLACEMENT_FLOATING } from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
@@ -98,7 +97,7 @@ const OverlayButtonContainer = props => {
         width: 350,
         allowLeftSide: mode === BUILDER_MODE_NORMAL,
         allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? POPUP_PLACEMENT_FLOATING : POPUP_PLACEMENT_RIGHT
+        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
       });
     }
   }, [addPopup, existsPopup, mode]);

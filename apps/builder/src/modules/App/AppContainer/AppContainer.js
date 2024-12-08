@@ -2,7 +2,7 @@
 import React, { use, useState, useMemo, useCallback } from 'react';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
-import PopupProvider from '@plitzi/plitzi-ui-components/Popup/PopupProvider';
+import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
