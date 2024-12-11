@@ -94,7 +94,7 @@ const BuilderElementTools = props => {
 
   if (!element) {
     return (
-      <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded text-center">
+      <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded text-center self-start">
         Click on a component to select it
       </div>
     );

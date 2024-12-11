@@ -16,6 +16,7 @@
   font-family: 'Rubik', sans-serif;
 
   &.resizing,
+  &.accordion-resizing,
   &.moving {
     user-select: none;
 

@@ -105,7 +105,7 @@ const Segment = props => {
           height: 500,
           allowRightSide: false,
           allowExternal: false,
-          placement: 'POPUP_PLACEMENT_FLOATING'
+          placement: 'floating'
         });
       }
     },

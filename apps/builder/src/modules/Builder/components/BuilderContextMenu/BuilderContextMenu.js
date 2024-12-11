@@ -159,7 +159,7 @@ const BuilderContextMenu = props => {
         title: 'Tools',
         resizeHandles: ['se'],
         width: 350,
-        placement: 'POPUP_PLACEMENT_FLOATING'
+        placement: 'floating'
       });
     }
 

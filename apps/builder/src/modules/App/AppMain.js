@@ -97,7 +97,7 @@ const AppMain = props => {
         <StateManagerContextProvider webId={webId} state={state}>
           <DataSourceContextProvider environment={environment}>
             <InteractionsBuilderContextProvider previewMode={previewMode}>
-              <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
+              <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
                 <AppContainer externalStyle={externalStyle} />
               </PopupProvider>
             </InteractionsBuilderContextProvider>

@@ -56,8 +56,8 @@ const BuilderAreaFooter = props => {
   }, [setDragTree, addPopup, existsPopup, mode]);
 
   const handleClickAdvanceStyle = useCallback(() => {
-    if (!existsPopup('advance-style')) {
-      addPopup('advance-style', <StyleAdvanceEditor />, {
+    if (!existsPopup('advanceStyle')) {
+      addPopup('advanceStyle', <StyleAdvanceEditor />, {
         icon: <i className="fas fa-code text-base" />,
         title: 'Advance Style',
         resizeHandles: ['se'],

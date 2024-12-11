@@ -1,6 +1,6 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
-import PopupSidebar from '@plitzi/plitzi-ui/Popup/PopupSidebar';
+import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
 
@@ -26,11 +26,9 @@ const BuilderPopup = props => {
   const { segments } = use(SegmentsContext);
   const segment = segments[segmentIdentifier];
   const [state, setCache, getCacheByKey] = useCache();
-  const popupsActive = useMemo(() => getCacheByKey('PopupSidebar.popupsActive', { left: [], right: [] }), [state]);
+  const popupsActive = useMemo(() => getCacheByKey('PopupSidePanel.popupsActive', { left: [], right: [] }), [state]);
 
-  const handleChange = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive'), []);
-
-  const handleLoadPopups = useCallback(popups => setCache(popups, 'PopupSidebar.popupsActive'), []);
+  const handleChange = useCallback(popups => setCache(popups, 'PopupSidePanel.popupsActive'), []);
 
   const builderHandler = useCallback(
     (event, data) => eventBridge.emit(EventBridgeModuleTypes.SEGMENT, event, segment.id, ...data),
@@ -57,20 +55,19 @@ const BuilderPopup = props => {
         mode={BUILDER_MODE_SEGMENT}
         onHandler={builderHandler}
       >
-        <PopupProvider renderRightPopup={false} renderFloatingPopup={!previewMode}>
+        <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
           <Builder previewMode={previewMode} />
 
           {!previewMode && (
-            <PopupSidebar
+            <PopupSidePanel
               className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
               placementTabs="right"
               minWidth={320}
               maxWidth={540}
               canHide
-              multiSelect
+              multi
               value={popupsActive['right']}
               onChange={handleChange}
-              onLoadPopups={handleLoadPopups}
             />
           )}
         </PopupProvider>
