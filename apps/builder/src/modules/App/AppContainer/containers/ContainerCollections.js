@@ -38,7 +38,7 @@ const ContainerCollections = props => {
   );
 
   return (
-    <Card className="mx-[5%] grow m-4 relative flex basis-0">
+    <Card className="grow relative flex basis-0" rounded={false}>
       {!updateMode && collectionId && <Collection id={collectionId} onUpdateMode={setUpdateMode} />}
       {updateMode && (
         <CollectionForm

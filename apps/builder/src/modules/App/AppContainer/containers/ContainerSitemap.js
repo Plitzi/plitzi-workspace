@@ -12,7 +12,7 @@ const ContainerSitemap = () => {
   // const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
 
   return (
-    <Card className="mx-[5%] grow m-4 relative flex flex-col overflow-hidden">
+    <Card className="grow relative flex flex-col overflow-hidden" rounded={false}>
       <WorkflowDiagram direction="vertical" />
     </Card>
   );

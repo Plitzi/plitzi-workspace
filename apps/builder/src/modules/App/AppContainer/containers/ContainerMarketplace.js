@@ -10,7 +10,7 @@ const ContainerMarketplace = () => {
   //   const { onSelect = noop } = props;
 
   return (
-    <Card className="mx-[5%] grow basis-0 m-4 relative flex flex-col">
+    <Card className="grow basis-0 m-4 relative flex flex-col" rounded={false}>
       <Marketplace />
     </Card>
   );

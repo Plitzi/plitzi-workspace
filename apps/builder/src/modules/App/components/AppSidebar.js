@@ -5,7 +5,7 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
 
 const defaultCache = [];
-const popupSidebarExcluded = ['layerManager', 'advanceStyle', 'stateManager'];
+const popupSidebarExcluded = ['collections', 'settings'];
 
 /**
  * @param {{

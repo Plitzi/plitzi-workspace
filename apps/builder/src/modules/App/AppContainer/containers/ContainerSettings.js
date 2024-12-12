@@ -79,7 +79,7 @@ const ContainerSettings = () => {
   const keepStateProps = useMemo(() => ({ checked: keepState }), [keepState]);
 
   return (
-    <Card className="mx-[5%] grow basis-0 m-4 relative flex flex-col overflow-y-auto">
+    <Card className="grow basis-0 relative flex flex-col overflow-y-auto" rounded={false}>
       <div className="p-6 border-b border-gray-300 gap-4 flex flex-col grow basis-0">
         <Heading type="h4">User Settings</Heading>
         <FormControl
