@@ -125,18 +125,15 @@ const AppHeaher = props => {
 
   return (
     <div className="h-14 px-4 py-3 flex items-center bg-white justify-between border-b border-gray-200">
-      <div className="flex h-full items-center">
-        <div
-          className="flex items-center justify-between w-20 px-3 h-8 bg-grayviolet-200 rounded-lg mr-6"
-          id="plitzi-logo"
-        >
+      <div className="flex h-full gap-4 items-center">
+        <div className="flex items-center justify-between w-20 px-3 h-8 bg-grayviolet-200 rounded-lg" id="plitzi-logo">
           <a href={origin}>
             <img src="https://cdn.plitzi.com/resources/img/favicon.svg" className="w-6 h-6" alt="Plitzi" />
           </a>
           <i className="fa-solid fa-chevron-down" />
         </div>
-        <PageHeader className="mr-9" setTabSelected={setTabSelected} />
-        <HistoryButtons className="mr-4" />
+        <PageHeader setTabSelected={setTabSelected} />
+        <HistoryButtons />
         <BorderButton />
       </div>
       <div className="flex h-full items-center gap-4">
@@ -155,7 +152,7 @@ const AppHeaher = props => {
               return <BuilderCollaboratorHeaderUser key={i} color={color} firstName={firstName} surName={surName} />;
             })}
         </div>
-        <IconGroup size="xl" gap={4}>
+        <IconGroup gap={4}>
           <IconGroup.Icon
             icon={queueProcessing ? 'fas fa-sync fa-spin' : 'fas fa-check'}
             title="Mode: Desktop"
@@ -168,7 +165,7 @@ const AppHeaher = props => {
             onClick={handleClickPreviewMode}
           />
         </IconGroup>
-        <div className='flex gap-4'>
+        <div className="flex gap-4">
           <Button
             id="header-publish"
             size="sm"

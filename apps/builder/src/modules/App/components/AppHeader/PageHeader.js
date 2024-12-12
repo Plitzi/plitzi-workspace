@@ -31,7 +31,7 @@ const PageHeader = props => {
   return (
     <div
       className={classNames(
-        'flex items-center select-none min-w-0 basis-0 grow text-xs gap-1 max-w-[150px] cursor-pointer',
+        'flex items-center select-none min-w-0 basis-0 grow text-xs gap-1 w-[126px] cursor-pointer',
         className
       )}
       title={pageLabel}

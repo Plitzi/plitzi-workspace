@@ -14,7 +14,10 @@
 
 .plitzi-builder {
   font-family: 'Rubik', sans-serif;
+}
 
+body,
+.plitzi-builder {
   &.resizing,
   &.accordion-resizing,
   &.moving {

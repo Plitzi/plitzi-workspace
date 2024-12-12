@@ -32,7 +32,7 @@ const HistoryButtons = props => {
   }, [undoableRedo, eventBridge]);
 
   return (
-    <IconGroup className={classNames('h-[26px]', className)} size="lg" gap={3}>
+    <IconGroup className={classNames('h-8', className)} size="md" gap={4}>
       <IconGroup.Icon
         icon="fa-solid fa-rotate-left"
         title="Undo"
