@@ -96,8 +96,8 @@ const Segment = props => {
     async e => {
       e.stopPropagation();
       const segment = await segmentGet(identifier);
-      if (!existsPopup('segment-builder') && segment) {
-        addPopup('segment-builder', <BuilderPopup segmentIdentifier={identifier} />, {
+      if (!existsPopup('segmentBuilder') && segment) {
+        addPopup('segmentBuilder', <BuilderPopup segmentIdentifier={identifier} />, {
           icon: <i className="fa-solid fa-puzzle-piece text-base" />,
           title: `Segment - ${name}`,
           resizeHandles: ['se'],

@@ -124,28 +124,24 @@ const BuilderAreaFooter = props => {
         >
           <i className="fas fa-tools" />
         </Button>
-        {mode !== BUILDER_MODE_NORMAL && (
-          <>
-            <Button
-              intent="custom"
-              size="custom"
-              onClick={handleClickLayerManayer}
-              className="hover:bg-gray-200 h-9 w-9 mr-2 text-gray-500"
-              title="Layer Manager"
-            >
-              <i className="fas fa-stream" />
-            </Button>
-            <Button
-              intent="custom"
-              size="custom"
-              onClick={handleClickAdvanceStyle}
-              className="hover:bg-gray-200 h-9 w-9 text-gray-500"
-              title="Advance Style"
-            >
-              <i className="fas fa-code" />
-            </Button>
-          </>
-        )}
+        <Button
+          intent="custom"
+          size="custom"
+          onClick={handleClickLayerManayer}
+          className="hover:bg-gray-200 h-9 w-9 mr-2 text-gray-500"
+          title="Layer Manager"
+        >
+          <i className="fas fa-stream" />
+        </Button>
+        <Button
+          intent="custom"
+          size="custom"
+          onClick={handleClickAdvanceStyle}
+          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
+          title="Advance Style"
+        >
+          <i className="fas fa-code" />
+        </Button>
         <Button
           intent="custom"
           size="custom"

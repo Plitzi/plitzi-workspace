@@ -182,7 +182,7 @@ const AppSidebar = props => {
             />
           </>
         )}
-        <Sidebar.Separator />
+        <Sidebar.Separator className="grow bg-transparent border-t border-gray-300 border-solid" />
         <Sidebar.Icon id="settings" icon="fas fa-cog" title="Settings" />
       </Sidebar>
       <PopupSidePanel
