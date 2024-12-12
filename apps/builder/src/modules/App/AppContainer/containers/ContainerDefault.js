@@ -50,6 +50,7 @@ const ContainerDefault = props => {
       {!previewMode && (
         <PopupSidePanel
           className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
+          size="md"
           placementTabs="right"
           placement="right"
           minWidth={335}
