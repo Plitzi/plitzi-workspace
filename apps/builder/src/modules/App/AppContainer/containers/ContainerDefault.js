@@ -55,7 +55,7 @@ const ContainerDefault = props => {
           minWidth={335}
           maxWidth={540}
           canHide
-          multiSelect
+          multi
           value={popupsActiveRight}
           onChange={handleChangeRight}
         />

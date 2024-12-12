@@ -193,7 +193,7 @@ const AppSidebar = props => {
         minWidth={335}
         maxWidth={540}
         canHide
-        multiSelect
+        multi
         value={popupsActiveLeft}
         onChange={handleChangeLeft}
       />
