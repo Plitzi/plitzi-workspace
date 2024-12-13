@@ -38,7 +38,7 @@ Custom.content = {
     license: 'MIT',
     website: 'https://plitzi.com',
     backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    icon: 'fa-solid fa-paintbrush'
   },
   defaultStyle: {
     name: 'Custom Element',

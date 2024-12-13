@@ -35,7 +35,7 @@ TabContainer.content = {
     license: 'MIT',
     website: 'https://plitzi.com',
     backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    icon: 'fa-solid fa-table-columns'
   },
   defaultStyle: {
     name: 'Tab Container',

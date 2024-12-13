@@ -38,7 +38,7 @@ BlockJsx.content = {
     license: 'MIT',
     website: 'https://plitzi.com',
     backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    icon: 'fa-solid fa-code'
   },
   defaultStyle: {
     name: 'Block JSX',

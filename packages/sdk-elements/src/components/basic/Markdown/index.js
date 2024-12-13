@@ -32,7 +32,7 @@ Markdown.content = {
     license: 'MIT',
     website: 'https://plitzi.com',
     backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    icon: 'fa-brands fa-markdown'
   },
   defaultStyle: {
     name: 'Markdown',

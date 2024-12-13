@@ -1,7 +1,7 @@
 // Packages
 import React, { useCallback, use } from 'react';
 import get from 'lodash/get';
-import Heading from '@plitzi/plitzi-ui-components/Heading';
+import Text from '@plitzi/plitzi-ui/Text';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Relatives
@@ -25,6 +25,7 @@ const ElementCategory = props => {
       if (!element) {
         return {};
       }
+
       const type = get(element, 'definition.type');
       if (!type) {
         return {};
@@ -41,9 +42,12 @@ const ElementCategory = props => {
   }
 
   return (
-    <div className="flex flex-col mt-4">
-      <Heading type="h5">{category}</Heading>
-      <div className="flex flex-wrap gap-4">
+    <div className="flex flex-col gap-2">
+      <div className="border-t border-gray-200" />
+      <Text size="sm" weight={500}>
+        {category}
+      </Text>
+      <div className="flex flex-wrap gap-2">
         {elementsToRender.map((element, key) => (
           <Element key={key} element={element} />
         ))}

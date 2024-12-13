@@ -1,7 +1,7 @@
 // Packages
-import React, { use, useMemo, useState } from 'react';
+import React, { use, useCallback, useMemo, useState } from 'react';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
-import FormControl from '@plitzi/plitzi-ui-components/FormControl';
+import Input from '@plitzi/plitzi-ui/Input';
 
 // Relatives
 import ElementCategory from './ElementCategory';
@@ -11,7 +11,7 @@ const Elements = () => {
   const { components, componentDefinitions } = use(ComponentContext);
   const [filter, setFilter] = useState('');
 
-  const handleChange = e => setFilter(e.target.value);
+  const handleChange = useCallback(value => setFilter(value), []);
 
   const elementDefinitions = useMemo(() => {
     const result = [];
@@ -43,8 +43,10 @@ const Elements = () => {
   }, [elementDefinitions, filter]);
 
   return (
-    <div className="flex flex-col p-3 overflow-y-auto grow basis-0">
-      <FormControl value={filter} type="text" placeholder="Search Elements" onChange={handleChange} />
+    <div className="flex flex-col gap-4 overflow-y-auto grow basis-0">
+      <Input placeholder="Search Elements" value={filter} onChange={handleChange} label="">
+        <Input.Icon icon="fa-solid fa-magnifying-glass" />
+      </Input>
       {Object.keys(elementsSorted).map(category => (
         <ElementCategory key={category} elements={elementsSorted[category]} category={category} />
       ))}

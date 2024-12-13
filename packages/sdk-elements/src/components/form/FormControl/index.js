@@ -1,5 +1,6 @@
 // Packages
-import omit from 'lodash/omit.js';
+import omit from 'lodash/omit.js';// Packages
+import FormIcon from '@plitzi/plitzi-ui/icons/Form/index.es';
 
 // Relatives
 import FormControl from './FormControl.js';
@@ -96,7 +97,7 @@ FormControl.content = {
     license: 'MIT',
     website: 'https://plitzi.com',
     backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    icon: <FormIcon />
   },
   defaultStyle: {
     name: 'Form Control',

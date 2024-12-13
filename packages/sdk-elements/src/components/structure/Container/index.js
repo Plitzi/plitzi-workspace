@@ -34,7 +34,7 @@ Container.content = {
     license: 'MIT',
     website: 'https://plitzi.com',
     backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    icon: 'fa-regular fa-square'
   },
   defaultStyle: {
     name: 'Container',

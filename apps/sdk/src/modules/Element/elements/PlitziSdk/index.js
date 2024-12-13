@@ -1,3 +1,6 @@
+// Packages
+import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo/index.es';
+
 // Relatives
 import PlitziSdk from './PlitziSdk';
 
@@ -34,7 +37,7 @@ PlitziSdk.content = {
     license: 'MIT',
     website: 'https://plitzi.com',
     backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    icon: <PlitziLogo />
   },
   defaultStyle: {
     name: 'Plitzi Sdk',
