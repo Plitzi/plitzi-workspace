@@ -15,7 +15,7 @@ import Segments from '@pmodules/Segments';
 import Variables from '@pmodules/Variables';
 
 // Relatives
-import AppDirectory from '../components/AppDirectory/AppDirectory';
+import AppDirectory from '../components/AppDirectory';
 import { featureFlag } from '../../../config';
 
 export const getPopups = ({ sourceId, handleSourceChange }) => {

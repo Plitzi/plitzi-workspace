@@ -1,6 +1,7 @@
 // Packages
 import React from 'react';
 import Icon from '@plitzi/plitzi-ui/Icon';
+import Text from '@plitzi/plitzi-ui/Text';
 import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo';
 
 // Relatives
@@ -51,8 +52,10 @@ const Element = props => {
           </Icon>
         )}
       </div>
-      <div className="flex w-20 items-center h-full p-1 justify-center text-center overflow-hidden">
-        <div className="truncate text-xs">{label}</div>
+      <div className="flex w-20 items-center justify-center text-center overflow-hidden">
+        <Text isTruncated size="xs">
+          {label}
+        </Text>
       </div>
     </div>
   );

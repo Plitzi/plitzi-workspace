@@ -1,8 +1,7 @@
 // Packages
 import React, { useCallback, use } from 'react';
-import classNames from 'classnames';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import Heading from '@plitzi/plitzi-ui-components/Heading';
+import Button from '@plitzi/plitzi-ui/Button';
+import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
@@ -18,13 +17,12 @@ const pageFoldersDefault = [];
 
 /**
  * @param {{
- *   className?: string;
  *   pageFolders?: any[];
  * }} props
  * @returns {React.ReactElement}
  */
 const DirectoryHeader = props => {
-  const { className = '', pageFolders = pageFoldersDefault } = props;
+  const { pageFolders = pageFoldersDefault } = props;
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
 
@@ -65,31 +63,28 @@ const DirectoryHeader = props => {
   }, [showModal, eventBridge]);
 
   return (
-    <div className={classNames('flex p-2 items-center justify-between border-b border-gray-300', className)}>
-      <Heading type="h3" className="m-0">
-        Pages
-      </Heading>
-      <div className="flex items-center gap-1">
-        <Button
-          intent="custom"
-          size="sm"
-          className="border border-gray-300 rounded"
-          title="Add Folder"
-          onClick={handleClickAddPageFolder}
-        >
-          <i className="fa-solid fa-folder-plus fa-2x" />
-        </Button>
-        <Button
-          intent="custom"
-          size="sm"
-          className="border border-gray-300 rounded"
-          title="Add Page"
-          onClick={handleClickAddPage}
-        >
-          <i className="fa-solid fa-file-circle-plus fa-2x" />
-        </Button>
-      </div>
-    </div>
+    <Flex items="center" justify="center" gap={2}>
+      <Button
+        intent="primary"
+        size="sm"
+        className="grow basis-0"
+        content="New Page"
+        iconPlacement="before"
+        onClick={handleClickAddPage}
+      >
+        <Button.Icon icon="fa-solid fa-file-circle-plus" className="fa-2x" />
+      </Button>
+      <Button
+        intent="secondary"
+        size="sm"
+        className="grow basis-0"
+        content="New Folder"
+        iconPlacement="before"
+        onClick={handleClickAddPageFolder}
+      >
+        <Button.Icon icon="fa-solid fa-folder-plus" className="fa-2x" />
+      </Button>
+    </Flex>
   );
 };
 

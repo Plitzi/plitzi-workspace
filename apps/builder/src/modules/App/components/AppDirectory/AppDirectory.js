@@ -1,6 +1,6 @@
 // Packages
 import React, { use } from 'react';
-import classNames from 'classnames';
+import Flex from '@plitzi/plitzi-ui/Flex';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -14,19 +14,15 @@ import DirectoryHeader from './DirectoryHeader';
 import PageLayouts from './PageLayouts';
 
 /**
- * @param {{
- *   className?: string;
- * }} props
+ * @param {{}} props
  * @returns {React.ReactElement}
  */
-const AppDirectory = props => {
-  const { className = '' } = props;
+const AppDirectory = () => {
   const { pageFolders } = use(SchemaMainContext);
-
   const { currentPageId } = use(NavigationContext);
 
   return (
-    <div className={classNames('flex flex-col border-b border-gray-300', className)}>
+    <Flex direction="column" gap={4} className="w-full border-b border-gray-300">
       <DirectoryHeader pageFolders={pageFolders} />
       <Directory
         id=""
@@ -38,7 +34,7 @@ const AppDirectory = props => {
         isRootFolder
       />
       <PageLayouts className="" />
-    </div>
+    </Flex>
   );
 };
 
