@@ -5,6 +5,8 @@ import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import Flex from '@plitzi/plitzi-ui/Flex';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -111,30 +113,44 @@ const PageActions = props => {
   );
 
   return (
-    <div
-      className={classNames(
-        'flex gap-3 text-sm ml-2',
-        {
-          'group-hover:flex hidden': !active && !zoom && !defaultPage
-        },
-        className
-      )}
+    <Flex
+      gap={2}
+      items="center"
+      className={classNames('text-sm ml-2', { 'group-hover:flex hidden': !active && !zoom && !defaultPage }, className)}
     >
-      <i
-        className={classNames('fas fa-home', { 'text-blue-300': defaultPage })}
-        onClick={handleClickSetHome}
-        title="Set Home Page"
-      />
-      <div className={classNames('flex gap-3 items-center', { 'group-hover:flex hidden': !active && !zoom })}>
-        {zoom && <i className="fa-solid fa-magnifying-glass-minus cursor-pointer" title="Zoom Out" onClick={onZoom} />}
-        {!zoom && <i className="fa-solid fa-magnifying-glass-plus cursor-pointer" title="Zoom In" onClick={onZoom} />}
-        <i
-          className="fas fa-trash-alt text-red-500 cursor-pointer"
+      {!defaultPage && (
+        <Icon
+          size="xs"
+          cursor="pointer"
+          intent="primary"
+          icon="fas fa-home"
+          title="Set Home Page"
+          onClick={handleClickSetHome}
+        />
+      )}
+      <Flex gap={2} items="center" className={classNames({ 'group-hover:flex hidden': !active && !zoom })}>
+        {zoom && (
+          <Icon
+            size="xs"
+            icon="fa-solid fa-magnifying-glass-minus"
+            cursor="pointer"
+            title="Zoom Out"
+            onClick={onZoom}
+          />
+        )}
+        {!zoom && (
+          <Icon size="xs" icon="fa-solid fa-magnifying-glass-plus" cursor="pointer" title="Zoom In" onClick={onZoom} />
+        )}
+        <Icon
+          size="xs"
+          icon="fas fa-trash-alt"
+          intent="error"
+          cursor="pointer"
           title="Remove Page"
           onClick={handleClickRemovePage}
         />
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   );
 };
 

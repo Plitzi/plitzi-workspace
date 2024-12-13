@@ -1,9 +1,11 @@
 // Packages
 import React, { useCallback, use, useMemo, useState } from 'react';
-import classNames from 'classnames';
 import upperFirst from 'lodash/upperFirst';
 import get from 'lodash/get';
-import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
+import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
+import Text from '@plitzi/plitzi-ui/Text';
+import Flex from '@plitzi/plitzi-ui/Flex';
+import Icon from '@plitzi/plitzi-ui/Icon';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -23,7 +25,6 @@ const pageFoldersDefault = [];
 
 /**
  * @param {{
- *   className?: string;
  *   id?: string;
  *   name?: string;
  *   slug?: string;
@@ -37,7 +38,6 @@ const pageFoldersDefault = [];
  */
 const Directory = props => {
   const {
-    className = '',
     id = '',
     name = '',
     slug = '',
@@ -135,23 +135,15 @@ const Directory = props => {
 
   const titleMemo = useMemo(
     () => (
-      <div className="flex justify-between grow px-2 py-1" style={{ paddingLeft: nestedLevel * 16 + 8 }}>
-        <div className="flex items-center">
-          {collapsed && <i className="fa-solid fa-folder mr-2" />}
-          {!collapsed && <i className="fa-regular fa-folder-open mr-2" />}
-          {upperFirst(name)}
-        </div>
-        {!isRootFolder && (
-          <div className="ml-2 flex gap-2 items-center">
-            <i className="fa-solid fa-gear cursor-pointer" title="Settings" onClick={handleClickSettings} />
-            <i
-              className="fas fa-trash-alt text-red-500 cursor-pointer"
-              title="Remove Folder"
-              onClick={handleClickRemoveFolder}
-            />
-          </div>
-        )}
-      </div>
+      <Flex justify="between" grow style={{ paddingLeft: nestedLevel * 16 }}>
+        <Flex items="center" gap={2}>
+          {collapsed && <Icon size="xs" intent="custom" icon="fa-solid fa-folder" />}
+          {!collapsed && <Icon size="xs" intent="custom" icon="fa-regular fa-folder-open" />}
+          <Text size="sm" weight="bold">
+            {upperFirst(name)}
+          </Text>
+        </Flex>
+      </Flex>
     ),
     [name, nestedLevel, collapsed]
   );
@@ -164,37 +156,53 @@ const Directory = props => {
     [id, pageFolders, parentId]
   );
 
-  const handleCollapse = useCallback(isCollapsed => {
-    setCollapsed(isCollapsed);
-  }, []);
+  const handleCollapse = useCallback(isCollapsed => setCollapsed(isCollapsed), []);
 
   return (
-    <ContainerCollapsable
-      title={titleMemo}
-      collapsed={!(pagesMemo && pagesMemo.length > 0)}
-      className={classNames('not-last:border-y not-last:border-gray-300', className)}
-      onChange={handleCollapse}
-    >
-      {pagesMemo &&
-        pagesMemo.length > 0 &&
-        pagesMemo.map(pageId => (
-          <Page key={pageId} id={pageId} active={pageId === currentPageId} nestedLevel={nestedLevel + 1} />
-        ))}
-
-      {directories &&
-        directories.length > 0 &&
-        directories.map(directory => (
-          <Directory
-            key={directory.id}
-            {...directory}
-            slug={directory.slug}
-            parentId={id}
-            pageFolders={pageFolders}
-            currentPageId={currentPageId}
-            nestedLevel={nestedLevel + 1}
-          />
-        ))}
-    </ContainerCollapsable>
+    <>
+      <ContainerCollapsable collapsed={!(pagesMemo && pagesMemo.length > 0)} onChange={handleCollapse} gap={2}>
+        <ContainerCollapsable.Header
+          placement="right"
+          iconCollapsed={<i className="fa-solid fa-angle-left" />}
+          iconExpanded={<i className="fa-solid fa-angle-down" />}
+          title={titleMemo}
+        >
+          {!isRootFolder && (
+            <Flex gap={2} items="center">
+              <Icon size="xs" icon="fa-solid fa-gear" cursor="pointer" title="Settings" onClick={handleClickSettings} />
+              <Icon
+                size="xs"
+                icon="fas fa-trash-alt"
+                cursor="pointer"
+                intent="error"
+                title="Remove Folder"
+                onClick={handleClickRemoveFolder}
+              />
+            </Flex>
+          )}
+        </ContainerCollapsable.Header>
+        <ContainerCollapsable.Content gap={2}>
+          {pagesMemo &&
+            pagesMemo.length > 0 &&
+            pagesMemo.map(pageId => (
+              <Page key={pageId} id={pageId} active={pageId === currentPageId} nestedLevel={nestedLevel + 1} />
+            ))}
+          {directories &&
+            directories.length > 0 &&
+            directories.map(directory => (
+              <Directory
+                key={directory.id}
+                {...directory}
+                slug={directory.slug}
+                parentId={id}
+                pageFolders={pageFolders}
+                currentPageId={currentPageId}
+                nestedLevel={nestedLevel + 1}
+              />
+            ))}
+        </ContainerCollapsable.Content>
+      </ContainerCollapsable>
+    </>
   );
 };
 

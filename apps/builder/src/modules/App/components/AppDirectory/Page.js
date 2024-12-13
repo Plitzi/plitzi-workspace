@@ -1,8 +1,10 @@
 // Packages
 import React, { useCallback, use, useMemo, useState } from 'react';
-import classNames from 'classnames';
-import get from 'lodash/get';
 import { Link } from 'react-router-dom';
+import get from 'lodash/get';
+import Text from '@plitzi/plitzi-ui/Text';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import Flex from '@plitzi/plitzi-ui/Flex';
 import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale';
 
 // Monorepo
@@ -17,7 +19,6 @@ import PageActions from './PageActions';
 
 /**
  * @param {{
- *   className?: string;
  *   id?: string;
  *   active?: boolean;
  *   nestedLevel?: number;
@@ -25,7 +26,7 @@ import PageActions from './PageActions';
  * @returns {React.ReactElement}
  */
 const Page = props => {
-  const { className = '', id = '', active = false, nestedLevel = 0 } = props;
+  const { id = '', active = false, nestedLevel = 0 } = props;
   const {
     schema,
     schema: { flat }
@@ -34,6 +35,7 @@ const Page = props => {
     style: { cache }
   } = use(StyleContext);
   const [zoom, setZoom] = useState(false);
+  const styleMemo = useMemo(() => ({ paddingLeft: nestedLevel * 16 }), [nestedLevel]);
   const page = useMemo(() => get(flat, id, {}), [flat, id]);
   if (!page) {
     return undefined;
@@ -51,17 +53,23 @@ const Page = props => {
   }, []);
 
   return (
-    <div className="group not-last:border-b border-gray-300 flex">
+    <Flex className="group">
       <Link to={id} className="flex flex-col basis-0 min-w-0 grow">
-        <div className={classNames('flex px-2 py-1 min-w-0 basis-0 grow items-center justify-between', className)}>
-          <div className="flex min-w-0 basis-0 grow items-center" style={{ paddingLeft: nestedLevel * 16 }}>
-            <i className="fa-solid fa-file mr-2" />
-            <div className={classNames('truncate min-w-0 grow', { 'text-blue-300': active })}>
+        <Flex basis={0} grow items="center" justify="between">
+          <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
+            <Icon
+              size="xs"
+              cursor="pointer"
+              active={active}
+              intent={active ? 'primary' : 'custom'}
+              icon={defaultPage ? 'fas fa-home' : 'fa-solid fa-file'}
+            />
+            <Text size="sm" isTruncated active={active}>
               {name ?? label ?? type}
-            </div>
-          </div>
+            </Text>
+          </Flex>
           <PageActions id={id} active={active} zoom={zoom} defaultPage={defaultPage} onZoom={handleClickZoom} />
-        </div>
+        </Flex>
         {zoom && (
           <div className="border border-gray-300 p-4 m-4 rounded">
             <ContainerAutoScale className="flex items-center justify-center h-[150px] w-full overflow-hidden rounded">
@@ -70,7 +78,7 @@ const Page = props => {
           </div>
         )}
       </Link>
-    </div>
+    </Flex>
   );
 };
 

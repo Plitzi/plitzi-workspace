@@ -63,7 +63,7 @@ const DirectoryHeader = props => {
   }, [showModal, eventBridge]);
 
   return (
-    <Flex items="center" justify="center" gap={2}>
+    <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3">
       <Button
         intent="primary"
         size="sm"
