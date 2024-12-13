@@ -16,7 +16,6 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 /**
  * @param {{
- *   className?: string;
  *   id?: string;
  *   active?: boolean;
  *   zoom?: boolean;
@@ -26,7 +25,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
  * @returns {React.ReactElement}
  */
 const PageActions = props => {
-  const { className = '', id = '', active = false, zoom = false, defaultPage = false, onZoom = noop } = props;
+  const { id = '', active = false, zoom = false, defaultPage = false, onZoom = noop } = props;
   const {
     schema: { flat }
   } = use(SchemaContext);
@@ -116,7 +115,7 @@ const PageActions = props => {
     <Flex
       gap={2}
       items="center"
-      className={classNames('text-sm ml-2', { 'group-hover:flex hidden': !active && !zoom && !defaultPage }, className)}
+      className={classNames({ 'group-hover:flex hidden': !active && !zoom && !defaultPage })}
     >
       {!defaultPage && (
         <Icon

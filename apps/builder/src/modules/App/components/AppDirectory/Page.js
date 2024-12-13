@@ -55,7 +55,7 @@ const Page = props => {
   return (
     <Flex className="group">
       <Link to={id} className="flex flex-col basis-0 min-w-0 grow">
-        <Flex basis={0} grow items="center" justify="between">
+        <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
             <Icon
               size="xs"

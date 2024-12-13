@@ -163,8 +163,9 @@ const Directory = props => {
       <ContainerCollapsable collapsed={!(pagesMemo && pagesMemo.length > 0)} onChange={handleCollapse} gap={2}>
         <ContainerCollapsable.Header
           placement="right"
-          iconCollapsed={<i className="fa-solid fa-angle-left" />}
-          iconExpanded={<i className="fa-solid fa-angle-down" />}
+          iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-left" />}
+          iconExpanded={<Icon size="sm" icon="fa-solid fa-angle-down" />}
+          className="!p-0"
           title={titleMemo}
         >
           {!isRootFolder && (
