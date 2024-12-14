@@ -1,35 +1,27 @@
 // Packages
-import React, { useCallback, use, useMemo } from 'react';
+import React, { use, useMemo } from 'react';
 import get from 'lodash/get';
-import classNames from 'classnames';
-import Button from '@plitzi/plitzi-ui-components/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import { DROP_DIRECTION_CUSTOM } from '@plitzi/sdk-schema/FlatMap';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Relatives
-import { generateID } from '../../../../helpers/utils';
 import PageLayout from './PageLayout';
+import LayoutsHeader from './LayoutsHeader';
 
 /**
- * @param {{
- *   className?: string;
- * }} props
+ * @param {{}} props
  * @returns {React.ReactElement}
  */
-const PageLayouts = props => {
-  const { className = '' } = props;
+const PageLayouts = () => {
   const {
     schema: { flat }
   } = use(SchemaContext);
-  const { componentDefinitions } = use(ComponentContext);
   const { currentPageId } = use(NavigationContext);
   const { eventBridge } = use(EventBridgeContext);
   const { showModal } = useModal();
@@ -61,19 +53,6 @@ const PageLayouts = props => {
     }
   };
 
-  const handleClickAddLayout = useCallback(async () => {
-    const { definition, attributes } = componentDefinitions.layoutContainer;
-    const id = generateID();
-    const element = { id, attributes, definition: { ...definition, rootId: id, parentId: null } };
-    eventBridge.emit(
-      EventBridgeModuleTypes.MAIN,
-      EventBridgeTypes.SCHEMA_ADD_ELEMENT,
-      '',
-      element,
-      DROP_DIRECTION_CUSTOM
-    );
-  }, [eventBridge, componentDefinitions]);
-
   const handleClickLayout = layoutId => () =>
     eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, layoutId);
 
@@ -83,12 +62,9 @@ const PageLayouts = props => {
   );
 
   return (
-    <div className={classNames('flex flex-col', className)}>
-      <Button intent="custom" size="custom" onClick={handleClickAddLayout} className="px-4 py-3 bg-gray-600 text-white">
-        <i className="fa-solid fa-table-columns fa-2x mr-4" />
-        Add New Layout
-      </Button>
-      <div className="flex flex-col items-center overflow-auto px-4 w-full">
+    <div className="flex flex-col">
+      <LayoutsHeader />
+      <div className="flex flex-col items-center overflow-auto w-full">
         {layouts &&
           layouts.map(layout => (
             <PageLayout

@@ -43,7 +43,7 @@ const Elements = () => {
   }, [elementDefinitions, filter]);
 
   return (
-    <div className="flex flex-col gap-4 overflow-y-auto grow basis-0">
+    <div className="flex flex-col gap-2 overflow-y-auto grow basis-0">
       <Input placeholder="Search Elements" value={filter} onChange={handleChange} label="">
         <Input.Icon icon="fa-solid fa-magnifying-glass" />
       </Input>

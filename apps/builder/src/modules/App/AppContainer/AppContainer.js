@@ -41,7 +41,7 @@ const AppContainer = props => {
   const [sourceState, setSourceState] = useState({});
   const { sourceId } = sourceState;
 
-  const handleSourceChange = useCallback(sourceId => setSourceState({ sourceId }), [tabSelected]);
+  const handleSourceChange = useCallback(newSourceId => setSourceState({ sourceId: newSourceId }), []);
 
   const builderHandler = useCallback(
     (event, data) => eventBridge.emit(EventBridgeModuleTypes.MAIN, event, ...data),

@@ -1,10 +1,11 @@
 // Packages
 import React, { use } from 'react';
-// import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import Flex from '@plitzi/plitzi-ui/Flex';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
@@ -48,9 +49,13 @@ const PageLayout = props => {
       <div className="absolute top-0 right-0">
         <Dropdown showIcon={false} containerTopOffset={5} containerLeftOffset={0}>
           <Dropdown.Content>
-            <div className="h-7 w-8 hover:text-blue-400 flex items-center justify-center border-b border-l rounded-bl-lg bg-white">
-              <i className="fa-solid fa-ellipsis" />
-            </div>
+            <Flex
+              items="center"
+              justify="center"
+              className="h-8 w-8 text-white rounded-bl-3xl bg-[linear-gradient(to_bottom_left,rgba(0,0,0,0.7)_5%,rgba(0,0,0,0.5)_0%,transparent_90%)] group-hover:bg-none"
+            >
+              <Icon intent="custom" icon="fa-solid fa-ellipsis" />
+            </Flex>
           </Dropdown.Content>
           <Dropdown.Container className="flex flex-col rounded-none rounded-tl-lg rounded-bl-lg">
             <Button

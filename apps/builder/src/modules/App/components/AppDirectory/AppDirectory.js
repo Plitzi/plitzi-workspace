@@ -33,7 +33,8 @@ const AppDirectory = () => {
         pageFolders={pageFolders}
         isRootFolder
       />
-      <PageLayouts className="" />
+      <div className="border-t border-gray-200 w-full" />
+      <PageLayouts />
     </Flex>
   );
 };

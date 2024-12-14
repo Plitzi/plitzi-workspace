@@ -32,12 +32,7 @@ const Element = props => {
   const { onDragStart } = useDragElement({ type });
 
   return (
-    <div
-      className="flex flex-col gap-2 items-center py-2 cursor-grabbing"
-      draggable
-      onDragStart={onDragStart}
-      title={label}
-    >
+    <div className="flex flex-col gap-2 items-center cursor-grabbing" draggable onDragStart={onDragStart} title={label}>
       <div className="w-9 h-9 p-1.5 flex flex-col shrink-0 items-center justify-center border border-gray-300 rounded-lg">
         {icon && typeof icon === 'string' && !icon.startsWith('http') && <Icon intent="custom" icon={icon} />}
         {icon && typeof icon === 'string' && icon.startsWith('http') && (
