@@ -14,7 +14,7 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
 import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
 import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';

@@ -8,7 +8,7 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
-import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';

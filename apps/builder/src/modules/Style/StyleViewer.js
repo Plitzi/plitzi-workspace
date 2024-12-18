@@ -2,7 +2,7 @@
 import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Alias
 import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';

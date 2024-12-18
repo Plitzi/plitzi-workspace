@@ -3,7 +3,7 @@ import React, { useCallback, use, useMemo, useState } from 'react';
 import Card from '@plitzi/plitzi-ui-components/Card';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
-// import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+// import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';

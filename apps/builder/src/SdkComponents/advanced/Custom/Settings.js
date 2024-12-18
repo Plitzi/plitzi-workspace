@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
 
 /**

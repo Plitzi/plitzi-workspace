@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
-import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui/CodeMirror';
 import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
 import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';

@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

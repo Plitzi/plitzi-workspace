@@ -7,7 +7,7 @@ import capitalize from 'lodash/capitalize';
 import { ComponentContext } from '@plitzi/plitzi-sdk';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

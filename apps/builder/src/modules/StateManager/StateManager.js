@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import isEqual from 'lodash/isEqual';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
@@ -43,7 +43,7 @@ const StateManager = props => {
   }, [state]);
 
   return (
-    <div className={classNames('h-full flex flex-col relative', className)}>
+    <div className={classNames('h-full flex flex-col relative w-full', className)}>
       <CodeMirror value={value} theme="dark" lineWrapping onChange={handleChange} mode="json" />
       <div className="flex absolute top-3 right-3">
         <Button

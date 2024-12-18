@@ -7,7 +7,7 @@ import set from 'lodash/set';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';

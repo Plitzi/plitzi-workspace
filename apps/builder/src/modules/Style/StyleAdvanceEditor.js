@@ -5,7 +5,7 @@ import debounce from 'lodash/debounce';
 import get from 'lodash/get';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
@@ -61,7 +61,7 @@ const StyleAdvanceEditor = props => {
   }, [setCustomCss, schemaUpdateSettingsDebounce, customCss]);
 
   return (
-    <div className={classNames('h-full flex flex-col relative', className)}>
+    <div className={classNames('h-full w-full flex flex-col relative', className)}>
       <CodeMirror value={customCss} theme="dark" lineWrapping onChange={handleChange} />
       <div className="flex absolute top-3 right-3">
         <Button

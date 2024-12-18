@@ -59,7 +59,7 @@ export const getPopups = ({ sourceId, handleSourceChange }) => {
       active: false,
       settings: {
         icon: (
-          <Sidebar.Icon className="p-2" intent="tertiary" id="variables" title="Variables">
+          <Sidebar.Icon className="p-2" intent="tertiary" title="Variables">
             <Variable />
           </Sidebar.Icon>
         ),
@@ -145,7 +145,7 @@ export const getPopups = ({ sourceId, handleSourceChange }) => {
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        // allowFloatingSide: false,
+        allowFloatingSide: false,
         allowClose: false,
         resizeHandles: ['se']
       }
@@ -153,6 +153,7 @@ export const getPopups = ({ sourceId, handleSourceChange }) => {
     {
       id: 'advanceStyle',
       component: <StyleAdvanceEditor />,
+      size: 'custom',
       active: false,
       settings: {
         icon: 'fa-solid fa-file-code text-base',
@@ -160,18 +161,19 @@ export const getPopups = ({ sourceId, handleSourceChange }) => {
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        // allowFloatingSide: false,
+        allowFloatingSide: false,
         allowClose: false,
         resizeHandles: ['se']
       }
     },
     {
       id: 'stateManager',
+      size: 'custom',
       component: <StateManager />,
       active: false,
       settings: {
         icon: (
-          <Sidebar.Icon className="p-2" intent="tertiary" id="variables" title="Variables">
+          <Sidebar.Icon className="p-2" intent="tertiary" title="Variables">
             <StateManagerIcon />
           </Sidebar.Icon>
         ),
@@ -179,7 +181,7 @@ export const getPopups = ({ sourceId, handleSourceChange }) => {
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        // allowFloatingSide: false,
+        allowFloatingSide: false,
         allowClose: false,
         resizeHandles: ['se']
       }

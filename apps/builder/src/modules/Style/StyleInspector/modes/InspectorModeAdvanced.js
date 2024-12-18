@@ -3,7 +3,7 @@ import React, { useCallback, use, useMemo, useEffect, useState } from 'react';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
-import CodeMirror, { CODEMIRROR_CSS_TOKEN } from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror, { CODEMIRROR_CSS_TOKEN } from '@plitzi/plitzi-ui/CodeMirror';
 import set from 'lodash/set';
 import { produce } from 'immer';
 

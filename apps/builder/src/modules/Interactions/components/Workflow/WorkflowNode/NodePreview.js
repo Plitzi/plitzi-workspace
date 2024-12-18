@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
