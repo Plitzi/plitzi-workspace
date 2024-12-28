@@ -1,8 +1,9 @@
 // Packages
 import React, { useCallback, use, useMemo, useState } from 'react';
 import get from 'lodash/get';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import FormControl from '@plitzi/plitzi-ui-components/FormControl';
+import Button from '@plitzi/plitzi-ui/Button';
+import Input from '@plitzi/plitzi-ui/Input';
+import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
@@ -36,7 +37,7 @@ const Variables = () => {
     [routeParams, queryParams, hostname, environment]
   );
 
-  const handleChangeFilter = useCallback(e => setFilter(e.target.value), [setFilter]);
+  const handleChangeFilter = useCallback(value => setFilter(value), [setFilter]);
 
   const handleClickAddVariable = useCallback(async () => {
     const response = await showModal(
@@ -75,26 +76,17 @@ const Variables = () => {
   );
 
   return (
-    <div className="segments flex flex-col">
-      <Button
-        intent="custom"
-        size="custom"
-        onClick={handleClickAddVariable}
-        className="rounded-none px-4 py-3 bg-gray-600 text-white"
-      >
-        <i className="fa-solid fa-swatchbook fa-2x mr-4 text-white" />
-        Add Variable
-      </Button>
-      <div className="p-2">
-        <FormControl
-          value={filter}
-          type="text"
-          placeholder="Search Variables"
-          inputClassName="rounded"
-          onChange={handleChangeFilter}
-        />
-      </div>
-      <div className="flex flex-col px-2 my-2 gap-1">
+    <div className="segments flex flex-col gap-3 w-full">
+      <Flex gap={2} direction="column">
+        <Button size="sm" onClick={handleClickAddVariable} content="Add Variable" iconPlacement="before">
+          <Button.Icon icon="fa-solid fa-plus" />
+        </Button>
+        <Input placeholder="Search Variables" value={filter} onChange={handleChangeFilter} label="">
+          <Input.Icon icon="fa-solid fa-magnifying-glass" />
+        </Input>
+      </Flex>
+      <div className="bg-gray-300 h-px" />
+      <div className="flex flex-col gap-1">
         {variablesFiltered.map(segment => {
           const { name, type, value, category, subValues } = segment;
 

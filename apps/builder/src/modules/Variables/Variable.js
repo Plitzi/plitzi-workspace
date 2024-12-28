@@ -1,9 +1,7 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import classNames from 'classnames';
 import noop from 'lodash/noop';
 import omit from 'lodash/omit';
-import Button from '@plitzi/plitzi-ui-components/Button';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -12,6 +10,7 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import VariableForm from './models/VariableForm';
 import VariableDetails from './VariableDetails';
 import VariableValue from './VariableValue';
+import VariableActions from './VariableActions';
 
 const subValuesDefault = [];
 
@@ -89,37 +88,18 @@ const Variable = props => {
   }
 
   return (
-    <div className="group flex flex-col border px-2 py-0.5 border-gray-300 rounded text-sm">
+    <div className="group flex flex-col border px-2 py-0.5 gap-1 border-gray-300 rounded text-sm">
       <div className="flex w-full items-center gap-2 cursor-pointer" onClick={handleClick}>
-        <div className="flex w-full">
+        <div className="flex w-full overflow-hidden">
           {subValues?.length > 0 && <i className="fa-solid fa-code-merge text-sm px-1" title="Has Variations" />}
           <div className="flex basis-0 gap-2 min-w-0 grow justify-between">
-            <div className="truncate font-bold" title={name}>
+            <div className="font-bold" title={name}>
               {name}
             </div>
-            <VariableValue className="text-xs" type={type} value={value} />
+            <VariableValue className="truncate text-xs" type={type} value={value} />
           </div>
         </div>
-        <div className={classNames('items-center text-xs', { flex: selected, 'group-hover:flex hidden': !selected })}>
-          <Button
-            intent="custom"
-            size="custom"
-            onClick={handleClickUpdate}
-            title="Update"
-            className="p-1 hover:text-blue-400"
-          >
-            <i className="fas fa-pen" />
-          </Button>
-          <Button
-            intent="custom"
-            size="custom"
-            onClick={handleClickRemove}
-            title="Remove"
-            className="text-red-400 hover:text-red-500 p-1"
-          >
-            <i className="fas fa-trash-alt" />
-          </Button>
-        </div>
+        <VariableActions selected={selected} onUpdate={handleClickUpdate} onRemove={handleClickRemove} />
       </div>
       {selected && <VariableDetails name={name} type={type} subValues={subValues} />}
     </div>
