@@ -4,7 +4,7 @@ import camelCase from 'lodash/camelCase.js';
 import get from 'lodash/get.js';
 import set from 'lodash/set.js';
 import { produce } from 'immer';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
 
 // Relatives
 import utility from '../utility/index.js';

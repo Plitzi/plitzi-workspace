@@ -2,7 +2,7 @@
 import React from 'react';
 import get from 'lodash/get.js';
 import omit from 'lodash/omit.js';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
 
 // Monorepo
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';

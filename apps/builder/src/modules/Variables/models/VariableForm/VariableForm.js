@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
 
@@ -11,7 +11,6 @@ import Alert from '@plitzi/plitzi-ui-components/Alert';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 import VariableSubValue from './VariableSubValue';
 import VariableValue from './VariableValue';
-import VariableSubValueActions from './VariableSubValueActions';
 
 const subValuesDefault = [];
 
@@ -155,8 +154,10 @@ const VariableForm = props => {
         <div className="flex flex-col gap-2">
           {fields.map((field, index) => (
             <div key={field.id} className="flex gap-2">
-              <VariableSubValue index={index} whenData={whenData} control={control} valueType={currentType} />
-              <VariableSubValueActions
+              <VariableSubValue
+                whenData={whenData}
+                control={control}
+                valueType={currentType}
                 index={index}
                 indexLimit={fields.length - 1}
                 onClickRemove={handleClickFieldRemove(index)}
@@ -166,15 +167,15 @@ const VariableForm = props => {
             </div>
           ))}
         </div>
-        <Button size="custom" className="rounded px-2 py-1 text-xs" title="Down" onClick={handleClickFieldAppend}>
+        <Button size="xs" title="Down" onClick={handleClickFieldAppend}>
           + Conditional Value
         </Button>
       </div>
-      <div className="flex justify-end">
-        <Button onClick={onClose} className="mr-3 rounded-md" size="sm">
+      <div className="flex justify-end gap-2">
+        <Button onClick={onClose} size="sm">
           Cancel
         </Button>
-        <Button type="submit" className="rounded-md" size="sm">
+        <Button type="submit" size="sm">
           Submit
         </Button>
       </div>

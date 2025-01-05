@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
-import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
+import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -41,7 +41,7 @@ const StepWhen = props => {
                 placeholder: `Enter ${path}`,
                 group: `Data Source - ${source}`,
                 inputType,
-                values
+                options: values
               }
             }),
             {}
@@ -61,7 +61,7 @@ const StepWhen = props => {
       </Heading>
       <div className="flex flex-col">
         <QueryBuilder
-          ruleDirection="vertical"
+          direction="vertical"
           className="w-full"
           query={when}
           fields={fieldsDataSource}

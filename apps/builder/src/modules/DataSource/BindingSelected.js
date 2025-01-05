@@ -5,7 +5,7 @@ import get from 'lodash/get';
 import upperFirst from 'lodash/upperFirst';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
+import QueryBuilderFormatter from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderFormatter';
 
 // Monorepo
 import utility from '@plitzi/sdk-data-source/utility';

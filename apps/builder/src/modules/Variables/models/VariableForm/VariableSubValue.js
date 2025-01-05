@@ -1,7 +1,7 @@
 // Packages
 import React, { useMemo } from 'react';
 import { Controller } from 'react-hook-form';
-import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
+import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 
 // Monorepo
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
@@ -9,15 +9,28 @@ import VariableValue from './VariableValue';
 
 /**
  * @param {{
- *   index?: number;
  *   control: import('react-hook-form').UseFormMethods;
  *   valueType?: string;
  *   whenData?: object;
+ *   index?: number;
+ *   indexLimit?: number;
+ *   onClickRemove?: () => void;
+ *   onClickUp?: () => void;
+ *   onClickDown?: () => void;
  * }} props
  * @returns {React.ReactElement}
  */
 const VariableSubValue = props => {
-  const { index = 0, control, valueType = 'text', whenData = emptyObject } = props;
+  const {
+    index = 0,
+    control,
+    valueType = 'text',
+    whenData = emptyObject,
+    indexLimit,
+    onClickRemove,
+    onClickUp,
+    onClickDown
+  } = props;
 
   const fieldsDataSource = useMemo(
     () =>
@@ -30,7 +43,17 @@ const VariableSubValue = props => {
 
   return (
     <div className="border border-gray-300 rounded p-2 flex flex-col gap-2 grow basis-0 min-w-0">
-      <VariableValue valueType={valueType} control={control} name={`subValues.${index}.value`} />
+      <VariableValue
+        valueType={valueType}
+        control={control}
+        name={`subValues.${index}.value`}
+        isSubValue
+        index={index}
+        indexLimit={indexLimit}
+        onClickRemove={onClickRemove}
+        onClickUp={onClickUp}
+        onClickDown={onClickDown}
+      />
       <Controller
         control={control}
         rules={{ required: true, validate: value => (value?.rules?.length > 0 ? true : 'This field is required') }}
@@ -45,7 +68,8 @@ const VariableSubValue = props => {
             <div className="flex flex-col">
               <label className="mb-1 font-medium text-gray-500 text-xs">When</label>
               <QueryBuilder
-                ruleDirection="vertical"
+                direction="vertical"
+                intent="gray"
                 className="w-full"
                 query={value}
                 fields={fieldsDataSource}

@@ -1,5 +1,5 @@
 // Packages
-import omit from 'lodash/omit.js';// Packages
+import omit from 'lodash/omit.js';
 import FormIcon from '@plitzi/plitzi-ui/icons/Form/index.es';
 
 // Relatives

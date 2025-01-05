@@ -1,7 +1,7 @@
 // Packages
 import { useMemo, useEffect, useState, use, useCallback } from 'react';
 import isEmpty from 'lodash/isEmpty.js';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter.js';
+import QueryBuilderFormatter from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderFormatter.es';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';

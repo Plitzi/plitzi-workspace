@@ -1,6 +1,6 @@
 // Packages
 import React from 'react';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 import noop from 'lodash/noop';
 
 /**
@@ -17,23 +17,23 @@ const VariableSubValueActions = props => {
   const { indexLimit = 0, index = 0, onClickRemove = noop, onClickUp = noop, onClickDown = noop } = props;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex gap-2">
       <Button
-        intent="custom"
-        size="custom"
+        intent="danger"
+        size="xs"
         onClick={onClickRemove}
         title="Remove"
-        className="text-red-400 hover:text-red-500 p-1"
+        className="aspect-square"
       >
         <i className="fas fa-trash-alt" />
       </Button>
       {index > 0 && (
-        <Button size="custom" className="rounded p-1 text-xs" title="Up" onClick={onClickUp}>
+        <Button size="xs" className="aspect-square" title="Up" onClick={onClickUp}>
           <i className="fa-solid fa-arrow-up" />
         </Button>
       )}
       {index < indexLimit && (
-        <Button size="custom" className="rounded p-1 text-xs" title="Down" onClick={onClickDown}>
+        <Button size="xs" className="aspect-square" title="Down" onClick={onClickDown}>
           <i className="fa-solid fa-arrow-down" />
         </Button>
       )}

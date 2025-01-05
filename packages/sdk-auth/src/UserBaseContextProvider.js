@@ -2,7 +2,7 @@
 import React, { useMemo, use } from 'react';
 import get from 'lodash/get.js';
 import { useAuth0 } from '@auth0/auth0-react';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
 
 // Monorepo
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';

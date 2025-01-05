@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
-import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
+import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 
 // Monorepo
@@ -40,7 +40,7 @@ const NodeWhen = props => {
     >
       <ContainerCollapsable className="w-full flex justify-center" title={containerTitle} collapsed={isCollapsed}>
         <QueryBuilder
-          ruleDirection="vertical"
+          direction="vertical"
           className="w-full py-2"
           query={when}
           fields={fields}

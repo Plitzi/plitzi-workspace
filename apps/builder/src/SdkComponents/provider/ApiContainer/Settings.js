@@ -5,7 +5,7 @@ import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui/CodeMirror';
-import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
+import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
 import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
 
@@ -121,7 +121,7 @@ const Settings = props => {
             <div>
               <label>When to perform query request</label>
               <QueryBuilder
-                ruleDirection="vertical"
+                direction="vertical"
                 className="w-full"
                 query={when}
                 onChange={handleChangeWhen}

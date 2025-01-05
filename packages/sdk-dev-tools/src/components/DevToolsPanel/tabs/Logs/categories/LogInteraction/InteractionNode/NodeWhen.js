@@ -1,6 +1,6 @@
 // Packages
 import React, { useMemo } from 'react';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter.js';
+import QueryBuilderFormatter from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderFormatter.es';
 import Heading from '@plitzi/plitzi-ui-components/Heading/index.js';
 
 /**

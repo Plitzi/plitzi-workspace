@@ -12,7 +12,7 @@ import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
-import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
+import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 

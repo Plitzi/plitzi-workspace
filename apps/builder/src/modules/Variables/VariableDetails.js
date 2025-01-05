@@ -1,7 +1,7 @@
 // Packages
 import React, { useCallback } from 'react';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderFormatter';
+import QueryBuilderFormatter from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderFormatter';
 
 // Relatives
 import VariableValue from './VariableValue';

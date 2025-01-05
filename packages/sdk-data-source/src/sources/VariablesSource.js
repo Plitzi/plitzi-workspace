@@ -1,6 +1,6 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
 
 // Monorepo
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';

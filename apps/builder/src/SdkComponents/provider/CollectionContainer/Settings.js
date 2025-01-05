@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
-import QueryBuilder from '@plitzi/plitzi-ui-components/QueryBuilder';
+import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 
 // Monorepo
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
@@ -73,7 +73,7 @@ const Settings = props => {
             <div className="flex flex-col mt-4">
               <label>Query</label>
               <QueryBuilder
-                ruleDirection="vertical"
+                direction="vertical"
                 className="w-full"
                 query={query}
                 fields={fieldsDataSource}

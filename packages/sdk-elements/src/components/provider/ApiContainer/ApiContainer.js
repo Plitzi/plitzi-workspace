@@ -3,7 +3,7 @@ import React, { useCallback, use, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 import get from 'lodash/get.js';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui-components/QueryBuilder/helpers/QueryBuilderEvaluator.js';
+import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
 
 // Monorepo
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
