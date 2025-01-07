@@ -59,7 +59,7 @@ export const getPopups = ({ sourceId, handleSourceChange }) => {
       active: false,
       settings: {
         icon: (
-          <Sidebar.Icon className="p-2" intent="tertiary" title="Variables">
+          <Sidebar.Icon className="p-1" intent="tertiary" title="Variables">
             <Variable />
           </Sidebar.Icon>
         ),

@@ -5,6 +5,9 @@ import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
+import Flex from '@plitzi/plitzi-ui/Flex';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
 
 // Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
@@ -107,67 +110,71 @@ const BuilderAreaHeader = props => {
   }, [headerTitle, multiPagesMode, title, domain, defaultPage, slug, baseElementId, mode]);
 
   return (
-    <div className="h-10 min-h-[40px] pl-4 pr-2 flex items-center bg-white rounded-tl rounded-tr border-b border-gray-300">
-      <div className="flex items-center">
+    <Flex
+      items="center"
+      gap={4}
+      className="h-10 min-h-[40px] pl-4 pr-2 bg-white rounded-tl-lg rounded-tr-lg border-b border-gray-300"
+    >
+      <Flex items="center" gap={2}>
         <div
-          className={classNames('w-3 h-3 mr-2 rounded-full', {
-            'bg-blue-400': isActive,
+          className={classNames('w-3 h-3 rounded-full', {
+            'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
         />
         <div
-          className={classNames('w-3 h-3 mr-2 rounded-full', {
-            'bg-blue-400': isActive,
+          className={classNames('w-3 h-3 rounded-full', {
+            'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
         />
         <div
-          className={classNames('w-3 h-3 mr-2 rounded-full', {
-            'bg-blue-400': isActive,
+          className={classNames('w-3 h-3 rounded-full', {
+            'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
         />
-        <div
-          title="Default Page"
-          className={classNames('mr-2', { 'text-blue-400': defaultPage, 'text-gray-400': !defaultPage })}
-        >
-          <i className="fas fa-home" />
-        </div>
         {!multiPagesMode && baseElementIdOriginal !== baseElementId && (
           <Button size="custom" className="px-2 py-0.5 mr-2 rounded-md" onClick={handleClickBackToInstance}>
             <i className="fas fa-arrow-left mr-1" />
             Back
           </Button>
         )}
+      </Flex>
+      <div
+        title="Default Page"
+        className={classNames({ 'text-primary-400': defaultPage, 'text-gray-400': !defaultPage })}
+      >
+        <Icon icon="fas fa-home" />
       </div>
-      <div className="h-7 px-3 flex items-center grow justify-between rounded bg-gray-200 select-none border border-gray-400 overflow-hidden">
+      <Flex items="center" grow className="h-7 px-3 rounded-lg select-none border border-gray-200 overflow-hidden">
         <div className="w-full truncate mr-4">{pageTitle}</div>
-        {!previewMode && (
-          <div className="flex items-center">
-            {mode === BUILDER_MODE_NORMAL && (
-              <a href={domainName} target="__blank" className="hover:text-blue-400 mr-4" title="Go to your space">
-                <i className="fa-solid fa-arrow-up-right-from-square" />
-              </a>
-            )}
-            <i
-              className="fas fa-cog cursor-pointer hover:text-blue-400"
-              title="Domain Settings"
-              onClick={handleClickSettings}
-            />
-          </div>
-        )}
-      </div>
-      {hasMultiPages && !previewMode && (
-        <div className="ml-2 hover:text-blue-400 cursor-pointer" onClick={handleClickMultipage}>
-          {!multiPagesMode && <i className="fas fa-search-minus" title="Zoom into page overview" />}
-          {multiPagesMode && (
-            <Link to={baseElementId} className="hover:text-blue-400">
-              <i className="fas fa-search-plus hover:text-blue-400" title="Zoom in on this page" />
-            </Link>
+      </Flex>
+      {!previewMode && (
+        <Flex items="center" gap={3}>
+          {hasMultiPages && (
+            <div className="cursor-pointer" onClick={handleClickMultipage}>
+              {!multiPagesMode && (
+                <Icon title="Zoom into page overview">
+                  <PageOverview />
+                </Icon>
+              )}
+              {multiPagesMode && (
+                <Link to={baseElementId}>
+                  <Icon icon="fas fa-search-plus" title="Zoom in on this page" />
+                </Link>
+              )}
+            </div>
           )}
-        </div>
+          <Icon icon="fas fa-cog" className="cursor-pointer" title="Domain Settings" onClick={handleClickSettings} />
+          {mode === BUILDER_MODE_NORMAL && (
+            <a href={domainName} target="__blank" className="" title="Go to your space">
+              <Icon icon="fa-solid fa-arrow-up-right-from-square" />
+            </a>
+          )}
+        </Flex>
       )}
-    </div>
+    </Flex>
   );
 };
 

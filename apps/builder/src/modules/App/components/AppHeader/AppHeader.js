@@ -172,8 +172,9 @@ const AppHeaher = props => {
             title="Publish: Click Publish to go live with your latest changes."
             onClick={handleClickPublish}
             intent="secondary"
-            content="Snapshot"
-          />
+          >
+            Snapshot
+          </Button>
           <Button
             id="header-deploy"
             size="sm"
@@ -181,7 +182,9 @@ const AppHeaher = props => {
             onClick={handleClickDeploy}
             disabled={loadingDeployment}
             content={!loadingDeployment ? 'Publish' : <i className="fa-solid fa-sync fa-spin fa-2x" />}
-          />
+          >
+            {!loadingDeployment ? 'Publish' : <Button.Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />}
+          </Button>
         </div>
       </div>
     </div>

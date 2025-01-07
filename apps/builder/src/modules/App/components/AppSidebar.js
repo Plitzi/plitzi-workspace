@@ -1,11 +1,11 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import noop from 'lodash/noop';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
 
 const defaultCache = [];
 const popupSidebarExcluded = ['collections', 'settings'];
+const separatorsBefore = ['layerManager', 'settings'];
 
 /**
  * @param {{
@@ -16,7 +16,7 @@ const popupSidebarExcluded = ['collections', 'settings'];
  * @returns {React.ReactElement}
  */
 const AppSidebar = props => {
-  const { onSelect = noop } = props;
+  const { onSelect } = props;
   const [, setCache, getCacheByKey] = useCache();
   const [popupsActiveLeft, setPopupsActiveLeft] = useState(
     getCacheByKey('PopupSidePanel.popupsActive.left', defaultCache)
@@ -29,7 +29,7 @@ const AppSidebar = props => {
         'PopupSidePanel.popupsActive.left'
       );
       setPopupsActiveLeft(popups);
-      onSelect(popups?.[0] ?? '');
+      onSelect?.(popups?.[0] ?? '');
     },
     [setCache, onSelect]
   );
@@ -40,7 +40,7 @@ const AppSidebar = props => {
       className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
       placementTabs="left"
       placement="left"
-      separatorsBefore={['layerManager', 'settings']}
+      separatorsBefore={separatorsBefore}
       minWidth={335}
       maxWidth={540}
       canHide

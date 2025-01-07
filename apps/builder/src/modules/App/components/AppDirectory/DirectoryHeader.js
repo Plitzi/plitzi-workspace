@@ -64,25 +64,19 @@ const DirectoryHeader = props => {
 
   return (
     <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3">
-      <Button
-        intent="primary"
-        size="sm"
-        className="grow basis-0"
-        content="New Page"
-        iconPlacement="before"
-        onClick={handleClickAddPage}
-      >
+      <Button intent="primary" size="sm" className="grow basis-0" iconPlacement="before" onClick={handleClickAddPage}>
         <Button.Icon icon="fa-solid fa-file-circle-plus" className="fa-2x" />
+        New Page
       </Button>
       <Button
         intent="secondary"
         size="sm"
         className="grow basis-0"
-        content="New Folder"
         iconPlacement="before"
         onClick={handleClickAddPageFolder}
       >
         <Button.Icon icon="fa-solid fa-folder-plus" className="fa-2x" />
+        New Folder
       </Button>
     </Flex>
   );

@@ -75,15 +75,9 @@ const LayoutsHeader = () => {
 
   return (
     <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3">
-      <Button
-        intent="primary"
-        size="sm"
-        className="grow basis-0"
-        content="New Layout"
-        iconPlacement="before"
-        onClick={handleClickAddLayout}
-      >
+      <Button intent="primary" size="sm" className="grow basis-0" iconPlacement="before" onClick={handleClickAddLayout}>
         <Button.Icon icon="fa-solid fa-border-all" className="fa-2x" />
+        New Layout
       </Button>
       {/* <Button
         intent="secondary"
