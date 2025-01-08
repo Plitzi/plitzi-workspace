@@ -65,7 +65,7 @@ const DirectoryHeader = props => {
   return (
     <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3">
       <Button intent="primary" size="sm" className="grow basis-0" iconPlacement="before" onClick={handleClickAddPage}>
-        <Button.Icon icon="fa-solid fa-file-circle-plus" className="fa-2x" />
+        <Button.Icon icon="fa-solid fa-file-circle-plus" size="md" className="text-base" />
         New Page
       </Button>
       <Button
@@ -75,7 +75,7 @@ const DirectoryHeader = props => {
         iconPlacement="before"
         onClick={handleClickAddPageFolder}
       >
-        <Button.Icon icon="fa-solid fa-folder-plus" className="fa-2x" />
+        <Button.Icon icon="fa-solid fa-folder-plus" size="md" className="text-base" />
         New Folder
       </Button>
     </Flex>

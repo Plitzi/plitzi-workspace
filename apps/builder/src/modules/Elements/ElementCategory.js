@@ -44,7 +44,7 @@ const ElementCategory = props => {
   return (
     <div className="flex flex-col gap-2">
       <div className="border-t border-gray-200" />
-      <Text size="sm" weight={500}>
+      <Text size="sm" weight={500} className="capitalize">
         {category}
       </Text>
       <div className="flex flex-wrap gap-2">

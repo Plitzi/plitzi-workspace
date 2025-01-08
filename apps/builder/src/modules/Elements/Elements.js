@@ -44,7 +44,7 @@ const Elements = () => {
 
   return (
     <div className="flex flex-col gap-2 overflow-y-auto grow basis-0">
-      <Input placeholder="Search Elements" value={filter} onChange={handleChange} label="">
+      <Input placeholder="Search Elements" value={filter} onChange={handleChange}>
         <Input.Icon icon="fa-solid fa-magnifying-glass" />
       </Input>
       {Object.keys(elementsSorted).map(category => (
