@@ -3,7 +3,7 @@ import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
-import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
+import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -90,7 +90,7 @@ const BuilderAreaPreview = props => {
   const css = useMemo(() => {
     const css = `${styleCache}\n${settings?.customCss}`;
 
-    return `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${css}`;
+    return `${sdkStyle[0][1]}\n${styleFrame[1][1]}\n${css}`;
   }, [settings, styleCache]);
 
   const { components } = use(ComponentContext);
@@ -99,27 +99,24 @@ const BuilderAreaPreview = props => {
   const internalProps = useMemo(() => ({ id, rootId: id }), [id]);
 
   return (
-    <ContainerFrame className={classNames('flex builder-area', className)}>
-      <>
-        <style>{css}</style>
-        <PlitziServiceProvider value={plitziContextValue}>
-          <DataSourceContextProvider>
-            <InteractionsBuilderContextProvider>
-              <div
-                className={classNames('builder-iframe', {
-                  'builder--display-component-border display-component-border--black':
-                    displayBorderComponents === DISPLAY_BORDER_BLACK,
-                  'builder--display-component-border display-component-border--white':
-                    displayBorderComponents === DISPLAY_BORDER_WHITE
-                })}
-                style={{ width: '100%', display: 'flex' }}
-              >
-                {Plugin && <Plugin internalProps={internalProps} />}
-              </div>
-            </InteractionsBuilderContextProvider>
-          </DataSourceContextProvider>
-        </PlitziServiceProvider>
-      </>
+    <ContainerFrame className={classNames('flex builder-area', className)} css={css}>
+      <PlitziServiceProvider value={plitziContextValue}>
+        <DataSourceContextProvider>
+          <InteractionsBuilderContextProvider>
+            <div
+              className={classNames('builder-iframe', {
+                'builder--display-component-border display-component-border--black':
+                  displayBorderComponents === DISPLAY_BORDER_BLACK,
+                'builder--display-component-border display-component-border--white':
+                  displayBorderComponents === DISPLAY_BORDER_WHITE
+              })}
+              style={{ width: '100%', display: 'flex', height: '100%' }}
+            >
+              {Plugin && <Plugin internalProps={internalProps} />}
+            </div>
+          </InteractionsBuilderContextProvider>
+        </DataSourceContextProvider>
+      </PlitziServiceProvider>
     </ContainerFrame>
   );
 };

@@ -54,7 +54,7 @@ const App = props => {
     webKey = '',
     includeSubscriptions = true,
     userKey = '',
-    className = 'min-h-screen text-gray-700',
+    className = 'min-h-screen',
     builderEnvironment = 'production'
   } = props;
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);

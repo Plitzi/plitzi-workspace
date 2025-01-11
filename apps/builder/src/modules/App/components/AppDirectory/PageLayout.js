@@ -1,6 +1,5 @@
 // Packages
 import React, { use } from 'react';
-import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
@@ -24,7 +23,7 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/
  * @returns {React.ReactElement}
  */
 const PageLayout = props => {
-  const { id = '', name = '', onSelect = noop, onRemove = noop } = props;
+  const { id = '', name = '', onSelect, onRemove } = props;
   const { schema } = use(SchemaContext);
   const {
     style: { cache }
@@ -41,7 +40,7 @@ const PageLayout = props => {
       <div className="hidden group-hover:flex">
         <div className="bg-black opacity-50 absolute top-0 bottom-0 left-0 right-0" />
         <div className="flex bg-white rounded-lg absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]">
-          <div className="py-2 px-4 text-blue-400 w-full flex items-center text-center font-bold select-none">
+          <div className="py-2 px-4 w-full flex items-center text-center select-none">
             {name}
           </div>
         </div>
