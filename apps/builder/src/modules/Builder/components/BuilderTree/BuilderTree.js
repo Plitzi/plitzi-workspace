@@ -166,6 +166,8 @@ const BuilderTree = ({ setDragTree }) => {
     return [nodesMapped];
   }, [flat, baseElement, componentDefinitions]);
 
+  const itemControls = useMemo(() => <BuilderTreeNodeControls />, []);
+
   return (
     <Tree
       className="w-full"
@@ -175,7 +177,7 @@ const BuilderTree = ({ setDragTree }) => {
       itemsOpened={openedCache}
       itemHovered={elementHovered}
       itemSelected={elementSelected}
-      itemControls={<BuilderTreeNodeControls />}
+      itemControls={itemControls}
       onChange={handleChange}
       isDragAllowed={isDragAllowed}
     />
