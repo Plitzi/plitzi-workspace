@@ -5,14 +5,27 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./VariablesContext": "./dist/VariablesContext.js",
-    "./VariablesHelper": "./dist/VariablesHelper.js"
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/index.es",
+      "require": "./dist/index.cjs"
+    },
+    "./VariablesContext": {
+      "types": "./dist/src/VariablesContext.d.ts",
+      "import": "./dist/VariablesContext.es",
+      "require": "./dist/VariablesContext.cjs"
+    },
+    "./VariablesHelper": {
+      "types": "./dist/src/VariablesHelper.d.ts",
+      "import": "./dist/VariablesHelper.es",
+      "require": "./dist/VariablesHelper.cjs"
+    }
   },
+  "type": "module",
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
-    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
+    "build-assets:dev-watch": "tsc -p ./tsconfig.app.json && vite build --watch --minify false",
+    "build-assets:prod": "tsc -p ./tsconfig.app.json && vite build"
   },
   "devDependencies": {
     "@babel/cli": "^7.26.4",
@@ -21,6 +34,8 @@
   },
   "dependencies": {
     "@plitzi/sdk-shared": "*",
-    "lodash": "^4.17.21"
+    "eslint": "^9.16.0",
+    "lodash": "^4.17.21",
+    "vite": "^6.0.7"
   }
 }

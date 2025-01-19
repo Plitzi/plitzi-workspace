@@ -1,7 +1,13 @@
+/* eslint-disable react-refresh/only-export-components */
 // Packages
-import React, { createContext, use } from 'react';
+import { createContext, use } from 'react';
 
-export const PlitziServiceContext = createContext(undefined);
+// Types
+import type { ReactNode } from 'react';
+
+const plitziServiceContextDefaultValue: unknown = undefined;
+
+export const PlitziServiceContext = createContext(plitziServiceContextDefaultValue);
 
 const usePlitziServiceContext = () => {
   const context = use(PlitziServiceContext);
@@ -14,14 +20,7 @@ const usePlitziServiceContext = () => {
   return context;
 };
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   value: any;
- * }} props
- * @returns {React.ReactElement}
- */
-const PlitziServiceProvider = props => {
+const PlitziServiceProvider = (props: { children?: ReactNode; value: unknown }) => {
   const { children, value } = props;
 
   return <PlitziServiceContext value={value}>{children}</PlitziServiceContext>;

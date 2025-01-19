@@ -1,0 +1,9 @@
+{
+  "extends": "@plitzi/sdk-shared/tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "strict": true,
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/*.ts", "src/*.tsx"]
+}

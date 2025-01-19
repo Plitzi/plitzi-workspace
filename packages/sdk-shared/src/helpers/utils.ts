@@ -1,9 +1,16 @@
 // Packages
 import get from 'lodash/get.js';
 
-export const isTestMode = () => typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test';
+// Types
+import type { FC } from 'react';
 
-export function getDisplayName(WrappedComponent) {
+export const isTestMode = () => typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+
+export function getDisplayName(WrappedComponent?: FC) {
+  if (!WrappedComponent) {
+    return 'Component';
+  }
+
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 }
 
@@ -25,7 +32,7 @@ const mongoObjectId = () => {
   );
 };
 
-export const generateID = (prevId = '') => {
+export const generateID = (prevId: string = '') => {
   if (!isTestMode()) {
     return mongoObjectId();
   }
@@ -37,12 +44,17 @@ export const generateID = (prevId = '') => {
   return `id_${prevId.substring(prevId.length - 6)}`;
 };
 
-export const getPathsFromObeject = (object, basePath = '', glue = '.', skipArray = false) => {
+export const getPathsFromObeject = (
+  object?: { [key: string]: unknown },
+  basePath = '',
+  glue = '.',
+  skipArray = false
+) => {
   if (!object || typeof object !== 'object') {
     return [];
   }
 
-  return Object.keys(object).reduce((acum, key) => {
+  return Object.keys(object).reduce<string[]>((acum, key): string[] => {
     key = key.replaceAll(glue, '').replaceAll('.', '');
     const path = `${basePath}${basePath ? glue : ''}${key}`;
 
@@ -54,11 +66,11 @@ export const getPathsFromObeject = (object, basePath = '', glue = '.', skipArray
       return [...acum, path];
     }
 
-    return [...acum, path, ...getPathsFromObeject(object[key], path, glue, skipArray)];
+    return [...acum, path, ...getPathsFromObeject(object[key] as { [key: string]: unknown }, path, glue, skipArray)];
   }, []);
 };
 
-export const makeId = (length, includeMayus = true, includeNumbers = true) => {
+export const makeId = (length: number, includeMayus = true, includeNumbers = true) => {
   let result = '';
   let characters = 'abcdefghijklmnopqrstuvwxyz';
   if (includeMayus) {
@@ -77,35 +89,35 @@ export const makeId = (length, includeMayus = true, includeNumbers = true) => {
   return result;
 };
 
-export const getKeyDecoded = (webKey, asWebId = false) => {
+export const getKeyDecoded = (webKey?: string, asWebId = false) => {
   if (!webKey) {
     return 0;
   }
 
-  let payload = {};
+  let payload: unknown = {};
   try {
     if (typeof window !== 'undefined') {
-      payload = JSON.parse(window.atob(webKey.split('.')[1], 'base64').toString());
+      payload = JSON.parse(window.atob(webKey.split('.')[1]).toString());
     } else {
       payload = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
     }
-  } catch (e) {
+  } catch {
     return 0;
   }
 
   if (asWebId) {
-    return get(payload, 'data.spaceId', 0);
+    return get(payload, 'data.spaceId', 0) as number;
   }
 
   return payload;
 };
 
-export function ParamsFromURL(query = undefined) {
+export function ParamsFromURL(query?: string) {
   if (!query && typeof window !== 'undefined') {
     query = window.location.search;
   }
 
-  const queryString = {};
+  const queryString: { [key: string]: string | string[] } = {};
   if (!query || query.length === 0) {
     return queryString;
   }
@@ -131,7 +143,7 @@ export function ParamsFromURL(query = undefined) {
   return queryString;
 }
 
-export const delay = ms =>
+export const delay = (ms: number) =>
   new Promise(res => {
     setTimeout(res, ms);
   });

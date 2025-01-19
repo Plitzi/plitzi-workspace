@@ -1,4 +1,4 @@
-const regexCallback = match => {
+const regexCallback = (match: string) => {
   let cls = 'number';
   if (/^"/.test(match)) {
     if (/:$/.test(match)) {
@@ -18,6 +18,6 @@ const regexCallback = match => {
 const regexJson =
   /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g;
 
-const syntaxHighlight = json => json?.replace(regexJson, regexCallback) ?? json;
+const syntaxHighlight = (json?: string) => json?.replace(regexJson, regexCallback) ?? json;
 
 export default syntaxHighlight;

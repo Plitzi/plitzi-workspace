@@ -1,4 +1,4 @@
-export const variablesToCss = variables => {
+export const variablesToCss = (variables?: { [key: string]: string }) => {
   if (!variables) {
     return '';
   }

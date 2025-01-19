@@ -9,7 +9,7 @@ jest.mock('plitziSdkFederation/usePlitziServiceContext');
 describe('twigWrapper', () => {
   test('processTwig should work successfully', () => {
     let result = processTwig(
-      `{"id": "{{list_6464d847fb1604e21afad1eb.item.id}}","label": "{{list_6464d847fb1604e21afad1eb.item.name}}"}`,
+      '{"id": "{{list_6464d847fb1604e21afad1eb.item.id}}","label": "{{list_6464d847fb1604e21afad1eb.item.name}}"}',
       {
         list_6464d847fb1604e21afad1eb: {
           item: {
@@ -23,7 +23,7 @@ describe('twigWrapper', () => {
     expect(result).toStrictEqual({ id: '123', label: 'test' });
 
     result = processTwig(
-      `{"id": "{{list_6464d847fb1604e21afad1eb.item.id}}","label": "{{list_6464d847fb1604e21afad1eb.item.name}}"}`,
+      '{"id": "{{list_6464d847fb1604e21afad1eb.item.id}}","label": "{{list_6464d847fb1604e21afad1eb.item.name}}"}',
       {
         list_6464d847fb1604e21afad1eb: {
           item: {
