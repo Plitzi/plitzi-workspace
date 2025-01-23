@@ -11,7 +11,7 @@ const VariableActions = ({ onUpdate, onRemove, selected }) => (
       <Button.Icon intent="primary" icon="fas fa-pen" />
     </Button>
     <Button intent="custom" border="none" size="custom" onClick={onRemove} title="Remove">
-      <Button.Icon intent="error" icon="fas fa-trash-alt" />
+      <Button.Icon intent="danger" icon="fas fa-trash-alt" />
     </Button>
   </div>
 );

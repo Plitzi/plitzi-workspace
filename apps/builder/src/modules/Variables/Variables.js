@@ -80,7 +80,7 @@ const Variables = () => {
       <Flex gap={2} direction="column">
         <Button size="sm" onClick={handleClickAddVariable} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />
-          Add Variable
+          New Variable
         </Button>
         <Input placeholder="Search Variables" value={filter} onChange={handleChangeFilter} label="">
           <Input.Icon icon="fa-solid fa-magnifying-glass" />

@@ -2,7 +2,9 @@
 import React, { useCallback, use, useEffect, useState, useMemo } from 'react';
 import omit from 'lodash/omit';
 import debounce from 'lodash/debounce';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
+import Flex from '@plitzi/plitzi-ui/Flex';
+import Input from '@plitzi/plitzi-ui/Input';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
@@ -74,9 +76,9 @@ const Segments = () => {
   );
 
   const handleChange = useCallback(
-    e => {
-      setFilter(e.target.value);
-      fetchDebounce(e.target.value);
+    value => {
+      setFilter(value);
+      fetchDebounce(value);
     },
     [setFilter]
   );
@@ -105,20 +107,18 @@ const Segments = () => {
   const { segments } = data;
 
   return (
-    <div className="segments flex flex-col">
-      <Button
-        intent="custom"
-        size="custom"
-        onClick={handleClickAddSegment}
-        className="rounded-none px-4 py-3 bg-gray-600 text-white"
-      >
-        <i className="fa-solid fa-puzzle-piece fa-2x mr-4 text-white" />
-        Add Segment
-      </Button>
-      <div className="px-4 my-2">
-        <FormControl value={filter} type="text" placeholder="Search Segments" onChange={handleChange} />
-      </div>
-      <div className="flex flex-col px-4 my-2">
+    <Flex direction="column" gap={2} className="segments w-full">
+      <Flex gap={2} direction="column">
+        <Button size="sm" onClick={handleClickAddSegment} iconPlacement="before">
+          <Button.Icon icon="fa-solid fa-plus" />
+          New Segment
+        </Button>
+        <Input placeholder="Search" value={filter} onChange={handleChange} label="">
+          <Input.Icon icon="fa-solid fa-magnifying-glass" />
+        </Input>
+      </Flex>
+      <div className="bg-gray-200 h-px mt-2" />
+      <Flex direction="column">
         {!loading &&
           segments &&
           Object.values(segments).map((segment, key) => {
@@ -135,14 +135,13 @@ const Segments = () => {
                 id={id}
                 identifier={identifier}
                 name={name}
-                description={description}
                 variables={variables}
                 onParentRefresh={handleRefresh}
               />
             );
           })}
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   );
 };
 

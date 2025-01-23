@@ -143,7 +143,7 @@ const PageActions = props => {
         <Icon
           size="xs"
           icon="fas fa-trash-alt"
-          intent="error"
+          intent="danger"
           cursor="pointer"
           title="Remove Page"
           onClick={handleClickRemovePage}

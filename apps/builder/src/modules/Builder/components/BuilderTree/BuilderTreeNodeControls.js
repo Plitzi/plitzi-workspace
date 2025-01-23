@@ -92,7 +92,7 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }) => {
         <>
           <Icon icon="fas fa-tools" title="Tools" onClick={handleClickTools} size="sm" />
           {canDelete && (
-            <Icon icon="fas fa-trash" title="Remove" onClick={handleClickDelete} intent="error" size="sm" />
+            <Icon icon="fas fa-trash" title="Remove" onClick={handleClickDelete} intent="danger" size="sm" />
           )}
         </>
       )}

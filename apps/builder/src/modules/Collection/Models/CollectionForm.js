@@ -2,8 +2,8 @@
 import React, { useCallback, useState } from 'react';
 import noop from 'lodash/noop';
 import { useForm, Controller } from 'react-hook-form';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import Heading from '@plitzi/plitzi-ui-components/Heading';
+import Button from '@plitzi/plitzi-ui/Button';
+import Heading from '@plitzi/plitzi-ui/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
@@ -119,64 +119,62 @@ const CollectionForm = props => {
   const handleCancel = useCallback(() => onCancel(), [onCancel]);
 
   return (
-    <div className="h-full flex flex-col grow basis-0 overflow-y-auto">
-      <div className="p-4 border-b border-gray-300">
-        <Heading type="h3">{id ? namePlural : 'New Collection'}</Heading>
-      </div>
-      <form className="flex flex-col p-3" onSubmit={handleSubmit(handleSubmitInternal)}>
-        <div className="flex mb-3 justify-end">
-          <div className="flex">
+    <div className="h-full flex flex-col grow basis-0 overflow-y-auto mx-4 my-2 gap-8">
+      <div className="flex flex-col gap-2">
+        <div className="border-b border-gray-300 pb-2">
+          <Heading as="h6">{id ? namePlural : 'New Collection'}</Heading>
+        </div>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit(handleSubmitInternal)}>
+          <div className="flex justify-end gap-3">
             {id && (
-              <Button onClick={handleCancel} className="mr-3 rounded-md">
+              <Button onClick={handleCancel} size="sm">
                 Cancel
               </Button>
             )}
-            <Button type="submit" className="rounded-md">
+            <Button type="submit" size="sm">
               {!id ? 'Create Collection' : 'Update Collection'}
             </Button>
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Controller
-            control={control}
-            rules={{ required: true }}
-            name="name"
-            render={({ field: { onChange, value, name }, fieldState: { error } }) => (
-              <FormControl
-                type="text"
-                name={name}
-                size="md"
-                label="Name Singular"
-                placeholder="Example: Post"
-                className="w-full"
-                inputClassName="rounded"
-                onChange={e => onChange(e.target.value)}
-                value={value}
-                error={error}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            rules={{ required: true }}
-            name="namePlural"
-            render={({ field: { onChange, value, name }, fieldState: { error } }) => (
-              <FormControl
-                type="text"
-                name={name}
-                size="md"
-                label="Name Plural"
-                placeholder="Example: Posts"
-                className="w-full"
-                inputClassName="rounded"
-                onChange={e => onChange(e.target.value)}
-                value={value}
-                error={error}
-              />
-            )}
-          />
-        </div>
-        <div className="mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Controller
+              control={control}
+              rules={{ required: true }}
+              name="name"
+              render={({ field: { onChange, value, name }, fieldState: { error } }) => (
+                <FormControl
+                  type="text"
+                  name={name}
+                  size="md"
+                  label="Name Singular"
+                  placeholder="Example: Post"
+                  className="w-full"
+                  inputClassName="rounded"
+                  onChange={e => onChange(e.target.value)}
+                  value={value}
+                  error={error}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              rules={{ required: true }}
+              name="namePlural"
+              render={({ field: { onChange, value, name }, fieldState: { error } }) => (
+                <FormControl
+                  type="text"
+                  name={name}
+                  size="md"
+                  label="Name Plural"
+                  placeholder="Example: Posts"
+                  className="w-full"
+                  inputClassName="rounded"
+                  onChange={e => onChange(e.target.value)}
+                  value={value}
+                  error={error}
+                />
+              )}
+            />
+          </div>
           <Controller
             control={control}
             rules={{ required: false }}
@@ -196,8 +194,6 @@ const CollectionForm = props => {
               />
             )}
           />
-        </div>
-        <div className="mt-4">
           <Controller
             control={control}
             rules={{ required: true }}
@@ -220,14 +216,12 @@ const CollectionForm = props => {
               </FormControl>
             )}
           />
-        </div>
-      </form>
-      <div className="flex flex-col px-3 pb-3">
-        <div className="flex justify-between items-center">
-          <Heading type="h4">Schema</Heading>
-        </div>
-        <div className="flex flex-col w-full">
-          <div className="flex gap-10 font-bold px-10 py-2 border-b border-gray-300">
+        </form>
+      </div>
+      <div className="flex flex-col">
+        <Heading as="h6">Schema</Heading>
+        <div className="flex flex-col w-full gap-2">
+          <div className="flex gap-10 font-bold border-b border-gray-300 pb-2">
             <div className="flex grow basis-0">Name</div>
             <div className="flex grow basis-0">Identifier</div>
             <div className="flex grow basis-0">Type</div>

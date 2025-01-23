@@ -1,8 +1,7 @@
 // Packages
 import React from 'react';
-// import classNames from 'classnames';
 import get from 'lodash/get';
-import noop from 'lodash/noop';
+import Icon from '@plitzi/plitzi-ui/Icon';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -22,13 +21,13 @@ import { fieldTypes } from '../CollectionsConstants';
  * @returns {React.ReactElement}
  */
 const CollectionField = props => {
-  const { name = '', machineName = '', type, params = emptyObject, onRemove = noop } = props;
+  const { name = '', machineName = '', type, params = emptyObject, onRemove } = props;
   const fieldType = get(fieldTypes, type);
   const isRequired = get(params, 'required', false);
   const isPrimary = get(params, 'primary', false);
 
   return (
-    <div className="items-center gap-10 flex py-3 px-10 hover:bg-blue-200/20 hover:cursor-pointer border-b border-gray-300">
+    <div className="items-center gap-10 flex hover:bg-blue-200/20 hover:cursor-pointer border-b border-gray-300 pb-2">
       <div className="flex items-center grow basis-0 text-md font-bold">{name !== '' ? name : 'New Field'}</div>
       <div className="flex items-center grow basis-0 text-md">{machineName !== '' ? machineName : 'Not Set'}</div>
       <div className="flex items-center grow basis-0">
@@ -48,11 +47,7 @@ const CollectionField = props => {
         {!isPrimary && <i className="fa-solid fa-xmark text-red-400 hover:text-red-500" title="Is Not Primary" />}
       </div>
       <div className="flex items-center justify-center w-[150px]">
-        <i
-          className="fas fa-trash p-1 text-red-400 hover:text-red-500 cursor-pointer"
-          title="Remove"
-          onClick={onRemove}
-        />
+        <Icon icon="fas fa-trash" intent="danger" className="p-1 cursor-pointer" title="Remove" onClick={onRemove} />
       </div>
     </div>
   );

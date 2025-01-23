@@ -6,6 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
+import Icon from '@plitzi/plitzi-ui/Icon';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -68,7 +69,7 @@ const CollectionFieldForm = props => {
     <form
       onSubmit={handleSubmit(handleSubmitInternal)}
       onReset={handleResetInternal}
-      className="justify-between gap-10 flex py-3 px-10 border-b border-gray-300"
+      className="justify-between gap-10 flex"
     >
       <div className="flex items-start grow basis-0 text-md">
         <Controller
@@ -200,11 +201,11 @@ const CollectionFieldForm = props => {
         />
       </div>
       <div className="flex gap-4 items-center justify-center w-[150px]">
-        <Button intent="custom" size="custom" type="reset">
-          <i className="fa-solid fa-xmark text-red-400 hover:text-red-500" title="Cancel" />
+        <Button intent="custom" size="custom" type="reset" title="Cancel">
+          <Icon icon="fas fa-trash" intent="danger" className="p-1 cursor-pointer" />
         </Button>
-        <Button intent="custom" size="custom" type="submit">
-          <i className="fa-solid fa-check text-green-400 hover:text-green-500" title="Save" />
+        <Button intent="custom" size="custom" type="submit" title="Save">
+          <Icon icon="fa-solid fa-check" intent="success" />
         </Button>
       </div>
     </form>

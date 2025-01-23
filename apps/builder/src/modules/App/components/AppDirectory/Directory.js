@@ -174,7 +174,7 @@ const Directory = props => {
               size="xs"
               icon="fas fa-trash-alt"
               cursor="pointer"
-              intent="error"
+              intent="danger"
               title="Remove Folder"
               onClick={handleClickRemoveFolder}
             />

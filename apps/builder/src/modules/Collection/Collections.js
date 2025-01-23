@@ -54,7 +54,7 @@ const Collections = props => {
     <Flex direction="column" gap={4} className="w-full">
       <Button iconPlacement="before" size="sm" onClick={handleClickAddCollection}>
         <Button.Icon icon="fa-solid fa-plus" />
-        Add Collection
+        New Collection
       </Button>
       <div className="w-full border-solid border-b border-gray-200" />
       <Flex direction="column" gap={2}>

@@ -1,11 +1,13 @@
 // Packages
 import React, { useCallback, use } from 'react';
 import noop from 'lodash/noop';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import Flex from '@plitzi/plitzi-ui/Flex';
 
 // Alias
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
@@ -141,53 +143,47 @@ const Segment = props => {
   }, [id, addToast, mutate, showModal]);
 
   return (
-    <div className="group flex items-center cursor-grabbing my-2 first:mt-0" draggable onDragStart={onDragStart}>
-      <div className="w-11 h-11 flex items-center justify-center bg-blue-400 rounded mr-3">
-        <i className="fa-solid fa-puzzle-piece fa-2x text-white" />
-      </div>
+    <Flex className="group cursor-grabbing my-2 first:mt-0" gap={2} items="center" draggable onDragStart={onDragStart}>
+      <Icon icon="fa-solid fa-diamond" intent="primaryActive" />
       <div className="flex flex-col basis-0 grow overflow-hidden">
-        <div className="group-hover:text-blue-400 font-bold truncate">{name}</div>
-        <div className="text-sm">{description}</div>
+        <div className="group-hover:text-primary-400 font-bold truncate">{name}</div>
       </div>
       <div className="hidden group-hover:flex">
-        <Button
-          intent="custom"
-          size="custom"
+        <Icon
+          icon="fas fa-pen"
           onClick={handleClickUpdateSegment}
           title="Update"
-          className="px-1 py-2 mr-2 hover:text-blue-400"
-        >
-          <i className="fas fa-pen" />
-        </Button>
-        <Button
-          intent="custom"
-          size="custom"
+          size="sm"
+          cursor="pointer"
+          className="px-1"
+        />
+        <Icon
+          icon="fa-solid fa-puzzle-piece"
           onClick={handleClickBuilder}
           title="Open Builder"
-          className="px-1 py-2 mr-2 hover:text-blue-400"
-        >
-          <i className="fa-solid fa-puzzle-piece" />
-        </Button>
-        <Button
-          intent="custom"
-          size="custom"
+          size="sm"
+          cursor="pointer"
+          className="px-1"
+        />
+        <Icon
+          icon="fa-solid fa-rocket"
           onClick={handleClickPublish}
           title="Make Snapshot"
-          className="px-1 py-2 mr-2 hover:text-blue-400"
-        >
-          <i className="fa-solid fa-rocket" />
-        </Button>
-        <Button
-          intent="custom"
-          size="custom"
+          size="sm"
+          cursor="pointer"
+          className="px-1"
+        />
+        <Icon
+          icon="fas fa-trash-alt"
           onClick={handleClickRemove}
           title="Remove"
-          className="text-red-400 hover:text-red-500 px-1 py-2"
-        >
-          <i className="fas fa-trash-alt" />
-        </Button>
+          size="sm"
+          cursor="pointer"
+          intent="danger"
+          className="px-1"
+        />
       </div>
-    </div>
+    </Flex>
   );
 };
 
