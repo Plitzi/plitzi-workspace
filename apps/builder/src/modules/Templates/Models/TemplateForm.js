@@ -1,14 +1,12 @@
 // Packages
-import React from 'react';
-import classNames from 'classnames';
-import noop from 'lodash/noop';
-import { useForm, Controller } from 'react-hook-form';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import FormControl from '@plitzi/plitzi-ui-components/FormControl';
+import React, { useMemo } from 'react';
+import Button from '@plitzi/plitzi-ui/Button';
+import Form from '@plitzi/plitzi-ui/Form';
+import Flex from '@plitzi/plitzi-ui/Flex';
+import { z } from 'zod';
 
 /**
  * @param {{
- *   className?: string;
  *   name?: string;
  *   description?: string;
  *   onClose?: () => void;
@@ -17,67 +15,34 @@ import FormControl from '@plitzi/plitzi-ui-components/FormControl';
  * @returns {React.ReactElement}
  */
 const TemplateForm = props => {
-  const { className = '', name = 'New Template', description = '', onSubmit = noop, onClose = noop } = props;
+  const { name = 'New Template', description = '', onSubmit, onClose } = props;
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors }
-  } = useForm({
-    defaultValues: { name, description }
-  });
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(3, { message: 'Too Short' }).max(20, { message: 'Too Long' }),
+        description: z.string().max(200, { message: 'Too Long' }).optional()
+      }),
+    []
+  );
 
-  const handleSubmitInternal = values => onSubmit(values);
+  const initialValues = useMemo(() => ({ name, description }), [name, description]);
+
+  const handleSubmitInternal = values => onSubmit?.(values);
 
   return (
-    <form className={classNames('flex flex-col p-3', className)} onSubmit={handleSubmit(handleSubmitInternal)}>
-      <Controller
-        control={control}
-        rules={{ required: true }}
-        name="name"
-        render={({ field: { onChange, value } }) => (
-          <FormControl
-            type="text"
-            name="name"
-            size="md"
-            label="Template Name"
-            placeholder="Template Name"
-            className="w-full"
-            inputClassName="rounded"
-            onChange={e => onChange(e.target.value)}
-            value={value}
-            error={errors.name}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        rules={{ required: false }}
-        name="description"
-        render={({ field: { onChange, value } }) => (
-          <FormControl
-            type="textarea"
-            name="description"
-            size="md"
-            label="Template Description"
-            placeholder="Template Description"
-            className="w-full mt-4"
-            inputClassName="rounded"
-            onChange={e => onChange(e.target.value)}
-            value={value}
-            error={errors.description}
-          />
-        )}
-      />
-      <div className="flex justify-end mt-4">
-        <Button onClick={onClose} className="mr-3 rounded-md">
+    <Form className="p-3" initialValues={initialValues} schema={schema} onSubmit={handleSubmitInternal}>
+      <Form.Input name="name" label="Template Name" placeholder="Template Name" />
+      <Form.TextArea name="description" label="Template Description" placeholder="Template Description" />
+      <Flex gap={3} justify="end">
+        <Button onClick={onClose} size="sm">
           Cancel
         </Button>
-        <Button type="submit" className="rounded-md">
+        <Button type="submit" size="sm">
           Submit
         </Button>
-      </div>
-    </form>
+      </Flex>
+    </Form>
   );
 };
 

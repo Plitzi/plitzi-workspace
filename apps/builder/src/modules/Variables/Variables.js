@@ -86,7 +86,7 @@ const Variables = () => {
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="bg-gray-300 h-px" />
+      <div className="bg-gray-200 h-px" />
       <div className="flex flex-col gap-1">
         {variablesFiltered.map(segment => {
           const { name, type, value, category, subValues } = segment;

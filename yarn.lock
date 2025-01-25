@@ -2456,6 +2456,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hookform/resolvers@npm:^3.10.0":
+  version: 3.10.0
+  resolution: "@hookform/resolvers@npm:3.10.0"
+  peerDependencies:
+    react-hook-form: ^7.0.0
+  checksum: 10c0/7ee44533b4cdc28c4fa2a94894c735411e5a1f830f4a617c580533321a9b901df0cc8c1e2fad81ad8d55154ebc5cb844cf9c116a3148ffae2bc48758c33cbb8e
+  languageName: node
+  linkType: hard
+
 "@humanfs/core@npm:^0.19.1":
   version: 0.19.1
   resolution: "@humanfs/core@npm:0.19.1"
@@ -3346,6 +3355,7 @@ __metadata:
     webpack-cli: "npm:^5.1.4"
     webpack-dev-server: "npm:^5.1.0"
     webpack-subresource-integrity: "npm:^5.2.0-rc.1"
+    zod: "npm:^3.24.1"
   languageName: unknown
   linkType: soft
 
@@ -3483,6 +3493,7 @@ __metadata:
     "@codemirror/state": "npm:^6.5.1"
     "@codemirror/theme-one-dark": "npm:^6.1.2"
     "@codemirror/view": "npm:^6.36.2"
+    "@hookform/resolvers": "npm:^3.10.0"
     class-variance-authority: "npm:^0.7.1"
     classnames: "npm:^2.5.1"
     immer: "npm:^10.1.1"
@@ -3490,6 +3501,8 @@ __metadata:
     moment: "npm:^2.30.1"
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
+    react-hook-form: "npm:^7.54.2"
+    zod: "npm:^3.24.1"
   languageName: node
   linkType: soft
 
@@ -3668,7 +3681,6 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.25.9"
     "@babel/preset-env": "npm:^7.26.0"
     "@eslint/js": "npm:^9.18.0"
-    "@rollup/plugin-node-resolve": "npm:^16.0.0"
     "@tailwindcss/forms": "npm:^0.5.9"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
@@ -3799,25 +3811,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-node-resolve@npm:^16.0.0":
-  version: 16.0.0
-  resolution: "@rollup/plugin-node-resolve@npm:16.0.0"
-  dependencies:
-    "@rollup/pluginutils": "npm:^5.0.1"
-    "@types/resolve": "npm:1.20.2"
-    deepmerge: "npm:^4.2.2"
-    is-module: "npm:^1.0.0"
-    resolve: "npm:^1.22.1"
-  peerDependencies:
-    rollup: ^2.78.0||^3.0.0||^4.0.0
-  peerDependenciesMeta:
-    rollup:
-      optional: true
-  checksum: 10c0/b63deb6fc14b37070ccaffacc8c10c9720f28ce7632f4fe2ee77064c0c79bcc3fe060fb77160e673c9fd847307252f25a2983030bd54f1888324063c69ae1399
-  languageName: node
-  linkType: hard
-
-"@rollup/pluginutils@npm:^5.0.1, @rollup/pluginutils@npm:^5.1.4":
+"@rollup/pluginutils@npm:^5.1.4":
   version: 5.1.4
   resolution: "@rollup/pluginutils@npm:5.1.4"
   dependencies:
@@ -5090,13 +5084,6 @@ __metadata:
   dependencies:
     csstype: "npm:^3.0.2"
   checksum: 10c0/818e546fa03a2a65ac2652fc472891ac96684211e8967bc25e1da6a8a09e2301ad972b1b038d128f8b4cbbd7691f6f57fee274db568169e9b6b01556abbb5bee
-  languageName: node
-  linkType: hard
-
-"@types/resolve@npm:1.20.2":
-  version: 1.20.2
-  resolution: "@types/resolve@npm:1.20.2"
-  checksum: 10c0/c5b7e1770feb5ccfb6802f6ad82a7b0d50874c99331e0c9b259e415e55a38d7a86ad0901c57665d93f75938be2a6a0bc9aa06c9749192cadb2e4512800bbc6e6
   languageName: node
   linkType: hard
 
@@ -11739,13 +11726,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-module@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "is-module@npm:1.0.0"
-  checksum: 10c0/795a3914bcae7c26a1c23a1e5574c42eac13429625045737bf3e324ce865c0601d61aee7a5afbca1bee8cb300c7d9647e7dc98860c9bdbc3b7fdc51d8ac0bffc
-  languageName: node
-  linkType: hard
-
 "is-network-error@npm:^1.0.0":
   version: 1.1.0
   resolution: "is-network-error@npm:1.1.0"
@@ -15698,7 +15678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-hook-form@npm:^7.53.2":
+"react-hook-form@npm:^7.53.2, react-hook-form@npm:^7.54.2":
   version: 7.54.2
   resolution: "react-hook-form@npm:7.54.2"
   peerDependencies:
@@ -19877,6 +19857,13 @@ __metadata:
   version: 0.8.15
   resolution: "zen-observable@npm:0.8.15"
   checksum: 10c0/71cc2f2bbb537300c3f569e25693d37b3bc91f225cefce251a71c30bc6bb3e7f8e9420ca0eb57f2ac9e492b085b8dfa075fd1e8195c40b83c951dd59c6e4fbf8
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.24.1":
+  version: 3.24.1
+  resolution: "zod@npm:3.24.1"
+  checksum: 10c0/0223d21dbaa15d8928fe0da3b54696391d8e3e1e2d0283a1a070b5980a1dbba945ce631c2d1eccc088fdbad0f2dfa40155590bf83732d3ac4fcca2cc9237591b
   languageName: node
   linkType: hard
 

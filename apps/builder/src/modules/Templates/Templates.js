@@ -2,9 +2,10 @@
 import React, { use, useMemo, useState } from 'react';
 import get from 'lodash/get';
 import PlitziSdk from '@plitzi/plitzi-sdk';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
+import Flex from '@plitzi/plitzi-ui/Flex';
+import Input from '@plitzi/plitzi-ui/Input';
 import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale';
-import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
@@ -138,19 +139,17 @@ const Templates = () => {
   }, [templates, filter]);
 
   return (
-    <div className="w-full flex flex-col overflow-y-auto grow basis-0">
-      <Button
-        intent="custom"
-        size="custom"
-        onClick={handleClickAddTemplate}
-        className="px-4 py-3 bg-gray-600 text-white"
-      >
-        <i className="fas fa-cube fa-2x mr-4" />
-        Add Template
-      </Button>
-      <div className="px-4 my-2">
-        <FormControl value={filter} type="text" placeholder="Search Templates" onChange={handleChange} />
-      </div>
+    <div className="w-full flex flex-col overflow-y-auto grow basis-0 gap-3">
+      <Flex gap={2} direction="column">
+        <Button size="sm" onClick={handleClickAddTemplate} iconPlacement="before">
+          <Button.Icon icon="fa-solid fa-plus" />
+          New Template
+        </Button>
+        <Input placeholder="Search Variables" value={filter} onChange={handleChange} label="">
+          <Input.Icon icon="fa-solid fa-magnifying-glass" />
+        </Input>
+      </Flex>
+      <div className="bg-gray-200 h-px" />
       <div className="flex flex-col items-center overflow-auto px-4">
         {templatesMemo &&
           templatesMemo.map(template => {
