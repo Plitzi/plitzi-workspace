@@ -1,6 +1,6 @@
 // Packages
-import { expect, describe, test } from '@jest/globals';
 import cloneDeep from 'lodash/cloneDeep';
+import { describe, it, expect } from 'vitest';
 
 // Relatives
 import FlatMap from './FlatMap';
@@ -9,6 +9,9 @@ import FlatMap from './FlatMap';
 import schema1 from '../tests/fixtures/json/schema1.json';
 import styleSchema1 from '../tests/fixtures/json/styleSchema1.json';
 
+// Types
+import type { Schema, Style } from '@plitzi/sdk-shared';
+
 describe('Testing FlatMap', () => {
   const flat = {
     '62f70064f2882d5ee31dcf71': {
@@ -16,8 +19,8 @@ describe('Testing FlatMap', () => {
       definition: {
         label: 'Page',
         type: 'page',
-        bindings: null,
-        parentId: null,
+        bindings: {},
+        parentId: undefined,
         rootId: '62f70064f2882d5ee31dcf71',
         items: [],
         styleSelectors: {
@@ -80,7 +83,7 @@ describe('Testing FlatMap', () => {
     }
   };
 
-  test('FlatMap Add Element', done => {
+  it('FlatMap Add Element', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
@@ -90,8 +93,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: ['62f89157c38ce9ef02b7a5a6'],
           styleSelectors: {
@@ -130,8 +133,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: ['62f8c677a4dcde9ce010a397', '62f89157c38ce9ef02b7a5a6'],
           styleSelectors: {
@@ -188,8 +191,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: ['62f8c677a4dcde9ce010a397', '62f89157c38ce9ef02b7a5a6', '62cbd2570eedfd5fee5df93d'],
           styleSelectors: {
@@ -251,11 +254,9 @@ describe('Testing FlatMap', () => {
         }
       }
     });
-
-    done();
   });
 
-  test('FlatMap Add Element Wrong', done => {
+  it('FlatMap Add Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'wrong')).toBe(false);
@@ -263,11 +264,9 @@ describe('Testing FlatMap', () => {
     expect(instance.addElement(element1, 'wrongId', 'wrong')).toBe(false);
     expect(instance.addElement(element2, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
     expect(instance.addElement(element3, '62f89157c38ce9ef02b7a5a6', 'wrong')).toBe(false);
-
-    done();
   });
 
-  test('FlatMap Remove Element', done => {
+  it('FlatMap Remove Element', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     expect(instance.removeElement('62f89157c38ce9ef02b7a5a6')).toBe(false);
@@ -277,8 +276,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: [],
           styleSelectors: {
@@ -300,8 +299,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: ['62f89157c38ce9ef02b7a5a6'],
           styleSelectors: {
@@ -340,8 +339,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: [],
           styleSelectors: {
@@ -355,20 +354,16 @@ describe('Testing FlatMap', () => {
         }
       }
     });
-
-    done();
   });
 
-  test('FlatMap Remove Element Wrong', done => {
+  it('FlatMap Remove Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     expect(instance.removeElement('wrongId')).toBe(false);
     expect(instance.removeElement('62f70064f2882d5ee31dcf71')).toBe(false);
-
-    done();
   });
 
-  test('FlatMap Update Element', () => {
+  it('FlatMap Update Element', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
@@ -381,8 +376,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: ['62f89157c38ce9ef02b7a5a6'],
           styleSelectors: {
@@ -415,7 +410,7 @@ describe('Testing FlatMap', () => {
     });
   });
 
-  test('FlatMap Update Element Wrong', () => {
+  it('FlatMap Update Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
@@ -426,8 +421,8 @@ describe('Testing FlatMap', () => {
         definition: {
           label: 'Page',
           type: 'page',
-          bindings: null,
-          parentId: null,
+          bindings: {},
+          parentId: undefined,
           rootId: '62f70064f2882d5ee31dcf71',
           items: ['62f89157c38ce9ef02b7a5a6'],
           styleSelectors: {
@@ -461,10 +456,13 @@ describe('Testing FlatMap', () => {
   });
 
   // yarn test FlatMap.test.js -t flatAsTemplate
-  test('flatAsTemplate', () => {
-    const instance = new FlatMap({ flat: cloneDeep(schema1.flat), variables: cloneDeep(schema1.variables) });
+  it('flatAsTemplate', () => {
+    const instance = new FlatMap({
+      flat: cloneDeep(schema1.flat),
+      variables: cloneDeep(schema1.variables) as Schema['variables']
+    });
     const { elements, elementsStyle, variables } = instance.flatAsTemplate(
-      styleSchema1 ?? { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
+      styleSchema1 as Style,
       '669b33d56e29e1297a6ccde1'
     );
     expect({ elements, elementsStyle, variables }).toStrictEqual({
@@ -619,7 +617,8 @@ describe('Testing FlatMap', () => {
           },
           mobile: {},
           tablet: {}
-        }
+        },
+        variables: {}
       },
       variables: [
         {
@@ -673,12 +672,12 @@ describe('Testing FlatMap', () => {
     });
   });
 
-  test('FlatMap getElementVariables', () => {
-    const instance = new FlatMap({ flat: cloneDeep(schema1.flat), variables: cloneDeep(schema1.variables) });
-    const variables = instance.getElementVariables(
-      '669b33dcf636e501810d3d1d',
-      styleSchema1
-    );
+  it('FlatMap getElementVariables', () => {
+    const instance = new FlatMap({
+      flat: cloneDeep(schema1.flat),
+      variables: cloneDeep(schema1.variables) as Schema['variables']
+    });
+    const variables = instance.getElementVariables(styleSchema1 as Style, '669b33dcf636e501810d3d1d');
     expect(variables).toEqual([
       {
         name: 'fancyVariableColor',

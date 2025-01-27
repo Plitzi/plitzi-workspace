@@ -7,9 +7,8 @@
         "type": "page",
         "initialState": null,
         "styleSelectors": { "base": "page-u7af" },
-        "bindings": null,
+        "bindings": {},
         "interactions": null,
-        "parentId": null,
         "rootId": "657425e280b5b09c93b4a284",
         "items": ["669b33d56e29e1297a6ccde1"]
       },

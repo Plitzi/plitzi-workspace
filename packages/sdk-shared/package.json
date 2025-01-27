@@ -6,26 +6,33 @@
     "eslint.config.mjs",
     "jest.config.js",
     "jest.setup.js",
-    "tailwind.config.js"
+    "tailwind.config.js",
+    "vite.config.mjs",
+    "setupTests.ts"
   ],
   "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es",
+      "require": "./dist/index.cjs"
+    },
     "./usePlitziServiceContext": {
-      "types": "./dist/src/hooks/usePlitziServiceContext.d.ts",
+      "types": "./dist/hooks/usePlitziServiceContext.d.ts",
       "import": "./dist/hooks/usePlitziServiceContext.es",
       "require": "./dist/hooks/usePlitziServiceContext.cjs"
     },
     "./utils": {
-      "types": "./dist/src/helpers/utils.d.ts",
+      "types": "./dist/helpers/utils.d.ts",
       "import": "./dist/helpers/utils.es",
       "require": "./dist/helpers/utils.cjs"
     },
     "./syntaxHighlight": {
-      "types": "./dist/src/helpers/syntaxHighlight.d.ts",
+      "types": "./dist/helpers/syntaxHighlight.d.ts",
       "import": "./dist/helpers/syntaxHighlight.es",
       "require": "./dist/helpers/syntaxHighlight.cjs"
     },
     "./twigWrapper": {
-      "types": "./dist/src/helpers/twigWrapper.d.ts",
+      "types": "./dist/helpers/twigWrapper.d.ts",
       "import": "./dist/helpers/twigWrapper.es",
       "require": "./dist/helpers/twigWrapper.cjs"
     },
@@ -37,66 +44,72 @@
     "./tailwind.config": "./tailwind.config.js",
     "./tsconfig.json": "./tsconfig.json",
     "./tsconfig.app.json": "./tsconfig.app.json",
-    "./vite.config.mjs": "./vite.config.mjs"
-  },
-  "scripts": {
-    "lint": "eslint ./src",
-    "build-assets:dev-watch": "tsc -p ./tsconfig.app.json && vite build --watch --minify false",
-    "build-assets:prod": "tsc -p ./tsconfig.app.json && vite build"
+    "./vite.config.mjs": "./vite.config.mjs",
+    "./setupTests.ts": "./setupTests.ts"
   },
   "type": "module",
+  "scripts": {
+    "lint": "eslint ./src",
+    "build-assets:dev": "tsc -p ./tsconfig.app.json && vite build --mode development --minify false",
+    "build-assets:dev-watch": "tsc -p ./tsconfig.app.json && vite build --mode development --watch --minify false",
+    "build-assets:prod": "tsc -p ./tsconfig.app.json && vite build"
+  },
+  "dependencies": {
+    "@plitzi/plitzi-ui": "^0.1.7",
+    "lodash": "^4.17.21",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "twig": "^1.17.1"
+  },
   "devDependencies": {
     "@babel/cli": "^7.26.4",
-    "@babel/core": "^7.26.0",
-    "@babel/eslint-parser": "^7.25.9",
+    "@babel/core": "^7.26.7",
+    "@babel/eslint-parser": "^7.26.5",
     "@babel/plugin-syntax-flow": "^7.26.0",
     "@babel/plugin-transform-react-jsx": "^7.25.9",
-    "@babel/preset-env": "^7.26.0",
-    "@eslint/js": "^9.18.0",
-    "@tailwindcss/forms": "^0.5.9",
+    "@babel/preset-env": "^7.26.7",
+    "@eslint/js": "^9.19.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@tailwindcss/forms": "^0.5.10",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.1.0",
+    "@testing-library/react": "^16.2.0",
     "@testing-library/react-hooks": "^8.0.1",
-    "@testing-library/user-event": "^14.5.2",
-    "@types/lodash": "^4.17.13",
-    "@types/react": "^19.0.7",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/lodash": "^4.17.14",
+    "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@types/twig": "^1.12.16",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "babel-minify": "^0.5.2",
-    "eslint": "^9.16.0",
+    "eslint": "^9.19.0",
     "eslint-config-airbnb": "^19.0.4",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "^2.3.3",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-config-turbo": "^2.3.4",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-cypress": "^4.1.0",
     "eslint-plugin-flowtype": "8.0.3",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-jest": "^28.9.0",
-    "eslint-plugin-jsdoc": "^50.6.0",
+    "eslint-plugin-jest": "^28.11.0",
+    "eslint-plugin-jsdoc": "^50.6.3",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-prettier": "^5.2.1",
-    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-prettier": "^5.2.3",
+    "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-react-refresh": "^0.4.16",
-    "eslint-plugin-storybook": "^0.11.1",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "eslint-plugin-storybook": "^0.11.2",
     "globals": "^15.14.0",
     "jest-environment-jsdom": "^29.7.0",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.1",
     "prettier": "^3.4.2",
-    "tailwindcss": "^3.4.16",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
-    "vite": "^6.0.7",
+    "typescript-eslint": "^8.21.0",
+    "vite": "^6.0.11",
     "vite-plugin-dts": "^4.5.0",
-    "vitest": "^2.1.8"
-  },
-  "dependencies": {
-    "lodash": "^4.17.21",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "twig": "^1.17.1"
+    "vite-plugin-react": "^4.0.1",
+    "vitest": "^3.0.4",
+    "vitest-fetch-mock": "^0.4.3"
   }
 }

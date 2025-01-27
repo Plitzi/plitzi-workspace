@@ -11,14 +11,15 @@
   },
   "scripts": {
     "lint": "eslint ./src",
+    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored",
     "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
     "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
   },
   "type": "module",
   "devDependencies": {
     "@babel/cli": "^7.26.4",
-    "@babel/core": "^7.26.0",
-    "eslint": "^9.16.0"
+    "@babel/core": "^7.26.7",
+    "eslint": "^9.19.0"
   },
   "dependencies": {
     "@plitzi/sdk-shared": "*",

@@ -12,7 +12,6 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 
 // Alias
 import LayoutForm from '@pmodules/App/models/LayoutForm';
-import { DROP_DIRECTION_CUSTOM } from '@plitzi/sdk-schema/FlatMap';
 
 // Relatives
 import { generateID } from '../../../../helpers/utils';
@@ -45,13 +44,7 @@ const LayoutsHeader = () => {
       const { definition, attributes } = componentDefinitions.layoutContainer;
       const id = generateID();
       const element = { id, attributes, definition: { ...definition, rootId: id, parentId: null, label: data.name } };
-      eventBridge.emit(
-        EventBridgeModuleTypes.MAIN,
-        EventBridgeTypes.SCHEMA_ADD_ELEMENT,
-        '',
-        element,
-        DROP_DIRECTION_CUSTOM
-      );
+      eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_ADD_ELEMENT, '', element, 'custom');
     }
   }, [showModal, eventBridge]);
 

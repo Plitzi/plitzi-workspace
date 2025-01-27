@@ -6,14 +6,6 @@ import cloneDeep from 'lodash/cloneDeep';
 // Relatives
 import { generateID } from '../../helpers/utils';
 
-export const DropDirectionConstants = {
-  DROP_DIRECTION_TOP: 'top',
-  DROP_DIRECTION_BOTTOM: 'bottom',
-  DROP_DIRECTION_LEFT: 'left',
-  DROP_DIRECTION_RIGHT: 'right',
-  DROP_DIRECTION_INSIDE: 'inside'
-};
-
 export const getInitialItems = (parentId, items, definitions, rootId) => {
   let result = {};
   const directItems = {};

@@ -9,9 +9,6 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
-// Monorepo
-import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
-
 // Alias
 import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 
@@ -158,7 +155,7 @@ const Selector = props => {
           const { value: newValue } = e.target;
           if (newValue !== '' && !tags.find(tag => tag.name === newValue)) {
             setInputValue('');
-            const tag = { name: selectorFormatter(newValue), type: StyleSelectors.SELECTOR_CLASS };
+            const tag = { name: selectorFormatter(newValue), type: 'class' };
             const finalValue = [...tags, tag]
               .filter(tag => !!tag?.name)
               .reduce((acum, tag) => `${acum} ${tag.name}`, '')

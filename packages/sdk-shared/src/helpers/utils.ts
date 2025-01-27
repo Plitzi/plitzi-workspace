@@ -1,5 +1,5 @@
 // Packages
-import get from 'lodash/get.js';
+import get from 'lodash/get';
 
 // Types
 import type { FC } from 'react';

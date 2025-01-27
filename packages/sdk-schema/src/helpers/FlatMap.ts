@@ -1,28 +1,36 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
+
 // Packages
-import get from 'lodash/get.js';
-import set from 'lodash/set.js';
+import get from 'lodash/get';
+import set from 'lodash/set';
 
 // Monorepo
 import { generateID } from '@plitzi/sdk-shared/utils';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
-export const DROP_DIRECTION_TOP = 'top';
-export const DROP_DIRECTION_BOTTOM = 'bottom';
-export const DROP_DIRECTION_LEFT = 'left';
-export const DROP_DIRECTION_RIGHT = 'right';
-export const DROP_DIRECTION_INSIDE = 'inside';
-export const DROP_DIRECTION_CUSTOM = 'custom';
+// Types
+import type { Style, Element, Schema, SchemaVariable } from '@plitzi/sdk-shared';
 
 export const VARIABLE_REGEX = /var\(--(?<token>[a-z0-9_-]+)\)/gi;
 
 export const EMPTY_SCHEMA = {
-  schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] },
-  style: { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' },
+  schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] } as Schema,
+  style: { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' } as Style,
   definition: { rootId: '' } // for segments and templates
 };
 
+export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside';
+
+export type FlatMapProps = {
+  flat?: Schema['flat'];
+  variables?: Schema['variables'];
+};
+
 class FlatMap {
-  constructor(props = {}) {
+  flat: Schema['flat'];
+  variables: Schema['variables'];
+
+  constructor(props: FlatMapProps = {}) {
     const { flat, variables } = props;
     if (!flat) {
       throw new Error('Flat is required');
@@ -32,16 +40,23 @@ class FlatMap {
     this.variables = variables ?? [];
   }
 
-  addElement = (data, to, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}) => {
+  addElement = (
+    data: Element,
+    to: string,
+    dropPosition = 'inside',
+    initialItems: { [key: string]: Element | undefined } = {}
+  ) => {
     let parent;
-    if (dropPosition !== DROP_DIRECTION_CUSTOM) {
-      if (dropPosition !== DROP_DIRECTION_INSIDE) {
+    if (dropPosition !== 'custom') {
+      if (dropPosition !== 'inside') {
         const element = this.flat[to];
         if (!element) {
           return false;
         }
 
-        parent = this.flat[element.definition.parentId];
+        if (element.definition.parentId) {
+          parent = this.flat[element.definition.parentId];
+        }
       } else {
         parent = this.flat[to];
       }
@@ -51,10 +66,7 @@ class FlatMap {
       }
     }
 
-    if (
-      dropPosition !== DROP_DIRECTION_CUSTOM &&
-      (!this.flat || this.flat[data.id] || !Array.isArray(get(parent, 'definition.items')))
-    ) {
+    if (dropPosition !== 'custom' && (this.flat[data.id] || !Array.isArray(get(parent, 'definition.items')))) {
       return false;
     }
 
@@ -64,8 +76,8 @@ class FlatMap {
 
     set(this.flat, data.id, data);
     switch (dropPosition) {
-      case DROP_DIRECTION_LEFT:
-      case DROP_DIRECTION_TOP: {
+      case 'left':
+      case 'top': {
         const items = get(parent, 'definition.items', []);
         items.splice(
           items.findIndex(i => i === to),
@@ -73,6 +85,10 @@ class FlatMap {
           data.id
         );
 
+        if (!parent) {
+          return false;
+        }
+
         set(this.flat, `${parent.id}.definition.items`, items);
         set(this.flat, `${data.id}.definition.parentId`, parent.id);
         set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
@@ -80,10 +96,14 @@ class FlatMap {
         break;
       }
 
-      case DROP_DIRECTION_RIGHT:
-      case DROP_DIRECTION_BOTTOM: {
+      case 'right':
+      case 'bottom': {
         const items = get(parent, 'definition.items', []);
         items.splice(items.findIndex(i => i === to) + 1, 0, data.id);
+        if (!parent) {
+          return false;
+        }
+
         set(this.flat, `${parent.id}.definition.items`, items);
         set(this.flat, `${data.id}.definition.parentId`, parent.id);
         set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
@@ -91,8 +111,12 @@ class FlatMap {
         break;
       }
 
-      case DROP_DIRECTION_INSIDE: {
+      case 'inside': {
         const items = get(parent, 'definition.items', []);
+        if (!parent) {
+          return false;
+        }
+
         set(this.flat, `${to}.definition.items`, [...items, data.id]);
         set(this.flat, `${data.id}.definition.parentId`, to);
         set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
@@ -100,7 +124,7 @@ class FlatMap {
         break;
       }
 
-      case DROP_DIRECTION_CUSTOM: {
+      case 'custom': {
         break;
       }
 
@@ -108,7 +132,7 @@ class FlatMap {
         return false;
     }
 
-    if (initialItems && Object.keys(initialItems).length > 0) {
+    if (Object.keys(initialItems).length > 0) {
       Object.keys(initialItems).forEach(itemKey => {
         this.flat[itemKey] = initialItems[itemKey];
       });
@@ -117,7 +141,7 @@ class FlatMap {
     return true;
   };
 
-  updateElement = element => {
+  updateElement = (element?: Element) => {
     if (!element || !this.flat[element.id]) {
       return false;
     }
@@ -127,12 +151,17 @@ class FlatMap {
     return true;
   };
 
-  moveElement = (from, to, elementId, dropPosition = DROP_DIRECTION_INSIDE) => {
-    if (elementId === to || !this.flat[from] || !this.flat[to]) {
+  moveElement = (from: string, to: string, elementId: string, dropPosition: DropPosition = 'inside') => {
+    if (elementId === to || !this.flat[from]) {
       return false;
     }
 
     // Verify if the receptor is child from the sender
+    const elementTo = this.flat[to];
+    if (!elementTo) {
+      return false;
+    }
+
     let element = this.flat[to];
     while (element) {
       const parentId = get(element, 'definition.parentId');
@@ -147,43 +176,48 @@ class FlatMap {
       element = this.flat[parentId];
     }
 
+    if (!element) {
+      return false;
+    }
+
     // Do the swap
-    const fromItems = get(this.flat, `${from}.definition.items`, []).filter(item => item !== elementId);
-    if ([DROP_DIRECTION_LEFT, DROP_DIRECTION_TOP, DROP_DIRECTION_RIGHT, DROP_DIRECTION_BOTTOM].includes(dropPosition)) {
-      const element = this.flat[to];
-      const parent = this.flat[element.definition.parentId];
+    const fromItems = (get(this.flat, `${from}.definition.items`, []) as string[]).filter(item => item !== elementId);
+    if (['left', 'top', 'right', 'bottom'].includes(dropPosition)) {
+      if (!elementTo.definition.parentId) {
+        return false;
+      }
+
+      const parent = this.flat[elementTo.definition.parentId];
       if (!parent) {
         return false;
       }
 
-      let parentItems = get(parent, 'definition.items', []);
+      let parentItems = get(parent, 'definition.items', [] as string[]);
       if (parent.id === from) {
         parentItems = fromItems;
       }
 
       let dropPositionIndex = parentItems.findIndex(i => i === to);
-      if ([DROP_DIRECTION_RIGHT, DROP_DIRECTION_BOTTOM].includes(dropPosition)) {
+      if (['right', 'bottom'].includes(dropPosition)) {
         dropPositionIndex++;
       }
 
       parentItems.splice(dropPositionIndex, 0, elementId);
-
       set(this.flat, `${from}.definition.items`, fromItems);
       set(this.flat, `${parent.id}.definition.items`, parentItems);
       set(this.flat, `${elementId}.definition.parentId`, parent.id);
-    } else if (dropPosition === DROP_DIRECTION_INSIDE) {
+    } else if (dropPosition === 'inside') {
       const parent = this.flat[to];
       if (!parent) {
         return false;
       }
 
-      let toItems = get(this.flat, `${to}.definition.items`, []);
+      let toItems = get(this.flat, `${to}.definition.items`, []) as string[];
       if (from === to) {
         toItems = fromItems;
       }
 
       toItems = [...toItems, elementId];
-
       set(this.flat, `${from}.definition.items`, fromItems);
       set(this.flat, `${to}.definition.items`, toItems);
       set(this.flat, `${elementId}.definition.parentId`, to);
@@ -192,33 +226,35 @@ class FlatMap {
     return true;
   };
 
-  getElement = elementId => get(this.flat, elementId);
+  getElement = (elementId: string) => get(this.flat, elementId);
 
-  cloneElements = (elementId, parentId = '', rootId = '', excludeRoot = false) => {
-    const result = { acum: {}, item: undefined };
-    const mapIds = {};
+  cloneElements = (elementId: string, parentId = '', rootId = '', excludeRoot = false) => {
+    const result: { acum: { [key: string]: Element }; item?: Element } = { acum: {}, item: undefined };
+    const mapIds: { [key: string]: string } = {};
 
     const element = this.flat[elementId];
     if (!element) {
       return result;
     }
 
-    const elements = [elementId, ...this.childTree(elementId)]
-      .map(id => this.flat[id])
-      .filter(Boolean)
-      .reduce((acum, element) => {
-        mapIds[element.id] = generateID(element.id);
-        if (!rootId) {
-          return { ...acum, [element.id]: element };
-        }
+    const elements = [elementId, ...this.childTree(elementId)].reduce<{ [key: string]: Element }>((acum, id) => {
+      const element = this.flat[id];
+      if (!element) {
+        return acum;
+      }
 
-        return { ...acum, [element.id]: { ...element, definition: { ...element.definition, rootId } } };
-      }, {});
+      mapIds[element.id] = generateID(element.id);
+      if (!rootId) {
+        return { ...acum, [element.id]: element };
+      }
+
+      return { ...acum, [element.id]: { ...element, definition: { ...element.definition, rootId } } };
+    }, {});
 
     try {
       let dataStr = JSON.stringify(elements);
       dataStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), dataStr);
-      result.acum = JSON.parse(dataStr);
+      result.acum = JSON.parse(dataStr) as { [key: string]: Element };
       result.item = result.acum[mapIds[elementId]];
     } catch (e) {
       console.error('Error parsing elements', e);
@@ -232,32 +268,36 @@ class FlatMap {
 
     const parentElement = this.flat[parentId];
     if (!parentElement || !Array.isArray(get(parentElement, 'definition.items'))) {
-      parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId'));
+      parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId')) as string;
     }
 
-    if (parentId && result.item) {
+    if (parentId) {
       set(result, 'item.definition.parentId', parentId);
     }
 
     return result;
   };
 
-  removeElement = (elementId, removePage = false) => {
+  removeElement = (elementId: string, removePage = false) => {
     const element = this.flat[elementId];
     if (!element || (element.definition.type === 'page' && !removePage)) {
       return false;
     }
 
-    const elementItems = get(element, 'definition.items', []);
-    const parentId = get(element, 'definition.parentId');
-    if (elementItems && elementItems.length > 0) {
+    const elementItems = get(element, 'definition.items', [] as string[]);
+    if (elementItems.length > 0) {
       elementItems.forEach(id => this.removeElement(id));
+    }
+
+    const parentId = get(element, 'definition.parentId');
+    if (!parentId) {
+      return false;
     }
 
     const parent = this.flat[parentId];
     if (parent) {
       const {
-        definition: { items }
+        definition: { items = [] }
       } = parent;
 
       set(
@@ -276,9 +316,9 @@ class FlatMap {
 
   // Extra Methods
 
-  parentTree = elementId => {
+  parentTree = (elementId: string) => {
     let element = this.flat[elementId];
-    const ids = [];
+    const ids: string[] = [];
     if (!element) {
       return ids;
     }
@@ -287,9 +327,9 @@ class FlatMap {
       const type = get(element, 'definition.type');
       if (type === 'page') {
         const layout = get(element, 'attributes.layout');
-        const layoutContainer = get(element, 'attributes.layoutContainer');
+        const layoutContainer = get(element, 'attributes.layoutContainer') as string;
         if (layout && layoutContainer) {
-          ids.push(layoutContainer, ...this.parentTree(this.flat, layoutContainer));
+          ids.push(layoutContainer, ...this.parentTree(layoutContainer));
         }
       }
 
@@ -297,19 +337,19 @@ class FlatMap {
         ids.push(element.id);
       }
 
-      element = get(this.flat, get(element, 'definition.parentId'));
+      element = get(this.flat, get(element, 'definition.parentId') as string);
     } while (element);
 
     return ids;
   };
 
-  childTree = elementId => {
+  childTree = (elementId: string) => {
     const element = this.flat[elementId];
     if (!element) {
       return [];
     }
 
-    const ids = [];
+    const ids: string[] = [];
     const children = get(element, 'definition.items');
     if (!children) {
       return ids;
@@ -320,7 +360,7 @@ class FlatMap {
     return ids;
   };
 
-  isValidElement = element => {
+  isValidElement = (element?: Partial<Element>) => {
     if (!element) {
       return false;
     }
@@ -330,28 +370,19 @@ class FlatMap {
       return false;
     }
 
-    const { type, label, styleSelectors, rootId } = definition;
-    if (
-      !type ||
-      label === undefined ||
-      label === null ||
-      typeof styleSelectors !== 'object' ||
-      styleSelectors === undefined ||
-      styleSelectors === null ||
-      rootId === undefined ||
-      rootId === null
-    ) {
+    const { type, label, styleSelectors, rootId } = definition as Partial<Element['definition']>;
+    if (!type || label === undefined || typeof styleSelectors !== 'object' || rootId === undefined) {
       return false;
     }
 
     return true;
   };
 
-  flatAsTemplate = (style, elementId, excludeRoot = false) => {
-    const elementsStyle = { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
-    let variables = [];
-    if (!style || !elementId) {
-      return { elements, elementsStyle, variables };
+  flatAsTemplate = (style: Style, elementId: string, excludeRoot = false) => {
+    const elementsStyle: Style = { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' };
+    let variables = [] as Schema['variables'];
+    if (!elementId) {
+      return { elements: {}, elementsStyle, variables };
     }
 
     const element = get(this.flat, elementId);
@@ -360,9 +391,13 @@ class FlatMap {
     }
 
     const elements = this.cloneElements(elementId, element.definition.parentId);
+    if (!elements.item) {
+      return { elements: {}, elementsStyle, variables };
+    }
+
     Object.values(elements.acum).forEach(element => {
       const { id } = element;
-      set(elements.acum, `${id}.definition.rootId`, elements.item.id);
+      set(elements.acum, `${id}.definition.rootId`, elements.item?.id);
       const calculatedStyle = calculateInheriting(element, this.flat, style.platform);
       calculatedStyle.tree.forEach(item => {
         const { displayMode, name } = item;
@@ -374,6 +409,7 @@ class FlatMap {
       // Variables
       if (this.variables.length > 0) {
         const elementVariables = this.getElementVariables(style, id, elements.acum);
+        console.log(variables);
         variables = [...variables, ...elementVariables];
       }
     });
@@ -394,9 +430,11 @@ class FlatMap {
 
   // Semi - Static
 
-  getElementVariables = (style, elementId, flat = this.flat, variables = this.variables) => {
-    const variablesFound = [];
-    const selectors = get(flat, `${elementId}.definition.styleSelectors`);
+  getElementVariables = (style: Style, elementId: string, flat = this.flat, variables = this.variables) => {
+    const variablesFound: SchemaVariable[] = [];
+    const selectors = get(flat, `${elementId}.definition.styleSelectors`) as unknown as
+      | Element['definition']['styleSelectors']
+      | undefined;
     if (!selectors) {
       return variablesFound;
     }
@@ -404,21 +442,23 @@ class FlatMap {
     Object.values(selectors)
       .filter(Boolean)
       .forEach(selector => {
-        Object.values(style?.platform ?? {})
-          .filter(platform => platform && selector && !!platform[selector])
-          .forEach(platform => {
-            const elementStyle = platform[selector];
-            Object.values(elementStyle.attributes)
-              .filter(attribute => typeof attribute === 'string' && attribute.includes('var('))
-              .forEach(attribute => {
-                [...attribute.matchAll(VARIABLE_REGEX)].forEach(match => {
-                  const variableFound = variables.find(variable => variable.name === match?.groups?.token);
-                  if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
-                    variablesFound.push(variableFound);
-                  }
-                });
+        Object.values(style.platform).forEach(platform => {
+          const elementStyle = platform[selector];
+          if (!elementStyle) {
+            return;
+          }
+
+          Object.values(elementStyle.attributes)
+            .filter(attribute => typeof attribute === 'string' && attribute.includes('var('))
+            .forEach(attribute => {
+              [...attribute.matchAll(VARIABLE_REGEX)].forEach(match => {
+                const variableFound = variables.find(variable => variable.name === match.groups?.token);
+                if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
+                  variablesFound.push(variableFound);
+                }
               });
-          });
+            });
+        });
       });
 
     return variablesFound;
@@ -426,39 +466,45 @@ class FlatMap {
 
   // ===  Static ===
 
-  static getInstance = props => new this(props);
+  static getInstance = (props: FlatMapProps) => new this(props);
 
-  static addElement = (flat, data, to, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}) =>
+  static addElement = (flat: Schema['flat'], data: Element, to: string, dropPosition = 'inside', initialItems = {}) =>
     this.getInstance({ flat }).addElement(data, to, dropPosition, initialItems);
 
-  static updateElement = (flat, element) => this.getInstance({ flat }).updateElement(element);
+  static updateElement = (flat: Schema['flat'], element: Element) => this.getInstance({ flat }).updateElement(element);
 
-  static moveElement = (flat, from, to, elementId, dropPosition = DROP_DIRECTION_INSIDE) =>
-    this.getInstance({ flat }).moveElement(from, to, elementId, dropPosition);
+  static moveElement = (
+    flat: Schema['flat'],
+    from: string,
+    to: string,
+    elementId: string,
+    dropPosition: DropPosition = 'inside'
+  ) => this.getInstance({ flat }).moveElement(from, to, elementId, dropPosition);
 
-  static getElement = (flat, elementId) => this.getInstance({ flat }).getElement(elementId);
+  static getElement = (flat: Schema['flat'], elementId: string) => this.getInstance({ flat }).getElement(elementId);
 
-  static cloneElements = (flat, elementId, parentId = '', rootId = '', excludeRoot = false) =>
+  static cloneElements = (flat: Schema['flat'], elementId: string, parentId = '', rootId = '', excludeRoot = false) =>
     this.getInstance({ flat }).cloneElements(elementId, parentId, rootId, excludeRoot);
 
-  static removeElement = (flat, elementId, removePage = false) =>
+  static removeElement = (flat: Schema['flat'], elementId: string, removePage = false) =>
     this.getInstance({ flat }).removeElement(elementId, removePage);
 
   // Extra Methods - Static
 
-  static parentTree = (flat, elementId) => this.getInstance({ flat }).parentTree(elementId);
+  static parentTree = (flat: Schema['flat'], elementId: string) => this.getInstance({ flat }).parentTree(elementId);
 
-  static childTree = (flat, elementId) => this.getInstance({ flat }).childTree(elementId);
+  static childTree = (flat: Schema['flat'], elementId: string) => this.getInstance({ flat }).childTree(elementId);
 
-  static isValidElement = (flat, element) => this.getInstance({ flat }).isValidElement(element);
+  static isValidElement = (flat: Schema['flat'], element: Element) =>
+    this.getInstance({ flat }).isValidElement(element);
 
-  static flatAsTemplate = (schema, style, elementId, excludeRoot = false) => {
+  static flatAsTemplate = (schema: Schema, style: Style, elementId: string, excludeRoot = false) => {
     const { flat, variables } = schema;
 
     return this.getInstance({ flat, variables }).flatAsTemplate(style, elementId, excludeRoot);
   };
 
-  static getElementVariables = (schema, style, elementId) => {
+  static getElementVariables = (schema: Schema, style: Style, elementId: string) => {
     const { flat, variables } = schema;
 
     return this.getInstance({ flat, variables }).getElementVariables(style, elementId);

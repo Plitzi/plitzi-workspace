@@ -8,7 +8,7 @@ import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { StyleSelectors, makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 // Relatives
 import OverlaySpacing from './OverlaySpacing';
@@ -121,23 +121,12 @@ const OverlayNormal = props => {
             set(draft, 'definition.styleSelectors.base', newSelector);
           })
         );
-        builderHandler(
-          EventBridgeTypes.STYLE_ADD_SELECTOR,
-          displayMode,
-          newSelector,
-          StyleSelectors.SELECTOR_CLASS,
-          '',
-          {
-            width: `${width}px`,
-            height: `${height}px`
-          }
-        );
+        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, newSelector, 'class', '', {
+          width: `${width}px`,
+          height: `${height}px`
+        });
       } else {
-        const selectorType = get(
-          styleRef.current,
-          `platform.${displayMode}.${selector}.type`,
-          StyleSelectors.SELECTOR_CLASS
-        );
+        const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`, 'class');
         const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
         builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, '', {
           ...values,

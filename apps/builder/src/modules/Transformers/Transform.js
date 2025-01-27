@@ -11,7 +11,7 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { DROP_DIRECTION_INSIDE, EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
@@ -102,7 +102,7 @@ const Transform = props => {
       EventBridgeTypes.SCHEMA_ADD_TEMPLATE,
       elementSelected,
       pick(baseElement, ['id', 'definition', 'attributes']),
-      DROP_DIRECTION_INSIDE,
+      'inside',
       elements,
       stylePlatform
     );

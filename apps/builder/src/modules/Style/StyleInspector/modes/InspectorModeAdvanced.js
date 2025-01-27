@@ -14,8 +14,7 @@ import {
   cssToSelectors,
   getReadOnlyRangesFromContent,
   formatCssFromSelector,
-  makeSelector,
-  StyleSelectors
+  makeSelector
 } from '@plitzi/sdk-style/StyleHelper';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 
@@ -108,14 +107,7 @@ const InspectorModeAdvanced = props => {
         })
       );
 
-      builderHandler(
-        EventBridgeTypes.STYLE_ADD_SELECTOR,
-        displayMode,
-        customClass,
-        StyleSelectors.SELECTOR_CLASS,
-        undefined,
-        undefined
-      );
+      builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, customClass, 'class', undefined, undefined);
     }
   }, [element, selector, builderHandler, styleSelector]);
 

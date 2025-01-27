@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import { produce } from 'immer';
-import noop from 'lodash/noop.js';
 import set from 'lodash/set.js';
 import get from 'lodash/get.js';
 
@@ -27,7 +26,7 @@ export const STYLE_TYPE_SEGMENT = 'segment';
  * @returns {React.ReactElement}
  */
 const StateManagerContextProvider = props => {
-  const { children, webId, state: stateProp = emptyObject, onInit = noop } = props;
+  const { children, webId, state: stateProp = emptyObject, onInit } = props;
   const storageId = useMemo(() => `plitzi_${webId}_state`, [webId]);
   const settings = use(SchemaSettingsContext);
 

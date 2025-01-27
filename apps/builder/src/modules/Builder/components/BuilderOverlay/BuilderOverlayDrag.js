@@ -5,9 +5,6 @@ import camelCase from 'lodash/camelCase';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
 
-// Alias
-import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
-
 // Relatives
 import BuilderContext from '../../BuilderContext';
 import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
@@ -135,40 +132,40 @@ const BuilderOverlayDrag = props => {
       y /= zoom;
     }
 
-    let newDropPosition = DropDirectionConstants.DROP_DIRECTION_INSIDE;
+    let newDropPosition = 'inside';
     if (items) {
       if (x < clientRect.x + width * 0.1) {
         // left
-        newDropPosition = DropDirectionConstants.DROP_DIRECTION_LEFT;
+        newDropPosition = 'left';
       } else if (x > clientRect.x + width * 0.9) {
         // right
-        newDropPosition = DropDirectionConstants.DROP_DIRECTION_RIGHT;
+        newDropPosition = 'right';
       } else if (y < clientRect.y + height * 0.1) {
         // top
-        newDropPosition = DropDirectionConstants.DROP_DIRECTION_TOP;
+        newDropPosition = 'top';
       } else if (y > clientRect.y + height * 0.9) {
         // bottom
-        newDropPosition = DropDirectionConstants.DROP_DIRECTION_BOTTOM;
+        newDropPosition = 'bottom';
       }
     } else if (x < clientRect.x + width * 0.25) {
       // left
-      newDropPosition = DropDirectionConstants.DROP_DIRECTION_LEFT;
+      newDropPosition = 'left';
     } else if (x > clientRect.x + width * 0.75) {
       // right
-      newDropPosition = DropDirectionConstants.DROP_DIRECTION_RIGHT;
+      newDropPosition = 'right';
     } else if (y <= clientRect.y + height * 0.5) {
       // top
-      newDropPosition = DropDirectionConstants.DROP_DIRECTION_TOP;
+      newDropPosition = 'top';
     } else if (y > clientRect.y + height * 0.5) {
       // bottom
-      newDropPosition = DropDirectionConstants.DROP_DIRECTION_BOTTOM;
+      newDropPosition = 'bottom';
     }
 
     if (elementType === 'page' || !parentElement) {
-      newDropPosition = DropDirectionConstants.DROP_DIRECTION_INSIDE;
+      newDropPosition = 'inside';
     }
 
-    if (newDropPosition !== DropDirectionConstants.DROP_DIRECTION_INSIDE && parentElement) {
+    if (newDropPosition !== 'inside' && parentElement) {
       ({ itemsAllowed, itemsNotAllowed } = builderElementPermissions(parentElement));
     }
 
@@ -205,10 +202,7 @@ const BuilderOverlayDrag = props => {
 
     const type = e.dataTransfer.types[0];
     const data = JSON.parse(e.dataTransfer.getData(type));
-    if (
-      data.id === element.id ||
-      (data.parentId === element.id && dropPosition === DropDirectionConstants.DROP_DIRECTION_INSIDE)
-    ) {
+    if (data.id === element.id || (data.parentId === element.id && dropPosition === 'inside')) {
       setRerender(state => !state);
       return;
     }
@@ -303,7 +297,7 @@ const BuilderOverlayDrag = props => {
       })}
       style={{ width, height, transform: `translate3d(${x}px,${y}px, 5px)`, ...extraStyle }}
     >
-      {dropPosition === DropDirectionConstants.DROP_DIRECTION_INSIDE && (
+      {dropPosition === 'inside' && (
         <div className="overlay__drop-message-container" style={{ transform: `scale(${1 / zoom})` }}>
           <div className="overlay__drop-message">
             {!dropAllowed && 'Not Allowed'}

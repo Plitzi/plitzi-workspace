@@ -53,6 +53,7 @@ export default tsEslint.config({
       {
         groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'type'],
         pathGroups: [
+          { pattern: '@plitzi/sdk-*/**', group: 'internal' }
           // { pattern: '@icons/**', group: 'internal' },
           // { pattern: '@components/**', group: 'internal' },
           // { pattern: '@hooks/**', group: 'internal' },

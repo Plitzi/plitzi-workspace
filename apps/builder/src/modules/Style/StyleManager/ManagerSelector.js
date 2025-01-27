@@ -12,7 +12,6 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
 import BuilderContext from '@pmodules/Builder/BuilderContext';
@@ -68,7 +67,7 @@ const ManagerSelector = props => {
         data: { name }
       } = response;
 
-      builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, name, StyleSelectors.SELECTOR_CLASS);
+      builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, name, 'class');
     }
   }, [builderHandler]);
 

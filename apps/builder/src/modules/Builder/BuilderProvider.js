@@ -17,8 +17,7 @@ import {
   EventBridgeTypes,
   EventBridgeTypesPerModule
 } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import FlatMap, { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
-import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias
@@ -178,7 +177,7 @@ const BuilderProvider = props => {
         const name = get(selector.split(' '), '0');
         setStyleSelector('base');
         if (name) {
-          setSelectorSelected({ name, type: StyleSelectors.SELECTOR_CLASS });
+          setSelectorSelected({ name, type: 'class' });
         } else {
           setSelectorSelected(undefined);
         }
@@ -251,7 +250,7 @@ const BuilderProvider = props => {
     }
 
     let { itemsAllowed, itemsNotAllowed } = builderElementPermissions(element);
-    if (parentElement && dropPosition !== DROP_DIRECTION_INSIDE) {
+    if (parentElement && dropPosition !== 'inside') {
       ({ itemsAllowed, itemsNotAllowed } = builderElementPermissions(parentElement));
     }
 
@@ -280,7 +279,7 @@ const BuilderProvider = props => {
         return false;
       }
 
-      if (dropPosition === DROP_DIRECTION_INSIDE && !Array.isArray(get(toElement, 'definition.items'))) {
+      if (dropPosition === 'inside' && !Array.isArray(get(toElement, 'definition.items'))) {
         return false;
       }
 

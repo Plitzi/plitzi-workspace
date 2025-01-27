@@ -1,7 +1,12 @@
 {
   "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
   "compilerOptions": {
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "target": "ES2023",
+    "jsx": "react-jsx", // @todo: react/jsx-runtime
+    "esModuleInterop": true,
     "strict": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
   }
 }

@@ -1,24 +1,24 @@
 // Packages
-import React, { useCallback, useMemo } from 'react';
-import get from 'lodash/get.js';
-import isEmpty from 'lodash/isEmpty.js';
-import CodeMirror from '@plitzi/plitzi-ui-components/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
+import { useCallback, useMemo } from 'react';
 
-/**
- * @param {{
- *   elementSelected: string;
- *   schema: object;
- *   style: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const StyleViewer = props => {
-  const { elementSelected, schema, style } = props;
+// Types
+import type { Style } from './StyleContext';
+
+export type StyleViewerProps = {
+  elementSelected: string;
+  schema: object;
+  style: Style;
+};
+
+const StyleViewer = ({ elementSelected, schema, style }: StyleViewerProps) => {
   const flat = useMemo(() => get(schema, 'flat', {}), [schema]);
-  const platform = useMemo(() => get(style, 'platform', {}), [style]);
+  const platform = useMemo(() => get(style, 'platform', {}) as Style['platform'], [style]);
 
   const selectorToString = useCallback(
-    selector => {
+    (selector: string) => {
       let style = '';
       if (!isEmpty(selector)) {
         selector = btoa(selector);
@@ -42,7 +42,7 @@ const StyleViewer = props => {
   );
 
   const styleSelectors = useMemo(
-    () => get(flat, `${elementSelected}.definition.styleSelectors`, {}),
+    () => get(flat, `${elementSelected}.definition.styleSelectors`, {}) as { [key: string]: string },
     [elementSelected, flat]
   );
 

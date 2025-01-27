@@ -6,10 +6,7 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { StyleSelectors, generateCache, generateStyleSelector, makeSelector } from '@plitzi/sdk-style/StyleHelper';
-
-// Alias
-import { DropDirectionConstants } from '@pmodules/Elements/ElementHelper';
+import { generateCache, generateStyleSelector, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 // Relatives
 import { generateID } from '../../helpers/utils';
@@ -217,7 +214,7 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
       set(
         templateData,
         `style.platform.desktop.${selector}`,
-        generateStyleSelector(selector, StyleSelectors.SELECTOR_CLASS, {
+        generateStyleSelector(selector, 'class', {
           height: `${size?.height}px`,
           width: `${size?.width}px`
         })
@@ -255,13 +252,7 @@ export const processPaste = async (clipboardData, builderMetadata = {}) => {
   }
 
   if (templateData?.baseElement) {
-    result = await builderDropElement(
-      'add##plitzi-template',
-      templateData,
-      DropDirectionConstants.DROP_DIRECTION_INSIDE,
-      elementSelected,
-      baseElementId
-    );
+    result = await builderDropElement('add##plitzi-template', templateData, 'inside', elementSelected, baseElementId);
   }
 
   return result;

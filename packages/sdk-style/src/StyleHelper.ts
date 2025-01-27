@@ -1,53 +1,86 @@
 // Packages
-import get from 'lodash/get.js';
-import pick from 'lodash/pick.js';
-import set from 'lodash/set.js';
+import get from 'lodash/get';
+import pick from 'lodash/pick';
+import set from 'lodash/set';
 
 // Monorepo
 import { makeId } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import { StyleConstants, inheritableAttributesBase } from './StyleConstants.js';
+import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 
-export const StyleSelectors = {
-  SELECTOR_CLASS: 'class',
-  SELECTOR_ELEMENT: 'element',
-  SELECTOR_ID: 'id',
-  SELECTOR_STATE: 'state',
-  SELECTOR_PARENT: 'parent'
+// Types
+import type { Style, StyleItem, TagType } from './StyleContext';
+import type { Schema, Element } from '@plitzi/sdk-shared';
+
+export type ComponentDefinition = {
+  attributes: { [key: string]: unknown };
+  definition: { [key: string]: unknown };
+  builder: { [key: string]: unknown };
+  market: { [key: string]: unknown };
+  defaultStyle: {
+    name: string;
+    displayMode: string;
+    style: { [key: string]: { [key: string]: string | number } };
+    subTypes?: { [key: string]: Omit<ComponentDefinition['defaultStyle'], 'subTypes'> };
+  };
+  settings: { [key: string]: unknown };
 };
 
-export const processSelector = (selector, type, attributes) => {
-  const result = [];
+type MetaData = {
+  tree: {
+    name: string;
+    displayMode: string;
+    style: StyleItem['attributes'];
+    isParent: boolean;
+    isSubParent: boolean;
+  }[];
+  style?: { [key: string]: { key: string; value: string; displayMode: string }[] };
+  parentStyle?: { [key: string]: string };
+};
+
+export const EMPTY_STYLE_SCHEMA: Style = {
+  variables: {},
+  platform: { desktop: {}, tablet: {}, mobile: {} },
+  cache: ''
+};
+
+export const processSelector = (selector: string, type?: TagType, attributes: { [key: string]: string } = {}) => {
+  const result: string[] = [];
   Object.keys(attributes).forEach(key => {
     result.push(`${key}:${attributes[key]};`);
   });
 
   let finalSelector = selector;
   switch (type) {
-    case StyleSelectors.SELECTOR_CLASS:
-    case StyleSelectors.SELECTOR_STATE:
+    case 'class':
+    case 'state':
       finalSelector = `.${selector}`;
       break;
 
-    case StyleSelectors.SELECTOR_ID:
+    case 'id':
       finalSelector = `#${selector}`;
       break;
 
-    case StyleSelectors.SELECTOR_ELEMENT:
-    case StyleSelectors.SELECTOR_PARENT:
+    case 'element':
+    case 'parent':
     default:
   }
 
   return `${finalSelector}{${result.join('')}}`;
 };
 
-export const selectorToString = (tags, filters = [], includePrefix = true, separator = '') => {
+export const selectorToString = (
+  tags?: { type: TagType; value: string }[],
+  filters: string[] = [],
+  includePrefix = true,
+  separator = ''
+) => {
   if (!tags || tags.length === 0) {
     return '';
   }
 
-  let value = '';
+  let value = [];
   value = tags
     .filter(tag => filters.length === 0 || filters.includes(tag.type))
     .map(tag => {
@@ -56,13 +89,13 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
       }
 
       switch (tag.type) {
-        case StyleSelectors.SELECTOR_CLASS:
-        case StyleSelectors.SELECTOR_STATE:
+        case 'class':
+        case 'state':
           return `.${tag.value}`;
-        case StyleSelectors.SELECTOR_ELEMENT:
-        case StyleSelectors.SELECTOR_PARENT:
+        case 'element':
+        case 'parent':
           return tag.value;
-        case StyleSelectors.SELECTOR_ID:
+        case 'id':
           return `#${tag.value}`;
         default:
           return '';
@@ -73,14 +106,14 @@ export const selectorToString = (tags, filters = [], includePrefix = true, separ
 };
 
 const getDataStyle = (
-  element,
-  platform,
+  element: Element | undefined,
+  platform: Style['platform'],
   styleSelector = 'base',
   isParent = false,
   isSubParent = false,
-  componentDefinitions = {}
+  componentDefinitions: { [key: string]: ComponentDefinition } = {}
 ) => {
-  const metadata = { tree: [] };
+  const metadata: MetaData = { tree: [] };
   if (!element) {
     return undefined;
   }
@@ -96,6 +129,10 @@ const getDataStyle = (
       pick(get(platform, mode, {}), get(styleSelectors, styleSelector, '').split(' '))
     );
     selectorSegments.forEach(segment => {
+      if (!segment) {
+        return;
+      }
+
       const { name } = segment;
       const style = platform[mode][name];
       if (style) {
@@ -124,30 +161,37 @@ const getDataStyle = (
   });
 
   // get global element type
-  let global = get(componentDefinitions, `${type}.defaultStyle`);
+  let global = get(componentDefinitions, `${type}.defaultStyle`) as unknown as
+    | ComponentDefinition['defaultStyle']
+    | undefined;
   if (global && subType) {
-    const subGlobal = global.subTypes[subType];
+    const subGlobal = global.subTypes?.[subType];
     if (subGlobal) {
       global = subGlobal;
     }
   }
 
   if (global) {
-    metadata.tree.push({ ...global, style: get(global, `style.${styleSelector}`, {}), isParent, isSubParent });
+    metadata.tree.push({
+      ...global,
+      style: get(global, `style.${styleSelector}`, {}) as StyleItem['attributes'],
+      isParent,
+      isSubParent
+    });
   }
 
   return metadata;
 };
 
 export const calculateInheriting = (
-  element,
-  flat,
-  platform,
-  styleSelector,
-  componentDefinitions,
-  skipSelectors = []
+  element: Element | undefined,
+  flat: Schema['flat'],
+  platform: Style['platform'],
+  styleSelector?: string,
+  componentDefinitions: { [key: string]: ComponentDefinition } = {},
+  skipSelectors: string[] = []
 ) => {
-  const metadata = { tree: [], style: {}, parentStyle: {} };
+  const metadata: MetaData = { tree: [], style: {}, parentStyle: {} };
   if (!element) {
     return metadata;
   }
@@ -163,15 +207,16 @@ export const calculateInheriting = (
       id !== element.id,
       componentDefinitions
     );
-    metadata.tree.push(
-      ...styleData.tree.filter(node => !skipSelectors || !(skipSelectors.includes(node.name) && !node.isSubParent))
-    );
-    element = get(flat, get(element, 'definition.parentId'));
+    if (styleData) {
+      metadata.tree.push(...styleData.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isSubParent)));
+    }
+
+    element = get(flat, get(element, 'definition.parentId', ''));
   }
 
-  const finalMeta = {};
+  const finalMeta: { [key: string]: { key: string; value: string; displayMode: string }[] | undefined } = {};
   metadata.tree.forEach(node => {
-    let styleData = get(node, `style.${styleSelector}`, node.style);
+    let styleData = get(node, `style.${styleSelector}`, node.style) as { [key: string]: string } | undefined;
     if (!styleData) {
       return;
     }
@@ -200,8 +245,8 @@ export const calculateInheriting = (
   };
 };
 
-export const calculateBindings = element => {
-  const metadata = { tree: [], style: {} };
+export const calculateBindings = (element?: Element) => {
+  const metadata: { style: { [key: string]: boolean } } = { style: {} };
   if (!element) {
     return metadata;
   }
@@ -221,12 +266,12 @@ export const calculateBindings = element => {
   return metadata;
 };
 
-export const generateCache = style => {
+export const generateCache = (style: Style) => {
   const { platform } = style;
   const cache = [];
   if (Object.keys(platform.desktop).length > 0) {
     const style = Object.values(platform.desktop)
-      .map(s => s.cache)
+      .map(s => s?.cache)
       .join('\n');
     if (style !== '') {
       cache.push(style);
@@ -235,7 +280,7 @@ export const generateCache = style => {
 
   if (Object.keys(platform.tablet).length > 0) {
     const style = Object.values(platform.tablet)
-      .map(s => s.cache)
+      .map(s => s?.cache)
       .join('\n');
     if (style !== '') {
       cache.push(`@media screen and (max-width: 768px) {${style}}`);
@@ -244,7 +289,7 @@ export const generateCache = style => {
 
   if (Object.keys(platform.mobile).length > 0) {
     const style = Object.values(platform.mobile)
-      .map(s => s.cache)
+      .map(s => s?.cache)
       .join('\n');
     if (style !== '') {
       cache.push(`@media screen and (max-width: 425px) {${style}}`);
@@ -263,15 +308,15 @@ const StyleConstantsList = Object.values(StyleConstants);
 export const cssToSelectors = (css = '', singleSelector = false) => {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const selectors = match.map(match => {
-    const { selectorName, selectorData } = match.groups;
+    const { selectorName, selectorData } = match.groups as Record<string, string | undefined>;
     const selectorResult = { name: selectorName?.trim(), attributes: {}, cache: match[0] };
     if (selectorData) {
       const propsMatch = [...selectorData.replaceAll(cssIsCommentRegex, '').trim().matchAll(cssPropsRegex)];
       propsMatch
-        .filter(prop => StyleConstantsList.includes(prop.groups.propName))
+        .filter(prop => StyleConstantsList.includes((prop.groups as Record<string, string>).propName))
         .forEach(prop => {
-          const { propName, propValue } = prop.groups;
-          set(selectorResult, `attributes.${propName.trim()}`, `${propValue.trim()}`);
+          const { propName, propValue } = prop.groups as Record<string, string>;
+          set(selectorResult, `attributes.${propName.trim()}`, propValue.trim());
         });
     }
 
@@ -286,10 +331,14 @@ export const cssToSelectors = (css = '', singleSelector = false) => {
 };
 
 export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAfter = true) => {
-  const ranges = [];
+  const ranges: { from: number; to: number | undefined }[] = [];
   [...css.matchAll(cssRegex)].forEach(match => {
-    const { selector, selectorName, selectorData } = match.groups;
-    const selectorNameCorrection = [...(selectorName?.match(/[\n]/gim) ?? [])].length;
+    const { selector, selectorName, selectorData } = match.groups as Record<string, string | undefined>;
+    if (!selectorName || !selector || !selectorData) {
+      return;
+    }
+
+    const selectorNameCorrection = [...(selectorName.match(/[\n]/gim) ?? [])].length;
     const bFrom = allowPre ? match.index : 0;
     const bTo = bFrom + selector.length + selectorName.length + 1 - selectorNameCorrection;
     const aFrom = bTo + selectorData.length;
@@ -300,10 +349,10 @@ export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAft
   return ranges;
 };
 
-export const formatCssFromSelector = (css, singleSelector = true, tabIndentSpace = 2, filterProps = true) => {
+export const formatCssFromSelector = (css: string, singleSelector = true, tabIndentSpace = 2, filterProps = true) => {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const selectors = match.map(match => {
-    const { selector, selectorName, selectorData } = match.groups;
+    const { selector, selectorName, selectorData } = match.groups as Record<string, string>;
     if (!selectorData) {
       return `${selector}${selectorName} {\n}`;
     }
@@ -311,9 +360,9 @@ export const formatCssFromSelector = (css, singleSelector = true, tabIndentSpace
     const propsMatch = [...selectorData.matchAll(cssPropsRegex)];
     let propsString = '';
     propsMatch
-      .filter(prop => !filterProps || StyleConstantsList.includes(prop.groups.propName))
+      .filter(prop => !filterProps || StyleConstantsList.includes((prop.groups as Record<string, string>).propName))
       .forEach(prop => {
-        const { propName, propValue } = prop.groups;
+        const { propName, propValue } = prop.groups as Record<string, string>;
         if (propName && propValue) {
           propsString = `${propsString}${propsString === '' ? '' : '\n'}${' '.repeat(
             tabIndentSpace
@@ -337,8 +386,12 @@ export const formatCssFromSelector = (css, singleSelector = true, tabIndentSpace
   return selectors;
 };
 
-export const generateStyleSelector = (selector = '', selectorType = StyleSelectors.SELECTOR_CLASS, values = {}) => {
-  if (!selector || !values || typeof values !== 'object') {
+export const generateStyleSelector = (
+  selector = '',
+  selectorType: TagType = 'class',
+  values: StyleItem['attributes'] = {}
+) => {
+  if (!selector || typeof values !== 'object') {
     return undefined;
   }
 
@@ -350,7 +403,7 @@ export const generateStyleSelector = (selector = '', selectorType = StyleSelecto
   };
 };
 
-export const makeSelector = (type, styleSelector = 'base', length = 4) => {
+export const makeSelector = (type: string, styleSelector = 'base', length = 4) => {
   let selector = `${type}-${makeId(length)}`;
   if (styleSelector !== 'base') {
     selector = `${type}-${styleSelector}-${makeId(length)}`;

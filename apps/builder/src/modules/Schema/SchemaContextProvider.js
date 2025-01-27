@@ -9,7 +9,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import FlatMap, { DROP_DIRECTION_INSIDE, EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
+import FlatMap, { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
@@ -91,7 +91,7 @@ const SchemaContextProvider = props => {
   // Elements
 
   const schemaAddElement = useCallback(
-    (to, data, dropPosition = DROP_DIRECTION_INSIDE, initialItems = {}, variables = [], fromSubscriptions = false) => {
+    (to, data, dropPosition = 'inside', initialItems = {}, variables = [], fromSubscriptions = false) => {
       dispatchSchema({
         type: SchemaActions.SCHEMA_ADD_ELEMENT,
         to,
@@ -112,7 +112,7 @@ const SchemaContextProvider = props => {
   );
 
   const schemaMoveElement = useCallback(
-    (from, to, elementId, dropPosition = DROP_DIRECTION_INSIDE, fromSubscriptions = false) =>
+    (from, to, elementId, dropPosition = 'inside', fromSubscriptions = false) =>
       dispatchSchema({ type: SchemaActions.SCHEMA_MOVE_ELEMENT, from, to, elementId, dropPosition, fromSubscriptions }),
     [dispatchSchema]
   );
@@ -133,7 +133,7 @@ const SchemaContextProvider = props => {
         type: SchemaActions.SCHEMA_ADD_ELEMENT,
         to: targetId ?? get(elements, 'item.definition.parentId'),
         data: elements.item,
-        dropPosition: DROP_DIRECTION_INSIDE,
+        dropPosition: 'inside',
         initialItems: elements.acum,
         fromSubscriptions
       });
@@ -240,7 +240,7 @@ const SchemaContextProvider = props => {
     (
       to,
       data,
-      dropPosition = DROP_DIRECTION_INSIDE,
+      dropPosition = 'inside',
       initialItems = {},
       templatePlatform = null,
       variables = [],

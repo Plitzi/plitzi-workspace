@@ -8,7 +8,6 @@ import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
 
 // Monorepo
-import { StyleSelectors } from '@plitzi/sdk-style/StyleHelper';
 import { makeId } from '@plitzi/sdk-shared/utils';
 
 // Relatives
@@ -32,7 +31,7 @@ const SelectorTag = props => {
   const {
     className = '',
     selector = '',
-    type = StyleSelectors.SELECTOR_CLASS,
+    type = 'class',
     editable = true,
     active = false,
     onClick = noop,

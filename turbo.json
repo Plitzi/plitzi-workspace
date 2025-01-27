@@ -38,7 +38,6 @@
       "outputs": ["dist/**"]
     },
     "build-assets:dev-watch": {
-      "dependsOn": [],
       "cache": false,
       "persistent": true,
       "outputs": ["dist/**"]

@@ -6,7 +6,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 // Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import FlatMap, { DROP_DIRECTION_INSIDE } from '@plitzi/sdk-schema/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/FlatMap';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias
@@ -134,15 +134,7 @@ const SegmentsContextProvider = props => {
   // Schema Actions
 
   const segmentAddElement = useCallback(
-    (
-      segmentId,
-      to,
-      data,
-      dropPosition = DROP_DIRECTION_INSIDE,
-      initialItems = {},
-      variables = [],
-      fromSubscriptions = false
-    ) =>
+    (segmentId, to, data, dropPosition = 'inside', initialItems = {}, variables = [], fromSubscriptions = false) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_ADD_ELEMENT,
         segmentId,
@@ -185,7 +177,7 @@ const SegmentsContextProvider = props => {
   //       segmentId,
   //       to: targetId ?? get(elements, 'item.definition.parentId'),
   //       data: elements.item,
-  //       dropPosition: DROP_DIRECTION_INSIDE,
+  //       dropPosition: 'inside',
   //       initialItems: elements.acum,
   //       fromSubscriptions
   //     });
@@ -194,7 +186,7 @@ const SegmentsContextProvider = props => {
   // );
 
   const segmentMoveElement = useCallback(
-    (segmentId, from, to, elementId, dropPosition = DROP_DIRECTION_INSIDE, fromSubscriptions = false) =>
+    (segmentId, from, to, elementId, dropPosition = 'inside', fromSubscriptions = false) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_MOVE_ELEMENT,
         segmentId,

@@ -112,7 +112,7 @@ import {
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
 } from '@plitzi/sdk-style/StyleConstants';
-import { StyleSelectors, makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
@@ -306,7 +306,7 @@ const StyleInspectorProvider = props => {
           EventBridgeTypes.STYLE_ADD_SELECTOR,
           displayMode,
           customClass,
-          StyleSelectors.SELECTOR_CLASS,
+          'class',
           typeof styleKey === 'string' ? styleKey : '',
           value
         );
@@ -323,7 +323,7 @@ const StyleInspectorProvider = props => {
         );
       }
 
-      setSelectorSelected({ name: customClass, type: StyleSelectors.SELECTOR_CLASS });
+      setSelectorSelected({ name: customClass, type: 'class' });
     },
     [values, displayMode, bindingData, element, builderHandler, builderHandler, selector, selectorType, styleSelector]
   );

@@ -1,11 +1,15 @@
 // Packages
-import get from 'lodash/get.js';
-import set from 'lodash/set.js';
 import { produce } from 'immer';
-import has from 'lodash/has.js';
+import get from 'lodash/get';
+import has from 'lodash/has';
+import set from 'lodash/set';
 
 // Relatives
-import FlatMap from './helpers/FlatMap.js';
+import FlatMap from './helpers/FlatMap';
+
+// Relatives
+import type { DropPosition } from './helpers/FlatMap';
+import type { Schema, Element } from '@plitzi/sdk-shared';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',
@@ -25,16 +29,49 @@ export const SchemaActions = {
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS'
 };
 
-const SchemaReducer = (state, action = {}) => {
+type Action = {
+  type:
+    | 'SCHEMA_UPDATE'
+    | 'SCHEMA_ADD_PAGE'
+    | 'SCHEMA_HOME_PAGE'
+    | 'SCHEMA_UPDATE_PAGE'
+    | 'SCHEMA_REMOVE_PAGE'
+    | 'SCHEMA_ADD_PAGE_FOLDER'
+    | 'SCHEMA_UPDATE_PAGE_FOLDER'
+    | 'SCHEMA_REMOVE_PAGE_FOLDER'
+    | 'SCHEMA_ADD_ELEMENT'
+    | 'SCHEMA_REMOVE_ELEMENT'
+    | 'SCHEMA_MOVE_ELEMENT'
+    | 'SCHEMA_CLONE_ELEMENT'
+    | 'SCHEMA_UPDATE_ELEMENT'
+    | 'SCHEMA_ADD_TEMPLATE'
+    | 'SCHEMA_UPDATE_SETTINGS';
+  schema?: Schema;
+  page?: Element;
+  pageId?: string;
+  pageFolder?: Schema['pageFolders'][number];
+  path?: string;
+  value?: string;
+  element?: Element;
+  from?: string;
+  to?: string;
+  elementId?: string;
+  pageFolderId?: string;
+  data?: Element;
+  dropPosition?: DropPosition;
+  initialItems?: { [key: string]: Element | undefined };
+};
+
+const SchemaReducer = (state: Schema, action: Partial<Action> = {}) => {
   switch (action.type) {
     case SchemaActions.SCHEMA_UPDATE:
-      return {
-        ...state,
-        ...action.schema
-      };
+      return { ...state, ...action.schema };
 
     case SchemaActions.SCHEMA_ADD_PAGE: {
       const { page } = action;
+      if (!page) {
+        return state;
+      }
 
       return produce(state, draft => {
         set(draft, 'flat', { ...draft.flat, [page.id]: page });
@@ -45,15 +82,18 @@ const SchemaReducer = (state, action = {}) => {
     case SchemaActions.SCHEMA_HOME_PAGE: {
       const { flat, pages } = state;
       const { pageId } = action;
+      if (!pageId) {
+        return state;
+      }
 
-      let oldPage;
-      pages.forEach(pageId => {
+      let oldPage: Element | undefined;
+      pages.forEach(pageIdItem => {
         if (oldPage) {
           return;
         }
 
-        const auxPage = flat[pageId];
-        const defaultPage = get(auxPage, 'attributes.default', false);
+        const auxPage = flat[pageIdItem] as Element;
+        const defaultPage = get(auxPage, 'attributes.default', false) as boolean;
         if (defaultPage) {
           oldPage = auxPage;
         }
@@ -67,12 +107,17 @@ const SchemaReducer = (state, action = {}) => {
 
       return produce(state, draft => {
         set(draft.flat, `${pageId}.attributes.default`, true);
-        set(draft.flat, `${oldPage.id}.attributes.default`, false);
+        if (oldPage) {
+          set(draft.flat, `${oldPage.id}.attributes.default`, false);
+        }
       });
     }
 
     case SchemaActions.SCHEMA_UPDATE_PAGE: {
       const { page } = action;
+      if (!page) {
+        return state;
+      }
 
       return produce(state, draft => {
         set(draft.flat, page.id, page);
@@ -81,15 +126,21 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_REMOVE_PAGE: {
       const { pageId } = action;
+      if (!pageId) {
+        return state;
+      }
 
       return produce(state, draft => {
-        FlatMap.removeElement(draft.flat, pageId, pageId, true);
+        FlatMap.removeElement(draft.flat, pageId, true);
         draft.pages = draft.pages.filter(p => p !== pageId);
       });
     }
 
     case SchemaActions.SCHEMA_ADD_PAGE_FOLDER: {
       const { pageFolder } = action;
+      if (!pageFolder) {
+        return state;
+      }
 
       return produce(state, draft => {
         draft.pageFolders.push(pageFolder);
@@ -98,6 +149,9 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_UPDATE_PAGE_FOLDER: {
       const { pageFolder } = action;
+      if (!pageFolder) {
+        return state;
+      }
 
       return produce(state, draft => {
         const index = draft.pageFolders.findIndex(p => p.id === pageFolder.id);
@@ -111,6 +165,9 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_REMOVE_PAGE_FOLDER: {
       const { pageFolderId } = action;
+      if (!pageFolderId) {
+        return state;
+      }
 
       return produce(state, draft => {
         draft.pageFolders = draft.pageFolders.filter(pageFolder => pageFolder.id !== pageFolderId);
@@ -120,6 +177,9 @@ const SchemaReducer = (state, action = {}) => {
     case SchemaActions.SCHEMA_ADD_TEMPLATE:
     case SchemaActions.SCHEMA_ADD_ELEMENT: {
       const { to, data, dropPosition, initialItems } = action;
+      if (!to || !data) {
+        return state;
+      }
 
       return produce(state, draft => {
         FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
@@ -128,6 +188,9 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_REMOVE_ELEMENT: {
       const { elementId } = action;
+      if (!elementId) {
+        return state;
+      }
 
       return produce(state, draft => {
         FlatMap.removeElement(draft.flat, elementId);
@@ -136,6 +199,9 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_MOVE_ELEMENT: {
       const { from, to, elementId, dropPosition } = action;
+      if (!from || !to || !elementId) {
+        return state;
+      }
 
       return produce(state, draft => {
         FlatMap.moveElement(draft.flat, from, to, elementId, dropPosition);
@@ -144,6 +210,9 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_CLONE_ELEMENT: {
       const { to, data, dropPosition, initialItems } = action;
+      if (!to || !data) {
+        return state;
+      }
 
       return produce(state, draft => {
         FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
@@ -152,6 +221,9 @@ const SchemaReducer = (state, action = {}) => {
 
     case SchemaActions.SCHEMA_UPDATE_ELEMENT: {
       const { element } = action;
+      if (!element) {
+        return state;
+      }
 
       return produce(state, draft => {
         set(draft.flat, element.id, element);
@@ -159,11 +231,13 @@ const SchemaReducer = (state, action = {}) => {
     }
 
     case SchemaActions.SCHEMA_UPDATE_SETTINGS: {
+      const { path, value } = action;
+
       return produce(state, draft => {
-        if (action.path && has(state.settings, action.path)) {
-          set(draft.settings, action.path, action.value);
-        } else if (!action.path) {
-          set(draft, 'settings', action.value);
+        if (path && has(state.settings, path)) {
+          set(draft.settings, path, value);
+        } else if (!path) {
+          set(draft, 'settings', value);
         }
       });
     }
