@@ -1,0 +1,3 @@
+{
+  "extends": "@plitzi/sdk-shared/tsconfig.json"
+}

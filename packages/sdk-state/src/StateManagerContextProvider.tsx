@@ -1,8 +1,8 @@
 // Packages
-import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 import { produce } from 'immer';
-import set from 'lodash/set.js';
-import get from 'lodash/get.js';
+import get from 'lodash/get';
+import set from 'lodash/set';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 // Monorepo
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
@@ -11,48 +11,49 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 // Relatives
 import StateManagerContext from './StateManagerContext.js';
 
+// Types
+import type { ReactNode } from 'react';
+
 export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 export const STYLE_TYPE_SEGMENT = 'segment';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   webId: number;
- *   state?: Record<string, any>;
- *   onInit: (value: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const StateManagerContextProvider = props => {
-  const { children, webId, state: stateProp = emptyObject, onInit } = props;
+export type StateManagerContextProviderProps = {
+  children: ReactNode;
+  webId: number;
+  state: Record<string, unknown>;
+  onInit: (value: Record<string, unknown>) => void;
+};
+
+const StateManagerContextProvider = ({
+  children,
+  webId,
+  state: stateProp = emptyObject,
+  onInit
+}: StateManagerContextProviderProps) => {
   const storageId = useMemo(() => `plitzi_${webId}_state`, [webId]);
   const settings = use(SchemaSettingsContext);
 
   const getCache = useCallback(
-    (path, defaultValue = {}, storeMode = '') => {
-      let serializedState = defaultValue;
+    (path?: string, defaultValue: Record<string, unknown> = {}, storeMode = '') => {
+      let serializedState: Record<string, unknown> | string | null = defaultValue;
       try {
-        if (localStorage && storeMode === 'local') {
+        if (storeMode === 'local') {
           serializedState = localStorage.getItem(storageId);
-        } else if (sessionStorage && storeMode === 'session') {
+        } else if (storeMode === 'session') {
           serializedState = sessionStorage.getItem(storageId);
         }
 
         if (typeof serializedState === 'string') {
-          serializedState = JSON.parse(serializedState);
+          serializedState = JSON.parse(serializedState) as Record<string, unknown>;
         }
-      } catch (err) {
+      } catch {
         serializedState = defaultValue;
       }
 
-      if (!serializedState) {
-        return defaultValue;
-      }
-
       if (!path) {
-        return serializedState;
+        return serializedState as Record<string, unknown>;
       }
 
       return get(serializedState, path, defaultValue);
@@ -60,11 +61,14 @@ const StateManagerContextProvider = props => {
     [storageId]
   );
 
-  const [state, setState] = useState(() => {
-    const keepState = get(settings, 'keepState', false);
-    const storeMode = get(settings, 'stateStorage', '');
+  const [state, setState] = useState<Record<string, unknown>>(() => {
+    const keepState: boolean = get(settings, 'keepState', false) as boolean;
+    const storeMode: string = get(settings, 'stateStorage', '');
     if (keepState && storeMode) {
-      return { ...stateProp, ...getCache('', {}, storeMode) };
+      return {
+        ...stateProp,
+        ...(getCache('', {}, storeMode) as Record<string, unknown>)
+      };
     }
 
     return stateProp;
@@ -80,8 +84,8 @@ const StateManagerContextProvider = props => {
   }, [stateProp]);
 
   const setCache = useCallback(
-    (value, path = '', storeMode = '') => {
-      const currentState = getCache();
+    (value: Record<string, unknown>, path = '', storeMode = '') => {
+      const currentState = getCache() as Record<string, unknown>;
       let newState = currentState;
       if (path) {
         newState = produce(currentState, draft => {
@@ -93,12 +97,12 @@ const StateManagerContextProvider = props => {
 
       try {
         const serializedState = JSON.stringify(newState);
-        if (localStorage && storeMode === 'local') {
+        if (storeMode === 'local') {
           localStorage.setItem(storageId, serializedState);
-        } else if (sessionStorage && storeMode === 'session') {
+        } else if (storeMode === 'session') {
           sessionStorage.setItem(storageId, serializedState);
         }
-      } catch (err) {
+      } catch {
         return false;
       }
 
@@ -108,16 +112,16 @@ const StateManagerContextProvider = props => {
   );
 
   const clearCache = useCallback(
-    storeMode => {
+    (storeMode = '') => {
       try {
-        if (localStorage && storeMode === 'local') {
+        if (storeMode === 'local') {
           localStorage.removeItem(storageId);
           setState({});
-        } else if (sessionStorage && storeMode === 'session') {
+        } else if (storeMode === 'session') {
           sessionStorage.removeItem(storageId);
           setState({});
         }
-      } catch (err) {
+      } catch {
         // Nothing to do here
       }
     },
@@ -125,7 +129,7 @@ const StateManagerContextProvider = props => {
   );
 
   const setStateByKey = useCallback(
-    (key, value, storeMode = '') => {
+    (key: string, value: unknown, storeMode = '') => {
       setState(state => {
         const newState = produce(state, draft => {
           set(draft, key, value);

@@ -54,7 +54,8 @@ export default defineConfig(({ mode, ...args }) => {
           'lodash/omit',
           'lodash/isEmpty',
           'lodash/pick',
-          'react/jsx-runtime'
+          'react/jsx-runtime',
+          'immer'
         ],
         output: {
           exports: 'named',
