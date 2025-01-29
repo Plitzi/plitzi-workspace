@@ -5,9 +5,21 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./StateManagerContext": "./dist/StateManagerContext.js",
-    "./StateManagerContextProvider": "./dist/StateManagerContextProvider.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es",
+      "require": "./dist/index.cjs"
+    },
+    "./StateManagerContext": {
+      "types": "./dist/StateManagerContext.d.ts",
+      "import": "./dist/StateManagerContext.es",
+      "require": "./dist/StateManagerContext.cjs"
+    },
+    "./StateManagerContextProvider": {
+      "types": "./dist/StateManagerContextProvider.d.ts",
+      "import": "./dist/StateManagerContextProvider.es",
+      "require": "./dist/StateManagerContextProvider.cjs"
+    }
   },
   "scripts": {
     "lint": "eslint ./src",
