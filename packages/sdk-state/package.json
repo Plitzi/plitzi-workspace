@@ -31,8 +31,8 @@
   "dependencies": {
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "lodash": "^4.17.21",
-    "immer": "^10.1.1"
+    "immer": "^10.1.1",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "eslint": "^9.19.0",

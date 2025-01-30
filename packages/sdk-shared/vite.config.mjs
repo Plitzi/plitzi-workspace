@@ -17,7 +17,7 @@ export default defineConfig(({ mode, ...args }) => {
       react(),
       dts({
         entryRoot: 'src',
-        outputDir: 'dist',
+        outDir: 'dist',
         rollupTypes: false,
         exclude: [
           '**/*.test.tsx',

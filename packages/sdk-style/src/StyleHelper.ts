@@ -11,21 +11,8 @@ import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 
 // Types
 import type { Style, StyleItem, TagType } from './StyleContext';
+import type { ComponentDefinition } from '@plitzi/sdk-plugins';
 import type { Schema, Element } from '@plitzi/sdk-shared';
-
-export type ComponentDefinition = {
-  attributes: { [key: string]: unknown };
-  definition: { [key: string]: unknown };
-  builder: { [key: string]: unknown };
-  market: { [key: string]: unknown };
-  defaultStyle: {
-    name: string;
-    displayMode: string;
-    style: { [key: string]: { [key: string]: string | number } };
-    subTypes?: { [key: string]: Omit<ComponentDefinition['defaultStyle'], 'subTypes'> };
-  };
-  settings: { [key: string]: unknown };
-};
 
 type MetaData = {
   tree: {

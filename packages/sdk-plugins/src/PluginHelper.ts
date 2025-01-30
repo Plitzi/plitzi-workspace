@@ -1,13 +1,26 @@
 // Packages
-import get from 'lodash/get.js';
-import omit from 'lodash/omit.js';
+import get from 'lodash/get';
+import omit from 'lodash/omit';
 
-const getComponentDefinition = (pluginRaw, pluginManifest) => {
+// Types
+import type { PluginManifest, Plugin, ComponentDefinition } from './PluginsContext';
+
+export type PluginRaw = {
+  resource: string;
+  settings: Plugin['settings'];
+  type: string;
+};
+
+const getComponentDefinition = (
+  pluginRaw: PluginRaw,
+  pluginManifest: PluginManifest
+): Record<string, ComponentDefinition> => {
   try {
     const { resource, settings, type } = pluginRaw;
     const {
       runtime: { scope = '', module = '' },
       definition: {
+        // eslint-disable-next-line quotes
         name = "Plitzi's Demo Plugin",
         // description = '',
         owner = 'Plitzi',
@@ -23,7 +36,7 @@ const getComponentDefinition = (pluginRaw, pluginManifest) => {
 
     const componentDefinitions = Object.values(get(pluginManifest, 'pluginSchema', {})).reduce((acum, component) => {
       const { definition, builder, defaultStyle, attributes } = component;
-      let subPlugins = [];
+      let subPlugins: string[] = [];
       if (definition.type === type) {
         subPlugins = Object.keys(omit(pluginSchema, [type]));
       }
@@ -53,12 +66,12 @@ const getComponentDefinition = (pluginRaw, pluginManifest) => {
     }, {});
 
     return componentDefinitions;
-  } catch (e) {
-    return {};
+  } catch {
+    return {} as Record<string, ComponentDefinition>;
   }
 };
 
-const getCompactComponentDefinition = (pluginRaw, pluginManifest) => {
+const getCompactComponentDefinition = (pluginRaw: PluginRaw, pluginManifest: PluginManifest) => {
   const { resource, settings, type } = pluginRaw;
   const { runtime: { scope, module } = {}, assets, pluginSchema } = pluginManifest;
 
@@ -68,22 +81,22 @@ const getCompactComponentDefinition = (pluginRaw, pluginManifest) => {
     module,
     settings,
     subPlugins: Object.keys(omit(pluginSchema, [type]))
-  };
+  } as Partial<ComponentDefinition>;
 };
 
-const fetchPluginsManifest = async pluginManifest => {
-  let responseContent;
+const fetchPluginsManifest = async (pluginManifest: string) => {
+  let responseContent: PluginManifest | undefined;
   try {
     const response = await fetch(pluginManifest, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
-    responseContent = await response.json();
+    responseContent = (await response.json()) as PluginManifest;
 
     return responseContent;
-  } catch (err) {
+  } catch {
     return responseContent;
   }
 };
 
-export const fetchPluginsManifests = async manifests => {
+export const fetchPluginsManifests = async (manifests: string[]) => {
   if (!Array.isArray(manifests) || manifests.length === 0) {
     return {};
   }
@@ -91,32 +104,34 @@ export const fetchPluginsManifests = async manifests => {
   const promises = manifests.map(pluginManifest => fetchPluginsManifest(pluginManifest));
   const responses = await Promise.allSettled(promises);
 
-  return responses
-    .filter(response => response.status === 'fulfilled' && response.value)
-    .reduce((acum, response) => ({ ...acum, [get(response.value, 'root', '')]: response.value }), {});
+  return responses.reduce((acum, response) => {
+    if (response.status === 'fulfilled' && response.value) {
+      return { ...acum, [get(response.value, 'root', '')]: response.value };
+    }
+
+    return acum;
+  }, {}) as Record<string, PluginManifest>;
 };
 
-export const pluginParseDefinition = async (pluginsRaw = [], compact = false) => {
-  let definitions = {};
+export const pluginParseDefinition = async (pluginsRaw: PluginRaw[] = [], compact = false) => {
+  let definitions: Record<string, ComponentDefinition | Partial<ComponentDefinition>> = {};
   if (!Array.isArray(pluginsRaw)) {
     return definitions;
   }
 
   const pluginManifests = await fetchPluginsManifests(
-    pluginsRaw.reduce((acum, plugin) => [...acum, `${plugin.resource}/plugin-manifest.json`], [])
+    pluginsRaw.reduce<string[]>((acum, plugin) => [...acum, `${plugin.resource}/plugin-manifest.json`], [])
   );
 
-  pluginsRaw
-    .filter(pluginRaw => get(pluginManifests, pluginRaw.type))
-    .forEach(pluginRaw => {
-      const { type } = pluginRaw;
-      const manifest = get(pluginManifests, type);
-      if (compact) {
-        definitions[type] = getCompactComponentDefinition(pluginRaw, manifest);
-      } else {
-        definitions = { ...definitions, ...getComponentDefinition(pluginRaw, manifest) };
-      }
-    });
+  pluginsRaw.forEach(pluginRaw => {
+    const { type } = pluginRaw;
+    const manifest = get(pluginManifests, type);
+    if (compact) {
+      definitions[type] = getCompactComponentDefinition(pluginRaw, manifest);
+    } else {
+      definitions = { ...definitions, ...getComponentDefinition(pluginRaw, manifest) };
+    }
+  });
 
   return definitions;
 };
