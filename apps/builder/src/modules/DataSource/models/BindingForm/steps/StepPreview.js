@@ -85,7 +85,7 @@ const StepPreview = props => {
       <Heading type="h5" className="mb-4">
         Preview
       </Heading>
-      <div className="flex flex-col truncate border border-gray-300 rounded w-full">
+      <div className="flex flex-col truncate border border-gray-300 rounded-sm w-full">
         <div className="flex px-1 py-0.5 text-xs truncate" title={name}>
           <div className="font-bold">From:</div>
           <div className="truncate ml-1">{`${sourceName} [${name}]`}</div>

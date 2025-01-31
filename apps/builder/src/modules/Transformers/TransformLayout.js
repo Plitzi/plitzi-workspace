@@ -34,13 +34,13 @@ const TransformLayout = props => {
       <Button
         size="sm"
         title="Hide/Show Editor"
-        className={classNames('rounded', { 'opacity-70': !isEditorVisible })}
+        className={classNames('rounded-sm', { 'opacity-70': !isEditorVisible })}
         onClick={onClickEditorVisible}
       >
         <i className="fas fa-code" />
       </Button>
       <Select2
-        className="rounded w-[150px]"
+        className="rounded-sm w-[150px]"
         isClearable={false}
         isSearchable={false}
         value={layoutMode}

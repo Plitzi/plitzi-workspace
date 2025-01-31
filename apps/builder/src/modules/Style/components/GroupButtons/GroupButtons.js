@@ -69,9 +69,13 @@ const GroupButtons = props => {
       {itemsParsed && itemsParsed.length > 0 && (
         <div className={classNames('flex flex-col', { 'w-full': fullWidth })}>
           <div
-            className={classNames('flex bg-white border border-gray-300 rounded py-1 divide-x-2', classNameContainer, {
-              'w-full': fullWidth
-            })}
+            className={classNames(
+              'flex bg-white border border-gray-300 rounded-sm py-1 divide-x-2',
+              classNameContainer,
+              {
+                'w-full': fullWidth
+              }
+            )}
           >
             {itemsParsed.map((item, i) => {
               const {

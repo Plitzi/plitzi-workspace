@@ -29,8 +29,8 @@ const ElementDefinitionSettings = props => {
 
   return (
     <div className="flex p-2 gap-2">
-      <Input className="grow" size="sm" value={label} onChange={handleChangeLabel} inputClassName="rounded" />
-      <Button size="sm" className="rounded" onClick={handleClickVisibility}>
+      <Input className="grow" size="sm" value={label} onChange={handleChangeLabel} inputClassName="rounded-sm" />
+      <Button size="sm" className="rounded-sm" onClick={handleClickVisibility}>
         {visibility && <i className="fa-solid fa-eye" />}
         {!visibility && <i className="fa-solid fa-eye-slash" />}
       </Button>

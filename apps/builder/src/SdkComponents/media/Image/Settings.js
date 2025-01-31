@@ -26,20 +26,20 @@ const Settings = props => {
           <label>Image</label>
           <div className="flex flex-col">
             <span>URL</span>
-            <Input value={src} onChange={handleChange('src')} inputClassName="rounded" />
+            <Input value={src} onChange={handleChange('src')} inputClassName="rounded-sm" />
             {src && (
-              <div className="flex items-center justify-center p-2 mt-2 border rounded border-gray-300 relative">
+              <div className="flex items-center justify-center p-2 mt-2 border rounded-sm border-gray-300 relative">
                 <div className="bg-white text-xs absolute top-2 left-2 p-1 rounded-br rounded-tl border border-gray-300">
                   Preview
                 </div>
-                <img src={src} alt="" className="w-full h-full rounded" />
+                <img src={src} alt="" className="w-full h-full rounded-sm" />
               </div>
             )}
           </div>
         </div>
         <div className="flex flex-col mt-4">
           <label>Load Mode</label>
-          <Select value={loadMode} onChange={handleChange('loadMode')} className="rounded">
+          <Select value={loadMode} onChange={handleChange('loadMode')} className="rounded-sm">
             <option value="auto">Auto</option>
             <option value="lazy">Lazy</option>
             <option value="eager">Eager</option>

@@ -123,7 +123,7 @@ const StyleInspector = props => {
         {allowStyleSelector && (
           <div className="flex flex-col text-xs">
             <label>Selector</label>
-            <Select className="rounded" size="sm" onChange={handleChangeStyleSelector} value={styleSelector}>
+            <Select className="rounded-sm" size="sm" onChange={handleChangeStyleSelector} value={styleSelector}>
               {Object.keys(styleSelectorsAvailables).map(selectorKey => (
                 <option key={selectorKey} value={selectorKey}>
                   {selectorKey}
@@ -145,7 +145,7 @@ const StyleInspector = props => {
             onSelectorSelected={handleCurrentSelector}
           />
           <Button
-            className="rounded ml-2 w-10 text-sm"
+            className="rounded-sm ml-2 w-10 text-sm"
             size="custom"
             onClick={handleClicViewMode}
             title={viewMode === 'basic' ? 'Advanced Mode' : 'Basic Mode'}

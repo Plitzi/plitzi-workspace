@@ -49,7 +49,7 @@ const PageForm = props => {
             label="Page Name"
             placeholder="Page Name"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={e => onChange(e.target.value)}
             value={value}
             error={error}
@@ -69,7 +69,7 @@ const PageForm = props => {
             label="Page Folder"
             placeholder="Page Folder"
             className="w-full mt-4"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={option => onChange(option?.value ?? '')}
             value={value}
             error={error}

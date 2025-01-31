@@ -43,7 +43,7 @@ const StepSource = props => {
             return (
               <div
                 key={i}
-                className="group w-full hover:bg-blue-400 border rounded flex px-2 py-1 items-center cursor-pointer overflow-hidden not-first:mt-2 select-none"
+                className="group w-full hover:bg-blue-400 border rounded-sm flex px-2 py-1 items-center cursor-pointer overflow-hidden [&:not(:first-child)]:mt-2 select-none"
                 title={name}
                 onClick={handleClickSource(srcKey)}
               >

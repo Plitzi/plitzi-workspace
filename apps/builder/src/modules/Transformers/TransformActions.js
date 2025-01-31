@@ -38,11 +38,11 @@ const TransformActions = props => {
 
   return (
     <div className="flex gap-2">
-      <Button size="sm" className="rounded" title="Clean Up" onClick={onClickEraser}>
+      <Button size="sm" className="rounded-sm" title="Clean Up" onClick={onClickEraser}>
         <i className="fa-solid fa-eraser" />
       </Button>
       <Select2
-        className="rounded w-[150px]"
+        className="rounded-sm w-[150px]"
         size="sm"
         placeholder="Select mode"
         value={mode}
@@ -51,10 +51,10 @@ const TransformActions = props => {
         isSearchable={false}
         isClearable={false}
       />
-      <Button size="sm" className="rounded" disabled={disabled} onClick={onTransform} title="Transform">
+      <Button size="sm" className="rounded-sm" disabled={disabled} onClick={onTransform} title="Transform">
         {disabled ? 'Loading...' : 'Compile'}
       </Button>
-      <Button size="sm" className="rounded" disabled={disabled} onClick={onImport} title="Import">
+      <Button size="sm" className="rounded-sm" disabled={disabled} onClick={onImport} title="Import">
         Import
       </Button>
     </div>

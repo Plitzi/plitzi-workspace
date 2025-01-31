@@ -99,19 +99,19 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Input Name</label>
-          <Input value={name} onChange={handleChangeName} inputClassName="rounded" />
+          <Input value={name} onChange={handleChangeName} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Label</label>
-          <Input value={label} onChange={handleChangeLabel} inputClassName="rounded" />
+          <Input value={label} onChange={handleChangeLabel} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Placeholder</label>
-          <Input value={placeholder} onChange={handleChangePlaceholder} inputClassName="rounded" />
+          <Input value={placeholder} onChange={handleChangePlaceholder} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Input Type</label>
-          <Select value={subType} onChange={handleChangeType} className="rounded">
+          <Select value={subType} onChange={handleChangeType} className="rounded-sm">
             <option value="text">Text</option>
             <option value="number">Number</option>
             <option value="time">Time</option>
@@ -127,7 +127,7 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-5">
           <label>Default Value</label>
-          <TextArea value={defaultValue} onChange={handleChangeDefaultValue} className="rounded" />
+          <TextArea value={defaultValue} onChange={handleChangeDefaultValue} className="rounded-sm" />
         </div>
         {/* <div className="flex flex-col mt-4">
           <label>Value</label>
@@ -152,7 +152,7 @@ const Settings = props => {
         {subType === 'select' && (
           <div className="flex flex-col mt-4">
             <label>Options</label>
-            <TextArea value={optionsString} onChange={handleChangeOptions} className="rounded" />
+            <TextArea value={optionsString} onChange={handleChangeOptions} className="rounded-sm" />
           </div>
         )}
         <div className="flex flex-col mt-4">

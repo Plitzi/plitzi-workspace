@@ -80,7 +80,7 @@ const Settings = props => {
         <div className="flex flex-col">
           <label>Query</label>
           <CodeMirror
-            className="basis-auto border border-gray-300 rounded font-rubik text-sm px-3 py-1 min-h-[38px]"
+            className="basis-auto border border-gray-300 rounded-sm font-rubik text-sm px-3 py-1 min-h-[38px]"
             value={query}
             theme="light"
             mode="text"
@@ -92,14 +92,14 @@ const Settings = props => {
         </div>
         <div className="flex flex-col">
           <label>Method</label>
-          <Select value={method} onChange={handleChange('method')} className="rounded">
+          <Select value={method} onChange={handleChange('method')} className="rounded-sm">
             <option value="get">Get</option>
             <option value="post">Post</option>
           </Select>
         </div>
         <div className="flex flex-col">
           <label>Access Token</label>
-          <Input value={accessToken} onChange={handleChange('accessToken')} inputClassName="rounded" />
+          <Input value={accessToken} onChange={handleChange('accessToken')} inputClassName="rounded-sm" />
         </div>
         <div className="flex gap-1">
           <Switch value={advancedSettings} size="sm" className="!w-auto" onChange={handleChangeEnabled}>
@@ -111,9 +111,9 @@ const Settings = props => {
             <div className="flex flex-col">
               <label>Headers</label>
               <KVEditor
-                className="rounded"
-                classNameItem="not-first:rounded-t-none rounded-t last:rounded-b"
-                classNameInput="rounded"
+                className="rounded-sm"
+                classNameItem="[&:not(:first-child)]:rounded-t-none rounded-t last:rounded-b"
+                classNameInput="rounded-sm"
                 value={Object.entries(headers)}
                 onChange={handleChangeHeaders}
               />
@@ -130,7 +130,7 @@ const Settings = props => {
             </div>
             <div className="flex flex-col">
               <label>Container Tag</label>
-              <Select value={subType} onChange={handleChange('subType')} className="rounded">
+              <Select value={subType} onChange={handleChange('subType')} className="rounded-sm">
                 <option value="div">Div</option>
                 <option value="header">Header</option>
                 <option value="footer">Footer</option>

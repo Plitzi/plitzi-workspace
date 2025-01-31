@@ -146,7 +146,7 @@ const Background = props => {
   return (
     <CategoryContainer title="Background" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="inspector__background flex flex-col p-2 gap-2">
-        <div className="mx-auto border border-gray-300 rounded p-1 w-16 h-16 bg-white">
+        <div className="mx-auto border border-gray-300 rounded-sm p-1 w-16 h-16 bg-white">
           <div className="h-full w-full bg-no-repeat bg-contain bg-center" style={{ backgroundImage: bgImage }} />
         </div>
         <GroupButtons

@@ -70,7 +70,7 @@ const DetailsSidebar = props => {
 
   return (
     <div className="flex flex-col w-[300px]">
-      <div className="flex flex-col border border-gray-300 rounded p-4">
+      <div className="flex flex-col border border-gray-300 rounded-sm p-4">
         <div className="flex items-center justify-center">
           <div className="w-32 h-32 bg-no-repeat bg-contain" style={{ backgroundImage: `url(${icon})` }} />
         </div>
@@ -79,7 +79,7 @@ const DetailsSidebar = props => {
             {name}
           </Heading>
         </div>
-        <Select onChange={handleChangeVersion} value={versionSelected} className="rounded mb-4">
+        <Select onChange={handleChangeVersion} value={versionSelected} className="rounded-sm mb-4">
           {revisions &&
             revisions.map((revision, i) => {
               const { version } = revision;
@@ -94,19 +94,19 @@ const DetailsSidebar = props => {
             })}
         </Select>
         {versionInstalled && versionInstalled !== latestVersion && (
-          <Button className="rounded" onClick={handleClickUpdate}>
+          <Button className="rounded-sm" onClick={handleClickUpdate}>
             Update Now
           </Button>
         )}
-        <Button className="rounded" onClick={handleClickInstall}>
+        <Button className="rounded-sm" onClick={handleClickInstall}>
           {!versionInstalled ? 'Install Now' : 'Uninstall'}
         </Button>
       </div>
-      <div className="flex flex-col border border-gray-300 rounded p-4 mt-6">
+      <div className="flex flex-col border border-gray-300 rounded-sm p-4 mt-6">
         <Heading type="h4">Overview</Heading>
         <div className="font-sm mt-4">{description}</div>
       </div>
-      <div className="flex flex-col border border-gray-300 rounded p-4 mt-6 text-sm">
+      <div className="flex flex-col border border-gray-300 rounded-sm p-4 mt-6 text-sm">
         <Heading type="h4">Information</Heading>
         <div className="flex flex-col mt-4">
           <div className="flex items-center justify-between">

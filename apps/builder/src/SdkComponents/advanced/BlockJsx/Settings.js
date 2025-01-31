@@ -81,13 +81,13 @@ const Settings = props => {
               id="custom-is-plugin"
               checked={allowEmptyRender}
               onChange={handleChangeAllowEmpty('allowEmptyRender')}
-              className="rounded mr-2"
+              className="rounded-sm mr-2"
             />
             <label htmlFor="custom-is-plugin" className="cursor-pointer select-none">
               Allow Empty Render
             </label>
           </div>
-          <Button onClick={handleClick} disabled={networkLoading} className="rounded">
+          <Button onClick={handleClick} disabled={networkLoading} className="rounded-sm">
             {!networkLoading && 'Compile'}
             {networkLoading && (
               <div className="flex items-center justify-center">

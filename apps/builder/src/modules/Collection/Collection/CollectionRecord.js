@@ -51,7 +51,7 @@ const CollectionRecord = props => {
                 values[fieldKey]}
               {type === 'image' && (
                 <div
-                  className="h-12 w-20 flex items-center bg-cover justify-center bg-gray-300 bg-no-repeat rounded"
+                  className="h-12 w-20 flex items-center bg-cover justify-center bg-gray-300 bg-no-repeat rounded-sm"
                   style={{ backgroundImage: `url(${values[fieldKey]})` }}
                 >
                   {valueEmpty && <i className="fas fa-image fa-2x" />}
@@ -62,7 +62,7 @@ const CollectionRecord = props => {
         })}
       <div className="flex justify-center items-start w-32 select-none">
         <div
-          className={classNames('px-4 border rounded capitalize', {
+          className={classNames('px-4 border rounded-sm capitalize', {
             'text-orange-400 border-orange-400': status === 'draft',
             'text-red-400 border-red-400': status === 'archived',
             'text-blue-400 border-blue-400': status === 'published'

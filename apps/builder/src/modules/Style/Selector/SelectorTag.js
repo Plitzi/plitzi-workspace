@@ -97,7 +97,7 @@ const SelectorTag = props => {
   return (
     <div
       className={classNames(
-        'group px-1 relative flex items-center rounded text-white select-none cursor-pointer',
+        'group px-1 relative flex items-center rounded-sm text-white select-none cursor-pointer',
         className,
         {
           'bg-blue-400': type === 'class' && active,
@@ -111,7 +111,7 @@ const SelectorTag = props => {
       onClick={handleClick}
     >
       <div
-        className={classNames('px-1 my-1 rounded bg-white capitalize font-bold text-xs', {
+        className={classNames('px-1 my-1 rounded-sm bg-white capitalize font-bold text-xs', {
           'text-blue-400': type === 'class' && active,
           'text-green-500': type === 'state' && active,
           'text-purple-500': type === 'parent' && active,
@@ -156,13 +156,13 @@ const SelectorTag = props => {
           <div className="py-1 bg-gray-50">
             <div className="font-bold mb-1 px-2">Actions</div>
             <ul className="flex flex-col gap-1 px-2">
-              <li onClick={handleClickDuplicate} className="hover:bg-gray-200 px-2 py-1 rounded">
+              <li onClick={handleClickDuplicate} className="hover:bg-gray-200 px-2 py-1 rounded-sm">
                 Duplicate
               </li>
-              <li onClick={handleClickRemove} className="hover:bg-gray-200 px-2 py-1 rounded">
+              <li onClick={handleClickRemove} className="hover:bg-gray-200 px-2 py-1 rounded-sm">
                 Remove
               </li>
-              {/* <li onClick={handleClickDelete} className="text-red-400 hover:bg-gray-200 px-2 py-1 rounded">
+              {/* <li onClick={handleClickDelete} className="text-red-400 hover:bg-gray-200 px-2 py-1 rounded-sm">
                 Delete
               </li> */}
             </ul>
@@ -172,7 +172,7 @@ const SelectorTag = props => {
               {['none', 'hover', 'active', 'focus'].map((stateItem, i) => (
                 <li
                   key={i}
-                  className="flex items-center hover:bg-gray-200 px-2 py-1 rounded gap-1"
+                  className="flex items-center hover:bg-gray-200 px-2 py-1 rounded-sm gap-1"
                   onClick={handleClickState(stateItem)}
                 >
                   {(state === stateItem || (state === '' && stateItem === 'none')) && (

@@ -72,7 +72,7 @@ const Variable = props => {
 
   if (editMode) {
     return (
-      <div className="border border-gray-300 rounded p-2">
+      <div className="border border-gray-300 rounded-sm p-2">
         <VariableForm
           name={name}
           category={category}
@@ -88,7 +88,7 @@ const Variable = props => {
   }
 
   return (
-    <div className="group flex flex-col border px-2 py-0.5 gap-1 border-gray-300 rounded text-sm">
+    <div className="group flex flex-col border px-2 py-0.5 gap-1 border-gray-300 rounded-sm text-sm">
       <div className="flex w-full items-center gap-2 cursor-pointer" onClick={handleClick}>
         <div className="flex w-full overflow-hidden">
           {subValues?.length > 0 && <i className="fa-solid fa-code-merge text-sm px-1" title="Has Variations" />}

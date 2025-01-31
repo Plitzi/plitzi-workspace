@@ -71,7 +71,7 @@ const CollectionRecordForm = props => {
                     }
                     placeholder={fieldName}
                     className="w-full mb-4"
-                    inputClassName={classNames('rounded', { 'bg-blue-200': fieldHovered === i })}
+                    inputClassName={classNames('rounded-sm', { 'bg-blue-200': fieldHovered === i })}
                     onChange={e => onChange(e.target.value)}
                     value={value}
                     error={error}

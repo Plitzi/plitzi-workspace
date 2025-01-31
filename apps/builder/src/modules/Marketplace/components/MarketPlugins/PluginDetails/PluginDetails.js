@@ -53,7 +53,7 @@ const PluginDetails = props => {
 
   return (
     <div className="flex flex-col grow basis-0">
-      <Breadcrumb separator="/" className="bg-blue-100 px-6 py-4 rounded">
+      <Breadcrumb separator="/" className="bg-blue-100 px-6 py-4 rounded-sm">
         <span className="cursor-pointer font-bold" onClick={handleClickBack}>
           Plugins
         </span>

@@ -62,7 +62,7 @@ const PageFolderForm = props => {
             label="Folder Name"
             placeholder="Page Name"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={e => onChange(e.target.value)}
             value={value}
             error={error}
@@ -81,7 +81,7 @@ const PageFolderForm = props => {
               label="Parent Folder"
               placeholder="Parent Folder"
               className="w-full"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               inputProps={{ options: pageFolderOptions }}
               onChange={option => onChange(option?.value ?? '')}
               value={value}
@@ -110,7 +110,7 @@ const PageFolderForm = props => {
               label="Folder Slug / Path"
               placeholder="Page Slug / Path"
               className="w-full"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               onChange={e => onChange(e.target.value)}
               value={value}
               error={error}

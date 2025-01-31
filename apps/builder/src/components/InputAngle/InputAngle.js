@@ -125,7 +125,7 @@ const InputAngle = props => {
     <div className={classNames('flex justify-between items-center', className)}>
       <div
         ref={inputRef}
-        className="relative border border-gray-300 bg-gray-100 mr-2 rounded-full cursor-pointer outline-none"
+        className="relative border border-gray-300 bg-gray-100 mr-2 rounded-full cursor-pointer outline-hidden"
         style={{ width, minWidth: width, height, minHeight: height }}
       >
         <span
@@ -143,7 +143,7 @@ const InputAngle = props => {
         minValue={0}
         maxValue={360}
         emptyValue="0"
-        className="rounded"
+        className="rounded-sm"
       />
     </div>
   );

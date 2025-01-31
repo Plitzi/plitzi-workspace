@@ -190,7 +190,7 @@ const TransitionItem = props => {
   return (
     <Dropdown
       showIcon={false}
-      className="w-full border bg-white rounded border-gray-300 not-first:mt-2 hover:bg-gray-100"
+      className="w-full border bg-white rounded-sm border-gray-300 [&:not(:first-child)]:mt-2 hover:bg-gray-100"
       backgroundDisabled
       closeOnClick={false}
     >
@@ -234,7 +234,7 @@ const TransitionItem = props => {
                       type="EffectsTransitionEase"
                       width={26}
                       height={26}
-                      className="border rounded p-0.5 border-gray-300"
+                      className="border rounded-sm p-0.5 border-gray-300"
                     />
                   </InspectorButton>
                 </Dropdown.Content>
@@ -262,7 +262,7 @@ const TransitionItem = props => {
               </Dropdown>
               <Input
                 className="grow w-full"
-                inputClassName="rounded"
+                inputClassName="rounded-sm"
                 type="text"
                 size="sm"
                 value={easing}

@@ -48,7 +48,7 @@ const VariableValue = props => {
               label={hasSubValues ? 'Fallback Value' : 'Value'}
               placeholder={hasSubValues ? 'Fallback Value' : 'Value'}
               className="min-w-0 w-full"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               size="sm"
               onChange={e => {
                 switch (valueType) {

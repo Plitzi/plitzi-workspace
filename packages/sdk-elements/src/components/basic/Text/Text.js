@@ -49,7 +49,7 @@ const Text = props => {
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable
-          className="focus-visible:outline-none"
+          className="focus-visible:outline-hidden"
           value={finalContent}
           onChange={handleChange}
           openMode="doubleClick"

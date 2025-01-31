@@ -99,17 +99,24 @@ const NodeBodyParam = props => {
   );
 
   return (
-    <div className={classNames('flex flex-col w-full not-first:mt-2', className)}>
+    <div className={classNames('flex flex-col w-full [&:not(:first-child)]:mt-2', className)}>
       <label htmlFor={id} className="text-sm">
         {finalLabel}
       </label>
       <div className="flex">
         {!isBinding && type === 'text' && (
-          <Input className="w-full" size="sm" inputClassName="rounded" id={id} value={value} onChange={handleChange} />
+          <Input
+            className="w-full"
+            size="sm"
+            inputClassName="rounded-sm"
+            id={id}
+            value={value}
+            onChange={handleChange}
+          />
         )}
         {!isBinding && type === 'select' && (
           <Select2
-            className="rounded w-full basis-0 min-w-0 grow"
+            className="rounded-sm w-full basis-0 min-w-0 grow"
             size="sm"
             placeholder={`Select a ${finalLabel}`}
             value={value}
@@ -119,10 +126,10 @@ const NodeBodyParam = props => {
           />
         )}
         {!isBinding && type === 'boolean' && (
-          <Switch className="rounded w-full" size="sm" value={value} onChange={handleChange} />
+          <Switch className="rounded-sm w-full" size="sm" value={value} onChange={handleChange} />
         )}
         {!isBinding && type === 'textarea' && (
-          <TextArea className="rounded w-full" size="sm" value={value} onChange={handleChange} />
+          <TextArea className="rounded-sm w-full" size="sm" value={value} onChange={handleChange} />
         )}
         {!isBinding && type === 'codemirror-json' && (
           <CodeMirror
@@ -148,7 +155,7 @@ const NodeBodyParam = props => {
         )}
         {isBinding && <ParamBinding className="w-full" nodeId={nodeId} id={id} onChange={onChange} value={value} />}
         {canBind && (
-          <Button size="sm" className="ml-2 rounded w-8" onClick={handleClickBind}>
+          <Button size="sm" className="ml-2 rounded-sm w-8" onClick={handleClickBind}>
             {!isBinding && <i className="fa-solid fa-plug" />}
             {isBinding && <i className="fa-solid fa-plug-circle-xmark" />}
           </Button>

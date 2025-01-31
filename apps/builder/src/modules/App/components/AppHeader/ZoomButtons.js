@@ -36,7 +36,7 @@ const ZoomButtons = () => {
         size="sm"
         value={Number(zoom).toFixed(1)}
         onChange={handleChange}
-        className="border-white active:border-gray-200 hover:border-gray-200 font-bold rounded hover:bg-gray-50"
+        className="border-white active:border-gray-200 hover:border-gray-200 font-bold rounded-sm hover:bg-gray-50"
       >
         {zooms.map(({ label, value }) => (
           <option key={value} value={value}>

@@ -27,14 +27,14 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Title</label>
-          <Input value={title} onChange={handleChange('title')} inputClassName="rounded" />
+          <Input value={title} onChange={handleChange('title')} inputClassName="rounded-sm" />
         </div>
         <div className="flex items-center mt-4">
           <Checkbox
             id="auto-hide-after-click"
             checked={autoHideAfterClick}
             onChange={handleChangeAutoHide}
-            className="rounded mr-2"
+            className="rounded-sm mr-2"
           />
           <label htmlFor="auto-hide-after-click" className="cursor-pointer select-none">
             Hide after click background

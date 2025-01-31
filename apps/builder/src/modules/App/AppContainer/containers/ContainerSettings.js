@@ -89,7 +89,7 @@ const ContainerSettings = () => {
           type="select"
           label="User Provider"
           placeholder="None"
-          inputClassName="rounded"
+          inputClassName="rounded-sm"
         >
           <option value="basic">Basic</option>
           <option value="auth0">Auth0</option>
@@ -101,14 +101,14 @@ const ContainerSettings = () => {
               value={auth0Domain}
               onChange={handleChange('auth0Domain')}
               label="Auth0 Domain"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
             />
             <FormControl
               name="auth0ClientId"
               value={auth0ClientId}
               onChange={handleChange('auth0ClientId')}
               label="Auth0 Client ID"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
             />
           </>
         )}
@@ -119,35 +119,35 @@ const ContainerSettings = () => {
               value={loginUrl}
               onChange={handleChange('loginUrl')}
               label="API Login Url"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
             />
             <FormControl
               name="refreshUrl"
               value={refreshUrl}
               onChange={handleChange('refreshUrl')}
               label="API Refresh Url (Optional)"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
             />
             <FormControl
               name="detailsPath"
               value={detailsPath}
               onChange={handleChange('detailsPath')}
               label="API Details Object Path - Default: [details] - example: [user.details]"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
             />
             <FormControl
               name="tokenPath"
               value={tokenPath}
               onChange={handleChange('tokenPath')}
               label="API Token Object Path - Default: [access_token] - example: [user.access_token]"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
             />
             <FormControl
               name="expirationTimePath"
               value={expirationTimePath}
               onChange={handleChange('expirationTimePath')}
               label="API Expiration Time Object Path - Default: [expire_at] - example: [user.expire_at]"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
             />
           </>
         )}
@@ -169,7 +169,7 @@ const ContainerSettings = () => {
             type="select"
             label="User Provider"
             placeholder="None"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
           >
             <option value="local">Local Storage</option>
             <option value="session">Session Storage</option>

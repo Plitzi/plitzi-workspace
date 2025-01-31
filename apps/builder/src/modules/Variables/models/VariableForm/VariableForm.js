@@ -97,7 +97,7 @@ const VariableForm = props => {
               size="sm"
               placeholder="Name"
               className="w-full"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               onChange={e => onChange(e.target.value)}
               value={value}
               error={error}
@@ -131,7 +131,7 @@ const VariableForm = props => {
               label="Type"
               placeholder="Type"
               className="w-full"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               onChange={option => {
                 onChange(option?.value ?? 'text');
                 setValue('value', '');

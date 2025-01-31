@@ -65,7 +65,7 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Popup Placement</label>
-          <Select value={popupPlacement} onChange={handleChangePopupPlacement} className="rounded">
+          <Select value={popupPlacement} onChange={handleChangePopupPlacement} className="rounded-sm">
             <option value="top">Top</option>
             <option value="bottom">Bottom</option>
             <option value="left">Left</option>
@@ -74,14 +74,24 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-4">
           <label>Container Top Offset</label>
-          <Input type="number" value={containerTopOffset} onChange={handleChangeTopOffset} inputClassName="rounded" />
+          <Input
+            type="number"
+            value={containerTopOffset}
+            onChange={handleChangeTopOffset}
+            inputClassName="rounded-sm"
+          />
         </div>
         <div className="flex flex-col mt-4">
           <label>Container Left Offset</label>
-          <Input type="number" value={containerLeftOffset} onChange={handleChangeLeftOffset} inputClassName="rounded" />
+          <Input
+            type="number"
+            value={containerLeftOffset}
+            onChange={handleChangeLeftOffset}
+            inputClassName="rounded-sm"
+          />
         </div>
         <div className="flex items-center mt-4">
-          <Checkbox id="open-popup" checked={openPopup} onChange={handleChangeOpenPopup} className="rounded mr-2" />
+          <Checkbox id="open-popup" checked={openPopup} onChange={handleChangeOpenPopup} className="rounded-sm mr-2" />
           <label htmlFor="open-popup" className="cursor-pointer select-none">
             Open Popup
           </label>
@@ -91,7 +101,7 @@ const Settings = props => {
             id="background-disabled"
             checked={backgroundDisabled}
             onChange={handleChangeBackgroundDisabled}
-            className="rounded mr-2"
+            className="rounded-sm mr-2"
           />
           <label htmlFor="background-disabled" className="cursor-pointer select-none">
             Disable Background
@@ -102,7 +112,7 @@ const Settings = props => {
             id="close-on-click-background"
             checked={closeOnClickBackground}
             onChange={handleChangeCloseOnClickBackground}
-            className="rounded mr-2"
+            className="rounded-sm mr-2"
           />
           <label htmlFor="close-on-click-background" className="cursor-pointer select-none">
             Close on click background
@@ -113,14 +123,14 @@ const Settings = props => {
             id="close-on-click-popup"
             checked={closeOnClickPopup}
             onChange={handleChangeCloseOnClickPopup}
-            className="rounded mr-2"
+            className="rounded-sm mr-2"
           />
           <label htmlFor="close-on-click-popup" className="cursor-pointer select-none">
             Close on click popup
           </label>
         </div>
         <div className="flex items-center mt-4">
-          <Checkbox id="disabled" checked={disabled} onChange={handleChangeDisabled} className="rounded mr-2" />
+          <Checkbox id="disabled" checked={disabled} onChange={handleChangeDisabled} className="rounded-sm mr-2" />
           <label htmlFor="disabled" className="cursor-pointer select-none">
             Disabled
           </label>

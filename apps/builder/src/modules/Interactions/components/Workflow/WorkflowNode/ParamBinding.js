@@ -133,7 +133,7 @@ const ParamBinding = props => {
   return (
     <div className={classNames('', className)}>
       <Select2
-        className="rounded"
+        className="rounded-sm"
         size="sm"
         isClearable
         placeholder="Select a Source"
@@ -143,7 +143,7 @@ const ParamBinding = props => {
       />
       {node && (
         <Select2
-          className="rounded mt-2"
+          className="rounded-sm mt-2"
           size="sm"
           placeholder="Select a Binding"
           value={nodeFullPath}

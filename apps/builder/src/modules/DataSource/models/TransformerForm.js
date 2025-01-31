@@ -86,7 +86,7 @@ const TransformerForm = props => {
             size="md"
             placeholder="Attribute"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={e => onChange(e.target.value)}
             value={value}
             error={error}
@@ -111,7 +111,7 @@ const TransformerForm = props => {
               size="md"
               placeholder="Select Path"
               className="w-full mt-4"
-              inputClassName="rounded w-full border-none !ring-0 !shadow-none cursor-pointer text-sm !p-0"
+              inputClassName="rounded-sm w-full border-none !ring-0 !shadow-none cursor-pointer text-sm !p-0"
               disabled={loading}
               onChange={option => onChange(option.value)}
               value={value}

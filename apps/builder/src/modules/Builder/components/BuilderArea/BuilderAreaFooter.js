@@ -114,7 +114,7 @@ const BuilderAreaFooter = props => {
 
   return (
     <div className="flex justify-center items-center gap-4">
-      <div className="p-1 flex items-center rounded bg-white shadow">
+      <div className="p-1 flex items-center rounded-sm bg-white shadow">
         <Button
           intent="custom"
           size="custom"

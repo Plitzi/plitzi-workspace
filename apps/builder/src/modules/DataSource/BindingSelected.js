@@ -118,7 +118,7 @@ const BindingSelected = props => {
   const sourceName = useMemo(() => upperFirst(get(sources, `${source}.name`, source)), [source, sources]);
 
   return (
-    <div className="flex border border-gray-300 rounded not-first:mt-2">
+    <div className="flex border border-gray-300 rounded-sm [&:not(:first-child)]:mt-2">
       <div className="flex flex-col">
         <Switch
           value={enabled}

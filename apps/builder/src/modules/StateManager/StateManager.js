@@ -49,7 +49,7 @@ const StateManager = props => {
         <Button
           intent="custom"
           size="custom"
-          className="p-2 bg-white rounded mr-2"
+          className="p-2 bg-white rounded-sm mr-2"
           onClick={handleClickSave}
           tilte="Save State"
         >

@@ -83,7 +83,7 @@ const CollectionFieldForm = props => {
               size="md"
               placeholder="Field Name"
               className="grow basis-0"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               errorClassName="text-xs"
               onChange={e => {
                 onChange(e.target.value);
@@ -109,7 +109,7 @@ const CollectionFieldForm = props => {
               size="md"
               placeholder="Unique Identifier"
               className="grow basis-0"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               errorClassName="text-xs"
               onChange={e => onChange(e.target.value)}
               value={value}
@@ -124,7 +124,12 @@ const CollectionFieldForm = props => {
           rules={{ required: false }}
           name="type"
           render={({ field: { onChange, value }, fieldState: { error } }) => (
-            <Dropdown width={200} height={300} showIcon={false} className="flex w-full border border-gray-300 rounded">
+            <Dropdown
+              width={200}
+              height={300}
+              showIcon={false}
+              className="flex w-full border border-gray-300 rounded-sm"
+            >
               <Dropdown.Content className="flex items-center w-full h-full px-4 py-2">
                 {type && (
                   <span className="text-sm">
@@ -142,7 +147,7 @@ const CollectionFieldForm = props => {
                     return (
                       <li
                         key={i}
-                        className="px-4 py-2 hover:bg-blue-300 hover:text-white not-last:border-b border-gray-300 flex items-center justify-between cursor-pointer"
+                        className="px-4 py-2 hover:bg-blue-300 hover:text-white [&:not(:last-child)]:border-b border-gray-300 flex items-center justify-between cursor-pointer"
                         onClick={() => onChange(typeKey)}
                       >
                         <div className="flex">

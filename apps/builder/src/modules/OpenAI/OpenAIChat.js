@@ -178,7 +178,7 @@ const OpenAIChat = props => {
           {!recording && (
             <Input
               className="min-w-0 basis-0 grow"
-              inputClassName="rounded min-w-0 basis-0"
+              inputClassName="rounded-sm min-w-0 basis-0"
               value={messageInput}
               size="sm"
               onChange={handleChangeMessage}
@@ -198,7 +198,7 @@ const OpenAIChat = props => {
           )}
         </div>
         {recording && (
-          <div className="flex rounded overflow-hidden">
+          <div className="flex rounded-sm overflow-hidden">
             <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
               {!paused && <i className="fa-solid fa-pause" />}
               {paused && <i className="fa-solid fa-play" />}
@@ -210,7 +210,7 @@ const OpenAIChat = props => {
         )}
         {!recording && (
           <Button
-            className="rounded w-[38px]"
+            className="rounded-sm w-[38px]"
             size="sm"
             intent={recording ? 'danger' : 'primary'}
             disabled={loading}
@@ -221,7 +221,7 @@ const OpenAIChat = props => {
           </Button>
         )}
         {!recording && (
-          <Button size="sm" className="rounded w-[38px]" disabled={loading} onClick={handleClickAsk} title="Ask">
+          <Button size="sm" className="rounded-sm w-[38px]" disabled={loading} onClick={handleClickAsk} title="Ask">
             {!loading && <i className="fa-solid fa-star" />}
             {loading && <i className="fa-solid fa-sync fa-spin" />}
           </Button>
@@ -229,7 +229,7 @@ const OpenAIChat = props => {
         <Button
           size="sm"
           intent="danger"
-          className="rounded w-[38px]"
+          className="rounded-sm w-[38px]"
           disabled={loading}
           onClick={handleClickClearConversation}
           title="Clear the conversation"

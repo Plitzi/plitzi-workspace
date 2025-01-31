@@ -20,7 +20,7 @@ const itemsDefault = [];
  * @returns {React.ReactElement}
  */
 const CollectionRecords = ({ items = itemsDefault, fields = emptyObject, onUpdate = noop, onRemove = noop }) => (
-  <div className="flex flex-col grow border border-gray-300 rounded">
+  <div className="flex flex-col grow border border-gray-300 rounded-sm">
     <div className="flex border-b border-gray-300 h-10 font-bold items-center py-3 px-4 gap-4">
       {fields &&
         Object.keys(fields).map((fieldKey, i) => (

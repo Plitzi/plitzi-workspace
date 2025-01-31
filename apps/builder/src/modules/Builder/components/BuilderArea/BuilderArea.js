@@ -90,7 +90,7 @@ const BuilderArea = props => {
   const css = useMemo(() => {
     const cssVariables = variablesToCss(variables);
 
-    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${styleFrame[1][1]}\n${`${cache}\n${customCss}`}\n${externalStyle}`;
+    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${`${cache}\n${customCss}`}\n${externalStyle}`;
   }, [customCss, cache, externalStyle, variables]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const [dragTree, setDragTreeState] = useState(false);

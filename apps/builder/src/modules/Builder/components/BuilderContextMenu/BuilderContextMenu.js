@@ -253,7 +253,7 @@ const BuilderContextMenu = props => {
           transformOrigin: 'top left'
         }}
       >
-        <div className="h-20 p-3 flex items-center justify-center border-2 border-dashed rounded">
+        <div className="h-20 p-3 flex items-center justify-center border-2 border-dashed rounded-sm">
           No components selected. Click on a component to select it
         </div>
       </Card>
@@ -267,7 +267,7 @@ const BuilderContextMenu = props => {
     <Card
       ref={ref}
       allowOverflow
-      className="builder__context-menu z-[99999999] flex rounded"
+      className="builder__context-menu z-[99999999] flex rounded-sm"
       style={{
         position: 'fixed',
         top: yPos,

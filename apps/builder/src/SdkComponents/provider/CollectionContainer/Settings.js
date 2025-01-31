@@ -59,7 +59,7 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Source</label>
-          <Select value={source} onChange={handleChange('source')} className="rounded">
+          <Select value={source} onChange={handleChange('source')} className="rounded-sm">
             <option value="">Select a Source</option>
             {Object.values(collections).map((collection, i) => (
               <option key={i} value={collection.id}>
@@ -87,7 +87,7 @@ const Settings = props => {
                 id="single-record"
                 checked={singleRecord}
                 onChange={handleChangeIsPlugin('singleRecord')}
-                className="rounded mr-2"
+                className="rounded-sm mr-2"
               />
               <label htmlFor="single-record" className="cursor-pointer select-none">
                 Single Record
@@ -99,7 +99,7 @@ const Settings = props => {
         {!singleRecord && (
           <div className="flex flex-col mt-4">
             <label>Limit</label>
-            <Input value={limit} onChange={handleChange('limit')} inputClassName="rounded" />
+            <Input value={limit} onChange={handleChange('limit')} inputClassName="rounded-sm" />
           </div>
         )}
       </div>

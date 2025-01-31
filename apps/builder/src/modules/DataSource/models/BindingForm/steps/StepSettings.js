@@ -78,7 +78,7 @@ const StepSettings = props => {
             size="md"
             placeholder="Attribute"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={option => onChange(option?.value ?? '')}
             value={value}
             error={error}
@@ -98,7 +98,7 @@ const StepSettings = props => {
               size="md"
               placeholder="Select Path"
               className="w-full mt-4"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               onChange={option => onChange(option?.value ?? '')}
               value={value}
               error={error}

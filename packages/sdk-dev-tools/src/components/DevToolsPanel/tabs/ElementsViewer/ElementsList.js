@@ -29,7 +29,13 @@ const ElementsList = props => {
 
   return (
     <div className={classNames('flex flex-col h-full border-r border-gray-300 gap-4', className)}>
-      <Input inputClassName="rounded" value={filter} onChange={handleChangeFilter} placeholder="Search..." size="sm" />
+      <Input
+        inputClassName="rounded-sm"
+        value={filter}
+        onChange={handleChangeFilter}
+        placeholder="Search..."
+        size="sm"
+      />
       <div className="flex flex-col overflow-y-auto gap-1 text-xs">
         {elementsSorted.map((element, i) => (
           <ElementsListItem

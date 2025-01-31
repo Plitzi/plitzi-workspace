@@ -74,15 +74,22 @@ const TransformerParam = props => {
   );
 
   return (
-    <div className={classNames('flex flex-col w-full not-first:mt-4', className)}>
+    <div className={classNames('flex flex-col w-full [&:not(:first-child)]:mt-4', className)}>
       <label htmlFor={id}>{label}</label>
       <div className="flex">
         {type === 'text' && (
-          <Input className="w-full" size="sm" inputClassName="rounded" id={id} value={value} onChange={handleChange} />
+          <Input
+            className="w-full"
+            size="sm"
+            inputClassName="rounded-sm"
+            id={id}
+            value={value}
+            onChange={handleChange}
+          />
         )}
         {type === 'select' && (
           <Select2
-            className="rounded w-full"
+            className="rounded-sm w-full"
             size="sm"
             placeholder={`Select a ${label}`}
             value={value}
@@ -90,7 +97,9 @@ const TransformerParam = props => {
             options={options}
           />
         )}
-        {type === 'textarea' && <TextArea className="rounded w-full" size="sm" value={value} onChange={handleChange} />}
+        {type === 'textarea' && (
+          <TextArea className="rounded-sm w-full" size="sm" value={value} onChange={handleChange} />
+        )}
         {type === 'checkbox' && <Checkbox onChange={handleChange} checked={value} />}
         {type === 'codemirror-text' && (
           <CodeMirror

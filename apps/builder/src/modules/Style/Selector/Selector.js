@@ -258,7 +258,7 @@ const Selector = props => {
     >
       <Dropdown.Content className={classNames('w-full', { 'z-[51]': popupOpened })}>
         <div
-          className={classNames('flex-wrap border border-gray-300 rounded relative p-1 gap-1 flex', className, {
+          className={classNames('flex-wrap border border-gray-300 rounded-sm relative p-1 gap-1 flex', className, {
             'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
             'cursor-pointer': !disabled
           })}
@@ -269,7 +269,7 @@ const Selector = props => {
             intent="custom"
             size="custom"
             onClick={handleClickStyleManager}
-            className="hover:bg-gray-200 border border-gray-300 rounded h-6 w-6 text-gray-500"
+            className="hover:bg-gray-200 border border-gray-300 rounded-sm h-6 w-6 text-gray-500"
             title="Style Manager"
           >
             <i className="fas fa-swatchbook" />
@@ -289,7 +289,7 @@ const Selector = props => {
             ))}
           <input
             ref={inputRef}
-            className="border-none bg-transparent w-0 text-inherit outline-none focus:min-w-[50px] focus:grow focus:ring-transparent min-h-0 px-1 text-xs py-0 flex"
+            className="border-none bg-transparent w-0 text-inherit outline-hidden focus:min-w-[50px] focus:grow focus:ring-transparent min-h-0 px-1 text-xs py-0 flex"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"

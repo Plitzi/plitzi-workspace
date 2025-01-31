@@ -103,22 +103,22 @@ const BorderRadius = props => {
         onChange={handleChange}
       />
       {showRadiusIndividuals && (
-        <div className="grid grid-cols-2 grid-rows-2 gap-2 bg-gray-50 border border-gray-300 rounded p-2">
+        <div className="grid grid-cols-2 grid-rows-2 gap-2 bg-gray-50 border border-gray-300 rounded-sm p-2">
           <div className="flex items-center">
             <Icons type="BorderRadiusTopLeft" className="mr-1" />
-            <InputMetric onChange={handleChangeTopLeft} value={borderTopLeft} className="rounded" />
+            <InputMetric onChange={handleChangeTopLeft} value={borderTopLeft} className="rounded-sm" />
           </div>
           <div className="flex items-center">
             <Icons type="BorderRadiusTopRight" className="mr-1" />
-            <InputMetric onChange={handleChangeTopRight} value={borderTopRight} className="rounded" />
+            <InputMetric onChange={handleChangeTopRight} value={borderTopRight} className="rounded-sm" />
           </div>
           <div className="flex items-center">
             <Icons type="BorderRadiusBottomLeft" className="mr-1" />
-            <InputMetric onChange={handleChangeBottomLeft} value={borderBottomLeft} className="rounded" />
+            <InputMetric onChange={handleChangeBottomLeft} value={borderBottomLeft} className="rounded-sm" />
           </div>
           <div className="flex items-center">
             <Icons type="BorderRadiusBottomRight" className="mr-1" />
-            <InputMetric onChange={handleChangeBottomRight} value={borderBottomRight} className="rounded" />
+            <InputMetric onChange={handleChangeBottomRight} value={borderBottomRight} className="rounded-sm" />
           </div>
         </div>
       )}

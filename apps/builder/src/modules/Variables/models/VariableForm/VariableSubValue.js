@@ -42,7 +42,7 @@ const VariableSubValue = props => {
   );
 
   return (
-    <div className="border border-gray-300 rounded p-2 flex flex-col gap-2 grow basis-0 min-w-0">
+    <div className="border border-gray-300 rounded-sm p-2 flex flex-col gap-2 grow basis-0 min-w-0">
       <VariableValue
         valueType={valueType}
         control={control}

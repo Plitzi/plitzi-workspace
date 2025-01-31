@@ -84,12 +84,12 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Render Type</label>
-          <Input value={renderType} onChange={handleChange('renderType')} inputClassName="rounded" />
+          <Input value={renderType} onChange={handleChange('renderType')} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Settings</label>
           <CodeMirror
-            className="min-h-[250px] rounded"
+            className="min-h-[250px] rounded-sm"
             value={settings}
             theme="dark"
             mode="json"
@@ -103,24 +103,30 @@ const Settings = props => {
           </Alert>
         )}
         <div className="flex items-center mt-4">
-          <Checkbox id="custom-is-plugin" checked={isPlugin} onChange={handleChangeIsPlugin} className="rounded mr-2" />
+          <Checkbox
+            id="custom-is-plugin"
+            checked={isPlugin}
+            onChange={handleChangeIsPlugin}
+            className="rounded-sm mr-2"
+          />
           <label htmlFor="custom-is-plugin" className="cursor-pointer select-none">
             Is Plugin
           </label>
         </div>
+        rounded-sm"
         {isPlugin && (
           <>
             <div className="flex flex-col mt-4">
               <label>Plugin Scope</label>
-              <Input value={pluginScope} onChange={handleChange('pluginScope')} inputClassName="rounded" />
+              <Input value={pluginScope} onChange={handleChange('pluginScope')} inputClassName="rounded-sm" />
             </div>
             <div className="flex flex-col mt-4">
               <label>Plugin Script Url</label>
-              <Input value={scriptUrl} onChange={handleChange('scriptUrl')} inputClassName="rounded" />
+              <Input value={scriptUrl} onChange={handleChange('scriptUrl')} inputClassName="rounded-sm" />
             </div>
             <div className="flex flex-col mt-4">
               <label>Plugin Assets (Styles)</label>
-              <TextArea value={assets} onChange={handleChange('assets')} className="rounded" />
+              <TextArea value={assets} onChange={handleChange('assets')} className="rounded-sm" />
             </div>
           </>
         )}

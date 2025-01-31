@@ -159,7 +159,7 @@ const TemporalResource = props => {
       )}
       {error && (
         <div
-          className="absolute bottom-1 left-1 bg-white p-1 rounded text-red-400 flex items-center justify-center"
+          className="absolute bottom-1 left-1 bg-white p-1 rounded-sm text-red-400 flex items-center justify-center"
           title={error}
         >
           <i className="fa-solid fa-triangle-exclamation" />

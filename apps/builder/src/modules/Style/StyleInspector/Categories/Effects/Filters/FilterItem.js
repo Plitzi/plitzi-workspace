@@ -105,7 +105,7 @@ const FilterItem = props => {
   return (
     <Dropdown
       showIcon={false}
-      className="w-full border bg-white rounded border-gray-300 not-first:mt-2 hover:bg-gray-100"
+      className="w-full border bg-white rounded-sm border-gray-300 [&:not(:first-child)]:mt-2 hover:bg-gray-100"
       backgroundDisabled
       closeOnClick={false}
     >

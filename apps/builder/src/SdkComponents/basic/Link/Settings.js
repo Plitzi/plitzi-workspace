@@ -86,7 +86,7 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Target</label>
-          <Select value={target} onChange={handleChange('target')} className="rounded">
+          <Select value={target} onChange={handleChange('target')} className="rounded-sm">
             <option value="blank">Blank</option>
             <option value="self">Self</option>
             <option value="parent">Parent</option>
@@ -95,7 +95,7 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-4">
           <label>Mode</label>
-          <Select value={mode} onChange={handleChangeMode} className="rounded">
+          <Select value={mode} onChange={handleChangeMode} className="rounded-sm">
             <option value="page">Space Page</option>
             <option value="internal">Inside Space</option>
             <option value="external">Outside Space</option>
@@ -103,7 +103,7 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-4">
           <label>Url</label>
-          {mode !== 'page' && <Input value={href} onChange={handleChangeHref} inputClassName="rounded" />}
+          {mode !== 'page' && <Input value={href} onChange={handleChangeHref} inputClassName="rounded-sm" />}
           {mode === 'page' && (
             <>
               <Select value={href} onChange={handleChangeHref} className="rounded-t">

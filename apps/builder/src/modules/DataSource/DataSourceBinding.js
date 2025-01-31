@@ -156,7 +156,7 @@ const DataSourceBinding = props => {
 
   if (!sources || Object.keys(sources).length === 0) {
     return (
-      <div className="m-3 p-3 border-2 border-gray-300 border-dashed rounded text-center">
+      <div className="m-3 p-3 border-2 border-gray-300 border-dashed rounded-sm text-center">
         Sources not found, Check if you have sources added
       </div>
     );
@@ -169,7 +169,7 @@ const DataSourceBinding = props => {
       collapsed={!(bindings && bindings[fkey] && bindings[fkey].length > 0)}
     >
       {bindings && bindings[fkey] && (
-        <div className="flex flex-col not-first:p-4 first:px-4 not-first:pt-4 overflow-auto">
+        <div className="flex flex-col [&:not(:first-child)]:p-4 first:px-4 [&:not(:first-child)]:pt-4 overflow-auto">
           {bindings[fkey]
             .filter(binding => binding.id !== get(bindingFormValues, `${fkey}.id`))
             .map((binding, j) => {

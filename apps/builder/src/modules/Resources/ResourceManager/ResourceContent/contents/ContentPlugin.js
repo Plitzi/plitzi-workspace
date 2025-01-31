@@ -64,7 +64,7 @@ const ContentPlugin = props => {
           className="h-11 w-11 flex items-center justify-center shrink-0 rounded-lg bg-gray-500"
           style={{ backgroundColor }}
         >
-          <div className="p-1 flex items-center justify-center rounded bg-white">
+          <div className="p-1 flex items-center justify-center rounded-sm bg-white">
             <img src={icon} alt="" className="h-6 w-6" />
           </div>
         </div>

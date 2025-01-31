@@ -5,7 +5,8 @@ import Select from '@plitzi/plitzi-ui-components/Select';
 
 /**
  * @param {{
- *   subType?: 'div'
+ *   subType?:
+ *     | 'div'
  *     | 'header'
  *     | 'footer'
  *     | 'nav'
@@ -34,7 +35,7 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Container Tag</label>
-          <Select value={subType} onChange={handleChange('subType')} className="rounded">
+          <Select value={subType} onChange={handleChange('subType')} className="rounded-sm">
             <option value="div">Div</option>
             <option value="header">Header</option>
             <option value="footer">Footer</option>

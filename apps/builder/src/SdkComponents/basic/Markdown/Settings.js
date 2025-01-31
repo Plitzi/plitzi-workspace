@@ -26,7 +26,7 @@ const Settings = props => {
           <TextArea
             value={content}
             classNameContainer="h-full"
-            className="rounded h-full"
+            className="rounded-sm h-full"
             onChange={handleChange('content')}
           />
         </div>

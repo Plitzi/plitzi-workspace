@@ -92,10 +92,10 @@ const StepTransformers = props => {
             const paramDefinitions = get(utility, `${action}.params`, {});
 
             return (
-              <div key={i} className="flex flex-col border border-gray-300 rounded p-4 not-first:mt-4">
+              <div key={i} className="flex flex-col border border-gray-300 rounded-sm p-4 [&:not(:first-child)]:mt-4">
                 <div className="flex items-center">
                   <Select2
-                    className="rounded w-full"
+                    className="rounded-sm w-full"
                     size="sm"
                     placeholder="Select a Transformer"
                     value={action}
@@ -105,7 +105,7 @@ const StepTransformers = props => {
                   <Button
                     intent="custom"
                     size="custom"
-                    className="flex items-start flex items-center w-6 h-6 text-red-400 hover:text-red-500 ml-4"
+                    className="flex items-center w-6 h-6 text-red-400 hover:text-red-500 ml-4"
                     onClick={handleClickRemove(i)}
                     title="Remove"
                   >
@@ -137,7 +137,7 @@ const StepTransformers = props => {
               </div>
             );
           })}
-        <Button className="rounded not-first:mt-4" onClick={handleClickAdd}>
+        <Button className="rounded-sm [&:not(:first-child)]:mt-4" onClick={handleClickAdd}>
           Add Transformer
         </Button>
       </div>

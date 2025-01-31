@@ -34,21 +34,21 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Form Method</label>
-          <Select value={method} onChange={handleChangeMethod} className="rounded">
+          <Select value={method} onChange={handleChangeMethod} className="rounded-sm">
             <option value="get">GET</option>
             <option value="post">POST</option>
           </Select>
         </div>
         <div className="flex flex-col mt-4">
           <label>Action URL</label>
-          <Input value={actionUrl} onChange={handleChangeActionUrl} inputClassName="rounded" />
+          <Input value={actionUrl} onChange={handleChangeActionUrl} inputClassName="rounded-sm" />
         </div>
         <div className="flex items-center mt-4">
           <Checkbox
             id="managed-by-interactions"
             checked={managedByInteractions}
             onChange={handleChangeManageByInteractions}
-            className="rounded mr-2"
+            className="rounded-sm mr-2"
           />
           <label htmlFor="managed-by-interactions" className="cursor-pointer select-none">
             Managed By Interactions

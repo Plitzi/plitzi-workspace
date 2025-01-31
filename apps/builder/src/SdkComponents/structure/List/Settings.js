@@ -24,7 +24,7 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Source</label>
-          <Select value={source} onChange={handleChange('source')} className="rounded">
+          <Select value={source} onChange={handleChange('source')} className="rounded-sm">
             <option value="none">None</option>
             <option value="controlled">Controlled</option>
           </Select>
@@ -32,7 +32,7 @@ const Settings = props => {
         {source === 'none' && (
           <div className="flex flex-col mt-4">
             <label>List Type</label>
-            <Select value={subType} onChange={handleChange('subType')} className="rounded">
+            <Select value={subType} onChange={handleChange('subType')} className="rounded-sm">
               <option value="ul">Unordered</option>
               <option value="ol">Ordered</option>
             </Select>

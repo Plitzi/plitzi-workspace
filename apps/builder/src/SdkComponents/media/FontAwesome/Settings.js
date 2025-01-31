@@ -132,7 +132,7 @@ const Settings = props => {
         </Select>
       </div>
       <div className="flex flex-col px-4 py-2">
-        <Input value={filter} placeholder="Search Icon..." inputClassName="rounded" onChange={handleChangeFilter} />
+        <Input value={filter} placeholder="Search Icon..." inputClassName="rounded-sm" onChange={handleChangeFilter} />
       </div>
       <div className="flex flex-col px-2 py-2 grow basis-0 overflow-auto">
         <div className="flex flex-wrap gap-2 items-center justify-center">

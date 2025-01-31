@@ -27,7 +27,7 @@ const PluginsFilter = props => {
 
   return (
     <div className="flex w-full items-center justify-between">
-      <div className="flex grow border border-gray-300 mr-10 rounded overflow-hidden">
+      <div className="flex grow border border-gray-300 mr-10 rounded-sm overflow-hidden">
         <FilterCategory active={filter.owner.contains === ''} id="" name="All Plugins" onClick={handleClick} />
         <FilterCategory active={filter.owner.contains === 'plitzi'} id="plitzi" name="Official" onClick={handleClick} />
       </div>
@@ -35,7 +35,7 @@ const PluginsFilter = props => {
         className="w-[200px]"
         placeholder="Search"
         onChange={handleChangeFilter}
-        inputClassName="rounded pl-8"
+        inputClassName="rounded-sm pl-8"
         value={filter.name.contains}
         icon={icon}
       />

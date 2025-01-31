@@ -137,7 +137,7 @@ const Collection = props => {
       </div>
       {hasNextPage && (
         <div className="mt-2 flex justify-center">
-          <Button className="rounded" onClick={handleClickMore}>
+          <Button className="rounded-sm" onClick={handleClickMore}>
             Fetch More Records
           </Button>
         </div>

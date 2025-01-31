@@ -25,11 +25,11 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col mt-2">
           <label>Space Key</label>
-          <Input value={spaceKey} onChange={handleChange('spaceKey')} inputClassName="rounded" />
+          <Input value={spaceKey} onChange={handleChange('spaceKey')} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-2">
           <label>Environment</label>
-          <Select value={environment} onChange={handleChange('environment')} className="rounded">
+          <Select value={environment} onChange={handleChange('environment')} className="rounded-sm">
             <option value="main">Main</option>
             <option value="development">Development</option>
             <option value="staging">Staging</option>

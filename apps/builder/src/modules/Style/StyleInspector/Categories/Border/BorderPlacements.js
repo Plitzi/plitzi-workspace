@@ -27,7 +27,7 @@ const BorderPlacements = props => {
         type="BorderPlacementTop"
         width={30}
         height={30}
-        className={classNames('rounded cursor-pointer hover:bg-white p-1', {
+        className={classNames('rounded-sm cursor-pointer hover:bg-white p-1', {
           'bg-white': currentPlacement === 'top'
         })}
         onClick={handleClick('placement', 'top')}
@@ -37,7 +37,7 @@ const BorderPlacements = props => {
         type="BorderPlacementLeft"
         width={30}
         height={30}
-        className={classNames('rounded cursor-pointer hover:bg-white p-1', {
+        className={classNames('rounded-sm cursor-pointer hover:bg-white p-1', {
           'bg-white': currentPlacement === 'left'
         })}
         onClick={handleClick('placement', 'left')}
@@ -46,7 +46,7 @@ const BorderPlacements = props => {
         type="BorderPlacementCenter"
         width={30}
         height={30}
-        className={classNames('rounded cursor-pointer hover:bg-white p-1', {
+        className={classNames('rounded-sm cursor-pointer hover:bg-white p-1', {
           'bg-white': currentPlacement === 'all'
         })}
         onClick={handleClick('placement', 'all')}
@@ -55,7 +55,7 @@ const BorderPlacements = props => {
         type="BorderPlacementRight"
         width={30}
         height={30}
-        className={classNames('rounded cursor-pointer hover:bg-white p-1', {
+        className={classNames('rounded-sm cursor-pointer hover:bg-white p-1', {
           'bg-white': currentPlacement === 'right'
         })}
         onClick={handleClick('placement', 'right')}
@@ -65,7 +65,7 @@ const BorderPlacements = props => {
         type="BorderPlacementBottom"
         width={30}
         height={30}
-        className={classNames('rounded cursor-pointer hover:bg-white p-1', {
+        className={classNames('rounded-sm cursor-pointer hover:bg-white p-1', {
           'bg-white': currentPlacement === 'bottom'
         })}
         onClick={handleClick('placement', 'bottom')}

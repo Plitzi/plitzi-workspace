@@ -36,7 +36,7 @@ const LayoutForm = props => {
             label="Layout Name"
             placeholder="Layout Name"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={e => onChange(e.target.value)}
             value={value}
             error={error}

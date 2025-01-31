@@ -36,7 +36,7 @@ const VariableDetails = props => {
       {subValues.length > 0 && (
         <div className="flex flex-col gap-1 w-full">
           {subValues.map((subValue, index) => (
-            <div key={index} className="flex flex-col text-xs border border-gray-300 rounded w-full">
+            <div key={index} className="flex flex-col text-xs border border-gray-300 rounded-sm w-full">
               <div className="flex gap-1 px-1 py-0.5 items-center">
                 <div className="font-bold">Value:</div>
                 <VariableValue className="text-xs" value={subValue.value} type={type} />

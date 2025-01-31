@@ -155,7 +155,7 @@ const NodeHeader = props => {
       <div className="flex flex-col items-center justify-center">
         <div
           className={classNames(
-            'flex items-center justify-center border border-gray-300 rounded h-9 w-9 cursor-pointer',
+            'flex items-center justify-center border border-gray-300 rounded-sm h-9 w-9 cursor-pointer',
             {
               'bg-blue-400 text-white': type === 'trigger',
               'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
@@ -182,25 +182,27 @@ const NodeHeader = props => {
               <div className="truncate">{title}</div>
             </div>
           )}
-          {isOpened && <Input size="sm" value={title} onChange={handleChangeTitle} inputClassName="rounded !text-sm" />}
+          {isOpened && (
+            <Input size="sm" value={title} onChange={handleChangeTitle} inputClassName="rounded-sm !text-sm" />
+          )}
           {!nodeDefinition && elementId && (
             <i className="fa-solid fa-triangle-exclamation text-orange-400 ml-2" title="Node Not Found" />
           )}
           <div className="flex ml-2 basis-0 gap-1 grow justify-end">
             {canUp && (
-              <Button size="custom" className="rounded px-1.5 py-1 text-xs" title="Up" onClick={handleClickUp}>
+              <Button size="custom" className="rounded-sm px-1.5 py-1 text-xs" title="Up" onClick={handleClickUp}>
                 <i className="fa-solid fa-arrow-up" />
               </Button>
             )}
             {canDown && (
-              <Button size="custom" className="rounded px-1.5 py-1 text-xs" title="Down" onClick={handleClickDown}>
+              <Button size="custom" className="rounded-sm px-1.5 py-1 text-xs" title="Down" onClick={handleClickDown}>
                 <i className="fa-solid fa-arrow-down" />
               </Button>
             )}
           </div>
         </div>
         <Select2
-          className="rounded truncate"
+          className="rounded-sm truncate"
           placeholder={`Select a ${upperFirst(type)}`}
           value={optionValue}
           onChange={handleChangeAction}

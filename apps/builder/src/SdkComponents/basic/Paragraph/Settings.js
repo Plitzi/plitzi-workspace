@@ -23,7 +23,7 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Content</label>
-          <TextArea value={content} className="rounded" onChange={handleChangeContent} />
+          <TextArea value={content} className="rounded-sm" onChange={handleChangeContent} />
         </div>
       </div>
     </div>

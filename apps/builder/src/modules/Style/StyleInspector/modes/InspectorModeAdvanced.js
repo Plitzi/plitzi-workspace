@@ -124,7 +124,7 @@ const InspectorModeAdvanced = props => {
       <div className="flex flex-col absolute top-3 right-3 gap-1">
         <Dropdown showIcon={false} containerLeftOffset={-208}>
           <Dropdown.Content>
-            <Button intent="custom" size="custom" className="p-2 bg-white rounded">
+            <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
               <i className="fa-solid fa-circle-info" />
             </Button>
           </Dropdown.Content>
@@ -132,9 +132,9 @@ const InspectorModeAdvanced = props => {
             <div className="w-60 flex flex-col justify-center p-4 gap-1 text-xs ">
               <p className="text-xs">Add your own CSS code here to customize the appearance and layout of your site.</p>
               <span className="font-bold">Properties Allowed</span>
-              <ul className="text-xs border border-gray-300 rounded h-[100px] overflow-auto flex flex-col">
+              <ul className="text-xs border border-gray-300 rounded-sm h-[100px] overflow-auto flex flex-col">
                 {Object.values(StyleConstants).map(property => (
-                  <li key={property} className="px-1.5 py-1 not-last:border-b border-gray-300 w-full">
+                  <li key={property} className="px-1.5 py-1 [&:not(:last-child)]:border-b border-gray-300 w-full">
                     {property}
                   </li>
                 ))}
@@ -148,7 +148,7 @@ const InspectorModeAdvanced = props => {
         <Button
           intent="custom"
           size="custom"
-          className="p-2 bg-white rounded"
+          className="p-2 bg-white rounded-sm"
           onClick={handleFormat}
           tilte="Auto format"
           // disabled={networkLoading}

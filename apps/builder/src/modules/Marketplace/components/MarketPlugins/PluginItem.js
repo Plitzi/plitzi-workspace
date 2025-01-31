@@ -41,7 +41,7 @@ const PluginItem = props => {
 
   return (
     <div
-      className={classNames('flex flex-col border border-gray-300 rounded w-full select-none', className)}
+      className={classNames('flex flex-col border border-gray-300 rounded-sm w-full select-none', className)}
       onClick={handleClick}
       style={{ backgroundImage: `linear-gradient(${backgroundColor} 20%, white)` }}
     >
@@ -57,7 +57,7 @@ const PluginItem = props => {
       </div>
       <div className="flex px-4 py-2 text-xs text-gray-500">{description}</div>
       <div className="flex items-center justify-between border-t border-gray-300 px-4 py-2">
-        <Button className="rounded">View Plugin</Button>
+        <Button className="rounded-sm">View Plugin</Button>
         <div className="flex">
           {version && latestVersion !== version && (
             <i
@@ -66,7 +66,7 @@ const PluginItem = props => {
             />
           )}
           {version && (
-            <div className="bg-blue-400 flex items-center justify-center p-1 rounded">
+            <div className="bg-blue-400 flex items-center justify-center p-1 rounded-sm">
               <i className="fas fa-check fa-2x text-white" title="Plugin Installed" />
             </div>
           )}

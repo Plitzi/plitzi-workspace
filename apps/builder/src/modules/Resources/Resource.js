@@ -76,8 +76,8 @@ const Resource = props => {
               <Heading type="h5" className="mb-1">
                 Preview
               </Heading>
-              <div className="border rounded border-gray-400 p-1">
-                <ResourceContent className="w-[96px] h-[96px] rounded" type={type} src={src} title={title} />
+              <div className="border rounded-sm border-gray-400 p-1">
+                <ResourceContent className="w-[96px] h-[96px] rounded-sm" type={type} src={src} title={title} />
               </div>
             </div>
           </div>
@@ -104,8 +104,8 @@ const Resource = props => {
                 <Heading type="h6" className="font-bold w-[50px]">
                   Url:
                 </Heading>
-                <Input value={src} size="sm" className="mx-2 grow basis-0" inputClassName="rounded" readOnly />
-                <Button title="Copy Url" className="rounded" onClick={handleClickCopyUrl}>
+                <Input value={src} size="sm" className="mx-2 grow basis-0" inputClassName="rounded-sm" readOnly />
+                <Button title="Copy Url" className="rounded-sm" onClick={handleClickCopyUrl}>
                   <i className="fa-solid fa-copy" />
                 </Button>
               </div>

@@ -38,7 +38,7 @@ const ManagerModeBasic = props => {
         </BuilderStyleContext>
       )}
       {!selected && (
-        <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded text-center select-none">
+        <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center select-none">
           No selector or element selected. Click on one to select it.
         </div>
       )}

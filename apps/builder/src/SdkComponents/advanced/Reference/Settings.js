@@ -136,7 +136,7 @@ const Settings = props => {
             value={referenceType}
             onChange={handleChangeReferenceType}
             placeholder="Search..."
-            className="rounded"
+            className="rounded-sm"
             options={typeOptions}
           />
         </div>
@@ -146,7 +146,7 @@ const Settings = props => {
             value={referenceId}
             onChange={handleChangeReferenceID}
             placeholder="Search..."
-            className="rounded"
+            className="rounded-sm"
             options={elements}
           />
         </div>
@@ -157,7 +157,7 @@ const Settings = props => {
               value={referenceContainer}
               placeholder="None"
               onChange={handleChangeReferenceContainer}
-              className="rounded"
+              className="rounded-sm"
               options={referenceContainers}
             />
           </div>

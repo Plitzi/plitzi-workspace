@@ -120,7 +120,7 @@ const ManagerModeAdvanced = props => {
           <div className="flex absolute top-3 right-3">
             <Dropdown showIcon={false} containerLeftOffset={-208} className="mr-2">
               <Dropdown.Content>
-                <Button intent="custom" size="custom" className="p-2 bg-white rounded">
+                <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
                   <i className="fa-solid fa-circle-info" />
                 </Button>
               </Dropdown.Content>
@@ -131,9 +131,9 @@ const ManagerModeAdvanced = props => {
                   </p>
                   <div>
                     Properties Allowed
-                    <ul className="text-xs border border-gray-300 rounded h-[100px] overflow-auto flex flex-col mt-4">
+                    <ul className="text-xs border border-gray-300 rounded-sm h-[100px] overflow-auto flex flex-col mt-4">
                       {Object.values(StyleConstants).map(property => (
-                        <li key={property} className="px-1.5 py-1 not-last:border-b border-gray-300 w-full">
+                        <li key={property} className="px-1.5 py-1 [&:not(:last-child)]:border-b border-gray-300 w-full">
                           {property}
                         </li>
                       ))}
@@ -148,7 +148,7 @@ const ManagerModeAdvanced = props => {
             <Button
               intent="custom"
               size="custom"
-              className="p-2 bg-white rounded"
+              className="p-2 bg-white rounded-sm"
               onClick={handleClickFormat}
               tilte="Auto format"
               disabled={networkLoading}
@@ -159,7 +159,7 @@ const ManagerModeAdvanced = props => {
         </>
       )}
       {!selected && (
-        <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded text-center select-none">
+        <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center select-none">
           No selector or element selected. Click on one to select it.
         </div>
       )}

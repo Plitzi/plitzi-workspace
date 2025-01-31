@@ -49,7 +49,7 @@ const SelectorForm = props => {
             label="Name"
             placeholder="Name"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={e => onChange(e.target.value)}
             value={value}
             error={errors.name}
@@ -57,10 +57,10 @@ const SelectorForm = props => {
         )}
       />
       <div className="flex justify-end mt-3">
-        <Button onClick={onClose} className="mr-3 rounded">
+        <Button onClick={onClose} className="mr-3 rounded-sm">
           Cancel
         </Button>
-        <Button type="submit" className="rounded">
+        <Button type="submit" className="rounded-sm">
           Submit
         </Button>
       </div>

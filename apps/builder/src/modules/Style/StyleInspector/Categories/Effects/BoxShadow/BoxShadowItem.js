@@ -85,13 +85,13 @@ const BoxShadowItem = props => {
   return (
     <Dropdown
       showIcon={false}
-      className="w-full border bg-white rounded border-gray-300 not-first:mt-2 hover:bg-gray-100"
+      className="w-full border bg-white rounded-sm border-gray-300 [&:not(:first-child)]:mt-2 hover:bg-gray-100"
       backgroundDisabled
       closeOnClick={false}
     >
       <Dropdown.Content className="w-full px-2 py-1 flex justify-between">
         <div className="flex items-center">
-          <div className="h-5 w-5 mr-1 rounded" style={{ backgroundColor: color }} />
+          <div className="h-5 w-5 mr-1 rounded-sm" style={{ backgroundColor: color }} />
           <div className="flex">{value}</div>
         </div>
         <div className="flex">

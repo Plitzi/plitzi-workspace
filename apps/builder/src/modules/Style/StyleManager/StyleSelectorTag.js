@@ -61,7 +61,9 @@ const StyleSelectorTag = props => {
           </Button>
         </div>
         {elementsCount > 0 && (
-          <div className="flex items-center justify-center rounded bg-blue-400 text-white px-1.5">{elementsCount}</div>
+          <div className="flex items-center justify-center rounded-sm bg-blue-400 text-white px-1.5">
+            {elementsCount}
+          </div>
         )}
       </div>
     </div>

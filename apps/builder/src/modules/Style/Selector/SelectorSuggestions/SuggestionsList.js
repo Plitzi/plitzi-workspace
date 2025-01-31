@@ -35,7 +35,7 @@ const SuggestionsList = props => {
           />
         ))}
         {(!selectors || selectors.length === 0) && (
-          <div className="p-3 border-2 border-dashed border-gray-300 rounded text-center">No tokens availables</div>
+          <div className="p-3 border-2 border-dashed border-gray-300 rounded-sm text-center">No tokens availables</div>
         )}
       </div>
     </div>

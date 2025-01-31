@@ -42,7 +42,7 @@ const PublishForm = props => {
             size="md"
             label="Environment"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={e => onChange(e.target.value)}
             value={value}
             error={error}
@@ -65,7 +65,7 @@ const PublishForm = props => {
             label="Description"
             placeholder="Brief description changes..."
             className="w-full mt-4"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={e => onChange(e.target.value)}
             value={value}
             error={error}

@@ -164,14 +164,14 @@ const Settings = props => {
           </Alert>
         )}
         <div className={classNames('flex items-center', { 'mt-4': !enabled })}>
-          <Checkbox id="enabled" checked={enabled} onChange={handleChangeEnabled} className="rounded mr-2" />
+          <Checkbox id="enabled" checked={enabled} onChange={handleChangeEnabled} className="rounded-sm mr-2" />
           <label htmlFor="enabled" className="cursor-pointer select-none">
             Page Enabled
           </label>
         </div>
         <div className="flex flex-col mt-4">
           <label>Page Name</label>
-          <Input value={name} onChange={handleChangeName} inputClassName="rounded" />
+          <Input value={name} onChange={handleChangeName} inputClassName="rounded-sm" />
         </div>
         <Alert intent="info" className="text-white mt-4">
           <span className="text-xs">Slug is a combination of letters, numbers and _ - : / *</span>
@@ -190,12 +190,12 @@ const Settings = props => {
             options={pageFolderOptions}
             placeholder="None"
             onChange={handleChangeFolder}
-            className="rounded"
+            className="rounded-sm"
           />
         </div>
         <div className="flex flex-col mt-4">
           <label>Layout</label>
-          <Select value={layout} placeholder="None" onChange={handleChangeLayout} className="rounded">
+          <Select value={layout} placeholder="None" onChange={handleChangeLayout} className="rounded-sm">
             {layouts &&
               layouts.map(({ id, definition: { label } }) => (
                 <option key={id} value={id}>
@@ -211,7 +211,7 @@ const Settings = props => {
               value={layoutContainer}
               placeholder="None"
               onChange={handleChange('layoutContainer')}
-              className="rounded"
+              className="rounded-sm"
             >
               {layoutContainers &&
                 layoutContainers.map(({ id, definition: { label } }) => (
@@ -224,7 +224,7 @@ const Settings = props => {
         )}
         <div className="flex flex-col mt-4">
           <label>Restrict Access</label>
-          <Select value={accessLevel} onChange={handleChangeAccessLevel} className="rounded" placeholder="None">
+          <Select value={accessLevel} onChange={handleChangeAccessLevel} className="rounded-sm" placeholder="None">
             <option value="public">Public</option>
             <option value="authenticated">Authenticated</option>
           </Select>
@@ -245,7 +245,7 @@ const Settings = props => {
             <Select
               value={unauthorizedBehaviour}
               onChange={handleChange('unauthorizedBehaviour')}
-              className="rounded"
+              className="rounded-sm"
               placeholder="None"
             >
               <option value="redirect">Redirect</option>
@@ -258,7 +258,7 @@ const Settings = props => {
             <Select
               value={unauthorizedPageRedirect}
               onChange={handleChange('unauthorizedPageRedirect')}
-              className="rounded"
+              className="rounded-sm"
               placeholder="None"
             >
               {pagesParsed &&
@@ -271,7 +271,12 @@ const Settings = props => {
           </div>
         )}
         <div className="flex items-center mt-4">
-          <Checkbox id="seo-enabled" checked={seoEnabled} onChange={handleChangeSeoEnabled} className="rounded mr-2" />
+          <Checkbox
+            id="seo-enabled"
+            checked={seoEnabled}
+            onChange={handleChangeSeoEnabled}
+            className="rounded-sm mr-2"
+          />
           <label htmlFor="seo-enabled" className="cursor-pointer select-none">
             SEO Enabled
           </label>
@@ -280,7 +285,7 @@ const Settings = props => {
           <>
             <div className="flex flex-col mt-4">
               <label>SEO Title</label>
-              <Input value={seoPageTitle} onChange={handleChange('seoPageTitle')} inputClassName="rounded" />
+              <Input value={seoPageTitle} onChange={handleChange('seoPageTitle')} inputClassName="rounded-sm" />
             </div>
             <div className="flex flex-col mt-4">
               <label>SEO Description</label>
@@ -289,7 +294,7 @@ const Settings = props => {
                 value={seoPageDescription}
                 onChange={handleChange('seoPageDescription')}
                 rows={3}
-                className="rounded"
+                className="rounded-sm"
               />
             </div>
             <div className="mt-4">
@@ -298,7 +303,7 @@ const Settings = props => {
                 pages (SERPs) in the preview below.
               </p>
               <label>Search Result Preview</label>
-              <div className="border border-gray-300 rounded-sm py-1 px-2">
+              <div className="border border-gray-300 rounded-xs py-1 px-2">
                 <div className="mb-1 pt-1 text-[#1a0dab] text-xl">
                   <label>{seoPageTitle}</label>
                 </div>

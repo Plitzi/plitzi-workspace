@@ -1,13 +1,10 @@
 @use 'sass:meta';
 
-@include meta.load-css('./tailwind.css');
+@import './tailwind.css';
 @import '@plitzi/plitzi-ui-components/style.css';
 @import '@plitzi/plitzi-ui/style.css';
 
-@include meta.load-css('./helpers/index');
 @include meta.load-css('./variables');
-@include meta.load-css('./global');
-@include meta.load-css('./icons');
 @include meta.load-css('@pmodules/Builder/Assets');
 
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap');

@@ -106,7 +106,7 @@ const DeployForm = props => {
             size="md"
             label="Environment"
             className="w-full"
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
             onChange={handleChangeEnvironment(onChange)}
             value={value}
             error={error}
@@ -142,7 +142,7 @@ const DeployForm = props => {
               label="Revision"
               placeholder="Revision Not Selected"
               className="w-full mt-4"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               onChange={handleChangeRevision(onChange)}
               value={value}
               error={error}
@@ -176,7 +176,7 @@ const DeployForm = props => {
               label="Domain"
               placeholder="Domain..."
               className="w-full mt-4"
-              inputClassName="rounded"
+              inputClassName="rounded-sm"
               onChange={handleChangeDomain(onChange)}
               value={value}
               error={error}

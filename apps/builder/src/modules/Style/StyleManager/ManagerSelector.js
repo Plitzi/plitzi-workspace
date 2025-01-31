@@ -164,7 +164,7 @@ const ManagerSelector = props => {
           value={searchInput}
           onChange={handleChangeSearch}
           className="mr-1"
-          inputClassName="rounded"
+          inputClassName="rounded-sm"
         />
       </div>
       <div className="flex flex-col grow basis-0 overflow-y-auto">

@@ -90,7 +90,7 @@ const BuilderAreaPreview = props => {
   const css = useMemo(() => {
     const css = `${styleCache}\n${settings?.customCss}`;
 
-    return `${sdkStyle[0][1]}\n${styleFrame[1][1]}\n${css}`;
+    return `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${css}`;
   }, [settings, styleCache]);
 
   const { components } = use(ComponentContext);

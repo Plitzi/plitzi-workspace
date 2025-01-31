@@ -113,7 +113,7 @@ const MessageHtml = props => {
     <div className={classNames('flex', className)}>
       <div
         className={classNames('flex w-full overflow-x-auto', {
-          'p-0 border border-gray-300 rounded': viewMode === 'preview' && !fullScreen,
+          'p-0 border border-gray-300 rounded-sm': viewMode === 'preview' && !fullScreen,
           'absolute top-0 left-0 right-0 bottom-0 z-10 bg-white': fullScreen
         })}
       >
@@ -122,21 +122,21 @@ const MessageHtml = props => {
       </div>
       <div className="flex flex-col gap-2 ml-2">
         {viewMode === 'preview' && (
-          <Button size="sm" className="rounded h-6 w-6" title="Code" onClick={handleClickCode}>
+          <Button size="sm" className="rounded-sm h-6 w-6" title="Code" onClick={handleClickCode}>
             <i className="fas fa-code" />
           </Button>
         )}
         {viewMode === 'code' && (
-          <Button size="sm" className="rounded h-6 w-6" title="Preview" onClick={handleClickPreview}>
+          <Button size="sm" className="rounded-sm h-6 w-6" title="Preview" onClick={handleClickPreview}>
             <i className="fa-solid fa-pen-ruler" />
           </Button>
         )}
-        <Button size="sm" className="rounded h-6 w-6" title="Import" onClick={handleClickImport}>
+        <Button size="sm" className="rounded-sm h-6 w-6" title="Import" onClick={handleClickImport}>
           <i className="fa-solid fa-plus" />
         </Button>
         <Button
           size={fullScreen ? 'lg' : 'sm'}
-          className={classNames('rounded', {
+          className={classNames('rounded-sm', {
             'h-6 w-6': !fullScreen,
             'absolute top-4 right-4 z-20 h-10 w-10 text-lg': fullScreen
           })}

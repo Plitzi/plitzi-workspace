@@ -25,7 +25,7 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Heading Tag</label>
-          <Select value={subType} onChange={handleChange('subType')} className="rounded">
+          <Select value={subType} onChange={handleChange('subType')} className="rounded-sm">
             <option value="h1">H1</option>
             <option value="h2">H2</option>
             <option value="h3">H3</option>
@@ -36,7 +36,7 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-4">
           <label>Content</label>
-          <TextArea value={content} onChange={handleChange('content')} className="rounded" />
+          <TextArea value={content} onChange={handleChange('content')} className="rounded-sm" />
         </div>
       </div>
     </div>

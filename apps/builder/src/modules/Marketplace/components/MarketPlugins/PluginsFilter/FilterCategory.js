@@ -21,7 +21,7 @@ const FilterCategory = props => {
   return (
     <div
       className={classNames(
-        'flex px-2 py-1.5 not-last:border-r not-last:border-gray-300 grow basis-0 items-center justify-center cursor-pointer',
+        'flex px-2 py-1.5 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-gray-300 grow basis-0 items-center justify-center cursor-pointer',
         className,
         { 'bg-blue-100 font-bold': active }
       )}

@@ -22,7 +22,7 @@ const GroupInputMetric = props => {
       size="custom"
       emptyValue="auto"
       className={classNames('flex basis-0 grow min-h-0 !min-w-0 border-0', className)}
-      inputClassName="rounded px-2 py-0 m-0 text-xs"
+      inputClassName="rounded-sm px-2 py-0 m-0 text-xs"
       unitClassName="text-xs pr-2"
       {...otherProps}
     />

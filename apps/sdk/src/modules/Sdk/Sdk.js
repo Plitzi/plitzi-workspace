@@ -71,7 +71,7 @@ const Sdk = props => {
     return `.plitzi-sdk{${cssVariables}}\n${cache}${segmentsCss.join('')}\n${schemaSettings?.customCss}`;
   }, [schemaSettings?.customCss, segments, cache, variables]);
   const styleParsed = useMemo(
-    () => `${style[0][1]}\n${style[1][1]}\n${css}\n${externalStyle}`,
+    () => `${style[0][1]}\n${style[0][1]}\n${css}\n${externalStyle}`,
     [style, css, externalStyle]
   );
 

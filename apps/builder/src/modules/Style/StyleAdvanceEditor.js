@@ -67,7 +67,7 @@ const StyleAdvanceEditor = props => {
         <Button
           intent="custom"
           size="custom"
-          className="p-2 bg-white rounded mr-2"
+          className="p-2 bg-white rounded-sm mr-2"
           onClick={handleFormat}
           tilte="Auto format"
           disabled={networkLoading}
@@ -76,7 +76,7 @@ const StyleAdvanceEditor = props => {
         </Button>
         <Dropdown showIcon={false} containerLeftOffset={-208}>
           <Dropdown.Content>
-            <Button intent="custom" size="custom" className="p-2 bg-white rounded">
+            <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
               <i className="fa-solid fa-circle-info" />
             </Button>
           </Dropdown.Content>

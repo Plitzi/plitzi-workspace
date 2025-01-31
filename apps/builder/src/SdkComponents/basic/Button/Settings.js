@@ -40,11 +40,11 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Content</label>
-          <Input value={content} onChange={handleChangeContent} inputClassName="rounded" />
+          <Input value={content} onChange={handleChangeContent} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Mode</label>
-          <Select value={contentPlacement} onChange={handleChangeContentPlacement} className="rounded">
+          <Select value={contentPlacement} onChange={handleChangeContentPlacement} className="rounded-sm">
             <option value="before">Before Elements</option>
             <option value="after">After Elements</option>
             <option value="elements">Only Elements</option>
@@ -52,14 +52,14 @@ const Settings = props => {
         </div>
         <div className="flex flex-col mt-4">
           <label>Button Type</label>
-          <Select value={subType} onChange={handleChangeSubType} className="rounded">
+          <Select value={subType} onChange={handleChangeSubType} className="rounded-sm">
             <option value="button">Button</option>
             <option value="submit">Submit</option>
             <option value="reset">Reset</option>
           </Select>
         </div>
         <div className="flex items-center mt-4">
-          <Checkbox id="disabled" checked={disabled} onChange={handleChangeDisabled} className="rounded mr-2" />
+          <Checkbox id="disabled" checked={disabled} onChange={handleChangeDisabled} className="rounded-sm mr-2" />
           <label htmlFor="disabled" className="cursor-pointer select-none">
             Is Disabled
           </label>

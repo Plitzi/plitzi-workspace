@@ -71,8 +71,8 @@ const Page = props => {
           <PageActions id={id} active={active} zoom={zoom} defaultPage={defaultPage} onZoom={handleClickZoom} />
         </Flex>
         {zoom && (
-          <div className="border border-gray-300 p-4 m-4 rounded">
-            <ContainerAutoScale className="flex items-center justify-center h-[150px] w-full overflow-hidden rounded">
+          <div className="border border-gray-300 p-4 m-4 rounded-sm">
+            <ContainerAutoScale className="flex items-center justify-center h-[150px] w-full overflow-hidden rounded-sm">
               <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="w-full h-full" />
             </ContainerAutoScale>
           </div>

@@ -37,22 +37,22 @@ const Settings = props => {
       <div className="flex flex-col p-2">
         <div className="flex flex-col">
           <label>Header Label</label>
-          <Input value={headerLabel} onChange={handleChange('headerLabel')} inputClassName="rounded" />
+          <Input value={headerLabel} onChange={handleChange('headerLabel')} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Accept Label Button</label>
-          <Input value={acceptButtonLabel} onChange={handleChange('acceptButtonLabel')} inputClassName="rounded" />
+          <Input value={acceptButtonLabel} onChange={handleChange('acceptButtonLabel')} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Reject Label Button</label>
-          <Input value={rejectButtonLabel} onChange={handleChange('rejectButtonLabel')} inputClassName="rounded" />
+          <Input value={rejectButtonLabel} onChange={handleChange('rejectButtonLabel')} inputClassName="rounded-sm" />
         </div>
         <div className="flex flex-col mt-4">
           <label>Accept Label Button Loading</label>
           <Input
             value={acceptButtonLabelLoading}
             onChange={handleChange('acceptButtonLabelLoading')}
-            inputClassName="rounded"
+            inputClassName="rounded-sm"
           />
         </div>
         <div className="flex items-center mt-4">
@@ -60,7 +60,7 @@ const Settings = props => {
             id="auto-hide-after-click"
             checked={autoHideAfterClick}
             onChange={handleChangeAutoHide}
-            className="rounded mr-2"
+            className="rounded-sm mr-2"
           />
           <label htmlFor="auto-hide-after-click" className="cursor-pointer select-none">
             Hide after click background

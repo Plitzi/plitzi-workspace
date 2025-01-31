@@ -53,12 +53,12 @@ const TypographyTextShadowItem = props => {
     <Dropdown showIcon={false} className="w-full" backgroundDisabled closeOnClick={false}>
       <Dropdown.Content
         className={classNames(
-          'py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded w-full select-none',
+          'py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded-sm w-full select-none',
           className
         )}
       >
         <div className="flex items-center">
-          <div className="h-5 w-5 mr-1 rounded" style={{ backgroundColor: color }} />
+          <div className="h-5 w-5 mr-1 rounded-sm" style={{ backgroundColor: color }} />
           <div>{value}</div>
         </div>
         <div className="flex">

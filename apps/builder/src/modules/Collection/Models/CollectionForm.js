@@ -148,7 +148,7 @@ const CollectionForm = props => {
                   label="Name Singular"
                   placeholder="Example: Post"
                   className="w-full"
-                  inputClassName="rounded"
+                  inputClassName="rounded-sm"
                   onChange={e => onChange(e.target.value)}
                   value={value}
                   error={error}
@@ -167,7 +167,7 @@ const CollectionForm = props => {
                   label="Name Plural"
                   placeholder="Example: Posts"
                   className="w-full"
-                  inputClassName="rounded"
+                  inputClassName="rounded-sm"
                   onChange={e => onChange(e.target.value)}
                   value={value}
                   error={error}
@@ -187,7 +187,7 @@ const CollectionForm = props => {
                 label="Collection Description"
                 placeholder=""
                 className="w-full"
-                inputClassName="rounded"
+                inputClassName="rounded-sm"
                 onChange={e => onChange(e.target.value)}
                 value={value}
                 error={error}
@@ -206,7 +206,7 @@ const CollectionForm = props => {
                 label="Privacy"
                 placeholder=""
                 className="w-full"
-                inputClassName="rounded"
+                inputClassName="rounded-sm"
                 onChange={e => onChange(e.target.value)}
                 value={value}
                 error={error}
