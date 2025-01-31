@@ -54,6 +54,8 @@ export default defineConfig(({ mode, ...args }) => {
           'lodash/omit',
           'lodash/isEmpty',
           'lodash/pick',
+          'react-router',
+          'react-router-dom',
           'react/jsx-runtime',
           'immer'
         ],
@@ -80,7 +82,7 @@ export default defineConfig(({ mode, ...args }) => {
       setupFiles: ['@plitzi/sdk-shared/setupTests.ts'],
       coverage: {
         provider: 'v8',
-        reporter: ['text'],
+        reporter: ['text', 'html'],
         reportsDirectory: 'tests',
         include: ['src'],
         exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'

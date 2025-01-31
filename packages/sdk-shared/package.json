@@ -81,6 +81,7 @@
     "@types/react-dom": "^19.0.3",
     "@types/twig": "^1.12.16",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^3.0.4",
     "babel-minify": "^0.5.2",
     "eslint": "^9.19.0",
     "eslint-config-airbnb": "^19.0.4",

@@ -47,10 +47,12 @@ export type SchemaVariable = {
   }[];
 };
 
+export type PageFolder = { id: string; name: string; slug: string; parentId: string };
+
 export type Schema = {
   flat: { [key: string]: Element | undefined };
   variables: SchemaVariable[];
   settings: { customCss: string };
   pages: string[];
-  pageFolders: { id: string; name: string; slug: string; parentId: string }[];
+  pageFolders: PageFolder[];
 };
