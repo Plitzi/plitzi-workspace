@@ -1,17 +1,14 @@
 // Packages
 import React, { useMemo } from 'react';
 
-// Monorepo
-import {
-  ACTION_TYPE_ACCESS_DENIED,
-  ACTION_TYPE_NORMAL,
-  ACTION_TYPE_REDIRECT,
-  ACTION_TYPE_NOT_FOUND
-} from '@plitzi/sdk-navigation/NavigationHelper';
-
 // Relatives
 import LogStatus from '../../LogStatus.js';
-import { LOG_TYPE_CUSTOM, LOG_TYPE_DANGER, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole.js';
+import {
+  LOG_TYPE_CUSTOM,
+  LOG_TYPE_DANGER,
+  LOG_TYPE_SUCCESS,
+  LOG_TYPE_WARNING
+} from '../../../../../../utils/PlitziConsole.js';
 
 /**
  * @param {{
@@ -25,19 +22,19 @@ import { LOG_TYPE_CUSTOM, LOG_TYPE_DANGER, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } 
 const LogNavigationHeader = props => {
   const { status, message, time } = props;
   const { logType, statusMessage } = useMemo(() => {
-    if (status === ACTION_TYPE_NORMAL) {
+    if (status === 'normal') {
       return { logType: LOG_TYPE_SUCCESS, statusMessage: 'Success' };
     }
 
-    if (status === ACTION_TYPE_REDIRECT) {
+    if (status === 'redirect') {
       return { logType: LOG_TYPE_WARNING, statusMessage: 'Redirected' };
     }
 
-    if (status === ACTION_TYPE_NOT_FOUND) {
+    if (status === 'notFound') {
       return { logType: LOG_TYPE_WARNING, statusMessage: 'Not Found' };
     }
 
-    if (status === ACTION_TYPE_ACCESS_DENIED) {
+    if (status === 'accessDenied') {
       return { logType: LOG_TYPE_DANGER, statusMessage: 'Access Denied' };
     }
 

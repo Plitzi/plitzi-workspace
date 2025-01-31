@@ -5,26 +5,18 @@ import { matchPath, PathMatch } from 'react-router-dom';
 // Types
 import type { Schema, PageFolder, Element } from '@plitzi/sdk-shared';
 
-export const ACCESS_LEVEL_PUBLIC = 'public'; // @todo: deprecated
-export const ACCESS_LEVEL_AUTHENTICATED = 'authenticated'; // @todo: deprecated
+export type NavigationAction = 'accessDenied' | 'normal' | 'redirect' | 'notFound';
 
-export const ACTION_TYPE_ACCESS_DENIED = 'accessDenied'; // @todo: deprecated
-export const ACTION_TYPE_NORMAL = 'normal'; // @todo: deprecated
-export const ACTION_TYPE_REDIRECT = 'redirect'; // @todo: deprecated
-export const ACTION_TYPE_NOT_FOUND = 'notFound'; // @todo: deprecated
-
-type Action = 'accessDenied' | 'normal' | 'redirect' | 'notFound';
-
-type AccessLevel = 'public' | 'authenticated';
+export type NavigationAccessLevel = 'public' | 'authenticated';
 
 export type Path = {
-  accessLevel?: AccessLevel;
+  accessLevel?: NavigationAccessLevel;
   enabled?: boolean;
   hasAccess: boolean;
   isRaw: boolean;
   pageId: string;
   path: string;
-  unauthorizedBehaviour?: Action;
+  unauthorizedBehaviour?: NavigationAction;
   unauthorizedPageRedirect?: string;
 };
 
@@ -89,7 +81,7 @@ const getPageFullPath = (
   return { [`/${path}`]: pageId, [`/${pageId}`]: pageId };
 };
 
-const isPageAuthored = (accessLevel?: AccessLevel, authenticated?: boolean, previewMode: boolean = true) => {
+const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boolean, previewMode: boolean = true) => {
   if (!accessLevel || !previewMode) {
     return true;
   }
@@ -150,7 +142,7 @@ const getPaths = (
           isRaw: `/${pageId}` === subPath,
           unauthorizedBehaviour,
           unauthorizedPageRedirect,
-          hasAccess: isPageAuthored(accessLevel as AccessLevel, authenticated, previewMode)
+          hasAccess: isPageAuthored(accessLevel as NavigationAccessLevel, authenticated, previewMode)
         } as Path;
       });
 
