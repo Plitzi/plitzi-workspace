@@ -6,7 +6,7 @@ import type { FC } from 'react';
 
 export const isTestMode = () => typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
 
-export function getDisplayName(WrappedComponent?: FC) {
+export function getDisplayName<T = unknown>(WrappedComponent?: FC<T>) {
   if (!WrappedComponent) {
     return 'Component';
   }

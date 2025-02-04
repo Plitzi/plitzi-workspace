@@ -13,7 +13,7 @@ import pkg from './package.json' with { type: 'json' };
 export default defineConfig(({ mode, ...args }) => {
   return {
     plugins: [
-      nodeResolve({ extensions: ['ts', 'tsx'] }),
+      nodeResolve({ extensions: ['.ts', '.tsx'] }),
       react(),
       dts({
         entryRoot: 'src',

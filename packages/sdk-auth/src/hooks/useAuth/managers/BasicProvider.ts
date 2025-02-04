@@ -1,25 +1,48 @@
 // Packages
-import get from 'lodash/get.js';
+import get from 'lodash/get';
 import moment from 'moment';
 
-class BasicProvider {
-  constructor(props = {}) {
-    const {
-      cache,
-      setCache,
-      clearCache,
-      loginUrl,
-      refreshUrl,
-      detailsPath = '',
-      tokenPath = '',
-      expirationTimePath = ''
-    } = props;
+// Types
+import type { UseCacheReturn } from '@plitzi/plitzi-ui/Cache';
 
+export type BasicProviderProps = {
+  cache?: Record<string, unknown>;
+  setCache?: UseCacheReturn[1];
+  clearCache?: UseCacheReturn[3];
+  loginUrl?: string;
+  refreshUrl?: string;
+  detailsPath?: string;
+  tokenPath?: string;
+  expirationTimePath?: string;
+};
+
+class BasicProvider {
+  userDetails?: string | Record<string, unknown>;
+  accessData?: string;
+  expireAt?: number;
+  isAuthenticated?: boolean;
+  accessToken?: string;
+  setCache?: UseCacheReturn[1];
+  clearCache?: UseCacheReturn[3];
+  paths?: { detailsPath?: string; tokenPath?: string; expirationTimePath?: string };
+  network?: { loginUrl?: string; refreshUrl?: string };
+  expireHandler?: NodeJS.Timeout;
+
+  constructor({
+    cache,
+    setCache,
+    clearCache,
+    loginUrl,
+    refreshUrl,
+    detailsPath = '',
+    tokenPath = '',
+    expirationTimePath = ''
+  }: BasicProviderProps = {}) {
     // Props
     if (cache) {
-      this.userDetails = get(cache, 'details', undefined);
-      this.accessToken = get(cache, 'access_token', undefined);
-      this.expireAt = get(cache, 'expire_at', 0);
+      this.userDetails = get(cache, 'details', undefined) as string;
+      this.accessToken = get(cache, 'access_token', undefined) as string;
+      this.expireAt = get(cache, 'expire_at', 0) as number;
       this.isAuthenticated = !!this.accessToken;
     } else {
       this.reset(false);
@@ -37,7 +60,7 @@ class BasicProvider {
     if (this.isAuthenticated) {
       this.refreshDetails()
         .then(data => {
-          if (!data || data.errors) {
+          if (data.errors) {
             this.logout();
           } else {
             this.setExpiration();
@@ -47,11 +70,11 @@ class BasicProvider {
     }
   }
 
-  #loginAsToken = async token => {
+  #loginAsToken = async (token: string) => {
     this.accessToken = token;
     this.isAuthenticated = true;
     const data = await this.refreshDetails(false);
-    if (!data || data?.errors) {
+    if (data.errors) {
       return {
         errors: {
           token: 'Invalid token'
@@ -62,10 +85,10 @@ class BasicProvider {
     return data;
   };
 
-  #loginAsNormal = async (username, password) => {
-    const response = await this.#networkQuery(this.network.loginUrl, { username, password }, 'post');
-    const token = get(response, `data.${this.paths.tokenPath}`);
-    if (!response || !token) {
+  #loginAsNormal = async (username: string, password: string) => {
+    const response = await this.#networkQuery(this.network?.loginUrl ?? '', { username, password }, 'post');
+    const token = get(response, `data.${this.paths?.tokenPath}`, '') as string;
+    if (!token) {
       return {
         errors: {
           username: 'Invalid username or password',
@@ -77,7 +100,7 @@ class BasicProvider {
     return this.#loginAsToken(token);
   };
 
-  login = async params => {
+  login = async (params: { mode?: 'token' | 'normal'; username?: string; password?: string; token?: string }) => {
     const { mode = 'normal', username = '', password = '', token } = params;
     let response;
     if (mode === 'token' && token) {
@@ -86,7 +109,7 @@ class BasicProvider {
       response = await this.#loginAsNormal(username, password);
     }
 
-    if (response.errors) {
+    if (response?.errors) {
       this.reset(false);
 
       return response;
@@ -104,30 +127,34 @@ class BasicProvider {
   };
 
   refreshDetails = async (invalidateCache = true) => {
-    if (!this.isAuthenticated || !this.accessToken || !this.network.refreshUrl) {
+    if (!this.isAuthenticated || !this.accessToken || !this.network?.refreshUrl) {
       return { errors: 'Invalid request' };
     }
 
     const response = await this.#networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
-    if (!response) {
-      return { errors: 'Failed fetching user details' };
-    }
-
     if (response.status === 500) {
-      return { skip: true };
+      return { skip: true, errors: undefined };
     }
 
-    this.userDetails = this.paths.detailsPath ? get(response, `data.${this.paths.detailsPath}`) : get(response, 'data');
+    if (this.paths?.detailsPath) {
+      this.userDetails = get(response, `data.${this.paths.detailsPath}`, '');
+    } else {
+      this.userDetails = get(response, 'data') as Record<string, unknown>;
+    }
+
     if (!this.userDetails) {
       return { errors: 'Invalid user details' };
     }
 
-    this.expireAt = get(response, this.paths.expirationTimePath, 0);
+    if (this.paths?.expirationTimePath) {
+      this.expireAt = get(response, this.paths.expirationTimePath, 0) as number;
+    }
     if (invalidateCache) {
       this.syncCache();
     }
 
     return {
+      errors: undefined,
       success: this.isAuthenticated,
       access_token: this.accessToken,
       expires_at: this.expireAt,
@@ -145,12 +172,13 @@ class BasicProvider {
     return true;
   };
 
-  can = permission => {
-    if (!this.authData || !this.authData.details) {
+  can = (permission: string) => {
+    //  || !this.userDetails.details
+    if (!this.userDetails) {
       return false;
     }
 
-    return get(this.authData, 'details.permissions', []).include(permission);
+    return get(this.userDetails, 'details.permissions', [] as string[]).includes(permission);
   };
 
   // Others
@@ -160,7 +188,7 @@ class BasicProvider {
       return false;
     }
 
-    const remainingTime = this.expireAt - Math.floor(moment.utc().valueOf() / 1000);
+    const remainingTime = (this.expireAt ?? 0) - Math.floor(moment.utc().valueOf() / 1000);
     if (remainingTime <= 0) {
       return false;
     }
@@ -178,7 +206,7 @@ class BasicProvider {
   };
 
   syncCache = () => {
-    this.setCache({
+    this.setCache?.({
       access_token: this.accessToken,
       details: this.userDetails,
       expire_at: this.expireAt
@@ -187,7 +215,7 @@ class BasicProvider {
 
   reset = (invalidateCache = true) => {
     if (invalidateCache) {
-      this.clearCache();
+      this.clearCache?.();
     }
 
     this.userDetails = undefined;
@@ -200,11 +228,11 @@ class BasicProvider {
     }
   };
 
-  #networkQuery = async (url, params = {}, method = 'get', accessToken = '') => {
+  #networkQuery = async (url: string, params: Record<string, string | Blob> = {}, method = 'get', accessToken = '') => {
     let result;
     try {
       method = method.toLowerCase();
-      const headers = {};
+      const headers: Record<string, string> = {};
       if (accessToken) {
         headers.Authorization = `Bearer ${accessToken}`;
       }
@@ -222,13 +250,19 @@ class BasicProvider {
         formData.append(key, value);
       });
 
-      const fetchOptions = { method, headers, body: formData };
+      const fetchOptions: { method: string; headers: Record<string, string>; body?: typeof formData } = {
+        method,
+        headers,
+        body: formData
+      };
       if (method === 'get') {
-        delete fetchOptions.body;
+        if (fetchOptions.body) {
+          delete fetchOptions.body;
+        }
       }
 
       const response = await fetch(url, fetchOptions);
-      result = { status: response.status, data: await response.json() };
+      result = { status: response.status, data: (await response.json()) as unknown };
       if (response.status === 204 && method === 'delete') {
         result = { status: response.status, data: true };
       } else if (response.status >= 400) {

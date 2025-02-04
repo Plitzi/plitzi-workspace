@@ -3384,15 +3384,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@babel/cli": "npm:^7.26.4"
-    "@babel/core": "npm:^7.26.7"
+    "@plitzi/plitzi-ui": "npm:^0.1.7"
     "@plitzi/sdk-navigation": "npm:*"
     "@plitzi/sdk-schema": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.19.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
-    prop-types: "npm:^15.8.1"
+    vite: "npm:^6.0.11"
   languageName: unknown
   linkType: soft
 
@@ -3467,14 +3466,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@babel/cli": "npm:^7.26.4"
-    "@babel/core": "npm:^7.26.7"
+    "@plitzi/plitzi-ui": "npm:^0.1.7"
     "@plitzi/sdk-auth": "npm:*"
     "@plitzi/sdk-dev-tools": "npm:*"
     "@plitzi/sdk-event-bridge": "npm:*"
     "@plitzi/sdk-shared": "npm:*"
     eslint: "npm:^9.19.0"
     lodash: "npm:^4.17.21"
+    vite: "npm:^6.0.11"
   languageName: unknown
   linkType: soft
 
@@ -3487,6 +3486,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     react: "npm:19.0.0"
     react-dom: "npm:19.0.0"
+    react-router: "npm:^7.1.4"
     react-router-dom: "npm:^7.1.4"
     vite: "npm:^6.0.11"
     vitest: "npm:^3.0.4"

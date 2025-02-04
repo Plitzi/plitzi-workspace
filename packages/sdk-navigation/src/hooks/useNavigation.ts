@@ -5,13 +5,11 @@ import { useMemo } from 'react';
 // Monorepo
 import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
 
+// Types
+import type { Server } from '../types';
+
 export type UseNavigationProps = {
-  server: {
-    graphqlServer?: string;
-    subscriptionServer?: string;
-    host?: string;
-    websocketServer?: string;
-  };
+  server: Server;
 };
 
 const useNavigation = ({ server }: UseNavigationProps) => {
@@ -21,7 +19,7 @@ const useNavigation = ({ server }: UseNavigationProps) => {
   );
 
   const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
-  const hostname = useMemo(() => location.hostname ?? 'localhost', [location.hostname]);
+  const hostname = useMemo(() => (location.hostname ? location.hostname : 'localhost'), [location.hostname]);
   const navigationData = useMemo(() => ({ queryParams, hostname, location }), [queryParams, hostname, location]);
 
   return navigationData;

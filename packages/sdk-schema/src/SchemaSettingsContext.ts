@@ -1,9 +1,13 @@
 // Packages
-import { Schema } from '@plitzi/sdk-shared';
 import { createContext } from 'react';
 
-const schemaSettingsContextValue: Schema['settings'] = {} as Schema['settings'];
+// Types
+import type { Schema } from '@plitzi/sdk-shared';
 
-const SchemaSettingsContext = createContext(schemaSettingsContextValue);
+export type SchemaSettingsContextValue = Schema['settings'];
+
+const schemaSettingsContextDefaultValue = {} as SchemaSettingsContextValue;
+
+const SchemaSettingsContext = createContext<Schema['settings']>(schemaSettingsContextDefaultValue);
 
 export default SchemaSettingsContext;

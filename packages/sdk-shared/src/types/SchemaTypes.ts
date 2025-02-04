@@ -52,7 +52,17 @@ export type PageFolder = { id: string; name: string; slug: string; parentId: str
 export type Schema = {
   flat: { [key: string]: Element | undefined };
   variables: SchemaVariable[];
-  settings: { customCss: string };
+  settings: {
+    customCss: string;
+    userProvider?: 'auth0' | 'basic' | 'custom' | '';
+    auth0Domain?: string;
+    auth0ClientId?: string;
+    loginUrl?: string;
+    refreshUrl?: string;
+    detailsPath?: string;
+    tokenPath?: string;
+    expirationTimePath?: string;
+  };
   pages: string[];
   pageFolders: PageFolder[];
 };

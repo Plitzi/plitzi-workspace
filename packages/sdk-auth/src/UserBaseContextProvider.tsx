@@ -1,33 +1,40 @@
 // Packages
-import React, { useMemo, use } from 'react';
-import get from 'lodash/get.js';
 import { useAuth0 } from '@auth0/auth0-react';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import get from 'lodash/get';
+import { useMemo, use } from 'react';
 
 // Monorepo
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
 import useNavigation from '@plitzi/sdk-navigation/useNavigation';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
+import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import withUserProvider from './hocs/withUserProvider.js';
-import UserContext from './UserContext.js';
-import useAuth from './hooks/useAuth/index.js';
+import withUserProvider from './hocs/withUserProvider';
+import useAuth from './hooks/useAuth';
+import UserContext from './UserContext';
 
-/**
- * @param {{
- *   previewMode: boolean;
- *   children: React.ReactNode;
- *   webId: string | number;
- *   server?: object;
- *   environment?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const UserBaseContextProvider = props => {
-  const { previewMode = true, children, webId = 0, server = emptyObject, environment = 'live' } = props;
+// Types
+import type { Server } from '@plitzi/sdk-navigation';
+import type { ReactNode } from 'react';
+
+export type UserBaseContextProviderProps = {
+  previewMode?: boolean;
+  children?: ReactNode;
+  webId?: string | number;
+  server?: Server;
+  environment?: string;
+};
+
+const UserBaseContextProvider = ({
+  previewMode = true,
+  children,
+  webId = 0,
+  server = emptyObject,
+  environment = 'live'
+}: UserBaseContextProviderProps) => {
   const {
     userProvider,
     loginUrl,
@@ -43,6 +50,7 @@ const UserBaseContextProvider = props => {
   let loading = false;
   switch (userProvider) {
     case 'auth0':
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       loading = get(useAuth0(), 'isLoading', false) && previewMode;
       break;
 
@@ -56,7 +64,7 @@ const UserBaseContextProvider = props => {
     [queryParams, hostname, environment]
   );
   const variablesParsed = useMemo(() => {
-    if (!variables) {
+    if (!Array.isArray(variables)) {
       return {};
     }
 
@@ -81,8 +89,14 @@ const UserBaseContextProvider = props => {
         processTwig(
           JSON.stringify({ loginUrl, refreshUrl, detailsPath, tokenPath, expirationTimePath }),
           variablesParsed
-        )
-      ),
+        ) as string
+      ) as {
+        loginUrl?: string;
+        refreshUrl?: string;
+        detailsPath?: string;
+        tokenPath?: string;
+        expirationTimePath?: string;
+      },
     [variablesParsed, loginUrl, refreshUrl, detailsPath, tokenPath, expirationTimePath]
   );
 
@@ -119,9 +133,11 @@ const UserBaseContextProvider = props => {
         accessToken: manager.accessToken
       }
     };
-  }, [manager, manager?.userDetails, manager?.isAuthenticated, previewMode]);
+  }, [manager, previewMode]);
 
   return <UserContext value={valueMemo}>{!loading && children}</UserContext>;
 };
 
-export default withUserProvider(UserBaseContextProvider);
+const EnhancedUserBaseContextProvider = withUserProvider(UserBaseContextProvider);
+
+export default EnhancedUserBaseContextProvider;

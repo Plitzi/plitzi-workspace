@@ -1,36 +1,34 @@
 // Packages
-import React, { use } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
+import { use } from 'react';
 
 // Monorepo
-import { getDisplayName } from '@plitzi/sdk-shared/utils';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { getDisplayName } from '@plitzi/sdk-shared/utils';
 
-const withUserProvider = WrappedComponent => {
-  /**
-   * @param {{
-   *   ref: React.RefObject;
-   * }} props
-   * @returns {React.ReactElement}
-   */
-  const WithUserProviderComponent = props => {
-    const { ref } = props;
+// Types
+import type { FC } from 'react';
+
+export type WithUserProviderProps<T> = T;
+
+const withUserProvider = <T extends object>(WrappedComponent: FC<T>) => {
+  const WithUserProviderComponent = ({ ...props }: WithUserProviderProps<T>) => {
     const { userProvider, auth0Domain, auth0ClientId } = use(SchemaSettingsContext);
     switch (userProvider) {
       case 'auth0':
         return (
           <Auth0Provider
-            domain={auth0Domain}
-            clientId={auth0ClientId}
+            domain={auth0Domain as string}
+            clientId={auth0ClientId as string}
             authorizationParams={{ redirect_uri: window.location.origin }}
           >
-            <WrappedComponent {...props} ref={ref} userProvider={userProvider} />
+            <WrappedComponent {...props} />
           </Auth0Provider>
         );
 
       case 'basic':
       default:
-        return <WrappedComponent {...props} ref={ref} userProvider={userProvider} />;
+        return <WrappedComponent {...props} />;
     }
   };
 

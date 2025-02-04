@@ -4,12 +4,10 @@ import { createContext } from 'react';
 // Types
 import type { Style, Schema } from '@plitzi/sdk-shared';
 
-// @todo: replace all unknown types
-
 export type SchemaContextValue = {
   schema: Schema;
   style: Style;
-  definition: { rootId: string };
+  definition: { rootId: string }; // for segments and templates
 };
 
 const schemaContextDefaultValue: SchemaContextValue = {
@@ -21,9 +19,9 @@ const schemaContextDefaultValue: SchemaContextValue = {
     pageFolders: []
   },
   style: { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' },
-  definition: { rootId: '' } // for segments and templates
+  definition: { rootId: '' }
 };
 
-const SchemaContext = createContext<SchemaContextValue | undefined>(schemaContextDefaultValue);
+const SchemaContext = createContext<SchemaContextValue>(schemaContextDefaultValue);
 
 export default SchemaContext;
