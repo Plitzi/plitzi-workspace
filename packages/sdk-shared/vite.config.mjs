@@ -27,7 +27,14 @@ export default defineConfig(({ mode, ...args }) => {
           // 'node_modules'
         ],
         tsconfigPath: './tsconfig.app.json'
-      })
+      }),
+      {
+        name: 'debug-resolve',
+        resolveId(source, importer) {
+          console.log(`[VITE RESOLVE] Intentando resolver: ${source} desde ${importer}`);
+          return null; // Permitir que Vite siga resolviendo
+        }
+      }
     ],
     resolve: {
       alias: {
@@ -35,14 +42,15 @@ export default defineConfig(({ mode, ...args }) => {
         //     '@components': path.resolve(__dirname, './src/components'),
         //     '@hooks': path.resolve(__dirname, './src/hooks'),
         //     '@': resolve(__dirname, './src')
-      }
+      },
+      extensions: ['.js', '.ts', '.tsx', '.es']
     },
     css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
     build: {
       lib: {
         entry: ['./src/index.ts'],
         // name: 'plitzi-ui',
-        formats: ['es', 'cjs']
+        formats: ['es'] // , 'cjs'
       },
       rollupOptions: {
         external: [
