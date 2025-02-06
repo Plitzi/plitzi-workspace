@@ -65,7 +65,8 @@ export default defineConfig(({ mode, ...args }) => {
           'react-router',
           'react-router-dom',
           'react/jsx-runtime',
-          'immer'
+          'immer',
+          'moment'
         ],
         output: {
           exports: 'named',

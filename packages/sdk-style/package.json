@@ -49,6 +49,6 @@
   "devDependencies": {
     "@types/lodash": "^4.17.15",
     "eslint": "^9.19.0",
-    "vite": "^6.0.11"
+    "vite": "^6.1.0"
   }
 }

@@ -46,6 +46,7 @@ const build = (env, args) => {
   let modules = {
     entry: { 'plitzi-sdk': './src/index.js' },
     output: {
+      pathinfo: false,
       path: DESTINATION,
       filename: '[name].js',
       chunkFilename: 'plitzi-sdk-chunk-[name].js',
@@ -197,7 +198,7 @@ const build = (env, args) => {
   }
 
   if (devMode) {
-    modules.devtool = 'source-map';
+    modules.devtool = 'cheap-module-source-map';
   } else {
     modules.optimization = {
       usedExports: true,

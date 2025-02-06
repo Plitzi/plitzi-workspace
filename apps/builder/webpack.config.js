@@ -45,6 +45,7 @@ const build = (env, args) => {
   let modules = {
     entry: { 'plitzi-builder': './src/index.js' },
     output: {
+      pathinfo: false,
       path: DESTINATION,
       filename: '[name].js',
       chunkFilename: 'plitzi-builder-chunk-[name].js',
@@ -209,7 +210,7 @@ const build = (env, args) => {
   }
 
   if (devMode) {
-    modules.devtool = 'source-map';
+    modules.devtool = 'cheap-module-source-map';
   } else {
     modules.plugins.push(new CleanWebpackPlugin());
     modules.optimization = {
