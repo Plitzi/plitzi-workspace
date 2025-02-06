@@ -16,9 +16,9 @@
       "require": "./dist/UserContext.cjs"
     },
     "./UserBaseContextProvider": {
-      "types": "./dist/UserContext.d.ts",
-      "import": "./dist/UserContext.es",
-      "require": "./dist/UserContext.cjs"
+      "types": "./dist/UserBaseContextProvider.d.ts",
+      "import": "./dist/UserBaseContextProvider.es",
+      "require": "./dist/UserBaseContextProvider.cjs"
     }
   },
   "type": "module",

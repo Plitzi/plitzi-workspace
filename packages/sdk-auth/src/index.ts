@@ -4,7 +4,7 @@ import UserBaseContextProvider from './UserBaseContextProvider';
 import UserContext from './UserContext';
 
 export * from './hooks/useAuth';
-export * from './UserContext';
 export * from './UserBaseContextProvider';
+export * from './UserContext';
 
 export { UserContext, UserBaseContextProvider, useAuth };
