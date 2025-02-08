@@ -82,7 +82,7 @@ export type Plugin = {
   builder: PluginBuilder;
   defaultStyle: ComponentDefinition['defaultStyle'];
   isMain?: boolean;
-  manifest: Record<string, PluginManifest>;
+  manifest: PluginManifest;
   market: ComponentDefinition['market'];
   module: string;
   resource: string;
@@ -110,6 +110,6 @@ export type PluginsContextValue = {
 
 const pluginsContextDefaultValue: PluginsContextValue = {};
 
-const PluginsContext = createContext<PluginsContextValue | undefined>(pluginsContextDefaultValue);
+const PluginsContext = createContext<PluginsContextValue>(pluginsContextDefaultValue);
 
 export default PluginsContext;
