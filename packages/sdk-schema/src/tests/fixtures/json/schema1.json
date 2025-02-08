@@ -5,10 +5,10 @@
       "definition": {
         "label": "Page",
         "type": "page",
-        "initialState": null,
+        "initialState": {},
         "styleSelectors": { "base": "page-u7af" },
         "bindings": {},
-        "interactions": null,
+        "interactions": {},
         "rootId": "657425e280b5b09c93b4a284",
         "items": ["669b33d56e29e1297a6ccde1"]
       },

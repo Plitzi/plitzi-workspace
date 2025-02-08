@@ -458,7 +458,7 @@ describe('Testing FlatMap', () => {
   // yarn test FlatMap.test.js -t flatAsTemplate
   it('flatAsTemplate', () => {
     const instance = new FlatMap({
-      flat: cloneDeep(schema1.flat),
+      flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
     const { elements, elementsStyle, variables } = instance.flatAsTemplate(
@@ -674,7 +674,7 @@ describe('Testing FlatMap', () => {
 
   it('FlatMap getElementVariables', () => {
     const instance = new FlatMap({
-      flat: cloneDeep(schema1.flat),
+      flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
     const variables = instance.getElementVariables(styleSchema1 as Style, '669b33dcf636e501810d3d1d');
