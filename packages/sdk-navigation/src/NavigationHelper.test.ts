@@ -4,6 +4,9 @@ import { describe, it, expect } from 'vitest';
 // Relatives
 import { getPageFullPath, getPaths } from './NavigationHelper';
 
+// Types
+import type { Schema } from '@plitzi/sdk-shared';
+
 describe('Testing NavigationHelper', () => {
   const pages = [
     '64599fe5e07288d4094abbed',
@@ -34,7 +37,7 @@ describe('Testing NavigationHelper', () => {
             title: 'New Trigger',
             type: 'trigger',
             action: 'onPageLoad',
-            params: [],
+            params: {},
             preview: {
               pageId: '',
               routeParams: '',
@@ -140,7 +143,7 @@ describe('Testing NavigationHelper', () => {
               autoDismiss: true,
               autoDismissTimeout: 5000
             },
-            preview: [],
+            preview: {},
             elementId: 'space',
             beforeNode: 'node_65bd0fd3b00a3cf7f17a2775',
             afterNode: '',
@@ -180,7 +183,7 @@ describe('Testing NavigationHelper', () => {
           base: 'page'
         },
         bindings: undefined,
-        interactions: [],
+        interactions: {},
         parentId: undefined,
         rootId: '645f2945e07288d4094abbf1',
         items: ['646090965afc9374a32ee03e', '653f7c2a7e4ab0256ece1752', '65a22a91016c0e049647e6de']
@@ -214,7 +217,7 @@ describe('Testing NavigationHelper', () => {
           base: 'page-LUD1'
         },
         bindings: undefined,
-        interactions: [],
+        interactions: {},
         parentId: undefined,
         rootId: '64669d67e07288d4094abbf2',
         items: ['64fd46de946ecbf7def1e09d']
@@ -274,7 +277,7 @@ describe('Testing NavigationHelper', () => {
           base: ''
         },
         bindings: undefined,
-        interactions: [],
+        interactions: {},
         parentId: undefined,
         rootId: '64bba0dbde52766b70ce322c',
         items: ['6562a802fddb6cfc5a9e96e9', '64bba6ba18c98fb0e08905b9', '6545d72295fd266625202c76']
@@ -470,7 +473,7 @@ describe('Testing NavigationHelper', () => {
         folder: '679caf6b745d763d2aca2742'
       }
     }
-  };
+  } as Schema['flat'];
   const pageFolders = [
     {
       id: '6516b927960079dafdade5c6',

@@ -29,7 +29,7 @@ export type ElementInteraction = {
   afterNode: string;
   flowId: string;
   enabled: boolean;
-  when: RuleGroup | undefined;
+  when?: RuleGroup;
 };
 
 export type Element = {

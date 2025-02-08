@@ -1,9 +1,10 @@
 // Packages
 import get from 'lodash/get';
-import { matchPath, PathMatch } from 'react-router-dom';
+import { matchPath } from 'react-router-dom';
 
 // Types
 import type { Schema, PageFolder, Element } from '@plitzi/sdk-shared';
+import type { PathMatch } from 'react-router-dom';
 
 export type NavigationAction = 'accessDenied' | 'normal' | 'redirect' | 'notFound';
 
