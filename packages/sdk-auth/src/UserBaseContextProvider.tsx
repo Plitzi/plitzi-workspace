@@ -113,10 +113,10 @@ const UserBaseContextProvider = ({
   const valueMemo = useMemo(() => {
     if (!manager) {
       return {
-        login: () => {},
-        logout: () => {},
-        refreshDetails: () => {},
-        can: () => false,
+        login: undefined,
+        logout: undefined,
+        refreshDetails: undefined,
+        can: undefined,
         authenticated: false,
         user: { details: {}, accessToken: '' }
       };

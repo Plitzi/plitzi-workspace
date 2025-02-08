@@ -17,11 +17,26 @@ export type ElementBinding = {
   toPath: string;
 };
 
+export type ElementInteraction = {
+  id: string;
+  title: string;
+  type: 'trigger' | 'globalCallback' | 'callback' | 'utility';
+  action: string;
+  params: Record<string, unknown>;
+  preview: Record<string, unknown>;
+  elementId: string;
+  beforeNode: string;
+  afterNode: string;
+  flowId: string;
+  enabled: boolean;
+  when: RuleGroup | undefined;
+};
+
 export type Element = {
   id: string;
   definition: Omit<
     { [key: string]: unknown },
-    'parentId' | 'items' | 'styleSelectors' | 'string' | 'bindings' | 'label' | 'rootId'
+    'parentId' | 'items' | 'styleSelectors' | 'string' | 'bindings' | 'label' | 'rootId' | 'interactions'
   > & {
     rootId: string;
     label: string;
@@ -29,7 +44,8 @@ export type Element = {
     parentId?: string;
     items?: string[];
     styleSelectors: { [key: string]: string };
-    bindings?: { [key: string]: ElementBinding | undefined };
+    bindings?: Record<string, ElementBinding>;
+    interactions?: Record<string, ElementInteraction>;
   };
   attributes: Omit<{ [key: string]: unknown }, 'subType'> & {
     subType?: string;

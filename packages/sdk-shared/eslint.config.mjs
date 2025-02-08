@@ -36,6 +36,7 @@ export default tsEslint.config({
   },
   rules: {
     ...reactHooks.configs.recommended.rules,
+    '@typescript-eslint/consistent-type-imports': 'warn',
     '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     'no-var': 'error',
@@ -53,7 +54,8 @@ export default tsEslint.config({
       {
         groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'type'],
         pathGroups: [
-          { pattern: '@plitzi/sdk-*/**', group: 'internal' }
+          { pattern: '@plitzi/sdk-*/**', group: 'internal' },
+          { pattern: '@plitzi/sdk-*', group: 'internal' },
           // { pattern: '@icons/**', group: 'internal' },
           // { pattern: '@components/**', group: 'internal' },
           // { pattern: '@hooks/**', group: 'internal' },

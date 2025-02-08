@@ -17,7 +17,7 @@ export type BasicProviderProps = {
 };
 
 class BasicProvider {
-  userDetails?: string | Record<string, unknown>;
+  userDetails?: Record<string, unknown>;
   accessData?: string;
   expireAt?: number;
   isAuthenticated?: boolean;
@@ -40,7 +40,7 @@ class BasicProvider {
   }: BasicProviderProps = {}) {
     // Props
     if (cache) {
-      this.userDetails = get(cache, 'details', undefined) as string;
+      this.userDetails = get(cache, 'details') as Record<string, unknown> | undefined;
       this.accessToken = get(cache, 'access_token', undefined) as string;
       this.expireAt = get(cache, 'expire_at', 0) as number;
       this.isAuthenticated = !!this.accessToken;
@@ -137,9 +137,9 @@ class BasicProvider {
     }
 
     if (this.paths?.detailsPath) {
-      this.userDetails = get(response, `data.${this.paths.detailsPath}`, '');
+      this.userDetails = get(response, `data.${this.paths.detailsPath}`, {});
     } else {
-      this.userDetails = get(response, 'data') as Record<string, unknown>;
+      this.userDetails = get(response, 'data') as Record<string, unknown> | undefined;
     }
 
     if (!this.userDetails) {
@@ -178,7 +178,7 @@ class BasicProvider {
       return false;
     }
 
-    return get(this.userDetails, 'details.permissions', [] as string[]).includes(permission);
+    return (get(this.userDetails, 'details.permissions', []) as string[]).includes(permission);
   };
 
   // Others
