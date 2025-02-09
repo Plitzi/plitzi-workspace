@@ -31,7 +31,7 @@ export default defineConfig(({ mode, ...args }) => {
       {
         name: 'debug-resolve',
         resolveId(source, importer) {
-          console.log(`[VITE RESOLVE] Intentando resolver: ${source} desde ${importer}`);
+          // console.log(`[VITE RESOLVE] Intentando resolver: ${source} desde ${importer}`);
           return null; // Permitir que Vite siga resolviendo
         }
       }
@@ -62,6 +62,7 @@ export default defineConfig(({ mode, ...args }) => {
           'lodash/capitalize',
           'lodash/camelCase',
           'lodash/omit',
+          'lodash/throttle',
           'lodash/isEmpty',
           'lodash/pick',
           'react-router',
