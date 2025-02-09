@@ -15,11 +15,11 @@ export type SourceMeta = {
   fields?: SourceField[] | (() => SourceField[] | Promise<SourceField[]>);
 };
 
-export type Source = { id: string; meta: SourceMeta; context: Context<unknown> };
+export type Source<T = unknown> = { id: string; meta: SourceMeta; context: Context<T> };
 
 export type DataSourceContextValue = {
   useDataSource: typeof useDataSource;
-  addSource: (id: string, meta?: SourceMeta) => Context<unknown>;
+  addSource: <T = unknown>(id: string, meta?: SourceMeta) => Context<T>;
   updateFields: (id: string, fields: SourceMeta['fields']) => void;
   removeSource: (id: string) => void;
   getSources: (id?: string) => Record<string, Source> | Source;

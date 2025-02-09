@@ -36,18 +36,18 @@ const DataSourceContextProvider = ({ children, environment }: DataSourceContextP
   }, []);
 
   const handleAddSource = useCallback(
-    (id: string, meta: SourceMeta = {} as SourceMeta) => {
+    <T = unknown,>(id: string, meta: SourceMeta = {} as SourceMeta) => {
       const existingSource = Object.values(sourcesRef.current).find(source => source.meta.source === meta.source);
       let context;
       if (existingSource) {
         ({ context } = existingSource);
       } else {
-        context = createContext<unknown>(undefined);
+        context = createContext<T>(undefined as T);
       }
 
-      sourcesRef.current[id] = { id, meta, context };
+      sourcesRef.current[id] = { id, meta, context } as Source;
 
-      return context;
+      return context as Context<T>;
     },
     [sourcesRef]
   );
