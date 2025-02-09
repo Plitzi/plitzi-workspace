@@ -1,24 +1,24 @@
 // Packages
-import React, { useCallback, use, useMemo } from 'react';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import { useCallback, use, useMemo } from 'react';
 
 // Monorepo
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import DataSourceContext from '../DataSourceContext.js';
+import DataSourceContext from '../DataSourceContext';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   environment: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const VariablesSource = props => {
-  const { children, environment } = props;
+// Types
+import type { ReactNode } from 'react';
+
+export type VariablesSourceProps = {
+  children?: ReactNode;
+  environment: string;
+};
+
+const VariablesSource = ({ children, environment }: VariablesSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const {
     schema: { variables }
@@ -29,9 +29,9 @@ const VariablesSource = props => {
     [routeParams, queryParams, hostname, environment]
   );
 
-  const variablesParsed = useMemo(() => {
+  const variablesParsed = useMemo<Record<string, unknown>>(() => {
     return (
-      variables?.reduce((acum, variable) => {
+      variables?.reduce<Record<string, unknown>>((acum, variable) => {
         const { name, value, subValues } = variable;
         if (!Array.isArray(subValues) || subValues.length === 0) {
           return { ...acum, [name]: value };
@@ -43,13 +43,16 @@ const VariablesSource = props => {
         }
 
         return { ...acum, [name]: value };
-      }, {}) ?? {}
+      }, {}) ?? ({} as Record<string, unknown>)
     );
   }, [variables, whenData]);
 
   const sourceFields = useCallback(
-    async () => [
-      ...getPathsFromObeject(variablesParsed).reduce((acum, path) => [...acum, { path, name: `variables.${path}` }], [])
+    () => [
+      ...getPathsFromObeject(variablesParsed).reduce<{ path: string; name: string }[]>(
+        (acum, path) => [...acum, { path, name: `variables.${path}` }],
+        []
+      )
     ],
     [variablesParsed]
   );
@@ -57,6 +60,7 @@ const VariablesSource = props => {
   const [VariablesSourceContext] = useDataSource({
     id: 'global',
     source: 'variables',
+    mode: 'write',
     name: 'Variables',
     fields: sourceFields
   });

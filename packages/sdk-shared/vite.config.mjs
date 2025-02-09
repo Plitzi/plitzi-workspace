@@ -59,6 +59,8 @@ export default defineConfig(({ mode, ...args }) => {
           'lodash/set',
           'lodash/has',
           'lodash/pick',
+          'lodash/capitalize',
+          'lodash/camelCase',
           'lodash/omit',
           'lodash/isEmpty',
           'lodash/pick',

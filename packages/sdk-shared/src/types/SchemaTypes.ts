@@ -1,19 +1,22 @@
 // Types
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
+export type BindingTransformer = {
+  type: 'utility' | 'unknown';
+  action: string;
+  params: {
+    valueType: string;
+    value: string;
+  };
+};
+
 export type ElementBinding = {
   id: string;
   source: string;
   fromPath: string;
-  transformers: {
-    type: string;
-    action: string;
-    params: {
-      valueType: string;
-      value: string;
-    };
-  }[];
-  when: RuleGroup;
+  transformers?: BindingTransformer[];
+  when?: RuleGroup;
+  enabled?: boolean;
   toPath: string;
 };
 
@@ -67,7 +70,7 @@ export type PageFolder = { id: string; name: string; slug: string; parentId: str
 
 export type Schema = {
   flat: { [key: string]: Element | undefined };
-  variables: SchemaVariable[];
+  variables?: SchemaVariable[];
   settings: {
     customCss: string;
     userProvider?: 'auth0' | 'basic' | 'custom' | '';

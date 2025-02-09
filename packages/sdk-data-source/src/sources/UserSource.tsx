@@ -1,22 +1,23 @@
 // Packages
-import React, { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo } from 'react';
 
 // Monorepo
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import DataSourceContext from '../DataSourceContext.js';
+import DataSourceContext from '../DataSourceContext';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const UserSource = props => {
-  const { children } = props;
+// Types
+import type { SourceField } from '../DataSourceContext';
+import type { ReactNode } from 'react';
+
+export type UserSourceProps = {
+  children?: ReactNode;
+};
+
+const UserSource = ({ children }: UserSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { user, authenticated } = use(UserContext);
   const { userProvider = 'basic' } = use(SchemaSettingsContext);
@@ -60,17 +61,26 @@ const UserSource = props => {
     }
   }, [userProvider, user, authenticated]);
 
-  const sourceFields = useCallback(async () => {
+  const sourceFields = useCallback(() => {
     switch (userProvider) {
       case 'auth0':
       case 'basic':
       case '':
       default:
-        return getPathsFromObeject(userContextMemo).reduce((acum, path) => [...acum, { path, name: `user.${path}` }], []);
+        return getPathsFromObeject(userContextMemo).reduce<SourceField[]>(
+          (acum, path) => [...acum, { path, name: `user.${path}` }],
+          []
+        );
     }
   }, [userContextMemo, userProvider]);
 
-  const [UserSourceContext] = useDataSource({ id: 'global', source: 'user', name: 'User State', fields: sourceFields });
+  const [UserSourceContext] = useDataSource({
+    id: 'global',
+    source: 'user',
+    mode: 'write',
+    name: 'User State',
+    fields: sourceFields
+  });
 
   return <UserSourceContext value={userContextMemo}>{children}</UserSourceContext>;
 };

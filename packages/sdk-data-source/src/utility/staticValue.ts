@@ -1,4 +1,4 @@
-const callback = (source, params) => {
+const callback = (_source: string, params: { valueType: string; value: string }) => {
   const { valueType, value } = params;
   if (valueType === 'select') {
     return value === 'true';
@@ -24,7 +24,11 @@ const staticValue = {
     },
     value: {
       defaultValue: '',
-      type: ({ valueType }) => valueType,
+      type: ({
+        valueType
+      }: {
+        valueType: { label: string; defaultValue: string; type: string; options: { label: string; value: string }[] };
+      }) => valueType,
       options: [
         { label: 'True', value: 'true' },
         { label: 'False', value: 'false' }
@@ -33,6 +37,6 @@ const staticValue = {
   },
   preview: { valueType: '', value: '' },
   callback
-};
+} as const;
 
 export default staticValue;

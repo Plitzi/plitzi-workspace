@@ -1,15 +1,25 @@
 // Packages
-import isEmpty from 'lodash/isEmpty.js';
-import camelCase from 'lodash/camelCase.js';
-import get from 'lodash/get.js';
-import set from 'lodash/set.js';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
+import camelCase from 'lodash/camelCase';
+import get from 'lodash/get';
+import set from 'lodash/set';
 
 // Relatives
-import utility from '../utility/index.js';
+import utility from '../utility';
 
-const getValue = (dataSource, source, path, result, bkey, attrKey) => {
+// Types
+import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { Element, ElementBinding } from '@plitzi/sdk-shared';
+
+const getValue = (
+  dataSource: Record<string, unknown>,
+  source: string,
+  path: string,
+  result: Record<string, unknown>,
+  bkey: string,
+  attrKey: string
+) => {
   if (bkey === 'initialState') {
     return get(dataSource, `${source}.${path}`, get(result, `definition.${bkey}.${attrKey}`));
   }
@@ -17,7 +27,11 @@ const getValue = (dataSource, source, path, result, bkey, attrKey) => {
   return get(dataSource, `${source}.${path}`, get(result, `${bkey}.${attrKey}`));
 };
 
-const getBindingsDetails = (dataSource, attributes = {}, definition = {}) => {
+const getBindingsDetails = (
+  dataSource: Record<string, unknown>,
+  attributes: Element['attributes'],
+  definition: Element['definition']
+) => {
   const { bindings } = definition;
   if (!bindings || (typeof bindings === 'object' && Object.keys(bindings).length === 0)) {
     return { attributes, style: {}, definition };
@@ -29,11 +43,17 @@ const getBindingsDetails = (dataSource, attributes = {}, definition = {}) => {
         return;
       }
 
-      bindings[bkey].forEach(binding => {
+      bindings[bkey].forEach((binding?: ElementBinding) => {
         if (binding) {
           const { source, fromPath, transformers, when, enabled = true } = binding;
           let { toPath } = binding;
-          if (!source || !fromPath || !toPath || (when && !QueryBuilderEvaluator(when, dataSource)) || !enabled) {
+          if (
+            !source ||
+            !fromPath ||
+            !toPath ||
+            (when && !QueryBuilderEvaluator(when, dataSource as Record<string, RuleValue>)) ||
+            !enabled
+          ) {
             return;
           }
 
@@ -47,7 +67,9 @@ const getBindingsDetails = (dataSource, attributes = {}, definition = {}) => {
               const { type, action, params } = transformer;
               switch (type) {
                 case 'utility': {
-                  const callback = get(utility, `${action}.callback`);
+                  const callback = get<unknown, string>(utility, `${action}.callback`) as
+                    | ((value: unknown, params: unknown, dataSource: unknown) => unknown)
+                    | undefined;
                   if (!callback || typeof callback !== 'function') {
                     break;
                   }
@@ -61,7 +83,7 @@ const getBindingsDetails = (dataSource, attributes = {}, definition = {}) => {
             });
           }
 
-          if (typeof value === 'boolean' || typeof value === 'number' || !isEmpty(value)) {
+          if (typeof value === 'boolean' || typeof value === 'number' || !value) {
             if (bkey === 'initialState') {
               set(draft, `definition.${bkey}.${toPath}`, value);
             } else {

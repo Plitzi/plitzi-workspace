@@ -5,37 +5,76 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./DataSourceContext": "./dist/DataSourceContext.js",
-    "./DataSourceContextProvider": "./dist/DataSourceContextProvider.js",
-    "./hooks/useDataSource": "./dist/hooks/useDataSource.js",
-    "./helpers/getBindingsDetails": "./dist/helpers/getBindingsDetails.js",
-    "./utility": "./dist/utility/index.js",
-    "./sources/NavigationSource": "./dist/sources/NavigationSource.js",
-    "./sources/PageStateSource": "./dist/sources/PageStateSource.js",
-    "./sources/VariablesSource": "./dist/sources/VariablesSource.js",
-    "./sources/UserSource": "./dist/sources/UserSource.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es",
+      "require": "./dist/index.cjs"
+    },
+    "./DataSourceContext": {
+      "types": "./dist/DataSourceContext.d.ts",
+      "import": "./dist/DataSourceContext.es",
+      "require": "./dist/DataSourceContext.cjs"
+    },
+    "./DataSourceContextProvider": {
+      "types": "./dist/DataSourceContextProvider.d.ts",
+      "import": "./dist/DataSourceContextProvider.es",
+      "require": "./dist/DataSourceContextProvider.cjs"
+    },
+    "./hooks/useDataSource": {
+      "types": "./dist/hooks/useDataSource.d.ts",
+      "import": "./dist/hooks/useDataSource.es",
+      "require": "./dist/hooks/useDataSource.cjs"
+    },
+    "./helpers/getBindingsDetails": {
+      "types": "./dist/helpers/getBindingsDetails.d.ts",
+      "import": "./dist/helpers/getBindingsDetails.es",
+      "require": "./dist/helpers/getBindingsDetails.cjs"
+    },
+    "./utility": {
+      "types": "./dist/utility/index.d.ts",
+      "import": "./dist/utility/index.es",
+      "require": "./dist/utility/index.cjs"
+    },
+    "./sources/NavigationSource": {
+      "types": "./dist/sources/NavigationSource.d.ts",
+      "import": "./dist/sources/NavigationSource.es",
+      "require": "./dist/sources/NavigationSource.cjs"
+    },
+    "./sources/PageStateSource": {
+      "types": "./dist/sources/PageStateSource.d.ts",
+      "import": "./dist/sources/PageStateSource.es",
+      "require": "./dist/sources/PageStateSource.cjs"
+    },
+    "./sources/VariablesSource": {
+      "types": "./dist/sources/VariablesSource.d.ts",
+      "import": "./dist/sources/VariablesSource.es",
+      "require": "./dist/sources/VariablesSource.cjs"
+    },
+    "./sources/UserSource": {
+      "types": "./dist/sources/UserSource.d.ts",
+      "import": "./dist/sources/UserSource.es",
+      "require": "./dist/sources/UserSource.cjs"
+    }
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored",
-    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
-    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
+    "build-assets:dev": "tsc -p ./tsconfig.app.json && vite build --mode development --minify false",
+    "build-assets:dev-watch": "tsc -p ./tsconfig.app.json && vite build --mode development --watch --minify false",
+    "build-assets:prod": "tsc -p ./tsconfig.app.json && vite build"
   },
   "type": "module",
+  "devDependencies": {
+    "eslint": "^9.19.0",
+    "vite": "^6.1.0"
+  },
   "dependencies": {
-    "@plitzi/sdk-auth": "*",
-    "@plitzi/sdk-event-bridge": "*",
-    "@plitzi/sdk-navigation": "*",
-    "@plitzi/sdk-schema": "*",
-    "@plitzi/sdk-shared": "*",
-    "@plitzi/sdk-state": "*",
+    "@plitzi/sdk-auth": "workspace:*",
+    "@plitzi/sdk-event-bridge": "workspace:*",
+    "@plitzi/sdk-navigation": "workspace:*",
+    "@plitzi/sdk-schema": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
+    "@plitzi/sdk-state": "workspace:*",
     "lodash": "^4.17.21",
     "moment": "^2.30.1"
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.26.4",
-    "@babel/core": "^7.26.7",
-    "eslint": "^9.19.0"
   }
 }

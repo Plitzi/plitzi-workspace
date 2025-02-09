@@ -1,31 +1,33 @@
 // Packages
-import React, { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
-import omit from 'lodash/omit.js';
-import set from 'lodash/set.js';
-import get from 'lodash/get.js';
+import get from 'lodash/get';
+import omit from 'lodash/omit';
+import set from 'lodash/set';
+import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 
 // Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
 // Relatives
-import DataSourceContext from './DataSourceContext.js';
-import useDataSource from './hooks/useDataSource.js';
-import UserSource from './sources/UserSource.js';
-import VariablesSource from './sources/VariablesSource.js';
-import NavigationSource from './sources/NavigationSource.js';
-import PageStateSource from './sources/PageStateSource.js';
+import DataSourceContext from './DataSourceContext';
+import useDataSource from './hooks/useDataSource';
+import NavigationSource from './sources/NavigationSource';
+import PageStateSource from './sources/PageStateSource';
+import UserSource from './sources/UserSource';
+import VariablesSource from './sources/VariablesSource';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   environment: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const DataSourceContextProvider = props => {
-  const { children, environment } = props;
-  const sourcesRef = useRef({});
-  const initRef = useRef();
+// Types
+import type { Source, SourceMeta } from './DataSourceContext';
+import type { Schema } from '@plitzi/sdk-shared';
+import type { Context, ReactNode } from 'react';
+
+export type DataSourceContextProviderProps = {
+  children: ReactNode;
+  environment: string;
+};
+
+const DataSourceContextProvider = ({ children, environment }: DataSourceContextProviderProps) => {
+  const sourcesRef = useRef<Record<string, Source>>({});
+  const initRef = useRef(false);
 
   useEffect(() => {
     if (!initRef.current) {
@@ -34,13 +36,13 @@ const DataSourceContextProvider = props => {
   }, []);
 
   const handleAddSource = useCallback(
-    (id, meta = {}) => {
+    (id: string, meta: SourceMeta = {} as SourceMeta) => {
       const existingSource = Object.values(sourcesRef.current).find(source => source.meta.source === meta.source);
       let context;
       if (existingSource) {
         ({ context } = existingSource);
       } else {
-        context = createContext();
+        context = createContext<unknown>(undefined);
       }
 
       sourcesRef.current[id] = { id, meta, context };
@@ -51,12 +53,12 @@ const DataSourceContextProvider = props => {
   );
 
   const handleUpdateFields = useCallback(
-    (id, fields) => set(sourcesRef.current, `${id}.meta.fields`, fields),
+    (id: string, fields: SourceMeta['fields']) => set(sourcesRef.current, `${id}.meta.fields`, fields),
     [sourcesRef]
   );
 
   const handleGetSources = useCallback(
-    id => {
+    (id?: string) => {
       if (id) {
         return get(sourcesRef.current, id);
       }
@@ -67,7 +69,7 @@ const DataSourceContextProvider = props => {
   );
 
   const handleGetSourcesByElementId = useCallback(
-    (schemaFlat, id) => {
+    (schemaFlat?: Schema['flat'], id?: string) => {
       if (!id || !schemaFlat) {
         return {};
       }
@@ -75,7 +77,10 @@ const DataSourceContextProvider = props => {
       const ids = FlatMap.parentTree(schemaFlat, id);
       const sources = Object.values(sourcesRef.current)
         .filter(source => ids.includes(source.meta.id) || source.meta.id === 'global')
-        .reduce((acum, source) => ({ ...acum, [source.id]: source }), {});
+        .reduce<Record<string, { id: string; meta: SourceMeta; context: Context<unknown> }>>(
+          (acum, source) => ({ ...acum, [source.id]: source }),
+          {}
+        );
 
       return sources;
     },
@@ -83,7 +88,7 @@ const DataSourceContextProvider = props => {
   );
 
   const handleRemoveSource = useCallback(
-    id => {
+    (id: string) => {
       sourcesRef.current = omit(sourcesRef.current, id);
     },
     [sourcesRef]
@@ -98,7 +103,7 @@ const DataSourceContextProvider = props => {
       getSources: handleGetSources,
       getSourcesByElementId: handleGetSourcesByElementId
     }),
-    [useDataSource, handleAddSource, handleRemoveSource, handleGetSources, handleUpdateFields]
+    [handleAddSource, handleUpdateFields, handleRemoveSource, handleGetSources, handleGetSourcesByElementId]
   );
 
   return (

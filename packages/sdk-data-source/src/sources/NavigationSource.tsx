@@ -1,27 +1,28 @@
 // Packages
-import React, { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo } from 'react';
 
 // Monorepo
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import DataSourceContext from '../DataSourceContext.js';
-/**
- * @param {{
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const NavigationSource = props => {
-  const { children } = props;
+import DataSourceContext from '../DataSourceContext';
+
+// Types
+import type { ReactNode } from 'react';
+
+export type NavigationSourceProps = {
+  children?: ReactNode;
+};
+
+const NavigationSource = ({ children }: NavigationSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { routeParams, queryParams } = use(NavigationContext);
   const { currentPageId } = use(NavigationContext);
 
   const sourceFields = useCallback(
-    async () => [
-      ...getPathsFromObeject({ routeParams, queryParams, currentPageId }).reduce(
+    () => [
+      ...getPathsFromObeject({ routeParams, queryParams, currentPageId }).reduce<{ path: string; name: string }[]>(
         (acum, path) => [...acum, { path, name: `navigation.${path}` }],
         []
       ),
@@ -38,6 +39,7 @@ const NavigationSource = props => {
   const [NavigationSourceContext] = useDataSource({
     id: 'global',
     source: 'navigation',
+    mode: 'write',
     name: 'Navigation',
     fields: sourceFields
   });

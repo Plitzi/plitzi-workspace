@@ -1,22 +1,23 @@
 // Packages
-import get from 'lodash/get.js';
-import set from 'lodash/set.js';
+import get from 'lodash/get';
+import set from 'lodash/set';
 
-const callback = (source, params) => {
+const callback = (source: string[] | string, params: { keys: string | { from: string; to: string }[] }) => {
   let { keys } = params;
   if (!Array.isArray(source)) {
     return source;
   }
 
   try {
-    keys = JSON.parse(keys);
-  } catch (err) {
+    if (typeof keys === 'string') {
+      keys = JSON.parse(keys) as { from: string; to: string }[];
+    }
+  } catch {
     return source;
   }
 
   return source.map(item => {
-    const newItem = {};
-
+    const newItem: Record<string, string> = {};
     keys.forEach(key => {
       if (typeof key === 'object' && key.from && key.to) {
         set(newItem, key.to, get(item, key.from, ''));

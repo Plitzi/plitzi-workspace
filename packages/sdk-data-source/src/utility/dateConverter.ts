@@ -1,17 +1,20 @@
 // Packages
 import moment from 'moment';
 
-const callback = (source, { format = 'DD/MM/YYYY', asAge = false, isUnix = true, isUtc = false }) => {
+// Types
+import type { Moment } from 'moment';
+
+const callback = (source: string | number, { format = 'DD/MM/YYYY', asAge = false, isUnix = true, isUtc = false }) => {
   if (typeof source !== 'string' && typeof source !== 'number') {
     return source;
   }
 
-  let value = source;
+  let value: number | string | Moment = source;
   try {
     if (isUtc) {
       value = moment.utc(source);
     } else if (isUnix) {
-      value = moment.unix(source);
+      value = moment.unix(source as number);
     } else {
       value = moment(source);
     }
@@ -25,7 +28,7 @@ const callback = (source, { format = 'DD/MM/YYYY', asAge = false, isUnix = true,
     } else {
       value = value.format(format);
     }
-  } catch (e) {
+  } catch {
     value = source;
   }
 

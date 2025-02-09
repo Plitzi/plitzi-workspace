@@ -3395,21 +3395,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-data-source@npm:*, @plitzi/sdk-data-source@workspace:packages/sdk-data-source":
+"@plitzi/sdk-data-source@npm:*, @plitzi/sdk-data-source@workspace:*, @plitzi/sdk-data-source@workspace:packages/sdk-data-source":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-data-source@workspace:packages/sdk-data-source"
   dependencies:
-    "@babel/cli": "npm:^7.26.4"
-    "@babel/core": "npm:^7.26.7"
-    "@plitzi/sdk-auth": "npm:*"
-    "@plitzi/sdk-event-bridge": "npm:*"
-    "@plitzi/sdk-navigation": "npm:*"
-    "@plitzi/sdk-schema": "npm:*"
-    "@plitzi/sdk-shared": "npm:*"
-    "@plitzi/sdk-state": "npm:*"
+    "@plitzi/sdk-auth": "workspace:*"
+    "@plitzi/sdk-event-bridge": "workspace:*"
+    "@plitzi/sdk-navigation": "workspace:*"
+    "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-state": "workspace:*"
     eslint: "npm:^9.19.0"
     lodash: "npm:^4.17.21"
     moment: "npm:^2.30.1"
+    vite: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -3417,12 +3416,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
-    "@babel/cli": "npm:^7.26.4"
-    "@babel/core": "npm:^7.26.7"
-    "@plitzi/sdk-data-source": "npm:*"
-    "@plitzi/sdk-navigation": "npm:*"
-    "@plitzi/sdk-schema": "npm:*"
-    "@plitzi/sdk-shared": "npm:*"
+    "@plitzi/sdk-data-source": "workspace:*"
+    "@plitzi/sdk-navigation": "workspace:*"
+    "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
     "@uiw/react-json-view": "npm:^2.0.0-alpha.30"
     classnames: "npm:^2.5.1"
     eslint: "npm:^9.19.0"
@@ -3430,6 +3427,7 @@ __metadata:
     moment: "npm:^2.30.1"
     react: "npm:19.0.0"
     react-dom: "npm:19.0.0"
+    vite: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -3579,7 +3577,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-state@npm:*, @plitzi/sdk-state@workspace:packages/sdk-state":
+"@plitzi/sdk-state@npm:*, @plitzi/sdk-state@workspace:*, @plitzi/sdk-state@workspace:packages/sdk-state":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-state@workspace:packages/sdk-state"
   dependencies:

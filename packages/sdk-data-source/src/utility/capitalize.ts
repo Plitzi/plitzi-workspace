@@ -1,7 +1,7 @@
 // Packages
-import lodashCapitalize from 'lodash/capitalize.js';
+import lodashCapitalize from 'lodash/capitalize';
 
-const callback = source => {
+const callback = (source: string) => {
   if (typeof source !== 'string') {
     return source;
   }
