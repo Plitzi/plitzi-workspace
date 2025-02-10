@@ -5,24 +5,31 @@ import { use, useCallback, useMemo } from 'react';
 import UserContext from '@plitzi/sdk-auth/UserContext';
 
 // Relatives
-import InteractionsContext from '../../InteractionsContext.js';
+import InteractionsContext from '../../InteractionsContext';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   userProvider: 'auth0' | 'basic';
- * }} props
- * @returns {React.ReactElement}
- */
-const UserInteractions = props => {
-  const { children, userProvider = 'basic' } = props;
+// Types
+import type { InteractionCallback } from '../../InteractionsManager';
+import type { ReactNode } from 'react';
 
-  const { login, refreshDetails, logout } = use(UserContext);
+export type UserInteractionsProps = {
+  children?: ReactNode;
+  userProvider: 'auth0' | 'basic' | 'unknown';
+};
+
+const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractionsProps) => {
+  const { login, refreshDetails, logout } = use(UserContext) as {
+    login: (params: unknown) => unknown;
+    refreshDetails: (params: unknown) => unknown;
+    logout: () => boolean;
+  };
   const { useInteractions } = use(InteractionsContext);
 
-  const handleLogin = useCallback(async params => login(params), [login]);
+  const handleLogin = useCallback((params: InteractionCallback['params']) => login(params), [login]);
 
-  const handleRefreshDetails = useCallback(async params => refreshDetails(params), [refreshDetails]);
+  const handleRefreshDetails = useCallback(
+    (params: InteractionCallback['params']) => refreshDetails(params),
+    [refreshDetails]
+  );
 
   const handleLogout = useCallback(() => logout(), [logout]);
 
@@ -52,15 +59,15 @@ const UserInteractions = props => {
             },
             username: {
               defaultValue: '',
-              when: params => params.mode === 'normal'
+              when: (params: InteractionCallback['params']) => params.mode === 'normal'
             },
             password: {
               defaultValue: '',
-              when: params => params.mode === 'normal'
+              when: (params: InteractionCallback['params']) => params.mode === 'normal'
             },
             token: {
               defaultValue: '',
-              when: params => params.mode === 'token'
+              when: (params: InteractionCallback['params']) => params.mode === 'token'
             }
           },
           preview: {
@@ -102,7 +109,7 @@ const UserInteractions = props => {
     }
 
     return userCallbacks;
-  }, [handleLogin, handleLogout]);
+  }, [handleLogin, handleLogout, handleRefreshDetails, userProvider]);
 
   useInteractions({ id: 'user', callbacks: interactionCallbacks });
 

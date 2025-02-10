@@ -5,31 +5,59 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./utility": "./dist/utility/index.js",
-    "./InteractionsContext": "./dist/InteractionsContext.js",
-    "./InteractionsContextProvider": "./dist/InteractionsContextProvider.js",
-    "./InteractionsHelper": "./dist/InteractionsHelper.js",
-    "./useInteractions": "./dist/hooks/useInteractions.js",
-    "./sources/UserSource/UserInteractions": "./dist/sources/UserSource/UserInteractions.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es",
+      "require": "./dist/index.cjs"
+    },
+    "./utility": {
+      "types": "./dist/utility/index.d.ts",
+      "import": "./dist/utility/index.es",
+      "require": "./dist/utility/index.cjs"
+    },
+    "./InteractionsContext": {
+      "types": "./dist/InteractionsContext.d.ts",
+      "import": "./dist/InteractionsContext.es",
+      "require": "./dist/InteractionsContext.cjs"
+    },
+    "./InteractionsContextProvider": {
+      "types": "./dist/InteractionsContextProvider.d.ts",
+      "import": "./dist/InteractionsContextProvider.es",
+      "require": "./dist/InteractionsContextProvider.cjs"
+    },
+    "./InteractionsHelper": {
+      "types": "./dist/InteractionsHelper.d.ts",
+      "import": "./dist/InteractionsHelper.es",
+      "require": "./dist/InteractionsHelper.cjs"
+    },
+    "./useInteractions": {
+      "types": "./dist/hooks/useInteractions.d.ts",
+      "import": "./dist/hooks/useInteractions.es",
+      "require": "./dist/hooks/useInteractions.cjs"
+    },
+    "./sources/UserSource/UserInteractions": {
+      "types": "./dist/sources/UserSource/UserInteractions.d.ts",
+      "import": "./dist/sources/UserSource/UserInteractions.es",
+      "require": "./dist/sources/UserSource/UserInteractions.cjs"
+    }
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev": "babel src --out-dir dist --copy-files --no-copy-ignored",
-    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
-    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
+    "build-assets:dev": "tsc -p ./tsconfig.app.json && vite build --mode development --minify false",
+    "build-assets:dev-watch": "tsc -p ./tsconfig.app.json && vite build --mode development --watch --minify false",
+    "build-assets:prod": "tsc -p ./tsconfig.app.json && vite build"
   },
   "type": "module",
   "devDependencies": {
-    "@babel/cli": "^7.26.4",
-    "@babel/core": "^7.26.7",
-    "eslint": "^9.19.0"
+    "eslint": "^9.19.0",
+    "vite": "^6.1.0"
   },
   "dependencies": {
-    "@plitzi/sdk-auth": "*",
-    "@plitzi/sdk-dev-tools": "*",
-    "@plitzi/sdk-event-bridge": "*",
-    "@plitzi/sdk-shared": "*",
+    "@plitzi/plitzi-ui": "^0.1.7",
+    "@plitzi/sdk-auth": "workspace:*",
+    "@plitzi/sdk-dev-tools": "workspace:*",
+    "@plitzi/sdk-event-bridge": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
     "lodash": "^4.17.21"
   }
 }

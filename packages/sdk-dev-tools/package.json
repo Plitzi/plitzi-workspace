@@ -16,9 +16,9 @@
       "require": "./dist/DevToolsContainer.cjs"
     },
     "./PlitziConsole": {
-      "types": "./dist/PlitziConsole.d.ts",
-      "import": "./dist/PlitziConsole.es",
-      "require": "./dist/PlitziConsole.cjs"
+      "types": "./dist/utils/PlitziConsole.d.ts",
+      "import": "./dist/utils/PlitziConsole.es",
+      "require": "./dist/utils/PlitziConsole.cjs"
     }
   },
   "scripts": {

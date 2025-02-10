@@ -1,11 +1,13 @@
-const callback = async params => {
+type CallbackParams = { url: string; method: string; authorizationToken: string; body: { [key: string]: unknown } };
+
+const callback = async (params: CallbackParams) => {
   const { url, authorizationToken, body } = params;
   let { method } = params;
-  let response = {};
+  let response: { status?: number; data?: string } = {};
 
   try {
     method = method.toUpperCase();
-    const headers = {};
+    const headers: { [key: string]: string } = {};
     if (authorizationToken) {
       headers.Authorization = `Bearer ${authorizationToken}`;
     }
@@ -20,20 +22,24 @@ const callback = async params => {
 
     const formData = new FormData();
     Object.entries(body).forEach(([key, value]) => {
-      formData.append(key, value);
+      formData.append(key, value as string);
     });
 
-    const fetchOptions = { method, headers, body: formData };
+    const fetchOptions: { method: CallbackParams['method']; headers: { [key: string]: string }; body?: FormData } = {
+      method,
+      headers,
+      body: formData
+    };
     if (method === 'get') {
       delete fetchOptions.body;
     }
 
     const res = await fetch(url, fetchOptions);
 
-    let data;
+    let data: string = '';
     try {
-      data = await res.json();
-    } catch (e) {
+      data = (await res.json()) as string;
+    } catch {
       // nothing, just ignore
     }
 

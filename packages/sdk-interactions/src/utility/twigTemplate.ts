@@ -2,9 +2,11 @@
 import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
-const callback = params => {
+type CallbackParams = { template: string; returnMode: 'jsonObject' | 'json' | 'text' };
+
+const callback = (params: CallbackParams) => {
   const { template, returnMode } = params;
-  let content = '';
+  let content: string | object = '';
   try {
     content = processTwig(template, params);
   } catch (e) {
@@ -13,16 +15,16 @@ const callback = params => {
 
   if (returnMode === 'jsonObject') {
     try {
-      return { content: JSON.parse(content) };
+      return { content: JSON.parse(content as string) as object };
     } catch (e) {
       console.error(e);
     }
   } else if (returnMode === 'json') {
     try {
-      JSON.parse(content);
+      JSON.parse(content as string);
 
       return { content };
-    } catch (e) {
+    } catch {
       return { content: '' };
     }
   }
@@ -50,7 +52,7 @@ const delayTime = {
       label: 'Template',
       canBind: false,
       defaultValue: '',
-      type: params => {
+      type: (params: CallbackParams) => {
         const { returnMode } = params;
         if (returnMode === 'text') {
           return 'codemirror-text';
@@ -60,19 +62,21 @@ const delayTime = {
       }
     }
   },
-  preview: params => {
-    const { returnMode } = params;
-    let { template } = params;
+  preview: (params: CallbackParams) => {
+    const { template, returnMode } = params;
     if (returnMode === 'jsonObject') {
       try {
-        template = JSON.parse(processTwig(template, params));
-        if (template && typeof template === 'object') {
+        const templateParsed = JSON.parse(processTwig(template, params) as string) as object | undefined;
+        if (templateParsed && typeof templateParsed === 'object') {
           return {
             template: '',
-            content: getPathsFromObeject(template).reduce((acum, templateItem) => ({ ...acum, [templateItem]: '' }), {})
+            content: getPathsFromObeject(templateParsed as { [key: string]: unknown }).reduce(
+              (acum, templateItem) => ({ ...acum, [templateItem]: '' }),
+              {}
+            )
           };
         }
-      } catch (e) {
+      } catch {
         // Nothing to do
       }
     }

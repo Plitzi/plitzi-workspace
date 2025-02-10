@@ -1,17 +1,28 @@
 // Packages
-import React from 'react';
-import get from 'lodash/get.js';
-import omit from 'lodash/omit.js';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.es';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import get from 'lodash/get';
+import omit from 'lodash/omit';
 
 // Monorepo
-import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
+import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 
 // Relatives
-import utility from './utility/index.js';
+import utility from './utility';
 
-const processParams = (type, params, flowValues, globalValues, action) => {
+// Types
+import type { InteractionNode, InteractionNodeStatus, InteractionStatus } from './InteractionsContext';
+import type { InteractionCallback, InteractionParams } from './InteractionsManager';
+import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { ElementInteraction } from '@plitzi/sdk-shared';
+
+const processParams = (
+  type: InteractionCallback['type'],
+  params: Record<string, unknown>,
+  flowValues: Record<string, unknown>,
+  globalValues: Record<string, unknown>,
+  action: string
+): InteractionParams => {
   if (type === 'utility' && action === 'twigTemplate') {
     return params;
   }
@@ -30,9 +41,21 @@ const processParams = (type, params, flowValues, globalValues, action) => {
   }, {});
 };
 
-const processNode = async (node, callbacksAvailables = {}, flowParams = {}, globalParams = {}) => {
-  let result = {};
-  const postCallbacks = [];
+type PostCallback = { id: string; callback: InteractionCallback['postCallback']; params: ElementInteraction['params'] };
+
+const processNode = async (
+  node: ElementInteraction,
+  callbacksAvailables: Record<string, InteractionCallback> = {},
+  flowParams = {},
+  globalParams = {}
+): Promise<{
+  status: InteractionNodeStatus;
+  result: unknown;
+  postCallbacks: PostCallback[];
+  whenParams?: Record<string, RuleValue>;
+}> => {
+  let result: unknown = {};
+  const postCallbacks: PostCallback[] = [];
   const { id, action, enabled, params, elementId, type, when } = node;
   if (!action || !enabled) {
     return { status: 'disabled', result, postCallbacks };
@@ -55,7 +78,7 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
         return { status: 'failed', result, postCallbacks, whenParams };
       }
 
-      const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`);
+      const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`) as InteractionCallback | undefined;
       if (!receptorCallback) {
         return { status: 'failed', result, postCallbacks, whenParams };
       }
@@ -73,7 +96,7 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
     }
 
     case 'utility': {
-      const { callback, postCallback } = get(utility, action, {});
+      const { callback, postCallback } = get(utility, action, {}) as InteractionCallback;
       if (callback) {
         result = await callback(paramsToCallback);
       }
@@ -91,31 +114,31 @@ const processNode = async (node, callbacksAvailables = {}, flowParams = {}, glob
   return { status: 'success', result, postCallbacks, whenParams };
 };
 
-const processPostCallbacks = async (postCallbacks = []) => {
-  const results = {};
-  postCallbacks.reverse().forEach(async postCallback => {
-    const { id, callback, params } = postCallback;
-    const result = await callback(omit(params, [id]), params[id]);
-    results[id] = result;
-  });
+const processPostCallbacks = async (postCallbacks: PostCallback[] = []) => {
+  const results: Record<string, unknown> = {};
+  await Promise.all(
+    postCallbacks.reverse().map(async ({ id, callback, params }) => {
+      results[id] = await callback?.(omit(params, [id]), params[id]);
+    })
+  );
 
   return results;
 };
 
 const flowCallbacks = async (
-  parentNode,
-  nodes = {},
+  parentNode: ElementInteraction | undefined,
+  nodes: Record<string, ElementInteraction> = {},
   callbacksAvailables = {},
   flowParams = {},
   globalParams = {},
-  postCallbacksTotal = [],
-  executionResults = {}
+  postCallbacksTotal: PostCallback[] = [],
+  executionResults: Record<string, InteractionNode> = {}
 ) => {
   if (!parentNode) {
     return executionResults;
   }
 
-  const node = get(nodes, parentNode.afterNode);
+  const node = get(nodes, parentNode.afterNode) as ElementInteraction | undefined;
   if (!node && postCallbacksTotal.length > 0) {
     await processPostCallbacks(postCallbacksTotal);
   }
@@ -140,7 +163,7 @@ const flowCallbacks = async (
     startTime,
     endTime: pConsole.getTime().valueOf()
   };
-  postCallbacksTotal.push(...(postCallbacks ?? []));
+  postCallbacksTotal.push(...postCallbacks);
 
   return flowCallbacks(
     node,
@@ -153,7 +176,7 @@ const flowCallbacks = async (
   );
 };
 
-const storeLog = (triggerNode, startTime, nodes = {}, status = '') => {
+const storeLog = (triggerNode: ElementInteraction, startTime: number, nodes = {}, status: InteractionStatus) => {
   const endTime = pConsole.getTime().valueOf();
   let nodeStatus = 'skipped';
   if (status === 'completed') {
@@ -168,7 +191,7 @@ const storeLog = (triggerNode, startTime, nodes = {}, status = '') => {
     {
       status,
       node: triggerNode,
-      elementId: triggerNode?.elementId,
+      elementId: triggerNode.elementId,
       nodes: {
         ...nodes,
         [triggerNode.id]: {
@@ -187,16 +210,20 @@ const storeLog = (triggerNode, startTime, nodes = {}, status = '') => {
 };
 
 const flowTrigger = async (
-  triggerNode,
+  triggerNode: ElementInteraction,
   nodes = {},
   callbacksAvailables = {},
-  flowParams = {},
+  flowParams: InteractionParams = {},
   globalParams = {},
   postCallbacksTotal = []
 ) => {
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
-  if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
+  if (
+    !action ||
+    !enabled ||
+    (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams } as Record<string, RuleValue>))
+  ) {
     storeLog(triggerNode, startTime, {}, 'skipped');
 
     return;
@@ -213,6 +240,7 @@ const flowTrigger = async (
   storeLog(triggerNode, startTime, nodesProcessed, 'completed');
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { flowTrigger };
 
 const InteractionsHelper = { flowTrigger };

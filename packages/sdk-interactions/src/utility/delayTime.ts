@@ -1,4 +1,4 @@
-const callback = ({ time }) =>
+const callback = ({ time }: { time: number }) =>
   new Promise(res => {
     setTimeout(res, time);
   });
