@@ -3250,6 +3250,7 @@ __metadata:
     "@storybook/react": "npm:^8.5.3"
     "@storybook/react-webpack5": "npm:^8.5.3"
     "@storybook/testing-library": "npm:^0.2.2"
+    "@tailwindcss/postcss": "npm:^4.0.3"
     apollo3-cache-persist: "npm:^0.15.0"
     babel-loader: "npm:^9.2.1"
     classnames: "npm:^2.5.1"
