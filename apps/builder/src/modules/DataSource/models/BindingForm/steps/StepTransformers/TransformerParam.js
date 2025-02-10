@@ -7,7 +7,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import TextArea from '@plitzi/plitzi-ui-components/TextArea';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
-import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
@@ -62,7 +62,7 @@ const TransformerParam = props => {
         (acum1, source) => [
           ...acum1,
           ...dataSourceFields[source].reduce(
-            (acum2, field) => [...acum2, { type: CODEMIRROR_TOKEN, value: `${source}.${field.path}` }],
+            (acum2, field) => [...acum2, { type: 'token', value: `${source}.${field.path}` }],
             []
           )
         ],

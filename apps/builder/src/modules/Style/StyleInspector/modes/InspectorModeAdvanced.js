@@ -3,7 +3,7 @@ import React, { useCallback, use, useMemo, useEffect, useState } from 'react';
 import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
-import CodeMirror, { CODEMIRROR_CSS_TOKEN } from '@plitzi/plitzi-ui/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import set from 'lodash/set';
 import { produce } from 'immer';
 
@@ -50,10 +50,7 @@ const InspectorModeAdvanced = props => {
   );
   const variablesNames = useMemo(
     () =>
-      Object.keys(variables).reduce(
-        (acum, variableKey) => [...acum, { type: CODEMIRROR_CSS_TOKEN, value: variableKey }],
-        []
-      ),
+      Object.keys(variables).reduce((acum, variableKey) => [...acum, { type: 'css-token', value: variableKey }], []),
     [variables]
   );
 

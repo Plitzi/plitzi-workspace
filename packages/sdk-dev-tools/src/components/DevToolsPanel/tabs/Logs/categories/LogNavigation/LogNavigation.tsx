@@ -23,15 +23,13 @@ export type LogNavigationProps = {
 const LogNavigation = ({ time, message, params }: LogNavigationProps) => (
   <ContainerCollapsable className="w-full border-b last:border-b-none border-gray-300 px-2 py-1" collapsed>
     <ContainerCollapsable.Header
-      title="Test"
+      title={<LogNavigationHeader status={params?.status} message={message} time={time} />}
       placement="left"
-      className={{ header: 'flex items-center justify-center mr-1 w-4 h-4', headerTitle: 'overflow-hidden' }}
+      className={{ headerTitle: 'overflow-hidden' }}
       iconCollapsed={iconCollapsed}
       iconExpanded={iconExpanded}
-    >
-      <LogNavigationHeader status={params?.status} message={message} time={time} />
-    </ContainerCollapsable.Header>
-    <ContainerCollapsable.Content className="bg-gray-500">
+    />
+    <ContainerCollapsable.Content>
       <LogNavigationBody elementId={params?.elementId} startTime={time} endTime={time} duration="0ms" />
     </ContainerCollapsable.Content>
   </ContainerCollapsable>

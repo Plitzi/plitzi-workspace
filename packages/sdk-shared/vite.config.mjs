@@ -6,9 +6,12 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 // Relatives
 import pkg from './package.json' with { type: 'json' };
+
+const importedPackages = new Set();
 
 export default defineConfig(({ mode, ...args }) => {
   return {
@@ -33,6 +36,28 @@ export default defineConfig(({ mode, ...args }) => {
         resolveId(source, importer) {
           // console.log(`[VITE RESOLVE] Intentando resolver: ${source} desde ${importer}`);
           return null; // Permitir que Vite siga resolviendo
+        }
+      },
+      // @todo: Experimental
+      {
+        name: 'externalize-and-log',
+        enforce: 'pre',
+        resolveId(source, importer) {
+          if (!importer) {
+            return null; // Ignorar entradas principales
+          }
+
+          // Solo marcar como external si es un módulo de node_modules o un submódulo
+          if (!source.startsWith('.') && !path.isAbsolute(source)) {
+            importedPackages.add(source);
+
+            return { id: source, external: true };
+          }
+
+          return null;
+        },
+        buildEnd() {
+          console.log('Paquetes importados:', Array.from(importedPackages));
         }
       }
     ],

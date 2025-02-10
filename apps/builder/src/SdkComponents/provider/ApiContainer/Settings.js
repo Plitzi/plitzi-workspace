@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import Input from '@plitzi/plitzi-ui-components/Input';
-import CodeMirror, { CODEMIRROR_TOKEN } from '@plitzi/plitzi-ui/CodeMirror';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Switch from '@plitzi/plitzi-ui-components/Switch';
 import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
@@ -65,7 +65,7 @@ const Settings = props => {
   const queryParamsAutoComplete = useMemo(
     () =>
       [...Object.keys(routeParams), ...Object.keys(queryParams), ...urlParams].map(token => ({
-        key: CODEMIRROR_TOKEN,
+        key: 'token',
         value: token
       })),
     [routeParams, queryParams, urlParams]

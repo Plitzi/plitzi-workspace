@@ -12,6 +12,7 @@ import get from 'lodash/get';
 import classNames from 'classnames';
 import { HelmetProvider } from 'react-helmet-async';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
+import ThemeProvider from '@plitzi/plitzi-ui/ThemeProvider/index.es';
 
 // Monorepo
 import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
@@ -172,25 +173,27 @@ const App = props => {
 
   if (renderMode === RENDER_MODE_WIDGET) {
     return (
-      <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
-        <HelmetProvider>
-          {client && (
-            <ApolloProvider client={client}>
-              <ComponentProvider localCustomComponents={localCustomComponents}>
-                <AppMain
-                  cacheTimeout={cacheTimeout}
-                  server={finalServer}
-                  webKey={webKey}
-                  renderMode={renderMode}
-                  debugMode={debugMode}
-                  webId={webId}
-                  {...sdkProps}
-                />
-              </ComponentProvider>
-            </ApolloProvider>
-          )}
-        </HelmetProvider>
-      </ContainerRoot>
+      <ThemeProvider>
+        <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
+          <HelmetProvider>
+            {client && (
+              <ApolloProvider client={client}>
+                <ComponentProvider localCustomComponents={localCustomComponents}>
+                  <AppMain
+                    cacheTimeout={cacheTimeout}
+                    server={finalServer}
+                    webKey={webKey}
+                    renderMode={renderMode}
+                    debugMode={debugMode}
+                    webId={webId}
+                    {...sdkProps}
+                  />
+                </ComponentProvider>
+              </ApolloProvider>
+            )}
+          </HelmetProvider>
+        </ContainerRoot>
+      </ThemeProvider>
     );
   }
 
@@ -202,30 +205,32 @@ const App = props => {
   }
 
   return (
-    <ContainerRoot
-      className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
-      ssrMode={renderMode === RENDER_MODE_SSR}
-    >
-      <HelmetProvider>
-        <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
-          {client && (
-            <ApolloProvider client={client}>
-              <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                <AppMain
-                  cacheTimeout={cacheTimeout}
-                  server={finalServer}
-                  webKey={webKey}
-                  renderMode={renderMode}
-                  debugMode={debugMode}
-                  webId={webId}
-                  {...sdkProps}
-                />
-              </ComponentProvider>
-            </ApolloProvider>
-          )}
-        </ReactRouter>
-      </HelmetProvider>
-    </ContainerRoot>
+    <ThemeProvider>
+      <ContainerRoot
+        className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
+        ssrMode={renderMode === RENDER_MODE_SSR}
+      >
+        <HelmetProvider>
+          <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
+            {client && (
+              <ApolloProvider client={client}>
+                <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                  <AppMain
+                    cacheTimeout={cacheTimeout}
+                    server={finalServer}
+                    webKey={webKey}
+                    renderMode={renderMode}
+                    debugMode={debugMode}
+                    webId={webId}
+                    {...sdkProps}
+                  />
+                </ComponentProvider>
+              </ApolloProvider>
+            )}
+          </ReactRouter>
+        </HelmetProvider>
+      </ContainerRoot>
+    </ThemeProvider>
   );
 };
 

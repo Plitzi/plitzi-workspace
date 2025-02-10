@@ -60,7 +60,7 @@ const build = (env, args) => {
     },
     resolve: {
       symlinks: false,
-      extensions: ['.js', '.mjs', '.ts', '.tsx', '.cjs', '.es'],
+      extensions: ['.js', '.mjs', '.es'],
       alias: {
         '@node_modules': path.resolve('node_modules'),
         '@pmodules': path.resolve('./src/modules'),

@@ -58,7 +58,7 @@ const build = (env, args) => {
     },
     resolve: {
       symlinks: devMode,
-      extensions: ['.js', '.mjs', '.cjs', '.es'],
+      extensions: ['.js', '.mjs', '.es'],
       alias: {
         '@modules': path.resolve('./src/modules'),
         '@components': path.resolve('./src/components'),
