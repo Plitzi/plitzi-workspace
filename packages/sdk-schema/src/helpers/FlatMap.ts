@@ -380,7 +380,7 @@ class FlatMap {
 
   flatAsTemplate = (style: Style, elementId: string, excludeRoot = false) => {
     const elementsStyle: Style = { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' };
-    let variables = [] as Schema['variables'];
+    let variables = [] as SchemaVariable[];
     if (!elementId) {
       return { elements: {}, elementsStyle, variables };
     }
@@ -407,9 +407,8 @@ class FlatMap {
       });
 
       // Variables
-      if (this.variables.length > 0) {
+      if (this.variables && this.variables.length > 0) {
         const elementVariables = this.getElementVariables(style, id, elements.acum);
-        console.log(variables);
         variables = [...variables, ...elementVariables];
       }
     });
@@ -432,6 +431,10 @@ class FlatMap {
 
   getElementVariables = (style: Style, elementId: string, flat = this.flat, variables = this.variables) => {
     const variablesFound: SchemaVariable[] = [];
+    if (!variables) {
+      return variablesFound;
+    }
+
     const selectors = get(flat, `${elementId}.definition.styleSelectors`) as unknown as
       | Element['definition']['styleSelectors']
       | undefined;

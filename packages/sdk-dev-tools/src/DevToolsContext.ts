@@ -2,17 +2,12 @@
 import { createContext } from 'react';
 
 // Types
-import type { RuleValue } from '@plitzi/plitzi-ui';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
+import type { NavigationStatus } from '@plitzi/sdk-navigation';
+import type { ElementInteraction, InteractionNode, InteractionStatus } from '@plitzi/sdk-shared';
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 
 export type LogType = 'info' | 'warning' | 'danger' | 'success' | 'custom';
 export type LogCategory = 'navigation' | 'interactions';
-
-// @todo: status should come from each module
-export type NavigationStatus = 'normal' | 'redirect' | 'notFound' | 'accessDenied'; // @todo: move later
-export type InteractionStatus = 'completed' | 'skipped'; // @todo: move later
-export type InteractionNodeStatus = 'success' | 'failed' | 'skipped' | 'disabled'; // @todo: move later
 
 export type LogNavigation = { category: 'navigation'; params: { status: NavigationStatus; elementId: string } };
 export type LogInteraction = {
@@ -23,18 +18,7 @@ export type LogInteraction = {
     endTime: number;
     node: ElementInteraction;
     status: InteractionStatus;
-    nodes: Record<
-      string,
-      {
-        node: ElementInteraction;
-        status: InteractionNodeStatus;
-        postCallbacks: unknown[];
-        result?: unknown;
-        startTime: number;
-        endTime: number;
-        whenParams?: Record<string, RuleValue>;
-      }
-    >;
+    nodes: Record<string, InteractionNode>;
   };
 };
 

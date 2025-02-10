@@ -5,7 +5,8 @@ import { useMemo } from 'react';
 import LogStatus from '../../LogStatus';
 
 // Types
-import type { LogType, NavigationStatus } from '../../../../../../DevToolsContext';
+import type { LogType } from '../../../../../../DevToolsContext';
+import type { NavigationStatus } from '@plitzi/sdk-navigation';
 import type { Moment } from 'moment';
 import type { ReactNode } from 'react';
 

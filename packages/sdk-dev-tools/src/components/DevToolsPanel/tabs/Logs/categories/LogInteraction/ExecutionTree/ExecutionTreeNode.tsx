@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { useCallback } from 'react';
 
 // Types
-import type { InteractionNodeStatus } from '../../../../../../../DevToolsContext';
+import type { InteractionNodeStatus } from '@plitzi/sdk-shared';
 
 export type ExecutionTreeNodeProps = {
   id: string;
