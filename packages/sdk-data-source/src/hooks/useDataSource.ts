@@ -12,12 +12,6 @@ import DataSourceContext from '../DataSourceContext';
 import type { Source, SourceMeta } from '../DataSourceContext';
 import type { Context } from 'react';
 
-export const MODE_WRITE = 'write';
-export const MODE_READ = 'read';
-
-export const FILTER_MODE_SOFT = 'soft';
-export const FILTER_MODE_HARD = 'hard';
-
 export type UseDataSourceMode = 'write' | 'read';
 export type UseDataSourceFilter = 'soft' | 'hard';
 

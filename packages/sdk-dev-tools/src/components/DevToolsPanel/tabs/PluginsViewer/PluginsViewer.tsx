@@ -12,7 +12,7 @@ import List from '../../../List';
 
 // Types
 import type { ListItem } from '../../../List/List';
-import type { Plugin } from '@plitzi/sdk-plugins/PluginsContext';
+import type { Plugin } from '@plitzi/sdk-shared';
 
 export type PluginsViewerProps = {
   className?: string;
