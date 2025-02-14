@@ -3,14 +3,20 @@
 import { createContext, use } from 'react';
 
 // Types
-import type { ReactNode } from 'react';
+import type { PluginsContextValue } from '../types';
+import type { Context, ReactNode } from 'react';
 
-const plitziServiceContextDefaultValue: unknown = undefined;
+export type PlitziServiceContextValue = {
+  settings: Record<string, unknown>;
+  contexts: { PluginsContext: Context<PluginsContextValue> } & Record<string, Context<unknown>>;
+} & Record<string, unknown>;
 
-export const PlitziServiceContext = createContext(plitziServiceContextDefaultValue);
+const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;
+
+export const PlitziServiceContext = createContext<PlitziServiceContextValue>(plitziServiceContextDefaultValue);
 
 const usePlitziServiceContext = () => {
-  const context = use(PlitziServiceContext);
+  const context = use(PlitziServiceContext) as PlitziServiceContextValue | undefined;
   if (context === undefined) {
     throw new Error(
       'ServiceContext value is undefined. Make sure you use the PlitziServiceProvider before using the hook.'
@@ -20,7 +26,7 @@ const usePlitziServiceContext = () => {
   return context;
 };
 
-const PlitziServiceProvider = (props: { children?: ReactNode; value: unknown }) => {
+const PlitziServiceProvider = (props: { children?: ReactNode; value: PlitziServiceContextValue }) => {
   const { children, value } = props;
 
   return <PlitziServiceContext value={value}>{children}</PlitziServiceContext>;

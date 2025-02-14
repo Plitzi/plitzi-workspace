@@ -11,8 +11,7 @@ import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 
 // Types
 import type { Style, StyleItem, TagType } from './StyleContext';
-import type { ComponentDefinition } from '@plitzi/sdk-plugins';
-import type { Schema, Element } from '@plitzi/sdk-shared';
+import type { Schema, Element, ComponentDefinition } from '@plitzi/sdk-shared';
 
 type MetaData = {
   tree: {

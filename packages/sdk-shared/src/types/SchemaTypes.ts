@@ -47,7 +47,7 @@ export type Element = {
     parentId?: string;
     items?: string[];
     styleSelectors: { [key: string]: string };
-    bindings?: Record<string, ElementBinding>;
+    bindings?: Record<string, ElementBinding | undefined>;
     interactions?: Record<string, ElementInteraction>;
   };
   attributes: Omit<{ [key: string]: unknown }, 'subType'> & {

@@ -13,7 +13,7 @@ import pkg from './package.json' with { type: 'json' };
 
 const importedPackages = new Set();
 
-export default defineConfig(({ mode, ...args }) => {
+export default defineConfig(({ mode, command, ...args }) => {
   return {
     plugins: [
       nodeResolve({ extensions: ['.ts', '.tsx'] }),
@@ -33,21 +33,21 @@ export default defineConfig(({ mode, ...args }) => {
       }),
       {
         name: 'debug-resolve',
-        resolveId(source, importer) {
-          // console.log(`[VITE RESOLVE] Intentando resolver: ${source} desde ${importer}`);
-          return null; // Permitir que Vite siga resolviendo
+        resolveId(/* source, importer */) {
+          // console.log(`[VITE RESOLVE] Trying to resolve: ${source} from ${importer}`);
+          return null; // Allow vite keep resolving
         }
       },
-      // @todo: Experimental
       {
         name: 'externalize-and-log',
         enforce: 'pre',
         resolveId(source, importer) {
-          if (!importer) {
-            return null; // Ignorar entradas principales
+          if (!importer || command === 'serve') {
+            // Ignore main entries or runtime
+            return null;
           }
 
-          // Solo marcar como external si es un módulo de node_modules o un submódulo
+          // Mark as external modules or sub-modules from node_modules
           if (!source.startsWith('.') && !path.isAbsolute(source)) {
             importedPackages.add(source);
 
@@ -57,7 +57,7 @@ export default defineConfig(({ mode, ...args }) => {
           return null;
         },
         buildEnd() {
-          console.log('Paquetes importados:', Array.from(importedPackages));
+          console.log('Packages imported:', Array.from(importedPackages));
         }
       }
     ],

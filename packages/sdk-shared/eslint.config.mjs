@@ -36,7 +36,11 @@ export default tsEslint.config({
   },
   rules: {
     ...reactHooks.configs.recommended.rules,
-    '@typescript-eslint/consistent-type-imports': 'warn',
+    '@typescript-eslint/consistent-type-imports': ['warn', {
+      disallowTypeAnnotations: false,
+      fixStyle: 'separate-type-imports',
+      prefer: 'type-imports'
+    }],
     '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     'no-var': 'error',
@@ -63,7 +67,7 @@ export default tsEslint.config({
         ],
         pathGroupsExcludedImportTypes: ['type'],
         alphabetize: { order: 'asc', caseInsensitive: true },
-        'newlines-between': 'always-and-inside-groups'
+        'newlines-between': 'always'
       }
     ]
   }
