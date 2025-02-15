@@ -177,7 +177,11 @@ class InteractionsManager<T = unknown> {
     return rootManager?._getCallbacksAvailablesInternal();
   }
 
-  interactionTrigger(subscriptorId: string, eventName: string, params: InteractionParams = {}) {
+  interactionTrigger<T = Record<string, unknown>>(
+    subscriptorId: string,
+    eventName: string,
+    params: InteractionCallback<T>['params'] = {} as T
+  ) {
     return this.eventBridge.emit(EventBridgeModuleTypes.INTERACTION, subscriptorId, subscriptorId, eventName, params);
   }
 
