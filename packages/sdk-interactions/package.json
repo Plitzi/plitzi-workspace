@@ -30,6 +30,11 @@
       "import": "./dist/InteractionsHelper.es",
       "require": "./dist/InteractionsHelper.cjs"
     },
+    "./InteractionsManager": {
+      "types": "./dist/InteractionsManager.d.ts",
+      "import": "./dist/InteractionsManager.es",
+      "require": "./dist/InteractionsManager.cjs"
+    },
     "./useInteractions": {
       "types": "./dist/hooks/useInteractions.d.ts",
       "import": "./dist/hooks/useInteractions.es",

@@ -5,9 +5,7 @@ import { use, useLayoutEffect } from 'react';
 import InteractionsContext from '../InteractionsContext';
 
 // Types
-import type { InteractionCallback } from '../InteractionsManager';
-import type { Subscriptor } from '../InteractionsManager';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionCallback, Subscriptor } from '@plitzi/sdk-shared';
 
 export type UseInteractionsProps = {
   id: string;

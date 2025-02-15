@@ -11,9 +11,15 @@ import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 import utility from './utility';
 
 // Types
-import type { InteractionCallback, InteractionParams } from './InteractionsManager';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementInteraction, InteractionNode, InteractionNodeStatus, InteractionStatus } from '@plitzi/sdk-shared';
+import type {
+  ElementInteraction,
+  InteractionCallback,
+  InteractionNode,
+  InteractionNodeStatus,
+  InteractionParams,
+  InteractionStatus
+} from '@plitzi/sdk-shared';
 
 const processParams = (
   type: InteractionCallback['type'],

@@ -3,12 +3,15 @@
 import { createContext, use } from 'react';
 
 // Types
-import type { PluginsContextValue } from '../types';
+import type { InteractionsContextValue, PluginsContextValue } from '../types';
 import type { Context, ReactNode } from 'react';
 
 export type PlitziServiceContextValue = {
   settings: Record<string, unknown>;
-  contexts: { PluginsContext: Context<PluginsContextValue> } & Record<string, Context<unknown>>;
+  contexts: {
+    PluginsContext: Context<PluginsContextValue>;
+    InteractionsContext: Context<InteractionsContextValue>;
+  } & Record<string, Context<unknown>>;
 } & Record<string, unknown>;
 
 const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;

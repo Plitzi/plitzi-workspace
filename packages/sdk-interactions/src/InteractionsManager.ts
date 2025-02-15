@@ -12,45 +12,10 @@ import { flowTrigger } from './InteractionsHelper';
 
 // Types
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
-
-export type InteractionType = 'boolean';
-
-// @todo: revisar todo el tema de params entre interactions y callbacks, es un lio
-
-export type InteractionParams<T = unknown> = {
-  canBind?: boolean;
-  defaultValue?: T;
-  type?: InteractionType;
-  label?: string;
-};
-
-export type Trigger<T = unknown> = {
-  title: string;
-  preview?: Record<string, unknown>;
-  params: Record<string, InteractionParams<T>>;
-};
-
-export type InteractionCallback<T = Record<string, unknown>> = {
-  title: string;
-  type: ElementInteraction['type'];
-  action: string;
-  elementId: string;
-  callback?: (params?: T) => unknown;
-  postCallback?: (params?: T, callbackResult?: unknown) => unknown;
-  preview?: Record<string, unknown>;
-  params: T;
-  enabled?: boolean;
-};
-
-export type Subscriptor<T = unknown> = {
-  getAdditionalParams?: (params?: T) => { dataSource?: Record<string, unknown> };
-  id: string;
-  triggers: Record<string, Trigger<T>>;
-};
+import type { ElementInteraction, InteractionCallback, InteractionParams, Subscriptor } from '@plitzi/sdk-shared';
 
 class InteractionsManager<T = unknown> {
-  eventBridge: EventBridge;
+  eventBridge: InstanceType<typeof EventBridge>;
   parentManager?: InteractionsManager;
   childManagers: InteractionsManager[];
   interactionsData: Record<string, string | number | boolean>;

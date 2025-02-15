@@ -2,13 +2,10 @@
 import { createContext } from 'react';
 
 // Types
-import type useInteractions from './hooks/useInteractions';
 import type InteractionsManager from './InteractionsManager';
+import type { InteractionsContextValue as InteractionsContextValueShared } from '@plitzi/sdk-shared';
 
-export type InteractionsContextValue = {
-  interactionsManager: InteractionsManager;
-  useInteractions: typeof useInteractions;
-};
+export type InteractionsContextValue = InteractionsContextValueShared<InstanceType<typeof InteractionsManager>>;
 
 const InteractionsContextDefaultValue = {} as InteractionsContextValue;
 

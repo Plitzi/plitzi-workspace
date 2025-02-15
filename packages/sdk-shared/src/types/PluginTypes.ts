@@ -1,3 +1,4 @@
+import type { ComponentDefinition } from './ElementTypes';
 import type { Element } from './SchemaTypes';
 
 export type PluginSchema = {
@@ -46,13 +47,6 @@ export type PluginManifest = Record<string, unknown> & {
   created: string;
   updated: string;
   version: string;
-};
-
-export type ComponentDefinition = Pick<PluginSchema, 'attributes' | 'builder' | 'definition' | 'defaultStyle'> & {
-  assets: { type: 'style' | 'script'; url: string }[];
-  manifest: PluginManifest;
-  market: Omit<PluginManifest, 'name'> & { category: string };
-  settings: { [key: string]: unknown };
 };
 
 export type PluginBuilder = {

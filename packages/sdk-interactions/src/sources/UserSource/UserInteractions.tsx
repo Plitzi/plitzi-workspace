@@ -8,7 +8,7 @@ import UserContext from '@plitzi/sdk-auth/UserContext';
 import InteractionsContext from '../../InteractionsContext';
 
 // Types
-import type { InteractionCallback } from '../../InteractionsManager';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type UserInteractionsProps = {
