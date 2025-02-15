@@ -9,7 +9,7 @@ import { makeId, emptyObject } from '@plitzi/sdk-shared/utils';
 import DataSourceContext from '../DataSourceContext';
 
 // Types
-import type { Source, SourceMeta } from '../DataSourceContext';
+import type { Source, SourceMeta } from '@plitzi/sdk-shared';
 import type { Context } from 'react';
 
 export type UseDataSourceMode = 'write' | 'read';

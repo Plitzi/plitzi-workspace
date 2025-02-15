@@ -16,8 +16,7 @@ import UserSource from './sources/UserSource';
 import VariablesSource from './sources/VariablesSource';
 
 // Types
-import type { Source, SourceMeta } from './DataSourceContext';
-import type { Schema } from '@plitzi/sdk-shared';
+import type { Schema, Source, SourceMeta } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 export type DataSourceContextProviderProps = {

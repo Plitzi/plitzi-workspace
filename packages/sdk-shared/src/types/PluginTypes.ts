@@ -85,7 +85,7 @@ export type Plugin = {
 export type PluginsContextValue = {
   baseAssets?: Record<string, Asset>;
   assets?: Record<string, Asset>;
-  plugins?: Record<string, Plugin>;
+  plugins: Record<string, Plugin>;
   dispatchPlugins?: unknown;
   fetch?: unknown;
   add?: unknown;

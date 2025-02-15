@@ -10,7 +10,7 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import DataSourceContext from '../DataSourceContext';
 
 // Types
-import type { SourceField } from '../DataSourceContext';
+import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type UserSourceProps = {
