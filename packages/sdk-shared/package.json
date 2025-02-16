@@ -13,27 +13,27 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjss",
+      "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
     "./usePlitziServiceContext": {
       "types": "./dist/hooks/usePlitziServiceContext.d.ts",
-      "import": "./dist/hooks/usePlitziServiceContext.mjs",
+      "import": "./dist/hooks/usePlitziServiceContext.es",
       "require": "./dist/hooks/usePlitziServiceContext.cjs"
     },
     "./utils": {
       "types": "./dist/helpers/utils.d.ts",
-      "import": "./dist/helpers/utils.mjs",
+      "import": "./dist/helpers/utils.es",
       "require": "./dist/helpers/utils.cjs"
     },
     "./syntaxHighlight": {
       "types": "./dist/helpers/syntaxHighlight.d.ts",
-      "import": "./dist/helpers/syntaxHighlight.mjs",
+      "import": "./dist/helpers/syntaxHighlight.es",
       "require": "./dist/helpers/syntaxHighlight.cjs"
     },
     "./twigWrapper": {
       "types": "./dist/helpers/twigWrapper.d.ts",
-      "import": "./dist/helpers/twigWrapper.mjs",
+      "import": "./dist/helpers/twigWrapper.es",
       "require": "./dist/helpers/twigWrapper.cjs"
     },
     "./eslint.config.mjs": "./eslint.config.old.mjs",

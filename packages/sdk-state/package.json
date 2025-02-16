@@ -7,17 +7,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
     "./StateManagerContext": {
       "types": "./dist/StateManagerContext.d.ts",
-      "import": "./dist/StateManagerContext.mjs",
+      "import": "./dist/StateManagerContext.es",
       "require": "./dist/StateManagerContext.cjs"
     },
     "./StateManagerContextProvider": {
       "types": "./dist/StateManagerContextProvider.d.ts",
-      "import": "./dist/StateManagerContextProvider.mjs",
+      "import": "./dist/StateManagerContextProvider.es",
       "require": "./dist/StateManagerContextProvider.cjs"
     }
   },

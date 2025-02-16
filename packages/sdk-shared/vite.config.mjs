@@ -98,27 +98,13 @@ export default defineConfig(({ mode, command, ...args }) => {
           'moment'
         ],
         output: [
-          // {
-          //   format: 'cjs',
-          //   exports: 'named',
-          //   preserveModules: true, // Keep module structure for tree-shaking
-          //   preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
-          //   entryFileNames: '[name].[format]',
-          //   chunkFileNames: '[name].[format]',
-          //   assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
-          //   globals: {
-          //     react: 'React',
-          //     'react-dom': 'ReactDOM',
-          //     'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
-          //   }
-          // },
           {
-            format: 'es',
+            format: 'es', // ['es', 'cjs'],
             exports: 'named',
             preserveModules: true, // Keep module structure for tree-shaking
             preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
-            entryFileNames: '[name].mjs',
-            chunkFileNames: '[name].mjs',
+            entryFileNames: '[name].[format]',
+            chunkFileNames: '[name].[format]',
             assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
             globals: {
               react: 'React',
