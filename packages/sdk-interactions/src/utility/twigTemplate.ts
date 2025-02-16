@@ -66,11 +66,13 @@ const delayTime = {
     const { template, returnMode } = params;
     if (returnMode === 'jsonObject') {
       try {
-        const templateParsed = JSON.parse(processTwig(template, params) as string) as object | undefined;
+        const templateParsed = JSON.parse(processTwig(template, params) as string) as
+          | { [key: string]: unknown }
+          | undefined;
         if (templateParsed && typeof templateParsed === 'object') {
           return {
             template: '',
-            content: getPathsFromObeject(templateParsed as { [key: string]: unknown }).reduce(
+            content: getPathsFromObeject(templateParsed).reduce(
               (acum, templateItem) => ({ ...acum, [templateItem]: '' }),
               {}
             )

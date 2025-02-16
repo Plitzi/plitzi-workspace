@@ -57,7 +57,11 @@ export type Element = {
     styleSelectors: { [key: string]: string };
     bindings?: Record<string, ElementBinding[]>;
     interactions?: Record<string, ElementInteraction>;
-    initialState?: { styleSelectors?: Element['definition']['styleSelectors']; [key: string]: unknown };
+    initialState?: {
+      styleSelectors?: Element['definition']['styleSelectors'];
+      visibility?: boolean;
+      [key: string]: unknown;
+    };
   };
   attributes: Omit<{ [key: string]: unknown }, 'subType'> & {
     subType?: string;

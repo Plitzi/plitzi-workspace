@@ -11,7 +11,7 @@ import type {
 import type { Context, ReactNode } from 'react';
 
 export type PlitziServiceContextValue = {
-  settings: Record<string, unknown>;
+  settings: { previewMode?: boolean; [key: string]: unknown };
   root: { baseElementId: string };
   contexts: {
     PluginsContext: Context<PluginsContextValue>;
