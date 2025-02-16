@@ -106,7 +106,7 @@
   },
   "scripts": {
     "start": "webpack serve --mode development",
-    "start-debug": "node-nightly --inspect ./node_modules/webpack/bin/webpack.js serve --mode development",
+    "start-debug": "node --inspect ../../node_modules/webpack/bin/webpack.js serve --mode development",
     "test": "node --experimental-vm-modules ../../node_modules/.bin/jest",
     "test:coverage": "jest --coverage",
     "lint": "TIMING=1 eslint ./src",
