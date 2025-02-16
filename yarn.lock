@@ -3407,7 +3407,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-data-source@npm:*, @plitzi/sdk-data-source@workspace:*, @plitzi/sdk-data-source@workspace:packages/sdk-data-source":
+"@plitzi/sdk-data-source@workspace:*, @plitzi/sdk-data-source@workspace:packages/sdk-data-source":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-data-source@workspace:packages/sdk-data-source"
   dependencies:
@@ -3424,7 +3424,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-dev-tools@npm:*, @plitzi/sdk-dev-tools@workspace:*, @plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools":
+"@plitzi/sdk-dev-tools@workspace:*, @plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
@@ -3447,15 +3447,16 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
-    "@babel/cli": "npm:^7.26.4"
-    "@babel/core": "npm:^7.26.7"
-    "@plitzi/sdk-data-source": "npm:*"
-    "@plitzi/sdk-dev-tools": "npm:*"
-    "@plitzi/sdk-event-bridge": "npm:*"
-    "@plitzi/sdk-shared": "npm:*"
+    "@plitzi/sdk-data-source": "workspace:*"
+    "@plitzi/sdk-dev-tools": "workspace:*"
+    "@plitzi/sdk-event-bridge": "workspace:*"
+    "@plitzi/sdk-interactions": "workspace:*"
+    "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.19.0"
     immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"
+    vite: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
