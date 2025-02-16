@@ -1,5 +1,5 @@
 // Packages
-import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo/index.es';
+import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo';
 
 // Relatives
 import PlitziSdk from './PlitziSdk';

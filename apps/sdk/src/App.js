@@ -12,7 +12,7 @@ import get from 'lodash/get';
 import classNames from 'classnames';
 import { HelmetProvider } from 'react-helmet-async';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
-import ThemeProvider from '@plitzi/plitzi-ui/ThemeProvider/index.es';
+import ThemeProvider from '@plitzi/plitzi-ui/ThemeProvider';
 
 // Monorepo
 import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
