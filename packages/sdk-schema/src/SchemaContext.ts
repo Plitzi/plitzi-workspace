@@ -2,13 +2,7 @@
 import { createContext } from 'react';
 
 // Types
-import type { Style, Schema } from '@plitzi/sdk-shared';
-
-export type SchemaContextValue = {
-  schema: Schema;
-  style: Style;
-  definition: { rootId: string }; // for segments and templates
-};
+import type { SchemaContextValue } from '@plitzi/sdk-shared';
 
 const schemaContextDefaultValue: SchemaContextValue = {
   schema: {

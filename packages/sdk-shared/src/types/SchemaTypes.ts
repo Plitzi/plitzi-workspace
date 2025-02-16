@@ -1,4 +1,4 @@
-// Types
+import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
 export type BindingTransformer = {
@@ -57,7 +57,7 @@ export type Element = {
     styleSelectors: { [key: string]: string };
     bindings?: Record<string, ElementBinding[]>;
     interactions?: Record<string, ElementInteraction>;
-    initialState?: { styleSelectors: Element['definition']['styleSelectors']; [key: string]: unknown };
+    initialState?: { styleSelectors?: Element['definition']['styleSelectors']; [key: string]: unknown };
   };
   attributes: Omit<{ [key: string]: unknown }, 'subType'> & {
     subType?: string;
@@ -93,4 +93,11 @@ export type Schema = {
   };
   pages: string[];
   pageFolders: PageFolder[];
+};
+
+export type SchemaContextValue = {
+  prevSchema?: Schema;
+  schema: Schema;
+  style: Style;
+  definition?: { rootId: string }; // for segments and templates
 };

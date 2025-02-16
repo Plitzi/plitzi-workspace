@@ -1,15 +1,10 @@
-// Packages
 import cloneDeep from 'lodash/cloneDeep';
 import { describe, it, expect } from 'vitest';
 
-// Relatives
 import FlatMap from './FlatMap';
-
-// Fixtures
 import schema1 from '../tests/fixtures/json/schema1.json';
 import styleSchema1 from '../tests/fixtures/json/styleSchema1.json';
 
-// Types
 import type { Schema, Style } from '@plitzi/sdk-shared';
 
 describe('Testing FlatMap', () => {

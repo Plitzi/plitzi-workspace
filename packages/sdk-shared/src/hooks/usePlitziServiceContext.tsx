@@ -1,17 +1,24 @@
 /* eslint-disable react-refresh/only-export-components */
-// Packages
 import { createContext, use } from 'react';
 
-// Types
-import type { DataSourceContextValue, InteractionsContextValue, PluginsContextValue } from '../types';
+import type {
+  DataSourceContextValue,
+  EventBridgeContextValue,
+  InteractionsContextValue,
+  PluginsContextValue,
+  SchemaContextValue
+} from '../types';
 import type { Context, ReactNode } from 'react';
 
 export type PlitziServiceContextValue = {
   settings: Record<string, unknown>;
+  root: { baseElementId: string };
   contexts: {
     PluginsContext: Context<PluginsContextValue>;
     InteractionsContext: Context<InteractionsContextValue>;
     DataSourceContext: Context<DataSourceContextValue>;
+    SchemaContext: Context<SchemaContextValue>;
+    EventBridgeContext: Context<EventBridgeContextValue>;
   } & Record<string, Context<unknown>>;
 } & Record<string, unknown>;
 
