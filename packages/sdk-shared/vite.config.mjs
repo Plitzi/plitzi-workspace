@@ -57,7 +57,9 @@ export default defineConfig(({ mode, command, ...args }) => {
           return null;
         },
         buildEnd() {
-          console.log('Packages imported:', Array.from(importedPackages));
+          if (mode === 'development') {
+            console.log('Packages imported:', Array.from(importedPackages));
+          }
         }
       }
     ],
@@ -68,14 +70,13 @@ export default defineConfig(({ mode, command, ...args }) => {
         //     '@hooks': path.resolve(__dirname, './src/hooks'),
         //     '@': resolve(__dirname, './src')
       },
-      extensions: ['.js', '.ts', '.tsx', '.es']
+      extensions: ['.js', '.ts', '.tsx']
     },
     css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
     build: {
       lib: {
-        entry: ['./src/index.ts'],
+        entry: ['./src/index.ts']
         // name: 'plitzi-ui',
-        formats: ['es'] // , 'cjs'
       },
       rollupOptions: {
         external: [
@@ -96,19 +97,36 @@ export default defineConfig(({ mode, command, ...args }) => {
           'immer',
           'moment'
         ],
-        output: {
-          exports: 'named',
-          preserveModules: true, // Keep module structure for tree-shaking
-          preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
-          entryFileNames: '[name].[format]',
-          chunkFileNames: '[name].[format]',
-          assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
-          globals: {
-            react: 'React',
-            'react-dom': 'ReactDOM',
-            'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
+        output: [
+          // {
+          //   format: 'cjs',
+          //   exports: 'named',
+          //   preserveModules: true, // Keep module structure for tree-shaking
+          //   preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
+          //   entryFileNames: '[name].[format]',
+          //   chunkFileNames: '[name].[format]',
+          //   assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
+          //   globals: {
+          //     react: 'React',
+          //     'react-dom': 'ReactDOM',
+          //     'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
+          //   }
+          // },
+          {
+            format: 'es',
+            exports: 'named',
+            preserveModules: true, // Keep module structure for tree-shaking
+            preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
+            entryFileNames: '[name].mjs',
+            chunkFileNames: '[name].mjs',
+            assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
+            globals: {
+              react: 'React',
+              'react-dom': 'ReactDOM',
+              'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
+            }
           }
-        }
+        ]
       },
       sourcemap: false,
       emptyOutDir: mode === 'production'

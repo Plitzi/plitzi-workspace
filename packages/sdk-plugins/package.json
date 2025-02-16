@@ -7,17 +7,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./PluginsContext": {
       "types": "./dist/PluginsContext.d.ts",
-      "import": "./dist/PluginsContext.es",
+      "import": "./dist/PluginsContext.mjs",
       "require": "./dist/PluginsContext.cjs"
     },
     "./PluginHelper": {
       "types": "./dist/PluginHelper.d.ts",
-      "import": "./dist/PluginHelper.es",
+      "import": "./dist/PluginHelper.mjs",
       "require": "./dist/PluginHelper.cjs"
     }
   },

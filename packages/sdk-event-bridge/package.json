@@ -7,27 +7,27 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./EventBridgeContextProvider": {
       "types": "./dist/EventBridgeContextProvider.d.ts",
-      "import": "./dist/EventBridgeContextProvider.es",
+      "import": "./dist/EventBridgeContextProvider.mjs",
       "require": "./dist/EventBridgeContextProvider.cjs"
     },
     "./EventBridgeContext": {
       "types": "./dist/EventBridgeContext.d.ts",
-      "import": "./dist/EventBridgeContext.es",
+      "import": "./dist/EventBridgeContext.mjs",
       "require": "./dist/EventBridgeContext.cjs"
     },
     "./EventBridgeHelper": {
       "types": "./dist/EventBridgeHelper.d.ts",
-      "import": "./dist/EventBridgeHelper.es",
+      "import": "./dist/EventBridgeHelper.mjs",
       "require": "./dist/EventBridgeHelper.cjs"
     },
     "./hooks/useEventBridge": {
       "types": "./dist/hooks/useEventBridge.d.ts",
-      "import": "./dist/hooks/useEventBridge.es",
+      "import": "./dist/hooks/useEventBridge.mjs",
       "require": "./dist/hooks/useEventBridge.cjs"
     }
   },

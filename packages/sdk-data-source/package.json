@@ -7,52 +7,52 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./DataSourceContext": {
       "types": "./dist/DataSourceContext.d.ts",
-      "import": "./dist/DataSourceContext.es",
+      "import": "./dist/DataSourceContext.mjs",
       "require": "./dist/DataSourceContext.cjs"
     },
     "./DataSourceContextProvider": {
       "types": "./dist/DataSourceContextProvider.d.ts",
-      "import": "./dist/DataSourceContextProvider.es",
+      "import": "./dist/DataSourceContextProvider.mjs",
       "require": "./dist/DataSourceContextProvider.cjs"
     },
     "./hooks/useDataSource": {
       "types": "./dist/hooks/useDataSource.d.ts",
-      "import": "./dist/hooks/useDataSource.es",
+      "import": "./dist/hooks/useDataSource.mjs",
       "require": "./dist/hooks/useDataSource.cjs"
     },
     "./helpers/getBindingsDetails": {
       "types": "./dist/helpers/getBindingsDetails.d.ts",
-      "import": "./dist/helpers/getBindingsDetails.es",
+      "import": "./dist/helpers/getBindingsDetails.mjs",
       "require": "./dist/helpers/getBindingsDetails.cjs"
     },
     "./utility": {
       "types": "./dist/utility/index.d.ts",
-      "import": "./dist/utility/index.es",
+      "import": "./dist/utility/index.mjs",
       "require": "./dist/utility/index.cjs"
     },
     "./sources/NavigationSource": {
       "types": "./dist/sources/NavigationSource.d.ts",
-      "import": "./dist/sources/NavigationSource.es",
+      "import": "./dist/sources/NavigationSource.mjs",
       "require": "./dist/sources/NavigationSource.cjs"
     },
     "./sources/PageStateSource": {
       "types": "./dist/sources/PageStateSource.d.ts",
-      "import": "./dist/sources/PageStateSource.es",
+      "import": "./dist/sources/PageStateSource.mjs",
       "require": "./dist/sources/PageStateSource.cjs"
     },
     "./sources/VariablesSource": {
       "types": "./dist/sources/VariablesSource.d.ts",
-      "import": "./dist/sources/VariablesSource.es",
+      "import": "./dist/sources/VariablesSource.mjs",
       "require": "./dist/sources/VariablesSource.cjs"
     },
     "./sources/UserSource": {
       "types": "./dist/sources/UserSource.d.ts",
-      "import": "./dist/sources/UserSource.es",
+      "import": "./dist/sources/UserSource.mjs",
       "require": "./dist/sources/UserSource.cjs"
     }
   },

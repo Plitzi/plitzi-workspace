@@ -101,7 +101,7 @@ export type Schema = {
 
 export type SchemaContextValue = {
   prevSchema?: Schema;
-  schema?: Schema;
+  schema: Schema;
   style?: Style;
   definition?: { rootId: string }; // for segments and templates
 };

@@ -7,17 +7,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./UserContext": {
       "types": "./dist/UserContext.d.ts",
-      "import": "./dist/UserContext.es",
+      "import": "./dist/UserContext.mjs",
       "require": "./dist/UserContext.cjs"
     },
     "./UserBaseContextProvider": {
       "types": "./dist/UserBaseContextProvider.d.ts",
-      "import": "./dist/UserBaseContextProvider.es",
+      "import": "./dist/UserBaseContextProvider.mjs",
       "require": "./dist/UserBaseContextProvider.cjs"
     }
   },

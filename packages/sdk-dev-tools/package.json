@@ -7,17 +7,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./DevToolsContainer": {
       "types": "./dist/DevToolsContainer.d.ts",
-      "import": "./dist/DevToolsContainer.es",
+      "import": "./dist/DevToolsContainer.mjs",
       "require": "./dist/DevToolsContainer.cjs"
     },
     "./PlitziConsole": {
       "types": "./dist/utils/PlitziConsole.d.ts",
-      "import": "./dist/utils/PlitziConsole.es",
+      "import": "./dist/utils/PlitziConsole.mjs",
       "require": "./dist/utils/PlitziConsole.cjs"
     }
   },

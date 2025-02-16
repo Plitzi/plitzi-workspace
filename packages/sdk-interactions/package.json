@@ -7,42 +7,42 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./utility": {
       "types": "./dist/utility/index.d.ts",
-      "import": "./dist/utility/index.es",
+      "import": "./dist/utility/index.mjs",
       "require": "./dist/utility/index.cjs"
     },
     "./InteractionsContext": {
       "types": "./dist/InteractionsContext.d.ts",
-      "import": "./dist/InteractionsContext.es",
+      "import": "./dist/InteractionsContext.mjs",
       "require": "./dist/InteractionsContext.cjs"
     },
     "./InteractionsContextProvider": {
       "types": "./dist/InteractionsContextProvider.d.ts",
-      "import": "./dist/InteractionsContextProvider.es",
+      "import": "./dist/InteractionsContextProvider.mjs",
       "require": "./dist/InteractionsContextProvider.cjs"
     },
     "./InteractionsHelper": {
       "types": "./dist/InteractionsHelper.d.ts",
-      "import": "./dist/InteractionsHelper.es",
+      "import": "./dist/InteractionsHelper.mjs",
       "require": "./dist/InteractionsHelper.cjs"
     },
     "./InteractionsManager": {
       "types": "./dist/InteractionsManager.d.ts",
-      "import": "./dist/InteractionsManager.es",
+      "import": "./dist/InteractionsManager.mjs",
       "require": "./dist/InteractionsManager.cjs"
     },
     "./useInteractions": {
       "types": "./dist/hooks/useInteractions.d.ts",
-      "import": "./dist/hooks/useInteractions.es",
+      "import": "./dist/hooks/useInteractions.mjs",
       "require": "./dist/hooks/useInteractions.cjs"
     },
     "./sources/UserSource/UserInteractions": {
       "types": "./dist/sources/UserSource/UserInteractions.d.ts",
-      "import": "./dist/sources/UserSource/UserInteractions.es",
+      "import": "./dist/sources/UserSource/UserInteractions.mjs",
       "require": "./dist/sources/UserSource/UserInteractions.cjs"
     }
   },

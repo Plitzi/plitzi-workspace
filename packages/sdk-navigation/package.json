@@ -7,22 +7,22 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./NavigationHelper": {
       "types": "./dist/NavigationHelper.d.ts",
-      "import": "./dist/NavigationHelper.es",
+      "import": "./dist/NavigationHelper.mjs",
       "require": "./dist/NavigationHelper.cjs"
     },
     "./NavigationContext": {
       "types": "./dist/NavigationContext.d.ts",
-      "import": "./dist/NavigationContext.es",
+      "import": "./dist/NavigationContext.mjs",
       "require": "./dist/NavigationContext.cjs"
     },
     "./useNavigation": {
       "types": "./dist/hooks/useNavigation.d.ts",
-      "import": "./dist/hooks/useNavigation.es",
+      "import": "./dist/hooks/useNavigation.mjs",
       "require": "./dist/hooks/useNavigation.cjs"
     }
   },

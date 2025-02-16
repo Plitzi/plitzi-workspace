@@ -7,22 +7,22 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./SchemaContext": {
       "types": "./dist/SchemaContext.d.ts",
-      "import": "./dist/SchemaContext.es",
+      "import": "./dist/SchemaContext.mjs",
       "require": "./dist/SchemaContext.cjs"
     },
     "./SchemaSettingsContext": {
       "types": "./dist/SchemaSettingsContext.d.ts",
-      "import": "./dist/SchemaSettingsContext.es",
+      "import": "./dist/SchemaSettingsContext.mjs",
       "require": "./dist/SchemaSettingsContext.cjs"
     },
     "./FlatMap": {
       "types": "./dist/helpers/FlatMap.d.ts",
-      "import": "./dist/helpers/FlatMap.es",
+      "import": "./dist/helpers/FlatMap.mjs",
       "require": "./dist/helpers/FlatMap.cjs"
     }
   },

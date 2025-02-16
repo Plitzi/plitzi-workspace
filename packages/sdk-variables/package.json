@@ -7,17 +7,17 @@
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./VariablesContext": {
       "types": "./dist/src/VariablesContext.d.ts",
-      "import": "./dist/VariablesContext.es",
+      "import": "./dist/VariablesContext.mjs",
       "require": "./dist/VariablesContext.cjs"
     },
     "./VariablesHelper": {
       "types": "./dist/src/VariablesHelper.d.ts",
-      "import": "./dist/VariablesHelper.es",
+      "import": "./dist/VariablesHelper.mjs",
       "require": "./dist/VariablesHelper.cjs"
     }
   },

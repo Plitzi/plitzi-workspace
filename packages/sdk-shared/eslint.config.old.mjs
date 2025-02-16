@@ -19,7 +19,7 @@ delete GLOBALS_BROWSER_FIX['AudioWorkletGlobalScope '];
 
 const settings = {
   'import/resolver': {
-    node: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.es', '.mjs', '.cjs'] },
+    node: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'] },
     alias: {
       map: [
         [
@@ -35,7 +35,7 @@ const settings = {
         ['@plitzi/plitzi-ui/tailwind', path.resolve('../../node_modules/@plitzi/plitzi-ui/dist/src/tailwind')],
         ['@plitzi/plitzi-ui', path.resolve('../../node_modules/@plitzi/plitzi-ui/dist/src/components')]
       ],
-      extensions: ['.ts', '.js', '.jsx', '.json', '.stores.js', '.cjs', '.es', '.mjs']
+      extensions: ['.ts', '.js', '.jsx', '.json', '.stores.js', '.cjs', '.mjs']
     }
   },
   react: {

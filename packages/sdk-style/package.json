@@ -7,27 +7,27 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./StyleContext": {
       "types": "./dist/StyleContext.d.ts",
-      "import": "./dist/StyleContext.es",
+      "import": "./dist/StyleContext.mjs",
       "require": "./dist/StyleContext.cjs"
     },
     "./StyleHelper": {
       "types": "./dist/StyleHelper.d.ts",
-      "import": "./dist/StyleHelper.es",
+      "import": "./dist/StyleHelper.mjs",
       "require": "./dist/StyleHelper.cjs"
     },
     "./StyleMap": {
       "types": "./dist/StyleMap.d.ts",
-      "import": "./dist/StyleMap.es",
+      "import": "./dist/StyleMap.mjs",
       "require": "./dist/StyleMap.cjs"
     },
     "./StyleConstants": {
       "types": "./dist/StyleConstants.d.ts",
-      "import": "./dist/StyleConstants.es",
+      "import": "./dist/StyleConstants.mjs",
       "require": "./dist/StyleConstants.cjs"
     }
   },
