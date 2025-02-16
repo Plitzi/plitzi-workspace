@@ -39,7 +39,15 @@ export type Element = {
   id: string;
   definition: Omit<
     { [key: string]: unknown },
-    'parentId' | 'items' | 'styleSelectors' | 'string' | 'bindings' | 'label' | 'rootId' | 'interactions'
+    | 'parentId'
+    | 'items'
+    | 'styleSelectors'
+    | 'string'
+    | 'bindings'
+    | 'label'
+    | 'rootId'
+    | 'interactions'
+    | 'initialState'
   > & {
     rootId: string;
     label: string;
@@ -47,8 +55,9 @@ export type Element = {
     parentId?: string;
     items?: string[];
     styleSelectors: { [key: string]: string };
-    bindings?: Record<string, ElementBinding | undefined>;
+    bindings?: Record<string, ElementBinding[]>;
     interactions?: Record<string, ElementInteraction>;
+    initialState?: { styleSelectors: Element['definition']['styleSelectors']; [key: string]: unknown };
   };
   attributes: Omit<{ [key: string]: unknown }, 'subType'> & {
     subType?: string;

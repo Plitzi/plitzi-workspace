@@ -11,7 +11,6 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 
 // Alias
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
-import { REFERENCE_TYPE_SEGMENT } from '@pmodules/Elements/ElementConstants';
 import BuilderPopup from '@pmodules/Builder/BuilderPopup';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
@@ -40,7 +39,7 @@ const Segment = props => {
   const { mutate } = use(NetworkContext);
   const { onDragStart } = useDragElement({
     type: 'reference',
-    attributes: { referenceType: REFERENCE_TYPE_SEGMENT, referenceId: identifier },
+    attributes: { referenceType: 'segment', referenceId: identifier },
     variables
   });
 

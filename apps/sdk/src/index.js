@@ -11,8 +11,6 @@ import JsxManager from '@plitzi/sdk-elements/JsxManager';
 import PluginRemote from '@plitzi/sdk-elements/PluginRemote';
 import PluginManager from '@plitzi/sdk-elements/PluginManager';
 import ReplicaProvider from '@plitzi/sdk-elements/ReplicaProvider';
-import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '@plitzi/sdk-elements/ElementConstants';
-import { generatePluginPromises } from '@plitzi/sdk-elements/elementUtils';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Alias
@@ -170,8 +168,6 @@ export {
   RENDER_MODE_SHADOW,
   RENDER_MODE_SSR,
   RENDER_MODE_WIDGET,
-  PARTIAL_SCHEMA_TYPE_ELEMENT,
-  PARTIAL_SCHEMA_TYPE_SEGMENT,
   sdkComponents
 };
 
