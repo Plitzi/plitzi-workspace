@@ -2,23 +2,30 @@
 import { createContext, use } from 'react';
 
 import type {
+  BuilderContextValue,
   DataSourceContextValue,
   EventBridgeContextValue,
   InteractionsContextValue,
+  NavigationContextValue,
   PluginsContextValue,
-  SchemaContextValue
+  SchemaContextValue,
+  SegmentsContextValue
 } from '../types';
 import type { Context, ReactNode } from 'react';
 
 export type PlitziServiceContextValue = {
-  settings: { previewMode?: boolean; [key: string]: unknown };
+  settings: { previewMode?: boolean; environment?: string; [key: string]: unknown };
   root: { baseElementId: string };
+  utils: { getWindow: () => Window };
   contexts: {
     PluginsContext: Context<PluginsContextValue>;
     InteractionsContext: Context<InteractionsContextValue>;
     DataSourceContext: Context<DataSourceContextValue>;
     SchemaContext: Context<SchemaContextValue>;
     EventBridgeContext: Context<EventBridgeContextValue>;
+    SegmentsContext: Context<SegmentsContextValue>;
+    NavigationContext: Context<NavigationContextValue>;
+    BuilderContext?: Context<BuilderContextValue>;
   } & Record<string, Context<unknown>>;
 } & Record<string, unknown>;
 

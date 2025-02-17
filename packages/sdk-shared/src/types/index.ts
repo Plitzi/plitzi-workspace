@@ -5,3 +5,6 @@ export * from './PluginTypes';
 export * from './ElementTypes';
 export * from './DataSourceTypes';
 export * from './EventBridgeTypes';
+export * from './SegmentTypes';
+export * from './BuilderTypes';
+export * from './NavigationTypes';

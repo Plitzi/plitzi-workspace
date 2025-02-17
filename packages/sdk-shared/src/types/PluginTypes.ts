@@ -93,7 +93,7 @@ export type PluginsContextValue = {
   getSettings?: unknown;
   update?: unknown;
   remove?: unknown;
-  registerCustomAssets?: unknown;
-  unregisterCustomAssets?: unknown;
+  registerCustomAssets?: (assets: { url: string; [key: string]: unknown }[]) => void;
+  unregisterCustomAssets?: (assets: string[]) => void;
   pluginStyles?: Record<string, string[]>;
 };
