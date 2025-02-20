@@ -1,45 +1,48 @@
-import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 import get from 'lodash/get';
+import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- *   headerLabel: string;
- *   acceptButtonLabel: string;
- *   acceptButtonLabelLoading: string;
- *   rejectButtonLabel: string;
- *   autoHideAfterClick: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const DialogContainer = props => {
-  const {
-    ref,
-    className = '',
-    internalProps = emptyObject,
-    children,
-    headerLabel = 'Dialog Header',
-    acceptButtonLabel = 'Accept',
-    acceptButtonLabelLoading = 'Loading...',
-    rejectButtonLabel = 'Cancel',
-    autoHideAfterClick = true
-  } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { SourceField } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
+
+export type DialogContainerProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+  children: ReactNode;
+  headerLabel: string;
+  acceptButtonLabel: string;
+  acceptButtonLabelLoading: string;
+  rejectButtonLabel: string;
+  autoHideAfterClick: boolean;
+};
+
+const DialogContainer = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  children,
+  headerLabel = 'Dialog Header',
+  acceptButtonLabel = 'Accept',
+  acceptButtonLabelLoading = 'Loading...',
+  rejectButtonLabel = 'Cancel',
+  autoHideAfterClick = true
+}: DialogContainerProps) => {
   const { id, setElementState, styleSelectors } = internalProps;
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext);
-  const { useDataSource } = use(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
   const [internalMetadata, setInternalMetadata] = useState({});
   const [processing, setProcessing] = useState(false);
 
@@ -124,17 +127,17 @@ const DialogContainer = props => {
   }, [handleOpeDialog, internalProps?.definition?.label]);
 
   useEffect(() => {
-    if (internalProps?.elementState?.visibility !== false) {
+    if (internalProps.elementState?.visibility !== false) {
       interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
     }
   }, [internalProps?.elementState?.visibility]);
 
-  const sourceFields = useCallback(async () => {
+  const sourceFields = useCallback(() => {
     if (!internalMetadata || typeof internalMetadata !== 'object') {
       return [];
     }
 
-    return getPathsFromObeject(internalMetadata).reduce((acum, path) => {
+    return getPathsFromObeject(internalMetadata).reduce<SourceField[]>((acum, path) => {
       const name = path.split('.');
       if (name.length > 1) {
         return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
@@ -152,6 +155,7 @@ const DialogContainer = props => {
   const [DialogContianerContext] = useDataSource({
     id,
     source: `dialogContainer_${id}`,
+    mode: 'write',
     name: sourceName,
     fields: sourceFields
   });

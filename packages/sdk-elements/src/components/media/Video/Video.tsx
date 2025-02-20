@@ -1,36 +1,36 @@
-import React from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   src: string;
- *   autoPlay: boolean;
- *   playsInline: boolean;
- *   loop: boolean;
- *   muted: boolean;
- *   className: string;
- *   internalProps: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const Video = props => {
-  const {
-    ref,
-    src = '',
-    autoPlay = false,
-    playsInline = false,
-    loop = false,
-    muted = true,
-    className = '',
-    internalProps = emptyObject
-  } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { RefObject } from 'react';
+
+export type VideoProps = {
+  ref: RefObject<HTMLElement>;
+  src: string;
+  autoPlay: boolean;
+  playsInline: boolean;
+  loop: boolean;
+  muted: boolean;
+  className: string;
+  internalProps: InternalProps;
+};
+
+const Video = ({
+  ref,
+  src = '',
+  autoPlay = false,
+  playsInline = false,
+  loop = false,
+  muted = true,
+  className = '',
+  internalProps = emptyObject as InternalProps
+}: VideoProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

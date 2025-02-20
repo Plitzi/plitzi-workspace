@@ -1,24 +1,25 @@
-import React, { useMemo, use, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import classNames from 'classnames';
-import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable/index';
+import React, { useMemo, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   internalProps: object;
- *   className: string;
- *   content: string | number;
- * }} props
- * @returns {React.ReactElement}
- */
-const Text = props => {
-  const { ref, content = 'Text', className = '', internalProps = emptyObject } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { RefObject } from 'react';
+
+export type TextProps = {
+  ref: RefObject<HTMLElement>;
+  internalProps: InternalProps;
+  className: string;
+  content: string | number;
+};
+
+const Text = ({ ref, content = 'Text', className = '', internalProps = emptyObject as InternalProps }: TextProps) => {
   const {
     settings: { previewMode },
     contexts: { BuilderContext }
@@ -33,12 +34,16 @@ const Text = props => {
       return 'Text';
     }
 
+    if (typeof content === 'number') {
+      return `${content}`;
+    }
+
     return content;
-  }, [content]);
+  }, [content, previewMode]);
 
   const handleChange = useCallback(
-    value => builderContext?.updateElement(internalProps.id, 'content', value),
-    [builderContext?.updateElement, previewMode, internalProps.id]
+    (value: string) => builderContext?.updateElement(internalProps.id, 'content', value),
+    [builderContext, internalProps.id]
   );
 
   return (

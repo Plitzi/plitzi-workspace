@@ -1,45 +1,47 @@
-import React, { use, useEffect, useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
+import { use, useEffect, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
 import ComponentContext from '../../../Component/ComponentContext';
+import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   seoEnabled: boolean;
- *   seoPageTitle: string;
- *   seoPageDescription: string;
- *   className: string;
- *   layout: string;
- *   layoutContainer: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const Page = props => {
-  const {
-    ref,
-    seoEnabled = false,
-    seoPageTitle = 'Title',
-    seoPageDescription = 'Description',
-    className = '',
-    layout = '',
-    layoutContainer = '',
-    internalProps = emptyObject,
-    children
-  } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
+import type { ReactNode, RefObject } from 'react';
+
+export type PageProps = {
+  ref: RefObject<HTMLElement>;
+  seoEnabled: boolean;
+  seoPageTitle: string;
+  seoPageDescription: string;
+  className: string;
+  layout: string;
+  layoutContainer: string;
+  internalProps: InternalProps;
+  children: ReactNode;
+};
+
+const Page = ({
+  ref,
+  seoEnabled = false,
+  seoPageTitle = 'Title',
+  seoPageDescription = 'Description',
+  className = '',
+  layout = '',
+  layoutContainer = '',
+  internalProps = emptyObject as InternalProps,
+  children
+}: PageProps) => {
   const { id } = internalProps;
   const {
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext);
+  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
   const { Helmet, routeParams, queryParams } = use(NavigationContext);
   const { components } = use(ComponentContext);
   const LayoutContainerPlugin = components.layoutContainer;
@@ -75,8 +77,8 @@ const Page = props => {
   );
 
   useEffect(() => {
-    interactionsManager.interactionTrigger(id, 'onPageLoad', { pageId: id, routeParams, queryParams });
-  }, []);
+    void interactionsManager.interactionTrigger(id, 'onPageLoad', { pageId: id, routeParams, queryParams });
+  }, [id, interactionsManager, queryParams, routeParams]);
 
   return (
     <RootElement
@@ -91,7 +93,7 @@ const Page = props => {
           {seoPageDescription && <meta name="description" content={seoPageDescription} />}
         </Helmet>
       )}
-      {layout && LayoutContainerPlugin && <LayoutContainerPlugin internalProps={layoutInternalProps} />}
+      {layout && <LayoutContainerPlugin internalProps={layoutInternalProps} />}
       {!layout && children}
     </RootElement>
   );

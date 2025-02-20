@@ -1,24 +1,29 @@
-import React from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- *   subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
- * }} props
- * @returns {React.ReactElement}
- */
-const LayoutContainer = props => {
-  const { ref, className = '', internalProps = emptyObject, children, subType = 'div' } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { RefObject } from 'react';
 
+export type LayoutContainerProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+  children: React.ReactNode;
+  subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+};
+
+const LayoutContainer = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  children,
+  subType = 'div'
+}: LayoutContainerProps) => {
   return (
     <RootElement
       ref={ref}

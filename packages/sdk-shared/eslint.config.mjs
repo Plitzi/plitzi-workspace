@@ -13,7 +13,7 @@ import importEslint from 'eslint-plugin-import';
 export default tsEslint.config({
   extends: [js.configs.recommended, ...tsEslint.configs.strictTypeChecked],
   files: ['**/*.{ts,tsx}'],
-  ignores: ['node_modules', 'dist', 'coverage', '.yarn/*'],
+  ignores: ['node_modules', 'node_modules/*', './node_modules/**', '**/node_modules/**', 'dist', 'coverage', '.yarn/*'],
   languageOptions: {
     ecmaVersion: 2023,
     globals: globals.browser,

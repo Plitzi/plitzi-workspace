@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import MarkdownUI from '@plitzi/plitzi-ui-components/Markdown/index';
+import MarkdownUI from '@plitzi/plitzi-ui/Markdown';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';

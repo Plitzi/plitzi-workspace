@@ -1,32 +1,32 @@
-import React from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   icon: string;
- *   size: string;
- *   iconAnimation: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const FontAwesome = props => {
-  const {
-    ref,
-    className = '',
-    internalProps = emptyObject,
-    icon = 'fas fa-flag',
-    size = 'fa-1x',
-    iconAnimation = ''
-  } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { RefObject } from 'react';
+
+export type FontAwesomeProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+  icon: string;
+  size: string;
+  iconAnimation: string;
+};
+
+const FontAwesome = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  icon = 'fas fa-flag',
+  size = 'fa-1x',
+  iconAnimation = ''
+}: FontAwesomeProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

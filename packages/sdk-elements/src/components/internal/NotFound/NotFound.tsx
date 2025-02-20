@@ -1,22 +1,22 @@
-import React from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 import get from 'lodash/get';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const NotFound = props => {
-  const { ref, className = '', internalProps = emptyObject } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { RefObject } from 'react';
+
+export type NotFoundProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+};
+
+const NotFound = ({ ref, className = '', internalProps = emptyObject as InternalProps }: NotFoundProps) => {
   const label = get(internalProps, 'definition.label');
 
   return (

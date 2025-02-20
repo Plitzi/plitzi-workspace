@@ -1,32 +1,32 @@
-import React from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   internalProps: object;
- *   className: string;
- *   src: string;
- *   alt: string;
- *   loadMode: 'auto' | 'eager' | 'lazy';
- * }} props
- * @returns {React.ReactElement}
- */
-const Image = props => {
-  const {
-    ref,
-    internalProps = emptyObject,
-    className = '',
-    src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
-    alt = '',
-    loadMode = 'auto'
-  } = props;
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { RefObject } from 'react';
+
+export type ImageProps = {
+  ref: RefObject<HTMLElement>;
+  internalProps: InternalProps;
+  className: string;
+  src: string;
+  alt: string;
+  loadMode: 'eager' | 'lazy';
+};
+
+const Image = ({
+  ref,
+  internalProps = emptyObject as InternalProps,
+  className = '',
+  src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
+  alt = '',
+  loadMode
+}: ImageProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

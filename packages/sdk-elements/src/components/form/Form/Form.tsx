@@ -1,56 +1,66 @@
-import React, { useCallback, useMemo, useState, use } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 import { produce } from 'immer';
-import get from 'lodash/get';
 import capitalize from 'lodash/capitalize';
+import get from 'lodash/get';
 import omit from 'lodash/omit';
+import { useCallback, useMemo, useState, use } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- *   method: 'get' | 'post';
- *   actionUrl: string;
- *   managedByInteractions: boolean;
- *   errors: object;
- *   values: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const Form = props => {
-  const {
-    ref,
-    className = '',
-    internalProps = emptyObject,
-    children,
-    method = 'get',
-    actionUrl = '',
-    managedByInteractions = false,
-    errors = emptyObject,
-    values = emptyObject
-  } = props;
-  const [fields, setFields] = useState({});
+import type { InternalProps } from '../../../types/ElementTypes';
+import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
+import type { SourceField } from '@plitzi/sdk-shared';
+import type { FormEvent, ReactNode, RefObject } from 'react';
+
+export type FormProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+  children: ReactNode;
+  method: 'get' | 'post';
+  actionUrl: string;
+  managedByInteractions: boolean;
+  errors: Record<string, string>;
+  values: Record<string, unknown>;
+};
+
+export type Field = { id: string; name: string };
+export type FieldValue = string | boolean | number;
+
+const Form = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  children,
+  method = 'get',
+  actionUrl = '',
+  managedByInteractions = false,
+  errors = emptyObject,
+  values = emptyObject
+}: FormProps) => {
+  const [fields, setFields] = useState<Record<string, SourceField>>({});
   const { id, setElementState } = internalProps;
   const {
     settings: { previewMode },
     contexts: { DataSourceContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext);
-  const { interactionsManager } = use(InteractionsContext);
+  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
 
-  const registerField = useCallback(field => setFields(state => ({ ...state, [field.name]: field })), [setFields]);
+  const registerField = useCallback(
+    (field: Field) => setFields(state => ({ ...state, [field.name]: field })),
+    [setFields]
+  );
 
   const getField = useCallback(
-    id => {
-      if (!id || !fields[id]) {
+    (id: string) => {
+      if (!id || !(fields[id] as Field | undefined)) {
         return fields;
       }
 
@@ -60,15 +70,16 @@ const Form = props => {
   );
 
   const unregisterField = useCallback(
-    id => {
-      let name;
+    (id: string) => {
+      let name: string = '';
       setFields(state =>
         produce(state, draft => {
-          if (!draft[id]) {
+          if (!(draft[id] as SourceField | undefined)) {
             return;
           }
 
-          name = draft[id]?.name;
+          name = draft[id].name;
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete draft[id];
         })
       );
@@ -82,7 +93,7 @@ const Form = props => {
   );
 
   const setFieldValue = useCallback(
-    (name, value = '') => {
+    (name: string, value: FieldValue | null = '') => {
       if (!name) {
         return;
       }
@@ -104,7 +115,7 @@ const Form = props => {
   );
 
   const setFieldError = useCallback(
-    (name, error) => {
+    (name: string, error: string) => {
       if (!name) {
         return;
       }
@@ -125,10 +136,10 @@ const Form = props => {
   );
 
   const sourceFields = useCallback(
-    async () =>
+    () =>
       Object.values(fields)
-        .filter(field => !!field?.name)
-        .reduce(
+        .filter(field => !!field.name)
+        .reduce<SourceField[]>(
           (acum, field) => [
             ...acum,
             { path: `fields.${field.name}.id`, name: `${capitalize(field.name)} ID` },
@@ -144,12 +155,9 @@ const Form = props => {
     () => ({ fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError }),
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );
-  const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Form - ${id}`),
-    [id, internalProps?.definition?.label]
-  );
+  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Form - ${id}`), [id, internalProps]);
 
-  const [FormContext] = useDataSource({ id, source: 'form', name: sourceName, fields: sourceFields });
+  const [FormContext] = useDataSource({ id, source: 'form', mode: 'write', name: sourceName, fields: sourceFields });
 
   // Interactions Triggers
 
@@ -171,7 +179,7 @@ const Form = props => {
   // Interactions Callbacks
 
   const handleSubmit = useCallback(
-    e => {
+    (e: FormEvent) => {
       setElementState(state => ({ ...state, errors: {} }));
       if (!managedByInteractions) {
         return;
@@ -184,13 +192,13 @@ const Form = props => {
       }
 
       const valuesParsed = Object.values(fields).reduce((acum, { name }) => ({ ...acum, [name]: values[name] }), {});
-      interactionsManager.interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl, method });
+      void interactionsManager.interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl, method });
     },
-    [fields, values, managedByInteractions, actionUrl, setElementState, previewMode, interactionsManager, method]
+    [setElementState, managedByInteractions, previewMode, fields, interactionsManager, id, actionUrl, method, values]
   );
 
   const handleReset = useCallback(
-    e => {
+    (e: FormEvent) => {
       if (!managedByInteractions) {
         return;
       }
@@ -257,7 +265,7 @@ const Form = props => {
         }
       }
     };
-  }, [handleReset, fields, internalProps?.definition?.label, handleSetFieldValue, handleSetFieldError]);
+  }, [internalProps, handleReset, handleSetFieldValue, fields, handleSetFieldError]);
 
   return (
     <RootElement

@@ -1,23 +1,29 @@
-import React, { useCallback } from 'react';
 import classNames from 'classnames';
+import { useCallback } from 'react';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   children: React.ReactNode;
- *   targetInput: string;
- *   type: string;
- *   previewMode: boolean;
- *   required: boolean;
- *   className: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const Label = props => {
-  const { ref, children, targetInput = '', type = 'text', previewMode = true, required = true, className = '' } = props;
+import type { MouseEvent, ReactNode, RefObject } from 'react';
 
+export type LabelProps = {
+  ref: RefObject<HTMLLabelElement>;
+  children: ReactNode;
+  targetInput: string;
+  type: string;
+  previewMode: boolean;
+  required: boolean;
+  className: string;
+};
+
+const Label = ({
+  ref,
+  children,
+  targetInput = '',
+  type = 'text',
+  previewMode = true,
+  required = true,
+  className = ''
+}: LabelProps) => {
   const handleClick = useCallback(
-    e => {
+    (e: MouseEvent) => {
       if (!previewMode) {
         e.preventDefault();
       }

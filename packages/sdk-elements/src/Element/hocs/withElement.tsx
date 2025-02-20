@@ -2,7 +2,7 @@
 
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import classNames from 'classnames';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
@@ -21,6 +21,7 @@ export type WithElementProps<T> = {
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const WithElementComponent = (props: WithElementProps<T>) => {
+    const ref = useRef<HTMLElement>(undefined);
     const { plitziJsxSkipHOC = false, plitziCustomComponent = false } = props; // Props from JSX
     let { internalProps = emptyObject as InternalProps, className = '', children } = props;
     if (plitziJsxSkipHOC) {
@@ -32,46 +33,23 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       children,
       className
     }));
-    const { id, rootId, definition } = internalProps;
-
-    const refProxy = useMemo(
-      () =>
-        new Proxy(
-          { current: null },
-          {
-            get(target, prop) {
-              if (!target) {
-                return undefined;
-              }
-
-              return target[prop];
-            },
-            set(target, prop, newValue) {
-              target[prop] = newValue;
-              // Do other process if are required like datasets
-
-              return true;
-            }
-          }
-        ),
-      []
-    );
+    const { definition } = internalProps;
 
     return useMemo(
       () => (
         <ErrorBoundary>
           <WrappedComponent
-            {...internalProps.attributes}
-            className={classNames(className, definition?.styleSelectors?.base)}
+            {...(internalProps.attributes as T)}
+            className={classNames(className, definition.styleSelectors.base)}
             // Plitzi
-            ref={refProxy}
+            ref={ref}
             internalProps={internalProps}
           >
             {children}
           </WrappedComponent>
         </ErrorBoundary>
       ),
-      [internalProps, id, rootId, refProxy, children, className]
+      [internalProps, className, definition.styleSelectors.base, children]
     );
   };
 
