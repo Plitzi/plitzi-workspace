@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import { useMemo } from 'react';
 
-import type { InternalProps } from '../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 
 export type UseInternalClassNameProps = {
   className?: string;

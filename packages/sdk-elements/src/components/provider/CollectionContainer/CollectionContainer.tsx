@@ -1,40 +1,40 @@
-import React, { useCallback, use, useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
+import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
-
 import useCollectionContext from './hooks/useCollectionContext';
+import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   source: string;
- *   children: React.ReactNode;
- *   limit: string;
- *   query: object;
- *   singleRecord: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const CollectionContainer = props => {
-  const {
-    ref,
-    className = '',
-    internalProps = emptyObject,
-    source = '',
-    children,
-    limit = '10',
-    query = emptyObject,
-    singleRecord = false
-  } = props;
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
+
+export type CollectionContainerProps = {
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  internalProps?: InternalProps;
+  source?: string;
+  children?: ReactNode;
+  limit?: string;
+  query?: object;
+  singleRecord?: boolean;
+};
+
+const CollectionContainer = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  source = '',
+  children,
+  limit = '10',
+  query = emptyObject,
+  singleRecord = false
+}: CollectionContainerProps) => {
   const { id } = internalProps;
   const {
     settings: { previewMode },
@@ -64,8 +64,8 @@ const CollectionContainer = props => {
   }, [collection, singleRecord]);
 
   const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Collection - ${collection?.name || id}`),
-    [id, internalProps?.definition?.label, collection?.name]
+    () => get(internalProps, 'definition.label', `Collection - ${collection?.name || id}`) as string,
+    [internalProps, collection?.name, id]
   );
 
   const [CollectionContext] = useDataSource({
@@ -75,20 +75,11 @@ const CollectionContainer = props => {
     fields: sourceFields
   });
 
-  const handleFetch = useCallback(
-    async (/* params */) => {
-      if (fetch) {
-        await fetch();
-      }
-    },
-    [fetch]
-  );
-
   const interactionCallbacks = useMemo(() => {
     const label = get(internalProps, 'definition.label', 'Collection Container');
 
-    return { performQuery: { title: `Refresh ${label}`, callback: handleFetch, preview: {}, params: {} } };
-  }, [handleFetch, internalProps?.definition?.label]);
+    return { performQuery: { title: `Refresh ${label}`, callback: fetch, preview: {}, params: {} } };
+  }, [fetch, internalProps]);
 
   if (!collection && previewMode) {
     return undefined;

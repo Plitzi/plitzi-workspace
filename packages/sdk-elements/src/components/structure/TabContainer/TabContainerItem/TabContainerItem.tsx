@@ -1,22 +1,35 @@
-import React, { useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
+import React, { useCallback } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../../Element/RootElement';
 import withElement from '../../../../Element/hocs/withElement';
+import RootElement from '../../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const TabContainerItem = props => {
-  const { className = '', internalProps = emptyObject, children, ref } = props;
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { Dispatch, RefObject, SetStateAction } from 'react';
+
+type InternalPropsSubProps = {
+  tabSelected?: number;
+  tabIndex?: number;
+  isHeader?: boolean;
+  onSelect?: Dispatch<SetStateAction<number>>;
+};
+
+export type TabContainerItemProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps<InternalPropsSubProps>;
+  children: React.ReactNode;
+};
+
+const TabContainerItem = ({
+  className = '',
+  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
+  children,
+  ref
+}: TabContainerItemProps) => {
   const { tabSelected, tabIndex = 0, isHeader, onSelect } = internalProps;
 
   const handleClick = useCallback(() => {
@@ -24,7 +37,7 @@ const TabContainerItem = props => {
       return;
     }
 
-    onSelect(tabIndex);
+    onSelect?.(tabIndex);
   }, [isHeader, tabSelected, tabIndex, onSelect]);
 
   return (

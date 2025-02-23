@@ -1,64 +1,62 @@
-import React, { useCallback, useMemo, useRef } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import { useCallback, useMemo, useRef } from 'react';
 
-/**
- * @param {{
- *   options?: any[];
- *   placeholder?: string;
- *   value?: string;
- *   className?: string;
- *   disabled?: boolean;
- *   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
- *   onValidate?: () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Select = props => {
-  const {
-    options = [],
-    placeholder = '',
-    value = '',
-    className = '',
-    disabled = false,
-    onChange = noop,
-    onValidate = noop
-  } = props;
-  const inputRef = useRef();
+import type { ChangeEvent, MouseEvent } from 'react';
+
+export type SelectProps = {
+  options?: ({ value?: string; label?: string } | string)[];
+  placeholder?: string;
+  value?: string;
+  className?: string;
+  disabled?: boolean;
+  onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
+  onValidate?: () => void;
+};
+
+const Select = ({
+  options = [],
+  placeholder = '',
+  value = '',
+  className = '',
+  disabled = false,
+  onChange,
+  onValidate
+}: SelectProps) => {
+  const inputRef = useRef<HTMLSelectElement>(null);
 
   const handleClickContainer = useCallback(() => {
-    inputRef.current.click();
+    inputRef.current?.click();
   }, [inputRef]);
 
-  const handleClickInput = useCallback(e => {
+  const handleClickInput = useCallback((e: MouseEvent) => {
     e.stopPropagation();
   }, []);
 
-  const handleBlur = useCallback(() => onValidate(), [onValidate]);
+  const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
 
-  const finalOptions = useMemo(() => {
+  const finalOptions = useMemo<{ value: string; label: string }[]>(() => {
     if (!Array.isArray(options)) {
       return [];
     }
 
     return options.map(option => {
-      try {
-        option = JSON.parse(option);
-      } catch (error) {
-        // Nothing here due that is not a valid JSON
-      }
+      // try {
+      //   option = JSON.parse(option) as unknown;
+      // } catch {
+      //   // Nothing here due that is not a valid JSON
+      // }
 
       if (typeof option === 'string') {
         return { value: option, label: option };
       }
 
       if (typeof option === 'object' && (!option.value || !option.label)) {
-        option = option?.value ?? option?.label ?? '';
+        option = option.value ?? option.label ?? '';
 
         return { value: option, label: option };
       }
 
-      return { value: option.value, label: option.label };
+      return { value: option.value ?? '', label: option.label ?? '' };
     });
   }, [options]);
 
@@ -69,18 +67,16 @@ const Select = props => {
         onChange={onChange}
         value={value}
         className="select-container__select"
-        placeholder={placeholder}
         disabled={disabled}
         onClick={handleClickInput}
         onBlur={handleBlur}
       >
         {placeholder && <option value="">{placeholder}</option>}
-        {finalOptions &&
-          finalOptions.map((option, i) => (
-            <option key={i} value={option.value}>
-              {option.label}
-            </option>
-          ))}
+        {finalOptions.map((option, i) => (
+          <option key={i} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
     </div>
   );

@@ -1,7 +1,6 @@
 import { createContext } from 'react';
 
-import type { BaseInternalProps } from '../types/ElementTypes';
-import type { ComponentDefinition, PluginBuilder } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, PluginBuilder, BaseInternalProps } from '@plitzi/sdk-shared';
 import type { FC, ReactElement, ReactNode } from 'react';
 
 export type ComponentOrigin = 'local' | 'local-custom' | 'remote';

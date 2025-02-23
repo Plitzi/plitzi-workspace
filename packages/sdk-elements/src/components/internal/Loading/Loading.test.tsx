@@ -1,12 +1,13 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+// jest.mock('plitziSdkFederation/usePlitziServiceContext');
 
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+// Relatives
 import Loading from './Loading';
 
-jest.mock('plitziSdkFederation/usePlitziServiceContext');
-
-describe('Loading', () => {
-  it('should render successfully', () => {
+describe('Loading Tests', () => {
+  it('Render Component', () => {
     const { baseElement } = render(<Loading />);
 
     expect(baseElement).toBeTruthy();

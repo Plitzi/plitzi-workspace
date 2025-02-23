@@ -10,7 +10,7 @@ import withElement from './hocs/withElement';
 import useDynamicScript from './hooks/useDynamicScript';
 
 import type { ComponentContextValue, ComponentPlugin } from '../Component/ComponentContext';
-import type { BaseInternalProps } from '../types/ElementTypes';
+import type { BaseInternalProps } from '@plitzi/sdk-shared';
 
 function loadComponent(
   url: string,

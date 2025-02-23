@@ -11,19 +11,19 @@ import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
 import type { ComponentPlugin } from '../../../Component/ComponentContext';
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
-  ref: RefObject<HTMLElement>;
-  className: string;
-  internalProps: InternalProps;
-  renderType: string;
-  settings: string;
-  isPlugin: boolean;
-  pluginScope: string;
-  assets: string;
-  scriptUrl: string;
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  internalProps?: InternalProps;
+  renderType?: string;
+  settings?: string;
+  isPlugin?: boolean;
+  pluginScope?: string;
+  assets?: string;
+  scriptUrl?: string;
 };
 
 const Custom = ({

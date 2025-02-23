@@ -1,31 +1,38 @@
-import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
+import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../../../Element/RootElement';
 import ListControlledItem from './ListControlledItem';
+import RootElement from '../../../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- *   items: any[];
- * }} props
- * @returns {React.ReactElement}
- */
-const ListControlled = props => {
-  const { ref, className = '', internalProps = emptyObject, children, items = [] } = props;
+import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
+
+export type ListControlledProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+  children: ReactNode;
+  items: object[];
+};
+
+const ListControlled = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  children,
+  items = []
+}: ListControlledProps) => {
   const { id } = internalProps;
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
   const finalItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;
@@ -35,7 +42,7 @@ const ListControlled = props => {
   }, [items]);
 
   const sourceFields = useCallback(
-    async () =>
+    () =>
       getPathsFromObeject({ item: get(finalItems, '0', {}), index: '0' }).reduce(
         (acum, path) => [...acum, { path, name: path }],
         []
@@ -46,13 +53,14 @@ const ListControlled = props => {
   const listContextValue = useMemo(() => ({ items: finalItems }), [finalItems]);
 
   const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `List - ${id}`),
-    [id, internalProps?.definition?.label]
+    () => get(internalProps, 'definition.label', `List - ${id}`) as string,
+    [id, internalProps]
   );
 
   const [ListContext, listContextId] = useDataSource({
     id,
     source: `list_${id}`,
+    mode: 'write',
     name: sourceName,
     fields: sourceFields
   });
@@ -79,7 +87,6 @@ const ListControlled = props => {
             <ListControlledItem
               key={i}
               itemCount={i + 1}
-              parentId={id}
               isTemplate={i !== 0 && !previewMode}
               record={item}
               listContextId={listContextId}

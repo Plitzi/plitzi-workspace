@@ -128,6 +128,11 @@ export default defineConfig(({ mode, command, ...args }) => {
         include: ['src'],
         exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
       },
+      server: {
+        deps: {
+          inline: ['@plitzi/plitzi-ui']
+        }
+      },
       reporters: ['default']
     }
   };

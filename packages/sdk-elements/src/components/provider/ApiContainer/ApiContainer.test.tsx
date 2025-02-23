@@ -1,12 +1,13 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+// jest.mock('plitziSdkFederation/usePlitziServiceContext');
 
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+// Relatives
 import ApiContainer from './ApiContainer';
 
-jest.mock('plitziSdkFederation/usePlitziServiceContext');
-
-describe('ApiContainer', () => {
-  it('should render successfully', () => {
+describe('ApiContainer Tests', () => {
+  it('Render Component', () => {
     const { baseElement } = render(<ApiContainer />);
 
     expect(baseElement).toBeTruthy();

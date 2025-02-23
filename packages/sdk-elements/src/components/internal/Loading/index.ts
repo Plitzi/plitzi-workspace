@@ -1,45 +1,46 @@
-import Loading from './Loading';
+import BaseLoading from './Loading';
 
-Loading.content = {
-  attributes: {},
-  definition: {
-    label: 'Loading',
-    type: 'loading',
-    description: '',
-    bindings: {},
-    styleSelectors: {
-      base: ''
+const Loading = Object.assign(BaseLoading, {
+  type: 'loading',
+  content: {
+    attributes: {},
+    definition: {
+      label: 'Loading',
+      type: 'loading',
+      description: '',
+      bindings: {},
+      styleSelectors: {
+        base: ''
+      },
+      initialState: {
+        visibility: true
+      }
     },
-    initialState: {
-      visibility: true
-    }
-  },
-  builder: {
-    canDelete: true,
-    canSelect: true,
-    canDragDrop: false,
-    canMove: true,
-    canTemplate: true,
-    itemsAllowed: [],
-    itemsNotAllowed: []
-  },
-  market: {
-    category: 'internal',
-    owner: 'Plitzi',
-    verified: true,
-    license: 'MIT',
-    website: 'https://plitzi.com',
-    backgroundColor: '#4422ee',
-    icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
-  },
-  defaultStyle: {
-    name: 'Loading',
-    displayMode: 'desktop',
-    style: {}
-  },
-  settings: {}
-};
-
-Loading.type = 'loading';
+    builder: {
+      canDelete: true,
+      canSelect: true,
+      canDragDrop: false,
+      canMove: true,
+      canTemplate: true,
+      itemsAllowed: [],
+      itemsNotAllowed: []
+    },
+    market: {
+      category: 'internal',
+      owner: 'Plitzi',
+      verified: true,
+      license: 'MIT',
+      website: 'https://plitzi.com',
+      backgroundColor: '#4422ee',
+      icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
+    },
+    defaultStyle: {
+      name: 'Loading',
+      displayMode: 'desktop',
+      style: {}
+    },
+    settings: {}
+  }
+});
 
 export default Loading;

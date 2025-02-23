@@ -9,20 +9,20 @@ import ComponentContext from '../../../Component/ComponentContext';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
-  ref: RefObject<HTMLElement>;
-  seoEnabled: boolean;
-  seoPageTitle: string;
-  seoPageDescription: string;
-  className: string;
-  layout: string;
-  layoutContainer: string;
-  internalProps: InternalProps;
-  children: ReactNode;
+  ref?: RefObject<HTMLElement>;
+  seoEnabled?: boolean;
+  seoPageTitle?: string;
+  seoPageDescription?: string;
+  className?: string;
+  layout?: string;
+  layoutContainer?: string;
+  internalProps?: InternalProps;
+  children?: ReactNode;
 };
 
 const Page = ({

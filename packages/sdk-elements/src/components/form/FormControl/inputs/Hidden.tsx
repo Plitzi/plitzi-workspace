@@ -1,29 +1,24 @@
-import React from 'react';
 import classNames from 'classnames';
 
-/**
- * @param {{
- *   className?: string;
- *   id?: string;
- *   name?: string;
- *   value?: string;
- *   required?: boolean;
- *   disabled?: boolean;
- *   previewMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const Hidden = props => {
-  const {
-    className = '',
-    id = '',
-    name = '',
-    value = '',
-    required = true,
-    disabled = false,
-    previewMode = true
-  } = props;
+export type HiddenProps = {
+  className?: string;
+  id?: string;
+  name?: string;
+  value?: string;
+  required?: boolean;
+  disabled?: boolean;
+  previewMode?: boolean;
+};
 
+const Hidden = ({
+  className = '',
+  id = '',
+  name = '',
+  value = '',
+  required = true,
+  disabled = false,
+  previewMode = true
+}: HiddenProps) => {
   return (
     <div className={classNames('form-control__input-hidden-container', className)}>
       {previewMode && (

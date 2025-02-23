@@ -1,9 +1,7 @@
-
-import omit from 'lodash/omit';
 import FormIcon from '@plitzi/plitzi-ui/icons/Form';
+import omit from 'lodash/omit';
 
-
-import FormControl from './FormControl';
+import BaseFormControl from './FormControl';
 
 const defaultInputStyle = {
   width: '100%',
@@ -53,150 +51,151 @@ const defaultErrorStyle = {
   'margin-top': '4px'
 };
 
-FormControl.content = {
-  attributes: {
-    subType: 'text',
-    name: '',
-    label: 'Label',
-    placeholder: '',
-    defaultValue: '',
-    autoComplete: true,
-    disabled: false,
-    options: [],
-    required: true,
-    readOnly: false
-  },
-  definition: {
-    label: 'Form Control',
-    type: 'formControl',
-    description: '',
-    bindings: {},
-    styleSelectors: {
-      base: '',
-      label: '',
-      input: '',
-      error: ''
+const FormControl = Object.assign(BaseFormControl, {
+  type: 'formControl',
+  content: {
+    attributes: {
+      subType: 'text',
+      name: '',
+      label: 'Label',
+      placeholder: '',
+      defaultValue: '',
+      autoComplete: true,
+      disabled: false,
+      options: [],
+      required: true,
+      readOnly: false
     },
-    initialState: {
-      visibility: true
-    }
-  },
-  builder: {
-    canDelete: true,
-    canSelect: true,
-    canDragDrop: true,
-    canMove: true,
-    canTemplate: false,
-    itemsAllowed: [],
-    itemsNotAllowed: []
-  },
-  market: {
-    category: 'form',
-    owner: 'Plitzi',
-    verified: true,
-    license: 'MIT',
-    website: 'https://plitzi.com',
-    backgroundColor: '#4422ee',
-    icon: <FormIcon />
-  },
-  defaultStyle: {
-    name: 'Form Control',
-    displayMode: 'desktop',
-    style: {},
-    subTypes: {
-      hidden: {
-        name: 'Form Control Hidden',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: {},
-          label: defaultLabelStyle,
-          error: defaultErrorStyle
-        }
+    definition: {
+      label: 'Form Control',
+      type: 'formControl',
+      description: '',
+      bindings: {},
+      styleSelectors: {
+        base: '',
+        label: '',
+        input: '',
+        error: ''
       },
-      text: {
-        name: 'Form Control Text',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: defaultInputStyle,
-          label: defaultLabelStyle,
-          error: defaultErrorStyle
-        }
-      },
-      password: {
-        name: 'Form Control Password',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: defaultInputStyle,
-          label: defaultLabelStyle,
-          error: defaultErrorStyle
-        }
-      },
-      number: {
-        name: 'Form Control Number',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: defaultInputStyle,
-          label: defaultLabelStyle,
-          error: defaultErrorStyle
-        }
-      },
-      email: {
-        name: 'Form Control Email',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: defaultInputStyle,
-          label: defaultLabelStyle,
-          error: defaultErrorStyle
-        }
-      },
-      textarea: {
-        name: 'Form Control Textarea',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: defaultInputStyle,
-          label: defaultLabelStyle,
-          error: defaultErrorStyle
-        }
-      },
-      checkbox: {
-        name: 'Form Control Checkbox',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: {
-            'margin-top': '0px',
-            'margin-bottom': '0px',
-            'margin-left': '0px',
-            'margin-right': '4px'
-          },
-          label: omit(defaultLabelStyle, ['margin-bottom']),
-          error: defaultErrorStyle
-        }
-      },
-      select: {
-        name: 'Form Control Select',
-        displayMode: 'desktop',
-        style: {
-          base: {},
-          input: {
-            ...defaultInputStyle,
-            cursor: 'pointer'
-          },
-          label: defaultLabelStyle,
-          error: defaultErrorStyle
+      initialState: {
+        visibility: true
+      }
+    },
+    builder: {
+      canDelete: true,
+      canSelect: true,
+      canDragDrop: true,
+      canMove: true,
+      canTemplate: false,
+      itemsAllowed: [],
+      itemsNotAllowed: []
+    },
+    market: {
+      category: 'form',
+      owner: 'Plitzi',
+      verified: true,
+      license: 'MIT',
+      website: 'https://plitzi.com',
+      backgroundColor: '#4422ee',
+      icon: <FormIcon />
+    },
+    defaultStyle: {
+      name: 'Form Control',
+      displayMode: 'desktop',
+      style: {},
+      subTypes: {
+        hidden: {
+          name: 'Form Control Hidden',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: {},
+            label: defaultLabelStyle,
+            error: defaultErrorStyle
+          }
+        },
+        text: {
+          name: 'Form Control Text',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: defaultInputStyle,
+            label: defaultLabelStyle,
+            error: defaultErrorStyle
+          }
+        },
+        password: {
+          name: 'Form Control Password',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: defaultInputStyle,
+            label: defaultLabelStyle,
+            error: defaultErrorStyle
+          }
+        },
+        number: {
+          name: 'Form Control Number',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: defaultInputStyle,
+            label: defaultLabelStyle,
+            error: defaultErrorStyle
+          }
+        },
+        email: {
+          name: 'Form Control Email',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: defaultInputStyle,
+            label: defaultLabelStyle,
+            error: defaultErrorStyle
+          }
+        },
+        textarea: {
+          name: 'Form Control Textarea',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: defaultInputStyle,
+            label: defaultLabelStyle,
+            error: defaultErrorStyle
+          }
+        },
+        checkbox: {
+          name: 'Form Control Checkbox',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: {
+              'margin-top': '0px',
+              'margin-bottom': '0px',
+              'margin-left': '0px',
+              'margin-right': '4px'
+            },
+            label: omit(defaultLabelStyle, ['margin-bottom']),
+            error: defaultErrorStyle
+          }
+        },
+        select: {
+          name: 'Form Control Select',
+          displayMode: 'desktop',
+          style: {
+            base: {},
+            input: {
+              ...defaultInputStyle,
+              cursor: 'pointer'
+            },
+            label: defaultLabelStyle,
+            error: defaultErrorStyle
+          }
         }
       }
-    }
-  },
-  settings: {}
-};
-
-FormControl.type = 'formControl';
+    },
+    settings: {}
+  }
+});
 
 export default FormControl;

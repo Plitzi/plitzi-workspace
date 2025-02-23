@@ -3365,6 +3365,12 @@ __metadata:
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
     react-hook-form: "npm:^7.54.2"
+    react-markdown: "npm:^9.0.1"
+    react-syntax-highlighter: "npm:^15.6.1"
+    react-toastify: "npm:^10.0.6"
+    rehype-raw: "npm:^7.0.0"
+    remark-gfm: "npm:^4.0.0"
+    tinycolor2: "npm:^1.6.0"
     zod: "npm:^3.24.2"
   languageName: node
   linkType: soft
@@ -3457,6 +3463,7 @@ __metadata:
     immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"
     vite: "npm:^6.1.0"
+    vitest: "npm:^3.0.5"
   languageName: unknown
   linkType: soft
 

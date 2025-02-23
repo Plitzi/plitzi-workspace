@@ -1,22 +1,33 @@
-import React from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
+import React from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../../Element/RootElement';
 import withElement from '../../../../Element/hocs/withElement';
+import RootElement from '../../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const TabContainerHeader = props => {
-  const { ref, className = '', internalProps = emptyObject, children } = props;
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react';
+
+type InternalPropsSubProps = {
+  tabSelected?: number;
+  onSelect?: Dispatch<SetStateAction<number>>;
+};
+
+export type TabContainerHeaderProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps<InternalPropsSubProps>;
+  children: ReactNode;
+};
+
+const TabContainerHeader = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
+  children
+}: TabContainerHeaderProps) => {
   const { onSelect, tabSelected } = internalProps;
 
   return (

@@ -1,12 +1,13 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+// jest.mock('plitziSdkFederation/usePlitziServiceContext');
 
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+// Relatives
 import LayoutContainer from './LayoutContainer';
 
-jest.mock('plitziSdkFederation/usePlitziServiceContext');
-
-describe('LayoutContainer', () => {
-  it('should render successfully', () => {
+describe('LayoutContainer Tests', () => {
+  it('Render Component', () => {
     const { baseElement } = render(<LayoutContainer />);
 
     expect(baseElement).toBeTruthy();

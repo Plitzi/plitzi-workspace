@@ -5,12 +5,12 @@ import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LabelProps = {
   ref: RefObject<HTMLLabelElement>;
+  className?: string;
   children: ReactNode;
   targetInput: string;
   type: string;
-  previewMode: boolean;
+  previewMode?: boolean;
   required: boolean;
-  className: string;
 };
 
 const Label = ({

@@ -10,17 +10,17 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
-  ref: RefObject<HTMLElement>;
-  internalProps: InternalProps;
+  ref?: RefObject<HTMLElement>;
+  internalProps?: InternalProps;
   children?: ReactNode;
-  className: string;
-  href: string;
-  target: 'self' | 'blank' | 'parent' | 'top';
-  mode: 'page' | 'internal' | 'external';
+  className?: string;
+  href?: string;
+  target?: 'self' | 'blank' | 'parent' | 'top';
+  mode?: 'page' | 'internal' | 'external';
 };
 
 const Link = ({

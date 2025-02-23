@@ -7,16 +7,16 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type ImageProps = {
-  ref: RefObject<HTMLElement>;
-  internalProps: InternalProps;
-  className: string;
-  src: string;
-  alt: string;
-  loadMode: 'eager' | 'lazy';
+  ref?: RefObject<HTMLElement>;
+  internalProps?: InternalProps;
+  className?: string;
+  src?: string;
+  alt?: string;
+  loadMode?: 'eager' | 'lazy';
 };
 
 const Image = ({

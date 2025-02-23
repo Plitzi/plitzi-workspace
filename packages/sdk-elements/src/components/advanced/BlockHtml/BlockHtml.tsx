@@ -8,7 +8,7 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockHtmlProps = {

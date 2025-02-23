@@ -1,38 +1,38 @@
-import { useMemo, useEffect, useState, use, useCallback } from 'react';
+import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import isEmpty from 'lodash/isEmpty';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderFormatter.mjs';
+import { useMemo, useEffect, useState, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-/**
- * @param {{
- *   source: string;
- *   record: string;
- *   query: string;
- *   limit: number;
- *   appendResults: boolean;
- *   singleRecord: boolean;
- *   previewMode: boolean;
- * }} props
- * @returns {{
- *   loading: boolean;
- *   collection: object;
- *   hasNextPage: boolean;
- *   handleNextPage: () => void;
- *   fetch: () => void;
- * }}
- */
-const useCollectionContext = (props = {}) => {
-  const {
+export type UseCollectionContextProps = {
+  source: string;
+  record: string;
+  query: string;
+  limit: string;
+  appendResults: boolean;
+  singleRecord: boolean;
+  previewMode?: boolean;
+};
+
+export type UseCollectionContextResult = {
+  loading: boolean;
+  collection?: object;
+  hasNextPage: boolean;
+  handleNextPage: () => void;
+  fetch: () => void;
+};
+const useCollectionContext = (
+  {
     source,
     record,
     query = emptyObject,
-    limit = 1,
+    limit = '1',
     appendResults = false,
     singleRecord = false,
     previewMode = true
-  } = props;
+  }: UseCollectionContextProps = {} as UseCollectionContextProps
+): UseCollectionContextResult => {
   const plitziContext = usePlitziServiceContext();
   const [collection, setCollection] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ const useCollectionContext = (props = {}) => {
 
     try {
       return QueryBuilderFormatter(query, 'mongodb', false, { queryParams, routeParams });
-    } catch (e) {
+    } catch {
       // nothing to do
     }
 
@@ -77,7 +77,7 @@ const useCollectionContext = (props = {}) => {
     if (collectionInternal?.records) {
       populateRecords(collectionInternal, collectionInternal.records);
     }
-  }, [queryCompiled, source]);
+  }, [fetchCollection, populateRecords, queryCompiled, source]);
 
   const fetchRecordsInternal = useCallback(async () => {
     if (!collection || !source) {
@@ -97,7 +97,7 @@ const useCollectionContext = (props = {}) => {
     if (result) {
       populateRecords(collection, result);
     }
-  }, [source, routeParams, queryParams, appendResults, limit, queryCompiled]);
+  }, [collection, source, fetchRecords, queryCompiled, appendResults, cursor, limit, populateRecords]);
 
   const handleNextPage = useCallback(async () => {
     if (!hasNextPage) {
@@ -120,7 +120,7 @@ const useCollectionContext = (props = {}) => {
 
   const valueMemo = useMemo(
     () => ({ loading, collection, hasNextPage, handleNextPage, fetch: fetchCollectionInternal }),
-    [plitziContext, record, loading, collection, hasNextPage, handleNextPage, fetchCollectionInternal]
+    [loading, collection, hasNextPage, handleNextPage, fetchCollectionInternal]
   );
 
   return valueMemo;

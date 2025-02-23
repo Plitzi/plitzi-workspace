@@ -6,13 +6,13 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ContainerProps = {
-  ref: RefObject<HTMLElement>;
-  className: string;
-  subType:
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  subType?:
     | 'div'
     | 'header'
     | 'footer'
@@ -26,8 +26,8 @@ export type ContainerProps = {
     | 'dl'
     | 'dt'
     | 'dd';
-  internalProps: InternalProps;
-  children: ReactNode;
+  internalProps?: InternalProps;
+  children?: ReactNode;
 };
 
 const Container = ({

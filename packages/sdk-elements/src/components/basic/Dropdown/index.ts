@@ -1,74 +1,75 @@
-import Dropdown from './Dropdown';
-import DropdownPopup from './DropdownPopup/index';
+import BaseDropdown from './Dropdown';
+import DropdownPopup from './DropdownPopup';
 
-Dropdown.content = {
-  attributes: {
-    popupPlacement: 'bottom',
-    openPopup: false,
-    backgroundDisabled: false,
-    closeOnClickBackground: true,
-    closeOnClickPopup: true,
-    containerTopOffset: 5,
-    containerLeftOffset: 5,
-    disabled: false
-  },
-  definition: {
-    label: 'Dropdown',
-    type: 'dropdown',
-    items: [],
-    bindings: {},
-    styleSelectors: {
-      base: '',
-      backgroundContainer: ''
+const Dropdown = Object.assign(BaseDropdown, {
+  type: 'dropdown',
+  content: {
+    attributes: {
+      popupPlacement: 'bottom',
+      openPopup: false,
+      backgroundDisabled: false,
+      closeOnClickBackground: true,
+      closeOnClickPopup: true,
+      containerTopOffset: 5,
+      containerLeftOffset: 5,
+      disabled: false
     },
-    initialState: {
-      visibility: true
-    }
-  },
-  builder: {
-    canDelete: true,
-    canSelect: true,
-    canDragDrop: true,
-    canMove: true,
-    canTemplate: true,
-    itemsAllowed: [],
-    itemsNotAllowed: []
-  },
-  market: {
-    category: 'basic',
-    owner: 'Plitzi',
-    verified: true,
-    license: 'MIT',
-    website: 'https://plitzi.com',
-    backgroundColor: '#4422ee',
-    icon: 'fa-solid fa-angle-down'
-  },
-  defaultStyle: {
-    name: 'Dropdown',
-    displayMode: 'desktop',
-    style: {
-      base: {
-        'min-height': '50px',
-        'min-width': '50px',
-        cursor: 'pointer',
-        'user-select': 'none'
+    definition: {
+      label: 'Dropdown',
+      type: 'dropdown',
+      items: [],
+      bindings: {},
+      styleSelectors: {
+        base: '',
+        backgroundContainer: ''
       },
-      backgroundContainer: {
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        position: 'fixed',
-        cursor: 'default',
-        'z-index': 50
+      initialState: {
+        visibility: true
       }
-    }
+    },
+    builder: {
+      canDelete: true,
+      canSelect: true,
+      canDragDrop: true,
+      canMove: true,
+      canTemplate: true,
+      itemsAllowed: [],
+      itemsNotAllowed: []
+    },
+    market: {
+      category: 'basic',
+      owner: 'Plitzi',
+      verified: true,
+      license: 'MIT',
+      website: 'https://plitzi.com',
+      backgroundColor: '#4422ee',
+      icon: 'fa-solid fa-angle-down'
+    },
+    defaultStyle: {
+      name: 'Dropdown',
+      displayMode: 'desktop',
+      style: {
+        base: {
+          'min-height': '50px',
+          'min-width': '50px',
+          cursor: 'pointer',
+          'user-select': 'none'
+        },
+        backgroundContainer: {
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          position: 'fixed',
+          cursor: 'default',
+          'z-index': 50
+        }
+      }
+    },
+    settings: {}
   },
-  settings: {}
-};
-
-Dropdown.initialItems = ['dropdownPopup'];
-Dropdown.plugins = { dropdownPopup: DropdownPopup };
-Dropdown.type = 'dropdown';
+  initialItems: ['dropdownPopup'],
+  plugins: { dropdownPopup: DropdownPopup }
+});
 
 export default Dropdown;

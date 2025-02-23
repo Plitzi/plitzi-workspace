@@ -1,22 +1,35 @@
-import React, { useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
+import { useMemo } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../../Element/RootElement';
 import withElement from '../../../../Element/hocs/withElement';
+import RootElement from '../../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   internalProps: object;
- *   className: string;
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const DropdownPopup = props => {
-  const { ref, className = '', internalProps = emptyObject, children } = props;
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { RefObject, ReactNode, CSSProperties, MouseEvent } from 'react';
+
+type InternalPropsSubProps = {
+  onClick: (e: MouseEvent) => void;
+  openPopup?: boolean;
+  parameters?: CSSProperties;
+  popupRef?: RefObject<unknown>;
+};
+
+export type DropdownPopupProps = {
+  ref?: RefObject<HTMLElement>;
+  internalProps?: InternalProps<InternalPropsSubProps>;
+  className?: string;
+  children?: ReactNode;
+};
+
+const DropdownPopup = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
+  children
+}: DropdownPopupProps) => {
   const { onClick, openPopup, parameters, popupRef } = internalProps;
   const refProxy = useMemo(
     () =>

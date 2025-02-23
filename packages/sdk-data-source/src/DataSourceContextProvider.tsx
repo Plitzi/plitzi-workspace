@@ -59,7 +59,7 @@ const DataSourceContextProvider = ({ children, environment }: DataSourceContextP
   const handleGetSources = useCallback(
     (id?: string) => {
       if (id) {
-        return get(sourcesRef.current, id);
+        return get(sourcesRef.current, id) as Source | undefined;
       }
 
       return sourcesRef.current;

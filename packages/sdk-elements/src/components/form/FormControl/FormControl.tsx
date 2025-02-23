@@ -1,77 +1,69 @@
-import React, { use, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-hooks/rules-of-hooks */
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import { use, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
-import Input from './inputs/Input';
-import Checkbox from './inputs/Checkbox';
 import Label from './components/Label';
+import withFieldValue from './hocs/withFieldValue';
+import Checkbox from './inputs/Checkbox';
+import Hidden from './inputs/Hidden';
+import Input from './inputs/Input';
 import Select from './inputs/Select';
 import Textarea from './inputs/Textarea';
-import Hidden from './inputs/Hidden';
-import withFieldValue from './hocs/withFieldValue';
+import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   subType:
- *     | 'text'
- *     | 'number'
- *     | 'email'
- *     | 'password'
- *     | 'time'
- *     | 'checkbox'
- *     | 'switch'
- *     | 'select'
- *     | 'textarea'
- *     | 'hidden';
- *   name: string;
- *   label: string;
- *   placeholder: string;
- *   autoComplete: boolean;
- *   disabled: boolean;
- *   options: { label: string; value: string }[];
- *   required: boolean;
- *   readOnly: boolean;
- *   value: string;
- *   error: string;
- *   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
- *   handleValidate: (e: React.ChangeEvent<HTMLInputElement>) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const FormControl = props => {
-  const {
-    ref,
-    className = '',
-    internalProps = emptyObject,
-    subType = 'text',
-    name = '',
-    label = 'Label',
-    placeholder = '',
-    autoComplete = true,
-    disabled = false,
-    options = [],
-    required = true,
-    readOnly = false,
-    // HOC
-    value = '', // HOC Managed
-    error = '', // HOC Managed
-    handleChange = noop,
-    handleValidate = noop
-  } = props;
+import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ChangeEvent, RefObject } from 'react';
+
+export type FormControlProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+  subType: 'text' | 'number' | 'email' | 'password' | 'time' | 'checkbox' | 'switch' | 'select' | 'textarea' | 'hidden';
+  name: string;
+  label: string;
+  placeholder: string;
+  autoComplete: boolean;
+  disabled: boolean;
+  options: { label: string; value: string }[];
+  required: boolean;
+  readOnly: boolean;
+  value: string;
+  error: string;
+  handleChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleValidate: () => void;
+};
+
+const FormControl = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  subType = 'text',
+  name = '',
+  label = 'Label',
+  placeholder = '',
+  autoComplete = true,
+  disabled = false,
+  options = [],
+  required = true,
+  readOnly = false,
+  // HOC
+  value = '', // HOC Managed
+  error = '', // HOC Managed
+  handleChange,
+  handleValidate
+}: FormControlProps) => {
   const { id, rootId, styleSelectors } = internalProps;
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
   const { form } = useDataSource({ id, mode: 'read' });
   if (!form && !previewMode) {
     return (
@@ -172,10 +164,8 @@ const FormControl = props => {
           id={`${rootId}_${id}`}
           name={name}
           value={value}
-          type={subType}
           className={styleSelectors.input}
           placeholder={placeholder}
-          autoComplete={autoComplete}
           required={required}
           disabled={disabled}
           onChange={handleChange}
@@ -196,7 +186,7 @@ const FormControl = props => {
           disabled={disabled}
         />
       )} */}
-      {subType && ['text', 'number', 'email', 'password', 'time'].includes(subType) && (
+      {['text', 'number', 'email', 'password', 'time'].includes(subType) && (
         <Input
           id={`${rootId}_${id}`}
           name={name}
@@ -208,7 +198,6 @@ const FormControl = props => {
           required={required}
           disabled={disabled}
           readOnly={readOnly || !previewMode}
-          previewMode={previewMode}
           onChange={handleChange}
           onValidate={handleValidate}
         />

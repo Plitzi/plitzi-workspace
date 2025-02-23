@@ -1,23 +1,27 @@
-import React from 'react';
 import classNames from 'classnames';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import RootElement from '../../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   subType: 'ul' | 'ol';
- *   internalProps: object;
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const ListBasic = props => {
-  const { ref, className = '', subType = 'ul', internalProps = emptyObject, children } = props;
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
 
+export type ListBasicProps = {
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  subType?: 'ul' | 'ol';
+  internalProps?: InternalProps;
+  children?: ReactNode;
+};
+
+const ListBasic = ({
+  ref,
+  className = '',
+  subType = 'ul',
+  internalProps = emptyObject as InternalProps,
+  children
+}: ListBasicProps) => {
   return (
     <RootElement
       ref={ref}

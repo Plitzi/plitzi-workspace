@@ -5,7 +5,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext'
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { Context, ReactNode } from 'react';
 
-export type ReplicaProviderProps = { children?: ReactNode; id: string };
+export type ReplicaProviderProps = { children?: ReactNode };
 
 const ReplicaProvider = ({ children }: ReplicaProviderProps) => {
   const {

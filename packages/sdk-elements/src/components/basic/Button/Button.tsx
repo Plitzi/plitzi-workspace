@@ -9,18 +9,18 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ButtonProps = {
-  ref: RefObject<HTMLElement>;
-  className: string;
-  internalProps: InternalProps;
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  internalProps?: InternalProps;
   children?: ReactNode;
-  contentPlacement: 'before' | 'after';
+  contentPlacement?: 'before' | 'after';
   content?: string;
-  subType: 'button' | 'submit' | 'reset';
-  disabled: boolean;
+  subType?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 };
 
 const Button = ({
@@ -41,7 +41,7 @@ const Button = ({
       return content;
     }
 
-    return get(internalProps, 'definition.label', '');
+    return get(internalProps, 'definition.label', '') as string;
   }, [content, internalProps]);
 
   return (

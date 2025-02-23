@@ -9,15 +9,15 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type HeadingProps = {
-  ref: RefObject<HTMLElement>;
-  internalProps: InternalProps;
-  className: string;
-  content: string;
-  subType: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  ref?: RefObject<HTMLElement>;
+  internalProps?: InternalProps;
+  className?: string;
+  content?: string;
+  subType?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 };
 
 const Heading = ({

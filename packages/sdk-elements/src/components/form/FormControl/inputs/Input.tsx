@@ -1,49 +1,45 @@
-import React, { useCallback, useRef, useState } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import { useCallback, useRef, useState } from 'react';
 
-/**
- * @param {{
- *   className?: string;
- *   id?: string;
- *   name?: string;
- *   placeholder?: string;
- *   value?: string;
- *   type?: string;
- *   autoComplete?: boolean;
- *   required?: boolean;
- *   disabled?: boolean;
- *   readOnly?: boolean;
- *   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
- *   onValidate?: () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Input = props => {
-  const {
-    className = '',
-    id = '',
-    name = '',
-    placeholder = '',
-    value = '',
-    type = 'text',
-    autoComplete = false,
-    required = true,
-    disabled = false,
-    readOnly = false,
-    onChange = noop,
-    onValidate = noop
-  } = props;
+export type InputProps = {
+  className?: string;
+  id?: string;
+  name?: string;
+  placeholder?: string;
+  value?: string;
+  type?: string;
+  autoComplete?: boolean;
+  required?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onValidate?: () => void;
+};
+
+const Input = ({
+  className = '',
+  id = '',
+  name = '',
+  placeholder = '',
+  value = '',
+  type = 'text',
+  autoComplete = false,
+  required = true,
+  disabled = false,
+  readOnly = false,
+  onChange,
+  onValidate
+}: InputProps) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const inputRef = useRef();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleClickShowPassword = useCallback(() => setIsPasswordVisible(state => !state), [setIsPasswordVisible]);
 
   const handleClickContainer = useCallback(() => {
-    inputRef.current.focus();
+    inputRef.current?.focus();
   }, [inputRef]);
 
-  const handleBlur = useCallback(() => onValidate(), [onValidate]);
+  const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
 
   return (
     <div className={classNames('form-control__input-container', className)} onClick={handleClickContainer}>

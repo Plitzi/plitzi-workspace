@@ -1,12 +1,13 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+// jest.mock('plitziSdkFederation/usePlitziServiceContext');
 
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+// Relatives
 import Heading from './Heading';
 
-jest.mock('plitziSdkFederation/usePlitziServiceContext');
-
-describe('Heading', () => {
-  it('should render successfully', () => {
+describe('Heading Tests', () => {
+  it('Render Component', () => {
     const { baseElement } = render(<Heading />);
 
     expect(baseElement).toBeTruthy();

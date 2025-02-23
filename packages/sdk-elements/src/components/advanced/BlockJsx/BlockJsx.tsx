@@ -14,16 +14,16 @@ import JsxManager from '../../../Element/JsxManager';
 import RootElement from '../../../Element/RootElement';
 
 import type { ComponentPlugin } from '../../../Component/ComponentContext';
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {
-  ref: RefObject<HTMLElement>;
-  internalProps: InternalProps;
-  className: string;
-  props: string;
-  contentCache: string;
-  allowEmptyRender: boolean;
+  ref?: RefObject<HTMLElement>;
+  internalProps?: InternalProps;
+  className?: string;
+  props?: string;
+  contentCache?: string;
+  allowEmptyRender?: boolean;
 };
 
 type ComponentPluginJsx = ComponentPlugin<{

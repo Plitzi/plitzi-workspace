@@ -10,8 +10,7 @@ import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';
 
 import type { ComponentPlugin } from '../Component/ComponentContext';
-import type { BaseInternalProps } from '../types/ElementTypes';
-import type { Plugin } from '@plitzi/sdk-shared';
+import type { Plugin, BaseInternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type ElementLayoutType = 'layout' | 'segment' | 'element' | 'reference';

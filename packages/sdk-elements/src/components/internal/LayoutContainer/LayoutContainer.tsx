@@ -6,15 +6,15 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
-import type { RefObject } from 'react';
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
 
 export type LayoutContainerProps = {
-  ref: RefObject<HTMLElement>;
-  className: string;
-  internalProps: InternalProps;
-  children: React.ReactNode;
-  subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  internalProps?: InternalProps;
+  children?: ReactNode;
+  subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
 };
 
 const LayoutContainer = ({

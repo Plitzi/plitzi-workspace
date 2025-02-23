@@ -1,36 +1,32 @@
-import React, { useCallback } from 'react';
-
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import { useCallback } from 'react';
 
-/**
- * @param {{
- *   className?: string;
- *   id?: string;
- *   name?: string;
- *   placeholder?: string;
- *   value?: string;
- *   required?: boolean;
- *   disabled?: boolean;
- *   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
- *   onValidate?: () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Checkbox = props => {
-  const {
-    className = '',
-    id = '',
-    name = '',
-    placeholder = '',
-    value = '',
-    required = true,
-    disabled = false,
-    onChange = noop,
-    onValidate = noop
-  } = props;
+import type { ChangeEvent } from 'react';
 
-  const handleBlur = useCallback(() => onValidate(), [onValidate]);
+export type CheckboxProps = {
+  className?: string;
+  id?: string;
+  name?: string;
+  placeholder?: string;
+  value?: string;
+  required?: boolean;
+  disabled?: boolean;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onValidate?: () => void;
+};
+
+const Checkbox = ({
+  className = '',
+  id = '',
+  name = '',
+  placeholder = '',
+  value = '',
+  required = true,
+  disabled = false,
+  onChange,
+  onValidate
+}: CheckboxProps) => {
+  const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
 
   return (
     <input

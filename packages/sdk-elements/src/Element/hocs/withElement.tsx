@@ -8,13 +8,13 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import useElement from '../hooks/useElement';
 
-import type { InternalProps } from '../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
 export type WithElementProps<T> = {
   plitziJsxSkipHOC?: boolean;
   plitziCustomComponent?: boolean;
-  internalProps: InternalProps;
+  internalProps?: InternalProps;
   className?: string;
   children?: ReactNode;
 } & T;

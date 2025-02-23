@@ -3,8 +3,7 @@ import { isValidElement, useMemo } from 'react';
 
 import PluginManager from '../PluginManager';
 
-import type { InternalProps } from '../../types/ElementTypes';
-import type { Element, Schema, SchemaContextValue } from '@plitzi/sdk-shared';
+import type { Element, Schema, SchemaContextValue, InternalProps } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 const useInternalItems = ({

@@ -1,22 +1,28 @@
-import React, { useState, cloneElement } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
+import React, { useState, cloneElement } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const TabContainer = props => {
-  const { ref, className = '', internalProps = emptyObject, children } = props;
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
+
+export type TabContainerProps = {
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  internalProps?: InternalProps;
+  children?: ReactNode;
+};
+
+const TabContainer = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  children
+}: TabContainerProps) => {
   const [tabSelected, setTabSelected] = useState(0);
 
   return (

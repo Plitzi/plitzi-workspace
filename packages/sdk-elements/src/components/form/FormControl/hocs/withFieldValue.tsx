@@ -5,9 +5,9 @@ import { useCallback, use, useMemo, useEffect } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
 
-import type { InternalProps } from '../../../../types/ElementTypes';
 import type { FieldValue } from '../../Form/Form';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { ChangeEvent, FC, RefObject } from 'react';
 
 export type WithFieldValueProps<T> = {

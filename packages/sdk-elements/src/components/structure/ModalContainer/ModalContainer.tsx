@@ -1,39 +1,46 @@
-import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 import get from 'lodash/get';
+import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
 import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- *   title: string;
- *   autoHideAfterClick: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const ModalContainer = props => {
-  const {
-    ref,
-    className = '',
-    internalProps = emptyObject,
-    children,
-    title = 'Modal Header',
-    autoHideAfterClick = true
-  } = props;
+import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
+
+type InternalPropsSubProps = {
+  setElementState: unknown;
+  styleSelectors: Record<string, string>;
+};
+
+export type ModalContainerProps = {
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  internalProps?: InternalProps<InternalPropsSubProps>;
+  children?: ReactNode;
+  title?: string;
+  autoHideAfterClick?: boolean;
+};
+
+const ModalContainer = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
+  children,
+  title = 'Modal Header',
+  autoHideAfterClick = true
+}: ModalContainerProps) => {
   const { id, setElementState, styleSelectors } = internalProps;
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext);
-  const { useDataSource } = use(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
   const [internalMetadata, setInternalMetadata] = useState({});
 
   const handleOpenModal = useCallback(
@@ -44,7 +51,7 @@ const ModalContainer = props => {
       } else if (typeof metadata === 'string') {
         try {
           setInternalMetadata(JSON.parse(metadata));
-        } catch (error) {
+        } catch {
           setInternalMetadata({ content: metadata });
         }
       } else if (typeof metadata === 'boolean' || typeof metadata === 'number') {
@@ -83,7 +90,7 @@ const ModalContainer = props => {
   );
 
   const interactionCallbacks = useMemo(() => {
-    const label = get(internalProps, 'definition.label', 'Modal');
+    const label = get(internalProps, 'definition.label', 'Modal') as string;
 
     return {
       openModal: {
@@ -94,15 +101,15 @@ const ModalContainer = props => {
       },
       closeModal: { title: `Close ${label}`, callback: handleClickClose, params: {}, preview: {} }
     };
-  }, [handleClickClose, internalProps?.definition?.label]);
+  }, [handleClickClose, handleOpenModal, internalProps]);
 
   useEffect(() => {
-    if (internalProps?.elementState?.visibility !== false) {
+    if (internalProps.elementState?.visibility !== false) {
       interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
     }
-  }, [internalProps?.elementState?.visibility]);
+  }, [id, interactionsManager, internalMetadata, internalProps.elementState?.visibility]);
 
-  const sourceFields = useCallback(async () => {
+  const sourceFields = useCallback(() => {
     if (!internalMetadata || typeof internalMetadata !== 'object') {
       return [];
     }
@@ -117,12 +124,15 @@ const ModalContainer = props => {
     }, []);
   }, [internalMetadata]);
 
-  const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Modal - ${id}`),
-    [id, internalProps?.definition?.label]
-  );
+  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Modal - ${id}`), [id, internalProps]);
 
-  const [ModalContext] = useDataSource({ id, source: `modalContainer_${id}`, name: sourceName, fields: sourceFields });
+  const [ModalContext] = useDataSource({
+    id,
+    source: `modalContainer_${id}`,
+    mode: 'write',
+    name: sourceName,
+    fields: sourceFields
+  });
 
   return (
     <RootElement
@@ -139,7 +149,7 @@ const ModalContainer = props => {
       <div className={classNames('modal-container__root', styleSelectors.rootContainer)}>
         <div className={classNames('modal-container__header', styleSelectors.headerContainer)}>
           <div className={classNames('modal-container__header__title', styleSelectors.headerTitle)}>
-            {title ?? 'Modal Header'}
+            {title ? title : 'Modal Header'}
           </div>
           <i className="fa-solid fa-xmark" title="Close" onClick={handleClickClose} />
         </div>

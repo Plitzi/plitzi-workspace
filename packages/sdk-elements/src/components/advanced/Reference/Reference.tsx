@@ -12,8 +12,7 @@ import PluginManager from '../../../Element/PluginManager';
 import RootElement from '../../../Element/RootElement';
 
 import type { ElementLayoutType } from '../../../Element/PluginManager';
-import type { BaseInternalProps, InternalProps } from '../../../types/ElementTypes';
-import type { Element, Schema, Segment } from '@plitzi/sdk-shared';
+import type { Element, Schema, Segment, InternalProps, BaseInternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ReferenceProps = {

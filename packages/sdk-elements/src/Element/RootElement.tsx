@@ -9,10 +9,9 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import { nativeEventsList } from './helpers/elementUtils';
 
-import type { InternalProps } from '../types/ElementTypes';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback, InternalProps } from '@plitzi/sdk-shared';
 import type { Context, FC, JSX, ReactNode, RefObject } from 'react';
 
 const interactionBasicTriggers: Record<string, Partial<InteractionCallback>> = {

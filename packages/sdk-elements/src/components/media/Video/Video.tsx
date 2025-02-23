@@ -7,18 +7,18 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
+import type { InternalProps } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type VideoProps = {
-  ref: RefObject<HTMLElement>;
-  src: string;
-  autoPlay: boolean;
-  playsInline: boolean;
-  loop: boolean;
-  muted: boolean;
-  className: string;
-  internalProps: InternalProps;
+  ref?: RefObject<HTMLElement>;
+  src?: string;
+  autoPlay?: boolean;
+  playsInline?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+  className?: string;
+  internalProps?: InternalProps;
 };
 
 const Video = ({

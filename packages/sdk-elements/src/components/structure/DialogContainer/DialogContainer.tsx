@@ -9,9 +9,8 @@ import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
-import type { SourceField } from '@plitzi/sdk-shared';
+import type { SourceField, InternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type DialogContainerProps = {

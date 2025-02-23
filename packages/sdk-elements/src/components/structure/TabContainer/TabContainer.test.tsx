@@ -1,12 +1,13 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+// jest.mock('plitziSdkFederation/usePlitziServiceContext');
 
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+// Relatives
 import TabContainer from './TabContainer';
 
-jest.mock('plitziSdkFederation/usePlitziServiceContext');
-
-describe('TabContainer', () => {
-  it('should render successfully', () => {
+describe('TabContainer Tests', () => {
+  it('Render Component', () => {
     const { baseElement } = render(<TabContainer />);
 
     expect(baseElement).toBeTruthy();

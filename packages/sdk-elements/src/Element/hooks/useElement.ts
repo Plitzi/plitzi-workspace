@@ -10,10 +10,9 @@ import useInternalClassName from './useInternalClassName';
 import useInternalItems from './useInternalItems';
 import useInternalProps from './useInternalProps';
 
-import type { InternalProps } from '../../types/ElementTypes';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { EventBridgeCallback, EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
-import type { Schema } from '@plitzi/sdk-shared';
+import type { Schema, InternalProps } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 const useElement = (

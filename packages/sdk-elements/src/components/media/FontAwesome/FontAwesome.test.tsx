@@ -1,14 +1,15 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+// jest.mock('plitziSdkFederation/usePlitziServiceContext');
 
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+// Relatives
 import FontAwesome from './FontAwesome';
 
-jest.mock('plitziSdkFederation/usePlitziServiceContext');
+describe('FontAwesome Tests', () => {
+  it('Render Component', () => {
+    const { baseElement } = render(<FontAwesome />);
 
-describe('FontAwesome', () => {
-  it('should render successfully', () => {
-    const BaseElement = render(<FontAwesome internalProps={{}} />);
-
-    expect(BaseElement).toBeTruthy();
+    expect(baseElement).toBeTruthy();
   });
 });

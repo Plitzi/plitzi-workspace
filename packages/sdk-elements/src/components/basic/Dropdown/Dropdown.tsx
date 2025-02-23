@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 import get from 'lodash/get';
 import { cloneElement, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -8,27 +9,32 @@ import { emptyObject } from '@plitzi/sdk-shared/utils';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '../../../types/ElementTypes';
-import type { KeyboardEvent, MouseEvent, ReactNode, RefObject } from 'react';
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { MouseEvent, ReactNode, RefObject } from 'react';
+
+type InternalPropsSubProps = {
+  setElementState: unknown;
+  styleSelectors: Record<string, string>;
+};
 
 export type DropdownProps = {
-  ref: RefObject<HTMLElement>;
-  internalProps: InternalProps;
+  ref?: RefObject<HTMLElement>;
+  internalProps?: InternalProps<InternalPropsSubProps>;
   children?: ReactNode;
-  className: string;
-  popupPlacement: 'left' | 'right' | 'top' | 'bottom';
-  openPopup: boolean;
-  backgroundDisabled: boolean;
-  closeOnClickBackground: boolean;
-  closeOnClickPopup: boolean;
-  containerTopOffset: number;
-  containerLeftOffset: number;
-  disabled: boolean;
+  className?: string;
+  popupPlacement?: 'left' | 'right' | 'top' | 'bottom';
+  openPopup?: boolean;
+  backgroundDisabled?: boolean;
+  closeOnClickBackground?: boolean;
+  closeOnClickPopup?: boolean;
+  containerTopOffset?: number;
+  containerLeftOffset?: number;
+  disabled?: boolean;
 };
 
 const Dropdown = ({
   ref,
-  internalProps = emptyObject as InternalProps,
+  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
   children,
   className = '',
   popupPlacement = 'bottom',
@@ -45,12 +51,12 @@ const Dropdown = ({
     settings: { previewMode },
     utils: { getWindow }
   } = usePlitziServiceContext();
-  const popupRef = useRef(undefined);
-  const backgroundContainerRef = useRef(undefined);
+  const popupRef = useRef<HTMLElement>(undefined);
+  const backgroundContainerRef = useRef<HTMLDivElement>(null);
   const windowInstance = useMemo(() => getWindow(), [getWindow]);
 
   const calculatePosition = useCallback(
-    (rectParent, rectContent) => {
+    (rectParent: DOMRect, rectContent: DOMRect) => {
       const w = rectContent.width;
       const h = rectContent.height;
       let top;
@@ -121,11 +127,11 @@ const Dropdown = ({
 
       setElementState(state => ({ ...state, openPopup: !state.openPopup }));
     },
-    [previewMode, openPopup, setElementState, disabled]
+    [previewMode, setElementState, disabled]
   );
 
   const handleClickBackgroundContainer = useCallback(
-    e => {
+    (e: MouseEvent) => {
       if (!closeOnClickBackground) {
         return;
       }
@@ -139,7 +145,7 @@ const Dropdown = ({
   );
 
   const handleClickPopup = useCallback(
-    e => {
+    (e: MouseEvent) => {
       if (!closeOnClickPopup || !previewMode) {
         return;
       }
@@ -149,7 +155,7 @@ const Dropdown = ({
 
       setElementState(state => ({ ...state, openPopup: !state.openPopup }));
     },
-    [closeOnClickPopup, setElementState]
+    [closeOnClickPopup, previewMode, setElementState]
   );
 
   const handleKeyDown = useCallback(
@@ -175,7 +181,7 @@ const Dropdown = ({
 
   const parameters = useMemo(() => {
     let parameters = { top: 0, left: 0 };
-    if (openPopup && ref.current && popupRef.current) {
+    if (openPopup && ref?.current && popupRef.current) {
       const rectParent = ref.current.getBoundingClientRect();
       const rectContent = popupRef.current.getBoundingClientRect();
       parameters = calculatePosition(rectParent, rectContent);
@@ -207,7 +213,7 @@ const Dropdown = ({
       ...children.props,
       internalProps: { onClick: handleClickPopup, openPopup, parameters, popupRef }
     });
-  }, [children, handleClickPopup, openPopup, popupRef, previewMode, calculatePosition]);
+  }, [children, handleClickPopup, openPopup, parameters]);
 
   return (
     <RootElement

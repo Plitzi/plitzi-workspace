@@ -1,53 +1,57 @@
-import React, { useCallback, use, useEffect, useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
 import get from 'lodash/get';
-import QueryBuilderEvaluator from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderEvaluator.mjs';
+import { useCallback, use, useEffect, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../Element/RootElement';
-import withElement from '../../../Element/hocs/withElement';
 import useApi from './hooks/useApi';
+import withElement from '../../../Element/hocs/withElement';
+import RootElement from '../../../Element/RootElement';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   className: string;
- *   internalProps: object;
- *   children: React.ReactNode;
- *   query: string;
- *   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
- *   accessToken: string;
- *   when: object;
- *   headers: object;
- *   mockData: object;
- *   subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
- * }} props
- * @returns {React.ReactElement}
- */
-const ApiContainer = props => {
-  const {
-    ref,
-    className = '',
-    internalProps = emptyObject,
-    children,
-    query = '',
-    method = 'get',
-    accessToken = '',
-    when = emptyObject,
-    headers = emptyObject,
-    mockData = '{}',
-    subType = 'div'
-  } = props;
+import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
+
+export type ApiContainerProps = {
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  internalProps?: InternalProps;
+  children?: ReactNode;
+  query?: string;
+  method?: 'get' | 'post' | 'put' | 'delete' | 'patch';
+  accessToken?: string;
+  when?: RuleGroup;
+  headers: Record<string, string>;
+  mockData: Record<string, unknown> | string;
+  subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+};
+
+const ApiContainer = ({
+  ref,
+  className = '',
+  internalProps = emptyObject as InternalProps,
+  children,
+  query = '',
+  method = 'get',
+  accessToken = '',
+  when = emptyObject as RuleGroup,
+  headers = emptyObject,
+  mockData = '{}',
+  subType = 'div'
+}: ApiContainerProps) => {
   const { id } = internalProps;
   const {
     settings: { previewMode, debugMode },
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext);
-  const { useDataSource } = use(DataSourceContext);
+  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
+  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
   const { routeParams, queryParams } = use(NavigationContext);
   const queryCompiled = useMemo(() => {
     if (!query) {
@@ -59,8 +63,8 @@ const ApiContainer = props => {
       // Check if Tokens required are defined first, if not skip fetch
       if (debugMode) {
         [...query.matchAll(/{{([ ]+|)(?<token>[a-zA-Z0-9-_:*/]+)([ ]+|)}}/gim)].forEach(({ groups }) => {
-          const token = groups.token.trim();
-          if (!get(handleBarsParams, token)) {
+          const token = groups?.token.trim();
+          if (!token || !get(handleBarsParams, token)) {
             console.log(`Token ${token} is required`);
           }
         });
@@ -74,7 +78,7 @@ const ApiContainer = props => {
     }
 
     return '';
-  }, [routeParams, queryParams, query]);
+  }, [query, queryParams, routeParams, debugMode]);
 
   const customHeaders = useMemo(() => {
     if (!accessToken) {
@@ -88,7 +92,7 @@ const ApiContainer = props => {
     if (
       previewMode &&
       queryCompiled &&
-      (!when || when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams }))
+      (when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams }))
     ) {
       return true;
     }
@@ -98,7 +102,7 @@ const ApiContainer = props => {
     }
 
     return false;
-  }, [previewMode, when, routeParams, queryParams, queryCompiled]);
+  }, [previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
 
   const { isLoading, data, refetch, isSuccess, isError } = useApi({
     url: queryCompiled,
@@ -114,16 +118,16 @@ const ApiContainer = props => {
     }
 
     if (isSuccess) {
-      interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: queryCompiled, method, ...data });
+      void interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: queryCompiled, method, ...data });
     } else if (isError) {
-      interactionsManager.interactionTrigger(id, 'onApiError', { url: queryCompiled, method, ...data });
+      void interactionsManager.interactionTrigger(id, 'onApiError', { url: queryCompiled, method, ...data });
     }
 
     return undefined;
-  }, [isLoading]);
+  }, [data, id, interactionsManager, isError, isLoading, isSuccess, method, queryCompiled]);
 
   const sourceFields = useCallback(
-    async () =>
+    () =>
       getPathsFromObeject(data).reduce((acum, path) => {
         const name = path.split('.');
         if (name.length > 1) {
@@ -132,26 +136,27 @@ const ApiContainer = props => {
 
         return [...acum, { path, name: name[name.length - 1] }];
       }, []),
-    [fetch, queryCompiled, method, data]
+    [data]
   );
 
   const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Api - ${id}`),
-    [id, internalProps?.definition?.label]
+    () => get(internalProps, 'definition.label', `Api - ${id}`) as string,
+    [id, internalProps]
   );
 
   const [ApiContainerContext] = useDataSource({
     id,
     source: `apiContainer_${id}`,
+    mode: 'write',
     name: sourceName,
     fields: sourceFields
   });
 
   const interactionCallbacks = useMemo(() => {
-    const label = get(internalProps, 'definition.label', 'Api Container');
+    const label = get(internalProps, 'definition.label', 'Api Container') as string;
 
     return { performQuery: { title: `Perform Query ${label}`, callback: refetch, preview: {}, params: {} } };
-  }, [refetch, internalProps?.definition?.label]);
+  }, [internalProps, refetch]);
 
   const interactionTriggers = useMemo(
     () => ({

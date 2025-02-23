@@ -9,9 +9,14 @@ import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetai
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import type { InternalProps } from '../../types/ElementTypes';
-import type { Element, ElementBinding, InteractionCallback } from '@plitzi/sdk-shared';
-import { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
+import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
+import type {
+  Element,
+  ElementBinding,
+  InteractionCallback,
+  InteractionPostCallback,
+  InternalProps
+} from '@plitzi/sdk-shared';
 
 // Helpers
 
@@ -93,7 +98,7 @@ const getInteractions = (
   attributes: Element['attributes'],
   definition: Element['definition'],
   callback: InteractionCallback,
-  postCallback
+  postCallback: InteractionPostCallback
 ) => ({
   setState: {
     title: `Update ${definition.label}`,
@@ -282,15 +287,14 @@ const useInternalProps = ({
       interactionsBasicCallbacks: getInteractions(attributes, definition, setStateCallback, setStatePostCallback)
     };
   }, [
-    element.definition,
-    element.attributes,
+    element,
     internalProps,
     plitziCustomComponent,
+    dataSource,
     state,
     setElementState,
     setStateCallback,
-    setStatePostCallback,
-    dataSource
+    setStatePostCallback
   ]);
 
   return { internalProps: internalPropsParsed, children: undefined, className: '' };

@@ -1,12 +1,13 @@
-import React from 'react';
-import { render } from '@testing-library/react';
+// jest.mock('plitziSdkFederation/usePlitziServiceContext');
 
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+// Relatives
 import Dropdown from './Dropdown';
 
-jest.mock('plitziSdkFederation/usePlitziServiceContext');
-
-describe('Dropdown', () => {
-  it('should render successfully', () => {
+describe('Dropdown Tests', () => {
+  it('Render Component', () => {
     const { baseElement } = render(<Dropdown />);
 
     expect(baseElement).toBeTruthy();
