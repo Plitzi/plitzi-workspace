@@ -18,7 +18,8 @@ import type {
   InteractionNode,
   InteractionNodeStatus,
   InteractionParams,
-  InteractionStatus
+  InteractionStatus,
+  PostCallbackNode
 } from '@plitzi/sdk-shared';
 
 const processParams = (
@@ -46,8 +47,6 @@ const processParams = (
   }, {});
 };
 
-type PostCallback = { id: string; callback: InteractionCallback['postCallback']; params: ElementInteraction['params'] };
-
 const processNode = async (
   node: ElementInteraction,
   callbacksAvailables: Record<string, InteractionCallback> = {},
@@ -56,11 +55,11 @@ const processNode = async (
 ): Promise<{
   status: InteractionNodeStatus;
   result: unknown;
-  postCallbacks: PostCallback[];
+  postCallbacks: PostCallbackNode[];
   whenParams?: Record<string, RuleValue>;
 }> => {
   let result: unknown = {};
-  const postCallbacks: PostCallback[] = [];
+  const postCallbacks: PostCallbackNode[] = [];
   const { id, action, enabled, params, elementId, type, when } = node;
   if (!action || !enabled) {
     return { status: 'disabled', result, postCallbacks };
@@ -119,7 +118,7 @@ const processNode = async (
   return { status: 'success', result, postCallbacks, whenParams };
 };
 
-const processPostCallbacks = async (postCallbacks: PostCallback[] = []) => {
+const processPostCallbacks = async (postCallbacks: PostCallbackNode[] = []) => {
   const results: Record<string, unknown> = {};
   await Promise.all(
     postCallbacks.reverse().map(async ({ id, callback, params }) => {
@@ -136,7 +135,7 @@ const flowCallbacks = async (
   callbacksAvailables = {},
   flowParams = {},
   globalParams = {},
-  postCallbacksTotal: PostCallback[] = [],
+  postCallbacksTotal: PostCallbackNode[] = [],
   executionResults: Record<string, InteractionNode> = {}
 ) => {
   if (!parentNode) {

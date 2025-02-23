@@ -9,7 +9,7 @@ import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Relatives
-import StateManagerContext from './StateManagerContext.js';
+import StateManagerContext from './StateManagerContext';
 
 // Types
 import type { ReactNode } from 'react';

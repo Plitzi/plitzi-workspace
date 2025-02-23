@@ -4,7 +4,7 @@ import type { NavigationContextValue } from '@plitzi/sdk-shared';
 
 export type NavigationStatus = 'normal' | 'redirect' | 'notFound' | 'accessDenied';
 
-const navigationContextDefaultValue = {};
+const navigationContextDefaultValue = {} as NavigationContextValue;
 
 const NavigationContext = createContext<NavigationContextValue>(navigationContextDefaultValue);
 

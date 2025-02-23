@@ -5,10 +5,18 @@ import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 export type InteractionStatus = 'completed' | 'skipped';
 export type InteractionNodeStatus = 'success' | 'failed' | 'skipped' | 'disabled';
 
+export type InteractionPostCallback<T = Record<string, unknown>> = (params?: T, callbackResult?: unknown) => unknown;
+
+export type PostCallbackNode<T = Record<string, unknown>> = {
+  id: string;
+  callback?: InteractionPostCallback<T>;
+  params: ElementInteraction['params'];
+};
+
 export type InteractionNode = {
   node: ElementInteraction;
   status: InteractionNodeStatus;
-  postCallbacks: unknown[];
+  postCallbacks: PostCallbackNode[];
   result?: unknown;
   startTime: number;
   endTime: number;
@@ -21,7 +29,7 @@ export type InteractionCallback<T = Record<string, unknown>> = {
   action: string;
   elementId: string;
   callback?: (params?: T) => unknown;
-  postCallback?: (params?: T, callbackResult?: unknown) => unknown;
+  postCallback?: InteractionPostCallback<T>;
   preview?: Record<string, unknown>;
   params: T;
   enabled?: boolean;
