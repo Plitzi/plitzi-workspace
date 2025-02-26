@@ -5,10 +5,13 @@ import { useMemo, useEffect, useState, use, useCallback } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
+import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { Collection } from '@plitzi/sdk-shared';
+
 export type UseCollectionContextProps = {
   source: string;
-  record: string;
-  query: string;
+  record: Record<string, unknown>;
+  query?: RuleGroup;
   limit: string;
   appendResults: boolean;
   singleRecord: boolean;
@@ -26,7 +29,7 @@ const useCollectionContext = (
   {
     source,
     record,
-    query = emptyObject,
+    query = emptyObject as RuleGroup,
     limit = '1',
     appendResults = false,
     singleRecord = false,
@@ -34,9 +37,9 @@ const useCollectionContext = (
   }: UseCollectionContextProps = {} as UseCollectionContextProps
 ): UseCollectionContextResult => {
   const plitziContext = usePlitziServiceContext();
-  const [collection, setCollection] = useState(null);
+  const [collection, setCollection] = useState<Collection | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const [cursor, setCursor] = useState(null);
+  const [cursor, setCursor] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
   const {
     contexts: { CollectionContext, NavigationContext }
@@ -46,7 +49,7 @@ const useCollectionContext = (
 
   // needs to find new user cases
   const queryCompiled = useMemo(() => {
-    if (!query || !previewMode) {
+    if (!previewMode) {
       return {};
     }
 
@@ -57,18 +60,21 @@ const useCollectionContext = (
     }
 
     return {};
-  }, [routeParams, queryParams, previewMode && query]);
+  }, [previewMode, query, queryParams, routeParams]);
 
-  const populateRecords = (collection, records) => {
-    const { pageInfo, edges } = records;
-    setCursor(pageInfo.nextCursor);
-    setHasNextPage(pageInfo.hasNextPage);
-    setCollection({
-      ...collection,
-      records: singleRecord ? null : edges,
-      record: singleRecord && edges.length > 0 ? edges[0] : null
-    });
-  };
+  const populateRecords = useCallback(
+    (collection, records) => {
+      const { pageInfo, edges } = records;
+      setCursor(pageInfo.nextCursor);
+      setHasNextPage(pageInfo.hasNextPage);
+      setCollection({
+        ...collection,
+        records: singleRecord ? null : edges,
+        record: singleRecord && edges.length > 0 ? edges[0] : null
+      });
+    },
+    [singleRecord]
+  );
 
   const fetchCollectionInternal = useCallback(async () => {
     setLoading(true);
@@ -85,7 +91,7 @@ const useCollectionContext = (
     }
 
     setLoading(true);
-    const result = await fetchRecords(
+    const result = await fetchRecords?.(
       source,
       queryCompiled,
       !appendResults && cursor ? null : cursor,
@@ -109,11 +115,11 @@ const useCollectionContext = (
 
   useEffect(() => {
     if (!isEmpty(source)) {
-      fetchCollectionInternal();
+      void fetchCollectionInternal();
     } else {
       setCursor(null);
       setHasNextPage(false);
-      setCollection(null);
+      setCollection(undefined);
       setLoading(false);
     }
   }, [source, limit, query, setLoading, fetchRecordsInternal, fetchCollectionInternal]);

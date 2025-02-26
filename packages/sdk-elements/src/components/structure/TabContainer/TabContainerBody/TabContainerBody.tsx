@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import { cloneElement } from 'react';
+import { Children, cloneElement, isValidElement, useMemo } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
@@ -8,7 +8,7 @@ import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
 
 import type { InternalProps } from '@plitzi/sdk-shared';
-import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react';
+import type { Dispatch, ReactElement, ReactNode, RefObject, SetStateAction } from 'react';
 
 export type TabContainerBodyProps = {
   ref: RefObject<HTMLElement>;
@@ -30,16 +30,32 @@ const TabContainerBody = ({
 }: TabContainerBodyProps) => {
   const { onSelect, tabSelected } = internalProps;
 
+  const { childrenParsed } = useMemo(() => {
+    const components: { childrenParsed: ReactNode[] } = { childrenParsed: [] };
+    Children.forEach(children, (child, i: number) => {
+      if (!isValidElement(child)) {
+        return;
+      }
+
+      const childProps = child.props as Record<string, unknown>;
+      components.childrenParsed.push(
+        cloneElement<Record<string, unknown>>(child as ReactElement<Record<string, unknown>>, {
+          ...childProps,
+          internalProps: { onSelect, tabSelected, tabIndex: i }
+        })
+      );
+    });
+
+    return components;
+  }, [children, onSelect, tabSelected]);
+
   return (
     <RootElement
       ref={ref}
       internalProps={internalProps}
       className={classNames('plitzi-component__tab-container-body', className)}
     >
-      {Array.isArray(children) &&
-        children.map((child, i) =>
-          cloneElement(child, { ...child.props, internalProps: { onSelect, tabSelected, tabIndex: i } })
-        )}
+      {childrenParsed}
     </RootElement>
   );
 };

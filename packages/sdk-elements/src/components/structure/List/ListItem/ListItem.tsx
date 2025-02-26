@@ -1,10 +1,20 @@
-import React from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import RootElement from '../../../../Element/RootElement';
 import withElement from '../../../../Element/hocs/withElement';
+import RootElement from '../../../../Element/RootElement';
+
+import type { InternalProps } from '@plitzi/sdk-shared';
+import type { ReactNode, RefObject } from 'react';
+
+export type ListItemProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  internalProps: InternalProps;
+  children: ReactNode;
+};
 
 /**
  * @param {{
@@ -15,9 +25,7 @@ import withElement from '../../../../Element/hocs/withElement';
  * }} props
  * @returns {React.ReactElement}
  */
-const ListItem = props => {
-  const { ref, className = '', internalProps = emptyObject, children } = props;
-
+const ListItem = ({ ref, className = '', internalProps = emptyObject as InternalProps, children }: ListItemProps) => {
   return (
     <RootElement
       tag="li"

@@ -8,3 +8,4 @@ export * from './EventBridgeTypes';
 export * from './SegmentTypes';
 export * from './BuilderTypes';
 export * from './NavigationTypes';
+export * from './CollectionTypes';

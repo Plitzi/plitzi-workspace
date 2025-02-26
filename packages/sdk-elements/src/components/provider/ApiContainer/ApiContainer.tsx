@@ -27,9 +27,9 @@ export type ApiContainerProps = {
   method?: 'get' | 'post' | 'put' | 'delete' | 'patch';
   accessToken?: string;
   when?: RuleGroup;
-  headers: Record<string, string>;
-  mockData: Record<string, unknown> | string;
-  subType: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+  headers?: Record<string, string>;
+  mockData?: Record<string, unknown> | string;
+  subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
 };
 
 const ApiContainer = ({
