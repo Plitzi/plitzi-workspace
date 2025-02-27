@@ -11,27 +11,31 @@ import { nativeEventsList } from './helpers/elementUtils';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback, InternalProps } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, InternalProps } from '@plitzi/sdk-shared';
 import type { Context, FC, JSX, ReactNode, RefObject } from 'react';
 
-const interactionBasicTriggers: Record<string, Partial<InteractionCallback>> = {
+const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
   onClick: {
     title: 'On Click',
+    type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   onMouseEnter: {
     title: 'On Mouse Enter',
+    type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   onMouseLeave: {
     title: 'On Mouse Leave',
+    type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   onHover: {
     title: 'On Hover',
+    type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   }
@@ -42,8 +46,8 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   children?: ReactNode;
   tag?: T;
   className?: string;
-  interactionTriggers?: Record<string, InteractionCallback>;
-  interactionCallbacks?: Record<string, InteractionCallback>;
+  interactionTriggers?: Record<string, InteractionBaseCallback>;
+  interactionCallbacks?: Record<string, InteractionBaseCallback>;
   internalProps?: InternalProps;
 } & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref'>;
 
@@ -177,7 +181,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   useInteractions({
     id,
     interactions: internalProps.interactions,
-    triggers: interactionTriggersMemo as Record<string, InteractionCallback>,
+    triggers: interactionTriggersMemo,
     callbacks: interactionCallbacksMemo,
     getAdditionalParams
   });

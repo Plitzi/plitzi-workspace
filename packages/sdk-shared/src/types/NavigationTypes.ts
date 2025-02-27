@@ -8,4 +8,5 @@ export type NavigationContextValue = {
   queryParams: QueryParams;
   hostname?: string;
   currentPageId?: string;
+  Helmet?: unknown;
 };

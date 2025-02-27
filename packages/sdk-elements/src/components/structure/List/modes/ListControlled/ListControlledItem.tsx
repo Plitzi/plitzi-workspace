@@ -9,7 +9,7 @@ import type { Context, ReactNode } from 'react';
 
 export type ListControlledItemProps = {
   children: ReactNode;
-  className: string;
+  className?: string;
   isTemplate: boolean;
   itemCount: number;
   record: object;

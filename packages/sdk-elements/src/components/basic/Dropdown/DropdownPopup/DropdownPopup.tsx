@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import { useMemo } from 'react';
+import { useImperativeHandle } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
@@ -31,37 +31,11 @@ const DropdownPopup = ({
   children
 }: DropdownPopupProps) => {
   const { onClick, openPopup, parameters, popupRef } = internalProps;
-  const refProxy = useMemo(
-    () =>
-      new Proxy(
-        { current: popupRef?.current },
-        {
-          get(target, prop) {
-            if (!target) {
-              return undefined;
-            }
-
-            return target[prop];
-          },
-          set(target, prop, newValue) {
-            target[prop] = newValue;
-            // Do other process if are required like datasets
-            if (popupRef) {
-              popupRef.current = newValue;
-            }
-
-            ref.current = newValue;
-
-            return true;
-          }
-        }
-      ),
-    [popupRef, ref]
-  );
+  useImperativeHandle<HTMLElement, HTMLElement>(ref, () => (popupRef as RefObject<HTMLElement>).current, [popupRef]);
 
   return (
     <RootElement
-      ref={refProxy}
+      ref={popupRef as RefObject<HTMLElement>}
       internalProps={internalProps}
       className={classNames('plitzi-component__dropdown-popup', className, {
         'popup-container--no-visible': !openPopup || !parameters

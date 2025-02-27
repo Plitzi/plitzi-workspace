@@ -15,20 +15,20 @@ import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type {
   ElementInteraction,
   InteractionCallback,
+  InteractionBaseCallback,
   InteractionNode,
   InteractionNodeStatus,
-  InteractionParams,
   InteractionStatus,
   PostCallbackNode
 } from '@plitzi/sdk-shared';
 
 const processParams = (
-  type: InteractionCallback['type'],
+  type: InteractionBaseCallback['type'],
   params: Record<string, unknown>,
   flowValues: Record<string, unknown>,
   globalValues: Record<string, unknown>,
   action: string
-): InteractionParams => {
+): Record<string, unknown> => {
   if (type === 'utility' && action === 'twigTemplate') {
     return params;
   }
@@ -49,7 +49,7 @@ const processParams = (
 
 const processNode = async (
   node: ElementInteraction,
-  callbacksAvailables: Record<string, InteractionCallback> = {},
+  callbacksAvailables: Record<string, InteractionBaseCallback> = {},
   flowParams = {},
   globalParams = {}
 ): Promise<{
@@ -217,7 +217,7 @@ const flowTrigger = async (
   triggerNode: ElementInteraction,
   nodes = {},
   callbacksAvailables = {},
-  flowParams: InteractionParams = {},
+  flowParams: Record<string, unknown> = {},
   globalParams = {},
   postCallbacksTotal = []
 ) => {

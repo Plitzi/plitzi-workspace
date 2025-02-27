@@ -1,5 +1,5 @@
 import type { PluginManifest, PluginSchema } from './PluginTypes';
-import type { Element, InteractionCallback } from '@plitzi/sdk-shared';
+import type { Element, InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { CSSProperties, ReactNode } from 'react';
 
 export type BaseInternalProps = { id: string; rootId?: string; className?: string };
@@ -9,7 +9,7 @@ export type InternalProps<T extends Record<string, unknown> = Record<string, unk
   attributes: Element['attributes'];
   style?: CSSProperties;
   interactions?: Element['definition']['interactions'];
-  interactionsBasicCallbacks?: Record<string, InteractionCallback>;
+  interactionsBasicCallbacks?: Record<string, InteractionBaseCallback>;
   elementState?: Record<string, string | boolean | number>;
   plitziElementLayout?: {
     bodyChildren: ReactNode;

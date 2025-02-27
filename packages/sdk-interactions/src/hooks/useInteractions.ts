@@ -5,13 +5,13 @@ import { use, useLayoutEffect } from 'react';
 import InteractionsContext from '../InteractionsContext';
 
 // Types
-import type { ElementInteraction, InteractionCallback, Subscriptor } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionBaseCallback, Subscriptor } from '@plitzi/sdk-shared';
 
 export type UseInteractionsProps = {
   id: string;
   interactions?: Record<string, ElementInteraction>;
-  triggers?: Record<string, InteractionCallback>;
-  callbacks?: Record<string, InteractionCallback>;
+  triggers?: Record<string, InteractionBaseCallback>;
+  callbacks?: Record<string, InteractionBaseCallback>;
   getAdditionalParams?: Subscriptor['getAdditionalParams'];
 };
 

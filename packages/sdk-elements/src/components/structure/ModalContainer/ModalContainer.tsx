@@ -10,11 +10,17 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
+import type {
+  SourceField,
+  InternalProps,
+  InteractionCallbackParamValues,
+  InteractionBaseCallback
+} from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 type InternalPropsSubProps = {
-  setElementState: unknown;
+  setElementState: (params: { key: string; value: boolean }) => void;
   styleSelectors: Record<string, string>;
 };
 
@@ -39,18 +45,18 @@ const ModalContainer = ({
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext);
+  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
   const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
-  const [internalMetadata, setInternalMetadata] = useState({});
+  const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
 
   const handleOpenModal = useCallback(
-    params => {
+    (params: InteractionCallbackParamValues) => {
       const { metadata } = params;
       if (metadata && typeof metadata === 'object') {
-        setInternalMetadata(metadata);
+        setInternalMetadata(metadata as Record<string, unknown>);
       } else if (typeof metadata === 'string') {
         try {
-          setInternalMetadata(JSON.parse(metadata));
+          setInternalMetadata(JSON.parse(metadata) as Record<string, unknown>);
         } catch {
           setInternalMetadata({ content: metadata });
         }
@@ -66,7 +72,7 @@ const ModalContainer = ({
   );
 
   const handleClickClose = useCallback(() => {
-    interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState({ key: 'visibility', value: false });
   }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
@@ -76,53 +82,57 @@ const ModalContainer = ({
       return;
     }
 
-    interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState({ key: 'visibility', value: false });
   }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
-  const interactionTriggers = useMemo(
+  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
-      onModalOpen: { title: 'On Modal Open', preview: { metadata: '' }, params: { metadata: '' } },
-      onModalClose: { title: 'On Modal Close', preview: {}, params: {} }
+      onModalOpen: {
+        title: 'On Modal Open',
+        type: 'trigger',
+        params: { metadata: { type: 'text', defaultValue: '' } },
+        preview: { metadata: '' }
+      },
+      onModalClose: { title: 'On Modal Close', type: 'trigger', preview: {}, params: {} }
     }),
     []
   );
 
-  const interactionCallbacks = useMemo(() => {
-    const label = get(internalProps, 'definition.label', 'Modal') as string;
+  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
+    const label = get(internalProps, 'definition.label', 'Modal');
 
     return {
       openModal: {
         title: `Open ${label}`,
+        type: 'callback',
         callback: handleOpenModal,
-        params: { metadata: '' },
+        params: { metadata: { type: 'text', defaultValue: '' } },
         preview: { metadata: '' }
       },
-      closeModal: { title: `Close ${label}`, callback: handleClickClose, params: {}, preview: {} }
+      closeModal: { title: `Close ${label}`, type: 'callback', callback: handleClickClose, params: {}, preview: {} }
     };
   }, [handleClickClose, handleOpenModal, internalProps]);
 
   useEffect(() => {
     if (internalProps.elementState?.visibility !== false) {
-      interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
+      void interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
     }
   }, [id, interactionsManager, internalMetadata, internalProps.elementState?.visibility]);
 
-  const sourceFields = useCallback(() => {
-    if (!internalMetadata || typeof internalMetadata !== 'object') {
-      return [];
-    }
+  const sourceFields = useCallback(
+    () =>
+      getPathsFromObeject(internalMetadata).reduce<SourceField[]>((acum, path) => {
+        const name = path.split('.');
+        if (name.length > 1) {
+          return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
+        }
 
-    return getPathsFromObeject(internalMetadata).reduce((acum, path) => {
-      const name = path.split('.');
-      if (name.length > 1) {
-        return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
-      }
-
-      return [...acum, { path, name: name[name.length - 1] }];
-    }, []);
-  }, [internalMetadata]);
+        return [...acum, { path, name: name[name.length - 1] }];
+      }, []),
+    [internalMetadata]
+  );
 
   const sourceName = useMemo(() => get(internalProps, 'definition.label', `Modal - ${id}`), [id, internalProps]);
 

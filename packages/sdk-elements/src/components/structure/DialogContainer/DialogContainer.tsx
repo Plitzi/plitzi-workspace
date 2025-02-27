@@ -10,13 +10,24 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
-import type { SourceField, InternalProps } from '@plitzi/sdk-shared';
+import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
+import type {
+  SourceField,
+  InternalProps,
+  InteractionBaseCallback,
+  InteractionCallbackParamValues
+} from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
+
+type InternalPropsSubProps = {
+  setElementState: (params: { key: string; value: boolean }) => void;
+  styleSelectors: Record<string, string>;
+};
 
 export type DialogContainerProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalProps;
+  internalProps: InternalProps<InternalPropsSubProps>;
   children: ReactNode;
   headerLabel: string;
   acceptButtonLabel: string;
@@ -28,7 +39,7 @@ export type DialogContainerProps = {
 const DialogContainer = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
   children,
   headerLabel = 'Dialog Header',
   acceptButtonLabel = 'Accept',
@@ -40,22 +51,22 @@ const DialogContainer = ({
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext);
+  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
   const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
-  const [internalMetadata, setInternalMetadata] = useState({});
+  const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
   const [processing, setProcessing] = useState(false);
 
   // Modal methods
 
   const handleOpeDialog = useCallback(
-    params => {
+    (params: InteractionCallbackParamValues) => {
       const { metadata } = params;
       if (metadata && typeof metadata === 'object') {
-        setInternalMetadata(metadata);
+        setInternalMetadata(metadata as Record<string, unknown>);
       } else if (typeof metadata === 'string') {
         try {
-          setInternalMetadata(JSON.parse(metadata));
-        } catch (error) {
+          setInternalMetadata(JSON.parse(metadata) as Record<string, unknown>);
+        } catch {
           setInternalMetadata({ content: metadata });
         }
       } else if (typeof metadata === 'boolean' || typeof metadata === 'number') {
@@ -70,7 +81,7 @@ const DialogContainer = ({
   );
 
   const handleClickClose = useCallback(() => {
-    interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState({ key: 'visibility', value: false });
   }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
@@ -80,7 +91,7 @@ const DialogContainer = ({
       return;
     }
 
-    interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState({ key: 'visibility', value: false });
   }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
@@ -92,47 +103,68 @@ const DialogContainer = ({
     await interactionsManager.interactionTrigger(id, 'onDialogAccept', { metadata: internalMetadata });
     setProcessing(false);
     setElementState({ key: 'visibility', value: false });
-  }, [interactionsManager, setElementState, internalMetadata]);
+  }, [interactionsManager, id, internalMetadata, setElementState]);
 
   const handleClickCancel = useCallback(async () => {
     setProcessing(true);
     await interactionsManager.interactionTrigger(id, 'onDialogReject', { metadata: internalMetadata });
     setProcessing(false);
     setElementState({ key: 'visibility', value: false });
-  }, [interactionsManager, setElementState, internalMetadata]);
+  }, [interactionsManager, id, internalMetadata, setElementState]);
 
-  const interactionTriggers = useMemo(
+  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
-      onDialogAccept: { title: 'On Dialog Accept', params: { metadata: '' }, preview: { metadata: '' } },
-      onDialogReject: { title: 'On Dialog Reject', params: { metadata: '' }, preview: { metadata: '' } },
-      onDialogOpen: { title: 'On Dialog Open', params: { metadata: '' }, preview: { metadata: '' } },
-      onDialogClose: { title: 'On Dialog Close', params: { metadata: '' }, preview: { metadata: '' } }
+      onDialogAccept: {
+        title: 'On Dialog Accept',
+        type: 'trigger',
+        params: { metadata: { type: 'text', defaultValue: '' } },
+        preview: { metadata: '' }
+      },
+      onDialogReject: {
+        title: 'On Dialog Reject',
+        type: 'trigger',
+        params: { metadata: { type: 'text', defaultValue: '' } },
+        preview: { metadata: '' }
+      },
+      onDialogOpen: {
+        title: 'On Dialog Open',
+        type: 'trigger',
+        params: { metadata: { type: 'text', defaultValue: '' } },
+        preview: { metadata: '' }
+      },
+      onDialogClose: {
+        title: 'On Dialog Close',
+        type: 'trigger',
+        params: { metadata: { type: 'text', defaultValue: '' } },
+        preview: { metadata: '' }
+      }
     }),
     []
   );
 
-  const interactionCallbacks = useMemo(() => {
+  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
     const label = get(internalProps, 'definition.label', 'Modal');
 
     return {
       openDialog: {
         title: `Open ${label}`,
+        type: 'callback',
         callback: handleOpeDialog,
-        preview: { metadata: '' },
-        params: { metadata: '' }
+        params: { metadata: { type: 'text', defaultValue: '' } },
+        preview: { metadata: '' }
       },
-      closeDialog: { title: `Close ${label}`, callback: handleClickClose, preview: {}, params: {} }
+      closeDialog: { title: `Close ${label}`, type: 'callback', callback: handleClickClose, preview: {}, params: {} }
     };
-  }, [handleOpeDialog, internalProps?.definition?.label]);
+  }, [handleClickClose, handleOpeDialog, internalProps]);
 
   useEffect(() => {
     if (internalProps.elementState?.visibility !== false) {
-      interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
+      void interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
     }
-  }, [internalProps?.elementState?.visibility]);
+  }, [id, interactionsManager, internalMetadata, internalProps.elementState?.visibility]);
 
   const sourceFields = useCallback(() => {
-    if (!internalMetadata || typeof internalMetadata !== 'object') {
+    if (typeof internalMetadata !== 'object') {
       return [];
     }
 
@@ -146,10 +178,7 @@ const DialogContainer = ({
     }, []);
   }, [internalMetadata]);
 
-  const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Dialog - ${id}`),
-    [id, internalProps?.definition?.label]
-  );
+  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Dialog - ${id}`), [id, internalProps]);
 
   const [DialogContianerContext] = useDataSource({
     id,
@@ -174,9 +203,9 @@ const DialogContainer = ({
       <div className={classNames('dialog-container__root', styleSelectors.rootContainer)}>
         <div className={classNames('dialog-container__header', styleSelectors.headerContainer)}>
           <div className={classNames('modal-container__header__title', styleSelectors.headerTitle)}>
-            {headerLabel ?? 'Dialog Header'}
+            {headerLabel ? headerLabel : 'Dialog Header'}
           </div>
-          <i className="fa-solid fa-xmark" title="Close" onClick={handleClickCancel} />
+          <i className="fa-solid fa-xmark" title="Close" onClick={void handleClickCancel} />
         </div>
         <div className={classNames('dialog-container__body', styleSelectors.body)}>
           <DialogContianerContext value={internalMetadata}>{children}</DialogContianerContext>
@@ -184,7 +213,7 @@ const DialogContainer = ({
         <div className={classNames('dialog-container__footer', styleSelectors.footerContainer)}>
           <button
             className={classNames('footer__button button--accept', styleSelectors.acceptButton)}
-            onClick={handleClickAccept}
+            onClick={void handleClickAccept}
             disabled={processing}
           >
             {processing && (
@@ -197,7 +226,7 @@ const DialogContainer = ({
           </button>
           <button
             className={classNames('footer__button button--cancel', styleSelectors.cancelButton)}
-            onClick={handleClickCancel}
+            onClick={void handleClickCancel}
             disabled={processing}
           >
             {rejectButtonLabel}

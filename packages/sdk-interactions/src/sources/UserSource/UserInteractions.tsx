@@ -8,7 +8,7 @@ import UserContext from '@plitzi/sdk-auth/UserContext';
 import InteractionsContext from '../../InteractionsContext';
 
 // Types
-import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type UserInteractionsProps = {
@@ -24,21 +24,34 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
   };
   const { useInteractions } = use(InteractionsContext);
 
-  const handleLogin = useCallback((params: InteractionCallback['params']) => login(params), [login]);
+  const handleLogin = useCallback(
+    (params: Parameters<NonNullable<InteractionBaseCallback['callback']>>[0]) => login(params),
+    [login]
+  );
 
   const handleRefreshDetails = useCallback(
-    (params: InteractionCallback['params']) => refreshDetails(params),
+    (params: Parameters<NonNullable<InteractionBaseCallback['callback']>>[0]) => refreshDetails(params),
     [refreshDetails]
   );
 
   const handleLogout = useCallback(() => logout(), [logout]);
 
   const interactionCallbacks = useMemo(() => {
-    let userCallbacks = {};
+    let userCallbacks: Record<string, InteractionBaseCallback> = {};
     if (userProvider === 'auth0') {
       userCallbacks = {
-        login: { title: 'User Login', callback: handleLogin, params: {} },
-        logout: { title: 'User Logout', callback: handleLogout, params: {} }
+        login: {
+          title: 'User Login',
+          type: 'globalCallback',
+          callback: handleLogin,
+          params: {}
+        },
+        logout: {
+          title: 'User Logout',
+          type: 'globalCallback',
+          callback: handleLogout,
+          params: {}
+        }
       };
     } else if (userProvider === 'basic') {
       userCallbacks = {
@@ -58,16 +71,19 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
               ]
             },
             username: {
+              type: 'text',
               defaultValue: '',
-              when: (params: InteractionCallback['params']) => params.mode === 'normal'
+              when: params => params.mode === 'normal'
             },
             password: {
+              type: 'text',
               defaultValue: '',
-              when: (params: InteractionCallback['params']) => params.mode === 'normal'
+              when: params => params.mode === 'normal'
             },
             token: {
+              type: 'text',
               defaultValue: '',
-              when: (params: InteractionCallback['params']) => params.mode === 'token'
+              when: params => params.mode === 'token'
             }
           },
           preview: {
@@ -104,7 +120,13 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
             }
           }
         },
-        logout: { title: 'User Logout', type: 'globalCallback', callback: handleLogout, preview: {}, params: {} }
+        logout: {
+          title: 'User Logout',
+          type: 'globalCallback',
+          callback: handleLogout,
+          preview: {},
+          params: {}
+        }
       };
     }
 

@@ -10,7 +10,7 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, InternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
@@ -61,10 +61,11 @@ const Page = ({
     [layoutContainer, layout, id, children]
   );
 
-  const interactionTriggers = useMemo(
+  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       onPageLoad: {
         title: 'On Page Load',
+        type: 'trigger',
         params: {
           // pageId: { canBind: false, defaultValue: '', type: 'text', label: 'Page ID' },
           // routeParams: { canBind: false, defaultValue: '', type: 'text', label: 'Route Params' },

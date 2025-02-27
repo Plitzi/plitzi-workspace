@@ -12,15 +12,15 @@ import { flowTrigger } from './InteractionsHelper';
 
 // Types
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
-import type { ElementInteraction, InteractionCallback, InteractionParams, Subscriptor } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionBaseCallback, Subscriptor } from '@plitzi/sdk-shared';
 
-class InteractionsManager<T = unknown> {
+class InteractionsManager {
   eventBridge: InstanceType<typeof EventBridge>;
   parentManager?: InteractionsManager;
   childManagers: InteractionsManager[];
   interactionsData: Record<string, string | number | boolean>;
   subscriptors: Record<string, Subscriptor>;
-  callbacksAvailables: Record<string, Record<string, InteractionCallback<T>> | undefined>;
+  callbacksAvailables: Record<string, Record<string, InteractionBaseCallback> | undefined>;
   interactionsRunning: Record<string, boolean>;
 
   constructor(currentPageId = '', routeParams: Record<string, string> = {}, queryParams: Record<string, string> = {}) {
@@ -37,7 +37,7 @@ class InteractionsManager<T = unknown> {
 
   eventBridgeCallback =
     (interactions?: Record<string, ElementInteraction>) =>
-    async (subscriptorId: string, eventName: string, params: InteractionParams<T>) => {
+    async (subscriptorId: string, eventName: string, params: Record<string, unknown>) => {
       if (
         !interactions ||
         !eventName ||
@@ -85,8 +85,8 @@ class InteractionsManager<T = unknown> {
   subscribe(
     id: string,
     interactions: Record<string, ElementInteraction> = {},
-    triggers: Record<string, InteractionCallback> = {},
-    callbacks: Record<string, InteractionCallback> = {},
+    triggers: Record<string, InteractionBaseCallback> = {},
+    callbacks: Record<string, InteractionBaseCallback> = {},
     getAdditionalParams: Subscriptor['getAdditionalParams']
   ) {
     set(this.subscriptors, id, { id, triggers, getAdditionalParams });
@@ -177,11 +177,7 @@ class InteractionsManager<T = unknown> {
     return rootManager?._getCallbacksAvailablesInternal();
   }
 
-  interactionTrigger<T = Record<string, unknown>>(
-    subscriptorId: string,
-    eventName: string,
-    params: InteractionCallback<T>['params'] = {} as T
-  ) {
+  interactionTrigger(subscriptorId: string, eventName: string, params: Record<string, unknown> = {}) {
     return this.eventBridge.emit(EventBridgeModuleTypes.INTERACTION, subscriptorId, subscriptorId, eventName, params);
   }
 

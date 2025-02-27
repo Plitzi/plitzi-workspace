@@ -1,3 +1,4 @@
+import type { InteractionCallbackType } from './InteractionTypes';
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -23,7 +24,7 @@ export type ElementBinding = {
 export type ElementInteraction = {
   id: string;
   title: string;
-  type: 'trigger' | 'globalCallback' | 'callback' | 'utility';
+  type: InteractionCallbackType;
   action: string;
   params: Record<string, unknown>;
   preview: Record<string, unknown>;

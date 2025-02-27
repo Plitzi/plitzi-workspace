@@ -9,7 +9,7 @@ import ListControlledItem from './ListControlledItem';
 import RootElement from '../../../../../Element/RootElement';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { SourceField, InternalProps } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListControlledProps = {
@@ -43,7 +43,7 @@ const ListControlled = ({
 
   const sourceFields = useCallback(
     () =>
-      getPathsFromObeject({ item: get(finalItems, '0', {}), index: '0' }).reduce(
+      getPathsFromObeject({ item: get(finalItems, '0', {}), index: '0' }).reduce<SourceField[]>(
         (acum, path) => [...acum, { path, name: path }],
         []
       ),

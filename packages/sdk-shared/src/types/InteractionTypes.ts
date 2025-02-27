@@ -2,6 +2,7 @@
 import type { ElementInteraction } from './SchemaTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
+export type InteractionCallbackType = 'trigger' | 'globalCallback' | 'callback' | 'utility';
 export type InteractionStatus = 'completed' | 'skipped';
 export type InteractionNodeStatus = 'success' | 'failed' | 'skipped' | 'disabled';
 
@@ -23,37 +24,47 @@ export type InteractionNode = {
   whenParams?: Record<string, RuleValue>;
 };
 
-export type InteractionCallback<T = Record<string, unknown>> = {
+export type InteractionParamType = 'boolean' | 'select' | 'text';
+export type InteractionCallbackParamValues = Record<keyof InteractionBaseCallback['params'], unknown>;
+export type InteractionCallbackParam = {
+  canBind?: boolean;
+  label?: string;
+  type: InteractionParamType;
+  when?: boolean | ((params: InteractionCallbackParamValues) => boolean);
+} & (
+  | { type: 'text'; defaultValue?: string }
+  | { type: 'boolean'; defaultValue?: boolean }
+  | { type: 'select'; options: { label: string; value: string }[]; defaultValue?: string }
+);
+
+export type InteractionCallbackPreview = string | Record<string, string>;
+export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
+
+export type InteractionBaseCallback = {
   title: string;
-  type: ElementInteraction['type'];
-  action: string;
-  elementId: string;
-  callback?: (params?: T) => unknown;
-  postCallback?: InteractionPostCallback<T>;
-  preview?: Record<string, unknown>;
-  params: T;
+  type: InteractionCallbackType;
+  params: Record<string, InteractionCallbackParam>;
+  callback?: (params: InteractionCallbackParamValues) => unknown;
+  postCallback?: InteractionPostCallback;
+  preview?: InteractionCallbackPreviews;
   enabled?: boolean;
 };
 
-export type InteractionType = 'boolean';
-
-export type InteractionParams<T = unknown> = {
-  canBind?: boolean;
-  defaultValue?: T;
-  type?: InteractionType;
-  label?: string;
+export type InteractionCallback = InteractionBaseCallback & {
+  action: string; // Name of the action
+  elementId: string; // When is globalCallback or utility, we just put the source as elementId
 };
 
-export type Trigger<T = unknown> = {
-  title: string;
-  preview?: Record<string, unknown>;
-  params: Record<string, InteractionParams<T>>;
+export type Trigger = {
+  title: InteractionCallback['title'];
+  preview?: InteractionCallback['preview'];
+  params: InteractionCallback['params'];
 };
 
 export type Subscriptor<T = unknown> = {
   getAdditionalParams?: (params?: T) => { dataSource?: Record<string, unknown> };
   id: string;
-  triggers: Record<string, Trigger<T>>;
+  triggers: Record<string, Trigger>;
 };
 
 export type InteractionsContextValue<T = unknown> = {
@@ -61,8 +72,8 @@ export type InteractionsContextValue<T = unknown> = {
   useInteractions: (props: {
     id: string;
     interactions?: Record<string, ElementInteraction>;
-    triggers?: Record<string, InteractionCallback>;
-    callbacks?: Record<string, InteractionCallback>;
+    triggers?: Record<string, InteractionBaseCallback>;
+    callbacks?: Record<string, InteractionBaseCallback>;
     getAdditionalParams?: Subscriptor['getAdditionalParams'];
   }) => void;
 };

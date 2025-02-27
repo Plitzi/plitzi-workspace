@@ -14,7 +14,12 @@ import RootElement from '../../../Element/RootElement';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InternalProps } from '@plitzi/sdk-shared';
+import type {
+  SourceField,
+  InternalProps,
+  InteractionBaseCallback,
+  InteractionCallbackParamValues
+} from '@plitzi/sdk-shared';
 import type { FormEvent, ReactNode, RefObject } from 'react';
 
 export type FormProps = {
@@ -53,13 +58,13 @@ const Form = ({
   const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
 
   const registerField = useCallback(
-    (field: Field) => setFields(state => ({ ...state, [field.name]: field })),
+    (field: SourceField) => setFields(state => ({ ...state, [field.name]: field })),
     [setFields]
   );
 
   const getField = useCallback(
     (id: string) => {
-      if (!id || !(fields[id] as Field | undefined)) {
+      if (!id || !(fields[id] as SourceField | undefined)) {
         return fields;
       }
 
@@ -156,14 +161,21 @@ const Form = ({
   );
   const sourceName = useMemo(() => get(internalProps, 'definition.label', `Form - ${id}`), [id, internalProps]);
 
-  const [FormContext] = useDataSource({ id, source: 'form', mode: 'write', name: sourceName, fields: sourceFields });
+  const [FormContext] = useDataSource({
+    id,
+    source: 'form',
+    mode: 'write',
+    name: sourceName as string,
+    fields: sourceFields
+  });
 
   // Interactions Triggers
 
-  const interactionTriggers = useMemo(
+  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       onSubmit: {
         title: 'On Form Submit',
+        type: 'trigger',
         params: {},
         preview: {
           values: Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {}),
@@ -197,14 +209,14 @@ const Form = ({
   );
 
   const handleReset = useCallback(
-    (e: FormEvent) => {
+    (params: InteractionCallbackParamValues | FormEvent) => {
       if (!managedByInteractions) {
         return;
       }
 
-      if (e instanceof Event) {
-        e.stopPropagation();
-        e.preventDefault();
+      if (params instanceof Event) {
+        params.stopPropagation();
+        params.preventDefault();
       }
 
       setElementState({ key: 'values', value: {} });
@@ -214,29 +226,30 @@ const Form = ({
   );
 
   const handleSetFieldValue = useCallback(
-    params => {
+    (params: InteractionCallbackParamValues) => {
       const { name, value } = params;
 
-      setFieldValue(name, value);
+      setFieldValue(name as string, value as FieldValue);
     },
     [setFieldValue]
   );
 
   const handleSetFieldError = useCallback(
-    params => {
+    (params: InteractionCallbackParamValues) => {
       const { name, error } = params;
-      setFieldError(name, error);
+      setFieldError(name as string, error as string);
     },
     [setFieldError]
   );
 
-  const interactionCallbacks = useMemo(() => {
-    const label = get(internalProps, 'definition.label', 'Form');
+  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
+    const label = get(internalProps, 'definition.label', 'Form') as string;
 
     return {
-      performReset: { title: `Reset ${label}`, callback: handleReset, params: {} },
+      performReset: { title: `Reset ${label}`, type: 'callback', callback: handleReset, params: {} },
       setFieldValue: {
         title: `Set Field Value ${label}`,
+        type: 'callback',
         callback: handleSetFieldValue,
         preview: {},
         params: {
@@ -246,11 +259,12 @@ const Form = ({
             type: 'select',
             options: Object.values(fields).map(field => ({ value: field.name, label: field.name }))
           },
-          value: ''
+          value: { type: 'text', defaultValue: '' }
         }
       },
       setFieldError: {
         title: `Set Field Error ${label}`,
+        type: 'callback',
         callback: handleSetFieldError,
         preview: {},
         params: {
@@ -260,7 +274,7 @@ const Form = ({
             type: 'select',
             options: Object.values(fields).map(field => ({ value: field.name, label: field.name }))
           },
-          error: ''
+          error: { type: 'text', defaultValue: '' }
         }
       }
     };
