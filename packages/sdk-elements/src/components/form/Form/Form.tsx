@@ -16,7 +16,7 @@ import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type {
   SourceField,
-  InternalProps,
+  InternalPropsSTG2,
   InteractionBaseCallback,
   InteractionCallbackParamValues
 } from '@plitzi/sdk-shared';
@@ -25,7 +25,7 @@ import type { FormEvent, ReactNode, RefObject } from 'react';
 export type FormProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   children: ReactNode;
   method: 'get' | 'post';
   actionUrl: string;
@@ -40,7 +40,7 @@ export type FieldValue = string | boolean | number;
 const Form = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   children,
   method = 'get',
   actionUrl = '',

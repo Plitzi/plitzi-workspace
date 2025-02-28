@@ -3,27 +3,21 @@ import classNames from 'classnames';
 import { useCallback, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockHtmlProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
   content?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
 };
 
-const BlockHtml = ({
-  ref,
-  content = '',
-  className = '',
-  internalProps = emptyObject as InternalProps
-}: BlockHtmlProps) => {
+const BlockHtml = ({ ref, content = '', className = '', internalProps }: BlockHtmlProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

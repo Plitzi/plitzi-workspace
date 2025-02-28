@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -13,21 +13,21 @@ import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type {
   SourceField,
-  InternalProps,
+  InternalPropsSTG2,
   InteractionBaseCallback,
   InteractionCallbackParamValues
 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 type InternalPropsSubProps = {
-  setElementState: (params: { key: string; value: boolean }) => void;
+  // setElementState: (params: { key: string; value: boolean }) => void;
   styleSelectors: Record<string, string>;
 };
 
 export type DialogContainerProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalProps<InternalPropsSubProps>;
+  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   children: ReactNode;
   headerLabel: string;
   acceptButtonLabel: string;
@@ -39,7 +39,7 @@ export type DialogContainerProps = {
 const DialogContainer = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
+  internalProps,
   children,
   headerLabel = 'Dialog Header',
   acceptButtonLabel = 'Accept',
@@ -158,10 +158,10 @@ const DialogContainer = ({
   }, [handleClickClose, handleOpeDialog, internalProps]);
 
   useEffect(() => {
-    if (internalProps.elementState?.visibility !== false) {
+    if (internalProps.elementState.visibility !== false) {
       void interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
     }
-  }, [id, interactionsManager, internalMetadata, internalProps.elementState?.visibility]);
+  }, [id, interactionsManager, internalMetadata, internalProps.elementState.visibility]);
 
   const sourceFields = useCallback(() => {
     if (typeof internalMetadata !== 'object') {

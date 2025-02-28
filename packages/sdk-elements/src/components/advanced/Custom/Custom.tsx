@@ -3,7 +3,6 @@ import classNames from 'classnames';
 import { use, useEffect, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import ComponentContext from '../../../Component/ComponentContext';
 import withElement from '../../../Element/hocs/withElement';
@@ -11,13 +10,13 @@ import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
 import type { ComponentPlugin } from '../../../Component/ComponentContext';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   renderType?: string;
   settings?: string;
   isPlugin?: boolean;
@@ -29,7 +28,7 @@ export type CustomProps = {
 const Custom = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   renderType = '',
   settings = '{}',
   isPlugin = false,
@@ -55,7 +54,7 @@ const Custom = ({
 
     return {};
   }, [settings]);
-  const internalPropsMemo = useMemo<InternalProps>(
+  const internalPropsMemo = useMemo<InternalPropsSTG2>(
     () => ({ ...internalProps, attributes: settingsParsed }),
     [internalProps, settingsParsed]
   );

@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -13,7 +13,7 @@ import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type {
   SourceField,
-  InternalProps,
+  InternalPropsSTG2,
   InteractionCallbackParamValues,
   InteractionBaseCallback
 } from '@plitzi/sdk-shared';
@@ -27,7 +27,7 @@ type InternalPropsSubProps = {
 export type ModalContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps<InternalPropsSubProps>;
+  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   children?: ReactNode;
   title?: string;
   autoHideAfterClick?: boolean;
@@ -36,7 +36,7 @@ export type ModalContainerProps = {
 const ModalContainer = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
+  internalProps,
   children,
   title = 'Modal Header',
   autoHideAfterClick = true
@@ -116,10 +116,10 @@ const ModalContainer = ({
   }, [handleClickClose, handleOpenModal, internalProps]);
 
   useEffect(() => {
-    if (internalProps.elementState?.visibility !== false) {
+    if (internalProps.elementState.visibility !== false) {
       void interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
     }
-  }, [id, interactionsManager, internalMetadata, internalProps.elementState?.visibility]);
+  }, [id, interactionsManager, internalMetadata, internalProps.elementState.visibility]);
 
   const sourceFields = useCallback(
     () =>

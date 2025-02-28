@@ -4,22 +4,20 @@ import get from 'lodash/get';
 import { cloneElement, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 type InternalPropsSubProps = {
-  setElementState: unknown;
   styleSelectors: Record<string, string>;
 };
 
 export type DropdownProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalProps<InternalPropsSubProps>;
+  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   children?: ReactNode;
   className?: string;
   popupPlacement?: 'left' | 'right' | 'top' | 'bottom';
@@ -34,7 +32,7 @@ export type DropdownProps = {
 
 const Dropdown = ({
   ref,
-  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
+  internalProps,
   children,
   className = '',
   popupPlacement = 'bottom',

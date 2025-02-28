@@ -4,7 +4,6 @@ import classNames from 'classnames';
 import { use, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import Label from './components/Label';
 import withFieldValue from './hocs/withFieldValue';
@@ -17,13 +16,13 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ChangeEvent, RefObject } from 'react';
 
 export type FormControlProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   subType: 'text' | 'number' | 'email' | 'password' | 'time' | 'checkbox' | 'switch' | 'select' | 'textarea' | 'hidden';
   name: string;
   label: string;
@@ -42,7 +41,7 @@ export type FormControlProps = {
 const FormControl = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   subType = 'text',
   name = '',
   label = 'Label',

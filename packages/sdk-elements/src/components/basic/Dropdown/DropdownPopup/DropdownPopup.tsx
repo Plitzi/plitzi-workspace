@@ -2,12 +2,10 @@
 import classNames from 'classnames';
 import { useImperativeHandle } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject, ReactNode, CSSProperties, MouseEvent } from 'react';
 
 type InternalPropsSubProps = {
@@ -19,17 +17,12 @@ type InternalPropsSubProps = {
 
 export type DropdownPopupProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalProps<InternalPropsSubProps>;
+  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   className?: string;
   children?: ReactNode;
 };
 
-const DropdownPopup = ({
-  ref,
-  className = '',
-  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
-  children
-}: DropdownPopupProps) => {
+const DropdownPopup = ({ ref, className = '', internalProps, children }: DropdownPopupProps) => {
   const { onClick, openPopup, parameters, popupRef } = internalProps;
   useImperativeHandle<HTMLElement, HTMLElement>(ref, () => (popupRef as RefObject<HTMLElement>).current, [popupRef]);
 

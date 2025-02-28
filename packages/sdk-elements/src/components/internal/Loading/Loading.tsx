@@ -1,21 +1,19 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type LoadingProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
 };
 
-const Loading = ({ ref, className = '', internalProps = emptyObject as InternalProps }: LoadingProps) => {
+const Loading = ({ ref, className = '', internalProps }: LoadingProps) => {
   const {
     definition: { label }
   } = internalProps;

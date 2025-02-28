@@ -2,18 +2,17 @@
 import classNames from 'classnames';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type FontAwesomeProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   icon?: string;
   size?: string;
   iconAnimation?: string;
@@ -22,7 +21,7 @@ export type FontAwesomeProps = {
 const FontAwesome = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   icon = 'fas fa-flag',
   size = 'fa-1x',
   iconAnimation = ''

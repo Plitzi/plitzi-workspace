@@ -3,27 +3,21 @@ import MarkdownUI from '@plitzi/plitzi-ui/Markdown';
 import classNames from 'classnames';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type MarkdownProps = {
   ref: RefObject<HTMLElement>;
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   className: string;
   content: string;
 };
 
-const Markdown = ({
-  ref,
-  content = 'Markdown',
-  className = '',
-  internalProps = emptyObject as InternalProps
-}: MarkdownProps) => {
+const Markdown = ({ ref, content = 'Markdown', className = '', internalProps }: MarkdownProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

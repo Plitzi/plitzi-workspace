@@ -11,13 +11,14 @@ import useCollectionContext from './hooks/useCollectionContext';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
+import type { InternalPropsSTG2, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type CollectionContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   source?: string;
   children?: ReactNode;
   limit?: string;
@@ -28,7 +29,7 @@ export type CollectionContainerProps = {
 const CollectionContainer = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   source = '',
   children,
   limit = '10',
@@ -41,10 +42,10 @@ const CollectionContainer = ({
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
   const { loading, collection, fetch } = useCollectionContext({ source, limit, query, singleRecord, previewMode });
-  const { useDataSource } = use(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
 
   const sourceFields = useCallback(() => {
-    const fields = [];
+    const fields: SourceField[] = [];
     if (!collection) {
       return [];
     }
@@ -71,6 +72,7 @@ const CollectionContainer = ({
   const [CollectionContext] = useDataSource({
     id,
     source: `collectionContainer_${id}`,
+    mode: 'write',
     name: sourceName,
     fields: sourceFields
   });

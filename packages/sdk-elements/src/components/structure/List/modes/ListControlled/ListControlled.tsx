@@ -3,30 +3,24 @@ import get from 'lodash/get';
 import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 import ListControlledItem from './ListControlledItem';
 import RootElement from '../../../../../Element/RootElement';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
-import type { SourceField, InternalProps } from '@plitzi/sdk-shared';
+import type { SourceField, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListControlledProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   children: ReactNode;
   items: object[];
 };
 
-const ListControlled = ({
-  ref,
-  className = '',
-  internalProps = emptyObject as InternalProps,
-  children,
-  items = []
-}: ListControlledProps) => {
+const ListControlled = ({ ref, className = '', internalProps, children, items = [] }: ListControlledProps) => {
   const { id } = internalProps;
   const {
     settings: { previewMode },

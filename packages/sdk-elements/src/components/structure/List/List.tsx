@@ -1,18 +1,17 @@
 /* eslint-disable react-refresh/only-export-components */
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import ListBasic from './modes/ListBasic';
 import ListControlled from './modes/ListControlled';
 import withElement from '../../../Element/hocs/withElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListProps<T = unknown> = {
   ref?: RefObject<HTMLElement>;
   className?: string;
   subType?: 'ul' | 'ol';
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   items?: T[];
   source?: 'none' | 'controlled';
@@ -22,7 +21,7 @@ const List = ({
   ref,
   className = '',
   subType = 'ul',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   children,
   items = [],
   source = 'none'

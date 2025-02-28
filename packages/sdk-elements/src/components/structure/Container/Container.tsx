@@ -1,12 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ContainerProps = {
@@ -26,17 +24,11 @@ export type ContainerProps = {
     | 'dl'
     | 'dt'
     | 'dd';
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   children?: ReactNode;
 };
 
-const Container = ({
-  ref,
-  className = '',
-  subType = 'div',
-  internalProps = emptyObject as InternalProps,
-  children
-}: ContainerProps) => {
+const Container = ({ ref, className = '', subType = 'div', internalProps, children }: ContainerProps) => {
   return (
     <RootElement
       ref={ref}

@@ -2,12 +2,11 @@
 import classNames from 'classnames';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type VideoProps = {
@@ -18,7 +17,7 @@ export type VideoProps = {
   loop?: boolean;
   muted?: boolean;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
 };
 
 const Video = ({
@@ -29,7 +28,7 @@ const Video = ({
   loop = false,
   muted = true,
   className = '',
-  internalProps = emptyObject as InternalProps
+  internalProps
 }: VideoProps) => {
   const {
     settings: { previewMode }

@@ -4,27 +4,21 @@ import classNames from 'classnames';
 import { useMemo, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type ParagraphProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   content?: string | number;
   className?: string;
 };
 
-const Paragraph = ({
-  ref,
-  content = 'Paragraph',
-  className = '',
-  internalProps = emptyObject as InternalProps
-}: ParagraphProps) => {
+const Paragraph = ({ ref, content = 'Paragraph', className = '', internalProps }: ParagraphProps) => {
   const {
     settings: { previewMode },
     contexts: { BuilderContext }

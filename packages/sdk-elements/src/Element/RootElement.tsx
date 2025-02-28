@@ -11,7 +11,7 @@ import { nativeEventsList } from './helpers/elementUtils';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback, InternalProps } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { Context, FC, JSX, ReactNode, RefObject } from 'react';
 
 const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
@@ -48,7 +48,7 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   className?: string;
   interactionTriggers?: Record<string, InteractionBaseCallback>;
   interactionCallbacks?: Record<string, InteractionBaseCallback>;
-  internalProps?: InternalProps;
+  internalProps?: InternalPropsSTG2;
 } & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref'>;
 
 const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({

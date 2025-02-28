@@ -4,29 +4,22 @@ import classNames from 'classnames';
 import { useMemo, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type HeadingProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   className?: string;
   content?: string;
   subType?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 };
 
-const Heading = ({
-  ref,
-  internalProps = emptyObject as InternalProps,
-  className = '',
-  content = 'Heading',
-  subType = 'h1'
-}: HeadingProps) => {
+const Heading = ({ ref, internalProps, className = '', content = 'Heading', subType = 'h1' }: HeadingProps) => {
   const {
     settings: { previewMode },
     contexts: { BuilderContext }

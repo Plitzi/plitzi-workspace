@@ -3,16 +3,16 @@ import get from 'lodash/get';
 import { useCallback, use, useMemo, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject, getDisplayName } from '@plitzi/sdk-shared/utils';
+import { getDisplayName } from '@plitzi/sdk-shared/utils';
 
 import type { FieldValue } from '../../Form/Form';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ChangeEvent, FC, RefObject } from 'react';
 
 export type WithFieldValueProps<T> = {
   ref: RefObject<HTMLElement>;
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   name: string;
   defaultValue?: string;
   subType:
@@ -31,14 +31,7 @@ export type WithFieldValueProps<T> = {
 
 const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
   const WithFieldValueComponent = (props: WithFieldValueProps<T>) => {
-    const {
-      ref,
-      internalProps = emptyObject as InternalProps,
-      name = '',
-      subType = 'text',
-      defaultValue = '',
-      required = true
-    } = props;
+    const { ref, internalProps, name = '', subType = 'text', defaultValue = '', required = true } = props;
     const { id } = internalProps;
     const {
       settings: { previewMode },

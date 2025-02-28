@@ -8,7 +8,9 @@ export type ElementLayoutType = 'layout' | 'segment' | 'element' | 'reference';
 // PluginManager ->                 -> ComponentPlugin -> withElement -> (preload all hooks) -> RootElement -> render
 //               -> PluginRemote -> ^
 
-export type InternalPropsExtension = Record<Exclude<string, 'id' | 'rootId'>, unknown>;
+export type InternalPropsExtension<
+  T extends Record<Exclude<string, 'id' | 'rootId'>, unknown> = Record<Exclude<string, 'id' | 'rootId'>, unknown>
+> = T;
 
 export type InternalPropsSTG0<T extends InternalPropsExtension = InternalPropsExtension> = {
   id: string;
@@ -30,12 +32,13 @@ export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsEx
   definition: Element['definition'];
   attributes: Element['attributes'];
   elementState: Record<string, unknown>;
-  interactions?: Element['definition']['interactions'];
   interactionsBasicCallbacks?: Record<string, InteractionBaseCallback>;
   setElementState: (state: Record<string, unknown>) => void;
+  interactions?: Element['definition']['interactions'];
+  style?: CSSProperties;
 };
 
-export type InternalPropSTG3<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG2<T> & {};
+// export type InternalPropSTG3<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG2<T> & {};
 
 export type ComponentDefinition = Pick<PluginSchema, 'attributes' | 'builder' | 'definition' | 'defaultStyle'> & {
   assets: { type: 'style' | 'script'; url: string }[];
@@ -43,23 +46,3 @@ export type ComponentDefinition = Pick<PluginSchema, 'attributes' | 'builder' | 
   market: Omit<PluginManifest, 'name'> & { category: string };
   settings: { [key: string]: unknown };
 };
-
-// deprecated
-
-export type BaseInternalProps = { id: string; rootId?: string; className?: string };
-
-export type InternalProps<T extends Record<string, unknown> = Record<string, unknown>> = BaseInternalProps & {
-  definition: Element['definition'];
-  attributes: Element['attributes'];
-  style?: CSSProperties;
-  interactions?: Element['definition']['interactions'];
-  interactionsBasicCallbacks?: Record<string, InteractionBaseCallback>;
-  elementState?: Record<string, string | boolean | number>;
-  plitziElementLayout?: {
-    bodyChildren: ReactNode;
-    containerId: string;
-    referenceId: string;
-    rootId: string;
-    type: ElementLayoutType;
-  };
-} & T;

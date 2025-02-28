@@ -9,7 +9,7 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback, InternalProps } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
@@ -20,7 +20,7 @@ export type PageProps = {
   className?: string;
   layout?: string;
   layoutContainer?: string;
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   children?: ReactNode;
 };
 

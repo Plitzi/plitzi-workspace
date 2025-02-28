@@ -2,12 +2,10 @@
 import classNames from 'classnames';
 import { Children, cloneElement, isValidElement, useMemo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { Dispatch, ReactElement, ReactNode, RefObject, SetStateAction } from 'react';
 
 type InternalPropsSubProps = {
@@ -18,16 +16,11 @@ type InternalPropsSubProps = {
 export type TabContainerHeaderProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalProps<InternalPropsSubProps>;
+  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   children: ReactNode;
 };
 
-const TabContainerHeader = ({
-  ref,
-  className = '',
-  internalProps = emptyObject as InternalProps<InternalPropsSubProps>,
-  children
-}: TabContainerHeaderProps) => {
+const TabContainerHeader = ({ ref, className = '', internalProps, children }: TabContainerHeaderProps) => {
   const { onSelect, tabSelected } = internalProps;
 
   const { childrenParsed } = useMemo(() => {

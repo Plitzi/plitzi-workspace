@@ -15,13 +15,13 @@ import RootElement from '../../../Element/RootElement';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { SourceField, InternalPropsSTG2, InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ApiContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   query?: string;
   method?: 'get' | 'post' | 'put' | 'delete' | 'patch';
@@ -35,7 +35,7 @@ export type ApiContainerProps = {
 const ApiContainer = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   children,
   query = '',
   method = 'get',
@@ -74,7 +74,7 @@ const ApiContainer = ({
 
       return template(handleBarsParams);
     } catch (e) {
-      console.error(e.message);
+      console.error((e as Error).message);
     }
 
     return '';
@@ -128,7 +128,7 @@ const ApiContainer = ({
 
   const sourceFields = useCallback(
     () =>
-      getPathsFromObeject(data).reduce((acum, path) => {
+      getPathsFromObeject(data).reduce<SourceField[]>((acum, path) => {
         const name = path.split('.');
         if (name.length > 1) {
           return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
@@ -152,16 +152,28 @@ const ApiContainer = ({
     fields: sourceFields
   });
 
-  const interactionCallbacks = useMemo(() => {
+  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
     const label = get(internalProps, 'definition.label', 'Api Container') as string;
 
-    return { performQuery: { title: `Perform Query ${label}`, callback: refetch, preview: {}, params: {} } };
+    return {
+      performQuery: { title: `Perform Query ${label}`, type: 'callback', callback: refetch, preview: {}, params: {} }
+    };
   }, [internalProps, refetch]);
 
-  const interactionTriggers = useMemo(
+  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
-      onApiError: { title: 'On Api Error', params: {}, preview: { url: '', method: '', status: '', data: '' } },
-      onApiSuccess: { title: 'On Api Success', params: {}, preview: { url: '', method: '', status: '', data: '' } }
+      onApiError: {
+        title: 'On Api Error',
+        type: 'trigger',
+        params: {},
+        preview: { url: '', method: '', status: '', data: '' }
+      },
+      onApiSuccess: {
+        title: 'On Api Success',
+        type: 'trigger',
+        params: {},
+        preview: { url: '', method: '', status: '', data: '' }
+      }
     }),
     []
   );

@@ -2,21 +2,19 @@
 import classNames from 'classnames';
 import get from 'lodash/get';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type NotFoundProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
 };
 
-const NotFound = ({ ref, className = '', internalProps = emptyObject as InternalProps }: NotFoundProps) => {
+const NotFound = ({ ref, className = '', internalProps }: NotFoundProps) => {
   const label = get(internalProps, 'definition.label') as string;
 
   return (

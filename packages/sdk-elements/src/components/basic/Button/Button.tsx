@@ -4,18 +4,17 @@ import get from 'lodash/get';
 import { useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ButtonProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   contentPlacement?: 'before' | 'after';
   content?: string;
@@ -26,7 +25,7 @@ export type ButtonProps = {
 const Button = ({
   ref,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   children,
   contentPlacement = 'after',
   content = 'Button',

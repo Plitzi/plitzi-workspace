@@ -6,7 +6,6 @@ import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import ComponentContext from '../../../Component/ComponentContext';
 import withElement from '../../../Element/hocs/withElement';
@@ -14,12 +13,12 @@ import JsxManager from '../../../Element/JsxManager';
 import RootElement from '../../../Element/RootElement';
 
 import type { ComponentPlugin } from '../../../Component/ComponentContext';
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   className?: string;
   props?: string;
   contentCache?: string;
@@ -38,7 +37,7 @@ type ComponentPluginJsx = ComponentPlugin<{
 
 const BlockJsx = ({
   ref,
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   className = '',
   props: componentProps = '{}',
   contentCache = '',

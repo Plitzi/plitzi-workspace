@@ -2,17 +2,16 @@
 import classNames from 'classnames';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type ImageProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   className?: string;
   src?: string;
   alt?: string;
@@ -21,7 +20,7 @@ export type ImageProps = {
 
 const Image = ({
   ref,
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   className = '',
   src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
   alt = '',

@@ -5,17 +5,16 @@ import { useMemo, use } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalProps;
+  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   className?: string;
   href?: string;
@@ -25,7 +24,7 @@ export type LinkProps = {
 
 const Link = ({
   ref,
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   children,
   className = '',
   href = '#',

@@ -5,21 +5,26 @@ import get from 'lodash/get';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import withElement from '../../../Element/hocs/withElement';
 import PluginManager from '../../../Element/PluginManager';
 import RootElement from '../../../Element/RootElement';
 
-import type { ElementLayoutType } from '../../../Element/PluginManager';
-import type { Element, Schema, Segment, InternalProps, BaseInternalProps } from '@plitzi/sdk-shared';
+import type {
+  Element,
+  Schema,
+  Segment,
+  InternalPropsSTG1,
+  InternalPropsSTG2,
+  ElementLayoutType
+} from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ReferenceProps = {
   ref: RefObject<HTMLElement>;
   children: ReactNode;
   className: string;
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   referenceType: ElementLayoutType;
   referenceId: string;
   referenceContainer: string;
@@ -29,7 +34,7 @@ const Reference = ({
   ref,
   children,
   className = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   referenceType = 'element',
   referenceId = '',
   referenceContainer = ''
@@ -104,9 +109,9 @@ const Reference = ({
     [referenceContainer, children, referenceType, id]
   );
 
-  const internalPropsMemo = useMemo<BaseInternalProps>(
-    () => ({ id, className: styleSelectors.base }),
-    [styleSelectors, id]
+  const internalPropsMemo = useMemo<InternalPropsSTG1>(
+    () => ({ id, rootId, className: styleSelectors.base }),
+    [styleSelectors, id, rootId]
   );
   if (!reference) {
     return (
@@ -128,8 +133,6 @@ const Reference = ({
       <SchemaContext value={referenceContextData}>
         <PluginManager
           key={`${id}_${referenceId}`}
-          id={element.id}
-          rootId={rootId}
           type={elementType}
           internalProps={internalPropsMemo}
           plitziElementLayout={plitziElementLayoutMemo}
@@ -150,8 +153,6 @@ const Reference = ({
         {element && (
           <PluginManager
             key={`${id}_${referenceId}`}
-            id={element.id}
-            rootId={rootId}
             type={elementType}
             internalProps={internalPropsMemo}
             plitziElementLayout={plitziElementLayoutMemo}
