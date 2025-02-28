@@ -10,17 +10,24 @@ import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';
 
 import type { ComponentPlugin } from '../Component/ComponentContext';
-import type { Plugin } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG1, Plugin } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type JsxManagerProps = {
   plitziJsxSkipHOC?: boolean;
   plitziJsxType: string;
   plitziJsxProps: Record<string, unknown>;
+  internalProps: InternalPropsSTG1;
   children: ReactNode;
 };
 
-const JsxManager = ({ plitziJsxSkipHOC = false, plitziJsxType = '', plitziJsxProps, children }: JsxManagerProps) => {
+const JsxManager = ({
+  plitziJsxSkipHOC = false,
+  plitziJsxType = '',
+  plitziJsxProps,
+  internalProps,
+  children
+}: JsxManagerProps) => {
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
@@ -47,7 +54,15 @@ const JsxManager = ({ plitziJsxSkipHOC = false, plitziJsxType = '', plitziJsxPro
 
     const { scope } = pluginDefinition;
 
-    return <PluginRemote url={url} scope={scope} plitziJsxSkipHOC={plitziJsxSkipHOC} plitziJsxProps={plitziJsxProps} />;
+    return (
+      <PluginRemote
+        internalProps={internalProps}
+        url={url}
+        scope={scope}
+        plitziJsxSkipHOC={plitziJsxSkipHOC}
+        plitziJsxProps={plitziJsxProps}
+      />
+    );
   }
 
   if (!Plugin) {
@@ -55,7 +70,7 @@ const JsxManager = ({ plitziJsxSkipHOC = false, plitziJsxType = '', plitziJsxPro
   }
 
   return (
-    <Plugin plitziJsxSkipHOC={plitziJsxSkipHOC} {...plitziJsxProps}>
+    <Plugin plitziJsxSkipHOC={plitziJsxSkipHOC} {...plitziJsxProps} internalProps={internalProps}>
       {children}
     </Plugin>
   );

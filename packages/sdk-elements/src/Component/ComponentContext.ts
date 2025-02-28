@@ -1,12 +1,12 @@
 import { createContext } from 'react';
 
-import type { ComponentDefinition, PluginBuilder, InternalPropsSTG0 } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, PluginBuilder, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactElement, ReactNode } from 'react';
 
 export type ComponentOrigin = 'local' | 'local-custom' | 'remote';
 export type ComponentPlugin<T = unknown> = FC<
   T & {
-    internalProps: InternalPropsSTG0;
+    internalProps: InternalPropsSTG1;
     className?: string;
     plitziCustomComponent?: boolean;
     plitziJsxSkipHOC?: boolean;

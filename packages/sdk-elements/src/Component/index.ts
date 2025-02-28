@@ -1,5 +1,5 @@
 import ComponentContext from './ComponentContext';
-import ComponentHelper from './ComponentHelper';
+import * as ComponentHelper from './ComponentHelper';
 import ComponentProvider from './ComponentProvider';
 
 export * from './ComponentContext';

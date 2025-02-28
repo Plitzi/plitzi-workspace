@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import classNames from 'classnames';
-import React, { useMemo, use, useCallback } from 'react';
+import { useMemo, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 

@@ -13,7 +13,7 @@ import JsxManager from '../../../Element/JsxManager';
 import RootElement from '../../../Element/RootElement';
 
 import type { ComponentPlugin } from '../../../Component/ComponentContext';
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {
@@ -46,6 +46,11 @@ const BlockJsx = ({
   const [JsxModule, setJsxModule] = useState<{ default: ComponentPluginJsx } | undefined>(undefined);
   const [renderError, setRenderError] = useState<string | undefined>(undefined);
   const { components } = use(ComponentContext);
+  const internalPropsTruncated = useMemo<InternalPropsSTG1>(() => {
+    const { id, rootId, plitziElementLayout } = internalProps;
+
+    return { id, rootId, plitziElementLayout };
+  }, [internalProps]);
   const componentPropsParsed = useMemo(() => {
     if (!componentProps) {
       return {};
@@ -110,6 +115,7 @@ const BlockJsx = ({
         <JsxModule.default
           _jsx={_jsx}
           React={React}
+          internalProps={internalPropsTruncated}
           getManager={getManager}
           allowEmptyRender={allowEmptyRender}
           props={componentPropsParsed}

@@ -56,7 +56,7 @@ function loadComponent(
 export type PluginRemoteProps = {
   url: string;
   scope: string;
-  internalProps?: InternalPropsSTG1;
+  internalProps: InternalPropsSTG1;
   autoRegister?: boolean;
   plitziJsxSkipHOC?: boolean;
   plitziCustomComponent?: boolean;
@@ -94,7 +94,7 @@ const PluginRemote = ({
     return (
       <Suspense>
         <Component
-          /* internalProps={internalProps} */
+          internalProps={internalProps}
           plitziJsxSkipHOC={plitziJsxSkipHOC}
           {...plitziJsxProps}
           plitziCustomComponent={plitziCustomComponent}
