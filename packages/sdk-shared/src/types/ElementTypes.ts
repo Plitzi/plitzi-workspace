@@ -33,9 +33,12 @@ export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsEx
   attributes: Element['attributes'];
   elementState: Record<string, unknown>;
   interactionsBasicCallbacks?: Record<string, InteractionBaseCallback>;
-  setElementState: (state: Record<string, unknown>) => void;
+  setElementState: <T2 extends Record<string, unknown> = Record<string, unknown>>(
+    params?: ((state: T2) => T2) | { key: string; value?: string | boolean | number } | T2
+  ) => void;
   interactions?: Element['definition']['interactions'];
   style?: CSSProperties;
+  styleSelectors: Element['definition']['styleSelectors'];
 };
 
 // export type InternalPropSTG3<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG2<T> & {};

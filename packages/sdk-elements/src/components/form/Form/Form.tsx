@@ -108,7 +108,7 @@ const Form = ({
 
       setElementState(state => ({ ...state, values: { ...state.values, [name]: value } }));
       setElementState(state => {
-        if (!state?.errors || !state.errors[name]) {
+        if (!state.errors || !state.errors[name]) {
           return state;
         }
 
@@ -129,7 +129,7 @@ const Form = ({
           return state;
         }
 
-        if (!error && state?.errors && state?.errors[name]) {
+        if (!error && state.errors && state.errors[name]) {
           return { ...state, errors: omit(state, [`errors.${name}`]) };
         }
 

@@ -19,15 +19,10 @@ import type {
 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
-type InternalPropsSubProps = {
-  // setElementState: (params: { key: string; value: boolean }) => void;
-  styleSelectors: Record<string, string>;
-};
-
 export type DialogContainerProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
+  internalProps: InternalPropsSTG2;
   children: ReactNode;
   headerLabel: string;
   acceptButtonLabel: string;
@@ -143,7 +138,7 @@ const DialogContainer = ({
   );
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Modal');
+    const label = get(internalProps, 'definition.label', 'Modal') as string;
 
     return {
       openDialog: {
@@ -178,7 +173,10 @@ const DialogContainer = ({
     }, []);
   }, [internalMetadata]);
 
-  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Dialog - ${id}`), [id, internalProps]);
+  const sourceName = useMemo(
+    () => get(internalProps, 'definition.label', `Dialog - ${id}`) as string,
+    [id, internalProps]
+  );
 
   const [DialogContianerContext] = useDataSource({
     id,

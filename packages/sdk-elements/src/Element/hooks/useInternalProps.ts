@@ -191,11 +191,8 @@ const useInternalProps = ({
   const cache = useMemo(() => getCache(element.definition), [element.definition]);
 
   const setElementState = useCallback(
-    (
-      params?:
-        | ((state?: Record<string, unknown>) => unknown)
-        | { key: string; value?: string | boolean | number }
-        | Record<string, unknown>
+    <T extends Record<string, unknown> = Record<string, unknown>>(
+      params?: ((state: T) => T) | { key: string; value?: string | boolean | number } | T
     ) => {
       if (!previewMode || !params || (typeof params !== 'object' && typeof params !== 'function')) {
         return false;
@@ -205,8 +202,8 @@ const useInternalProps = ({
       if (typeof params === 'function') {
         setState(prevState =>
           produce(prevState, draft => {
-            const result = params(draft);
-            if (result && typeof result === 'object') {
+            const result = params(draft as T);
+            if (typeof result === 'object') {
               omit(result, cache.attributesBinded);
             }
           })
