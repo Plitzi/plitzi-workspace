@@ -106,8 +106,11 @@ const Form = ({
         value = '';
       }
 
-      setElementState(state => ({ ...state, values: { ...state.values, [name]: value } }));
-      setElementState(state => {
+      setElementState<{ values: Record<string, unknown> | undefined }>(state => ({
+        ...state,
+        values: { ...state.values, [name]: value }
+      }));
+      setElementState<{ errors: Record<string, unknown> | undefined }>(state => {
         if (!state.errors || !state.errors[name]) {
           return state;
         }
@@ -124,7 +127,7 @@ const Form = ({
         return;
       }
 
-      setElementState(state => {
+      setElementState<{ errors: Record<string, unknown> | undefined }>(state => {
         if (!error && !get(state, `errors.${name}`)) {
           return state;
         }
