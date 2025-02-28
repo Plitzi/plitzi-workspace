@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import get from 'lodash/get';
-import { cloneElement, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Children, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 
@@ -9,7 +8,7 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
-import type { MouseEvent, ReactNode, RefObject } from 'react';
+import type { MouseEvent, ReactElement, ReactNode, RefObject } from 'react';
 
 type InternalPropsSubProps = {
   styleSelectors: Record<string, string>;
@@ -188,29 +187,27 @@ const Dropdown = ({
     return parameters;
   }, [openPopup, ref, popupRef, calculatePosition]);
 
-  const childrenParsed = useMemo(() => {
-    if (Array.isArray(children)) {
-      return children.map(child => {
-        const type = get(child, 'props.type');
-        if (type === 'dropdownPopup') {
-          return cloneElement(child, {
-            ...child.props,
+  const { options } = useMemo(() => {
+    const components: { options: ReactNode[] } = {
+      options: []
+    };
+    Children.forEach(children, child => {
+      if (!isValidElement(child)) {
+        return;
+      }
+
+      const childProps = child.props as Record<string, unknown>;
+      if (childProps.type === 'dropdownPopup') {
+        components.options.push(
+          cloneElement<Record<string, unknown>>(child as ReactElement<Record<string, unknown>>, {
+            ...childProps,
             internalProps: { onClick: handleClickPopup, openPopup, parameters, popupRef }
-          });
-        }
-
-        return child;
-      });
-    }
-
-    if (!children) {
-      return children;
-    }
-
-    return cloneElement(children, {
-      ...children.props,
-      internalProps: { onClick: handleClickPopup, openPopup, parameters, popupRef }
+          })
+        );
+      }
     });
+
+    return components;
   }, [children, handleClickPopup, openPopup, parameters]);
 
   return (
@@ -222,7 +219,7 @@ const Dropdown = ({
       })}
       onClick={handleClick}
     >
-      {childrenParsed}
+      {options}
       {openPopup && backgroundDisabled && previewMode && (
         <div
           ref={backgroundContainerRef}
