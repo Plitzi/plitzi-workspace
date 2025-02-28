@@ -3,17 +3,16 @@ import isEmpty from 'lodash/isEmpty';
 import { useMemo, useEffect, useState, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Collection } from '@plitzi/sdk-shared';
 
 export type UseCollectionContextProps = {
   source: string;
-  record: Record<string, unknown>;
+  record?: Record<string, unknown>;
   query?: RuleGroup;
   limit: string;
-  appendResults: boolean;
+  appendResults?: boolean;
   singleRecord: boolean;
   previewMode?: boolean;
 };
@@ -29,7 +28,7 @@ const useCollectionContext = (
   {
     source,
     record,
-    query = emptyObject as RuleGroup,
+    query,
     limit = '1',
     appendResults = false,
     singleRecord = false,
@@ -39,7 +38,7 @@ const useCollectionContext = (
   const plitziContext = usePlitziServiceContext();
   const [collection, setCollection] = useState<Collection | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasNextPage, setHasNextPage] = useState(false);
   const {
     contexts: { CollectionContext, NavigationContext }
@@ -94,7 +93,7 @@ const useCollectionContext = (
     const result = await fetchRecords?.(
       source,
       queryCompiled,
-      !appendResults && cursor ? null : cursor,
+      !appendResults && cursor ? undefined : cursor,
       parseInt(limit, 10)
       // appendResults ? collection.records : [], // refactor, this one is removed in sdk
     );

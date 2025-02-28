@@ -5,12 +5,12 @@ import get from 'lodash/get';
 import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import useCollectionContext from './hooks/useCollectionContext';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionBaseCallback, InternalPropsSTG2, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
@@ -22,7 +22,7 @@ export type CollectionContainerProps = {
   source?: string;
   children?: ReactNode;
   limit?: string;
-  query?: object;
+  query?: RuleGroup;
   singleRecord?: boolean;
 };
 
@@ -33,7 +33,7 @@ const CollectionContainer = ({
   source = '',
   children,
   limit = '10',
-  query = emptyObject,
+  query,
   singleRecord = false
 }: CollectionContainerProps) => {
   const { id } = internalProps;
