@@ -46,7 +46,7 @@ const RawMode = props => {
       <PlitziServiceProvider value={plitziContextValue}>
         {pageId && renderMode !== RENDER_MODE_WIDGET && <Page key={pageId} internalProps={pageValueMemo} />}
         {pageId && renderMode === RENDER_MODE_WIDGET && (
-          <PluginManager key={pageId} id={pageId} rootId={pageId} type={type} internalProps={pageValueMemo} />
+          <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />
         )}
       </PlitziServiceProvider>
       <MadeInPlitzi pageId={pageId} />

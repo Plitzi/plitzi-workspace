@@ -3,7 +3,7 @@ import { isValidElement, useMemo } from 'react';
 
 import PluginManager from '../PluginManager';
 
-import type { Element, Schema, SchemaContextValue, InternalProps } from '@plitzi/sdk-shared';
+import type { Element, Schema, SchemaContextValue, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 const useInternalItems = ({
@@ -15,7 +15,7 @@ const useInternalItems = ({
   newSchema,
   previewMode
 }: {
-  internalProps: InternalProps;
+  internalProps: InternalPropsSTG2;
   schema: Schema;
   children: ReactNode | ReactNode[];
   SchemaContext: Context<SchemaContextValue>;
@@ -45,8 +45,7 @@ const useInternalItems = ({
         return (
           <PluginManager
             key={!previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId}
-            id={itemId}
-            rootId={finalRootId}
+            internalProps={{ id: itemId, rootId: finalRootId }}
             plitziElementLayout={plitziElementLayout}
             type={type}
           />

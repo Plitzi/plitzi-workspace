@@ -6,7 +6,10 @@ export type InteractionCallbackType = 'trigger' | 'globalCallback' | 'callback' 
 export type InteractionStatus = 'completed' | 'skipped';
 export type InteractionNodeStatus = 'success' | 'failed' | 'skipped' | 'disabled';
 
-export type InteractionPostCallback<T = Record<string, unknown>> = (params?: T, callbackResult?: unknown) => unknown;
+export type InteractionPostCallback<T = Record<string, unknown>> = (
+  params: InteractionCallbackParamValues & T,
+  callbackResult?: unknown
+) => unknown;
 
 export type PostCallbackNode<T = Record<string, unknown>> = {
   id: string;
@@ -29,12 +32,24 @@ export type InteractionCallbackParamValues = Record<keyof InteractionBaseCallbac
 export type InteractionCallbackParam = {
   canBind?: boolean;
   label?: string;
-  type: InteractionParamType;
   when?: boolean | ((params: InteractionCallbackParamValues) => boolean);
 } & (
   | { type: 'text'; defaultValue?: string }
   | { type: 'boolean'; defaultValue?: boolean }
-  | { type: 'select'; options: { label: string; value: string }[]; defaultValue?: string }
+  | {
+      type: 'select';
+      defaultValue?: string;
+      options:
+        | { label: string; value: string }[]
+        | ((params: InteractionCallbackParamValues) => { label: string; value: string }[]);
+    }
+  | {
+      type: (params: InteractionCallbackParamValues) => InteractionParamType;
+      defaultValue?: unknown;
+      options?:
+        | { label: string; value: string }[]
+        | ((params: InteractionCallbackParamValues) => { label: string; value: string }[]);
+    }
 );
 
 export type InteractionCallbackPreview = string | Record<string, string>;

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
-export type EventBridgeCallback<T = unknown> = (params?: T | T[]) => T | Promise<T>;
+export type EventBridgeCallback<T = unknown> = (params?: T) => T | Promise<T>;
 
-export type EventBridgeParams<T = unknown> = { filter?: (params?: T | T[]) => boolean; override?: boolean };
+export type EventBridgeParams<T = unknown> = { filter?: (params?: T) => boolean; override?: boolean };
 
 export type Event<T = unknown> = { callback: EventBridgeCallback<T>; filter?: EventBridgeParams<T>['filter'] };
 

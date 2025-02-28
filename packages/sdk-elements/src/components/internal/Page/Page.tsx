@@ -3,7 +3,6 @@ import classNames from 'classnames';
 import { use, useEffect, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import ComponentContext from '../../../Component/ComponentContext';
 import withElement from '../../../Element/hocs/withElement';
@@ -21,7 +20,7 @@ export type PageProps = {
   className?: string;
   layout?: string;
   layoutContainer?: string;
-  internalProps?: InternalProps;
+  internalProps: InternalProps;
   children?: ReactNode;
 };
 
@@ -33,7 +32,7 @@ const Page = ({
   className = '',
   layout = '',
   layoutContainer = '',
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   children
 }: PageProps) => {
   const { id } = internalProps;

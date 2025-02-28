@@ -10,7 +10,7 @@ import withElement from './hocs/withElement';
 import useDynamicScript from './hooks/useDynamicScript';
 
 import type { ComponentContextValue, ComponentPlugin } from '../Component/ComponentContext';
-import type { BaseInternalProps } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 function loadComponent(
   url: string,
@@ -56,7 +56,7 @@ function loadComponent(
 export type PluginRemoteProps = {
   url: string;
   scope: string;
-  internalProps?: BaseInternalProps;
+  internalProps?: InternalPropsSTG1;
   autoRegister?: boolean;
   plitziJsxSkipHOC?: boolean;
   plitziCustomComponent?: boolean;
@@ -66,7 +66,7 @@ export type PluginRemoteProps = {
 const PluginRemote = ({
   url = '',
   scope = '',
-  internalProps = emptyObject as BaseInternalProps,
+  internalProps,
   autoRegister = true,
   // Props from JSX
   plitziJsxSkipHOC = false,

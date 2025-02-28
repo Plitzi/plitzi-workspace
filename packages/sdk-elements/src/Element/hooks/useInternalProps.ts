@@ -7,20 +7,25 @@ import { useMemo, useState, useCallback, useRef } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
   Element,
   ElementBinding,
+  InteractionBaseCallback,
   InteractionCallback,
+  InteractionCallbackParamValues,
   InteractionPostCallback,
-  InternalProps
+  InternalPropsSTG1,
+  InternalPropsSTG2
 } from '@plitzi/sdk-shared';
 
 // Helpers
 
-const getCache = (definition: Element['definition']) => {
+const getCache = (definition?: Element['definition']) => {
+  if (!definition) {
+    return { stateBinded: [], attributesBinded: [] };
+  }
+
   const bindingsState = get(definition, 'bindings.initialState', []) as ElementBinding[];
   let stateBinded: string[] = [];
   if (Array.isArray(bindingsState)) {
@@ -47,15 +52,15 @@ const sanityValue = (value: string | boolean | number) => {
 // Methods
 
 const getProps = (
-  element: Partial<Element>,
-  internalProps: InternalProps = {} as InternalProps,
+  element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] },
+  internalProps: InternalPropsSTG1,
   plitziCustomComponent = false,
-  dataSource = {}
+  dataSource = {} as Record<string, unknown>
 ) => {
   let { attributes, definition } = element;
-  const { attributes: attributesProp, rootId, plitziElementLayout } = internalProps;
+  const { rootId, plitziElementLayout } = internalProps;
   if (plitziCustomComponent) {
-    attributes = omit({ ...attributes, ...attributesProp }, ['settings']);
+    attributes = omit(attributes, ['settings']);
   }
 
   // Data Sources
@@ -70,7 +75,7 @@ const getProps = (
   if (variables && Object.keys(variables).length > 0) {
     attributes = Object.keys(attributes).reduce((acum, key) => {
       if (typeof attributes[key] === 'string' && hasTokens(attributes[key])) {
-        return { ...acum, [key]: processTwig(attributes[key], variables, true) };
+        return { ...acum, [key]: processTwig(attributes[key], variables as Record<string, unknown>, true) };
       }
 
       return { ...acum, [key]: attributes[key] };
@@ -97,11 +102,12 @@ const getProps = (
 const getInteractions = (
   attributes: Element['attributes'],
   definition: Element['definition'],
-  callback: InteractionCallback,
+  callback: InteractionCallback['callback'],
   postCallback: InteractionPostCallback
-) => ({
+): Record<string, InteractionBaseCallback> => ({
   setState: {
     title: `Update ${definition.label}`,
+    type: 'callback',
     callback,
     postCallback,
     preview: {},
@@ -128,7 +134,7 @@ const getInteractions = (
 
           if (category === 'state') {
             return [
-              { path: 'visibility', label: 'Visibility' },
+              { value: 'visibility', label: 'Visibility' },
               ...Object.keys(definition.styleSelectors).map(styleSelector => ({
                 value: `styleSelectors.${styleSelector}`,
                 label: `Selector - ${capitalize(styleSelector)}`
@@ -142,17 +148,11 @@ const getInteractions = (
       value: {
         label: 'Value',
         defaultValue: undefined,
-        type: params => {
-          if (typeof attributes[params.key] === 'boolean') {
-            return 'select';
-          }
-
-          return 'text';
-        },
+        type: params => (typeof attributes[params.key as string] === 'boolean' ? 'select' : 'text'),
         when: params => !!params.category,
         options: params => {
           const { key } = params;
-          if (typeof attributes[key] === 'boolean') {
+          if (typeof attributes[key as string] === 'boolean') {
             return [
               { value: 'true', label: 'True' },
               { value: 'false', label: 'False' }
@@ -172,34 +172,45 @@ const getInteractions = (
 });
 
 export type UseInternalProps = {
-  element: Partial<Element>;
-  internalProps: InternalProps;
+  element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] };
+  internalProps: InternalPropsSTG1;
   plitziCustomComponent?: boolean;
-  dataSource: object;
+  dataSource: Record<string, unknown>;
   previewMode?: boolean;
 };
 
 const useInternalProps = ({
   element,
-  internalProps = emptyObject as InternalProps,
+  internalProps,
   plitziCustomComponent = false,
-  dataSource = emptyObject,
+  dataSource,
   previewMode = false
 }: UseInternalProps) => {
-  const prevStateRef = useRef({});
-  const [state, setState] = useState({});
-  const { definition } = internalProps;
-  const cache = useMemo(() => getCache(definition), [definition]);
+  const prevStateRef = useRef<Record<string, unknown>>({});
+  const [state, setState] = useState<Record<string, unknown>>({});
+  const cache = useMemo(() => getCache(element.definition), [element.definition]);
 
-  const setElementState: EventBridgeCallback = useCallback(
-    (params?: (() => Record<string, unknown>) | { key?: string; value?: string | boolean | number }) => {
+  const setElementState = useCallback(
+    (
+      params?:
+        | ((state?: Record<string, unknown>) => unknown)
+        | { key: string; value?: string | boolean | number }
+        | Record<string, unknown>
+    ) => {
       if (!previewMode || !params || (typeof params !== 'object' && typeof params !== 'function')) {
         return false;
       }
 
       // Scenario 1 when is a function
       if (typeof params === 'function') {
-        setState(prevState => produce(prevState, draft => omit(params(draft) ?? {}, cache.attributesBinded)));
+        setState(prevState =>
+          produce(prevState, draft => {
+            const result = params(draft);
+            if (result && typeof result === 'object') {
+              omit(result, cache.attributesBinded);
+            }
+          })
+        );
 
         return true;
       }
@@ -208,13 +219,13 @@ const useInternalProps = ({
       if (params.key && params.value !== undefined) {
         const { key } = params;
         let { value } = params;
-        value = sanityValue(value);
+        value = sanityValue(value as string | boolean | number);
         setState(prevState =>
           produce(prevState, draft => {
-            if (typeof value === 'boolean' || value || value === '' || value === 0) {
-              set(draft, key, value);
+            if (typeof value === 'undefined') {
+              draft = omit(prevState, [key as string]);
             } else {
-              draft = omit(draft, [key]);
+              set(draft, key as string, value);
             }
           })
         );
@@ -225,7 +236,7 @@ const useInternalProps = ({
       // Scenario 3, its an object
       const auxState = {};
       Object.keys(params).forEach(key => {
-        set(auxState, key, params[key]);
+        set(auxState, key, (params as Record<string, unknown>)[key]);
       });
 
       setState(omit(auxState, cache.attributesBinded));
@@ -236,20 +247,20 @@ const useInternalProps = ({
   );
 
   const setStateCallback = useCallback(
-    params => {
+    (params: InteractionCallbackParamValues) => {
       const prevState = prevStateRef.current;
-      if (!params || !params.key || !params.value) {
+      if (!params.key || !params.value) {
         return { prevState, nextState: prevState };
       }
 
       const { key } = params;
       let { value } = params;
-      value = sanityValue(value);
+      value = sanityValue(value as string | number | boolean);
       let newState = {};
-      if (typeof value === 'boolean' || value || value === '' || value === 0) {
-        newState = produce(prevState, draft => set(draft, key, value));
+      if (typeof value === 'undefined') {
+        newState = omit(prevState, [key as string]);
       } else {
-        newState = omit(prevState, [key]);
+        newState = produce(prevState, draft => set(draft, key as string, value));
       }
 
       if (setElementState(newState)) {
@@ -263,25 +274,29 @@ const useInternalProps = ({
     [setElementState]
   );
 
-  const setStatePostCallback = useCallback((params, callbackResult) => {
+  const setStatePostCallback: InteractionPostCallback = useCallback((params, callbackResult) => {
     const { revertOnFinish } = params;
-    if (!revertOnFinish || !callbackResult || !callbackResult?.prevState) {
+    if (
+      !revertOnFinish ||
+      !callbackResult ||
+      !(callbackResult as { prevState: Record<string, unknown> | undefined }).prevState
+    ) {
       return;
     }
 
-    const { prevState } = callbackResult;
+    const { prevState } = callbackResult as { prevState: Record<string, unknown> };
     prevStateRef.current = prevState;
     setState(prevState);
   }, []);
 
-  const internalPropsParsed = useMemo<InternalProps & { setElementState: typeof setElementState }>(() => {
+  const internalPropsParsed = useMemo<InternalPropsSTG2>(() => {
     const internalPropsAux = getProps(element, internalProps, plitziCustomComponent, dataSource);
     const { attributes, definition } = internalPropsAux;
 
     return {
       ...internalPropsAux,
       attributes: { ...attributes, ...omit(state, ['visibility', 'styleSelectors']) },
-      definition: { ...definition, styleSelectors: { ...definition?.styleSelectors, ...state?.styleSelectors } },
+      definition: { ...definition, styleSelectors: { ...definition.styleSelectors, ...(state.styleSelectors ?? {}) } },
       elementState: { ...definition.initialState, ...state },
       setElementState,
       interactionsBasicCallbacks: getInteractions(attributes, definition, setStateCallback, setStatePostCallback)

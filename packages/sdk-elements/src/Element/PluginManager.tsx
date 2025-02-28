@@ -4,42 +4,24 @@ import get from 'lodash/get';
 import { memo, useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';
 
 import type { ComponentPlugin } from '../Component/ComponentContext';
-import type { Plugin, BaseInternalProps } from '@plitzi/sdk-shared';
-import type { ReactNode } from 'react';
-
-export type ElementLayoutType = 'layout' | 'segment' | 'element' | 'reference';
+import type { Plugin, InternalPropsSTG0, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 export type PluginManagerProps = {
-  id: string;
-  rootId: string;
-  plitziElementLayout?: {
-    bodyChildren: ReactNode;
-    containerId: string;
-    referenceId: string;
-    rootId: string;
-    type: ElementLayoutType;
-  };
+  plitziElementLayout?: InternalPropsSTG1['plitziElementLayout'];
   type: string;
-  internalProps?: BaseInternalProps;
+  internalProps: InternalPropsSTG0;
 };
 
-const PluginManager = ({
-  id = '',
-  rootId = '',
-  plitziElementLayout = undefined,
-  type = '',
-  internalProps = emptyObject as BaseInternalProps
-}: PluginManagerProps) => {
+const PluginManager = ({ plitziElementLayout = undefined, type = '', internalProps }: PluginManagerProps) => {
   const { components } = use(ComponentContext);
-  const internalPropsMemo = useMemo<BaseInternalProps>(
-    () => ({ id, rootId, plitziElementLayout, ...(internalProps as Omit<BaseInternalProps, 'id'>) }),
-    [id, rootId, plitziElementLayout, internalProps]
+  const internalPropsMemo = useMemo<InternalPropsSTG1>(
+    () => ({ ...internalProps, plitziElementLayout }),
+    [plitziElementLayout, internalProps]
   );
   const {
     contexts: { PluginsContext }

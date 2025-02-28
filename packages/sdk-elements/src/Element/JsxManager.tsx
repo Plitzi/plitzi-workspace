@@ -5,7 +5,6 @@ import get from 'lodash/get';
 import { memo, useCallback, use } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
 
 import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';
@@ -21,12 +20,7 @@ export type JsxManagerProps = {
   children: ReactNode;
 };
 
-const JsxManager = ({
-  plitziJsxSkipHOC = false,
-  plitziJsxType = '',
-  plitziJsxProps = emptyObject,
-  children
-}: JsxManagerProps) => {
+const JsxManager = ({ plitziJsxSkipHOC = false, plitziJsxType = '', plitziJsxProps, children }: JsxManagerProps) => {
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();

@@ -12,11 +12,11 @@ import useInternalProps from './useInternalProps';
 
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { EventBridgeCallback, EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
-import type { Schema, InternalProps } from '@plitzi/sdk-shared';
+import type { Schema, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 const useElement = (
-  internalProps: InternalProps,
+  internalProps: InternalPropsSTG1,
   {
     plitziCustomComponent,
     children,
@@ -61,7 +61,9 @@ const useElement = (
     previewMode
   });
   const eventCallbacks = useMemo<Record<string, EventBridgeCallback>>(
-    () => ({ [`${id}_setState`]: internalPropsParsed.setElementState }),
+    () => ({
+      [`${id}_setState`]: internalPropsParsed.setElementState as EventBridgeCallback
+    }),
     [id, internalPropsParsed.setElementState]
   );
 
