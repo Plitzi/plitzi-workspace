@@ -8,7 +8,19 @@ export type PageInfo = {
   total: number;
 };
 
-export type CollectionField = unknown;
+export type CollectionField = {
+  id: string;
+  name: string;
+  machineName: string;
+  type: 'text' | 'number' | 'boolean' | 'date';
+  params: Record<
+    string,
+    {
+      primary: boolean;
+      required: boolean;
+    }
+  >;
+};
 
 export type Collection = {
   id: string;

@@ -20,7 +20,7 @@ export type UseCollectionContextProps = {
 
 export type UseCollectionContextResult = {
   loading: boolean;
-  collection?: object;
+  collection?: Collection;
   hasNextPage: boolean;
   handleNextPage: () => void;
   fetch: () => void;
@@ -50,16 +50,16 @@ const useCollectionContext = (
   // needs to find new user cases
   const queryCompiled = useMemo(() => {
     if (!previewMode) {
-      return {};
+      return '';
     }
 
     try {
-      return QueryBuilderFormatter(query, 'mongodb', false, { queryParams, routeParams });
+      return QueryBuilderFormatter(query, 'mongodb', false, { queryParams, routeParams }) as string;
     } catch {
       // nothing to do
     }
 
-    return {};
+    return '';
   }, [previewMode, query, queryParams, routeParams]);
 
   const populateRecords = useCallback(
