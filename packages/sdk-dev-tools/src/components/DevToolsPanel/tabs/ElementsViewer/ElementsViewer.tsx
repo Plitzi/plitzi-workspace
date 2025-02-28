@@ -1,16 +1,12 @@
-// Packages
 import classNames from 'classnames';
 import { useMemo, use, useCallback } from 'react';
 
-// Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
-// Relatives
 import ElementDetails from './ElementDetails';
 import ElementsList from './ElementsList';
 
-// Types
 import type { Element } from '@plitzi/sdk-shared';
 
 export type ElementsViewerProps = {

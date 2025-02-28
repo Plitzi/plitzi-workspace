@@ -1,14 +1,10 @@
-// Packages
 import { memo } from 'react';
 
-// Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import LogInteraction from './categories/LogInteraction';
 import LogNavigation from './categories/LogNavigation';
 
-// Types
 import type {
   LogInteraction as TLogInteraction,
   LogNavigation as TLogNavigation,

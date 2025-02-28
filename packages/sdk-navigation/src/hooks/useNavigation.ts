@@ -1,11 +1,8 @@
-// Packages
 import get from 'lodash/get';
 import { useMemo } from 'react';
 
-// Monorepo
 import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
 
-// Types
 import type { Server } from '../types';
 
 export type UseNavigationProps = {

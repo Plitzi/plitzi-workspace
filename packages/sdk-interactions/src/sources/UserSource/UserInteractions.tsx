@@ -1,13 +1,9 @@
-// Packages
 import { use, useCallback, useMemo } from 'react';
 
-// Monorepo
 import UserContext from '@plitzi/sdk-auth/UserContext';
 
-// Relatives
 import InteractionsContext from '../../InteractionsContext';
 
-// Types
 import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 

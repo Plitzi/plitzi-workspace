@@ -1,4 +1,3 @@
-// Relatives
 import EventBridge from './EventBridge';
 import EventBridgeContext from './EventBridgeContext';
 import EventBridgeContextProvider from './EventBridgeContextProvider';

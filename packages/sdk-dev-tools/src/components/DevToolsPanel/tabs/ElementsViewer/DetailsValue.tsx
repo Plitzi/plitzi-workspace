@@ -1,11 +1,8 @@
-// Packages
 import get from 'lodash/get';
 import { useMemo, use, useCallback } from 'react';
 
-// Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type DetailsValue = {

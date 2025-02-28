@@ -1,8 +1,6 @@
-// Packages
 import get from 'lodash/get';
 import { matchPath } from 'react-router-dom';
 
-// Types
 import type { Schema, PageFolder, Element } from '@plitzi/sdk-shared';
 import type { PathMatch } from 'react-router-dom';
 

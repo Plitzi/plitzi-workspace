@@ -1,16 +1,13 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
-// Packages
+
 import get from 'lodash/get';
 import set from 'lodash/set';
 
-// Monorepo
 import EventBridge from '@plitzi/sdk-event-bridge';
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
-// Relatives
 import { flowTrigger } from './InteractionsHelper';
 
-// Types
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type { ElementInteraction, InteractionBaseCallback, Subscriptor } from '@plitzi/sdk-shared';
 

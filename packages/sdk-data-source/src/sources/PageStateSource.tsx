@@ -1,17 +1,13 @@
-// Packages
 import get from 'lodash/get';
 import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
-// Relatives
 import DataSourceContext from '../DataSourceContext';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type PageStateSourceProps = {

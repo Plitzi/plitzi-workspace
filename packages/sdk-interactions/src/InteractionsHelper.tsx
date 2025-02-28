@@ -1,16 +1,12 @@
-// Packages
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 
-// Monorepo
 import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
 
-// Relatives
 import utility from './utility';
 
-// Types
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type {
   ElementInteraction,

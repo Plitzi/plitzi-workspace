@@ -1,4 +1,3 @@
-// Relatives
 import FlatMap from './helpers/FlatMap';
 import SchemaContext from './SchemaContext';
 import SchemaSettingsContext from './SchemaSettingsContext';

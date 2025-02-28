@@ -1,10 +1,7 @@
-// Packages
 import { use, useLayoutEffect } from 'react';
 
-// Relatives
 import InteractionsContext from '../InteractionsContext';
 
-// Types
 import type { ElementInteraction, InteractionBaseCallback, Subscriptor } from '@plitzi/sdk-shared';
 
 export type UseInteractionsProps = {

@@ -1,4 +1,3 @@
-// Relatives
 import VariableValue from './VariableValue';
 
 export type VariablesListItemProps = {

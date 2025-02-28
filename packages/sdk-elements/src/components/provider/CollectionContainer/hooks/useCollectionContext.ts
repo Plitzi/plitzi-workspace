@@ -77,7 +77,7 @@ const useCollectionContext = (
 
   const fetchCollectionInternal = useCallback(async () => {
     setLoading(true);
-    const collectionInternal = await fetchCollection(source, queryCompiled);
+    const collectionInternal = await fetchCollection?.(source, queryCompiled);
     setLoading(false);
     if (collectionInternal?.records) {
       populateRecords(collectionInternal, collectionInternal.records);

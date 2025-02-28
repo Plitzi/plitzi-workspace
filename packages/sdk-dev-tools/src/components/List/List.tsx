@@ -1,12 +1,9 @@
-// Packages
 import Input from '@plitzi/plitzi-ui/Input';
 import classNames from 'classnames';
 import { useCallback, useMemo, useState } from 'react';
 
-// Relatives
 import ListItem from './ListItem';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type ListItem<T = Record<string, unknown>> = { id: string; name?: string; label: ReactNode } & Omit<

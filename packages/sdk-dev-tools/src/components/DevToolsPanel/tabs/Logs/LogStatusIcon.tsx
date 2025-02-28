@@ -1,7 +1,5 @@
-// Packages
 import classNames from 'classnames';
 
-// Types
 import type { LogType } from '../../../../DevToolsContext';
 import type { ReactNode } from 'react';
 

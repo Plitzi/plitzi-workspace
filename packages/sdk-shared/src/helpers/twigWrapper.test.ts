@@ -1,7 +1,5 @@
-// Packages
 import { expect, describe, test, jest } from '@jest/globals';
 
-// Relatives
 import { processTwig } from './twigWrapper';
 
 jest.mock('plitziSdkFederation/usePlitziServiceContext');

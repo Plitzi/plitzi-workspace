@@ -1,4 +1,3 @@
-// Packages
 import { createContext } from 'react';
 
 export type StateManagerContextValue = { state?: Record<string, unknown> };

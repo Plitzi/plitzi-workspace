@@ -1,12 +1,9 @@
-// Packages
 import { getValuesRequired } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
-// Monorepo
 import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-// Types
 import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
 export type NodeMetadataProps = {

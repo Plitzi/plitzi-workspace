@@ -1,17 +1,13 @@
-// Packages
 import { produce } from 'immer';
 import get from 'lodash/get';
 import set from 'lodash/set';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-// Monorepo
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import StateManagerContext from './StateManagerContext';
 
-// Types
 import type { ReactNode } from 'react';
 
 export const STYLE_TYPE_NORMAL = 'normal';

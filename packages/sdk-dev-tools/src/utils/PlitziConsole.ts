@@ -1,7 +1,5 @@
-// Packages
 import moment from 'moment';
 
-// Types
 import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../DevToolsContext';
 import type { Moment } from 'moment';
 

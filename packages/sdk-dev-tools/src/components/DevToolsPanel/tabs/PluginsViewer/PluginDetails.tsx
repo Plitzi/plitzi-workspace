@@ -1,7 +1,5 @@
-// Packages
 import { useMemo } from 'react';
 
-// Monorepo
 import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
 
 export type PluginDetailsProps = {

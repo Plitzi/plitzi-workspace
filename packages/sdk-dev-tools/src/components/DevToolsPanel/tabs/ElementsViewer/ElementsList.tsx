@@ -1,12 +1,9 @@
-// Packages
 import Input from '@plitzi/plitzi-ui/Input';
 import get from 'lodash/get';
 import { useCallback, useMemo, useState } from 'react';
 
-// Relatives
 import ElementsListItem from './ElementsListItem';
 
-// Types
 import type { Element } from '@plitzi/sdk-shared';
 
 export type ElementsListProps = {

@@ -3,12 +3,12 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-// Relatives
 import TabContainer from './TabContainer';
+import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
 
 describe('TabContainer Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<TabContainer />);
+    const { baseElement } = render(<TabContainer internalProps={defaultInternalProps} />);
 
     expect(baseElement).toBeTruthy();
   });

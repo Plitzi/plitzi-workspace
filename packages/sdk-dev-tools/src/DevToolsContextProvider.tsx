@@ -1,12 +1,9 @@
-// Packages
 import omit from 'lodash/omit';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
-// Relatives
 import DevToolsContext from './DevToolsContext';
 import { pConsole } from './utils/PlitziConsole';
 
-// Types
 import type { Log, ProviderCallback } from './DevToolsContext';
 import type { ReactNode } from 'react';
 

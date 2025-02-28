@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-// Packages
 import get from 'lodash/get';
 import set from 'lodash/set';
 
-// Monorepo
 import { generateID } from '@plitzi/sdk-shared/utils';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
-// Types
 import type { Style, Element, Schema, SchemaVariable } from '@plitzi/sdk-shared';
 
 export const VARIABLE_REGEX = /var\(--(?<token>[a-z0-9_-]+)\)/gi;

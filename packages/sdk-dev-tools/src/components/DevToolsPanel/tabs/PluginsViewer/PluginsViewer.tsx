@@ -1,16 +1,12 @@
-// Packages
 import classNames from 'classnames';
 import capitalize from 'lodash/capitalize';
 import { use, useCallback, useMemo, useState } from 'react';
 
-// Monorepo
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
-// Relatives
 import PluginDetails from './PluginDetails';
 import List from '../../../List';
 
-// Types
 import type { ListItem } from '../../../List/List';
 import type { Plugin } from '@plitzi/sdk-shared';
 

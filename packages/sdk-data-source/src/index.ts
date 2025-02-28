@@ -1,4 +1,3 @@
-// Relatives
 import DataSourceContext from './DataSourceContext';
 import DataSourceContextProvider from './DataSourceContextProvider';
 import getBindingsDetails from './helpers/getBindingsDetails';

@@ -1,4 +1,3 @@
-// Relatives
 import DevToolsContainer from './DevToolsContainer';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import PlitziConsole from './utils/PlitziConsole';

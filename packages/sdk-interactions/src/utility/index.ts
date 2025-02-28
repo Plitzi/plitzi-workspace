@@ -1,4 +1,3 @@
-// Relatives
 import delayTime from './delayTime';
 import twigTemplate from './twigTemplate';
 // import dateConverter from './dateConverter';

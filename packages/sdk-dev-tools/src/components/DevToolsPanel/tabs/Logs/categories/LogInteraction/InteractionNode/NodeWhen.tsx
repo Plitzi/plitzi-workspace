@@ -1,9 +1,7 @@
-// Packages
 import Heading from '@plitzi/plitzi-ui/Heading';
 import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
-// Types
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
 export type NodeWhenProps = {

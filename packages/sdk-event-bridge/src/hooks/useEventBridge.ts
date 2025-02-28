@@ -1,10 +1,7 @@
-// Packages
 import { use, useEffect } from 'react';
 
-// Relatives
 import EventBridgeContext from '../EventBridgeContext';
 
-// Types
 import type { EventBridgeCallback, EventBridgeParams } from '../EventBridge';
 
 const useEventBridge = (

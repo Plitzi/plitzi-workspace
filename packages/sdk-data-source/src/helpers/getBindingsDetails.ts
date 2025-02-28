@@ -1,14 +1,11 @@
-// Packages
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
 import camelCase from 'lodash/camelCase';
 import get from 'lodash/get';
 import set from 'lodash/set';
 
-// Relatives
 import utility from '../utility';
 
-// Types
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, ElementBinding } from '@plitzi/sdk-shared';
 

@@ -1,4 +1,3 @@
-// Relatives
 import StyleContext from './StyleContext';
 import StyleMap from './StyleMap';
 import StyleViewer from './StyleViewer';

@@ -1,8 +1,6 @@
-// Packages
 import classNames from 'classnames';
 import { useCallback } from 'react';
 
-// Types
 import type { InteractionNodeStatus } from '@plitzi/sdk-shared';
 
 export type ExecutionTreeNodeProps = {

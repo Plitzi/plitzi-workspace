@@ -1,12 +1,9 @@
-// Packages
 import { Auth0Provider } from '@auth0/auth0-react';
 import { use } from 'react';
 
-// Monorepo
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { getDisplayName } from '@plitzi/sdk-shared/utils';
 
-// Types
 import type { FC } from 'react';
 
 export type WithUserProviderProps<T> = T;

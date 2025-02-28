@@ -1,13 +1,10 @@
-// Packages
 import { produce } from 'immer';
 import get from 'lodash/get';
 import has from 'lodash/has';
 import set from 'lodash/set';
 
-// Relatives
 import FlatMap from './helpers/FlatMap';
 
-// Relatives
 import type { DropPosition } from './helpers/FlatMap';
 import type { Schema, Element } from '@plitzi/sdk-shared';
 

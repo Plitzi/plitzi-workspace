@@ -1,4 +1,3 @@
-// Monorepo
 import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 

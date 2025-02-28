@@ -1,4 +1,3 @@
-// Packages
 import lodashCapitalize from 'lodash/capitalize';
 
 const callback = (source: string) => {

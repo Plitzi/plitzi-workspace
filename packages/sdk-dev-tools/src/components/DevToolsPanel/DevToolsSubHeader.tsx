@@ -1,12 +1,9 @@
-// Packages
 import classNames from 'classnames';
 import throttle from 'lodash/throttle';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// Relatives
 import DevToolsButton from './DevToolsButton';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type DevToolsSubHeaderProps = {

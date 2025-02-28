@@ -1,4 +1,3 @@
-// Packages
 import { createContext } from 'react';
 
 import type EventBridge from './EventBridge';

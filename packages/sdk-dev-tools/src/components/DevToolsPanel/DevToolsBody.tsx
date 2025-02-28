@@ -1,8 +1,6 @@
-// Packages
 import classNames from 'classnames';
 import { use } from 'react';
 
-// Relatives
 import DevToolsContext from '../../DevToolsContext';
 import DataSourceViewer from './tabs/DataSourceViewer';
 import ElementsViewer from './tabs/ElementsViewer';

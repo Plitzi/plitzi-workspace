@@ -1,15 +1,11 @@
-// Packages
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 
-// Monorepo
 import { makeId } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 
-// Types
 import type { Style, StyleItem, TagType } from './StyleContext';
 import type { Schema, Element, ComponentDefinition } from '@plitzi/sdk-shared';
 

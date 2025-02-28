@@ -1,8 +1,6 @@
-// Packages
 import get from 'lodash/get';
 import moment from 'moment';
 
-// Types
 import type { UseCacheReturn } from '@plitzi/plitzi-ui/Cache';
 
 export type BasicProviderProps = {

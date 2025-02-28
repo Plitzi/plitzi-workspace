@@ -1,6 +1,6 @@
 import get from 'lodash/get';
 
-const isAuthenticated = (authData, userProvider = '', previewMode = true) => {
+const isAuthenticated = (authData: { isAuthenticated: boolean }, userProvider = '', previewMode = true) => {
   let authenticated = false;
   switch (userProvider) {
     case 'auth0':

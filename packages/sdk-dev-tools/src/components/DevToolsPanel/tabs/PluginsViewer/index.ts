@@ -1,4 +1,3 @@
-// Relatives
 import PluginDetails from './PluginDetails';
 import PluginsViewer from './PluginsViewer';
 

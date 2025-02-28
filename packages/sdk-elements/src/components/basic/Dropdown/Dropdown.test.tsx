@@ -3,12 +3,12 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-// Relatives
 import Dropdown from './Dropdown';
+import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
 
 describe('Dropdown Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<Dropdown />);
+    const { baseElement } = render(<Dropdown internalProps={defaultInternalProps} />);
 
     expect(baseElement).toBeTruthy();
   });

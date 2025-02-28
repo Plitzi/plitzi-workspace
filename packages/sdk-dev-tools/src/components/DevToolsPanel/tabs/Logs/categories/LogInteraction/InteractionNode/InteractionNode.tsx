@@ -1,17 +1,13 @@
-// Packages
 import Heading from '@plitzi/plitzi-ui/Heading';
 import moment from 'moment';
 import { useMemo } from 'react';
 
-// Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import NodeHeader from './NodeHeader';
 import NodeMetadata from './NodeMetadata';
 import NodeWhen from './NodeWhen';
 
-// Types
 import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui';
 
 export type InteractionNodeProps = {

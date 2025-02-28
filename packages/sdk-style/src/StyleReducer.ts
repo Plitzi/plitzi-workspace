@@ -1,4 +1,3 @@
-// Packages
 import { produce } from 'immer';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
@@ -7,7 +6,6 @@ import set from 'lodash/set';
 // Relative
 import { generateCache, processSelector } from './StyleHelper';
 
-// Types
 import type { Style, StyleItem } from './StyleContext';
 
 export const StyleActions = {

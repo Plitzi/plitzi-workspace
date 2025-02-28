@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
-// Packages
+
 import { use, useEffect, useMemo, useRef } from 'react';
 
-// Monorepo
 import { makeId, emptyObject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import DataSourceContext from '../DataSourceContext';
 
-// Types
 import type { Source, SourceMeta } from '@plitzi/sdk-shared';
 import type { Context } from 'react';
 

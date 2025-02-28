@@ -1,4 +1,3 @@
-// Relatives
 import UserInteractions from './UserInteractions';
 
 export * from './UserInteractions';

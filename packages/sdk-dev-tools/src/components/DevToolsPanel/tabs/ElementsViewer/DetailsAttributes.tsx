@@ -1,7 +1,5 @@
-// Relatives
 import DetailsValue from './DetailsValue';
 
-// Types
 import type { Element } from '@plitzi/sdk-shared';
 
 export type DetailsAttributesProps = {

@@ -1,4 +1,3 @@
-// Relatives
 import arrayMap from './arrayMap';
 import capitalize from './capitalize';
 import dateConverter from './dateConverter';

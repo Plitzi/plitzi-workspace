@@ -1,7 +1,5 @@
-// Packages
 import { createContext } from 'react';
 
-// Relatives
 import { EMPTY_STYLE_SCHEMA } from './StyleHelper';
 
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';

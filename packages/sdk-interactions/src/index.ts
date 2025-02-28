@@ -1,4 +1,3 @@
-// Relatives
 import useInteractions from './hooks/useInteractions';
 import InteractionsContext from './InteractionsContext';
 import InteractionsContextProvider from './InteractionsContextProvider';

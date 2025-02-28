@@ -1,4 +1,3 @@
-// Relatives
 import ElementsViewer from './ElementsViewer';
 
 export * from './ElementsViewer';

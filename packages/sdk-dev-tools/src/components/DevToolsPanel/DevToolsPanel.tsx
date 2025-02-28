@@ -1,17 +1,13 @@
-// Packages
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import classNames from 'classnames';
 import { useCallback, useMemo, useState, use } from 'react';
 
-// Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
-// Relatives
 import DevToolsBody from './DevToolsBody';
 import DevToolsHeader from './DevToolsHeader';
 import DevToolsSubHeader from './DevToolsSubHeader';
 
-// Types
 import type { Orientation } from '../../DevToolsContainer';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
 import type { ReactNode } from 'react';

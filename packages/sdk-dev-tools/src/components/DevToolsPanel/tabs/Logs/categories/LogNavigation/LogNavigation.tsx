@@ -1,11 +1,8 @@
-// Packages
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 
-// Relatives
 import LogNavigationBody from './LogNavigationBody';
 import LogNavigationHeader from './LogNavigationHeader';
 
-// Types
 import type { LogNavigation } from '../../../../../../DevToolsContext';
 import type { Moment } from 'moment';
 import type { ReactNode } from 'react';

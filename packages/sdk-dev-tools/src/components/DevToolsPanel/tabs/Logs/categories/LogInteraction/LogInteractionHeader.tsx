@@ -1,9 +1,7 @@
-// Relatives
 import { LOG_TYPE_CUSTOM, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole';
 import LogStatus from '../../LogStatus';
 import LogStatusIcon from '../../LogStatusIcon';
 
-// Types
 import type { LogInteraction } from '../../../../../../DevToolsContext';
 import type { ReactNode } from 'react';
 

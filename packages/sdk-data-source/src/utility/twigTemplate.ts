@@ -1,4 +1,3 @@
-// Monorepo
 import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
 
 const callback = (source: string, params: { template: string }, dataSources = {}) => {

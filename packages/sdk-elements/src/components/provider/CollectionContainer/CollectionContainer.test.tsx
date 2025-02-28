@@ -6,12 +6,13 @@ import { describe, it, expect } from 'vitest';
 // import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 import CollectionContainer from './CollectionContainer';
+import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
 
 describe('CollectionContainer Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       // <PlitziServiceProvider>
-      <CollectionContainer />
+      <CollectionContainer internalProps={defaultInternalProps} />
       // </PlitziServiceProvider>
     );
 

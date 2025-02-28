@@ -1,13 +1,10 @@
-// Packages
 import classNames from 'classnames';
 import get from 'lodash/get';
 import moment from 'moment';
 import { useCallback, useMemo } from 'react';
 
-// Relatives
 import ExecutionTreeNode from './ExecutionTreeNode';
 
-// Types
 import type { LogInteraction } from '../../../../../../../DevToolsContext';
 
 type Nodes = LogInteraction['params']['nodes'];

@@ -1,12 +1,9 @@
-// Packages
 import { useAuth0 } from '@auth0/auth0-react';
 import { useCache } from '@plitzi/plitzi-ui/Cache';
 import { useMemo, useEffect, useCallback } from 'react';
 
-// Relatives
 import BasicProvider from './managers/BasicProvider';
 
-// Types
 import type { Schema } from '@plitzi/sdk-shared';
 
 export type UseAuthProps = {

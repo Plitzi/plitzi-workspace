@@ -1,7 +1,5 @@
-// Packages
 import { createContext } from 'react';
 
-// Types
 import type { SchemaContextValue } from '@plitzi/sdk-shared';
 
 const schemaContextDefaultValue: SchemaContextValue = {

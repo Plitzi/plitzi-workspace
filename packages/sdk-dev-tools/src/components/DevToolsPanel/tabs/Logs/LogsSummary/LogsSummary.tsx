@@ -1,11 +1,8 @@
-// Packages
 import classNames from 'classnames';
 import { useMemo, useCallback } from 'react';
 
-// Relatives
 import LogsSummaryItem from './LogsSummaryItem';
 
-// Types
 import type { Orientation } from '../../../../../DevToolsContainer';
 import type { LogType, Log } from '../../../../../DevToolsContext';
 

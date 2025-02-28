@@ -1,13 +1,10 @@
-// Packages
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 
-// Monorepo
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
 
-// Relatives
 import DataSourceContext from './DataSourceContext';
 import useDataSource from './hooks/useDataSource';
 import NavigationSource from './sources/NavigationSource';
@@ -15,7 +12,6 @@ import PageStateSource from './sources/PageStateSource';
 import UserSource from './sources/UserSource';
 import VariablesSource from './sources/VariablesSource';
 
-// Types
 import type { Schema, Source, SourceMeta } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 

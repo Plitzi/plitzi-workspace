@@ -1,4 +1,3 @@
-// Packages
 import defaultTheme from 'tailwindcss/defaultTheme';
 import twConfig from '@plitzi/plitzi-ui/tailwind.config';
 

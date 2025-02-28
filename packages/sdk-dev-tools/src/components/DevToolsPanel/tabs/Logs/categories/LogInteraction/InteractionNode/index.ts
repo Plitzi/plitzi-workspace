@@ -1,4 +1,3 @@
-// Relatives
 import InteractionNode from './InteractionNode';
 
 export * from './InteractionNode';

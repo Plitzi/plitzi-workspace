@@ -1,8 +1,6 @@
-// Packages
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 
-// Types
 import type { PluginManifest, Plugin, ComponentDefinition } from '@plitzi/sdk-shared';
 
 export type PluginRaw = {

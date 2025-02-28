@@ -1,8 +1,6 @@
-// Packages
 import classNames from 'classnames';
 import { useCallback } from 'react';
 
-// Types
 import type { Orientation } from '../../DevToolsContainer';
 
 export type DevToolsHeaderProps = {

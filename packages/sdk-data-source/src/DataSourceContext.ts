@@ -1,7 +1,5 @@
-// Packages
 import { createContext } from 'react';
 
-// Types
 import type useDataSource from './hooks/useDataSource';
 import type { DataSourceContextValue as DataSourceContextValueShared } from '@plitzi/sdk-shared';
 

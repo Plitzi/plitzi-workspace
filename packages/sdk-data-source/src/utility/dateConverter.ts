@@ -1,7 +1,5 @@
-// Packages
 import moment from 'moment';
 
-// Types
 import type { Moment } from 'moment';
 
 const callback = (source: string | number, { format = 'DD/MM/YYYY', asAge = false, isUnix = true, isUtc = false }) => {

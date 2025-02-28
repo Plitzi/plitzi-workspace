@@ -1,14 +1,10 @@
-// Packages
 import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import DataSourceContext from '../DataSourceContext';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type NavigationSourceProps = {

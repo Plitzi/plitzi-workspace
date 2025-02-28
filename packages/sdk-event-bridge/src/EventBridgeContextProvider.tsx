@@ -1,11 +1,8 @@
-// Packages
 import { useEffect, useMemo } from 'react';
 
-// Relatives
 import EventBridge from './EventBridge';
 import EventBridgeContext from './EventBridgeContext';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type EventBridgeContextProviderProps = {

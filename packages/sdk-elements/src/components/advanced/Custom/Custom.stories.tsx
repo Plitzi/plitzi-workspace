@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import Custom from './Custom';
 import ComponentContext from '../../../Component/ComponentContext';
+import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
 
 import type { ComponentContextValue } from '../../../Component/ComponentContext';
 import type { Meta, StoryObj } from '@storybook/react';
@@ -22,7 +23,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-  args: {},
+  args: {
+    internalProps: defaultInternalProps
+  },
   render: function Render(args) {
     const value = useMemo(() => ({}), []);
 

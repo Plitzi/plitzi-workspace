@@ -1,12 +1,9 @@
-// Packages
 import { useMemo } from 'react';
 
-// Relatives
 import useInteractions from './hooks/useInteractions';
 import InteractionsContext from './InteractionsContext';
 import InteractionsManager from './InteractionsManager';
 
-// Types
 import type { InteractionsContextValue } from './InteractionsContext';
 import type { ReactNode } from 'react';
 

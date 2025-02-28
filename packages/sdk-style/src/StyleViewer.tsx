@@ -1,10 +1,8 @@
-// Packages
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import { useCallback, useMemo } from 'react';
 
-// Types
 import type { Style } from './StyleContext';
 
 export type StyleViewerProps = {

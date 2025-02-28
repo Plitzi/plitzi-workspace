@@ -1,11 +1,8 @@
-// Packages
 import ContainerTabs from '@plitzi/plitzi-ui/ContainerTabs';
 
-// Relatives
 import DetailsAttributes from './DetailsAttributes';
 import DetailsDefinition from './DetailsDefinition';
 
-// Types
 import type { Element } from '@plitzi/sdk-shared';
 
 const tabs = [{ label: 'Definition' }, { label: 'Attributes' }]; // , { label: 'Style' }

@@ -1,4 +1,3 @@
-// Relatives
 import useNavigation from './hooks/useNavigation';
 import NavigationContext from './NavigationContext';
 import { getPageFullPath, getPaths, matchRoutePath, isPageAuthored } from './NavigationHelper';

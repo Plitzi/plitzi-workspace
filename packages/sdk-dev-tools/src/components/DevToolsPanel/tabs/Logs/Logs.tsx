@@ -1,12 +1,9 @@
-// Packages
 import classNames from 'classnames';
 import { useState, useCallback } from 'react';
 
-// Relatives
 import Log from './Log';
 import LogsSummary from './LogsSummary';
 
-// Types
 import type { Orientation } from '../../../../DevToolsContainer';
 import type { LogType, Log as TLog } from '../../../../DevToolsContext';
 

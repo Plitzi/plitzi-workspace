@@ -1,12 +1,9 @@
-// Packages
 import classNames from 'classnames';
 import { useState, useCallback } from 'react';
 
-// Relatives
 import DevToolsPanel from './components/DevToolsPanel';
 import DevToolsContextProvider from './DevToolsContextProvider';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type Orientation = 'horizontal' | 'vertical';

@@ -1,14 +1,12 @@
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
 
-// Packages
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
-// Relatives
 import pkg from './package.json' with { type: 'json' };
 
 const importedPackages = new Set();

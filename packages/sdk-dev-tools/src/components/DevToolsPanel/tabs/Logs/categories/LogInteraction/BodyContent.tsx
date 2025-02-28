@@ -1,13 +1,10 @@
-// Packages
 import classNames from 'classnames';
 import get from 'lodash/get';
 import { useCallback, useMemo, useState } from 'react';
 
-// Relatives
 import ExecutionTree from './ExecutionTree';
 import InteractionNode from './InteractionNode';
 
-// Types
 import type { LogInteraction } from '../../../../../../DevToolsContext';
 
 export type BodyContentProps = {

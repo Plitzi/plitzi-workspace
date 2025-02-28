@@ -1,4 +1,3 @@
-// Relatives
 import VariablesContext from './VariablesContext';
 import { variablesToCss } from './VariablesHelper';
 

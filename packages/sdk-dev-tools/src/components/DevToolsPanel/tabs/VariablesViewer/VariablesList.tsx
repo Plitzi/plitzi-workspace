@@ -1,7 +1,5 @@
-// Relatives
 import VariablesListItem from './VariablesListItem';
 
-// Types
 import type { SchemaVariable } from '@plitzi/sdk-shared';
 
 export type VariablesListProps = { variables?: SchemaVariable[]; variablesParsed?: Record<string, string> };

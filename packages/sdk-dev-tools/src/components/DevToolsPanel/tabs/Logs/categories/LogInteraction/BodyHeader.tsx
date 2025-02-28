@@ -1,12 +1,9 @@
-// Packages
 import get from 'lodash/get';
 import moment from 'moment';
 import { use, useCallback, useMemo } from 'react';
 
-// Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
-// Types
 import type { ReactNode } from 'react';
 
 export type BodyHeaderProps = {

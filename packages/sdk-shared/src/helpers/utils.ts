@@ -1,7 +1,5 @@
-// Packages
 import get from 'lodash/get';
 
-// Types
 import type { FC } from 'react';
 
 export const isTestMode = () => typeof process !== 'undefined' && process.env.NODE_ENV === 'test';

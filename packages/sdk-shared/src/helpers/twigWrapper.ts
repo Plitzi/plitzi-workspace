@@ -1,4 +1,3 @@
-// Packages
 import Twig from 'twig';
 
 Twig.extendFilter('object_as_json', (value: string) => (typeof value === 'object' ? JSON.stringify(value) : value));

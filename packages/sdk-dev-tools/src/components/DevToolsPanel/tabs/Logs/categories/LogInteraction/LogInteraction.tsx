@@ -1,16 +1,12 @@
-// Packages
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import moment from 'moment';
 import { useMemo } from 'react';
 
-// Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import LogInteractionBody from './LogInteractionBody';
 import LogInteractionHeader from './LogInteractionHeader';
 
-// Types
 import type { LogInteraction } from '../../../../../../DevToolsContext';
 import type { ReactNode } from 'react';
 

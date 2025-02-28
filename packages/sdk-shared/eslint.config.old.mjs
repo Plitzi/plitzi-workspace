@@ -1,4 +1,3 @@
-// Packages
 import path from 'node:path';
 import js from '@eslint/js';
 import react from 'eslint-plugin-react';

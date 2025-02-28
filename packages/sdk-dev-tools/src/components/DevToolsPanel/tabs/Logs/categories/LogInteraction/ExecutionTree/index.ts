@@ -1,4 +1,3 @@
-// Relatives
 import ExecutionTree from './ExecutionTree';
 
 export * from './ExecutionTree';

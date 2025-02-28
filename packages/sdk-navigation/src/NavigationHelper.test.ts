@@ -1,10 +1,7 @@
-// Packages
 import { describe, it, expect } from 'vitest';
 
-// Relatives
 import { getPageFullPath, getPaths } from './NavigationHelper';
 
-// Types
 import type { Schema } from '@plitzi/sdk-shared';
 
 describe('Testing NavigationHelper', () => {

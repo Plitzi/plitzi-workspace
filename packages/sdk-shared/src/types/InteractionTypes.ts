@@ -1,4 +1,3 @@
-// Types
 import type { ElementInteraction } from './SchemaTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 

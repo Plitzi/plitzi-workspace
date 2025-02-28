@@ -1,9 +1,7 @@
-// Packages
 import JsonView from '@uiw/react-json-view';
 import { vscodeTheme } from '@uiw/react-json-view/vscode';
 import { useMemo, use } from 'react';
 
-// Relatives
 import DevToolsContext from '../../../../DevToolsContext';
 
 const jsonViewStyle = {

@@ -1,11 +1,8 @@
-// Packages
 import { use } from 'react';
 
-// Monorepo
 import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
-// Relatives
 import VariablesList from './VariablesList';
 
 const VariablesViewer = () => {

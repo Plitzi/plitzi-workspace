@@ -3,12 +3,12 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-// Relatives
 import BlockHtml from './BlockHtml';
+import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
 
 describe('BlockHtml Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<BlockHtml />);
+    const { baseElement } = render(<BlockHtml internalProps={defaultInternalProps} />);
 
     expect(baseElement).toBeTruthy();
   });

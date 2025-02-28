@@ -1,10 +1,7 @@
-// Packages
 import { useMemo } from 'react';
 
-// Relatives
 import LogStatus from '../../LogStatus';
 
-// Types
 import type { LogType } from '../../../../../../DevToolsContext';
 import type { NavigationStatus } from '@plitzi/sdk-navigation';
 import type { Moment } from 'moment';

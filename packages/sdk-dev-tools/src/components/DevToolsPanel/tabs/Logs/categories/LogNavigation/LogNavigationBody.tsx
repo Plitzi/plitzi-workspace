@@ -1,11 +1,8 @@
-// Packages
 import get from 'lodash/get';
 import { use, useMemo } from 'react';
 
-// Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
-// Types
 import type { Moment } from 'moment';
 
 export type LogNavigationBodyProps = {

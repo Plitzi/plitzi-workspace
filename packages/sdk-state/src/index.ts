@@ -1,4 +1,3 @@
-// Relatives
 import StateManagerContext from './StateManagerContext';
 import StateManagerContextProvider from './StateManagerContextProvider';
 

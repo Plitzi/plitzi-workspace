@@ -1,7 +1,5 @@
-// Packages
 import classNames from 'classnames';
 
-// Types
 import type { MouseEvent } from 'react';
 
 export type DevToolsButtonProps = {

@@ -1,11 +1,8 @@
-// Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import BodyContent from './BodyContent';
 import BodyHeader from './BodyHeader';
 
-// Types
 import type { LogInteraction } from '../../../../../../DevToolsContext';
 
 export type LogInteractionBodyProps = {

@@ -1,12 +1,9 @@
-// Packages
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 
-// Relatives
 import { processSelector } from './StyleHelper';
 
-// Types
 import type { Style, StyleItem, TagType } from './StyleContext';
 
 export type StyleMapProps = {

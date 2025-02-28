@@ -1,7 +1,6 @@
 // Package
 import { createContext } from 'react';
 
-// Types
 import type InteractionsManager from './InteractionsManager';
 import type { InteractionsContextValue as InteractionsContextValueShared } from '@plitzi/sdk-shared';
 

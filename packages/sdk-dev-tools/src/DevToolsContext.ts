@@ -1,7 +1,6 @@
 // Package
 import { createContext } from 'react';
 
-// Types
 import type { NavigationStatus } from '@plitzi/sdk-navigation';
 import type { ElementInteraction, InteractionNode, InteractionStatus } from '@plitzi/sdk-shared';
 import type { ReactNode, Dispatch, SetStateAction } from 'react';

@@ -1,15 +1,11 @@
-// Packages
 import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
-// Relatives
 import DataSourceContext from '../DataSourceContext';
 
-// Types
 import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
