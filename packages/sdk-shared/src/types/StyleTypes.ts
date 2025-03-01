@@ -1,5 +1,7 @@
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
 
+export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
+
 export type StyleItem = {
   name: string;
   attributes: { [key: string]: string };
@@ -7,9 +9,7 @@ export type StyleItem = {
   type: TagType;
 };
 
-export type StylePlatform = {
-  [key: string]: { [key: string]: StyleItem | undefined };
-};
+export type StylePlatform = Record<DisplayMode, Record<string, StyleItem>>;
 
 export type Style = {
   variables: { [key: string]: string };
