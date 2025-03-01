@@ -54,8 +54,8 @@
   },
   "type": "module",
   "devDependencies": {
-    "eslint": "^9.19.0",
-    "vite": "^6.1.0"
+    "eslint": "^9.21.0",
+    "vite": "^6.2.0"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^0.1.7",
