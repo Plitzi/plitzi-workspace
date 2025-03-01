@@ -12,7 +12,7 @@ import get from 'lodash/get';
 import classNames from 'classnames';
 import { HelmetProvider } from 'react-helmet-async';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
-import ThemeProvider from '@plitzi/plitzi-ui/ThemeProvider';
+import Provider from '@plitzi/plitzi-ui/Provider';
 
 // Monorepo
 import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
@@ -173,7 +173,7 @@ const App = props => {
 
   if (renderMode === RENDER_MODE_WIDGET) {
     return (
-      <ThemeProvider>
+      <Provider>
         <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
           <HelmetProvider>
             {client && (
@@ -193,7 +193,7 @@ const App = props => {
             )}
           </HelmetProvider>
         </ContainerRoot>
-      </ThemeProvider>
+      </Provider>
     );
   }
 
@@ -205,7 +205,7 @@ const App = props => {
   }
 
   return (
-    <ThemeProvider>
+    <Provider>
       <ContainerRoot
         className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
         ssrMode={renderMode === RENDER_MODE_SSR}
@@ -230,7 +230,7 @@ const App = props => {
           </ReactRouter>
         </HelmetProvider>
       </ContainerRoot>
-    </ThemeProvider>
+    </Provider>
   );
 };
 

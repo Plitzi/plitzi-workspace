@@ -17,7 +17,7 @@
   "dependencies": {
     "@apollo/client": "^3.13.1",
     "@plitzi/plitzi-sdk": "*",
-    "@plitzi/plitzi-ui": "^0.1.7",
+    "@plitzi/plitzi-ui": "^0.2.0",
     "@plitzi/sdk-auth": "*",
     "@plitzi/sdk-event-bridge": "*",
     "@plitzi/sdk-interactions": "*",
@@ -58,7 +58,7 @@
     "@plitzi/plitzi-webpack": "^0.3.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@tailwindcss/postcss": "^4.0.9",
-    "@types/lodash": "^4.17.15",
+    "@types/lodash": "^4.17.16",
     "babel-loader": "^10.0.0",
     "clean-webpack-plugin": "^4.0.0",
     "compression-webpack-plugin": "^11.1.0",

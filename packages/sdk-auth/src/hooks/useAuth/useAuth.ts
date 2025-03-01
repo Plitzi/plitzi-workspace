@@ -63,7 +63,8 @@ const useAuth = ({
       default:
         return undefined;
     }
-  }, [provider, cache, setCache, clearCache, loginUrl, refreshUrl, detailsPath, tokenPath, expirationTimePath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider, loginUrl, refreshUrl, detailsPath, tokenPath, expirationTimePath]); // cache, setCache, clearCache
 
   const handleWindowFocus = useCallback(async (): Promise<void> => {
     if (manager && manager.isAuthenticated) {

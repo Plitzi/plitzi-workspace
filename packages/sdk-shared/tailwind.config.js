@@ -1,10 +1,11 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
-import twConfig from '@plitzi/plitzi-ui/tailwind.config';
+import plugin from 'tailwindcss/plugin';
+import { colors } from '@plitzi/plitzi-ui/tailwind';
 
 const config = {
   theme: {
     extend: {
-      colors: twConfig.theme.extend.colors
+      colors
     },
     groups: ['1', '2', '3', '4', '5'],
     fontFamily: {
@@ -12,7 +13,17 @@ const config = {
       rubik: ['Rubik', 'sans-serif']
     }
   },
-  plugins: [...twConfig.plugins]
+  plugins: [
+    plugin(({ addVariant, theme }) => {
+      const groups = theme('groups') || [];
+
+      groups.forEach(group => {
+        addVariant(`group-${group}-hover`, () => {
+          return `:merge(.group-${group}):hover &`;
+        });
+      });
+    })
+  ]
 };
 
 export default config;

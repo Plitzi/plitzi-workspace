@@ -16,7 +16,7 @@ import classNames from 'classnames';
 import ToastProvider from '@plitzi/plitzi-ui-components/Toast/ToastProvider';
 import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
 import CacheProvider from '@plitzi/plitzi-ui-components/Cache/CacheProvider';
-import ThemeProvider from '@plitzi/plitzi-ui/ThemeProvider/index.cjs';
+import Provider from '@plitzi/plitzi-ui/Provider';
 
 // Monorepo
 import { ComponentProvider, sdkComponents } from '@plitzi/plitzi-sdk';
@@ -191,7 +191,7 @@ const App = props => {
   }, [client]);
 
   return (
-    <ThemeProvider>
+    <Provider>
       <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
         <CacheProvider cacheId="builder-state">
           <BrowserRouter basename={get(server, 'basePath', '/')}>
@@ -210,7 +210,7 @@ const App = props => {
           </BrowserRouter>
         </CacheProvider>
       </ContainerRoot>
-    </ThemeProvider>
+    </Provider>
   );
 };
 
