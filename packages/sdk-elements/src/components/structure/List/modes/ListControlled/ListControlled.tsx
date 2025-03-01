@@ -12,12 +12,12 @@ import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { SourceField, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
-export type ListControlledProps = {
-  ref: RefObject<HTMLElement>;
+export type ListControlledProps<T = unknown> = {
+  ref?: RefObject<HTMLElement>;
   className: string;
   internalProps: InternalPropsSTG2;
   children: ReactNode;
-  items: object[];
+  items: T[];
 };
 
 const ListControlled = ({ ref, className = '', internalProps, children, items = [] }: ListControlledProps) => {

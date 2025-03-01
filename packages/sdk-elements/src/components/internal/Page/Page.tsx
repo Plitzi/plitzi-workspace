@@ -9,7 +9,7 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
@@ -45,7 +45,7 @@ const Page = ({
   const { components } = use(ComponentContext);
   const LayoutContainerPlugin = components.layoutContainer;
 
-  const layoutInternalProps = useMemo(
+  const layoutInternalProps = useMemo<InternalPropsSTG1>(
     () => ({
       id: layout,
       rootId: id, // layout to pageId as a root in runtime

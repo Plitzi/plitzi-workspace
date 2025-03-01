@@ -5,11 +5,10 @@ import { useMemo, useEffect, useState, use, useCallback } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { Collection } from '@plitzi/sdk-shared';
+import type { Collection, PageInfo } from '@plitzi/sdk-shared';
 
 export type UseCollectionContextProps = {
   source: string;
-  record?: Record<string, unknown>;
   query?: RuleGroup;
   limit: string;
   appendResults?: boolean;
@@ -27,7 +26,6 @@ export type UseCollectionContextResult = {
 const useCollectionContext = (
   {
     source,
-    record,
     query,
     limit = '1',
     appendResults = false,
@@ -36,7 +34,9 @@ const useCollectionContext = (
   }: UseCollectionContextProps = {} as UseCollectionContextProps
 ): UseCollectionContextResult => {
   const plitziContext = usePlitziServiceContext();
-  const [collection, setCollection] = useState<Collection | undefined>(undefined);
+  const [collection, setCollection] = useState<(Collection & { record: unknown; records: unknown }) | undefined>(
+    undefined
+  );
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -62,8 +62,8 @@ const useCollectionContext = (
   }, [previewMode, query, queryParams, routeParams]);
 
   const populateRecords = useCallback(
-    (collection, records) => {
-      const { pageInfo, edges } = records;
+    (collection: Collection, records: unknown) => {
+      const { pageInfo, edges } = records as { pageInfo: PageInfo; edges: unknown[] };
       setCursor(pageInfo.nextCursor);
       setHasNextPage(pageInfo.hasNextPage);
       setCollection({
@@ -77,10 +77,12 @@ const useCollectionContext = (
 
   const fetchCollectionInternal = useCallback(async () => {
     setLoading(true);
-    const collectionInternal = await fetchCollection?.(source, queryCompiled);
+    const collectionInternal = (await fetchCollection?.(source, queryCompiled)) as
+      | (Collection & { records: unknown })
+      | undefined;
     setLoading(false);
     if (collectionInternal?.records) {
-      populateRecords(collectionInternal, collectionInternal.records);
+      populateRecords(collectionInternal as Collection, collectionInternal.records);
     }
   }, [fetchCollection, populateRecords, queryCompiled, source]);
 
@@ -116,7 +118,7 @@ const useCollectionContext = (
     if (!isEmpty(source)) {
       void fetchCollectionInternal();
     } else {
-      setCursor(null);
+      setCursor(undefined);
       setHasNextPage(false);
       setCollection(undefined);
       setLoading(false);

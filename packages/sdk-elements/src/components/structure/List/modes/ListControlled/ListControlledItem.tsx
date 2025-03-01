@@ -7,12 +7,12 @@ import ReplicaProvider from '../../../../../Element/ReplicaProvider';
 
 import type { Context, ReactNode } from 'react';
 
-export type ListControlledItemProps = {
+export type ListControlledItemProps<T = unknown> = {
   children: ReactNode;
   className?: string;
   isTemplate: boolean;
   itemCount: number;
-  record: object;
+  record: T;
   listContextId: string;
 };
 
