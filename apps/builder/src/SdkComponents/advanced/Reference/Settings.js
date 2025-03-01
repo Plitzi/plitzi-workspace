@@ -1,9 +1,11 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
-import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
+
+// Monorepo
+import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 const REFERENCE_TYPE_ELEMENT = 'element';
 const REFERENCE_TYPE_SEGMENT = 'segment';

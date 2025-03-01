@@ -3,13 +3,13 @@ import React, { useCallback, use, useMemo, useState } from 'react';
 import set from 'lodash/set';
 import get from 'lodash/get';
 import classNames from 'classnames';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 import { produce } from 'immer';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Select from '@plitzi/plitzi-ui-components/Select';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 

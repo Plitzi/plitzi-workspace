@@ -1,12 +1,14 @@
 // Packages
 import React, { useCallback, use, useState } from 'react';
-import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+
+// Monorepo
+import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

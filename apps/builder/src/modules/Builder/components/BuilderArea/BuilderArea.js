@@ -3,12 +3,13 @@ import React, { memo, useCallback, use, useEffect, useMemo, useRef, useState } f
 import get from 'lodash/get';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
-import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Monorepo
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';

@@ -19,7 +19,8 @@ import CacheProvider from '@plitzi/plitzi-ui-components/Cache/CacheProvider';
 import Provider from '@plitzi/plitzi-ui/Provider';
 
 // Monorepo
-import { ComponentProvider, sdkComponents } from '@plitzi/plitzi-sdk';
+import { sdkComponents } from '@plitzi/plitzi-sdk';
+import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
 import { getKeyDecoded, emptyObject } from '@plitzi/sdk-shared/utils';
 
 // Alias

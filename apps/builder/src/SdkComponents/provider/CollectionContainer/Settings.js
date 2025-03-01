@@ -1,6 +1,5 @@
 // Packages
 import React, { use, useCallback, useMemo } from 'react';
-import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -9,6 +8,7 @@ import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 
 // Monorepo
+import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
 
 /**

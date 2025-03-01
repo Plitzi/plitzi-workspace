@@ -5,9 +5,9 @@ import omit from 'lodash/omit';
 import set from 'lodash/set';
 import cloneDeep from 'lodash/cloneDeep';
 import isEmpty from 'lodash/isEmpty';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 

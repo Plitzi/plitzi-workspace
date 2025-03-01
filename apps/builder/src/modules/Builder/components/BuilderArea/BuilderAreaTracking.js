@@ -3,10 +3,10 @@ import React, { use, useEffect, useLayoutEffect, useRef, useCallback } from 'rea
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 import classNames from 'classnames';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
 

@@ -3,9 +3,9 @@ import React, { useCallback, use, useMemo, useRef } from 'react';
 import get from 'lodash/get';
 import Tree from '@plitzi/plitzi-ui/Tree';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives

@@ -1,8 +1,8 @@
 // Packages
 import { use, useMemo } from 'react';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias

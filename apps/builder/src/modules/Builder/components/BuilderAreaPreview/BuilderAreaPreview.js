@@ -2,10 +2,11 @@
 import React, { useCallback, use, useMemo } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
-import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 
 // Monorepo
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';

@@ -6,10 +6,10 @@ import pick from 'lodash/pick';
 import noop from 'lodash/noop';
 import camelCase from 'lodash/camelCase';
 import { produce } from 'immer';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 import useStateMemo from '@plitzi/plitzi-ui-components/hooks/useStateMemo';
 
 // Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import {

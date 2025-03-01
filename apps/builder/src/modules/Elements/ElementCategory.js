@@ -2,7 +2,9 @@
 import React, { useCallback, use } from 'react';
 import get from 'lodash/get';
 import Text from '@plitzi/plitzi-ui/Text';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
+
+// Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 
 // Relatives
 import Element from './Element';

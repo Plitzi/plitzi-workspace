@@ -1,7 +1,6 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
-import { ComponentContext, PlitziServiceProvider } from '@plitzi/plitzi-sdk';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 import ErrorBoundary from '@plitzi/plitzi-ui-components/ErrorBoundary';
@@ -17,6 +16,8 @@ import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';

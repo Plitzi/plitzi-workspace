@@ -4,12 +4,12 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import capitalize from 'lodash/capitalize';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Alias
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 

@@ -1,6 +1,5 @@
 // Packages
 import React, { useMemo, use, useCallback, useEffect } from 'react';
-import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
@@ -8,6 +7,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 import Select from '@plitzi/plitzi-ui-components/Select';
 
 // Monorepo
+import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
 /**

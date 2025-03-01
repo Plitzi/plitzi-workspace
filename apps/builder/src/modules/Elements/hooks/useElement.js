@@ -1,9 +1,9 @@
 // Packages
 import { use } from 'react';
 import get from 'lodash/get';
-import { ComponentContext } from '@plitzi/plitzi-sdk';
 
 // Monorepo
+import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
 const useElement = id => {
