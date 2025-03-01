@@ -7,17 +7,17 @@ import { makeId } from '@plitzi/sdk-shared/utils';
 import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 
 import type { Style, StyleItem, TagType } from './StyleContext';
-import type { Schema, Element, ComponentDefinition } from '@plitzi/sdk-shared';
+import type { Schema, Element, ComponentDefinition, DisplayMode, ElementBinding } from '@plitzi/sdk-shared';
 
 type MetaData = {
   tree: {
     name: string;
-    displayMode: string;
+    displayMode: DisplayMode;
     style: StyleItem['attributes'];
     isParent: boolean;
     isSubParent: boolean;
   }[];
-  style?: { [key: string]: { key: string; value: string; displayMode: string }[] };
+  style?: { [key: string]: { key: string; value: string; displayMode: DisplayMode }[] };
   parentStyle?: { [key: string]: string };
 };
 
@@ -106,7 +106,7 @@ const getDataStyle = (
   } = element;
 
   // get element display mode styles (mobile -> tablet -> desktop)
-  ['desktop', 'tablet', 'mobile'].forEach(mode => {
+  (['desktop', 'tablet', 'mobile'] as DisplayMode[]).forEach(mode => {
     const selectorSegments = Object.values(
       pick(get(platform, mode, {}), get(styleSelectors, styleSelector, '').split(' '))
     );
@@ -196,7 +196,7 @@ export const calculateInheriting = (
     element = get(flat, get(element, 'definition.parentId', ''));
   }
 
-  const finalMeta: { [key: string]: { key: string; value: string; displayMode: string }[] | undefined } = {};
+  const finalMeta: { [key: string]: { key: string; value: string; displayMode: DisplayMode }[] | undefined } = {};
   metadata.tree.forEach(node => {
     let styleData = get(node, `style.${styleSelector}`, node.style) as { [key: string]: string } | undefined;
     if (!styleData) {
@@ -237,7 +237,7 @@ export const calculateBindings = (element?: Element) => {
     definition: { bindings }
   } = element;
 
-  if (!bindings || !bindings.style) {
+  if (!bindings || !(bindings as Record<string, ElementBinding[] | undefined>).style) {
     return metadata;
   }
 

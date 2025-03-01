@@ -6,7 +6,7 @@ import set from 'lodash/set';
 import { generateID } from '@plitzi/sdk-shared/utils';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
-import type { Style, Element, Schema, SchemaVariable } from '@plitzi/sdk-shared';
+import type { Style, Element, Schema, SchemaVariable, DisplayMode, StyleItem } from '@plitzi/sdk-shared';
 
 export const VARIABLE_REGEX = /var\(--(?<token>[a-z0-9_-]+)\)/gi;
 
@@ -398,8 +398,9 @@ class FlatMap {
       const calculatedStyle = calculateInheriting(element, this.flat, style.platform);
       calculatedStyle.tree.forEach(item => {
         const { displayMode, name } = item;
-        if (!elementsStyle.platform[displayMode][name] && style.platform[displayMode][name]) {
-          elementsStyle.platform[displayMode][name] = style.platform[displayMode][name];
+        if (!(name in elementsStyle.platform[displayMode]) && name in style.platform[displayMode]) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          elementsStyle.platform[displayMode][name] = style.platform[displayMode][name] as StyleItem;
         }
       });
 
@@ -443,7 +444,7 @@ class FlatMap {
       .filter(Boolean)
       .forEach(selector => {
         Object.values(style.platform).forEach(platform => {
-          const elementStyle = platform[selector];
+          const elementStyle = platform[selector as DisplayMode] as StyleItem | undefined;
           if (!elementStyle) {
             return;
           }

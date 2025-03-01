@@ -3806,6 +3806,7 @@ __metadata:
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/lodash": "npm:^4.17.16"
+    classnames: "npm:^2.5.1"
     eslint: "npm:^9.21.0"
     immer: "npm:^10.1.1"
     lodash: "npm:^4.17.21"

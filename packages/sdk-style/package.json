@@ -29,6 +29,16 @@
       "types": "./dist/StyleConstants.d.ts",
       "import": "./dist/StyleConstants.es",
       "require": "./dist/StyleConstants.cjs"
+    },
+    "./components": {
+      "types": "./dist/components/*/index.d.ts",
+      "import": "./dist/components/*/index.es",
+      "require": "./dist/components/*/index.cjs"
+    },
+    "./*": {
+      "types": "./dist/components/*/index.d.ts",
+      "import": "./dist/components/*",
+      "require": "./dist/components/*"
     }
   },
   "type": "module",
@@ -42,6 +52,7 @@
     "@plitzi/plitzi-ui": "^0.2.0",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
+    "classnames": "^2.5.1",
     "immer": "^10.1.1",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1"
