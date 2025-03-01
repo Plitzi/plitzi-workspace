@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import defaultElements from '../index';
+import { defaultElements } from '..';
 import ComponentContext from './ComponentContext';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
 

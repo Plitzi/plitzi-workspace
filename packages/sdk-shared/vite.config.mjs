@@ -97,7 +97,7 @@ export default defineConfig(({ mode, command, ...args }) => {
         ],
         output: [
           {
-            format: 'es', // ['es', 'cjs'],
+            format: 'es',
             exports: 'named',
             preserveModules: true, // Keep module structure for tree-shaking
             preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
@@ -110,6 +110,20 @@ export default defineConfig(({ mode, command, ...args }) => {
               'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
             }
           }
+          // {
+          //   format: 'cjs',
+          //   exports: 'named',
+          //   preserveModules: true, // Keep module structure for tree-shaking
+          //   preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
+          //   entryFileNames: '[name].[format]',
+          //   chunkFileNames: '[name].[format]',
+          //   assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
+          //   globals: {
+          //     react: 'React',
+          //     'react-dom': 'ReactDOM',
+          //     'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
+          //   }
+          // }
         ]
       },
       sourcemap: false,
