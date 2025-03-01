@@ -55,7 +55,7 @@ export default defineConfig(({ mode, command, ...args }) => {
           return null;
         },
         buildEnd() {
-          if (mode === 'development') {
+          if (mode === 'development' && importedPackages.size > 0) {
             console.log('Packages imported:', Array.from(importedPackages));
           }
         }
