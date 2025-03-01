@@ -37,6 +37,17 @@ export type FormProps = {
 export type Field = { id: string; name: string };
 export type FieldValue = string | boolean | number;
 
+export type FormContextValue = {
+  fields: Record<string, SourceField>;
+  errors: Record<string, string>;
+  values: Record<string, unknown>;
+  registerField: (field: SourceField) => void;
+  unregisterField: (name: string) => void;
+  getField: (name: string) => SourceField | Record<string, SourceField>;
+  setFieldValue: (name: string, value: FieldValue | null) => void;
+  setFieldError: (name: string, error: string) => void;
+};
+
 const Form = ({
   ref,
   className = '',
@@ -63,28 +74,26 @@ const Form = ({
   );
 
   const getField = useCallback(
-    (id: string) => {
-      if (!id || !(fields[id] as SourceField | undefined)) {
+    (name: string) => {
+      if (!name || !(fields[name] as SourceField | undefined)) {
         return fields;
       }
 
-      return get(fields, id);
+      return get(fields, name);
     },
     [fields]
   );
 
   const unregisterField = useCallback(
-    (id: string) => {
-      let name: string = '';
+    (name: string) => {
       setFields(state =>
         produce(state, draft => {
-          if (!(draft[id] as SourceField | undefined)) {
+          if (!(draft[name] as SourceField | undefined)) {
             return;
           }
 
-          name = draft[id].name;
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-          delete draft[id];
+          delete draft[name];
         })
       );
 
@@ -158,7 +167,7 @@ const Form = ({
     [fields]
   );
 
-  const contextValue = useMemo(
+  const contextValue = useMemo<FormContextValue>(
     () => ({ fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError }),
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );

@@ -15,6 +15,7 @@ import Textarea from './inputs/Textarea';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { FormContextValue } from '../Form';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ChangeEvent, RefObject } from 'react';
@@ -34,7 +35,9 @@ export type FormControlProps = {
   readOnly: boolean;
   value: string;
   error: string;
-  handleChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleChange: (
+    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLTextAreaElement>
+  ) => void;
   handleValidate: () => void;
 };
 
@@ -63,7 +66,7 @@ const FormControl = ({
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
   const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
-  const { form } = useDataSource({ id, mode: 'read' });
+  const { form } = useDataSource<FormContextValue | undefined>({ id, mode: 'read' });
   if (!form && !previewMode) {
     return (
       <RootElement
@@ -84,20 +87,20 @@ const FormControl = ({
     return null;
   }
 
-  const { registerField, unregisterField } = form;
+  const { registerField, unregisterField } = form as Partial<FormContextValue>;
   const isCheck = ['checkbox', 'switch'].includes(subType);
 
   useEffect(() => {
     if (registerField) {
-      registerField({ id, name });
+      registerField({ name, path: name });
     }
 
     return () => {
       if (unregisterField) {
-        unregisterField(id);
+        unregisterField(name);
       }
     };
-  }, [id, name, registerField, unregisterField]);
+  }, [name, registerField, unregisterField]);
 
   return (
     <RootElement
@@ -133,10 +136,8 @@ const FormControl = ({
               id={`${rootId}_${id}`}
               name={name}
               value={value}
-              type={subType}
               className={styleSelectors.input}
               placeholder={placeholder}
-              autoComplete={autoComplete}
               required={required}
               disabled={disabled}
               onChange={handleChange}

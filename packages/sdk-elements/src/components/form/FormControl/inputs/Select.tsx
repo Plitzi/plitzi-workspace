@@ -4,6 +4,8 @@ import { useCallback, useMemo, useRef } from 'react';
 import type { ChangeEvent, MouseEvent } from 'react';
 
 export type SelectProps = {
+  id?: string;
+  name: string;
   options?: ({ value?: string; label?: string } | string)[];
   placeholder?: string;
   value?: string;
@@ -14,6 +16,8 @@ export type SelectProps = {
 };
 
 const Select = ({
+  id = '',
+  name,
   options = [],
   placeholder = '',
   value = '',
@@ -64,6 +68,8 @@ const Select = ({
     <div className={classNames('form-control__select-container', className)} onClick={handleClickContainer}>
       <select
         ref={inputRef}
+        id={id}
+        name={name}
         onChange={onChange}
         value={value}
         className="select-container__select"

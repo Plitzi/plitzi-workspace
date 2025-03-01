@@ -11,6 +11,7 @@ export type TextareaProps = {
   value?: string;
   required?: boolean;
   disabled?: boolean;
+  readOnly?: boolean;
   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   onValidate?: () => void;
 };
@@ -23,6 +24,7 @@ const Textarea = ({
   value = '',
   required = true,
   disabled = false,
+  readOnly = false,
   onChange,
   onValidate
 }: TextareaProps) => {
@@ -42,6 +44,7 @@ const Textarea = ({
       name={name}
       placeholder={placeholder}
       value={value}
+      readOnly={readOnly}
       required={required}
       disabled={disabled}
       onChange={onChange}

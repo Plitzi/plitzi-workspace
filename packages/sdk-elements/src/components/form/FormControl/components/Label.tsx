@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LabelProps = {
-  ref: RefObject<HTMLLabelElement>;
+  ref?: RefObject<HTMLLabelElement>;
   className?: string;
   children: ReactNode;
   targetInput: string;
