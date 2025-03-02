@@ -222,7 +222,7 @@ const Selector = props => {
       const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
       onChange(finalValue);
       onSelectorAdded(tag);
-      onSelectorSelected(tag.name);
+      onSelectorSelected(tag);
     },
     [tags, onChange, onSelectorSelected]
   );
