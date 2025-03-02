@@ -173,12 +173,8 @@ export {
 
 export const version = VERSION;
 
-export const getStateManager = () => {
-  return stateManager;
-};
+export const getStateManager = () => stateManager;
 
-export const getEventBridge = () => {
-  return eventBridge;
-};
+export const getEventBridge = () => eventBridge;
 
 export default PlitziSdk;
