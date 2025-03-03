@@ -2,7 +2,7 @@
 import path from 'path';
 
 // Relatives
-import sharedConfig, { settings } from '@plitzi/sdk-shared/eslint.config.mjs';
+import sharedConfig, { settings } from '@plitzi/sdk-shared/eslint.config.old.mjs';
 
 export default [
   ...sharedConfig,

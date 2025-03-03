@@ -9,7 +9,9 @@ import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 
 import Selector from '../Selector';
 
+import type { SelectorValue } from '../Selector';
 import type { DisplayMode, Element, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { Dispatch, SetStateAction } from 'react';
 
 export type StyleInspectorProps = {
   element: Element;
@@ -20,9 +22,13 @@ export type StyleInspectorProps = {
   // Extras
   style: Style;
   selectorSelected?: Pick<StyleItem, 'name' | 'type'>;
-  setSelectorSelected?: (selector?: Pick<StyleItem, 'name' | 'type'>) => void;
+  setSelectorSelected?: Dispatch<SetStateAction<SelectorValue | undefined>>;
   styleSelector: string;
   setStyleSelector: (selector: string) => void;
+  // methods
+  onAdd?: (tag: SelectorValue, isDuplicated: boolean, originalTag?: SelectorValue) => void;
+  onChange?: (value: string) => void;
+  onRemove?: (selector: string) => void;
 };
 
 const StyleInspector = ({
@@ -34,9 +40,12 @@ const StyleInspector = ({
   // Extras
   style,
   selectorSelected,
-  // setSelectorSelected,
+  setSelectorSelected,
   styleSelector,
-  setStyleSelector
+  setStyleSelector,
+  onAdd,
+  onChange,
+  onRemove
 }: StyleInspectorProps) => {
   const [cache, setCache] = useStorage<{ viewMode: 'basic' | 'advanced' }>('StyleInspector', { viewMode: 'basic' });
   const selector = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
@@ -58,54 +67,6 @@ const StyleInspector = ({
   );
 
   const handleChangeStyleSelector = useCallback((value: string) => setStyleSelector(value), [setStyleSelector]);
-
-  // const handleChangeSelector = useCallback(
-  //   value => {
-  //     if (!element) {
-  //       return;
-  //     }
-
-  //     builderHandler(
-  //       EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
-  //       produce(element, draft => {
-  //         set(draft, `definition.styleSelectors.${styleSelector}`, value);
-  //       })
-  //     );
-  //   },
-  //   [element, builderHandler, styleSelector]
-  // );
-
-  // const handleAddSelector = useCallback(
-  //   (tag, isDuplicated, originalTag) => {
-  //     if (!tag || (isDuplicated && !originalTag)) {
-  //       return;
-  //     }
-
-  //     const { name, type } = tag;
-  //     if (!isDuplicated && name !== '' && !platform[displayMode][name]) {
-  //       builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, name, type);
-  //     } else if (
-  //       isDuplicated &&
-  //       originalTag &&
-  //       tag &&
-  //       originalTag.name !== name &&
-  //       platform[displayMode][originalTag.name] &&
-  //       !platform[displayMode][name]
-  //     ) {
-  //       builderHandler(
-  //         EventBridgeTypes.STYLE_ADD_SELECTOR,
-  //         displayMode,
-  //         name,
-  //         type,
-  //         '',
-  //         get(platform, `${displayMode}.${originalTag.name}.attributes`, {})
-  //       );
-  //     }
-  //   },
-  //   [builderHandler, displayMode, platform]
-  // );
-
-  const handleRemoveSelector = useCallback(() => {}, []);
 
   return (
     <div className="w-full flex flex-col grow">
@@ -130,10 +91,10 @@ const StyleInspector = ({
             value={selector}
             selectorSelected={selectorSelected}
             displayMode={displayMode}
-            onChange={handleChangeSelector}
-            onSelectorAdded={handleAddSelector}
-            onSelectorRemoved={handleRemoveSelector}
-            onSelectorSelected={handleCurrentSelector}
+            onAdd={onAdd}
+            onChange={onChange}
+            onRemove={onRemove}
+            onSelectorSelected={setSelectorSelected}
           />
           <Button
             className="rounded-sm ml-2 w-10 text-sm"

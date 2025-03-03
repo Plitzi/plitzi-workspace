@@ -1,5 +1,5 @@
+import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
-import Dropdown from '@plitzi/plitzi-ui/Dropdown';
 import classNames from 'classnames';
 import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
@@ -41,6 +41,7 @@ const SelectorTag = ({
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
+      e.preventDefault();
       if (editable) {
         e.stopPropagation();
       }
@@ -135,7 +136,7 @@ const SelectorTag = ({
         )}
         {!editable && <div className="text-xs truncate">{selector}</div>}
       </div>
-      <Dropdown
+      <ContainerFloating
         className={classNames('absolute right-0 text-xs px-1 rounded-r h-full', {
           'hidden group-hover:flex': !isVisible && editable,
           flex: isVisible && editable,
@@ -150,7 +151,7 @@ const SelectorTag = ({
         onContainerVisible={handleDropVisible}
         backgroundDisabled
       >
-        <Dropdown.Container className="text-gray-700">
+        <ContainerFloating.Container className="text-gray-700">
           <div className="py-1 bg-gray-50">
             <div className="font-bold mb-1 px-2">Actions</div>
             <ul className="flex flex-col gap-1 px-2">
@@ -181,8 +182,8 @@ const SelectorTag = ({
               ))}
             </ul>
           </div>
-        </Dropdown.Container>
-      </Dropdown>
+        </ContainerFloating.Container>
+      </ContainerFloating>
     </div>
   );
 };

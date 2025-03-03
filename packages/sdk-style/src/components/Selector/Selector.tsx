@@ -1,7 +1,7 @@
 // Packages
 import Button from '@plitzi/plitzi-ui/Button';
-import Dropdown from '@plitzi/plitzi-ui/Dropdown';
-import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
+// import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
@@ -11,10 +11,10 @@ import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { selectorFormatter } from './SelectorHelper';
 import SelectorSuggestions from './SelectorSuggestions';
 import SelectorTag from './SelectorTag';
-import StyleManager from '../StyleManager';
+// import StyleManager from '../StyleManager';
 
 import type { Style, StyleItem } from '@plitzi/sdk-shared';
-import type { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
+import type { ChangeEvent, Dispatch, KeyboardEvent, SetStateAction } from 'react';
 
 export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
 
@@ -25,10 +25,10 @@ export type SelectorProps = {
   displayMode?: 'desktop' | 'tablet' | 'mobile';
   disabled?: boolean;
   style: Style;
+  onSelectorSelected?: Dispatch<SetStateAction<SelectorValue | undefined>>;
+  onAdd?: (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => void;
   onChange?: (value: string) => void;
-  onSelectorSelected?: (selector: SelectorValue | ((state?: SelectorValue) => SelectorValue | undefined)) => void;
-  onSelectorAdded?: (selector: SelectorValue, selectTag?: boolean, tag?: object) => void;
-  onSelectorRemoved?: (selector: string) => void;
+  onRemove?: (selector: string) => void;
 };
 
 const Selector = ({
@@ -40,13 +40,13 @@ const Selector = ({
   style,
   onChange,
   onSelectorSelected,
-  onSelectorAdded
-  // onSelectorRemoved
+  onAdd
+  // onRemove
 }: SelectorProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState('');
   const [popupOpened, setPopupOpened] = useState(false);
-  const { existsPopup, addPopup } = usePopup('floating');
+  // const { existsPopup, addPopup } = usePopup('floating');
   const tags = useMemo<SelectorValue[]>(
     () =>
       Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))).map(tag =>
@@ -90,13 +90,13 @@ const Selector = ({
           .reduce((acum, tag) => `${acum} ${tag.name}`, '')
           .trim();
 
-        onSelectorAdded?.(value);
+        onAdd?.(value, false);
         onChange?.(finalValue);
         if (selectTag) {
           onSelectorSelected?.(value);
         }
       },
-    [tags, onSelectorAdded, onChange, onSelectorSelected]
+    [tags, onAdd, onChange, onSelectorSelected]
   );
 
   const handleChangeItemState = useCallback(
@@ -108,13 +108,13 @@ const Selector = ({
       }
 
       const tempTag: Pick<StyleItem, 'name' | 'type'> = { name: `${tag.name}:${tagState}`, type: 'state' };
-      onSelectorAdded?.(tempTag);
+      onAdd?.(tempTag, false);
       onSelectorSelected?.(tempTag);
     },
-    [onSelectorAdded, onSelectorSelected]
+    [onAdd, onSelectorSelected]
   );
 
-  const handleClickAction =
+  const handleClickAction = useCallback(
     (position: number) => (action: 'duplicate' | 'remove' | 'delete', value?: SelectorValue) => {
       switch (action) {
         case 'remove': {
@@ -138,20 +138,22 @@ const Selector = ({
             .reduce((acum, tag) => `${acum} ${tag.name}`, '')
             .trim();
 
-          onSelectorAdded?.(value, true, get(tags, `${position}`));
+          onAdd?.(value, true, get(tags, `${position}`));
           onChange?.(finalValue);
           break;
         }
 
         case 'delete': {
-          // onSelectorRemoved(value.name);
+          // onRemove(value.name);
           break;
         }
 
         default:
           break;
       }
-    };
+    },
+    [tags, selectorSelected, onChange, onSelectorSelected, onAdd]
+  );
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -166,7 +168,7 @@ const Selector = ({
               .reduce((acum, tag) => `${acum} ${tag.name}`, '')
               .trim();
 
-            onSelectorAdded?.(tag);
+            onAdd?.(tag, false);
             onChange?.(finalValue);
             setPopupOpened(false);
             (e.target as HTMLInputElement).blur();
@@ -204,7 +206,7 @@ const Selector = ({
           break;
       }
     },
-    [tags, onSelectorAdded, onChange, onSelectorSelected]
+    [tags, onAdd, onChange, onSelectorSelected]
   );
 
   const handleDropdownVisible = useCallback((visible: boolean) => setPopupOpened(visible), []);
@@ -226,42 +228,42 @@ const Selector = ({
       setPopupOpened(false);
       const finalValue = [...tags, tag].reduce<string>((acum, tag) => `${acum} ${tag.name}`, '').trim();
       onChange?.(finalValue);
-      onSelectorAdded?.(tag);
+      onAdd?.(tag, false);
       onSelectorSelected?.(tag);
     },
-    [tags, onChange, onSelectorAdded, onSelectorSelected]
+    [tags, onChange, onAdd, onSelectorSelected]
   );
 
-  const handleClickStyleManager = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!existsPopup?.('styleManager')) {
-        addPopup?.('styleManager', <StyleManager />, {
-          icon: <i className="fas fa-swatchbook text-base" />,
-          title: 'Style Manager',
-          resizeHandles: ['se'],
-          allowLeftSide: true,
-          allowRightSide: true,
-          placement: 'floating',
-          width: 600
-        });
-      }
-    },
-    [addPopup, existsPopup]
-  );
+  // const handleClickStyleManager = useCallback(
+  //   (e: MouseEvent) => {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+  //     if (!existsPopup?.('styleManager')) {
+  //       addPopup?.('styleManager', <StyleManager />, {
+  //         icon: <i className="fas fa-swatchbook text-base" />,
+  //         title: 'Style Manager',
+  //         resizeHandles: ['se'],
+  //         allowLeftSide: true,
+  //         allowRightSide: true,
+  //         placement: 'floating',
+  //         width: 600
+  //       });
+  //     }
+  //   },
+  //   [addPopup, existsPopup]
+  // );
 
   return (
-    <Dropdown
+    <ContainerFloating
       className="w-full"
-      showIcon={false}
+      // showIcon={false}
+      // classNameBackground=""
       popupOpened={popupOpened}
       disabled
       onContainerVisible={handleDropdownVisible}
       backgroundDisabled
-      classNameBackground=""
     >
-      <Dropdown.Content className={classNames('w-full', { 'z-[51]': popupOpened })}>
+      <ContainerFloating.Content className={classNames('w-full', { 'z-[51]': popupOpened })}>
         <div
           className={classNames('flex-wrap border border-gray-300 rounded-sm relative p-1 gap-1 flex', className, {
             'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
@@ -273,7 +275,7 @@ const Selector = ({
           <Button
             intent="custom"
             size="custom"
-            onClick={handleClickStyleManager}
+            // onClick={handleClickStyleManager}
             className="hover:bg-gray-200 border border-gray-300 rounded-sm h-6 w-6 text-gray-500"
             title="Style Manager"
           >
@@ -302,16 +304,16 @@ const Selector = ({
             onChange={handleChange}
           />
         </div>
-      </Dropdown.Content>
-      <Dropdown.Container>
+      </ContainerFloating.Content>
+      <ContainerFloating.Container>
         <SelectorSuggestions
           selector={inputValue}
           selectors={selectorsAvailables}
           onSelect={handleSuggestionsSelect}
           onCreate={handleSuggestionsCreate}
         />
-      </Dropdown.Container>
-    </Dropdown>
+      </ContainerFloating.Container>
+    </ContainerFloating>
   );
 };
 
