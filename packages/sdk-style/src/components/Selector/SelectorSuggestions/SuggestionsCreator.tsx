@@ -1,4 +1,4 @@
-import SelectorTag from '../SelectorTag';
+import SelectorItem from '../SelectorItem';
 
 import type { SelectorValue } from '../Selector';
 
@@ -13,7 +13,7 @@ const SuggestionsCreator = ({ selector, onClick }: SuggestionsCreatorProps) => {
       <div className="text-sm font-bold">New Token</div>
       <div className="flex items-center gap-1 text-xs px-2">
         <div>Create:</div>
-        <SelectorTag selector={selector} editable={false} active onClick={onClick} />
+        <SelectorItem selector={selector} editable={false} active onClick={onClick} />
       </div>
     </div>
   );

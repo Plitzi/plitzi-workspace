@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-import SelectorTag from '../SelectorTag';
+import SelectorItem from '../SelectorItem';
 
 import type { SelectorValue } from '../Selector';
 
@@ -19,7 +19,7 @@ const SuggestionsList = ({ selectors = [], onSelect }: SuggestionsListProps) => 
         })}
       >
         {selectors.map((selector, index) => (
-          <SelectorTag
+          <SelectorItem
             className="cursor-pointer"
             key={`${selector.name}_${index}`}
             selector={selector.name}

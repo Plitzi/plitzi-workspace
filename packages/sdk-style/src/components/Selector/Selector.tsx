@@ -9,8 +9,8 @@ import pick from 'lodash/pick';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
 import { selectorFormatter } from './SelectorHelper';
+import SelectorItem from './SelectorItem';
 import SelectorSuggestions from './SelectorSuggestions';
-import SelectorTag from './SelectorTag';
 // import StyleManager from '../StyleManager';
 
 import type { Style, StyleItem } from '@plitzi/sdk-shared';
@@ -85,7 +85,7 @@ const Selector = ({
   const handleChangeItem = useCallback(
     (position: number) =>
       (value: SelectorValue, selectTag = true) => {
-        const finalValue = [...tags.filter((tag, i) => i !== position), value]
+        const finalValue = [...tags.filter((_tag, i) => i !== position), value]
           .filter(tag => !!tag.name)
           .reduce((acum, tag) => `${acum} ${tag.name}`, '')
           .trim();
@@ -118,7 +118,7 @@ const Selector = ({
     (position: number) => (action: 'duplicate' | 'remove' | 'delete', value?: SelectorValue) => {
       switch (action) {
         case 'remove': {
-          const finalTags = tags.filter((tag, i) => i !== position);
+          const finalTags = tags.filter((_tag, i) => i !== position);
           const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
           if (selectorSelected && tags[position].name === selectorSelected.name) {
             onSelectorSelected?.(get(finalTags, '0'));
@@ -282,7 +282,7 @@ const Selector = ({
             <i className="fas fa-swatchbook" />
           </Button>
           {tags.map((tag, i) => (
-            <SelectorTag
+            <SelectorItem
               key={`${i}_${tag.name}`}
               selector={tag.name}
               type={tag.type}
