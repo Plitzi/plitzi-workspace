@@ -9,3 +9,4 @@ export * from './SegmentTypes';
 export * from './BuilderTypes';
 export * from './NavigationTypes';
 export * from './CollectionTypes';
+export * from './ComponentTypes';

@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, use } from 'react';
 
+import type { BuilderContextValue } from '../builder';
 import type {
-  BuilderContextValue,
   CollectionContextValue,
   DataSourceContextValue,
   EventBridgeContextValue,

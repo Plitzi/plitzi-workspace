@@ -8,8 +8,7 @@ import { defaultElements } from '..';
 import ComponentContext from './ComponentContext';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
 
-import type { ComponentPlugin, ComponentPlugins } from './ComponentContext';
-import type { ComponentDefinition } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, ComponentPlugin, ComponentPlugins } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type ComponentProviderProps = {

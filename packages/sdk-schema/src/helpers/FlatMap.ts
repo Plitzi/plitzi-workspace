@@ -399,8 +399,7 @@ class FlatMap {
       calculatedStyle.tree.forEach(item => {
         const { displayMode, name } = item;
         if (!(name in elementsStyle.platform[displayMode]) && name in style.platform[displayMode]) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          elementsStyle.platform[displayMode][name] = style.platform[displayMode][name] as StyleItem;
+          elementsStyle.platform[displayMode][name] = style.platform[displayMode][name];
         }
       });
 

@@ -1,6 +1,6 @@
 import withElement from '../Element/hocs/withElement';
 
-import type { ComponentOrigin, ComponentPlugin, ComponentPlugins } from './ComponentContext';
+import type { ComponentOrigin, ComponentPlugin, ComponentPlugins } from '@plitzi/sdk-shared';
 
 export const ORIGIN_LOCAL = 'local';
 export const ORIGIN_LOCAL_CUSTOM = 'local-custom';

@@ -8,8 +8,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext'
 import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';
 
-import type { ComponentPlugin } from '../Component/ComponentContext';
-import type { Plugin, InternalPropsSTG0, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { Plugin, InternalPropsSTG0, InternalPropsSTG1, ComponentPlugin } from '@plitzi/sdk-shared';
 
 export type PluginManagerProps = {
   plitziElementLayout?: InternalPropsSTG1['plitziElementLayout'];

@@ -12,8 +12,7 @@ import withElement from '../../../Element/hocs/withElement';
 import JsxManager from '../../../Element/JsxManager';
 import RootElement from '../../../Element/RootElement';
 
-import type { ComponentPlugin } from '../../../Component/ComponentContext';
-import type { InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {

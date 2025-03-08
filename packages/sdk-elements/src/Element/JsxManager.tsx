@@ -9,8 +9,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext'
 import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';
 
-import type { ComponentPlugin } from '../Component/ComponentContext';
-import type { InternalPropsSTG1, Plugin } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, InternalPropsSTG1, Plugin } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type JsxManagerProps = {

@@ -8,7 +8,7 @@ import ComponentContext from '../../Component/ComponentContext';
 import ComponentProvider from '../../Component/ComponentProvider';
 import RootElement from '../RootElement';
 
-import type { ComponentPlugin } from '../../Component/ComponentContext';
+import type { ComponentPlugin } from '@plitzi/sdk-shared';
 
 type PlitziModule = {
   default?: (

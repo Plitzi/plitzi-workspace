@@ -9,8 +9,7 @@ import { generatePluginModule } from './helpers/elementUtils';
 import withElement from './hocs/withElement';
 import useDynamicScript from './hooks/useDynamicScript';
 
-import type { ComponentContextValue, ComponentPlugin } from '../Component/ComponentContext';
-import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { ComponentContextValue, ComponentPlugin, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 function loadComponent(
   url: string,

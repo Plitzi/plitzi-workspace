@@ -11,7 +11,7 @@ import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { selectorFormatter } from './SelectorHelper';
 import SelectorItem from './SelectorItem';
 import SelectorSuggestions from './SelectorSuggestions';
-// import StyleManager from '../StyleManager';
+import StyleManager from '../StyleManager';
 
 import type { Style, StyleItem } from '@plitzi/sdk-shared';
 import type { ChangeEvent, CSSProperties, Dispatch, KeyboardEvent, MouseEvent, RefObject, SetStateAction } from 'react';
@@ -241,15 +241,15 @@ const Selector = ({
       e.preventDefault();
       e.stopPropagation();
       if (!existsPopup?.('styleManager')) {
-        // addPopup?.('styleManager', <StyleManager />, {
-        //   icon: <i className="fas fa-swatchbook text-base" />,
-        //   title: 'Style Manager',
-        //   resizeHandles: ['se'],
-        //   allowLeftSide: true,
-        //   allowRightSide: true,
-        //   placement: 'floating',
-        //   width: 600
-        // });
+        addPopup?.('styleManager', <StyleManager />, {
+          icon: <i className="fas fa-swatchbook text-base" />,
+          title: 'Style Manager',
+          resizeHandles: ['se'],
+          allowLeftSide: true,
+          allowRightSide: true,
+          placement: 'floating',
+          width: 600
+        });
       }
     },
     [addPopup, existsPopup]

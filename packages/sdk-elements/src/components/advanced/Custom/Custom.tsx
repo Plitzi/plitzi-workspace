@@ -9,8 +9,7 @@ import withElement from '../../../Element/hocs/withElement';
 import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
-import type { ComponentPlugin } from '../../../Component/ComponentContext';
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
