@@ -28,12 +28,13 @@ const StyleInspector = ({
   element,
   mode = 'element',
   styleSelectors,
-  allowStyleSelector = true,
-  displayMode
+  allowStyleSelector = true
 }: StyleInspectorProps) => {
   const [cache, setCache] = useStorage<{ viewMode: 'basic' | 'advanced' }>('StyleInspector', { viewMode: 'basic' });
   const { componentDefinitions } = use(ComponentContext);
   const {
+    style,
+    displayMode,
     style: { platform },
     selectorSelected,
     setSelectorSelected,

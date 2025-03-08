@@ -1,19 +1,25 @@
-import { useMemo, useState } from 'react';
+import get from 'lodash/get';
+import { useMemo, useState, use } from 'react';
+
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 import ManagerSelector from './ManagerSelector';
 import ManagerModeBasic from './modes/ManagerModeBasic';
 
-import type { Schema, StyleItem } from '@plitzi/sdk-shared';
+import type { StyleItem } from '@plitzi/sdk-shared';
 
-export type StyleManagerProps = {
-  displayMode: string;
-  selectors: StyleItem[];
-  flat: Schema['flat'];
-};
-
-const StyleManager = ({ displayMode, selectors, flat }: StyleManagerProps) => {
+const StyleManager = () => {
   const [selected, setSelected] = useState();
+  const {
+    schema: { flat }
+  } = use(BuilderSchemaContext);
   const flatList = useMemo(() => Object.values(flat), [flat]);
+  const { style, displayMode } = use(BuilderStyleContext);
+  const selectors = useMemo(
+    () => Object.values(get(style, `platform.${displayMode}`, {}) as Record<string, StyleItem>),
+    [displayMode, style]
+  );
 
   return (
     <div className="h-full flex flex-col grow overflow-auto">

@@ -13,7 +13,7 @@ import SelectorItem from './SelectorItem';
 import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
 
-import type { Style, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
 import type { ChangeEvent, CSSProperties, Dispatch, KeyboardEvent, MouseEvent, RefObject, SetStateAction } from 'react';
 
 export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
@@ -22,7 +22,7 @@ export type SelectorProps = {
   className?: string;
   value?: string;
   selectorSelected?: Pick<StyleItem, 'name' | 'type'>;
-  displayMode?: 'desktop' | 'tablet' | 'mobile';
+  displayMode: DisplayMode;
   disabled?: boolean;
   style: Style;
   onSelectorSelected?: Dispatch<SetStateAction<SelectorValue | undefined>>;
@@ -35,7 +35,7 @@ const Selector = ({
   className = '',
   value = '',
   selectorSelected,
-  displayMode = 'desktop',
+  displayMode,
   disabled = false,
   style,
   onChange,

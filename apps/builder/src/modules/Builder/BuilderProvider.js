@@ -28,6 +28,7 @@ import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 
 import { isInViewport } from '../../helpers/utils';
+import AppContext from '@pmodules/App/AppContext';
 
 export const BUILDER_MODE_NORMAL = 'normal';
 export const BUILDER_MODE_TEMPLATE = 'template';
@@ -57,6 +58,7 @@ const BuilderProvider = props => {
     onHandler = noop,
     onBaseElementChange = noop
   } = props;
+  const { displayMode } = use(AppContext);
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { getComponentBuilderSettings, componentDefinitions, getComponent } = use(ComponentContext);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
@@ -437,8 +439,8 @@ const BuilderProvider = props => {
   );
 
   const builderStyleValueMemo = useMemo(
-    () => ({ style, selectorSelected, setSelectorSelected, styleSelector, setStyleSelector }),
-    [style, selectorSelected, setSelectorSelected, styleSelector, setStyleSelector]
+    () => ({ style, selectorSelected, displayMode, setSelectorSelected, styleSelector, setStyleSelector }),
+    [style, selectorSelected, displayMode, setSelectorSelected, styleSelector, setStyleSelector]
   );
 
   const events = useMemo(
