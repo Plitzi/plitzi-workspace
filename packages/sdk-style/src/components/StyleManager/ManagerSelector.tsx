@@ -12,14 +12,15 @@ import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 import StyleSelectorTag from './StyleSelectorTag';
-import SelectorForm from '../Models/SelectorForm';
+import SelectorForm from '../SelectorForm';
 
 import type { Element, StyleItem } from '@plitzi/sdk-shared';
+import type { Dispatch, SetStateAction } from 'react';
 
 export type ManagerSelectorProps = {
   flatList: Element[];
   selected?: string;
-  onSelect?: (selector?: string) => void;
+  onSelect?: Dispatch<SetStateAction<string | undefined>>;
   selectors: StyleItem[];
 };
 

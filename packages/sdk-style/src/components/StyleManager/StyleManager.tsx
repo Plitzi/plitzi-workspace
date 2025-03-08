@@ -10,7 +10,7 @@ import ManagerModeBasic from './modes/ManagerModeBasic';
 import type { StyleItem } from '@plitzi/sdk-shared';
 
 const StyleManager = () => {
-  const [selected, setSelected] = useState<string>('');
+  const [selected, setSelected] = useState<string | undefined>(undefined);
   const {
     schema: { flat }
   } = use(BuilderSchemaContext);

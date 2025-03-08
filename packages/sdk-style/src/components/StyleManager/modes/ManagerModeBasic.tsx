@@ -8,13 +8,19 @@ import StyleInspector from '../../StyleInspector';
 import type { DisplayMode } from '@plitzi/sdk-shared';
 
 export type ManagerModeBasicProps = {
-  selected: string;
+  selected?: string;
   displayMode: DisplayMode;
 };
 
 const ManagerModeBasic = ({ selected, displayMode }: ManagerModeBasicProps) => {
   const { style } = use(BuilderStyleContext);
-  const styleSelectorsMemo = useMemo(() => ({ base: selected }), [selected]);
+  const styleSelectorsMemo = useMemo(() => {
+    if (!selected) {
+      return undefined;
+    }
+
+    return { base: selected };
+  }, [selected]);
   const builderStyleValueMemo = useMemo(
     () => ({
       style,
