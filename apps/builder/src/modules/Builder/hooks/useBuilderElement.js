@@ -2,8 +2,7 @@
 import { use, useMemo } from 'react';
 import get from 'lodash/get';
 
-// Relatives
-import BuilderSchemaContext from '../contexts/BuilderSchemaContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 const useBuilderElement = id => {
   const { schema } = use(BuilderSchemaContext);

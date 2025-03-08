@@ -16,6 +16,11 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
+    "./builder/*": {
+      "types": "./dist/builder/contexts/*",
+      "import": "./dist/builder/contexts/*",
+      "require": "./dist/builder/contexts/*"
+    },
     "./usePlitziServiceContext": {
       "types": "./dist/hooks/usePlitziServiceContext.d.ts",
       "import": "./dist/hooks/usePlitziServiceContext.es",

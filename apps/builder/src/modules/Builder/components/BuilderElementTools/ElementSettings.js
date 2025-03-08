@@ -25,6 +25,9 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 // Alias
 import CollectionContext from '@pmodules/Collection/CollectionContext';
@@ -33,9 +36,6 @@ import AppContext from '@pmodules/App/AppContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 // Relatives
-import BuilderContext from '../../BuilderContext';
-import BuilderStyleContext from '../../contexts/BuilderStyleContext';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import { defaultElementsSettings } from '../../../../SdkComponents';
 
 const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Select2, Switch, QueryBuilder, KVEditor };

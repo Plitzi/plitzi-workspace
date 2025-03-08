@@ -10,6 +10,11 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
@@ -19,13 +24,8 @@ import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 // Relatives
 import OverlayButton from './OverlayButton';
-import BuilderContext from '../../BuilderContext';
 import BuilderElementTools from '../BuilderElementTools';
-import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
-import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
-import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
 
 /**
  * @param {{

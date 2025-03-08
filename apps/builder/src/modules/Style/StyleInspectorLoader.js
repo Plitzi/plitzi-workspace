@@ -3,11 +3,11 @@ import set from 'lodash/set';
 import { use, useCallback } from 'react';
 
 import StyleInspector from '@plitzi/sdk-style/StyleInspector';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import AppContext from '@pmodules/App/AppContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
 
 const StyleInspectorLoader = ({ element, styleSelectors }) => {
   const { displayMode } = use(AppContext);

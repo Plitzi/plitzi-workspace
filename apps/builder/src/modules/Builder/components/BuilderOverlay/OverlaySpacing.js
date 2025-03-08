@@ -2,8 +2,7 @@
 import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
-// Alias
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 /**
  * @param {{

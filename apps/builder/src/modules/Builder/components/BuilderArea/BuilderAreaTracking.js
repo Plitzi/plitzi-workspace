@@ -9,6 +9,11 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -18,12 +23,7 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
-import BuilderContext from '../../BuilderContext';
-import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
-import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
 import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE, processPaste } from '../../BuilderHelper';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
-import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 
 /**
  * @param {{

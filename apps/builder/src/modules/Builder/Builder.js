@@ -1,13 +1,11 @@
-// Packages
 import React, { use, useEffect, useMemo } from 'react';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
-// Alias
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+
 import AppContext from '@pmodules/App/AppContext';
 
-// Relatives
 import BuilderArea from './components/BuilderArea';
-import BuilderContext from './BuilderContext';
 import { BUILDER_MODE_NORMAL } from './BuilderProvider';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 

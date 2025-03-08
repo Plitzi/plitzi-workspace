@@ -9,13 +9,13 @@ import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 // Relatives
 import OverlaySpacing from './OverlaySpacing';
 import OverlayButtonContainer from './OverlayButtonContainer';
-import BuilderContext from '../../BuilderContext';
 import OverlayButtonResize from './OverlayButtonResize';
-import BuilderStyleContext from '../../contexts/BuilderStyleContext';
 
 /**
  * @param {{

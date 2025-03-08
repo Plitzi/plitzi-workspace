@@ -7,7 +7,6 @@ import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
-// Monorepo
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -19,16 +18,16 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 // Alias
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import AppContext from '@pmodules/App/AppContext';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 

@@ -9,20 +9,20 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
 import TemplatesContext from '@pmodules/Templates/TemplatesContext';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 // Relatives
-import BuilderContext from '../../BuilderContext';
-import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
 /**
  * @param {{

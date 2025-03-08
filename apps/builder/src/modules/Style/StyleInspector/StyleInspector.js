@@ -12,11 +12,11 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
 
 // Relatives
 import Selector from '../Selector';

@@ -4,10 +4,8 @@ import { use, useMemo } from 'react';
 // Monorepo
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
-
-// Alias
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 const useStyleInherit = props => {
   const { element, selector, styleSelector } = props;

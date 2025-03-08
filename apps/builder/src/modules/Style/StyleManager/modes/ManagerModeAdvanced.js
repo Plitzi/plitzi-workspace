@@ -9,10 +9,10 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 // Monorepo
 import EventBridgeTypes from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { cssToSelectors, StyleConstants, getReadOnlyRangesFromContent } from '@plitzi/sdk-style/StyleHelper';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 

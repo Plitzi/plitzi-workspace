@@ -9,10 +9,8 @@ import { use, useCallback, useMemo } from 'react';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
-
-// Alias
-import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 // Relatives
 import useBuilderElement from '../../hooks/useBuilderElement';

@@ -17,10 +17,10 @@ import {
   makeSelector
 } from '@plitzi/sdk-style/StyleHelper';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
 
 const selectorsDefault = [];
 

@@ -10,9 +10,9 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 
 // Monorepo
-import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 // Relatives
 import BindingForm from './models/BindingForm';

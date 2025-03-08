@@ -10,9 +10,7 @@ import upperFirst from 'lodash/upperFirst';
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
-
-// Alias
-import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
 
 // Relatives
 import WorkflowContext from './WorkflowContext';

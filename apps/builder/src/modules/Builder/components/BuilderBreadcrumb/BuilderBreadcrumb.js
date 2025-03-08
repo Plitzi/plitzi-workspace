@@ -1,12 +1,13 @@
 // Packages
 import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+
 // Relatives
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
-import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
-import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
-import BuilderContext from '../../BuilderContext';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
 /**
  * @param {{

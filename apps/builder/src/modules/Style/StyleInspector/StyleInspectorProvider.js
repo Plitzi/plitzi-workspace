@@ -115,11 +115,11 @@ import {
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Relatives

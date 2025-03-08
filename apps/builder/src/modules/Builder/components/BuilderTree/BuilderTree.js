@@ -7,13 +7,13 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 // Monorepo
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 // Relatives
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
-import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
-import BuilderContext from '../../BuilderContext';
-import BuilderHoveredContext from '../../contexts/BuilderHoveredContext';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 
 const BuilderTree = ({ setDragTree }) => {
   const { componentDefinitions } = use(ComponentContext);

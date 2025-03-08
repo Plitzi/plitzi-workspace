@@ -3,8 +3,7 @@ import React, { useMemo, use } from 'react';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 
-// Alias
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 // Relatives
 import StyleInspector from '../../StyleInspector/StyleInspector';

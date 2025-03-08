@@ -4,10 +4,9 @@ import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
-// Alias
-import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 /** @returns {React.ReactElement} */
 const StyleViewer = () => {

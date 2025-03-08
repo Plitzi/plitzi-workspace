@@ -4,8 +4,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 import ContentEditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
-// Alias
-import BuilderContext from '@pmodules/Builder/BuilderContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
 
 /**
  * @param {{

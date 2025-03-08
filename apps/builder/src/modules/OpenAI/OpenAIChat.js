@@ -8,11 +8,11 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import BuilderSelectedContext from '@pmodules/Builder/contexts/BuilderSelectedContext';
 
 // Relatives
 import useMediaRecorder from './hooks/useMediaRecorder';

@@ -4,6 +4,8 @@ import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+
 // Alias
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
 import StateManager from '@pmodules/StateManager/StateManager';
@@ -13,7 +15,6 @@ import Transform from '@pmodules/Transformers/Transform';
 // Relatives
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderTree from '../BuilderTree';
-import BuilderContext from '../../BuilderContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 import { featureFlag } from '../../../../config';
 

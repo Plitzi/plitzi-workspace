@@ -2,10 +2,11 @@
 import React, { use, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+
 // Alias
 import AppContext from '@pmodules/App/AppContext';
-import BuilderStyleContext from '@pmodules/Builder/contexts/BuilderStyleContext';
-import BuilderSchemaContext from '@pmodules/Builder/contexts/BuilderSchemaContext';
 
 // Relatives
 import ManagerModeBasic from './modes/ManagerModeBasic';

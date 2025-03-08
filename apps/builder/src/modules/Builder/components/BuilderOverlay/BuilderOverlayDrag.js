@@ -5,9 +5,8 @@ import camelCase from 'lodash/camelCase';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
 
-// Relatives
-import BuilderContext from '../../BuilderContext';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 export const OVERLAY_MODE_NORMAL = 'normal';
 export const OVERLAY_MODE_DRAG = 'drag';

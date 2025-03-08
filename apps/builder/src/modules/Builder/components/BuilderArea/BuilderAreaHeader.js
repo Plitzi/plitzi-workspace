@@ -11,15 +11,15 @@ import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
 
 // Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
-import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
-import BuilderContext from '../../BuilderContext';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
-import BuilderSchemaContext from '../../contexts/BuilderSchemaContext';
 import BuilderElementTools from '../BuilderElementTools';
 
 /**

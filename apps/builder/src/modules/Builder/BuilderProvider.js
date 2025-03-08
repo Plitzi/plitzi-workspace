@@ -1,4 +1,3 @@
-// Packages
 import React, { useCallback, use, useMemo, useState, useRef, useEffect } from 'react';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -8,7 +7,6 @@ import camelCase from 'lodash/camelCase';
 import { produce } from 'immer';
 import useStateMemo from '@plitzi/plitzi-ui-components/hooks/useStateMemo';
 
-// Monorepo
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -19,19 +17,17 @@ import {
 } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
 
-// Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 
-// Relatives
-import BuilderSchemaContext from './contexts/BuilderSchemaContext';
-import BuilderSelectedContext from './contexts/BuilderSelectedContext';
-import BuilderHoveredContext from './contexts/BuilderHoveredContext';
 import { isInViewport } from '../../helpers/utils';
-import BuilderStyleContext from './contexts/BuilderStyleContext';
-import BuilderContext from './BuilderContext';
 
 export const BUILDER_MODE_NORMAL = 'normal';
 export const BUILDER_MODE_TEMPLATE = 'template';

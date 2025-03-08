@@ -2,11 +2,10 @@
 import { use, useMemo } from 'react';
 import get from 'lodash/get';
 
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+
 // Alias
 import AppContext from '@pmodules/App/AppContext';
-
-// Relatives
-import BuilderStyleContext from '../contexts/BuilderStyleContext';
 
 const useBuilderElementStyle = selector => {
   const { platform } = use(BuilderStyleContext);
