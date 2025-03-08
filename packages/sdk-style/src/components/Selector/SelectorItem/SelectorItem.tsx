@@ -68,50 +68,30 @@ const SelectorItem = ({
   return (
     <div
       className={classNames(
-        'pl-4 pr-2 py-0.5 relative flex items-center rounded-sm text-white select-none cursor-pointer gap-1',
+        'pl-2 pr-1 py-1.5 relative flex items-center rounded-sm text-white select-none cursor-pointer gap-1 max-w-[126px]',
         className,
-        {
-          'bg-blue-400': type === 'class' && active,
-          'bg-green-500': type === 'state' && active,
-          'bg-purple-500': type === 'parent' && active,
-          'bg-pink-500': type === 'element' && active,
-          'bg-yellow-500': type === 'id' && active,
-          'bg-gray-500': !active
-        }
+        { 'bg-secondary-400': active, 'bg-gray-500': !active }
       )}
       onClick={handleClick}
+      title={`${type}: ${selector}`}
     >
-      <div
-        className={classNames('px-1 my-1 rounded-sm bg-white capitalize font-bold text-xs', {
-          'text-blue-400': type === 'class' && active,
-          'text-green-500': type === 'state' && active,
-          'text-purple-500': type === 'parent' && active,
-          'text-pink-500': type === 'element' && active,
-          'text-yellow-500': type === 'id' && active,
-          'text-gray-400': !active
-        })}
-        title={type}
-      >
-        {type[0]}
-      </div>
-      <div className="flex basis-0 grow min-w-0">
-        {editable && (
-          <div className="flex truncate">
+      <div className="flex basis-0 grow min-w-0 text-xs">
+        <div className="truncate">
+          {editable && (
             <Contenteditable
-              className="focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1 text-xs"
+              className="focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1 inline"
               value={selector}
               onChange={handleChange}
               openMode="doubleClick"
             />
-            {state && <span className="text-xs">:{state}</span>}
-          </div>
-        )}
-        {!editable && <div className="text-xs truncate">{selector}</div>}
+          )}
+          {!editable && selector}
+          {state && <span>:{state}</span>}
+        </div>
       </div>
       {editable && (
         <ItemOptions
           selector={selector}
-          active={active}
           type={type}
           state={state}
           setState={setState}

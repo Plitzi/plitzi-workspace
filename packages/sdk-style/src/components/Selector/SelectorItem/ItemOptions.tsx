@@ -1,6 +1,5 @@
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import classNames from 'classnames';
 import capitalize from 'lodash/capitalize';
 import { useCallback } from 'react';
 
@@ -12,7 +11,6 @@ import type { Dispatch, SetStateAction } from 'react';
 
 export type ItemOptionsProps = {
   selector?: string;
-  active: boolean;
   type: TagType;
   state: string;
   onChangeState?: (state: string) => void;
@@ -23,7 +21,6 @@ export type ItemOptionsProps = {
 const ItemOptions = ({
   selector = '',
   type = 'class',
-  active = false,
   state = '',
   onAction,
   onChangeState,
@@ -55,21 +52,11 @@ const ItemOptions = ({
   );
 
   return (
-    <ContainerFloating
-      className={classNames('', {
-        'bg-blue-400': type === 'class' && active,
-        'bg-green-500': type === 'state' && active,
-        'bg-purple-500': type === 'parent' && active,
-        'bg-pink-500': type === 'element' && active,
-        'bg-yellow-500': type === 'id' && active,
-        'bg-gray-500': !active
-      })}
-      backgroundDisabled
-    >
-      <ContainerFloating.Content>
-        <Icon icon="fa-solid fa-ellipsis-vertical" className="w-3 h-5" size="lg" />
-      </ContainerFloating.Content>
-      <ContainerFloating.Container className="text-gray-700 text-xs">
+    <ContainerFloating>
+      <ContainerFloating.Trigger>
+        <Icon icon="fa-solid fa-ellipsis-vertical" className="!min-w-3 w-3 h-4" />
+      </ContainerFloating.Trigger>
+      <ContainerFloating.Content className="text-gray-700 text-xs">
         <div className="py-1 bg-gray-50">
           <div className="font-bold mb-1 px-2">Actions</div>
           <ul className="flex flex-col gap-1 px-2">
@@ -100,7 +87,7 @@ const ItemOptions = ({
             ))}
           </ul>
         </div>
-      </ContainerFloating.Container>
+      </ContainerFloating.Content>
     </ContainerFloating>
   );
 };
