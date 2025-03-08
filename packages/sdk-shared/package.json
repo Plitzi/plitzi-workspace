@@ -17,7 +17,7 @@
       "require": "./dist/index.cjs"
     },
     "./builder/*": {
-      "types": "./dist/builder/contexts/*",
+      "types": "./dist/builder/contexts/*.d.ts",
       "import": "./dist/builder/contexts/*",
       "require": "./dist/builder/contexts/*"
     },

@@ -2,33 +2,26 @@ import Button from '@plitzi/plitzi-ui/Button';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Select from '@plitzi/plitzi-ui/Select';
 import classNames from 'classnames';
+import { produce } from 'immer';
 import get from 'lodash/get';
+import set from 'lodash/set';
 import { use, useCallback, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 import Selector from '../Selector';
 
 import type { SelectorValue } from '../Selector';
-import type { DisplayMode, Element, Style, StyleItem } from '@plitzi/sdk-shared';
-import type { Dispatch, SetStateAction } from 'react';
+import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
-  element: Element;
+  element?: Element;
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
   allowStyleSelector?: boolean;
   displayMode: DisplayMode;
-  // Extras
-  style: Style;
-  selectorSelected?: Pick<StyleItem, 'name' | 'type'>;
-  setSelectorSelected?: Dispatch<SetStateAction<SelectorValue | undefined>>;
-  styleSelector: string;
-  setStyleSelector: (selector: string) => void;
-  // methods
-  onAdd?: (tag: SelectorValue, isDuplicated: boolean, originalTag?: SelectorValue) => void;
-  onChange?: (value: string) => void;
-  onRemove?: (selector: string) => void;
 };
 
 const StyleInspector = ({
@@ -36,21 +29,20 @@ const StyleInspector = ({
   mode = 'element',
   styleSelectors,
   allowStyleSelector = true,
-  displayMode,
-  // Extras
-  style,
-  selectorSelected,
-  setSelectorSelected,
-  styleSelector,
-  setStyleSelector,
-  onAdd,
-  onChange,
-  onRemove
+  displayMode
 }: StyleInspectorProps) => {
   const [cache, setCache] = useStorage<{ viewMode: 'basic' | 'advanced' }>('StyleInspector', { viewMode: 'basic' });
+  const { componentDefinitions } = use(ComponentContext);
+  const {
+    style: { platform },
+    selectorSelected,
+    setSelectorSelected,
+    styleSelector,
+    setStyleSelector
+  } = use(BuilderStyleContext);
   const selector = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   // const selectors = Object.values(get(style.platform, displayMode));
-  const { componentDefinitions } = use(ComponentContext);
+  const { builderHandler } = use(BuilderContext);
   const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
     () =>
       get(
@@ -60,6 +52,53 @@ const StyleInspector = ({
       ) as Element['definition']['styleSelectors'],
     [componentDefinitions, element]
   );
+
+  const handleAddSelector = useCallback(
+    (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => {
+      if (isDuplicated && !originalSelector) {
+        return;
+      }
+
+      const { name, type } = selector;
+      if (!isDuplicated && name !== '' && !(platform[displayMode][name] as StyleItem | undefined)) {
+        builderHandler('styleAddSelector', displayMode, name, type);
+      } else if (
+        isDuplicated &&
+        originalSelector &&
+        originalSelector.name !== name &&
+        (platform[displayMode][originalSelector.name] as StyleItem | undefined) &&
+        !(platform[displayMode][name] as StyleItem | undefined)
+      ) {
+        builderHandler(
+          'styleAddSelector',
+          displayMode,
+          name,
+          type,
+          '',
+          get(platform, `${displayMode}.${originalSelector.name}.attributes`, {})
+        );
+      }
+    },
+    [builderHandler, displayMode, platform]
+  );
+
+  const handleChangeSelector = useCallback(
+    (value: string) => {
+      if (!element) {
+        return;
+      }
+
+      builderHandler(
+        'schemaUpdateElement',
+        produce(element, draft => {
+          set(draft, `definition.styleSelectors.${styleSelector}`, value);
+        })
+      );
+    },
+    [element, builderHandler, styleSelector]
+  );
+
+  const handleRemoveSelector = useCallback(() => {}, []);
 
   const handleClicViewMode = useCallback(
     () => setCache(state => ({ viewMode: state.viewMode === 'basic' ? 'advanced' : 'basic' })),
@@ -91,9 +130,9 @@ const StyleInspector = ({
             value={selector}
             selectorSelected={selectorSelected}
             displayMode={displayMode}
-            onAdd={onAdd}
-            onChange={onChange}
-            onRemove={onRemove}
+            onAdd={handleAddSelector}
+            onChange={handleChangeSelector}
+            onRemove={handleRemoveSelector}
             onSelectorSelected={setSelectorSelected}
           />
           <Button

@@ -5,7 +5,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderStyleContextValue = {
   style: Style;
-  selectorSelected: Pick<StyleItem, 'name' | 'type'>;
+  selectorSelected?: Pick<StyleItem, 'name' | 'type'>;
   setSelectorSelected: Dispatch<SetStateAction<Pick<StyleItem, 'name' | 'type'> | undefined>>;
   styleSelector: string;
   setStyleSelector: Dispatch<SetStateAction<string>>;
