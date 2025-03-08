@@ -8,49 +8,35 @@ import isEmpty from 'lodash/isEmpty';
 import set from 'lodash/set';
 import { useCallback, use, useMemo, useState } from 'react';
 
-// import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-
-// import BuilderContext from '@pmodules/Builder/BuilderContext';
-// import AppContext from '@pmodules/App/AppContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 import StyleSelectorTag from './StyleSelectorTag';
 import SelectorForm from '../Models/SelectorForm';
 
-import type { ChangeEvent } from 'react';
-import { Element } from '@plitzi/sdk-shared';
-
-const flatListDefault = [];
-const selectorsDefault = [];
+import type { Element, StyleItem } from '@plitzi/sdk-shared';
 
 export type ManagerSelectorProps = {
-  flatList?: unknown[];
+  flatList: Element[];
   selected?: string;
   onSelect?: (selector?: string) => void;
-  selectors?: unknown[];
+  selectors: StyleItem[];
 };
 
-const ManagerSelector = ({
-  flatList = flatListDefault,
-  selectors = selectorsDefault,
-  selected,
-  onSelect
-}: ManagerSelectorProps) => {
+const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
   const { showModal } = useModal();
   const [searchInput, setSearchInput] = useState('');
-  const { displayMode } = use(AppContext);
   const { builderHandler } = use(BuilderContext);
+  const { displayMode } = use(BuilderStyleContext);
   const finalSelectors = useMemo(() => {
-    if (selectors && !isEmpty(searchInput)) {
-      selectors = selectors.filter(selector => selector.name?.toLowerCase().includes(searchInput.toLowerCase()));
+    if (!isEmpty(searchInput)) {
+      return selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
     return selectors;
   }, [selectors, searchInput]);
 
-  const handleChangeSearch = useCallback(
-    (e: ChangeEvent) => setSearchInput((e.target as HTMLInputElement).value),
-    [setSearchInput]
-  );
+  const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
 
   const handleClickAddSelector = useCallback(async () => {
     const response = await showModal(
@@ -69,9 +55,9 @@ const ManagerSelector = ({
         data: { name }
       } = response;
 
-      builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, name, 'class');
+      builderHandler('styleAddSelector', displayMode, name, 'class');
     }
-  }, [builderHandler]);
+  }, [builderHandler, displayMode, showModal]);
 
   const handleClickSelect = useCallback(
     (selector: string) => {
@@ -84,7 +70,7 @@ const ManagerSelector = ({
     [selected, onSelect]
   );
 
-  const elementHasSelector = useCallback((element: Element, selector) => {
+  const elementHasSelector = useCallback((element: Element, selector: string) => {
     if (!selector) {
       return [];
     }
@@ -120,7 +106,7 @@ const ManagerSelector = ({
 
       elementsAffected.forEach(element => {
         builderHandler(
-          EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
+          'schemaUpdateElement',
           produce(element, draft => {
             Object.keys(element.definition.styleSelectors).forEach(styleSelector => {
               if (get(draft, `definition.styleSelectors.${styleSelector}`, '') === selector) {
@@ -131,13 +117,13 @@ const ManagerSelector = ({
         );
       });
 
-      builderHandler(EventBridgeTypes.STYLE_REMOVE_SELECTOR, selector);
-      onSelect(undefined);
+      builderHandler('styleRemoveSelector', selector);
+      onSelect?.(undefined);
     },
-    [flatList, onSelect, builderHandler]
+    [flatList, builderHandler, onSelect, elementHasSelector, showModal]
   );
 
-  const elementCounts = useMemo(
+  const elementCounts = useMemo<Record<string, number>>(
     () =>
       finalSelectors.reduce(
         (acum, selector) => ({
@@ -154,20 +140,14 @@ const ManagerSelector = ({
       <Button
         intent="custom"
         size="custom"
-        onClick={handleClickAddSelector}
+        onClick={void handleClickAddSelector}
         className="px-4 py-3 bg-gray-600 text-white sticky top-0 z-10"
       >
         <i className="fas fa-tint fa-2x mr-4" />
         Add Selector
       </Button>
       <div className="m-2">
-        <Input
-          placeholder="Search Selector"
-          value={searchInput}
-          onChange={handleChangeSearch}
-          className="mr-1"
-          inputClassName="rounded-sm"
-        />
+        <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} />
       </div>
       <div className="flex flex-col grow basis-0 overflow-y-auto">
         {finalSelectors.map(selector => {
@@ -182,7 +162,7 @@ const ManagerSelector = ({
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
-              onDelete={handleClickDelete}
+              onDelete={void handleClickDelete}
             />
           );
         })}

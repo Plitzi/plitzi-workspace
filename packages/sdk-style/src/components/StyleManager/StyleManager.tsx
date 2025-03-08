@@ -1,5 +1,5 @@
 import get from 'lodash/get';
-import { useMemo, useState, use } from 'react';
+import { useState, use, useMemo } from 'react';
 
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
@@ -10,7 +10,7 @@ import ManagerModeBasic from './modes/ManagerModeBasic';
 import type { StyleItem } from '@plitzi/sdk-shared';
 
 const StyleManager = () => {
-  const [selected, setSelected] = useState();
+  const [selected, setSelected] = useState<string>('');
   const {
     schema: { flat }
   } = use(BuilderSchemaContext);
@@ -25,7 +25,7 @@ const StyleManager = () => {
     <div className="h-full flex flex-col grow overflow-auto">
       {/* <div className="m-1 flex justify-between items-center border-b border-gray-300" /> */}
       <div className="flex grow overflow-auto">
-        {/* <ManagerSelector selectors={selectors} flatList={flatList} selected={selected} onSelect={setSelected} /> */}
+        <ManagerSelector selectors={selectors} flatList={flatList} selected={selected} onSelect={setSelected} />
         <ManagerModeBasic selected={selected} displayMode={displayMode} />
         {/* {mode === 'advanced' && <ManagerModeAdvanced selected={selected} displayMode={displayMode} />} */}
       </div>

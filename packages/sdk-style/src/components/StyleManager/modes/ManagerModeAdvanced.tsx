@@ -1,170 +1,164 @@
-// Packages
-import React, { useCallback, use, useLayoutEffect, useMemo, useRef } from 'react';
-import get from 'lodash/get';
-import debounce from 'lodash/debounce';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+// import Button from '@plitzi/plitzi-ui/Button';
+// import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+// import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
+// import debounce from 'lodash/debounce';
+// import get from 'lodash/get';
+// import { useCallback, use, useLayoutEffect, useMemo, useRef } from 'react';
 
-// Monorepo
-import EventBridgeTypes from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { cssToSelectors, StyleConstants, getReadOnlyRangesFromContent } from '@plitzi/sdk-style/StyleHelper';
+// import EventBridgeTypes from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+// import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+// import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+// import { cssToSelectors, StyleConstants, getReadOnlyRangesFromContent } from '@plitzi/sdk-style/StyleHelper';
 
-// Alias
-import AppContext from '@pmodules/App/AppContext';
-import BuilderContext from '@pmodules/Builder/BuilderContext';
-import useNetwork from '@pmodules/Network/hooks/useNetwork';
-import NetworkContext from '@pmodules/Network/NetworkContext';
+// // import useNetwork from '@pmodules/Network/hooks/useNetwork';
+// // import NetworkContext from '@pmodules/Network/NetworkContext';
 
-const selectorsDefault = [];
+// const selectorsDefault = [];
 
-/**
- * @param {{
- *   selectors?: any[];
- *   selected?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const ManagerModeAdvanced = props => {
-  const { selectors = selectorsDefault, selected } = props;
-  const { builderHandler } = use(BuilderContext);
-  const { displayMode } = use(AppContext);
-  const { server, webKey } = use(NetworkContext);
-  const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
-  const selector = useMemo(() => selectors.find(selectorAux => selectorAux.name === selected), [selected, selectors]);
-  const CMRef = useRef({});
+// export type ManagerModeAdvancedProps = {
+//   selectors?: any[];
+//   selected?: string;
+// };
 
-  const format = useCallback(
-    async content => {
-      const response = await networkQuery('/utils/prettier-parser', { data: content, parser: 'css' }, 'post');
-      if (!response || !response.data) {
-        return content;
-      }
+// const ManagerModeAdvanced = ({ selectors = selectorsDefault, selected }: ManagerModeAdvancedProps) => {
+//   const { builderHandler } = use(BuilderContext);
+//   const { displayMode } = use(BuilderStyleContext);
+//   const { server, webKey } = use(NetworkContext);
+//   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
+//   const selector = useMemo(() => selectors.find(selectorAux => selectorAux.name === selected), [selected, selectors]);
+//   const CMRef = useRef({});
 
-      return get(response, 'data', content).replace('}\n', '}');
-    },
-    [networkQuery]
-  );
+//   const format = useCallback(
+//     async content => {
+//       const response = await networkQuery('/utils/prettier-parser', { data: content, parser: 'css' }, 'post');
+//       if (!response || !response.data) {
+//         return content;
+//       }
 
-  const sync = useCallback(
-    (currentState, push = true) => {
-      if (typeof currentState === 'string') {
-        currentState = cssToSelectors(currentState, true);
-      }
+//       return get(response, 'data', content).replace('}\n', '}');
+//     },
+//     [networkQuery]
+//   );
 
-      if (!push) {
-        return;
-      }
+//   const sync = useCallback(
+//     (currentState, push = true) => {
+//       if (typeof currentState === 'string') {
+//         currentState = cssToSelectors(currentState, true);
+//       }
 
-      builderHandler(
-        EventBridgeTypes.STYLE_UPDATE_SELECTOR,
-        displayMode,
-        currentState.name,
-        selector.type,
-        undefined,
-        currentState.attributes
-      );
-    },
-    [builderHandler, displayMode, selector?.type]
-  );
+//       if (!push) {
+//         return;
+//       }
 
-  const syncDebounced = useMemo(() => debounce(sync, 500), [sync]);
+//       builderHandler(
+//         EventBridgeTypes.STYLE_UPDATE_SELECTOR,
+//         displayMode,
+//         currentState.name,
+//         selector.type,
+//         undefined,
+//         currentState.attributes
+//       );
+//     },
+//     [builderHandler, displayMode, selector?.type]
+//   );
 
-  const handleChange = useCallback(
-    (newValue, viewUpdate) => {
-      CMRef.current.value = newValue;
-      if (viewUpdate.selectionSet) {
-        syncDebounced(newValue);
-      }
-    },
-    [selectors]
-  );
+//   const syncDebounced = useMemo(() => debounce(sync, 500), [sync]);
 
-  const reSync = useCallback(
-    async content => {
-      CMRef.current.value = await format(content);
-    },
-    [format]
-  );
+//   const handleChange = useCallback(
+//     (newValue, viewUpdate) => {
+//       CMRef.current.value = newValue;
+//       if (viewUpdate.selectionSet) {
+//         syncDebounced(newValue);
+//       }
+//     },
+//     [selectors]
+//   );
 
-  const getReadOnlyRanges = useCallback(targetState => {
-    const content = targetState.doc.text.reduce((acum, line) => `${acum}${acum ? '\n' : ''}${line}`, '');
+//   const reSync = useCallback(
+//     async content => {
+//       CMRef.current.value = await format(content);
+//     },
+//     [format]
+//   );
 
-    return getReadOnlyRangesFromContent(content, false, false);
-  }, []);
+//   const getReadOnlyRanges = useCallback(targetState => {
+//     const content = targetState.doc.text.reduce((acum, line) => `${acum}${acum ? '\n' : ''}${line}`, '');
 
-  useLayoutEffect(() => {
-    if (selector && CMRef.current.name !== selector.name) {
-      CMRef.current = { name: selector.name, value: '' };
-      reSync(selector.cache);
-    } else if (selector && CMRef.current.name === selector.name) {
-      reSync(selector.cache);
-    } else if (!selector) {
-      CMRef.current = { name: undefined, value: '' };
-    }
-  }, [selector]);
+//     return getReadOnlyRangesFromContent(content, false, false);
+//   }, []);
 
-  const handleClickFormat = useCallback(() => reSync(CMRef.current.value), []);
+//   useLayoutEffect(() => {
+//     if (selector && CMRef.current.name !== selector.name) {
+//       CMRef.current = { name: selector.name, value: '' };
+//       reSync(selector.cache);
+//     } else if (selector && CMRef.current.name === selector.name) {
+//       reSync(selector.cache);
+//     } else if (!selector) {
+//       CMRef.current = { name: undefined, value: '' };
+//     }
+//   }, [reSync, selector]);
 
-  return (
-    <div className="h-full flex flex-col relative grow basis-0">
-      {selected && (
-        <>
-          <CodeMirror
-            value={CMRef.current.value}
-            theme="dark"
-            lineWrapping
-            onChange={handleChange}
-            getReadOnlyRanges={getReadOnlyRanges}
-          />
-          <div className="flex absolute top-3 right-3">
-            <Dropdown showIcon={false} containerLeftOffset={-208} className="mr-2">
-              <Dropdown.Content>
-                <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
-                  <i className="fa-solid fa-circle-info" />
-                </Button>
-              </Dropdown.Content>
-              <Dropdown.Container>
-                <div className="w-60 flex flex-col justify-center p-4">
-                  <p className="text-xs">
-                    Add your own CSS code here to customize the appearance and layout of your site.
-                  </p>
-                  <div>
-                    Properties Allowed
-                    <ul className="text-xs border border-gray-300 rounded-sm h-[100px] overflow-auto flex flex-col mt-4">
-                      {Object.values(StyleConstants).map(property => (
-                        <li key={property} className="px-1.5 py-1 [&:not(:last-child)]:border-b border-gray-300 w-full">
-                          {property}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <p className="mt-4 text-xs">
-                    <span className="font-bold">Ctrl + Space</span> to autocomplete.
-                  </p>
-                </div>
-              </Dropdown.Container>
-            </Dropdown>
-            <Button
-              intent="custom"
-              size="custom"
-              className="p-2 bg-white rounded-sm"
-              onClick={handleClickFormat}
-              tilte="Auto format"
-              disabled={networkLoading}
-            >
-              <i className="fa-solid fa-wand-magic-sparkles" />
-            </Button>
-          </div>
-        </>
-      )}
-      {!selected && (
-        <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center select-none">
-          No selector or element selected. Click on one to select it.
-        </div>
-      )}
-    </div>
-  );
-};
+//   const handleClickFormat = useCallback(() => reSync(CMRef.current.value), [reSync]);
 
-export default ManagerModeAdvanced;
+//   return (
+//     <div className="h-full flex flex-col relative grow basis-0">
+//       {selected && (
+//         <>
+//           <CodeMirror
+//             value={CMRef.current.value}
+//             theme="dark"
+//             lineWrapping
+//             onChange={handleChange}
+//             getReadOnlyRanges={getReadOnlyRanges}
+//           />
+//           <div className="flex absolute top-3 right-3">
+//             <ContainerFloating containerLeftOffset={-208} className="mr-2">
+//               <ContainerFloating.Trigger>
+//                 <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
+//                   <i className="fa-solid fa-circle-info" />
+//                 </Button>
+//               </ContainerFloating.Trigger>
+//               <ContainerFloating.Content>
+//                 <div className="w-60 flex flex-col justify-center p-4">
+//                   <p className="text-xs">
+//                     Add your own CSS code here to customize the appearance and layout of your site.
+//                   </p>
+//                   <div>
+//                     Properties Allowed
+//                     <ul className="text-xs border border-gray-300 rounded-sm h-[100px] overflow-auto flex flex-col mt-4">
+//                       {Object.values(StyleConstants).map(property => (
+//                         <li key={property} className="px-1.5 py-1 [&:not(:last-child)]:border-b border-gray-300 w-full">
+//                           {property}
+//                         </li>
+//                       ))}
+//                     </ul>
+//                   </div>
+//                   <p className="mt-4 text-xs">
+//                     <span className="font-bold">Ctrl + Space</span> to autocomplete.
+//                   </p>
+//                 </div>
+//               </ContainerFloating.Content>
+//             </ContainerFloating>
+//             <Button
+//               intent="custom"
+//               size="custom"
+//               className="p-2 bg-white rounded-sm"
+//               onClick={handleClickFormat}
+//               tilte="Auto format"
+//               disabled={networkLoading}
+//             >
+//               <i className="fa-solid fa-wand-magic-sparkles" />
+//             </Button>
+//           </div>
+//         </>
+//       )}
+//       {!selected && (
+//         <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center select-none">
+//           No selector or element selected. Click on one to select it.
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default ManagerModeAdvanced;

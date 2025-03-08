@@ -106,7 +106,7 @@ const StyleInspector = ({
     [setCache]
   );
 
-  const handleChangeStyleSelector = useCallback((value: string) => setStyleSelector(value), [setStyleSelector]);
+  const handleChangeStyleSelector = useCallback((value: string) => setStyleSelector?.(value), [setStyleSelector]);
 
   return (
     <div className="w-full flex flex-col grow">

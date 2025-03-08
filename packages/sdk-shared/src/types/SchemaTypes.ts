@@ -83,7 +83,7 @@ export type SchemaVariable = {
 export type PageFolder = { id: string; name: string; slug: string; parentId: string };
 
 export type Schema = {
-  flat: { [key: string]: Element | undefined };
+  flat: { [key: string]: Element };
   variables?: SchemaVariable[];
   settings: {
     customCss: string;
