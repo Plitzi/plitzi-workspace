@@ -1,7 +1,7 @@
 // Packages
 import Button from '@plitzi/plitzi-ui/Button';
 import ContainerFloating, { useFloating } from '@plitzi/plitzi-ui/ContainerFloating';
-// import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
@@ -14,7 +14,7 @@ import SelectorSuggestions from './SelectorSuggestions';
 // import StyleManager from '../StyleManager';
 
 import type { Style, StyleItem } from '@plitzi/sdk-shared';
-import type { ChangeEvent, CSSProperties, Dispatch, KeyboardEvent, RefObject, SetStateAction } from 'react';
+import type { ChangeEvent, CSSProperties, Dispatch, KeyboardEvent, MouseEvent, RefObject, SetStateAction } from 'react';
 
 export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
 
@@ -47,7 +47,7 @@ const Selector = ({
   const [inputValue, setInputValue] = useState('');
   // const [popupOpened, setPopupOpened] = useState(false);
   const [open, setOpen, , triggerRef, triggerRect] = useFloating({ disabled });
-  // const { existsPopup, addPopup } = usePopup('floating');
+  const { existsPopup, addPopup } = usePopup('floating');
   const tags = useMemo<SelectorValue[]>(
     () =>
       Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))).map(tag =>
@@ -213,8 +213,6 @@ const Selector = ({
     [tags, onAdd, onChange, onSelectorSelected, setOpen]
   );
 
-  // const handleDropdownVisible = useCallback((visible: boolean) => setOpen(visible), [setOpen]);
-
   const handleSuggestionsSelect = useCallback(
     (tag: SelectorValue) => {
       setTimeout(() => setInputValue(''), 0);
@@ -238,37 +236,29 @@ const Selector = ({
     [tags, onChange, onAdd, onSelectorSelected, setOpen]
   );
 
-  // const handleClickStyleManager = useCallback(
-  //   (e: MouseEvent) => {
-  //     e.preventDefault();
-  //     e.stopPropagation();
-  //     if (!existsPopup?.('styleManager')) {
-  //       addPopup?.('styleManager', <StyleManager />, {
-  //         icon: <i className="fas fa-swatchbook text-base" />,
-  //         title: 'Style Manager',
-  //         resizeHandles: ['se'],
-  //         allowLeftSide: true,
-  //         allowRightSide: true,
-  //         placement: 'floating',
-  //         width: 600
-  //       });
-  //     }
-  //   },
-  //   [addPopup, existsPopup]
-  // );
+  const handleClickStyleManager = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!existsPopup?.('styleManager')) {
+        // addPopup?.('styleManager', <StyleManager />, {
+        //   icon: <i className="fas fa-swatchbook text-base" />,
+        //   title: 'Style Manager',
+        //   resizeHandles: ['se'],
+        //   allowLeftSide: true,
+        //   allowRightSide: true,
+        //   placement: 'floating',
+        //   width: 600
+        // });
+      }
+    },
+    [addPopup, existsPopup]
+  );
 
   const contentStyle = useMemo<CSSProperties>(() => ({ width: triggerRect?.width }), [triggerRect]);
 
   return (
-    <ContainerFloating
-      ref={triggerRef as RefObject<HTMLDivElement>}
-      className="w-full"
-      // showIcon={false}
-      // classNameBackground=""
-      open={open}
-      disabled
-      // onContainerVisible={handleDropdownVisible}
-    >
+    <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
       <ContainerFloating.Trigger className={classNames('w-full')}>
         <div
           className={classNames('flex-wrap border border-gray-300 rounded-sm relative p-1 gap-1 flex', className, {
@@ -281,7 +271,7 @@ const Selector = ({
           <Button
             intent="custom"
             size="custom"
-            // onClick={handleClickStyleManager}
+            onClick={handleClickStyleManager}
             className="hover:bg-gray-200 border border-gray-300 rounded-sm h-7 w-7 text-gray-500"
             title="Style Manager"
           >
