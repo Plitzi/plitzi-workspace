@@ -27,9 +27,7 @@ const TemplateForm = props => {
     []
   );
 
-  const initialValues = useMemo(() => ({ name, description }), [name, description]);
-
-  const form = useForm({ initialValues, config: { schema } });
+  const form = useForm({ initialValues: { name, description }, config: { schema } });
 
   const handleSubmitInternal = useCallback(values => onSubmit?.(values), [onSubmit]);
 

@@ -124,5 +124,3 @@ export const generatePluginModule = async (url: string, asES6 = true, pluginScop
 
 //   return pluginsProcessed;
 // };
-
-export const nativeEventsList = ['onClick', 'onFocus', 'onBlur', 'onMouseEnter', 'onMouseLeave'];

@@ -7,8 +7,6 @@ import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
 import { emptyObject } from '@plitzi/sdk-shared/utils';
 
-import { nativeEventsList } from './helpers/elementUtils';
-
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionBaseCallback, InternalPropsSTG2 } from '@plitzi/sdk-shared';
@@ -40,6 +38,8 @@ const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   }
 };
+
+const nativeEventsList = ['onClick', 'onFocus', 'onBlur', 'onMouseEnter', 'onMouseLeave'];
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   ref?: RefObject<HTMLElement>;

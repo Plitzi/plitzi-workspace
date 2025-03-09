@@ -37,16 +37,11 @@ class FlatMap {
     this.variables = variables ?? [];
   }
 
-  addElement = (
-    data: Element,
-    to: string,
-    dropPosition = 'inside',
-    initialItems: { [key: string]: Element | undefined } = {}
-  ) => {
+  addElement = (data: Element, to: string, dropPosition = 'inside', initialItems: { [key: string]: Element } = {}) => {
     let parent;
     if (dropPosition !== 'custom') {
       if (dropPosition !== 'inside') {
-        const element = this.flat[to];
+        const element = this.flat[to] as Element | undefined;
         if (!element) {
           return false;
         }
@@ -63,7 +58,10 @@ class FlatMap {
       }
     }
 
-    if (dropPosition !== 'custom' && (this.flat[data.id] || !Array.isArray(get(parent, 'definition.items')))) {
+    if (
+      dropPosition !== 'custom' &&
+      ((this.flat[data.id] as Element | undefined) || !Array.isArray(get(parent, 'definition.items')))
+    ) {
       return false;
     }
 
@@ -139,7 +137,7 @@ class FlatMap {
   };
 
   updateElement = (element?: Element) => {
-    if (!element || !this.flat[element.id]) {
+    if (!element || !(this.flat[element.id] as Element | undefined)) {
       return false;
     }
 
@@ -149,17 +147,17 @@ class FlatMap {
   };
 
   moveElement = (from: string, to: string, elementId: string, dropPosition: DropPosition = 'inside') => {
-    if (elementId === to || !this.flat[from]) {
+    if (elementId === to || !(this.flat[from] as Element | undefined)) {
       return false;
     }
 
     // Verify if the receptor is child from the sender
-    const elementTo = this.flat[to];
+    const elementTo = this.flat[to] as Element | undefined;
     if (!elementTo) {
       return false;
     }
 
-    let element = this.flat[to];
+    let element = this.flat[to] as Element | undefined;
     while (element) {
       const parentId = get(element, 'definition.parentId');
       if (!parentId) {
@@ -184,7 +182,7 @@ class FlatMap {
         return false;
       }
 
-      const parent = this.flat[elementTo.definition.parentId];
+      const parent = this.flat[elementTo.definition.parentId] as Element | undefined;
       if (!parent) {
         return false;
       }
@@ -204,7 +202,7 @@ class FlatMap {
       set(this.flat, `${parent.id}.definition.items`, parentItems);
       set(this.flat, `${elementId}.definition.parentId`, parent.id);
     } else if (dropPosition === 'inside') {
-      const parent = this.flat[to];
+      const parent = this.flat[to] as Element | undefined;
       if (!parent) {
         return false;
       }
@@ -229,13 +227,13 @@ class FlatMap {
     const result: { acum: { [key: string]: Element }; item?: Element } = { acum: {}, item: undefined };
     const mapIds: { [key: string]: string } = {};
 
-    const element = this.flat[elementId];
+    const element = this.flat[elementId] as Element | undefined;
     if (!element) {
       return result;
     }
 
     const elements = [elementId, ...this.childTree(elementId)].reduce<{ [key: string]: Element }>((acum, id) => {
-      const element = this.flat[id];
+      const element = this.flat[id] as Element | undefined;
       if (!element) {
         return acum;
       }
@@ -263,7 +261,7 @@ class FlatMap {
       delete result.acum[mapIds[elementId]];
     }
 
-    const parentElement = this.flat[parentId];
+    const parentElement = this.flat[parentId] as Element | undefined;
     if (!parentElement || !Array.isArray(get(parentElement, 'definition.items'))) {
       parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId')) as string;
     }
@@ -276,7 +274,7 @@ class FlatMap {
   };
 
   removeElement = (elementId: string, removePage = false) => {
-    const element = this.flat[elementId];
+    const element = this.flat[elementId] as Element | undefined;
     if (!element || (element.definition.type === 'page' && !removePage)) {
       return false;
     }
@@ -291,7 +289,7 @@ class FlatMap {
       return false;
     }
 
-    const parent = this.flat[parentId];
+    const parent = this.flat[parentId] as Element | undefined;
     if (parent) {
       const {
         definition: { items = [] }
@@ -314,7 +312,7 @@ class FlatMap {
   // Extra Methods
 
   parentTree = (elementId: string) => {
-    let element = this.flat[elementId];
+    let element = this.flat[elementId] as Element | undefined;
     const ids: string[] = [];
     if (!element) {
       return ids;
@@ -334,14 +332,14 @@ class FlatMap {
         ids.push(element.id);
       }
 
-      element = get(this.flat, get(element, 'definition.parentId') as string);
+      element = get(this.flat, get(element, 'definition.parentId') as string) as Element | undefined;
     } while (element);
 
     return ids;
   };
 
   childTree = (elementId: string) => {
-    const element = this.flat[elementId];
+    const element = this.flat[elementId] as Element | undefined;
     if (!element) {
       return [];
     }
@@ -382,7 +380,7 @@ class FlatMap {
       return { elements: {}, elementsStyle, variables };
     }
 
-    const element = get(this.flat, elementId);
+    const element = get(this.flat, elementId) as Element | undefined;
     if (!element) {
       return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
     }
