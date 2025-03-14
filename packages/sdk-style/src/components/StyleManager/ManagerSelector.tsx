@@ -1,7 +1,7 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal from '@plitzi/plitzi-ui/Modal';
 import { produce } from 'immer';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
@@ -25,7 +25,6 @@ export type ManagerSelectorProps = {
 };
 
 const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
-  const { showModal } = useModal();
   const [searchInput, setSearchInput] = useState('');
   const { builderHandler } = use(BuilderContext);
   const { displayMode } = use(BuilderStyleContext);
@@ -39,26 +38,20 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
 
-  const handleClickAddSelector = useCallback(async () => {
-    const response = await showModal(
-      <Modal.Header>
-        <h4>Add Selector</h4>
-      </Modal.Header>,
-      <Modal.Body>
-        <SelectorForm />
-      </Modal.Body>,
-      undefined,
-      { placement: 'center', renderFooter: false }
-    );
+  const handleCloseAddSelector = useCallback(
+    (values?: { name: string }) => {
+      if (values) {
+        const { name } = values;
+        builderHandler('styleAddSelector', displayMode, name, 'class');
+      }
+    },
+    [builderHandler, displayMode]
+  );
 
-    if (response.result) {
-      const {
-        data: { name }
-      } = response;
-
-      builderHandler('styleAddSelector', displayMode, name, 'class');
-    }
-  }, [builderHandler, displayMode, showModal]);
+  const [idAddSelector, openAddSelector, onOpenAddSelector, onCloseAddSelector] = useDisclosure<{ name: string }>({
+    id: 'add-selector',
+    onClose: handleCloseAddSelector
+  });
 
   const handleClickSelect = useCallback(
     (selector: string) => {
@@ -85,26 +78,13 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
     });
   }, []);
 
-  const handleClickDelete = useCallback(
-    async (selector: string) => {
-      const elementsAffected = flatList.filter(element => elementHasSelector(element, selector));
-      if (elementsAffected.length > 0) {
-        const response = await showModal(
-          <Modal.Header>
-            <h4>Remove Selector</h4>
-          </Modal.Header>,
-          <Modal.Body>
-            <h4 className="px-3 py-2">Do you want to remove this item ?</h4>
-          </Modal.Body>,
-          undefined,
-          { placement: 'center', renderFooter: true }
-        );
-
-        if (!response.result) {
-          return;
-        }
+  const handleCloseDeleteSelector = useCallback(
+    (value?: boolean, selector?: string) => {
+      if (!value || !selector) {
+        return;
       }
 
+      const elementsAffected = flatList.filter(element => elementHasSelector(element, selector));
       elementsAffected.forEach(element => {
         builderHandler(
           'schemaUpdateElement',
@@ -117,11 +97,23 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           })
         );
       });
-
       builderHandler('styleRemoveSelector', selector);
       onSelect?.(undefined);
     },
-    [flatList, builderHandler, onSelect, elementHasSelector, showModal]
+    [builderHandler, elementHasSelector, flatList, onSelect]
+  );
+
+  const [idDeleteSelector, openDeleteSelector, onOpenDeleteSelector, onCloseDeleteSelector] = useDisclosure<
+    boolean,
+    string
+  >({
+    id: 'delete-selector',
+    onClose: handleCloseDeleteSelector
+  });
+
+  const handleClickDelete = useCallback(
+    (selector: string) => () => onOpenDeleteSelector(selector),
+    [onOpenDeleteSelector]
   );
 
   const elementCounts = useMemo<Record<string, number>>(
@@ -137,19 +129,17 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   );
 
   return (
-    <div className="flex flex-col border-r border-gray-300 grow basis-0 overflow-auto max-w-[350px]">
+    <div className="flex flex-col gap-2 pt-2 pr-2 border-r border-gray-300 grow basis-0 overflow-auto max-w-[350px]">
       <Button
-        intent="custom"
-        size="custom"
-        onClick={void handleClickAddSelector}
-        className="px-4 py-3 bg-gray-600 text-white sticky top-0 z-10"
+        // intent="custom"
+        // size="custom"
+        onClick={onOpenAddSelector}
+        // className="px-4 py-3 bg-gray-600 text-white sticky top-0 z-10"
       >
         <i className="fas fa-tint fa-2x mr-4" />
         Add Selector
       </Button>
-      <div className="m-2">
-        <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} />
-      </div>
+      <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} />
       <div className="flex flex-col grow basis-0 overflow-y-auto">
         {finalSelectors.map(selector => {
           const { name, type } = selector;
@@ -163,11 +153,31 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
-              onDelete={void handleClickDelete}
+              onDelete={handleClickDelete(name)}
             />
           );
         })}
       </div>
+      <Modal id={idAddSelector} open={openAddSelector} onClose={onCloseAddSelector}>
+        <Modal.Header>
+          <h4>Add Selector</h4>
+        </Modal.Header>
+        <Modal.Body>
+          <SelectorForm onSubmit={onCloseAddSelector} onClose={onCloseAddSelector} />
+        </Modal.Body>
+      </Modal>
+      <Modal id={idDeleteSelector} open={openDeleteSelector} onClose={onCloseDeleteSelector}>
+        <Modal.Header>
+          <h4>Remove Selector</h4>
+        </Modal.Header>
+        <Modal.Body>
+          <h4 className="px-3 py-2">Do you want to remove this item ?</h4>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={() => void onCloseDeleteSelector(false)}>Cancel</Button>
+          <Button onClick={() => void onCloseDeleteSelector(true)}>Submit</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

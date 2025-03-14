@@ -259,7 +259,7 @@ const Selector = ({
 
   return (
     <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
-      <ContainerFloating.Trigger className={classNames('w-full')}>
+      <ContainerFloating.Trigger className="w-full">
         <div
           className={classNames('flex-wrap border border-gray-300 rounded-sm relative p-1 gap-1 flex', className, {
             'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
@@ -269,13 +269,13 @@ const Selector = ({
           onKeyDown={handleKeyDown}
         >
           <Button
-            intent="custom"
+            intent="secondary"
             size="custom"
             onClick={handleClickStyleManager}
-            className="hover:bg-gray-200 border border-gray-300 rounded-sm h-7 w-7 text-gray-500"
+            className="h-7 w-7 rounded-sm"
             title="Style Manager"
           >
-            <i className="fas fa-swatchbook" />
+            <Button.Icon icon="fas fa-swatchbook" />
           </Button>
           {tags.map((tag, i) => (
             <SelectorItem
@@ -301,7 +301,7 @@ const Selector = ({
           />
         </div>
       </ContainerFloating.Trigger>
-      <ContainerFloating.Content className="w-full" style={contentStyle}>
+      <ContainerFloating.Content style={contentStyle}>
         <SelectorSuggestions
           selector={inputValue}
           selectors={selectorsAvailables}

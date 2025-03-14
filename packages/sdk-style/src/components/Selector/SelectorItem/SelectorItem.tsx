@@ -68,9 +68,14 @@ const SelectorItem = ({
   return (
     <div
       className={classNames(
-        'px-2 py-1.5 relative flex items-center rounded-sm text-white select-none cursor-pointer gap-1 max-w-[126px]',
+        'px-2 py-1.5 relative flex items-center rounded-sm text-white select-none cursor-pointer gap-1',
         className,
-        { 'bg-secondary-400': active, 'bg-gray-500': !active }
+        {
+          'bg-secondary-400': active,
+          'bg-gray-500': !active,
+          'max-w-[126px]': editable,
+          'min-w-0 max-w-full': !editable
+        }
       )}
       onClick={handleClick}
       title={`${type}: ${selector}`}

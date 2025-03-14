@@ -1,5 +1,3 @@
-import classNames from 'classnames';
-
 import SelectorItem from '../SelectorItem';
 
 import type { SelectorValue } from '../Selector';
@@ -13,11 +11,7 @@ const SuggestionsList = ({ selectors = [], onSelect }: SuggestionsListProps) => 
   return (
     <div className="flex flex-col w-full">
       <div className="text-sm font-bold mb-1 w-full">Tokens Availables</div>
-      <div
-        className={classNames('flex flex-col overflow-y-auto items-start max-h-[250px] text-xs gap-1', {
-          'pl-1': selectors.length > 0
-        })}
-      >
+      <div className="flex flex-col overflow-y-auto items-start max-h-[250px] text-xs gap-1">
         {selectors.map((selector, index) => (
           <SelectorItem
             className="cursor-pointer"
