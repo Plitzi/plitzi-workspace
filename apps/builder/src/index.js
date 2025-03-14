@@ -9,9 +9,6 @@ import Builder from '@pmodules/Builder';
 import App from './App';
 import { disableReactDevTools } from './helpers/security';
 
-// Builder Style
-import './assets/index.scss';
-
 export function render(widgetContainer, params = {}, plugins = {}, debugMode = false) {
   const Widget = () => {
     const pluginKeys = Object.keys(plugins);

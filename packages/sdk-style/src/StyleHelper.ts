@@ -6,10 +6,19 @@ import { makeId } from '@plitzi/sdk-shared/utils';
 
 import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 
-import type { Style, StyleItem, TagType } from './StyleContext';
-import type { Schema, Element, ComponentDefinition, DisplayMode, ElementBinding } from '@plitzi/sdk-shared';
+import type {
+  Schema,
+  Element,
+  ComponentDefinition,
+  DisplayMode,
+  ElementBinding,
+  StyleItem,
+  Style,
+  TagType,
+  StyleValue
+} from '@plitzi/sdk-shared';
 
-type MetaData = {
+export type StyleHelperMetaData = {
   tree: {
     name: string;
     displayMode: DisplayMode;
@@ -17,8 +26,8 @@ type MetaData = {
     isParent: boolean;
     isSubParent: boolean;
   }[];
-  style?: { [key: string]: { key: string; value: string; displayMode: DisplayMode }[] };
-  parentStyle?: { [key: string]: string };
+  style: { [key: string]: { key: string; value: StyleValue; displayMode: DisplayMode }[] };
+  parentStyle: { [key: string]: string };
 };
 
 export const EMPTY_STYLE_SCHEMA: Style = {
@@ -27,7 +36,7 @@ export const EMPTY_STYLE_SCHEMA: Style = {
   cache: ''
 };
 
-export const processSelector = (selector: string, type?: TagType, attributes: { [key: string]: string } = {}) => {
+export const processSelector = (selector: string, type?: TagType, attributes: StyleItem['attributes'] = {}) => {
   const result: string[] = [];
   Object.keys(attributes).forEach(key => {
     result.push(`${key}:${attributes[key]};`);
@@ -95,7 +104,7 @@ const getDataStyle = (
   isSubParent = false,
   componentDefinitions: { [key: string]: ComponentDefinition } = {}
 ) => {
-  const metadata: MetaData = { tree: [] };
+  const metadata: { tree: StyleHelperMetaData['tree'] } = { tree: [] };
   if (!element) {
     return undefined;
   }
@@ -116,14 +125,14 @@ const getDataStyle = (
       }
 
       const { name } = segment;
-      const style = platform[mode][name];
+      const style = platform[mode][name] as StyleItem | undefined;
       if (style) {
         metadata.tree.push({ name, displayMode: mode, style: style.attributes, isParent, isSubParent });
       }
     });
 
     // global native type
-    if (type && platform[mode][type] && platform[mode][type].type !== 'class') {
+    if (type && (platform[mode][type] as StyleItem | undefined) && platform[mode][type].type !== 'class') {
       metadata.tree.push({
         name: type,
         displayMode: mode,
@@ -131,7 +140,11 @@ const getDataStyle = (
         isParent,
         isSubParent
       });
-    } else if (subType && platform[mode][subType] && platform[mode][subType].type !== 'class') {
+    } else if (
+      subType &&
+      (platform[mode][subType] as StyleItem | undefined) &&
+      platform[mode][subType].type !== 'class'
+    ) {
       metadata.tree.push({
         name: subType,
         displayMode: mode,
@@ -173,14 +186,14 @@ export const calculateInheriting = (
   componentDefinitions: { [key: string]: ComponentDefinition } = {},
   skipSelectors: string[] = []
 ) => {
-  const metadata: MetaData = { tree: [], style: {}, parentStyle: {} };
+  const metadata: StyleHelperMetaData = { tree: [], style: {}, parentStyle: {} };
   if (!element) {
     return metadata;
   }
 
   const { id } = element;
   const parentId = get(element, 'definition.parentId');
-  while (element) {
+  while (element as Element | undefined) {
     const styleData = getDataStyle(
       element,
       platform,
@@ -196,7 +209,7 @@ export const calculateInheriting = (
     element = get(flat, get(element, 'definition.parentId', ''));
   }
 
-  const finalMeta: { [key: string]: { key: string; value: string; displayMode: DisplayMode }[] | undefined } = {};
+  const finalMeta: StyleHelperMetaData['style'] = {};
   metadata.tree.forEach(node => {
     let styleData = get(node, `style.${styleSelector}`, node.style) as { [key: string]: string } | undefined;
     if (!styleData) {
@@ -210,7 +223,7 @@ export const calculateInheriting = (
     Object.keys(styleData)
       .filter(key => (inheritableAttributesBase.includes(key) && node.isSubParent) || !node.isSubParent)
       .forEach(key => {
-        if (!finalMeta[key]) {
+        if (!(finalMeta[key] as StyleHelperMetaData['style'][string] | undefined)) {
           finalMeta[key] = [];
         }
 
@@ -224,11 +237,11 @@ export const calculateInheriting = (
     parentStyle: metadata.tree
       .filter(node => node.isParent)
       .reduce((acum, node) => ({ ...acum, ...get(node, 'style', {}) }), {})
-  };
+  } as StyleHelperMetaData;
 };
 
 export const calculateBindings = (element?: Element) => {
-  const metadata: { style: { [key: string]: boolean } } = { style: {} };
+  const metadata: { style: { [key: string]: string | number } } = { style: {} };
   if (!element) {
     return metadata;
   }
@@ -253,7 +266,7 @@ export const generateCache = (style: Style) => {
   const cache = [];
   if (Object.keys(platform.desktop).length > 0) {
     const style = Object.values(platform.desktop)
-      .map(s => s?.cache)
+      .map(s => s.cache)
       .join('\n');
     if (style !== '') {
       cache.push(style);
@@ -262,7 +275,7 @@ export const generateCache = (style: Style) => {
 
   if (Object.keys(platform.tablet).length > 0) {
     const style = Object.values(platform.tablet)
-      .map(s => s?.cache)
+      .map(s => s.cache)
       .join('\n');
     if (style !== '') {
       cache.push(`@media screen and (max-width: 768px) {${style}}`);
@@ -271,7 +284,7 @@ export const generateCache = (style: Style) => {
 
   if (Object.keys(platform.mobile).length > 0) {
     const style = Object.values(platform.mobile)
-      .map(s => s?.cache)
+      .map(s => s.cache)
       .join('\n');
     if (style !== '') {
       cache.push(`@media screen and (max-width: 425px) {${style}}`);

@@ -130,14 +130,9 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
 
   return (
     <div className="flex flex-col gap-2 pt-2 pr-2 border-r border-gray-300 grow basis-0 overflow-auto max-w-[350px]">
-      <Button
-        // intent="custom"
-        // size="custom"
-        onClick={onOpenAddSelector}
-        // className="px-4 py-3 bg-gray-600 text-white sticky top-0 z-10"
-      >
-        <i className="fas fa-tint fa-2x mr-4" />
-        Add Selector
+      <Button intent="primary" size="sm" className="w-full" iconPlacement="before" onClick={onOpenAddSelector}>
+        <Button.Icon icon="fas fa-tint" size="md" className="text-base" />
+        New Selector
       </Button>
       <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} />
       <div className="flex flex-col grow basis-0 overflow-y-auto">

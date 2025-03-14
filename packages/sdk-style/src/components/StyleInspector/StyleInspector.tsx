@@ -12,16 +12,16 @@ import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 import Selector from '../Selector';
+import InspectorModeBasic from './modes/InspectorModeBasic';
 
 import type { SelectorValue } from '../Selector';
-import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
+import type { Element, StyleItem } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
   element?: Element;
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
   allowStyleSelector?: boolean;
-  displayMode: DisplayMode;
 };
 
 const StyleInspector = ({
@@ -110,7 +110,7 @@ const StyleInspector = ({
 
   return (
     <div className="w-full flex flex-col grow">
-      <div className="flex flex-col w-full p-2 border-b border-gray-300">
+      <div className="flex flex-col w-full py-2 border-b border-gray-300">
         {allowStyleSelector && (
           <div className="flex flex-col text-xs">
             <label>Selector</label>
@@ -156,10 +156,10 @@ const StyleInspector = ({
             selector={selectorSelected?.name}
             element={element}
           />
-        )}
-        {viewMode === 'basic' && (
-          <InspectorModeBasic styleSelector={styleSelector} selector={selectorSelected?.name} element={element} />
         )} */}
+        {cache.viewMode === 'basic' && (
+          <InspectorModeBasic styleSelector={styleSelector} selector={selectorSelected?.name} element={element} />
+        )}
       </div>
     </div>
   );
