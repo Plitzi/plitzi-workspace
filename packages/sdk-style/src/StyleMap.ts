@@ -4,7 +4,7 @@ import set from 'lodash/set';
 
 import { processSelector } from './StyleHelper';
 
-import type { Style, StyleItem, TagType } from './StyleContext';
+import type { DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
 
 export type StyleMapProps = {
   platform?: Style['platform'];
@@ -23,7 +23,7 @@ class StyleMap {
   }
 
   addSelector = (
-    displayMode: string,
+    displayMode: DisplayMode,
     selector: string,
     type: TagType,
     path: string,
@@ -52,13 +52,13 @@ class StyleMap {
   };
 
   updateSelector = (
-    displayMode: string,
+    displayMode: DisplayMode,
     selector: string,
     type: TagType,
     path: string,
     style?: StyleItem['attributes']
   ) => {
-    const styleItem = get(this.platform, `${displayMode}.${selector}`) as unknown as StyleItem | undefined;
+    const styleItem = get(this.platform, `${displayMode}.${selector}`) as StyleItem | undefined;
     if (!styleItem) {
       return this.addSelector(displayMode, selector, type, path, style);
     }
@@ -75,7 +75,7 @@ class StyleMap {
       set(this.platform, `${displayMode}.${selector}.attributes`, style);
     }
 
-    const newStyle = get(this.platform, `${displayMode}.${selector}.attributes`) as unknown as StyleItem['attributes'];
+    const newStyle = get(this.platform, `${displayMode}.${selector}.attributes`);
     set(this.platform, `${displayMode}.${selector}.cache`, processSelector(selector, type, newStyle));
 
     return true;
@@ -84,10 +84,10 @@ class StyleMap {
   removeSelector = (selector: string) => {
     let found = false;
     Object.keys(this.platform).forEach(displayMode => {
-      if (this.platform[displayMode][selector]) {
+      if (this.platform[displayMode as DisplayMode][selector] as StyleItem | undefined) {
         found = true;
         // eslint-disable-next-line
-        delete this.platform[displayMode][selector];
+        delete this.platform[displayMode as DisplayMode][selector];
       }
     });
 
@@ -100,7 +100,7 @@ class StyleMap {
 
   static addSelector = (
     platform: Style['platform'],
-    displayMode: string,
+    displayMode: DisplayMode,
     selector: string,
     type: TagType,
     path: string,
@@ -109,7 +109,7 @@ class StyleMap {
 
   static updateSelector = (
     platform: Style['platform'],
-    displayMode: string,
+    displayMode: DisplayMode,
     selector: string,
     type: TagType,
     path: string,

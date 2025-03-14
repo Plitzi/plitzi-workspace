@@ -3,10 +3,9 @@ import get from 'lodash/get';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
 
-// Relative
 import { generateCache, processSelector } from './StyleHelper';
 
-import type { Style, StyleItem } from './StyleContext';
+import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
 
 export const StyleActions = {
   STYLE_UPDATE: 'STYLE_UPDATE',
@@ -95,7 +94,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
       return produce(state, draft => {
         const platform = omit(get(draft, 'platform', {})) as Style['platform'];
         Object.keys(platform).forEach(pkey => {
-          platform[pkey] = omit(platform[pkey], [selector]);
+          platform[pkey as DisplayMode] = omit(platform[pkey as DisplayMode], [selector]);
         });
         draft.platform = platform;
         draft.cache = generateCache({ platform } as Style);
@@ -114,7 +113,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
             return;
           }
 
-          platform[mode] = { ...get(platform, mode, {}), ...action.platform[mode] };
+          platform[mode as DisplayMode] = { ...get(platform, mode, {}), ...action.platform[mode as DisplayMode] };
         });
         draft.platform = platform;
         draft.cache = generateCache({ platform } as Style);

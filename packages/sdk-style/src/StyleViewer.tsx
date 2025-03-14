@@ -3,7 +3,7 @@ import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import { useCallback, useMemo } from 'react';
 
-import type { Style } from './StyleContext';
+import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
 
 export type StyleViewerProps = {
   elementSelected: string;
@@ -21,7 +21,7 @@ const StyleViewer = ({ elementSelected, schema, style }: StyleViewerProps) => {
       if (!isEmpty(selector)) {
         selector = btoa(selector);
         Object.keys(platform).forEach(mode => {
-          const segment = platform[mode][selector];
+          const segment = platform[mode as DisplayMode][selector] as StyleItem | undefined;
 
           if (segment) {
             style = `${style}/* ${mode} */\n${segment.cache}\n`;

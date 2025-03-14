@@ -37,12 +37,7 @@ const ManagerModeBasic = ({ selected, displayMode }: ManagerModeBasicProps) => {
     <div className="flex flex-col grow basis-0 overflow-auto">
       {selected && (
         <BuilderStyleContext value={builderStyleValueMemo}>
-          <StyleInspector
-            mode="manager"
-            styleSelectors={styleSelectorsMemo}
-            allowStyleSelector={false}
-            displayMode={displayMode}
-          />
+          <StyleInspector mode="manager" styleSelectors={styleSelectorsMemo} allowStyleSelector={false} />
         </BuilderStyleContext>
       )}
       {!selected && (

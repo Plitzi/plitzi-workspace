@@ -24,7 +24,7 @@ export type InspectorModeBasicProps = {
   selector?: string;
   styleSelector?: string;
   element?: Element;
-  displayMode?: DisplayMode;
+  displayMode: DisplayMode;
 };
 
 const InspectorModeBasic = ({

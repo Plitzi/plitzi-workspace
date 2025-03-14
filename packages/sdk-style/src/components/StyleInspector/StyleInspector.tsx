@@ -158,7 +158,12 @@ const StyleInspector = ({
           />
         )} */}
         {cache.viewMode === 'basic' && (
-          <InspectorModeBasic styleSelector={styleSelector} selector={selectorSelected?.name} element={element} />
+          <InspectorModeBasic
+            styleSelector={styleSelector}
+            selector={selectorSelected?.name}
+            element={element}
+            displayMode={displayMode}
+          />
         )}
       </div>
     </div>
