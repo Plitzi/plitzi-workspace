@@ -1,11 +1,19 @@
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import { useCallback, useMemo } from 'react';
 
+import type { StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type OptionIconGroupProps = {
-  items?: { icon: ReactNode; value: string; description?: string; isVisible?: boolean; active?: boolean }[];
-  onChange?: (value: string) => void;
+  items?: {
+    icon: ReactNode;
+    value: StyleValue | boolean;
+    description?: string;
+    isVisible?: boolean;
+    active?: boolean;
+    size?: 'md' | 'sm' | 'xs' | 'custom';
+  }[];
+  onChange?: (value: StyleValue | boolean) => void;
 };
 
 const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
@@ -14,12 +22,13 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
     [items]
   );
 
-  const handleChange = useCallback((value: string) => () => onChange?.(value), [onChange]);
+  const handleChange = useCallback((value: StyleValue | boolean) => () => onChange?.(value), [onChange]);
 
   return (
     <IconGroup className="w-full">
       {itemsParsed.map((item, i) => (
         <IconGroup.Icon
+          size={item.size}
           className="cursor-pointer"
           active={item.active}
           key={i}

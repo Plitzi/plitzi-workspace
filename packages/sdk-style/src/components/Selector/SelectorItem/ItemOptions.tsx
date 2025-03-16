@@ -52,7 +52,7 @@ const ItemOptions = ({
   );
 
   return (
-    <ContainerFloating>
+    <ContainerFloating closeOnClick={false}>
       <ContainerFloating.Trigger>
         <Icon icon="fa-solid fa-ellipsis-vertical" className="!min-w-3 w-3 h-4" />
       </ContainerFloating.Trigger>

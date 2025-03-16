@@ -14,7 +14,7 @@ import CategoryOption from '../../components/CategoryOption';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
-import type { StyleCategory } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const LIST_ITEM_NONE = 'none';
 const LIST_ITEM_DISC = 'disc';
@@ -37,7 +37,10 @@ const ListItem = ({ isCollapsed = true, onCollapse }: ListItemProps) => {
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('listItem', isCollapsed), [onCollapse]);
 
-  const handleChange = useCallback((value: string) => setValue(LIST_ITEM_NONE, value), [setValue]);
+  const handleChange = useCallback(
+    (value: StyleValue | boolean) => setValue(LIST_ITEM_NONE, value as StyleValue),
+    [setValue]
+  );
 
   const items = useMemo(
     () => [

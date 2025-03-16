@@ -14,13 +14,16 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type DisplayElementsProps = {
   value?: StyleValue;
-  onChange?: (type: StyleCategory, value: string) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const keyValues: StyleCategory[] = [DISPLAY, FLEX_DIRECTION, ALIGN_ITEMS, JUSTIFY_CONTENT, FLEX_WRAP];
 
 const DisplayElements = ({ value = 'block', onChange }: DisplayElementsProps) => {
-  const handleChange = useCallback((value: string) => onChange?.(DISPLAY, value), [onChange]);
+  const handleChange = useCallback(
+    (value: StyleValue | boolean) => onChange?.(DISPLAY, value as StyleValue),
+    [onChange]
+  );
 
   const items = useMemo(
     () => [
@@ -64,7 +67,7 @@ const DisplayElements = ({ value = 'block', onChange }: DisplayElementsProps) =>
     [value]
   );
 
-  return <CategoryOption keys={keyValues} label="Style" onChange={handleChange} type="iconGroup" items={items} />;
+  return <CategoryOption keys={keyValues} label="Display" onChange={handleChange} type="iconGroup" items={items} />;
 };
 
 export default DisplayElements;

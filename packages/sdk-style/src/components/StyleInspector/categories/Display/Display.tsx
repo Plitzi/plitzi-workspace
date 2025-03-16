@@ -22,8 +22,8 @@ import {
 import DisplayElements from './DisplayElements';
 // import DisplayFlex from './DisplayFlex';
 // import DisplayFlexAlignContent from './DisplayFlexAlignContent';
-// import DisplayFlexAlignItems from './DisplayFlexAlignItems';
-// import DisplayFlexDirection from './DisplayFlexDirection';
+import DisplayFlexAlignItems from './DisplayFlexAlignItems';
+import DisplayFlexDirection from './DisplayFlexDirection';
 // import DisplayFlexJustify from './DisplayFlexJustify';
 // import DisplayGap from './DisplayGap';
 // import DisplayGridGap from './DisplayGridGap';
@@ -32,7 +32,7 @@ import CategoryContainer from '../../components/CategoryContainer';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
-import type { StyleCategory } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
   FLEX_DIRECTION,
@@ -61,10 +61,10 @@ export type DisplayProps = {
 const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
   const { setValue } = use(StyleInspectorContext);
   const {
-    [DISPLAY]: display
-    // [FLEX_DIRECTION]: flexDirection,
+    [DISPLAY]: display,
+    [FLEX_DIRECTION]: flexDirection,
     // [FLEX_WRAP]: flexWrap,
-    // [ALIGN_ITEMS]: alignItems,
+    [ALIGN_ITEMS]: alignItems
     // [JUSTIFY_CONTENT]: justifyContent,
     // [ROW_GAP]: rowGap,
     // [COLUMN_GAP]: columnGap,
@@ -80,7 +80,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
   } = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleChange = useCallback(
-    (type: string, partialValue: string) => {
+    (type: string, partialValue: StyleValue) => {
       if (type === 'display') {
         setValue(
           [
@@ -129,9 +129,9 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('display', isCollapsed), [onCollapse]);
 
-  // const isReverse = flexDirection.includes('reverse');
-  // const isRow = flexDirection.includes('row');
-  // const isReverseWrap = flexWrap.includes('reverse');
+  const isReverse = typeof flexDirection === 'string' && flexDirection.includes('reverse');
+  const isRow = typeof flexDirection === 'string' && flexDirection.includes('row');
+  // const isReverseWrap = typeof flexWrap === 'string' && flexWrap.includes('reverse');
 
   return (
     <CategoryContainer title="Layout" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
@@ -140,9 +140,9 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
         <>
           <DisplayFlexDirection value={flexDirection} onChange={handleChange} isReverse={isReverse} />
           <DisplayFlexAlignItems value={alignItems} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
-          <DisplayFlexJustify value={justifyContent} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
+          {/* <DisplayFlexJustify value={justifyContent} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
           <DisplayFlex value={flexWrap} onChange={handleChange} isReverse={isReverseWrap} />
-          <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} />
+          <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} /> */}
         </>
       )}
       {/* {display === 'grid' && (

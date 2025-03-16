@@ -14,7 +14,7 @@ import CategoryOption from '../../components/CategoryOption';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
-import type { StyleCategory } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const LIST_NONE = 'none';
 const LIST_CIRCLE = 'circle';
@@ -37,7 +37,10 @@ const List = ({ isCollapsed = true, onCollapse }: ListProps) => {
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('list', isCollapsed), [onCollapse]);
 
-  const handleChange = useCallback((value: string) => setValue(LIST_STYLE, value), [setValue]);
+  const handleChange = useCallback(
+    (value: StyleValue | boolean) => setValue(LIST_STYLE, value as StyleValue),
+    [setValue]
+  );
 
   const items = useMemo(
     () => [

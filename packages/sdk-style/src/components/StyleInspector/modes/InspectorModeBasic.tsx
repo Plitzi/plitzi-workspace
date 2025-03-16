@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import { useCallback, useMemo } from 'react';
 
 // import DisplayFlexChild from '../Categories/DisplayFlexChild';
-// import Display from '../Categories/Display';
+import Display from '../categories/Display';
 // import Spacing from '../Categories/Spacing';
 // import Size from '../Categories/Size';
 import List from '../categories/List';
@@ -85,8 +85,8 @@ const InspectorModeBasic = ({
         <div className="flex flex-col">
           {isList && <List isCollapsed={collapsedCache.list ?? true} onCollapse={handleChangeCollapse} />}
           {isList && <ListItem isCollapsed={collapsedCache.listItem ?? true} onCollapse={handleChangeCollapse} />}
-          {/* <Display isCollapsed={collapsedCache.display ?? true} onCollapse={handleChangeCollapse} />
-          {isFlexChild && (
+          <Display isCollapsed={collapsedCache.display ?? true} onCollapse={handleChangeCollapse} />
+          {/* {isFlexChild && (
             <DisplayFlexChild
               isCollapsed={collapsedCache.displayFlexChild ?? true}
               isFlexVertical={isFlexVertical}
