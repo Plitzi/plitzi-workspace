@@ -12,7 +12,7 @@ export type StyleInspectorContextValue = {
     (styleKey: string, value?: StyleValue): void;
     (styleKey: string[], value?: Record<string, StyleValue | undefined>): void;
   };
-  resetValue: (keys: string | string[]) => void;
+  resetValue: (keys: string[]) => void;
   inheritData: Record<string, StyleHelperMetaData['style'][string]>;
   bindingData: Record<string, StyleValue>;
   getDefaultValue: (key?: string[] | string) => StyleValue | Record<string, StyleValue>;

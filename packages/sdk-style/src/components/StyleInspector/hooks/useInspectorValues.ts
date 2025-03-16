@@ -11,36 +11,34 @@ import { baseDefaultValue } from '../StyleInspectorHelper';
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
 import type { DisplayMode, Style, StyleValue } from '@plitzi/sdk-shared';
 
-export type UseInspectorValuesProps = {
+export type UseInspectorValuesProps<TAsValue extends boolean> = {
   keys?: string[];
   skipContext?: boolean;
   context?: StyleInspectorContextValue;
   skipValidations?: boolean;
-  asValue?: boolean;
-  defaultValues?: { [key: string]: number | string };
+  asValue?: TAsValue;
+  defaultValues?: { [key: string]: StyleValue };
   strictMode?: boolean;
 };
 
-export type UseInspectorValuesReturn = {
-  values: Style['platform'][DisplayMode][number]['attributes'];
-  hasInherit: boolean;
-  hasBinding: boolean;
-  hasVariables: boolean;
-  hasValues: boolean;
-};
+export type UseInspectorValuesReturn<TAsValue extends boolean> = TAsValue extends true
+  ? StyleValue | Style['platform'][DisplayMode][number]['attributes']
+  : {
+      values: StyleValue | Style['platform'][DisplayMode][number]['attributes'];
+      hasInherit: boolean;
+      hasBinding: boolean;
+      hasVariables: boolean;
+      hasValues: boolean;
+    };
 
-const useInspectorValues = ({
+const useInspectorValues = <TAsValue extends boolean>({
   keys,
   skipContext = false,
   context = {} as StyleInspectorContextValue,
-  asValue = false,
+  asValue = false as TAsValue,
   defaultValues = emptyObject,
   strictMode = false
-}: UseInspectorValuesProps) => {
-  if (keys && !Array.isArray(keys)) {
-    throw new Error('keys is not an array');
-  }
-
+}: UseInspectorValuesProps<TAsValue>): UseInspectorValuesReturn<TAsValue> => {
   let { inheritData, bindingData, values, variables } = {} as StyleInspectorContextValue;
   if (skipContext) {
     ({ inheritData, bindingData, values, variables } = context);
@@ -48,17 +46,17 @@ const useInspectorValues = ({
     ({ inheritData, bindingData, values, variables } = use(StyleInspectorContext));
   }
 
-  const hasInherit = useMemo(() => {
-    return (
-      !!keys && !asValue && Object.keys(inheritData).filter(key => keys.includes(key) || keys.length === 0).length > 0
-    );
-  }, [keys, inheritData, asValue]);
+  const hasInherit = useMemo(
+    () =>
+      !!keys && !asValue && Object.keys(inheritData).filter(key => keys.includes(key) || keys.length === 0).length > 0,
+    [keys, inheritData, asValue]
+  );
 
-  const hasBinding = useMemo(() => {
-    return (
-      !!keys && !asValue && Object.keys(bindingData).filter(key => keys.includes(key) || keys.length === 0).length > 0
-    );
-  }, [keys, bindingData, asValue]);
+  const hasBinding = useMemo(
+    () =>
+      !!keys && !asValue && Object.keys(bindingData).filter(key => keys.includes(key) || keys.length === 0).length > 0,
+    [keys, bindingData, asValue]
+  );
 
   const hasVariables = useMemo(
     () =>
@@ -122,10 +120,16 @@ const useInspectorValues = ({
   }, [keys, strictMode, values, defaultValues, inheritData, bindingData, variables]);
 
   if (asValue) {
-    return valuesParsed;
+    return valuesParsed as UseInspectorValuesReturn<TAsValue>;
   }
 
-  return { values: valuesParsed, hasInherit, hasBinding, hasVariables, hasValues };
+  return {
+    values: valuesParsed,
+    hasInherit,
+    hasBinding,
+    hasVariables,
+    hasValues
+  } as UseInspectorValuesReturn<TAsValue>;
 };
 
 export default useInspectorValues;
