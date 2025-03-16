@@ -122,6 +122,14 @@ export const StyleConstants = {
   ALIGN_CONTENT,
   ROW_GAP,
   COLUMN_GAP,
+  GRID_ROW_GAP,
+  GRID_COLUMN_GAP,
+  GRID_TEMPLATE_AREAS,
+  GRID_TEMPLATE_COLUMNS,
+  GRID_TEMPLATE_ROWS,
+  GRID_AUTO_FLOW,
+  GRID_AUTO_ROWS,
+  GRID_AUTO_COLUMNS,
   // DisplayFlexChild
   ALIGN_SELF,
   ORDER,
@@ -208,7 +216,7 @@ export const StyleConstants = {
   TEXT_WRAP,
   TEXT_OVERFLOW,
   TEXT_SHADOW
-};
+} as const;
 
 export const StyleBindingsAllowed = Object.values(StyleConstants).map(attr => ({ path: attr, label: attr }));
 

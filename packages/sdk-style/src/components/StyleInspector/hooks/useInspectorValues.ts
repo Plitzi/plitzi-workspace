@@ -9,10 +9,10 @@ import StyleInspectorContext from '../StyleInspectorContext';
 import { baseDefaultValue } from '../StyleInspectorHelper';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
-import type { DisplayMode, Style, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseInspectorValuesProps<TAsValue extends boolean> = {
-  keys?: string[];
+  keys?: StyleCategory[];
   skipContext?: boolean;
   context?: StyleInspectorContextValue;
   skipValidations?: boolean;
@@ -22,9 +22,9 @@ export type UseInspectorValuesProps<TAsValue extends boolean> = {
 };
 
 export type UseInspectorValuesReturn<TAsValue extends boolean> = TAsValue extends true
-  ? StyleValue | Style['platform'][DisplayMode][number]['attributes']
+  ? Style['platform'][DisplayMode][number]['attributes']
   : {
-      values: StyleValue | Style['platform'][DisplayMode][number]['attributes'];
+      values: Style['platform'][DisplayMode][number]['attributes'];
       hasInherit: boolean;
       hasBinding: boolean;
       hasVariables: boolean;
@@ -48,13 +48,17 @@ const useInspectorValues = <TAsValue extends boolean>({
 
   const hasInherit = useMemo(
     () =>
-      !!keys && !asValue && Object.keys(inheritData).filter(key => keys.includes(key) || keys.length === 0).length > 0,
+      !!keys &&
+      !asValue &&
+      Object.keys(inheritData).filter(key => keys.includes(key as StyleCategory) || keys.length === 0).length > 0,
     [keys, inheritData, asValue]
   );
 
   const hasBinding = useMemo(
     () =>
-      !!keys && !asValue && Object.keys(bindingData).filter(key => keys.includes(key) || keys.length === 0).length > 0,
+      !!keys &&
+      !asValue &&
+      Object.keys(bindingData).filter(key => keys.includes(key as StyleCategory) || keys.length === 0).length > 0,
     [keys, bindingData, asValue]
   );
 
@@ -62,8 +66,10 @@ const useInspectorValues = <TAsValue extends boolean>({
     () =>
       !!keys &&
       !asValue &&
-      Object.keys(pick(values, keys)).filter(key => typeof values[key] === 'string' && values[key].includes('var('))
-        .length > 0,
+      Object.keys(pick(values, keys)).filter(
+        key =>
+          typeof values[key as StyleCategory] === 'string' && (values[key as StyleCategory] as string).includes('var(')
+      ).length > 0,
     [keys, values, asValue]
   );
 
@@ -86,7 +92,7 @@ const useInspectorValues = <TAsValue extends boolean>({
     }
 
     keys.forEach(key => {
-      let value: Style['platform'][DisplayMode][number]['attributes'][string];
+      let value: Style['platform'][DisplayMode][number]['attributes'][StyleCategory];
       if (strictMode) {
         value = get(values, key, get(defaultValues, key));
       } else {
@@ -111,10 +117,6 @@ const useInspectorValues = <TAsValue extends boolean>({
 
       valuesParsedAux[key] = value;
     });
-
-    if (keys.length === 1) {
-      return valuesParsedAux[keys[0]];
-    }
 
     return valuesParsedAux;
   }, [keys, strictMode, values, defaultValues, inheritData, bindingData, variables]);

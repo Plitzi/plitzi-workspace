@@ -19,8 +19,14 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
   return (
     <IconGroup className="w-full">
       {itemsParsed.map((item, i) => (
-        <IconGroup.Icon className="cursor-pointer" active={item.active} key={i} onClick={handleChange(item.value)}>
-          {item.icon}
+        <IconGroup.Icon
+          className="cursor-pointer"
+          active={item.active}
+          key={i}
+          onClick={handleChange(item.value)}
+          icon={typeof item.icon === 'string' ? item.icon : undefined}
+        >
+          {typeof item.icon !== 'string' && item.icon}
         </IconGroup.Icon>
       ))}
     </IconGroup>

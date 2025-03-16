@@ -5,13 +5,14 @@ import InspectorLabel from '../InspectorLabel';
 import OptionIconGroup from './categoryTypes/OptionIconGroup';
 
 import type { OptionIconGroupProps } from './categoryTypes/OptionIconGroup';
+import type { StyleCategory } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type CategoryOptionType = 'text' | 'select' | 'iconGroup';
 
 type CategoryOptionPropsBase = {
   direction?: 'column' | 'row';
-  keys?: string[];
+  keys?: StyleCategory[];
   label?: ReactNode;
   onChange?: (value: string) => void;
 };

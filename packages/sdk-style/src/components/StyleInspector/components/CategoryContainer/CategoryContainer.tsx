@@ -3,12 +3,13 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 
 import InspectorDots from '../InspectorDots';
 
+import type { StyleCategory } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type CategoryContainerProps = {
   children?: ReactNode;
   title?: string;
-  dotKeys: string[];
+  dotKeys: StyleCategory[];
   isCollapsed?: boolean;
   onCollapse: (collapsed: boolean) => void;
 };
@@ -31,7 +32,7 @@ const CategoryContainer = ({
       >
         <InspectorDots styleKeys={dotKeys} />
       </ContainerCollapsable.Header>
-      <ContainerCollapsable.Content className="py-2">{children}</ContainerCollapsable.Content>
+      <ContainerCollapsable.Content className="flex flex-col gap-2 py-2">{children}</ContainerCollapsable.Content>
     </ContainerCollapsable>
   );
 };

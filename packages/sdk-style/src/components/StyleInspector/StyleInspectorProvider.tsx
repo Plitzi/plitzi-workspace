@@ -20,7 +20,7 @@ import { baseDefaultValue } from './StyleInspectorHelper';
 
 import type { StyleInspectorContextValue } from './StyleInspectorContext';
 import type { StyleHelperMetaData } from '../../StyleHelper';
-import type { DisplayMode, Element } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type StyleInspectorProviderProps = {
@@ -49,13 +49,13 @@ const StyleInspectorProvider = ({
   const { variables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
   const setValue: StyleInspectorContextValue['setValue'] = useCallback(
-    (styleKey: string | string[], value?: string | number | Record<string, string | number | undefined>) => {
+    (styleKey: string | string[], value?: StyleValue | Record<StyleCategory, StyleValue | undefined>) => {
       if (Array.isArray(styleKey)) {
         styleKey.forEach((styleKeyItem, i) => {
           if (get(bindingData, styleKeyItem)) {
             delete styleKey[i];
             if (typeof value === 'object') {
-              delete value[styleKeyItem];
+              delete value[styleKeyItem as StyleCategory];
             }
           }
         });
@@ -69,8 +69,8 @@ const StyleInspectorProvider = ({
         } else if (Array.isArray(styleKey) && typeof value === 'object') {
           const newValues = { ...values, ...value };
           Object.keys(newValues).forEach(k => {
-            if (newValues[k] === undefined) {
-              delete newValues[k];
+            if (newValues[k as StyleCategory] === undefined) {
+              delete newValues[k as StyleCategory];
             }
           });
           builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', newValues);

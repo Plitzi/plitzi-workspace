@@ -7,11 +7,14 @@ import ListSquares from '@plitzi/plitzi-ui/icons/ListSquares';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, useMemo, use } from 'react';
 
-import { LIST_ITEM_TYPE } from '../../../../StyleConstants';
+import { LIST_ITEM_TYPE } from '@plitzi/sdk-shared';
+
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
+
+import type { StyleCategory } from '@plitzi/sdk-shared';
 
 const LIST_ITEM_NONE = 'none';
 const LIST_ITEM_DISC = 'disc';
@@ -21,16 +24,16 @@ const LIST_ITEM_DECIMAL = 'decimal';
 const LIST_ITEM_LETTERS = 'lower-alpha';
 const LIST_ITEM_ROMAN = 'lower-roman';
 
-const dotKeys = [LIST_ITEM_TYPE];
+const dotKeys = [LIST_ITEM_TYPE] as StyleCategory[];
 
 export type ListItemProps = {
   isCollapsed?: boolean;
-  onCollapse?: (type: string, isCollapsed: boolean) => void;
+  onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
 const ListItem = ({ isCollapsed = true, onCollapse }: ListItemProps) => {
   const { setValue } = use(StyleInspectorContext);
-  const listItemStyle = useInspectorValues({ keys: dotKeys, asValue: true });
+  const { [LIST_ITEM_TYPE]: listItemStyle } = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('listItem', isCollapsed), [onCollapse]);
 

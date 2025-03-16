@@ -8,13 +8,14 @@ import GroupButton from './types/GroupButton';
 // import GroupSelect from './types/GroupSelect';
 // import GroupColor from './types/GroupColor';
 
+import type { StyleCategory } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type GroupButtonsProps = {
   className?: string;
   classNameContainer?: string;
   label?: string;
-  keyValue: string[];
+  keyValue: StyleCategory[];
   items: {
     label?: string;
     value?: unknown;
@@ -25,7 +26,7 @@ export type GroupButtonsProps = {
     isVisible?: boolean;
     type?: 'button' | 'input' | 'inputMetric' | 'select' | 'color';
     inputProps?: Record<string, unknown>;
-    keyValue?: string[];
+    keyValue?: StyleCategory[];
   }[];
   fullWidth?: boolean;
   onChange?: (value: unknown) => void;

@@ -8,5 +8,6 @@ export * from './helpers/syntaxHighlight';
 export * from './helpers/twigWrapper';
 export * from './hooks/usePlitziServiceContext';
 export * from './builder';
+export * from './style';
 
 export { usePlitziServiceContext, PlitziServiceProvider, syntaxHighlight, utils };

@@ -2,9 +2,8 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 
+import { StyleConstants, inheritableAttributesBase } from '@plitzi/sdk-shared';
 import { makeId } from '@plitzi/sdk-shared/utils';
-
-import { StyleConstants, inheritableAttributesBase } from './StyleConstants';
 
 import type {
   Schema,
@@ -15,7 +14,8 @@ import type {
   StyleItem,
   Style,
   TagType,
-  StyleValue
+  StyleValue,
+  StyleCategory
 } from '@plitzi/sdk-shared';
 
 export type StyleHelperMetaData = {
@@ -39,7 +39,7 @@ export const EMPTY_STYLE_SCHEMA: Style = {
 export const processSelector = (selector: string, type?: TagType, attributes: StyleItem['attributes'] = {}) => {
   const result: string[] = [];
   Object.keys(attributes).forEach(key => {
-    result.push(`${key}:${attributes[key]};`);
+    result.push(`${key}:${attributes[key as StyleCategory]};`);
   });
 
   let finalSelector = selector;
@@ -308,7 +308,7 @@ export const cssToSelectors = (css = '', singleSelector = false) => {
     if (selectorData) {
       const propsMatch = [...selectorData.replaceAll(cssIsCommentRegex, '').trim().matchAll(cssPropsRegex)];
       propsMatch
-        .filter(prop => StyleConstantsList.includes((prop.groups as Record<string, string>).propName))
+        .filter(prop => StyleConstantsList.includes((prop.groups as Record<string, StyleCategory>).propName))
         .forEach(prop => {
           const { propName, propValue } = prop.groups as Record<string, string>;
           set(selectorResult, `attributes.${propName.trim()}`, propValue.trim());
@@ -355,7 +355,9 @@ export const formatCssFromSelector = (css: string, singleSelector = true, tabInd
     const propsMatch = [...selectorData.matchAll(cssPropsRegex)];
     let propsString = '';
     propsMatch
-      .filter(prop => !filterProps || StyleConstantsList.includes((prop.groups as Record<string, string>).propName))
+      .filter(
+        prop => !filterProps || StyleConstantsList.includes((prop.groups as Record<string, StyleCategory>).propName)
+      )
       .forEach(prop => {
         const { propName, propValue } = prop.groups as Record<string, string>;
         if (propName && propValue) {

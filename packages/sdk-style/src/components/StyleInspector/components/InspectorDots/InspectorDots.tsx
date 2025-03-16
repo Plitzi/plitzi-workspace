@@ -1,7 +1,9 @@
 import useInspectorValues from '../../hooks/useInspectorValues';
 
+import type { StyleCategory } from '@plitzi/sdk-shared';
+
 export type InspectorDotsProps = {
-  styleKeys: string[];
+  styleKeys: StyleCategory[];
 };
 
 const InspectorDots = ({ styleKeys }: InspectorDotsProps) => {

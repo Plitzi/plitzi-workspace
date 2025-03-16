@@ -4,10 +4,13 @@ import { memo, use, useCallback } from 'react';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
+import type { StyleCategory } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
 export type InspectorLabelProps = {
   className?: string;
-  children?: React.ReactNode;
-  keyValue?: string[];
+  children?: ReactNode;
+  keyValue?: StyleCategory[];
   size?: 'small' | 'medium' | 'normal' | 'custom';
   sectionTitle?: boolean;
 };

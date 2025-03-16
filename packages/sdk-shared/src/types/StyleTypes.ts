@@ -1,12 +1,16 @@
+import type { StyleConstants } from '../style/StyleConstants';
+
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
 
 export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
 
 export type StyleValue = number | string;
 
+export type StyleCategory = (typeof StyleConstants)[keyof typeof StyleConstants];
+
 export type StyleItem = {
   name: string;
-  attributes: { [key: string]: StyleValue };
+  attributes: { [key in StyleCategory]?: StyleValue };
   cache: string;
   type: TagType;
 };
