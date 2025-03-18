@@ -20,9 +20,6 @@ import { useCallback, useMemo } from 'react';
 
 import { ALIGN_ITEMS } from '@plitzi/sdk-style/StyleConstants';
 
-// import Icons from '@pcomponents/Icons';
-
-// import GroupButtons from '../../../components/GroupButtons';
 import CategoryOption from '../../components/CategoryOption';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';

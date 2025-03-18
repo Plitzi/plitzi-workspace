@@ -20,11 +20,11 @@ import {
 } from '@plitzi/sdk-shared/style';
 
 import DisplayElements from './DisplayElements';
-// import DisplayFlex from './DisplayFlex';
+import DisplayFlex from './DisplayFlex';
 // import DisplayFlexAlignContent from './DisplayFlexAlignContent';
 import DisplayFlexAlignItems from './DisplayFlexAlignItems';
 import DisplayFlexDirection from './DisplayFlexDirection';
-// import DisplayFlexJustify from './DisplayFlexJustify';
+import DisplayFlexJustify from './DisplayFlexJustify';
 // import DisplayGap from './DisplayGap';
 // import DisplayGridGap from './DisplayGridGap';
 // import DisplayGridTemplate from './DisplayGridTemplate';
@@ -63,9 +63,9 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
   const {
     [DISPLAY]: display,
     [FLEX_DIRECTION]: flexDirection,
-    // [FLEX_WRAP]: flexWrap,
-    [ALIGN_ITEMS]: alignItems
-    // [JUSTIFY_CONTENT]: justifyContent,
+    [FLEX_WRAP]: flexWrap,
+    [ALIGN_ITEMS]: alignItems,
+    [JUSTIFY_CONTENT]: justifyContent
     // [ROW_GAP]: rowGap,
     // [COLUMN_GAP]: columnGap,
     // [GRID_TEMPLATE_AREAS]: gridTemplateAreas,
@@ -131,7 +131,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
 
   const isReverse = typeof flexDirection === 'string' && flexDirection.includes('reverse');
   const isRow = typeof flexDirection === 'string' && flexDirection.includes('row');
-  // const isReverseWrap = typeof flexWrap === 'string' && flexWrap.includes('reverse');
+  const isReverseWrap = typeof flexWrap === 'string' && flexWrap.includes('reverse');
 
   return (
     <CategoryContainer title="Layout" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
@@ -140,9 +140,9 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
         <>
           <DisplayFlexDirection value={flexDirection} onChange={handleChange} isReverse={isReverse} />
           <DisplayFlexAlignItems value={alignItems} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
-          {/* <DisplayFlexJustify value={justifyContent} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
+          <DisplayFlexJustify value={justifyContent} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
           <DisplayFlex value={flexWrap} onChange={handleChange} isReverse={isReverseWrap} />
-          <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} /> */}
+          {/* <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} /> */}
         </>
       )}
       {/* {display === 'grid' && (

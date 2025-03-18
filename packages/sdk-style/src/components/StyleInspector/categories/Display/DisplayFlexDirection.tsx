@@ -18,7 +18,6 @@ const keyValues: StyleCategory[] = [FLEX_DIRECTION];
 const DisplayFlexDirection = ({ value = 'row', isReverse = false, onChange }: DisplayFlexDirectionProps) => {
   const handleChange = useCallback(
     (newValue: StyleValue | boolean) => {
-      console.log(value);
       if (typeof newValue === 'boolean') {
         if (newValue) {
           onChange?.(FLEX_DIRECTION, `${value as string}-reverse`);
