@@ -102,7 +102,7 @@ import {
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
-} from '@plitzi/sdk-style/StyleConstants';
+} from '@plitzi/sdk-shared/style';
 
 import type { StyleValue } from '@plitzi/sdk-shared';
 

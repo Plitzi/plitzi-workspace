@@ -1,7 +1,7 @@
 import React from 'react';
 // import noop from 'lodash/noop';
 
-// import { BACKGROUND_IMAGE } from '@plitzi/sdk-style/StyleConstants';
+// import { BACKGROUND_IMAGE } from '@plitzi/sdk-shared/style';
 // import InputMetric from '../../../../InputMetric';
 // import InspectorLabel from '../../../InspectorLabel';
 

@@ -10,7 +10,7 @@ import {
   BACKGROUND_POSITION,
   BACKGROUND_REPEAT,
   BACKGROUND_SIZE
-} from '@plitzi/sdk-style/StyleConstants';
+} from '@plitzi/sdk-shared/style';
 
 // Alias
 import Icons from '@pcomponents/Icons';

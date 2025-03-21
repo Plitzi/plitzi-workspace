@@ -3,7 +3,7 @@ import React from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { TRANSFORM } from '@plitzi/sdk-style/StyleConstants';
+import { TRANSFORM } from '@plitzi/sdk-shared/style';
 
 // Alias
 import InspectorButton from '@pmodules/Style/components/InspectorButton';
@@ -23,9 +23,7 @@ const Transform = props => {
   const { onChange = noop } = props;
   let { value } = props;
   if (value && value !== '') {
-    value = value.match(
-      /((translate3d|scale3d|skew)\([0-9a-z-, .%]+\))|(rotateX.*rotateZ\([0-9a-z%]+\))/gim
-    );
+    value = value.match(/((translate3d|scale3d|skew)\([0-9a-z-, .%]+\))|(rotateX.*rotateZ\([0-9a-z%]+\))/gim);
   } else {
     value = [];
   }

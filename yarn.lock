@@ -3558,6 +3558,7 @@ __metadata:
     react-toastify: "npm:^11.0.5"
     rehype-raw: "npm:^7.0.0"
     remark-gfm: "npm:^4.0.1"
+    tailwind-merge: "npm:^3.0.2"
     tinycolor2: "npm:^1.6.0"
     zod: "npm:^3.24.2"
   languageName: node
@@ -18218,6 +18219,13 @@ __metadata:
     string-width: "npm:^4.2.3"
     strip-ansi: "npm:^6.0.1"
   checksum: 10c0/35646185712bb65985fbae5975dda46696325844b78735f95faefae83e86df0a265277819a3e67d189de6e858c509b54e66ca3958ffd51bde56ef1118d455bf4
+  languageName: node
+  linkType: hard
+
+"tailwind-merge@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "tailwind-merge@npm:3.0.2"
+  checksum: 10c0/73f528345e5130e7690c5c57701155849ae4f0834e0a4bf56bc03e25d4563d45d4905ff9c487a7dce9efdfa18689a223e78365962105ad0e2f2d1226216c66ef
   languageName: node
   linkType: hard
 

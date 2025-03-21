@@ -16,7 +16,7 @@ import AlignContentStretchColumn from '@plitzi/plitzi-ui/icons/AlignContentStret
 import AlignContentStretchRow from '@plitzi/plitzi-ui/icons/AlignContentStretchRow';
 import { useCallback, useMemo } from 'react';
 
-import { ALIGN_CONTENT } from '@plitzi/sdk-style/StyleConstants';
+import { ALIGN_CONTENT } from '@plitzi/sdk-shared/style';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

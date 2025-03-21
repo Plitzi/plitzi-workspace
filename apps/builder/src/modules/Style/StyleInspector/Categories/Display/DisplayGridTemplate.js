@@ -9,7 +9,7 @@ import {
   GRID_AUTO_ROWS,
   GRID_TEMPLATE_COLUMNS,
   GRID_TEMPLATE_ROWS
-} from '@plitzi/sdk-style/StyleConstants';
+} from '@plitzi/sdk-shared/style';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

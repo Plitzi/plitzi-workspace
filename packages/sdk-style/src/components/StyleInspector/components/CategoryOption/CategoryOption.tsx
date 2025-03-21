@@ -29,7 +29,7 @@ const CategoryOption = (props: CategoryOptionProps) => {
   const { direction = 'column', label, keys, type = 'input', ...extraProps } = props;
 
   return (
-    <Flex className="w-full min-w-0" direction={direction} gap={2}>
+    <Flex className="w-full min-w-0" direction={direction} gap={1}>
       {label && (
         <InspectorLabel className="!min-w-0" keyValue={keys}>
           {label}

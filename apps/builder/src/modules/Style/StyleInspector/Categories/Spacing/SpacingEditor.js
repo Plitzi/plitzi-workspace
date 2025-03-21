@@ -13,7 +13,7 @@ import {
   PADDING_BOTTOM,
   PADDING_LEFT,
   PADDING_RIGHT
-} from '@plitzi/sdk-style/StyleConstants';
+} from '@plitzi/sdk-shared/style';
 
 // Alias
 import Icons from '@pcomponents/Icons';

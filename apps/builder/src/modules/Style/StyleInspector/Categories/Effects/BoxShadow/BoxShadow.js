@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { BOX_SHADOW } from '@plitzi/sdk-style/StyleConstants';
+import { BOX_SHADOW } from '@plitzi/sdk-shared/style';
 
 // Alias
 import InspectorButton from '@pmodules/Style/components/InspectorButton';

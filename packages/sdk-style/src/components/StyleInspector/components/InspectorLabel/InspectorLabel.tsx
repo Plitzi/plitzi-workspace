@@ -42,7 +42,6 @@ const InspectorLabel = ({
         'text-xs': size === 'small',
         'text-sm': size === 'medium',
         'text-base': size === 'normal',
-        'p-0.5': !sectionTitle,
         'mb-[-1px] p-0': sectionTitle
       })}
       title={typeof children === 'string' ? children : undefined}

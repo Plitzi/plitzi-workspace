@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { COLUMN_GAP, ROW_GAP } from '@plitzi/sdk-style/StyleConstants';
+import { COLUMN_GAP, ROW_GAP } from '@plitzi/sdk-shared/style';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

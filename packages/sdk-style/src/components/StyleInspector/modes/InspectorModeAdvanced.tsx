@@ -8,7 +8,7 @@
 
 // import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 // import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-// import { StyleConstants } from '@plitzi/sdk-style/StyleConstants';
+// import { StyleConstants } from '@plitzi/sdk-shared/style';
 // import {
 //   cssToSelectors,
 //   getReadOnlyRangesFromContent,

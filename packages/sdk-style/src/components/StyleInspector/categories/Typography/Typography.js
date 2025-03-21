@@ -20,7 +20,7 @@ import {
   WHITE_SPACE,
   TEXT_WRAP,
   TEXT_OVERFLOW
-} from '@plitzi/sdk-style/StyleConstants';
+} from '@plitzi/sdk-shared/style';
 
 // Relatives
 import TypographyFont from './TypographyFont';

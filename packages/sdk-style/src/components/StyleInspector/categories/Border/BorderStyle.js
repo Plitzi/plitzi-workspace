@@ -3,12 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import {
-  BORDER_TOP_STYLE,
-  BORDER_BOTTOM_STYLE,
-  BORDER_LEFT_STYLE,
-  BORDER_RIGHT_STYLE
-} from '@plitzi/sdk-style/StyleConstants';
+import { BORDER_TOP_STYLE, BORDER_BOTTOM_STYLE, BORDER_LEFT_STYLE, BORDER_RIGHT_STYLE } from '@plitzi/sdk-shared/style';
 
 // Alias
 import Icons from '@pcomponents/Icons';

@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { FILTER } from '@plitzi/sdk-style/StyleConstants';
+import { FILTER } from '@plitzi/sdk-shared/style';
 
 // Alias
 import InspectorButton from '@pmodules/Style/components/InspectorButton';

@@ -3,7 +3,7 @@ import React from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { TRANSITION } from '@plitzi/sdk-style/StyleConstants';
+import { TRANSITION } from '@plitzi/sdk-shared/style';
 
 // Alias
 import InspectorButton from '@pmodules/Style/components/InspectorButton';
