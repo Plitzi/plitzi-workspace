@@ -67,6 +67,9 @@ const build = (env, args) => {
       }
     },
     target: 'web',
+    watchOptions: {
+      ignored: /(node_modules|packages\/[a-z-]+\/src)/
+    },
     devServer: {
       compress: true,
       allowedHosts: 'all',

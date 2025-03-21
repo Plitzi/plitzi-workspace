@@ -13,7 +13,7 @@ const OptionMetricInput = ({ value, onChange }: OptionMetricInputProps) => {
 
   return (
     <MetricInput
-      size="sm"
+      size="xs"
       value={value as string}
       units={[{ label: 'PX', value: 'px' }]}
       onChange={handleChange}

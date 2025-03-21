@@ -1,30 +1,30 @@
 import { useCallback } from 'react';
 
-import { COLUMN_GAP, ROW_GAP } from '@plitzi/sdk-style/StyleConstants';
+import { GRID_COLUMN_GAP, GRID_ROW_GAP } from '@plitzi/sdk-style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-export type DisplayGapProps = {
+export type DisplayGridGapProps = {
   rowGap?: StyleValue;
   columnGap?: StyleValue;
   onChange?: (type: string, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [ROW_GAP, COLUMN_GAP];
-const keyValues1: StyleCategory[] = [ROW_GAP];
-const keyValues2: StyleCategory[] = [COLUMN_GAP];
+const keyValues: StyleCategory[] = [GRID_ROW_GAP, GRID_COLUMN_GAP];
+const keyValues1: StyleCategory[] = [GRID_ROW_GAP];
+const keyValues2: StyleCategory[] = [GRID_COLUMN_GAP];
 
-const DisplayGap = ({ rowGap = '0px', columnGap = '0px', onChange }: DisplayGapProps) => {
+const DisplayGridGap = ({ rowGap = '0px', columnGap = '0px', onChange }: DisplayGridGapProps) => {
   const handleChangeRow = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(ROW_GAP, itemValue as string),
+    (itemValue: StyleValue | boolean) => onChange?.(GRID_ROW_GAP, itemValue as string),
     [onChange]
   );
 
   const handleChangeColumn = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(COLUMN_GAP, itemValue as string),
+    (itemValue: StyleValue | boolean) => onChange?.(GRID_COLUMN_GAP, itemValue as string),
     [onChange]
   );
 
@@ -36,4 +36,4 @@ const DisplayGap = ({ rowGap = '0px', columnGap = '0px', onChange }: DisplayGapP
   );
 };
 
-export default DisplayGap;
+export default DisplayGridGap;

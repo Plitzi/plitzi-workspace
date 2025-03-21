@@ -21,13 +21,13 @@ import {
 
 import DisplayElements from './DisplayElements';
 import DisplayFlex from './DisplayFlex';
-// import DisplayFlexAlignContent from './DisplayFlexAlignContent';
+import DisplayFlexAlignContent from './DisplayFlexAlignContent';
 import DisplayFlexAlignItems from './DisplayFlexAlignItems';
 import DisplayFlexDirection from './DisplayFlexDirection';
 import DisplayFlexJustify from './DisplayFlexJustify';
 import DisplayGap from './DisplayGap';
-// import DisplayGridGap from './DisplayGridGap';
-// import DisplayGridTemplate from './DisplayGridTemplate';
+import DisplayGridGap from './DisplayGridGap';
+import DisplayGridTemplate from './DisplayGridTemplate';
 import CategoryContainer from '../../components/CategoryContainer';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
@@ -67,16 +67,16 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
     [ALIGN_ITEMS]: alignItems,
     [JUSTIFY_CONTENT]: justifyContent,
     [ROW_GAP]: rowGap,
-    [COLUMN_GAP]: columnGap
-    // [GRID_TEMPLATE_AREAS]: gridTemplateAreas,
-    // [GRID_TEMPLATE_COLUMNS]: gridTemplateColumns,
-    // [GRID_TEMPLATE_ROWS]: gridTemplateRows,
-    // [GRID_AUTO_FLOW]: gridAutoFlow,
-    // [GRID_AUTO_ROWS]: gridAutoRows,
-    // [GRID_AUTO_COLUMNS]: gridAutoColumns,
-    // [GRID_ROW_GAP]: gridRowGap,
-    // [GRID_COLUMN_GAP]: gridColumnGap,
-    // [ALIGN_CONTENT]: alignContent
+    [COLUMN_GAP]: columnGap,
+    [GRID_TEMPLATE_AREAS]: gridTemplateAreas,
+    [GRID_TEMPLATE_COLUMNS]: gridTemplateColumns,
+    [GRID_TEMPLATE_ROWS]: gridTemplateRows,
+    [GRID_AUTO_FLOW]: gridAutoFlow,
+    [GRID_AUTO_ROWS]: gridAutoRows,
+    [GRID_AUTO_COLUMNS]: gridAutoColumns,
+    [GRID_ROW_GAP]: gridRowGap,
+    [GRID_COLUMN_GAP]: gridColumnGap,
+    [ALIGN_CONTENT]: alignContent
   } = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleChange = useCallback(
@@ -145,7 +145,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
           <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} />
         </>
       )}
-      {/* {display === 'grid' && (
+      {display === 'grid' && (
         <>
           <DisplayGridTemplate
             templateAreas={gridTemplateAreas}
@@ -161,7 +161,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
       )}
       {display === 'flex' && (flexWrap === 'wrap' || flexWrap === 'wrap-reverse') && (
         <DisplayFlexAlignContent value={alignContent} onChange={handleChange} isReverse={isReverseWrap} isRow={isRow} />
-      )} */}
+      )}
     </CategoryContainer>
   );
 };
