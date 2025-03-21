@@ -9,6 +9,7 @@ import { useCallback, useMemo } from 'react';
 import { ALIGN_ITEMS, DISPLAY, FLEX_DIRECTION, FLEX_WRAP, JUSTIFY_CONTENT } from '@plitzi/sdk-shared/style';
 
 import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
@@ -67,7 +68,11 @@ const DisplayElements = ({ value = 'block', onChange }: DisplayElementsProps) =>
     [value]
   );
 
-  return <CategoryOption keys={keyValues} label="Display" onChange={handleChange} type="iconGroup" items={items} />;
+  return (
+    <CategorySection keys={keyValues} label="Display">
+      <CategoryOption onChange={handleChange} type="iconGroup" items={items} />
+    </CategorySection>
+  );
 };
 
 export default DisplayElements;

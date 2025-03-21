@@ -11,6 +11,7 @@ import { LIST_STYLE } from '@plitzi/sdk-shared';
 
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
@@ -57,7 +58,9 @@ const List = ({ isCollapsed = true, onCollapse }: ListProps) => {
 
   return (
     <CategoryContainer title="List" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <CategoryOption keys={dotKeys} label="Style" onChange={handleChange} type="iconGroup" items={items} />
+      <CategorySection keys={dotKeys} label="Style">
+        <CategoryOption onChange={handleChange} type="iconGroup" items={items} />
+      </CategorySection>
     </CategoryContainer>
   );
 };

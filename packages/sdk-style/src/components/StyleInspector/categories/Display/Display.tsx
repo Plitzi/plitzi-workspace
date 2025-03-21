@@ -25,7 +25,7 @@ import DisplayFlex from './DisplayFlex';
 import DisplayFlexAlignItems from './DisplayFlexAlignItems';
 import DisplayFlexDirection from './DisplayFlexDirection';
 import DisplayFlexJustify from './DisplayFlexJustify';
-// import DisplayGap from './DisplayGap';
+import DisplayGap from './DisplayGap';
 // import DisplayGridGap from './DisplayGridGap';
 // import DisplayGridTemplate from './DisplayGridTemplate';
 import CategoryContainer from '../../components/CategoryContainer';
@@ -65,9 +65,9 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
     [FLEX_DIRECTION]: flexDirection,
     [FLEX_WRAP]: flexWrap,
     [ALIGN_ITEMS]: alignItems,
-    [JUSTIFY_CONTENT]: justifyContent
-    // [ROW_GAP]: rowGap,
-    // [COLUMN_GAP]: columnGap,
+    [JUSTIFY_CONTENT]: justifyContent,
+    [ROW_GAP]: rowGap,
+    [COLUMN_GAP]: columnGap
     // [GRID_TEMPLATE_AREAS]: gridTemplateAreas,
     // [GRID_TEMPLATE_COLUMNS]: gridTemplateColumns,
     // [GRID_TEMPLATE_ROWS]: gridTemplateRows,
@@ -142,7 +142,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
           <DisplayFlexAlignItems value={alignItems} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
           <DisplayFlexJustify value={justifyContent} onChange={handleChange} isReverse={isReverse} isRow={isRow} />
           <DisplayFlex value={flexWrap} onChange={handleChange} isReverse={isReverseWrap} />
-          {/* <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} /> */}
+          <DisplayGap rowGap={rowGap} columnGap={columnGap} onChange={handleChange} />
         </>
       )}
       {/* {display === 'grid' && (

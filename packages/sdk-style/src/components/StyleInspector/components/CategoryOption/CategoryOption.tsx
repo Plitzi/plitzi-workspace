@@ -1,8 +1,8 @@
 import Flex from '@plitzi/plitzi-ui/Flex';
-// import { useCallback } from 'react';
 
 import InspectorLabel from '../InspectorLabel';
 import OptionIconGroup from './categoryTypes/OptionIconGroup';
+import OptionMetricInput from './categoryTypes/OptionMetricInput';
 
 import type { OptionIconGroupProps } from './categoryTypes/OptionIconGroup';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -19,25 +19,26 @@ type CategoryOptionPropsBase = {
 
 export type CategoryOptionProps =
   | (CategoryOptionPropsBase & { type: 'iconGroup'; items: OptionIconGroupProps['items'] })
-  | (CategoryOptionPropsBase & { type?: 'text' | 'select' });
+  | (CategoryOptionPropsBase & { type?: 'text' | 'select' | 'metric'; value?: StyleValue });
 
 const isIconGroup = (props: CategoryOptionProps): props is CategoryOptionProps & { type: 'iconGroup' } =>
   props.type === 'iconGroup';
 
 const CategoryOption = (props: CategoryOptionProps) => {
-  const { direction = 'row', label, keys, type = 'text', ...extraProps } = props;
+  const { direction = 'column', label, keys, type = 'text', ...extraProps } = props;
 
   return (
-    <Flex direction={direction} gap={2} justify={direction === 'row' ? 'between' : undefined}>
+    <Flex className="w-full min-w-0" direction={direction} gap={2}>
       {label && (
         <InspectorLabel className="!min-w-0" keyValue={keys}>
           {label}
         </InspectorLabel>
       )}
-      <div className="max-w-[210px] w-full">
+      <>
         {isIconGroup(props) && <OptionIconGroup {...extraProps} />}
         {type === 'text' && <div>SAD</div>}
-      </div>
+        {props.type === 'metric' && <OptionMetricInput {...extraProps} />}
+      </>
     </Flex>
   );
 };

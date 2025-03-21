@@ -21,6 +21,7 @@ import { useCallback, useMemo } from 'react';
 import { ALIGN_ITEMS } from '@plitzi/sdk-style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
@@ -163,7 +164,11 @@ const DisplayFlexAlignItems = ({ value, isReverse = false, isRow = false, onChan
     [value, isReverse, isRow, getIcon]
   );
 
-  return <CategoryOption keys={keyValues} label="Align" onChange={handleChange} type="iconGroup" items={items} />;
+  return (
+    <CategorySection keys={keyValues} label="Align">
+      <CategoryOption onChange={handleChange} type="iconGroup" items={items} />
+    </CategorySection>
+  );
 };
 
 export default DisplayFlexAlignItems;

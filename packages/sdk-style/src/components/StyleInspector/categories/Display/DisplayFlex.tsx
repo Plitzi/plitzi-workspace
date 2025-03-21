@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { FLEX_WRAP } from '@plitzi/sdk-shared/style';
 
 import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
@@ -37,13 +38,15 @@ const DisplayFlex = ({ value, isReverse = false, onChange }: DisplayFlexProps) =
         value: isReverse ? 'nowrap-reverse' : 'nowrap',
         icon: <div className="text-xs whitespace-nowrap select-none px-1">Don&apos;t Wrap</div>,
         description: '',
-        active: value === 'nowrap' || value === 'nowrap-reverse'
+        active: value === 'nowrap' || value === 'nowrap-reverse',
+        size: 'custom' as const
       },
       {
         value: isReverse ? 'wrap-reverse' : 'wrap',
         icon: <div className="text-xs select-none px-1">Wrap</div>,
         description: '',
-        active: value === 'wrap' || value === 'wrap-reverse'
+        active: value === 'wrap' || value === 'wrap-reverse',
+        size: 'custom' as const
       },
       {
         value: !isReverse,
@@ -55,17 +58,11 @@ const DisplayFlex = ({ value, isReverse = false, onChange }: DisplayFlexProps) =
     [value, isReverse]
   );
 
-  return <CategoryOption keys={keyValues} label="Children" onChange={handleChange} type="iconGroup" items={items} />;
-
-  // return (
-  //   <GroupButtons
-  //     classNameContainer="w-[180px]"
-  //     items={items}
-  //     label="Children"
-  //     keyValue={FLEX_WRAP}
-  //     onChange={handleChange}
-  //   />
-  // );
+  return (
+    <CategorySection label="Children" keys={keyValues}>
+      <CategoryOption onChange={handleChange} type="iconGroup" items={items} />
+    </CategorySection>
+  );
 };
 
 export default DisplayFlex;

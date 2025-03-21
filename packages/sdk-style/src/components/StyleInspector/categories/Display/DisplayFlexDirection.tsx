@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { FLEX_DIRECTION } from '@plitzi/sdk-shared/style';
 
 import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
@@ -57,7 +58,11 @@ const DisplayFlexDirection = ({ value = 'row', isReverse = false, onChange }: Di
     [value, isReverse]
   );
 
-  return <CategoryOption keys={keyValues} label="Direction" onChange={handleChange} type="iconGroup" items={items} />;
+  return (
+    <CategorySection keys={keyValues} label="Direction">
+      <CategoryOption onChange={handleChange} type="iconGroup" items={items} />
+    </CategorySection>
+  );
 };
 
 export default DisplayFlexDirection;

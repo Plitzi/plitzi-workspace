@@ -17,6 +17,7 @@ import { useCallback, useMemo } from 'react';
 import { JUSTIFY_CONTENT } from '@plitzi/sdk-shared/style';
 
 import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
@@ -134,7 +135,11 @@ const DisplayFlexJustify = ({ value, isReverse = false, isRow = false, onChange 
     [getIcon, isRow, isReverse, value]
   );
 
-  return <CategoryOption keys={keyValues} label="Justify" onChange={handleChange} type="iconGroup" items={items} />;
+  return (
+    <CategorySection label="Justify" keys={keyValues}>
+      <CategoryOption onChange={handleChange} type="iconGroup" items={items} />
+    </CategorySection>
+  );
 };
 
 export default DisplayFlexJustify;
