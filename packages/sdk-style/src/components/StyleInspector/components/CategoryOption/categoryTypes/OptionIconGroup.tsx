@@ -1,19 +1,19 @@
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import { useCallback, useMemo } from 'react';
 
-import type { StyleValue } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type OptionIconGroupProps = {
   items?: {
     icon: ReactNode;
-    value: StyleValue | boolean;
+    value: StyleValue | Record<StyleCategory, StyleValue> | boolean;
     description?: string;
     isVisible?: boolean;
     active?: boolean;
     size?: 'md' | 'sm' | 'xs' | 'custom';
   }[];
-  onChange?: (value: StyleValue | boolean) => void;
+  onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
 };
 
 const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
@@ -22,7 +22,10 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
     [items]
   );
 
-  const handleChange = useCallback((value: StyleValue | boolean) => () => onChange?.(value), [onChange]);
+  const handleChange = useCallback(
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => () => onChange?.(value),
+    [onChange]
+  );
 
   return (
     <IconGroup className="w-full">

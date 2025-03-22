@@ -29,14 +29,15 @@ export type DisplayFlexAlignItemsProps = {
   value?: StyleValue;
   isReverse: boolean;
   isRow: boolean;
-  onChange?: (type: string, value: StyleValue) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const keyValues: StyleCategory[] = [ALIGN_ITEMS];
 
 const DisplayFlexAlignItems = ({ value, isReverse = false, isRow = false, onChange }: DisplayFlexAlignItemsProps) => {
   const handleChange = useCallback(
-    (newValue: StyleValue | boolean) => onChange?.(ALIGN_ITEMS, newValue as StyleValue),
+    (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(ALIGN_ITEMS, newValue as StyleValue),
     [onChange]
   );
 

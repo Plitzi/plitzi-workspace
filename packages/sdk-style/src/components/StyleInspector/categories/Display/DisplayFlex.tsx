@@ -13,12 +13,12 @@ const keyValues: StyleCategory[] = [FLEX_WRAP];
 export type DisplayFlexProps = {
   value?: StyleValue;
   isReverse: boolean;
-  onChange?: (type: string, value: StyleValue) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const DisplayFlex = ({ value, isReverse = false, onChange }: DisplayFlexProps) => {
   const handleChange = useCallback(
-    (newValue: StyleValue | boolean) => {
+    (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
       if (typeof newValue === 'boolean') {
         if (newValue) {
           onChange?.(FLEX_WRAP, `${value as string}-reverse`);
@@ -26,7 +26,7 @@ const DisplayFlex = ({ value, isReverse = false, onChange }: DisplayFlexProps) =
           onChange?.(FLEX_WRAP, (value as string).replace('-reverse', ''));
         }
       } else {
-        onChange?.(FLEX_WRAP, newValue as string);
+        onChange?.(FLEX_WRAP, newValue as StyleValue);
       }
     },
     [onChange, value]

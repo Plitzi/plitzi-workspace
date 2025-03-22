@@ -1,11 +1,11 @@
 import MetricInput from '@plitzi/plitzi-ui/MetricInput';
 import { useCallback } from 'react';
 
-import type { StyleValue } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type OptionMetricInputProps = {
   value?: StyleValue;
-  onChange?: (value: StyleValue | boolean) => void;
+  onChange?: (value: StyleValue | Record<StyleCategory, StyleValue>) => void;
 };
 
 const OptionMetricInput = ({ value, onChange }: OptionMetricInputProps) => {

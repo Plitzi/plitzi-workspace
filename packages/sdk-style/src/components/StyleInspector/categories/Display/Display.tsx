@@ -80,7 +80,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
   } = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleChange = useCallback(
-    (type: string, partialValue: StyleValue) => {
+    (type: StyleCategory, partialValue: StyleValue) => {
       if (type === 'display') {
         setValue(
           [
@@ -100,7 +100,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
             GRID_AUTO_ROWS,
             GRID_AUTO_COLUMNS,
             DISPLAY
-          ],
+          ] as const,
           {
             [FLEX_DIRECTION]: undefined,
             [FLEX_WRAP]: undefined,
@@ -118,7 +118,7 @@ const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
             [GRID_AUTO_ROWS]: undefined,
             [GRID_AUTO_COLUMNS]: undefined,
             [DISPLAY]: partialValue
-          }
+          } as Record<StyleCategory, StyleValue | undefined>
         );
       } else {
         setValue(type, partialValue);

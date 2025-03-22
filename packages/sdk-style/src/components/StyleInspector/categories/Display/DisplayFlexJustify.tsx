@@ -25,14 +25,15 @@ export type DisplayFlexJustifyProps = {
   value?: StyleValue;
   isReverse: boolean;
   isRow: boolean;
-  onChange?: (type: string, value: StyleValue) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const keyValues: StyleCategory[] = [JUSTIFY_CONTENT];
 
 const DisplayFlexJustify = ({ value, isReverse = false, isRow = false, onChange }: DisplayFlexJustifyProps) => {
   const handleChange = useCallback(
-    (newValue: StyleValue | boolean) => onChange?.(JUSTIFY_CONTENT, newValue as StyleValue),
+    (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(JUSTIFY_CONTENT, newValue as StyleValue),
     [onChange]
   );
 

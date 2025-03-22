@@ -3,8 +3,8 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import get from 'lodash/get';
 import { useCallback, useMemo } from 'react';
 
-// import DisplayFlexChild from '../Categories/DisplayFlexChild';
 import Display from '../categories/Display';
+import DisplayFlexChild from '../categories/DisplayFlexChild';
 // import Spacing from '../Categories/Spacing';
 // import Size from '../Categories/Size';
 import List from '../categories/List';
@@ -60,18 +60,18 @@ const InspectorModeBasic = ({
     return type === 'list' || type === 'listItem';
   }, [element, showAllOptions]);
 
-  // const isFlexChild = useMemo(() => {
-  //   if (showAllOptions) {
-  //     return true;
-  //   }
+  const isFlexChild = useMemo(() => {
+    if (showAllOptions) {
+      return true;
+    }
 
-  //   return get(inheritData, 'parentStyle.display', 'block') === 'flex';
-  // }, [inheritData, showAllOptions]);
+    return get(inheritData, 'parentStyle.display', 'block') === 'flex';
+  }, [inheritData, showAllOptions]);
 
-  // const isFlexVertical = useMemo(
-  //   () => get(inheritData, 'parentStyle.flex-direction', 'row') === 'column',
-  //   [inheritData]
-  // );
+  const isFlexVertical = useMemo(
+    () => get(inheritData, 'parentStyle.flex-direction', 'row') === 'column',
+    [inheritData]
+  );
 
   return (
     <StyleInspectorProvider
@@ -86,14 +86,14 @@ const InspectorModeBasic = ({
           {isList && <List isCollapsed={collapsedCache.list ?? true} onCollapse={handleChangeCollapse} />}
           {isList && <ListItem isCollapsed={collapsedCache.listItem ?? true} onCollapse={handleChangeCollapse} />}
           <Display isCollapsed={collapsedCache.display ?? true} onCollapse={handleChangeCollapse} />
-          {/* {isFlexChild && (
+          {isFlexChild && (
             <DisplayFlexChild
               isCollapsed={collapsedCache.displayFlexChild ?? true}
               isFlexVertical={isFlexVertical}
               onCollapse={handleChangeCollapse}
             />
           )}
-          <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
+          {/* <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
           <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
           <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
           <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />

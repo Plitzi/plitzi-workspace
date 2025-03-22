@@ -49,17 +49,17 @@ const StyleInspectorProvider = ({
   const { variables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
   const setValue: StyleInspectorContextValue['setValue'] = useCallback(
-    (styleKey: string | string[], value?: StyleValue | Record<StyleCategory, StyleValue | undefined>) => {
+    (styleKey: StyleCategory | StyleCategory[], value?: StyleValue | Record<StyleCategory, StyleValue | undefined>) => {
       if (Array.isArray(styleKey)) {
         styleKey.forEach((styleKeyItem, i) => {
-          if (get(bindingData, styleKeyItem)) {
+          if (get(bindingData, styleKeyItem as string)) {
             delete styleKey[i];
             if (typeof value === 'object') {
-              delete value[styleKeyItem as StyleCategory];
+              delete value[styleKeyItem];
             }
           }
         });
-      } else if (typeof styleKey === 'string' && get(bindingData, styleKey)) {
+      } else if (typeof styleKey === 'string' && get(bindingData, styleKey as string)) {
         return;
       }
 
@@ -81,9 +81,9 @@ const StyleInspectorProvider = ({
 
       // // Value empty, remove it
       if (selector !== '' && selectorType) {
-        if (styleKey && typeof styleKey === 'string') {
+        if ((styleKey as string) && typeof styleKey === 'string') {
           builderHandler('styleUpdateSelector', displayMode, selector, selectorType, styleKey, value);
-        } else if (styleKey && Array.isArray(styleKey)) {
+        } else if ((styleKey as string) && Array.isArray(styleKey)) {
           builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', omit(values, styleKey));
         }
 
@@ -102,7 +102,7 @@ const StyleInspectorProvider = ({
       const existingClasses = get(element, `definition.styleSelectors.${styleSelector}`);
       const customClass = makeSelector(type, styleSelector);
 
-      if (styleKey) {
+      if (styleKey as string) {
         builderHandler(
           'styleAddSelector',
           displayMode,
@@ -157,7 +157,7 @@ const StyleInspectorProvider = ({
   }, []);
 
   const resetValue = useCallback(
-    (keys: string | string[]) => {
+    (keys: StyleCategory | StyleCategory[]) => {
       if (Array.isArray(keys)) {
         setValue(keys);
       } else {

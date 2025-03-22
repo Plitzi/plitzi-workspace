@@ -27,7 +27,7 @@ export type DisplayFlexAlignContentProps = {
   value?: StyleValue;
   isReverse?: boolean;
   isRow?: boolean;
-  onChange?: (type: string, value: string) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const keyValues: StyleCategory[] = [ALIGN_CONTENT];
@@ -39,7 +39,8 @@ const DisplayFlexAlignContent = ({
   onChange
 }: DisplayFlexAlignContentProps) => {
   const handleChange = useCallback(
-    (newValue: StyleValue | boolean) => onChange?.(ALIGN_CONTENT, newValue as string),
+    (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(ALIGN_CONTENT, newValue as StyleValue),
     [onChange]
   );
 

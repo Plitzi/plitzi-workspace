@@ -15,7 +15,7 @@ type CategoryOptionPropsBase = {
   direction?: 'column' | 'row';
   keys?: StyleCategory[];
   label?: ReactNode;
-  onChange?: (value: StyleValue | boolean) => void;
+  onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
 };
 
 export type CategoryOptionProps =

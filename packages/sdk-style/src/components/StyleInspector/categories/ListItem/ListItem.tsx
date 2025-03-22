@@ -39,7 +39,7 @@ const ListItem = ({ isCollapsed = true, onCollapse }: ListItemProps) => {
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('listItem', isCollapsed), [onCollapse]);
 
   const handleChange = useCallback(
-    (value: StyleValue | boolean) => setValue(LIST_ITEM_NONE, value as StyleValue),
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => setValue(LIST_ITEM_TYPE, value as StyleValue),
     [setValue]
   );
 

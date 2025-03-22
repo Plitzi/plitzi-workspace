@@ -21,7 +21,7 @@ export type DisplayGridTemplateProps = {
   templateAutoFlow?: StyleValue;
   templateAutoRows?: StyleValue;
   templateAutoColumns?: StyleValue;
-  onChange?: (type: string, value: StyleValue) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const keyValuesDirection: StyleCategory[] = [GRID_AUTO_FLOW];
@@ -38,32 +38,38 @@ const DisplayGridTemplate = ({
   onChange
 }: DisplayGridTemplateProps) => {
   const handleChangeTemplateArea = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(GRID_TEMPLATE_AREAS, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(GRID_TEMPLATE_AREAS, itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeTemplateRow = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(GRID_TEMPLATE_ROWS, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(GRID_TEMPLATE_ROWS, itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeTemplateColumn = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(GRID_TEMPLATE_COLUMNS, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(GRID_TEMPLATE_COLUMNS, itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeAutoRow = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(GRID_AUTO_ROWS, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(GRID_AUTO_ROWS, itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeAutoColumn = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(GRID_AUTO_COLUMNS, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(GRID_AUTO_COLUMNS, itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeAutoFlow = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(GRID_AUTO_FLOW, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(GRID_AUTO_FLOW, itemValue as StyleValue),
     [onChange]
   );
 

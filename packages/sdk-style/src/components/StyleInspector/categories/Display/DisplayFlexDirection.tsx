@@ -11,14 +11,14 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 export type DisplayFlexDirectionProps = {
   value?: StyleValue;
   isReverse: boolean;
-  onChange?: (type: string, value: StyleValue) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const keyValues: StyleCategory[] = [FLEX_DIRECTION];
 
 const DisplayFlexDirection = ({ value = 'row', isReverse = false, onChange }: DisplayFlexDirectionProps) => {
   const handleChange = useCallback(
-    (newValue: StyleValue | boolean) => {
+    (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
       if (typeof newValue === 'boolean') {
         if (newValue) {
           onChange?.(FLEX_DIRECTION, `${value as string}-reverse`);
@@ -26,7 +26,7 @@ const DisplayFlexDirection = ({ value = 'row', isReverse = false, onChange }: Di
           onChange?.(FLEX_DIRECTION, (value as string).replace('-reverse', ''));
         }
       } else {
-        onChange?.(FLEX_DIRECTION, newValue as string);
+        onChange?.(FLEX_DIRECTION, newValue as StyleValue);
       }
     },
     [onChange, value]

@@ -10,7 +10,7 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 export type DisplayGapProps = {
   rowGap?: StyleValue;
   columnGap?: StyleValue;
-  onChange?: (type: string, value: StyleValue) => void;
+  onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
 const keyValues: StyleCategory[] = [ROW_GAP, COLUMN_GAP];
@@ -19,12 +19,14 @@ const keyValues2: StyleCategory[] = [COLUMN_GAP];
 
 const DisplayGap = ({ rowGap = '0px', columnGap = '0px', onChange }: DisplayGapProps) => {
   const handleChangeRow = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(ROW_GAP, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(ROW_GAP, itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeColumn = useCallback(
-    (itemValue: StyleValue | boolean) => onChange?.(COLUMN_GAP, itemValue as string),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.(COLUMN_GAP, itemValue as StyleValue),
     [onChange]
   );
 

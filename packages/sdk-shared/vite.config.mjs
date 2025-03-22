@@ -72,7 +72,6 @@ export default defineConfig(({ mode, command, ...args }) => {
     },
     css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
     build: {
-      watch: {},
       lib: {
         entry: ['./src/index.ts']
         // name: 'plitzi-ui',

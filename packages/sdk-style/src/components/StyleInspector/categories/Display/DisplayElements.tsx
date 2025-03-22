@@ -22,7 +22,7 @@ const keyValues: StyleCategory[] = [DISPLAY, FLEX_DIRECTION, ALIGN_ITEMS, JUSTIF
 
 const DisplayElements = ({ value = 'block', onChange }: DisplayElementsProps) => {
   const handleChange = useCallback(
-    (value: StyleValue | boolean) => onChange?.(DISPLAY, value as StyleValue),
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => onChange?.(DISPLAY, value as StyleValue),
     [onChange]
   );
 
