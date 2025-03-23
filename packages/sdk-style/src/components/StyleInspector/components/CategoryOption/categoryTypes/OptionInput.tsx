@@ -1,5 +1,4 @@
 import Input from '@plitzi/plitzi-ui/Input';
-import { useCallback } from 'react';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
@@ -9,9 +8,7 @@ export type OptionInputProps = {
 };
 
 const OptionInput = ({ value, onChange }: OptionInputProps) => {
-  const handleChange = useCallback((value: StyleValue) => onChange?.(value), [onChange]);
-
-  return <Input size="xs" value={value as string} onChange={handleChange} className="min-w-0 w-full" />;
+  return <Input size="xs" value={value as string} onChange={onChange} className="min-w-0 w-full" />;
 };
 
 export default OptionInput;

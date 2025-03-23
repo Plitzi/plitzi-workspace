@@ -5,9 +5,9 @@ import { useCallback, useMemo } from 'react';
 
 import Display from '../categories/Display';
 import DisplayFlexChild from '../categories/DisplayFlexChild';
-// import Size from '../Categories/Size';
 import List from '../categories/List';
 import ListItem from '../categories/ListItem';
+import Size from '../categories/Size';
 import Spacing from '../categories/Spacing';
 // import Position from '../Categories/Position';
 // import Typography from '../Categories/Typography';
@@ -94,8 +94,8 @@ const InspectorModeBasic = ({
             />
           )}
           <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
-          {/* <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
-          <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
+          <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
+          {/* <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
           <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />
           <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} />
           <Border isCollapsed={collapsedCache.border ?? true} onCollapse={handleChangeCollapse} />

@@ -4,6 +4,7 @@ import InspectorLabel from '../InspectorLabel';
 import OptionIconGroup from './categoryTypes/OptionIconGroup';
 import OptionInput from './categoryTypes/OptionInput';
 import OptionMetricInput from './categoryTypes/OptionMetricInput';
+import OptionSelect from './categoryTypes/OptionSelect';
 
 import type { OptionIconGroupProps } from './categoryTypes/OptionIconGroup';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -20,6 +21,7 @@ type CategoryOptionPropsBase = {
 
 export type CategoryOptionProps =
   | (CategoryOptionPropsBase & { type: 'iconGroup'; items: OptionIconGroupProps['items'] })
+  | (CategoryOptionPropsBase & { type: 'select'; children?: ReactNode })
   | (CategoryOptionPropsBase & { type?: 'input' | 'select' | 'metric'; value?: StyleValue });
 
 const isIconGroup = (props: CategoryOptionProps): props is CategoryOptionProps & { type: 'iconGroup' } =>
@@ -38,6 +40,7 @@ const CategoryOption = (props: CategoryOptionProps) => {
       <>
         {isIconGroup(props) && <OptionIconGroup {...extraProps} />}
         {type === 'input' && <OptionInput {...extraProps} />}
+        {type === 'select' && <OptionSelect {...extraProps} />}
         {props.type === 'metric' && <OptionMetricInput {...extraProps} />}
       </>
     </Flex>
