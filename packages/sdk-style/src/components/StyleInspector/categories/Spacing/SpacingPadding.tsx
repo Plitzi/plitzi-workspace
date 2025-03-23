@@ -1,40 +1,40 @@
-// Packages
-import React, { useCallback } from 'react';
-import noop from 'lodash/noop';
+import { useCallback } from 'react';
 
-// Monorepo
 import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@plitzi/sdk-shared/style';
 
-// Relatives
-import InspectorLabel from '../../InspectorLabel';
 import SpacingNumber from './SpacingNumber';
+import InspectorLabel from '../../components/InspectorLabel';
 
-const keyValue = [PADDING_TOP, PADDING_LEFT, PADDING_RIGHT, PADDING_BOTTOM];
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-/**
- * @param {{
- *   fragmentSelected?: string;
- *   values?: {
- *     paddingTop: string;
- *     paddingBottom: string;
- *     paddingLeft: string;
- *     paddingRight: string;
- *   };
- *   isLinked?: boolean;
- *   onLinkSelected?: () => void;
- *   onSelectFragment?: (fragment: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const SpacingPadding = props => {
-  const { fragmentSelected, values, isLinked = false, onLinkSelected = noop, onSelectFragment = noop } = props;
+const keyValue = [PADDING_TOP, PADDING_LEFT, PADDING_RIGHT, PADDING_BOTTOM] as StyleCategory[];
 
+export type SpacingPaddingProps = {
+  fragmentSelected?: StyleCategory;
+  values?: {
+    [PADDING_TOP]?: StyleValue;
+    [PADDING_BOTTOM]?: StyleValue;
+    [PADDING_LEFT]?: StyleValue;
+    [PADDING_RIGHT]?: StyleValue;
+  };
+  isLinked?: boolean;
+  onLinkSelected?: () => void;
+  onSelectFragment?: (fragment?: StyleCategory) => void;
+};
+
+const SpacingPadding = ({
+  fragmentSelected,
+  values,
+  isLinked = false,
+  onLinkSelected,
+  onSelectFragment
+}: SpacingPaddingProps) => {
   const handleClickSelect = useCallback(
-    type => () => {
+    (type?: StyleCategory) => () => {
       if (type === fragmentSelected) {
-        onSelectFragment(undefined);
+        onSelectFragment?.(undefined);
       } else {
-        onSelectFragment(type);
+        onSelectFragment?.(type);
       }
     },
     [onSelectFragment, fragmentSelected]
@@ -45,7 +45,7 @@ const SpacingPadding = props => {
     [PADDING_BOTTOM]: paddingBottom,
     [PADDING_LEFT]: paddingLeft,
     [PADDING_RIGHT]: paddingRight
-  } = values;
+  } = values ?? {};
 
   return (
     <div className="relative border rounded-md border-gray-300 grow">

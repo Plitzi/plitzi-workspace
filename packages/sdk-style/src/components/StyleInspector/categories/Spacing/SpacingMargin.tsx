@@ -1,46 +1,52 @@
-// Packages
-import React, { useCallback } from 'react';
-import noop from 'lodash/noop';
+import { useCallback } from 'react';
 
-// Monorepo
 import { MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT } from '@plitzi/sdk-shared/style';
 
-// Relatives
-import InspectorLabel from '../../InspectorLabel';
-import SpacingPadding from './SpacingPadding';
 import SpacingNumber from './SpacingNumber';
+import SpacingPadding from './SpacingPadding';
+import InspectorLabel from '../../components/InspectorLabel';
 
-const keyValue = [MARGIN_TOP, MARGIN_LEFT, MARGIN_RIGHT, MARGIN_BOTTOM];
+import type {
+  PADDING_BOTTOM,
+  PADDING_LEFT,
+  PADDING_RIGHT,
+  PADDING_TOP,
+  StyleCategory,
+  StyleValue
+} from '@plitzi/sdk-shared';
 
-/**
- * @param {{
- *   fragmentSelected?: string;
- *   values?: {
- *     marginTop: string;
- *     marginBottom: string;
- *     marginLeft: string;
- *     marginRight: string;
- *     paddingTop: string;
- *     paddingBottom: string;
- *     paddingLeft: string;
- *     paddingRight: string;
- *   };
- *   isLinked?: boolean;
- *   onLinkSelected?: () => void;
- *   onSelectFragment?: (fragment: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const SpacingMargin = props => {
-  const { fragmentSelected, values, isLinked = false, onLinkSelected = noop, onSelectFragment = noop } = props;
+const keyValue = [MARGIN_TOP, MARGIN_LEFT, MARGIN_RIGHT, MARGIN_BOTTOM] as StyleCategory[];
 
+export type SpacingMarginProps = {
+  fragmentSelected?: StyleCategory;
+  values?: {
+    [MARGIN_TOP]?: StyleValue;
+    [MARGIN_BOTTOM]?: StyleValue;
+    [MARGIN_LEFT]?: StyleValue;
+    [MARGIN_RIGHT]?: StyleValue;
+    [PADDING_TOP]?: StyleValue;
+    [PADDING_BOTTOM]?: StyleValue;
+    [PADDING_RIGHT]?: StyleValue;
+    [PADDING_LEFT]?: StyleValue;
+  };
+  isLinked?: boolean;
+  onLinkSelected?: () => void;
+  onSelectFragment?: (fragment?: StyleCategory) => void;
+};
+
+const SpacingMargin = ({
+  fragmentSelected,
+  values,
+  isLinked = false,
+  onLinkSelected,
+  onSelectFragment
+}: SpacingMarginProps) => {
   const handleClickSelect = useCallback(
-    type => () => {
-      const { fragmentSelected, onSelectFragment } = props;
+    (type: StyleCategory) => () => {
       if (type === fragmentSelected) {
-        onSelectFragment(undefined);
+        onSelectFragment?.(undefined);
       } else {
-        onSelectFragment(type);
+        onSelectFragment?.(type);
       }
     },
     [fragmentSelected, onSelectFragment]
@@ -51,7 +57,7 @@ const SpacingMargin = props => {
     [MARGIN_BOTTOM]: marginBottom,
     [MARGIN_LEFT]: marginLeft,
     [MARGIN_RIGHT]: marginRight
-  } = values;
+  } = values ?? {};
 
   return (
     <div className="flex flex-col bg-white border border-gray-300 rounded-md relative cursor-pointer select-none">

@@ -5,10 +5,10 @@ import { useCallback, useMemo } from 'react';
 
 import Display from '../categories/Display';
 import DisplayFlexChild from '../categories/DisplayFlexChild';
-// import Spacing from '../Categories/Spacing';
 // import Size from '../Categories/Size';
 import List from '../categories/List';
 import ListItem from '../categories/ListItem';
+import Spacing from '../categories/Spacing';
 // import Position from '../Categories/Position';
 // import Typography from '../Categories/Typography';
 // import Background from '../Categories/Background';
@@ -82,7 +82,7 @@ const InspectorModeBasic = ({
       inheritData={inheritData}
     >
       <div className="flex flex-col justify-between grow">
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-1">
           {isList && <List isCollapsed={collapsedCache.list ?? true} onCollapse={handleChangeCollapse} />}
           {isList && <ListItem isCollapsed={collapsedCache.listItem ?? true} onCollapse={handleChangeCollapse} />}
           <Display isCollapsed={collapsedCache.display ?? true} onCollapse={handleChangeCollapse} />
@@ -93,8 +93,8 @@ const InspectorModeBasic = ({
               onCollapse={handleChangeCollapse}
             />
           )}
-          {/* <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
-          <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
+          <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
+          {/* <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
           <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
           <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />
           <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} />
