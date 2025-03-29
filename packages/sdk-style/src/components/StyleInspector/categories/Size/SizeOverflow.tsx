@@ -50,17 +50,6 @@ const SizeOverflow = ({ value, onChange }: SizeOverflowProps) => {
       <CategoryOption onChange={onChange?.(OVERFLOW)} type="iconGroup" items={items} />
     </CategorySection>
   );
-
-  // return (
-  //   <GroupButtons
-  //     className="w-full"
-  //     classNameContainer="w-[180px]"
-  //     items={items}
-  //     label="Overflow"
-  //     keyValue={OVERFLOW}
-  //     onChange={handleChange}
-  //   />
-  // );
 };
 
 export default SizeOverflow;

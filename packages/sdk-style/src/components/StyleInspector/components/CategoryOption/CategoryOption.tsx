@@ -1,6 +1,7 @@
 import Flex from '@plitzi/plitzi-ui/Flex';
 
 import InspectorLabel from '../InspectorLabel';
+import OptionColor from './categoryTypes/OptionColor';
 import OptionIconGroup from './categoryTypes/OptionIconGroup';
 import OptionInput from './categoryTypes/OptionInput';
 import OptionMetricInput from './categoryTypes/OptionMetricInput';
@@ -29,10 +30,8 @@ export type CategoryOptionProps =
       units?: { label: string; value: string }[];
       allowedWords?: string[];
     })
+  | (CategoryOptionPropsBase & { type: 'color'; value?: StyleValue })
   | (CategoryOptionPropsBase & { type?: 'input' | 'select'; value?: StyleValue });
-
-const isIconGroup = (props: CategoryOptionProps): props is CategoryOptionProps & { type: 'iconGroup' } =>
-  props.type === 'iconGroup';
 
 const CategoryOption = (props: CategoryOptionProps) => {
   const { direction = 'column', label, keys, type = 'input', ...extraProps } = props;
@@ -45,10 +44,11 @@ const CategoryOption = (props: CategoryOptionProps) => {
         </InspectorLabel>
       )}
       <>
-        {isIconGroup(props) && <OptionIconGroup {...extraProps} />}
+        {type === 'iconGroup' && <OptionIconGroup {...extraProps} />}
         {type === 'input' && <OptionInput {...extraProps} />}
         {type === 'select' && <OptionSelect {...extraProps} />}
-        {props.type === 'metric' && <OptionMetricInput {...extraProps} />}
+        {type === 'color' && <OptionColor {...extraProps} />}
+        {type === 'metric' && <OptionMetricInput {...extraProps} />}
       </>
     </Flex>
   );

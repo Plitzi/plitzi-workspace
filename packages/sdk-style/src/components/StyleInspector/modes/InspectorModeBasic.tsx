@@ -10,10 +10,10 @@ import ListItem from '../categories/ListItem';
 import Position from '../categories/Position';
 import Size from '../categories/Size';
 import Spacing from '../categories/Spacing';
-// import Typography from '../Categories/Typography';
-// import Background from '../Categories/Background';
-// import Border from '../Categories/Border';
-// import Effects from '../Categories/Effects';
+import Typography from '../categories/Typography';
+// import Background from '../categories/Background';
+// import Border from '../categories/Border';
+// import Effects from '../categories/Effects';
 import useStyleInherit from '../hooks/useStyleInherit';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 
@@ -96,8 +96,8 @@ const InspectorModeBasic = ({
           <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
           <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
           <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
-          {/* <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />
-          <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} />
+          <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />
+          {/* <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} />
           <Border isCollapsed={collapsedCache.border ?? true} onCollapse={handleChangeCollapse} />
           <Effects isCollapsed={collapsedCache.effects ?? true} onCollapse={handleChangeCollapse} /> */}
         </div>

@@ -25,7 +25,7 @@ const CategorySection = ({ children, className, direction = 'row', label, keys }
       className={className}
     >
       {label && (
-        <InspectorLabel className="w-16" keyValue={keys}>
+        <InspectorLabel className="w-18" keyValue={keys}>
           {label}
         </InspectorLabel>
       )}
