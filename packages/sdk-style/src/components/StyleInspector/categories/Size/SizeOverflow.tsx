@@ -46,7 +46,7 @@ const SizeOverflow = ({ value, onChange }: SizeOverflowProps) => {
   );
 
   return (
-    <CategorySection label="Size" keys={[OVERFLOW]}>
+    <CategorySection label="Overflow" keys={[OVERFLOW]}>
       <CategoryOption onChange={onChange?.(OVERFLOW)} type="iconGroup" items={items} />
     </CategorySection>
   );

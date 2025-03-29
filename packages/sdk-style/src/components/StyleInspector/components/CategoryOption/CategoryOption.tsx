@@ -13,6 +13,7 @@ import type { ReactNode } from 'react';
 export type CategoryOptionType = 'input' | 'select' | 'iconGroup';
 
 type CategoryOptionPropsBase = {
+  className?: string;
   direction?: 'column' | 'row';
   keys?: StyleCategory[];
   label?: ReactNode;
@@ -22,7 +23,13 @@ type CategoryOptionPropsBase = {
 export type CategoryOptionProps =
   | (CategoryOptionPropsBase & { type: 'iconGroup'; items: OptionIconGroupProps['items'] })
   | (CategoryOptionPropsBase & { type: 'select'; children?: ReactNode })
-  | (CategoryOptionPropsBase & { type?: 'input' | 'select' | 'metric'; value?: StyleValue });
+  | (CategoryOptionPropsBase & {
+      type: 'metric';
+      value?: StyleValue;
+      units?: { label: string; value: string }[];
+      allowedWords?: string[];
+    })
+  | (CategoryOptionPropsBase & { type?: 'input' | 'select'; value?: StyleValue });
 
 const isIconGroup = (props: CategoryOptionProps): props is CategoryOptionProps & { type: 'iconGroup' } =>
   props.type === 'iconGroup';
