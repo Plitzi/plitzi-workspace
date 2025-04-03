@@ -1,97 +1,83 @@
-// // Packages
-// import React, { useCallback, useMemo } from 'react';
-// import noop from 'lodash/noop';
+import TextDirectionLtr from '@plitzi/plitzi-ui/icons/TextDirectionLtr';
+import TextDirectionRtl from '@plitzi/plitzi-ui/icons/TextDirectionRtl';
+import XMark from '@plitzi/plitzi-ui/icons/XMark';
+import { useMemo } from 'react';
 
-// // Monorepo
-// import { TEXT_TRANSFORM, DIRECTION } from '@plitzi/sdk-shared/style';
+import { TEXT_TRANSFORM, DIRECTION } from '@plitzi/sdk-shared/style';
 
-// // Alias
-// import Icons from '@pcomponents/Icons';
+import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
-// // Relatives
-// import GroupButtons from '../../../components/GroupButtons';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-// /**
-//  * @param {{
-//  *   textTransform: string;
-//  *   direction: string;
-//  *   onChange?: (type: string, value: string) => void;
-//  * }} props
-//  * @returns {React.ReactElement}
-//  */
-// const TypographyTransform = props => {
-//   const { textTransform, direction, onChange = noop } = props;
+export type TypographyTransformProps = {
+  textTransform?: StyleValue;
+  direction?: StyleValue;
+  onChange?: (category: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
+};
 
-//   const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
+const TypographyTransform = ({ textTransform, direction, onChange }: TypographyTransformProps) => {
+  const itemsTransform = useMemo(
+    () => [
+      {
+        value: 'none',
+        icon: <XMark />,
+        description: 'None',
+        active: textTransform === 'none'
+      },
+      {
+        value: 'uppercase',
+        icon: <span>AA</span>,
+        size: 'custom' as const,
+        description: 'All Caps',
+        active: textTransform === 'uppercase'
+      },
+      {
+        value: 'capitalize',
+        icon: <span>Aa</span>,
+        size: 'custom' as const,
+        description: 'Capitalize Every Word',
+        active: textTransform === 'capitalize'
+      },
+      {
+        value: 'lowercase',
+        icon: <span>aa</span>,
+        size: 'custom' as const,
+        description: 'Lower Case',
+        active: textTransform === 'lowercase'
+      }
+    ],
+    [textTransform]
+  );
 
-//   const itemsTransform = useMemo(
-//     () => [
-//       {
-//         value: { value: 'none', type: TEXT_TRANSFORM },
-//         children: <Icons width={16} height={16} type="XMark" />,
-//         description: 'None',
-//         active: textTransform === 'none'
-//       },
-//       {
-//         value: { value: 'uppercase', type: TEXT_TRANSFORM },
-//         children: <Icons width={16} height={16} type="TextTransformCapitalize" />,
-//         description: 'All Caps',
-//         active: textTransform === 'uppercase'
-//       },
-//       {
-//         value: { value: 'capitalize', type: TEXT_TRANSFORM },
-//         children: <Icons width={16} height={16} type="TextTransformSentence" />,
-//         description: 'Capitalize Every Word',
-//         active: textTransform === 'capitalize'
-//       },
-//       {
-//         value: { value: 'lowercase', type: TEXT_TRANSFORM },
-//         children: <Icons width={16} height={16} type="TextTransformLowercase" />,
-//         description: 'Lower Case',
-//         active: textTransform === 'lowercase'
-//       }
-//     ],
-//     [textTransform]
-//   );
+  const itemsDirection = useMemo(
+    () => [
+      {
+        value: 'ltr',
+        icon: <TextDirectionLtr />,
+        description: 'Left To Right',
+        active: direction === 'ltr'
+      },
+      {
+        value: 'rtl',
+        icon: <TextDirectionRtl />,
+        description: 'Right To Left',
+        active: direction === 'rtl'
+      }
+    ],
+    [direction]
+  );
 
-//   const itemsDirection = useMemo(
-//     () => [
-//       {
-//         value: { value: 'ltr', type: DIRECTION },
-//         children: <Icons width={16} height={16} type="TextDirectionLtr" />,
-//         description: 'Left To Right',
-//         active: direction === 'ltr'
-//       },
-//       {
-//         value: { value: 'rtl', type: DIRECTION },
-//         children: <Icons width={16} height={16} type="TextDirectionRtl" />,
-//         description: 'Right To Left',
-//         active: direction === 'rtl'
-//       }
-//     ],
-//     [direction]
-//   );
+  return (
+    <>
+      <CategorySection label="Capitalize" keys={[TEXT_TRANSFORM]}>
+        <CategoryOption onChange={onChange?.(TEXT_TRANSFORM)} type="iconGroup" items={itemsTransform} />
+      </CategorySection>
+      <CategorySection label="Direction" keys={[DIRECTION]}>
+        <CategoryOption onChange={onChange?.(DIRECTION)} type="iconGroup" items={itemsDirection} />
+      </CategorySection>
+    </>
+  );
+};
 
-//   return (
-//     <>
-//       <GroupButtons
-//         className="w-full"
-//         classNameContainer="w-[180px]"
-//         items={itemsTransform}
-//         label="Capitalize"
-//         keyValue={TEXT_TRANSFORM}
-//         onChange={handleChange}
-//       />
-//       <GroupButtons
-//         className="w-full"
-//         classNameContainer="w-[180px]"
-//         items={itemsDirection}
-//         label="Direction"
-//         keyValue={DIRECTION}
-//         onChange={handleChange}
-//       />
-//     </>
-//   );
-// };
-
-// export default TypographyTransform;
+export default TypographyTransform;

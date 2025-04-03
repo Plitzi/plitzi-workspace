@@ -24,7 +24,7 @@ import { defaultFonts, weights } from './TypographyConstants';
 import TypographyFont from './TypographyFont';
 import TypographyStyle from './TypographyStyle';
 // import TypographyTextShadow from './TypographyTextShadow';
-// import TypographyTransform from './TypographyTransform';
+import TypographyTransform from './TypographyTransform';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
@@ -70,15 +70,15 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
     [TEXT_ALIGN]: textAlign,
     [TEXT_DECORATION]: textDecoration,
     [TEXT_INDENT]: textIndent,
-    // [TEXT_TRANSFORM]: textTransform,
+    [TEXT_TRANSFORM]: textTransform,
     // [TEXT_SHADOW]: textShadow,
     [WHITE_SPACE]: whiteSpace,
     [TEXT_WRAP]: textWrap,
     [TEXT_OVERFLOW]: textOverflow,
     [LINE_HEIGHT]: lineHeight,
     [COLOR]: color,
-    [LETTER_SPACING]: letterSpacing
-    // [DIRECTION]: direction
+    [LETTER_SPACING]: letterSpacing,
+    [DIRECTION]: direction
   } = useInspectorValues({ keys: dotKeys, asValue: true });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('typography', isCollapsed), [onCollapse]);
@@ -140,7 +140,7 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
           type="metric"
         />
       </CategorySection>
-      {/* <TypographyTransform textTransform={textTransform} direction={direction} onChange={handleChange} /> */}
+      <TypographyTransform textTransform={textTransform} direction={direction} onChange={handleChange} />
       <CategorySection label="Breaking" keys={[WHITE_SPACE]}>
         <CategoryOption value={whiteSpace} onChange={handleChange(WHITE_SPACE)} type="select">
           <option value="normal">Normal</option>
