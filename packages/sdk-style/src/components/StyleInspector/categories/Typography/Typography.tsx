@@ -52,8 +52,7 @@ const dotKeys = [
   TEXT_OVERFLOW
 ] as StyleCategory[];
 
-// const keyValueLetter = [LETTER_SPACING, TEXT_INDENT];
-// const keyValueWrap = [TEXT_WRAP, TEXT_OVERFLOW];
+const keyValueLetter = [LETTER_SPACING, TEXT_INDENT] as StyleCategory[];
 
 export type TypographyProps = {
   isCollapsed?: boolean;
@@ -70,15 +69,15 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
     [FONT_STYLE]: fontStyle,
     [TEXT_ALIGN]: textAlign,
     [TEXT_DECORATION]: textDecoration,
-    // [TEXT_INDENT]: textIndent,
+    [TEXT_INDENT]: textIndent,
     // [TEXT_TRANSFORM]: textTransform,
     // [TEXT_SHADOW]: textShadow,
-    // [WHITE_SPACE]: whiteSpace,
-    // [TEXT_WRAP]: textWrap,
-    // [TEXT_OVERFLOW]: textOverflow,
+    [WHITE_SPACE]: whiteSpace,
+    [TEXT_WRAP]: textWrap,
+    [TEXT_OVERFLOW]: textOverflow,
     [LINE_HEIGHT]: lineHeight,
-    [COLOR]: color
-    // [LETTER_SPACING]: letterSpacing,
+    [COLOR]: color,
+    [LETTER_SPACING]: letterSpacing
     // [DIRECTION]: direction
   } = useInspectorValues({ keys: dotKeys, asValue: true });
 
@@ -91,85 +90,6 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
       setValue(type, value as StyleValue),
     [setValue]
   );
-
-  // const itemsSpacing = useMemo(
-  //   () => [
-  //     {
-  //       type: 'inputMetric',
-  //       value: letterSpacing,
-  //       extraValue: { type: LETTER_SPACING },
-  //       keyValue: LETTER_SPACING,
-  //       label: 'Spacing'
-  //     },
-  //     {
-  //       type: 'inputMetric',
-  //       value: textIndent,
-  //       extraValue: { type: TEXT_INDENT },
-  //       keyValue: TEXT_INDENT,
-  //       label: 'Indent'
-  //     }
-  //   ],
-  //   [letterSpacing, textIndent]
-  // );
-
-  // const itemsBreaking = useMemo(
-  //   () => [
-  //     {
-  //       type: 'select',
-  //       value: whiteSpace,
-  //       extraValue: { type: WHITE_SPACE },
-  //       children: (
-  //         <>
-  //           <option value="normal">Normal</option>
-  //           <option value="nowrap">No Wrap</option>
-  //           <option value="pre">Pre</option>
-  //           <option value="pre-wrap">Pre Wrap</option>
-  //           <option value="pre-line">Pre Line</option>
-  //           <option value="break-spaces">Break Spaces</option>
-  //         </>
-  //       )
-  //     }
-  //   ],
-  //   [whiteSpace]
-  // );
-
-  // const itemsWrap = useMemo(
-  //   () => [
-  //     {
-  //       type: 'select',
-  //       value: textWrap,
-  //       extraValue: { type: TEXT_WRAP },
-  //       keyValue: TEXT_WRAP,
-  //       children: (
-  //         <>
-  //           <option value="wrap">Wrap</option>
-  //           <option value="nowrap">No Wrap</option>
-  //           <option value="balance">Balance</option>
-  //           <option value="pretty">Pretty</option>
-  //           <option value="stable">Stable</option>
-  //         </>
-  //       ),
-  //       label: 'Wrap'
-  //     },
-  //     {
-  //       type: 'select',
-  //       value: textOverflow,
-  //       extraValue: { type: TEXT_OVERFLOW },
-  //       keyValue: TEXT_OVERFLOW,
-  //       children: (
-  //         <>
-  //           <option value="clip">Clip</option>
-  //           <option value="ellipsis">Ellipsis</option>
-  //           <option value="string">String</option>
-  //           <option value="initial">Initial</option>
-  //           <option value="inherit">Inherit</option>
-  //         </>
-  //       ),
-  //       label: 'Overflow'
-  //     }
-  //   ],
-  //   [textWrap, textOverflow]
-  // );
 
   return (
     <CategoryContainer title="Typography" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
@@ -203,41 +123,53 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
       <CategorySection label="Color" keys={[COLOR]}>
         <CategoryOption type="color" value={color} onChange={handleChange(COLOR)} />
       </CategorySection>
-      {/* <GroupButtons
-          className="w-full"
-          classNameContainer="w-[180px]"
-          keyValue={COLOR}
-          items={itemsColor}
-          label="Color"
-          onChange={handleChange}
-        /> */}
       <TypographyStyle fontStyle={fontStyle} textDecoration={textDecoration} onChange={handleChange} />
-      {/* <GroupButtons
-          className="w-full"
-          classNameContainer="w-[180px]"
-          items={itemsSpacing}
-          keyValue={keyValueLetter}
-          label="Letter"
-          onChange={handleChange}
+      <CategorySection label="Letter" keys={keyValueLetter}>
+        <CategoryOption
+          keys={[LETTER_SPACING]}
+          label="Spacing"
+          value={letterSpacing}
+          onChange={handleChange(LETTER_SPACING)}
+          type="metric"
         />
-        <TypographyTransform textTransform={textTransform} direction={direction} onChange={handleChange} />
-        <GroupButtons
-          className="w-full"
-          classNameContainer="w-[180px]"
-          keyValue={WHITE_SPACE}
-          items={itemsBreaking}
-          label="Breaking"
-          onChange={handleChange}
+        <CategoryOption
+          keys={[TEXT_INDENT]}
+          label="Indent"
+          value={textIndent}
+          onChange={handleChange(TEXT_INDENT)}
+          type="metric"
         />
-        <GroupButtons
-          className="w-full"
-          classNameContainer="w-[180px]"
-          items={itemsWrap}
-          keyValue={keyValueWrap}
-          label="Text"
-          onChange={handleChange}
-        />
-        <TypographyTextShadow value={textShadow} onChange={handleChange} /> */}
+      </CategorySection>
+      {/* <TypographyTransform textTransform={textTransform} direction={direction} onChange={handleChange} /> */}
+      <CategorySection label="Breaking" keys={[WHITE_SPACE]}>
+        <CategoryOption value={whiteSpace} onChange={handleChange(WHITE_SPACE)} type="select">
+          <option value="normal">Normal</option>
+          <option value="nowrap">No Wrap</option>
+          <option value="pre">Pre</option>
+          <option value="pre-wrap">Pre Wrap</option>
+          <option value="pre-line">Pre Line</option>
+          <option value="break-spaces">Break Spaces</option>
+        </CategoryOption>
+      </CategorySection>
+      <CategorySection label="Wrap" keys={[TEXT_WRAP]}>
+        <CategoryOption value={textWrap} onChange={handleChange(TEXT_WRAP)} type="select">
+          <option value="wrap">Wrap</option>
+          <option value="nowrap">No Wrap</option>
+          <option value="balance">Balance</option>
+          <option value="pretty">Pretty</option>
+          <option value="stable">Stable</option>
+        </CategoryOption>
+      </CategorySection>
+      <CategorySection label="Overflow" keys={[TEXT_OVERFLOW]}>
+        <CategoryOption value={textOverflow} onChange={handleChange(TEXT_OVERFLOW)} type="select">
+          <option value="clip">Clip</option>
+          <option value="ellipsis">Ellipsis</option>
+          <option value="string">String</option>
+          <option value="initial">Initial</option>
+          <option value="inherit">Inherit</option>
+        </CategoryOption>
+      </CategorySection>
+      {/* <TypographyTextShadow value={textShadow} onChange={handleChange} /> */}
     </CategoryContainer>
   );
 };
