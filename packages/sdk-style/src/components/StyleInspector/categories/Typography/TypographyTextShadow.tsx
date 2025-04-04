@@ -1,73 +1,97 @@
-// // Packages
-// import React from 'react';
-// import noop from 'lodash/noop';
+import { useCallback } from 'react';
 
-// // Monorepo
-// import { TEXT_SHADOW } from '@plitzi/sdk-shared/style';
+import { TEXT_SHADOW } from '@plitzi/sdk-shared/style';
 
-// // Relatives
-// import InspectorLabel from '../../InspectorLabel';
-// import TypographyTextShadowItem from './TypographyTextShadowItem';
+import TypographyTextShadowItem from './TypographyTextShadowItem';
+import CategorySection from '../../components/CategorySection';
+import InspectorLabel from '../../components/InspectorLabel';
 
-// /**
-//  * @param {{
-//  *   value: string;
-//  *   onChange?: (type: string, value: string) => void;
-//  * }} props
-//  * @returns {React.ReactElement}
-//  */
-// const TypographyTextShadow = props => {
-//   const { onChange = noop } = props;
-//   let { value } = props;
-//   if (value !== '') {
-//     value = value.split(',');
-//   } else {
-//     value = [];
-//   }
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
 
-//   const handleClickRemoveItem = index => e => {
-//     e.stopPropagation();
-//     e.preventDefault();
-//     value.splice(index, 1);
-//     if (value.length > 0) {
-//       onChange({ type: TEXT_SHADOW, value: value.join(',') });
-//     } else {
-//       onChange({ type: TEXT_SHADOW, value: '' });
-//     }
-//   };
+export type TypographyTextShadowProps = {
+  value?: StyleValue;
+  onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
+};
 
-//   const handleChangeItem = index => shadowItemValue => {
-//     value[index] = shadowItemValue;
-//     onChange({ type: TEXT_SHADOW, value: value.join(',') });
-//   };
+const TypographyTextShadow = ({ value, onChange }: TypographyTextShadowProps) => {
+  const handleClickRemoveItem = useCallback(
+    (index: number) => (e: MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const valueParts = (value as string).split(',').toSpliced(index, 1);
+      onChange?.(valueParts.length > 0 ? valueParts.join(',') : '');
+    },
+    [onChange, value]
+  );
 
-//   const handleClickAddItem = () => {
-//     value.push('2px 2px 5px black');
-//     onChange({ type: TEXT_SHADOW, value: value.join(',') });
-//   };
+  const handleChangeItem = useCallback(
+    (index: number) => (shadowItemValue: string) => {
+      const valueParts = (value as string).split(',');
+      valueParts[index] = shadowItemValue;
+      onChange?.(valueParts.join(','));
+    },
+    [onChange, value]
+  );
 
-//   return (
-//     <div className="w-full">
-//       <div className="w-full flex justify-between">
-//         <InspectorLabel keyValue={TEXT_SHADOW}>Text Shadow</InspectorLabel>
-//         <button type="button" onClick={handleClickAddItem}>
-//           <i className="fas fa-plus" />
-//         </button>
-//       </div>
-//       {value.length > 0 && (
-//         <div className="mt-1">
-//           {value.map((textShadow, index) => (
-//             <TypographyTextShadowItem
-//               key={index}
-//               value={textShadow}
-//               onChange={handleChangeItem(index)}
-//               onRemove={handleClickRemoveItem(index)}
-//             />
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
+  const handleClickAddItem = useCallback(() => {
+    const valueParts = value === '' ? [] : (value as string).split(',');
+    valueParts.push('2px 2px 5px black');
+    onChange?.(valueParts.join(','));
+  }, [onChange, value]);
 
-// export default TypographyTextShadow;
+  let valueParts: string[] = [];
+  if (value !== '') {
+    valueParts = (value as string).split(',');
+  }
+
+  console.log(value, valueParts);
+
+  return (
+    <CategorySection direction="column">
+      <div className="w-full flex justify-between">
+        <InspectorLabel keyValue={[TEXT_SHADOW]}>Text Shadow</InspectorLabel>
+        <button className="cursor-pointer" type="button" onClick={handleClickAddItem}>
+          <i className="fas fa-plus" />
+        </button>
+      </div>
+      {valueParts.length > 0 && (
+        <div className="mt-1">
+          {valueParts.map((textShadow, index) => (
+            <TypographyTextShadowItem
+              key={index}
+              value={textShadow}
+              onChange={handleChangeItem(index)}
+              onRemove={handleClickRemoveItem(index)}
+            />
+          ))}
+        </div>
+      )}
+    </CategorySection>
+  );
+
+  // return (
+  //   <div className="w-full">
+  // <div className="w-full flex justify-between">
+  //   <InspectorLabel keyValue={TEXT_SHADOW}>Text Shadow</InspectorLabel>
+  //   <button type="button" onClick={handleClickAddItem}>
+  //     <i className="fas fa-plus" />
+  //   </button>
+  // </div>
+  //     {valueParts.length > 0 && (
+  //       <div className="mt-1">
+  //         {valueParts.map((textShadow, index) => (
+  //           <TypographyTextShadowItem
+  //             key={index}
+  //             value={textShadow}
+  //             onChange={handleChangeItem(index)}
+  //             onRemove={handleClickRemoveItem(index)}
+  //           />
+  //         ))}
+  //       </div>
+  //     )}
+  //   </div>
+  // );
+};
+
+export default TypographyTextShadow;

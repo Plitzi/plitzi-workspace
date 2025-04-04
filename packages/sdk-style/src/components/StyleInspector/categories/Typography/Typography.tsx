@@ -23,7 +23,7 @@ import TypographyAlign from './TypographyAlign';
 import { defaultFonts, weights } from './TypographyConstants';
 import TypographyFont from './TypographyFont';
 import TypographyStyle from './TypographyStyle';
-// import TypographyTextShadow from './TypographyTextShadow';
+import TypographyTextShadow from './TypographyTextShadow';
 import TypographyTransform from './TypographyTransform';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -71,7 +71,7 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
     [TEXT_DECORATION]: textDecoration,
     [TEXT_INDENT]: textIndent,
     [TEXT_TRANSFORM]: textTransform,
-    // [TEXT_SHADOW]: textShadow,
+    [TEXT_SHADOW]: textShadow,
     [WHITE_SPACE]: whiteSpace,
     [TEXT_WRAP]: textWrap,
     [TEXT_OVERFLOW]: textOverflow,
@@ -169,7 +169,7 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
           <option value="inherit">Inherit</option>
         </CategoryOption>
       </CategorySection>
-      {/* <TypographyTextShadow value={textShadow} onChange={handleChange} /> */}
+      <TypographyTextShadow value={textShadow} onChange={handleChange(TEXT_SHADOW)} />
     </CategoryContainer>
   );
 };
