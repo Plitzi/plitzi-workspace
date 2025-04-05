@@ -3,7 +3,7 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import get from 'lodash/get';
 import { useCallback, useMemo } from 'react';
 
-// import Background from '../categories/Background';
+import Background from '../categories/Background';
 import Border from '../categories/Border';
 import Display from '../categories/Display';
 import DisplayFlexChild from '../categories/DisplayFlexChild';
@@ -97,7 +97,7 @@ const InspectorModeBasic = ({
           <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
           <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
           <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />
-          {/* <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} /> */}
+          <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} />
           <Border isCollapsed={collapsedCache.border ?? true} onCollapse={handleChangeCollapse} />
           {/* <Effects isCollapsed={collapsedCache.effects ?? true} onCollapse={handleChangeCollapse} /> */}
         </div>
