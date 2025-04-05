@@ -3,17 +3,17 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import get from 'lodash/get';
 import { useCallback, useMemo } from 'react';
 
+// import Background from '../categories/Background';
+import Border from '../categories/Border';
 import Display from '../categories/Display';
 import DisplayFlexChild from '../categories/DisplayFlexChild';
+// import Effects from '../categories/Effects';
 import List from '../categories/List';
 import ListItem from '../categories/ListItem';
 import Position from '../categories/Position';
 import Size from '../categories/Size';
 import Spacing from '../categories/Spacing';
 import Typography from '../categories/Typography';
-// import Background from '../categories/Background';
-// import Border from '../categories/Border';
-// import Effects from '../categories/Effects';
 import useStyleInherit from '../hooks/useStyleInherit';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 
@@ -97,9 +97,9 @@ const InspectorModeBasic = ({
           <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
           <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
           <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />
-          {/* <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} />
+          {/* <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} /> */}
           <Border isCollapsed={collapsedCache.border ?? true} onCollapse={handleChangeCollapse} />
-          <Effects isCollapsed={collapsedCache.effects ?? true} onCollapse={handleChangeCollapse} /> */}
+          {/* <Effects isCollapsed={collapsedCache.effects ?? true} onCollapse={handleChangeCollapse} /> */}
         </div>
         <div className="flex items-center justify-end px-2 py-1 gap-2 text-xs">
           Show All Options

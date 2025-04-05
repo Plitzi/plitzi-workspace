@@ -45,8 +45,6 @@ const TypographyTextShadow = ({ value, onChange }: TypographyTextShadowProps) =>
     valueParts = (value as string).split(',');
   }
 
-  console.log(value, valueParts);
-
   return (
     <CategorySection direction="column">
       <div className="w-full flex justify-between">

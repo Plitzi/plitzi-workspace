@@ -1,23 +1,19 @@
-// Package
-import React, { useCallback, useMemo } from 'react';
-import noop from 'lodash/noop';
+import { useMemo } from 'react';
 
-// Monorepo
 import { BORDER_TOP_WIDTH, BORDER_BOTTOM_WIDTH, BORDER_LEFT_WIDTH, BORDER_RIGHT_WIDTH } from '@plitzi/sdk-shared/style';
 
-// Relatives
-import GroupButtons from '../../../components/GroupButtons';
+import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
-/**
- * @param {{
- *   values: object;
- *   currentPlacement: string;
- *   onChange?: (type: string, value: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const BorderWidth = props => {
-  const { values, currentPlacement, onChange = noop } = props;
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+
+export type BorderWidthProps = {
+  values: Record<StyleCategory, StyleValue | undefined>;
+  currentPlacement: string;
+  onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
+};
+
+const BorderWidth = ({ values, currentPlacement, onChange }: BorderWidthProps) => {
   const value = useMemo(() => {
     const {
       [BORDER_TOP_WIDTH]: borderTop,
@@ -48,26 +44,17 @@ const BorderWidth = props => {
         return '0px';
     }
   }, [values, currentPlacement]);
-  const items = useMemo(() => [{ type: 'inputMetric', value, extraValue: { type: 'width' } }], [value]);
   const keyValues = useMemo(() => {
     if (currentPlacement === 'all') {
-      return [BORDER_TOP_WIDTH, BORDER_BOTTOM_WIDTH, BORDER_LEFT_WIDTH, BORDER_RIGHT_WIDTH];
+      return [BORDER_TOP_WIDTH, BORDER_BOTTOM_WIDTH, BORDER_LEFT_WIDTH, BORDER_RIGHT_WIDTH] as StyleCategory[];
     }
 
-    return `border-${currentPlacement}-width`;
+    return [`border-${currentPlacement}-width`] as StyleCategory[];
   }, [currentPlacement]);
-
-  const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
-
   return (
-    <GroupButtons
-      className="w-full"
-      classNameContainer="w-[180px]"
-      items={items}
-      label="Width"
-      keyValue={keyValues}
-      onChange={handleChange}
-    />
+    <CategorySection label="Width" keys={keyValues}>
+      <CategoryOption value={value} onChange={onChange} type="metric" />
+    </CategorySection>
   );
 };
 

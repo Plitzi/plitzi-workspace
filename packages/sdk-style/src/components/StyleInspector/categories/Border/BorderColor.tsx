@@ -1,23 +1,19 @@
-// Package
-import React, { useCallback, useMemo } from 'react';
-import noop from 'lodash/noop';
+import { useMemo } from 'react';
 
-// Monorepo
 import { BORDER_TOP_COLOR, BORDER_BOTTOM_COLOR, BORDER_LEFT_COLOR, BORDER_RIGHT_COLOR } from '@plitzi/sdk-shared/style';
 
-// Relatives
-import GroupButtons from '../../../components/GroupButtons';
+import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
-/**
- * @param {{
- *   values: object;
- *   currentPlacement: string;
- *   onChange?: (type: string, value: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const BorderColor = props => {
-  const { values, currentPlacement, onChange = noop } = props;
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+
+export type BorderColorProps = {
+  values: Record<StyleCategory, StyleValue | undefined>;
+  currentPlacement: string;
+  onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
+};
+
+const BorderColor = ({ values, currentPlacement, onChange }: BorderColorProps) => {
   const value = useMemo(() => {
     const {
       [BORDER_TOP_COLOR]: borderTop,
@@ -48,26 +44,18 @@ const BorderColor = props => {
         return '#000000';
     }
   }, [values, currentPlacement]);
-  const items = useMemo(() => [{ type: 'color', value, extraValue: { type: 'color' } }], [value]);
   const keyValues = useMemo(() => {
     if (currentPlacement === 'all') {
-      return [BORDER_TOP_COLOR, BORDER_BOTTOM_COLOR, BORDER_LEFT_COLOR, BORDER_RIGHT_COLOR];
+      return [BORDER_TOP_COLOR, BORDER_BOTTOM_COLOR, BORDER_LEFT_COLOR, BORDER_RIGHT_COLOR] as StyleCategory[];
     }
 
-    return `border-${currentPlacement}-color`;
+    return [`border-${currentPlacement}-color`] as StyleCategory[];
   }, [currentPlacement]);
 
-  const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
-
   return (
-    <GroupButtons
-      className="w-full"
-      classNameContainer="w-[180px]"
-      items={items}
-      label="Color"
-      keyValue={keyValues}
-      onChange={handleChange}
-    />
+    <CategorySection label="Color" keys={keyValues}>
+      <CategoryOption value={value} onChange={onChange} type="color" />
+    </CategorySection>
   );
 };
 

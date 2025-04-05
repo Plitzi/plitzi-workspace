@@ -1,26 +1,23 @@
-// Package
-import React, { useCallback, useMemo } from 'react';
-import noop from 'lodash/noop';
+import BorderStyleDashed from '@plitzi/plitzi-ui/icons/BorderStyleDashed';
+import BorderStyleDotted from '@plitzi/plitzi-ui/icons/BorderStyleDotted';
+import BorderStyleSolid from '@plitzi/plitzi-ui/icons/BorderStyleSolid';
+import XMark from '@plitzi/plitzi-ui/icons/XMark';
+import { useMemo } from 'react';
 
-// Monorepo
 import { BORDER_TOP_STYLE, BORDER_BOTTOM_STYLE, BORDER_LEFT_STYLE, BORDER_RIGHT_STYLE } from '@plitzi/sdk-shared/style';
 
-// Alias
-import Icons from '@pcomponents/Icons';
+import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 
-// Relatives
-import GroupButtons from '../../../components/GroupButtons';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-/**
- * @param {{
- *   values: object;
- *   currentPlacement: string;
- *   onChange?: (type: string, value: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const BorderStyle = props => {
-  const { values, currentPlacement, onChange = noop } = props;
+export type BorderStyleProps = {
+  values: Record<StyleCategory, StyleValue | undefined>;
+  currentPlacement: string;
+  onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
+};
+
+const BorderStyle = ({ values, currentPlacement, onChange }: BorderStyleProps) => {
   const value = useMemo(() => {
     const {
       [BORDER_TOP_STYLE]: borderTop,
@@ -52,31 +49,29 @@ const BorderStyle = props => {
     }
   }, [values, currentPlacement]);
 
-  const handleChange = useCallback(itemValue => onChange(itemValue.type, itemValue.value), [onChange]);
-
   const items = useMemo(
     () => [
       {
-        value: { value: 'none', type: 'style' },
-        children: <Icons width={16} height={16} type="XMark" />,
+        value: 'none',
+        icon: <XMark />,
         description: '',
         active: value === 'none'
       },
       {
-        value: { value: 'solid', type: 'style' },
-        children: <Icons width={16} height={16} type="BorderStyleSolid" />,
+        value: 'solid',
+        icon: <BorderStyleSolid />,
         description: '',
         active: value === 'solid'
       },
       {
-        value: { value: 'dashed', type: 'style' },
-        children: <Icons width={16} height={16} type="BorderStyleDashed" />,
+        value: 'dashed',
+        icon: <BorderStyleDashed />,
         description: '',
         active: value === 'dashed'
       },
       {
-        value: { value: 'dotted', type: 'style' },
-        children: <Icons width={16} height={16} type="BorderStyleDotted" />,
+        value: 'dotted',
+        icon: <BorderStyleDotted />,
         description: '',
         active: value === 'dotted'
       }
@@ -86,21 +81,16 @@ const BorderStyle = props => {
 
   const keyValues = useMemo(() => {
     if (currentPlacement === 'all') {
-      return [BORDER_TOP_STYLE, BORDER_BOTTOM_STYLE, BORDER_LEFT_STYLE, BORDER_RIGHT_STYLE];
+      return [BORDER_TOP_STYLE, BORDER_BOTTOM_STYLE, BORDER_LEFT_STYLE, BORDER_RIGHT_STYLE] as StyleCategory[];
     }
 
-    return `border-${currentPlacement}-style`;
+    return [`border-${currentPlacement}-style`] as StyleCategory[];
   }, [currentPlacement]);
 
   return (
-    <GroupButtons
-      className="w-full"
-      classNameContainer="w-[180px]"
-      items={items}
-      label="Style"
-      keyValue={keyValues}
-      onChange={handleChange}
-    />
+    <CategorySection label="Style" keys={keyValues}>
+      <CategoryOption onChange={onChange} items={items} type="iconGroup" />
+    </CategorySection>
   );
 };
 
