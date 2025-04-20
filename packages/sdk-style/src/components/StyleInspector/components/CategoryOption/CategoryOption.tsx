@@ -29,6 +29,9 @@ export type CategoryOptionProps =
       value?: StyleValue;
       units?: { label: string; value: string }[];
       allowedWords?: string[];
+      step?: number;
+      min?: number;
+      max?: number;
     })
   | (CategoryOptionPropsBase & { type: 'color'; value?: StyleValue })
   | (CategoryOptionPropsBase & { type?: 'input' | 'select'; value?: StyleValue });

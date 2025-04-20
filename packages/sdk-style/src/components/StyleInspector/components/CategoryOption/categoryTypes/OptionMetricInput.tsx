@@ -7,6 +7,9 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 export type OptionMetricInputProps = {
   className?: string;
   value?: StyleValue;
+  min?: number;
+  max?: number;
+  step?: number;
   units?: { label: string; value: string }[];
   allowedWords?: string[];
   onChange?: (value: StyleValue | Record<StyleCategory, StyleValue>) => void;
@@ -15,6 +18,9 @@ export type OptionMetricInputProps = {
 const OptionMetricInput = ({
   value,
   className,
+  min,
+  max,
+  step,
   units = [{ label: 'PX', value: 'px' }],
   allowedWords = [],
   onChange
@@ -25,6 +31,9 @@ const OptionMetricInput = ({
     <MetricInput
       size="xs"
       value={value as string}
+      min={min}
+      max={max}
+      step={step}
       units={units}
       allowedWords={allowedWords}
       onChange={handleChange}

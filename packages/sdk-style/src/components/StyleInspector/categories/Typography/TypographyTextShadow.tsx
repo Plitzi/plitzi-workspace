@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-import { TEXT_SHADOW } from '@plitzi/sdk-shared/style';
-
 import TypographyTextShadowItem from './TypographyTextShadowItem';
 import CategorySection from '../../components/CategorySection';
 import InspectorLabel from '../../components/InspectorLabel';
@@ -48,7 +46,7 @@ const TypographyTextShadow = ({ value, onChange }: TypographyTextShadowProps) =>
   return (
     <CategorySection direction="column">
       <div className="w-full flex justify-between">
-        <InspectorLabel keyValue={[TEXT_SHADOW]}>Text Shadow</InspectorLabel>
+        <InspectorLabel keyValue={['text-shadow']}>Text Shadow</InspectorLabel>
         <button className="cursor-pointer" type="button" onClick={handleClickAddItem}>
           <i className="fas fa-plus" />
         </button>
@@ -67,29 +65,6 @@ const TypographyTextShadow = ({ value, onChange }: TypographyTextShadowProps) =>
       )}
     </CategorySection>
   );
-
-  // return (
-  //   <div className="w-full">
-  // <div className="w-full flex justify-between">
-  //   <InspectorLabel keyValue={TEXT_SHADOW}>Text Shadow</InspectorLabel>
-  //   <button type="button" onClick={handleClickAddItem}>
-  //     <i className="fas fa-plus" />
-  //   </button>
-  // </div>
-  //     {valueParts.length > 0 && (
-  //       <div className="mt-1">
-  //         {valueParts.map((textShadow, index) => (
-  //           <TypographyTextShadowItem
-  //             key={index}
-  //             value={textShadow}
-  //             onChange={handleChangeItem(index)}
-  //             onRemove={handleClickRemoveItem(index)}
-  //           />
-  //         ))}
-  //       </div>
-  //     )}
-  //   </div>
-  // );
 };
 
 export default TypographyTextShadow;

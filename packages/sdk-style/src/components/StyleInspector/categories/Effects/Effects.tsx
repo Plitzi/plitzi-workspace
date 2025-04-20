@@ -1,67 +1,63 @@
-// Packages
-import React, { memo, useCallback, use, useMemo } from 'react';
-import noop from 'lodash/noop';
+import { memo, use, useCallback } from 'react';
 
-// Monorepo
-import { OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM } from '@plitzi/sdk-shared/style';
-
-// Relatives
-import Transition from './Transition';
 import BoxShadow from './BoxShadow';
 import Filter from './Filters/Filter';
-import Transform from './Transform/Transform';
-import StyleInspectorContext from '../../StyleInspectorContext';
-import CategoryContainer from '../../../components/CategoryContainer';
-import GroupButtons from '../../../components/GroupButtons';
+import Transform from './Transform';
+import Transition from './Transition';
+import CategoryContainer from '../../components/CategoryContainer';
+import CategoryOption from '../../components/CategoryOption';
+import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
+import StyleInspectorContext from '../../StyleInspectorContext';
 
-const dotKeys = [OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM];
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-/**
- * @param {{
- *   isCollapsed?: boolean;
- *   onCollapse?: (category: string, collapsed: boolean) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Effects = props => {
-  const { isCollapsed = true, onCollapse = noop } = props;
+const dotKeys = ['opacity', 'cursor', 'transition', 'box-shadow', 'filter', 'transform'] as StyleCategory[];
+
+export type EffectsProps = {
+  isCollapsed?: boolean;
+  onCollapse?: (category: string, isCollapsed: boolean) => void;
+};
+
+const Effects = ({ isCollapsed = true, onCollapse }: EffectsProps) => {
   const { setValue } = use(StyleInspectorContext);
   const {
-    [OPACITY]: opacity,
-    [CURSOR]: cursor,
-    [TRANSITION]: transition,
-    [BOX_SHADOW]: boxShadow,
-    [FILTER]: filter,
-    [TRANSFORM]: transform
+    opacity,
+    cursor,
+    transition,
+    'box-shadow': boxShadow,
+    filter,
+    transform
   } = useInspectorValues({
     keys: dotKeys,
     asValue: true,
     strictMode: true,
     defaultValues: {
-      [OPACITY]: '1',
-      [CURSOR]: 'auto',
-      [TRANSITION]: undefined,
-      [BOX_SHADOW]: undefined,
-      [FILTER]: undefined,
-      [TRANSFORM]: undefined
+      opacity: '1',
+      cursor: 'auto',
+      transition: undefined,
+      'box-shadow': undefined,
+      filter: undefined,
+      transform: undefined
     }
   });
 
-  const handleCollapse = useCallback(isCollapsed => onCollapse('effects', isCollapsed), [onCollapse]);
+  const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('effects', isCollapsed), [onCollapse]);
 
-  const handleChange = useCallback(itemValue => setValue(itemValue.type, itemValue.value), [setValue]);
+  const handleChange = useCallback(
+    (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      setValue(type, value as StyleValue),
+    [setValue]
+  );
 
-  const itemsOpacity = useMemo(() => [{ type: 'input', value: opacity, extraValue: { type: OPACITY } }], [opacity]);
-
-  const itemsCursor = useMemo(
-    () => [
-      {
-        type: 'select',
-        value: cursor,
-        extraValue: { type: CURSOR },
-        children: (
-          <>
+  return (
+    <CategoryContainer title="Effects" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+      <div className="flex flex-col p-2 gap-2">
+        <CategorySection label="Size" keys={['opacity']}>
+          <CategoryOption value={opacity} onChange={handleChange('cursor')} type="metric" />
+        </CategorySection>
+        <CategorySection label="Cursor" keys={['cursor']}>
+          <CategoryOption value={cursor} onChange={handleChange('cursor')} type="select">
             <optgroup label="General">
               <option value="auto">Auto</option>
               <option value="default">Default</option>
@@ -108,34 +104,12 @@ const Effects = props => {
               <option value="sw-resize">SW Resize</option>
               <option value="se-resize">SE Resize</option>
             </optgroup>
-          </>
-        )
-      }
-    ],
-    [cursor]
-  );
-
-  return (
-    <CategoryContainer title="Effects" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <div className="flex flex-col p-2 gap-2">
-        <GroupButtons
-          classNameContainer="w-[180px]"
-          keyValue={OPACITY}
-          items={itemsOpacity}
-          label="Opacity"
-          onChange={handleChange}
-        />
-        <GroupButtons
-          classNameContainer="w-[180px]"
-          keyValue={CURSOR}
-          items={itemsCursor}
-          label="Cursor"
-          onChange={handleChange}
-        />
-        <BoxShadow onChange={handleChange} value={boxShadow} />
-        <Transform onChange={handleChange} value={transform} />
-        <Transition onChange={handleChange} value={transition} />
-        <Filter onChange={handleChange} value={filter} />
+          </CategoryOption>
+        </CategorySection>
+        <BoxShadow onChange={handleChange('box-shadow')} value={boxShadow} />
+        <Transform onChange={handleChange('transform')} value={transform} />
+        <Transition onChange={handleChange('transition')} value={transition} />
+        <Filter onChange={handleChange('filter')} value={filter} />
       </div>
     </CategoryContainer>
   );

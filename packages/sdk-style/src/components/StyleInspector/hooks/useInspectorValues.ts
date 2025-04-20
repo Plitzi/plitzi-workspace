@@ -17,7 +17,7 @@ export type UseInspectorValuesProps<TAsValue extends boolean> = {
   context?: StyleInspectorContextValue;
   skipValidations?: boolean;
   asValue?: TAsValue;
-  defaultValues?: { [key: string]: StyleValue };
+  defaultValues?: Partial<Record<StyleCategory, StyleValue>>;
   strictMode?: boolean;
 };
 

@@ -1,6 +1,5 @@
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import classNames from 'classnames';
 import { useCallback, useRef } from 'react'; //  useCallback, useMemo,
 
 import CategoryOption from '../../components/CategoryOption';
@@ -10,18 +9,12 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type TypographyTextShadowItemProps = {
-  className?: string;
   value?: string;
   onChange?: (value: string) => void;
   onRemove?: (e: MouseEvent) => void;
 };
 
-const TypographyTextShadowItem = ({
-  className = '',
-  value = '',
-  onRemove,
-  onChange
-}: TypographyTextShadowItemProps) => {
+const TypographyTextShadowItem = ({ value = '', onRemove, onChange }: TypographyTextShadowItemProps) => {
   const [posX = '2px', posY = '2px', blur = '0px', color = 'black'] = value.split(' ');
   const valueRef = useRef<{ posX: string; posY: string; blur: string; color: string }>({ posX, posY, blur, color });
   valueRef.current = { posX, posY, blur, color };
@@ -38,12 +31,7 @@ const TypographyTextShadowItem = ({
 
   return (
     <ContainerFloating className="w-full" closeOnClick={false}>
-      <ContainerFloating.Trigger
-        className={classNames(
-          'py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded-sm w-full select-none',
-          className
-        )}
-      >
+      <ContainerFloating.Trigger className="py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded-sm w-full select-none">
         <div className="flex items-center">
           <div className="h-5 w-5 mr-1 rounded-sm" style={{ backgroundColor: color }} />
           <div>{value}</div>

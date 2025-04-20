@@ -28,7 +28,7 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
   );
 
   return (
-    <IconGroup className="w-full">
+    <IconGroup className="w-full" gap={1} size="xs">
       {itemsParsed.map((item, i) => (
         <IconGroup.Icon
           size={item.size}
