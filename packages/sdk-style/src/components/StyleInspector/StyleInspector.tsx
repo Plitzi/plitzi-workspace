@@ -12,6 +12,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
 
 import Selector from '../Selector';
+import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
 import InspectorModeBasic from './modes/InspectorModeBasic';
 
 import type { SelectorValue } from '../Selector';
@@ -42,7 +43,7 @@ const StyleInspector = ({
     setStyleSelector
   } = use(BuilderStyleContext);
   const selector = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
-  // const selectors = Object.values(get(style.platform, displayMode));
+  const selectors = useMemo(() => Object.values(get(style.platform, displayMode)), [style, displayMode]);
   const { builderHandler } = use(BuilderContext);
   const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
     () =>
@@ -149,14 +150,15 @@ const StyleInspector = ({
         </div>
       </div>
       <div className="flex flex-col grow overflow-auto basis-0">
-        {/* {viewMode === 'advanced' && (
+        {cache.viewMode === 'advanced' && (
           <InspectorModeAdvanced
             styleSelector={styleSelector}
             selectors={selectors}
             selector={selectorSelected?.name}
             element={element}
+            displayMode={displayMode}
           />
-        )} */}
+        )}
         {cache.viewMode === 'basic' && (
           <InspectorModeBasic
             styleSelector={styleSelector}

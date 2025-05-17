@@ -188,7 +188,7 @@ const TransitionItem = ({ value = '', onRemove, onChange }: TransitionItemProps)
                   <EffectsTransitionEase />
                 </Icon>
               </ContainerFloating.Trigger>
-              <ContainerFloating.Content className="w-[260px] h-[400px] flex flex-col items-center overflow-y-auto">
+              <ContainerFloating.Content className="w-[260px] h-[456px] flex flex-col items-center overflow-y-auto">
                 <InputEasingList className="w-[260px]" onChange={handleChange('easing')} />
                 <div className="flex flex-col m-2">
                   <div className="flex" onClick={handleClickEaseAnimation}>

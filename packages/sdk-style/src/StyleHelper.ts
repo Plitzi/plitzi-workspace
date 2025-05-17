@@ -15,7 +15,8 @@ import type {
   Style,
   TagType,
   StyleValue,
-  StyleCategory
+  StyleCategory,
+  StyleBaseItem
 } from '@plitzi/sdk-shared';
 
 export type StyleHelperMetaData = {
@@ -300,11 +301,13 @@ const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\([^;]\)
 const cssIsCommentRegex = /(\/\*.*\*\/)/gim;
 const StyleConstantsList = Object.values(StyleConstants);
 
-export const cssToSelectors = (css = '', singleSelector = false) => {
+export function cssToSelectors(css: string, singleSelector: true): StyleBaseItem;
+export function cssToSelectors(css: string, singleSelector?: false): StyleBaseItem[];
+export function cssToSelectors(css = '', singleSelector = false): StyleBaseItem | StyleBaseItem[] {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const selectors = match.map(match => {
     const { selectorName, selectorData } = match.groups as Record<string, string | undefined>;
-    const selectorResult = { name: selectorName?.trim(), attributes: {}, cache: match[0] };
+    const selectorResult: StyleBaseItem = { name: selectorName?.trim() ?? '', attributes: {}, cache: match[0] };
     if (selectorData) {
       const propsMatch = [...selectorData.replaceAll(cssIsCommentRegex, '').trim().matchAll(cssPropsRegex)];
       propsMatch
@@ -323,10 +326,10 @@ export const cssToSelectors = (css = '', singleSelector = false) => {
   }
 
   return selectors;
-};
+}
 
 export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAfter = true) => {
-  const ranges: { from: number; to: number | undefined }[] = [];
+  const ranges: { from: number | null; to: number | null }[] = [];
   [...css.matchAll(cssRegex)].forEach(match => {
     const { selector, selectorName, selectorData } = match.groups as Record<string, string | undefined>;
     if (!selectorName || !selector || !selectorData) {
@@ -337,7 +340,7 @@ export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAft
     const bFrom = allowPre ? match.index : 0;
     const bTo = bFrom + selector.length + selectorName.length + 1 - selectorNameCorrection;
     const aFrom = bTo + selectorData.length;
-    const aTo = allowAfter ? aFrom + 1 : undefined;
+    const aTo = allowAfter ? aFrom + 1 : null;
     ranges.push({ from: bFrom, to: bTo }, { from: aFrom, to: aTo });
   });
 

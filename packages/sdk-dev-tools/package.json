@@ -29,19 +29,19 @@
   },
   "type": "module",
   "devDependencies": {
-    "eslint": "^9.21.0",
-    "vite": "^6.2.0"
+    "eslint": "^9.27.0",
+    "vite": "^6.3.5"
   },
   "dependencies": {
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@uiw/react-json-view": "^2.0.0-alpha.30",
+    "@uiw/react-json-view": "^2.0.0-alpha.32",
     "classnames": "^2.5.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   }
 }
