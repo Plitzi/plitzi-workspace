@@ -7,7 +7,7 @@ import noop from 'lodash/noop';
 
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 
 // Relatives
 import NetworkContext from './NetworkContext';

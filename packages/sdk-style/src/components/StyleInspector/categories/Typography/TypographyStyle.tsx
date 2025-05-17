@@ -2,7 +2,7 @@ import TextDecorationOverline from '@plitzi/plitzi-ui/icons/TextDecorationOverli
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { FONT_STYLE, TEXT_DECORATION } from '@plitzi/sdk-shared/style/StyleConstants';
+import { FONT_STYLE, TEXT_DECORATION } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

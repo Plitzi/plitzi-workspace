@@ -3,7 +3,7 @@ import omit from 'lodash/omit';
 import set from 'lodash/set';
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 
-import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
 import DataSourceContext from './DataSourceContext';
 import useDataSource from './hooks/useDataSource';

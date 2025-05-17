@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import classNames from 'classnames';
 
 // Monorepo
-import { ALIGN_SELF } from '@plitzi/sdk-shared/style/StyleConstants';
+import { ALIGN_SELF } from '@plitzi/sdk-shared/style/styleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';

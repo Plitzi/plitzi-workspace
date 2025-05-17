@@ -2,8 +2,8 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 import { use, useMemo } from 'react';
 
-import { VARIABLE_REGEX } from '@plitzi/sdk-schema/FlatMap';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import StyleInspectorContext from '../StyleInspectorContext';
 import { baseDefaultValue } from '../StyleInspectorHelper';

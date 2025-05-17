@@ -8,7 +8,7 @@ import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { StyleConstants } from '@plitzi/sdk-shared/style/StyleConstants';
+import { StyleConstants } from '@plitzi/sdk-shared/style/styleConstants';
 
 import {
   cssToSelectors,

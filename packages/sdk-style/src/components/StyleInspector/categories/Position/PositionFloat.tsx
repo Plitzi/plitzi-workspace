@@ -3,7 +3,7 @@ import FloatRight from '@plitzi/plitzi-ui/icons/FloatRight';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { FLOAT, LEFT, RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
+import { FLOAT, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

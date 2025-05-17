@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
+import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
 
 import SpacingNumber from './SpacingNumber';
 import InspectorLabel from '../../components/InspectorLabel';

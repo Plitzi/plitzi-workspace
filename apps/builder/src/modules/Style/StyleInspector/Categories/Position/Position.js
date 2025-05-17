@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
 // Monorepo
-import { POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
+import { POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';

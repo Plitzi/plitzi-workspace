@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { OBJECT_POSITION } from '@plitzi/sdk-shared/style/StyleConstants';
+import { OBJECT_POSITION } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

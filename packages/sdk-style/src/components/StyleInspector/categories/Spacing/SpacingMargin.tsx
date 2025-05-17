@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
+import { MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
 
 import SpacingNumber from './SpacingNumber';
 import SpacingPadding from './SpacingPadding';

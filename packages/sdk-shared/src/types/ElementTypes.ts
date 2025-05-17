@@ -1,5 +1,6 @@
+import type { InteractionBaseCallback } from './InteractionTypes';
 import type { PluginManifest, PluginSchema } from './PluginTypes';
-import type { Element, InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { Element } from './SchemaTypes';
 import type { CSSProperties, ReactNode } from 'react';
 
 export type ElementLayoutType = 'layout' | 'segment' | 'element' | 'reference';

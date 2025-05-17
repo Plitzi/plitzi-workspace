@@ -3,7 +3,7 @@ import React from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { TEXT_SHADOW } from '@plitzi/sdk-shared/style/StyleConstants';
+import { TEXT_SHADOW } from '@plitzi/sdk-shared/style/styleConstants';
 
 // Relatives
 import InspectorLabel from '../../InspectorLabel';

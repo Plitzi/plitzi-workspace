@@ -7,7 +7,7 @@ import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import classNames from 'classnames';
 import { useCallback, useMemo } from 'react';
 
-import { ALIGN_SELF } from '@plitzi/sdk-shared/style/StyleConstants';
+import { ALIGN_SELF } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

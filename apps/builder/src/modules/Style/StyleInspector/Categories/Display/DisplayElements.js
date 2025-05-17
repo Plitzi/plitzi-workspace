@@ -9,7 +9,7 @@ import {
   FLEX_DIRECTION,
   FLEX_WRAP,
   JUSTIFY_CONTENT
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';

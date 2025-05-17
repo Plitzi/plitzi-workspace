@@ -1,7 +1,7 @@
 import ArrowReverse from '@plitzi/plitzi-ui/icons/ArrowReverse';
 import { useCallback, useMemo } from 'react';
 
-import { FLEX_DIRECTION } from '@plitzi/sdk-shared/style/StyleConstants';
+import { FLEX_DIRECTION } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

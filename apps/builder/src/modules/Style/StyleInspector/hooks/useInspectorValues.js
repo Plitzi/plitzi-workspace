@@ -110,7 +110,7 @@ import {
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 // Relatives
 import StyleInspectorContext from '../StyleInspectorContext';

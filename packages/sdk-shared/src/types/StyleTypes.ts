@@ -1,4 +1,4 @@
-import type { StyleConstants } from '../style/StyleConstants';
+import type { StyleConstants } from '../style/styleConstants';
 
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
 

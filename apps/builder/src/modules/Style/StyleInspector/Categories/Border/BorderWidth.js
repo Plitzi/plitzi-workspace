@@ -8,7 +8,7 @@ import {
   BORDER_BOTTOM_WIDTH,
   BORDER_LEFT_WIDTH,
   BORDER_RIGHT_WIDTH
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

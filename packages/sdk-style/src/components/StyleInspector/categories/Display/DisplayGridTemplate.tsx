@@ -7,7 +7,7 @@ import {
   GRID_TEMPLATE_AREAS,
   GRID_TEMPLATE_COLUMNS,
   GRID_TEMPLATE_ROWS
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

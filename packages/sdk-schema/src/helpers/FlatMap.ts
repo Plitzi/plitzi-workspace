@@ -4,11 +4,10 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
+import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
 import type { Style, Element, Schema, SchemaVariable, DisplayMode, StyleItem } from '@plitzi/sdk-shared';
-
-export const VARIABLE_REGEX = /var\(--(?<token>[a-z0-9_-]+)\)/gi;
 
 export const EMPTY_SCHEMA = {
   schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] } as Schema,

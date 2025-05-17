@@ -1,1 +1,1 @@
-export * from './StyleConstants';
+export * from './styleConstants';

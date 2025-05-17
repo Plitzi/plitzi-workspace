@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { FONT_STYLE, TEXT_DECORATION } from '@plitzi/sdk-shared/style/StyleConstants';
+import { FONT_STYLE, TEXT_DECORATION } from '@plitzi/sdk-shared/style/styleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';

@@ -5,7 +5,7 @@ import PositionRelative from '@plitzi/plitzi-ui/icons/PositionRelative';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, use, useMemo } from 'react';
 
-import { POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
+import { POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
 
 import PositionAdvanced from './PositionAdvanced';
 import PositionAdvancedButtons from './PositionAdvancedButtons';

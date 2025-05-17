@@ -1,7 +1,7 @@
 import { SizeOverflowScroll } from '@plitzi/plitzi-ui/icons';
 import { useMemo } from 'react';
 
-import { OVERFLOW } from '@plitzi/sdk-shared/style/StyleConstants';
+import { OVERFLOW } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

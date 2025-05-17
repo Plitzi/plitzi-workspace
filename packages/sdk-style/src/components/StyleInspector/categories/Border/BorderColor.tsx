@@ -5,7 +5,7 @@ import {
   BORDER_BOTTOM_COLOR,
   BORDER_LEFT_COLOR,
   BORDER_RIGHT_COLOR
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

@@ -10,35 +10,10 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
-    "./StyleContext": {
-      "types": "./dist/StyleContext.d.ts",
-      "import": "./dist/StyleContext.es",
-      "require": "./dist/StyleContext.cjs"
-    },
-    "./StyleHelper": {
-      "types": "./dist/StyleHelper.d.ts",
-      "import": "./dist/StyleHelper.es",
-      "require": "./dist/StyleHelper.cjs"
-    },
-    "./StyleMap": {
-      "types": "./dist/StyleMap.d.ts",
-      "import": "./dist/StyleMap.es",
-      "require": "./dist/StyleMap.cjs"
-    },
-    "./StyleConstants": {
-      "types": "./dist/StyleConstants.d.ts",
-      "import": "./dist/StyleConstants.es",
-      "require": "./dist/StyleConstants.cjs"
-    },
-    "./components": {
-      "types": "./dist/components/*/index.d.ts",
-      "import": "./dist/components/*/index.es",
-      "require": "./dist/components/*/index.cjs"
-    },
     "./*": {
-      "types": "./dist/components/*/index.d.ts",
-      "import": "./dist/components/*",
-      "require": "./dist/components/*"
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
     }
   },
   "type": "module",

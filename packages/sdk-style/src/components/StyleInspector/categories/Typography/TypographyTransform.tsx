@@ -3,7 +3,7 @@ import TextDirectionRtl from '@plitzi/plitzi-ui/icons/TextDirectionRtl';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { TEXT_TRANSFORM, DIRECTION } from '@plitzi/sdk-shared/style/StyleConstants';
+import { TEXT_TRANSFORM, DIRECTION } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

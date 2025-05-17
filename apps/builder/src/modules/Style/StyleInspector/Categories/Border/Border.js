@@ -20,7 +20,7 @@ import {
   BORDER_RADIUS_TOP_RIGHT,
   BORDER_RADIUS_BOTTOM_LEFT,
   BORDER_RADIUS_BOTTOM_RIGHT
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 // Relatives
 import StyleInspectorContext from '../../StyleInspectorContext';

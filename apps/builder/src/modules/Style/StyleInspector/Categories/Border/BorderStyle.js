@@ -8,7 +8,7 @@ import {
   BORDER_BOTTOM_STYLE,
   BORDER_LEFT_STYLE,
   BORDER_RIGHT_STYLE
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';

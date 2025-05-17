@@ -6,7 +6,7 @@ import pick from 'lodash/pick';
 // Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';

@@ -1,4 +1,4 @@
-import { TOP, BOTTOM, LEFT, RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
+import { TOP, BOTTOM, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

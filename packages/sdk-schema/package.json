@@ -10,20 +10,10 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
-    "./SchemaContext": {
-      "types": "./dist/SchemaContext.d.ts",
-      "import": "./dist/SchemaContext.es",
-      "require": "./dist/SchemaContext.cjs"
-    },
-    "./SchemaSettingsContext": {
-      "types": "./dist/SchemaSettingsContext.d.ts",
-      "import": "./dist/SchemaSettingsContext.es",
-      "require": "./dist/SchemaSettingsContext.cjs"
-    },
-    "./FlatMap": {
-      "types": "./dist/helpers/FlatMap.d.ts",
-      "import": "./dist/helpers/FlatMap.es",
-      "require": "./dist/helpers/FlatMap.cjs"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
     }
   },
   "type": "module",

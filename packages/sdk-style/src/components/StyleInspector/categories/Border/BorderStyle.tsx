@@ -9,7 +9,7 @@ import {
   BORDER_BOTTOM_STYLE,
   BORDER_LEFT_STYLE,
   BORDER_RIGHT_STYLE
-} from '@plitzi/sdk-shared/style/StyleConstants';
+} from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

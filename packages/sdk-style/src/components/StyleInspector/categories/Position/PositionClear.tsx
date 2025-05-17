@@ -4,7 +4,7 @@ import ClearRight from '@plitzi/plitzi-ui/icons/ClearRight';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { CLEAR } from '@plitzi/sdk-shared/style/StyleConstants';
+import { CLEAR } from '@plitzi/sdk-shared/style/styleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
