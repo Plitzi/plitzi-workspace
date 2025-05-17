@@ -2,7 +2,7 @@
 import React, { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
 // Monorepo
-import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 // Alias

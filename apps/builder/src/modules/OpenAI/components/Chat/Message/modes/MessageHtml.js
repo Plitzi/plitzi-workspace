@@ -10,7 +10,7 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 

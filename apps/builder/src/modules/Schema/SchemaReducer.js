@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import has from 'lodash/has';
 
 // Relatives
-import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',

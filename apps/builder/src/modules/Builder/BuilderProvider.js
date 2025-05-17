@@ -15,7 +15,7 @@ import {
   EventBridgeTypes,
   EventBridgeTypesPerModule
 } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';

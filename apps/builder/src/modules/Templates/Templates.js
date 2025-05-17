@@ -10,7 +10,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import FlatMap from '@plitzi/sdk-schema/FlatMap';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';

@@ -9,7 +9,7 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 // Monorepo
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 
 // Relatives
 import NetworkContext from './NetworkContext';

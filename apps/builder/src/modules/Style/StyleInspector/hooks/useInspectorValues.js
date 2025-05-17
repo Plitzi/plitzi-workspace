@@ -5,7 +5,7 @@ import get from 'lodash/get';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { VARIABLE_REGEX } from '@plitzi/sdk-schema/FlatMap';
+import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import {
   // typography
   FONT_FAMILY,
