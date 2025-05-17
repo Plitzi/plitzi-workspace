@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 
 // Monorepo
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
@@ -13,7 +13,7 @@ import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContext
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 

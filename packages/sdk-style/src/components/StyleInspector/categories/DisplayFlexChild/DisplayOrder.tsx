@@ -1,7 +1,7 @@
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useCallback, useMemo } from 'react';
 
-import { ORDER } from '@plitzi/sdk-shared/style';
+import { ORDER } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

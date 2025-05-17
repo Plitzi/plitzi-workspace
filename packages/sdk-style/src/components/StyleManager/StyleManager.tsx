@@ -1,8 +1,8 @@
 import get from 'lodash/get';
 import { useState, use, useMemo } from 'react';
 
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import ManagerSelector from './ManagerSelector';
 import ManagerModeBasic from './modes/ManagerModeBasic';

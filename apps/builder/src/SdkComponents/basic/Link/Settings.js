@@ -7,7 +7,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 import Select from '@plitzi/plitzi-ui-components/Select';
 
 // Monorepo
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
 /**

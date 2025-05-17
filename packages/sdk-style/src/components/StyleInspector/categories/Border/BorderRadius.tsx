@@ -6,7 +6,7 @@ import {
   BORDER_RADIUS_TOP_RIGHT,
   BORDER_RADIUS_BOTTOM_LEFT,
   BORDER_RADIUS_BOTTOM_RIGHT
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

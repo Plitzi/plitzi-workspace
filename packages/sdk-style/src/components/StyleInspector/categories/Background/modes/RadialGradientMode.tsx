@@ -1,6 +1,6 @@
 // import noop from 'lodash/noop';
 
-// import { BACKGROUND_IMAGE } from '@plitzi/sdk-shared/style';
+// import { BACKGROUND_IMAGE } from '@plitzi/sdk-shared/style/StyleConstants';
 // import InputMetric from '../../../../InputMetric';
 // import InspectorLabel from '../../../InspectorLabel';
 

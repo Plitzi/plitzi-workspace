@@ -7,7 +7,7 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
-import { getDisplayName } from '@plitzi/sdk-shared/utils';
+import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import NetworkContext from '../../NetworkContext';

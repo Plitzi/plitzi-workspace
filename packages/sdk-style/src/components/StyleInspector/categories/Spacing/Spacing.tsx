@@ -9,7 +9,7 @@ import {
   PADDING_BOTTOM,
   PADDING_LEFT,
   PADDING_RIGHT
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import SpacingEditor from './SpacingEditor';
 import SpacingMargin from './SpacingMargin';

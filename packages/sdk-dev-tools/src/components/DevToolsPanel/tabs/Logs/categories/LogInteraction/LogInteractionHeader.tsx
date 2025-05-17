@@ -9,14 +9,14 @@ export type LogInteractionHeaderProps = {
   className?: string;
   status: string;
   message?: ReactNode;
-  nodes: LogInteraction['params']['nodes'];
+  nodes?: LogInteraction['params']['nodes'];
   time?: string;
   duration: string;
 };
 
 const LogInteractionHeader = ({ status, message, nodes, time, duration }: LogInteractionHeaderProps) => {
-  const nodesSkipped = Object.values(nodes).filter(node => node.status === 'skipped').length;
-  const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
+  const nodesSkipped = Object.values(nodes ?? {}).filter(node => node.status === 'skipped').length;
+  const nodesDisabled = Object.values(nodes ?? {}).filter(node => node.status === 'disabled').length;
 
   return (
     <div className="flex justify-between w-full text-sm">

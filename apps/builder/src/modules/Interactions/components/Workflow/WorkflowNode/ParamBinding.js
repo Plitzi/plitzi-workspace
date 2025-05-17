@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 // Monorepo
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import WorkflowContext from '../WorkflowContext';

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import ContentPlugin from './contents/ContentPlugin';

@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { FLEX_DIRECTION } from '@plitzi/sdk-shared/style';
+import { FLEX_DIRECTION } from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';

@@ -7,7 +7,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import { recordStatus } from '../CollectionsConstants';

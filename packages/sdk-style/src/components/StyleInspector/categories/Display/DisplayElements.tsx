@@ -6,7 +6,13 @@ import DisplayInline from '@plitzi/plitzi-ui/icons/DisplayInline';
 import DisplayInlineBlock from '@plitzi/plitzi-ui/icons/DisplayInlineBlock';
 import { useCallback, useMemo } from 'react';
 
-import { ALIGN_ITEMS, DISPLAY, FLEX_DIRECTION, FLEX_WRAP, JUSTIFY_CONTENT } from '@plitzi/sdk-shared/style';
+import {
+  ALIGN_ITEMS,
+  DISPLAY,
+  FLEX_DIRECTION,
+  FLEX_WRAP,
+  JUSTIFY_CONTENT
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

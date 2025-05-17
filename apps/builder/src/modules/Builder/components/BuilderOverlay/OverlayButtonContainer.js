@@ -9,12 +9,12 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 
 // Alias
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';

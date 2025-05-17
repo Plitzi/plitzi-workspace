@@ -1,4 +1,4 @@
-import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 const callback = (source: string, params: { template: string }, dataSources = {}) => {
   const { template } = params;

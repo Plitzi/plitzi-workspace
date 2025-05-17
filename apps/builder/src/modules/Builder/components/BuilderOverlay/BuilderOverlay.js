@@ -3,7 +3,7 @@ import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'r
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 // Relatives
 import OverlayNormal from './OverlayNormal';

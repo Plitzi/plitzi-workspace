@@ -2,8 +2,6 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import moment from 'moment';
 import { useMemo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import LogInteractionBody from './LogInteractionBody';
 import LogInteractionHeader from './LogInteractionHeader';
 
@@ -27,7 +25,7 @@ export type LogInteractionProps = {
 const LogInteraction = ({
   time,
   message,
-  params: { elementId, status, node, nodes = emptyObject, startTime = 0, endTime = 0 }
+  params: { elementId, status, node, nodes, startTime = 0, endTime = 0 }
 }: LogInteractionProps) => {
   const duration = useMemo(
     () => `${moment.duration(moment(endTime).diff(startTime)).asMilliseconds()}ms`,

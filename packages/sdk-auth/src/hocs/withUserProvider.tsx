@@ -2,7 +2,7 @@ import { Auth0Provider } from '@auth0/auth0-react';
 import { use } from 'react';
 
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import { getDisplayName } from '@plitzi/sdk-shared/utils';
+import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { FC } from 'react';
 

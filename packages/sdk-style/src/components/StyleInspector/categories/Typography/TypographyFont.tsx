@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { FONT_FAMILY } from '@plitzi/sdk-shared/style';
+import { FONT_FAMILY } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import { defaultFonts } from './TypographyConstants';
 import CategoryOption from '../../components/CategoryOption';

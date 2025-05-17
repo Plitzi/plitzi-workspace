@@ -3,7 +3,7 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-// import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+// import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import CollectionContainer from './CollectionContainer';
 import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';

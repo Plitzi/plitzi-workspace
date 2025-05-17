@@ -111,12 +111,12 @@ import {
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

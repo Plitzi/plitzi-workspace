@@ -10,7 +10,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Input from '@plitzi/plitzi-ui-components/Input';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Alias
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';

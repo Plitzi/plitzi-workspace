@@ -2,7 +2,7 @@ import get from 'lodash/get';
 import omit from 'lodash/omit';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import { defaultElements } from '..';
 import ComponentContext from './ComponentContext';

@@ -1,6 +1,6 @@
 import { use, useEffect, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { Context, ReactNode } from 'react';

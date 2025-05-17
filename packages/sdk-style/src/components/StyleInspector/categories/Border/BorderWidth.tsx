@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 
-import { BORDER_TOP_WIDTH, BORDER_BOTTOM_WIDTH, BORDER_LEFT_WIDTH, BORDER_RIGHT_WIDTH } from '@plitzi/sdk-shared/style';
+import {
+  BORDER_TOP_WIDTH,
+  BORDER_BOTTOM_WIDTH,
+  BORDER_LEFT_WIDTH,
+  BORDER_RIGHT_WIDTH
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

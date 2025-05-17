@@ -6,7 +6,7 @@ import set from 'lodash/set';
 import { useMemo, useState, useCallback, useRef } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
-import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
+import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import type {
   Element,

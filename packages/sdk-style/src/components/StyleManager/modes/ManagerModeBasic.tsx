@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import { use, useMemo } from 'react';
 
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import StyleInspector from '../../StyleInspector';
 

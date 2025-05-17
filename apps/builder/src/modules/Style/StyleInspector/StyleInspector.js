@@ -11,9 +11,9 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 // Monorepo
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

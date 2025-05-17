@@ -11,7 +11,7 @@ import JsxManager from '@plitzi/sdk-elements/JsxManager';
 import PluginRemote from '@plitzi/sdk-elements/PluginRemote';
 import PluginManager from '@plitzi/sdk-elements/PluginManager';
 import ReplicaProvider from '@plitzi/sdk-elements/ReplicaProvider';
-import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 // Alias
 import Sdk, {

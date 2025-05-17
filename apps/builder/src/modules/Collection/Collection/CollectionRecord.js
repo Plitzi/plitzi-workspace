@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 /**
  * @param {{

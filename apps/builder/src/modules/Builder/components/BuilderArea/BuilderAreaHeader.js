@@ -11,9 +11,9 @@ import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
 
 // Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';

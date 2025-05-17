@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
+import syntaxHighlight from '@plitzi/sdk-shared/helpers/syntaxHighlight';
 
 export type PluginDetailsProps = {
   label?: string;

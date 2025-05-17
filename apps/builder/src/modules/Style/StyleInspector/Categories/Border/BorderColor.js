@@ -3,7 +3,12 @@ import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { BORDER_TOP_COLOR, BORDER_BOTTOM_COLOR, BORDER_LEFT_COLOR, BORDER_RIGHT_COLOR } from '@plitzi/sdk-shared/style';
+import {
+  BORDER_TOP_COLOR,
+  BORDER_BOTTOM_COLOR,
+  BORDER_LEFT_COLOR,
+  BORDER_RIGHT_COLOR
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

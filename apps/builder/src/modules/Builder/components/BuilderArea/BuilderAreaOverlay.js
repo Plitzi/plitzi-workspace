@@ -1,8 +1,8 @@
 // Packages
 import React, { use, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 
 // Relatives
 import BuilderOverlay from '../BuilderOverlay';

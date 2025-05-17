@@ -2,7 +2,7 @@ import { useCallback, use, useMemo } from 'react';
 
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
 import DataSourceContext from '../DataSourceContext';
 

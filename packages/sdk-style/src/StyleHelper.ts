@@ -3,7 +3,7 @@ import pick from 'lodash/pick';
 import set from 'lodash/set';
 
 import { StyleConstants, inheritableAttributesBase } from '@plitzi/sdk-shared';
-import { makeId } from '@plitzi/sdk-shared/utils';
+import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 
 import type {
   Schema,

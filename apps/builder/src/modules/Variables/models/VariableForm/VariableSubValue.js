@@ -4,7 +4,7 @@ import { Controller } from 'react-hook-form';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 
 // Monorepo
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import VariableValue from './VariableValue';
 
 /**

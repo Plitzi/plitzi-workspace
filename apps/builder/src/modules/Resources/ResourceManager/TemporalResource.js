@@ -5,7 +5,7 @@ import noop from 'lodash/noop';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import ResourceUploadStatus from './ResourceUploadStatus';

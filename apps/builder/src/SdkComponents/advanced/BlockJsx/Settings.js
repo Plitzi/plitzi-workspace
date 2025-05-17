@@ -8,7 +8,7 @@ import Alert from '@plitzi/plitzi-ui-components/Alert';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

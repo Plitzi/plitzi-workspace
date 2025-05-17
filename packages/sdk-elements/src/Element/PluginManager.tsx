@@ -3,7 +3,7 @@
 import get from 'lodash/get';
 import { memo, useCallback, use, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';

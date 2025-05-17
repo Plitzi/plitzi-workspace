@@ -16,7 +16,7 @@ import Provider from '@plitzi/plitzi-ui/Provider';
 
 // Monorepo
 import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
-import { getKeyDecoded } from '@plitzi/sdk-shared/utils';
+import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 // Alias
 import SdkPlugin from '@modules/Sdk/SdkPlugin';

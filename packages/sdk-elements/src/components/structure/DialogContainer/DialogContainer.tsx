@@ -3,8 +3,8 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';

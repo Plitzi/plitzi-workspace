@@ -1,7 +1,5 @@
 import { memo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import LogInteraction from './categories/LogInteraction';
 import LogNavigation from './categories/LogNavigation';
 
@@ -20,7 +18,7 @@ export type LogProps = {
   params: LogParams;
 };
 
-const Log = ({ category, message, time, params = emptyObject as LogParams }: LogProps) => {
+const Log = ({ category, message, time, params }: LogProps) => {
   return (
     <>
       {category === 'interactions' && (

@@ -14,7 +14,7 @@ import JustifyContentStartRow from '@plitzi/plitzi-ui/icons/JustifyContentStartR
 import JustifyContentStartRowReverse from '@plitzi/plitzi-ui/icons/JustifyContentStartRowReverse';
 import { useCallback, useMemo } from 'react';
 
-import { JUSTIFY_CONTENT } from '@plitzi/sdk-shared/style';
+import { JUSTIFY_CONTENT } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

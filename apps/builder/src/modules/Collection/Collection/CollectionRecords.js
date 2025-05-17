@@ -3,7 +3,7 @@ import React from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import CollectionRecord from './CollectionRecord';

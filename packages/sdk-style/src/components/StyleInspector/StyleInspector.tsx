@@ -8,8 +8,8 @@ import set from 'lodash/set';
 import { use, useCallback, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import Selector from '../Selector';
 import InspectorModeAdvanced from './modes/InspectorModeAdvanced';

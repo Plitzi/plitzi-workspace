@@ -4,7 +4,7 @@ import set from 'lodash/set';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import StateManagerContext from './StateManagerContext';
 

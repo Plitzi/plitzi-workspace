@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { COLUMN_GAP, ROW_GAP } from '@plitzi/sdk-shared/style';
+import { COLUMN_GAP, ROW_GAP } from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

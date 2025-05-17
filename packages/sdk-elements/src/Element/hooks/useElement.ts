@@ -3,7 +3,7 @@ import { use, useMemo } from 'react';
 
 import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import useElementProps from './useElementProps';
 import useInternalClassName from './useInternalClassName';

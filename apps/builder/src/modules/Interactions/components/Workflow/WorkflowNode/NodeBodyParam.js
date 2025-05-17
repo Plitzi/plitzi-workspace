@@ -11,8 +11,8 @@ import Switch from '@plitzi/plitzi-ui-components/Switch';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-import { isValidToken } from '@plitzi/sdk-shared/twigWrapper';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { isValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 // Relatives
 import ParamBinding from './ParamBinding';

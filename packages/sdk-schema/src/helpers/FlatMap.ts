@@ -3,7 +3,7 @@
 import get from 'lodash/get';
 import set from 'lodash/set';
 
-import { generateID } from '@plitzi/sdk-shared/utils';
+import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
 import type { Style, Element, Schema, SchemaVariable, DisplayMode, StyleItem } from '@plitzi/sdk-shared';
@@ -449,7 +449,7 @@ class FlatMap {
           Object.values(elementStyle.attributes)
             .filter(attribute => typeof attribute === 'string' && attribute.includes('var('))
             .forEach(attribute => {
-              [...attribute.matchAll(VARIABLE_REGEX)].forEach(match => {
+              [...(attribute as string).matchAll(VARIABLE_REGEX)].forEach(match => {
                 const variableFound = variables.find(variable => variable.name === match.groups?.token);
                 if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
                   variablesFound.push(variableFound);

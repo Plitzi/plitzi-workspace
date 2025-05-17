@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { delay as delayFunction } from '@plitzi/sdk-shared/utils';
+import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
 
 // Alias
 import { StyleActions } from '@pmodules/Style/StyleReducer';

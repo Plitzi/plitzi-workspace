@@ -6,8 +6,8 @@ import { useMemo, use } from 'react';
 import useNavigation from '@plitzi/sdk-navigation/useNavigation';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import withUserProvider from './hocs/withUserProvider';
 import useAuth from './hooks/useAuth';

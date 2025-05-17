@@ -10,7 +10,7 @@ import {
   OVERFLOW,
   OBJECT_FIT,
   OBJECT_POSITION
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import SizeFit from './SizeFit';
 import SizeOverflow from './SizeOverflow';

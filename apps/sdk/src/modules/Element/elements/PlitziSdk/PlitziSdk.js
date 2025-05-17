@@ -3,8 +3,8 @@ import React, { use } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import RootElement from '@plitzi/sdk-elements/RootElement';
 import withElement from '@plitzi/sdk-elements/withElement';
 

@@ -6,7 +6,7 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 /**
  * @param {{

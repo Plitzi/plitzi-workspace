@@ -1,5 +1,3 @@
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import BodyContent from './BodyContent';
 import BodyHeader from './BodyHeader';
 
@@ -15,14 +13,7 @@ export type LogInteractionBodyProps = {
   elementId?: string;
 };
 
-const LogInteractionBody = ({
-  node,
-  nodes = emptyObject,
-  startTime,
-  endTime,
-  duration,
-  elementId
-}: LogInteractionBodyProps) => {
+const LogInteractionBody = ({ node, nodes, startTime, endTime, duration, elementId }: LogInteractionBodyProps) => {
   return (
     <div className="flex flex-col m-2 gap-4">
       <BodyHeader

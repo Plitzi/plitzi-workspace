@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import omit from 'lodash/omit';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import VariableForm from './models/VariableForm';

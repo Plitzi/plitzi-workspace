@@ -3,7 +3,7 @@ import get from 'lodash/get';
 import omit from 'lodash/omit';
 
 import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
-import { processTwig, hasTokens } from '@plitzi/sdk-shared/twigWrapper';
+import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import utility from './utility';
 

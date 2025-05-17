@@ -4,7 +4,12 @@ import BorderStyleSolid from '@plitzi/plitzi-ui/icons/BorderStyleSolid';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { BORDER_TOP_STYLE, BORDER_BOTTOM_STYLE, BORDER_LEFT_STYLE, BORDER_RIGHT_STYLE } from '@plitzi/sdk-shared/style';
+import {
+  BORDER_TOP_STYLE,
+  BORDER_BOTTOM_STYLE,
+  BORDER_LEFT_STYLE,
+  BORDER_RIGHT_STYLE
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

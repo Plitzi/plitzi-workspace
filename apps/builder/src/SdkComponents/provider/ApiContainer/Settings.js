@@ -11,7 +11,7 @@ import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Alias
 import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';

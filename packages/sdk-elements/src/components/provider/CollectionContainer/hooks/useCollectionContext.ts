@@ -2,7 +2,7 @@ import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import isEmpty from 'lodash/isEmpty';
 import { useMemo, useEffect, useState, use, useCallback } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Collection, PageInfo } from '@plitzi/sdk-shared';

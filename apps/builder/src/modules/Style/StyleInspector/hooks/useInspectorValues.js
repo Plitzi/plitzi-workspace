@@ -4,7 +4,7 @@ import pick from 'lodash/pick';
 import get from 'lodash/get';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { VARIABLE_REGEX } from '@plitzi/sdk-schema/FlatMap';
 import {
   // typography
@@ -110,7 +110,7 @@ import {
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import StyleInspectorContext from '../StyleInspectorContext';

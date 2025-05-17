@@ -1,4 +1,4 @@
-import { OBJECT_FIT } from '@plitzi/sdk-shared/style';
+import { OBJECT_FIT } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

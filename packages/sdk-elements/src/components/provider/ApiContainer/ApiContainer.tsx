@@ -5,8 +5,8 @@ import Handlebars from 'handlebars';
 import get from 'lodash/get';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import useApi from './hooks/useApi';
 import withElement from '../../../Element/hocs/withElement';

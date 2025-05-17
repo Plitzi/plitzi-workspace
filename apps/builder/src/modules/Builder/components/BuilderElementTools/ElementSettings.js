@@ -16,18 +16,18 @@ import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 
 // Alias
 import CollectionContext from '@pmodules/Collection/CollectionContext';

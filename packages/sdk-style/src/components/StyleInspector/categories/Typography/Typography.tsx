@@ -17,7 +17,7 @@ import {
   WHITE_SPACE,
   TEXT_WRAP,
   TEXT_OVERFLOW
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import TypographyAlign from './TypographyAlign';
 import { defaultFonts, weights } from './TypographyConstants';

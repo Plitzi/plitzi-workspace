@@ -1,7 +1,7 @@
 import React, { use, useEffect, useMemo } from 'react';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 import AppContext from '@pmodules/App/AppContext';
 

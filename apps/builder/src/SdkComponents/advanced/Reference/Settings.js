@@ -5,7 +5,7 @@ import get from 'lodash/get';
 import Select2 from '@plitzi/plitzi-ui-components/Select2';
 
 // Monorepo
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 const REFERENCE_TYPE_ELEMENT = 'element';
 const REFERENCE_TYPE_SEGMENT = 'segment';

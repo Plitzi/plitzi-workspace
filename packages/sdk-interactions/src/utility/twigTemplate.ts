@@ -1,5 +1,5 @@
-import { processTwig } from '@plitzi/sdk-shared/twigWrapper';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
 type CallbackParams = { template: string; returnMode: 'jsonObject' | 'json' | 'text' };
 

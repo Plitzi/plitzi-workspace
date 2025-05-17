@@ -6,7 +6,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 import Button from '@plitzi/plitzi-ui-components/Button';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 /**
  * @param {{

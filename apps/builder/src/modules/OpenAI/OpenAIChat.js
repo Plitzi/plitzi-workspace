@@ -8,7 +8,7 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

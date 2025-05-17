@@ -3,7 +3,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import capitalize from 'lodash/capitalize';
 import { useCallback } from 'react';
 
-import { makeId } from '@plitzi/sdk-shared/utils';
+import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { SelectorValue } from '../Selector';
 import type { TagType } from '@plitzi/sdk-shared';

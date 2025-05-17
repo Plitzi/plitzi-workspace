@@ -13,7 +13,7 @@ import {
   OVERFLOW,
   OBJECT_FIT,
   OBJECT_POSITION
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import SizeOverflow from './SizeOverflow';

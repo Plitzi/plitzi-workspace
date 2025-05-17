@@ -8,7 +8,7 @@ import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import VariableSubValue from './VariableSubValue';
 import VariableValue from './VariableValue';
 

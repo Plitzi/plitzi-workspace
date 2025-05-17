@@ -8,7 +8,7 @@ import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
 
 // Monorepo
-import { makeId } from '@plitzi/sdk-shared/utils';
+import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import { selectorFormatter } from './SelectorHelper';

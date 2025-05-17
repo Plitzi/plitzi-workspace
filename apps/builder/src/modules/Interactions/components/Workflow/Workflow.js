@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import WorkflowFlow from './WorkflowFlow';

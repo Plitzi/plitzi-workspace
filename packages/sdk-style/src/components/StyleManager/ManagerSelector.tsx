@@ -8,8 +8,8 @@ import isEmpty from 'lodash/isEmpty';
 import set from 'lodash/set';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import StyleSelectorTag from './StyleSelectorTag';
 import SelectorForm from '../SelectorForm';

@@ -4,7 +4,7 @@ import camelCase from 'lodash/camelCase';
 import get from 'lodash/get';
 import { memo, useCallback, use } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import PluginRemote from './PluginRemote';
 import ComponentContext from '../Component/ComponentContext';

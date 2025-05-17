@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { OBJECT_FIT } from '@plitzi/sdk-shared/style';
+import { OBJECT_FIT } from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import GroupButtons from '../../../components/GroupButtons';

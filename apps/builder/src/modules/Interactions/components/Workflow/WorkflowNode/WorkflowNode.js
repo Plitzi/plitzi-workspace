@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import NodeHeader from './NodeHeader';

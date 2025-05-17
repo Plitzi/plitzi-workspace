@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { TEXT_ALIGN } from '@plitzi/sdk-shared/style';
+import { TEXT_ALIGN } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

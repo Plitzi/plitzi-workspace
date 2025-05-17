@@ -9,9 +9,9 @@ import set from 'lodash/set';
 import { useCallback, use, useMemo } from 'react';
 
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import useStyleBinding from './hooks/useStyleBinding';

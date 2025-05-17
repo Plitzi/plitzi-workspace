@@ -9,11 +9,11 @@ import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/FlatMap';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/BuilderHoveredContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';

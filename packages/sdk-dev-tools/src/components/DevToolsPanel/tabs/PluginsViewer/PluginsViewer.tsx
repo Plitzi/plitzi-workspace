@@ -16,28 +16,26 @@ export type PluginsViewerProps = {
 
 const PluginsViewer = ({ className }: PluginsViewerProps) => {
   const { plugins } = use(PluginsContext);
-  const pluginsParsed = useMemo<ListItem<Plugin>[]>(() => {
-    if (!plugins) {
-      return [];
-    }
+  const pluginsParsed = useMemo<ListItem<Plugin>[]>(
+    () =>
+      Object.keys(plugins).map(pluginKey => {
+        const plugin = plugins[pluginKey];
+        const label = capitalize(pluginKey);
 
-    return Object.keys(plugins).map(pluginKey => {
-      const plugin = plugins[pluginKey];
-      const label = capitalize(pluginKey);
-
-      return {
-        ...plugin,
-        id: pluginKey,
-        name: label,
-        label: (
-          <div className="flex flex-col">
-            {label}
-            <span className="text-xs text-gray-500">{plugin.manifest.version}</span>
-          </div>
-        )
-      };
-    });
-  }, [plugins]);
+        return {
+          ...plugin,
+          id: pluginKey,
+          name: label,
+          label: (
+            <div className="flex flex-col">
+              {label}
+              <span className="text-xs text-gray-500">{plugin.manifest.version}</span>
+            </div>
+          )
+        };
+      }),
+    [plugins]
+  );
   const [plugin, setPlugin] = useState<ListItem<Plugin> | undefined>();
 
   const handleItemSelected = useCallback((pluginSelected?: ListItem<Plugin>) => setPlugin(pluginSelected), []);

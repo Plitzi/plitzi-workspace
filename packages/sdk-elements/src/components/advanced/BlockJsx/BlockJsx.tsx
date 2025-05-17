@@ -5,7 +5,7 @@ import set from 'lodash/set';
 import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ComponentContext from '../../../Component/ComponentContext';
 import withElement from '../../../Element/hocs/withElement';

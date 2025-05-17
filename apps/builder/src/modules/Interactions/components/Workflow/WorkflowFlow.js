@@ -3,7 +3,7 @@ import React, { useCallback, use, useMemo, useState } from 'react';
 import classNames from 'classnames';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import WorkflowNode from './WorkflowNode';

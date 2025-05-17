@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT } from '@plitzi/sdk-shared/style';
+import { MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import InspectorLabel from '../../InspectorLabel';

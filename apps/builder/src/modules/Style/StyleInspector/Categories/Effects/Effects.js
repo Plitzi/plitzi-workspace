@@ -3,7 +3,7 @@ import React, { memo, useCallback, use, useMemo } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM } from '@plitzi/sdk-shared/style';
+import { OPACITY, CURSOR, TRANSITION, BOX_SHADOW, FILTER, TRANSFORM } from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import Transition from './Transition';

@@ -2,7 +2,7 @@
 import { use, useMemo } from 'react';
 import get from 'lodash/get';
 
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 const getApiRequest = async ({
   url = '',

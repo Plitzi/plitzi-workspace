@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { useMemo, use } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ReplicaProvider from '../../../../../Element/ReplicaProvider';
 

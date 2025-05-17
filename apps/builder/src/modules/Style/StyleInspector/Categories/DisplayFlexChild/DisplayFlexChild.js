@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import isEqual from 'lodash/isEqual';
 
 // Monorepo
-import { ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS } from '@plitzi/sdk-shared/style';
+import { ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS } from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Alias
 import Icons from '@pcomponents/Icons';

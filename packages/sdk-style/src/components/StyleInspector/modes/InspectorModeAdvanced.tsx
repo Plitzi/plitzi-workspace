@@ -7,8 +7,8 @@ import set from 'lodash/set';
 import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import { StyleConstants } from '@plitzi/sdk-shared/style';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { StyleConstants } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import {
   cssToSelectors,

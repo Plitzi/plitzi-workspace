@@ -17,7 +17,7 @@ import {
   GRID_AUTO_FLOW,
   GRID_AUTO_ROWS,
   GRID_AUTO_COLUMNS
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 import DisplayElements from './DisplayElements';
 import DisplayFlex from './DisplayFlex';

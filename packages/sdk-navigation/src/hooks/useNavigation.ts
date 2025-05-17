@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import { useMemo } from 'react';
 
-import { ParamsFromURL } from '@plitzi/sdk-shared/utils';
+import { ParamsFromURL } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { Server } from '../types';
 

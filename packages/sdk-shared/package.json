@@ -16,40 +16,10 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
-    "./style/*": {
-      "types": "./dist/style/*.d.ts",
-      "import": "./dist/style/*",
-      "require": "./dist/style/*"
-    },
-    "./style": {
-      "types": "./dist/style/index.d.ts",
-      "import": "./dist/style/index.es",
-      "require": "./dist/style/index.cjs"
-    },
-    "./builder/*": {
-      "types": "./dist/builder/contexts/*.d.ts",
-      "import": "./dist/builder/contexts/*",
-      "require": "./dist/builder/contexts/*"
-    },
-    "./usePlitziServiceContext": {
-      "types": "./dist/hooks/usePlitziServiceContext.d.ts",
-      "import": "./dist/hooks/usePlitziServiceContext.es",
-      "require": "./dist/hooks/usePlitziServiceContext.cjs"
-    },
-    "./utils": {
-      "types": "./dist/helpers/utils.d.ts",
-      "import": "./dist/helpers/utils.es",
-      "require": "./dist/helpers/utils.cjs"
-    },
-    "./syntaxHighlight": {
-      "types": "./dist/helpers/syntaxHighlight.d.ts",
-      "import": "./dist/helpers/syntaxHighlight.es",
-      "require": "./dist/helpers/syntaxHighlight.cjs"
-    },
-    "./twigWrapper": {
-      "types": "./dist/helpers/twigWrapper.d.ts",
-      "import": "./dist/helpers/twigWrapper.es",
-      "require": "./dist/helpers/twigWrapper.cjs"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
     },
     "./eslint.config.mjs": "./eslint.config.old.mjs",
     "./eslint.config.ts.mjs": "./eslint.config.mjs",

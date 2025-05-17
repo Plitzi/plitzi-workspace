@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import Icon from '@plitzi/plitzi-ui/Icon';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import { fieldTypes } from '../CollectionsConstants';

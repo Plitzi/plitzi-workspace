@@ -8,8 +8,8 @@ import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 
 // Monorepo
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
 /**
  * @param {{

@@ -12,7 +12,7 @@ import Input from '@plitzi/plitzi-ui-components/Input';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

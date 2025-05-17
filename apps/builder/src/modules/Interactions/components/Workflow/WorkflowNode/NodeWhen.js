@@ -7,7 +7,7 @@ import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 /**
  * @param {{

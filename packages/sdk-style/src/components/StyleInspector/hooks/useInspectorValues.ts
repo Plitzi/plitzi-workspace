@@ -3,7 +3,7 @@ import pick from 'lodash/pick';
 import { use, useMemo } from 'react';
 
 import { VARIABLE_REGEX } from '@plitzi/sdk-schema/FlatMap';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import StyleInspectorContext from '../StyleInspectorContext';
 import { baseDefaultValue } from '../StyleInspectorHelper';

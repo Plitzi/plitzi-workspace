@@ -2,8 +2,8 @@
 import React, { use, useMemo, useState } from 'react';
 import get from 'lodash/get';
 
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

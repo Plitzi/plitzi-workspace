@@ -5,7 +5,7 @@ import FlexShrinkRow from '@plitzi/plitzi-ui/icons/FlexShrinkRow';
 import isEqual from 'lodash/isEqual';
 import { memo, useCallback, use, useMemo } from 'react';
 
-import { ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS } from '@plitzi/sdk-shared/style';
+import { ALIGN_SELF, ORDER, FLEX_GROW, FLEX_SHRINK, FLEX_BASIS } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import DisplayAlignSelf from './DisplayAlignSelf';
 import DisplayOrder from './DisplayOrder';

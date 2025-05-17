@@ -1,8 +1,7 @@
 import { getValuesRequired } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
-import syntaxHighlight from '@plitzi/sdk-shared/syntaxHighlight';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import syntaxHighlight from '@plitzi/sdk-shared/helpers/syntaxHighlight';
 
 import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -12,7 +11,7 @@ export type NodeMetadataProps = {
   whenParams?: Record<string, RuleValue>;
 };
 
-const NodeMetadata = ({ when, whenParams = emptyObject }: NodeMetadataProps) => {
+const NodeMetadata = ({ when, whenParams }: NodeMetadataProps) => {
   const content = useMemo<string>(() => {
     if (!when || Object.keys(when).length === 0) {
       return '';

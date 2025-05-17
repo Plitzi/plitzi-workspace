@@ -2,7 +2,7 @@
 
 import { use, useEffect, useMemo, useRef } from 'react';
 
-import { makeId, emptyObject } from '@plitzi/sdk-shared/utils';
+import { makeId, emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import DataSourceContext from '../DataSourceContext';
 

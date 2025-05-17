@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 // Alias
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';

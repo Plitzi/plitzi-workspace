@@ -5,7 +5,7 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import StepSource from './steps/StepSource';

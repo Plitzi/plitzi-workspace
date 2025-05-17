@@ -2,8 +2,8 @@
 import get from 'lodash/get';
 import { useCallback, use, useMemo, useEffect } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { getDisplayName } from '@plitzi/sdk-shared/utils';
+import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { FieldValue } from '../../Form/Form';
 import type { DataSourceContextValue } from '@plitzi/sdk-data-source';

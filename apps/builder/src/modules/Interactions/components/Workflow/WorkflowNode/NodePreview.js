@@ -7,7 +7,7 @@ import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsa
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 /**
  * @param {{

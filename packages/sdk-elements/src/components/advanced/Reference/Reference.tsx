@@ -4,7 +4,7 @@ import capitalize from 'lodash/capitalize';
 import get from 'lodash/get';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
 import PluginManager from '../../../Element/PluginManager';

@@ -11,8 +11,8 @@ import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsa
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/BuilderSchemaContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 
 // Relatives
 import BindingForm from './models/BindingForm';

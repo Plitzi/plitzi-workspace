@@ -3,7 +3,7 @@
 import classNames from 'classnames';
 import { use, useEffect } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import Label from './components/Label';
 import withFieldValue from './hocs/withFieldValue';

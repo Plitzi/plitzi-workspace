@@ -10,7 +10,7 @@ import Checkbox from '@plitzi/plitzi-ui-components/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 const optionsDefault = [];
 

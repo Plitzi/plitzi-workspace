@@ -9,7 +9,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/BuilderStyleContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 // Relatives
 import SelectorTag from './SelectorTag';

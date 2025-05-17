@@ -7,7 +7,7 @@ import get from 'lodash/get';
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import utility from '@plitzi/sdk-interactions/utility';
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Alias
 import Workflow from './components/Workflow';

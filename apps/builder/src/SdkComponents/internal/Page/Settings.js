@@ -12,7 +12,7 @@ import Select2 from '@plitzi/plitzi-ui-components/Select2';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
 
 // Monorepo
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 
 /**

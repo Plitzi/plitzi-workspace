@@ -2,8 +2,6 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import moment from 'moment';
 import { useMemo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
-
 import NodeHeader from './NodeHeader';
 import NodeMetadata from './NodeMetadata';
 import NodeWhen from './NodeWhen';
@@ -23,7 +21,7 @@ export type InteractionNodeProps = {
 };
 
 const InteractionNode = ({
-  whenParams = emptyObject,
+  whenParams,
   name = 'Node Title',
   startTime = 0,
   endTime = 0,

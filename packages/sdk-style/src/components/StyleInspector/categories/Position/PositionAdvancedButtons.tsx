@@ -9,7 +9,7 @@ import PositionTopLeft from '@plitzi/plitzi-ui/icons/PositionTopLeft';
 import PositionTopRight from '@plitzi/plitzi-ui/icons/PositionTopRight';
 import { useMemo } from 'react';
 
-import { TOP, BOTTOM, LEFT, RIGHT } from '@plitzi/sdk-shared/style';
+import { TOP, BOTTOM, LEFT, RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
 
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';

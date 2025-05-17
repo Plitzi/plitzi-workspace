@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import noop from 'lodash/noop';
 
 // Monorepo
-import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@plitzi/sdk-shared/style';
+import { PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT } from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import InspectorLabel from '../../InspectorLabel';

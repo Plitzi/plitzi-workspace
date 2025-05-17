@@ -37,7 +37,7 @@ const useInternalItems = ({
     // Process items
     const flat = get(schema, 'flat', {}) as Schema['flat'];
     const itemsParsed: ReactNode[] = (items ?? [])
-      .filter(itemId => !!flat[itemId])
+      .filter(itemId => !!(flat[itemId] as Element | undefined))
       .map(itemId => {
         const { rootId, type } = get(flat, `${itemId}.definition`, {}) as Element['definition'];
         const finalRootId = get(plitziElementLayout, 'rootId', rootId);

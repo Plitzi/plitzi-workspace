@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import { lazy, Suspense, use, useMemo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import ComponentContext from '../Component/ComponentContext';
 import { nestedInject, ORIGIN_REMOTE } from '../Component/ComponentHelper';

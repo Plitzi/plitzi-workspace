@@ -3,7 +3,7 @@ import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import classNames from 'classnames';
 import { useMemo, use, useCallback } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';

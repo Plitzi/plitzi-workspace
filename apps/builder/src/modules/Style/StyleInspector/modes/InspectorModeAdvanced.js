@@ -9,7 +9,7 @@ import { produce } from 'immer';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import { StyleConstants } from '@plitzi/sdk-shared/style';
+import { StyleConstants } from '@plitzi/sdk-shared/style/StyleConstants';
 import {
   cssToSelectors,
   getReadOnlyRangesFromContent,
@@ -17,7 +17,7 @@ import {
   makeSelector
 } from '@plitzi/sdk-style/StyleHelper';
 import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';

@@ -2,8 +2,8 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import { useCallback, use, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/usePlitziServiceContext';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ListControlledItem from './ListControlledItem';
 import RootElement from '../../../../../Element/RootElement';

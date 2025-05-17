@@ -12,8 +12,8 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
-import BuilderContext from '@plitzi/sdk-shared/builder/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/BuilderSelectedContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 
 // Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';

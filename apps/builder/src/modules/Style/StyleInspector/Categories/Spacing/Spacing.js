@@ -12,7 +12,7 @@ import {
   PADDING_BOTTOM,
   PADDING_LEFT,
   PADDING_RIGHT
-} from '@plitzi/sdk-shared/style';
+} from '@plitzi/sdk-shared/style/StyleConstants';
 
 // Relatives
 import SpacingMargin from './SpacingMargin';
