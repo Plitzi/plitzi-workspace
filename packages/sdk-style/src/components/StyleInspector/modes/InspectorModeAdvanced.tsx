@@ -58,11 +58,8 @@ const InspectorModeAdvanced = ({
   );
 
   const sync = useCallback(
-    (currentState: string, push = true) => {
+    (currentState: string) => {
       const newState = cssToSelectors(currentState, true);
-      if (!push) {
-        return;
-      }
 
       if (newState.name) {
         builderHandler(
