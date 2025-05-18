@@ -7,7 +7,7 @@ import omit from 'lodash/omit';
 
 // Monorepo
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';

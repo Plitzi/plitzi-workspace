@@ -15,7 +15,7 @@ import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
 import Provider from '@plitzi/plitzi-ui/Provider';
 
 // Monorepo
-import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 // Alias

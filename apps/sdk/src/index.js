@@ -3,14 +3,14 @@ import React, { useCallback } from 'react';
 import ReactDOM from 'react-dom/client';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
-import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
-import RootElement from '@plitzi/sdk-elements/RootElement';
-import withElement from '@plitzi/sdk-elements/withElement';
-import JsxManager from '@plitzi/sdk-elements/JsxManager';
-import PluginRemote from '@plitzi/sdk-elements/PluginRemote';
-import PluginManager from '@plitzi/sdk-elements/PluginManager';
-import ReplicaProvider from '@plitzi/sdk-elements/ReplicaProvider';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
+import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
+import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
+import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 // Alias

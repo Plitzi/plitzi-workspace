@@ -10,7 +10,7 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 

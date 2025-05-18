@@ -4,7 +4,7 @@ import get from 'lodash/get';
 
 // Monorepo
 import { Page } from '@plitzi/sdk-elements/components';
-import PluginManager from '@plitzi/sdk-elements/PluginManager';
+import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
