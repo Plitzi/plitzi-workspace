@@ -11,7 +11,6 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionBaseCallback, InternalPropsSTG2, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
@@ -42,7 +41,7 @@ const CollectionContainer = ({
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
   const { loading, collection, fetch } = useCollectionContext({ source, limit, query, singleRecord, previewMode });
-  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { useDataSource } = use(DataSourceContext);
 
   const sourceFields = useCallback(() => {
     const fields: SourceField[] = [];

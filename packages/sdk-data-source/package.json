@@ -10,50 +10,10 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
-    "./DataSourceContext": {
-      "types": "./dist/DataSourceContext.d.ts",
-      "import": "./dist/DataSourceContext.es",
-      "require": "./dist/DataSourceContext.cjs"
-    },
-    "./DataSourceContextProvider": {
-      "types": "./dist/DataSourceContextProvider.d.ts",
-      "import": "./dist/DataSourceContextProvider.es",
-      "require": "./dist/DataSourceContextProvider.cjs"
-    },
-    "./hooks/useDataSource": {
-      "types": "./dist/hooks/useDataSource.d.ts",
-      "import": "./dist/hooks/useDataSource.es",
-      "require": "./dist/hooks/useDataSource.cjs"
-    },
-    "./helpers/getBindingsDetails": {
-      "types": "./dist/helpers/getBindingsDetails.d.ts",
-      "import": "./dist/helpers/getBindingsDetails.es",
-      "require": "./dist/helpers/getBindingsDetails.cjs"
-    },
-    "./utility": {
-      "types": "./dist/utility/index.d.ts",
-      "import": "./dist/utility/index.es",
-      "require": "./dist/utility/index.cjs"
-    },
-    "./sources/NavigationSource": {
-      "types": "./dist/sources/NavigationSource.d.ts",
-      "import": "./dist/sources/NavigationSource.es",
-      "require": "./dist/sources/NavigationSource.cjs"
-    },
-    "./sources/PageStateSource": {
-      "types": "./dist/sources/PageStateSource.d.ts",
-      "import": "./dist/sources/PageStateSource.es",
-      "require": "./dist/sources/PageStateSource.cjs"
-    },
-    "./sources/VariablesSource": {
-      "types": "./dist/sources/VariablesSource.d.ts",
-      "import": "./dist/sources/VariablesSource.es",
-      "require": "./dist/sources/VariablesSource.cjs"
-    },
-    "./sources/UserSource": {
-      "types": "./dist/sources/UserSource.d.ts",
-      "import": "./dist/sources/UserSource.es",
-      "require": "./dist/sources/UserSource.cjs"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
     }
   },
   "scripts": {

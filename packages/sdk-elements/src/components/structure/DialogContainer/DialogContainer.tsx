@@ -9,7 +9,6 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type {
   SourceField,
@@ -47,7 +46,7 @@ const DialogContainer = ({
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
-  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { useDataSource } = use(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
   const [processing, setProcessing] = useState(false);
 

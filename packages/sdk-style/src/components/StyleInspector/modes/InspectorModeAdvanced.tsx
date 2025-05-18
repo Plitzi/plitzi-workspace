@@ -6,8 +6,8 @@ import debounce from 'lodash/debounce';
 import set from 'lodash/set';
 import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { StyleConstants } from '@plitzi/sdk-shared/style/styleConstants';
 
 import {

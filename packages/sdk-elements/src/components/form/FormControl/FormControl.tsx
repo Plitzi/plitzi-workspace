@@ -16,7 +16,6 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { FormContextValue } from '../Form';
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ChangeEvent, RefObject } from 'react';
 
@@ -65,7 +64,7 @@ const FormControl = ({
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { useDataSource } = use(DataSourceContext);
   const { form } = useDataSource<FormContextValue | undefined>({ id, mode: 'read' });
   if (!form && !previewMode) {
     return (

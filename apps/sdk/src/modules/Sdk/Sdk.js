@@ -3,7 +3,7 @@ import React, { use, useMemo, useRef, useCallback } from 'react';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Monorepo
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';

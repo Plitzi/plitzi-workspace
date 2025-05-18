@@ -77,6 +77,7 @@ export default defineConfig(({ mode, command, ...args }) => {
         // name: 'plitzi-ui',
       },
       rollupOptions: {
+        treeshake: false,
         external: [
           ...Object.keys(pkg.dependencies),
           'lodash/get',

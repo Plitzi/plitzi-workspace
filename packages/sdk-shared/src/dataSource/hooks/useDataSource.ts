@@ -2,11 +2,10 @@
 
 import { use, useEffect, useMemo, useRef } from 'react';
 
-import { makeId, emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-
+import { emptyObject, makeId } from '../../helpers/utils';
 import DataSourceContext from '../DataSourceContext';
 
-import type { Source, SourceMeta } from '@plitzi/sdk-shared';
+import type { Source, SourceMeta } from '../../types';
 import type { Context } from 'react';
 
 export type UseDataSourceMode = 'write' | 'read';

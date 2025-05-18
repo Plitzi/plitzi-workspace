@@ -1,8 +1,8 @@
 import { use, useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import { calculateInheriting } from '../../../StyleHelper';
 

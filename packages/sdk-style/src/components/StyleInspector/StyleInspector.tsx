@@ -7,9 +7,9 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 import { use, useCallback, useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import Selector from '../Selector';
 import InspectorModeAdvanced from './modes/InspectorModeAdvanced';

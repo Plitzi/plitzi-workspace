@@ -7,9 +7,8 @@ import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, InternalPropsSTG2, DataSourceContextValue } from '@plitzi/sdk-shared';
 import type { Context, FC, JSX, ReactNode, RefObject } from 'react';
 
 const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {

@@ -2,9 +2,9 @@
 import { createContext, use } from 'react';
 
 import type { BuilderContextValue } from '../builder';
+import type { DataSourceContextValue } from '../dataSource';
 import type {
   CollectionContextValue,
-  DataSourceContextValue,
   EventBridgeContextValue,
   InteractionsContextValue,
   NavigationContextValue,

@@ -8,7 +8,7 @@ import omit from 'lodash/omit';
 import upperFirst from 'lodash/upperFirst';
 
 // Monorepo
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 

@@ -10,7 +10,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui-components/ContainerCollapsable';
 
 // Monorepo
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 

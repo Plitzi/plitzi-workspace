@@ -13,7 +13,6 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { SourceField, InternalPropsSTG2, InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
@@ -51,7 +50,7 @@ const ApiContainer = ({
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
-  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { useDataSource } = use(DataSourceContext);
   const { routeParams, queryParams } = use(NavigationContext);
   const queryCompiled = useMemo(() => {
     if (!query) {

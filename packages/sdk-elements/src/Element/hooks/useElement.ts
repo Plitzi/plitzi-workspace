@@ -10,7 +10,6 @@ import useInternalClassName from './useInternalClassName';
 import useInternalItems from './useInternalItems';
 import useInternalProps from './useInternalProps';
 
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { EventBridgeCallback, EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type { Schema, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
@@ -28,7 +27,7 @@ const useElement = (
     root: { baseElementId },
     contexts: { SchemaContext, DataSourceContext, EventBridgeContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { useDataSource } = use(DataSourceContext);
   const { schema } = use(SchemaContext);
   const { id } = internalProps;
   const { prevSchema } = use(SchemaContext);

@@ -16,7 +16,7 @@ import {
   formatCssFromSelector,
   makeSelector
 } from '@plitzi/sdk-style/StyleHelper';
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 // Alias

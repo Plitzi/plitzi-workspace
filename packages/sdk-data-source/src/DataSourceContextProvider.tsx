@@ -4,9 +4,9 @@ import set from 'lodash/set';
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 
-import DataSourceContext from './DataSourceContext';
-import useDataSource from './hooks/useDataSource';
 import NavigationSource from './sources/NavigationSource';
 import PageStateSource from './sources/PageStateSource';
 import UserSource from './sources/UserSource';

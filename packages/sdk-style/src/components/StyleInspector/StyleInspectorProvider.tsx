@@ -8,18 +8,17 @@ import omit from 'lodash/omit';
 import set from 'lodash/set';
 import { useCallback, use, useMemo } from 'react';
 
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
 import { baseDefaultValue } from './StyleInspectorHelper';
+import { makeSelector, type StyleHelperMetaData } from '../../StyleHelper';
 
 import type { StyleInspectorContextValue } from './StyleInspectorContext';
-import type { StyleHelperMetaData } from '../../StyleHelper';
 import type { DisplayMode, Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 

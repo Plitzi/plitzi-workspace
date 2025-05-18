@@ -1,7 +1,7 @@
 import { use } from 'react';
 
-import useDataSource from '@plitzi/sdk-data-source/hooks/useDataSource';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 
 import VariablesList from './VariablesList';
 

@@ -8,7 +8,7 @@ import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';

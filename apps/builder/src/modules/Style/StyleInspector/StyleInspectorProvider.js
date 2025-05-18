@@ -113,7 +113,7 @@ import {
   GRID_AUTO_COLUMNS
 } from '@plitzi/sdk-shared/style/styleConstants';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';

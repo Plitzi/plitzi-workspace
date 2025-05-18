@@ -6,7 +6,6 @@ import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { FieldValue } from '../../Form/Form';
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ChangeEvent, FC, RefObject } from 'react';
 
@@ -37,7 +36,7 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
       settings: { previewMode },
       contexts: { DataSourceContext }
     } = usePlitziServiceContext();
-    const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+    const { useDataSource } = use(DataSourceContext);
     const { form } = useDataSource<
       | {
           setFieldValue: (name: string, value: FieldValue | null) => void;

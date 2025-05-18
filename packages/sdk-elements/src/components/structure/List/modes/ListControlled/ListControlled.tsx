@@ -8,7 +8,6 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import ListControlledItem from './ListControlledItem';
 import RootElement from '../../../../../Element/RootElement';
 
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { SourceField, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
@@ -26,7 +25,7 @@ const ListControlled = ({ ref, className = '', internalProps, children, items = 
     settings: { previewMode },
     contexts: { DataSourceContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { useDataSource } = use(DataSourceContext);
   const finalItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;

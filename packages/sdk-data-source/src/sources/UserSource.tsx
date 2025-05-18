@@ -2,9 +2,8 @@ import { useCallback, use, useMemo } from 'react';
 
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
-
-import DataSourceContext from '../DataSourceContext';
 
 import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

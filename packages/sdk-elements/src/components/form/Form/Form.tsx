@@ -12,7 +12,6 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { DataSourceContextValue } from '@plitzi/sdk-data-source';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type {
   SourceField,
@@ -65,7 +64,7 @@ const Form = ({
     settings: { previewMode },
     contexts: { DataSourceContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext) as DataSourceContextValue;
+  const { useDataSource } = use(DataSourceContext);
   const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
 
   const registerField = useCallback(
