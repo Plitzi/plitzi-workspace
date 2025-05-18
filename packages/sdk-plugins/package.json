@@ -10,15 +10,10 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
-    "./PluginsContext": {
-      "types": "./dist/PluginsContext.d.ts",
-      "import": "./dist/PluginsContext.es",
-      "require": "./dist/PluginsContext.cjs"
-    },
-    "./PluginHelper": {
-      "types": "./dist/PluginHelper.d.ts",
-      "import": "./dist/PluginHelper.es",
-      "require": "./dist/PluginHelper.cjs"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
     }
   },
   "scripts": {

@@ -10,55 +10,10 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
-    "./ComponentContext": {
-      "types": "./dist/Component/ComponentContext.d.ts",
-      "import": "./dist/Component/ComponentContext.es",
-      "require": "./dist/Component/ComponentContext.cjs"
-    },
-    "./ComponentProvider": {
-      "types": "./dist/Component/ComponentProvider.d.ts",
-      "import": "./dist/Component/ComponentProvider.es",
-      "require": "./dist/Component/ComponentProvider.cjs"
-    },
-    "./RootElement": {
-      "types": "./dist/Element/RootElement.d.ts",
-      "import": "./dist/Element/RootElement.es",
-      "require": "./dist/Element/RootElement.cjs"
-    },
-    "./ReplicaProvider": {
-      "types": "./dist/Element/ReplicaProvider.d.ts",
-      "import": "./dist/Element/ReplicaProvider.es",
-      "require": "./dist/Element/ReplicaProvider.cjs"
-    },
-    "./withElement": {
-      "types": "./dist/Element/hocs/withElement.d.ts",
-      "import": "./dist/Element/hocs/withElement.es",
-      "require": "./dist/Element/hocs/withElement.cjs"
-    },
-    "./JsxManager": {
-      "types": "./dist/Element/JsxManager.d.ts",
-      "import": "./dist/Element/JsxManager.es",
-      "require": "./dist/Element/JsxManager.cjs"
-    },
-    "./PluginRemote": {
-      "types": "./dist/Element/PluginRemote.d.ts",
-      "import": "./dist/Element/PluginRemote.es",
-      "require": "./dist/Element/PluginRemote.cjs"
-    },
-    "./PluginManager": {
-      "types": "./dist/Element/PluginManager.d.ts",
-      "import": "./dist/Element/PluginManager.es",
-      "require": "./dist/Element/PluginManager.cjs"
-    },
-    "./elementUtils": {
-      "types": "./dist/Element/helpers/elementUtils.d.ts",
-      "import": "./dist/Element/helpers/elementUtils.es",
-      "require": "./dist/Element/helpers/elementUtils.cjs"
-    },
-    "./components": {
-      "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.es",
-      "require": "./dist/components/index.cjs"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
     }
   },
   "scripts": {

@@ -3,7 +3,7 @@
 import get from 'lodash/get';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
-import { pConsole } from '@plitzi/sdk-dev-tools/PlitziConsole';
+import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 

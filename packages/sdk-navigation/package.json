@@ -10,20 +10,10 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
-    "./NavigationHelper": {
-      "types": "./dist/NavigationHelper.d.ts",
-      "import": "./dist/NavigationHelper.es",
-      "require": "./dist/NavigationHelper.cjs"
-    },
-    "./NavigationContext": {
-      "types": "./dist/NavigationContext.d.ts",
-      "import": "./dist/NavigationContext.es",
-      "require": "./dist/NavigationContext.cjs"
-    },
-    "./useNavigation": {
-      "types": "./dist/hooks/useNavigation.d.ts",
-      "import": "./dist/hooks/useNavigation.es",
-      "require": "./dist/hooks/useNavigation.cjs"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
     }
   },
   "scripts": {
