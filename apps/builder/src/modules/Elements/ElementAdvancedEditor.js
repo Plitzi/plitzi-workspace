@@ -9,7 +9,7 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Alias
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 

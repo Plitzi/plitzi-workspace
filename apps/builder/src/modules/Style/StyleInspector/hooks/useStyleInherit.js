@@ -2,7 +2,7 @@
 import { use, useMemo } from 'react';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';

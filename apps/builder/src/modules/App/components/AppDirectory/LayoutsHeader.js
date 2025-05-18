@@ -6,7 +6,7 @@ import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 

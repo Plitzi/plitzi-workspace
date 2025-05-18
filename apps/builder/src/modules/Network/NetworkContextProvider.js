@@ -7,7 +7,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 

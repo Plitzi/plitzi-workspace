@@ -6,7 +6,7 @@ import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 
 // Monorepo
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';

@@ -3,7 +3,7 @@ import React, { use, useCallback, useMemo, useState } from 'react';
 import Input from '@plitzi/plitzi-ui/Input';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 // Relatives
 import ElementCategory from './ElementCategory';

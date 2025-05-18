@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import Text from '@plitzi/plitzi-ui/Text';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 // Relatives
 import Element from './Element';

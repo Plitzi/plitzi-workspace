@@ -7,7 +7,7 @@ import camelCase from 'lodash/camelCase';
 import { produce } from 'immer';
 import useStateMemo from '@plitzi/plitzi-ui-components/hooks/useStateMemo';
 
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import {

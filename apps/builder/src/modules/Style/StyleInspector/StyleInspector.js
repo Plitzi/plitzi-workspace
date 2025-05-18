@@ -9,7 +9,7 @@ import Select from '@plitzi/plitzi-ui-components/Select';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

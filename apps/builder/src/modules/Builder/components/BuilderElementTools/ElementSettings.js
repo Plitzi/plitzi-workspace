@@ -17,7 +17,7 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';

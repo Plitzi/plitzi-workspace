@@ -6,7 +6,7 @@ import get from 'lodash/get';
 // Monorepo
 import UserContext from '@plitzi/sdk-auth/UserContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import useNavigation from '@plitzi/sdk-navigation/useNavigation';
+import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 
 // Alias

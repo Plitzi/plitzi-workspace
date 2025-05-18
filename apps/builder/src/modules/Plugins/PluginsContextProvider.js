@@ -7,7 +7,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import isEmpty from 'lodash/isEmpty';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 
