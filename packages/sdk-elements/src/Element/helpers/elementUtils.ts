@@ -2,9 +2,9 @@ import get from 'lodash/get';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import ComponentContext from '../../Component/ComponentContext';
 import ComponentProvider from '../../Component/ComponentProvider';
 import RootElement from '../RootElement';
 

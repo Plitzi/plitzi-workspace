@@ -2,9 +2,9 @@
 import classNames from 'classnames';
 import { use, useEffect, useMemo } from 'react';
 
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import ComponentContext from '../../../Component/ComponentContext';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 

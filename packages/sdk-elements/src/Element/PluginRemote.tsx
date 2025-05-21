@@ -1,9 +1,9 @@
 import get from 'lodash/get';
 import { lazy, Suspense, use, useMemo } from 'react';
 
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
-import ComponentContext from '../Component/ComponentContext';
 import { nestedInject, ORIGIN_REMOTE } from '../Component/ComponentHelper';
 import { generatePluginModule } from './helpers/elementUtils';
 import withElement from './hocs/withElement';

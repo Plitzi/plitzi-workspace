@@ -4,10 +4,10 @@ import camelCase from 'lodash/camelCase';
 import get from 'lodash/get';
 import { memo, useCallback, use } from 'react';
 
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import PluginRemote from './PluginRemote';
-import ComponentContext from '../Component/ComponentContext';
 
 import type { ComponentPlugin, InternalPropsSTG1, Plugin } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

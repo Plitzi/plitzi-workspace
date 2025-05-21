@@ -2,10 +2,10 @@ import get from 'lodash/get';
 import omit from 'lodash/omit';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import { defaultElements } from '..';
-import ComponentContext from './ComponentContext';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
 
 import type { ComponentDefinition, ComponentPlugin, ComponentPlugins } from '@plitzi/sdk-shared';

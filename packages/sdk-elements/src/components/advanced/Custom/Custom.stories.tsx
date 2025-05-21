@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+
 import Custom from './Custom';
-import ComponentContext from '../../../Component/ComponentContext';
 import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
 
 import type { ComponentContextValue } from '@plitzi/sdk-shared';
