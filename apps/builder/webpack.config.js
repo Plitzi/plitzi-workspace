@@ -34,6 +34,8 @@ const packages = {
   '@plitzi/sdk-variables': path.resolve(__dirname, '../../packages/sdk-variables/src')
 };
 
+// process.traceDeprecation = true; // enable in case to debug node
+
 const build = (env, args) => {
   const devMode = args.mode !== 'production';
   const onlyGzip = env.onlyGzip || false;
