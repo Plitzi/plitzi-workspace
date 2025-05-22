@@ -11,7 +11,6 @@ const webpack = require('webpack');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const threadLoader = require('thread-loader');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const smp = new SpeedMeasurePlugin();
 
