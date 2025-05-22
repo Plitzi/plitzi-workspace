@@ -20,8 +20,8 @@ import Provider from '@plitzi/plitzi-ui/Provider';
 
 // Monorepo
 import { sdkComponents } from '@plitzi/plitzi-sdk';
-import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
-import { getKeyDecoded, emptyObject } from '@plitzi/sdk-shared/utils';
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import { getKeyDecoded, emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Alias
 import customFetch from '@pmodules/Network/helpers/customFetch';

@@ -18,6 +18,22 @@ const PACKAGE = require('./package.json');
 
 const DESTINATION = path.resolve(__dirname, './dist/');
 
+const packages = {
+  '@plitzi/sdk-auth': path.resolve(__dirname, '../../packages/sdk-auth/src'),
+  '@plitzi/sdk-data-source': path.resolve(__dirname, '../../packages/sdk-data-source/src'),
+  '@plitzi/sdk-dev-tools': path.resolve(__dirname, '../../packages/sdk-dev-tools/src'),
+  '@plitzi/sdk-elements': path.resolve(__dirname, '../../packages/sdk-elements/src'),
+  '@plitzi/sdk-event-bridge': path.resolve(__dirname, '../../packages/sdk-event-bridge/src'),
+  '@plitzi/sdk-interactions': path.resolve(__dirname, '../../packages/sdk-interactions/src'),
+  '@plitzi/sdk-navigation': path.resolve(__dirname, '../../packages/sdk-navigation/src'),
+  '@plitzi/sdk-plugins': path.resolve(__dirname, '../../packages/sdk-plugins/src'),
+  '@plitzi/sdk-schema': path.resolve(__dirname, '../../packages/sdk-schema/src'),
+  '@plitzi/sdk-shared': path.resolve(__dirname, '../../packages/sdk-shared/src'),
+  '@plitzi/sdk-state': path.resolve(__dirname, '../../packages/sdk-state/src'),
+  '@plitzi/sdk-style': path.resolve(__dirname, '../../packages/sdk-style/src'),
+  '@plitzi/sdk-variables': path.resolve(__dirname, '../../packages/sdk-variables/src')
+};
+
 // process.traceDeprecation = true // enable in case to debug node
 
 const build = (env, args) => {
@@ -35,8 +51,10 @@ const build = (env, args) => {
       // modules to load
       // can be any module, i. e.
       'babel-loader',
+      'ts-loader',
       '@babel/preset-env',
       '@babel/preset-react',
+      '@babel/preset-typescript',
       '@babel/plugin-proposal-class-properties',
       '@babel/plugin-transform-runtime',
       '@babel/plugin-transform-private-methods'
@@ -58,7 +76,7 @@ const build = (env, args) => {
     },
     resolve: {
       symlinks: devMode,
-      extensions: ['.js', '.mjs', '.es', '.cjs'],
+      extensions: ['.js', '.mjs', '.es', '.cjs', '.ts', '.tsx'],
       alias: {
         '@modules': path.resolve('./src/modules'),
         '@components': path.resolve('./src/components'),
@@ -68,7 +86,7 @@ const build = (env, args) => {
     },
     target: 'web',
     watchOptions: {
-      ignored: /(node_modules|packages\/[a-z-]+\/src)/
+      ignored: /(node_modules|packages\/[a-z-]+\/dist)/
     },
     devServer: {
       compress: true,
@@ -96,7 +114,10 @@ const build = (env, args) => {
             {
               loader: 'babel-loader',
               options: {
-                presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]], // [classic] will disable new JSX compiler and [automatic] will enable it
+                presets: [
+                  '@babel/preset-env',
+                  ['@babel/preset-react', { runtime: 'automatic' }] // [classic] will disable new JSX compiler and [automatic] will enable it
+                ],
                 plugins: [
                   '@babel/plugin-proposal-class-properties',
                   '@babel/plugin-transform-runtime',
@@ -108,7 +129,7 @@ const build = (env, args) => {
           ]
         },
         {
-          test: /\.(png|jpg|gif|svg|...)$/,
+          test: /\.(png|jpg|gif|svg)$/,
           loader: 'url-loader',
           exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/
         },
@@ -202,6 +223,42 @@ const build = (env, args) => {
 
   if (devMode) {
     modules.devtool = 'cheap-module-source-map';
+    modules.module.rules.unshift({
+      test: /\.(ts|tsx)$/,
+      include: [path.resolve(__dirname, 'src'), ...Object.values(packages)],
+      use: [
+        {
+          loader: 'thread-loader',
+          options: {
+            poolTimeout: watch ? Infinity : 2000
+          }
+        },
+        {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true,
+            happyPackMode: true
+          }
+        },
+        {
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              '@babel/preset-env',
+              ['@babel/preset-react', { runtime: 'automatic' }], // [classic] will disable new JSX compiler and [automatic] will enable it
+              '@babel/preset-typescript'
+            ],
+            plugins: [
+              '@babel/plugin-proposal-class-properties',
+              '@babel/plugin-transform-runtime',
+              '@babel/plugin-transform-private-methods',
+              env.WEBPACK_SERVE && 'react-refresh/babel'
+            ].filter(Boolean)
+          }
+        }
+      ]
+    });
+    modules.resolve.alias = { ...modules.resolve.alias, ...packages };
   } else {
     modules.optimization = {
       usedExports: true,

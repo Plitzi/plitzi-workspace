@@ -3,7 +3,7 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import LogNavigationBody from './LogNavigationBody';
 import LogNavigationHeader from './LogNavigationHeader';
 
-import type { LogNavigation } from '../../../../../../DevToolsContext';
+import type { LogNavigation as TLogNavigation } from '../../../../../../DevToolsContext';
 import type { Moment } from 'moment';
 import type { ReactNode } from 'react';
 
@@ -13,7 +13,7 @@ const iconExpanded = <i className="fa-solid fa-angle-down" />;
 export type LogNavigationProps = {
   className?: string;
   message?: ReactNode;
-  params?: LogNavigation['params'];
+  params?: TLogNavigation['params'];
   time?: string | Moment;
 };
 

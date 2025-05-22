@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import LogInteractionBody from './LogInteractionBody';
 import LogInteractionHeader from './LogInteractionHeader';
 
-import type { LogInteraction } from '../../../../../../DevToolsContext';
+import type { LogInteraction as TLogInteraction } from '../../../../../../DevToolsContext';
 import type { ReactNode } from 'react';
 
 export const LOG_INTERACTION_STATUS_SUCCESS = 'success';
@@ -18,7 +18,7 @@ const iconExpanded = <i className="fa-solid fa-angle-down" />;
 export type LogInteractionProps = {
   className?: string;
   message?: ReactNode;
-  params: LogInteraction['params'];
+  params: TLogInteraction['params'];
   time?: string;
 };
 
