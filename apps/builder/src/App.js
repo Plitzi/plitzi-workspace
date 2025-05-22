@@ -30,6 +30,7 @@ import AppMain from '@pmodules/App/AppMain';
 // Relatives
 import { getEnvironmentServer } from './config';
 import { loadState, saveState } from './services/session/sessionStorage';
+import packageSettings from '../package.json';
 
 // Builder Style
 import './assets/index.scss';
@@ -80,7 +81,7 @@ const App = props => {
         ...headers,
         'plitzi-instance-id': instanceId,
         'plitzi-access-token': userKey,
-        'sdk-version': VERSION,
+        'sdk-version': packageSettings.version,
         'Apollo-Require-Preflight': 'true',
         authorization: webKey ? `Bearer ${webKey}` : ''
       }

@@ -8,6 +8,7 @@ import Builder from '@pmodules/Builder';
 // Relatives
 import App from './App';
 import { disableReactDevTools } from './helpers/security';
+import packageSettings from '../package.json';
 
 export function render(widgetContainer, params = {}, plugins = {}, debugMode = false) {
   const Widget = () => {
@@ -72,6 +73,6 @@ const PlitziBuilder = props => {
 
 PlitziBuilder.Plugin = Builder.Plugin;
 
-export const { version } = VERSION;
+export const { version } = packageSettings;
 
 export default PlitziBuilder;

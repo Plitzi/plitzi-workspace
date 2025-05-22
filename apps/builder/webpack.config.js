@@ -11,6 +11,7 @@ const webpack = require('webpack');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const threadLoader = require('thread-loader');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const smp = new SpeedMeasurePlugin();
 
@@ -42,6 +43,7 @@ const build = (env, args) => {
   const onlyAnalyze = env.onlyAnalyze || false;
   const watch = env.watch || false;
   const measure = env.measure || false;
+  const isDevServer = !!env.WEBPACK_SERVE;
 
   threadLoader.warmup(
     {
@@ -186,9 +188,6 @@ const build = (env, args) => {
           'react-router-dom': { singleton: true, requiredVersion: false, eager: true }
         }
       }),
-      new webpack.DefinePlugin({
-        VERSION: JSON.stringify(PACKAGE.version)
-      }),
       new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /(es|pt|en).js/),
       new HandlebarsPlugin({
         data: {
@@ -199,32 +198,35 @@ const build = (env, args) => {
         output: path.join(process.cwd(), 'dist', '[name].html'),
         entry: path.join(process.cwd(), 'index.hbs')
       }),
-      new WebpackAssetsManifest({
-        output: 'app-manifest.json',
-        integrity: true,
-        integrityHashes: ['sha384'],
-        sortManifest: false,
-        transform: assets => ({
-          accessGroup: [],
-          author: 'Carlos Rodriguez <crodriguez@plitzi.com>',
-          created: '',
-          updated: '',
-          pluginVersion: PACKAGE.version,
-          assets
+      !isDevServer &&
+        new WebpackAssetsManifest({
+          output: 'app-manifest.json',
+          integrity: true,
+          integrityHashes: ['sha384'],
+          sortManifest: false,
+          transform: assets => ({
+            accessGroup: [],
+            author: 'Carlos Rodriguez <crodriguez@plitzi.com>',
+            created: '',
+            updated: '',
+            pluginVersion: PACKAGE.version,
+            assets
+          })
+        }),
+      !isDevServer &&
+        new webpack.optimize.LimitChunkCountPlugin({
+          maxChunks: 1
+        }),
+      !isDevServer &&
+        new CompressionPlugin({
+          algorithm: 'gzip',
+          filename: onlyGzip ? '[path][base]' : '[path][base].gz',
+          deleteOriginalAssets: onlyGzip,
+          test: /\.js$|\.css$|\.html$/,
+          threshold: 0,
+          minRatio: 0.8
         })
-      }),
-      new webpack.optimize.LimitChunkCountPlugin({
-        maxChunks: 1
-      }),
-      new CompressionPlugin({
-        algorithm: 'gzip',
-        filename: onlyGzip ? '[path][base]' : '[path][base].gz',
-        deleteOriginalAssets: onlyGzip,
-        test: /\.js$|\.css$|\.html$/,
-        threshold: 0,
-        minRatio: 0.8
-      })
-    ],
+    ].filter(Boolean),
     stats: {
       colors: true
     }
