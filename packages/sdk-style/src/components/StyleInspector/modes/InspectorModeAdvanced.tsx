@@ -1,40 +1,28 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
-import { produce } from 'immer';
+import deepEqual from '@plitzi/plitzi-ui/utils/deepEqual';
 import debounce from 'lodash/debounce';
-import set from 'lodash/set';
-import { useCallback, use, useMemo, useEffect, useState } from 'react';
+import { useCallback, use, useMemo, useState, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { StyleConstants } from '@plitzi/sdk-shared/style/styleConstants';
 
-import {
-  cssToSelectors,
-  getReadOnlyRangesFromContent,
-  formatCssFromSelector,
-  makeSelector
-} from '../../../StyleHelper';
+import { cssToSelectors, getReadOnlyRangesFromContent, formatCssFromSelector } from '../../../StyleHelper';
 
 import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui';
-import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleBaseItem, StyleItem } from '@plitzi/sdk-shared';
 
 export type InspectorModeAdvancedProps = {
-  element?: Element;
-  styleSelector: string;
   selectors: StyleItem[];
   selector?: string;
   displayMode: DisplayMode;
 };
 
-const InspectorModeAdvanced = ({
-  element,
-  styleSelector = '',
-  selectors,
-  selector,
-  displayMode
-}: InspectorModeAdvancedProps) => {
+const InspectorModeAdvanced = ({ selectors, selector, displayMode }: InspectorModeAdvancedProps) => {
+  const selectorsRef = useRef(selectors);
+  selectorsRef.current = selectors;
   const [reRender, setReRender] = useState(false);
   const { builderHandler } = use(BuilderContext);
   const { useDataSource } = use(DataSourceContext);
@@ -44,9 +32,9 @@ const InspectorModeAdvanced = ({
     [selector, selectors]
   );
   const CMValue = useMemo(
-    () => (selectorInstance ? (formatCssFromSelector(selectorInstance.cache, true, 2, false) as string) : ''),
+    () => formatCssFromSelector(selectors.map(selector => selector.cache).join('\n'), false, 2, false).join('\n\n'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectorInstance, reRender]
+    [selectors, reRender]
   );
   const variablesNames = useMemo<AutoComplete[]>(
     () =>
@@ -59,18 +47,24 @@ const InspectorModeAdvanced = ({
 
   const sync = useCallback(
     (currentState: string) => {
-      const newState = cssToSelectors(currentState, true);
-
-      if (newState.name) {
-        builderHandler(
-          'styleUpdateSelector',
-          displayMode,
-          newState.name,
-          selectorInstance?.type,
-          undefined,
-          newState.attributes
-        );
+      if (selectorsRef.current.length === 0) {
+        return;
       }
+
+      const newSelectors = cssToSelectors(currentState);
+      selectorsRef.current.forEach(selectorItem => {
+        const newSelector = newSelectors[selectorItem.name] as StyleBaseItem | undefined;
+        if (newSelector && !deepEqual(selectorItem.attributes, newSelector.attributes)) {
+          builderHandler(
+            'styleUpdateSelector',
+            displayMode,
+            newSelector.name,
+            selectorInstance?.type,
+            undefined,
+            newSelector.attributes
+          );
+        }
+      });
     },
     [builderHandler, displayMode, selectorInstance?.type]
   );
@@ -82,33 +76,15 @@ const InspectorModeAdvanced = ({
   const handleClickFormat = useCallback(() => setReRender(state => !state), []);
 
   const getReadOnlyRanges = useCallback((targetState: EditorState) => {
-    // @ts-expect-error eslint-disable-next-line
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    const content = targetState.doc.text.reduce(
+    const content = (targetState.doc as unknown as { text: string[] }).text.reduce(
       (acum: string, line: string) => `${acum}${acum ? '\n' : ''}${line}`,
       ''
-    ) as string;
+    );
 
-    return getReadOnlyRangesFromContent(content, false, false);
+    return getReadOnlyRangesFromContent(content);
   }, []);
 
-  useEffect(() => {
-    if (element && !selector) {
-      const {
-        definition: { type }
-      } = element;
-
-      const customClass = makeSelector(type, styleSelector);
-      builderHandler(
-        'schemaUpdateElement',
-        produce(element, draft => {
-          set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
-        })
-      );
-
-      builderHandler('styleAddSelector', displayMode, customClass, 'class', undefined, undefined);
-    }
-  }, [element, selector, builderHandler, styleSelector, displayMode]);
+  const handleBlur = useCallback(() => setReRender(state => !state), []);
 
   return (
     <div className="flex flex-col grow relative">
@@ -117,14 +93,15 @@ const InspectorModeAdvanced = ({
         theme="dark"
         lineWrapping
         onChange={handleChange}
+        onBlur={handleBlur}
         autoComplete={variablesNames}
         getReadOnlyRanges={getReadOnlyRanges}
       />
       <div className="flex flex-col absolute top-3 right-3 gap-1">
-        <ContainerFloating containerLeftOffset={-208}>
+        <ContainerFloating>
           <ContainerFloating.Trigger>
             <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
-              <i className="fa-solid fa-circle-info" />
+              <Button.Icon icon="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>

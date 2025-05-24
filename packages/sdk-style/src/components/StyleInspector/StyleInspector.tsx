@@ -4,6 +4,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import classNames from 'classnames';
 import { produce } from 'immer';
 import get from 'lodash/get';
+import pick from 'lodash/pick';
 import set from 'lodash/set';
 import { use, useCallback, useMemo } from 'react';
 
@@ -43,7 +44,10 @@ const StyleInspector = ({
     setStyleSelector
   } = use(BuilderStyleContext);
   const selector = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
-  const selectors = useMemo(() => Object.values(get(style.platform, displayMode)), [style, displayMode]);
+  const selectors = useMemo(
+    () => Object.values(pick(get(style.platform, displayMode), selector.split(' '))),
+    [style, displayMode, selector]
+  );
   const { builderHandler } = use(BuilderContext);
   const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
     () =>
@@ -151,13 +155,7 @@ const StyleInspector = ({
       </div>
       <div className="flex flex-col grow overflow-auto basis-0">
         {cache.viewMode === 'advanced' && (
-          <InspectorModeAdvanced
-            styleSelector={styleSelector}
-            selectors={selectors}
-            selector={selectorSelected?.name}
-            element={element}
-            displayMode={displayMode}
-          />
+          <InspectorModeAdvanced selectors={selectors} selector={selectorSelected?.name} displayMode={displayMode} />
         )}
         {cache.viewMode === 'basic' && (
           <InspectorModeBasic

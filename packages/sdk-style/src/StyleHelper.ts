@@ -297,17 +297,20 @@ export const generateCache = (style: Style) => {
 
 const cssRegex =
   /(?<selector>\.|#|)(?<selectorName>[a-z0-9_-]+)([ ]+|){(?<selectorData>[a-z0-9:; (),.%\n*/#+"'_-]+|)}/gim;
-const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\([^;]\)|".*"|[a-z0-9 (),.%\n*/#+"':_-]+))/gim;
+const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\([^;]\)|".*"|[a-z0-9 (),.%\n*/#+"':_-]+));/gim;
 const cssIsCommentRegex = /(\/\*.*\*\/)/gim;
 const StyleConstantsList = Object.values(StyleConstants);
 
 export function cssToSelectors(css: string, singleSelector: true): StyleBaseItem;
-export function cssToSelectors(css: string, singleSelector?: false): StyleBaseItem[];
-export function cssToSelectors(css = '', singleSelector = false): StyleBaseItem | StyleBaseItem[] {
+export function cssToSelectors(css: string, singleSelector?: false): Record<string, StyleBaseItem>;
+export function cssToSelectors(
+  css = '',
+  singleSelector = false
+): StyleBaseItem | Record<string, StyleBaseItem> | undefined {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
-  const selectors = match.map(match => {
-    const { selectorName, selectorData } = match.groups as Record<string, string | undefined>;
-    const selectorResult: StyleBaseItem = { name: selectorName?.trim() ?? '', attributes: {}, cache: match[0] };
+  const selectors = match.reduce<Record<string, StyleBaseItem>>((acum, match) => {
+    const { selectorName, selectorData } = match.groups as Record<string, string>;
+    const selectorResult: StyleBaseItem = { name: selectorName.trim(), attributes: {}, cache: match[0] };
     if (selectorData) {
       const propsMatch = [...selectorData.replaceAll(cssIsCommentRegex, '').trim().matchAll(cssPropsRegex)];
       propsMatch
@@ -318,36 +321,68 @@ export function cssToSelectors(css = '', singleSelector = false): StyleBaseItem 
         });
     }
 
-    return selectorResult;
-  });
+    return { ...acum, [selectorName]: selectorResult };
+  }, {});
 
-  if (singleSelector && Array.isArray(selectors) && selectors.length > 0) {
-    return selectors[0];
+  if (!singleSelector) {
+    return selectors;
   }
 
-  return selectors;
+  const selectorsArr = Object.values(selectors);
+
+  return selectorsArr.length === 0 ? undefined : selectorsArr[0];
 }
 
-export const getReadOnlyRangesFromContent = (css = '', allowPre = true, allowAfter = true) => {
+export const getReadOnlyRangesFromContent = (doc = '') => {
   const ranges: { from: number | null; to: number | null }[] = [];
-  [...css.matchAll(cssRegex)].forEach(match => {
-    const { selector, selectorName, selectorData } = match.groups as Record<string, string | undefined>;
-    if (!selectorName || !selector || !selectorData) {
-      return;
+  let match: RegExpExecArray | null;
+  let lastMatchEnd = 0;
+
+  while ((match = cssRegex.exec(doc))) {
+    const fullStart = match.index;
+    const fullEnd = cssRegex.lastIndex;
+
+    const selectorData = match.groups?.selectorData || '';
+    const dataStart = doc.indexOf(selectorData, fullStart);
+    const dataEnd = dataStart + selectorData.length;
+
+    // ReadOnly before selectors
+    if (lastMatchEnd < fullStart) {
+      ranges.push({ from: lastMatchEnd, to: fullStart });
     }
 
-    const selectorNameCorrection = [...(selectorName.match(/[\n]/gim) ?? [])].length;
-    const bFrom = allowPre ? match.index : 0;
-    const bTo = bFrom + selector.length + selectorName.length + 1 - selectorNameCorrection;
-    const aFrom = bTo + selectorData.length;
-    const aTo = allowAfter ? aFrom + 1 : null;
-    ranges.push({ from: bFrom, to: bTo }, { from: aFrom, to: aTo });
-  });
+    // ReadOnly before content
+    if (fullStart < dataStart) {
+      ranges.push({ from: fullStart, to: dataStart });
+    }
+
+    // ReadOnly after content
+    if (dataEnd < fullEnd) {
+      ranges.push({ from: dataEnd, to: fullEnd });
+    }
+
+    lastMatchEnd = fullEnd;
+  }
+
+  // ReadOnly after last selector
+  ranges.push({ from: lastMatchEnd, to: doc.length });
 
   return ranges;
 };
 
-export const formatCssFromSelector = (css: string, singleSelector = true, tabIndentSpace = 2, filterProps = true) => {
+export function formatCssFromSelector(
+  css: string,
+  singleSelector: true,
+  tabIndentSpace?: number,
+  filterProps?: boolean
+): string;
+export function formatCssFromSelector(
+  css: string,
+  singleSelector: false,
+  tabIndentSpace?: number,
+  filterProps?: boolean
+): string[];
+export function formatCssFromSelector(css: string, singleSelector = true, tabIndentSpace = 2, filterProps = true) {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const selectors = match.map(match => {
     const { selector, selectorName, selectorData } = match.groups as Record<string, string>;
@@ -379,12 +414,12 @@ export const formatCssFromSelector = (css: string, singleSelector = true, tabInd
     return selectors[0];
   }
 
-  if (selectors.length === 0) {
+  if (singleSelector && selectors.length === 0) {
     return '';
   }
 
   return selectors;
-};
+}
 
 export const generateStyleSelector = (
   selector = '',
