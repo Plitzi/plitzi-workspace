@@ -301,12 +301,7 @@ const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\([^;]\)
 const cssIsCommentRegex = /(\/\*.*\*\/)/gim;
 const StyleConstantsList = Object.values(StyleConstants);
 
-export function cssToSelectors(css: string, singleSelector: true): StyleBaseItem;
-export function cssToSelectors(css: string, singleSelector?: false): Record<string, StyleBaseItem>;
-export function cssToSelectors(
-  css = '',
-  singleSelector = false
-): StyleBaseItem | Record<string, StyleBaseItem> | undefined {
+export function cssToSelectors(css = ''): Record<string, StyleBaseItem> {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const selectors = match.reduce<Record<string, StyleBaseItem>>((acum, match) => {
     const { selectorName, selectorData } = match.groups as Record<string, string>;
@@ -324,13 +319,7 @@ export function cssToSelectors(
     return { ...acum, [selectorName]: selectorResult };
   }, {});
 
-  if (!singleSelector) {
-    return selectors;
-  }
-
-  const selectorsArr = Object.values(selectors);
-
-  return selectorsArr.length === 0 ? undefined : selectorsArr[0];
+  return selectors;
 }
 
 export const getReadOnlyRangesFromContent = (doc = '') => {
