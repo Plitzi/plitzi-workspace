@@ -7,23 +7,23 @@ import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 
 // Alias
-import StyleInspector from '@pmodules/Style/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
 
 // Relatives
 import BuilderBreadcrumb from '../BuilderBreadcrumb';
-import BuilderSelectedContext from '../../contexts/BuilderSelectedContext';
 import useBuilderElement from '../../hooks/useBuilderElement';
 import ElementSettings from './ElementSettings';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
-import BuilderContext from '../../BuilderContext';
 
 /**
  * @param {{
- *   initialTab?: string;r
+ *   initialTab?: string;
  * }} props
  * @returns {React.ReactElement}
  */
@@ -94,7 +94,7 @@ const BuilderElementTools = props => {
 
   if (!element) {
     return (
-      <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center self-start">
+      <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center self-start w-full">
         Click on a component to select it
       </div>
     );
@@ -105,7 +105,7 @@ const BuilderElementTools = props => {
   } = element;
 
   return (
-    <div className={classNames('flex flex-col grow', { [`element-${type}`]: type })}>
+    <div className={classNames('flex flex-col grow min-w-0', { [`element-${type}`]: type })}>
       <div className="top-0 sticky z-10 flex flex-col bg-white shadow-[rgba(0,15,51,0.2)_0px_1px_3px_0px]">
         <ul className="w-full m-0 p-0 flex justify-around list-type-none border-b border-gray-300">
           <li
@@ -165,7 +165,9 @@ const BuilderElementTools = props => {
       </div>
       <div className="flex flex-col grow overflow-y-auto basis-0">
         {selected === 'style' && (
-          <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
+          <div className="flex flex-col grow gap-2">
+            <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
+          </div>
         )}
         {selected === 'settings' && (
           <>
