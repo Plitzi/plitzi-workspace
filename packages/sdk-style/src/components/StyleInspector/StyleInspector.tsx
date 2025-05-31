@@ -1,7 +1,6 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Select from '@plitzi/plitzi-ui/Select';
-import classNames from 'classnames';
+import Switch from '@plitzi/plitzi-ui/Switch';
 import { produce } from 'immer';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
@@ -115,11 +114,36 @@ const StyleInspector = ({
 
   return (
     <div className="w-full flex flex-col grow">
-      <div className="flex flex-col w-full py-2 border-b border-gray-300">
-        {allowStyleSelector && (
+      <div className="flex flex-col w-full py-2 border-b border-gray-300 gap-1">
+        <div className="flex items-center justify-between">
+          <label>Style Selector</label>
+          <div className="flex items-center py-1 gap-2 text-xs">
+            Dev Mode
+            <Switch
+              className="!w-auto"
+              size="sm"
+              intent="secondary"
+              checked={cache.viewMode === 'advanced'}
+              onChange={handleClicViewMode}
+              disabled={selectorSelected?.name.includes(':')}
+            />
+          </div>
+        </div>
+        <Selector
+          className="w-full min-h-0"
+          style={style}
+          disabled={mode === 'manager'}
+          value={selector}
+          selectorSelected={selectorSelected}
+          displayMode={displayMode}
+          onAdd={handleAddSelector}
+          onChange={handleChangeSelector}
+          onRemove={handleRemoveSelector}
+          onSelectorSelected={setSelectorSelected}
+        />
+        {allowStyleSelector && Object.keys(styleSelectorsAvailables).length > 1 && (
           <div className="flex flex-col text-xs">
-            <label>Selector</label>
-            <Select className="rounded-sm" size="sm" onChange={handleChangeStyleSelector} value={styleSelector}>
+            <Select className="rounded-sm" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>
               {Object.keys(styleSelectorsAvailables).map(selectorKey => (
                 <option key={selectorKey} value={selectorKey}>
                   {selectorKey}
@@ -128,30 +152,6 @@ const StyleInspector = ({
             </Select>
           </div>
         )}
-        <div className={classNames('flex w-full', { 'mt-2': allowStyleSelector })}>
-          <Selector
-            className="w-full min-h-[34px]"
-            style={style}
-            disabled={mode === 'manager'}
-            value={selector}
-            selectorSelected={selectorSelected}
-            displayMode={displayMode}
-            onAdd={handleAddSelector}
-            onChange={handleChangeSelector}
-            onRemove={handleRemoveSelector}
-            onSelectorSelected={setSelectorSelected}
-          />
-          <Button
-            className="rounded-sm ml-2 w-10 text-sm"
-            size="custom"
-            onClick={handleClicViewMode}
-            title={cache.viewMode === 'basic' ? 'Advanced Mode' : 'Basic Mode'}
-            disabled={selectorSelected?.name.includes(':')}
-          >
-            {cache.viewMode === 'basic' && <i className="fa-solid fa-code" />}
-            {cache.viewMode === 'advanced' && <i className="fa-regular fa-hand-pointer" />}
-          </Button>
-        </div>
       </div>
       <div className="flex flex-col grow overflow-auto basis-0">
         {cache.viewMode === 'advanced' && (

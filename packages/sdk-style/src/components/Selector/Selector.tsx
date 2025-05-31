@@ -261,7 +261,7 @@ const Selector = ({
     <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
       <ContainerFloating.Trigger className="w-full">
         <div
-          className={classNames('flex-wrap border border-gray-300 rounded-sm relative p-1 gap-1 flex', className, {
+          className={classNames('flex-wrap rounded-sm relative p-1 gap-1 flex bg-grayviolet-200', className, {
             'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
             'cursor-pointer': !disabled
           })}
@@ -272,7 +272,7 @@ const Selector = ({
             intent="secondary"
             size="custom"
             onClick={handleClickStyleManager}
-            className="h-7 w-7 rounded-sm"
+            className="h-7 w-7 rounded-sm bg-white"
             title="Style Manager"
           >
             <Button.Icon icon="fas fa-swatchbook" />
