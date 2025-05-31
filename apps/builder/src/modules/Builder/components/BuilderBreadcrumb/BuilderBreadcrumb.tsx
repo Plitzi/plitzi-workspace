@@ -32,25 +32,25 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
     }
   }, []);
 
-  const getPath = (id?: string): { id: string; label: string }[] => {
+  const getPath = (id?: string): { id: string; label: string; type: string }[] => {
     if (!id) {
       return [];
     }
 
     const element = flat[id] as Element | undefined;
     if (!element) {
-      return [{ id, label: 'unknown' }];
+      return [{ id, label: 'unknown', type: 'unknown' }];
     }
 
     const {
-      definition: { parentId, label }
+      definition: { parentId, label, type }
     } = element;
 
     if (!parentId) {
-      return [{ id, label }];
+      return [{ id, label, type }];
     }
 
-    return [...getPath(parentId), { id, label }];
+    return [...getPath(parentId), { id, label, type }];
   };
 
   const handleClick = useCallback(
@@ -93,7 +93,7 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
       )}
       {subPath.length > 0 &&
         subPath.map(segment => {
-          const { id, label } = segment;
+          const { id, label, type } = segment;
 
           return (
             <BuilderBreadcrumbItem
@@ -103,6 +103,7 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
               onMouseEnter={handleMouseEnter}
               onClick={handleClick}
               label={label}
+              type={type}
             />
           );
         })}
