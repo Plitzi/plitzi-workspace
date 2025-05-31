@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import classNames from 'classnames';
-import { useCallback } from 'react';
+import { useCallback, memo } from 'react';
 
 import SelectorItem from '../Selector/SelectorItem';
 
@@ -63,4 +63,4 @@ const StyleSelectorTag = ({
   );
 };
 
-export default StyleSelectorTag;
+export default memo(StyleSelectorTag);

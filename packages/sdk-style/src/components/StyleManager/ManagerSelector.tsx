@@ -55,13 +55,9 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
 
   const handleClickSelect = useCallback(
     (selector: string) => {
-      if (selected === selector) {
-        onSelect?.(undefined);
-      } else {
-        onSelect?.(selector);
-      }
+      onSelect?.(state => (state === selector ? undefined : selector));
     },
-    [selected, onSelect]
+    [onSelect]
   );
 
   const elementHasSelector = useCallback((element: Element, selector: string) => {
@@ -106,15 +102,9 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const [idDeleteSelector, openDeleteSelector, onOpenDeleteSelector, onCloseDeleteSelector] = useDisclosure<
     boolean,
     string
-  >({
-    id: 'delete-selector',
-    onClose: handleCloseDeleteSelector
-  });
+  >({ id: 'delete-selector', onClose: handleCloseDeleteSelector });
 
-  const handleClickDelete = useCallback(
-    (selector: string) => () => onOpenDeleteSelector(selector),
-    [onOpenDeleteSelector]
-  );
+  const handleClickDelete = useCallback((selector: string) => onOpenDeleteSelector(selector), [onOpenDeleteSelector]);
 
   const elementCounts = useMemo<Record<string, number>>(
     () =>
@@ -127,6 +117,10 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
       ),
     [finalSelectors, flatList, elementHasSelector]
   );
+
+  const handleCloseModal = useCallback(() => void onCloseDeleteSelector(false), [onCloseDeleteSelector]);
+
+  const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(true), [onCloseDeleteSelector]);
 
   return (
     <div className="flex flex-col gap-2 pt-2 pr-2 border-r border-gray-300 grow basis-0 overflow-auto max-w-[350px]">
@@ -148,7 +142,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
-              onDelete={handleClickDelete(name)}
+              onDelete={handleClickDelete}
             />
           );
         })}
@@ -169,8 +163,8 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           <h4 className="px-3 py-2">Do you want to remove this item ?</h4>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={() => void onCloseDeleteSelector(false)}>Cancel</Button>
-          <Button onClick={() => void onCloseDeleteSelector(true)}>Submit</Button>
+          <Button onClick={handleCloseModal}>Cancel</Button>
+          <Button onClick={handleSubmitModal}>Submit</Button>
         </Modal.Footer>
       </Modal>
     </div>
