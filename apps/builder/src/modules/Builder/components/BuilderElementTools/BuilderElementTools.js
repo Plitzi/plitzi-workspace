@@ -20,6 +20,7 @@ import BuilderBreadcrumb from '../BuilderBreadcrumb';
 import useBuilderElement from '../../hooks/useBuilderElement';
 import ElementSettings from './ElementSettings';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
+import ToolsList from '../ToolsList';
 
 /**
  * @param {{
@@ -27,8 +28,7 @@ import ElementDefinitionSettings from './ElementDefinitionSettings';
  * }} props
  * @returns {React.ReactElement}
  */
-const BuilderElementTools = props => {
-  const { initialTab = 'style' } = props;
+const BuilderElementTools = ({ initialTab = 'style' }) => {
   const [, setCache, getCache] = useCache();
   const [selected, setSelected] = useState(() => getCache('BuilderElementTools.tabSelected', initialTab));
   const { builderHandler } = use(BuilderContext);
@@ -39,10 +39,13 @@ const BuilderElementTools = props => {
   const elementRef = useRef(element);
   elementRef.current = element;
 
-  const handleClickListItems = item => () => {
-    setSelected(item);
-    setCache(item, 'BuilderElementTools.tabSelected');
-  };
+  const handleClickListItems = useCallback(
+    item => {
+      setSelected(item);
+      setCache(item, 'BuilderElementTools.tabSelected');
+    },
+    [setCache]
+  );
 
   const [tempAttributes, setTempAttributes] = useStateDebounce(
     attributes,
@@ -105,64 +108,9 @@ const BuilderElementTools = props => {
   } = element;
 
   return (
-    <div className={classNames('flex flex-col grow min-w-0', { [`element-${type}`]: type })}>
-      <div className="top-0 sticky z-10 flex flex-col bg-white shadow-[rgba(0,15,51,0.2)_0px_1px_3px_0px]">
-        <ul className="w-full m-0 p-0 flex justify-around list-type-none border-b border-gray-300">
-          <li
-            className={classNames(
-              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
-              {
-                'border-transparent': selected !== 'style',
-                'border-blue-400 text-blue-400': selected === 'style'
-              }
-            )}
-            onClick={handleClickListItems('style')}
-            title="Style"
-          >
-            <i className="fas fa-palette" />
-          </li>
-          <li
-            className={classNames(
-              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
-              {
-                'border-transparent': selected !== 'settings',
-                'border-blue-400 text-blue-400': selected === 'settings'
-              }
-            )}
-            onClick={handleClickListItems('settings')}
-            title="Settings"
-          >
-            <i className="fas fa-cog" />
-          </li>
-          <li
-            className={classNames(
-              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
-              {
-                'border-transparent': selected !== 'bindings',
-                'border-blue-400 text-blue-400': selected === 'bindings'
-              }
-            )}
-            onClick={handleClickListItems('bindings')}
-            title="Bindings"
-          >
-            <i className="fas fa-link" />
-          </li>
-          <li
-            className={classNames(
-              'p-1.5 flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400',
-              {
-                'border-transparent': selected !== 'interactions',
-                'border-blue-400 text-blue-400': selected === 'interactions'
-              }
-            )}
-            onClick={handleClickListItems('interactions')}
-            title="Interactions"
-          >
-            <i className="fas fa-bolt" />
-          </li>
-        </ul>
-        <BuilderBreadcrumb limit={4} />
-      </div>
+    <div className={classNames('flex flex-col grow min-w-0 gap-4', { [`element-${type}`]: type })}>
+      <ToolsList onSelect={handleClickListItems} selected={selected} />
+      <BuilderBreadcrumb limit={4} />
       <div className="flex flex-col grow overflow-y-auto basis-0">
         {selected === 'style' && (
           <div className="flex flex-col grow gap-2">

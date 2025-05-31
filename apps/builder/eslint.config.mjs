@@ -1,30 +1,14 @@
-// Packages
-import path from 'path';
+import sharedConfig from '@plitzi/sdk-shared/eslint.config.ts.mjs';
+import tsEslint from 'typescript-eslint';
 
-// Relatives
-import sharedConfig, { settings } from '@plitzi/sdk-shared/eslint.config.old.mjs';
-
-export default [
-  ...sharedConfig,
-  {
-    settings: {
-      ...settings,
-      'import/resolver': {
-        ...settings['import/resolver'],
-        alias: {
-          ...settings['import/resolver'].alias,
-          map: [
-            ...settings['import/resolver'].alias.map,
-            [
-              'apollo-upload-client/createUploadLink',
-              path.resolve('./node_modules/apollo-upload-client/src/createUploadLink.mjs')
-            ],
-            ['@pmodules', path.resolve('./src/modules/')],
-            ['@pcomponents', path.resolve('./src/components/')]
-          ]
-        }
-      }
-    },
-    ignores: ['**/node_modules/**', 'dist/**']
+export default tsEslint.config({
+  extends: [sharedConfig],
+  languageOptions: {
+    parserOptions: {
+      projectService: {
+        defaultProject: './tsconfig.app.json'
+      },
+      tsconfigRootDir: import.meta.dirname
+    }
   }
-];
+});

@@ -75,6 +75,7 @@
     "clean-webpack-plugin": "^4.0.0",
     "compression-webpack-plugin": "^11.1.0",
     "css-loader": "^7.1.2",
+    "eslint": "^9.27.0",
     "file-loader": "^6.2.0",
     "flow-bin": "^0.272.0",
     "handlebars-webpack-plugin": "^2.2.1",

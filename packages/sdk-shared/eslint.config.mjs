@@ -7,11 +7,10 @@ import react from 'eslint-plugin-react';
 import prettier from 'eslint-plugin-prettier';
 import storybook from 'eslint-plugin-storybook';
 import importEslint from 'eslint-plugin-import';
-
-// const path = require('path');
+import { globalIgnores } from 'eslint/config';
 
 export default tsEslint.config({
-  extends: [js.configs.recommended, ...tsEslint.configs.strictTypeChecked],
+  extends: [js.configs.recommended, ...tsEslint.configs.strictTypeChecked, globalIgnores(['**/*.js'])],
   files: ['**/*.{ts,tsx}'],
   ignores: ['node_modules', 'node_modules/*', './node_modules/**', '**/node_modules/**', 'dist', 'coverage', '.yarn/*'],
   languageOptions: {

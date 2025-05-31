@@ -44,7 +44,10 @@ export type BuilderContextValue = {
   baseContext: { baseElementId: string };
   baseElementIdOriginal: string;
   builderSetBaseContext: (id: string) => void;
-  builderElementPermissions: (element: Element, path?: string, defaultValue?: boolean) => Record<string, boolean>;
+  builderElementPermissions: {
+    (element: Element, path: undefined, defaultValue?: boolean): Record<string, boolean>;
+    (element: Element, path: string, defaultValue?: boolean): boolean;
+  };
   builderHandler: (event: HandlerEvent, ...data: unknown[]) => void;
   updateElement: (elementId: string, attributeKey: string, attributeValue: unknown, category?: keyof Element) => void;
 };

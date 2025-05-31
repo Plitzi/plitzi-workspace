@@ -1,0 +1,12 @@
+{
+  "extends": "@plitzi/sdk-shared/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./"
+  },
+  "paths": {
+    "@pmodules/*": ["./src/modules/*"],
+    "@pcomponents/*": ["./src/components/*"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/*.ts", "src/*.tsx", "vite.config.ts"]
+}

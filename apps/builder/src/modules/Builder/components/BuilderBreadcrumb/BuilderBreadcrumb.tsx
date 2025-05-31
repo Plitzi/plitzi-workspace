@@ -1,23 +1,20 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
+import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 
-// Relatives
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
 
-/**
- * @param {{
- *   limit?: number;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderBreadcrumb = props => {
-  const { limit = Infinity } = props;
-  const ref = useRef(null);
+import type { Element } from '@plitzi/sdk-shared/types/SchemaTypes';
+
+export type BuilderBreadcrumbProps = {
+  limit?: number;
+};
+
+const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
+  const ref = useRef<HTMLDivElement>(null);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const { elementHovered, setHovered } = use(BuilderHoveredContext);
   const { builderElementPermissions, baseElementIdOriginal } = use(BuilderContext);
@@ -33,16 +30,16 @@ const BuilderBreadcrumb = props => {
 
       ref.current.scrollLeft = scrollWidth - offsetWidth;
     }
-  }, [ref.current]);
+  }, []);
 
-  const getPath = id => {
+  const getPath = (id?: string): { id: string; label: string }[] => {
     if (!id) {
       return [];
     }
 
-    const element = flat[id];
+    const element = flat[id] as Element | undefined;
     if (!element) {
-      return [{ id, label }];
+      return [{ id, label: 'unknown' }];
     }
 
     const {
@@ -57,7 +54,7 @@ const BuilderBreadcrumb = props => {
   };
 
   const handleClick = useCallback(
-    id => {
+    (id: string) => {
       if (!id) {
         return;
       }
@@ -73,10 +70,11 @@ const BuilderBreadcrumb = props => {
     [setSelected, builderElementPermissions, flat]
   );
 
-  const handleMouseEnter = useCallback(id => setHovered(id), [setHovered]);
+  const handleMouseEnter = useCallback((id: string) => setHovered(id), [setHovered]);
 
-  const handleMouseLeave = () => setHovered(null);
+  const handleMouseLeave = () => setHovered(undefined);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const path = useMemo(() => getPath(elementSelected), [elementSelected, flat]);
   const subPath = useMemo(() => {
     if (limit !== Infinity && path.length > limit) {
@@ -84,15 +82,10 @@ const BuilderBreadcrumb = props => {
     }
 
     return path;
-  }, [path, elementSelected]);
+  }, [path, limit]);
 
   return (
-    <div
-      ref={ref}
-      tabIndex={-1}
-      className="builder__breadcrumb flex overflow-y-hidden border-b border-gray-300"
-      onMouseLeave={handleMouseLeave}
-    >
+    <div ref={ref} tabIndex={-1} className="builder__breadcrumb flex overflow-y-hidden" onMouseLeave={handleMouseLeave}>
       {subPath.length < path.length && (
         <BuilderBreadcrumbItem
           className="hover:bg-blue-400 hover:text-white after:border-l-white hover:after:border-l-blue-400 before:border-gray-300"

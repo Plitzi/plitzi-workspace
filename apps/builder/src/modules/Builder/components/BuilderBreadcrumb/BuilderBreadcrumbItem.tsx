@@ -1,32 +1,38 @@
-// Packages
-import React, { use, useCallback } from 'react';
+import ContentEditable from '@plitzi/plitzi-ui/ContentEditable';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
-import ContentEditable from '@plitzi/plitzi-ui-components/ContentEditable';
+import { memo, use, useCallback } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
-/**
- * @param {{
- *   id?: string;
- *   label?: string;
- *   isActive?: boolean;
- *   children?: React.ReactNode;
- *   className?: string;
- *   onMouseEnter?: (id: string) => void;
- *   onClick?: (id: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderBreadcrumbItem = props => {
-  const { id, label = '', isActive = false, children, className = '', onMouseEnter = noop, onClick = noop } = props;
+export type BuilderBreadcrumbItemProps = {
+  id?: string;
+  label?: string;
+  isActive?: boolean;
+  children?: React.ReactNode;
+  className?: string;
+  onMouseEnter?: (id: string) => void;
+  onClick?: (id: string) => void;
+};
+
+const BuilderBreadcrumbItem = ({
+  id = '',
+  label = '',
+  isActive = false,
+  children,
+  className = '',
+  onMouseEnter,
+  onClick
+}: BuilderBreadcrumbItemProps) => {
   const { updateElement } = use(BuilderContext);
 
-  const handleMouseEnter = useCallback(() => onMouseEnter(id), [onMouseEnter, id]);
+  const handleMouseEnter = useCallback(() => onMouseEnter?.(id), [onMouseEnter, id]);
 
-  const handleClick = useCallback(() => onClick(id), [onClick, id]);
+  const handleClick = useCallback(() => onClick?.(id), [onClick, id]);
 
-  const handleChange = useCallback(value => updateElement(id, 'label', value, 'definition'), [updateElement, id]);
+  const handleChange = useCallback(
+    (value: string) => updateElement(id, 'label', value, 'definition'),
+    [updateElement, id]
+  );
 
   return (
     <div
@@ -57,4 +63,4 @@ const BuilderBreadcrumbItem = props => {
   );
 };
 
-export default BuilderBreadcrumbItem;
+export default memo(BuilderBreadcrumbItem);
