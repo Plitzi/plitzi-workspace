@@ -108,9 +108,9 @@ const BuilderElementTools = ({ initialTab = 'style' }) => {
   } = element;
 
   return (
-    <div className={classNames('flex flex-col grow min-w-0 gap-4', { [`element-${type}`]: type })}>
-      <ToolsList onSelect={handleClickListItems} selected={selected} />
+    <div className={classNames('flex flex-col grow min-w-0 gap-4 mt-2', { [`element-${type}`]: type })}>
       <BuilderBreadcrumb limit={4} />
+      <ToolsList onSelect={handleClickListItems} selected={selected} />
       <div className="flex flex-col grow overflow-y-auto basis-0">
         {selected === 'style' && (
           <div className="flex flex-col grow gap-2">

@@ -14,8 +14,8 @@ const ToolsListItem = ({ id = '', title = '', active = false, onClick }: ToolsLi
   return (
     <li
       className={classNames(
-        'flex items-center justify-center border-b-4 grow basis-0 cursor-pointer hover:text-blue-400 text-xs px-1',
-        { 'border-transparent': !active, 'border-blue-400 text-blue-400': active }
+        'flex items-center justify-center border-b-4 -mb-0.5 grow basis-0 cursor-pointer hover:text-primary-500 text-xs px-1',
+        { 'border-transparent': !active, 'border-primary-500 text-primary-500': active }
       )}
       onClick={handleClick}
     >

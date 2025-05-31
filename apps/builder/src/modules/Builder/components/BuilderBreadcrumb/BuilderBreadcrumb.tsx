@@ -14,7 +14,7 @@ export type BuilderBreadcrumbProps = {
 };
 
 const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLUListElement>(null);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const { elementHovered, setHovered } = use(BuilderHoveredContext);
   const { builderElementPermissions, baseElementIdOriginal } = use(BuilderContext);
@@ -85,12 +85,9 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
   }, [path, limit]);
 
   return (
-    <div ref={ref} tabIndex={-1} className="builder__breadcrumb flex overflow-y-hidden" onMouseLeave={handleMouseLeave}>
+    <ul ref={ref} tabIndex={-1} className="builder__breadcrumb flex gap-2" onMouseLeave={handleMouseLeave}>
       {subPath.length < path.length && (
-        <BuilderBreadcrumbItem
-          className="hover:bg-blue-400 hover:text-white after:border-l-white hover:after:border-l-blue-400 before:border-gray-300"
-          onMouseEnter={handleMouseEnter}
-        >
+        <BuilderBreadcrumbItem onMouseEnter={handleMouseEnter}>
           <i className="fas fa-ellipsis-h" />
         </BuilderBreadcrumbItem>
       )}
@@ -119,7 +116,7 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
           label="Page"
         />
       )}
-    </div>
+    </ul>
   );
 };
 

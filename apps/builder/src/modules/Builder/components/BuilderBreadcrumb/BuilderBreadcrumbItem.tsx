@@ -35,21 +35,18 @@ const BuilderBreadcrumbItem = ({
   );
 
   return (
-    <div
+    <li
       className={classNames(
-        'breadcrumb__item flex before:border-gray-300 font-bold basis-0 cursor-pointer relative items-center select-none pl-4 first:pl-1.5 min-h-[24px] no-underline',
+        'breadcrumb__item flex not-first:before:content-[">"] first:before:content-none before:text-black gap-2 text-xs select-none items-center',
         className,
-        {
-          'after:border-l-white': !isActive,
-          'bg-blue-400 text-white after:border-l-blue-400': isActive
-        }
+        { 'hover:text-primary-500': !isActive, 'text-primary-500': isActive }
       )}
       onMouseEnter={handleMouseEnter}
       onClick={handleClick}
       tabIndex={-1}
     >
       {label && (
-        <div className="truncate">
+        <div className="truncate cursor-pointer">
           <ContentEditable
             className="focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1"
             value={label}
@@ -58,8 +55,8 @@ const BuilderBreadcrumbItem = ({
           />
         </div>
       )}
-      {!label && children}
-    </div>
+      {!label && <div className="cursor-pointer">{children}</div>}
+    </li>
   );
 };
 
