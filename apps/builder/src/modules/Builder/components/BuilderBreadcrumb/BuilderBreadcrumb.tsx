@@ -85,7 +85,12 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
   }, [path, limit]);
 
   return (
-    <ul ref={ref} tabIndex={-1} className="builder__breadcrumb flex gap-2" onMouseLeave={handleMouseLeave}>
+    <ul
+      ref={ref}
+      tabIndex={-1}
+      className="builder__breadcrumb flex gap-2 overflow-x-auto"
+      onMouseLeave={handleMouseLeave}
+    >
       {subPath.length < path.length && (
         <BuilderBreadcrumbItem onMouseEnter={handleMouseEnter}>
           <i className="fas fa-ellipsis-h" />
