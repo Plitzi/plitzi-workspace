@@ -52,7 +52,7 @@ const Effects = ({ isCollapsed = true, onCollapse }: EffectsProps) => {
 
   return (
     <CategoryContainer title="Effects" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <div className="flex flex-col p-2 gap-2">
+      <div className="flex flex-col gap-2">
         <CategorySection label="Size" keys={['opacity']}>
           <CategoryOption value={opacity} onChange={handleChange('cursor')} type="metric" />
         </CategorySection>

@@ -27,6 +27,7 @@ export type CategoryOptionProps =
   | (CategoryOptionPropsBase & {
       type: 'metric';
       value?: StyleValue;
+      preffix?: string;
       units?: { label: string; value: string }[];
       allowedWords?: string[];
       step?: number;

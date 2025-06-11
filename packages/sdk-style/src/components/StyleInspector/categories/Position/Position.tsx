@@ -102,7 +102,7 @@ const Position = ({ isCollapsed = true, onCollapse }: PositionProps) => {
 
   return (
     <CategoryContainer title="Position" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <div className="flex flex-col p-2 gap-2">
+      <div className="flex flex-col gap-2">
         <CategorySection keys={keyValue} label="Position">
           <CategoryOption onChange={handleChange(POSITION)} type="iconGroup" items={items} />
         </CategorySection>

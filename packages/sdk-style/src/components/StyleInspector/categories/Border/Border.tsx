@@ -154,7 +154,7 @@ const Border = ({ isCollapsed = true, onCollapse }: BorderProps) => {
 
   return (
     <CategoryContainer title="Border" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <div className="flex flex-col p-2 gap-2">
+      <div className="flex flex-col gap-2">
         <BorderRadius values={values} onChange={handleChange('radius')} onChangeSegment={handleChange} />
         <div className="flex flex-col w-full gap-2">
           <BorderPlacements currentPlacement={currentPlacement} setCurrentPlacement={setCurrentPlacement} />

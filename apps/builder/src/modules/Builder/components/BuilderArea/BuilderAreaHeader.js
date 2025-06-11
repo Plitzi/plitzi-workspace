@@ -8,6 +8,7 @@ import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
+import PageOverviewZoom from '@plitzi/plitzi-ui/icons/PageOverviewZoom';
 
 // Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
@@ -161,7 +162,9 @@ const BuilderAreaHeader = props => {
               )}
               {multiPagesMode && (
                 <Link to={baseElementId}>
-                  <Icon icon="fas fa-search-plus" title="Zoom in on this page" />
+                  <Icon title="Zoom in on this page">
+                    <PageOverviewZoom />
+                  </Icon>
                 </Link>
               )}
             </div>

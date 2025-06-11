@@ -69,8 +69,22 @@ const Size = ({ isCollapsed = true, onCollapse }: SizeProps) => {
   return (
     <CategoryContainer title="Size" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <CategorySection label="Size" keys={keyValueSize}>
-        <CategoryOption keys={[WIDTH]} label="Width" value={width} onChange={handleChange(WIDTH)} type="metric" />
-        <CategoryOption keys={[HEIGHT]} label="Height" value={height} onChange={handleChange(HEIGHT)} type="metric" />
+        <CategoryOption
+          keys={[WIDTH]}
+          label="Width"
+          preffix="W"
+          value={width}
+          onChange={handleChange(WIDTH)}
+          type="metric"
+        />
+        <CategoryOption
+          keys={[HEIGHT]}
+          label="Height"
+          preffix="H"
+          value={height}
+          onChange={handleChange(HEIGHT)}
+          type="metric"
+        />
       </CategorySection>
       <CategorySection label="Min Size" keys={keyValueSizeMin}>
         <CategoryOption
