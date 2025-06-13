@@ -157,37 +157,6 @@ const NetworkContextProvider = props => {
     [client]
   );
 
-  const subscribe = useCallback(
-    (subscriptionKey, documentKey, variables, callback) => {
-      if (!Subscriptions[subscriptionKey]) {
-        addToast('Subscription not found', {
-          appeareance: 'danger',
-          autoDismiss: true,
-          placement: 'top-right'
-        });
-
-        return null;
-      }
-
-      const subscriptionObserver = client.subscribe({
-        document: documentKey,
-        query: Subscriptions[subscriptionKey],
-        variables: { ...variables, environment }
-      });
-
-      subscriptionObserver.subscribe(callback, err => {
-        addToast(`Subscription Error: ${err}`, {
-          appeareance: 'danger',
-          autoDismiss: true,
-          placement: 'top-right'
-        });
-      });
-
-      return subscriptionObserver;
-    },
-    [client]
-  );
-
   const connectivityStatus = () => {
     console.log(window.navigator.onLine);
   };
@@ -278,8 +247,8 @@ const NetworkContextProvider = props => {
   const subscriptionManager = useSubscriptionsManager({ client, environment, onMessage: handleMessage });
 
   const networkValue = useMemo(
-    () => ({ mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId, environment }),
-    [mutate, query, subscribe, subscriptionManager, webKey, instanceId, server, userKey, webId, environment]
+    () => ({ mutate, query, subscriptionManager, webKey, instanceId, server, userKey, webId, environment }),
+    [mutate, query, subscriptionManager, webKey, instanceId, server, userKey, webId, environment]
   );
 
   if (error) {

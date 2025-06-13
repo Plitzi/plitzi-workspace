@@ -12,7 +12,6 @@ import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import { SubscriptionEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
@@ -285,7 +284,7 @@ const SegmentsContextProvider = props => {
 
   useEffect(() => {
     if (includeSubscriptions) {
-      subscriptionManager.subscribe('SegmentAddElement', SubscriptionEventTypes.SEGMENT_ADD_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SegmentAddElement', {}, data => {
         const {
           element,
           to,
@@ -304,19 +303,19 @@ const SegmentsContextProvider = props => {
           true
         );
       });
-      subscriptionManager.subscribe('SegmentUpdateElement', SubscriptionEventTypes.SEGMENT_UPDATE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SegmentUpdateElement', {}, data => {
         const { element, contextId } = get(data, 'data.SegmentUpdateElement', {});
         segmentUpdateElement(contextId, element, true);
       });
-      subscriptionManager.subscribe('SegmentRemoveElement', SubscriptionEventTypes.SEGMENT_REMOVE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SegmentRemoveElement', {}, data => {
         const { elementId, contextId } = get(data, 'data.SegmentRemoveElement', {});
         segmentRemoveElement(contextId, elementId, true);
       });
-      subscriptionManager.subscribe('SegmentMoveElement', SubscriptionEventTypes.SEGMENT_MOVE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SegmentMoveElement', {}, data => {
         const { from, to, elementId, dropPosition, contextId } = get(data, 'data.SegmentMoveElement', {});
         segmentMoveElement(contextId, from, to, elementId, dropPosition, true);
       });
-      subscriptionManager.subscribe('SegmentCloneElement', SubscriptionEventTypes.SEGMENT_CLONE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SegmentCloneElement', {}, data => {
         const { element, to, dropPosition, initialItems = [], contextId } = get(data, 'data.SegmentCloneElement', {});
         segmentAddElement(
           contextId,
@@ -327,7 +326,7 @@ const SegmentsContextProvider = props => {
           true
         );
       });
-      subscriptionManager.subscribe('SegmentAddTemplate', SubscriptionEventTypes.SPACE_ADD_TEMPLATE, {}, data => {
+      subscriptionManager.subscribe('SegmentAddTemplate', {}, data => {
         const {
           element,
           styles,
@@ -348,65 +347,35 @@ const SegmentsContextProvider = props => {
           true
         );
       });
-      subscriptionManager.subscribe(
-        'SegmentStyleAddSelector',
-        SubscriptionEventTypes.SEGMENT_STYLE_ADD_SELECTOR,
-        {},
-        data => {
-          const { displayMode, selector, type, path, style, contextId } = get(data, 'data.SegmentStyleAddSelector', {});
-          segmentAddSelector(contextId, displayMode, selector, type, path, style, true);
-        }
-      );
-      subscriptionManager.subscribe(
-        'SegmentStyleUpdateSelector',
-        SubscriptionEventTypes.SEGMENT_STYLE_UPDATE_SELECTOR,
-        {},
-        data => {
-          const { displayMode, selector, type, path, style, contextId } = get(
-            data,
-            'data.SegmentStyleUpdateSelector',
-            {}
-          );
-          segmentUpdateSelector(contextId, displayMode, selector, type, path, style, true);
-        }
-      );
-      subscriptionManager.subscribe(
-        'SegmentStyleRemoveSelector',
-        SubscriptionEventTypes.SEGMENT_STYLE_REMOVE_SELECTOR,
-        {},
-        data => {
-          const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {});
-          segmentRemoveSelector(contextId, selector, true);
-        }
-      );
+      subscriptionManager.subscribe('SegmentStyleAddSelector', {}, data => {
+        const { displayMode, selector, type, path, style, contextId } = get(data, 'data.SegmentStyleAddSelector', {});
+        segmentAddSelector(contextId, displayMode, selector, type, path, style, true);
+      });
+      subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
+        const { displayMode, selector, type, path, style, contextId } = get(
+          data,
+          'data.SegmentStyleUpdateSelector',
+          {}
+        );
+        segmentUpdateSelector(contextId, displayMode, selector, type, path, style, true);
+      });
+      subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
+        const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {});
+        segmentRemoveSelector(contextId, selector, true);
+      });
 
-      subscriptionManager.subscribe(
-        'SegmentStyleAddVariable',
-        SubscriptionEventTypes.SEGMENT_STYLE_ADD_VARIABLE,
-        {},
-        data => {
-          const { variable, value, contextId } = get(data, 'data.SegmentStyleAddVariable', {});
-          segmentAddVariable(contextId, variable, value, true);
-        }
-      );
-      subscriptionManager.subscribe(
-        'SegmentStyleUpdateVariable',
-        SubscriptionEventTypes.SEGMENT_STYLE_UPDATE_VARIABLE,
-        {},
-        data => {
-          const { variable, value, contextId } = get(data, 'data.SegmentStyleUpdateVariable', {});
-          segmentUpdateVariable(contextId, variable, value, true);
-        }
-      );
-      subscriptionManager.subscribe(
-        'SegmentStyleRemoveVariable',
-        SubscriptionEventTypes.SEGMENT_STYLE_REMOVE_VARIABLE,
-        {},
-        data => {
-          const { variable, contextId } = get(data, 'data.SegmentStyleRemoveVariable', {});
-          segmentRemoveVariable(contextId, variable, true);
-        }
-      );
+      subscriptionManager.subscribe('SegmentStyleAddVariable', {}, data => {
+        const { variable, value, contextId } = get(data, 'data.SegmentStyleAddVariable', {});
+        segmentAddVariable(contextId, variable, value, true);
+      });
+      subscriptionManager.subscribe('SegmentStyleUpdateVariable', {}, data => {
+        const { variable, value, contextId } = get(data, 'data.SegmentStyleUpdateVariable', {});
+        segmentUpdateVariable(contextId, variable, value, true);
+      });
+      subscriptionManager.subscribe('SegmentStyleRemoveVariable', {}, data => {
+        const { variable, contextId } = get(data, 'data.SegmentStyleRemoveVariable', {});
+        segmentRemoveVariable(contextId, variable, true);
+      });
     }
   }, [subscriptionManager, includeSubscriptions]);
 

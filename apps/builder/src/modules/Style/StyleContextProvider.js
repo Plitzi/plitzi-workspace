@@ -12,7 +12,6 @@ import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import { SubscriptionEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
@@ -131,37 +130,37 @@ const StyleContextProvider = props => {
 
   useEffect(() => {
     if (subscriptionManager && includeSubscriptions) {
-      subscriptionManager.subscribe('StyleUpdated', SubscriptionEventTypes.STYLE_UPDATED, {}, data => {
+      subscriptionManager.subscribe('StyleUpdated', {}, data => {
         const style = get(data, 'data.StyleUpdated', {});
         styleUpdate(style, true);
       });
 
-      subscriptionManager.subscribe('StyleAddSelector', SubscriptionEventTypes.STYLE_ADD_SELECTOR, {}, data => {
+      subscriptionManager.subscribe('StyleAddSelector', {}, data => {
         const { displayMode, selector, type, path, style } = get(data, 'data.StyleAddSelector', {});
         styleAddSelector(displayMode, selector, type, path, style, true);
       });
 
-      subscriptionManager.subscribe('StyleUpdateSelector', SubscriptionEventTypes.STYLE_UPDATE_SELECTOR, {}, data => {
+      subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
         const { displayMode, selector, type, path, style } = get(data, 'data.StyleUpdateSelector', {});
         styleUpdateSelector(displayMode, selector, type, path, style, true);
       });
 
-      subscriptionManager.subscribe('StyleRemoveSelector', SubscriptionEventTypes.STYLE_REMOVE_SELECTOR, {}, data => {
+      subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {
         const { selector } = get(data, 'data.StyleRemoveSelector', {});
         styleRemoveSelector(selector, true);
       });
 
-      subscriptionManager.subscribe('StyleAddVariable', SubscriptionEventTypes.STYLE_ADD_VARIABLE, {}, data => {
+      subscriptionManager.subscribe('StyleAddVariable', {}, data => {
         const { variable, value } = get(data, 'data.StyleAddVariable', {});
         styleAddVariable(variable, value, true);
       });
 
-      subscriptionManager.subscribe('StyleUpdateVariable', SubscriptionEventTypes.STYLE_UPDATE_VARIABLE, {}, data => {
+      subscriptionManager.subscribe('StyleUpdateVariable', {}, data => {
         const { variable, value } = get(data, 'data.StyleUpdateVariable', {});
         styleUpdateVariable(variable, value, true);
       });
 
-      subscriptionManager.subscribe('StyleRemoveVariable', SubscriptionEventTypes.STYLE_REMOVE_VARIABLE, {}, data => {
+      subscriptionManager.subscribe('StyleRemoveVariable', {}, data => {
         const { variable } = get(data, 'data.StyleRemoveVariable', {});
         styleRemoveVariable(variable, true);
       });

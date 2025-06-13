@@ -17,7 +17,6 @@ import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
-import { SubscriptionEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 // Relatives
@@ -273,75 +272,65 @@ const SchemaContextProvider = props => {
       if (type === SCHEMA_TYPE_MAIN) {
         // Pages
 
-        subscriptionManager.subscribe('SpaceAddPage', SubscriptionEventTypes.SPACE_ADD_PAGE, {}, data => {
+        subscriptionManager.subscribe('SpaceAddPage', {}, data => {
           const { page } = get(data, 'data.SpaceAddPage', {});
           schemaAddPage(page, true);
         });
 
-        subscriptionManager.subscribe('SpaceHomePage', SubscriptionEventTypes.SPACE_SET_HOME_PAGE, {}, data => {
+        subscriptionManager.subscribe('SpaceHomePage', {}, data => {
           const {
             page: { id }
           } = get(data, 'data.SpaceHomePage', {});
           schemaHomePage(id, true);
         });
 
-        subscriptionManager.subscribe('SpaceUpdatePage', SubscriptionEventTypes.SPACE_UPDATE_PAGE, {}, data => {
+        subscriptionManager.subscribe('SpaceUpdatePage', {}, data => {
           const { page } = get(data, 'data.SpaceUpdatePage', {});
           schemaUpdatePage(page, true);
         });
 
-        subscriptionManager.subscribe('SpaceRemovePage', SubscriptionEventTypes.SPACE_REMOVE_PAGE, {}, data => {
+        subscriptionManager.subscribe('SpaceRemovePage', {}, data => {
           const { pageId } = get(data, 'data.SpaceRemovePage', {});
           schemaRemovePage(pageId, true);
         });
 
         // Page Folders
 
-        subscriptionManager.subscribe('SpaceAddPageFolder', SubscriptionEventTypes.SPACE_ADD_PAGE_FOLDER, {}, data => {
+        subscriptionManager.subscribe('SpaceAddPageFolder', {}, data => {
           const { pageFolder } = get(data, 'data.SpaceAddPageFolder', {});
           schemaAddPageFolder(pageFolder, true);
         });
 
-        subscriptionManager.subscribe(
-          'SpaceUpdatePageFolder',
-          SubscriptionEventTypes.SPACE_UPDATE_PAGE_FOLDER,
-          {},
-          data => {
-            const { pageFolder } = get(data, 'data.SpaceUpdatePageFolder', {});
-            schemaUpdatePageFolder(pageFolder, true);
-          }
-        );
+        subscriptionManager.subscribe('SpaceUpdatePageFolder', {}, data => {
+          const { pageFolder } = get(data, 'data.SpaceUpdatePageFolder', {});
+          schemaUpdatePageFolder(pageFolder, true);
+        });
 
-        subscriptionManager.subscribe(
-          'SpaceRemovePageFolder',
-          SubscriptionEventTypes.SPACE_REMOVE_PAGE_FOLDER,
-          {},
-          data => {
-            const { pageFolderId } = get(data, 'data.SpaceRemovePageFolder', {});
-            schemaRemovePageFolder(pageFolderId, true);
-          }
-        );
+        subscriptionManager.subscribe('SpaceRemovePageFolder', {}, data => {
+          const { pageFolderId } = get(data, 'data.SpaceRemovePageFolder', {});
+          schemaRemovePageFolder(pageFolderId, true);
+        });
 
         // Variables
 
-        subscriptionManager.subscribe('SpaceAddVariable', SubscriptionEventTypes.SPACE_ADD_VARIABLE, {}, data => {
+        subscriptionManager.subscribe('SpaceAddVariable', {}, data => {
           const { variable } = get(data, 'data.SpaceAddVariable', {});
           schemaAddVariable(variable, true);
         });
 
-        subscriptionManager.subscribe('SpaceUpdateVariable', SubscriptionEventTypes.SPACE_UPDATE_VARIABLE, {}, data => {
+        subscriptionManager.subscribe('SpaceUpdateVariable', {}, data => {
           const { variable } = get(data, 'data.SpaceUpdateVariable', {});
           schemaUpdateVariable(variable, true);
         });
 
-        subscriptionManager.subscribe('SpaceRemoveVariable', SubscriptionEventTypes.SPACE_REMOVE_VARIABLE, {}, data => {
+        subscriptionManager.subscribe('SpaceRemoveVariable', {}, data => {
           const { name } = get(data, 'data.SpaceRemoveVariable', {});
           schemaRemoveVariable(name, true);
         });
 
         // Others
 
-        subscriptionManager.subscribe('SpaceUpdateSettings', SubscriptionEventTypes.SPACE_UPDATE_SETTINGS, {}, data => {
+        subscriptionManager.subscribe('SpaceUpdateSettings', {}, data => {
           const { value, path } = get(data, 'data.SpaceUpdateSettings', {});
           schemaUpdateSettings(value, path, true);
         });
@@ -349,7 +338,7 @@ const SchemaContextProvider = props => {
 
       // Elements
 
-      subscriptionManager.subscribe('SpaceAddElement', SubscriptionEventTypes.SPACE_ADD_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SpaceAddElement', {}, data => {
         const { element, to, dropPosition, initialItems = [], variables = [] } = get(data, 'data.SpaceAddElement', {});
         schemaAddElement(
           to,
@@ -361,22 +350,22 @@ const SchemaContextProvider = props => {
         );
       });
 
-      subscriptionManager.subscribe('SpaceUpdateElement', SubscriptionEventTypes.SPACE_UPDATE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SpaceUpdateElement', {}, data => {
         const { element } = get(data, 'data.SpaceUpdateElement', {});
         schemaUpdateElement(element, true);
       });
 
-      subscriptionManager.subscribe('SpaceRemoveElement', SubscriptionEventTypes.SPACE_REMOVE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SpaceRemoveElement', {}, data => {
         const { elementId } = get(data, 'data.SpaceRemoveElement', {});
         schemaRemoveElement(elementId, true);
       });
 
-      subscriptionManager.subscribe('SpaceMoveElement', SubscriptionEventTypes.SPACE_MOVE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SpaceMoveElement', {}, data => {
         const { from, to, elementId, dropPosition } = get(data, 'data.SpaceMoveElement', {});
         schemaMoveElement(from, to, elementId, dropPosition, true);
       });
 
-      subscriptionManager.subscribe('SpaceCloneElement', SubscriptionEventTypes.SPACE_CLONE_ELEMENT, {}, data => {
+      subscriptionManager.subscribe('SpaceCloneElement', {}, data => {
         const { element, to, dropPosition, initialItems = [] } = get(data, 'data.SpaceCloneElement', {});
         schemaAddElement(
           to,
@@ -389,12 +378,12 @@ const SchemaContextProvider = props => {
 
       // Others
 
-      subscriptionManager.subscribe('SpaceUpdated', SubscriptionEventTypes.SPACE_UPDATED, {}, data => {
+      subscriptionManager.subscribe('SpaceUpdated', {}, data => {
         const { schema } = get(data, 'data.SpaceUpdated', {});
         schemaUpdate(schema, true);
       });
 
-      subscriptionManager.subscribe('SpaceAddTemplate', SubscriptionEventTypes.SPACE_ADD_TEMPLATE, {}, data => {
+      subscriptionManager.subscribe('SpaceAddTemplate', {}, data => {
         const {
           element,
           styles,

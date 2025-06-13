@@ -1,33 +1,42 @@
-// Packages
 import { useCallback, useMemo, useRef, useEffect } from 'react';
-import noop from 'lodash/noop';
 
-// Alias
-import Subscriptions from '@pmodules/Network/Subscriptions';
+import Subscriptions from '../Subscriptions';
 
-const useSubscriptionsManager = (props = {}) => {
-  const { onMessage = noop, client, environment, disabled } = props;
-  const subscriptions = useRef([]);
+import type { ApolloClient, FetchResult, NormalizedCacheObject, Observable } from '@apollo/client/core';
+import type { DocumentNode } from 'graphql';
+
+export type UseSubscriptionsManagerProps = {
+  onMessage?: (message: string, type?: 'info' | 'success' | 'warning' | 'danger') => void;
+  client?: ApolloClient<NormalizedCacheObject>;
+  environment?: string;
+  disabled?: boolean;
+};
+
+const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: UseSubscriptionsManagerProps) => {
+  const subscriptions = useRef<Observable<FetchResult<unknown>>[]>([]);
 
   const subscribe = useCallback(
-    (subscriptionKey, documentKey, variables, callback) => {
+    (
+      subscriptionKey: keyof typeof Subscriptions,
+      variables: Record<string, unknown>,
+      callback: (result: FetchResult) => void
+    ) => {
       if (!client || disabled) {
         return false;
       }
 
-      if (!Subscriptions[subscriptionKey]) {
-        onMessage('Subscription not found', 'danger');
+      if (!(Subscriptions[subscriptionKey] as DocumentNode | undefined)) {
+        onMessage?.('Subscription not found', 'danger');
 
         return null;
       }
 
       const subscriptionObserver = client.subscribe({
-        document: documentKey,
         query: Subscriptions[subscriptionKey],
         variables: { ...variables, environment }
       });
 
-      subscriptionObserver.subscribe(callback, err => onMessage(`Subscription Error: ${err}`, 'danger'));
+      subscriptionObserver.subscribe(callback, err => onMessage?.(`Subscription Error: ${err}`, 'danger'));
 
       subscriptions.current.push(subscriptionObserver);
 

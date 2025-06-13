@@ -1,40 +1,41 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
-import get from 'lodash/get';
-import { Link } from 'react-router-dom';
-import classNames from 'classnames';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
+import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
 import PageOverviewZoom from '@plitzi/plitzi-ui/icons/PageOverviewZoom';
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import classNames from 'classnames';
+import get from 'lodash/get';
+import { useCallback, use, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 
-// Monorepo
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 
-// Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 import BuilderElementTools from '../BuilderElementTools';
 
-/**
- * @param {{
- *   baseElementId: string;
- *   element: any;
- *   isActive?: boolean;
- *   headerTitle?: string;
- *   previewMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderAreaHeader = props => {
-  const { baseElementId, element, isActive = false, headerTitle = '', previewMode = false } = props;
+import type { Element } from '@plitzi/sdk-shared';
+
+export type BuilderAreaHeaderProps = {
+  baseElementId: string;
+  element: Element;
+  isActive?: boolean;
+  headerTitle?: string;
+  previewMode?: boolean;
+};
+
+const BuilderAreaHeader = ({
+  baseElementId,
+  element,
+  isActive = false,
+  headerTitle = '',
+  previewMode = false
+}: BuilderAreaHeaderProps) => {
   const { existsPopup, addPopup } = usePopup();
   const { multiPagesMode, setMultiPagesMode, hasMultiPages, builderSetBaseContext, baseElementIdOriginal, mode } =
     use(BuilderContext);
@@ -50,7 +51,7 @@ const BuilderAreaHeader = props => {
 
   const handleClickMultipage = useCallback(() => {
     if (elementSelected) {
-      setSelected(null);
+      setSelected(undefined);
     }
 
     setMultiPagesMode(!multiPagesMode);
@@ -69,7 +70,7 @@ const BuilderAreaHeader = props => {
         placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
       });
     }
-  }, [baseElementId, setSelected]);
+  }, [addPopup, baseElementId, existsPopup, mode, setSelected]);
 
   const fullpath = useMemo(() => {
     const path = getPageFullPath(flat, pageFolders, baseElementId, true);
@@ -80,9 +81,8 @@ const BuilderAreaHeader = props => {
     return path;
   }, [flat, pageFolders, baseElementId]);
 
-  const title = get(element, 'attributes.name', 'Page');
+  const title = get(element, 'attributes.name', 'Page') as string;
   const defaultPage = get(element, 'attributes.default', false);
-  const slug = get(element, 'attributes.slug', '');
 
   const domainName = useMemo(() => {
     let name = domain || 'https://subdomain.plitzi.app';
@@ -91,7 +91,7 @@ const BuilderAreaHeader = props => {
     }
 
     return name;
-  }, [domain, defaultPage, slug, baseElementId, mode]);
+  }, [domain, defaultPage, fullpath]);
 
   const pageTitle = useMemo(() => {
     if (headerTitle) {
@@ -108,7 +108,7 @@ const BuilderAreaHeader = props => {
     }
 
     return name;
-  }, [headerTitle, multiPagesMode, title, domain, defaultPage, slug, baseElementId, mode]);
+  }, [headerTitle, multiPagesMode, domain, defaultPage, title, fullpath]);
 
   return (
     <Flex
@@ -136,8 +136,8 @@ const BuilderAreaHeader = props => {
           })}
         />
         {!multiPagesMode && baseElementIdOriginal !== baseElementId && (
-          <Button size="custom" className="px-2 py-0.5 mr-2 rounded-md" onClick={handleClickBackToInstance}>
-            <i className="fas fa-arrow-left mr-1" />
+          <Button size="xs" iconPlacement="before" className="gap-1" onClick={handleClickBackToInstance}>
+            <Button.Icon icon="fas fa-arrow-left" />
             Back
           </Button>
         )}

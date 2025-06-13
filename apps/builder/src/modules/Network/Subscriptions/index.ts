@@ -1,47 +1,46 @@
-// Relatives
-import SpaceUpdatedSubscription from './Space/SpaceUpdatedSubscription';
-import StyleUpdatedSubscription from './Style/StyleUpdatedSubscription';
-
+// Collaborator subscriptions
 import CollaboratorConnectedSubscription from './Collaborator/CollaboratorConnectedSubscription';
 import CollaboratorDisconnectedSubscription from './Collaborator/CollaboratorDisconnectedSubscription';
-
+// Segment subscriptions
+import SegmentAddElementSubscription from './Segment/SegmentAddElementSubscription';
+import SegmentAddTemplateSubscription from './Segment/SegmentAddTemplateSubscription';
+import SegmentCloneElementSubscription from './Segment/SegmentCloneElementSubscription';
+import SegmentMoveElementSubscription from './Segment/SegmentMoveElementSubscription';
+import SegmentRemoveElementSubscription from './Segment/SegmentRemoveElementSubscription';
+import SegmentStyleAddSelectorSubscription from './Segment/SegmentStyleAddSelectorSubscription';
+import SegmentStyleAddVariableSubscription from './Segment/SegmentStyleAddVariableSubscription';
+import SegmentStyleRemoveSelectorSubscription from './Segment/SegmentStyleRemoveSelectorSubscription';
+import SegmentStyleRemoveVariableSubscription from './Segment/SegmentStyleRemoveVariableSubscription';
+import SegmentStyleUpdateSelectorSubscription from './Segment/SegmentStyleUpdateSelectorSubscription';
+import SegmentStyleUpdateVariableSubscription from './Segment/SegmentStyleUpdateVariableSubscription';
+import SegmentUpdateElementSubscription from './Segment/SegmentUpdateElementSubscription';
+// Space subscriptions
+import SpaceAddPageFolderSubscription from './Space/folders/SpaceAddPageFolderSubscription';
+import SpaceRemovePageFolderSubscription from './Space/folders/SpaceRemovePageFolderSubscription';
+import SpaceUpdatePageFolderSubscription from './Space/folders/SpaceUpdatePageFolderSubscription';
 import SpaceAddPageSubscription from './Space/pages/SpaceAddPageSubscription';
 import SpaceHomePageSubscription from './Space/pages/SpaceHomePageSubscription';
-import SpaceUpdatePageSubscription from './Space/pages/SpaceUpdatePageSubscription';
 import SpaceRemovePageSubscription from './Space/pages/SpaceRemovePageSubscription';
-import SpaceAddPageFolderSubscription from './Space/folders/SpaceAddPageFolderSubscription';
-import SpaceUpdatePageFolderSubscription from './Space/folders/SpaceUpdatePageFolderSubscription';
-import SpaceRemovePageFolderSubscription from './Space/folders/SpaceRemovePageFolderSubscription';
-import SpaceAddVariableSubscription from './Space/variables/SpaceAddVariableSubscription';
-import SpaceUpdateVariableSubscription from './Space/variables/SpaceUpdateVariableSubscription';
-import SpaceRemoveVariableSubscription from './Space/variables/SpaceRemoveVariableSubscription';
+import SpaceUpdatePageSubscription from './Space/pages/SpaceUpdatePageSubscription';
 import SpaceAddElementSubscription from './Space/SpaceAddElementSubscription';
-import SpaceUpdateElementSubscription from './Space/SpaceUpdateElementSubscription';
-import SpaceRemoveElementSubscription from './Space/SpaceRemoveElementSubscription';
-import SpaceMoveElementSubscription from './Space/SpaceMoveElementSubscription';
-import SpaceCloneElementSubscription from './Space/SpaceCloneElementSubscription';
 import SpaceAddTemplateSubscription from './Space/SpaceAddTemplateSubscription';
+import SpaceCloneElementSubscription from './Space/SpaceCloneElementSubscription';
+import SpaceMoveElementSubscription from './Space/SpaceMoveElementSubscription';
+import SpaceRemoveElementSubscription from './Space/SpaceRemoveElementSubscription';
+import SpaceUpdatedSubscription from './Space/SpaceUpdatedSubscription'; // Other Space Subscriptions
+import SpaceUpdateElementSubscription from './Space/SpaceUpdateElementSubscription';
 import SpaceUpdateSettingsSubscription from './Space/SpaceUpdateSettingsSubscription';
-
+import SpaceAddVariableSubscription from './Space/variables/SpaceAddVariableSubscription';
+import SpaceRemoveVariableSubscription from './Space/variables/SpaceRemoveVariableSubscription';
+import SpaceUpdateVariableSubscription from './Space/variables/SpaceUpdateVariableSubscription';
+// Style subscriptions
 import StyleAddSelectorSubscription from './Style/StyleAddSelectorSubscription';
-import StyleUpdateSelectorSubscription from './Style/StyleUpdateSelectorSubscription';
-import StyleRemoveSelectorSubscription from './Style/StyleRemoveSelectorSubscription';
 import StyleAddVariableSubscription from './Style/StyleAddVariableSubscription';
-import StyleUpdateVariableSubscription from './Style/StyleUpdateVariableSubscription';
+import StyleRemoveSelectorSubscription from './Style/StyleRemoveSelectorSubscription';
 import StyleRemoveVariableSubscription from './Style/StyleRemoveVariableSubscription';
-
-import SegmentAddElementSubscription from './Segment/SegmentAddElementSubscription';
-import SegmentUpdateElementSubscription from './Segment/SegmentUpdateElementSubscription';
-import SegmentRemoveElementSubscription from './Segment/SegmentRemoveElementSubscription';
-import SegmentMoveElementSubscription from './Segment/SegmentMoveElementSubscription';
-import SegmentCloneElementSubscription from './Segment/SegmentCloneElementSubscription';
-import SegmentAddTemplateSubscription from './Segment/SegmentAddTemplateSubscription';
-import SegmentStyleAddSelectorSubscription from './Segment/SegmentStyleAddSelectorSubscription';
-import SegmentStyleUpdateSelectorSubscription from './Segment/SegmentStyleUpdateSelectorSubscription';
-import SegmentStyleRemoveSelectorSubscription from './Segment/SegmentStyleRemoveSelectorSubscription';
-import SegmentStyleAddVariableSubscription from './Segment/SegmentStyleAddVariableSubscription';
-import SegmentStyleUpdateVariableSubscription from './Segment/SegmentStyleUpdateVariableSubscription';
-import SegmentStyleRemoveVariableSubscription from './Segment/SegmentStyleRemoveVariableSubscription';
+import StyleUpdatedSubscription from './Style/StyleUpdatedSubscription'; // Other Style Subscriptions
+import StyleUpdateSelectorSubscription from './Style/StyleUpdateSelectorSubscription';
+import StyleUpdateVariableSubscription from './Style/StyleUpdateVariableSubscription';
 
 const Subscriptions = {
   CollaboratorConnected: CollaboratorConnectedSubscription,

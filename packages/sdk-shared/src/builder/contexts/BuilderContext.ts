@@ -43,7 +43,7 @@ export type BuilderContextValue = {
   hasMultiPages: boolean;
   baseContext: { baseElementId: string };
   baseElementIdOriginal: string;
-  builderSetBaseContext: (id: string) => void;
+  builderSetBaseContext: (id?: string) => void;
   builderElementPermissions: {
     (element: Element, path: undefined, defaultValue?: boolean): Record<string, boolean>;
     (element: Element, path: string, defaultValue?: boolean): boolean;

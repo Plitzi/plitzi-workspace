@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import { matchPath } from 'react-router-dom';
 
-import type { Schema, PageFolder, Element } from '@plitzi/sdk-shared';
+import type { Schema, PageFolder } from '@plitzi/sdk-shared';
 import type { PathMatch } from 'react-router-dom';
 
 export type NavigationAction = 'accessDenied' | 'normal' | 'redirect' | 'notFound';
@@ -35,12 +35,19 @@ const recursiveFolderSlug = (pageFolders: Record<string, PageFolder | undefined>
   return `${recursiveFolderSlug(pageFolders, parentId)}/${slug}`;
 };
 
-const getPageFullPath = (
+function getPageFullPath(flat: Schema['flat'], pageFolders: PageFolder[], pageId: string, asString: true): string;
+function getPageFullPath(
+  flat: Schema['flat'],
+  pageFolders: PageFolder[],
+  pageId: string,
+  asString?: false
+): Record<string, string>;
+function getPageFullPath(
   flat: Schema['flat'],
   pageFolders: PageFolder[],
   pageId: string,
   asString: boolean = false
-) => {
+): string | Record<string, string> {
   const {
     slug: pageSlug = '',
     folder: folderId,
@@ -78,7 +85,7 @@ const getPageFullPath = (
   }
 
   return { [`/${path}`]: pageId, [`/${pageId}`]: pageId };
-};
+}
 
 const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boolean, previewMode: boolean = true) => {
   if (!accessLevel || !previewMode) {
@@ -113,10 +120,10 @@ const getPaths = (
     .reduce<Path[]>((acum, pageId) => {
       const {
         attributes: { accessLevel, enabled, unauthorizedBehaviour }
-      } = flat[pageId] as Element;
+      } = flat[pageId];
       let {
         attributes: { unauthorizedPageRedirect }
-      } = flat[pageId] as Element;
+      } = flat[pageId];
 
       if (typeof enabled === 'boolean' && !enabled && previewMode) {
         return acum;
