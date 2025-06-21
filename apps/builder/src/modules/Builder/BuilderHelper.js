@@ -1,21 +1,12 @@
-// Packages
 import get from 'lodash/get';
 import set from 'lodash/set';
 import { produce } from 'immer';
 import pick from 'lodash/pick';
 
-// Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { generateCache, generateStyleSelector, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
-// Relatives
 import { generateID } from '../../helpers/utils';
-
-export const DISPLAY_BORDER_NONE = 'none';
-export const DISPLAY_BORDER_WHITE = 'white';
-export const DISPLAY_BORDER_BLACK = 'black';
-
-export const DISPLAY_BORDER = [DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE, DISPLAY_BORDER_NONE];
 
 const getImageSize = async file =>
   new Promise((resolve, reject) => {

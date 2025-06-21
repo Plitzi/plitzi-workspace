@@ -1,44 +1,36 @@
-// Basic
-import Text from './basic/Text/Settings';
-import Paragraph from './basic/Paragraph/Settings';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
+import BlockHtml from './advanced/BlockHtml/Settings';
+import BlockJsx from './advanced/BlockJsx/Settings';
+import Custom from './advanced/Custom/Settings';
+import PlitziSdk from './advanced/PlitziSdk/Settings';
+import Reference from './advanced/Reference/Settings';
 import Button from './basic/Button/Settings';
-import Link from './basic/Link/Settings';
-import Heading from './basic/Heading/Settings';
 import Dropdown from './basic/Dropdown/Settings';
+import Heading from './basic/Heading/Settings';
+import Link from './basic/Link/Settings';
 import Markdown from './basic/Markdown/Settings';
-
-// Structure
-import Container from './structure/Container/Settings';
-import List from './structure/List/Settings';
-import TabContainer from './structure/TabContainer/Settings';
-import DialogContainer from './structure/DialogContainer/Settings';
-import ModalContainer from './structure/ModalContainer/Settings';
-
-// Form
+import Paragraph from './basic/Paragraph/Settings';
+import Text from './basic/Text/Settings';
 import Form from './form/Form/Settings';
 import FormControl from './form/FormControl/Settings';
-
-// Internal
-import Page from './internal/Page/Settings';
 import LayoutContainer from './internal/LayoutContainer/Settings';
-
-// Media
+import Page from './internal/Page/Settings';
+import FontAwesome from './media/FontAwesome/Settings';
 import Image from './media/Image/Settings';
 import Video from './media/Video/Settings';
-import FontAwesome from './media/FontAwesome/Settings';
-
-// Advanced
-import Custom from './advanced/Custom/Settings';
-import BlockHtml from './advanced/BlockHtml/Settings';
-import PlitziSdk from './advanced/PlitziSdk/Settings';
-import BlockJsx from './advanced/BlockJsx/Settings';
-import Reference from './advanced/Reference/Settings';
-
-// Provider
 import ApiContainer from './provider/ApiContainer/Settings';
 import CollectionContainer from './provider/CollectionContainer/Settings';
+import Container from './structure/Container/Settings';
+import DialogContainer from './structure/DialogContainer/Settings';
+import List from './structure/List/Settings';
+import ModalContainer from './structure/ModalContainer/Settings';
+import TabContainer from './structure/TabContainer/Settings';
 
-const defaultElementsSettings = {
+import type { FC } from 'react';
+
+const defaultElementsSettings: Record<string, FC<any>> = {
   dropdown: Dropdown,
   plitziSdk: PlitziSdk,
   // notFound: NotFound,

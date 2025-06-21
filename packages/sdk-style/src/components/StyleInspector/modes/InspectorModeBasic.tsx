@@ -34,10 +34,10 @@ const InspectorModeBasic = ({
   displayMode
 }: InspectorModeBasicProps) => {
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
-    'builder-state.StyleInspector.collapsedCache',
+    'builder-state.styleInspector.collapsedCache',
     {}
   );
-  const [showAllOptions, setShowAllOptions] = useStorage<boolean>('builder-state.StyleInspector.showAllOptions', false);
+  const [showAllOptions, setShowAllOptions] = useStorage<boolean>('builder-state.styleInspector.showAllOptions', false);
   const inheritData = useStyleInherit({ element, selector, styleSelector });
 
   const handleChangeCollapse = useCallback(

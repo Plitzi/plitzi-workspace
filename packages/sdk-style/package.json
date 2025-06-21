@@ -10,6 +10,11 @@
       "import": "./dist/index.es",
       "require": "./dist/index.cjs"
     },
+    "./components/*": {
+      "types": "./dist/components/*/index.d.ts",
+      "import": "./dist/components/*",
+      "require": "./dist/components/*"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*",

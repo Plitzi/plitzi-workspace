@@ -13,7 +13,6 @@ import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';

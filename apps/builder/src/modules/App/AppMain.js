@@ -8,7 +8,6 @@ import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextPr
 
 // Alias
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
-import { DISPLAY_BORDER_BLACK } from '@pmodules/Builder/BuilderHelper';
 
 // Relatives
 import AppContext from './AppContext';
@@ -47,7 +46,7 @@ const AppMain = props => {
     debugMode = false
   } = props;
   const [previewMode, setPreviewMode] = useState(false);
-  const [displayBorderComponents, setDisplayBorderComponents] = useState(DISPLAY_BORDER_BLACK);
+  const [displayBorderComponents, setDisplayBorderComponents] = useState('black');
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);

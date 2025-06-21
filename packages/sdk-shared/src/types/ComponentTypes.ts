@@ -29,7 +29,7 @@ export type ComponentContextValue = {
     path?: string,
     defaultValue?: boolean
   ) => boolean | ComponentDefinition | PluginBuilder | undefined;
-  getComponent: (componentTypes: string[], withPlugins?: boolean) => ComponentPlugin | ComponentPlugins;
+  getComponent: (componentTypes: string | string[], withPlugins?: boolean) => ComponentPlugin | ComponentPlugins;
   register: (components: ComponentPlugin[] | ComponentPlugin) => ComponentPlugins;
   unregister: (componentTypes: string[] | string) => string[];
   unregisterDefinition: (pluginType: string) => void;

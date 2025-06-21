@@ -10,7 +10,7 @@ export type SegmentsContextValue = {
   segments: Record<string, Segment>;
   dispatchSegments?: unknown;
   segmentGet: (identifier: string) => Promise<Segment>;
-  segmentsFetch?: unknown;
+  segmentsFetch: (filter?: string, cursor?: string, limit?: number) => Promise<Segment[]>;
   segmentsAdd?: unknown;
   segmentsUpdate?: unknown;
   segmentsRemove?: unknown;

@@ -36,34 +36,25 @@ export type ElementInteraction = {
   when?: RuleGroup;
 };
 
+export type ElementDefinition = {
+  rootId: string;
+  label: string;
+  type: string;
+  parentId?: string;
+  items?: string[];
+  styleSelectors: { [key: string]: string };
+  bindings?: Record<string, ElementBinding[]>;
+  interactions?: Record<string, ElementInteraction>;
+  initialState?: {
+    styleSelectors?: ElementDefinition['styleSelectors'];
+    visibility?: boolean;
+    [key: string]: unknown;
+  };
+};
+
 export type Element = {
   id: string;
-  definition: Omit<
-    { [key: string]: unknown },
-    | 'parentId'
-    | 'items'
-    | 'styleSelectors'
-    | 'string'
-    | 'bindings'
-    | 'label'
-    | 'rootId'
-    | 'interactions'
-    | 'initialState'
-  > & {
-    rootId: string;
-    label: string;
-    type: string;
-    parentId?: string;
-    items?: string[];
-    styleSelectors: { [key: string]: string };
-    bindings?: Record<string, ElementBinding[]>;
-    interactions?: Record<string, ElementInteraction>;
-    initialState?: {
-      styleSelectors?: Element['definition']['styleSelectors'];
-      visibility?: boolean;
-      [key: string]: unknown;
-    };
-  };
+  definition: Omit<{ [key: string]: unknown }, keyof ElementDefinition> & ElementDefinition;
   attributes: Omit<{ [key: string]: unknown }, 'subType'> & {
     subType?: string;
   };

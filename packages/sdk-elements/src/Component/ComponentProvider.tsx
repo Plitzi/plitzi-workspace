@@ -33,7 +33,7 @@ const ComponentProvider = ({
   const [remoteComponents, setRemoteComponents] = useState<ComponentPlugins>({});
   const totalComponents = useRef({ ...remoteComponents, ...localComponentsParsed });
 
-  const getComponent = useCallback((componentTypes: string[] = [], withPlugins = false) => {
+  const getComponent = useCallback((componentTypes: string | string[] = [], withPlugins = false) => {
     if (typeof componentTypes === 'string' && !withPlugins) {
       return totalComponents.current[componentTypes];
     }
@@ -48,7 +48,7 @@ const ComponentProvider = ({
     }
 
     let componentsToReturn: ComponentPlugins = {};
-    componentTypes.forEach(componentType => {
+    (componentTypes as string[]).forEach(componentType => {
       const component = totalComponents.current[componentType] as ComponentPlugin | undefined;
       if (!component) {
         return;

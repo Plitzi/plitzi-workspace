@@ -6,12 +6,8 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 
 // Alias
 import AppContext from '@pmodules/App/AppContext';
-import {
-  DISPLAY_BORDER,
-  DISPLAY_BORDER_BLACK,
-  DISPLAY_BORDER_NONE,
-  DISPLAY_BORDER_WHITE
-} from '@pmodules/Builder/BuilderHelper';
+
+const DISPLAY_BORDER = ['black', 'white', 'none'];
 
 /** @returns {React.ReactElement} */
 const BorderButton = () => {
@@ -22,15 +18,15 @@ const BorderButton = () => {
     if (DISPLAY_BORDER.length - 1 >= pos + 1) {
       setDisplayBorderComponents(DISPLAY_BORDER[pos + 1]);
     } else {
-      setDisplayBorderComponents(DISPLAY_BORDER_BLACK);
+      setDisplayBorderComponents('black');
     }
   }, [displayBorderComponents, setDisplayBorderComponents]);
 
   return (
     <Icon className="h-5 w-5" onClick={handleClick} title="Grid" cursor="pointer">
-      {displayBorderComponents === DISPLAY_BORDER_NONE && <i className="fas fa-border-none" />}
-      {displayBorderComponents === DISPLAY_BORDER_WHITE && <BorderWhite />}
-      {displayBorderComponents === DISPLAY_BORDER_BLACK && <BorderBlack />}
+      {displayBorderComponents === 'none' && <i className="fas fa-border-none" />}
+      {displayBorderComponents === 'white' && <BorderWhite />}
+      {displayBorderComponents === 'black' && <BorderBlack />}
     </Icon>
   );
 };

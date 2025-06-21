@@ -23,9 +23,6 @@ import InteractionsBuilderContextProvider from '@pmodules/Interactions/Interacti
 import AppContext from '@pmodules/App/AppContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
-// Relatives
-import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE } from '../../BuilderHelper';
-
 // Style
 import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss';
 
@@ -107,9 +104,8 @@ const BuilderAreaPreview = props => {
             <div
               className={classNames('builder-iframe', {
                 'builder--display-component-border display-component-border--black':
-                  displayBorderComponents === DISPLAY_BORDER_BLACK,
-                'builder--display-component-border display-component-border--white':
-                  displayBorderComponents === DISPLAY_BORDER_WHITE
+                  displayBorderComponents === 'black',
+                'builder--display-component-border display-component-border--white': displayBorderComponents === 'white'
               })}
               style={{ width: '100%', display: 'flex', height: '100%' }}
             >

@@ -23,7 +23,7 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 // Relatives
-import { DISPLAY_BORDER_BLACK, DISPLAY_BORDER_WHITE, processPaste } from '../../BuilderHelper';
+import { processPaste } from '../../BuilderHelper';
 
 /**
  * @param {{
@@ -344,9 +344,9 @@ const BuilderAreaTracking = props => {
     <div
       className={classNames(className, {
         'builder--display-component-border display-component-border--black':
-          displayBorderComponents === DISPLAY_BORDER_BLACK && !previewMode,
+          displayBorderComponents === 'black' && !previewMode,
         'builder--display-component-border display-component-border--white':
-          displayBorderComponents === DISPLAY_BORDER_WHITE && !previewMode
+          displayBorderComponents === 'white' && !previewMode
       })}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

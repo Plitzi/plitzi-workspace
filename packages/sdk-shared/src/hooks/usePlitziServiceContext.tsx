@@ -17,7 +17,10 @@ import type { Context, ReactNode } from 'react';
 export type PlitziServiceContextValue = {
   settings: { previewMode?: boolean; environment?: string; [key: string]: unknown };
   root: { baseElementId: string };
-  utils: { getWindow: () => Window };
+  utils: {
+    getWindow: () => Window;
+    rootDOM?: HTMLElement | null;
+  };
   contexts: {
     PluginsContext: Context<PluginsContextValue>;
     InteractionsContext: Context<InteractionsContextValue>;

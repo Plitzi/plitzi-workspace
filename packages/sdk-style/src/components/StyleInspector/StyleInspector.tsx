@@ -31,7 +31,9 @@ const StyleInspector = ({
   styleSelectors,
   allowStyleSelector = true
 }: StyleInspectorProps) => {
-  const [cache, setCache] = useStorage<{ viewMode: 'basic' | 'advanced' }>('StyleInspector', { viewMode: 'basic' });
+  const [cache, setCache] = useStorage<{ viewMode: 'basic' | 'advanced' }>('builder-state.styleInspector', {
+    viewMode: 'basic'
+  });
   const { componentDefinitions } = use(ComponentContext);
   const {
     style,

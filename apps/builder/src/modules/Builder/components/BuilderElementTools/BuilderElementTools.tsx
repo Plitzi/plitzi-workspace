@@ -1,93 +1,82 @@
-// Packages
-import React, { use, useMemo, useState, useCallback, useRef } from 'react';
-import get from 'lodash/get';
+import useStateDebounce from '@plitzi/plitzi-ui/hooks/useStateDebounce';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import classNames from 'classnames';
-import useStateDebounce from '@plitzi/plitzi-ui-components/hooks/useStateDebounce';
-import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
+import get from 'lodash/get';
+import { use, useMemo, useCallback, useRef } from 'react';
 
-// Monorepo
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
-
-// Alias
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
 
-// Relatives
 import BuilderBreadcrumb from '../BuilderBreadcrumb';
-import useBuilderElement from '../../hooks/useBuilderElement';
-import ElementSettings from './ElementSettings';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
+import ElementSettings from './ElementSettings';
+import useBuilderElement from '../../hooks/useBuilderElement';
 import ToolsList from '../ToolsList';
 
-/**
- * @param {{
- *   initialTab?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderElementTools = ({ initialTab = 'style' }) => {
-  const [, setCache, getCache] = useCache();
-  const [selected, setSelected] = useState(() => getCache('BuilderElementTools.tabSelected', initialTab));
+import type { Element } from '@plitzi/sdk-shared';
+
+export type BuilderElementToolsProps = {
+  initialTab?: string;
+};
+
+const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
+  const [selected, setSelected] = useStorage<string>('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
-  const attributes = useMemo(() => get(element, 'attributes', {}), [element]);
-  const definition = useMemo(() => get(element, 'definition', {}), [element]);
+  const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
+  const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);
   const elementRef = useRef(element);
   elementRef.current = element;
 
-  const handleClickListItems = useCallback(
-    item => {
-      setSelected(item);
-      setCache(item, 'BuilderElementTools.tabSelected');
-    },
-    [setCache]
-  );
+  const handleClickListItems = useCallback((item: string) => setSelected(item), [setSelected]);
 
-  const [tempAttributes, setTempAttributes] = useStateDebounce(
+  const [tempAttributes, setTempAttributes] = useStateDebounce<Element['attributes']>(
     attributes,
     useCallback(
-      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...elementRef.current, attributes: state }),
+      (state: Element['attributes']) =>
+        builderHandler('schemaUpdateElement', { ...elementRef.current, attributes: state }),
       [builderHandler]
     ),
     500
   );
 
-  const [tempDefinition, setTempDefinition] = useStateDebounce(
+  const [tempDefinition, setTempDefinition] = useStateDebounce<Element['definition']>(
     definition,
     useCallback(
-      state => builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...elementRef.current, definition: state }),
+      (state: Element['definition']) =>
+        builderHandler('schemaUpdateElement', { ...elementRef.current, definition: state }),
       [builderHandler]
     ),
     500
   );
 
   const handleChange = useCallback(
-    (key, value, isDefinition = false) => {
+    (key: string, value: string | boolean | number, isDefinition = false) => {
       if (isDefinition) {
-        setTempDefinition(state => ({ ...state, [key]: value }));
+        setTempDefinition((state: Element['definition']) => ({ ...state, [key]: value }));
       } else {
-        setTempAttributes(state => ({ ...state, [key]: value }));
+        setTempAttributes((state: Element['attributes']) => ({ ...state, [key]: value }));
       }
     },
-    [setTempAttributes]
+    [setTempAttributes, setTempDefinition]
   );
 
   const handleChangeBinding = useCallback(
-    bindings => {
+    (bindings: Element['definition']['bindings']) => {
       const { definition } = element;
-      builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, { ...element, definition: { ...definition, bindings } });
+      builderHandler('schemaUpdateElement', { ...element, definition: { ...definition, bindings } });
     },
     [builderHandler, element]
   );
 
   const handleChangeInteractions = useCallback(
-    interactions => {
+    (interactions: Element['definition']['interactions']) => {
       const { definition } = element;
-      builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, {
+      builderHandler('schemaUpdateElement', {
         ...element,
         definition: { ...definition, interactions }
       });
@@ -95,7 +84,7 @@ const BuilderElementTools = ({ initialTab = 'style' }) => {
     [builderHandler, element]
   );
 
-  if (!element) {
+  if (!(element as Element | undefined)) {
     return (
       <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center self-start w-full">
         Click on a component to select it

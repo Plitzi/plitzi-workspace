@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 import capitalize from 'lodash/capitalize';
-import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
+import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
@@ -52,43 +52,47 @@ const ElementAdvancedEditor = props => {
   const handlePluginInsert = type => () => onChange(state => `${state}<${type}></${type}>`);
 
   return (
-    <div className={classNames('h-full flex flex-col relative', className)}>
+    <div className={classNames('relative flex h-full flex-col', className)}>
       <CodeMirror value={value} theme="dark" lineWrapping onChange={handleChange} mode={mode} />
-      <div className="flex absolute top-3 right-3">
+      <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"
           size="custom"
-          className="p-2 bg-white rounded-sm mr-2"
+          className="mr-2 rounded-sm bg-white p-2"
           onClick={handleFormat}
           tilte="Auto format"
           disabled={networkLoading}
         >
           <i className="fa-solid fa-wand-magic-sparkles" />
         </Button>
-        <Dropdown showIcon={false} containerLeftOffset={-208}>
-          <Dropdown.Content>
-            <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm mr-2" title="Plugins">
+        <ContainerFloating showIcon={false} containerTopOffset={8}>
+          <ContainerFloating.Trigger>
+            <Button intent="custom" size="custom" className="mr-2 rounded-sm bg-white p-2" title="Plugins">
               <i className="fa-solid fa-puzzle-piece" />
             </Button>
-          </Dropdown.Content>
-          <Dropdown.Container>
+          </ContainerFloating.Trigger>
+          <ContainerFloating.Content>
             <ul className="max-h-[300px] overflow-y-auto">
               {pluginsAvailables.map(type => (
-                <li key={type} className="border border-t px-4 py-2 border-gray-300" onClick={handlePluginInsert(type)}>
+                <li
+                  key={type}
+                  className="border-gray-300 px-4 py-2 not-first:border-t"
+                  onClick={handlePluginInsert(type)}
+                >
                   {type}
                 </li>
               ))}
             </ul>
-          </Dropdown.Container>
-        </Dropdown>
-        <Dropdown showIcon={false} containerLeftOffset={-208}>
-          <Dropdown.Content>
-            <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
+          </ContainerFloating.Content>
+        </ContainerFloating>
+        <ContainerFloating showIcon={false} containerTopOffset={8}>
+          <ContainerFloating.Trigger>
+            <Button intent="custom" size="custom" className="rounded-sm bg-white p-2">
               <i className="fa-solid fa-circle-info" />
             </Button>
-          </Dropdown.Content>
-          <Dropdown.Container>
-            <div className="w-60 flex flex-col items-center justify-center p-4 text-center">
+          </ContainerFloating.Trigger>
+          <ContainerFloating.Content>
+            <div className="flex w-60 flex-col items-center justify-center p-4 text-center">
               <p>
                 Add your own <span className="font-bold">{mode === 'js' ? 'JSX' : 'HTML'}</span> code here to customize
                 the appearance and layout of your site.
@@ -97,8 +101,8 @@ const ElementAdvancedEditor = props => {
                 <span className="font-bold">Ctrl + Space</span> to autocomplete.
               </p>
             </div>
-          </Dropdown.Container>
-        </Dropdown>
+          </ContainerFloating.Content>
+        </ContainerFloating>
       </div>
     </div>
   );

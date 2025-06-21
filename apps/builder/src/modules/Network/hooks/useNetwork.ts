@@ -1,13 +1,25 @@
 // Packages
 import { useCallback, useState } from 'react';
 
-const useNetwork = props => {
-  const { initLoading = false, server, webKey, internalUsage = true } = props;
+export type UseNetworkProps = {
+  initLoading?: boolean;
+  server: {
+    nodeServer: string;
+  };
+  webKey?: string;
+  internalUsage?: boolean;
+};
+
+const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true }: UseNetworkProps) => {
   const [networkLoading, setNetworkLoading] = useState(initLoading);
 
   const networkQuery = useCallback(
-    async (url, params = {}, method = 'get', accessToken = '') => {
-      let result;
+    async <T = unknown>(
+      url: string,
+      params: FormData | Record<string, string> = {},
+      method = 'get',
+      accessToken = ''
+    ) => {
       try {
         setNetworkLoading(true);
         method = method.toLowerCase();
@@ -26,7 +38,8 @@ const useNetwork = props => {
         }
 
         let formData = params;
-        (params instanceof FormData ? params.values() : Object.values(params)).forEach(value => {
+        const valuesArray = params instanceof FormData ? Array.from(params.values()) : Object.values(params);
+        valuesArray.forEach((value: string | Blob) => {
           if (value instanceof Blob && headers.get('Content-Type') !== 'multipart/form-data') {
             headers.delete('Content-Type');
 
@@ -37,11 +50,11 @@ const useNetwork = props => {
         if (!(formData instanceof FormData)) {
           formData = new FormData();
           Object.entries(params).forEach(([key, value]) => {
-            formData.append(key, value);
+            (formData as FormData).append(key, value as string | Blob);
           });
         }
 
-        const fetchOptions = { method, headers, body: formData };
+        const fetchOptions: Record<string, unknown> = { method, headers, body: formData };
         if (headers.get('Content-Type') === 'application/json') {
           fetchOptions.body = JSON.stringify(params);
         }
@@ -52,16 +65,16 @@ const useNetwork = props => {
 
         const res = await fetch(`${baseURL}${url}`, fetchOptions);
 
-        return await res.json();
+        return (await res.json()) as T;
       } catch (e) {
         console.error(e);
       } finally {
         setNetworkLoading(false);
       }
 
-      return result?.data;
+      return undefined;
     },
-    [webKey, server?.nodeServer, internalUsage]
+    [webKey, internalUsage, server]
   );
 
   return { networkLoading, networkQuery };
