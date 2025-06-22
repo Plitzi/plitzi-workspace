@@ -6,7 +6,7 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 // Relatives
 import Directory from './Directory';
@@ -33,7 +33,7 @@ const AppDirectory = () => {
         pageFolders={pageFolders}
         isRootFolder
       />
-      <div className="border-t border-gray-200 w-full" />
+      <div className="w-full border-t border-gray-200" />
       <PageLayouts />
     </Flex>
   );

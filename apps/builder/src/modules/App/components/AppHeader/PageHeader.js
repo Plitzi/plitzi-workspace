@@ -7,7 +7,7 @@ import classNames from 'classnames';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 /**
  * @param {{

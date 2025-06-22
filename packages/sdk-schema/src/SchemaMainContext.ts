@@ -4,7 +4,7 @@ import type { Schema } from '@plitzi/sdk-shared';
 
 export type SchemaMainContextValue = {
   pages: Schema['pages'];
-  pageDefinition: Element[];
+  pageDefinitions: Element[];
   pageFolders: Schema['pageFolders'];
   settings: Schema['settings'];
   variables: Schema['variables'];
@@ -12,12 +12,12 @@ export type SchemaMainContextValue = {
 
 const schemaMainContextDefaultValue: SchemaMainContextValue = {
   pages: [],
-  pageDefinition: [],
+  pageDefinitions: [],
   variables: [],
   settings: { customCss: '' },
   pageFolders: []
 };
 
-const SchemaMainContext = createContext<SchemaMainContextValue | undefined>(schemaMainContextDefaultValue);
+const SchemaMainContext = createContext<SchemaMainContextValue>(schemaMainContextDefaultValue);
 
 export default SchemaMainContext;

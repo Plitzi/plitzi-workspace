@@ -18,10 +18,10 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 // Relatives
 import SchemaReducer, { SchemaActions } from './SchemaReducer';
-import SchemaMainContext from './SchemaMainContext';
 
 export const SCHEMA_TYPE_MAIN = 'main';
 export const SCHEMA_TYPE_PARTIAL = 'partial';

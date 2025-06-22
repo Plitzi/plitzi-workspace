@@ -55,7 +55,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   );
 
   const handleChange = useCallback(
-    (key: string, value: string | boolean | number, isDefinition = false) => {
+    (key: string, value: string | boolean | number | object, isDefinition = false) => {
       if (isDefinition) {
         setTempDefinition((state: Element['definition']) => ({ ...state, [key]: value }));
       } else {
@@ -86,7 +86,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
 
   if (!(element as Element | undefined)) {
     return (
-      <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center self-start w-full">
+      <div className="m-3 w-full self-start rounded-sm border-2 border-dashed border-gray-300 p-3 text-center">
         Click on a component to select it
       </div>
     );
@@ -97,12 +97,12 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   } = element;
 
   return (
-    <div className={classNames('flex flex-col grow min-w-0 gap-4 mt-2', { [`element-${type}`]: type })}>
+    <div className={classNames('mt-2 flex min-w-0 grow flex-col gap-4', { [`element-${type}`]: type })}>
       <BuilderBreadcrumb limit={4} />
       <ToolsList onSelect={handleClickListItems} selected={selected} />
-      <div className="flex flex-col grow overflow-y-auto basis-0">
+      <div className="flex grow basis-0 flex-col overflow-y-auto">
         {selected === 'style' && (
-          <div className="flex flex-col grow gap-2">
+          <div className="flex grow flex-col gap-2">
             <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
           </div>
         )}

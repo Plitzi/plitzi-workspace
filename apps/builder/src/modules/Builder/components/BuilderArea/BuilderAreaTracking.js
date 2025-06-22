@@ -163,7 +163,7 @@ const BuilderAreaTracking = props => {
             break;
           }
 
-          if (iframeDOM.contentWindow.document.body.contains(e.target) || e.target.closest('.builder__breadcrumb')) {
+          if (iframeDOM && iframeDOM.contentWindow.document.body.contains(e.target) || e.target.closest('.builder__breadcrumb')) {
             builderHandler(EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, elementSelected);
           }
 

@@ -15,7 +15,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
 // Relatives

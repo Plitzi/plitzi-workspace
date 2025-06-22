@@ -11,7 +11,7 @@ import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 /**
  * @param {{

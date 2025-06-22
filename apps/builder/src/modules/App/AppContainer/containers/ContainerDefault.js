@@ -1,11 +1,9 @@
-// Packages
 import React, { useCallback, use, useMemo, useState } from 'react';
 import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
 import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 
-// Alias
 import Builder from '@pmodules/Builder';
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 const defaultCache = [];
@@ -49,7 +47,7 @@ const ContainerDefault = props => {
       <Builder externalStyle={externalStyle} customCss={customCss} pages={pages} />
       {!previewMode && (
         <PopupSidePanel
-          className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
+          className="max-h-[calc(_100vh_-_48px)] overflow-y-auto"
           size="md"
           placementTabs="right"
           placement="right"

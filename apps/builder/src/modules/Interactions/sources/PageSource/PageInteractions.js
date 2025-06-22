@@ -10,7 +10,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 // Alias
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 /**
  * @param {{

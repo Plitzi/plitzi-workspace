@@ -1,16 +1,12 @@
-// Packages
 import React, { useCallback, use, useMemo, useState } from 'react';
 import Card from '@plitzi/plitzi-ui-components/Card';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 // import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
-// Monorepo
 import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-
-// Alias
-import SchemaMainContext from '@pmodules/Schema/SchemaMainContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 /** @returns {React.ReactElement} */
 const ContainerSettings = () => {
@@ -79,8 +75,8 @@ const ContainerSettings = () => {
   const keepStateProps = useMemo(() => ({ checked: keepState }), [keepState]);
 
   return (
-    <Card className="grow basis-0 relative flex flex-col overflow-y-auto" rounded={false}>
-      <div className="p-6 border-b border-gray-300 gap-4 flex flex-col grow basis-0">
+    <Card className="relative flex grow basis-0 flex-col overflow-y-auto" rounded={false}>
+      <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
         <Heading type="h4">User Settings</Heading>
         <FormControl
           name="userProvider"
@@ -152,7 +148,7 @@ const ContainerSettings = () => {
           </>
         )}
       </div>
-      <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
+      <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
         <Heading type="h4">State Settings</Heading>
         <FormControl
           name="keepState"

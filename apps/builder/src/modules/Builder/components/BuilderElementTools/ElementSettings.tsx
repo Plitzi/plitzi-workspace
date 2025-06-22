@@ -42,7 +42,7 @@ export type ElementSettingsProps = {
   id?: string;
   type?: string;
   attributes?: Record<string, unknown>;
-  handleChange?: (key: string, value: string | boolean | number) => void;
+  handleChange?: (key: string, value: string | boolean | number | object) => void;
 };
 
 const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleChange }: ElementSettingsProps) => {
@@ -109,7 +109,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
           <StyleContext value={styleValueMemo}>
             <ErrorBoundary>
               {Settings && (
-                <div className="flex flex-col h-full">
+                <div className="flex h-full flex-col">
                   <Heading as="h5">Settings</Heading>
                   <Settings {...attributes} id={id} onUpdate={handleChange} uiComponents={uiComponents} />
                 </div>
@@ -126,7 +126,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
   if (Plugin && pluginStyles?.[type] && pluginStyles[type].length > 0) {
     return (
       <ContainerShadow
-        className="flex flex-col h-full"
+        className="flex h-full flex-col"
         fallback={
           <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <link
