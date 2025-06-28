@@ -107,6 +107,43 @@ const build = (env, args) => {
     module: {
       rules: [
         {
+          test: /\.(ts|tsx)$/,
+          include: devMode
+            ? [path.resolve(__dirname, 'src'), ...Object.values(packages)]
+            : [path.resolve(__dirname, 'src')],
+          use: [
+            {
+              loader: 'thread-loader',
+              options: {
+                poolTimeout: watch ? Infinity : 2000
+              }
+            },
+            {
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true,
+                happyPackMode: true
+              }
+            },
+            {
+              loader: 'babel-loader',
+              options: {
+                presets: [
+                  '@babel/preset-env',
+                  ['@babel/preset-react', { runtime: 'automatic' }], // [classic] will disable new JSX compiler and [automatic] will enable it
+                  '@babel/preset-typescript'
+                ],
+                plugins: [
+                  '@babel/plugin-proposal-class-properties',
+                  '@babel/plugin-transform-runtime',
+                  '@babel/plugin-transform-private-methods',
+                  env.WEBPACK_SERVE && 'react-refresh/babel'
+                ].filter(Boolean)
+              }
+            }
+          ]
+        },
+        {
           test: /(\.jsx|\.js)$/,
           exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
           use: [
@@ -237,41 +274,6 @@ const build = (env, args) => {
 
   if (devMode) {
     modules.devtool = 'cheap-module-source-map';
-    modules.module.rules.unshift({
-      test: /\.(ts|tsx)$/,
-      include: [path.resolve(__dirname, 'src'), ...Object.values(packages)],
-      use: [
-        {
-          loader: 'thread-loader',
-          options: {
-            poolTimeout: watch ? Infinity : 2000
-          }
-        },
-        {
-          loader: 'ts-loader',
-          options: {
-            transpileOnly: true,
-            happyPackMode: true
-          }
-        },
-        {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              '@babel/preset-env',
-              ['@babel/preset-react', { runtime: 'automatic' }], // [classic] will disable new JSX compiler and [automatic] will enable it
-              '@babel/preset-typescript'
-            ],
-            plugins: [
-              '@babel/plugin-proposal-class-properties',
-              '@babel/plugin-transform-runtime',
-              '@babel/plugin-transform-private-methods',
-              env.WEBPACK_SERVE && 'react-refresh/babel'
-            ].filter(Boolean)
-          }
-        }
-      ]
-    });
     modules.resolve.alias = { ...modules.resolve.alias, ...packages };
   } else {
     modules.devtool = false;
