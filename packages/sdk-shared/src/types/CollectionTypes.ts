@@ -22,15 +22,6 @@ export type CollectionField = {
   >;
 };
 
-export type Collection = {
-  id: string;
-  name: string;
-  mamePlural: string;
-  description: string;
-  privacy: 'public' | 'private';
-  fields: CollectionField[];
-};
-
 export type CollectionRecord = {
   id: string;
   values: Record<string, string | number | boolean>;
@@ -38,10 +29,18 @@ export type CollectionRecord = {
   updatedAt: number;
 };
 
-// export type CollectionRecords = CollectionRecord[];
+export type Collection = {
+  id: string;
+  name: string;
+  mamePlural: string;
+  description: string;
+  privacy: 'public' | 'private';
+  fields: CollectionField[];
+  records?: CollectionRecord[];
+};
 
 export type CollectionContextValue = {
-  collections: Collection[];
+  collections: Record<string, Collection>;
   fetchCollections?: (
     filter: string,
     cursor?: string,

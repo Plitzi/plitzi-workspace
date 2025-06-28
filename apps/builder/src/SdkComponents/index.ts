@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import BlockHtml from './advanced/BlockHtml/Settings';
 import BlockJsx from './advanced/BlockJsx/Settings';

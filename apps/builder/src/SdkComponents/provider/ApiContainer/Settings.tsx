@@ -71,7 +71,7 @@ const Settings = ({
   );
 
   return (
-    <div className="flex grow flex-col gap-4 p-2">
+    <div className="flex grow flex-col gap-4 py-2">
       <div className="flex flex-col">
         <label>Query</label>
         <CodeMirror
