@@ -1,21 +1,25 @@
-// Packages
-import React, { useCallback, use, useMemo, useRef } from 'react';
-import get from 'lodash/get';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Tree from '@plitzi/plitzi-ui/Tree';
-import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
+import get from 'lodash/get';
+import { useCallback, use, useMemo, useRef } from 'react';
 
-// Monorepo
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
-// Relatives
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
+import { recursiveMap } from './utils';
 
-const BuilderTree = ({ setDragTree }) => {
+import type { DropPosition, TreeChangeState } from '@plitzi/plitzi-ui/Tree';
+import type { Element } from '@plitzi/sdk-shared';
+
+export type BuilderTreeProps = {
+  setDragTree?: (dragTree: boolean) => void;
+};
+
+const BuilderTree = ({ setDragTree }: BuilderTreeProps) => {
   const { componentDefinitions } = use(ComponentContext);
   const { elementHovered, setHovered: setHoverElement } = use(BuilderHoveredContext);
   const { elementSelected, setSelected: setSelectElement } = use(BuilderSelectedContext);
@@ -30,14 +34,15 @@ const BuilderTree = ({ setDragTree }) => {
     builderElementPermissions,
     baseContext: { baseElementId }
   } = use(BuilderContext);
-  const baseElement = useMemo(() => flat[baseElementId], [flat, baseElementId]);
-  const [, setCache, getCache] = useCache();
-  const openedCache = getCache('BuilderTree.openedCache', {});
+  const [openedCache, setOpenedCache] = useStorage<Record<string, boolean>>(
+    'builder-state.builderTree.openedCache',
+    {}
+  );
 
   const isDragAllowed = useCallback(
-    (id, dropPosition, parentId) => {
-      const element = get(flatRef.current, id);
-      const parentElement = get(flatRef.current, parentId);
+    (id: string, dropPosition: DropPosition, parentId?: string) => {
+      const element = get(flatRef.current, id, undefined);
+      const parentElement = parentId ? get(flatRef.current, parentId, undefined) : undefined;
       if (!element || (dropPosition !== 'inside' && !parentElement)) {
         return true;
       }
@@ -47,7 +52,7 @@ const BuilderTree = ({ setDragTree }) => {
       } = element;
 
       let { itemsAllowed, itemsNotAllowed } = builderElementPermissions(element);
-      if (itemsNotAllowed && dropPosition !== 'inside') {
+      if (itemsNotAllowed && dropPosition !== 'inside' && parentElement) {
         ({ itemsAllowed, itemsNotAllowed } = builderElementPermissions(parentElement));
       }
 
@@ -65,21 +70,21 @@ const BuilderTree = ({ setDragTree }) => {
   );
 
   const handleChange = useCallback(
-    (action, data) => {
-      switch (action) {
+    (state: TreeChangeState) => {
+      switch (state.action) {
         case 'itemsOpened': {
-          setCache(data, 'BuilderTree.openedCache');
+          setOpenedCache(state.data);
           break;
         }
 
         case 'itemChanged': {
-          const { item } = data;
-          const element = get(flatRef.current, item.id);
+          const { item } = state.data;
+          const element = get(flatRef.current, item.id) as Element | undefined;
           if (!element) {
             break;
           }
 
-          builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, {
+          builderHandler('schemaUpdateElement', {
             ...element,
             definition: { ...element.definition, label: item.label }
           });
@@ -87,8 +92,8 @@ const BuilderTree = ({ setDragTree }) => {
         }
 
         case 'itemDragged': {
-          const { id, toId, dropPosition, event } = data;
-          const element = get(flatRef.current, id);
+          const { id, toId, dropPosition, event } = state.data;
+          const element = get(flatRef.current, id) as Element | undefined;
           if (!element) {
             break;
           }
@@ -98,73 +103,48 @@ const BuilderTree = ({ setDragTree }) => {
           } = element;
           if ((id && id === toId) || !id) {
             try {
-              let data = event.dataTransfer.getData(event.dataTransfer.types[0]);
-              data = JSON.parse(data);
-              builderDropElement(`add##${type}`, data, dropPosition, toId, baseElementId);
-            } catch (e) {
+              let data: unknown = event.dataTransfer.getData(event.dataTransfer.types[0]);
+              data = JSON.parse(data as string);
+              void builderDropElement(`add##${type}`, data, dropPosition, toId, baseElementId);
+            } catch {
               // nothing here
             }
           } else {
-            builderDropElement(`move##${type}`, { element, id: element.id }, dropPosition, toId, baseElementId);
+            void builderDropElement(`move##${type}`, { element, id: element.id }, dropPosition, toId, baseElementId);
           }
 
           break;
         }
 
         case 'itemHovered': {
-          setHoverElement(data);
+          setHoverElement(state.data);
           break;
         }
 
         case 'itemSelected': {
-          setSelectElement(data);
+          setSelectElement(state.data);
           break;
         }
 
         case 'isDragging': {
-          setDragTree?.(data);
+          setDragTree?.(state.data);
           break;
         }
 
         default:
       }
     },
-    [setHoverElement, setSelectElement, setCache, builderDropElement, baseElementId]
+    [setOpenedCache, builderHandler, builderDropElement, baseElementId, setHoverElement, setSelectElement, setDragTree]
   );
 
   const nodes = useMemo(() => {
-    const recursiveMap = (id, parentId, flatItems = {}) => {
-      const element = flat[id];
-      if (!element) {
-        return undefined;
-      }
-
-      const {
-        definition: { items, label, type }
-      } = element;
-
-      const icon = get(componentDefinitions, `${type}.market.icon`);
-      if (!items) {
-        return { id, label, icon, parentId };
-      }
-
-      return {
-        id,
-        label,
-        icon,
-        parentId,
-        items: items.map(item => recursiveMap(item, id, flatItems)).filter(Boolean)
-      };
-    };
-
-    const nodesMapped = recursiveMap(baseElementId, undefined, flat);
-
+    const nodesMapped = recursiveMap(flat, componentDefinitions, baseElementId, undefined, flat);
     if (!baseElementId || !nodesMapped) {
       return [];
     }
 
     return [nodesMapped];
-  }, [flat, baseElement, componentDefinitions]);
+  }, [baseElementId, flat, componentDefinitions]);
 
   const itemControls = useMemo(() => <BuilderTreeNodeControls />, []);
 

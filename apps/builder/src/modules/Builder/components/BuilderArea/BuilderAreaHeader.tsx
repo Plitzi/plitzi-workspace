@@ -113,23 +113,23 @@ const BuilderAreaHeader = ({
     <Flex
       items="center"
       gap={4}
-      className="h-10 min-h-[40px] pl-4 pr-2 bg-white rounded-tl-lg rounded-tr-lg border-b border-gray-300"
+      className="h-10 min-h-[40px] rounded-tl-lg rounded-tr-lg border-b border-gray-300 bg-white pr-2 pl-4"
     >
       <Flex items="center" gap={2}>
         <div
-          className={classNames('w-3 h-3 rounded-full', {
+          className={classNames('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
         />
         <div
-          className={classNames('w-3 h-3 rounded-full', {
+          className={classNames('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
         />
         <div
-          className={classNames('w-3 h-3 rounded-full', {
+          className={classNames('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
@@ -147,8 +147,8 @@ const BuilderAreaHeader = ({
       >
         <Icon icon="fas fa-home" />
       </div>
-      <Flex items="center" grow className="h-7 px-3 rounded-lg select-none border border-gray-200 overflow-hidden">
-        <div className="w-full truncate mr-4">{pageTitle}</div>
+      <Flex items="center" grow className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none">
+        <div className="mr-4 w-full truncate">{pageTitle}</div>
       </Flex>
       {!previewMode && (
         <Flex items="center" gap={3}>

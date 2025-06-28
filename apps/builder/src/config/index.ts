@@ -1,4 +1,4 @@
-export const getEnvironmentServer = (env, server) => {
+export const getEnvironmentServer = (env: 'production' | 'staging' | 'development', server: object) => {
   switch (env) {
     case 'production': {
       return {

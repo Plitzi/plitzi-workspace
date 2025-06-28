@@ -12,7 +12,7 @@ export type UseDataSourceMode = 'write' | 'read';
 export type UseDataSourceFilter = 'soft' | 'hard';
 
 export type UseDataSourceProps<T extends UseDataSourceMode> = {
-  id: string;
+  id?: string;
   fields?: SourceMeta['fields'];
   mode: T;
   sourceFilter?: string[];
@@ -23,7 +23,7 @@ export type UseDataSourceProps<T extends UseDataSourceMode> = {
 function useDataSource<T = unknown>(props: UseDataSourceProps<'read'>): Record<string, T>;
 function useDataSource<T = unknown>(props: UseDataSourceProps<'write'>): [Context<T>, string];
 function useDataSource<T = unknown, M extends UseDataSourceMode = 'read'>({
-  id,
+  id = '',
   source,
   name,
   fields = [],

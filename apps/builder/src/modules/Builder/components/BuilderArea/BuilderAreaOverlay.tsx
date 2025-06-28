@@ -1,34 +1,29 @@
-// Packages
-import React, { use, useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { use, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 
-// Relatives
 import BuilderOverlay from '../BuilderOverlay';
-import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 import BuilderOverlayDistance from '../BuilderOverlay/BuilderOverlayDistance';
+import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 
-/**
- * @param {{
- *   iframeDOM: object;
- *   baseElementId?: string;
- *   dragTree?: boolean;
- *   zoom?: number;
- *   displayMode?: 'desktop' | 'tablet' | 'mobile';
- *   previewMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderAreaOverlay = props => {
-  const {
-    iframeDOM,
-    baseElementId = '',
-    previewMode = false,
-    dragTree = false,
-    zoom = 1,
-    displayMode = 'desktop'
-  } = props;
+export type BuilderAreaOverlayProps = {
+  iframeDOM?: HTMLIFrameElement;
+  baseElementId?: string;
+  dragTree?: boolean;
+  zoom?: number;
+  displayMode?: 'desktop' | 'tablet' | 'mobile';
+  previewMode?: boolean;
+};
+
+const BuilderAreaOverlay = ({
+  iframeDOM,
+  baseElementId = '',
+  previewMode = false,
+  dragTree = false,
+  zoom = 1,
+  displayMode = 'desktop'
+}: BuilderAreaOverlayProps) => {
   const { elementHovered } = use(BuilderHoveredContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const [showDistance, setShowDistance] = useState(false);
@@ -47,7 +42,7 @@ const BuilderAreaOverlay = props => {
     [elementSelected, baseElementId, iframeDOM, displayMode, zoom]
   );
 
-  const handleKeyDown = useCallback(async e => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     switch (e.key) {
       case 'Alt': {
         setShowDistance(true);
@@ -59,7 +54,7 @@ const BuilderAreaOverlay = props => {
     }
   }, []);
 
-  const handleKeyUp = useCallback(async e => {
+  const handleKeyUp = useCallback((e: KeyboardEvent) => {
     switch (e.key) {
       case 'Alt': {
         setShowDistance(false);
@@ -77,7 +72,7 @@ const BuilderAreaOverlay = props => {
 
     window.document.addEventListener('keydown', handleKeyDown);
     window.document.addEventListener('keyup', handleKeyUp);
-    if (iframeDOM) {
+    if (iframeDOM && iframeDOM.contentWindow) {
       iframeDOM.contentWindow.document.addEventListener('keydown', handleKeyDown);
       iframeDOM.contentWindow.document.addEventListener('keyup', handleKeyUp);
     }
@@ -85,7 +80,7 @@ const BuilderAreaOverlay = props => {
     return () => {
       window.document.removeEventListener('keydown', handleKeyDown);
       window.document.removeEventListener('keyup', handleKeyUp);
-      if (iframeDOM) {
+      if (iframeDOM && iframeDOM.contentWindow) {
         iframeDOM.contentWindow.document.removeEventListener('keydown', handleKeyDown);
         iframeDOM.contentWindow.document.removeEventListener('keyup', handleKeyUp);
       }

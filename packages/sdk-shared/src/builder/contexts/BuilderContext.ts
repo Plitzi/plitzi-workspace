@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { Element } from '../../types';
+import type { Element, PluginBuilder } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type HandlerEvent =
@@ -45,8 +45,8 @@ export type BuilderContextValue = {
   baseElementIdOriginal: string;
   builderSetBaseContext: (id?: string) => void;
   builderElementPermissions: {
-    (element: Element, path: undefined, defaultValue?: boolean): Record<string, boolean>;
-    (element: Element, path: string, defaultValue?: boolean): boolean;
+    (element: Element, path?: undefined, defaultValue?: boolean): PluginBuilder;
+    (element: Element, path: string, defaultValue?: boolean): boolean | undefined;
   };
   builderHandler: (event: HandlerEvent, ...data: unknown[]) => void;
   updateElement: (elementId: string, attributeKey: string, attributeValue: unknown, category?: keyof Element) => void;
@@ -57,3 +57,5 @@ const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValu
 const BuilderContext = createContext<BuilderContextValue>(builderContextDefaultValue);
 
 export default BuilderContext;
+
+// { ...permissions, canDelete: false, canTemplate: false, canMove: false }

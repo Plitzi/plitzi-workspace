@@ -1,31 +1,22 @@
-// Packages
-import React, { useCallback, use } from 'react';
-import noop from 'lodash/noop';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
+import Button from '@plitzi/plitzi-ui/Button';
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import { useCallback, use } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-
-// Alias
-import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
-import StateManager from '@pmodules/StateManager/StateManager';
 import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
+import StateManager from '@pmodules/StateManager/StateManager';
+import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
 import Transform from '@pmodules/Transformers/Transform';
 
-// Relatives
+import { featureFlag } from '../../../../config';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderTree from '../BuilderTree';
-import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
-import { featureFlag } from '../../../../config';
 
-/**
- * @param {{
- *   setDragTree?: (dragTree: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderAreaFooter = props => {
-  const { setDragTree = noop } = props;
+export type BuilderAreaFooterProps = {
+  setDragTree?: (dragTree: boolean) => void;
+};
+
+const BuilderAreaFooter = ({ setDragTree }: BuilderAreaFooterProps) => {
   const { existsPopup, addPopup } = usePopup();
   const { mode } = use(BuilderContext);
 
@@ -36,9 +27,9 @@ const BuilderAreaFooter = props => {
         title: 'Tools',
         resizeHandles: ['se'],
         width: 350,
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right'
       });
     }
   }, [addPopup, existsPopup, mode]);
@@ -48,9 +39,9 @@ const BuilderAreaFooter = props => {
       addPopup('layerManager', <BuilderTree setDragTree={setDragTree} />, {
         icon: <i className="fas fa-stream text-base" />,
         title: 'Layer Manager',
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }
@@ -64,9 +55,9 @@ const BuilderAreaFooter = props => {
         resizeHandles: ['se'],
         height: 400,
         width: 600,
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right'
       });
     }
   }, [addPopup, existsPopup, mode]);
@@ -76,9 +67,9 @@ const BuilderAreaFooter = props => {
       addPopup('stateManager', <StateManager />, {
         icon: <i className="fa-solid fa-sliders text-base" />,
         title: 'State Manager',
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }
@@ -91,9 +82,9 @@ const BuilderAreaFooter = props => {
         title: 'Import And Transform',
         height: 400,
         width: 800,
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }
@@ -105,22 +96,22 @@ const BuilderAreaFooter = props => {
         icon: <i className="fa-solid fa-star text-base" />,
         title: 'Assistant',
         width: 400,
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right',
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right',
         resizeHandles: ['se']
       });
     }
   }, [addPopup, existsPopup, mode]);
 
   return (
-    <div className="flex justify-center items-center gap-4">
-      <div className="p-1 flex items-center rounded-sm bg-white shadow">
+    <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center rounded-sm bg-white p-1 shadow">
         <Button
           intent="custom"
           size="custom"
           onClick={handleClickTools}
-          className="hover:bg-gray-200 h-9 w-9 mr-2 text-gray-500"
+          className="mr-2 h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="Tools"
         >
           <i className="fas fa-tools" />
@@ -129,7 +120,7 @@ const BuilderAreaFooter = props => {
           intent="custom"
           size="custom"
           onClick={handleClickLayerManayer}
-          className="hover:bg-gray-200 h-9 w-9 mr-2 text-gray-500"
+          className="mr-2 h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="Layer Manager"
         >
           <i className="fas fa-stream" />
@@ -138,7 +129,7 @@ const BuilderAreaFooter = props => {
           intent="custom"
           size="custom"
           onClick={handleClickAdvanceStyle}
-          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
+          className="h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="Advance Style"
         >
           <i className="fas fa-code" />
@@ -147,7 +138,7 @@ const BuilderAreaFooter = props => {
           intent="custom"
           size="custom"
           onClick={handleClickStateManager}
-          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
+          className="h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="State Manager"
         >
           <i className="fa-solid fa-sliders" />
@@ -157,7 +148,7 @@ const BuilderAreaFooter = props => {
             intent="custom"
             size="custom"
             onClick={handleClickAssistant}
-            className="hover:bg-gray-200 h-9 w-9 text-gray-500"
+            className="h-9 w-9 text-gray-500 hover:bg-gray-200"
             title="Assistant"
           >
             <i className="fa-solid fa-star" />
@@ -167,7 +158,7 @@ const BuilderAreaFooter = props => {
           intent="custom"
           size="custom"
           onClick={handleClickTransform}
-          className="hover:bg-gray-200 h-9 w-9 text-gray-500"
+          className="h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="Transform"
         >
           <i className="fa-brands fa-nfc-symbol" />

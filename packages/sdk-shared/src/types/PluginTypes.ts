@@ -55,8 +55,8 @@ export type PluginBuilder = {
   canDragDrop?: boolean;
   canMove?: boolean;
   canTemplate?: boolean;
-  itemsAllowed: string[];
-  itemsNotAllowed: string[];
+  itemsAllowed?: string[];
+  itemsNotAllowed?: string[];
 };
 
 export type Asset =

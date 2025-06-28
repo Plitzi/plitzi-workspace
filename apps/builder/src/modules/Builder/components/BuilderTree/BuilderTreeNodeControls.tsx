@@ -1,21 +1,26 @@
-// Packages
-import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import classNames from 'classnames';
 import get from 'lodash/get';
-import Icon from '@plitzi/plitzi-ui/Icon';
 import { use, useCallback, useMemo } from 'react';
 
-// Monorepo
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 
-// Relatives
 import useBuilderElement from '../../hooks/useBuilderElement';
+import BuilderElementTools from '../BuilderElementTools';
 
-const BuilderTreeNodeControls = ({ id, hovered, selected }) => {
+import type { MouseEvent } from 'react';
+
+export type BuilderTreeNodeControlsProps = {
+  id?: string;
+  hovered?: boolean;
+  selected?: boolean;
+};
+
+const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeControlsProps) => {
   const { builderSetElementVisibility } = use(BuilderSchemaContext);
   const { existsPopup, addPopup } = usePopup();
   const { builderHandler, builderElementPermissions } = use(BuilderContext);
@@ -42,10 +47,10 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }) => {
     const bindingData = getBindingsDetails(dataSource, attributes, definition);
 
     return get(bindingData, 'definition.initialState.visibility', true);
-  }, [element]);
+  }, [dataSource, element]);
 
   const handleClickTools = useCallback(
-    e => {
+    (e: MouseEvent) => {
       e.stopPropagation();
       if (!existsPopup('element-tools')) {
         addPopup('element-tools', <BuilderElementTools />, {
@@ -61,14 +66,18 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }) => {
   );
 
   const handleClickVisibility = useCallback(() => {
+    if (!id) {
+      return;
+    }
+
     builderSetElementVisibility(id, !isVisible);
     // setHovered(null);
   }, [builderSetElementVisibility, id, isVisible]); // setHovered
 
   const handleClickDelete = useCallback(
-    async e => {
+    (e: MouseEvent) => {
       e.stopPropagation();
-      builderHandler(EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, id);
+      builderHandler('schemaRemoveElement', id);
     },
     [builderHandler, id]
   );

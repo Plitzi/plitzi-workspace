@@ -98,9 +98,14 @@ const BuilderProvider = props => {
 
   const builderElementPermissions = useCallback(
     (element, path = '', defaultValue = undefined) => {
-      if (!element) {
+      if (!element && !path) {
         return {};
       }
+
+      if (!element && path) {
+        return defaultValue;
+      }
+
       const type = get(element, 'definition.type');
       if (!type) {
         return {};
