@@ -45,7 +45,7 @@ export type ElementSettingsProps = {
   id?: string;
   type?: string;
   attributes?: Record<string, unknown>;
-  handleChange?: (key: string, value: string | boolean | number | object) => void;
+  handleChange?: (key: string, value: string | boolean | number | object, isDefinition?: boolean) => void;
 };
 
 const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleChange }: ElementSettingsProps) => {
