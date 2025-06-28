@@ -1,6 +1,6 @@
 import type { ComponentDefinition, InternalPropsSTG1 } from './ElementTypes';
 import type { PluginBuilder } from './PluginTypes';
-import type { FC, ReactElement, ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
 
 export type ComponentOrigin = 'local' | 'local-custom' | 'remote';
 export type ComponentPlugin<T = unknown> = FC<
@@ -17,7 +17,8 @@ export type ComponentPlugin<T = unknown> = FC<
   assets: unknown;
   plugins?: Record<string, ComponentPlugin<T>>;
   origin: ComponentOrigin;
-  pluginSettings?: ReactElement;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pluginSettings?: FC<any>;
   version?: string;
   initialItems?: string[];
 };

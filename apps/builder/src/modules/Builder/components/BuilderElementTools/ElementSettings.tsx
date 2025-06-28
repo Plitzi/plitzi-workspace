@@ -3,10 +3,10 @@ import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Heading from '@plitzi/plitzi-ui/components/Heading';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
-import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
+import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import Input from '@plitzi/plitzi-ui/Input';
-import KVEditor from '@plitzi/plitzi-ui-components/KVEditor';
+import KVInput from '@plitzi/plitzi-ui/KVInput';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
@@ -14,6 +14,8 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useMemo } from 'react';
 
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
@@ -35,8 +37,9 @@ import { defaultElementsSettings } from '../../../../SdkComponents';
 
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import type { FC } from 'react';
 
-const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Select2, Switch, QueryBuilder, KVEditor };
+const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Select2, Switch, QueryBuilder, KVInput };
 
 export type ElementSettingsProps = {
   id?: string;
@@ -81,10 +84,9 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         getWindow,
         rootDOM
       },
-      customContexts: {},
+      customContexts: { ContainerRootContext },
       contexts: {
         ComponentContext,
-        ContainerRootContext,
         CollectionContext,
         NetworkContext,
         PluginsContext,
@@ -92,7 +94,9 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         DataSourceContext,
         SchemaContext,
         StateManagerContext,
-        SegmentsContext
+        SegmentsContext,
+        EventBridgeContext,
+        InteractionsContext
       }
     }),
     [previewMode, currentPageId, baseElementId, displayBorderComponents, getWindow, rootDOM]
@@ -100,7 +104,8 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   const schemaValueMemo = useMemo(() => ({ schema }), [schema]);
   const styleValueMemo = useMemo(() => ({ style }), [style]);
-  const Settings = Plugin?.pluginSettings ?? (defaultElementsSettings[type] as React.FC | undefined);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
 
   const children = useMemo(
     () => (

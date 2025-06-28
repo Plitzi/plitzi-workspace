@@ -5,7 +5,7 @@ import { useMemo, useEffect, useState, use, useCallback } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { Collection, PageInfo } from '@plitzi/sdk-shared';
+import type { Collection, CollectionRecord, PageInfo } from '@plitzi/sdk-shared';
 
 export type UseCollectionContextProps = {
   source: string;
@@ -63,12 +63,12 @@ const useCollectionContext = (
 
   const populateRecords = useCallback(
     (collection: Collection, records: unknown) => {
-      const { pageInfo, edges } = records as { pageInfo: PageInfo; edges: unknown[] };
+      const { pageInfo, edges } = records as { pageInfo: PageInfo; edges: CollectionRecord[] };
       setCursor(pageInfo.nextCursor);
       setHasNextPage(pageInfo.hasNextPage);
       setCollection({
         ...collection,
-        records: singleRecord ? null : edges,
+        records: singleRecord ? undefined : edges,
         record: singleRecord && edges.length > 0 ? edges[0] : null
       });
     },

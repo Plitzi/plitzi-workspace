@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import BlockHtml from './advanced/BlockHtml/Settings';
 import BlockJsx from './advanced/BlockJsx/Settings';
 import Custom from './advanced/Custom/Settings';
@@ -29,6 +27,7 @@ import TabContainer from './structure/TabContainer/Settings';
 
 import type { FC } from 'react';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const defaultElementsSettings: Record<string, FC<any>> = {
   dropdown: Dropdown,
   plitziSdk: PlitziSdk,

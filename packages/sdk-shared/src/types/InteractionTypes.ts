@@ -81,7 +81,8 @@ export type Subscriptor<T = unknown> = {
   triggers: Record<string, Trigger>;
 };
 
-export type InteractionsContextValue<T = unknown> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type InteractionsContextValue<T = any> = {
   interactionsManager: T;
   useInteractions: (props: {
     id: string;

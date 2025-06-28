@@ -9,7 +9,6 @@ import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { NavigationContextValue } from '@plitzi/sdk-navigation';
 import type { InteractionBaseCallback, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
@@ -42,7 +41,7 @@ const Page = ({
     contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
-  const { Helmet, routeParams, queryParams } = use(NavigationContext) as NavigationContextValue;
+  const { Helmet, routeParams, queryParams } = use(NavigationContext);
   const { components } = use(ComponentContext);
   const LayoutContainerPlugin = components.layoutContainer;
 

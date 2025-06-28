@@ -5,12 +5,14 @@ import type { BuilderContextValue } from '../builder';
 import type { DataSourceContextValue } from '../dataSource';
 import type {
   CollectionContextValue,
+  ComponentContextValue,
   EventBridgeContextValue,
   InteractionsContextValue,
   NavigationContextValue,
   PluginsContextValue,
   SchemaContextValue,
-  SegmentsContextValue
+  SegmentsContextValue,
+  StateManagerContextValue
 } from '../types';
 import type { Context, ReactNode } from 'react';
 
@@ -21,17 +23,21 @@ export type PlitziServiceContextValue = {
     getWindow: () => Window;
     rootDOM?: HTMLElement | null;
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  customContexts: Record<string, Context<any>>;
   contexts: {
-    PluginsContext: Context<PluginsContextValue>;
-    InteractionsContext: Context<InteractionsContextValue>;
     DataSourceContext: Context<DataSourceContextValue>;
     SchemaContext: Context<SchemaContextValue>;
-    EventBridgeContext: Context<EventBridgeContextValue>;
     SegmentsContext: Context<SegmentsContextValue>;
     NavigationContext: Context<NavigationContextValue>;
     CollectionContext: Context<CollectionContextValue>;
+    ComponentContext: Context<ComponentContextValue>;
+    StateManagerContext: Context<StateManagerContextValue>;
+    EventBridgeContext: Context<EventBridgeContextValue>;
+    PluginsContext: Context<PluginsContextValue>;
+    InteractionsContext: Context<InteractionsContextValue>;
     BuilderContext?: Context<BuilderContextValue>;
-  } & Record<string, Context<unknown>>;
+  };
 } & Record<string, unknown>;
 
 const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;

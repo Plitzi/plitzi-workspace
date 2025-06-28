@@ -4,9 +4,9 @@ import { EMPTY_STYLE_SCHEMA } from './StyleHelper';
 
 import type { Style } from '@plitzi/sdk-shared';
 
-export type StyleContextValue = Style;
+export type StyleContextValue = { style: Style };
 
-const styleContextDefaultValue: StyleContextValue = EMPTY_STYLE_SCHEMA;
+const styleContextDefaultValue: StyleContextValue = { style: EMPTY_STYLE_SCHEMA };
 
 const StyleContext = createContext<StyleContextValue | undefined>(styleContextDefaultValue);
 

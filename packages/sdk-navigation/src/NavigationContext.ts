@@ -1,11 +1,8 @@
 import { createContext } from 'react';
 
-import type { NavigationContextValue as NavigationContextValueShared } from '@plitzi/sdk-shared';
-import type { Helmet } from 'react-helmet-async';
+import type { NavigationContextValue } from '@plitzi/sdk-shared';
 
 export type NavigationStatus = 'normal' | 'redirect' | 'notFound' | 'accessDenied';
-
-export type NavigationContextValue = NavigationContextValueShared<typeof Helmet>;
 
 const navigationContextDefaultValue = {} as NavigationContextValue;
 
