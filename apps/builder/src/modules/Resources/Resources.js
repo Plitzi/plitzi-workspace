@@ -2,7 +2,7 @@
 import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import get from 'lodash/get';
 import classNames from 'classnames';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 
 // Monorepo
@@ -134,7 +134,7 @@ const Resources = () => {
   }, [resources, plugins]);
 
   return (
-    <div className="w-full flex flex-col overflow-y-auto grow basis-0">
+    <div className="flex w-full grow basis-0 flex-col overflow-y-auto">
       <ResourceManager
         className="shrink-0"
         mutate={mutate}
@@ -143,11 +143,11 @@ const Resources = () => {
         onUploadAdded={handleUploadAdded}
       />
       {!loading && finalResources.length > 0 && (
-        <div className="flex flex-col px-2 basis-0 min-h-[200px] grow overflow-y-auto">
+        <div className="flex min-h-[200px] grow basis-0 flex-col overflow-y-auto px-2">
           <Heading type="h5" className="mb-2">
             Uploaded
           </Heading>
-          <div className="grid grid-cols-2 gap-2 pb-1 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-2 overflow-y-auto pb-1">
             {finalResources.map(resource => (
               <Resource
                 className={classNames({ 'col-span-2': resource.type === 'plugin' })}
@@ -164,7 +164,7 @@ const Resources = () => {
         </div>
       )}
       {loading && (
-        <div className="flex flex-col grow items-center justify-center">
+        <div className="flex grow flex-col items-center justify-center">
           <i className="fa-solid fa-sync fa-spin fa-3x" title="Loading" />
         </div>
       )}

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
@@ -141,7 +141,7 @@ const TemporalResource = props => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={classNames(
-        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden',
+        'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none',
         className
       )}
     >
@@ -159,7 +159,7 @@ const TemporalResource = props => {
       )}
       {error && (
         <div
-          className="absolute bottom-1 left-1 bg-white p-1 rounded-sm text-red-400 flex items-center justify-center"
+          className="absolute bottom-1 left-1 flex items-center justify-center rounded-sm bg-white p-1 text-red-400"
           title={error}
         >
           <i className="fa-solid fa-triangle-exclamation" />

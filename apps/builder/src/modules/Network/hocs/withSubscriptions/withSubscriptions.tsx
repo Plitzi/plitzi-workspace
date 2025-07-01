@@ -1,41 +1,45 @@
-// Packages
-import React, { memo, useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { memo, useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
 
-// Alias
+import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
-import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 
-// Relatives
+import { isRealTimeEvent, isRealTimeSelfEvent } from '../../helpers/EventTypes';
 import NetworkContext from '../../NetworkContext';
-import { RealTimeEventTypes, RealTimeEventTypesList, RealTimeSelfEventTypesList } from '../../helpers/EventTypes';
 
-/**
- * @param {React.ReactElement} WrappedComponent
- * @returns {React.ReactElement}
- */
-const withSubscriptions = WrappedComponent => {
-  /**
-   * @param {{
-   *   includeRealTime?: boolean;
-   *   includeSubscriptions?: boolean;
-   * }} props
-   * @returns {React.ReactElement}
-   */
-  const WithSubscriptionsComponent = props => {
-    const { includeRealTime = true, includeSubscriptions = true } = props;
+import type {
+  RealTimeEvent,
+  RealTimeMessage,
+  RealTimeMessageCallback,
+  SubscriptionCollaborator
+} from '@pmodules/Network/types';
+import type { FC } from 'react';
+
+export type WithSubscriptionsComponentProps = {
+  includeRealTime?: boolean;
+  includeSubscriptions?: boolean;
+};
+
+const withSubscriptions = (WrappedComponent: FC) => {
+  const WithSubscriptionsComponent = ({
+    includeRealTime = true,
+    includeSubscriptions = true,
+    ...props
+  }: WithSubscriptionsComponentProps) => {
     const { addToast } = useToast();
-    const [messageCallbacks, setMessageCallbacks] = useState({});
-    const [collaborators, setCollaborators] = useState([]);
+    const [messageCallbacks, setMessageCallbacks] = useState<
+      Record<RealTimeEvent, Record<string, RealTimeMessageCallback>>
+    >({} as Record<RealTimeEvent, Record<string, RealTimeMessageCallback>>);
+    const [collaborators, setCollaborators] = useState<SubscriptionCollaborator[]>([]);
     const { webKey, instanceId, server, userKey } = use(NetworkContext);
 
     const processMessage = useCallback(
-      e => {
-        const { type, payload } = JSON.parse(e.data);
-        if (type && payload && type === RealTimeEventTypes.INIT) {
+      (e: MessageEvent) => {
+        const { type, payload } = JSON.parse(e.data as string) as RealTimeMessage;
+        if (payload && type === 'INIT') {
           // Init Realtime
           const collaborators = payload.collaborators.filter(collaborator => collaborator.instanceId !== instanceId);
           if (collaborators.length > 0) {
@@ -45,20 +49,24 @@ const withSubscriptions = WrappedComponent => {
           return;
         }
 
-        if (!RealTimeEventTypesList.includes(type)) {
+        if (!isRealTimeEvent(type)) {
           // Invalid Packet
           return;
         }
 
-        if (!type || !payload || !messageCallbacks[type] || payload.instanceId === instanceId) {
+        if (
+          !payload ||
+          !(messageCallbacks[type] as Record<string, RealTimeMessageCallback> | undefined) ||
+          payload.instanceId === instanceId
+        ) {
           return;
         }
 
         Object.keys(messageCallbacks[type])
-          .filter(callbackKey => callbackKey !== instanceId || RealTimeSelfEventTypesList.includes(type))
+          .filter(callbackKey => callbackKey !== instanceId || isRealTimeSelfEvent(type))
           .forEach(callbackKey => messageCallbacks[type][callbackKey](payload));
       },
-      [messageCallbacks]
+      [instanceId, messageCallbacks]
     );
 
     const { push } = useWebsocket({
@@ -68,21 +76,23 @@ const withSubscriptions = WrappedComponent => {
       connectMode: includeRealTime ? 'auto' : 'manual'
     });
 
-    const registerCallback = useCallback((key, type, callback) => {
-      if (key && callback) {
+    const registerCallback = useCallback((key: string, type: RealTimeEvent, callback: RealTimeMessageCallback) => {
+      if (key) {
         setMessageCallbacks(state => set(state, `${type}.${key}`, callback));
       }
     }, []);
 
-    const unregisterCallback = useCallback((key, type) => {
+    const unregisterCallback = useCallback((key: string, type: RealTimeEvent) => {
       if (key) {
-        setMessageCallbacks(state => omit(state, [`${type}.${key}`]));
+        setMessageCallbacks(
+          state => omit(state, [`${type}.${key}`]) as Record<RealTimeEvent, Record<string, RealTimeMessageCallback>>
+        );
       }
     }, []);
 
     useLayoutEffect(() => {
       if (includeSubscriptions) {
-        registerCallback(instanceId, RealTimeEventTypes.COLLABORATOR_CONNECTED, payload => {
+        registerCallback(instanceId, 'COLLABORATOR_CONNECTED', (payload: SubscriptionCollaborator) => {
           const {
             user: { firstName, surName }
           } = payload;
@@ -100,7 +110,7 @@ const withSubscriptions = WrappedComponent => {
           setCollaborators(state => [...state, payload]);
         });
 
-        registerCallback(instanceId, RealTimeEventTypes.COLLABORATOR_DISCONNECTED, payload => {
+        registerCallback(instanceId, 'COLLABORATOR_DISCONNECTED', (payload: SubscriptionCollaborator) => {
           const {
             user: { firstName, surName }
           } = payload;
@@ -121,10 +131,11 @@ const withSubscriptions = WrappedComponent => {
 
       return () => {
         if (includeSubscriptions) {
-          unregisterCallback(instanceId, RealTimeEventTypes.COLLABORATOR_CONNECTED);
-          unregisterCallback(instanceId, RealTimeEventTypes.COLLABORATOR_DISCONNECTED);
+          unregisterCallback(instanceId, 'COLLABORATOR_CONNECTED');
+          unregisterCallback(instanceId, 'COLLABORATOR_DISCONNECTED');
         }
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [includeSubscriptions]);
 
     const subscriptionsValue = useMemo(
@@ -141,7 +152,7 @@ const withSubscriptions = WrappedComponent => {
 
     return (
       <BuilderSubscriptionsContext value={subscriptionsValue}>
-        <WrappedComponent {...omit(props, ['includeSubscriptions', 'includeRealTime'])} />
+        <WrappedComponent {...props} />
       </BuilderSubscriptionsContext>
     );
   };

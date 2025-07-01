@@ -2,7 +2,7 @@
 import React, { useState, use, useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
@@ -76,18 +76,18 @@ const Resource = props => {
               <Heading type="h5" className="mb-1">
                 Preview
               </Heading>
-              <div className="border rounded-sm border-gray-400 p-1">
-                <ResourceContent className="w-[96px] h-[96px] rounded-sm" type={type} src={src} title={title} />
+              <div className="rounded-sm border border-gray-400 p-1">
+                <ResourceContent className="h-[96px] w-[96px] rounded-sm" type={type} src={src} title={title} />
               </div>
             </div>
           </div>
-          <div className="flex flex-col basis-0 grow overflow-hidden">
+          <div className="flex grow basis-0 flex-col overflow-hidden">
             <Heading type="h5" className="mb-1">
               Information
             </Heading>
             <div className="flex flex-col">
               <div className="flex items-center">
-                <Heading type="h6" className="font-bold w-[50px]">
+                <Heading type="h6" className="w-[50px] font-bold">
                   Title:
                 </Heading>
                 <div className="ml-2 truncate" title={title}>
@@ -95,13 +95,13 @@ const Resource = props => {
                 </div>
               </div>
               <div className="flex items-center">
-                <Heading type="h6" className="font-bold w-[50px]">
+                <Heading type="h6" className="w-[50px] font-bold">
                   Type:
                 </Heading>
                 <div className="ml-2">{type}</div>
               </div>
               <div className="flex items-center">
-                <Heading type="h6" className="font-bold w-[50px]">
+                <Heading type="h6" className="w-[50px] font-bold">
                   Url:
                 </Heading>
                 <Input value={src} size="sm" className="mx-2 grow basis-0" inputClassName="rounded-sm" readOnly />
@@ -157,7 +157,7 @@ const Resource = props => {
       onDragStart={canDrag ? onDragStart : undefined}
       draggable={canDrag}
       className={classNames(
-        'w-full flex relative border border-gray-300 select-none rounded-md overflow-hidden',
+        'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none',
         { 'min-h-[164px]': type === 'plugin', 'min-h-[80px]': type !== 'plugin', 'cursor-grabbing': !canDrag },
         className
       )}
@@ -165,14 +165,14 @@ const Resource = props => {
     >
       <ResourceContent type={type} src={src} title={title} metadata={metadata} isUploaded />
       {hovered && (
-        <div className="absolute top-1 right-1 bg-white rounded-full aspect-square flex items-center justify-center px-1 cursor-pointer">
+        <div className="absolute top-1 right-1 flex aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1">
           <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={handleClickRemove} />
         </div>
       )}
       <ResourceType type={type} />
       {title && <ResourceName name={title} />}
       <div
-        className="absolute top-1 left-1 bg-white rounded-full aspect-square flex items-center justify-center px-1 hover:text-blue-400 cursor-pointer"
+        className="absolute top-1 left-1 flex aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1 hover:text-blue-400"
         title="Information"
       >
         <i className="fa-solid fa-circle-info" />

@@ -1,6 +1,6 @@
 // Packages
 import { useCallback, use, useMemo } from 'react';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';

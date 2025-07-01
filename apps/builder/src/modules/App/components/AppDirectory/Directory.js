@@ -8,7 +8,7 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

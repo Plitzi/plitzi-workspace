@@ -3,7 +3,6 @@ import React, { memo, use, useEffect, useRef, useState } from 'react';
 
 // Alias
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 
 // Relatives
 import BuilderCollaboratorCursor from './BuilderCollaboratorCursor';
@@ -94,14 +93,14 @@ const BuilderCollaboratorArea = props => {
 
   useEffect(() => {
     if (supportRealTime) {
-      subscriptionsRegisterCallback(instanceId, RealTimeEventTypes.MOUSE, realtimeCallbackMouse);
-      subscriptionsRegisterCallback(instanceId, RealTimeEventTypes.ELEMENT, realtimeCallbackElement);
+      subscriptionsRegisterCallback(instanceId, 'MOUSE', realtimeCallbackMouse);
+      subscriptionsRegisterCallback(instanceId, 'ELEMENT', realtimeCallbackElement);
     }
 
     return () => {
       if (supportRealTime) {
-        subscriptionsUnregisterCallback(instanceId, RealTimeEventTypes.MOUSE);
-        subscriptionsUnregisterCallback(instanceId, RealTimeEventTypes.ELEMENT);
+        subscriptionsUnregisterCallback(instanceId, 'MOUSE');
+        subscriptionsUnregisterCallback(instanceId, 'ELEMENT');
       }
     };
   }, []);

@@ -3,7 +3,7 @@ import React, { use, useState, useCallback, useMemo } from 'react';
 import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui/Button';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
@@ -124,11 +124,11 @@ const AppHeaher = props => {
   }, []);
 
   return (
-    <div className="h-14 px-4 py-3 flex items-center bg-white justify-between border-b border-gray-200">
-      <div className="flex h-full gap-4 items-center">
-        <div className="flex items-center justify-between w-20 px-3 h-8 bg-grayviolet-200 rounded-lg" id="plitzi-logo">
+    <div className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+      <div className="flex h-full items-center gap-4">
+        <div className="bg-grayviolet-200 flex h-8 w-20 items-center justify-between rounded-lg px-3" id="plitzi-logo">
           <a href={origin}>
-            <img src="https://cdn.plitzi.com/resources/img/favicon.svg" className="w-6 h-6" alt="Plitzi" />
+            <img src="https://cdn.plitzi.com/resources/img/favicon.svg" className="h-6 w-6" alt="Plitzi" />
           </a>
           <i className="fa-solid fa-chevron-down" />
         </div>

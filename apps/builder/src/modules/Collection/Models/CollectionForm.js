@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui/Button';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
@@ -119,7 +119,7 @@ const CollectionForm = props => {
   const handleCancel = useCallback(() => onCancel(), [onCancel]);
 
   return (
-    <div className="h-full flex flex-col grow basis-0 overflow-y-auto mx-4 my-2 gap-8">
+    <div className="mx-4 my-2 flex h-full grow basis-0 flex-col gap-8 overflow-y-auto">
       <div className="flex flex-col gap-2">
         <div className="border-b border-gray-300 pb-2">
           <Heading as="h6">{id ? namePlural : 'New Collection'}</Heading>
@@ -220,14 +220,14 @@ const CollectionForm = props => {
       </div>
       <div className="flex flex-col">
         <Heading as="h6">Schema</Heading>
-        <div className="flex flex-col w-full gap-2">
-          <div className="flex gap-10 font-bold border-b border-gray-300 pb-2">
+        <div className="flex w-full flex-col gap-2">
+          <div className="flex gap-10 border-b border-gray-300 pb-2 font-bold">
             <div className="flex grow basis-0">Name</div>
             <div className="flex grow basis-0">Identifier</div>
             <div className="flex grow basis-0">Type</div>
-            <div className="flex justify-center items-center w-[100px]">Required</div>
-            <div className="flex justify-center items-center w-[100px]">Primary</div>
-            <div className="flex justify-center items-center w-[150px]">Actions</div>
+            <div className="flex w-[100px] items-center justify-center">Required</div>
+            <div className="flex w-[100px] items-center justify-center">Primary</div>
+            <div className="flex w-[150px] items-center justify-center">Actions</div>
           </div>
           {fields.map((field, i) => (
             <CollectionField key={i} {...field} onRemove={handleClickRemoveField(i)} />

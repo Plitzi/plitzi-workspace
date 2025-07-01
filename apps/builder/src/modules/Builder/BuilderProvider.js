@@ -24,7 +24,6 @@ import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyl
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import { RealTimeEventTypes } from '@pmodules/Network/helpers/EventTypes';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 
 import { isInViewport } from '../../helpers/utils';
@@ -159,7 +158,7 @@ const BuilderProvider = props => {
 
         if (supportRealTime) {
           subscriptionsPush({
-            type: RealTimeEventTypes.ELEMENT,
+            type: 'ELEMENT',
             payload: {
               action: 'selected',
               rootId: baseElementId,
@@ -204,7 +203,7 @@ const BuilderProvider = props => {
 
         if (supportRealTime) {
           subscriptionsPush({
-            type: RealTimeEventTypes.ELEMENT,
+            type: 'ELEMENT',
             payload: {
               action: 'hovered',
               rootId: baseElementId,

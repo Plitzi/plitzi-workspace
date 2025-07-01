@@ -11,11 +11,9 @@ const mongoObjectId = () => {
   );
 };
 
-export const generateID = () => {
-  return mongoObjectId();
-};
+export const generateID = () => mongoObjectId();
 
-export const isInViewport = el => {
+export const isInViewport = (el: HTMLElement) => {
   const rect = el.getBoundingClientRect();
   const { top, left, bottom, right } = rect;
   const { innerHeight, innerWidth } = window;
@@ -26,7 +24,7 @@ export const isInViewport = el => {
   return top >= 0 && left >= 0 && bottom <= (innerHeight || clientHeight) && right <= (innerWidth || clientWidth);
 };
 
-export const isUrl = str => {
+export const isUrl = (str: string) => {
   const regexp = /^(https?:\/\/)?([\da-z.-]+\.[a-z.]{2,6}|[\d.]+)([/:?=&#]{1}[\da-zA-Z. :|;-]+)*[/?]?$/gim;
   if (regexp.test(str)) {
     return true;
@@ -35,7 +33,7 @@ export const isUrl = str => {
   return false;
 };
 
-export const hexToRGB = (hex, alpha) => {
+export const hexToRGB = (hex: string, alpha: string) => {
   if (!hex) {
     return false;
   }
@@ -44,9 +42,9 @@ export const hexToRGB = (hex, alpha) => {
   let g;
   let b;
   if (hex.length === 7) {
-    [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
+    [r, g, b] = (hex.match(/\w\w/g) ?? []).map((x: string) => parseInt(x, 16));
   } else if (hex.length === 4) {
-    [r, g, b] = hex.match(/\w/g).map(x => parseInt(`${x}${x}`, 16));
+    [r, g, b] = (hex.match(/\w/g) ?? []).map((x: string) => parseInt(`${x}${x}`, 16));
   } else {
     return false;
   }

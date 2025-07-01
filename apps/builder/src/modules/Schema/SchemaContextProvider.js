@@ -2,7 +2,7 @@
 import React, { useMemo, useRef, useCallback, use, useEffect } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
 
 // Monorepo

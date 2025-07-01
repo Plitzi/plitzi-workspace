@@ -245,10 +245,10 @@ const BuilderArea = props => {
   return (
     <div
       className={classNames(
-        'builder-area p-2 flex flex-col select-none',
+        'builder-area flex flex-col p-2 select-none',
         {
-          'overflow-hidden min-w-[600px]': multiPagesMode,
-          'overflow-auto basis-0': !multiPagesMode,
+          'min-w-[600px] overflow-hidden': multiPagesMode,
+          'basis-0 overflow-auto': !multiPagesMode,
           grow: !mobilePreview && !mobilePreview,
           'px-4 pt-4 pb-2': mode === BUILDER_MODE_NORMAL,
           'p-2': mode !== BUILDER_MODE_NORMAL
@@ -257,7 +257,7 @@ const BuilderArea = props => {
       )}
     >
       <div
-        className={classNames('w-full mx-auto mb-2 flex flex-col grow basis-0 shadow', {
+        className={classNames('mx-auto mb-2 flex w-full grow basis-0 flex-col shadow', {
           'max-w-[1440px]': displayMode === 'desktop',
           'max-w-[768px]': displayMode === 'tablet',
           'max-w-[425px]': displayMode === 'mobile'
@@ -275,7 +275,7 @@ const BuilderArea = props => {
         <div
           id="builder-area"
           ref={refContainer}
-          className="h-full w-full relative flex flex-col"
+          className="relative flex h-full w-full flex-col"
           onMouseEnter={() => {
             setIframeActive(true);
           }}
@@ -289,7 +289,7 @@ const BuilderArea = props => {
             zoom={zoom}
             css={css}
             assets={assets}
-            className="w-full h-full absolute origin-top-left"
+            className="absolute h-full w-full origin-top-left"
           >
             {Plugin && (
               <>
@@ -356,7 +356,7 @@ const BuilderArea = props => {
           </ContainerFrame>
         </div>
       </div>
-      {!multiPagesMode && mode !== BUILDER_MODE_NORMAL && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
+      {!multiPagesMode && mode === BUILDER_MODE_NORMAL && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
     </div>
   );
 };

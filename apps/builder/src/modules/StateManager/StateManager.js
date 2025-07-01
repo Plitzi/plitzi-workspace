@@ -3,7 +3,7 @@ import React, { useCallback, use, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import isEqual from 'lodash/isEqual';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
@@ -43,13 +43,13 @@ const StateManager = props => {
   }, [state]);
 
   return (
-    <div className={classNames('h-full flex flex-col relative w-full', className)}>
+    <div className={classNames('relative flex h-full w-full flex-col', className)}>
       <CodeMirror value={value} theme="dark" lineWrapping onChange={handleChange} mode="json" />
-      <div className="flex absolute top-3 right-3">
+      <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"
           size="custom"
-          className="p-2 bg-white rounded-sm mr-2"
+          className="mr-2 rounded-sm bg-white p-2"
           onClick={handleClickSave}
           tilte="Save State"
         >

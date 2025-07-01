@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
@@ -91,21 +91,23 @@ const Transform = props => {
       return;
     }
 
-    set(baseElement, 'definition.rootId', baseElementId);
-    Object.values(elements).forEach(element => {
-      set(elements, `${element.id}.definition.rootId`, baseElementId);
-    });
+    console.log(stylePlatform);
 
-    set(baseElement, 'definition.parentId', elementSelected);
+    // set(baseElement, 'definition.rootId', baseElementId);
+    // Object.values(elements).forEach(element => {
+    //   set(elements, `${element.id}.definition.rootId`, baseElementId);
+    // });
 
-    builderHandler(
-      EventBridgeTypes.SCHEMA_ADD_TEMPLATE,
-      elementSelected,
-      pick(baseElement, ['id', 'definition', 'attributes']),
-      'inside',
-      elements,
-      stylePlatform
-    );
+    // set(baseElement, 'definition.parentId', elementSelected);
+
+    // builderHandler(
+    //   'schemaAddTemplate',
+    //   elementSelected,
+    //   pick(baseElement, ['id', 'definition', 'attributes']),
+    //   'inside',
+    //   elements,
+    //   stylePlatform
+    // );
   }, [builderHandler, elementSelected, preview, baseElementId]);
 
   const handleChangeContent = useCallback(value => setContent(value), [setContent]);
@@ -158,9 +160,9 @@ const Transform = props => {
   }, [mode]);
 
   return (
-    <div className={classNames('h-full flex flex-col', className)}>
+    <div className={classNames('flex h-full flex-col', className)}>
       <div className={classNames('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
-        <div className="flex flex-col grow basis-0 overflow-y-auto">
+        <div className="flex grow basis-0 flex-col overflow-y-auto">
           <TransformPreview preview={preview} />
         </div>
         {isEditorVisible && (
@@ -204,7 +206,7 @@ const Transform = props => {
           </div>
         )}
       </div>
-      <div className="flex p-2 items-center justify-between border-t border-gray-400">
+      <div className="flex items-center justify-between border-t border-gray-400 p-2">
         <TransformLayout
           layoutMode={layoutMode}
           onLayoutModeChange={handleChangeLayoutMode}

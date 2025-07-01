@@ -1,13 +1,10 @@
-// Packages
 import React, { useCallback, useMemo, useReducer, useRef } from 'react';
 
-// Alias
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { StyleActions } from '@pmodules/Style/StyleReducer';
 
-// Relatives
 import UndoableContext from './UndoableContext';
-import UndoableReducer, { initialState, UndoableActions } from './UndoableReducer';
+import UndoableReducer, { initialState } from './UndoableReducer';
 
 /**
  * @param {{
@@ -44,7 +41,7 @@ const UndoableContextProducer = props => {
 
   const undoableAddUndo = useCallback(
     (prevState, action, nextState, dispatch) => {
-      dispatchUndoable({ type: UndoableActions.UNDOABLE_ADD_UNDO, prevState, action, nextState, dispatch });
+      dispatchUndoable({ type: 'undoableAddUndo', prevState, action, nextState, dispatch });
     },
     [dispatchUndoable]
   );
@@ -57,7 +54,7 @@ const UndoableContextProducer = props => {
       processItem(previous);
 
       dispatchUndoable({
-        type: UndoableActions.UNDOABLE_UNDO,
+        type: 'undoableUndo',
         past,
         future: newFuture,
         canUndo: past.length > 0,
@@ -74,7 +71,7 @@ const UndoableContextProducer = props => {
       processItem(next, false);
 
       dispatchUndoable({
-        type: UndoableActions.UNDOABLE_REDO,
+        type: 'undoableRedo',
         past: newPast,
         future,
         canUndo: newPast.length > 0,
@@ -83,20 +80,8 @@ const UndoableContextProducer = props => {
     }
   }, [dispatchUndoable, processItem]);
 
-  // export function undoableJumpToFuture(index) {
-  //   return { type: UndoableActions.UNDOABLE_JUMP_TO_FUTURE, index };
-  // }
-
-  // export function undoableJumpToPast(index) {
-  //   return { type: UndoableActions.UNDOABLE_JUMP_TO_PAST, index };
-  // }
-
-  // export function undoableJump(index) {
-  //   return { type: UndoableActions.UNDOABLE_JUMP, index };
-  // }
-
   const undoableClearHistory = useCallback(() => {
-    dispatchUndoable({ type: UndoableActions.UNDOABLE_CLEAR_HISTORY });
+    dispatchUndoable({ type: 'UndoableClearHistory' });
   }, [dispatchUndoable]);
 
   const undoableMiddleware = useCallback(

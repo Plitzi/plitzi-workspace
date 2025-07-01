@@ -4,7 +4,7 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 import { withApollo } from '@apollo/client/react/hoc';
 import cloneDeep from 'lodash/cloneDeep';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -14,7 +14,6 @@ import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 // Relatives
 import NetworkContext from './NetworkContext';
 import NetworkInternalContext from './contexts/NetworkInternalContext';
-import Subscriptions from './Subscriptions';
 import Mutations from './Mutations';
 import Queries from './Queries';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';

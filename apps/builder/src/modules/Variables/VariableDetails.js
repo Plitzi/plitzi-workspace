@@ -1,6 +1,6 @@
 // Packages
 import React, { useCallback } from 'react';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import QueryBuilderFormatter from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderFormatter';
 
 // Relatives
@@ -32,16 +32,16 @@ const VariableDetails = props => {
   }, [name]);
 
   return (
-    <div className="flex flex-col w-full gap-2">
+    <div className="flex w-full flex-col gap-2">
       {subValues.length > 0 && (
-        <div className="flex flex-col gap-1 w-full">
+        <div className="flex w-full flex-col gap-1">
           {subValues.map((subValue, index) => (
-            <div key={index} className="flex flex-col text-xs border border-gray-300 rounded-sm w-full">
-              <div className="flex gap-1 px-1 py-0.5 items-center">
+            <div key={index} className="flex w-full flex-col rounded-sm border border-gray-300 text-xs">
+              <div className="flex items-center gap-1 px-1 py-0.5">
                 <div className="font-bold">Value:</div>
                 <VariableValue className="text-xs" value={subValue.value} type={type} />
               </div>
-              <div className="flex gap-1 px-1 py-0.5 border-t border-gray-300">
+              <div className="flex gap-1 border-t border-gray-300 px-1 py-0.5">
                 <div className="font-bold">When:</div>
                 {QueryBuilderFormatter(subValue.when)}
               </div>

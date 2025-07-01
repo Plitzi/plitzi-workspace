@@ -5,7 +5,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Flex from '@plitzi/plitzi-ui/Flex';
 
@@ -142,10 +142,10 @@ const Segment = props => {
   }, [id, addToast, mutate, showModal]);
 
   return (
-    <Flex className="group cursor-grabbing my-2 first:mt-0" gap={2} items="center" draggable onDragStart={onDragStart}>
+    <Flex className="group my-2 cursor-grabbing first:mt-0" gap={2} items="center" draggable onDragStart={onDragStart}>
       <Icon icon="fa-solid fa-diamond" intent="primaryActive" />
-      <div className="flex flex-col basis-0 grow overflow-hidden">
-        <div className="group-hover:text-primary-400 font-bold truncate">{name}</div>
+      <div className="flex grow basis-0 flex-col overflow-hidden">
+        <div className="group-hover:text-primary-400 truncate font-bold">{name}</div>
       </div>
       <div className="hidden group-hover:flex">
         <Icon

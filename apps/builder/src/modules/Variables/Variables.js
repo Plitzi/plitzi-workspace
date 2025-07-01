@@ -6,7 +6,7 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -76,7 +76,7 @@ const Variables = () => {
   );
 
   return (
-    <div className="segments flex flex-col gap-3 w-full">
+    <div className="segments flex w-full flex-col gap-3">
       <Flex gap={2} direction="column">
         <Button size="sm" onClick={handleClickAddVariable} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />
@@ -86,7 +86,7 @@ const Variables = () => {
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="bg-gray-200 h-px" />
+      <div className="h-px bg-gray-200" />
       <div className="flex flex-col gap-1">
         {variablesFiltered.map(segment => {
           const { name, type, value, category, subValues } = segment;

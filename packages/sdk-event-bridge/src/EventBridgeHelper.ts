@@ -7,6 +7,7 @@ const EventBridgeModuleTypes = {
   ELEMENT: 'element'
 };
 
+// @todo: remove it and move it to TS type
 const EventBridgeTypes = {
   // Root Schema
   SCHEMA_ADD_PAGE: 'schemaAddPage',

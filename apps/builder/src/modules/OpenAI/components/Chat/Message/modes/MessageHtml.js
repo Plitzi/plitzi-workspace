@@ -6,7 +6,7 @@ import pick from 'lodash/pick';
 import set from 'lodash/set';
 import Markdown from '@plitzi/plitzi-ui-components/Markdown';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
@@ -113,25 +113,25 @@ const MessageHtml = props => {
     <div className={classNames('flex', className)}>
       <div
         className={classNames('flex w-full overflow-x-auto', {
-          'p-0 border border-gray-300 rounded-sm': viewMode === 'preview' && !fullScreen,
-          'absolute top-0 left-0 right-0 bottom-0 z-10 bg-white': fullScreen
+          'rounded-sm border border-gray-300 p-0': viewMode === 'preview' && !fullScreen,
+          'absolute top-0 right-0 bottom-0 left-0 z-10 bg-white': fullScreen
         })}
       >
         {viewMode === 'code' && <Markdown className="w-full">{content}</Markdown>}
         {viewMode === 'preview' && <TransformPreview className="" preview={preview} />}
       </div>
-      <div className="flex flex-col gap-2 ml-2">
+      <div className="ml-2 flex flex-col gap-2">
         {viewMode === 'preview' && (
-          <Button size="sm" className="rounded-sm h-6 w-6" title="Code" onClick={handleClickCode}>
+          <Button size="sm" className="h-6 w-6 rounded-sm" title="Code" onClick={handleClickCode}>
             <i className="fas fa-code" />
           </Button>
         )}
         {viewMode === 'code' && (
-          <Button size="sm" className="rounded-sm h-6 w-6" title="Preview" onClick={handleClickPreview}>
+          <Button size="sm" className="h-6 w-6 rounded-sm" title="Preview" onClick={handleClickPreview}>
             <i className="fa-solid fa-pen-ruler" />
           </Button>
         )}
-        <Button size="sm" className="rounded-sm h-6 w-6" title="Import" onClick={handleClickImport}>
+        <Button size="sm" className="h-6 w-6 rounded-sm" title="Import" onClick={handleClickImport}>
           <i className="fa-solid fa-plus" />
         </Button>
         <Button

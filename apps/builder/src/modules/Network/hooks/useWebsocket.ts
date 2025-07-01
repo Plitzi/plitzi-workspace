@@ -1,20 +1,29 @@
-// Packages
 import { useCallback, useEffect, useState } from 'react';
 
-const useWebsocket = (props = {}) => {
-  const {
-    url = '',
-    protocols = [],
-    processMessage = null,
-    initMessage = { type: 'init', payload: { message: 'hi' } },
-    retryReconnect = Infinity,
-    connectMode = 'auto'
-  } = props;
-  const [ws, setWs] = useState(null);
+import type { RealTimeEvent } from '../types';
+
+export type UseWebsocketProps = {
+  url: string;
+  protocols?: string[];
+  processMessage: ((ev: MessageEvent) => unknown) | null;
+  initMessage?: { type: 'init'; payload: { message: string } };
+  retryReconnect?: number;
+  connectMode?: 'auto' | 'manual';
+};
+
+const useWebsocket = ({
+  url = '',
+  protocols = [],
+  processMessage = null,
+  initMessage = { type: 'init', payload: { message: 'hi' } },
+  retryReconnect = Infinity,
+  connectMode = 'auto'
+}: UseWebsocketProps) => {
+  const [ws, setWs] = useState<WebSocket | undefined>(undefined);
   const [currentRetry, setCurrentRetry] = useState(0);
 
   const push = useCallback(
-    data => {
+    (data: { type: RealTimeEvent; payload: unknown }) => {
       if (!ws || ws.readyState !== ws.OPEN) {
         return;
       }
@@ -30,18 +39,18 @@ const useWebsocket = (props = {}) => {
         return;
       }
 
-      if (ws && ws.readyState === ws.OPEN) {
+      if (ws.readyState === ws.OPEN) {
         ws.close(closeCode);
       }
 
-      setWs(null);
+      setWs(undefined);
     },
     [ws]
   );
 
   const connect = () => {
     if (retryReconnect !== Infinity && currentRetry > retryReconnect) {
-      return null;
+      return undefined;
     }
 
     const ws = new WebSocket(url, protocols);
@@ -54,9 +63,7 @@ const useWebsocket = (props = {}) => {
         setCurrentRetry(0);
       }
 
-      if (initMessage) {
-        ws.send(JSON.stringify(initMessage));
-      }
+      ws.send(JSON.stringify(initMessage));
     };
 
     ws.onerror = () => ws.close();
@@ -95,7 +102,8 @@ const useWebsocket = (props = {}) => {
         internalWs.close(1000);
       }
     };
-  }, [ws, url, close]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ws, url, close, connectMode]);
 
   useEffect(() => {
     if (ws) {

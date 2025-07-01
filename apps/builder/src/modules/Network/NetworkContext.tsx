@@ -1,9 +1,16 @@
-// Packages
 import { createContext } from 'react';
 
+import type Mutations from './Mutations';
+
 export type NetworkContextValue = {
-  mutate: () => void;
-  query: () => void;
+  mutate: (
+    mutationKey: keyof typeof Mutations,
+    variables: Record<string, string | number | boolean | File>,
+    silentError?: boolean,
+    includeEnvironment?: boolean,
+    uploadOptions?: object
+  ) => Promise<unknown>;
+  query: () => Promise<void>;
   subscribe: () => void;
   subscriptionManager: unknown;
   webKey: string;
@@ -26,8 +33,8 @@ export type NetworkContextValue = {
 };
 
 const networkContextDefaultValue: NetworkContextValue = {
-  mutate: () => {},
-  query: () => {},
+  mutate: async () => {},
+  query: async () => {},
   subscribe: () => {},
   subscriptionManager: {},
   webKey: '',

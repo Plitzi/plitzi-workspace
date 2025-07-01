@@ -2,7 +2,7 @@
 import React, { useCallback, use, useEffect, useRef, useState } from 'react';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
@@ -195,7 +195,7 @@ const MarketPlugins = () => {
   }, [pluginSelected]);
 
   return (
-    <div className="flex flex-col grow basis-0">
+    <div className="flex grow basis-0 flex-col">
       {!pluginSelected && <PluginsFilter filter={filter} onChange={handleChangeFilter} />}
       {!loading && (
         <>

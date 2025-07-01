@@ -16,7 +16,7 @@ export type BuilderSchemaContextValue = {
     dropPosition: DropPosition,
     toElementId: string,
     rootId?: string
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   builderSetElementVisibility: (elementId: string, visibility: boolean) => void;
 };
 

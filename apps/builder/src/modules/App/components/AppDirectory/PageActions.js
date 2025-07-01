@@ -2,7 +2,7 @@
 import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 import Icon from '@plitzi/plitzi-ui/Icon';

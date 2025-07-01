@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 import Alert from '@plitzi/plitzi-ui-components/Alert';
-import useToast from '@plitzi/plitzi-ui-components/Toast/useToast';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
@@ -87,7 +87,7 @@ const DeployForm = props => {
 
   if (loading) {
     return (
-      <div className="flex flex-col grow items-center justify-center p-20">
+      <div className="flex grow flex-col items-center justify-center p-20">
         <i className="fa-solid fa-sync fa-spin fa-4x" title="Loading" />
       </div>
     );
@@ -119,13 +119,13 @@ const DeployForm = props => {
         )}
       />
       {!loading && envSelected !== 'main' && !latestRevision && (
-        <Alert className="text-white mt-4" intent="warning">
+        <Alert className="mt-4 text-white" intent="warning">
           This environment don&apos;t have any snapshot, please make a snapshot first
         </Alert>
       )}
       {!loading && envSelected === 'main' && (
-        <Alert className="text-white mt-4" intent="info">
-          <span className="font-bold">Note:</span> Selecting <span className="font-bold inline">Main</span> will render
+        <Alert className="mt-4 text-white" intent="info">
+          <span className="font-bold">Note:</span> Selecting <span className="inline font-bold">Main</span> will render
           all changes, Use this only for testing purposes
         </Alert>
       )}
@@ -141,7 +141,7 @@ const DeployForm = props => {
               size="md"
               label="Revision"
               placeholder="Revision Not Selected"
-              className="w-full mt-4"
+              className="mt-4 w-full"
               inputClassName="rounded-sm"
               onChange={handleChangeRevision(onChange)}
               value={value}
@@ -175,7 +175,7 @@ const DeployForm = props => {
               size="md"
               label="Domain"
               placeholder="Domain..."
-              className="w-full mt-4"
+              className="mt-4 w-full"
               inputClassName="rounded-sm"
               onChange={handleChangeDomain(onChange)}
               value={value}
@@ -192,7 +192,7 @@ const DeployForm = props => {
           )}
         />
       )}
-      <div className="flex justify-end mt-4">
+      <div className="mt-4 flex justify-end">
         <Button onClick={onClose} className="mr-3 rounded-md">
           Cancel
         </Button>
