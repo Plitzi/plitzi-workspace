@@ -403,6 +403,10 @@ const BuilderProvider = props => {
 
   const updateElement = useCallback(
     (elementId, attributeKey, attributeValue, category = 'attributes') => {
+      if (!elementId) {
+        return;
+      }
+
       const element = getElement(elementId);
       if (!element || elementId !== elementSelectedRef.current) {
         return;

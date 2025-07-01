@@ -22,7 +22,10 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { plitziJsxSkipHOC = false, plitziCustomComponent = false } = props; // Props from JSX
     if (plitziJsxSkipHOC) {
-      return useMemo(() => <WrappedComponent {...props} />, [props]);
+      return useMemo(
+        () => <WrappedComponent {...props} internalProps={{ plitziJsxSkipHOC: true, ...props.internalProps }} />,
+        [props]
+      );
     }
 
     const { internalProps, children, className } = useElement(props.internalProps, {

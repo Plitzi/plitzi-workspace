@@ -38,9 +38,9 @@ const Heading = ({ ref, internalProps, className = '', content = 'Heading', subT
   }, [content, previewMode]);
 
   const handleChange = useCallback(
-    (value: string) => builderContext?.updateElement(internalProps.id, 'content', value),
+    (value: string) => !previewMode && builderContext?.updateElement(internalProps.id, 'content', value),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [builderContext?.updateElement, internalProps.id]
+    [builderContext?.updateElement, internalProps]
   );
 
   return (

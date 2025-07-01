@@ -62,12 +62,15 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 }: RootElementProps<T>) => {
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
   if (!Tag || !internalProps) {
-    console.error('One of these parameters [tag, ref, internalProps] are missing', Tag, ref, internalProps);
+    console.error('One of these parameters [tag, internalProps] are missing:', Tag, internalProps);
 
     return undefined;
   }
 
-  const { id, rootId, style, definition, interactions, interactionsBasicCallbacks } = internalProps;
+  if (internalProps.plitziJsxSkipHOC) {
+    return children;
+  }
+
   const plitziContextData = usePlitziServiceContext();
   const previewMode = get(plitziContextData, 'settings.previewMode', true);
   const debugMode = get(plitziContextData, 'settings.debugMode', false);
@@ -79,6 +82,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     | undefined;
   const baseElementId = get(plitziContextData, 'root.baseElementId');
 
+  const { id, rootId, style, definition, interactions, interactionsBasicCallbacks } = internalProps;
   const params = useMemo<Record<string, string | undefined | boolean>>(() => {
     if (!debugMode && (previewMode || !definition.type || rootId !== baseElementId)) {
       return {} as Record<string, string>;

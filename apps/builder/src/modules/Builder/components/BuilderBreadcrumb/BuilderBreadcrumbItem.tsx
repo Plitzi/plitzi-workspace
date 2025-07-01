@@ -49,7 +49,7 @@ const BuilderBreadcrumbItem = ({
   return (
     <li
       className={classNames(
-        'breadcrumb__item flex not-first:before:content-[">"] first:before:content-none before:text-black gap-2 text-xs select-none items-center',
+        'breadcrumb__item flex items-center gap-2 text-xs select-none before:text-black not-first:before:content-[">"] first:before:content-none',
         className,
         { 'hover:text-primary-500': !isActive, 'text-primary-500': isActive }
       )}
@@ -58,10 +58,10 @@ const BuilderBreadcrumbItem = ({
       tabIndex={-1}
     >
       {label && (
-        <div className="flex items-center truncate cursor-pointer gap-0.5">
+        <div className="flex cursor-pointer items-center gap-0.5 truncate">
           <ItemIcon icon={icon} />
           <ContentEditable
-            className="focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1"
+            className="focus-visible:m-[1px] focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
             value={label}
             onChange={handleChange}
             openMode="doubleClick"

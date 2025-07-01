@@ -16,6 +16,7 @@ export type InternalPropsExtension<
 export type InternalPropsSTG0<T extends InternalPropsExtension = InternalPropsExtension> = {
   id: string;
   rootId?: string;
+  plitziJsxSkipHOC?: boolean;
 } & T;
 
 export type InternalPropsSTG1<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG0<T> & {
@@ -41,8 +42,6 @@ export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsEx
   style?: CSSProperties;
   styleSelectors: Element['definition']['styleSelectors'];
 };
-
-// export type InternalPropSTG3<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG2<T> & {};
 
 export type ComponentDefinition = Pick<PluginSchema, 'attributes' | 'builder' | 'definition' | 'defaultStyle'> & {
   assets: { type: 'style' | 'script'; url: string }[];
