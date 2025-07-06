@@ -1,12 +1,10 @@
-import React, { useCallback, use, useMemo, useState } from 'react';
+import React, { useCallback, use, useMemo } from 'react';
 import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
-import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 
 import Builder from '@pmodules/Builder';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
-
-const defaultCache = [];
 
 /**
  * @param {{
@@ -18,18 +16,9 @@ const defaultCache = [];
 const ContainerDefault = props => {
   const { previewMode = false, externalStyle = '' } = props;
   const { pages, settings } = use(SchemaMainContext);
-  const [, setCache, getCacheByKey] = useCache();
-  const [popupsActiveRight, setPopupsActiveRight] = useState(
-    getCacheByKey('PopupSidePanel.popupsActive.right', defaultCache)
-  );
+  const [popupsActiveRight, setPopupsActiveRight] = useStorage('builder-state.popupSidePanel.popupsActive.right', []); // <string[]>
 
-  const handleChangeRight = useCallback(
-    popups => {
-      setCache(popups, 'PopupSidePanel.popupsActive.right');
-      setPopupsActiveRight(popups);
-    },
-    [setCache]
-  );
+  const handleChangeRight = useCallback(popups => setPopupsActiveRight(popups), [setPopupsActiveRight]);
 
   const { segments } = use(SegmentsContext);
 

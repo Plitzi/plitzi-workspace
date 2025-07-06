@@ -17,6 +17,8 @@ export type BuilderProps = {
   externalStyle?: string;
 };
 
+export type BuilderPluginProps = { renderType: string; component: ComponentPlugin };
+
 const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProps) => {
   const builderContextValue = use(BuilderContext);
   const { existsPopup, addPopup } = usePopup();
@@ -101,6 +103,6 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
   );
 };
 
-Builder.Plugin = (() => null) as (props: { renderType: string; component: ComponentPlugin }) => null;
+Builder.Plugin = (() => null) as (props: BuilderPluginProps) => null;
 
 export default Builder;

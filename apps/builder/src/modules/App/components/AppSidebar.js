@@ -1,10 +1,8 @@
 // Packages
 import React, { useCallback, useState } from 'react';
-import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
 import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 
-const defaultCache = [];
-const popupSidebarExcluded = ['collections', 'settings'];
 const separatorsBefore = ['layerManager', 'settings'];
 
 /**
@@ -17,27 +15,20 @@ const separatorsBefore = ['layerManager', 'settings'];
  */
 const AppSidebar = props => {
   const { onSelect } = props;
-  const [, setCache, getCacheByKey] = useCache();
-  const [popupsActiveLeft, setPopupsActiveLeft] = useState(
-    getCacheByKey('PopupSidePanel.popupsActive.left', defaultCache)
-  );
+  const [popupsActiveLeft, setPopupsActiveLeft] = useStorage('builder-state.popupSidePanel.popupsActive.left', []); // <string[]>
 
   const handleChangeLeft = useCallback(
     popups => {
-      setCache(
-        popups.filter(popup => !popupSidebarExcluded.includes(popup)),
-        'PopupSidePanel.popupsActive.left'
-      );
       setPopupsActiveLeft(popups);
       onSelect?.(popups?.[0] ?? '');
     },
-    [setCache, onSelect]
+    [setPopupsActiveLeft, onSelect]
   );
 
   return (
     <PopupSidePanel
       size="md"
-      className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
+      className="max-h-[calc(_100vh_-_48px)] overflow-y-auto"
       placementTabs="left"
       placement="left"
       separatorsBefore={separatorsBefore}

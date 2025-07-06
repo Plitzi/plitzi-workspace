@@ -58,6 +58,7 @@
     "@plitzi/plitzi-webpack": "^0.3.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.0",
     "@tailwindcss/postcss": "^4.1.7",
+    "@types/apollo-upload-client": "^18.0.0",
     "@types/lodash": "^4.17.17",
     "babel-loader": "^10.0.0",
     "clean-webpack-plugin": "^4.0.0",

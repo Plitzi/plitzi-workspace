@@ -1,7 +1,7 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
 import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
-import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
 
 // Monorepo
@@ -25,10 +25,12 @@ const BuilderPopup = props => {
   const { eventBridge } = use(EventBridgeContext);
   const { segments } = use(SegmentsContext);
   const segment = segments[segmentIdentifier];
-  const [state, setCache, getCacheByKey] = useCache();
-  const popupsActive = useMemo(() => getCacheByKey('PopupSidePanel.popupsActive', { left: [], right: [] }), [state]);
+  const [popupsActiveRught, setPopupsActiveRight] = useStorage('builder-state.popupSidePanel.popupsActive.right', []); // <string[]>
 
-  const handleChange = useCallback(popups => setCache(popups, 'PopupSidePanel.popupsActive'), []);
+  const handleChange = useCallback(
+    popups => setPopupsActiveRight(popups, 'PopupSidePanel.popupsActive.right'),
+    [setPopupsActiveRight]
+  );
 
   const builderHandler = useCallback(
     (event, data) => eventBridge.emit(EventBridgeModuleTypes.SEGMENT, event, segment.id, ...data),
@@ -37,7 +39,7 @@ const BuilderPopup = props => {
 
   if (!segment) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         The segment is not available, please close this window
       </div>
     );
@@ -60,13 +62,13 @@ const BuilderPopup = props => {
 
           {!previewMode && (
             <PopupSidePanel
-              className="overflow-y-auto max-h-[calc(_100vh_-_48px)]"
+              className="max-h-[calc(_100vh_-_48px)] overflow-y-auto"
               placementTabs="right"
               minWidth={320}
               maxWidth={540}
               canHide
               multi
-              value={popupsActive['right']}
+              value={popupsActiveRught}
               onChange={handleChange}
             />
           )}

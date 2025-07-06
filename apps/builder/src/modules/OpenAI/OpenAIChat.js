@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import Input from '@plitzi/plitzi-ui-components/Input';
 import Button from '@plitzi/plitzi-ui-components/Button';
-import useCache from '@plitzi/plitzi-ui-components/Cache/useCache';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 
 // Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -32,8 +32,7 @@ const OpenAIChat = props => {
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const { currentPageId } = use(NavigationContext);
   const { elementSelected } = use(BuilderSelectedContext);
-  const [, setCache, getCacheByKey] = useCache();
-  const [threadId, setThreadId] = useState(() => getCacheByKey('assistantAI.threadId', ''));
+  const [threadId, setThreadId] = useStorage('builder-state.assistantAI.threadId', ''); // <string>
   const [conversation, setConversation] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [retrieveMessagePending, setRetrieveMessagePending] = useTransition();
@@ -57,10 +56,9 @@ const OpenAIChat = props => {
     }
 
     const threadIdResponse = get(response, 'threadId', '');
-    setThreadId(threadIdResponse);
     await getThreadMessages(threadIdResponse);
-    setCache(threadIdResponse, 'assistantAI.threadId');
-  }, [getThreadMessages, threadId]);
+    setThreadId(threadIdResponse);
+  }, [getThreadMessages, threadId, setThreadId]);
 
   const askToAssistant = useCallback(
     message => {
@@ -145,9 +143,9 @@ const OpenAIChat = props => {
 
   const handleClickClearConversation = useCallback(() => {
     setConversation([]);
-    setCache('', 'assistantAI.threadId');
+    setThreadId('');
     initAssistant();
-  }, [initAssistant, setCache]);
+  }, [initAssistant, setThreadId]);
 
   useEffect(() => {
     if (!threadId) {
@@ -169,15 +167,15 @@ const OpenAIChat = props => {
   const loading = retrieveMessagePending || networkLoading;
 
   return (
-    <div className={classNames('h-full flex flex-col min-h-0 relative', className)}>
-      <div className="flex flex-col grow border-b border-gray-300">
-        <Chat className="flex basis-0 grow m-3" messages={conversation} ref={chatRef} />
+    <div className={classNames('relative flex h-full min-h-0 flex-col', className)}>
+      <div className="flex grow flex-col border-b border-gray-300">
+        <Chat className="m-3 flex grow basis-0" messages={conversation} ref={chatRef} />
       </div>
-      <div className="flex p-2 gap-2">
+      <div className="flex gap-2 p-2">
         <div className="flex grow basis-0 gap-4">
           {!recording && (
             <Input
-              className="min-w-0 basis-0 grow"
+              className="min-w-0 grow basis-0"
               inputClassName="rounded-sm min-w-0 basis-0"
               value={messageInput}
               size="sm"
@@ -198,7 +196,7 @@ const OpenAIChat = props => {
           )}
         </div>
         {recording && (
-          <div className="flex rounded-sm overflow-hidden">
+          <div className="flex overflow-hidden rounded-sm">
             <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
               {!paused && <i className="fa-solid fa-pause" />}
               {paused && <i className="fa-solid fa-play" />}
@@ -210,7 +208,7 @@ const OpenAIChat = props => {
         )}
         {!recording && (
           <Button
-            className="rounded-sm w-[38px]"
+            className="w-[38px] rounded-sm"
             size="sm"
             intent={recording ? 'danger' : 'primary'}
             disabled={loading}
@@ -221,7 +219,7 @@ const OpenAIChat = props => {
           </Button>
         )}
         {!recording && (
-          <Button size="sm" className="rounded-sm w-[38px]" disabled={loading} onClick={handleClickAsk} title="Ask">
+          <Button size="sm" className="w-[38px] rounded-sm" disabled={loading} onClick={handleClickAsk} title="Ask">
             {!loading && <i className="fa-solid fa-star" />}
             {loading && <i className="fa-solid fa-sync fa-spin" />}
           </Button>
@@ -229,7 +227,7 @@ const OpenAIChat = props => {
         <Button
           size="sm"
           intent="danger"
-          className="rounded-sm w-[38px]"
+          className="w-[38px] rounded-sm"
           disabled={loading}
           onClick={handleClickClearConversation}
           title="Clear the conversation"
@@ -237,7 +235,7 @@ const OpenAIChat = props => {
           <i className="fa-solid fa-eraser" />
         </Button>
       </div>
-      <div className="flex items-center justify-end mx-2 text-xs">{threadId}</div>
+      <div className="mx-2 flex items-center justify-end text-xs">{threadId}</div>
     </div>
   );
 };
