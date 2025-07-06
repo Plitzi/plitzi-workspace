@@ -64,7 +64,7 @@ const build = (env, args) => {
   );
 
   let modules = {
-    entry: { 'plitzi-builder': './src/index.js' },
+    entry: { 'plitzi-builder': './src/index' },
     output: {
       pathinfo: false,
       path: DESTINATION,

@@ -1,6 +1,6 @@
 import withElement from '../Element/hocs/withElement';
 
-import type { ComponentOrigin, ComponentPlugin, ComponentPlugins } from '@plitzi/sdk-shared';
+import type { ComponentOrigin, ComponentPlugin } from '@plitzi/sdk-shared';
 
 export const ORIGIN_LOCAL = 'local';
 export const ORIGIN_LOCAL_CUSTOM = 'local-custom';
@@ -9,7 +9,7 @@ export const ORIGIN_REMOTE = 'remote';
 // Generic methods
 
 export const getPlugins = (component: ComponentPlugin | undefined) => {
-  let result: ComponentPlugins = {};
+  let result: Record<string, ComponentPlugin> = {};
   if (!component) {
     return result;
   }
@@ -27,7 +27,7 @@ export const getPlugins = (component: ComponentPlugin | undefined) => {
 
 // Local
 
-export const processLocalPlugins = (plugins: ComponentPlugins) => {
+export const processLocalPlugins = (plugins: Record<string, ComponentPlugin>) => {
   let pluginsProcessed = {};
   Object.values(plugins).forEach(comp => {
     if (comp.type) {
@@ -40,12 +40,12 @@ export const processLocalPlugins = (plugins: ComponentPlugins) => {
 
 // Local Custom Components
 
-export const nestedInject = (plugins: ComponentPlugins | undefined, origin: ComponentOrigin) => {
+export const nestedInject = (plugins: Record<string, ComponentPlugin> | undefined, origin: ComponentOrigin) => {
   if (!plugins) {
     return {};
   }
 
-  const pluginsProcessed: ComponentPlugins = {};
+  const pluginsProcessed: Record<string, ComponentPlugin> = {};
   Object.keys(plugins).forEach(pluginType => {
     const plugin = plugins[pluginType];
     const { version, pluginSettings, initialItems, plugins: subPlugins } = plugin;
@@ -61,7 +61,7 @@ export const nestedInject = (plugins: ComponentPlugins | undefined, origin: Comp
   return pluginsProcessed;
 };
 
-export const processLocalCustomPlugins = (localComponents: ComponentPlugins) => {
+export const processLocalCustomPlugins = (localComponents: Record<string, ComponentPlugin>) => {
   let pluginsProcessed = {};
   Object.values(localComponents).forEach(comp => {
     if (!comp.type) {

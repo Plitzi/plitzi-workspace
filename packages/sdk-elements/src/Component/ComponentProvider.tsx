@@ -8,12 +8,12 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { defaultElements } from '..';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
 
-import type { ComponentDefinition, ComponentPlugin, ComponentPlugins } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type ComponentProviderProps = {
-  localComponents: ComponentPlugins;
-  localCustomComponents: ComponentPlugins;
+  localComponents: Record<string, ComponentPlugin>;
+  localCustomComponents: Record<string, ComponentPlugin>;
   children?: ReactNode;
 };
 
@@ -22,15 +22,15 @@ const ComponentProvider = ({
   localCustomComponents = emptyObject,
   children
 }: ComponentProviderProps) => {
-  const localComponentsParsed = useMemo<ComponentPlugins>(
+  const localComponentsParsed = useMemo<Record<string, ComponentPlugin>>(
     () => ({
-      ...processLocalPlugins(defaultElements as unknown as ComponentPlugins),
+      ...processLocalPlugins(defaultElements as unknown as Record<string, ComponentPlugin>),
       ...processLocalPlugins(localComponents),
       ...processLocalCustomPlugins(localCustomComponents)
     }),
     [localComponents, localCustomComponents]
   );
-  const [remoteComponents, setRemoteComponents] = useState<ComponentPlugins>({});
+  const [remoteComponents, setRemoteComponents] = useState<Record<string, ComponentPlugin>>({});
   const totalComponents = useRef({ ...remoteComponents, ...localComponentsParsed });
 
   const getComponent = useCallback((componentTypes: string | string[] = [], withPlugins = false) => {
@@ -47,7 +47,7 @@ const ComponentProvider = ({
       return { [componentTypes]: component, ...omit(getPlugins(component), [componentTypes]) };
     }
 
-    let componentsToReturn: ComponentPlugins = {};
+    let componentsToReturn: Record<string, ComponentPlugin> = {};
     (componentTypes as string[]).forEach(componentType => {
       const component = totalComponents.current[componentType] as ComponentPlugin | undefined;
       if (!component) {
@@ -66,7 +66,7 @@ const ComponentProvider = ({
 
   const register = useCallback(
     (components: ComponentPlugin[] | ComponentPlugin = []) => {
-      let componentsToAppend: ComponentPlugins = {};
+      let componentsToAppend: Record<string, ComponentPlugin> = {};
       if (!Array.isArray(components)) {
         components = [components];
       }

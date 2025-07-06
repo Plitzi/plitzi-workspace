@@ -1,35 +1,32 @@
-import React, { use, useEffect, useMemo } from 'react';
-import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
+/* eslint-disable react-hooks/rules-of-hooks */
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import { use, useEffect, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-
 import AppContext from '@pmodules/App/AppContext';
 
-import BuilderArea from './components/BuilderArea';
 import { BUILDER_MODE_NORMAL } from './BuilderProvider';
+import BuilderArea from './components/BuilderArea';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 
-const pagesDefault = [];
+import type { ComponentPlugin, BuilderContextValue } from '@plitzi/sdk-shared';
 
-/**
- * @param {{
- *   pages?: string[];
- *   customCss?: string;
- *   externalStyle?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const Builder = props => {
-  const { pages = pagesDefault, customCss = '', externalStyle = '' } = props;
+export type BuilderProps = {
+  pages?: string[];
+  customCss?: string;
+  externalStyle?: string;
+};
+
+const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProps) => {
   const builderContextValue = use(BuilderContext);
   const { existsPopup, addPopup } = usePopup();
   const { multiPagesMode, builderElementPermissions, mode, hasMultiPages } = builderContextValue;
   const { displayMode, previewMode, mobilePreview, debugMode } = use(AppContext);
   if (pages.length === 0 && mode === BUILDER_MODE_NORMAL) {
     return (
-      <div className="flex grow basis-0 overflow-auto min-w-0 relative flex-col items-center">
+      <div className="relative flex min-w-0 grow basis-0 flex-col items-center overflow-auto">
         <div
-          className="opacity-20 translate-y-[-50%] h-[400px] w-[400px] top-[50%] absolute bg-no-repeat bg-contain"
+          className="absolute top-[50%] h-[400px] w-[400px] translate-y-[-50%] bg-contain bg-no-repeat opacity-20"
           style={{ backgroundImage: 'url(https://cdn.plitzi.com/resources/img/favicon.svg)' }}
         />
         <div>Please add your first page</div>
@@ -49,9 +46,10 @@ const Builder = props => {
         placement: 'right'
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const contextsMemo = useMemo(
+  const contextsMemo = useMemo<Record<string, BuilderContextValue>>(
     () =>
       pages.reduce(
         (acum, page) => ({
@@ -64,7 +62,7 @@ const Builder = props => {
   );
 
   return (
-    <div className="flex grow basis-0 overflow-auto min-w-0">
+    <div className="flex min-w-0 grow basis-0 overflow-auto">
       {(!multiPagesMode || mode !== BUILDER_MODE_NORMAL) && (
         <BuilderArea
           externalStyle={externalStyle}
@@ -76,7 +74,7 @@ const Builder = props => {
       )}
       {mobilePreview && mode === BUILDER_MODE_NORMAL && displayMode !== 'mobile' && !previewMode && (
         <BuilderArea
-          className="basis-[425px] mb-11"
+          className="mb-11 basis-[425px]"
           externalStyle={externalStyle}
           customCss={customCss}
           mobilePreview
@@ -103,6 +101,6 @@ const Builder = props => {
   );
 };
 
-Builder.Plugin = () => null;
+Builder.Plugin = (() => null) as (props: { renderType: string; component: ComponentPlugin }) => null;
 
 export default Builder;

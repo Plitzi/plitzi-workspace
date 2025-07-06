@@ -22,7 +22,6 @@ export type ComponentPlugin<T = unknown> = FC<
   version?: string;
   initialItems?: string[];
 };
-export type ComponentPlugins<T = unknown> = Record<string, ComponentPlugin<T>>;
 
 export type ComponentContextValue = {
   getComponentBuilderSettings: (
@@ -30,11 +29,14 @@ export type ComponentContextValue = {
     path?: string,
     defaultValue?: boolean
   ) => boolean | ComponentDefinition | PluginBuilder | undefined;
-  getComponent: (componentTypes: string | string[], withPlugins?: boolean) => ComponentPlugin | ComponentPlugins;
-  register: (components: ComponentPlugin[] | ComponentPlugin) => ComponentPlugins;
+  getComponent: (
+    componentTypes: string | string[],
+    withPlugins?: boolean
+  ) => ComponentPlugin | Record<string, ComponentPlugin>;
+  register: (components: ComponentPlugin[] | ComponentPlugin) => Record<string, ComponentPlugin>;
   unregister: (componentTypes: string[] | string) => string[];
   unregisterDefinition: (pluginType: string) => void;
   registerDefinition: (plugins: Record<string, ComponentDefinition>) => void;
-  components: ComponentPlugins;
+  components: Record<string, ComponentPlugin>;
   componentDefinitions: Record<string, ComponentDefinition>;
 };
