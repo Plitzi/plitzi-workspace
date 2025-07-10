@@ -278,8 +278,8 @@ class FlatMap {
       return false;
     }
 
-    const elementItems = get(element, 'definition.items', [] as string[]);
-    if (elementItems.length > 0) {
+    const elementItems = get(element, 'definition.items');
+    if (elementItems && elementItems.length > 0) {
       elementItems.forEach(id => this.removeElement(id));
     }
 
