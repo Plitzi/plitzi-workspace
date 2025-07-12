@@ -5,7 +5,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 
 // Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
@@ -426,7 +426,7 @@ const SegmentsContextProvider = props => {
     ]
   );
 
-  useEventBridge(EventBridgeModuleTypes.SEGMENT, events);
+  useEventBridge('segment', events);
 
   const segmentsContextValue = useMemo(
     () => ({

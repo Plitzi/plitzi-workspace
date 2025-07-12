@@ -6,7 +6,7 @@ import Modal from '@plitzi/plitzi-ui-components/Modal';
 import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 
 // Alias
@@ -40,7 +40,7 @@ const DirectoryHeader = props => {
 
     if (response.result) {
       const { data } = response;
-      eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_ADD_PAGE, data);
+      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE, data);
     }
   }, [showModal, eventBridge, pageFolders]);
 
@@ -58,7 +58,7 @@ const DirectoryHeader = props => {
 
     if (response.result) {
       const { data } = response;
-      eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, data);
+      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, data);
     }
   }, [showModal, eventBridge]);
 

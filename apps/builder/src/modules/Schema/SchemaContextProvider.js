@@ -7,7 +7,6 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 
 // Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import FlatMap, { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
@@ -256,7 +255,7 @@ const SchemaContextProvider = props => {
         fromSubscriptions
       });
 
-      eventBridge.emit(EventBridgeModuleTypes.MAIN, 'styleAddTemplate', templatePlatform, true);
+      eventBridge.emit('main', 'styleAddTemplate', templatePlatform, true);
     },
     [dispatchSchema, eventBridge]
   );
@@ -435,7 +434,7 @@ const SchemaContextProvider = props => {
       ]
     );
 
-    useEventBridge(EventBridgeModuleTypes.MAIN, mainEvents);
+    useEventBridge('main', mainEvents);
   }
 
   const events = useMemo(
@@ -459,7 +458,7 @@ const SchemaContextProvider = props => {
     ]
   );
 
-  useEventBridge(EventBridgeModuleTypes.MAIN, events);
+  useEventBridge('main', events);
 
   const valueMemo = useMemo(() => {
     if (type === SCHEMA_TYPE_MAIN) {

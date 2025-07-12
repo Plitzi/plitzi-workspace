@@ -10,7 +10,7 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
@@ -66,7 +66,7 @@ const PageActions = props => {
       );
 
       if (response.result) {
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_HOME_PAGE, id);
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_HOME_PAGE, id);
       }
     },
     [id, eventBridge, flat, defaultPage]
@@ -104,7 +104,7 @@ const PageActions = props => {
       );
 
       if (response.result) {
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_REMOVE_PAGE, id);
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE, id);
         navigate('/');
       }
     },

@@ -1,32 +1,36 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
-export type EventBridgeCallback<T = unknown> = (params?: T) => T | Promise<T>;
+
+import type { EventBridgeModule } from '@plitzi/sdk-shared';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type EventBridgeCallback<T = any> = (...data: T[]) => T | Promise<T>;
 
 export type EventBridgeParams<T = unknown> = { filter?: (params?: T) => boolean; override?: boolean };
 
 export type Event<T = unknown> = { callback: EventBridgeCallback<T>; filter?: EventBridgeParams<T>['filter'] };
 
 export type EventBridgeProps<T = unknown> = {
-  events?: Record<string, Record<string, Event<T>[] | undefined> | undefined>;
+  events?: Record<EventBridgeModule, Record<string, Event<T>[]>>;
 };
 
 class EventBridge<T = unknown> {
-  events: Exclude<EventBridgeProps<T>['events'], undefined>;
+  events: Partial<Record<EventBridgeModule, Partial<Record<string, Event<T>[]>>>>;
 
-  constructor({ events = {} }: EventBridgeProps<T> | undefined = {}) {
-    this.events = events;
+  constructor({ events }: EventBridgeProps<T> | undefined = {}) {
+    this.events = events ?? {};
   }
 
-  has(module: string, event: string) {
-    if (!module) {
+  has(module: EventBridgeModule, event: string) {
+    if (!(module as string)) {
       throw new Error('Module name is required');
     }
 
     return this.events[module] && this.events[module][event];
   }
 
-  on(module: string, event: string, callback?: EventBridgeCallback<T>, params: EventBridgeParams<T> = {}) {
+  on(module: EventBridgeModule, event: string, callback?: EventBridgeCallback<T>, params: EventBridgeParams<T> = {}) {
     const { filter, override = false } = params;
-    if (!module) {
+    if (!(module as string)) {
       throw new Error('Module name is required');
     }
 
@@ -45,7 +49,7 @@ class EventBridge<T = unknown> {
     this.events[module][event].push({ callback, filter });
   }
 
-  get(module: string, event: string) {
+  get(module: EventBridgeModule, event: string) {
     if (!this.has(module, event)) {
       return [];
     }
@@ -53,7 +57,7 @@ class EventBridge<T = unknown> {
     return this.events[module]?.[event];
   }
 
-  off(module: string, event: string, callback?: EventBridgeCallback<T>) {
+  off(module: EventBridgeModule, event: string, callback?: EventBridgeCallback<T>) {
     if (!this.has(module, event) || !this.events[module]) {
       return;
     }
@@ -73,7 +77,7 @@ class EventBridge<T = unknown> {
     }
   }
 
-  emit(module: string, events: string[] | string = [], ...data: T[]) {
+  emit(module: EventBridgeModule, events: string[] | string = [], ...data: T[]) {
     if (!Array.isArray(events) && events) {
       events = [events];
     }
@@ -100,7 +104,7 @@ class EventBridge<T = unknown> {
     return Promise.all(promises);
   }
 
-  async emitWithResponse(module: string, event: string, ...data: T[]) {
+  async emitWithResponse(module: EventBridgeModule, event: string, ...data: T[]) {
     if (!this.has(module, event)) {
       return undefined;
     }
@@ -123,8 +127,8 @@ class EventBridge<T = unknown> {
     return answers;
   }
 
-  once(module: string, event: string, callback: EventBridgeCallback<T>, filter?: Event<T>['filter']) {
-    if (!module) {
+  once(module: EventBridgeModule, event: string, callback: EventBridgeCallback<T>, filter?: Event<T>['filter']) {
+    if (!(module as string)) {
       throw new Error('Module name is required');
     }
 
@@ -136,7 +140,7 @@ class EventBridge<T = unknown> {
     this.on(module, event, onceCallback as EventBridgeCallback<T>, { filter });
   }
 
-  clear(module?: string) {
+  clear(module?: EventBridgeModule) {
     if (!module) {
       this.events = {};
 
@@ -150,7 +154,7 @@ class EventBridge<T = unknown> {
     delete this.events[module];
   }
 
-  getEvents(module: string) {
+  getEvents(module?: EventBridgeModule) {
     if (!module) {
       return this.events;
     }
@@ -162,15 +166,15 @@ class EventBridge<T = unknown> {
     return this.events[module];
   }
 
-  getModuleEventsNames(module: string) {
-    if (!module || !this.events[module]) {
+  getModuleEventsNames(module: EventBridgeModule) {
+    if (!(module as string) || !this.events[module]) {
       return [];
     }
 
     return Object.keys(this.events[module]);
   }
 
-  getModuleEventsCount(module: string) {
+  getModuleEventsCount(module: EventBridgeModule) {
     return this.getModuleEventsNames(module).length;
   }
 }

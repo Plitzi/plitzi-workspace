@@ -1,12 +1,3 @@
-const EventBridgeModuleTypes = {
-  MAIN: 'main',
-  BUILDER: 'builder',
-  SEGMENT: 'segment',
-  TEMPLATE: 'template',
-  INTERACTION: 'interaction',
-  ELEMENT: 'element'
-};
-
 // @todo: remove it and move it to TS type
 const EventBridgeTypes = {
   // Root Schema
@@ -45,7 +36,7 @@ const EventBridgeTypes = {
 };
 
 const EventBridgeTypesPerModule = {
-  [EventBridgeModuleTypes.MAIN]: [
+  main: [
     EventBridgeTypes.SCHEMA_ADD_PAGE,
     EventBridgeTypes.SCHEMA_HOME_PAGE,
     EventBridgeTypes.SCHEMA_UPDATE_PAGE,
@@ -70,11 +61,11 @@ const EventBridgeTypesPerModule = {
     EventBridgeTypes.STYLE_REMOVE_VARIABLE,
     EventBridgeTypes.STYLE_ADD_TEMPLATE
   ],
-  [EventBridgeModuleTypes.BUILDER]: [
+  builder: [
     EventBridgeTypes.BUILDER_SET_BASE_CONTEXT,
     EventBridgeTypes.BUILDER_SET_SELECTED,
     EventBridgeTypes.BUILDER_SET_HOVERED
   ]
 };
 
-export { EventBridgeModuleTypes, EventBridgeTypes, EventBridgeTypesPerModule };
+export { EventBridgeTypes, EventBridgeTypesPerModule };

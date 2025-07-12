@@ -1,5 +1,4 @@
 import type { ComponentDefinition, InternalPropsSTG1 } from './ElementTypes';
-import type { PluginBuilder } from './PluginTypes';
 import type { FC, ReactNode } from 'react';
 
 export type ComponentOrigin = 'local' | 'local-custom' | 'remote';
@@ -24,11 +23,6 @@ export type ComponentPlugin<T = unknown> = FC<
 };
 
 export type ComponentContextValue = {
-  getComponentBuilderSettings: (
-    type: string,
-    path?: string,
-    defaultValue?: boolean
-  ) => boolean | ComponentDefinition | PluginBuilder | undefined;
   getComponent: (
     componentTypes: string | string[],
     withPlugins?: boolean

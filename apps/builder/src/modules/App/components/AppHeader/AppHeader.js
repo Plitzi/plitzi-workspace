@@ -10,7 +10,7 @@ import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 // Alias
@@ -48,8 +48,8 @@ const AppHeaher = props => {
   const { subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
 
   const handleClickPreviewMode = useCallback(() => {
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
+    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
     setPreviewMode(state => !state);
   }, [currentPageId, eventBridge]);
 

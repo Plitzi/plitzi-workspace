@@ -126,16 +126,11 @@ const ComponentProvider = ({
   const [componentDefinitions, setComponentDefinitions] = useState<Record<string, ComponentDefinition>>(() =>
     Object.keys(totalComponents.current).reduce((acum, elementType) => {
       const component = get(totalComponents.current, elementType) as ComponentPlugin | undefined;
-      if (!component) {
+      if (!component || !(component.content as ComponentDefinition | undefined)) {
         return acum;
       }
 
-      const content = get(component, 'content', {}) as ComponentDefinition;
-
-      return {
-        ...acum,
-        [elementType]: { ...content, builder: { ...content.builder, initialItems: component.initialItems } }
-      };
+      return { ...acum, [elementType]: { ...component.content, initialItems: component.initialItems } };
     }, {})
   );
 
@@ -152,26 +147,10 @@ const ComponentProvider = ({
     []
   );
 
-  const getComponentBuilderSettings = useCallback(
-    (type: string, path = '', defaultValue?: boolean) => {
-      if (!type || !(totalComponents.current[type] as ComponentPlugin | undefined)) {
-        return undefined;
-      }
-
-      if (!path) {
-        return get(componentDefinitions, `${type}.builder`, {}) as ComponentPlugin['content']['builder'];
-      }
-
-      return get(componentDefinitions, `${type}.builder.${path}`, defaultValue);
-    },
-    [componentDefinitions]
-  );
-
   // End Required by builder
 
   const componentsContextValue = useMemo(
     () => ({
-      getComponentBuilderSettings,
       getComponent,
       register,
       unregister,
@@ -180,15 +159,7 @@ const ComponentProvider = ({
       components: totalComponents.current,
       componentDefinitions
     }),
-    [
-      getComponentBuilderSettings,
-      register,
-      unregister,
-      registerDefinition,
-      unregisterDefinition,
-      getComponent,
-      componentDefinitions
-    ]
+    [register, unregister, registerDefinition, unregisterDefinition, getComponent, componentDefinitions]
   );
 
   return <ComponentContext value={componentsContextValue}>{children}</ComponentContext>;

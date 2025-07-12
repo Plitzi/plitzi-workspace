@@ -1,7 +1,6 @@
 import get from 'lodash/get';
 import { use, useMemo } from 'react';
 
-import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -66,12 +65,7 @@ const useElement = (
     [id, internalPropsParsed.setElementState]
   );
 
-  useEventBridge(
-    EventBridgeModuleTypes.ELEMENT,
-    eventCallbacks,
-    {},
-    EventBridgeContext as Context<EventBridgeContextValue>
-  );
+  useEventBridge('element', eventCallbacks, {}, EventBridgeContext as Context<EventBridgeContextValue>);
 
   return {
     internalProps: internalPropsParsed,

@@ -6,7 +6,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
@@ -48,13 +48,13 @@ const PageLayouts = () => {
     );
 
     if (response.result) {
-      eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
-      eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, layoutId);
+      eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
+      eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, layoutId);
     }
   };
 
   const handleClickLayout = layoutId => () =>
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, layoutId);
+    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, layoutId);
 
   const layouts = useMemo(
     () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'layoutContainer'),
@@ -64,7 +64,7 @@ const PageLayouts = () => {
   return (
     <div className="flex flex-col">
       <LayoutsHeader />
-      <div className="flex flex-col items-center overflow-auto w-full">
+      <div className="flex w-full flex-col items-center overflow-auto">
         {layouts &&
           layouts.map(layout => (
             <PageLayout

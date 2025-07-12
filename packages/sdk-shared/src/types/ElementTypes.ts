@@ -43,7 +43,10 @@ export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsEx
   styleSelectors: Element['definition']['styleSelectors'];
 };
 
-export type ComponentDefinition = Pick<PluginSchema, 'attributes' | 'builder' | 'definition' | 'defaultStyle'> & {
+export type ComponentDefinition = Pick<
+  PluginSchema,
+  'attributes' | 'builder' | 'definition' | 'defaultStyle' | 'initialItems'
+> & {
   assets: { type: 'style' | 'script'; url: string }[];
   manifest: PluginManifest;
   market: Omit<PluginManifest, 'name'> & { category: string };

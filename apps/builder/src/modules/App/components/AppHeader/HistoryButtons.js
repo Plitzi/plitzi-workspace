@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
@@ -22,12 +22,12 @@ const HistoryButtons = props => {
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
 
   const handleClickUndo = useCallback(() => {
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
     undoableUndo();
   }, [undoableUndo, eventBridge]);
 
   const handleClickRedo = useCallback(() => {
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
     undoableRedo();
   }, [undoableRedo, eventBridge]);
 

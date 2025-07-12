@@ -1,10 +1,18 @@
 import type { Element, Schema } from './SchemaTypes';
+import type { Style } from './StyleTypes';
 
 export type Segment = {
-  attributes: Element['attributes'];
-  definition: Element['definition'];
+  definition: {
+    name: string;
+    description: string;
+    baseElementId: Element['id'];
+  };
+  environment: 'main' | 'development' | 'staging' | 'production';
   schema: Schema;
-} & Record<string, unknown>;
+  style: Style;
+} & {
+  [K in Exclude<string, 'style' | 'schema' | 'definition' | 'environment'>]: unknown;
+};
 
 export type SegmentsContextValue = {
   segments: Record<string, Segment>;

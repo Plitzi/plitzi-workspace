@@ -45,11 +45,17 @@ export type BuilderContextValue = {
   baseElementIdOriginal: string;
   builderSetBaseContext: (id?: string) => void;
   builderElementPermissions: {
-    (element: Element, path?: undefined, defaultValue?: boolean): PluginBuilder;
+    (element: Element, path?: string, defaultValue?: boolean): PluginBuilder;
     (element: Element, path: string, defaultValue?: boolean): boolean | undefined;
+    (element: Element, path?: string, defaultValue?: boolean): boolean | undefined | PluginBuilder;
   };
   builderHandler: (event: HandlerEvent, ...data: unknown[]) => void;
-  updateElement: (elementId: string, attributeKey: string, attributeValue: unknown, category?: keyof Element) => void;
+  updateElement: (
+    elementId: string,
+    attributeKey: string,
+    attributeValue: unknown,
+    category?: 'attributes' | 'definition'
+  ) => void;
 };
 
 const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValue;
@@ -57,5 +63,3 @@ const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValu
 const BuilderContext = createContext<BuilderContextValue>(builderContextDefaultValue);
 
 export default BuilderContext;
-
-// { ...permissions, canDelete: false, canTemplate: false, canMove: false }

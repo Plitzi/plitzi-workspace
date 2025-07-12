@@ -5,6 +5,7 @@ import type { DisplayMode } from './StyleTypes';
 export type PluginSchema = {
   attributes: Element['attributes'];
   builder: PluginBuilder;
+  initialItems?: string[];
   definition: Element['definition'];
   defaultStyle: {
     name: string;
@@ -26,9 +27,10 @@ export type ManifestAsset = {
   type: 'style' | 'script';
 };
 
-export type PluginManifest = Record<string, unknown> & {
+export type PluginManifest = {
   assets: Record<string, { integrity: string; src: string; srcPath: string; type: 'style' | 'script' }>;
   author: string;
+  icon?: string;
   definition: {
     name: string;
     backgroundColor: string;

@@ -58,13 +58,6 @@ const OverlayNormal = props => {
   const { style } = use(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
-  const theme = useMemo(() => {
-    if (!element) {
-      return 'normal';
-    }
-
-    return builderElementPermissions(element, 'overlay.theme', 'normal');
-  }, [element, builderElementPermissions]);
 
   const isVisible = useMemo(() => {
     const visibility = get(element, 'definition.initialState.visibility', true);
@@ -169,7 +162,7 @@ const OverlayNormal = props => {
       ref={ref}
       className={classNames('builder__overlay', {
         'overlay--red': hoverRemove,
-        'overlay--blue': (theme === 'normal' || !theme) && !hoverRemove,
+        'overlay--blue': !hoverRemove,
         'overlay--empty': items && items.length === 0
       })}
       style={{ outlineColor: color }}

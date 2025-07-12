@@ -241,7 +241,7 @@ export const processPaste = async (
   let templateData: {
     elements: Record<string, Element>;
     baseElement?: Element;
-    style?: Style;
+    style: Style;
     variables: Schema['variables'];
   } = {
     elements: {},

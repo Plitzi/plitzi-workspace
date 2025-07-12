@@ -7,7 +7,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 
 // Alias
@@ -44,7 +44,7 @@ const LayoutsHeader = () => {
       const { definition, attributes } = componentDefinitions.layoutContainer;
       const id = generateID();
       const element = { id, attributes, definition: { ...definition, rootId: id, parentId: null, label: data.name } };
-      eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_ADD_ELEMENT, '', element, 'custom');
+      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_ELEMENT, '', element, 'custom');
     }
   }, [showModal, eventBridge]);
 
@@ -62,7 +62,7 @@ const LayoutsHeader = () => {
 
   //   if (response.result) {
   //     const { data } = response;
-  //     eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, data);
+  //     eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, data);
   //   }
   // }, [showModal, eventBridge]);
 

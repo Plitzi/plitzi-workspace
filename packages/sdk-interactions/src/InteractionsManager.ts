@@ -4,7 +4,6 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
-import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 import { flowTrigger } from './InteractionsHelper';
 
@@ -104,17 +103,14 @@ class InteractionsManager {
     }
 
     if (Object.keys(triggers).length > 0) {
-      this.eventBridge.on(
-        EventBridgeModuleTypes.INTERACTION,
-        id,
-        this.eventBridgeCallback(interactions) as EventBridgeCallback,
-        { override: true }
-      );
+      this.eventBridge.on('interaction', id, this.eventBridgeCallback(interactions) as EventBridgeCallback, {
+        override: true
+      });
     }
   }
 
   unsubscribe(id: string) {
-    this.eventBridge.off(EventBridgeModuleTypes.INTERACTION, id);
+    this.eventBridge.off('interaction', id);
     delete this.subscriptors[id];
     if (this.callbacksAvailables[id]) {
       delete this.callbacksAvailables[id];
@@ -175,7 +171,7 @@ class InteractionsManager {
   }
 
   interactionTrigger(subscriptorId: string, eventName: string, params: Record<string, unknown> = {}) {
-    return this.eventBridge.emit(EventBridgeModuleTypes.INTERACTION, subscriptorId, subscriptorId, eventName, params);
+    return this.eventBridge.emit('interaction', subscriptorId, subscriptorId, eventName, params);
   }
 
   // child managers

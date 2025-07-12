@@ -7,22 +7,17 @@ import classNames from 'classnames';
  *   className?: string;
  *   title?: string;
  *   children?: React.ReactNode;
- *   theme?: 'normal';
  *   isRemoving?: boolean;
  * }} props
  * @returns {React.ReactElement}
  */
 const OverlayButton = props => {
-  const { className = '', children, title = 'Title', theme = 'normal', isRemoving = false, ...otherProps } = props;
+  const { className = '', children, title = 'Title', isRemoving = false, ...otherProps } = props;
 
   return (
     <button
       type="button"
-      className={classNames(
-        'overlay__button',
-        { 'button--blue': theme === 'normal' && !isRemoving, 'button--red': isRemoving },
-        className
-      )}
+      className={classNames('overlay__button', { 'button--blue': !isRemoving, 'button--red': isRemoving }, className)}
       title={title}
       {...otherProps}
     >

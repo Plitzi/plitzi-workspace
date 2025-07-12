@@ -4,7 +4,7 @@ import Heading from '@plitzi/plitzi-ui-components/Heading';
 import FormControl from '@plitzi/plitzi-ui-components/FormControl';
 // import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
-import { EventBridgeModuleTypes, EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
@@ -33,18 +33,13 @@ const ContainerSettings = () => {
   const handleChange = useCallback(
     name => e => {
       if (name === 'userProvider') {
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0Domain');
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0ClientId');
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'loginUrl');
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'refreshUrl');
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'detailsPath');
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'tokenPath');
-        eventBridge.emit(
-          EventBridgeModuleTypes.MAIN,
-          EventBridgeTypes.SCHEMA_UPDATE_SETTINGS,
-          '',
-          'expirationTimePath'
-        );
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0Domain');
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0ClientId');
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'loginUrl');
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'refreshUrl');
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'detailsPath');
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'tokenPath');
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'expirationTimePath');
         setSettings(state => ({
           ...state,
           [name]: e.target.value,
@@ -56,17 +51,17 @@ const ContainerSettings = () => {
           tokenPath: '',
           expirationTimePath: ''
         }));
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.value, name);
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.value, name);
       } else if (name === 'keepState') {
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'stateStorage');
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'stateStorage');
         setSettings(state => ({ ...state, [name]: e.target.checked }));
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.checked, name);
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.checked, name);
       } else if (name === 'head') {
         // setSettings(state => ({ ...state, [name]: e }));
-        // eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e, name);
+        // eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e, name);
       } else {
         setSettings(state => ({ ...state, [name]: e.target.value }));
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.value, name);
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.value, name);
       }
     },
     [eventBridge]

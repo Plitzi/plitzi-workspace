@@ -5,7 +5,6 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 
 // Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
@@ -192,7 +191,7 @@ const StyleContextProvider = props => {
     ]
   );
 
-  useEventBridge(EventBridgeModuleTypes.MAIN, events);
+  useEventBridge('main', events);
 
   return <StyleContext value={styleContextMemo}>{children}</StyleContext>;
 };

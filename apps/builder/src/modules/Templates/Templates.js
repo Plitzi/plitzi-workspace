@@ -9,7 +9,7 @@ import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
 // Alias
@@ -28,7 +28,7 @@ const Templates = () => {
 
   const handleDragStart = template => e => {
     e.stopPropagation();
-    eventBridge.emit(EventBridgeModuleTypes.BUILDER, EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
     const flat = get(template, 'schema.flat', {});
     const variables = get(template, 'schema.variables', []);
     const templateBaseElementId = get(template, 'definition.baseElementId');
@@ -135,7 +135,7 @@ const Templates = () => {
   }, [templates, filter]);
 
   return (
-    <div className="w-full flex flex-col overflow-y-auto grow basis-0 gap-3">
+    <div className="flex w-full grow basis-0 flex-col gap-3 overflow-y-auto">
       <Flex gap={2} direction="column">
         <Button size="sm" onClick={handleClickAddTemplate} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />
@@ -145,7 +145,7 @@ const Templates = () => {
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="bg-gray-200 h-px" />
+      <div className="h-px bg-gray-200" />
       <div className="flex flex-col items-center overflow-auto px-4">
         {templatesMemo &&
           templatesMemo.map(template => {

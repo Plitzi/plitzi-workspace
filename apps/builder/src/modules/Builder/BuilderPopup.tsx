@@ -1,39 +1,32 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
-import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
+import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
+import { useCallback, use } from 'react';
 
-// Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-
-// Alias
 import Builder from '@pmodules/Builder';
-import BuilderProvider, { BUILDER_MODE_SEGMENT } from '@pmodules/Builder/BuilderProvider';
+import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
-/**
- * @param {{
- *   previewMode?: boolean;
- *   segmentIdentifier?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderPopup = props => {
-  const { previewMode = false, segmentIdentifier = '' } = props;
+import type { Segment } from '@plitzi/sdk-shared';
+
+export type BuilderPopupProps = {
+  previewMode?: boolean;
+  segmentIdentifier?: string;
+};
+
+const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPopupProps) => {
   const { eventBridge } = use(EventBridgeContext);
   const { segments } = use(SegmentsContext);
-  const segment = segments[segmentIdentifier];
-  const [popupsActiveRught, setPopupsActiveRight] = useStorage('builder-state.popupSidePanel.popupsActive.right', []); // <string[]>
-
-  const handleChange = useCallback(
-    popups => setPopupsActiveRight(popups, 'PopupSidePanel.popupsActive.right'),
-    [setPopupsActiveRight]
+  const segment = segments[segmentIdentifier] as Segment | undefined;
+  const [popupsActiveRught, setPopupsActiveRight] = useStorage<string[]>(
+    'builder-state.popupSidePanel.popupsActive.right',
+    []
   );
 
+  const handleChange = useCallback((popups: string[]) => setPopupsActiveRight(popups), [setPopupsActiveRight]);
+
   const builderHandler = useCallback(
-    (event, data) => eventBridge.emit(EventBridgeModuleTypes.SEGMENT, event, segment.id, ...data),
+    (event: string, data: unknown[]): void => void eventBridge?.emit('segment', event, segment?.id, ...data),
     [eventBridge, segment?.id]
   );
 
@@ -50,15 +43,15 @@ const BuilderPopup = props => {
   return (
     <div className="flex w-full grow">
       <BuilderProvider
-        schemaName={definition?.name}
+        schemaName={definition.name}
         schema={schema}
         style={style}
-        baseElementId={definition?.baseElementId}
-        mode={BUILDER_MODE_SEGMENT}
+        baseElementId={definition.baseElementId}
+        mode="segment"
         onHandler={builderHandler}
       >
         <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
-          <Builder previewMode={previewMode} />
+          <Builder />
 
           {!previewMode && (
             <PopupSidePanel

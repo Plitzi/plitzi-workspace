@@ -66,11 +66,7 @@ const OverlayButtonContainer = props => {
 
   const componentConfig = useMemo(() => builderElementPermissions(element), [element, builderElementPermissions]);
 
-  const {
-    canDelete = true,
-    canTemplate = true,
-    overlay: { theme = 'normal' }
-  } = componentConfig;
+  const { canDelete = true, canTemplate = true } = componentConfig;
 
   const handleMouseRemoveEnter = () => onHoverRemove(true);
 
@@ -241,23 +237,22 @@ const OverlayButtonContainer = props => {
       style={containerStyles}
       onMouseEnter={handleMouseEnter}
     >
-      <OverlayButton title="Tools" theme={theme} isRemoving={hoverRemove} onClick={handleClickProperties}>
+      <OverlayButton title="Tools" isRemoving={hoverRemove} onClick={handleClickProperties}>
         <i className="fas fa-tools" />
       </OverlayButton>
       {!!items && canTemplate && (
-        <OverlayButton title="Save as template" theme={theme} isRemoving={hoverRemove} onClick={handleClickAsTemplate}>
+        <OverlayButton title="Save as template" isRemoving={hoverRemove} onClick={handleClickAsTemplate}>
           <i className="fas fa-cube" />
         </OverlayButton>
       )}
       {!!items && canTemplate && (
-        <OverlayButton title="Save as segment" theme={theme} isRemoving={hoverRemove} onClick={handleClickAsSegment}>
+        <OverlayButton title="Save as segment" isRemoving={hoverRemove} onClick={handleClickAsSegment}>
           <i className="fa-solid fa-puzzle-piece" />
         </OverlayButton>
       )}
       {canDelete && (
         <OverlayButton
           title="Remove"
-          theme={theme}
           isRemoving
           onMouseEnter={handleMouseRemoveEnter}
           onMouseLeave={handleMouseRemoveLeave}

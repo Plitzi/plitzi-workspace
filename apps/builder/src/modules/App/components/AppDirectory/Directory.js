@@ -12,7 +12,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 
 // Alias
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
@@ -87,7 +87,7 @@ const Directory = props => {
 
       if (response.result) {
         const { data } = response;
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_UPDATE_PAGE_FOLDER, { id, ...data });
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_PAGE_FOLDER, { id, ...data });
       }
     },
     [pageFolders, id, name, slug, parentId, showModal, eventBridge]
@@ -127,7 +127,7 @@ const Directory = props => {
       );
 
       if (response.result) {
-        eventBridge.emit(EventBridgeModuleTypes.MAIN, EventBridgeTypes.SCHEMA_REMOVE_PAGE_FOLDER, id);
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE_FOLDER, id);
       }
     },
     [id, pageFolders, pages, addToast, eventBridge]

@@ -244,14 +244,6 @@ const BuilderOverlayDrag = props => {
   }, [iframeDOM, flat, builderDropElement, baseElementId, zoom]);
 
   const { dropPosition, element, dropAllowed } = dragMetadata.current;
-  const theme = useMemo(() => {
-    const type = get(element, 'element.definition');
-    if (!type) {
-      return 'normal';
-    }
-
-    return builderElementPermissions(type, 'overlay.theme', 'normal');
-  }, [element, builderElementPermissions]);
   if (!element) {
     return null;
   }
@@ -290,7 +282,7 @@ const BuilderOverlayDrag = props => {
     <div
       className={classNames('builder__overlay overlay--drag', {
         'overlay--red': !dropAllowed,
-        'overlay--blue': (theme === 'normal' || !theme) && dropAllowed,
+        'overlay--blue': dropAllowed,
         'overlay--drag-inside':
           (dropPosition && dropPosition === 'inside') || (!dropAllowed && dropPosition === 'inside')
       })}

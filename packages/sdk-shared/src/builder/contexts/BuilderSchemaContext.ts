@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { Schema } from '../../types';
+import type { Element, Schema, Style } from '../../types';
 import type { ComponentPlugin } from '../../types/ComponentTypes';
 
 type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside';
@@ -8,15 +8,65 @@ type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside';
 export type BuilderSchemaContextValue = {
   schema: Schema;
   builderGetBaseElement: (
-    otherBaseElementId: string
+    otherBaseElementId?: string
   ) => undefined | { data: Element; Plugin: ComponentPlugin | Record<string, ComponentPlugin> };
-  builderDropElement: (
-    type: string,
-    data: unknown,
-    dropPosition: DropPosition,
-    toElementId: string,
-    rootId?: string
-  ) => Promise<boolean>;
+  builderDropElement: {
+    (
+      type: 'add##plitzi-template',
+      data: {
+        elements: Record<string, Element>;
+        baseElement?: Element;
+        style: Style;
+        variables: Schema['variables'];
+      },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+    <T extends string>(
+      type: `add##${Exclude<T, 'plitzi-template'>}`,
+      data: {
+        id: string;
+        element: Element;
+      },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+    <T extends string>(
+      type: `move##${Exclude<T, 'plitzi-template'>}`,
+      data: {
+        id: string;
+        parentId: string;
+        element: Element;
+      },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+    (
+      type: string,
+      data:
+        | {
+            elements: Record<string, Element>;
+            baseElement?: Element;
+            style: Style;
+            variables: Schema['variables'];
+          }
+        | {
+            id: string;
+            element: Element;
+          }
+        | {
+            id: string;
+            parentId: string;
+            element: Element;
+          },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+  };
   builderSetElementVisibility: (elementId: string, visibility: boolean) => void;
 };
 

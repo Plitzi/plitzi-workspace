@@ -3,9 +3,10 @@ import { use, useEffect } from 'react';
 import EventBridgeContext from '../EventBridgeContext';
 
 import type { EventBridgeCallback, EventBridgeParams } from '../EventBridge';
+import type { EventBridgeModule } from '@plitzi/sdk-shared';
 
 const useEventBridge = (
-  module: string,
+  module: EventBridgeModule,
   callbacks: Record<string, EventBridgeCallback> = {},
   params: EventBridgeParams = {},
   context = EventBridgeContext
@@ -13,7 +14,7 @@ const useEventBridge = (
   const { eventBridge } = use(context);
 
   useEffect(() => {
-    if (!eventBridge || !module) {
+    if (!eventBridge || !(module as string)) {
       return undefined;
     }
 

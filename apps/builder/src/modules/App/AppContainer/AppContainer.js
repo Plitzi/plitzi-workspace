@@ -4,7 +4,6 @@ import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeModuleTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -44,7 +43,7 @@ const AppContainer = props => {
   const handleSourceChange = useCallback(newSourceId => setSourceState({ sourceId: newSourceId }), []);
 
   const builderHandler = useCallback(
-    (event, data) => eventBridge.emit(EventBridgeModuleTypes.MAIN, event, ...data),
+    (event, data) => eventBridge.emit('main', event, ...data),
     [eventBridge]
   );
 

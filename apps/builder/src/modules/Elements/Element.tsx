@@ -1,39 +1,26 @@
-// Packages
-import React from 'react';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import Text from '@plitzi/plitzi-ui/Text';
 import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo';
+import Text from '@plitzi/plitzi-ui/Text';
 
-// Relatives
 import useDragElement from './hooks/useDragElement';
 
-/**
- * @param {{
- *   element: {
- *     market: {
- *       icon: string;
- *       backgroundColor: string;
- *     };
- *     definition: {
- *       label: string;
- *       type: string;
- *     };
- *   };
- * }} props
- * @returns {React.ReactElement}
- */
-const Element = props => {
-  const {
-    element: {
-      market: { icon },
-      definition: { label, type }
-    }
-  } = props;
+import type { ComponentDefinition } from '@plitzi/sdk-shared';
+
+export type ElementProps = {
+  component: ComponentDefinition;
+};
+
+const Element = ({
+  component: {
+    market: { icon },
+    definition: { label, type }
+  }
+}: ElementProps) => {
   const { onDragStart } = useDragElement({ type });
 
   return (
-    <div className="flex flex-col gap-2 items-center cursor-grabbing" draggable onDragStart={onDragStart} title={label}>
-      <div className="w-9 h-9 p-1.5 flex flex-col shrink-0 items-center justify-center border border-gray-300 rounded-lg">
+    <div className="flex cursor-grabbing flex-col items-center gap-2" draggable onDragStart={onDragStart} title={label}>
+      <div className="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg border border-gray-300 p-1.5">
         {icon && typeof icon === 'string' && !icon.startsWith('http') && <Icon intent="custom" icon={icon} />}
         {icon && typeof icon === 'string' && icon.startsWith('http') && (
           <Icon intent="custom">
@@ -47,7 +34,7 @@ const Element = props => {
           </Icon>
         )}
       </div>
-      <div className="flex w-20 items-center justify-center text-center overflow-hidden">
+      <div className="flex w-20 items-center justify-center overflow-hidden text-center">
         <Text isTruncated size="xs">
           {label}
         </Text>
