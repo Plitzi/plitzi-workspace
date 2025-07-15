@@ -77,6 +77,8 @@ export type Schema = {
   flat: { [key: string]: Element };
   variables?: SchemaVariable[];
   settings: {
+    keepState: boolean;
+    stateStorage: 'sessionStorage' | 'localStorage';
     customCss: string;
     userProvider?: 'auth0' | 'basic' | 'custom' | '';
     auth0Domain?: string;

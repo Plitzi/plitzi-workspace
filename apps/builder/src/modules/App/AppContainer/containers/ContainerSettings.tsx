@@ -1,0 +1,192 @@
+import Card from '@plitzi/plitzi-ui/Card';
+import Checkbox from '@plitzi/plitzi-ui/Checkbox';
+import Heading from '@plitzi/plitzi-ui/Heading';
+import Input from '@plitzi/plitzi-ui/Input';
+import Select from '@plitzi/plitzi-ui/Select';
+import { useCallback, use, useState } from 'react';
+// import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+
+import type { ChangeEvent } from 'react';
+
+const ContainerSettings = () => {
+  const { settings: settingsProp } = use(SchemaMainContext);
+  const { eventBridge } = use(EventBridgeContext);
+
+  const [settings, setSettings] = useState(settingsProp);
+  const {
+    // head = '', // @todo: pending to implement
+    userProvider,
+    keepState,
+    stateStorage,
+    // Provider - Auth0
+    auth0Domain,
+    auth0ClientId,
+    // Provider - Basic
+    loginUrl,
+    refreshUrl,
+    detailsPath = 'details',
+    tokenPath = 'access_token',
+    expirationTimePath = 'expire_at'
+  } = settings;
+
+  const handleChangeKeepState = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'stateStorage');
+      setSettings(state => ({ ...state, keepState: e.target.checked }));
+      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e.target.checked, 'keepState');
+    },
+    [eventBridge]
+  );
+
+  const handleChange = useCallback(
+    (name: string) => (value: string) => {
+      if (name === 'userProvider') {
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0Domain');
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'auth0ClientId');
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'loginUrl');
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'refreshUrl');
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'detailsPath');
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'tokenPath');
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, '', 'expirationTimePath');
+        setSettings(state => ({
+          ...state,
+          userProvider: value as 'basic' | 'auth0' | '',
+          auth0Domain: '',
+          auth0ClientId: '',
+          loginUrl: '',
+          refreshUrl: '',
+          detailsPath: '',
+          tokenPath: '',
+          expirationTimePath: ''
+        }));
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, value, name);
+      } else if (name === 'head') {
+        // setSettings(state => ({ ...state, [name]: e }));
+        // eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, e, name);
+      } else {
+        setSettings(state => ({ ...state, [name]: value }));
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_SETTINGS, value, name);
+      }
+    },
+    [eventBridge]
+  );
+
+  return (
+    <Card className="flex grow basis-0 flex-col">
+      <Card.Body className="overflow-y-auto" grow>
+        <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
+          <Heading as="h4">User Settings</Heading>
+          <Select
+            size="sm"
+            name="userProvider"
+            value={userProvider}
+            onChange={handleChange('userProvider')}
+            label="User Provider"
+            placeholder="None"
+          >
+            <option value="basic">Basic</option>
+            <option value="auth0">Auth0</option>
+          </Select>
+          {userProvider === 'auth0' && (
+            <>
+              <Input
+                size="sm"
+                name="auth0Domain"
+                value={auth0Domain}
+                onChange={handleChange('auth0Domain')}
+                label="Auth0 Domain"
+              />
+              <Input
+                size="sm"
+                name="auth0ClientId"
+                value={auth0ClientId}
+                onChange={handleChange('auth0ClientId')}
+                label="Auth0 Client ID"
+              />
+            </>
+          )}
+          {userProvider === 'basic' && (
+            <>
+              <Input
+                size="sm"
+                name="loginUrl"
+                value={loginUrl}
+                onChange={handleChange('loginUrl')}
+                label="API Login Url"
+              />
+              <Input
+                size="sm"
+                name="refreshUrl"
+                value={refreshUrl}
+                onChange={handleChange('refreshUrl')}
+                label="API Refresh Url (Optional)"
+              />
+              <Input
+                size="sm"
+                name="detailsPath"
+                value={detailsPath}
+                onChange={handleChange('detailsPath')}
+                label="API Details Object Path - Default: [details] - example: [user.details]"
+              />
+              <Input
+                size="sm"
+                name="tokenPath"
+                value={tokenPath}
+                onChange={handleChange('tokenPath')}
+                label="API Token Object Path - Default: [access_token] - example: [user.access_token]"
+              />
+              <Input
+                size="sm"
+                name="expirationTimePath"
+                value={expirationTimePath}
+                onChange={handleChange('expirationTimePath')}
+                label="API Expiration Time Object Path - Default: [expire_at] - example: [user.expire_at]"
+              />
+            </>
+          )}
+        </div>
+        <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
+          <Heading as="h4">State Settings</Heading>
+          <Checkbox
+            size="sm"
+            name="keepState"
+            checked={keepState}
+            onChange={handleChangeKeepState}
+            type="checkbox"
+            label="Keep State"
+          />
+          {keepState && (
+            <Select
+              size="sm"
+              name="stateStorage"
+              value={stateStorage}
+              onChange={handleChange('stateStorage')}
+              label="User Provider"
+              placeholder="None"
+            >
+              <option value="local">Local Storage</option>
+              <option value="session">Session Storage</option>
+            </Select>
+          )}
+        </div>
+        {/* <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
+        <Heading type="h4">Space Settings</Heading>
+        <CodeMirror
+          value={head}
+          theme="dark"
+          className="min-h-[300px]"
+          lineWrapping
+          onChange={handleChange('head')}
+          mode="html"
+        />
+      </div> */}
+      </Card.Body>
+    </Card>
+  );
+};
+
+export default ContainerSettings;

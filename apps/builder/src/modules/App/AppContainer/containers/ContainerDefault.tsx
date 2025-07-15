@@ -1,35 +1,35 @@
-import React, { useCallback, use, useMemo } from 'react';
-import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import { PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
+import { useCallback, use, useMemo } from 'react';
 
-import Builder from '@pmodules/Builder';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import Builder from '@pmodules/Builder';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
-/**
- * @param {{
- *   previewMode?: boolean;
- *   externalStyle?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const ContainerDefault = props => {
-  const { previewMode = false, externalStyle = '' } = props;
-  const { pages, settings } = use(SchemaMainContext);
-  const [popupsActiveRight, setPopupsActiveRight] = useStorage('builder-state.popupSidePanel.popupsActive.right', []); // <string[]>
+export type ContainerDefaultProps = {
+  previewMode?: boolean;
+  externalStyle?: string;
+};
 
-  const handleChangeRight = useCallback(popups => setPopupsActiveRight(popups), [setPopupsActiveRight]);
+const ContainerDefault = ({ previewMode = false, externalStyle = '' }: ContainerDefaultProps) => {
+  const { pages, settings } = use(SchemaMainContext);
+  const [popupsActiveRight, setPopupsActiveRight] = useStorage<string[]>(
+    'builder-state.popupSidePanel.popupsActive.right',
+    []
+  );
+
+  const handleChangeRight = useCallback((popups: string[]) => setPopupsActiveRight(popups), [setPopupsActiveRight]);
 
   const { segments } = use(SegmentsContext);
 
   const customCss = useMemo(() => {
-    let css = settings?.customCss ?? '';
+    let css = settings.customCss;
     if (typeof css !== 'string') {
       css = '';
     }
 
     return [css, ...Object.values(segments).map(symbol => symbol.style.cache)].join('\n');
-  }, [settings?.customCss, segments]);
+  }, [settings.customCss, segments]);
 
   return (
     <div className="flex w-full grow">

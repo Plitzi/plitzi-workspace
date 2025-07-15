@@ -13,13 +13,7 @@ export type CollectionField = {
   name: string;
   machineName: string;
   type: 'text' | 'number' | 'boolean' | 'date';
-  params: Record<
-    string,
-    {
-      primary: boolean;
-      required: boolean;
-    }
-  >;
+  params: Record<string, { primary: boolean; required: boolean }>;
 };
 
 export type CollectionRecord = {
@@ -32,10 +26,10 @@ export type CollectionRecord = {
 export type Collection = {
   id: string;
   name: string;
-  mamePlural: string;
+  namePlural: string;
   description: string;
   privacy: 'public' | 'private';
-  fields: CollectionField[];
+  fields: Record<string, CollectionField>;
   records?: CollectionRecord[];
 };
 
@@ -49,8 +43,21 @@ export type CollectionContextValue = {
     store?: boolean
   ) => unknown;
   fetchCollection?: (id: string, recordsFilter: string, store?: boolean) => unknown;
-  addCollection?: unknown;
-  updateCollection?: unknown;
+  addCollection?: (
+    name: string,
+    namePlural: string,
+    description: string,
+    privacy: 'public' | 'private',
+    fields: Record<string, CollectionField>
+  ) => Promise<Collection>;
+  updateCollection?: (
+    id: string,
+    name: string,
+    namePlural: string,
+    description: string,
+    privacy: 'public' | 'private',
+    fields: Record<string, CollectionField>
+  ) => Promise<Collection>;
   removeCollection?: unknown;
   fetchRecords?: (
     collectionId: string,
