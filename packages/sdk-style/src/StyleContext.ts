@@ -8,6 +8,6 @@ export type StyleContextValue = { style: Style };
 
 const styleContextDefaultValue: StyleContextValue = { style: EMPTY_STYLE_SCHEMA };
 
-const StyleContext = createContext<StyleContextValue | undefined>(styleContextDefaultValue);
+const StyleContext = createContext<StyleContextValue>(styleContextDefaultValue);
 
 export default StyleContext;

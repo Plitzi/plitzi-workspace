@@ -1,25 +1,34 @@
-// Packages
+import StateManagerIcon from '@plitzi/plitzi-ui/icons/StateManager';
 import Variable from '@plitzi/plitzi-ui/icons/Variable';
 import Sidebar from '@plitzi/plitzi-ui/Sidebar';
-import StateManagerIcon from '@plitzi/plitzi-ui/icons/StateManager';
 
-// Alias
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
-import StateManager from '@pmodules/StateManager/StateManager';
-import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
 import Collections from '@pmodules/Collection/Collections';
-import Templates from '@pmodules/Templates';
 import Elements from '@pmodules/Elements';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
+import StateManager from '@pmodules/StateManager/StateManager';
+import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
+import Templates from '@pmodules/Templates';
 import Variables from '@pmodules/Variables';
 
-// Relatives
-import AppDirectory from '../components/AppDirectory';
 import { featureFlag } from '../../../config';
+import AppDirectory from '../components/AppDirectory';
 
-export const getPopups = ({ sourceId, handleSourceChange }) => {
-  const left = [
+import type { PopupInstance } from '@plitzi/plitzi-ui/components';
+
+export const getPopups = ({
+  sourceId,
+  handleSourceChange
+}: {
+  sourceId: string;
+  handleSourceChange: (id: string) => void;
+}): {
+  left: PopupInstance[];
+  right: PopupInstance[];
+  floating: PopupInstance[];
+} => {
+  const left: PopupInstance[] = [
     {
       id: 'elements',
       component: <Elements />,

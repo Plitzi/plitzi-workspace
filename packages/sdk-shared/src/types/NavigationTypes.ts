@@ -10,5 +10,5 @@ export type NavigationContextValue = {
   routeParams: RouteParams;
   queryParams: QueryParams;
   hostname?: string;
-  currentPageId?: string;
+  currentPageId: string;
 };

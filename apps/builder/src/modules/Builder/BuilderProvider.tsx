@@ -40,8 +40,8 @@ export const BUILDER_MODE_SEGMENT = 'segment';
 export type BuilderProviderProps = {
   children: React.ReactNode;
   baseElementId: string;
-  mode: 'normal' | 'template' | 'segment';
-  schemaName: string;
+  mode?: 'normal' | 'template' | 'segment';
+  schemaName?: string;
   style: Style;
   schema: Schema;
   onHandler?: (event: string, data: unknown[]) => void;
@@ -100,7 +100,7 @@ const BuilderProvider = ({
   );
 
   const builderElementPermissions = useCallback(
-    (element: Element, path?: string, defaultValue?: boolean) => {
+    (element: Element, path?: string, defaultValue: boolean = true) => {
       const type = get(element, 'definition.type');
       if (!type && !path) {
         return {};
@@ -150,7 +150,7 @@ const BuilderProvider = ({
         }
 
         if (elementId) {
-          const canSelect = builderElementPermissions(element, 'canSelect', true);
+          const canSelect = builderElementPermissions(element, 'canSelect');
           if (!canSelect) {
             return state;
           }

@@ -45,9 +45,9 @@ export type BuilderContextValue = {
   baseElementIdOriginal: string;
   builderSetBaseContext: (id?: string) => void;
   builderElementPermissions: {
-    (element: Element, path?: string, defaultValue?: boolean): PluginBuilder;
-    (element: Element, path: string, defaultValue?: boolean): boolean | undefined;
-    (element: Element, path?: string, defaultValue?: boolean): boolean | undefined | PluginBuilder;
+    (element: Element, path: string, defaultValue?: boolean): boolean;
+    (element: Element, path?: undefined, defaultValue?: boolean): PluginBuilder;
+    (element: Element, path?: string, defaultValue?: boolean): boolean | PluginBuilder;
   };
   builderHandler: (event: HandlerEvent, ...data: unknown[]) => void;
   updateElement: (
