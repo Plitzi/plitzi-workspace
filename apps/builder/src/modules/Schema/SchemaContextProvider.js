@@ -151,11 +151,7 @@ const SchemaContextProvider = props => {
     async (page, fromSubscriptions = false) => {
       const result = await mutate('SpaceAddPage', page);
       if (result instanceof Error) {
-        addToast(result.message, {
-          appeareance: 'danger',
-          autoDismiss: true,
-          placement: 'top-right'
-        });
+        addToast(result.message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
       } else if (result) {
         dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE, page: result, fromSubscriptions });
       }
@@ -187,11 +183,7 @@ const SchemaContextProvider = props => {
     async (pageFolder, fromSubscriptions = false) => {
       const result = await mutate('SpaceAddPageFolder', pageFolder);
       if (result instanceof Error) {
-        addToast(result.message, {
-          appeareance: 'danger',
-          autoDismiss: true,
-          placement: 'top-right'
-        });
+        addToast(result.message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
       } else if (result) {
         dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE_FOLDER, pageFolder: result, fromSubscriptions });
       }

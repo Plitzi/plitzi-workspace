@@ -3,8 +3,7 @@ import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Flex from '@plitzi/plitzi-ui/Flex';
 
@@ -31,7 +30,7 @@ const PageActions = props => {
   } = use(SchemaContext);
   const { eventBridge } = use(EventBridgeContext);
   const { navigate } = use(NavigationContext);
-  const { showModal } = useModal();
+  const { showDialog } = useModal();
   const { addToast } = useToast();
 
   const handleClickSetHome = useCallback(
@@ -52,7 +51,7 @@ const PageActions = props => {
         return;
       }
 
-      const response = await showModal(
+      const response = await showDialog(
         <Modal.Header>
           <h4>Set Home Page</h4>
         </Modal.Header>,
@@ -61,11 +60,12 @@ const PageActions = props => {
             <h4>Do you want to mark this page as home page ?</h4>
           </div>
         </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: true }
+        undefined,
+        undefined,
+        id
       );
 
-      if (response.result) {
+      if (response) {
         eventBridge.emit('main', EventBridgeTypes.SCHEMA_HOME_PAGE, id);
       }
     },
@@ -90,7 +90,7 @@ const PageActions = props => {
         return;
       }
 
-      const response = await showModal(
+      const response = await showDialog(
         <Modal.Header>
           <h4>Remove Page</h4>
         </Modal.Header>,
@@ -99,11 +99,12 @@ const PageActions = props => {
             <h4>Do you want to remove this item ?</h4>
           </div>
         </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: true }
+        undefined,
+        undefined,
+        id
       );
 
-      if (response.result) {
+      if (response) {
         eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE, id);
         navigate('/');
       }
@@ -115,7 +116,7 @@ const PageActions = props => {
     <Flex
       gap={2}
       items="center"
-      className={classNames({ 'group-hover:flex hidden': !active && !zoom && !defaultPage })}
+      className={classNames({ 'hidden group-hover:flex': !active && !zoom && !defaultPage })}
     >
       {!defaultPage && (
         <Icon
@@ -127,7 +128,7 @@ const PageActions = props => {
           onClick={handleClickSetHome}
         />
       )}
-      <Flex gap={2} items="center" className={classNames({ 'group-hover:flex hidden': !active && !zoom })}>
+      <Flex gap={2} items="center" className={classNames({ 'hidden group-hover:flex': !active && !zoom })}>
         {zoom && (
           <Icon
             size="xs"

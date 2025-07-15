@@ -5,9 +5,7 @@ import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
-import FormControl from '@plitzi/plitzi-ui-components/FormControl';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 
 // Relatives
 import SegmentsContext from './SegmentsContext';
@@ -88,17 +86,15 @@ const Segments = () => {
       <Modal.Header>
         <h4>Add Segment</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <SegmentForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <SegmentForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const {
-        data: { name, description }
-      } = response;
+    if (response) {
+      const { name, description } = response;
       segmentAddMutation(name, description);
       fetchDebounce(filter);
     }
@@ -117,7 +113,7 @@ const Segments = () => {
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="bg-gray-200 h-px mt-2" />
+      <div className="mt-2 h-px bg-gray-200" />
       <Flex direction="column">
         {!loading &&
           segments &&

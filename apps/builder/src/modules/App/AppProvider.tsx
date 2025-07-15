@@ -1,57 +1,53 @@
-// Packages
-import React from 'react';
+/* eslint-disable @typescript-eslint/no-deprecated */
+/* eslint-disable react-refresh/only-export-components */
+
 import { withApollo } from '@apollo/client/react/hoc';
-import ModalProvider from '@plitzi/plitzi-ui-components/Modal/ModalProvider';
+import { ModalProvider } from '@plitzi/plitzi-ui/Modal';
 
-// Monorepo
-import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
-
-// Alias
-import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscriptionsContextProvider';
-import NetworkContextProvider from '@pmodules/Network/NetworkContextProvider';
-import QueueContextProvider from '@pmodules/Queue/QueueContextProvider';
-import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
+import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import CollectionContextProvider from '@pmodules/Collection/CollectionContextProvider';
-import PluginsContextProvider from '@pmodules/Plugins/PluginsContextProvider';
-import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';
-import SegmentsContextProvider from '@pmodules/Segments/SegmentsContextProvider';
-import SchemaContextProvider from '@pmodules/Schema/SchemaContextProvider';
 import NavigationContextProvider from '@pmodules/Navigation/NavigationContextProvider';
+import NetworkContextProvider from '@pmodules/Network/NetworkContextProvider';
+import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscriptionsContextProvider';
+import PluginsContextProvider from '@pmodules/Plugins/PluginsContextProvider';
+import QueueContextProvider from '@pmodules/Queue/QueueContextProvider';
+import SchemaContextProvider from '@pmodules/Schema/SchemaContextProvider';
+import SegmentsContextProvider from '@pmodules/Segments/SegmentsContextProvider';
 import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
+import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';
+import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   instanceId: string;
- *   webKey: string;
- *   webId: number;
- *   environment: string;
- *   userKey: string;
- *   server: object;
- *   includeSubscriptions: boolean;
- *   includeRealTime: boolean;
- *   previewMode: boolean;
- *   client: object;
- * }} props
- * @returns {React.ReactElement}
- */
+import type { WithApolloClient } from '@apollo/client/react/hoc';
+import type { FunctionComponent, ReactNode } from 'react';
 
-const AppProvider = props => {
-  const {
-    children,
-    instanceId,
-    webKey = '',
-    webId = 0,
-    environment = 'development',
-    userKey = '',
-    server,
-    includeSubscriptions = true,
-    includeRealTime = true,
-    client, // hocs
-    previewMode = false
-  } = props;
+export type AppProviderProps = {
+  children: ReactNode;
+  instanceId: string;
+  webKey: string;
+  webId: number;
+  environment: string;
+  userKey: string;
+  server: object;
+  includeSubscriptions: boolean;
+  includeRealTime: boolean;
+  previewMode: boolean;
+  client: object;
+};
 
+const AppProvider = ({
+  children,
+  instanceId,
+  webKey = '',
+  webId = 0,
+  environment = 'development',
+  userKey = '',
+  server,
+  includeSubscriptions = true,
+  includeRealTime = true,
+  client, // hocs
+  previewMode = false
+}: AppProviderProps) => {
   return (
     <NetworkContextProvider
       instanceId={instanceId}
@@ -96,4 +92,4 @@ const AppProvider = props => {
   );
 };
 
-export default withApollo(AppProvider);
+export default withApollo(AppProvider as FunctionComponent<WithApolloClient<Omit<AppProviderProps, 'client'>>>);

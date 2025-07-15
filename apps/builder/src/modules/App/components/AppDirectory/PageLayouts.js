@@ -1,8 +1,7 @@
 // Packages
 import React, { use, useMemo } from 'react';
 import get from 'lodash/get';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -24,7 +23,7 @@ const PageLayouts = () => {
   } = use(SchemaContext);
   const { currentPageId } = use(NavigationContext);
   const { eventBridge } = use(EventBridgeContext);
-  const { showModal } = useModal();
+  const { showDialog } = useModal();
 
   const handleClickRemoveLayout = layoutId => async e => {
     e.stopPropagation();
@@ -34,7 +33,7 @@ const PageLayouts = () => {
       return;
     }
 
-    const response = await showModal(
+    const response = await showDialog(
       <Modal.Header>
         <h4>Remove Page Layout</h4>
       </Modal.Header>,
@@ -42,12 +41,10 @@ const PageLayouts = () => {
         <div className="px-4 py-2">
           <h4>Do you want to remove this item ?</h4>
         </div>
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: true }
+      </Modal.Body>
     );
 
-    if (response.result) {
+    if (response) {
       eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
       eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, layoutId);
     }

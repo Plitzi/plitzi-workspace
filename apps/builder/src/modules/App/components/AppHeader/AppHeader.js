@@ -4,8 +4,7 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui/Button';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 
 // Monorepo
@@ -58,23 +57,19 @@ const AppHeaher = props => {
       <Modal.Header>
         <h4>Make Snapshot</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <PublishForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <PublishForm onClose={onClose} onSubmit={onSubmit} />
+        </Modal.Body>
+      )
     );
-    if (response.result) {
-      const result = await mutate('SpacePublish', response.data);
+    if (response) {
+      const result = await mutate('SpacePublish', response);
       addToast(
         <div>
           Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
         </div>,
-        {
-          appeareance: 'success',
-          autoDismiss: true,
-          placement: 'top-right'
-        }
+        { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
       );
     }
   }, [addToast, mutate, showModal]);
@@ -84,15 +79,15 @@ const AppHeaher = props => {
       <Modal.Header>
         <h4>Publish Snapshot</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <DeployForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <DeployForm onClose={onClose} onSubmit={onSubmit} />
+        </Modal.Body>
+      )
     );
-    if (response.result) {
+    if (response) {
       setLoadingDeployment(true);
-      const result = await mutate('SpaceDeploy', response.data, true);
+      const result = await mutate('SpaceDeploy', response, true);
       setLoadingDeployment(false);
       if (result && !(result instanceof Error)) {
         addToast(
@@ -107,7 +102,7 @@ const AppHeaher = props => {
         );
       } else if (result instanceof Error) {
         addToast(result.message, {
-          appeareance: 'danger',
+          appeareance: 'error',
           autoDismiss: true,
           placement: 'top-right'
         });

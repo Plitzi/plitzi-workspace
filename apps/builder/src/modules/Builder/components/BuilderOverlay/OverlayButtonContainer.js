@@ -3,8 +3,7 @@ import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
@@ -81,7 +80,7 @@ const OverlayButtonContainer = props => {
 
       builderHandler(EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, id);
     },
-    [builderHandler, id, showModal, elementSelected, setSelected]
+    [builderHandler, id, elementSelected, setSelected]
   );
 
   const handleClickProperties = useCallback(() => {
@@ -103,17 +102,15 @@ const OverlayButtonContainer = props => {
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <TemplateForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const {
-        data: { name, description }
-      } = response;
+    if (response) {
+      const { name, description } = response;
       builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
       addToast(
         <div>
@@ -133,17 +130,15 @@ const OverlayButtonContainer = props => {
       <Modal.Header>
         <h4>Add Segment</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <SegmentForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <SegmentForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const {
-        data: { name, description }
-      } = response;
+    if (response) {
+      const { name, description } = response;
       builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
       addToast(
         <div>

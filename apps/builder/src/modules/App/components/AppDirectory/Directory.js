@@ -6,8 +6,7 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Text from '@plitzi/plitzi-ui/Text';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
@@ -47,7 +46,7 @@ const Directory = props => {
     nestedLevel = 0,
     pageFolders = pageFoldersDefault
   } = props;
-  const { showModal } = useModal();
+  const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
   const { pageDefinitions, pages } = use(SchemaMainContext);
@@ -78,16 +77,22 @@ const Directory = props => {
         <Modal.Header>
           <h4>Update Page Folder</h4>
         </Modal.Header>,
-        <Modal.Body>
-          <PageFolderForm pageFolders={pageFolders} name={name} slug={slug} parentId={parentId} />
-        </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: false }
+        ({ onSubmit, onClose }) => (
+          <Modal.Body>
+            <PageFolderForm
+              onClose={onClose}
+              onSubmit={onSubmit}
+              pageFolders={pageFolders}
+              name={name}
+              slug={slug}
+              parentId={parentId}
+            />
+          </Modal.Body>
+        )
       );
 
-      if (response.result) {
-        const { data } = response;
-        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_PAGE_FOLDER, { id, ...data });
+      if (response) {
+        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_PAGE_FOLDER, { id, ...response });
       }
     },
     [pageFolders, id, name, slug, parentId, showModal, eventBridge]
@@ -113,7 +118,7 @@ const Directory = props => {
         return;
       }
 
-      const response = await showModal(
+      const response = await showDialog(
         <Modal.Header>
           <h4>Remove Page Folder</h4>
         </Modal.Header>,
@@ -122,15 +127,16 @@ const Directory = props => {
             <h4>Do you want to remove this item ?</h4>
           </div>
         </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: true }
+        undefined,
+        undefined,
+        id
       );
 
       if (response.result) {
         eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE_FOLDER, id);
       }
     },
-    [id, pageFolders, pages, addToast, eventBridge]
+    [id, pageFolders, pages, addToast, eventBridge, showDialog]
   );
 
   const titleMemo = useMemo(

@@ -1,11 +1,9 @@
 // Packages
 import React, { useCallback, use, useMemo, useState } from 'react';
-import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Flex from '@plitzi/plitzi-ui/Flex';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
@@ -44,15 +42,15 @@ const Variables = () => {
       <Modal.Header>
         <h4>Add Variable</h4>
       </Modal.Header>,
-      <Modal.Body className="max-h-[500px] overflow-y-auto">
-        <VariableForm className="p-3" whenData={whenData} isNewRecord />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body className="max-h-[500px] overflow-y-auto">
+          <VariableForm onSubmit={onSubmit} onClose={onClose} className="p-3" whenData={whenData} isNewRecord />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const { name, category, value, type, subValues } = get(response, 'data', {});
+    if (response) {
+      const { name, category, value, type, subValues } = response;
       if (!variables.find(variable => variable.name === name)) {
         schemaAddVariable({ name, category, value, type, subValues });
       } else {

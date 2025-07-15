@@ -3,8 +3,7 @@ import React, { useState, use, useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Heading from '@plitzi/plitzi-ui-components/Heading';
 import Button from '@plitzi/plitzi-ui-components/Button';
 import Input from '@plitzi/plitzi-ui-components/Input';
@@ -46,7 +45,7 @@ const Resource = props => {
   } = props;
   const { onDragStart } = useDragElement({ type, attributes: { src } });
   const { mutate } = use(NetworkContext);
-  const { showModal } = useModal();
+  const { showModal, showDialog } = useModal();
   const [hovered, setHovered] = useState(false);
   const [removing, setRemoving] = useState(false);
   const { addToast } = useToast();
@@ -112,16 +111,14 @@ const Resource = props => {
             </div>
           </div>
         </div>
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      </Modal.Body>
     );
   }, [handleClickCopyUrl, showModal, src, title, type]);
 
   const handleClickRemove = useCallback(
     async e => {
       e.stopPropagation();
-      const response = await showModal(
+      const response = await showDialog(
         <Modal.Header>
           <h4>Remove Resource</h4>
         </Modal.Header>,
@@ -130,18 +127,19 @@ const Resource = props => {
             <h4>Do you want to remove this item ?</h4>
           </div>
         </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: true }
+        undefined,
+        undefined,
+        id
       );
 
-      if (response.result && id) {
+      if (response) {
         setRemoving(true);
         await mutate('SpaceRemoveResource', { resourceId: id });
         setRemoving(false);
         onRemove(id);
       }
     },
-    [id, onRemove, showModal]
+    [id, onRemove, showDialog]
   );
 
   const handleMouseEnter = () => setHovered(true);

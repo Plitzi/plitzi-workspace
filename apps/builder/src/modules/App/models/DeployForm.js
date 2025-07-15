@@ -45,11 +45,7 @@ const DeployForm = props => {
     if (result && !(result instanceof Error) && result.snapshot) {
       setLatestRevision(result.snapshot.revision);
     } else if (result instanceof Error) {
-      addToast(result.message, {
-        appeareance: 'danger',
-        autoDismiss: true,
-        placement: 'top-right'
-      });
+      addToast(result.message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
     } else {
       setLatestRevision(null);
     }

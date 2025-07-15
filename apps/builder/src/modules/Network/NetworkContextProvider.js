@@ -51,11 +51,7 @@ const NetworkContextProvider = props => {
   const query = useCallback(
     async (queryKey, variables, fetchPolicy = 'network-first', silentError = false) => {
       if (!Queries[queryKey]) {
-        addToast('Query not found', {
-          appeareance: 'danger',
-          autoDismiss: true,
-          placement: 'top-right'
-        });
+        addToast('Query not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
       }
 
       let result;
@@ -67,11 +63,7 @@ const NetworkContextProvider = props => {
         });
       } catch (e) {
         if (!silentError) {
-          addToast(`Query ${queryKey} Failed`, {
-            appeareance: 'danger',
-            autoDismiss: true,
-            placement: 'top-right'
-          });
+          addToast(`Query ${queryKey} Failed`, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
         }
 
         return e;
@@ -79,7 +71,7 @@ const NetworkContextProvider = props => {
 
       if (!result) {
         addToast('Network Not Available, Please try again', {
-          appeareance: 'danger',
+          appeareance: 'error',
           autoDismiss: true,
           placement: 'top-right'
         });
@@ -97,11 +89,7 @@ const NetworkContextProvider = props => {
   const mutate = useCallback(
     async (mutationKey, variables, silentError = false, includeEnvironment = true, uploadOptions = {}) => {
       if (!Mutations[mutationKey]) {
-        addToast('Mutation not found', {
-          appeareance: 'danger',
-          autoDismiss: true,
-          placement: 'top-right'
-        });
+        addToast('Mutation not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
         return undefined;
       }
@@ -130,7 +118,7 @@ const NetworkContextProvider = props => {
       } catch (e) {
         if (!silentError) {
           addToast(`Mutation ${mutationKey} Failed (${e.message})`, {
-            appeareance: 'danger',
+            appeareance: 'error',
             autoDismiss: true,
             placement: 'top-right'
           });
@@ -141,7 +129,7 @@ const NetworkContextProvider = props => {
 
       if (!result) {
         addToast('Network Not Available, Please try again', {
-          appeareance: 'danger',
+          appeareance: 'error',
           autoDismiss: true,
           placement: 'top-right'
         });

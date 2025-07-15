@@ -4,8 +4,7 @@ import get from 'lodash/get';
 import noop from 'lodash/noop';
 import Card from '@plitzi/plitzi-ui-components/Card';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
@@ -171,17 +170,15 @@ const BuilderContextMenu = props => {
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <TemplateForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const {
-        data: { name, description }
-      } = response;
+    if (response) {
+      const { name, description } = response;
       builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
     }
   };
@@ -191,17 +188,15 @@ const BuilderContextMenu = props => {
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <TemplateForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const {
-        data: { name, description }
-      } = response;
+    if (response) {
+      const { name, description } = response;
       builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
     }
   };
@@ -243,7 +238,7 @@ const BuilderContextMenu = props => {
     return (
       <Card
         ref={ref}
-        className="builder__context-menu flex flex-col p-3 z-[99999999]"
+        className="builder__context-menu z-[99999999] flex flex-col p-3"
         style={{
           position: 'fixed',
           top: yPos,
@@ -253,7 +248,7 @@ const BuilderContextMenu = props => {
           transformOrigin: 'top left'
         }}
       >
-        <div className="h-20 p-3 flex items-center justify-center border-2 border-dashed rounded-sm">
+        <div className="flex h-20 items-center justify-center rounded-sm border-2 border-dashed p-3">
           No components selected. Click on a component to select it
         </div>
       </Card>
@@ -277,7 +272,7 @@ const BuilderContextMenu = props => {
         transformOrigin: 'top left'
       }}
     >
-      <div className="w-full flex flex-col">
+      <div className="flex w-full flex-col">
         <BuilderContextSubMenu onClick={handleClickParent} iframeDOM={iframeDOM} parentRef={ref} items={subMenuMemo} />
         <BuilderContextMenuItem title="Copy Element" shortcut="CTRL / CMD + C" onClick={handleClickCopy}>
           <i className="fas fa-copy" />

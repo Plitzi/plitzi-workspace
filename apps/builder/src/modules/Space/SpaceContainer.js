@@ -1,6 +1,6 @@
 // Packages
 import React from 'react';
-import ToastProvider from '@plitzi/plitzi-ui-components/Toast/ToastProvider';
+import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
 
 // Relatives
 import SpaceContainerInternal from './SpaceContainerInternal';

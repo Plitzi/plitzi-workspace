@@ -1,54 +1,50 @@
-// Packages
-import React, { useState, useMemo } from 'react';
-import PopupProvider from '@plitzi/plitzi-ui/Popup/PopupProvider';
+import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
+import { useState, useMemo } from 'react';
 
-// Monorepo
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
-
-// Alias
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
-// Relatives
+import AppContainer from './AppContainer';
 import AppContext from './AppContext';
 import AppProvider from './AppProvider';
-import AppContainer from './AppContainer';
 
-/**
- * @param {{
- *   webKey?: string;
- *   webId?: number;
- *   userKey?: string;
- *   instanceId?: string;
- *   server?: object;
- *   environment?: string;
- *   includeSubscriptions?: boolean;
- *   includeRealTime?: boolean;
- *   externalStyle?: string;
- *   state?: object;
- *   children?: React.ReactNode;
- *   debugMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const AppMain = props => {
-  const {
-    webKey = '',
-    webId = 0,
-    userKey = '',
-    instanceId = '',
-    server,
-    environment = 'development',
-    includeSubscriptions = true,
-    includeRealTime = true,
-    externalStyle = '',
-    state,
-    debugMode = false
-  } = props;
+import type { AppContextValue } from './AppContext';
+import type { ReactNode } from 'react';
+
+export type AppMainProps = {
+  webKey?: string;
+  webId?: string;
+  userKey?: string;
+  instanceId?: string;
+  server?: object;
+  environment?: string;
+  includeSubscriptions?: boolean;
+  includeRealTime?: boolean;
+  externalStyle?: string;
+  state?: Record<string, unknown>;
+  children?: ReactNode;
+  debugMode?: boolean;
+};
+
+const AppMain = ({
+  webKey = '',
+  webId = '0',
+  userKey = '',
+  instanceId = '',
+  server,
+  environment = 'development',
+  includeSubscriptions = true,
+  includeRealTime = true,
+  externalStyle = '',
+  state,
+  debugMode = false
+}: AppMainProps) => {
   const [previewMode, setPreviewMode] = useState(false);
-  const [displayBorderComponents, setDisplayBorderComponents] = useState('black');
+  const [displayBorderComponents, setDisplayBorderComponents] =
+    useState<AppContextValue['displayBorderComponents']>('black');
   const [zoom, setZoom] = useState(1);
-  const [displayMode, setDisplayMode] = useState('desktop');
+  const [displayMode, setDisplayMode] = useState<AppContextValue['displayMode']>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
 
   const appValueMemo = useMemo(
@@ -104,7 +100,19 @@ const AppMain = props => {
         </StateManagerContextProvider>
       </AppProvider>
     ),
-    [props]
+    [
+      environment,
+      externalStyle,
+      includeRealTime,
+      includeSubscriptions,
+      instanceId,
+      previewMode,
+      server,
+      state,
+      userKey,
+      webId,
+      webKey
+    ]
   );
 
   return <AppContext value={appValueMemo}>{childrenMemo}</AppContext>;

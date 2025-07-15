@@ -42,18 +42,14 @@ const ContentPlugin = props => {
   //     </Modal.Body>,
   //     null,
   //     {
-  //       placement: 'center',
-  //       containerClassName: 'container',
-  //       renderFooter: false
   //       // style: { height: '90vh', width: '100%' }
   //     }
   //   );
 
-  //   if (response.result) {
-  //     const { data } = response;
-  //     onUpdate(data);
+  //   if (response) {
+  //     onUpdate(response);
   //   }
-  // }, [name, settings, onUpdate]);
+  // }, [name, settings, onUpdate, showModal]);
 
   const finalSize = useMemo(() => formatBytes(size), [size]);
 

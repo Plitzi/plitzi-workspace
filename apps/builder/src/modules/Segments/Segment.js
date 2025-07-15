@@ -1,9 +1,7 @@
 // Packages
 import React, { useCallback, use } from 'react';
 import noop from 'lodash/noop';
-import Button from '@plitzi/plitzi-ui/Button';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Icon from '@plitzi/plitzi-ui/Icon';
@@ -32,7 +30,7 @@ import PublishForm from './models/PublishForm';
  */
 const Segment = props => {
   const { id = '', identifier = '', name = '', description = '', variables = [], onParentRefresh = noop } = props;
-  const { showModal } = useModal();
+  const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
   const { segmentGet, segmentsRemove, segmentsUpdate } = use(SegmentsContext);
@@ -50,18 +48,21 @@ const Segment = props => {
         <Modal.Header>
           <h4>Update Segment</h4>
         </Modal.Header>,
-        <Modal.Body>
-          <SegmentForm identifier={identifier} name={name} description={description} />
-        </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: false }
+        ({ onSubmit, onClose }) => (
+          <Modal.Body>
+            <SegmentForm
+              onSubmit={onSubmit}
+              onClose={onClose}
+              identifier={identifier}
+              name={name}
+              description={description}
+            />
+          </Modal.Body>
+        )
       );
 
-      if (response.result) {
-        const {
-          data: { identifier, name, description }
-        } = response;
-
+      if (response) {
+        const { identifier, name, description } = response;
         const segment = await segmentGet(identifier);
         const newSegment = { ...segment, identifier, definition: { ...segment.definition, name, description } };
         segmentsUpdate(newSegment);
@@ -74,23 +75,24 @@ const Segment = props => {
   const handleClickRemove = useCallback(
     async e => {
       e.stopPropagation();
-      const response = await showModal(
+      const response = await showDialog(
         <Modal.Header>
           <h4>Remove Segment</h4>
         </Modal.Header>,
         <Modal.Body className="p-4">
           <h4>Do you want to remove this item ?</h4>
         </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: true }
+        undefined,
+        undefined,
+        id
       );
 
-      if (response.result) {
+      if (response) {
         segmentsRemove(id);
         onParentRefresh(identifier);
       }
     },
-    [id, identifier, segmentsRemove, showModal, onParentRefresh]
+    [id, identifier, segmentsRemove, showDialog, onParentRefresh]
   );
 
   const handleClickBuilder = useCallback(
@@ -118,14 +120,14 @@ const Segment = props => {
       <Modal.Header>
         <h4>Make Snapshot</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <PublishForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <PublishForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
-    if (response.result) {
-      const result = await mutate('SegmentPublish', { ...response.data, contextId: id });
+    if (response) {
+      const result = await mutate('SegmentPublish', { ...response, contextId: id });
       if (result) {
         addToast(
           <span>

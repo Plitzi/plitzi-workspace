@@ -2,8 +2,7 @@
 import React, { useCallback, use } from 'react';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 
 // Monorepo
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
@@ -31,16 +30,15 @@ const DirectoryHeader = props => {
       <Modal.Header>
         <h4>Add Page</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <PageForm pageFolders={pageFolders} />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <PageForm pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const { data } = response;
-      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE, data);
+    if (response) {
+      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE, response);
     }
   }, [showModal, eventBridge, pageFolders]);
 
@@ -49,16 +47,15 @@ const DirectoryHeader = props => {
       <Modal.Header>
         <h4>Add Page Folder</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <PageFolderForm pageFolders={pageFolders} />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <PageFolderForm pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const { data } = response;
-      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, data);
+    if (response) {
+      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, response);
     }
   }, [showModal, eventBridge]);
 

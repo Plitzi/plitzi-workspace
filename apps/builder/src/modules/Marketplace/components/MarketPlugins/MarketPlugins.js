@@ -97,11 +97,7 @@ const MarketPlugins = () => {
           <div>
             Plugin <b>{`${name} ${version}`}</b> Cant be added, Assets missing
           </div>,
-          {
-            appeareance: 'danger',
-            autoDismiss: true,
-            placement: 'top-right'
-          }
+          { appeareance: 'error', autoDismiss: true, placement: 'top-right' }
         );
 
         return false;

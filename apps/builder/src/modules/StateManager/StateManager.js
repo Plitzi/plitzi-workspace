@@ -29,7 +29,7 @@ const StateManager = props => {
       setValue(JSON.stringify(JSON.parse(value), null, 2));
     } catch (e) {
       addToast('Json Malformed, Please fix it and try again', {
-        appeareance: 'danger',
+        appeareance: 'error',
         autoDismiss: true,
         placement: 'top-right'
       });

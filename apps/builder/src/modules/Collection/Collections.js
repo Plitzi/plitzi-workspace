@@ -4,8 +4,7 @@ import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 
 // Relatives
 import CollectionContext from './CollectionContext';
@@ -19,7 +18,7 @@ import CollectionContext from './CollectionContext';
  */
 const Collections = props => {
   const { collectionId, onSourceChange } = props;
-  const { showModal } = useModal();
+  const { showDialog } = useModal();
   const { collections, removeCollection } = use(CollectionContext);
 
   const handleClickAddCollection = useCallback(() => onSourceChange?.(undefined), [onSourceChange]);
@@ -27,25 +26,26 @@ const Collections = props => {
   const handleClickRemoveCollection = useCallback(
     id => async e => {
       e.stopPropagation();
-      const response = await showModal(
+      const response = await showDialog(
         <Modal.Header>
           <h5>Remove Collection</h5>
         </Modal.Header>,
         <Modal.Body>
           <h4 className="px-3 py-2">Do you want to remove this item ?</h4>
         </Modal.Body>,
-        null,
-        { placement: 'center', renderFooter: true }
+        undefined,
+        undefined,
+        id
       );
 
-      if (response.result) {
+      if (response) {
         removeCollection(id);
         if (collectionId === id) {
           onSourceChange();
         }
       }
     },
-    [showModal, removeCollection, onSourceChange]
+    [showDialog, removeCollection, onSourceChange]
   );
 
   const handleClick = useCallback(collectionId => () => onSourceChange(collectionId), [onSourceChange]);
@@ -56,7 +56,7 @@ const Collections = props => {
         <Button.Icon icon="fa-solid fa-plus" />
         New Collection
       </Button>
-      <div className="w-full border-solid border-b border-gray-200" />
+      <div className="w-full border-b border-solid border-gray-200" />
       <Flex direction="column" gap={2}>
         {Object.values(collections).map((collection, i) => {
           const { id, namePlural } = collection;
@@ -64,7 +64,7 @@ const Collections = props => {
           return (
             <div
               key={i}
-              className={classNames('w-full flex items-center justify-between cursor-pointer', {
+              className={classNames('flex w-full cursor-pointer items-center justify-between', {
                 'text-primary-500': collectionId === id
               })}
               onClick={handleClick(id)}

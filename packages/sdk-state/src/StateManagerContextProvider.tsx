@@ -4,7 +4,6 @@ import set from 'lodash/set';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import StateManagerContext from './StateManagerContext';
 
@@ -17,15 +16,15 @@ export const STYLE_TYPE_SEGMENT = 'segment';
 
 export type StateManagerContextProviderProps = {
   children: ReactNode;
-  webId: number;
-  state: Record<string, unknown>;
-  onInit: (value: Record<string, unknown>) => void;
+  webId: string;
+  state?: Record<string, unknown>;
+  onInit?: (value: Record<string, unknown>) => void;
 };
 
 const StateManagerContextProvider = ({
   children,
   webId,
-  state: stateProp = emptyObject,
+  state: stateProp,
   onInit
 }: StateManagerContextProviderProps) => {
   const storageId = useMemo(() => `plitzi_${webId}_state`, [webId]);
@@ -62,18 +61,18 @@ const StateManagerContextProvider = ({
     const storeMode: string = get(settings, 'stateStorage', '');
     if (keepState && storeMode) {
       return {
-        ...stateProp,
+        ...(stateProp ?? {}),
         ...(getCache('', {}, storeMode) as Record<string, unknown>)
       };
     }
 
-    return stateProp;
+    return stateProp ?? {};
   });
 
   const initRef = useRef(false);
   useEffect(() => {
     if (initRef.current) {
-      setState(stateProp);
+      setState(stateProp ?? {});
     } else {
       initRef.current = true;
     }

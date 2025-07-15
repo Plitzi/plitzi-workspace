@@ -4,8 +4,7 @@ import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
-import Modal from '@plitzi/plitzi-ui-components/Modal';
-import useModal from '@plitzi/plitzi-ui-components/Modal/useModal';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -21,7 +20,7 @@ import Template from './Template';
 
 /** @returns {React.ReactElement} */
 const Templates = () => {
-  const { showModal } = useModal();
+  const { showModal, showDialog } = useModal();
   const [filter, setFilter] = useState('');
   const { eventBridge } = use(EventBridgeContext);
   const { templates, templatesAddMutation, templatesUpdateMutation, templatesRemoveMutation } = use(TemplatesContext);
@@ -53,17 +52,15 @@ const Templates = () => {
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <TemplateForm />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const {
-        data: { name, description }
-      } = response;
+    if (response) {
+      const { name, description } = response;
       await templatesAddMutation(name, description);
     }
   };
@@ -76,17 +73,15 @@ const Templates = () => {
       <Modal.Header>
         <h4>Update Template</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <TemplateForm name={name} description={description} />
-      </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: false }
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <TemplateForm onSubmit={onSubmit} onClose={onClose} name={name} description={description} />
+        </Modal.Body>
+      )
     );
 
-    if (response.result) {
-      const {
-        data: { name, description }
-      } = response;
+    if (response) {
+      const { name, description } = response;
       await templatesUpdateMutation({
         ...template,
         definition: { ...template.definition, name, description }
@@ -95,7 +90,7 @@ const Templates = () => {
   };
 
   const handleClickRemove = id => async () => {
-    const response = await showModal(
+    const response = await showDialog(
       <Modal.Header>
         <h4>Remove Template</h4>
       </Modal.Header>,
@@ -104,11 +99,12 @@ const Templates = () => {
           <h4>Do you want to remove this item ?</h4>
         </div>
       </Modal.Body>,
-      null,
-      { placement: 'center', renderFooter: true }
+      undefined,
+      undefined,
+      id
     );
 
-    if (response.result) {
+    if (response) {
       await templatesRemoveMutation(id);
     }
   };

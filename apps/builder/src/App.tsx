@@ -8,7 +8,7 @@ import { sdkComponents } from '@plitzi/plitzi-sdk';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Provider from '@plitzi/plitzi-ui/Provider';
-import ToastProvider from '@plitzi/plitzi-ui/Toast';
+import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import classNames from 'classnames';
 import { Kind, OperationTypeNode } from 'graphql';
