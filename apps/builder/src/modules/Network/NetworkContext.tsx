@@ -5,7 +5,7 @@ import type Mutations from './Mutations';
 export type NetworkContextValue = {
   mutate: (
     mutationKey: keyof typeof Mutations,
-    variables: Record<string, string | number | boolean | File>,
+    variables: Record<string, unknown>,
     silentError?: boolean,
     includeEnvironment?: boolean,
     uploadOptions?: object

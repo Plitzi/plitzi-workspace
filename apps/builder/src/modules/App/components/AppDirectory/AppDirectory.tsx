@@ -1,22 +1,13 @@
-// Packages
-import React, { use } from 'react';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import { use } from 'react';
 
-// Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-
-// Alias
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
-// Relatives
 import Directory from './Directory';
 import DirectoryHeader from './DirectoryHeader';
 import PageLayouts from './PageLayouts';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
 const AppDirectory = () => {
   const { pageFolders } = use(SchemaMainContext);
   const { currentPageId } = use(NavigationContext);

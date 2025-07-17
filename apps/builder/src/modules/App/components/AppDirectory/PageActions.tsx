@@ -1,30 +1,28 @@
-// Packages
-import React, { useCallback, use } from 'react';
-import classNames from 'classnames';
-import noop from 'lodash/noop';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import Icon from '@plitzi/plitzi-ui/Icon';
+/* eslint-disable quotes */
 import Flex from '@plitzi/plitzi-ui/Flex';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
+import classNames from 'classnames';
+import { useCallback, use } from 'react';
 
-// Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
-/**
- * @param {{
- *   id?: string;
- *   active?: boolean;
- *   zoom?: boolean;
- *   defaultPage?: boolean;
- *   onZoom?: () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const PageActions = props => {
-  const { id = '', active = false, zoom = false, defaultPage = false, onZoom = noop } = props;
+import type { Element } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
+
+export type PageActionsProps = {
+  id?: string;
+  active?: boolean;
+  zoom?: boolean;
+  defaultPage?: boolean;
+  onZoom?: (e: MouseEvent) => void;
+};
+
+const PageActions = ({ id = '', active = false, zoom = false, defaultPage = false, onZoom }: PageActionsProps) => {
   const {
     schema: { flat }
   } = use(SchemaContext);
@@ -34,10 +32,10 @@ const PageActions = props => {
   const { addToast } = useToast();
 
   const handleClickSetHome = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      if (!flat[id]) {
+      if (!(flat[id] as Element | undefined)) {
         return;
       }
 
@@ -66,17 +64,17 @@ const PageActions = props => {
       );
 
       if (response) {
-        eventBridge.emit('main', EventBridgeTypes.SCHEMA_HOME_PAGE, id);
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_HOME_PAGE, id);
       }
     },
-    [id, eventBridge, flat, defaultPage]
+    [flat, id, defaultPage, showDialog, addToast, eventBridge]
   );
 
   const handleClickRemovePage = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      if (!flat[id]) {
+      if (!(flat[id] as Element | undefined)) {
         return;
       }
 
@@ -105,11 +103,11 @@ const PageActions = props => {
       );
 
       if (response) {
-        eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE, id);
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE, id);
         navigate('/');
       }
     },
-    [id, eventBridge, active, defaultPage, flat]
+    [flat, id, defaultPage, showDialog, addToast, eventBridge, navigate]
   );
 
   return (

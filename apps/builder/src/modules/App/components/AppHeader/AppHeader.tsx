@@ -1,41 +1,34 @@
-// Packages
-import React, { use, useState, useCallback, useMemo } from 'react';
-import noop from 'lodash/noop';
-import get from 'lodash/get';
 import Button from '@plitzi/plitzi-ui/Button';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
+import get from 'lodash/get';
+import { use, useState, useCallback, useMemo } from 'react';
 
-// Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-
-// Alias
-import NetworkContext from '@pmodules/Network/NetworkContext';
-import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
+import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
-// Relatives
+import BorderButton from './BorderButton';
+import DisplayModeButtons from './DisplayModeButtons';
+import HistoryButtons from './HistoryButtons';
+import PageHeader from './PageHeader';
+import ZoomButtons from './ZoomButtons';
 import AppContext from '../../AppContext';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
-import HistoryButtons from './HistoryButtons';
-import BorderButton from './BorderButton';
-import PageHeader from './PageHeader';
-import ZoomButtons from './ZoomButtons';
-import DisplayModeButtons from './DisplayModeButtons';
 
-/**
- * @param {{
- *   setTabSelected?: (tab: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const AppHeaher = props => {
-  const { setTabSelected = noop } = props;
+import type { Dispatch, SetStateAction } from 'react';
+
+export type AppHeaderProps = {
+  setTabSelected?: Dispatch<SetStateAction<string>>;
+};
+
+const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
@@ -47,13 +40,13 @@ const AppHeaher = props => {
   const { subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
 
   const handleClickPreviewMode = useCallback(() => {
-    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
-    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
+    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
     setPreviewMode(state => !state);
-  }, [currentPageId, eventBridge]);
+  }, [currentPageId, eventBridge, setPreviewMode]);
 
   const handleClickPublish = useCallback(async () => {
-    const response = await showModal(
+    const response = await showModal<{ environment: string; description: string }>(
       <Modal.Header>
         <h4>Make Snapshot</h4>
       </Modal.Header>,
@@ -64,7 +57,7 @@ const AppHeaher = props => {
       )
     );
     if (response) {
-      const result = await mutate('SpacePublish', response);
+      const result = (await mutate('SpacePublish', response)) as { revision: string; environment: string };
       addToast(
         <div>
           Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
@@ -75,7 +68,7 @@ const AppHeaher = props => {
   }, [addToast, mutate, showModal]);
 
   const handleClickDeploy = useCallback(async () => {
-    const response = await showModal(
+    const response = await showModal<{ environment: string; domain: string; revision?: string }>(
       <Modal.Header>
         <h4>Publish Snapshot</h4>
       </Modal.Header>,
@@ -87,7 +80,7 @@ const AppHeaher = props => {
     );
     if (response) {
       setLoadingDeployment(true);
-      const result = await mutate('SpaceDeploy', response, true);
+      const result = (await mutate('SpaceDeploy', response, true)) as { domain: string } | undefined;
       setLoadingDeployment(false);
       if (result && !(result instanceof Error)) {
         addToast(
@@ -137,15 +130,14 @@ const AppHeaher = props => {
       </div>
       <div className="flex h-full items-center gap-6">
         <div className="flex items-center gap-1">
-          {subscriptionsCollaborators &&
-            subscriptionsCollaborators.map((collaborator, i) => {
-              const {
-                color,
-                user: { firstName, surName }
-              } = collaborator;
+          {subscriptionsCollaborators.map((collaborator, i) => {
+            const {
+              color,
+              user: { firstName, surName }
+            } = collaborator;
 
-              return <BuilderCollaboratorHeaderUser key={i} color={color} firstName={firstName} surName={surName} />;
-            })}
+            return <BuilderCollaboratorHeaderUser key={i} color={color} firstName={firstName} surName={surName} />;
+          })}
         </div>
         <IconGroup gap={4}>
           <IconGroup.Icon
@@ -176,7 +168,6 @@ const AppHeaher = props => {
             title="Deploy: Click Deploy to go with the environment selected."
             onClick={handleClickDeploy}
             disabled={loadingDeployment}
-            content={!loadingDeployment ? 'Publish' : <i className="fa-solid fa-sync fa-spin fa-2x" />}
           >
             {!loadingDeployment ? 'Publish' : <Button.Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />}
           </Button>
@@ -186,4 +177,4 @@ const AppHeaher = props => {
   );
 };
 
-export default AppHeaher;
+export default AppHeader;

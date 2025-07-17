@@ -1,33 +1,49 @@
-// Packages
-import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import debounce from 'lodash/debounce';
-import omit from 'lodash/omit';
 import get from 'lodash/get';
-import noop from 'lodash/noop';
+import omit from 'lodash/omit';
+import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 
-// Monorepo
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
-
-// Alias
-import { StyleActions } from '@pmodules/Style/StyleReducer';
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
+import { StyleActions } from '@pmodules/Style/StyleReducer';
 
-const useQueueManager = (props = {}) => {
-  const { delay = 1000, mutate = noop, maxRetries = 2, retryTimeout = 2500 } = props;
-  const queues = useMemo(() => ({ queueNormal: [], queueUrgent: [] }), []);
+import type { QueueItem, QueuePriority } from '../QueueContext';
+import type { DropPosition } from '@plitzi/sdk-schema/helpers/FlatMap';
+import type { Element, PageFolder, Schema, SchemaVariable, Segment, Style } from '@plitzi/sdk-shared';
+import type { NetworkContextValue } from '@pmodules/Network/NetworkContext';
+
+export type UseQueueManagerProps = {
+  delay?: number;
+  mutate: NetworkContextValue['mutate'];
+  maxRetries?: number;
+  retryTimeout?: number;
+  disabled?: boolean;
+};
+
+const useQueueManager = ({
+  delay = 1000,
+  mutate,
+  maxRetries = 2,
+  retryTimeout = 2500,
+  disabled = false
+}: UseQueueManagerProps) => {
+  const queues = useMemo<{ queueNormal: QueueItem[]; queueUrgent: QueueItem[] }>(
+    () => ({ queueNormal: [], queueUrgent: [] }),
+    []
+  );
   const [processing, setProcessing] = useState(false);
   const processingRef = useRef(processing);
   processingRef.current = processing;
 
-  const parseItem = useCallback(rawItem => {
+  const parseItem = useCallback((rawItem: QueueItem) => {
     const { action } = rawItem;
 
     return { type: action.type, data: omit(action, ['type']) };
   }, []);
 
   const processItem = useCallback(
-    async item => {
+    async (item: QueueItem) => {
       const itemParsed = parseItem(item);
       switch (itemParsed.type) {
         // Schema
@@ -37,12 +53,12 @@ const useQueueManager = (props = {}) => {
         }
 
         case SchemaActions.SCHEMA_HOME_PAGE: {
-          const { pageId } = itemParsed.data;
+          const { pageId } = itemParsed.data as { pageId: string };
           const {
             prevState: { flat }
-          } = item;
+          } = item as { prevState: Schema };
           const page = flat[pageId];
-          if (!page) {
+          if (!(page as Element | undefined)) {
             return null;
           }
 
@@ -55,13 +71,13 @@ const useQueueManager = (props = {}) => {
         }
 
         case SchemaActions.SCHEMA_UPDATE_PAGE: {
-          const { page } = itemParsed.data;
+          const { page } = itemParsed.data as { page: Element };
 
           return mutate('SpaceUpdatePage', { page });
         }
 
         case SchemaActions.SCHEMA_REMOVE_PAGE: {
-          const { pageId } = itemParsed.data;
+          const { pageId } = itemParsed.data as { pageId: string };
 
           return mutate('SpaceRemovePage', { pageId });
         }
@@ -71,19 +87,19 @@ const useQueueManager = (props = {}) => {
         }
 
         case SchemaActions.SCHEMA_UPDATE_PAGE_FOLDER: {
-          const { pageFolder } = itemParsed.data;
+          const { pageFolder } = itemParsed.data as { pageFolder: PageFolder };
 
           return mutate('SpaceUpdatePageFolder', { pageFolder });
         }
 
         case SchemaActions.SCHEMA_REMOVE_PAGE_FOLDER: {
-          const { pageFolderId } = itemParsed.data;
+          const { pageFolderId } = itemParsed.data as { pageFolderId: string };
 
           return mutate('SpaceRemovePageFolder', { pageFolderId });
         }
 
         case SchemaActions.SCHEMA_ADD_VARIABLE: {
-          const { variable } = itemParsed.data;
+          const { variable } = itemParsed.data as { variable: SchemaVariable };
 
           return mutate('SpaceAddVariable', variable);
         }
@@ -101,7 +117,13 @@ const useQueueManager = (props = {}) => {
         }
 
         case SchemaActions.SCHEMA_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems, variables } = itemParsed.data;
+          const { data, to, dropPosition, initialItems, variables } = itemParsed.data as {
+            data: Element;
+            to: string;
+            dropPosition: DropPosition;
+            initialItems: Record<string, Element>;
+            variables: SchemaVariable[];
+          };
 
           return mutate('SpaceAddElement', {
             element: data,
@@ -131,7 +153,12 @@ const useQueueManager = (props = {}) => {
         }
 
         case SchemaActions.SCHEMA_CLONE_ELEMENT: {
-          const { data, to, dropPosition, initialItems } = itemParsed.data;
+          const { data, to, dropPosition, initialItems } = itemParsed.data as {
+            data: Element;
+            to: string;
+            dropPosition: DropPosition;
+            initialItems: Record<string, Element>;
+          };
 
           return mutate('SpaceCloneElement', {
             element: data,
@@ -218,7 +245,14 @@ const useQueueManager = (props = {}) => {
         // Schema + Style
 
         case SchemaActions.SCHEMA_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform, variables } = itemParsed.data;
+          const { data, dropPosition, initialItems, to, templatePlatform, variables } = itemParsed.data as {
+            data: Element;
+            to: string;
+            dropPosition: DropPosition;
+            initialItems: Record<string, Element>;
+            variables: SchemaVariable[];
+            templatePlatform: Style['platform'];
+          };
 
           return mutate('SpaceAddTemplate', {
             element: data,
@@ -239,7 +273,14 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems, variables, segmentId } = itemParsed.data;
+          const { data, to, dropPosition, initialItems, variables, segmentId } = itemParsed.data as {
+            data: Element;
+            to: string;
+            dropPosition: DropPosition;
+            initialItems: Record<string, Element>;
+            variables: SchemaVariable[];
+            segmentId: string;
+          };
 
           return mutate('SegmentAddElement', {
             element: data,
@@ -320,7 +361,15 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform, variables, segmentId } = itemParsed.data;
+          const { data, dropPosition, initialItems, to, templatePlatform, variables, segmentId } = itemParsed.data as {
+            data: Element;
+            to: string;
+            dropPosition: DropPosition;
+            initialItems: Record<string, Element>;
+            variables: SchemaVariable[];
+            templatePlatform: Style['platform'];
+            segmentId: string;
+          };
 
           return mutate('SegmentAddTemplate', {
             element: data,
@@ -334,7 +383,13 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_CLONE_ELEMENT: {
-          const { data, to, dropPosition, initialItems, segmentId } = itemParsed.data;
+          const { data, to, dropPosition, initialItems, segmentId } = itemParsed.data as {
+            data: Element;
+            to: string;
+            dropPosition: DropPosition;
+            initialItems: Record<string, Element>;
+            segmentId: string;
+          };
 
           return mutate('SegmentCloneElement', {
             element: data,
@@ -346,8 +401,8 @@ const useQueueManager = (props = {}) => {
         }
 
         case SegmentsActions.SEGMENTS_UPDATE: {
-          const { segment, queryFailed } = itemParsed.data;
-          if (queryFailed) {
+          const { segment, queryFailed } = itemParsed.data as { segment: Segment; queryFailed: unknown };
+          if (queryFailed || !segment.id) {
             return null;
           }
 
@@ -368,7 +423,7 @@ const useQueueManager = (props = {}) => {
     [parseItem, mutate]
   );
 
-  const revertItem = useCallback(async item => {
+  const revertItem = useCallback((item: QueueItem) => {
     const {
       action: { type },
       // state,
@@ -377,19 +432,25 @@ const useQueueManager = (props = {}) => {
     } = item;
     switch (type) {
       case SchemaActions[type]: {
-        return dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: prevState, queryFailed: true });
+        dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: prevState, queryFailed: true });
+
+        return;
       }
 
       case StyleActions[type]: {
-        return dispatch({ type: StyleActions.STYLE_UPDATE, style: prevState, queryFailed: true });
+        dispatch({ type: StyleActions.STYLE_UPDATE, style: prevState, queryFailed: true });
+
+        return;
       }
 
       case SegmentsActions[type]: {
-        return dispatch({ type: SegmentsActions.SEGMENTS_UPDATE, segments: prevState, queryFailed: true });
+        dispatch({ type: SegmentsActions.SEGMENTS_UPDATE, segments: prevState, queryFailed: true });
+
+        return;
       }
 
       default:
-        return null;
+        return;
     }
   }, []);
 
@@ -416,7 +477,7 @@ const useQueueManager = (props = {}) => {
 
           if (result instanceof Error) {
             // if query fails, we have to revert the change in the builder
-            await revertItem(item);
+            revertItem(item);
           }
         }
       }
@@ -434,7 +495,11 @@ const useQueueManager = (props = {}) => {
   );
 
   const enqueue = useCallback(
-    (items = [], priority = 'normal') => {
+    (items: QueueItem | QueueItem[] = [], priority: QueuePriority = 'normal') => {
+      if (disabled) {
+        return;
+      }
+
       if (priority === 'normal') {
         if (Array.isArray(items)) {
           queues.queueNormal.push(...items);
@@ -442,7 +507,7 @@ const useQueueManager = (props = {}) => {
           queues.queueNormal.push(items);
         }
 
-        queueHandler.queueNormal();
+        void queueHandler.queueNormal();
       }
 
       if (priority === 'urgent') {
@@ -452,14 +517,14 @@ const useQueueManager = (props = {}) => {
           queues.queueUrgent.push(items);
         }
 
-        queueHandler.queueUrgent();
+        void queueHandler.queueUrgent();
       }
     },
-    [queues, queueHandler]
+    [queues, queueHandler, disabled]
   );
 
   const count = useCallback(
-    (priority = 'all') => {
+    (priority: QueuePriority = 'all') => {
       const { queueNormal, queueUrgent } = queues;
 
       if (priority === 'normal') {
@@ -476,9 +541,10 @@ const useQueueManager = (props = {}) => {
   );
 
   const handleBeforeUnload = useCallback(
-    e => {
+    (e: BeforeUnloadEvent) => {
       if (queues.queueNormal.length > 0) {
         e.preventDefault();
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         e.returnValue = 'Some changes still being saved.';
 
         return e;

@@ -1,22 +1,18 @@
-// Packages
-import React, { use, useMemo } from 'react';
-import get from 'lodash/get';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import get from 'lodash/get';
+import { use, useMemo } from 'react';
 
-// Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
-// Relatives
-import PageLayout from './PageLayout';
 import LayoutsHeader from './LayoutsHeader';
+import PageLayout from './PageLayout';
 
-/**
- * @param {{}} props
- * @returns {React.ReactElement}
- */
+import type { Element } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
+
 const PageLayouts = () => {
   const {
     schema: { flat }
@@ -25,11 +21,11 @@ const PageLayouts = () => {
   const { eventBridge } = use(EventBridgeContext);
   const { showDialog } = useModal();
 
-  const handleClickRemoveLayout = layoutId => async e => {
+  const handleClickRemoveLayout = (layoutId: string) => async (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     const layout = flat[layoutId];
-    if (!layout) {
+    if (!(layout as Element | undefined)) {
       return;
     }
 
@@ -45,8 +41,8 @@ const PageLayouts = () => {
     );
 
     if (response) {
-      eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
-      eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, layoutId);
+      void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
+      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, layoutId);
     }
   };
 
@@ -62,16 +58,15 @@ const PageLayouts = () => {
     <div className="flex flex-col">
       <LayoutsHeader />
       <div className="flex w-full flex-col items-center overflow-auto">
-        {layouts &&
-          layouts.map(layout => (
-            <PageLayout
-              key={layout.id}
-              id={layout.id}
-              name={layout.definition.label}
-              onSelect={handleClickLayout(layout.id)}
-              onRemove={handleClickRemoveLayout(layout.id)}
-            />
-          ))}
+        {layouts.map(layout => (
+          <PageLayout
+            key={layout.id}
+            id={layout.id}
+            name={layout.definition.label}
+            onSelect={handleClickLayout(layout.id)}
+            onRemove={handleClickRemoveLayout(layout.id)}
+          />
+        ))}
       </div>
     </div>
   );

@@ -1,26 +1,25 @@
-// Packages
-import React, { useCallback, useState } from 'react';
-import PopupSidePanel from '@plitzi/plitzi-ui/Popup/PopupSidePanel';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import { PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
+import { useCallback } from 'react';
+
+import type { Dispatch, SetStateAction } from 'react';
 
 const separatorsBefore = ['layerManager', 'settings'];
 
-/**
- * @param {{
- *   className?: string;
- *   selected?: string;
- *   onSelect?: (item: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const AppSidebar = props => {
-  const { onSelect } = props;
-  const [popupsActiveLeft, setPopupsActiveLeft] = useStorage('builder-state.popupSidePanel.popupsActive.left', []); // <string[]>
+export type AppSidebarProps = {
+  onSelect?: Dispatch<SetStateAction<string>>;
+};
+
+const AppSidebar = ({ onSelect }: AppSidebarProps) => {
+  const [popupsActiveLeft, setPopupsActiveLeft] = useStorage<string[]>(
+    'builder-state.popupSidePanel.popupsActive.left',
+    []
+  );
 
   const handleChangeLeft = useCallback(
-    popups => {
+    (popups: string[]) => {
       setPopupsActiveLeft(popups);
-      onSelect?.(popups?.[0] ?? '');
+      onSelect?.(popups[0]);
     },
     [setPopupsActiveLeft, onSelect]
   );

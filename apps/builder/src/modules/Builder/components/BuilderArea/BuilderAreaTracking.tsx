@@ -318,29 +318,27 @@ const BuilderAreaTracking = ({
     ]
   );
 
-  const handlePasteSync = useCallback((e: ClipboardEvent) => void handlePaste(e), [handlePaste]);
-
   useLayoutEffect(() => {
     if (previewMode) {
       return;
     }
 
     window.document.addEventListener('copy', handleCopy);
-    window.document.addEventListener('paste', handlePasteSync);
+    window.document.addEventListener('paste', handlePaste);
     if (iframeDOM && iframeDOM.contentWindow) {
       iframeDOM.contentWindow.document.addEventListener('copy', handleCopy);
-      iframeDOM.contentWindow.document.addEventListener('paste', handlePasteSync);
+      iframeDOM.contentWindow.document.addEventListener('paste', handlePaste);
     }
 
     return () => {
       window.document.removeEventListener('copy', handleCopy);
-      window.document.removeEventListener('paste', handlePasteSync);
+      window.document.removeEventListener('paste', handlePaste);
       if (iframeDOM && iframeDOM.contentWindow) {
         iframeDOM.contentWindow.document.removeEventListener('copy', handleCopy);
-        iframeDOM.contentWindow.document.removeEventListener('paste', handlePasteSync);
+        iframeDOM.contentWindow.document.removeEventListener('paste', handlePaste);
       }
     };
-  }, [iframeDOM, handleCopy, handlePasteSync, previewMode]);
+  }, [iframeDOM, handleCopy, handlePaste, previewMode]);
 
   useLayoutEffect(() => {
     if (previewMode || multiPagesMode) {

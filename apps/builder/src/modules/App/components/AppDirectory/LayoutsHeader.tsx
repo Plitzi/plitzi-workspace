@@ -1,33 +1,28 @@
-// Packages
-import React, { useCallback, use } from 'react';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { useCallback, use } from 'react';
 
-// Monorepo
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-
-// Alias
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import LayoutForm from '@pmodules/App/models/LayoutForm';
 
-// Relatives
 import { generateID } from '../../../../helpers/utils';
 
-/**
- * @param {{
- *   pageFolders?: any[];
- * }} props
- * @returns {React.ReactElement}
- */
+import type { PageFolder } from '@plitzi/sdk-shared';
+
+export type LayoutsHeaderProps = {
+  pageFolders: PageFolder[];
+};
+
 const LayoutsHeader = () => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
   const { componentDefinitions } = use(ComponentContext);
 
   const handleClickAddLayout = useCallback(async () => {
-    const response = await showModal(
+    const response = await showModal<{ name: string }>(
       <Modal.Header>
         <h4>Add Layout</h4>
       </Modal.Header>,
@@ -43,9 +38,9 @@ const LayoutsHeader = () => {
       const { definition, attributes } = componentDefinitions.layoutContainer;
       const id = generateID();
       const element = { id, attributes, definition: { ...definition, rootId: id, parentId: null, label: name } };
-      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_ELEMENT, '', element, 'custom');
+      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_ELEMENT, '', element, 'custom');
     }
-  }, [showModal, eventBridge]);
+  }, [showModal, componentDefinitions.layoutContainer, eventBridge]);
 
   // const handleClickAddPageFolder = useCallback(async () => {
   //   const response = await showModal(

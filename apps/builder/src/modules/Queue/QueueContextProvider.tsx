@@ -1,23 +1,19 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo } from 'react';
 
-// Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
-import QueueContext from './QueueContext';
 import useQueueManager from './hooks/useQueueManager';
+import QueueContext from './QueueContext';
 import QueueStatusContext from './QueueStatusContext';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   includeSubscriptions?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const QueueContextProvider = props => {
-  const { children, includeSubscriptions = true } = props;
+import type { Dispatch, ReactNode } from 'react';
+
+export type QueueContextProviderProps = {
+  children: ReactNode;
+  includeSubscriptions?: boolean;
+};
+
+const QueueContextProvider = ({ children, includeSubscriptions = true }: QueueContextProviderProps) => {
   const { mutate } = use(NetworkContext);
 
   const { queueManager, processing } = useQueueManager({
@@ -28,7 +24,12 @@ const QueueContextProvider = props => {
   });
 
   const enqueueMiddleware = useCallback(
-    (action, prevState, state, dispatch) => queueManager.enqueue({ action, prevState, state, dispatch }, 'normal'),
+    (
+      action: { type: string } & Record<Exclude<string, 'type'>, unknown>,
+      prevState: unknown,
+      state: unknown,
+      dispatch: Dispatch<unknown>
+    ) => queueManager.enqueue({ action, prevState, state, dispatch }, 'normal'),
     [queueManager]
   );
 

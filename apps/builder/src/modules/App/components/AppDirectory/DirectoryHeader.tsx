@@ -1,27 +1,22 @@
-// Packages
-import React, { useCallback, use } from 'react';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { useCallback, use } from 'react';
 
-// Monorepo
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-
-// Alias
-import PageForm from '@pmodules/App/models/PageForm';
+import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
+import PageForm from '@pmodules/App/models/PageForm';
+
+import type { PageFolder } from '@plitzi/sdk-shared';
 
 const pageFoldersDefault = [];
 
-/**
- * @param {{
- *   pageFolders?: any[];
- * }} props
- * @returns {React.ReactElement}
- */
-const DirectoryHeader = props => {
-  const { pageFolders = pageFoldersDefault } = props;
+export type DirectoryHeaderProps = {
+  pageFolders: PageFolder[];
+};
+
+const DirectoryHeader = ({ pageFolders = pageFoldersDefault }: DirectoryHeaderProps) => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
 
@@ -38,7 +33,7 @@ const DirectoryHeader = props => {
     );
 
     if (response) {
-      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE, response);
+      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE, response);
     }
   }, [showModal, eventBridge, pageFolders]);
 
@@ -55,9 +50,9 @@ const DirectoryHeader = props => {
     );
 
     if (response) {
-      eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, response);
+      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, response);
     }
-  }, [showModal, eventBridge]);
+  }, [showModal, pageFolders, eventBridge]);
 
   return (
     <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3">

@@ -28,14 +28,14 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const styleContext = use(StyleContext);
   const { eventBridge } = use(EventBridgeContext);
   const { currentPageId } = use(NavigationContext);
-  const [tabSelected, setTabSelected] = useState<'collections' | 'marketplace' | 'integrations' | 'settings'>();
+  const [tabSelected, setTabSelected] = useState<string>('');
   const [sourceState, setSourceState] = useState<{ sourceId: string }>({ sourceId: '' });
   const { sourceId } = sourceState;
 
   const handleSourceChange = useCallback((newSourceId: string) => setSourceState({ sourceId: newSourceId }), []);
 
   const builderHandler = useCallback(
-    (event: string, data: unknown[]) => void eventBridge?.emit('main', event, ...data),
+    (event: string, data: unknown[]) => void eventBridge.emit('main', event, ...data),
     [eventBridge]
   );
 
@@ -57,9 +57,9 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
           renderFloatingPopup={!previewMode}
         >
           <div className="bg-grayviolet-200 relative flex max-w-[100vw] grow basis-0 overflow-hidden">
-            {!previewMode && <AppSidebar onSelect={setTabSelected} selected={tabSelected} />}
+            {!previewMode && <AppSidebar onSelect={setTabSelected} />}
             <div className="flex grow basis-0 flex-col overflow-hidden">
-              {!['collections', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(tabSelected ?? '') && (
+              {!['collections', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(tabSelected) && (
                 <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
               )}
               {tabSelected === 'collections' && (

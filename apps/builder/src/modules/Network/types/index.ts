@@ -16,6 +16,7 @@ export type RealTimeMessage = {
 };
 
 export type SubscriptionCollaborator = {
+  color: string;
   user: { firstName: string; surName: string };
   instanceId: string;
 };

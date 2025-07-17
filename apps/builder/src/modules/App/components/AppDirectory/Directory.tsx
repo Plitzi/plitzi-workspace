@@ -1,63 +1,62 @@
-// Packages
-import React, { useCallback, use, useMemo, useState } from 'react';
-import upperFirst from 'lodash/upperFirst';
-import get from 'lodash/get';
+/* eslint-disable quotes */
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
-import Text from '@plitzi/plitzi-ui/Text';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import Text from '@plitzi/plitzi-ui/Text';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
+import get from 'lodash/get';
+import upperFirst from 'lodash/upperFirst';
+import { useCallback, use, useMemo, useState } from 'react';
 
-// Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-
-// Alias
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
-// Relatives
 import Page from './Page';
+
+import type { PageFolder } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
 
 const pageFoldersDefault = [];
 
-/**
- * @param {{
- *   id?: string;
- *   name?: string;
- *   slug?: string;
- *   parentId?: string;
- *   pageFolders?: any[];
- *   isRootFolder?: boolean;
- *   currentPageId?: string;
- *   nestedLevel?: number;
- * }} props
- * @returns {React.ReactElement}
- */
-const Directory = props => {
-  const {
-    id = '',
-    name = '',
-    slug = '',
-    parentId,
-    isRootFolder = false,
-    currentPageId,
-    nestedLevel = 0,
-    pageFolders = pageFoldersDefault
-  } = props;
+export type DirectoryProps = {
+  id?: string;
+  name?: string;
+  slug?: string;
+  parentId?: string;
+  pageFolders?: PageFolder[];
+  isRootFolder?: boolean;
+  currentPageId?: string;
+  nestedLevel?: number;
+};
+
+const Directory = ({
+  id = '',
+  name = '',
+  slug = '',
+  parentId,
+  isRootFolder = false,
+  currentPageId,
+  nestedLevel = 0,
+  pageFolders = pageFoldersDefault
+}: DirectoryProps) => {
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
   const { pageDefinitions, pages } = use(SchemaMainContext);
+  console.log(pageDefinitions);
   const pagesMemo = useMemo(
     () =>
       pages
         .map(pageId => get(pageDefinitions, pageId))
-        .filter(page => get(page, 'attributes.folder') === id || (!get(page, 'attributes.folder') && !id))
+        .filter(
+          page => get(page, 'attributes.folder', '') === id || (!(get(page, 'attributes.folder', '') as string) && !id)
+        )
         .sort((pageA, pageB) => {
-          const { default: defaultA, name: nameA } = get(pageA, 'attributes', {});
-          const { default: defaultB, name: nameB } = get(pageB, 'attributes', {});
+          const { default: defaultA, name: nameA } = get(pageA, 'attributes', {}) as { default: boolean; name: string };
+          const { default: defaultB, name: nameB } = get(pageB, 'attributes', {}) as { default: boolean; name: string };
           if (defaultA || (nameA < nameB && !defaultB)) {
             return -1;
           }
@@ -65,12 +64,12 @@ const Directory = props => {
           return 1;
         })
         .map(page => page.id),
-    [pages, pageDefinitions, parentId]
+    [pages, pageDefinitions, id]
   );
-  const [collapsed, setCollapsed] = useState(!(pagesMemo && pagesMemo.length > 0));
+  const [collapsed, setCollapsed] = useState(!(pagesMemo.length > 0));
 
   const handleClickSettings = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
       const response = await showModal(
@@ -92,22 +91,22 @@ const Directory = props => {
       );
 
       if (response) {
-        eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_PAGE_FOLDER, { id, ...response });
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_PAGE_FOLDER, { id, ...response });
       }
     },
     [pageFolders, id, name, slug, parentId, showModal, eventBridge]
   );
 
   const handleClickRemoveFolder = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
       if (!pageFolders.find(pageFolder => pageFolder.id === id)) {
         return;
       }
 
-      const hasPages = pages.some(pageId => get(pageDefinitions, `${pageId}.attributes.folder`) === id);
-      const hasPageFolders = pages.some(pageFolder => get(pageFolder, 'parentId') === id);
+      const hasPages = pages.some(pageId => get(pageDefinitions, `${pageId}.attributes.folder`, '') === id);
+      const hasPageFolders = pages.some(pageFolder => get(pageFolder, 'parentId', '') === id);
       if (hasPages || hasPageFolders) {
         addToast("You can't remove this folder with pages or folders", {
           appeareance: 'warning',
@@ -132,11 +131,11 @@ const Directory = props => {
         id
       );
 
-      if (response.result) {
-        eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE_FOLDER, id);
+      if (response) {
+        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE_FOLDER, id);
       }
     },
-    [id, pageFolders, pages, addToast, eventBridge, showDialog]
+    [pageFolders, pages, showDialog, id, pageDefinitions, addToast, eventBridge]
   );
 
   const titleMemo = useMemo(
@@ -159,13 +158,13 @@ const Directory = props => {
       pageFolders
         .filter(folder => folder.parentId === id || (!folder.parentId && !id))
         .sort((folderA, folderB) => (folderA.name > folderB.name ? 1 : -1)),
-    [id, pageFolders, parentId]
+    [id, pageFolders]
   );
 
-  const handleCollapse = useCallback(isCollapsed => setCollapsed(isCollapsed), []);
+  const handleCollapse = useCallback((isCollapsed: boolean) => setCollapsed(isCollapsed), []);
 
   return (
-    <ContainerCollapsable collapsed={!(pagesMemo && pagesMemo.length > 0)} onChange={handleCollapse} gap={2}>
+    <ContainerCollapsable collapsed={!(pagesMemo.length > 0)} onChange={handleCollapse} gap={2}>
       <ContainerCollapsable.Header
         placement="right"
         iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-left" />}
@@ -188,13 +187,11 @@ const Directory = props => {
         )}
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content gap={2}>
-        {pagesMemo &&
-          pagesMemo.length > 0 &&
-          pagesMemo.map(pageId => (
+        {pagesMemo.length > 0 &&
+          pagesMemo.map((pageId: string) => (
             <Page key={pageId} id={pageId} active={pageId === currentPageId} nestedLevel={nestedLevel + 1} />
           ))}
-        {directories &&
-          directories.length > 0 &&
+        {directories.length > 0 &&
           directories.map(directory => (
             <Directory
               key={directory.id}

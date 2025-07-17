@@ -1,8 +1,6 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
-import Select from '@plitzi/plitzi-ui-components/Select';
+import Select from '@plitzi/plitzi-ui/Select';
+import { useCallback, use, useMemo } from 'react';
 
-// Alias
 import AppContext from '@pmodules/App/AppContext';
 
 const zooms = [...Array(26).keys()].map(i => ({ label: `${50 + i * 10}%`, value: Number(0.5 + i * 0.1).toFixed(1) }));
@@ -11,8 +9,8 @@ const ZoomButtons = () => {
   const { zoom = 1, setZoom, displayMode } = use(AppContext);
 
   const handleChange = useCallback(
-    e => {
-      setZoom(parseFloat(e.target.value));
+    (value: string) => {
+      setZoom(parseFloat(value));
     },
     [setZoom]
   );
@@ -31,13 +29,8 @@ const ZoomButtons = () => {
 
   return (
     <div className="flex items-center gap-4">
-      <div className="text-xs inline font-bold">{Math.floor(width / zoom)} PX</div>
-      <Select
-        size="sm"
-        value={Number(zoom).toFixed(1)}
-        onChange={handleChange}
-        className="border-white active:border-gray-200 hover:border-gray-200 font-bold rounded-sm hover:bg-gray-50"
-      >
+      <div className="inline text-xs font-bold">{Math.floor(width / zoom)} PX</div>
+      <Select size="xs" value={Number(zoom).toFixed(1)} onChange={handleChange}>
         {zooms.map(({ label, value }) => (
           <option key={value} value={value}>
             {label}

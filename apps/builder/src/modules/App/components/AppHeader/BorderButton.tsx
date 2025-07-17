@@ -1,15 +1,12 @@
-// Packages
-import React, { use, useCallback } from 'react';
+import Icon from '@plitzi/plitzi-ui/Icon';
 import BorderBlack from '@plitzi/plitzi-ui/icons/BorderBlack';
 import BorderWhite from '@plitzi/plitzi-ui/icons/BorderWhite';
-import Icon from '@plitzi/plitzi-ui/Icon';
+import { use, useCallback } from 'react';
 
-// Alias
 import AppContext from '@pmodules/App/AppContext';
 
-const DISPLAY_BORDER = ['black', 'white', 'none'];
+const DISPLAY_BORDER = ['black', 'white', 'none'] as const;
 
-/** @returns {React.ReactElement} */
 const BorderButton = () => {
   const { displayBorderComponents, setDisplayBorderComponents } = use(AppContext);
 

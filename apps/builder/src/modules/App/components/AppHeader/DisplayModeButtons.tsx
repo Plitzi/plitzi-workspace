@@ -1,9 +1,7 @@
-// Packages
-import { useCallback, use } from 'react';
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import DesktopWithMobile from '@plitzi/plitzi-ui/icons/DesktopWithMobile';
+import { useCallback, use } from 'react';
 
-// Alias
 import AppContext from '@pmodules/App/AppContext';
 
 const DisplayModeButtons = () => {

@@ -2,6 +2,7 @@ import type { Element, Schema } from './SchemaTypes';
 import type { Style } from './StyleTypes';
 
 export type Segment = {
+  id?: string;
   definition: {
     name: string;
     description: string;
@@ -10,8 +11,9 @@ export type Segment = {
   environment: 'main' | 'development' | 'staging' | 'production';
   schema: Schema;
   style: Style;
+  identifier: string;
 } & {
-  [K in Exclude<string, 'style' | 'schema' | 'definition' | 'environment'>]: unknown;
+  [K in Exclude<string, 'style' | 'schema' | 'definition' | 'environment' | 'identifier'>]: unknown;
 };
 
 export type SegmentsContextValue = {

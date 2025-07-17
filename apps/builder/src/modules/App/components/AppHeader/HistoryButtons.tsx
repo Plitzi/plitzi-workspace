@@ -1,38 +1,26 @@
-// Packages
-import React, { use, useCallback } from 'react';
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
-import classNames from 'classnames';
+import { use, useCallback } from 'react';
 
-// Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-
-// Alias
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-/**
- * @param {{
- *   className?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const HistoryButtons = props => {
-  const { className } = props;
+const HistoryButtons = () => {
   const { eventBridge } = use(EventBridgeContext);
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
 
   const handleClickUndo = useCallback(() => {
-    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
     undoableUndo();
   }, [undoableUndo, eventBridge]);
 
   const handleClickRedo = useCallback(() => {
-    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
     undoableRedo();
   }, [undoableRedo, eventBridge]);
 
   return (
-    <IconGroup className={classNames('h-8', className)} size="md" gap={4}>
+    <IconGroup className="h-8" size="md" gap={4}>
       <IconGroup.Icon
         icon="fa-solid fa-rotate-left"
         title="Undo"

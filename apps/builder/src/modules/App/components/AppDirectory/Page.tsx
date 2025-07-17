@@ -1,32 +1,27 @@
-// Packages
-import React, { useCallback, use, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import get from 'lodash/get';
-import Text from '@plitzi/plitzi-ui/Text';
-import Icon from '@plitzi/plitzi-ui/Icon';
+import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import Flex from '@plitzi/plitzi-ui/Flex';
-import ContainerAutoScale from '@plitzi/plitzi-ui-components/ContainerAutoScale';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import Text from '@plitzi/plitzi-ui/Text';
+import get from 'lodash/get';
+import { useCallback, use, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
-// Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
-
-// Alias
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
-// Relatives
 import PageActions from './PageActions';
 
-/**
- * @param {{
- *   id?: string;
- *   active?: boolean;
- *   nestedLevel?: number;
- * }} props
- * @returns {React.ReactElement}
- */
-const Page = props => {
-  const { id = '', active = false, nestedLevel = 0 } = props;
+import type { Element } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
+
+export type PageProps = {
+  id?: string;
+  active?: boolean;
+  nestedLevel?: number;
+};
+
+const Page = ({ id = '', active = false, nestedLevel = 0 }: PageProps) => {
   const {
     schema,
     schema: { flat }
@@ -36,7 +31,14 @@ const Page = props => {
   } = use(StyleContext);
   const [zoom, setZoom] = useState(false);
   const styleMemo = useMemo(() => ({ paddingLeft: nestedLevel * 16 }), [nestedLevel]);
-  const page = useMemo(() => get(flat, id, {}), [flat, id]);
+  const page = useMemo(() => get(flat, id, undefined), [flat, id]);
+
+  const handleClickZoom = useCallback((e: MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setZoom(state => !state);
+  }, []);
+
   if (!page) {
     return undefined;
   }
@@ -44,17 +46,11 @@ const Page = props => {
   const {
     attributes: { name, default: defaultPage },
     definition: { label, type }
-  } = page;
-
-  const handleClickZoom = useCallback(e => {
-    e.stopPropagation();
-    e.preventDefault();
-    setZoom(state => !state);
-  }, []);
+  } = page as Element & { attributes: { name: string; default: boolean } };
 
   return (
     <Flex className="group">
-      <Link to={id} className="flex flex-col basis-0 min-w-0 grow">
+      <Link to={id} className="flex min-w-0 grow basis-0 flex-col">
         <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
             <Icon
@@ -65,15 +61,15 @@ const Page = props => {
               icon={defaultPage ? 'fas fa-home' : 'fa-solid fa-file'}
             />
             <Text size="sm" isTruncated active={active}>
-              {name ?? label ?? type}
+              {name ? name : label ? label : type}
             </Text>
           </Flex>
           <PageActions id={id} active={active} zoom={zoom} defaultPage={defaultPage} onZoom={handleClickZoom} />
         </Flex>
         {zoom && (
-          <div className="border border-gray-300 p-4 m-4 rounded-sm">
-            <ContainerAutoScale className="flex items-center justify-center h-[150px] w-full overflow-hidden rounded-sm">
-              <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="w-full h-full" />
+          <div className="m-4 rounded-sm border border-gray-300 p-4">
+            <ContainerAutoScale className="flex h-[150px] w-full items-center justify-center overflow-hidden rounded-sm">
+              <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="h-full w-full" />
             </ContainerAutoScale>
           </div>
         )}
