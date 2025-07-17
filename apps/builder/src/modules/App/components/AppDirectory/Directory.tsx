@@ -46,7 +46,6 @@ const Directory = ({
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
   const { pageDefinitions, pages } = use(SchemaMainContext);
-  console.log(pageDefinitions);
   const pagesMemo = useMemo(
     () =>
       pages

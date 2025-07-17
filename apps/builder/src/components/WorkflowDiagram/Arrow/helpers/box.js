@@ -55,8 +55,6 @@ export function getIdealBoxSides(startBox, endBox) {
   let minDistanceSource = [Infinity, { x: 0, y: 0 }];
   let minDistanceTarget = [Infinity, { x: 0, y: 0 }];
 
-  console.log(startPts);
-
   startPts.forEach(pointA => {
     endPts.forEach(pointB => {
       const distance = euclideanDistance(pointA, pointB);

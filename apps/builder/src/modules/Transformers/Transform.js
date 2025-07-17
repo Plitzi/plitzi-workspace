@@ -91,8 +91,6 @@ const Transform = props => {
       return;
     }
 
-    console.log(stylePlatform);
-
     // set(baseElement, 'definition.rootId', baseElementId);
     // Object.values(elements).forEach(element => {
     //   set(elements, `${element.id}.definition.rootId`, baseElementId);
