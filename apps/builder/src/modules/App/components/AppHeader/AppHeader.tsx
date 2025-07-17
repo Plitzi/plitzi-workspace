@@ -56,19 +56,30 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
         </Modal.Body>
       )
     );
-    if (response) {
-      const result = (await mutate('SpacePublish', response)) as { revision: string; environment: string };
+
+    if (!response) {
+      return;
+    }
+
+    const result = await mutate<{ revision: number; environment: string } | undefined>('SpacePublish', response);
+    if (result && !(result instanceof Error)) {
       addToast(
         <div>
           Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
         </div>,
         { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
       );
+    } else if (result instanceof Error) {
+      addToast(result.message, {
+        appeareance: 'error',
+        autoDismiss: true,
+        placement: 'top-right'
+      });
     }
   }, [addToast, mutate, showModal]);
 
   const handleClickDeploy = useCallback(async () => {
-    const response = await showModal<{ environment: string; domain: string; revision?: string }>(
+    const response = await showModal<{ environment: string; domain: string; revision?: number }>(
       <Modal.Header>
         <h4>Publish Snapshot</h4>
       </Modal.Header>,
@@ -78,28 +89,31 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
         </Modal.Body>
       )
     );
-    if (response) {
-      setLoadingDeployment(true);
-      const result = (await mutate('SpaceDeploy', response, true)) as { domain: string } | undefined;
-      setLoadingDeployment(false);
-      if (result && !(result instanceof Error)) {
-        addToast(
-          <div>
-            Your snapshot have being published to <b>{result.domain}</b> Successfully
-          </div>,
-          {
-            appeareance: 'success',
-            autoDismiss: true,
-            placement: 'top-right'
-          }
-        );
-      } else if (result instanceof Error) {
-        addToast(result.message, {
-          appeareance: 'error',
+
+    if (!response) {
+      return;
+    }
+
+    setLoadingDeployment(true);
+    const result = await mutate<{ domain: string } | undefined>('SpaceDeploy', response, true);
+    setLoadingDeployment(false);
+    if (result && !(result instanceof Error)) {
+      addToast(
+        <div>
+          Your snapshot have being published to <b>{result.domain}</b> Successfully
+        </div>,
+        {
+          appeareance: 'success',
           autoDismiss: true,
           placement: 'top-right'
-        });
-      }
+        }
+      );
+    } else if (result instanceof Error) {
+      addToast(result.message, {
+        appeareance: 'error',
+        autoDismiss: true,
+        placement: 'top-right'
+      });
     }
   }, [addToast, mutate, showModal]);
 

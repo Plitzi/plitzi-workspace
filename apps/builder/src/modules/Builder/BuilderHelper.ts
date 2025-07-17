@@ -311,7 +311,7 @@ export const processPaste = async (
   }
 
   if (templateData.baseElement) {
-    result = await builderDropElement('add##plitzi-template', templateData, 'inside', elementSelected, baseElementId);
+    result = builderDropElement('add##plitzi-template', templateData, 'inside', elementSelected, baseElementId);
   }
 
   return result;

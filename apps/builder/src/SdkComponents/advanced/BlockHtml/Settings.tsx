@@ -11,7 +11,7 @@ const Settings = ({ content = '', onUpdate }: SettingsProps) => {
   const handleChangeContent = useCallback((value: string) => onUpdate?.('content', value), [onUpdate]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <ElementAdvancedEditor className="grow" value={content} mode="html" onChange={handleChangeContent} />
     </div>
   );

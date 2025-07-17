@@ -62,7 +62,7 @@ const useDragElement = ({ attributes, type, variables }: UseDragElementProps) =>
       }
 
       e.stopPropagation();
-      void eventBridge?.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+      void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
       e.dataTransfer.setDragImage(e.currentTarget, -5, -5);
       e.dataTransfer.setData(
         `add##${sneakCase(element.definition.type)}`,

@@ -1,16 +1,23 @@
 import { createContext } from 'react';
 
 import type Mutations from './Mutations';
+import type Queries from './Queries';
+import type { FetchPolicy } from '@apollo/client/core';
 
 export type NetworkContextValue = {
-  mutate: (
+  mutate: <T = unknown>(
     mutationKey: keyof typeof Mutations,
     variables: Record<string, unknown>,
     silentError?: boolean,
     includeEnvironment?: boolean,
     uploadOptions?: object
-  ) => Promise<unknown>;
-  query: () => Promise<void>;
+  ) => Promise<T>;
+  query: <T = unknown>(
+    queryKey: keyof typeof Queries,
+    variables?: Record<string, unknown>,
+    fetchPolicy?: FetchPolicy,
+    silentError?: boolean
+  ) => Promise<T>;
   subscribe: () => void;
   subscriptionManager: unknown;
   webKey: string;
@@ -43,7 +50,7 @@ const networkContextDefaultValue: NetworkContextValue = {
   userKey: '',
   webId: '',
   environment: ''
-};
+} as NetworkContextValue;
 
 const NetworkContext = createContext(networkContextDefaultValue);
 

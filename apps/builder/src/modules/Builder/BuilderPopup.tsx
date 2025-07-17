@@ -26,7 +26,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
   const handleChange = useCallback((popups: string[]) => setPopupsActiveRight(popups), [setPopupsActiveRight]);
 
   const builderHandler = useCallback(
-    (event: string, data: unknown[]): void => void eventBridge?.emit('segment', event, segment?.id, ...data),
+    (event: string, data: unknown[]): void => void eventBridge.emit('segment', event, segment?.id, ...data),
     [eventBridge, segment?.id]
   );
 

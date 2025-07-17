@@ -5,7 +5,7 @@ import type { EventBridgeContextValue as EventBridgeContextValueShared } from '@
 
 export type EventBridgeContextValue<T = unknown> = EventBridgeContextValueShared<InstanceType<typeof EventBridge<T>>>;
 
-const eventBridgeContextDefaultValue = {};
+const eventBridgeContextDefaultValue = {} as EventBridgeContextValue;
 
 const EventBridgeContext = createContext<EventBridgeContextValue>(eventBridgeContextDefaultValue);
 

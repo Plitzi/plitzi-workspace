@@ -86,7 +86,7 @@ const BuilderProvider = ({
   const builderHandler = useCallback(
     (event: string, ...data: unknown[]) => {
       if (EventBridgeTypesPerModule.builder.includes(event)) {
-        void eventBridge?.emit('builder', event, ...data);
+        void eventBridge.emit('builder', event, ...data);
       } else if (typeof onHandler === 'function') {
         onHandler(event, data);
       }
@@ -278,21 +278,9 @@ const BuilderProvider = ({
     (
       type: string,
       data:
-        | {
-            elements: Record<string, Element>;
-            baseElement?: Element;
-            style: Style;
-            variables: Schema['variables'];
-          }
-        | {
-            id: string;
-            element: Element;
-          }
-        | {
-            id: string;
-            parentId: string;
-            element: Element;
-          },
+        | { elements: Record<string, Element>; baseElement?: Element; style: Style; variables: Schema['variables'] }
+        | { id: string; element: Element }
+        | { id: string; parentId: string; element: Element },
       dropPosition: DropPosition,
       toElementId: string,
       rootId?: string
