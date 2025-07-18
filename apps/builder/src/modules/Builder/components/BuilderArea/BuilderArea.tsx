@@ -1,79 +1,71 @@
-// Packages
-import React, { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
-import get from 'lodash/get';
+import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
+import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
+import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
-import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
-import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
-import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
+import get from 'lodash/get';
+import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-
-// Alias
-import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
-import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import CollectionContext from '@pmodules/Collection/CollectionContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
+import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
+import CollectionContext from '@pmodules/Collection/CollectionContext';
+import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 
-// Relatives
-import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaFooter from './BuilderAreaFooter';
-import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
-import BuilderAreaTracking from './BuilderAreaTracking';
+import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
+import BuilderAreaTracking from './BuilderAreaTracking';
 import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
+import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
-// Style
-import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../Assets/index-iframe.scss'; // eslint-disable-line
-import styleTailwind from '!!css-loader!postcss-loader!sass-loader!../../Assets/index-iframe-tailwind.scss'; // eslint-disable-line
+import type { ComponentPlugin, DisplayMode } from '@plitzi/sdk-shared';
 
-// SDK Style
-import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // eslint-disable-line
+import styleTailwind from '!!css-loader!postcss-loader!sass-loader!../../Assets/index-iframe-tailwind.scss';
+import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../Assets/index-iframe.scss';
+import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // SDK Styles
 
-/**
- * @param {{
- *   className?: string;
- *   customCss?: string;
- *   externalStyle?: string;
- *   displayMode?: 'desktop' | 'tablet' | 'mobile';
- *   showHeader?: boolean;
- *   headerTitle?: string;
- *   showFooter?: boolean;
- *   mobilePreview?: boolean;
- *   previewMode?: boolean;
- *   debugMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderArea = props => {
-  const {
-    className = '',
-    customCss = '',
-    externalStyle = '',
-    displayMode = 'desktop',
-    showHeader = true,
-    headerTitle = '',
-    showFooter = true,
-    mobilePreview = false,
-    previewMode = false,
-    debugMode = false
-  } = props;
+export type BuilderAreaProps = {
+  className?: string;
+  customCss?: string;
+  externalStyle?: string;
+  displayMode?: DisplayMode;
+  showHeader?: boolean;
+  headerTitle?: string;
+  showFooter?: boolean;
+  mobilePreview?: boolean;
+  previewMode?: boolean;
+  debugMode?: boolean;
+};
+
+const BuilderArea = ({
+  className = '',
+  customCss = '',
+  externalStyle = '',
+  displayMode = 'desktop',
+  showHeader = true,
+  headerTitle = '',
+  showFooter = true,
+  mobilePreview = false,
+  previewMode = false,
+  debugMode = false
+}: BuilderAreaProps) => {
   const { assets } = use(PluginsContext);
   const {
     multiPagesMode,
@@ -86,16 +78,17 @@ const BuilderArea = props => {
     style: { cache }
   } = use(BuilderStyleContext);
   const { useDataSource } = use(DataSourceContext);
-  const { variables } = useDataSource({ id: '', mode: 'read' });
+  // @todo: variables should be only related to styles
+  const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
   const css = useMemo(() => {
     const cssVariables = variablesToCss(variables);
 
-    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${`${cache}\n${customCss}`}\n${externalStyle}`;
+    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cache}\n${customCss}\n${externalStyle}`;
   }, [customCss, cache, externalStyle, variables]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const [dragTree, setDragTreeState] = useState(false);
-  const ref = useRef(null);
-  const refContainer = useRef(null);
+  const ref = useRef<HTMLIFrameElement>(null);
+  const refContainer = useRef<HTMLDivElement>(null);
   const [widthArea, setWidthArea] = useState(0);
   const [heightArea, setHeightArea] = useState(0);
   const [iframeScaleX, setIframeScaleX] = useState(1);
@@ -105,7 +98,7 @@ const BuilderArea = props => {
   const { schema, builderGetBaseElement } = use(BuilderSchemaContext);
   const { rootDOM } = use(ContainerRootContext);
 
-  const callbackRefresh = () => {
+  const callbackRefresh = useCallback(() => {
     if (!refContainer.current || !ref.current) {
       return;
     }
@@ -144,9 +137,9 @@ const BuilderArea = props => {
     setWidthArea(widthArea);
     setHeightArea(elementDOM.offsetHeight);
     setIframeScaleX(iframeScaleX);
-  };
+  }, [displayMode, desiredWidth, multiPagesMode]);
 
-  const callbackRefreshDebounced = useMemo(() => debounce(callbackRefresh, 50), [displayMode]);
+  const callbackRefreshDebounced = useMemo(() => debounce(callbackRefresh, 50), [callbackRefresh]);
 
   const getWindow = useCallback(() => {
     if (ref.current) {
@@ -158,13 +151,13 @@ const BuilderArea = props => {
     }
 
     // @todo: Hmm what to put here
-    return { innerWidth: 1440, innerHeight: 900 };
-  }, [ref]);
+    return { innerWidth: 1440, innerHeight: 900 } as Window;
+  }, []);
 
   useEffect(() => {
-    let observer;
+    let observer: ResizeObserver | undefined;
     if (refContainer.current) {
-      const observer = new window.ResizeObserver(callbackRefreshDebounced);
+      observer = new window.ResizeObserver(callbackRefreshDebounced);
       observer.observe(refContainer.current);
     }
 
@@ -173,27 +166,15 @@ const BuilderArea = props => {
         observer.disconnect();
       }
 
-      if (callbackRefreshDebounced) {
-        callbackRefreshDebounced.cancel();
-      }
+      callbackRefreshDebounced.cancel();
     };
   }, [callbackRefreshDebounced]);
 
-  const setDragTree = useCallback(newDragTree => {
-    if (dragTree !== newDragTree) {
-      setDragTreeState(newDragTree);
-    }
-  }, []);
-
-  const handleDragOver = useCallback(() => {
-    if (dragTree) {
-      setDragTreeState(false);
-    }
-  }, [setDragTreeState, dragTree]);
+  const setDragTree = useCallback((newDragTree: boolean) => setDragTreeState(newDragTree), []);
 
   const baseElement = builderGetBaseElement(baseElementId);
   const baseElementData = get(baseElement, 'data');
-  const Plugin = get(baseElement, 'Plugin');
+  const Plugin = get(baseElement, 'Plugin') as ComponentPlugin | undefined;
 
   const plitziContextValue = useMemo(
     () => ({
@@ -217,25 +198,7 @@ const BuilderArea = props => {
         BuilderContext
       }
     }),
-    [
-      PluginsContext,
-      DataSourceContext,
-      currentPageId,
-      previewMode,
-      baseElementId,
-      ComponentContext,
-      getWindow,
-      displayBorderComponents,
-      SchemaContext,
-      SegmentsContext,
-      CollectionContext,
-      NavigationContext,
-      NetworkContext,
-      StateManagerContext,
-      InteractionsContext,
-      EventBridgeContext,
-      BuilderContext
-    ]
+    [previewMode, debugMode, currentPageId, baseElementId, displayBorderComponents, getWindow, rootDOM]
   );
 
   const schemaValueMemo = useMemo(() => ({ schema }), [schema]);
@@ -294,7 +257,6 @@ const BuilderArea = props => {
             {Plugin && (
               <>
                 <BuilderAreaTracking
-                  onDragOver={handleDragOver}
                   iframeScaleX={iframeScaleX}
                   className="builder-iframe"
                   isActive={iframeActive}
@@ -340,9 +302,10 @@ const BuilderArea = props => {
                     ))}
                 </BuilderAreaTracking>
                 <ContainerShadow>
-                  {assets &&
-                    Object.values(assets).map((asset, i) => (
-                      <ContainerShadow.Link key={i} href={asset?.params?.href} />
+                  {Object.values(assets)
+                    .filter(asset => asset.type === 'link')
+                    .map((asset, i) => (
+                      <ContainerShadow.Link key={i} href={asset.params.href} />
                     ))}
                   <ContainerShadow.Content>
                     <style>{styleTailwind[0][1]}</style>

@@ -131,7 +131,7 @@ const BuilderProvider = ({
   ) as BuilderContextValue['builderElementPermissions'];
 
   const setSelected = useCallback(
-    (elementId?: string, iframeDOM: HTMLIFrameElement | undefined = undefined, force = false) => {
+    (elementId?: string, iframeDOM?: HTMLIFrameElement | null, force = false) => {
       setElementSelected(state => {
         if (force) {
           setSelectorSelected(undefined);

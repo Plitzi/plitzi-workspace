@@ -20,7 +20,7 @@ export type PlitziServiceContextValue = {
   settings: { previewMode?: boolean; environment?: string; [key: string]: unknown };
   root: { baseElementId: string };
   utils: {
-    getWindow: () => Window;
+    getWindow: () => Window | null;
     rootDOM?: HTMLElement | null;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

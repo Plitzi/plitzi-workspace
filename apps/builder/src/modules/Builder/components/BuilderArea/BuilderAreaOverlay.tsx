@@ -8,7 +8,7 @@ import BuilderOverlayDistance from '../BuilderOverlay/BuilderOverlayDistance';
 import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 
 export type BuilderAreaOverlayProps = {
-  iframeDOM?: HTMLIFrameElement;
+  iframeDOM?: HTMLIFrameElement | null;
   baseElementId?: string;
   dragTree?: boolean;
   zoom?: number;

@@ -22,7 +22,7 @@ import type { Element } from '@plitzi/sdk-shared';
 
 export type BuilderAreaHeaderProps = {
   baseElementId: string;
-  element: Element;
+  element?: Element;
   isActive?: boolean;
   headerTitle?: string;
   previewMode?: boolean;

@@ -62,12 +62,8 @@ export type PluginBuilder = {
 };
 
 export type Asset =
-  | {
-      id: string;
-      type: 'link';
-      params: { href: string; type: 'text/css'; rel: 'stylesheet' } & Record<string, unknown>;
-    }
-  | { id: string; type: 'script'; params: { src: string; type: 'text/javascript' } & Record<string, unknown> };
+  | { id: string; type: 'link'; params: { href: string; type: 'text/css'; rel: 'stylesheet' } & Record<string, string> }
+  | { id: string; type: 'script'; params: { src: string; type: 'text/javascript' } & Record<string, string> };
 
 export type Plugin = {
   assets: Pick<ManifestAsset, 'type' | 'url'>[];
@@ -87,7 +83,7 @@ export type Plugin = {
 
 export type PluginsContextValue = {
   baseAssets?: Record<string, Asset>;
-  assets?: Record<string, Asset>;
+  assets: Record<string, Asset>;
   plugins: Record<string, Plugin>;
   dispatchPlugins?: unknown;
   fetch?: unknown;

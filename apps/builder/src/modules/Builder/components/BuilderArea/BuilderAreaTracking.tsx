@@ -24,7 +24,7 @@ import type { MouseEvent, ReactNode } from 'react';
 export type BuilderAreaTrackingProps = {
   children?: ReactNode;
   className?: string;
-  iframeDOM?: HTMLIFrameElement;
+  iframeDOM?: HTMLIFrameElement | null;
   isActive?: boolean;
   iframeScaleX?: number;
   previewMode?: boolean;
