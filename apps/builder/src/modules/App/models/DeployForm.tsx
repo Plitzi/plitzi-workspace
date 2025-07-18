@@ -67,13 +67,16 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchEnvironment]);
 
-  const handleSubmitInternal = (values: z.infer<typeof deployFormSchema>) => {
-    if (values.revision) {
-      onSubmit?.(values);
-    } else {
-      onSubmit?.({ ...values, revision: 0 });
-    }
-  };
+  const handleSubmitInternal = useCallback(
+    (values: z.infer<typeof deployFormSchema>) => {
+      if (values.revision) {
+        onSubmit?.(values);
+      } else {
+        onSubmit?.({ ...values, revision: 0 });
+      }
+    },
+    [onSubmit]
+  );
 
   const fetch = useCallback(async () => {
     setLoading(true);
