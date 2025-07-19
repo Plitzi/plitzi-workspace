@@ -1,34 +1,33 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
 import get from 'lodash/get';
+import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
-/**
- * @param {{
- *   id?: string;
- *   hoverRemove?: boolean;
- *   selector?: string;
- *   hasItems?: boolean;
- *   iframeDOM?: object;
- *   elementDOM?: object;
- *   displayMode?: 'desktop' | 'tablet' | 'mobile';
- *   zoom?: number;
- * }} props
- * @returns {React.ReactElement}
- */
-const OverlaySpacing = props => {
-  const {
-    id = '',
-    hoverRemove = false,
-    selector,
-    hasItems = false,
-    iframeDOM,
-    elementDOM,
-    displayMode = 'desktop',
-    zoom = 1
-  } = props;
-  const [rawStyle, setRawStyle] = useState({});
+import type { DisplayMode } from '@plitzi/sdk-shared';
+
+export type OverlaySpacingProps = {
+  id?: string;
+  hoverRemove?: boolean;
+  selector?: string;
+  hasItems?: boolean;
+  iframeDOM?: HTMLIFrameElement | null;
+  elementDOM?: HTMLElement | null;
+  displayMode?: DisplayMode;
+  zoom?: number;
+};
+
+const OverlaySpacing = ({
+  id = '',
+  hoverRemove = false,
+  selector,
+  hasItems = false,
+  iframeDOM,
+  elementDOM,
+  displayMode = 'desktop',
+  zoom = 1
+}: OverlaySpacingProps) => {
+  const [rawStyle, setRawStyle] = useState<Partial<CSSStyleDeclaration> | undefined>({});
   const { style } = use(BuilderStyleContext);
   const elementStyle = useMemo(() => {
     if (!selector) {
@@ -38,21 +37,22 @@ const OverlaySpacing = props => {
     return get(style, `platform.${displayMode}.${selector}.attributes`, {});
   }, [style, displayMode, selector]);
 
-  const getStyle = () => {
+  const getStyle = useCallback(() => {
     if (!elementDOM) {
-      return [];
+      return undefined;
     }
 
     if (iframeDOM) {
-      return iframeDOM.contentWindow.getComputedStyle(elementDOM);
+      return iframeDOM.contentWindow?.getComputedStyle(elementDOM);
     }
 
     return window.getComputedStyle(elementDOM);
-  };
+  }, [elementDOM, iframeDOM]);
 
   useEffect(() => {
     setRawStyle(getStyle());
   }, [
+    getStyle,
     id,
     elementStyle['margin-top'],
     elementStyle['margin-bottom'],
@@ -64,7 +64,7 @@ const OverlaySpacing = props => {
     elementStyle['padding-right']
   ]);
 
-  const calculateWidth = useCallback((distance, mode = 'rest', correction = '0px') => {
+  const calculateWidth = useCallback((distance?: string, mode = 'rest', correction = '0px') => {
     if (distance === '0px') {
       return '0px';
     }
@@ -78,7 +78,7 @@ const OverlaySpacing = props => {
 
   const calculateSpacingMemo = useMemo(() => {
     const { marginTop, marginBottom, marginLeft, marginRight, paddingTop, paddingBottom, paddingLeft, paddingRight } =
-      rawStyle;
+      rawStyle ?? {};
 
     const overlayCorrection = '2px';
 
