@@ -12,3 +12,8 @@ declare module '!!css-loader!postcss-loader!sass-loader!../../Assets/index-ifram
   const content: [string[], () => void];
   export default content;
 }
+
+declare module '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss' {
+  const content: [string[], () => void];
+  export default content;
+}

@@ -17,10 +17,10 @@ import type { Context, ReactNode } from 'react';
 
 export type DataSourceContextProviderProps = {
   children: ReactNode;
-  environment: string;
+  environment?: 'main' | 'production' | 'development' | 'staging';
 };
 
-const DataSourceContextProvider = ({ children, environment }: DataSourceContextProviderProps) => {
+const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourceContextProviderProps) => {
   const sourcesRef = useRef<Record<string, Source>>({});
   const initRef = useRef(false);
 

@@ -1,47 +1,45 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
-import get from 'lodash/get';
-import classNames from 'classnames';
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
+import classNames from 'classnames';
+import get from 'lodash/get';
+import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss'; // Style
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-
-// Alias
-import NetworkContext from '@pmodules/Network/NetworkContext';
-import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 import AppContext from '@pmodules/App/AppContext';
+import CollectionContext from '@pmodules/Collection/CollectionContext';
+import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
-// Style
-import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss';
+import type { Schema } from '@plitzi/sdk-shared';
 
-// SDK Style
-import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // eslint-disable-line
+import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // SDK Style
 
-/**
- * @param {{
- *   id?: string;
- *   className?: string;
- *   previewMode?: boolean;
- *   schema?: object;
- *   styleCache?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderAreaPreview = props => {
-  const { id = '', className = '', previewMode = false, schema = emptyObject, styleCache = '' } = props;
-  const { settings, flat } = schema;
+export type BuilderAreaPreviewProps = {
+  id?: string;
+  className?: string;
+  previewMode?: boolean;
+  schema?: Schema;
+  styleCache?: string;
+};
+
+const BuilderAreaPreview = ({
+  id = '',
+  className = '',
+  previewMode = false,
+  schema,
+  styleCache = ''
+}: BuilderAreaPreviewProps) => {
+  const { settings, flat } = schema ?? {};
   const { displayBorderComponents } = use(AppContext);
 
   const getWindow = useCallback(() => {
@@ -50,7 +48,7 @@ const BuilderAreaPreview = props => {
     }
 
     // @todo: Hmm what to put here
-    return { innerWidth: 1440, innerHeight: 900 };
+    return { innerWidth: 1440, innerHeight: 900 } as Window;
   }, []);
 
   const plitziContextValue = useMemo(
@@ -60,6 +58,8 @@ const BuilderAreaPreview = props => {
       utils: { getWindow },
       customContexts: {},
       contexts: {
+        CollectionContext,
+        ComponentContext,
         PluginsContext,
         DataSourceContext,
         SchemaContext,
@@ -71,18 +71,7 @@ const BuilderAreaPreview = props => {
         EventBridgeContext
       }
     }),
-    [
-      settings,
-      PluginsContext,
-      DataSourceContext,
-      SchemaContext,
-      NetworkContext,
-      NavigationContext,
-      StateManagerContext,
-      InteractionsContext,
-      SegmentsContext,
-      EventBridgeContext
-    ]
+    [previewMode, settings, id, getWindow]
   );
 
   const css = useMemo(() => {
@@ -93,11 +82,11 @@ const BuilderAreaPreview = props => {
 
   const { components } = use(ComponentContext);
   const element = useMemo(() => get(flat, id), [id, flat]);
-  const Plugin = useMemo(() => get(components, get(element, 'definition.type')), [components, element]);
+  const Plugin = useMemo(() => element && get(components, get(element, 'definition.type')), [components, element]);
   const internalProps = useMemo(() => ({ id, rootId: id }), [id]);
 
   return (
-    <ContainerFrame className={classNames('flex builder-area', className)} css={css}>
+    <ContainerFrame className={classNames('builder-area flex', className)} css={css}>
       <PlitziServiceProvider value={plitziContextValue}>
         <DataSourceContextProvider>
           <InteractionsBuilderContextProvider>
