@@ -1,52 +1,45 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
-import classNames from 'classnames';
-import noop from 'lodash/noop';
-import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
+import classNames from 'classnames';
+import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-
-// Alias
-import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
-import TemplatesContext from '@pmodules/Templates/TemplatesContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import SegmentForm from '@pmodules/Segments/models/SegmentForm';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
+import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
+import TemplatesContext from '@pmodules/Templates/TemplatesContext';
 
-// Relatives
 import OverlayButton from './OverlayButton';
 import BuilderElementTools from '../BuilderElementTools';
 
-/**
- * @param {{
- *   id?: string;
- *   element: object;
- *   container?: object;
- *   width?: number;
- *   hoverRemove?: boolean;
- *   zoom?: number;
- *   onHoverRemove?: (hoverRemove: boolean) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const OverlayButtonContainer = props => {
-  const {
-    id = '',
-    element,
-    container = emptyObject,
-    width = 250,
-    hoverRemove = false,
-    zoom = 1,
-    onHoverRemove = noop
-  } = props;
-  const { width: containerWidth, height, x, y, innerHeight, innerWidth } = container;
+import type { OverlayRect } from './BuilderOverlayHelper';
+import type { Element } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
+
+export type OverlayButtonContainerProps = {
+  id?: string;
+  element: Element;
+  container?: OverlayRect;
+  width?: number;
+  hoverRemove?: boolean;
+  zoom?: number;
+  onHoverRemove?: (hoverRemove: boolean) => void;
+};
+
+const OverlayButtonContainer = ({
+  id = '',
+  element,
+  container,
+  width = 250,
+  hoverRemove = false,
+  zoom = 1,
+  onHoverRemove
+}: OverlayButtonContainerProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
@@ -65,12 +58,12 @@ const OverlayButtonContainer = props => {
 
   const { canDelete = true, canTemplate = true } = componentConfig;
 
-  const handleMouseRemoveEnter = () => onHoverRemove(true);
+  const handleMouseRemoveEnter = useCallback(() => onHoverRemove?.(true), [onHoverRemove]);
 
-  const handleMouseRemoveLeave = () => onHoverRemove(false);
+  const handleMouseRemoveLeave = useCallback(() => onHoverRemove?.(false), [onHoverRemove]);
 
   const handleClickRemove = useCallback(
-    async e => {
+    (e: MouseEvent) => {
       e.stopPropagation();
       if (id === elementSelected) {
         setSelected(undefined);
@@ -96,7 +89,7 @@ const OverlayButtonContainer = props => {
   }, [addPopup, existsPopup, mode]);
 
   const handleClickAsTemplate = async () => {
-    const response = await showModal(
+    const response = await showModal<{ name: string; description: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -109,7 +102,7 @@ const OverlayButtonContainer = props => {
 
     if (response) {
       const { name, description } = response;
-      builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
+      void builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
       addToast(
         <div>
           Template <b>{name}</b> Created
@@ -124,7 +117,7 @@ const OverlayButtonContainer = props => {
   };
 
   const handleClickAsSegment = async () => {
-    const response = await showModal(
+    const response = await showModal<{ name: string; description: string }>(
       <Modal.Header>
         <h4>Add Segment</h4>
       </Modal.Header>,
@@ -137,7 +130,7 @@ const OverlayButtonContainer = props => {
 
     if (response) {
       const { name, description } = response;
-      builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
+      void builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
       addToast(
         <div>
           Segment <b>{name}</b> Created
@@ -151,11 +144,14 @@ const OverlayButtonContainer = props => {
     }
   };
 
-  const handleMouseEnter = useCallback(() => {
-    setHovered(null);
-  }, [setHovered]);
+  const handleMouseEnter = useCallback(() => setHovered(undefined), [setHovered]);
 
   const actionsPosition = useMemo(() => {
+    if (!container) {
+      return 'bottom';
+    }
+
+    const { width: containerWidth, height, x, y, innerHeight, innerWidth } = container;
     // Inside
     if (y + height + 40 > innerHeight && y < 40 && containerWidth > width) {
       return 'bottom-inside';
@@ -184,7 +180,7 @@ const OverlayButtonContainer = props => {
     }
 
     return 'bottom';
-  }, [height, width, innerHeight, innerWidth, x, y, containerWidth, zoom]);
+  }, [container, width]);
 
   const containerStyles = useMemo(() => {
     let transformOrigin = '';

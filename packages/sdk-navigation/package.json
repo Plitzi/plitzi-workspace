@@ -18,6 +18,7 @@
   },
   "scripts": {
     "lint": "eslint ./src",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest",

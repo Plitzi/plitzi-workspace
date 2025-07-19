@@ -32,6 +32,10 @@
       "dependsOn": ["^lint-style:fix"],
       "cache": false
     },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "cache": false
+    },
     "build-assets:dev": {
       "dependsOn": ["^build-assets:dev"],
       "cache": false,

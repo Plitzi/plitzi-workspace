@@ -35,6 +35,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint ./src",
+    "typecheck": "tsc --noEmit",
     "build-assets:dev": "tsc -p ./tsconfig.app.json && vite build --mode development --minify false",
     "build-assets:dev-watch": "tsc -p ./tsconfig.app.json && vite build --mode development --watch --minify false",
     "build-assets:prod": "tsc -p ./tsconfig.app.json && vite build"

@@ -1,9 +1,58 @@
-const processContainer = (elementDOM, iframeDOM, zoom) => {
+export type OverlayDistanceRect = {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+};
+
+export type OverlayRect = {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  scrollX: number;
+  scrollY: number;
+  innerHeight: number;
+  innerWidth: number;
+  rounded: {
+    width: number;
+    height: number;
+  };
+};
+
+export type ContainerPlacement = 'top' | 'bottom' | 'left' | 'right';
+
+export type OverlayQuadrant = {
+  placement: ContainerPlacement;
+  isCentered: boolean;
+  isOverlaped: boolean;
+};
+
+export type OverlayPosition = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
+export type OverlayDistance = {
+  placement: ContainerPlacement;
+  position: OverlayPosition;
+  value: number;
+  isCentered?: boolean;
+  isOverlaped?: boolean;
+};
+
+const processContainer = (elementDOM?: HTMLElement, iframeDOM?: HTMLIFrameElement, zoom: number = 1) => {
   let scrollY = 0;
   let scrollX = 0;
   let innerHeight = 0;
   let innerWidth = 0;
-  if (iframeDOM) {
+  if (iframeDOM && iframeDOM.contentWindow) {
     ({ scrollY, innerHeight, innerWidth } = iframeDOM.contentWindow);
     const [{ scrollLeft, scrollTop }] = iframeDOM.contentWindow.document.getElementsByClassName('builder-iframe');
     if (scrollLeft !== 0 && scrollX === 0) {
@@ -39,7 +88,11 @@ const processContainer = (elementDOM, iframeDOM, zoom) => {
   };
 };
 
-const processContainerDistance = (elementDOM, iframeDOM, zoom) => {
+const processContainerDistance = (
+  elementDOM?: HTMLElement,
+  iframeDOM?: HTMLIFrameElement,
+  zoom: number = 1
+): OverlayDistanceRect | undefined => {
   if (!elementDOM) {
     return;
   }
@@ -63,17 +116,18 @@ const processContainerDistance = (elementDOM, iframeDOM, zoom) => {
   };
 };
 
-// Distance - Helpers
+// OverlayDistance - Helpers
 
 const borderSize = 2;
 
-const PLACEMENT_TOP = 'top';
-const PLACEMENT_BOTTOM = 'bottom';
-const PLACEMENT_LEFT = 'left';
-const PLACEMENT_RIGHT = 'right';
-const placements = [PLACEMENT_TOP, PLACEMENT_BOTTOM, PLACEMENT_LEFT, PLACEMENT_RIGHT];
+const placements: ContainerPlacement[] = ['top', 'bottom', 'left', 'right'];
 
-const calculateIsOverlaped = (rectSelected, rectHovered, placement, fullOverlapping = false) => {
+const calculateIsOverlaped = (
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  placement: ContainerPlacement,
+  fullOverlapping = false
+) => {
   const overlapLeft = Math.max(rectSelected.left, rectHovered.left);
   const overlapRight = Math.min(rectSelected.right, rectHovered.right);
   const overlapTop = Math.max(rectSelected.top, rectHovered.top);
@@ -84,46 +138,50 @@ const calculateIsOverlaped = (rectSelected, rectHovered, placement, fullOverlapp
     isOverlapping = overlapLeft < overlapRight && overlapTop < overlapBottom;
   } else {
     isOverlapping =
-      (overlapLeft < overlapRight && [PLACEMENT_LEFT, PLACEMENT_RIGHT].includes(placement)) ||
-      (overlapTop < overlapBottom && [PLACEMENT_TOP, PLACEMENT_BOTTOM].includes(placement));
+      (overlapLeft < overlapRight && ['left', 'right'].includes(placement)) ||
+      (overlapTop < overlapBottom && ['top', 'bottom'].includes(placement));
   }
 
   return isOverlapping;
 };
 
-const calculateQuadrants = (rectSelected, rectHovered, isInside = false) => {
-  const quadrants = {};
-  const isOverlapedTop = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_TOP);
+const calculateQuadrants = (
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  isInside: boolean = false
+) => {
+  const quadrants: Partial<Record<ContainerPlacement, OverlayQuadrant>> = {};
+  const isOverlapedTop = calculateIsOverlaped(rectSelected, rectHovered, 'top');
   if (rectSelected.centerY > rectHovered.bottom || isOverlapedTop || isInside) {
-    quadrants[PLACEMENT_TOP] = {
-      placement: PLACEMENT_TOP,
+    quadrants.top = {
+      placement: 'top',
       isCentered: rectSelected.centerX === rectHovered.centerX,
       isOverlaped: isOverlapedTop && !isInside
     };
   }
 
-  const isOverlapedBottom = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_BOTTOM);
+  const isOverlapedBottom = calculateIsOverlaped(rectSelected, rectHovered, 'bottom');
   if (rectSelected.centerY < rectHovered.centerY || isOverlapedBottom || isInside) {
-    quadrants[PLACEMENT_BOTTOM] = {
-      placement: PLACEMENT_BOTTOM,
+    quadrants.bottom = {
+      placement: 'bottom',
       isCentered: rectSelected.centerX === rectHovered.centerX,
       isOverlaped: isOverlapedBottom && !isInside
     };
   }
 
-  const isOverlapedLeft = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_LEFT);
+  const isOverlapedLeft = calculateIsOverlaped(rectSelected, rectHovered, 'left');
   if (rectSelected.centerX > rectHovered.left || isOverlapedLeft || isInside) {
-    quadrants[PLACEMENT_LEFT] = {
-      placement: PLACEMENT_LEFT,
+    quadrants.left = {
+      placement: 'left',
       isCentered: rectSelected.centerY === rectHovered.centerY,
       isOverlaped: isOverlapedLeft && !isInside
     };
   }
 
-  const isOverlapedRight = calculateIsOverlaped(rectSelected, rectHovered, PLACEMENT_RIGHT);
+  const isOverlapedRight = calculateIsOverlaped(rectSelected, rectHovered, 'right');
   if (rectSelected.centerX < rectHovered.right || isOverlapedRight || isInside) {
-    quadrants[PLACEMENT_RIGHT] = {
-      placement: PLACEMENT_RIGHT,
+    quadrants.right = {
+      placement: 'right',
       isCentered: rectSelected.centerY === rectHovered.centerY,
       isOverlaped: isOverlapedRight && !isInside
     };
@@ -132,7 +190,7 @@ const calculateQuadrants = (rectSelected, rectHovered, isInside = false) => {
   return quadrants;
 };
 
-const calculateIsInside = (rectSelected, rectHovered) =>
+const calculateIsInside = (rectSelected: OverlayDistanceRect, rectHovered: OverlayDistanceRect) =>
   rectSelected.left >= rectHovered.left &&
   rectSelected.right <= rectHovered.right &&
   rectSelected.top >= rectHovered.top &&
@@ -140,13 +198,18 @@ const calculateIsInside = (rectSelected, rectHovered) =>
 
 const calculateDelta = (position1 = 0, position2 = 0, absolute = true) => {
   if (absolute) {
-    return parseFloat(Math.abs(position1 - position2));
+    return parseFloat(Math.abs(position1 - position2).toString());
   }
 
-  return parseFloat(position1 - position2);
+  return parseFloat((position1 - position2).toString());
 };
 
-const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside = false) => {
+const calculateDeltaVariation = (
+  rectSelected?: OverlayDistanceRect,
+  rectHovered?: OverlayDistanceRect,
+  placement?: ContainerPlacement,
+  isInside: boolean = false
+) => {
   if (!rectSelected || !rectHovered) {
     return 0;
   }
@@ -159,8 +222,8 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
   }
 
   switch (placement) {
-    case PLACEMENT_TOP:
-    case PLACEMENT_BOTTOM:
+    case 'top':
+    case 'bottom':
       delta1 = calculateDelta(rectSelected.centerX, rectHovered.left);
       delta2 = calculateDelta(rectSelected.centerX, rectHovered.right);
       if (rectSelected.centerY <= rectHovered.right && rectSelected.centerY >= rectHovered.left) {
@@ -172,8 +235,8 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
       }
 
       break;
-    case PLACEMENT_LEFT:
-    case PLACEMENT_RIGHT:
+    case 'left':
+    case 'right':
       delta1 = calculateDelta(rectSelected.centerY, rectHovered.top);
       delta2 = calculateDelta(rectSelected.centerY, rectHovered.bottom);
       if (rectSelected.centerY <= rectHovered.bottom && rectSelected.centerY >= rectHovered.top) {
@@ -196,25 +259,25 @@ const calculateDeltaVariation = (rectSelected, rectHovered, placement, isInside 
   return delta;
 };
 
-// Distance
+// OverlayDistance
 
 const calculateDistanceTop = (
-  rectSelected,
-  rectHovered,
-  value,
-  sameQuadrant = false,
-  isOverlaped = false,
-  isInside = false
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  sameQuadrant: boolean = false,
+  isOverlaped: boolean = false,
+  isInside: boolean = false
 ) => {
   if (sameQuadrant && !isOverlaped) {
-    value = value - rectHovered?.height;
+    value = value - rectHovered.height;
   }
 
   if (rectSelected.top < rectHovered.top) {
     return {
       position: {
         top: rectHovered.top - value,
-        left: rectHovered.centerX + calculateDeltaVariation(rectHovered, rectSelected, PLACEMENT_TOP, isInside),
+        left: rectHovered.centerX + calculateDeltaVariation(rectHovered, rectSelected, 'top', isInside),
         width: borderSize,
         height: value
       },
@@ -225,7 +288,7 @@ const calculateDistanceTop = (
   return {
     position: {
       top: rectSelected.top - value,
-      left: rectSelected.centerX + calculateDeltaVariation(rectSelected, rectHovered, PLACEMENT_TOP, isInside),
+      left: rectSelected.centerX + calculateDeltaVariation(rectSelected, rectHovered, 'top', isInside),
       width: borderSize,
       height: value
     },
@@ -234,22 +297,22 @@ const calculateDistanceTop = (
 };
 
 const calculateDistanceBottom = (
-  rectSelected,
-  rectHovered,
-  value,
-  sameQuadrant = false,
-  isOverlaped = false,
-  isInside = false
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  sameQuadrant: boolean = false,
+  isOverlaped: boolean = false,
+  isInside: boolean = false
 ) => {
   if (sameQuadrant && !isOverlaped) {
-    value = value - rectHovered?.height;
+    value = value - rectHovered.height;
   }
 
   if (rectSelected.bottom > rectHovered.bottom) {
     return {
       position: {
         top: rectHovered.bottom,
-        left: rectHovered.centerX + calculateDeltaVariation(rectHovered, rectSelected, PLACEMENT_BOTTOM, isInside),
+        left: rectHovered.centerX + calculateDeltaVariation(rectHovered, rectSelected, 'bottom', isInside),
         width: borderSize,
         height: value
       },
@@ -260,7 +323,7 @@ const calculateDistanceBottom = (
   return {
     position: {
       top: rectSelected.bottom,
-      left: rectSelected.centerX + calculateDeltaVariation(rectSelected, rectHovered, PLACEMENT_BOTTOM, isInside),
+      left: rectSelected.centerX + calculateDeltaVariation(rectSelected, rectHovered, 'bottom', isInside),
       width: borderSize,
       height: value
     },
@@ -269,21 +332,21 @@ const calculateDistanceBottom = (
 };
 
 const calculateDistanceLeft = (
-  rectSelected,
-  rectHovered,
-  value,
-  sameQuadrant = false,
-  isOverlaped = false,
-  isInside = false
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  sameQuadrant: boolean = false,
+  isOverlaped: boolean = false,
+  isInside: boolean = false
 ) => {
   if (sameQuadrant && !isOverlaped) {
-    value = value - rectHovered?.width;
+    value = value - rectHovered.width;
   }
 
   if (rectSelected.left < rectHovered.left) {
     return {
       position: {
-        top: rectHovered.centerY + calculateDeltaVariation(rectHovered, rectSelected, PLACEMENT_LEFT, isInside),
+        top: rectHovered.centerY + calculateDeltaVariation(rectHovered, rectSelected, 'left', isInside),
         left: rectSelected.left,
         width: value,
         height: borderSize
@@ -294,7 +357,7 @@ const calculateDistanceLeft = (
 
   return {
     position: {
-      top: rectSelected.centerY + calculateDeltaVariation(rectSelected, rectHovered, PLACEMENT_LEFT, isInside),
+      top: rectSelected.centerY + calculateDeltaVariation(rectSelected, rectHovered, 'left', isInside),
       left: rectSelected.left - value,
       width: value,
       height: borderSize
@@ -304,21 +367,21 @@ const calculateDistanceLeft = (
 };
 
 const calculateDistanceRight = (
-  rectSelected,
-  rectHovered,
-  value,
-  sameQuadrant = false,
-  isOverlaped = false,
-  isInside = false
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  sameQuadrant: boolean = false,
+  isOverlaped: boolean = false,
+  isInside: boolean = false
 ) => {
   if (sameQuadrant && !isOverlaped) {
-    value = value - rectHovered?.width;
+    value = value - rectHovered.width;
   }
 
   if (rectSelected.right > rectHovered.right) {
     return {
       position: {
-        top: rectHovered.centerY + calculateDeltaVariation(rectHovered, rectSelected, PLACEMENT_RIGHT, isInside),
+        top: rectHovered.centerY + calculateDeltaVariation(rectHovered, rectSelected, 'right', isInside),
         left: rectHovered.right,
         width: value,
         height: borderSize
@@ -329,7 +392,7 @@ const calculateDistanceRight = (
 
   return {
     position: {
-      top: rectSelected.centerY + calculateDeltaVariation(rectSelected, rectHovered, PLACEMENT_RIGHT, isInside),
+      top: rectSelected.centerY + calculateDeltaVariation(rectSelected, rectHovered, 'right', isInside),
       left: rectSelected.right,
       width: value,
       height: borderSize
@@ -338,28 +401,44 @@ const calculateDistanceRight = (
   };
 };
 
-const distanceFn = {
-  [PLACEMENT_TOP]: calculateDistanceTop,
-  [PLACEMENT_BOTTOM]: calculateDistanceBottom,
-  [PLACEMENT_LEFT]: calculateDistanceLeft,
-  [PLACEMENT_RIGHT]: calculateDistanceRight
+const distanceFn: Record<
+  ContainerPlacement,
+  (
+    rectSelected: OverlayDistanceRect,
+    rectHovered: OverlayDistanceRect,
+    value: number,
+    sameQuadrant?: boolean,
+    isOverlaped?: boolean,
+    isInside?: boolean
+  ) => { position: OverlayPosition; value: number }
+> = {
+  top: calculateDistanceTop,
+  bottom: calculateDistanceBottom,
+  left: calculateDistanceLeft,
+  right: calculateDistanceRight
 };
 
-const calculateDistance = (placement, rectSelected, rectHovered, quadrants, isInside = false) => {
+const calculateDistance = (
+  placement: ContainerPlacement,
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  quadrants?: Partial<Record<ContainerPlacement, OverlayQuadrant>>,
+  isInside: boolean = false
+) => {
   if (!quadrants || !Object.keys(quadrants).length) {
     quadrants = calculateQuadrants(rectSelected, rectHovered, isInside);
   }
 
-  const { isOverlaped, isCentered } = quadrants[placement];
+  const { isOverlaped = false, isCentered = false } = quadrants[placement] ?? {};
   const sameQuadrant = !!quadrants[placement] && !isInside;
-  let value = calculateDelta(rectSelected?.[placement], rectHovered?.[placement]);
-  let position = { top: 0, left: 0, width: 0, height: 0 };
+  let value = calculateDelta(rectSelected[placement], rectHovered[placement]);
+  let position: OverlayPosition = { top: 0, left: 0, width: 0, height: 0 };
   ({ position, value } = distanceFn[placement](rectSelected, rectHovered, value, sameQuadrant, isOverlaped, isInside));
 
-  return { placement, position, value: Number(Math.abs(value).toFixed(2)), isCentered, isOverlaped };
+  return { placement, position, value: Number(Math.abs(value).toFixed(2)), isCentered, isOverlaped } as OverlayDistance;
 };
 
-const calculateDistances = (rectSelected, rectHovered) => {
+const calculateDistances = (rectSelected?: OverlayDistanceRect, rectHovered?: OverlayDistanceRect) => {
   if (!rectHovered || !rectSelected) {
     return { distances: [], projections: [] };
   }
@@ -381,10 +460,15 @@ const calculateDistances = (rectSelected, rectHovered) => {
   };
 };
 
-// Distance - Projection
+// OverlayDistance - Projection
 
-const calculateProjectionTop = (rectSelected, rectHovered, value, distancesObj) => {
-  const distanceLeft = distancesObj[PLACEMENT_LEFT]?.value;
+const calculateProjectionTop = (
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  distancesObj: Partial<Record<ContainerPlacement, OverlayDistance>>
+) => {
+  const distanceLeft = distancesObj.left?.value;
   const selectedIsBigger = rectSelected.top > rectHovered.top;
   let left = 0;
   let deltaX = 0;
@@ -412,8 +496,13 @@ const calculateProjectionTop = (rectSelected, rectHovered, value, distancesObj) 
   };
 };
 
-const calculateProjectionBottom = (rectSelected, rectHovered, value, distancesObj) => {
-  const distanceLeft = distancesObj[PLACEMENT_LEFT]?.value;
+const calculateProjectionBottom = (
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  distancesObj: Partial<Record<ContainerPlacement, OverlayDistance>>
+) => {
+  const distanceLeft = distancesObj.left?.value;
   const selectedIsBigger = rectSelected.bottom < rectHovered.bottom;
   let left = 0;
   let deltaX = 0;
@@ -441,8 +530,13 @@ const calculateProjectionBottom = (rectSelected, rectHovered, value, distancesOb
   };
 };
 
-const calculateProjectionLeft = (rectSelected, rectHovered, value, distancesObj) => {
-  const distanceTop = distancesObj[PLACEMENT_TOP]?.value;
+const calculateProjectionLeft = (
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  distancesObj: Partial<Record<ContainerPlacement, OverlayDistance>>
+) => {
+  const distanceTop = distancesObj.top?.value;
   const selectedIsBigger = rectSelected.left < rectHovered.left;
   let top = 0;
   let deltaY = 0;
@@ -470,8 +564,13 @@ const calculateProjectionLeft = (rectSelected, rectHovered, value, distancesObj)
   };
 };
 
-const calculateProjectionRight = (rectSelected, rectHovered, value, distancesObj) => {
-  const distanceTop = distancesObj[PLACEMENT_TOP]?.value;
+const calculateProjectionRight = (
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect,
+  value: number,
+  distancesObj: Partial<Record<ContainerPlacement, OverlayDistance>>
+) => {
+  const distanceTop = distancesObj.top?.value;
   const selectedIsBigger = rectSelected.right > rectHovered.right;
   let top = 0;
   let deltaY = 0;
@@ -499,19 +598,35 @@ const calculateProjectionRight = (rectSelected, rectHovered, value, distancesObj
   };
 };
 
-const projectionFn = {
-  [PLACEMENT_TOP]: calculateProjectionTop,
-  [PLACEMENT_BOTTOM]: calculateProjectionBottom,
-  [PLACEMENT_LEFT]: calculateProjectionLeft,
-  [PLACEMENT_RIGHT]: calculateProjectionRight
+const projectionFn: Record<
+  ContainerPlacement,
+  (
+    rectSelected: OverlayDistanceRect,
+    rectHovered: OverlayDistanceRect,
+    value: number,
+    distancesObj: Partial<Record<ContainerPlacement, OverlayDistance>>
+  ) => { position: OverlayPosition }
+> = {
+  top: calculateProjectionTop,
+  bottom: calculateProjectionBottom,
+  left: calculateProjectionLeft,
+  right: calculateProjectionRight
 };
 
-const calculateProjections = (distances = [], rectSelected, rectHovered) => {
-  if (distances.length <= 1 || !rectSelected) {
+const calculateProjections = (
+  distances: OverlayDistance[] = [],
+  rectSelected: OverlayDistanceRect,
+  rectHovered: OverlayDistanceRect
+) => {
+  if (distances.length <= 1) {
     return [];
   }
 
-  const distancesObj = distances.reduce((acum, distance) => ({ ...acum, [distance.placement]: distance }), {});
+  // debugger;
+  const distancesObj: Partial<Record<ContainerPlacement, OverlayDistance>> = distances.reduce(
+    (acum, distance) => ({ ...acum, [distance.placement]: distance }),
+    {}
+  );
   distances = distances.filter(distance => !distance.isCentered);
   const hasOverlaped = distances.find(distance => distance.isOverlaped);
 

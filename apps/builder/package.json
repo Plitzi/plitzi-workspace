@@ -105,6 +105,7 @@
     "lint": "TIMING=1 eslint ./src",
     "lint-style": "stylelint \"**/*.scss\" --custom-syntax postcss-scss",
     "lint-style:fix": "stylelint \"**/*.scss\" --custom-syntax postcss-scss --fix",
+    "typecheck": "tsc --noEmit",
     "build-assets:dev": "webpack --mode development",
     "build-assets:dev-watch": "webpack --mode development --env watch --watch",
     "build-assets:dev-measure": "webpack --mode development --env measure",

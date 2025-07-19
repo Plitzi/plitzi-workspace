@@ -1,7 +1,5 @@
-// Packages
 import { expect, describe, test } from '@jest/globals';
 
-// Relatives
 import { calculateDistances } from './BuilderOverlayHelper';
 
 describe('Testing BuilderOverlayHelper', () => {
