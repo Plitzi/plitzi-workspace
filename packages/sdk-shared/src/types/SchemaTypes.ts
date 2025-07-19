@@ -3,7 +3,7 @@ import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
 // FlatMap
-export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside';
+export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside' | 'custom';
 
 export type BindingTransformer = {
   type: 'utility' | 'unknown';
@@ -28,7 +28,7 @@ export type ElementInteraction = {
   action: string;
   params: Record<string, unknown>;
   preview: Record<string, unknown>;
-  elementId: string;
+  elementId: Element['id'];
   beforeNode: string;
   afterNode: string;
   flowId: string;
@@ -37,11 +37,11 @@ export type ElementInteraction = {
 };
 
 export type ElementDefinition = {
-  rootId: string;
+  rootId: Element['id'];
   label: string;
   type: string;
-  parentId?: string;
-  items?: string[];
+  parentId?: Element['id'];
+  items?: Element['id'][];
   styleSelectors: Record<string, string>;
   bindings?: Record<string, ElementBinding[]>;
   interactions?: Record<string, ElementInteraction>;
@@ -55,9 +55,7 @@ export type ElementDefinition = {
 export type Element = {
   id: string;
   definition: Omit<{ [key: string]: unknown }, keyof ElementDefinition> & ElementDefinition;
-  attributes: Omit<{ [key: string]: unknown }, 'subType'> & {
-    subType?: string;
-  };
+  attributes: Omit<{ [key: string]: unknown }, 'subType'> & { subType?: string };
 };
 
 export type SchemaVariable = {
@@ -68,7 +66,7 @@ export type SchemaVariable = {
   subValues: { when: RuleGroup; value: string }[];
 };
 
-export type PageFolder = { id: string; name: string; slug: string; parentId: string };
+export type PageFolder = { id: string; name: string; slug: string; parentId?: PageFolder['id'] };
 
 export type Schema = {
   flat: Record<string, Element>;
@@ -86,7 +84,7 @@ export type Schema = {
     tokenPath?: string;
     expirationTimePath?: string;
   };
-  pages: string[];
+  pages: Element['id'][];
   pageFolders: PageFolder[];
 };
 

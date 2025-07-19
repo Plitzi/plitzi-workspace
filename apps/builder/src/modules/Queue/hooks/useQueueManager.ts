@@ -9,8 +9,7 @@ import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 import { StyleActions } from '@pmodules/Style/StyleReducer';
 
 import type { QueueItem, QueuePriority } from '../QueueContext';
-import type { DropPosition } from '@plitzi/sdk-schema/helpers/FlatMap';
-import type { Element, PageFolder, Schema, SchemaVariable, Segment, Style } from '@plitzi/sdk-shared';
+import type { Element, PageFolder, Schema, SchemaVariable, Segment, Style, DropPosition } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@pmodules/Network/NetworkContext';
 
 export type UseQueueManagerProps = {

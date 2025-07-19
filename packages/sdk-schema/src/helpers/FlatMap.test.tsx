@@ -5,7 +5,7 @@ import FlatMap from './FlatMap';
 import schema1 from '../tests/fixtures/json/schema1.json';
 import styleSchema1 from '../tests/fixtures/json/styleSchema1.json';
 
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { DropPosition, Schema, Style } from '@plitzi/sdk-shared';
 
 describe('Testing FlatMap', () => {
   const flat = {
@@ -254,11 +254,11 @@ describe('Testing FlatMap', () => {
   it('FlatMap Add Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
-    expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'wrong')).toBe(false);
+    expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'wrong' as DropPosition)).toBe(false);
     expect(instance.addElement(element1, 'wrongId', 'inside')).toBe(false);
-    expect(instance.addElement(element1, 'wrongId', 'wrong')).toBe(false);
+    expect(instance.addElement(element1, 'wrongId', 'wrong' as DropPosition)).toBe(false);
     expect(instance.addElement(element2, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
-    expect(instance.addElement(element3, '62f89157c38ce9ef02b7a5a6', 'wrong')).toBe(false);
+    expect(instance.addElement(element3, '62f89157c38ce9ef02b7a5a6', 'wrong' as DropPosition)).toBe(false);
   });
 
   it('FlatMap Remove Element', () => {

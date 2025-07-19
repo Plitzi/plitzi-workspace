@@ -5,7 +5,7 @@ import set from 'lodash/set';
 
 import FlatMap from './helpers/FlatMap';
 
-import type { Schema, Element, DropPosition } from '@plitzi/sdk-shared';
+import type { Schema, Element, DropPosition, PageFolder } from '@plitzi/sdk-shared';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',
@@ -44,18 +44,18 @@ type Action = {
     | 'SCHEMA_UPDATE_SETTINGS';
   schema?: Schema;
   page?: Element;
-  pageId?: string;
-  pageFolder?: Schema['pageFolders'][number];
+  pageId?: Element['id'];
+  pageFolder?: PageFolder;
   path?: string;
   value?: string;
   element?: Element;
-  from?: string;
-  to?: string;
-  elementId?: string;
+  from?: Element['id'];
+  to?: Element['id'];
+  elementId?: Element['id'];
   pageFolderId?: string;
   data?: Element;
   dropPosition?: DropPosition;
-  initialItems?: { [key: string]: Element | undefined };
+  initialItems?: Record<Element['id'], Element>;
 };
 
 const SchemaReducer = (state: Schema, action: Partial<Action> = {}) => {

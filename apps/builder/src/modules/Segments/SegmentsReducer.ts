@@ -7,7 +7,6 @@ import set from 'lodash/set';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { generateCache, processSelector } from '@plitzi/sdk-style/StyleHelper';
 
-import type { DropPosition } from '@plitzi/sdk-schema/helpers/FlatMap';
 import type {
   DisplayMode,
   Element,
@@ -16,7 +15,8 @@ import type {
   Segment,
   Style,
   StyleItem,
-  TagType
+  TagType,
+  DropPosition
 } from '@plitzi/sdk-shared';
 
 export const SegmentsActions = {
@@ -68,15 +68,15 @@ const SegmentsReducer = (
         type: keyof typeof SegmentsActions;
         segmentId: string;
         segment?: Segment;
-        to: string;
+        to: Element['id'];
         data: Element;
         dropPosition: DropPosition;
         initialItems: Record<string, Element>;
       };
 
-      return produce(state, draft => {
+      return produce(state, (draft: Record<string, Segment>) => {
         FlatMap.addElement(
-          get(draft, `${identifier}.schema.flat`) as Schema['flat'],
+          get(draft, `${identifier}.schema.flat`) as unknown as Schema['flat'],
           data,
           to,
           dropPosition,
@@ -94,7 +94,7 @@ const SegmentsReducer = (
       };
 
       return produce(state, draft => {
-        FlatMap.removeElement(get(draft, `${identifier}.schema.flat`) as Schema['flat'], elementId);
+        FlatMap.removeElement(get(draft, `${identifier}.schema.flat`) as unknown as Schema['flat'], elementId);
       });
     }
 
@@ -111,7 +111,7 @@ const SegmentsReducer = (
 
       return produce(state, draft => {
         FlatMap.addElement(
-          get(draft, `${identifier}.schema.flat`) as Schema['flat'],
+          get(draft, `${identifier}.schema.flat`) as unknown as Schema['flat'],
           data,
           to,
           dropPosition,
@@ -133,7 +133,7 @@ const SegmentsReducer = (
 
       return produce(state, draft => {
         FlatMap.moveElement(
-          get(draft, `${identifier}.schema.flat`) as Schema['flat'],
+          get(draft, `${identifier}.schema.flat`) as unknown as Schema['flat'],
           from,
           to,
           elementId,
@@ -293,13 +293,13 @@ const SegmentsReducer = (
         }
 
         FlatMap.addElement(
-          get(draft, `${identifier}.schema.flat`) as Schema['flat'],
+          get(draft, `${identifier}.schema.flat`) as unknown as Schema['flat'],
           data,
           to,
           dropPosition,
           initialItems
         );
-        const platform = get(segment, 'style.platform') as Style['platform'];
+        const platform = get(segment, 'style.platform');
         const currentVariables = get(segment, 'schema.variables', []) as SchemaVariable[];
         Object.keys(templatePlatform).forEach(mode => {
           platform[mode as DisplayMode] = { ...get(platform, mode, {}), ...templatePlatform[mode as DisplayMode] };

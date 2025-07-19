@@ -34,7 +34,12 @@ class FlatMap {
     this.variables = variables ?? [];
   }
 
-  addElement = (data: Element, to: string, dropPosition = 'inside', initialItems: { [key: string]: Element } = {}) => {
+  addElement = (
+    data: Element,
+    to: Element['id'],
+    dropPosition: DropPosition = 'inside',
+    initialItems: Record<Element['id'], Element> = {}
+  ) => {
     let parent;
     if (dropPosition !== 'custom') {
       if (dropPosition !== 'inside') {
@@ -143,7 +148,12 @@ class FlatMap {
     return true;
   };
 
-  moveElement = (from: string, to: string, elementId: string, dropPosition: DropPosition = 'inside') => {
+  moveElement = (
+    from: Element['id'],
+    to: Element['id'],
+    elementId: Element['id'],
+    dropPosition: DropPosition = 'inside'
+  ) => {
     if (elementId === to || !(this.flat[from] as Element | undefined)) {
       return false;
     }
@@ -173,7 +183,9 @@ class FlatMap {
     }
 
     // Do the swap
-    const fromItems = (get(this.flat, `${from}.definition.items`, []) as string[]).filter(item => item !== elementId);
+    const fromItems = (get(this.flat, `${from}.definition.items`, []) as Element['id'][]).filter(
+      item => item !== elementId
+    );
     if (['left', 'top', 'right', 'bottom'].includes(dropPosition)) {
       if (!elementTo.definition.parentId) {
         return false;
@@ -184,7 +196,7 @@ class FlatMap {
         return false;
       }
 
-      let parentItems = get(parent, 'definition.items', [] as string[]);
+      let parentItems = get(parent, 'definition.items', [] as Element['id'][]);
       if (parent.id === from) {
         parentItems = fromItems;
       }
@@ -204,7 +216,7 @@ class FlatMap {
         return false;
       }
 
-      let toItems = get(this.flat, `${to}.definition.items`, []) as string[];
+      let toItems = get(this.flat, `${to}.definition.items`, []) as Element['id'][];
       if (from === to) {
         toItems = fromItems;
       }
@@ -218,18 +230,23 @@ class FlatMap {
     return true;
   };
 
-  getElement = (elementId: string) => get(this.flat, elementId);
+  getElement = (elementId: Element['id']) => get(this.flat, elementId);
 
-  cloneElements = (elementId: string, parentId = '', rootId = '', excludeRoot = false) => {
-    const result: { acum: { [key: string]: Element }; item?: Element } = { acum: {}, item: undefined };
-    const mapIds: { [key: string]: string } = {};
+  cloneElements = (
+    elementId: Element['id'],
+    parentId: Element['id'] = '',
+    rootId: Element['id'] = '',
+    excludeRoot = false
+  ) => {
+    const result: { acum: Record<Element['id'], Element>; item?: Element } = { acum: {}, item: undefined };
+    const mapIds: Record<Element['id'], Element['id']> = {};
 
     const element = this.flat[elementId] as Element | undefined;
     if (!element) {
       return result;
     }
 
-    const elements = [elementId, ...this.childTree(elementId)].reduce<{ [key: string]: Element }>((acum, id) => {
+    const elements = [elementId, ...this.childTree(elementId)].reduce<Record<Element['id'], Element>>((acum, id) => {
       const element = this.flat[id] as Element | undefined;
       if (!element) {
         return acum;
@@ -246,7 +263,7 @@ class FlatMap {
     try {
       let dataStr = JSON.stringify(elements);
       dataStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), dataStr);
-      result.acum = JSON.parse(dataStr) as { [key: string]: Element };
+      result.acum = JSON.parse(dataStr) as Record<Element['id'], Element>;
       result.item = result.acum[mapIds[elementId]];
     } catch (e) {
       console.error('Error parsing elements', e);
@@ -260,7 +277,7 @@ class FlatMap {
 
     const parentElement = this.flat[parentId] as Element | undefined;
     if (!parentElement || !Array.isArray(get(parentElement, 'definition.items'))) {
-      parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId')) as string;
+      parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId')) as Element['id'];
     }
 
     if (parentId) {
@@ -270,7 +287,7 @@ class FlatMap {
     return result;
   };
 
-  removeElement = (elementId: string, removePage = false) => {
+  removeElement = (elementId: Element['id'], removePage = false) => {
     const element = this.flat[elementId] as Element | undefined;
     if (!element || (element.definition.type === 'page' && !removePage)) {
       return false;
@@ -308,9 +325,9 @@ class FlatMap {
 
   // Extra Methods
 
-  parentTree = (elementId: string) => {
+  parentTree = (elementId: Element['id']) => {
     let element = this.flat[elementId] as Element | undefined;
-    const ids: string[] = [];
+    const ids: Element['id'][] = [];
     if (!element) {
       return ids;
     }
@@ -319,7 +336,7 @@ class FlatMap {
       const type = get(element, 'definition.type');
       if (type === 'page') {
         const layout = get(element, 'attributes.layout');
-        const layoutContainer = get(element, 'attributes.layoutContainer') as string;
+        const layoutContainer = get(element, 'attributes.layoutContainer') as Element['id'];
         if (layout && layoutContainer) {
           ids.push(layoutContainer, ...this.parentTree(layoutContainer));
         }
@@ -329,19 +346,19 @@ class FlatMap {
         ids.push(element.id);
       }
 
-      element = get(this.flat, get(element, 'definition.parentId') as string) as Element | undefined;
+      element = get(this.flat, get(element, 'definition.parentId') as Element['id']) as Element | undefined;
     } while (element);
 
     return ids;
   };
 
-  childTree = (elementId: string) => {
+  childTree = (elementId: Element['id']) => {
     const element = this.flat[elementId] as Element | undefined;
     if (!element) {
       return [];
     }
 
-    const ids: string[] = [];
+    const ids: Element['id'][] = [];
     const children = get(element, 'definition.items');
     if (!children) {
       return ids;
@@ -370,7 +387,7 @@ class FlatMap {
     return true;
   };
 
-  flatAsTemplate = (style: Style, elementId: string, excludeRoot = false) => {
+  flatAsTemplate = (style: Style, elementId: Element['id'], excludeRoot = false) => {
     const elementsStyle: Style = { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' };
     let variables = [] as SchemaVariable[];
     if (!elementId) {
@@ -421,7 +438,7 @@ class FlatMap {
 
   // Semi - Static
 
-  getElementVariables = (style: Style, elementId: string, flat = this.flat, variables = this.variables) => {
+  getElementVariables = (style: Style, elementId: Element['id'], flat = this.flat, variables = this.variables) => {
     const variablesFound: SchemaVariable[] = [];
     if (!variables) {
       return variablesFound;
@@ -463,43 +480,56 @@ class FlatMap {
 
   static getInstance = (props: FlatMapProps) => new this(props);
 
-  static addElement = (flat: Schema['flat'], data: Element, to: string, dropPosition = 'inside', initialItems = {}) =>
-    this.getInstance({ flat }).addElement(data, to, dropPosition, initialItems);
+  static addElement = (
+    flat: Schema['flat'],
+    data: Element,
+    to: Element['id'],
+    dropPosition: DropPosition = 'inside',
+    initialItems: Record<Element['id'], Element> = {}
+  ) => this.getInstance({ flat }).addElement(data, to, dropPosition, initialItems);
 
   static updateElement = (flat: Schema['flat'], element: Element) => this.getInstance({ flat }).updateElement(element);
 
   static moveElement = (
     flat: Schema['flat'],
-    from: string,
-    to: string,
-    elementId: string,
+    from: Element['id'],
+    to: Element['id'],
+    elementId: Element['id'],
     dropPosition: DropPosition = 'inside'
   ) => this.getInstance({ flat }).moveElement(from, to, elementId, dropPosition);
 
-  static getElement = (flat: Schema['flat'], elementId: string) => this.getInstance({ flat }).getElement(elementId);
+  static getElement = (flat: Schema['flat'], elementId: Element['id']) =>
+    this.getInstance({ flat }).getElement(elementId);
 
-  static cloneElements = (flat: Schema['flat'], elementId: string, parentId = '', rootId = '', excludeRoot = false) =>
-    this.getInstance({ flat }).cloneElements(elementId, parentId, rootId, excludeRoot);
+  static cloneElements = (
+    flat: Schema['flat'],
+    elementId: Element['id'],
+    parentId: Element['id'] = '',
+    rootId: Element['id'] = '',
+    excludeRoot = false
+  ) => this.getInstance({ flat }).cloneElements(elementId, parentId, rootId, excludeRoot);
 
-  static removeElement = (flat: Schema['flat'], elementId: string, removePage = false) =>
+  static removeElement = (flat: Schema['flat'], elementId: Element['id'], removePage = false) =>
     this.getInstance({ flat }).removeElement(elementId, removePage);
 
   // Extra Methods - Static
 
-  static parentTree = (flat: Schema['flat'], elementId: string) => this.getInstance({ flat }).parentTree(elementId);
+  static parentTree = (flat: Schema['flat'], elementId: Element['id']) =>
+    this.getInstance({ flat }).parentTree(elementId);
 
-  static childTree = (flat: Schema['flat'], elementId: string) => this.getInstance({ flat }).childTree(elementId);
+  static childTree = (flat: Schema['flat'], elementId: Element['id']) =>
+    this.getInstance({ flat }).childTree(elementId);
 
   static isValidElement = (flat: Schema['flat'], element: Element) =>
     this.getInstance({ flat }).isValidElement(element);
 
-  static flatAsTemplate = (schema: Schema, style: Style, elementId: string, excludeRoot = false) => {
+  static flatAsTemplate = (schema: Schema, style: Style, elementId: Element['id'], excludeRoot = false) => {
     const { flat, variables } = schema;
 
     return this.getInstance({ flat, variables }).flatAsTemplate(style, elementId, excludeRoot);
   };
 
-  static getElementVariables = (schema: Schema, style: Style, elementId: string) => {
+  static getElementVariables = (schema: Schema, style: Style, elementId: Element['id']) => {
     const { flat, variables } = schema;
 
     return this.getInstance({ flat, variables }).getElementVariables(style, elementId);

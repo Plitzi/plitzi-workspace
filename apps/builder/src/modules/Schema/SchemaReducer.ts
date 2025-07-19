@@ -5,8 +5,7 @@ import set from 'lodash/set';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
-import type { DropPosition } from '@plitzi/sdk-schema/helpers/FlatMap';
-import type { Element, PageFolder, Schema, SchemaVariable } from '@plitzi/sdk-shared';
+import type { Element, PageFolder, Schema, SchemaVariable, DropPosition } from '@plitzi/sdk-shared';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',

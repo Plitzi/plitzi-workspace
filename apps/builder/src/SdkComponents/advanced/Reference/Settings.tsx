@@ -84,8 +84,8 @@ const Settings = ({
         return new Promise<Option[]>(resolve => {
           void segmentsFetch().then(response => {
             const segments = get(response, 'edges', []).map<Option>((segment: Segment) => ({
-              value: segment.definition.identifier as string,
-              label: get(segment, 'definition.name', segment.id) as string
+              value: segment.identifier,
+              label: get(segment, 'definition.name', segment.id)
             }));
             resolve(segments);
           });
