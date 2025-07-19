@@ -15,7 +15,6 @@ import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSch
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { Element } from '@plitzi/sdk-shared';
@@ -64,9 +63,9 @@ const BuilderAreaHeader = ({
         title: 'Tools',
         resizeHandles: ['se'],
         width: 350,
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right'
       });
     }
   }, [addPopup, baseElementId, existsPopup, mode, setSelected]);
@@ -169,7 +168,7 @@ const BuilderAreaHeader = ({
             </div>
           )}
           <Icon icon="fas fa-cog" className="cursor-pointer" title="Domain Settings" onClick={handleClickSettings} />
-          {mode === BUILDER_MODE_NORMAL && (
+          {mode === 'normal' && (
             <a href={domainName} target="__blank" className="" title="Go to your space">
               <Icon icon="fa-solid fa-arrow-up-right-from-square" />
             </a>

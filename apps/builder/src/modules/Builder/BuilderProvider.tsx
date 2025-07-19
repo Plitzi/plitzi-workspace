@@ -7,7 +7,7 @@ import set from 'lodash/set';
 import { useCallback, use, useMemo, useState, useRef, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes, EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
+import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -23,19 +23,16 @@ import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubsc
 import { isInViewport } from '../../helpers/utils';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
-import type { DropPosition } from '@plitzi/sdk-schema/helpers/FlatMap';
 import type {
   BuilderContextValue,
   BuilderStyleContextValue,
   Element,
+  EventBridgeEvent,
   PluginBuilder,
   Schema,
-  Style
+  Style,
+  DropPosition
 } from '@plitzi/sdk-shared';
-
-export const BUILDER_MODE_NORMAL = 'normal';
-export const BUILDER_MODE_TEMPLATE = 'template';
-export const BUILDER_MODE_SEGMENT = 'segment';
 
 export type BuilderProviderProps = {
   children: React.ReactNode;
@@ -84,7 +81,7 @@ const BuilderProvider = ({
   const { eventBridge } = use(EventBridgeContext);
 
   const builderHandler = useCallback(
-    (event: string, ...data: unknown[]) => {
+    (event: EventBridgeEvent, ...data: unknown[]) => {
       if (EventBridgeTypesPerModule.builder.includes(event)) {
         void eventBridge.emit('builder', event, ...data);
       } else if (typeof onHandler === 'function') {
@@ -146,7 +143,7 @@ const BuilderProvider = ({
 
         const element = get(schemaRef.current, `flat.${elementId}`);
         if (!elementId || !(element as Element | undefined)) {
-          return state;
+          return undefined;
         }
 
         if (elementId) {
@@ -336,7 +333,7 @@ const BuilderProvider = ({
 
         set(dataParsed.baseElement, 'definition.parentId', toElementId);
         builderHandler(
-          EventBridgeTypes.SCHEMA_ADD_TEMPLATE,
+          'schemaAddTemplate',
           toElementId,
           pick(dataCloned.item, ['id', 'definition', 'attributes']),
           dropPosition,
@@ -364,7 +361,7 @@ const BuilderProvider = ({
 
         if (typeArr[0] === 'move') {
           const fromParentId = get(dataParsed.element, 'definition.parentId');
-          builderHandler(EventBridgeTypes.SCHEMA_MOVE_ELEMENT, fromParentId, toElementId, dataParsed.id, dropPosition);
+          builderHandler('schemaMoveElement', fromParentId, toElementId, dataParsed.id, dropPosition);
           setHovered(undefined);
         } else if ((typeArr[0] as string) === 'add') {
           const element = {
@@ -383,7 +380,7 @@ const BuilderProvider = ({
           }
 
           builderHandler(
-            EventBridgeTypes.SCHEMA_ADD_ELEMENT,
+            'schemaAddElement',
             toElementId,
             pick(element, ['id', 'attributes', 'definition']),
             dropPosition,
@@ -410,7 +407,7 @@ const BuilderProvider = ({
       }
 
       builderHandler(
-        EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
+        'schemaUpdateElement',
         produce(element, draft => {
           set(draft, 'definition.initialState.visibility', visibility);
         })
@@ -454,7 +451,7 @@ const BuilderProvider = ({
         return;
       }
 
-      builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, {
+      builderHandler('schemaUpdateElement', {
         ...element,
         [category]: { ...element[category], [attributeKey]: attributeValue }
       });
@@ -506,7 +503,7 @@ const BuilderProvider = ({
       schemaName,
       setMultiPagesMode,
       multiPagesMode,
-      hasMultiPages: pages.length > 1 && mode === BUILDER_MODE_NORMAL,
+      hasMultiPages: pages.length > 1 && mode === 'normal',
       baseContext,
       baseElementIdOriginal: baseElementIdProp,
       builderSetBaseContext,

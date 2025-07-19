@@ -240,8 +240,8 @@ const Selector = ({
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!existsPopup?.('styleManager')) {
-        addPopup?.('styleManager', <StyleManager />, {
+      if (!existsPopup('styleManager')) {
+        addPopup('styleManager', <StyleManager />, {
           icon: <i className="fas fa-swatchbook text-base" />,
           title: 'Style Manager',
           resizeHandles: ['se'],
@@ -261,8 +261,8 @@ const Selector = ({
     <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
       <ContainerFloating.Trigger className="w-full">
         <div
-          className={classNames('flex-wrap rounded-sm relative p-1 gap-1 flex bg-grayviolet-200', className, {
-            'bg-gray-100 pointer-events-none cursor-not-allowed': disabled,
+          className={classNames('bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1', className, {
+            'pointer-events-none cursor-not-allowed bg-gray-100': disabled,
             'cursor-pointer': !disabled
           })}
           onClick={handleClick}
@@ -291,7 +291,7 @@ const Selector = ({
           ))}
           <input
             ref={inputRef}
-            className="border-none bg-transparent w-0 text-inherit outline-hidden focus:min-w-[50px] focus:grow focus:ring-transparent min-h-0 px-1 text-xs py-0 flex"
+            className="flex min-h-0 w-0 border-none bg-transparent px-1 py-0 text-xs text-inherit outline-hidden focus:min-w-[50px] focus:grow focus:ring-transparent"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"

@@ -5,7 +5,6 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useRedu
 
 // Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
@@ -393,21 +392,21 @@ const SegmentsContextProvider = props => {
 
   const events = useMemo(
     () => ({
-      [EventBridgeTypes.SCHEMA_UPDATE]: segmentsUpdate,
-      [EventBridgeTypes.SCHEMA_ADD_ELEMENT]: segmentAddElement,
-      [EventBridgeTypes.SCHEMA_UPDATE_ELEMENT]: segmentUpdateElement,
-      [EventBridgeTypes.SCHEMA_REMOVE_ELEMENT]: segmentRemoveElement,
-      [EventBridgeTypes.SCHEMA_MOVE_ELEMENT]: segmentMoveElement,
-      // [EventBridgeTypes.SCHEMA_CLONE_ELEMENT]: segmentsCloneElement,
-      [EventBridgeTypes.SCHEMA_ADD_TEMPLATE]: segmentAddTemplate,
-      [EventBridgeTypes.STYLE_UPDATE]: segmentsUpdate,
-      [EventBridgeTypes.STYLE_ADD_SELECTOR]: segmentAddSelector,
-      [EventBridgeTypes.STYLE_UPDATE_SELECTOR]: segmentUpdateSelector,
-      [EventBridgeTypes.STYLE_REMOVE_SELECTOR]: segmentRemoveSelector,
-      [EventBridgeTypes.STYLE_ADD_VARIABLE]: segmentAddVariable,
-      [EventBridgeTypes.STYLE_UPDATE_VARIABLE]: segmentUpdateVariable,
-      [EventBridgeTypes.STYLE_REMOVE_VARIABLE]: segmentRemoveVariable,
-      [EventBridgeTypes.STYLE_ADD_TEMPLATE]: segmentAddTemplate
+      schemaUpdate: segmentsUpdate,
+      schemaAddElement: segmentAddElement,
+      schemaUpdateElement: segmentUpdateElement,
+      schemaRemoveElement: segmentRemoveElement,
+      schemaMoveElement: segmentMoveElement,
+      // schemaCloneElement: segmentsCloneElement,
+      schemaAddTemplate: segmentAddTemplate,
+      styleUpdate: segmentsUpdate,
+      styleAddSelector: segmentAddSelector,
+      styleUpdateSelector: segmentUpdateSelector,
+      styleRemoveSelector: segmentRemoveSelector,
+      styleAddVariable: segmentAddVariable,
+      styleUpdateVariable: segmentUpdateVariable,
+      styleRemoveVariable: segmentRemoveVariable,
+      styleAddTemplate: segmentAddTemplate
     }),
     [
       segmentsAdd,

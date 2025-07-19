@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import type { EventBridgeModule } from '@plitzi/sdk-shared';
+import type { EventBridgeEvent, EventBridgeModule } from '@plitzi/sdk-shared';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventBridgeCallback<T = any> = (...data: T[]) => T | Promise<T>;
@@ -10,17 +10,17 @@ export type EventBridgeParams<T = unknown> = { filter?: (params?: T) => boolean;
 export type Event<T = unknown> = { callback: EventBridgeCallback<T>; filter?: EventBridgeParams<T>['filter'] };
 
 export type EventBridgeProps<T = unknown> = {
-  events?: Record<EventBridgeModule, Record<string, Event<T>[]>>;
+  events?: Record<EventBridgeModule, Record<EventBridgeEvent, Event<T>[]>>;
 };
 
 class EventBridge<T = unknown> {
-  events: Partial<Record<EventBridgeModule, Partial<Record<string, Event<T>[]>>>>;
+  events: Partial<Record<EventBridgeModule, Partial<Record<EventBridgeEvent, Event<T>[]>>>>;
 
   constructor({ events }: EventBridgeProps<T> | undefined = {}) {
     this.events = events ?? {};
   }
 
-  has(module: EventBridgeModule, event: string) {
+  has(module: EventBridgeModule, event: EventBridgeEvent) {
     if (!(module as string)) {
       throw new Error('Module name is required');
     }
@@ -28,7 +28,12 @@ class EventBridge<T = unknown> {
     return this.events[module] && this.events[module][event];
   }
 
-  on(module: EventBridgeModule, event: string, callback?: EventBridgeCallback<T>, params: EventBridgeParams<T> = {}) {
+  on(
+    module: EventBridgeModule,
+    event: EventBridgeEvent,
+    callback?: EventBridgeCallback<T>,
+    params: EventBridgeParams<T> = {}
+  ) {
     const { filter, override = false } = params;
     if (!(module as string)) {
       throw new Error('Module name is required');
@@ -49,7 +54,7 @@ class EventBridge<T = unknown> {
     this.events[module][event].push({ callback, filter });
   }
 
-  get(module: EventBridgeModule, event: string) {
+  get(module: EventBridgeModule, event: EventBridgeEvent) {
     if (!this.has(module, event)) {
       return [];
     }
@@ -57,7 +62,7 @@ class EventBridge<T = unknown> {
     return this.events[module]?.[event];
   }
 
-  off(module: EventBridgeModule, event: string, callback?: EventBridgeCallback<T>) {
+  off(module: EventBridgeModule, event: EventBridgeEvent, callback?: EventBridgeCallback<T>) {
     if (!this.has(module, event) || !this.events[module]) {
       return;
     }
@@ -77,13 +82,13 @@ class EventBridge<T = unknown> {
     }
   }
 
-  emit(module: EventBridgeModule, events: string[] | string = [], ...data: T[]) {
-    if (!Array.isArray(events) && events) {
+  emit(module: EventBridgeModule, events: EventBridgeEvent[] | EventBridgeEvent = [], ...data: T[]) {
+    if (!Array.isArray(events) && (events as string)) {
       events = [events];
     }
 
     const promises: Promise<T>[] = [];
-    (events as string[]).forEach(event => {
+    (events as EventBridgeEvent[]).forEach(event => {
       if (!this.has(module, event)) {
         return;
       }
@@ -104,7 +109,7 @@ class EventBridge<T = unknown> {
     return Promise.all(promises);
   }
 
-  async emitWithResponse(module: EventBridgeModule, event: string, ...data: T[]) {
+  async emitWithResponse(module: EventBridgeModule, event: EventBridgeEvent, ...data: T[]) {
     if (!this.has(module, event)) {
       return undefined;
     }
@@ -127,7 +132,12 @@ class EventBridge<T = unknown> {
     return answers;
   }
 
-  once(module: EventBridgeModule, event: string, callback: EventBridgeCallback<T>, filter?: Event<T>['filter']) {
+  once(
+    module: EventBridgeModule,
+    event: EventBridgeEvent,
+    callback: EventBridgeCallback<T>,
+    filter?: Event<T>['filter']
+  ) {
     if (!(module as string)) {
       throw new Error('Module name is required');
     }

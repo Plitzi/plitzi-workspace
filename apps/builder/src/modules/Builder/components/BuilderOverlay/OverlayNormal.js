@@ -7,7 +7,6 @@ import set from 'lodash/set';
 import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
 
 // Monorepo
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
@@ -109,19 +108,19 @@ const OverlayNormal = props => {
       if (!selector) {
         const newSelector = makeSelector(type);
         builderHandler(
-          EventBridgeTypes.SCHEMA_UPDATE_ELEMENT,
+          'schemaUpdateElement',
           produce(element, draft => {
             set(draft, 'definition.styleSelectors.base', newSelector);
           })
         );
-        builderHandler(EventBridgeTypes.STYLE_ADD_SELECTOR, displayMode, newSelector, 'class', '', {
+        builderHandler('styleAddSelector', displayMode, newSelector, 'class', '', {
           width: `${width}px`,
           height: `${height}px`
         });
       } else {
         const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`, 'class');
         const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
-        builderHandler(EventBridgeTypes.STYLE_UPDATE_SELECTOR, displayMode, selector, selectorType, '', {
+        builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', {
           ...values,
           width: `${width}px`,
           height: `${height}px`
@@ -134,7 +133,7 @@ const OverlayNormal = props => {
   const handleChange = useCallback(
     value => {
       if (element && value !== element?.definition?.label) {
-        builderHandler(EventBridgeTypes.SCHEMA_UPDATE_ELEMENT, {
+        builderHandler('schemaUpdateElement', {
           ...element,
           definition: { ...element.definition, label: value }
         });

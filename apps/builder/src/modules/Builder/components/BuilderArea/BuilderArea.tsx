@@ -32,7 +32,6 @@ import BuilderAreaFooter from './BuilderAreaFooter';
 import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
 import BuilderAreaTracking from './BuilderAreaTracking';
-import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
 import type { ComponentPlugin, DisplayMode } from '@plitzi/sdk-shared';
@@ -89,8 +88,6 @@ const BuilderArea = ({
   const [dragTree, setDragTreeState] = useState(false);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
-  const [widthArea, setWidthArea] = useState(0);
-  const [heightArea, setHeightArea] = useState(0);
   const [iframeScaleX, setIframeScaleX] = useState(1);
   const [desiredWidth] = useState(1440);
   const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
@@ -134,8 +131,6 @@ const BuilderArea = ({
     ref.current.style.width = `${(1 / iframeScaleX) * 100}%`;
     ref.current.style.height = `${(1 / iframeScaleX) * 100}%`;
     ref.current.style.transform = `scale(${iframeScaleX})`;
-    setWidthArea(widthArea);
-    setHeightArea(elementDOM.offsetHeight);
     setIframeScaleX(iframeScaleX);
   }, [displayMode, desiredWidth, multiPagesMode]);
 
@@ -213,8 +208,8 @@ const BuilderArea = ({
           'min-w-[600px] overflow-hidden': multiPagesMode,
           'basis-0 overflow-auto': !multiPagesMode,
           grow: !mobilePreview && !mobilePreview,
-          'px-4 pt-4 pb-2': mode === BUILDER_MODE_NORMAL,
-          'p-2': mode !== BUILDER_MODE_NORMAL
+          'px-4 pt-4 pb-2': mode === 'normal',
+          'p-2': mode !== 'normal'
         },
         className
       )}
@@ -226,7 +221,7 @@ const BuilderArea = ({
           'max-w-[425px]': displayMode === 'mobile'
         })}
       >
-        {mode === BUILDER_MODE_NORMAL && showHeader && (
+        {mode === 'normal' && showHeader && (
           <BuilderAreaHeader
             baseElementId={baseElementId}
             element={baseElementData}
@@ -294,8 +289,6 @@ const BuilderArea = ({
                         instanceId={subscriptionsCollaborator.instanceId}
                         color={subscriptionsCollaborator.color}
                         title={`${subscriptionsCollaborator.user.firstName} ${subscriptionsCollaborator.user.surName}`}
-                        width={widthArea}
-                        height={heightArea}
                         displayMode={displayMode}
                         zoom={zoom}
                       />
@@ -319,7 +312,7 @@ const BuilderArea = ({
           </ContainerFrame>
         </div>
       </div>
-      {!multiPagesMode && mode === BUILDER_MODE_NORMAL && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
+      {!multiPagesMode && mode === 'normal' && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
     </div>
   );
 };

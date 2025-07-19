@@ -9,7 +9,6 @@ import Button from '@plitzi/plitzi-ui-components/Button';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
@@ -100,7 +99,7 @@ const MessageHtml = props => {
     set(baseElement, 'definition.parentId', elementSelected);
 
     builderHandler(
-      EventBridgeTypes.SCHEMA_ADD_TEMPLATE,
+      'schemaAddTemplate',
       elementSelected,
       pick(baseElement, ['id', 'definition', 'attributes']),
       'inside',

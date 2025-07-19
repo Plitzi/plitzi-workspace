@@ -10,7 +10,6 @@ import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/Con
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 // Monorepo
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';

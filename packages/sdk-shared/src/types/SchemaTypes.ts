@@ -2,13 +2,13 @@ import type { InteractionCallbackType } from './InteractionTypes';
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
+// FlatMap
+export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside';
+
 export type BindingTransformer = {
   type: 'utility' | 'unknown';
   action: string;
-  params: {
-    valueType: string;
-    value: string;
-  };
+  params: { valueType: string; value: string };
 };
 
 export type ElementBinding = {
@@ -42,7 +42,7 @@ export type ElementDefinition = {
   type: string;
   parentId?: string;
   items?: string[];
-  styleSelectors: { [key: string]: string };
+  styleSelectors: Record<string, string>;
   bindings?: Record<string, ElementBinding[]>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
@@ -65,16 +65,13 @@ export type SchemaVariable = {
   category: string;
   type: string;
   value: string;
-  subValues: {
-    when: RuleGroup;
-    value: string;
-  }[];
+  subValues: { when: RuleGroup; value: string }[];
 };
 
 export type PageFolder = { id: string; name: string; slug: string; parentId: string };
 
 export type Schema = {
-  flat: { [key: string]: Element };
+  flat: Record<string, Element>;
   variables?: SchemaVariable[];
   settings: {
     keepState?: boolean;

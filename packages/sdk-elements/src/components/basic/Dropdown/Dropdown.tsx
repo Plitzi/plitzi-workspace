@@ -54,6 +54,10 @@ const Dropdown = ({
 
   const calculatePosition = useCallback(
     (rectParent: DOMRect, rectContent: DOMRect) => {
+      if (!windowInstance) {
+        return { top: 0, left: 0 };
+      }
+
       const w = rectContent.width;
       const h = rectContent.height;
       let top;

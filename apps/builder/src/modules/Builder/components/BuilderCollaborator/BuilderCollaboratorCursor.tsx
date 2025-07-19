@@ -1,18 +1,13 @@
-// Packages
-import React from 'react';
+import type { RefObject } from 'react';
 
-/**
- * @param {{
- *   ref: React.RefObject<HTMLDivElement>;
- *   title?: string;
- *   color?: string;
- *   scale?: number;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderCollaboratorCursor = props => {
-  const { ref, title = '', color = '#000', scale = 1 } = props;
+export type BuilderCollaboratorCursorProps = {
+  ref: RefObject<HTMLDivElement | null>;
+  title?: string;
+  color?: string;
+  scale?: number;
+};
 
+const BuilderCollaboratorCursor = ({ ref, title = '', color = '#000', scale = 1 }: BuilderCollaboratorCursorProps) => {
   return (
     <div ref={ref} className="builder-collaborator-cursor" style={{ color, fontSize: `${16 * (1 / scale)}px` }}>
       <i className="fas fa-mouse-pointer" />

@@ -5,7 +5,6 @@ import sneakCase from 'lodash/snakeCase';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import { generateID } from '../../../helpers/utils';
@@ -62,7 +61,7 @@ const useDragElement = ({ attributes, type, variables }: UseDragElementProps) =>
       }
 
       e.stopPropagation();
-      void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+      void eventBridge.emit('builder', 'builderSetSelected', null);
       e.dataTransfer.setDragImage(e.currentTarget, -5, -5);
       e.dataTransfer.setData(
         `add##${sneakCase(element.definition.type)}`,

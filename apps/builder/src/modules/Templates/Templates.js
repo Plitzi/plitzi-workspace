@@ -8,7 +8,6 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 
 // Monorepo
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
 // Alias
@@ -27,7 +26,7 @@ const Templates = () => {
 
   const handleDragStart = template => e => {
     e.stopPropagation();
-    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    eventBridge.emit('builder', 'builderSetSelected', null);
     const flat = get(template, 'schema.flat', {});
     const variables = get(template, 'schema.variables', []);
     const templateBaseElementId = get(template, 'definition.baseElementId');

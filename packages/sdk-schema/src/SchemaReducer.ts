@@ -5,8 +5,7 @@ import set from 'lodash/set';
 
 import FlatMap from './helpers/FlatMap';
 
-import type { DropPosition } from './helpers/FlatMap';
-import type { Schema, Element } from '@plitzi/sdk-shared';
+import type { Schema, Element, DropPosition } from '@plitzi/sdk-shared';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',
@@ -89,7 +88,7 @@ const SchemaReducer = (state: Schema, action: Partial<Action> = {}) => {
           return;
         }
 
-        const auxPage = flat[pageIdItem] as Element;
+        const auxPage = flat[pageIdItem];
         const defaultPage = get(auxPage, 'attributes.default', false) as boolean;
         if (defaultPage) {
           oldPage = auxPage;

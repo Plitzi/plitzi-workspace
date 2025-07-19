@@ -9,11 +9,13 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
+import type { MouseEvent } from 'react';
+
 export type PageLayoutProps = {
   id?: string;
   name?: string;
   onSelect?: () => void;
-  onRemove?: () => void;
+  onRemove?: (e: MouseEvent) => void;
 };
 
 const PageLayout = ({ id = '', name = '', onSelect, onRemove }: PageLayoutProps) => {

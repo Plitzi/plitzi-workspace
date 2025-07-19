@@ -7,7 +7,6 @@ import classNames from 'classnames';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
@@ -64,7 +63,7 @@ const PageActions = ({ id = '', active = false, zoom = false, defaultPage = fals
       );
 
       if (response) {
-        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_HOME_PAGE, id);
+        void eventBridge.emit('main', 'schemaHomePage', id);
       }
     },
     [flat, id, defaultPage, showDialog, addToast, eventBridge]
@@ -103,7 +102,7 @@ const PageActions = ({ id = '', active = false, zoom = false, defaultPage = fals
       );
 
       if (response) {
-        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE, id);
+        void eventBridge.emit('main', 'schemaRemovePage', id);
         navigate('/');
       }
     },

@@ -5,7 +5,6 @@ import { use, useEffect, useMemo } from 'react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import AppContext from '@pmodules/App/AppContext';
 
-import { BUILDER_MODE_NORMAL } from './BuilderProvider';
 import BuilderArea from './components/BuilderArea';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 
@@ -24,7 +23,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
   const { existsPopup, addPopup } = usePopup();
   const { multiPagesMode, builderElementPermissions, mode, hasMultiPages } = builderContextValue;
   const { displayMode, previewMode, mobilePreview, debugMode } = use(AppContext);
-  if (pages.length === 0 && mode === BUILDER_MODE_NORMAL) {
+  if (pages.length === 0 && mode === 'normal') {
     return (
       <div className="relative flex min-w-0 grow basis-0 flex-col items-center overflow-auto">
         <div
@@ -65,7 +64,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
 
   return (
     <div className="flex min-w-0 grow basis-0 overflow-auto">
-      {(!multiPagesMode || mode !== BUILDER_MODE_NORMAL) && (
+      {(!multiPagesMode || mode !== 'normal') && (
         <BuilderArea
           externalStyle={externalStyle}
           customCss={customCss}
@@ -74,7 +73,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
           debugMode={debugMode}
         />
       )}
-      {mobilePreview && mode === BUILDER_MODE_NORMAL && displayMode !== 'mobile' && !previewMode && (
+      {mobilePreview && mode === 'normal' && displayMode !== 'mobile' && !previewMode && (
         <BuilderArea
           className="mb-11 basis-[425px]"
           externalStyle={externalStyle}

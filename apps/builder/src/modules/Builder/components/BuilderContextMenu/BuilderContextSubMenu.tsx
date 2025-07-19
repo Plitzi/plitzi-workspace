@@ -1,32 +1,32 @@
-// Packages
-import React, { useRef, useState } from 'react';
-import noop from 'lodash/noop';
-import Card from '@plitzi/plitzi-ui-components/Card';
+import Card from '@plitzi/plitzi-ui/Card';
 import classNames from 'classnames';
+import { useRef, useState } from 'react';
 
-// Alias
-
-// Relatives
 import BuilderContextMenuItem from './BuilderContextMenuItem';
+
+import type { RefObject } from 'react';
 
 const itemsDefault = [];
 
-/**
- * @param {{
- *   items?: { key: string; value: string }[];
- *   width?: number;
- *   iframeDOM?: object;
- *   parentRef?: object;
- *   onClick?: (key: string) => () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderContextSubMenu = props => {
-  const { items = itemsDefault, width = 250, iframeDOM, parentRef, onClick = noop } = props;
+export type BuilderContextSubMenuProps = {
+  items?: { key: string; value: string }[];
+  width?: number;
+  iframeDOM?: HTMLIFrameElement | null;
+  parentRef?: RefObject<HTMLDivElement | null>;
+  onClick?: (key: string) => () => void;
+};
+
+const BuilderContextSubMenu = ({
+  items = itemsDefault,
+  width = 150,
+  iframeDOM,
+  parentRef,
+  onClick
+}: BuilderContextSubMenuProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [top, setTop] = useState('0px');
   const [left, setLeft] = useState('0px');
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = () => {
     if (!ref.current) {
@@ -38,9 +38,9 @@ const BuilderContextSubMenu = props => {
       return;
     }
 
-    innerWidth = iframeDOM.contentWindow.innerWidth;
+    innerWidth = iframeDOM.contentWindow?.innerWidth ?? 0;
     const { offsetTop, offsetWidth, offsetLeft } = ref.current;
-    const { offsetLeft: parentOffsetLeft } = parentRef.current;
+    const { offsetLeft: parentOffsetLeft } = parentRef?.current ?? { offsetLeft: 0 };
     let left = offsetLeft + offsetWidth;
     if (parentOffsetLeft + offsetWidth + width > innerWidth) {
       left = offsetLeft - width;
@@ -57,27 +57,28 @@ const BuilderContextSubMenu = props => {
     <div
       ref={ref}
       className={classNames(
-        'flex items-center first:rounded-tl justify-between border-b border-gray-300 select-none py-1 px-4 hover:bg-blue-100 cursor-pointer last:border-b-0',
+        'flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100',
         { 'rounded-tr': items.length === 0 }
       )}
       // onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseOver={handleMouseEnter}
-      onFocus={noop}
     >
       <div className="flex items-center">
         {/* <i className="" /> */}
         Select Parent Element
         {showMenu && items.length > 0 && (
           <Card
-            className="z-[99999999] flex rounded-bl-none rounded-tl-none"
+            className="absolute z-[99999999] flex rounded-tl-none rounded-bl-none shadow-2xl"
             style={{ position: 'absolute', top, left, width: `${width}px` }}
           >
-            <div className="w-full flex flex-col">
-              {items.map(item => (
-                <BuilderContextMenuItem key={item.key} title={item.value} onClick={onClick(item.key)} />
-              ))}
-            </div>
+            <Card.Body className="w-full">
+              <div className="flex w-full flex-col">
+                {items.map(item => (
+                  <BuilderContextMenuItem key={item.key} title={item.value} onClick={onClick?.(item.key)} />
+                ))}
+              </div>
+            </Card.Body>
           </Card>
         )}
       </div>

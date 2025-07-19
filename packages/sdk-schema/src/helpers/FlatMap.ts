@@ -7,15 +7,13 @@ import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
-import type { Style, Element, Schema, SchemaVariable, DisplayMode, StyleItem } from '@plitzi/sdk-shared';
+import type { Style, Element, Schema, SchemaVariable, DisplayMode, StyleItem, DropPosition } from '@plitzi/sdk-shared';
 
 export const EMPTY_SCHEMA = {
   schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] } as Schema,
   style: { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' } as Style,
   definition: { rootId: '' } // for segments and templates
 };
-
-export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside';
 
 export type FlatMapProps = {
   flat?: Schema['flat'];

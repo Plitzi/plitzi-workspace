@@ -4,7 +4,6 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
 
@@ -33,7 +32,7 @@ const DirectoryHeader = ({ pageFolders = pageFoldersDefault }: DirectoryHeaderPr
     );
 
     if (response) {
-      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE, response);
+      void eventBridge.emit('main', 'schemaAddPage', response);
     }
   }, [showModal, eventBridge, pageFolders]);
 
@@ -50,7 +49,7 @@ const DirectoryHeader = ({ pageFolders = pageFoldersDefault }: DirectoryHeaderPr
     );
 
     if (response) {
-      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, response);
+      void eventBridge.emit('main', 'schemaAddPageFolder', response);
     }
   }, [showModal, pageFolders, eventBridge]);
 

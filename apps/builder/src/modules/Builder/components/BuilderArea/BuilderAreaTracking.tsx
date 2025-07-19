@@ -2,7 +2,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import throttle from 'lodash/throttle';
-import { use, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import { use, useRef, useCallback, useMemo, useEffect } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -171,6 +171,7 @@ const BuilderAreaTracking = ({
         }
 
         case 'Escape': {
+          console.log('Escape pressed', elementSelected, setSelected);
           if (elementSelected) {
             setSelected(undefined);
           } else if (!elementSelected && baseElementId !== baseElementIdOriginal) {
@@ -318,7 +319,7 @@ const BuilderAreaTracking = ({
     ]
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (previewMode) {
       return;
     }
@@ -340,7 +341,7 @@ const BuilderAreaTracking = ({
     };
   }, [iframeDOM, handleCopy, handlePaste, previewMode]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (previewMode || multiPagesMode) {
       return;
     }

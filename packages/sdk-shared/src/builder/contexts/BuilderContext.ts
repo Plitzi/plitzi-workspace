@@ -1,39 +1,7 @@
 import { createContext } from 'react';
 
-import type { Element, PluginBuilder } from '../../types';
+import type { Element, EventBridgeEvent, PluginBuilder } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
-
-export type HandlerEvent =
-  // Root Schema Events
-  | 'schemaAddPage'
-  | 'schemaHomePage'
-  | 'schemaUpdatePage'
-  | 'schemaRemovePage'
-  | 'schemaAddPageFolder'
-  | 'schemaUpdatePageFolder'
-  | 'schemaRemovePageFolder'
-  | 'schemaUpdateSettings'
-  // Schema Events (can be root as well)
-  | 'schemaUpdate'
-  | 'schemaAddElement'
-  | 'schemaUpdateElement'
-  | 'schemaRemoveElement'
-  | 'schemaMoveElement'
-  | 'schemaCloneElement'
-  | 'schemaAddTemplate'
-  // Style Events
-  | 'styleUpdate'
-  | 'styleAddSelector'
-  | 'styleUpdateSelector'
-  | 'styleRemoveSelector'
-  | 'styleAddVariable'
-  | 'styleUpdateVariable'
-  | 'styleRemoveVariable'
-  | 'styleAddTemplate'
-  // Builder Events
-  | 'builderSetBaseContext'
-  | 'builderSetSelected'
-  | 'builderSetHovered';
 
 export type BuilderContextValue = {
   mode: 'normal' | 'template' | 'segment';
@@ -49,7 +17,7 @@ export type BuilderContextValue = {
     (element: Element, path?: undefined, defaultValue?: boolean): PluginBuilder;
     (element: Element, path?: string, defaultValue?: boolean): boolean | PluginBuilder;
   };
-  builderHandler: (event: HandlerEvent, ...data: unknown[]) => void;
+  builderHandler: (event: EventBridgeEvent, ...data: unknown[]) => void;
   updateElement: (
     elementId: string,
     attributeKey: string,

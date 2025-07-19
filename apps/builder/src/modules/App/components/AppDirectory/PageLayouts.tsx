@@ -3,7 +3,6 @@ import get from 'lodash/get';
 import { use, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
@@ -41,13 +40,12 @@ const PageLayouts = () => {
     );
 
     if (response) {
-      void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
-      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, layoutId);
+      void eventBridge.emit('builder', 'builderSetBaseContext', currentPageId);
+      void eventBridge.emit('main', 'schemaRemoveElement', layoutId);
     }
   };
 
-  const handleClickLayout = layoutId => () =>
-    eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, layoutId);
+  const handleClickLayout = (layoutId: string) => () => eventBridge.emit('builder', 'builderSetBaseContext', layoutId);
 
   const layouts = useMemo(
     () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'layoutContainer'),

@@ -2,7 +2,6 @@ import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import { use, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 const HistoryButtons = () => {
@@ -10,12 +9,12 @@ const HistoryButtons = () => {
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
 
   const handleClickUndo = useCallback(() => {
-    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    void eventBridge.emit('builder', 'builderSetSelected', null);
     undoableUndo();
   }, [undoableUndo, eventBridge]);
 
   const handleClickRedo = useCallback(() => {
-    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    void eventBridge.emit('builder', 'builderSetSelected', null);
     undoableRedo();
   }, [undoableRedo, eventBridge]);
 

@@ -4,7 +4,6 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import LayoutForm from '@pmodules/App/models/LayoutForm';
 
@@ -38,7 +37,7 @@ const LayoutsHeader = () => {
       const { definition, attributes } = componentDefinitions.layoutContainer;
       const id = generateID();
       const element = { id, attributes, definition: { ...definition, rootId: id, parentId: null, label: name } };
-      void eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_ELEMENT, '', element, 'custom');
+      void eventBridge.emit('main', 'schemaAddElement', '', element, 'custom');
     }
   }, [showModal, componentDefinitions.layoutContainer, eventBridge]);
 
@@ -55,7 +54,7 @@ const LayoutsHeader = () => {
   //   );
 
   //   if (response) {
-  //     eventBridge.emit('main', EventBridgeTypes.SCHEMA_ADD_PAGE_FOLDER, response);
+  //     eventBridge.emit('main', 'schemaAddPageFolder', response);
   //   }
   // }, [showModal, eventBridge]);
 

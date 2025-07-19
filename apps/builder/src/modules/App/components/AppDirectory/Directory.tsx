@@ -10,7 +10,6 @@ import upperFirst from 'lodash/upperFirst';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
@@ -90,7 +89,7 @@ const Directory = ({
       );
 
       if (response) {
-        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_UPDATE_PAGE_FOLDER, { id, ...response });
+        void eventBridge.emit('main', 'schemaUpdatePageFolder', { id, ...response });
       }
     },
     [pageFolders, id, name, slug, parentId, showModal, eventBridge]
@@ -131,7 +130,7 @@ const Directory = ({
       );
 
       if (response) {
-        void eventBridge.emit('main', EventBridgeTypes.SCHEMA_REMOVE_PAGE_FOLDER, id);
+        void eventBridge.emit('main', 'schemaRemovePageFolder', id);
       }
     },
     [pageFolders, pages, showDialog, id, pageDefinitions, addToast, eventBridge]

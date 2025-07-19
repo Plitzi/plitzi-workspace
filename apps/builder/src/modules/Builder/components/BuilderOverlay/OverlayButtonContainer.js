@@ -7,7 +7,6 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 
 // Monorepo
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
@@ -24,7 +23,6 @@ import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 // Relatives
 import OverlayButton from './OverlayButton';
 import BuilderElementTools from '../BuilderElementTools';
-import { BUILDER_MODE_NORMAL } from '../../BuilderProvider';
 
 /**
  * @param {{
@@ -78,7 +76,7 @@ const OverlayButtonContainer = props => {
         setSelected(undefined);
       }
 
-      builderHandler(EventBridgeTypes.SCHEMA_REMOVE_ELEMENT, id);
+      builderHandler('schemaRemoveElement', id);
     },
     [builderHandler, id, elementSelected, setSelected]
   );
@@ -90,9 +88,9 @@ const OverlayButtonContainer = props => {
         title: 'Tools',
         resizeHandles: ['se'],
         width: 350,
-        allowLeftSide: mode === BUILDER_MODE_NORMAL,
-        allowRightSide: mode === BUILDER_MODE_NORMAL,
-        placement: mode === BUILDER_MODE_NORMAL ? 'floating' : 'right'
+        allowLeftSide: mode === 'normal',
+        allowRightSide: mode === 'normal',
+        placement: mode === 'normal' ? 'floating' : 'right'
       });
     }
   }, [addPopup, existsPopup, mode]);

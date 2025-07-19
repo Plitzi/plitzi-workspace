@@ -6,7 +6,6 @@ import get from 'lodash/get';
 import { use, useState, useCallback, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypes } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -40,8 +39,8 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
   const { subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
 
   const handleClickPreviewMode = useCallback(() => {
-    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_BASE_CONTEXT, currentPageId);
-    void eventBridge.emit('builder', EventBridgeTypes.BUILDER_SET_SELECTED, null);
+    void eventBridge.emit('builder', 'builderSetBaseContext', currentPageId);
+    void eventBridge.emit('builder', 'builderSetSelected', null);
     setPreviewMode(state => !state);
   }, [currentPageId, eventBridge, setPreviewMode]);
 
