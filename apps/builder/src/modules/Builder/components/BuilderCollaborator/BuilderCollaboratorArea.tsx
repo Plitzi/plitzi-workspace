@@ -6,13 +6,14 @@ import BuilderCollaboratorCursor from './BuilderCollaboratorCursor';
 import BuilderOverlay from '../BuilderOverlay';
 
 import type { DisplayMode } from '@plitzi/sdk-shared';
+import type { RefObject } from 'react';
 
 export type BuilderCollaboratorAreaProps = {
   baseElementId?: string;
   instanceId?: string;
   color?: string;
   title?: string;
-  iframeDOM?: HTMLIFrameElement | null;
+  refIframe: RefObject<HTMLIFrameElement | null>;
   scale?: number;
   zoom?: number;
   displayMode?: DisplayMode;
@@ -23,7 +24,7 @@ const BuilderCollaboratorArea = ({
   instanceId = '',
   color = '#000',
   title = '',
-  iframeDOM,
+  refIframe,
   scale = 1,
   zoom = 1,
   displayMode = 'desktop'
@@ -124,7 +125,7 @@ const BuilderCollaboratorArea = ({
     <div className="builder__collaborator-area">
       {elementSelected && (
         <BuilderOverlay
-          iframeDOM={iframeDOM}
+          refIframe={refIframe}
           id={elementSelected}
           baseElementId={baseElementId}
           mode="select"
@@ -138,8 +139,8 @@ const BuilderCollaboratorArea = ({
       )}
       {elementHovered && elementHovered !== elementSelected && (
         <BuilderOverlay
-          iframeDOM={iframeDOM}
-          id={elementHovered === elementSelected ? null : elementHovered}
+          refIframe={refIframe}
+          id={elementHovered === elementSelected ? undefined : elementHovered}
           baseElementId={baseElementId}
           hideActions
           zoom={zoom}

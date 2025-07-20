@@ -1,9 +1,7 @@
 import { createContext } from 'react';
 
-import type { Element, Schema, Style } from '../../types';
+import type { DropPosition, Element, Schema, Style } from '../../types';
 import type { ComponentPlugin } from '../../types/ComponentTypes';
-
-type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside';
 
 export type BuilderSchemaContextValue = {
   schema: Schema;

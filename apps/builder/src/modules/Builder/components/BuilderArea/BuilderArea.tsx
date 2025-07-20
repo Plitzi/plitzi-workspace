@@ -271,7 +271,7 @@ const BuilderArea = ({
                   {!previewMode && (
                     <BuilderAreaOverlay
                       baseElementId={baseElementId}
-                      iframeDOM={ref.current}
+                      refIframe={ref}
                       dragTree={dragTree}
                       displayMode={displayMode}
                       zoom={zoom}
@@ -284,7 +284,7 @@ const BuilderArea = ({
                       <BuilderCollaboratorArea
                         key={i}
                         scale={iframeScaleX}
-                        iframeDOM={ref.current}
+                        refIframe={ref}
                         baseElementId={baseElementId}
                         instanceId={subscriptionsCollaborator.instanceId}
                         color={subscriptionsCollaborator.color}

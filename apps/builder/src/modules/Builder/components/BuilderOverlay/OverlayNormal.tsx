@@ -1,57 +1,55 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
+import ContentEditable from '@plitzi/plitzi-ui/ContentEditable';
 import classNames from 'classnames';
-import get from 'lodash/get';
 import { produce } from 'immer';
+import get from 'lodash/get';
 import set from 'lodash/set';
-import Contenteditable from '@plitzi/plitzi-ui-components/ContentEditable';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-// Monorepo
-import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
-// Relatives
-import OverlaySpacing from './OverlaySpacing';
 import OverlayButtonContainer from './OverlayButtonContainer';
 import OverlayButtonResize from './OverlayButtonResize';
+import OverlaySpacing from './OverlaySpacing';
 
-/**
- * @param {{
- *   ref: React.RefObject<any>;
- *   id?: string;
- *   element?: object;
- *   iframeDOM?: object;
- *   elementDOM?: object;
- *   hideActions?: boolean;
- *   displayMode?: 'desktop' | 'tablet' | 'mobile';
- *   container?: object;
- *   selector?: string;
- *   zoom?: number;
- *   mode?: 'hover' | 'select';
- *   isCollaborator?: boolean;
- *   color?: string;
- *   collaboratorName?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const OverlayNormal = props => {
-  const {
-    ref,
-    id = '',
-    element,
-    iframeDOM,
-    elementDOM,
-    hideActions = false,
-    displayMode = 'desktop',
-    container,
-    selector = '',
-    zoom = 1,
-    mode = 'hover',
-    isCollaborator = false,
-    color,
-    collaboratorName = ''
-  } = props;
+import type { OverlayRect } from './BuilderOverlayHelper';
+import type { Element } from '@plitzi/sdk-shared';
+import type { RefObject } from 'react';
+
+export type OverlayNormalProps = {
+  ref: RefObject<HTMLDivElement | null>;
+  id?: string;
+  element?: Element;
+  refIframe?: RefObject<HTMLIFrameElement | null>;
+  elementDOM?: HTMLElement | null;
+  hideActions?: boolean;
+  displayMode?: 'desktop' | 'tablet' | 'mobile';
+  container?: OverlayRect;
+  selector?: string;
+  zoom?: number;
+  mode?: 'hover' | 'select';
+  isCollaborator?: boolean;
+  color?: string;
+  collaboratorName?: string;
+};
+
+const OverlayNormal = ({
+  ref,
+  id = '',
+  element,
+  refIframe,
+  elementDOM,
+  hideActions = false,
+  displayMode = 'desktop',
+  container,
+  selector = '',
+  zoom = 1,
+  mode = 'hover',
+  isCollaborator = false,
+  color,
+  collaboratorName = ''
+}: OverlayNormalProps) => {
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = use(BuilderContext);
   const { style } = use(BuilderStyleContext);
@@ -59,7 +57,7 @@ const OverlayNormal = props => {
   styleRef.current = style;
 
   const isVisible = useMemo(() => {
-    const visibility = get(element, 'definition.initialState.visibility', true);
+    const visibility = get(element, 'definition.initialState.visibility', true) as boolean | string;
 
     return visibility || visibility === 'true';
   }, [element]);
@@ -68,45 +66,47 @@ const OverlayNormal = props => {
       return false;
     }
 
-    if (!container || !container.rounded) {
+    if (!container) {
       return true;
     }
 
     const { width, height } = container.rounded;
 
     return width >= 50 && height >= 30;
-  }, [container]);
-  const componentConfig = useMemo(() => builderElementPermissions(element), [element, builderElementPermissions]);
+  }, [container, hideActions]);
+  const componentConfig = useMemo(
+    () => (element ? builderElementPermissions(element) : {}),
+    [element, builderElementPermissions]
+  );
   const { canMove = true } = componentConfig;
 
-  if (!element || !container || !container.rounded) {
-    return <div ref={ref} />;
-  }
-
-  const {
-    definition: { label, items, parentId, type }
-  } = element;
-
   const handleDragStart = useCallback(
-    e => {
-      const clientRect = e.currentTarget.getBoundingClientRect();
+    (e: DragEvent | React.DragEvent) => {
+      if (!element) {
+        return;
+      }
+
+      const {
+        definition: { parentId, type }
+      } = element;
+      const clientRect = (e as React.DragEvent).currentTarget.getBoundingClientRect();
       const offsetX = e.clientX / zoom - clientRect.left;
       const offsetY = e.clientY / zoom - clientRect.top + 10;
       e.stopPropagation();
-      e.dataTransfer.setDragImage(e.currentTarget, offsetX, offsetY);
-      e.dataTransfer.setData(`move##${type}`, JSON.stringify({ id, parentId, element }));
+      (e as React.DragEvent).dataTransfer.setDragImage((e as React.DragEvent).currentTarget, offsetX, offsetY);
+      (e as React.DragEvent).dataTransfer.setData(`move##${type}`, JSON.stringify({ id, parentId, element }));
     },
-    [id, parentId, element, type, zoom]
+    [id, element, zoom]
   );
 
   const handleOnChangeSize = useCallback(
-    (width, height, finalUpdate = false) => {
+    (width: number, height: number, finalUpdate = false) => {
       if (!finalUpdate || !element) {
         return;
       }
 
       if (!selector) {
-        const newSelector = makeSelector(type);
+        const newSelector = makeSelector(element.definition.type);
         builderHandler(
           'schemaUpdateElement',
           produce(element, draft => {
@@ -127,12 +127,12 @@ const OverlayNormal = props => {
         });
       }
     },
-    [id, displayMode, builderHandler, type, selector]
+    [element, selector, builderHandler, displayMode]
   );
 
   const handleChange = useCallback(
-    value => {
-      if (element && value !== element?.definition?.label) {
+    (value: string) => {
+      if (element && value !== element.definition.label) {
         builderHandler('schemaUpdateElement', {
           ...element,
           definition: { ...element.definition, label: value }
@@ -148,13 +148,21 @@ const OverlayNormal = props => {
     }
 
     elementDOM.addEventListener('dragstart', handleDragStart);
-    elementDOM.setAttribute('draggable', true);
+    elementDOM.setAttribute('draggable', 'true');
 
     return () => {
       elementDOM.removeEventListener('dragstart', handleDragStart);
-      elementDOM.setAttribute('draggable', false);
+      elementDOM.setAttribute('draggable', 'false');
     };
-  }, [elementDOM, handleDragStart]);
+  }, [canMove, elementDOM, handleDragStart, mode]);
+
+  if (!element || !container) {
+    return <div ref={ref} />;
+  }
+
+  const {
+    definition: { label, items }
+  } = element;
 
   return (
     <div
@@ -172,7 +180,7 @@ const OverlayNormal = props => {
         selector={selector}
         hasItems={!!items}
         elementDOM={elementDOM}
-        iframeDOM={iframeDOM}
+        refIframe={refIframe}
         displayMode={displayMode}
         zoom={zoom}
       />
@@ -200,10 +208,10 @@ const OverlayNormal = props => {
         >
           {isVisible && <i className="fas fa-eye" />}
           {!isVisible && <i className="fas fa-eye-slash" />}
-          <Contenteditable
+          <ContentEditable
             className="name-editable-container"
             value={label}
-            myWindow={iframeDOM.contentWindow}
+            myWindow={refIframe?.current?.contentWindow}
             onChange={handleChange}
             openMode="doubleClick"
           />
@@ -212,23 +220,23 @@ const OverlayNormal = props => {
       {isCollaborator && collaboratorName && (
         <div
           className={classNames('overlay__collaborator-name', {
-            'collaborator-name--bottom': container?.y < 30,
-            'collaborator-name--xs': container?.width < 70
+            'collaborator-name--bottom': container.y < 30,
+            'collaborator-name--xs': container.width < 70
           })}
           style={{ backgroundColor: color }}
           title={collaboratorName}
         >
-          {container?.width >= 70 && <i className="fa-solid fa-user" />}
+          {container.width >= 70 && <i className="fa-solid fa-user" />}
           {collaboratorName}
         </div>
       )}
-      {mode === 'select' && canMove && !hideActions && (
+      {mode === 'select' && canMove && !hideActions && elementDOM && (
         <>
           <OverlayButtonResize
             width={container.rounded.width}
             height={container.rounded.height}
             elementDOM={elementDOM}
-            iframeDOM={iframeDOM}
+            refIframe={refIframe}
             resizeHandle="nw"
             onChange={handleOnChangeSize}
             transformScale={zoom}
@@ -237,7 +245,7 @@ const OverlayNormal = props => {
             width={container.rounded.width}
             height={container.rounded.height}
             elementDOM={elementDOM}
-            iframeDOM={iframeDOM}
+            refIframe={refIframe}
             resizeHandle="ne"
             onChange={handleOnChangeSize}
             transformScale={zoom}
@@ -246,7 +254,7 @@ const OverlayNormal = props => {
             width={container.rounded.width}
             height={container.rounded.height}
             elementDOM={elementDOM}
-            iframeDOM={iframeDOM}
+            refIframe={refIframe}
             resizeHandle="sw"
             onChange={handleOnChangeSize}
             transformScale={zoom}
@@ -255,7 +263,7 @@ const OverlayNormal = props => {
             width={container.rounded.width}
             height={container.rounded.height}
             elementDOM={elementDOM}
-            iframeDOM={iframeDOM}
+            refIframe={refIframe}
             resizeHandle="se"
             onChange={handleOnChangeSize}
             transformScale={zoom}

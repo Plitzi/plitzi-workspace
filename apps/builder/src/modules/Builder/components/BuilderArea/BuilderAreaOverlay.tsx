@@ -7,8 +7,10 @@ import BuilderOverlay from '../BuilderOverlay';
 import BuilderOverlayDistance from '../BuilderOverlay/BuilderOverlayDistance';
 import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 
+import type { RefObject } from 'react';
+
 export type BuilderAreaOverlayProps = {
-  iframeDOM?: HTMLIFrameElement | null;
+  refIframe: RefObject<HTMLIFrameElement | null>;
   baseElementId?: string;
   dragTree?: boolean;
   zoom?: number;
@@ -17,7 +19,7 @@ export type BuilderAreaOverlayProps = {
 };
 
 const BuilderAreaOverlay = ({
-  iframeDOM,
+  refIframe,
   baseElementId = '',
   previewMode = false,
   dragTree = false,
@@ -34,12 +36,12 @@ const BuilderAreaOverlay = ({
         id={elementSelected}
         baseElementId={baseElementId}
         mode="select"
-        iframeDOM={iframeDOM}
+        refIframe={refIframe}
         displayMode={displayMode}
         zoom={zoom}
       />
     ),
-    [elementSelected, baseElementId, iframeDOM, displayMode, zoom]
+    [elementSelected, baseElementId, refIframe, displayMode, zoom]
   );
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -72,6 +74,7 @@ const BuilderAreaOverlay = ({
 
     window.document.addEventListener('keydown', handleKeyDown);
     window.document.addEventListener('keyup', handleKeyUp);
+    const iframeDOM = refIframe.current;
     if (iframeDOM && iframeDOM.contentWindow) {
       iframeDOM.contentWindow.document.addEventListener('keydown', handleKeyDown);
       iframeDOM.contentWindow.document.addEventListener('keyup', handleKeyUp);
@@ -85,7 +88,7 @@ const BuilderAreaOverlay = ({
         iframeDOM.contentWindow.document.removeEventListener('keyup', handleKeyUp);
       }
     };
-  }, [previewMode, handleKeyDown, handleKeyUp, iframeDOM]);
+  }, [previewMode, handleKeyDown, handleKeyUp, refIframe]);
 
   return (
     <>
@@ -94,17 +97,17 @@ const BuilderAreaOverlay = ({
           id={elementHovered}
           baseElementId={baseElementId}
           hideActions
-          iframeDOM={iframeDOM}
+          refIframe={refIframe}
           displayMode={displayMode}
           zoom={zoom}
         />
       )}
       {!showDistance && elementSelected && overlaySelectMemo}
-      {!dragTree && <BuilderOverlayDrag iframeDOM={iframeDOM} zoom={zoom} />}
+      {!dragTree && <BuilderOverlayDrag refIframe={refIframe} zoom={zoom} />}
       {showDistance && elementSelected && elementHovered && elementHovered !== elementSelected && (
         <BuilderOverlayDistance
           baseElementId={baseElementId}
-          iframeDOM={iframeDOM}
+          refIframe={refIframe}
           zoom={zoom}
           elementHovered={elementHovered}
           elementSelected={elementSelected}

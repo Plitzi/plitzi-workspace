@@ -1,56 +1,70 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
-import throttle from 'lodash/throttle';
+/* eslint-disable react-hooks/exhaustive-deps */
 import get from 'lodash/get';
+import throttle from 'lodash/throttle';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
-// Relatives
+import { processContainer } from './BuilderOverlayHelper';
 import OverlayNormal from './OverlayNormal';
 import useBuilderElement from '../../hooks/useBuilderElement';
-import { processContainer } from './BuilderOverlayHelper';
 
-/**
- * @param {{
- *   mode?: 'hover' | 'select';
- *   id?: string;
- *   hideActions?: boolean;
- *   displayMode?: 'desktop' | 'tablet' | 'mobile';
- *   baseElementId: string;
- *   iframeDOM: object;
- *   zoom?: number;
- *   isCollaborator?: boolean;
- *   color?: string;
- *   collaboratorName?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderOverlay = props => {
-  const {
-    mode = 'hover',
-    id = '',
-    hideActions = false,
-    displayMode = 'desktop',
-    baseElementId,
-    iframeDOM,
-    zoom = 1,
-    isCollaborator = false,
-    color,
-    collaboratorName = ''
-  } = props;
-  const containerRef = useRef();
-  const rootContainerRef = useRef();
+import type { OverlayRect } from './BuilderOverlayHelper';
+import type { DisplayMode, Element } from '@plitzi/sdk-shared';
+import type { RefObject } from 'react';
+
+export type BuilderOverlayProps = {
+  mode?: 'hover' | 'select';
+  id?: string;
+  hideActions?: boolean;
+  displayMode?: DisplayMode;
+  baseElementId: string;
+  refIframe: RefObject<HTMLIFrameElement | null>;
+  zoom?: number;
+  isCollaborator?: boolean;
+  color?: string;
+  collaboratorName?: string;
+};
+
+const BuilderOverlay = ({
+  mode = 'hover',
+  id = '',
+  hideActions = false,
+  displayMode = 'desktop',
+  baseElementId,
+  refIframe,
+  zoom = 1,
+  isCollaborator = false,
+  color,
+  collaboratorName = ''
+}: BuilderOverlayProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const element = useBuilderElement(id);
-  const [container, setContainer] = useState({ width: 0, height: 0, x: 0, y: 0 });
-  const [overlayProps, setOverlayProps] = useState({ id: '', element: undefined, elementDOM: undefined });
+  const [container, setContainer] = useState<OverlayRect>({
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+    scrollX: 0,
+    scrollY: 0,
+    innerHeight: 0,
+    innerWidth: 0,
+    rounded: { width: 0, height: 0 }
+  });
+  const [overlayProps, setOverlayProps] = useState<{ id: string; element?: Element; elementDOM?: HTMLElement | null }>({
+    id: '',
+    element: undefined,
+    elementDOM: undefined
+  });
 
   const handleProcessContainer = useCallback(
-    elementDOM => {
-      if (!elementDOM || !rootContainerRef?.current) {
+    (elementDOM?: HTMLElement | null) => {
+      if (!elementDOM || !rootContainerRef.current) {
         return;
       }
 
-      const container = processContainer(elementDOM, iframeDOM, zoom);
+      const container = processContainer(elementDOM, refIframe.current, zoom);
       if (!container) {
         return;
       }
@@ -68,40 +82,45 @@ const BuilderOverlay = props => {
         return container;
       });
     },
-    [iframeDOM, zoom]
+    [refIframe, zoom]
   );
 
   const throttledHandleProcessContainer = useCallback(throttle(handleProcessContainer, 50), [handleProcessContainer]);
 
   const getElementDOM = useCallback(
-    eId => {
-      if (iframeDOM) {
-        return iframeDOM.contentWindow.document.querySelector(`[data-id="${eId}"][data-root-id="${baseElementId}"]`);
+    (eId: string) => {
+      if (refIframe.current && refIframe.current.contentWindow) {
+        return refIframe.current.contentWindow.document.querySelector(
+          `[data-id="${eId}"][data-root-id="${baseElementId}"]`
+        );
       }
 
       return window.document.querySelector(`[data-id="${eId}"][data-root-id="${baseElementId}"]`);
     },
-    [iframeDOM, baseElementId]
+    [refIframe, baseElementId]
   );
 
   useEffect(() => {
-    const elementDOM = getElementDOM(id);
+    const elementDOM = getElementDOM(id) as HTMLElement | null;
     setOverlayProps(state => {
-      if (state.id === id && state?.element?.definition?.parentId === element?.definition?.parentId) {
+      if (
+        state.id === id &&
+        state.element?.definition.parentId === (element as Element | undefined)?.definition.parentId
+      ) {
         return state;
       }
 
       return { id, element, elementDOM };
     });
-  }, [baseElementId, element?.definition?.parentId, id, getElementDOM]);
+  }, [baseElementId, element.definition.parentId, id, getElementDOM, element]);
 
   useEffect(() => {
-    if (!overlayProps || !overlayProps.elementDOM) {
+    if (!overlayProps.elementDOM) {
       return;
     }
 
     handleProcessContainer(overlayProps.elementDOM);
-  }, [overlayProps]);
+  }, [handleProcessContainer, overlayProps]);
 
   useEffect(() => {
     const { elementDOM } = overlayProps;
@@ -111,35 +130,44 @@ const BuilderOverlay = props => {
 
     const resizeObserver = new ResizeObserver(() => handleProcessContainer(elementDOM));
     resizeObserver.observe(elementDOM);
-    if (elementDOM?.parentNode) {
-      resizeObserver.observe(elementDOM?.parentNode);
+    if (elementDOM.parentNode) {
+      resizeObserver.observe(elementDOM.parentNode as HTMLElement);
     }
 
-    const mutationObserver = new MutationObserver(() => handleProcessContainer(overlayProps?.elementDOM));
-    if (elementDOM?.parentNode) {
-      mutationObserver.observe(elementDOM?.parentNode, { childList: true });
+    const mutationObserver = new MutationObserver(() => handleProcessContainer(overlayProps.elementDOM));
+    if (elementDOM.parentNode) {
+      mutationObserver.observe(elementDOM.parentNode, { childList: true });
     }
 
-    const scrollCallback = () => throttledHandleProcessContainer(overlayProps?.elementDOM);
-    if (iframeDOM) {
+    const scrollCallback = () => throttledHandleProcessContainer(overlayProps.elementDOM);
+    const iframeDOM = refIframe.current;
+    if (iframeDOM && iframeDOM.contentWindow) {
       iframeDOM.contentWindow.document.addEventListener('scroll', scrollCallback, true);
       iframeDOM.contentWindow.addEventListener('resize', scrollCallback, true);
     }
 
     return () => {
       resizeObserver.unobserve(elementDOM);
-      if (elementDOM?.parentNode) {
-        resizeObserver.unobserve(elementDOM?.parentNode);
+      if (elementDOM.parentNode) {
+        resizeObserver.unobserve(elementDOM.parentNode as HTMLElement);
       }
 
       resizeObserver.disconnect();
       mutationObserver.disconnect();
-      if (iframeDOM) {
-        iframeDOM?.contentWindow?.document?.removeEventListener('scroll', scrollCallback, true);
-        iframeDOM?.contentWindow?.removeEventListener('resize', scrollCallback, true);
+      if (iframeDOM && iframeDOM.contentWindow) {
+        iframeDOM.contentWindow.document.removeEventListener('scroll', scrollCallback, true);
+        iframeDOM.contentWindow.removeEventListener('resize', scrollCallback, true);
       }
     };
-  }, [mode, overlayProps?.elementDOM, overlayProps?.elementDOM?.parentNode, handleProcessContainer]);
+  }, [
+    mode,
+    overlayProps.elementDOM,
+    overlayProps.elementDOM?.parentNode,
+    handleProcessContainer,
+    overlayProps,
+    refIframe,
+    throttledHandleProcessContainer
+  ]);
 
   const { style, selectorSelected } = use(BuilderStyleContext);
   const elementStyle = useMemo(() => {
@@ -147,7 +175,7 @@ const BuilderOverlay = props => {
       return {};
     }
 
-    return get(style, `platform.${displayMode}.${selectorSelected?.name}.attributes`, {});
+    return get(style, `platform.${displayMode}.${selectorSelected.name}.attributes`, {});
   }, [style, displayMode, selectorSelected?.name]);
 
   useEffect(() => {
@@ -155,9 +183,10 @@ const BuilderOverlay = props => {
       return;
     }
 
-    handleProcessContainer(overlayProps?.elementDOM);
+    handleProcessContainer(overlayProps.elementDOM);
   }, [
     mode,
+    handleProcessContainer,
     elementStyle['margin-top'],
     elementStyle['margin-bottom'],
     elementStyle['margin-left'],
@@ -173,14 +202,14 @@ const BuilderOverlay = props => {
   ]);
 
   useEffect(() => {
-    if (!overlayProps?.element || overlayProps?.elementDOM || mode !== 'select') {
+    if (!overlayProps.element || overlayProps.elementDOM || mode !== 'select') {
       return;
     }
 
     // Special case where the element is not found in the DOM due lazy loading
     let retries = 10;
     const retryHandler = setTimeout(() => {
-      const elementDOM = getElementDOM(id);
+      const elementDOM = getElementDOM(id) as HTMLElement | null;
       if (elementDOM) {
         setOverlayProps({ id, element, elementDOM });
         handleProcessContainer(elementDOM);
@@ -198,7 +227,7 @@ const BuilderOverlay = props => {
     return () => {
       clearTimeout(retryHandler);
     };
-  }, [id, overlayProps?.element, overlayProps?.elementDOM, getElementDOM]);
+  }, [id, overlayProps.element, overlayProps.elementDOM, getElementDOM, mode, element, handleProcessContainer]);
 
   const selector = useMemo(() => {
     if (mode === 'hover') {
@@ -208,16 +237,16 @@ const BuilderOverlay = props => {
     return selectorSelected?.name;
   }, [mode, selectorSelected?.name]);
 
-  if (!overlayProps?.element || !overlayProps?.elementDOM) {
+  if (!overlayProps.element || !overlayProps.elementDOM) {
     return undefined;
   }
 
   return (
     <div ref={rootContainerRef} className={`plitzi-component--overlay-${mode}`}>
-      {container && container.width !== 0 && container.height !== 0 && (
+      {container.width !== 0 && container.height !== 0 && (
         <OverlayNormal
           ref={containerRef}
-          iframeDOM={iframeDOM}
+          refIframe={refIframe}
           displayMode={displayMode}
           container={container}
           zoom={zoom}

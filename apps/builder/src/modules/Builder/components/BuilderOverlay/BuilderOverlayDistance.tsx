@@ -1,45 +1,52 @@
-// Packages
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// Relatives
 import { calculateDistances, processContainerDistance } from './BuilderOverlayHelper';
 
-/**
- * @param {{
- *   iframeDOM: object;
- *   baseElementId?: string;
- *   elementSelected?: string;
- *   elementHovered?: string;
- *   zoom?: number;
- * }} props
- * @returns {React.ReactElement}
- */
-const BuilderOverlayDistance = props => {
-  const { iframeDOM, baseElementId = '', zoom = 1.0, elementSelected = '', elementHovered = '' } = props;
-  const containerSelectedRef = useRef();
-  const containerHoveredRef = useRef();
-  const [containers, setContainers] = useState({});
+import type { OverlayDistanceRect } from './BuilderOverlayHelper';
+import type { Element } from '@plitzi/sdk-shared';
+import type { RefObject } from 'react';
+
+export type BuilderOverlayDistanceProps = {
+  refIframe?: RefObject<HTMLIFrameElement | null>;
+  baseElementId?: Element['id'];
+  elementSelected?: Element['id'];
+  elementHovered?: Element['id'];
+  zoom?: number;
+};
+
+const BuilderOverlayDistance = ({
+  refIframe,
+  baseElementId = '',
+  zoom = 1.0,
+  elementSelected = '',
+  elementHovered = ''
+}: BuilderOverlayDistanceProps) => {
+  const containerSelectedRef = useRef<HTMLDivElement | null>(null);
+  const containerHoveredRef = useRef<HTMLDivElement | null>(null);
+  const [containers, setContainers] = useState<Record<string, OverlayDistanceRect>>({});
 
   const getElementDOM = useCallback(
-    eId => {
-      if (iframeDOM) {
-        return iframeDOM.contentWindow.document.querySelector(`[data-id="${eId}"][data-root-id="${baseElementId}"]`);
+    (eId: string): HTMLElement | null => {
+      if (refIframe?.current && refIframe.current.contentWindow) {
+        return refIframe.current.contentWindow.document.querySelector(
+          `[data-id="${eId}"][data-root-id="${baseElementId}"]`
+        );
       }
 
       return window.document.querySelector(`[data-id="${eId}"][data-root-id="${baseElementId}"]`);
     },
-    [iframeDOM, baseElementId]
+    [refIframe, baseElementId]
   );
 
   const handleProcessContainer = useCallback(
-    (elementDOM, node, ref) => {
-      const container = processContainerDistance(elementDOM, iframeDOM, zoom);
+    (elementDOM: HTMLElement | null, node: 'selected' | 'hovered', ref: RefObject<HTMLDivElement | null>) => {
+      const container = processContainerDistance(elementDOM, refIframe?.current, zoom);
       if (!container) {
         return;
       }
 
       const { width, height, top, left } = container;
-      if (ref?.current) {
+      if (ref.current) {
         ref.current.style.width = `${width}px`;
         ref.current.style.height = `${height}px`;
         ref.current.style.top = `${top}px`;
@@ -48,7 +55,7 @@ const BuilderOverlayDistance = props => {
 
       setContainers(state => ({ ...state, [node]: container }));
     },
-    [iframeDOM, zoom]
+    [refIframe, zoom]
   );
 
   useEffect(() => {
@@ -60,14 +67,14 @@ const BuilderOverlayDistance = props => {
   }, [elementHovered, getElementDOM, handleProcessContainer]);
 
   const { distances, projections } = useMemo(
-    () => calculateDistances(containers?.selected, containers?.hovered),
+    () => calculateDistances(containers.selected, containers.hovered),
     [containers]
   );
 
   return (
-    <div className={`plitzi-component--overlay-distance`}>
-      <div ref={containerSelectedRef} className={`plitzi-component--overlay-distance-selected`} />
-      <div ref={containerHoveredRef} className={`plitzi-component--overlay-distance-hovered`} />
+    <div className="plitzi-component--overlay-distance">
+      <div ref={containerSelectedRef} className="plitzi-component--overlay-distance-selected" />
+      <div ref={containerHoveredRef} className="plitzi-component--overlay-distance-hovered" />
       {distances.map((distance, i) => (
         <div
           key={`${distance.placement}-${i}`}

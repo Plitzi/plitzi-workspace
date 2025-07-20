@@ -5,13 +5,14 @@ import { useCallback, use, useEffect, useMemo, useState } from 'react';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import type { DisplayMode } from '@plitzi/sdk-shared';
+import type { RefObject } from 'react';
 
 export type OverlaySpacingProps = {
   id?: string;
   hoverRemove?: boolean;
   selector?: string;
   hasItems?: boolean;
-  iframeDOM?: HTMLIFrameElement | null;
+  refIframe?: RefObject<HTMLIFrameElement | null>;
   elementDOM?: HTMLElement | null;
   displayMode?: DisplayMode;
   zoom?: number;
@@ -22,7 +23,7 @@ const OverlaySpacing = ({
   hoverRemove = false,
   selector,
   hasItems = false,
-  iframeDOM,
+  refIframe,
   elementDOM,
   displayMode = 'desktop',
   zoom = 1
@@ -42,12 +43,12 @@ const OverlaySpacing = ({
       return undefined;
     }
 
-    if (iframeDOM) {
-      return iframeDOM.contentWindow?.getComputedStyle(elementDOM);
+    if (refIframe && refIframe.current) {
+      return refIframe.current.contentWindow?.getComputedStyle(elementDOM);
     }
 
     return window.getComputedStyle(elementDOM);
-  }, [elementDOM, iframeDOM]);
+  }, [elementDOM, refIframe]);
 
   useEffect(() => {
     setRawStyle(getStyle());

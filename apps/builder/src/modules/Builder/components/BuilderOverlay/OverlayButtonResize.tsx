@@ -2,6 +2,8 @@ import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
+import type { RefObject } from 'react';
+
 export type ResizeDirection = 'sw' | 'nw' | 'se' | 'ne' | 's' | 'w' | 'e' | 'n';
 
 export type OverlayButtonResizeProps = {
@@ -10,7 +12,7 @@ export type OverlayButtonResizeProps = {
   height?: number;
   transformScale?: number; // 0.5 if is centered and expands in both sides
   elementDOM: HTMLElement;
-  iframeDOM?: HTMLIFrameElement;
+  refIframe?: RefObject<HTMLIFrameElement | null>;
   lockAspectRatio?: boolean;
   minConstraintsX?: number;
   minConstraintsY?: number;
@@ -27,7 +29,7 @@ const OverlayButtonResize = ({
   height = -1,
   transformScale = 1, // 0.5 if is centered and expands in both sides
   elementDOM,
-  iframeDOM,
+  refIframe,
   lockAspectRatio = false,
   minConstraintsX = 50,
   minConstraintsY = 50,
@@ -183,8 +185,8 @@ const OverlayButtonResize = ({
   };
 
   const getWindow = useCallback(() => {
-    if (iframeDOM) {
-      return iframeDOM.contentWindow;
+    if (refIframe && refIframe.current) {
+      return refIframe.current.contentWindow;
     }
 
     if (typeof window === 'undefined') {
@@ -192,7 +194,7 @@ const OverlayButtonResize = ({
     }
 
     return window;
-  }, [iframeDOM]);
+  }, [refIframe]);
 
   useEffect(() => {
     const win = getWindow();

@@ -47,7 +47,7 @@ export type OverlayDistance = {
   isOverlaped?: boolean;
 };
 
-const processContainer = (elementDOM?: HTMLElement, iframeDOM?: HTMLIFrameElement, zoom: number = 1) => {
+const processContainer = (elementDOM?: HTMLElement, iframeDOM?: HTMLIFrameElement | null, zoom: number = 1) => {
   let scrollY = 0;
   let scrollX = 0;
   let innerHeight = 0;
@@ -89,8 +89,8 @@ const processContainer = (elementDOM?: HTMLElement, iframeDOM?: HTMLIFrameElemen
 };
 
 const processContainerDistance = (
-  elementDOM?: HTMLElement,
-  iframeDOM?: HTMLIFrameElement,
+  elementDOM?: HTMLElement | null,
+  iframeDOM?: HTMLIFrameElement | null,
   zoom: number = 1
 ): OverlayDistanceRect | undefined => {
   if (!elementDOM) {
