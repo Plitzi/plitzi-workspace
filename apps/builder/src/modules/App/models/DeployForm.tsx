@@ -137,7 +137,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
           <Form.Select name="revision" label="Revision" placeholder="Revision Not Selected">
             {Array(latestRevision)
               .fill(undefined)
-              .map((item, i) => (
+              .map((_item, i) => (
                 <option key={latestRevision - i} value={latestRevision - i}>
                   Revision {latestRevision - i}
                   {i === 0 && ' (Latest)'}

@@ -25,7 +25,7 @@ export type AppProviderProps = {
   children: ReactNode;
   instanceId: string;
   webKey: string;
-  webId: number;
+  webId: string;
   environment: string;
   userKey: string;
   server: object;
@@ -39,7 +39,7 @@ const AppProvider = ({
   children,
   instanceId,
   webKey = '',
-  webId = 0,
+  webId = '0',
   environment = 'development',
   userKey = '',
   server,

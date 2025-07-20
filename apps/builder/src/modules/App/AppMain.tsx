@@ -17,8 +17,8 @@ export type AppMainProps = {
   webId?: string;
   userKey?: string;
   instanceId?: string;
-  server?: object;
-  environment?: string;
+  server: object;
+  environment?: 'main' | 'production' | 'development' | 'staging';
   includeSubscriptions?: boolean;
   includeRealTime?: boolean;
   externalStyle?: string;

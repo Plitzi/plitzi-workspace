@@ -53,7 +53,7 @@ const Settings = ({
     []
   );
 
-  const handleChangeHeaders = useCallback((value, valueObj: object) => onUpdate?.('headers', valueObj), [onUpdate]);
+  const handleChangeHeaders = useCallback((_value, valueObj: object) => onUpdate?.('headers', valueObj), [onUpdate]);
 
   const urlParams = useMemo(() => {
     const slug: string = get(pageDefinitions, `${currentPageId}.attributes.slug`, '') as string;

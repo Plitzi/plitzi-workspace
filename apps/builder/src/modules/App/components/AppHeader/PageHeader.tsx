@@ -18,7 +18,7 @@ const PageHeader = ({ setTabSelected }: PageHeaderProps) => {
     setTabSelected?.((state: string) => (state === 'pages' ? '' : 'pages'));
   }, [setTabSelected]);
 
-  const pageLabel = get(pageDefinitions, `${currentPageId}.attributes.name`, '');
+  const pageLabel = get(pageDefinitions, `${currentPageId}.attributes.name`, '') as string;
   const isHome = get(pageDefinitions, `${currentPageId}.attributes.default`, false) as boolean;
 
   return (

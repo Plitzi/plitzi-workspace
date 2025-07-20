@@ -18,6 +18,8 @@ import ContainerSettings from './containers/ContainerSettings';
 // import ContainerSitemap from './containers/ContainerSitemap';
 import { getPopups } from '../helpers/utils';
 
+import type { EventBridgeEvent } from '@plitzi/sdk-shared';
+
 export type AppContainerProps = {
   externalStyle?: string;
 };
@@ -35,7 +37,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const handleSourceChange = useCallback((newSourceId: string) => setSourceState({ sourceId: newSourceId }), []);
 
   const builderHandler = useCallback(
-    (event: string, data: unknown[]) => void eventBridge.emit('main', event, ...data),
+    (event: EventBridgeEvent, data: unknown[]) => void eventBridge.emit('main', event, ...data),
     [eventBridge]
   );
 

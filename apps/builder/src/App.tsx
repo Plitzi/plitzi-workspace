@@ -35,16 +35,16 @@ import type { BuilderPluginProps } from '@pmodules/Builder';
 import type { ReactNode } from 'react';
 
 export type AppProps = {
+  className?: string;
   server: {
     graphqlServer: string;
     subscriptionServer: string;
   };
   webKey: string;
-  includeSubscriptions: boolean;
-  userKey: string;
-  className: string;
+  includeSubscriptions?: boolean;
+  userKey?: string;
   children: ReactNode;
-  builderEnvironment: 'development' | 'staging' | 'production';
+  builderEnvironment?: 'development' | 'staging' | 'production';
 };
 
 const App = (props: AppProps) => {

@@ -41,7 +41,7 @@ export type BuilderProviderProps = {
   schemaName?: string;
   style: Style;
   schema: Schema;
-  onHandler?: (event: string, data: unknown[]) => void;
+  onHandler?: (event: EventBridgeEvent, data: unknown[]) => void;
   onBaseElementChange?: (baseElementId: string) => void;
 };
 

@@ -7,7 +7,7 @@ import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
-import type { Segment } from '@plitzi/sdk-shared';
+import type { EventBridgeEvent, Segment } from '@plitzi/sdk-shared';
 
 export type BuilderPopupProps = {
   previewMode?: boolean;
@@ -26,7 +26,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
   const handleChange = useCallback((popups: string[]) => setPopupsActiveRight(popups), [setPopupsActiveRight]);
 
   const builderHandler = useCallback(
-    (event: string, data: unknown[]): void => void eventBridge.emit('segment', event, segment?.id, ...data),
+    (event: EventBridgeEvent, data: unknown[]): void => void eventBridge.emit('segment', event, segment?.id, ...data),
     [eventBridge, segment?.id]
   );
 

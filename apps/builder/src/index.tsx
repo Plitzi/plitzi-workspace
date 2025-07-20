@@ -8,12 +8,13 @@ import App from './App';
 import packageSettings from '../package.json';
 import { disableReactDevTools } from './helpers/security';
 
+import type { AppProps } from './App';
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export function render(
   widgetContainer: string,
-  params = {},
+  params = {} as AppProps,
   plugins: Record<string, ComponentPlugin> = {},
   debugMode = false
 ) {
@@ -24,7 +25,7 @@ export function render(
     }
 
     return (
-      <App {...params} debugMode={debugMode}>
+      <App {...params}>
         {pluginKeys.map(pluginType => (
           <Builder.Plugin key={pluginType} renderType={pluginType} component={plugins[pluginType]} />
         ))}
@@ -43,7 +44,7 @@ export function render(
 export type PlitziBuilderProps = {
   className?: string;
   children: ReactNode;
-  webKey?: string;
+  webKey: string;
   environment?: string;
   currentPageId?: string;
   userKey?: string;
@@ -56,7 +57,7 @@ export type PlitziBuilderProps = {
   };
   includeSubscriptions?: boolean;
   includeRealTime?: boolean;
-  builderEnvironment?: string;
+  builderEnvironment?: 'development' | 'staging' | 'production';
   renderMode?: 'raw' | 'iframe' | 'shadow';
   externalStyle?: string;
   state?: object;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, use } from 'react';
 
@@ -23,7 +24,6 @@ export type PlitziServiceContextValue = {
     getWindow: () => Window | null;
     rootDOM?: HTMLElement | null;
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customContexts: Record<string, Context<any>>;
   contexts: {
     DataSourceContext: Context<DataSourceContextValue>;
@@ -36,6 +36,7 @@ export type PlitziServiceContextValue = {
     EventBridgeContext: Context<EventBridgeContextValue>;
     PluginsContext: Context<PluginsContextValue>;
     InteractionsContext: Context<InteractionsContextValue>;
+    NetworkContext: Context<any>;
     BuilderContext?: Context<BuilderContextValue>;
   };
 } & Record<string, unknown>;
