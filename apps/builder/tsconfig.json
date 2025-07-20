@@ -16,6 +16,7 @@
   "include": [
     "../sdk-shared/vite.config.ts",
     "../sdk-shared/package.json",
+    "**/*.json",
     "src/*.ts",
     "src/*.tsx",
     "src/**/*.ts",
