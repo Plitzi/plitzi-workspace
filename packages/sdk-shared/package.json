@@ -7,7 +7,7 @@
     "jest.config.js",
     "jest.setup.js",
     "tailwind.config.js",
-    "vite.config.mjs",
+    "vite.config.ts",
     "setupTests.ts"
   ],
   "exports": {
@@ -23,8 +23,11 @@
     "./babel.config": "./babel.config.mjs",
     "./tailwind.config": "./tailwind.config.js",
     "./tsconfig.json": "./tsconfig.json",
-    "./tsconfig.app.json": "./tsconfig.app.json",
-    "./vite.config.mjs": "./vite.config.mjs",
+    "./vite.config":{
+      "types": "./dist/vite.config.d.ts",
+      "import": "./dist/vite.config.es",
+      "require": "./dist/vite.config.es"
+    },
     "./setupTests.ts": "./setupTests.ts",
     "./*": {
       "types": "./dist/*.d.ts",
@@ -36,9 +39,9 @@
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc --noEmit",
-    "build-assets:dev": "tsc -p ./tsconfig.app.json && vite build --mode development --minify false",
-    "build-assets:dev-watch": "tsc -p ./tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc -p ./tsconfig.app.json && vite build"
+    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
+    "build-assets:prod": "tsc && vite build"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^0.2.0",

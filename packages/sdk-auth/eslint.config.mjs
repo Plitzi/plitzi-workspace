@@ -6,7 +6,7 @@ export default tsEslint.config({
   languageOptions: {
     parserOptions: {
       projectService: {
-        defaultProject: './tsconfig.app.json'
+        defaultProject: './tsconfig.json'
       },
       tsconfigRootDir: import.meta.dirname
     }

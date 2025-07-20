@@ -19,7 +19,7 @@ export default tsEslint.config({
     parserOptions: {
       projectService: {
         allowDefaultProject: ['.storybook/*.ts', '.storybook/*.tsx'],
-        defaultProject: './tsconfig.app.json'
+        defaultProject: './tsconfig.json'
       },
       tsconfigRootDir: import.meta.dirname
     }

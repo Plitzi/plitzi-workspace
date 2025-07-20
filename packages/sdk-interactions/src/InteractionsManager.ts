@@ -8,7 +8,7 @@ import EventBridge from '@plitzi/sdk-event-bridge';
 import { flowTrigger } from './InteractionsHelper';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
-import type { ElementInteraction, InteractionBaseCallback, Subscriptor } from '@plitzi/sdk-shared';
+import type { ElementInteraction, EventBridgeEvent, InteractionBaseCallback, Subscriptor } from '@plitzi/sdk-shared';
 
 class InteractionsManager {
   eventBridge: InstanceType<typeof EventBridge>;
@@ -103,14 +103,17 @@ class InteractionsManager {
     }
 
     if (Object.keys(triggers).length > 0) {
-      this.eventBridge.on('interaction', id, this.eventBridgeCallback(interactions) as EventBridgeCallback, {
-        override: true
-      });
+      this.eventBridge.on(
+        'interaction',
+        id as EventBridgeEvent,
+        this.eventBridgeCallback(interactions) as EventBridgeCallback,
+        { override: true }
+      );
     }
   }
 
   unsubscribe(id: string) {
-    this.eventBridge.off('interaction', id);
+    this.eventBridge.off('interaction', id as EventBridgeEvent);
     delete this.subscriptors[id];
     if (this.callbacksAvailables[id]) {
       delete this.callbacksAvailables[id];
@@ -171,7 +174,7 @@ class InteractionsManager {
   }
 
   interactionTrigger(subscriptorId: string, eventName: string, params: Record<string, unknown> = {}) {
-    return this.eventBridge.emit('interaction', subscriptorId, subscriptorId, eventName, params);
+    return this.eventBridge.emit('interaction', subscriptorId as EventBridgeEvent, subscriptorId, eventName, params);
   }
 
   // child managers

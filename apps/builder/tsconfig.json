@@ -9,5 +9,18 @@
       "@pcomponents/*": ["./src/components/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/*.ts", "src/*.tsx", "vite.config.ts"]
+  // "paths": {
+  //   "@pmodules/*": ["./src/modules/*"],
+  //   "@pcomponents/*": ["./src/components/*"]
+  // },
+  "include": [
+    "../sdk-shared/vite.config.ts",
+    "../sdk-shared/package.json",
+    "src/*.ts",
+    "src/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vite.config.ts",
+    "setupTests.ts"
+  ]
 }

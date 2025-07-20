@@ -1,17 +1,18 @@
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
 
+import path from 'path';
+
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
-import { defineConfig } from 'vitest/config';
-import path from 'path';
 
 import pkg from './package.json' with { type: 'json' };
 
 const importedPackages = new Set();
 
-export default defineConfig(({ mode, command, ...args }) => {
+export default defineConfig(({ mode, command }) => {
   return {
     plugins: [
       nodeResolve({ extensions: ['.ts', '.tsx'] }),
@@ -20,14 +21,8 @@ export default defineConfig(({ mode, command, ...args }) => {
         entryRoot: 'src',
         outDir: 'dist',
         rollupTypes: false,
-        exclude: [
-          '**/*.test.tsx',
-          '**/*.stories.ts',
-          '**/*.stories.tsx'
-          // 'setupTests.ts',
-          // 'node_modules'
-        ],
-        tsconfigPath: './tsconfig.app.json'
+        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
+        tsconfigPath: './tsconfig.json'
       }),
       {
         name: 'debug-resolve',

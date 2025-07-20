@@ -1,13 +1,45 @@
 {
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
   "compilerOptions": {
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
+    "composite": true,
     "target": "ES2023",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "emitDeclarationOnly": true,
     "jsx": "react-jsx", // @todo: react/jsx-runtime
-    "esModuleInterop": true,
+
+    /* Linting */
     "strict": true,
+    "resolveJsonModule": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      // "@icons/*": ["./src/icons/*"],
+      // "@components/*": ["./src/components/*"],
+      // "@hooks/*": ["./src/hooks/*"],
+      // "@/*": ["./src/*"]
+    },
     "rootDir": "./",
-    "outDir": "./dist",
-  }
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/*.ts",
+    "src/*.tsx",
+    "src/*.json",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.json",
+    "vite.config.ts",
+    "setupTests.ts",
+    "package.json"
+  ]
 }
