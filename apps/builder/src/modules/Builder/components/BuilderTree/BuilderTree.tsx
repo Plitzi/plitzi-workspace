@@ -71,6 +71,7 @@ const BuilderTree = ({ setDragTree }: BuilderTreeProps) => {
 
   const handleChange = useCallback(
     (state: TreeChangeState) => {
+      console.log('BuilderTree handleChange', state);
       switch (state.action) {
         case 'itemsOpened': {
           setOpenedCache(state.data);
@@ -92,7 +93,7 @@ const BuilderTree = ({ setDragTree }: BuilderTreeProps) => {
         }
 
         case 'itemDragged': {
-          const { id, toId, dropPosition, event } = state.data;
+          const { id, toId, dropPosition } = state.data;
           const element = get(flatRef.current, id) as Element | undefined;
           if (!element) {
             break;
@@ -101,18 +102,30 @@ const BuilderTree = ({ setDragTree }: BuilderTreeProps) => {
           const {
             definition: { type }
           } = element;
-          if ((id && id === toId) || !id) {
-            try {
-              let data: unknown = event.dataTransfer.getData(event.dataTransfer.types[0]);
-              data = JSON.parse(data as string);
-              void builderDropElement(`add##${type}`, data, dropPosition, toId, baseElementId);
-            } catch {
-              // nothing here
-            }
-          } else {
+          if (id !== toId) {
             void builderDropElement(`move##${type}`, { element, id: element.id }, dropPosition, toId, baseElementId);
           }
 
+          break;
+        }
+        case 'externalItemDragged': {
+          const { toId, dropPosition, event } = state.data;
+
+          try {
+            const data = event.dataTransfer.getData(event.dataTransfer.types[0]);
+            const dataParsed = JSON.parse(data) as { element: Element; id: Element['id'] };
+            if (!(dataParsed as unknown) || !(dataParsed.element as Element | undefined) || !dataParsed.id) {
+              console.warn('Invalid data parsed from drag event', dataParsed);
+              return;
+            }
+
+            const {
+              definition: { type }
+            } = dataParsed.element;
+            void builderDropElement(`add##${type}`, dataParsed, dropPosition, toId, baseElementId);
+          } catch {
+            // nothing here
+          }
           break;
         }
 
