@@ -221,7 +221,6 @@ const BuilderOverlayDrag = ({ refIframe, sizeOffset = 2, zoom = 1 }: BuilderOver
         parentId?: string;
         element: PlitziElement;
       };
-      console.log(data);
       if (data.id === element.id || (data.parentId === element.id && dropPosition === 'inside')) {
         setRerender(state => !state);
         return;

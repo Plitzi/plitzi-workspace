@@ -34,9 +34,7 @@ const useCollectionContext = (
   }: UseCollectionContextProps = {} as UseCollectionContextProps
 ): UseCollectionContextResult => {
   const plitziContext = usePlitziServiceContext();
-  const [collection, setCollection] = useState<(Collection & { record: unknown; records: unknown }) | undefined>(
-    undefined
-  );
+  const [collection, setCollection] = useState<(Collection & { record?: CollectionRecord }) | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -62,14 +60,14 @@ const useCollectionContext = (
   }, [previewMode, query, queryParams, routeParams]);
 
   const populateRecords = useCallback(
-    (collection: Collection, records: unknown) => {
-      const { pageInfo, edges } = records as { pageInfo: PageInfo; edges: CollectionRecord[] };
+    (collection: Omit<Collection, 'records'>, records: { pageInfo: PageInfo; edges: CollectionRecord[] }) => {
+      const { pageInfo, edges } = records;
       setCursor(pageInfo.nextCursor);
       setHasNextPage(pageInfo.hasNextPage);
       setCollection({
         ...collection,
-        records: singleRecord ? undefined : edges,
-        record: singleRecord && edges.length > 0 ? edges[0] : null
+        records: singleRecord ? [] : edges,
+        record: singleRecord && edges.length > 0 ? edges[0] : undefined
       });
     },
     [singleRecord]
@@ -77,12 +75,10 @@ const useCollectionContext = (
 
   const fetchCollectionInternal = useCallback(async () => {
     setLoading(true);
-    const collectionInternal = (await fetchCollection?.(source, queryCompiled)) as
-      | (Collection & { records: unknown })
-      | undefined;
+    const collectionInternal = await fetchCollection?.(source, queryCompiled);
     setLoading(false);
-    if (collectionInternal?.records) {
-      populateRecords(collectionInternal as Collection, collectionInternal.records);
+    if (collectionInternal?.records && collectionInternal.records.edges.length > 0) {
+      populateRecords(collectionInternal, collectionInternal.records);
     }
   }, [fetchCollection, populateRecords, queryCompiled, source]);
 
@@ -102,7 +98,7 @@ const useCollectionContext = (
     setLoading(false);
 
     if (result) {
-      populateRecords(collection, result);
+      populateRecords(collection, result as { pageInfo: PageInfo; edges: CollectionRecord[] });
     }
   }, [collection, source, fetchRecords, queryCompiled, appendResults, cursor, limit, populateRecords]);
 
@@ -123,7 +119,7 @@ const useCollectionContext = (
       setCollection(undefined);
       setLoading(false);
     }
-  }, [source, limit, query, setLoading, fetchRecordsInternal, fetchCollectionInternal]);
+  }, [source, fetchCollectionInternal]);
 
   const valueMemo = useMemo(
     () => ({ loading, collection, hasNextPage, handleNextPage, fetch: fetchCollectionInternal }),

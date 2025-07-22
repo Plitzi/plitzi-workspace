@@ -155,8 +155,13 @@ const CollectionContextProvider = props => {
 
   const fetchCollection = useCallback(
     async (id, recordsFilter, store = true) => {
-      const result = await query('Collection', { id, recordsFilter }, 'network-only');
-      if (!result) {
+      const variables = { id };
+      if (recordsFilter) {
+        variables.recordsFilter = recordsFilter;
+      }
+
+      const result = await query('Collection', variables, 'network-only');
+      if (!result || result.errors) {
         return null;
       }
 
