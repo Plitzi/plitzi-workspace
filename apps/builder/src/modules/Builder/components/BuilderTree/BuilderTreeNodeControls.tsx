@@ -28,6 +28,10 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
   const dataSource = useDataSource({ id, mode: 'read' });
   const element = useBuilderElement(id);
   const { canDelete } = useMemo(() => {
+    if (!element) {
+      return { canDelete: false };
+    }
+
     const {
       definition: { label, parentId, items, initialState }
     } = element;
@@ -43,6 +47,10 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
     };
   }, [element, builderElementPermissions]);
   const isVisible = useMemo(() => {
+    if (!element) {
+      return false;
+    }
+
     const { attributes, definition } = element;
     const bindingData = getBindingsDetails(dataSource, attributes, definition);
 

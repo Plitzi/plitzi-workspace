@@ -6,7 +6,7 @@ import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSch
 const useBuilderElement = (id?: string) => {
   const { schema } = use(BuilderSchemaContext);
 
-  return useMemo(() => get(schema, `flat.${id}`), [schema, id]);
+  return useMemo(() => get(schema, `flat.${id}`, undefined), [schema, id]);
 };
 
 export default useBuilderElement;

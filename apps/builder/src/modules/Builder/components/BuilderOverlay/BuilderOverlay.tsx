@@ -103,16 +103,13 @@ const BuilderOverlay = ({
   useEffect(() => {
     const elementDOM = getElementDOM(id) as HTMLElement | null;
     setOverlayProps(state => {
-      if (
-        state.id === id &&
-        state.element?.definition.parentId === (element as Element | undefined)?.definition.parentId
-      ) {
+      if (state.id === id && state.element?.definition.parentId === element?.definition.parentId) {
         return state;
       }
 
       return { id, element, elementDOM };
     });
-  }, [baseElementId, element.definition.parentId, id, getElementDOM, element]);
+  }, [baseElementId, element?.definition.parentId, id, getElementDOM, element]);
 
   useEffect(() => {
     if (!overlayProps.elementDOM) {

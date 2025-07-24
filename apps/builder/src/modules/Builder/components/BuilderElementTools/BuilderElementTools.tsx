@@ -67,6 +67,10 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
 
   const handleChangeBinding = useCallback(
     (bindings: Element['definition']['bindings']) => {
+      if (!element) {
+        return;
+      }
+
       const { definition } = element;
       builderHandler('schemaUpdateElement', { ...element, definition: { ...definition, bindings } });
     },
@@ -75,6 +79,10 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
 
   const handleChangeInteractions = useCallback(
     (interactions: Element['definition']['interactions']) => {
+      if (!element) {
+        return;
+      }
+
       const { definition } = element;
       builderHandler('schemaUpdateElement', {
         ...element,
@@ -84,7 +92,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
     [builderHandler, element]
   );
 
-  if (!(element as Element | undefined)) {
+  if (!element) {
     return (
       <div className="m-3 w-full self-start rounded-sm border-2 border-dashed border-gray-300 p-3 text-center">
         Click on a component to select it

@@ -22,7 +22,7 @@ export type BuilderContextMenuProps = {
   width?: number;
   iframeDOM?: HTMLIFrameElement | null;
   zoom?: number;
-  getWindow?: () => { innerHeight: number; innerWidth: number };
+  getWindow?: () => Window | null;
 };
 
 const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: BuilderContextMenuProps) => {
