@@ -1,7 +1,12 @@
 import get from 'lodash/get';
 import set from 'lodash/set';
 
-const callback = (source: string[] | string, params: { keys: string | { from: string; to: string }[] }) => {
+import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
+
+const callback = (
+  source: string[] | string,
+  params: DataSourceUtilityParamsValue<string | { from: string; to: string }[]>
+) => {
   let { keys } = params;
   if (!Array.isArray(source)) {
     return source;
@@ -27,7 +32,11 @@ const callback = (source: string[] | string, params: { keys: string | { from: st
   });
 };
 
-const arrayMap = {
+const arrayMap: DataSourceUtility<
+  string[] | string,
+  string | string[] | Record<string, string>[],
+  string | { from: string; to: string }[]
+> = {
   action: 'arrayMap',
   title: 'Array Map',
   type: 'utility',

@@ -1,5 +1,7 @@
 import lodashCapitalize from 'lodash/capitalize';
 
+import type { DataSourceUtility } from '@plitzi/sdk-shared';
+
 const callback = (source: string) => {
   if (typeof source !== 'string') {
     return source;
@@ -8,7 +10,7 @@ const callback = (source: string) => {
   return lodashCapitalize(source);
 };
 
-const capitalize = {
+const capitalize: DataSourceUtility = {
   action: 'capitalize',
   title: 'Capitalize',
   type: 'utility',

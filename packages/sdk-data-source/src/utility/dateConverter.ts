@@ -1,8 +1,12 @@
 import moment from 'moment';
 
+import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
 import type { Moment } from 'moment';
 
-const callback = (source: string | number, { format = 'DD/MM/YYYY', asAge = false, isUnix = true, isUtc = false }) => {
+const callback = (
+  source: string | number,
+  { format = 'DD/MM/YYYY', asAge = false, isUnix = true, isUtc = false }: DataSourceUtilityParamsValue
+) => {
   if (typeof source !== 'string' && typeof source !== 'number') {
     return source;
   }
@@ -24,7 +28,7 @@ const callback = (source: string | number, { format = 'DD/MM/YYYY', asAge = fals
     if (asAge) {
       value = value.fromNow();
     } else {
-      value = value.format(format);
+      value = value.format(format as string);
     }
   } catch {
     value = source;
@@ -33,7 +37,7 @@ const callback = (source: string | number, { format = 'DD/MM/YYYY', asAge = fals
   return value;
 };
 
-const dateConverter = {
+const dateConverter: DataSourceUtility = {
   action: 'dateConverter',
   title: 'Date Converter',
   type: 'utility',
@@ -43,7 +47,7 @@ const dateConverter = {
     isUnix: { defaultValue: true, type: 'checkbox' },
     isUtc: { defaultValue: false, type: 'checkbox' }
   },
-  preview: { time: '' },
+  preview: { format: '', asAge: '', isUnix: '', isUtc: '' },
   callback
 };
 

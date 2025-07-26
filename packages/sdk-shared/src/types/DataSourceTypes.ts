@@ -1,8 +1,48 @@
 import type { Schema } from './SchemaTypes';
 import type useDataSource from '../dataSource/hooks/useDataSource';
+import type { Field, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Context } from 'react';
 
-export type SourceField = { path: string; name: string };
+export type DataSourceUtilityParams<TParams = string | boolean | number> = Record<
+  string,
+  {
+    type?: DataSourceUtilityParamType | ((params: DataSourceUtilityParamsValue<TParams>) => DataSourceUtilityParamType);
+    label?: string;
+    defaultValue?: string | boolean | number;
+    options?: { label: string; value: string }[];
+  }
+>;
+
+export type DataSourceUtilityParamsValue<T = string | boolean | number> = Record<
+  keyof DataSourceUtility<T>['params'],
+  T
+>;
+
+export type DataSourceUtilityParamType = 'text' | 'select' | 'textarea' | 'checkbox' | 'codemirror-text';
+
+export type DataSourceUtility<
+  TSource = string,
+  TSourceReturn = string | boolean | number,
+  TParams = string | boolean | number
+> = {
+  action: string;
+  title: string;
+  type: 'utility' | 'unknown';
+  params: DataSourceUtilityParams<TParams>;
+  preview: Record<string, string>;
+  callback: (
+    source: TSource,
+    params: DataSourceUtilityParamsValue<TParams>,
+    dataSources?: Record<string, string>
+  ) => TSourceReturn;
+};
+
+export type SourceField = {
+  path: string;
+  name: string;
+  inputType?: Field['inputType'];
+  values?: { value: RuleValue; label: 'string' }[];
+};
 
 export type SourceMeta = {
   id: string;

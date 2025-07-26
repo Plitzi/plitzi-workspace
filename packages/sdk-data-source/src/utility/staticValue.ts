@@ -1,4 +1,6 @@
-const callback = (_source: string, params: { valueType: string; value: string }) => {
+import type { DataSourceUtility, DataSourceUtilityParamsValue, DataSourceUtilityParamType } from '@plitzi/sdk-shared';
+
+const callback = (_source: string, params: DataSourceUtilityParamsValue) => {
   const { valueType, value } = params;
   if (valueType === 'select') {
     return value === 'true';
@@ -7,7 +9,7 @@ const callback = (_source: string, params: { valueType: string; value: string })
   return value;
 };
 
-const staticValue = {
+const staticValue: DataSourceUtility = {
   action: 'staticValue',
   title: 'Static Value',
   type: 'utility',
@@ -24,11 +26,7 @@ const staticValue = {
     },
     value: {
       defaultValue: '',
-      type: ({
-        valueType
-      }: {
-        valueType: { label: string; defaultValue: string; type: string; options: { label: string; value: string }[] };
-      }) => valueType,
+      type: ({ valueType }) => valueType as DataSourceUtilityParamType,
       options: [
         { label: 'True', value: 'true' },
         { label: 'False', value: 'false' }

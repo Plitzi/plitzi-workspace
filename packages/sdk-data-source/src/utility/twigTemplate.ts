@@ -1,6 +1,8 @@
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
-const callback = (source: string, params: { template: string }, dataSources = {}) => {
+import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
+
+const callback = (source: string, params: DataSourceUtilityParamsValue<string>, dataSources = {}) => {
   const { template } = params;
   let content: string | object = source;
   try {
@@ -12,7 +14,7 @@ const callback = (source: string, params: { template: string }, dataSources = {}
   return content;
 };
 
-const twigTemplate = {
+const twigTemplate: DataSourceUtility<string, string | object, string> = {
   action: 'twigTemplate',
   title: 'Twig Template',
   type: 'utility',
