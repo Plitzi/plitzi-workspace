@@ -1,29 +1,23 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
-import classNames from 'classnames';
-import get from 'lodash/get';
-import noop from 'lodash/noop';
-import capitalize from 'lodash/capitalize';
-import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
+import classNames from 'classnames';
+import capitalize from 'lodash/capitalize';
+import get from 'lodash/get';
+import { useCallback, use, useMemo } from 'react';
 
-// Alias
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-/**
- * @param {{
- *   className?: string;
- *   value?: string;
- *   mode?: 'js' | 'html';
- *   onChange?: (value: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const ElementAdvancedEditor = props => {
-  const { className = '', value = '', mode = 'js', onChange = noop } = props;
+export type ElementAdvancedEditorProps = {
+  className?: string;
+  value?: string;
+  mode?: 'js' | 'html';
+  onChange?: (value: string) => void;
+};
+
+const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChange }: ElementAdvancedEditorProps) => {
   const { componentDefinitions } = use(ComponentContext);
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
@@ -35,40 +29,54 @@ const ElementAdvancedEditor = props => {
     [componentDefinitions]
   );
 
-  const handleChange = useCallback(v => onChange(v), [onChange]);
+  const handleChange = useCallback((newValue: string) => onChange?.(newValue), [onChange]);
 
   const handleFormat = useCallback(async () => {
-    const response = await networkQuery('/utils/prettier-parser', { data: value, parser: mode }, 'post');
+    const response = await networkQuery<{ data: string }>(
+      '/utils/prettier-parser',
+      { data: value, parser: mode },
+      'post'
+    );
     if (!response || !response.data) {
       return;
     }
 
     const valuePretty = get(response, 'data', value);
     if (valuePretty !== value) {
-      onChange(valuePretty);
+      onChange?.(valuePretty);
     }
-  }, [onChange, value]);
+  }, [mode, networkQuery, onChange, value]);
 
-  const handlePluginInsert = type => () => onChange(state => `${state}<${type}></${type}>`);
+  const handlePluginInsert = useCallback(
+    (type: string) => () => onChange?.(`${value}<${type}></${type}>`),
+    [onChange, value]
+  );
 
   return (
     <div className={classNames('relative flex h-full flex-col', className)}>
-      <CodeMirror value={value} theme="dark" lineWrapping onChange={handleChange} mode={mode} />
+      <CodeMirror
+        value={value}
+        theme="dark"
+        className={{ inputContainer: 'h-full w-full', root: 'h-full w-full' }}
+        lineWrapping
+        onChange={handleChange}
+        mode={mode}
+      />
       <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"
           size="custom"
           className="mr-2 rounded-sm bg-white p-2"
           onClick={handleFormat}
-          tilte="Auto format"
+          title="Auto format"
           disabled={networkLoading}
         >
-          <i className="fa-solid fa-wand-magic-sparkles" />
+          <Button.Icon icon="fa-solid fa-wand-magic-sparkles" />
         </Button>
-        <ContainerFloating showIcon={false} containerTopOffset={8}>
+        <ContainerFloating containerTopOffset={8}>
           <ContainerFloating.Trigger>
             <Button intent="custom" size="custom" className="mr-2 rounded-sm bg-white p-2" title="Plugins">
-              <i className="fa-solid fa-puzzle-piece" />
+              <Button.Icon icon="fa-solid fa-puzzle-piece" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>
@@ -85,10 +93,10 @@ const ElementAdvancedEditor = props => {
             </ul>
           </ContainerFloating.Content>
         </ContainerFloating>
-        <ContainerFloating showIcon={false} containerTopOffset={8}>
+        <ContainerFloating containerTopOffset={8}>
           <ContainerFloating.Trigger>
             <Button intent="custom" size="custom" className="rounded-sm bg-white p-2">
-              <i className="fa-solid fa-circle-info" />
+              <Button.Icon icon="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>
