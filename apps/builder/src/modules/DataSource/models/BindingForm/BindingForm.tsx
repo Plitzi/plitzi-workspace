@@ -34,7 +34,6 @@ export type BindingSchema = z.infer<typeof bindingForm>;
 const attributesDefault = [];
 
 export type BindingFormProps = {
-  id: string;
   category?: string;
   attributes?: { label: string; path: string }[];
   sources: Record<string, SourceMeta>;
