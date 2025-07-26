@@ -231,7 +231,7 @@ const DataSourceBinding = ({
                     })}
                   >
                     <BindingForm
-                      value={bindingFormValues[fkey]} // revisar esto, antes no tenia fkey aca, ver si no rompi esta mierda
+                      value={bindingFormValues[fkey]}
                       category={fkey}
                       onClose={handleClickCloseForm(fkey)}
                       attributes={bindingsAvailables[fkey]}

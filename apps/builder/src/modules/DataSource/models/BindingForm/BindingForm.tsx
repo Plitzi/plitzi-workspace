@@ -22,7 +22,7 @@ export const bindingForm = z.object({
   when: z.any().optional(),
   transformers: z.array(
     z.object({
-      type: z.enum(['utility', 'abc']),
+      type: z.enum(['utility', 'unknown']),
       action: z.string(),
       params: z.record(z.any())
     })
@@ -30,8 +30,6 @@ export const bindingForm = z.object({
 });
 
 export type BindingSchema = z.infer<typeof bindingForm>;
-
-const attributesDefault = [];
 
 export type BindingFormProps = {
   category?: string;
@@ -46,22 +44,14 @@ const totalSteps = 4;
 
 const BindingForm = ({
   category = '',
-  attributes = attributesDefault,
+  attributes,
   sources,
   value,
   allowCustomBindings = false,
   onClose
 }: BindingFormProps) => {
   const form = useForm({
-    initialValues: {
-      id: '',
-      source: '',
-      fromPath: '',
-      toPath: '',
-      when: {},
-      transformers: [],
-      ...get(value, category, {})
-    },
+    initialValues: { id: '', source: '', fromPath: '', toPath: '', when: {}, transformers: [], ...value },
     config: { schema: bindingForm }
   });
   const [step, setStep] = useState(0);
