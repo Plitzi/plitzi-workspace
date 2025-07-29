@@ -14,8 +14,7 @@ import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
 import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
-import type { ServerEnvironment } from '../../config';
-import type { Server } from '@plitzi/sdk-shared';
+import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppProviderProps = {

@@ -18,7 +18,6 @@ import Mutations from './Mutations';
 import NetworkContext from './NetworkContext';
 import Queries from './Queries';
 
-import type { ServerEnvironment } from '../../config';
 import type { NetworkInternalContextValue } from './contexts/NetworkInternalContext';
 import type { ApolloClient, ApolloQueryResult, FetchPolicy, FetchResult } from '@apollo/client/core';
 import type { WithApolloClient } from '@apollo/client/react/hoc';
@@ -31,7 +30,8 @@ import type {
   PluginRaw,
   Schema,
   SchemaRaw,
-  Style
+  Style,
+  ServerEnvironment
 } from '@plitzi/sdk-shared';
 import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DocumentNode } from 'graphql';

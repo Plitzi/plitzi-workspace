@@ -2,9 +2,8 @@ import { createContext } from 'react';
 
 import type Mutations from './Mutations';
 import type Queries from './Queries';
-import type { ServerEnvironment } from '../../config';
 import type { ApolloError, FetchPolicy } from '@apollo/client/core';
-import type { Server } from '@plitzi/sdk-shared';
+import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 
 export type NetworkContextValue = {
   mutate: <T = unknown>(

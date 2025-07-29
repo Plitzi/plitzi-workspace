@@ -29,9 +29,8 @@ import packageSettings from '../package.json';
 
 import './assets/index.scss';
 
-import type { ServerEnvironment } from './config';
 import type { NormalizedCacheObject } from '@apollo/client/core';
-import type { ComponentPlugin, Server } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { BuilderPluginProps } from '@pmodules/Builder';
 import type { ReactNode } from 'react';
 
@@ -57,6 +56,7 @@ const App = (props: AppProps) => {
   } = props;
   const webId = useMemo(() => getKeyDecoded(webKey, true) as string, [webKey]);
   const [instanceId, setInstanceId] = useStorage<string>(`web_${webId}_state.instanceId`, '', 'sessionStorage');
+  const server = useMemo(() => getEnvironmentServer(builderEnvironment, serverProp), [builderEnvironment, serverProp]);
 
   useEffect(() => {
     console.log(
@@ -154,7 +154,6 @@ const App = (props: AppProps) => {
     [userKey]
   );
 
-  const server = useMemo(() => getEnvironmentServer(builderEnvironment, serverProp), [builderEnvironment, serverProp]);
   const client = useMemo(
     () => generateClient(server, webKey, includeSubscriptions, instanceId),
     [generateClient, server, webKey, includeSubscriptions, instanceId]

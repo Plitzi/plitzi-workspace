@@ -10,8 +10,7 @@ import AppContext from './AppContext';
 import AppProvider from './AppProvider';
 
 import type { AppContextValue } from './AppContext';
-import type { ServerEnvironment } from '../../config';
-import type { Server } from '@plitzi/sdk-shared';
+import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppMainProps = {

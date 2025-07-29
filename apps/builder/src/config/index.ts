@@ -1,8 +1,6 @@
-import type { Server } from '@plitzi/sdk-shared';
+import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 
-export type ServerEnvironment = 'production' | 'staging' | 'development';
-
-export const getEnvironmentServer = (env: ServerEnvironment, server?: object): Server => {
+export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Server>): Server => {
   switch (env) {
     case 'production': {
       return {
@@ -16,8 +14,10 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: object): S
         graphqlServer: 'https://server.plitzi.com/graphql',
         websocketServer: 'wss://server.plitzi.com',
         subscriptionServer: 'wss://server.plitzi.com/subscriptions',
+        // Others
+        location: undefined,
         ...server
-      };
+      } as Server;
     }
 
     case 'staging': {
@@ -32,8 +32,10 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: object): S
         graphqlServer: 'https://server-stg.plitzi.com/graphql',
         websocketServer: 'wss://server-stg.plitzi.com',
         subscriptionServer: 'wss://server-stg.plitzi.com/subscriptions',
+        // Others
+        location: undefined,
         ...server
-      };
+      } as Server;
     }
 
     default:
@@ -48,8 +50,10 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: object): S
         graphqlServer: 'http://localhost:8888/graphql',
         websocketServer: 'ws://localhost:8888',
         subscriptionServer: 'ws://localhost:8888/subscriptions',
+        // Others
+        location: undefined,
         ...server
-      };
+      } as Server;
   }
 };
 

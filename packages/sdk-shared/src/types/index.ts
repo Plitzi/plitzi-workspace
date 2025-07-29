@@ -11,3 +11,4 @@ export * from './NavigationTypes';
 export * from './CollectionTypes';
 export * from './ComponentTypes';
 export * from './StateTypes';
+export * from './CommonTypes';
