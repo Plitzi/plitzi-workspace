@@ -7,6 +7,7 @@ import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
+import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type PageStateSourceProps = {
@@ -34,16 +35,16 @@ const PageStateSource = ({ children }: PageStateSourceProps) => {
   const sourceFields = useCallback(() => {
     if (pages.length > 0) {
       return [
-        ...getPathsFromObeject(state).reduce<{ path: string; name: string }[]>(
+        ...getPathsFromObeject(state).reduce<SourceField[]>(
           (acum, path) => [...acum, { path, name: `page.${path}` }],
           []
         ),
-        { path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages }
+        { path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages } as SourceField
       ];
     }
 
     return [
-      ...getPathsFromObeject(state).reduce<{ path: string; name: string }[]>(
+      ...getPathsFromObeject(state).reduce<SourceField[]>(
         (acum, path) => [...acum, { path, name: `page.${path}` }],
         []
       ),
