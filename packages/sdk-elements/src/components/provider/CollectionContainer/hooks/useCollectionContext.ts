@@ -46,12 +46,12 @@ const useCollectionContext = (
 
   // needs to find new user cases
   const queryCompiled = useMemo(() => {
-    if (!previewMode) {
+    if (!previewMode || !query) {
       return '';
     }
 
     try {
-      return QueryBuilderFormatter(query, 'mongodb', false, { queryParams, routeParams }) as string;
+      return QueryBuilderFormatter(query, 'mongodb', false, { queryParams, routeParams });
     } catch {
       // nothing to do
     }

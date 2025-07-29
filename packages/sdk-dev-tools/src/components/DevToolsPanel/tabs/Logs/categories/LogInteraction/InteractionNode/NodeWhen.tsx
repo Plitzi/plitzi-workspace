@@ -10,7 +10,11 @@ export type NodeWhenProps = {
 
 const NodeWhen = ({ when }: NodeWhenProps) => {
   const whenStr = useMemo(() => {
-    const str = QueryBuilderFormatter(when) as string;
+    if (!when) {
+      return 'None';
+    }
+
+    const str = QueryBuilderFormatter(when);
     if (str) {
       return str;
     }
