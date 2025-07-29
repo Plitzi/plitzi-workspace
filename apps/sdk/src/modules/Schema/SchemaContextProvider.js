@@ -14,11 +14,6 @@ import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalCon
 // Relatives
 import SchemaPagesContext from './SchemaPagesContext';
 
-export const SCHEMA_TYPE_NORMAL = 'normal';
-export const SCHEMA_TYPE_PARTIAL = 'partial';
-export const SCHEMA_TYPE_TEMPLATE = 'template';
-export const SCHEMA_TYPE_SEGMENT = 'segment';
-
 /**
  * @param {{
  *   children: React.ReactNode;
@@ -28,7 +23,7 @@ export const SCHEMA_TYPE_SEGMENT = 'segment';
  * @returns {React.ReactElement}
  */
 const SchemaContextProvider = props => {
-  const { children, type = SCHEMA_TYPE_NORMAL, schema: schemaProp } = props;
+  const { children, type = 'normal', schema: schemaProp } = props;
   const internalData = use(NetworkInternalContext);
   const schema = useMemo(() => {
     if (schemaProp) {
@@ -36,7 +31,7 @@ const SchemaContextProvider = props => {
     }
 
     switch (type) {
-      case SCHEMA_TYPE_NORMAL:
+      case 'normal':
         return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
       default:
         return EMPTY_SCHEMA.schema;

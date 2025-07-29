@@ -22,11 +22,6 @@ import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 // Relatives
 import SchemaReducer, { SchemaActions } from './SchemaReducer';
 
-export const SCHEMA_TYPE_MAIN = 'main';
-export const SCHEMA_TYPE_PARTIAL = 'partial';
-export const SCHEMA_TYPE_TEMPLATE = 'template';
-export const SCHEMA_TYPE_SEGMENT = 'segment';
-
 /**
  * @param {{
  *   children: React.ReactNode;
@@ -37,7 +32,7 @@ export const SCHEMA_TYPE_SEGMENT = 'segment';
  * @returns {React.ReactElement}
  */
 const SchemaContextProvider = props => {
-  const { children, type = SCHEMA_TYPE_MAIN, schema: schemaProp, includeSubscriptions = true } = props;
+  const { children, type = 'main', schema: schemaProp, includeSubscriptions = true } = props;
   const { addToast } = useToast();
   const internalData = use(NetworkInternalContext);
   const { eventBridge } = use(EventBridgeContext);
@@ -47,11 +42,11 @@ const SchemaContextProvider = props => {
     }
 
     switch (type) {
-      case SCHEMA_TYPE_MAIN:
+      case 'main':
         return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
 
-      case SCHEMA_TYPE_PARTIAL:
-      case SCHEMA_TYPE_TEMPLATE:
+      case 'partial':
+      case 'template':
       default:
         return EMPTY_SCHEMA.schema;
     }
@@ -62,11 +57,11 @@ const SchemaContextProvider = props => {
     () => [
       {
         middleware: undoableMiddleware,
-        filterCallback: action => !action.fromSubscriptions && type === SCHEMA_TYPE_MAIN
+        filterCallback: action => !action.fromSubscriptions && type === 'main'
       },
       {
         middleware: enqueueMiddleware,
-        filterCallback: action => !action.fromSubscriptions && type === SCHEMA_TYPE_MAIN
+        filterCallback: action => !action.fromSubscriptions && type === 'main'
       }
     ],
     [undoableMiddleware]
@@ -259,8 +254,8 @@ const SchemaContextProvider = props => {
   );
 
   useEffect(() => {
-    if (subscriptionManager && includeSubscriptions && type === SCHEMA_TYPE_MAIN) {
-      if (type === SCHEMA_TYPE_MAIN) {
+    if (subscriptionManager && includeSubscriptions && type === 'main') {
+      if (type === 'main') {
         // Pages
 
         subscriptionManager.subscribe('SpaceAddPage', {}, data => {
@@ -396,7 +391,7 @@ const SchemaContextProvider = props => {
     }
   }, [subscriptionManager, includeSubscriptions, type]);
 
-  if (type === SCHEMA_TYPE_MAIN) {
+  if (type === 'main') {
     const mainEvents = useMemo(
       () => ({
         schemaAddPage,
@@ -453,7 +448,7 @@ const SchemaContextProvider = props => {
   useEventBridge('main', events);
 
   const valueMemo = useMemo(() => {
-    if (type === SCHEMA_TYPE_MAIN) {
+    if (type === 'main') {
       return {
         dispatchSchema,
         schema,
@@ -526,7 +521,7 @@ const SchemaContextProvider = props => {
 
   const schemaSettings = useMemo(() => schema.settings, [schema.settings]);
 
-  if (type === SCHEMA_TYPE_MAIN) {
+  if (type === 'main') {
     return (
       <SchemaMainContext value={mainSchemaValueMemo}>
         <SchemaSettingsContext value={schemaSettings}>

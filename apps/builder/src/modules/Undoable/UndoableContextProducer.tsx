@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useMemo, useReducer, useRef } from 'react';
 
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { StyleActions } from '@pmodules/Style/StyleReducer';
@@ -6,19 +6,19 @@ import { StyleActions } from '@pmodules/Style/StyleReducer';
 import UndoableContext from './UndoableContext';
 import UndoableReducer, { initialState } from './UndoableReducer';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const UndoableContextProducer = props => {
-  const { children } = props;
+import type { UndoableItem } from './UndoableContext';
+import type { ReactNode } from 'react';
+
+export type UndoableContextProducerProps = {
+  children?: ReactNode;
+};
+
+const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => {
   const [undoable, dispatchUndoable] = useReducer(UndoableReducer, initialState);
   const undoableRef = useRef(undoable);
   undoableRef.current = undoable;
 
-  const processItem = useCallback(async (item, isUndo = true) => {
+  const processItem = useCallback((item: UndoableItem, isUndo = true) => {
     const {
       action: { type },
       prevState,
@@ -27,20 +27,29 @@ const UndoableContextProducer = props => {
     } = item;
     switch (type) {
       case SchemaActions[type]: {
-        return dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: isUndo ? prevState : nextState });
+        dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: isUndo ? prevState : nextState });
+
+        return;
       }
 
       case StyleActions[type]: {
-        return dispatch({ type: StyleActions.STYLE_UPDATE, style: isUndo ? prevState : nextState });
+        dispatch({ type: StyleActions.STYLE_UPDATE, style: isUndo ? prevState : nextState });
+
+        return;
       }
 
       default:
-        return null;
+        return;
     }
   }, []);
 
   const undoableAddUndo = useCallback(
-    (prevState, action, nextState, dispatch) => {
+    (
+      prevState: UndoableItem['prevState'],
+      action: UndoableItem['action'],
+      nextState: UndoableItem['nextState'],
+      dispatch: UndoableItem['dispatch']
+    ) => {
       dispatchUndoable({ type: 'undoableAddUndo', prevState, action, nextState, dispatch });
     },
     [dispatchUndoable]
@@ -50,16 +59,13 @@ const UndoableContextProducer = props => {
     const { canUndo, past, future } = undoableRef.current;
     if (canUndo) {
       const previous = past.pop();
+      if (!previous) {
+        return;
+      }
+
       const newFuture = [...future, previous];
       processItem(previous);
-
-      dispatchUndoable({
-        type: 'undoableUndo',
-        past,
-        future: newFuture,
-        canUndo: past.length > 0,
-        canRedo: newFuture.length > 0
-      });
+      dispatchUndoable({ type: 'undoableUndo', past, future: newFuture });
     }
   }, [dispatchUndoable, processItem]);
 
@@ -67,25 +73,27 @@ const UndoableContextProducer = props => {
     const { canRedo, past, future } = undoableRef.current;
     if (canRedo) {
       const next = future.pop();
+      if (!next) {
+        return;
+      }
+
       const newPast = [...past, next];
       processItem(next, false);
-
-      dispatchUndoable({
-        type: 'undoableRedo',
-        past: newPast,
-        future,
-        canUndo: newPast.length > 0,
-        canRedo: future.length > 0
-      });
+      dispatchUndoable({ type: 'undoableRedo', past: newPast, future });
     }
   }, [dispatchUndoable, processItem]);
 
   const undoableClearHistory = useCallback(() => {
-    dispatchUndoable({ type: 'UndoableClearHistory' });
+    dispatchUndoable({ type: 'undoableClearHistory' });
   }, [dispatchUndoable]);
 
   const undoableMiddleware = useCallback(
-    (action, prevState, state, dispatch) => undoableAddUndo(prevState, action, state, dispatch),
+    (
+      action: UndoableItem['action'],
+      prevState: UndoableItem['prevState'],
+      state: UndoableItem['nextState'],
+      dispatch: UndoableItem['dispatch']
+    ) => undoableAddUndo(prevState, action, state, dispatch),
     [undoableAddUndo]
   );
 
