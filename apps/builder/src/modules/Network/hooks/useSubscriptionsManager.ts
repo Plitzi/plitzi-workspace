@@ -2,12 +2,13 @@ import { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import Subscriptions from '../Subscriptions';
 
-import type { ApolloClient, FetchResult, NormalizedCacheObject, Observable } from '@apollo/client/core';
+import type { ApolloClient, FetchResult, Observable } from '@apollo/client/core';
 import type { DocumentNode } from 'graphql';
+import type { ReactNode } from 'react';
 
 export type UseSubscriptionsManagerProps = {
-  onMessage?: (message: string, type?: 'info' | 'success' | 'warning' | 'danger') => void;
-  client?: ApolloClient<NormalizedCacheObject>;
+  onMessage?: (message: ReactNode, type?: 'info' | 'success' | 'warning' | 'error' | 'default') => void;
+  client: ApolloClient<unknown>;
   environment?: string;
   disabled?: boolean;
 };
@@ -21,12 +22,12 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
       variables: Record<string, unknown>,
       callback: (result: FetchResult) => void
     ) => {
-      if (!client || disabled) {
+      if (disabled) {
         return false;
       }
 
       if (!(Subscriptions[subscriptionKey] as DocumentNode | undefined)) {
-        onMessage?.('Subscription not found', 'danger');
+        onMessage?.('Subscription not found', 'error');
 
         return null;
       }
@@ -36,7 +37,7 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
         variables: { ...variables, environment }
       });
 
-      subscriptionObserver.subscribe(callback, err => onMessage?.(`Subscription Error: ${err}`, 'danger'));
+      subscriptionObserver.subscribe(callback, err => onMessage?.(`Subscription Error: ${err}`, 'error'));
 
       subscriptions.current.push(subscriptionObserver);
 

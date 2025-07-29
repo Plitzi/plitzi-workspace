@@ -20,7 +20,7 @@ import { SubscriptionClient } from 'subscriptions-transport-ws';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { getKeyDecoded, emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 
@@ -29,28 +29,26 @@ import packageSettings from '../package.json';
 
 import './assets/index.scss';
 
+import type { ServerEnvironment } from './config';
 import type { NormalizedCacheObject } from '@apollo/client/core';
-import type { ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, Server } from '@plitzi/sdk-shared';
 import type { BuilderPluginProps } from '@pmodules/Builder';
 import type { ReactNode } from 'react';
 
 export type AppProps = {
   className?: string;
-  server: {
-    graphqlServer: string;
-    subscriptionServer: string;
-  };
+  server?: Server;
   webKey: string;
   includeSubscriptions?: boolean;
   userKey?: string;
   children: ReactNode;
-  builderEnvironment?: 'development' | 'staging' | 'production';
+  builderEnvironment?: ServerEnvironment;
 };
 
 const App = (props: AppProps) => {
   const {
     children,
-    server: serverProp = emptyObject,
+    server: serverProp,
     webKey = '',
     includeSubscriptions = true,
     userKey = '',
@@ -78,7 +76,13 @@ const App = (props: AppProps) => {
       webKey: string,
       includeSubscriptions: boolean,
       instanceId: string
-    ): ApolloClient<NormalizedCacheObject> & { wsLink?: WebSocketLink; subscriptionClient?: SubscriptionClient } => {
+    ):
+      | (ApolloClient<NormalizedCacheObject> & { wsLink?: WebSocketLink; subscriptionClient?: SubscriptionClient })
+      | undefined => {
+      if (!server) {
+        return undefined;
+      }
+
       const httpWithUploadLink = createUploadLink({ uri: server.graphqlServer, fetch: customFetch });
       const authLink = setContext((_, { headers }) => ({
         headers: {
@@ -91,7 +95,7 @@ const App = (props: AppProps) => {
         }
       }));
 
-      if (!includeSubscriptions) {
+      if (!includeSubscriptions || !server.subscriptionServer) {
         return new ApolloClient({
           link: authLink.concat(httpWithUploadLink),
           cache: new InMemoryCache({ addTypename: false })
@@ -180,6 +184,10 @@ const App = (props: AppProps) => {
   }, [children]);
 
   useEffect(() => {
+    if (!client) {
+      return;
+    }
+
     return () => {
       const ws = client.subscriptionClient;
       if (ws) {
@@ -192,21 +200,23 @@ const App = (props: AppProps) => {
     <Provider>
       <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
         <BrowserRouter basename={get(server, 'basePath', '/')}>
-          <ApolloProvider client={client}>
-            <ComponentProvider
-              localCustomComponents={localComponents}
-              localComponents={sdkComponents as Record<string, ComponentPlugin>}
-            >
-              <ToastProvider>
-                <AppMain
-                  {...omit(props, ['children', 'server', 'builderEnvironment'])}
-                  server={server}
-                  instanceId={instanceId}
-                  webId={webId}
-                />
-              </ToastProvider>
-            </ComponentProvider>
-          </ApolloProvider>
+          {client && (
+            <ApolloProvider client={client}>
+              <ComponentProvider
+                localCustomComponents={localComponents}
+                localComponents={sdkComponents as Record<string, ComponentPlugin>}
+              >
+                <ToastProvider>
+                  <AppMain
+                    {...omit(props, ['children', 'server', 'builderEnvironment'])}
+                    server={server}
+                    instanceId={instanceId}
+                    webId={webId}
+                  />
+                </ToastProvider>
+              </ComponentProvider>
+            </ApolloProvider>
+          )}
         </BrowserRouter>
       </ContainerRoot>
     </Provider>

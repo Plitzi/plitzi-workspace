@@ -1,13 +1,7 @@
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 
-import type { PluginManifest, Plugin, ComponentDefinition } from '@plitzi/sdk-shared';
-
-export type PluginRaw = {
-  resource: string;
-  settings: Plugin['settings'];
-  type: string;
-};
+import type { PluginManifest, ComponentDefinition, PluginRaw } from '@plitzi/sdk-shared';
 
 const getComponentDefinition = (
   pluginRaw: PluginRaw,
@@ -69,19 +63,6 @@ const getComponentDefinition = (
   }
 };
 
-const getCompactComponentDefinition = (pluginRaw: PluginRaw, pluginManifest: PluginManifest) => {
-  const { resource, settings, type } = pluginRaw;
-  const { runtime: { scope, module } = {}, assets, pluginSchema } = pluginManifest;
-
-  return {
-    assets: Object.values(assets).map(asset => ({ type: asset.type, url: `${resource}/${asset.src}` })),
-    scope,
-    module,
-    settings,
-    subPlugins: Object.keys(omit(pluginSchema, [type]))
-  } as Partial<ComponentDefinition>;
-};
-
 const fetchPluginsManifest = async (pluginManifest: string) => {
   let responseContent: PluginManifest | undefined;
   try {
@@ -111,8 +92,8 @@ export const fetchPluginsManifests = async (manifests: string[]) => {
   }, {}) as Record<string, PluginManifest>;
 };
 
-export const pluginParseDefinition = async (pluginsRaw: PluginRaw[] = [], compact = false) => {
-  let definitions: Record<string, ComponentDefinition | Partial<ComponentDefinition>> = {};
+export const pluginParseDefinition = async (pluginsRaw: PluginRaw[] = []) => {
+  let definitions: Record<string, ComponentDefinition> = {};
   if (!Array.isArray(pluginsRaw)) {
     return definitions;
   }
@@ -124,11 +105,7 @@ export const pluginParseDefinition = async (pluginsRaw: PluginRaw[] = [], compac
   pluginsRaw.forEach(pluginRaw => {
     const { type } = pluginRaw;
     const manifest = get(pluginManifests, type);
-    if (compact) {
-      definitions[type] = getCompactComponentDefinition(pluginRaw, manifest);
-    } else {
-      definitions = { ...definitions, ...getComponentDefinition(pluginRaw, manifest) };
-    }
+    definitions = { ...definitions, ...getComponentDefinition(pluginRaw, manifest) };
   });
 
   return definitions;

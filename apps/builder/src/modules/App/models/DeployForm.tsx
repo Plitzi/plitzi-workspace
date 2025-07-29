@@ -61,7 +61,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
     };
 
     form.formMethods.setValue('domain', '');
-    if (watchEnvironment) {
+    if ((watchEnvironment as string) && watchEnvironment !== 'main') {
       void getLatestRevision();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,7 +84,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
       edges: Domain[];
       pageInfo: { hasPrevPage: boolean; hasNextPage: boolean; from: number; to: number; total: number };
     }>('SpaceDeployments', { pageSize: 30 }, 'network-only');
-    if (!(result instanceof Error)) {
+    if (result && !(result instanceof Error)) {
       const { /* pageInfo, */ edges } = result;
       setDomains(edges);
       // setHasNextPage(pageInfo.hasNextPage);

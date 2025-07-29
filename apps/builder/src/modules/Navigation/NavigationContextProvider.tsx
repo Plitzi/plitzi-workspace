@@ -87,11 +87,18 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
   );
 
   const navigationValue = useMemo(
-    () => ({ navigate: handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId }),
+    () => ({
+      navigate: handleNavigate,
+      urlSearchParams,
+      routeParams,
+      queryParams,
+      hostname,
+      currentPageId: currentPageId ?? ''
+    }),
     [handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId]
   );
 
-  if (action.type === 'notFound') {
+  if (action.type === 'notFound' || !currentPageId) {
     // @todo: In the future this should navigate to page 404
     // return <Navigate to="/not-found" replace />;
     return 'Not Found';

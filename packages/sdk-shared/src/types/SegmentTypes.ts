@@ -1,4 +1,4 @@
-import type { DropPosition, Element, Schema, SchemaVariable } from './SchemaTypes';
+import type { DropPosition, Element, Schema, SchemaRaw, SchemaVariable } from './SchemaTypes';
 import type { DisplayMode, Style, StyleItem, TagType } from './StyleTypes';
 
 export type Segment = {
@@ -87,4 +87,19 @@ export type SegmentsContextValue = {
     style: Style,
     variables?: SchemaVariable[]
   ) => Promise<void>;
+};
+
+// Raws
+
+export type SegmentRaw = {
+  id: string;
+  definition: {
+    name: string;
+    description: string;
+    baseElementId: Element['id'];
+  };
+  environment: 'main' | 'development' | 'staging' | 'production';
+  schema: SchemaRaw;
+  style: Style;
+  identifier: string;
 };

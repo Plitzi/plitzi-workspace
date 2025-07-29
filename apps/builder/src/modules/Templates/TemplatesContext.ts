@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { Element, Schema, Style } from '@plitzi/sdk-shared';
+import type { Element, Schema, SchemaRaw, Style } from '@plitzi/sdk-shared';
 
 export type Template = {
   id?: string;
@@ -10,6 +10,17 @@ export type Template = {
     baseEleemntId: Element['id'];
   };
   schema: Schema;
+  style: Style;
+};
+
+export type TemplateRaw = {
+  id: string;
+  definition: {
+    name: string;
+    description: string;
+    baseEleemntId: Element['id'];
+  };
+  schema: SchemaRaw;
   style: Style;
 };
 

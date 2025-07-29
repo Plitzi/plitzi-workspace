@@ -3,8 +3,7 @@ import { useMemo } from 'react';
 
 import { ParamsFromURL } from '@plitzi/sdk-shared/helpers/utils';
 
-import type { Server } from '../types';
-import type { QueryParams } from '@plitzi/sdk-shared';
+import type { QueryParams, Server } from '@plitzi/sdk-shared';
 
 export type UseNavigationProps = {
   server: Server;

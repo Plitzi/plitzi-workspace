@@ -1,4 +1,8 @@
-export const getEnvironmentServer = (env: 'production' | 'staging' | 'development', server: object) => {
+import type { Server } from '@plitzi/sdk-shared';
+
+export type ServerEnvironment = 'production' | 'staging' | 'development';
+
+export const getEnvironmentServer = (env: ServerEnvironment, server?: object): Server => {
   switch (env) {
     case 'production': {
       return {

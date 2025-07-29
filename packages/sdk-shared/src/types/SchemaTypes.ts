@@ -94,3 +94,13 @@ export type SchemaContextValue = {
   style?: Style;
   definition?: { rootId: string }; // for segments and templates
 };
+
+// Raw
+
+export type SchemaRaw = {
+  flat: Element[];
+  variables?: SchemaVariable[];
+  setings: Schema['settings'];
+  pages: Element['id'][];
+  pageFolders: PageFolder[];
+};

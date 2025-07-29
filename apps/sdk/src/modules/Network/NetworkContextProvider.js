@@ -205,6 +205,7 @@ const NetworkContextProvider = props => {
 
     let plugins = {};
     if (data.plugins && data.plugins.length > 0) {
+      // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, scope, module, settings, subPlugins
       plugins = await pluginParseDefinition(data.plugins, !debugMode);
     }
 

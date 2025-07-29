@@ -88,3 +88,15 @@ export type CollectionContextValue = {
   ) => Promise<CollectionRecord>;
   removeRecord?: (collectionId: string, recordId: string, updateStore?: boolean) => Promise<CollectionRecord>;
 };
+
+// Raws
+
+export type CollectionRaw = {
+  id: string;
+  name: string;
+  namePlural: string;
+  description: string;
+  privacy: 'public' | 'private';
+  fields: Record<string, CollectionField>;
+  records: { edges: CollectionRecord[] };
+};

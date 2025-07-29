@@ -10,6 +10,8 @@ import AppContext from './AppContext';
 import AppProvider from './AppProvider';
 
 import type { AppContextValue } from './AppContext';
+import type { ServerEnvironment } from '../../config';
+import type { Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppMainProps = {
@@ -17,8 +19,8 @@ export type AppMainProps = {
   webId?: string;
   userKey?: string;
   instanceId?: string;
-  server: object;
-  environment?: 'main' | 'production' | 'development' | 'staging';
+  server: Server;
+  environment?: ServerEnvironment;
   includeSubscriptions?: boolean;
   includeRealTime?: boolean;
   externalStyle?: string;

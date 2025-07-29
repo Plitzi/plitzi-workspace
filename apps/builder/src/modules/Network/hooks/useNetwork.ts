@@ -2,9 +2,18 @@ import { useCallback, useState } from 'react';
 
 export type UseNetworkProps = {
   initLoading?: boolean;
-  server: {
+  server?: {
+    // Dashboard
+    apiServer: string;
+    ssrServer: string;
+    // SDK
+    basePath: string;
+    host: string;
     nodeServer: string;
-  };
+    graphqlServer: string;
+    websocketServer: string;
+    subscriptionServer: string;
+  } & Record<string, string>;
   webKey?: string;
   internalUsage?: boolean;
 };
@@ -31,7 +40,7 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true 
         }
 
         let baseURL = '';
-        if (internalUsage) {
+        if (internalUsage && server) {
           const { nodeServer } = server;
           baseURL = nodeServer;
         }

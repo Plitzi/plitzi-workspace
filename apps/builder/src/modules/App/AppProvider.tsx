@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-deprecated */
-/* eslint-disable react-refresh/only-export-components */
-
-import { withApollo } from '@apollo/client/react/hoc';
 import { ModalProvider } from '@plitzi/plitzi-ui/Modal';
 
 import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
@@ -18,40 +14,38 @@ import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
 import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
-import type { WithApolloClient } from '@apollo/client/react/hoc';
-import type { FunctionComponent, ReactNode } from 'react';
+import type { ServerEnvironment } from '../../config';
+import type { Server } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 export type AppProviderProps = {
   children: ReactNode;
   instanceId: string;
   webKey: string;
   webId: string;
-  environment: string;
+  environment: ServerEnvironment;
   userKey: string;
-  server: object;
+  server: Server;
   includeSubscriptions: boolean;
   includeRealTime: boolean;
   previewMode: boolean;
-  client: object;
 };
 
 const AppProvider = ({
   children,
   instanceId,
   webKey = '',
-  webId = '0',
+  webId,
   environment = 'development',
   userKey = '',
   server,
   includeSubscriptions = true,
   includeRealTime = true,
-  client, // hocs
   previewMode = false
 }: AppProviderProps) => {
   return (
     <NetworkContextProvider
       instanceId={instanceId}
-      client={client}
       webKey={webKey}
       webId={webId}
       environment={environment}
@@ -92,4 +86,4 @@ const AppProvider = ({
   );
 };
 
-export default withApollo(AppProvider as FunctionComponent<WithApolloClient<Omit<AppProviderProps, 'client'>>>);
+export default AppProvider;

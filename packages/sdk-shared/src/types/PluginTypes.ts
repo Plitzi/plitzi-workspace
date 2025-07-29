@@ -96,3 +96,11 @@ export type PluginsContextValue = {
   unregisterCustomAssets?: (assets: string[]) => void;
   pluginStyles?: Record<string, string[]>;
 };
+
+// Raw
+
+export type PluginRaw = {
+  resource: string;
+  settings: Plugin['settings'];
+  type: string;
+};

@@ -2,7 +2,9 @@ import { createContext } from 'react';
 
 import type Mutations from './Mutations';
 import type Queries from './Queries';
-import type { FetchPolicy } from '@apollo/client/core';
+import type { ServerEnvironment } from '../../config';
+import type { ApolloError, FetchPolicy } from '@apollo/client/core';
+import type { Server } from '@plitzi/sdk-shared';
 
 export type NetworkContextValue = {
   mutate: <T = unknown>(
@@ -11,32 +13,21 @@ export type NetworkContextValue = {
     silentError?: boolean,
     includeEnvironment?: boolean,
     uploadOptions?: object
-  ) => Promise<T>;
+  ) => Promise<T | ApolloError | undefined | null>;
   query: <T = unknown>(
     queryKey: keyof typeof Queries,
     variables?: Record<string, unknown>,
     fetchPolicy?: FetchPolicy,
     silentError?: boolean
-  ) => Promise<T>;
-  subscribe: () => void;
+  ) => Promise<T | ApolloError | undefined | null>;
+  // subscribe: () => void;
   subscriptionManager: unknown;
   webKey: string;
   instanceId: string;
-  server: {
-    // Dashboard
-    apiServer: string;
-    ssrServer: string;
-    // SDK
-    basePath: string;
-    host: string;
-    nodeServer: string;
-    graphqlServer: string;
-    websocketServer: string;
-    subscriptionServer: string;
-  } & Record<string, string>;
+  server: Server;
   userKey: string;
   webId: string;
-  environment: string;
+  environment: ServerEnvironment;
 };
 
 const networkContextDefaultValue: NetworkContextValue = {
@@ -49,7 +40,7 @@ const networkContextDefaultValue: NetworkContextValue = {
   server: {} as NetworkContextValue['server'],
   userKey: '',
   webId: '',
-  environment: ''
+  environment: 'development'
 } as NetworkContextValue;
 
 const NetworkContext = createContext(networkContextDefaultValue);
