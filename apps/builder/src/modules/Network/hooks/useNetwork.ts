@@ -1,4 +1,3 @@
-// Packages
 import { useCallback, useState } from 'react';
 
 export type UseNetworkProps = {

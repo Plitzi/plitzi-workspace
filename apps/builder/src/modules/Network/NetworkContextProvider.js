@@ -1,4 +1,3 @@
-// Packages
 import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
 import noop from 'lodash/noop';
 import get from 'lodash/get';

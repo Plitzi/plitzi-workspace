@@ -1,4 +1,3 @@
-// Packages
 import { gql } from '@apollo/client/core';
 
 const SegmentAddMutation = gql`

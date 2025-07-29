@@ -1,19 +1,14 @@
-// Relatives
-import InitQuery from './InitQuery';
-
-import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
-import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
-import SpaceDeploymentsQuery from './Space/SpaceDeploymentsQuery';
-
-import PluginsQuery from './PluginsQuery';
-
 import CollectionQuery from './Collection/CollectionQuery';
-import CollectionsQuery from './Collection/CollectionsQuery';
-import CollectionRecordsQuery from './Collection/CollectionRecordsQuery';
 import CollectionRecordQuery from './Collection/CollectionRecordQuery';
-
+import CollectionRecordsQuery from './Collection/CollectionRecordsQuery';
+import CollectionsQuery from './Collection/CollectionsQuery';
+import InitQuery from './InitQuery';
+import PluginsQuery from './PluginsQuery';
 import SegmentQuery from './Segment/SegmentQuery';
 import SegmentsQuery from './Segment/SegmentsQuery';
+import SpaceDeploymentsQuery from './Space/SpaceDeploymentsQuery';
+import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
+import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
 
 const Queries = {
   Init: InitQuery,
