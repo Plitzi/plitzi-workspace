@@ -1,27 +1,24 @@
-// Packages
-import React, { useMemo, use, useCallback, useRef } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
 import get from 'lodash/get';
+import { useMemo, use, useCallback, useRef } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 
-// Monorepo
 import UserContext from '@plitzi/sdk-auth/UserContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
-
-// Alias
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   previewMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const NavigationContextProvider = props => {
-  const { previewMode = false, children } = props;
+import type { RouteParams } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+import type { PathMatch } from 'react-router-dom';
+
+export type NavigationContextProviderProps = {
+  children?: ReactNode;
+  previewMode?: boolean;
+};
+
+const NavigationContextProvider = ({ previewMode = false, children }: NavigationContextProviderProps) => {
   const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
   const { server } = use(NetworkContext);
   const { authenticated } = use(UserContext);
@@ -31,8 +28,8 @@ const NavigationContextProvider = props => {
   pageDefinitionsRef.current = pageDefinitions;
 
   const paths = useMemo(
-    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server?.basePath, previewMode),
-    [pages, pageFolders, authenticated, previewMode, server?.basePath]
+    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
+    [pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 
   const matchResult = useMemo(
@@ -41,56 +38,57 @@ const NavigationContextProvider = props => {
   );
 
   const { action, pageId: currentPageId, pathMatch } = matchResult;
-  const routeParams = useMemo(() => {
+
+  const routeParams = useMemo<RouteParams>(() => {
     const path = paths.find(path => path.pageId === currentPageId && !path.isRaw);
     if (!path) {
-      return get(pathMatch, 'params', {});
+      return get(pathMatch, 'params', {}) as PathMatch['params'];
     }
 
     return {
       ...getRouteParams(path.path).reduce((acum, param) => ({ ...acum, [param]: '' }), {}),
-      ...get(pathMatch, 'params', {})
+      ...(get(pathMatch, 'params', {}) as PathMatch['params'])
     };
-  }, [paths, pathMatch]);
+  }, [paths, pathMatch, currentPageId]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const handleNavigate = useCallback(
-    (url, isExternal) => {
+    (url: string, isExternal: boolean = false) => {
       if (isExternal && typeof window !== 'undefined') {
         window.location.href = url;
 
         return;
       }
 
-      const page = get(pageDefinitionsRef, `current.${url}`);
+      const page = get(pageDefinitionsRef, `current.${url}`, undefined);
       if (!page) {
-        navigate(url);
+        void navigate(url);
 
         return;
       }
 
-      const slug = get(page, 'attributes.slug');
+      const slug = get(page, 'attributes.slug', '');
       if (slug || slug === '') {
-        navigate(slug);
+        void navigate(slug);
 
         return;
       }
 
-      const isHome = get(page, 'attributes.default');
+      const isHome = get(page, 'attributes.default', false);
       if (isHome) {
-        navigate('/');
+        void navigate('/');
 
         return;
       }
 
-      navigate(`/${url}`);
+      void navigate(`/${url}`);
     },
     [navigate]
   );
 
   const navigationValue = useMemo(
     () => ({ navigate: handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId }),
-    [handleNavigate, urlSearchParams, routeParams, queryParams, currentPageId, location]
+    [handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId]
   );
 
   if (action.type === 'notFound') {
@@ -107,7 +105,7 @@ const NavigationContextProvider = props => {
 
   return (
     <NavigationContext value={navigationValue}>
-      {action?.type === 'redirect' && <Navigate to={action.path} replace />}
+      {action.type === 'redirect' && action.path && <Navigate to={action.path} replace />}
       {children}
     </NavigationContext>
   );

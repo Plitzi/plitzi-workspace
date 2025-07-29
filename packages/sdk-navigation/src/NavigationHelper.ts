@@ -180,15 +180,20 @@ const getPaths = (
   return paths;
 };
 
-const matchRoutePath = (paths: Path[], pathName: string, authenticated: boolean, filter = '') => {
+const matchRoutePath = (
+  paths: Path[],
+  pathName: string,
+  authenticated: boolean
+): {
+  action: { type: 'authenticated' | 'accessDenied' | 'redirect' | 'notFound' | 'normal'; path?: string };
+  pathMatch?: PathMatch;
+  pageId?: string;
+} => {
   if (!pathName) {
     return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };
   }
 
   const candidates: { matchResult: PathMatch; path: Path; pageId: string }[] = [];
-  if (filter) {
-    return paths.find(path => path.path === filter && path.hasAccess);
-  }
 
   // Filter all possible Matches
   paths.forEach(path => {

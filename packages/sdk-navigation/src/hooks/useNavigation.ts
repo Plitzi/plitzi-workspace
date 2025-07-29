@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { ParamsFromURL } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { Server } from '../types';
+import type { QueryParams } from '@plitzi/sdk-shared';
 
 export type UseNavigationProps = {
   server: Server;
@@ -15,7 +16,7 @@ const useNavigation = ({ server }: UseNavigationProps) => {
     [server]
   );
 
-  const queryParams = useMemo(() => ParamsFromURL(location.search), [location.search]);
+  const queryParams = useMemo<QueryParams>(() => ParamsFromURL(location.search), [location.search]);
   const hostname = useMemo(() => (location.hostname ? location.hostname : 'localhost'), [location.hostname]);
   const navigationData = useMemo(() => ({ queryParams, hostname, location }), [queryParams, hostname, location]);
 

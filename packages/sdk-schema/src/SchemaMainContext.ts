@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { Schema } from '@plitzi/sdk-shared';
+import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export type SchemaMainContextValue = {
   pages: Schema['pages'];

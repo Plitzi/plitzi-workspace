@@ -1,14 +1,14 @@
 import type { Helmet } from 'react-helmet-async';
 
-export type QueryParams = Record<string, string>;
-export type RouteParams = Record<string, string>;
+export type QueryParams = Record<string, string[] | string | undefined>;
+export type RouteParams = Record<string, string[] | string | undefined>;
 
 export type NavigationContextValue = {
   Helmet?: typeof Helmet;
   navigate: (url: string, isExternal?: boolean) => void;
-  urlSearchParams?: Record<string, string>;
+  urlSearchParams?: URLSearchParams;
   routeParams: RouteParams;
   queryParams: QueryParams;
   hostname?: string;
-  currentPageId: string;
+  currentPageId?: string;
 };
