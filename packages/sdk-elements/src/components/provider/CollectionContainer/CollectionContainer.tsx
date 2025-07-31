@@ -96,7 +96,7 @@ const CollectionContainer = ({
       })}
     >
       {!collection && <div className="collection-container__message">Source Not Selected</div>}
-      {collection && !loading && <CollectionContext value={undefined}>{children}</CollectionContext>}
+      {collection && !loading && <CollectionContext value={collection}>{children}</CollectionContext>}
     </RootElement>
   );
 };

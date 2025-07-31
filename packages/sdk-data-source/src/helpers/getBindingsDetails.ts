@@ -48,7 +48,7 @@ const getBindingsDetails = (
             !source ||
             !fromPath ||
             !toPath ||
-            (when && !QueryBuilderEvaluator(when, dataSource as Record<string, RuleValue>)) ||
+            (when && !QueryBuilderEvaluator(when, dataSource as Record<string, RuleValue>, false, true)) ||
             !enabled
           ) {
             return;
@@ -80,7 +80,7 @@ const getBindingsDetails = (
             });
           }
 
-          if (typeof value === 'boolean' || typeof value === 'number' || !value) {
+          if (typeof value === 'boolean' || typeof value === 'number' || value) {
             if (bkey === 'initialState') {
               set(draft, `definition.${bkey}.${toPath}`, value);
             } else {
