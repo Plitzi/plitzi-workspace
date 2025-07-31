@@ -87,9 +87,10 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode }: InspectorMo
   const handleBlur = useCallback(() => setReRender(state => !state), []);
 
   return (
-    <div className="flex flex-col grow relative">
+    <div className="relative flex grow flex-col">
       <CodeMirror
         value={CMValue}
+        className="h-full"
         theme="dark"
         lineWrapping
         onChange={handleChange}
@@ -97,20 +98,20 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode }: InspectorMo
         autoComplete={variablesNames}
         getReadOnlyRanges={getReadOnlyRanges}
       />
-      <div className="flex flex-col absolute top-3 right-3 gap-1">
+      <div className="absolute top-3 right-3 flex flex-col gap-1">
         <ContainerFloating>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
+            <Button intent="custom" size="custom" className="rounded-sm bg-white p-2">
               <Button.Icon icon="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>
-            <div className="w-60 flex flex-col justify-center p-4 gap-1 text-xs ">
+            <div className="flex w-60 flex-col justify-center gap-1 p-4 text-xs">
               <p className="text-xs">Add your own CSS code here to customize the appearance and layout of your site.</p>
               <span className="font-bold">Properties Allowed</span>
-              <ul className="text-xs border border-gray-300 rounded-sm h-[100px] overflow-auto flex flex-col">
+              <ul className="flex h-[100px] flex-col overflow-auto rounded-sm border border-gray-300 text-xs">
                 {Object.values(StyleConstants).map((property, i: number) => (
-                  <li key={i} className="px-1.5 py-1 [&:not(:last-child)]:border-b border-gray-300 w-full">
+                  <li key={i} className="w-full border-gray-300 px-1.5 py-1 [&:not(:last-child)]:border-b">
                     {property as string}
                   </li>
                 ))}
@@ -124,7 +125,7 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode }: InspectorMo
         <Button
           intent="custom"
           size="custom"
-          className="p-2 bg-white rounded-sm"
+          className="rounded-sm bg-white p-2"
           onClick={handleClickFormat}
           iconPlacement="before"
           // disabled={networkLoading}

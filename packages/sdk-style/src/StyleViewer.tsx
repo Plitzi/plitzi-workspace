@@ -54,8 +54,8 @@ const StyleViewer = ({ elementSelected, schema, style }: StyleViewerProps) => {
   );
 
   return (
-    <div className="flex flex-col grow">
-      <CodeMirror theme="dark" readOnly value={styleStr} />
+    <div className="flex grow flex-col">
+      <CodeMirror theme="dark" readOnly className="h-full" value={styleStr} />
     </div>
   );
 };

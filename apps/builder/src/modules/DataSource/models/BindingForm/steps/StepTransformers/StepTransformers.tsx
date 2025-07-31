@@ -22,7 +22,7 @@ export type StepTransformersProps = {
 const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
   const form = useFormContext<BindingSchema>();
   const { control, setValue } = form;
-  const watchTransformers = useFormWatch(form, 'transformers') as BindingSchema['transformers'];
+  const watchTransformers = useFormWatch(form, 'transformers');
   const utilityOptions = useMemo(
     () => Object.values(utility).map(({ title, action }) => ({ label: title, value: action })),
     []

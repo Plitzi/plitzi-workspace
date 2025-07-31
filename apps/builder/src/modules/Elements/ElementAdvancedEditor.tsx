@@ -54,14 +54,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
 
   return (
     <div className={classNames('relative flex h-full flex-col', className)}>
-      <CodeMirror
-        value={value}
-        theme="dark"
-        className={{ inputContainer: 'h-full w-full', root: 'h-full w-full' }}
-        lineWrapping
-        onChange={handleChange}
-        mode={mode}
-      />
+      <CodeMirror value={value} theme="dark" className="h-full" lineWrapping onChange={handleChange} mode={mode} />
       <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"
