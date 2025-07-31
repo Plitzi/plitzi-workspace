@@ -1,4 +1,5 @@
 import type { ComponentDefinition, InternalPropsSTG1 } from './ElementTypes';
+import type { Asset } from './PluginTypes';
 import type { FC, ReactNode } from 'react';
 
 export type ComponentOrigin = 'local' | 'local-custom' | 'remote';
@@ -13,7 +14,7 @@ export type ComponentPlugin<T = unknown> = FC<
 > & {
   content: ComponentDefinition;
   type: string;
-  assets: unknown;
+  assets: Asset[];
   plugins?: Record<string, ComponentPlugin<T>>;
   origin: ComponentOrigin;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -6,6 +6,7 @@ import isEmpty from 'lodash/isEmpty';
 import omit from 'lodash/omit';
 
 // Monorepo
+import { getStyle } from '@plitzi/sdk-plugins/PluginHelper';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
@@ -55,27 +56,23 @@ const PluginsContextProvider = props => {
   );
 
   const registerCustomAssets = useCallback((assets = []) => {
-    const assetsProcessed = assets
-      .filter(asset => !isEmpty(asset?.url))
-      .reduce((acum, asset) => {
-        const isScript = asset?.url?.endsWith('.js');
-        let assetToAdd = {};
-        if (isScript) {
-          assetToAdd = {
-            type: 'script',
-            key: btoa(asset?.url),
-            params: { src: asset?.url, type: 'text/javascript', ...omit(asset, ['url']) }
-          };
-        } else {
-          assetToAdd = {
-            type: 'link',
-            key: btoa(asset?.url),
-            params: { href: asset?.url, rel: 'stylesheet', type: 'text/css', ...omit(asset, ['url']) }
-          };
-        }
+    const assetsProcessed = assets.reduce((acum, asset) => {
+      let url = '';
+      if (asset.type === 'script') {
+        url = asset.params.src;
+      } else {
+        url = asset.params.href;
+      }
 
-        return { ...acum, [btoa(asset?.url)]: assetToAdd };
-      }, {});
+      if (!url) {
+        return acum;
+      }
+
+      url = btoa(url);
+
+      return { ...acum, [url]: { ...asset, key: url } };
+    }, {});
+
     if (Object.keys(assetsProcessed).length === 0) {
       return;
     }
@@ -89,30 +86,6 @@ const PluginsContextProvider = props => {
   }, []);
 
   // internal
-
-  const getStyle = plugins => {
-    return Object.values(plugins).reduce(
-      (acum, plugin) => ({
-        ...acum,
-        ...get(plugin, 'assets', [])
-          .filter(asset => asset.type === 'style')
-          .reduce((acum2, asset) => {
-            const { url } = asset;
-            const urlEncoded = btoa(url);
-
-            return {
-              ...acum2,
-              [urlEncoded]: {
-                type: 'link',
-                key: urlEncoded,
-                params: { href: url, rel: 'stylesheet', type: 'text/css' }
-              }
-            };
-          }, {})
-      }),
-      {}
-    );
-  };
 
   const pluginStyleAssets = useMemo(() => getStyle(plugins), [plugins]);
 

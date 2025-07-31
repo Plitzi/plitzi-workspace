@@ -92,7 +92,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       'data-id': id,
       'data-name': definition.label ? definition.label : definition.type ? definition.type : 'unknown',
       'data-root-id': rootId,
-      'data-type': !definition.type ? definition.type : 'unknown',
+      'data-type': definition.type ? definition.type : 'unknown',
       'data-root-render-element': true
     };
   }, [id, rootId, definition, previewMode, baseElementId, debugMode]);

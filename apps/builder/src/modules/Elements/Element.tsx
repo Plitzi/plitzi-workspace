@@ -24,7 +24,7 @@ const Element = ({
         {icon && typeof icon === 'string' && !icon.startsWith('http') && <Icon intent="custom" icon={icon} />}
         {icon && typeof icon === 'string' && icon.startsWith('http') && (
           <Icon intent="custom">
-            <img src={icon} />
+            <img src={icon} draggable={false} />
           </Icon>
         )}
         {icon && typeof icon !== 'string' && <Icon intent="custom">{icon}</Icon>}

@@ -7,20 +7,19 @@ import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import withUserProvider from './hocs/withUserProvider';
 import useAuth from './hooks/useAuth';
 import UserContext from './UserContext';
 
-import type { Server } from '@plitzi/sdk-navigation';
+import type { Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type UserBaseContextProviderProps = {
   previewMode?: boolean;
   children?: ReactNode;
   webId?: string | number;
-  server?: Server;
+  server: Server;
   environment?: string;
 };
 
@@ -28,7 +27,7 @@ const UserBaseContextProvider = ({
   previewMode = true,
   children,
   webId = 0,
-  server = emptyObject,
+  server,
   environment = 'live'
 }: UserBaseContextProviderProps) => {
   const {

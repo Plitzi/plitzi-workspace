@@ -1,5 +1,5 @@
 import type { InteractionBaseCallback } from './InteractionTypes';
-import type { PluginManifest, PluginSchema } from './PluginTypes';
+import type { Asset, PluginManifest, PluginSchema } from './PluginTypes';
 import type { Element } from './SchemaTypes';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -47,8 +47,11 @@ export type ComponentDefinition = Pick<
   PluginSchema,
   'attributes' | 'builder' | 'definition' | 'defaultStyle' | 'initialItems'
 > & {
-  assets: { type: 'style' | 'script'; url: string }[];
+  assets: Asset[];
   manifest: PluginManifest;
   market: Omit<PluginManifest, 'name'> & { category: string };
   settings: { [key: string]: unknown };
-};
+  type: string;
+  subPlugins: string[];
+  resource: string;
+} & PluginManifest['runtime'];

@@ -9,7 +9,7 @@ import withElement from '../../../Element/hocs/withElement';
 import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
-import type { ComponentPlugin, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Asset, ComponentPlugin, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
@@ -57,30 +57,36 @@ const Custom = ({
     () => ({ ...internalProps, attributes: settingsParsed }),
     [internalProps, settingsParsed]
   );
-  const assetsArray = useMemo(() => {
+  const assetsParsed = useMemo<Asset[]>(() => {
     if (!assets) {
       return [];
     }
 
     return assets
       .split('\n')
-      .filter(asset => !!asset)
-      .map(asset => ({
-        url: asset
-      }));
+      .filter(asset => !!asset && asset.trim() !== '')
+      .map(url => {
+        if (url.endsWith('.js')) {
+          return { id: url, type: 'script', params: { src: url, type: 'text/javascript' } } as Asset;
+        }
+
+        return { id: url, type: 'link', params: { href: url, rel: 'stylesheet', type: 'text/css' } } as Asset;
+      });
   }, [assets]);
 
   useEffect(() => {
-    if (Array.isArray(assetsArray) && assetsArray.length === 0) {
-      return () => {};
+    if (assetsParsed.length === 0) {
+      return;
     }
 
-    registerCustomAssets?.(assetsArray);
+    registerCustomAssets(assetsParsed);
 
     return () => {
-      unregisterCustomAssets?.(assetsArray.map(asset => asset.url));
+      unregisterCustomAssets(
+        assetsParsed.map(asset => (asset.type === 'script' ? asset.params.url : asset.params.href))
+      );
     };
-  }, [assetsArray, registerCustomAssets, unregisterCustomAssets]);
+  }, [assetsParsed, registerCustomAssets, unregisterCustomAssets]);
 
   if (isPlugin && scriptUrl && pluginScope) {
     return (

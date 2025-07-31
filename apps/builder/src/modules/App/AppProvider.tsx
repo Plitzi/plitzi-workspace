@@ -65,7 +65,12 @@ const AppProvider = ({
                       <ModalProvider>
                         <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
                           <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                            <UserBaseContextProvider previewMode={previewMode} webId={webId} environment={environment}>
+                            <UserBaseContextProvider
+                              server={server}
+                              previewMode={previewMode}
+                              webId={webId}
+                              environment={environment}
+                            >
                               <NavigationContextProvider previewMode={previewMode}>
                                 {children}
                               </NavigationContextProvider>

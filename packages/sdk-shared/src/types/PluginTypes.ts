@@ -24,11 +24,12 @@ export type ManifestAsset = {
   src?: string;
   srcPath?: string;
   url?: string;
-  type: 'style' | 'script';
+  type: 'style' | 'script'; // @todo: Asset['type'];
+  isMain?: boolean;
 };
 
 export type PluginManifest = {
-  assets: Record<string, { integrity: string; src: string; srcPath: string; type: 'style' | 'script' }>;
+  assets: Record<string, ManifestAsset>;
   author: string;
   icon?: string;
   definition: {
@@ -62,11 +63,21 @@ export type PluginBuilder = {
 };
 
 export type Asset =
-  | { id: string; type: 'link'; params: { href: string; type: 'text/css'; rel: 'stylesheet' } & Record<string, string> }
-  | { id: string; type: 'script'; params: { src: string; type: 'text/javascript' } & Record<string, string> };
+  | {
+      id: string;
+      type: 'link';
+      params: { href: string; type: 'text/css'; rel: 'stylesheet' } & Record<string, string>;
+      isMain?: boolean;
+    }
+  | {
+      id: string;
+      type: 'script';
+      params: { src: string; type: 'text/javascript' } & Record<string, string>;
+      isMain?: boolean;
+    };
 
 export type Plugin = {
-  assets: Pick<ManifestAsset, 'type' | 'url'>[];
+  assets: Asset[];
   attributes: ComponentDefinition['attributes'];
   builder: PluginBuilder;
   defaultStyle: ComponentDefinition['defaultStyle'];
@@ -84,7 +95,7 @@ export type Plugin = {
 export type PluginsContextValue = {
   baseAssets?: Record<string, Asset>;
   assets: Record<string, Asset>;
-  plugins: Record<string, Plugin>;
+  plugins: Record<string, ComponentDefinition>;
   dispatchPlugins?: unknown;
   fetch?: unknown;
   add?: unknown;
@@ -92,8 +103,8 @@ export type PluginsContextValue = {
   getSettings?: unknown;
   update?: unknown;
   remove?: unknown;
-  registerCustomAssets?: (assets: { url: string; [key: string]: unknown }[]) => void;
-  unregisterCustomAssets?: (assets: string[]) => void;
+  registerCustomAssets: (assets: Asset[]) => void;
+  unregisterCustomAssets: (assets: string[]) => void;
   pluginStyles?: Record<string, string[]>;
 };
 

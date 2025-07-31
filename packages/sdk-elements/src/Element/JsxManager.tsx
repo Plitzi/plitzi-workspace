@@ -1,15 +1,13 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-
 import camelCase from 'lodash/camelCase';
 import get from 'lodash/get';
-import { memo, useCallback, use } from 'react';
+import { memo, useCallback, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import PluginRemote from './PluginRemote';
 
-import type { ComponentPlugin, InternalPropsSTG1, Plugin } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type JsxManagerProps = {
@@ -33,31 +31,38 @@ const JsxManager = ({
   const type = camelCase(plitziJsxType);
   const { components } = use(ComponentContext);
   const { plugins } = use(PluginsContext);
+
+  const getParentPlugin = useCallback(
+    (subPlugin: string) => Object.values(plugins).find(plugin => plugin.subPlugins.find(type => type === subPlugin)),
+    [plugins]
+  );
+
+  let Plugin = type ? components[type] : undefined;
+  const remoteSettings = useMemo(() => {
+    const pluginDefinition = (type ? plugins[type] : undefined) ?? getParentPlugin(type);
+    if (Plugin || !pluginDefinition) {
+      return undefined;
+    }
+
+    const pluginAssets = get(pluginDefinition, 'assets', []).filter(asset => asset.type === 'script');
+    const { scope } = pluginDefinition;
+
+    return {
+      url: pluginAssets.find(asset => asset.isMain)?.params.src ?? get(pluginAssets, '0.params.src', ''),
+      scope
+    };
+  }, [Plugin, getParentPlugin, plugins, type]);
+
   if (!type) {
     return null;
   }
 
-  const getParentPlugin = useCallback(
-    (subPlugin: string) => Object.values(plugins).find(plugin => plugin.subPlugins?.find(type => type === subPlugin)),
-    [plugins]
-  );
-
-  let Plugin = components[type] as ComponentPlugin | undefined;
-  const pluginDefinition = (plugins[type] as Plugin | undefined) ?? getParentPlugin(type);
-  if (!Plugin && pluginDefinition) {
-    const pluginAssets = get(pluginDefinition, 'assets', []).filter(asset => asset.type === 'script');
-    const url = get(pluginAssets, '0.url');
-    if (!url) {
-      return null;
-    }
-
-    const { scope } = pluginDefinition;
-
+  if (!Plugin && remoteSettings) {
     return (
       <PluginRemote
         internalProps={internalProps}
-        url={url}
-        scope={scope}
+        url={remoteSettings.url}
+        scope={remoteSettings.scope}
         plitziJsxSkipHOC={plitziJsxSkipHOC}
         plitziJsxProps={plitziJsxProps}
       />

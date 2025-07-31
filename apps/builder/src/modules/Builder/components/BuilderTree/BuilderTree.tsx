@@ -71,7 +71,6 @@ const BuilderTree = ({ setDragTree }: BuilderTreeProps) => {
 
   const handleChange = useCallback(
     (state: TreeChangeState) => {
-      console.log('BuilderTree handleChange', state);
       switch (state.action) {
         case 'itemsOpened': {
           setOpenedCache(state.data);

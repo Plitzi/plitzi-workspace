@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 
-import type { PluginManifest, ComponentDefinition, PluginRaw } from '@plitzi/sdk-shared';
+import type { PluginManifest, ComponentDefinition, PluginRaw, Asset } from '@plitzi/sdk-shared';
 
 const getComponentDefinition = (
   pluginRaw: PluginRaw,
@@ -49,7 +49,20 @@ const getComponentDefinition = (
           type,
           // SDK
           settings,
-          assets: Object.values(assets).map(asset => ({ type: asset.type, url: `${resource}/${asset.src}` })),
+          assets: Object.values(assets).map<Asset>(({ src, type, isMain }) => {
+            const url = `${resource}/${src}`;
+            const urlEncoded = btoa(url);
+            if (type === 'style') {
+              return {
+                type: 'link',
+                id: urlEncoded,
+                params: { href: url, rel: 'stylesheet', type: 'text/css' },
+                isMain
+              } as Asset;
+            }
+
+            return { type: 'script', id: urlEncoded, params: { src: url, type: 'text/javascript' }, isMain } as Asset;
+          }),
           scope,
           module,
           subPlugins
@@ -92,7 +105,7 @@ export const fetchPluginsManifests = async (manifests: string[]) => {
   }, {}) as Record<string, PluginManifest>;
 };
 
-export const pluginParseDefinition = async (pluginsRaw: PluginRaw[] = []) => {
+export const pluginParseDefinition = async (pluginsRaw: PluginRaw | PluginRaw[] = []) => {
   let definitions: Record<string, ComponentDefinition> = {};
   if (!Array.isArray(pluginsRaw)) {
     return definitions;
@@ -110,3 +123,14 @@ export const pluginParseDefinition = async (pluginsRaw: PluginRaw[] = []) => {
 
   return definitions;
 };
+
+export const getStyle = (plugins: Record<string, ComponentDefinition>): Record<string, Asset> =>
+  Object.values(plugins).reduce(
+    (acum, plugin) => ({
+      ...acum,
+      ...get(plugin, 'assets', [])
+        .filter(asset => asset.type === 'link')
+        .reduce((acum2, asset) => ({ ...acum2, [btoa(asset.id)]: asset }), {})
+    }),
+    {}
+  );

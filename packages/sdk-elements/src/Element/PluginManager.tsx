@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-
 import get from 'lodash/get';
 import { memo, useCallback, use, useMemo } from 'react';
 
@@ -8,7 +6,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import PluginRemote from './PluginRemote';
 
-import type { Plugin, InternalPropsSTG0, InternalPropsSTG1, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG0, InternalPropsSTG1, ComponentPlugin } from '@plitzi/sdk-shared';
 
 export type PluginManagerProps = {
   plitziElementLayout?: InternalPropsSTG1['plitziElementLayout'];
@@ -32,16 +30,16 @@ const PluginManager = ({ plitziElementLayout = undefined, type = '', internalPro
     return <PluginInternal internalProps={internalPropsMemo} />;
   }, [components.notFound, internalPropsMemo]);
 
-  if (!type) {
-    return PluginNotFound;
-  }
-
   const getParentPlugin = useCallback(
-    (subPlugin: string) => Object.values(plugins).find(plugin => plugin.subPlugins?.find(type => type === subPlugin)),
+    (subPlugin: string) => Object.values(plugins).find(plugin => plugin.subPlugins.find(type => type === subPlugin)),
     [plugins]
   );
 
   const Plugin = useMemo(() => {
+    if (!type) {
+      return undefined;
+    }
+
     const PluginInternal = components[type] as ComponentPlugin | undefined;
     if (!PluginInternal) {
       return undefined;
@@ -50,17 +48,27 @@ const PluginManager = ({ plitziElementLayout = undefined, type = '', internalPro
     return <PluginInternal internalProps={internalPropsMemo} className={internalPropsMemo.className} />;
   }, [components, internalPropsMemo, type]);
 
-  const pluginDefinition = (plugins[type] as Plugin | undefined) ?? getParentPlugin(type);
-  if (!Plugin && pluginDefinition) {
-    const pluginAssets = get(pluginDefinition, 'assets', []).filter(asset => asset.type === 'script');
-    const url = get(pluginAssets, '0.url');
-    if (!url) {
+  const remoteSettings = useMemo(() => {
+    const pluginDefinition = (type ? plugins[type] : undefined) ?? getParentPlugin(type);
+    if (Plugin || !pluginDefinition) {
       return undefined;
     }
 
+    const pluginAssets = get(pluginDefinition, 'assets', []).filter(asset => asset.type === 'script');
     const { scope } = pluginDefinition;
 
-    return <PluginRemote url={url} scope={scope} internalProps={internalPropsMemo} />;
+    return {
+      url: pluginAssets.find(asset => asset.isMain)?.params.src ?? get(pluginAssets, '0.params.src', ''),
+      scope
+    };
+  }, [Plugin, getParentPlugin, plugins, type]);
+
+  if (!type) {
+    return PluginNotFound;
+  }
+
+  if (!Plugin && remoteSettings) {
+    return <PluginRemote url={remoteSettings.url} scope={remoteSettings.scope} internalProps={internalPropsMemo} />;
   }
 
   if (!Plugin) {

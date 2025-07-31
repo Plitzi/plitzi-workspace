@@ -42,7 +42,7 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
 
   return (
     <div className={classNames('flex h-full w-full', className)}>
-      <List className="p-2 w-[300px]" items={pluginsParsed} value={plugin} onSelect={handleItemSelected} />
+      <List className="w-[300px] p-2" items={pluginsParsed} value={plugin} onSelect={handleItemSelected} />
       {plugin && (
         <PluginDetails
           label={plugin.name}
