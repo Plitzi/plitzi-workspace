@@ -17,10 +17,6 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 // Relatives
 import StyleReducer, { StyleActions } from './StyleReducer';
 
-export const STYLE_TYPE_NORMAL = 'normal';
-export const STYLE_TYPE_PARTIAL = 'partial';
-export const STYLE_TYPE_TEMPLATE = 'template';
-
 /**
  * @param {{
  *   children: React.ReactNode;
@@ -31,7 +27,7 @@ export const STYLE_TYPE_TEMPLATE = 'template';
  * @returns {React.ReactElement}
  */
 const StyleContextProvider = props => {
-  const { children, style: styleProp, includeSubscriptions = true, type = STYLE_TYPE_NORMAL } = props;
+  const { children, style: styleProp, includeSubscriptions = true, type = 'normal' } = props;
   const { subscriptionManager } = use(NetworkContext);
   const internalData = use(NetworkInternalContext);
   const stylePropMemo = useMemo(() => {
@@ -40,7 +36,7 @@ const StyleContextProvider = props => {
     }
 
     switch (type) {
-      case STYLE_TYPE_NORMAL:
+      case 'normal':
         return internalData.style;
       default:
         return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };

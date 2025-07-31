@@ -33,7 +33,8 @@ export type InteractionCallbackParam = {
   label?: string;
   when?: boolean | ((params: InteractionCallbackParamValues) => boolean);
 } & (
-  | { type: 'text'; defaultValue?: string }
+  | { type: 'text'; defaultValue?: string | number }
+  | { type: 'textarea'; defaultValue?: string }
   | { type: 'boolean'; defaultValue?: boolean }
   | {
       type: 'select';

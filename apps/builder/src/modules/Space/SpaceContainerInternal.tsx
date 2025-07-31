@@ -1,24 +1,28 @@
-// Packages
-import { useCallback, use, useMemo } from 'react';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
+import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
-/**
- * @param {{
- *   children?: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const SpaceContainerInternal = props => {
-  const { children } = props;
+import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type SpaceContainerInternalProps = {
+  children?: ReactNode;
+};
+
+const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
   const { addToast } = useToast();
   const { useInteractions } = use(InteractionsContext);
 
   const handleAddNotification = useCallback(
-    params => {
-      const { placement, appeareance, autoDismiss, transitionDuration, autoDismissTimeout } = params;
+    (params: {
+      content?: string;
+      placement?: 'top-right' | 'top-center' | 'top-left' | 'bottom-right' | 'bottom-center' | 'bottom-left';
+      appeareance?: 'info' | 'success' | 'warning' | 'error' | 'default';
+      autoDismiss?: boolean;
+      autoDismissTimeout?: number;
+    }) => {
+      const { placement, appeareance, autoDismiss, autoDismissTimeout } = params;
       let { content } = params;
       if (typeof content !== 'string') {
         content = JSON.stringify(content);
@@ -28,14 +32,13 @@ const SpaceContainerInternal = props => {
         appeareance,
         autoDismiss,
         placement,
-        transitionDuration,
         autoDismissTimeout
       });
     },
     [addToast]
   );
 
-  const interactionCallbacks = useMemo(
+  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       addNotification: {
         title: 'Add Notification',
@@ -66,8 +69,9 @@ const SpaceContainerInternal = props => {
             defaultValue: 'success',
             type: 'select',
             options: [
+              { value: 'default', label: 'Default' },
               { value: 'success', label: 'Success' },
-              { value: 'danger', label: 'Danger' },
+              { value: 'error', label: 'Error' },
               { value: 'warning', label: 'Warning' },
               { value: 'info', label: 'Info' }
             ]
@@ -81,7 +85,8 @@ const SpaceContainerInternal = props => {
           autoDismissTimeout: {
             label: 'Auto Dismiss Timeout',
             defaultValue: 5000,
-            when: params => !!params.autoDismiss
+            type: 'text',
+            when: params => params.autoDismiss as boolean
           }
         }
       }
