@@ -41,6 +41,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       addNotification: {
+        action: 'addNotification',
         title: 'Add Notification',
         type: 'globalCallback',
         callback: handleAddNotification,

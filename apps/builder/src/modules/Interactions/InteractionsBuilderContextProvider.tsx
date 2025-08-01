@@ -1,25 +1,24 @@
-// Packages
-import React, { use } from 'react';
+import { use } from 'react';
 
-// Monorepo
 import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import UserInteractions from '@plitzi/sdk-interactions/sources/UserSource/UserInteractions';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
-// Alias
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
 import PageInteractions from './sources/PageSource/PageInteractions';
 
-/**
- * @param {{
- *   children?: React.ReactNode;
- *   previewMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const InteractionsBuilderContextProvider = props => {
-  const { children, previewMode = true } = props;
+import type { ReactNode } from 'react';
+
+export type InteractionsBuilderContextProviderProps = {
+  children?: ReactNode;
+  previewMode?: boolean;
+};
+
+const InteractionsBuilderContextProvider = ({
+  children,
+  previewMode = true
+}: InteractionsBuilderContextProviderProps) => {
   const { currentPageId, routeParams, queryParams } = use(NavigationContext);
   const { userProvider } = use(SchemaSettingsContext);
 

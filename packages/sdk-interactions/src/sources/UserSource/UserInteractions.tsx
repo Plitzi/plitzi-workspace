@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 
 export type UserInteractionsProps = {
   children?: ReactNode;
-  userProvider: 'auth0' | 'basic' | 'unknown';
+  userProvider?: '' | 'auth0' | 'basic' | 'custom';
 };
 
 const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractionsProps) => {
@@ -37,12 +37,14 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
     if (userProvider === 'auth0') {
       userCallbacks = {
         login: {
+          action: 'userLogin',
           title: 'User Login',
           type: 'globalCallback',
           callback: handleLogin,
           params: {}
         },
         logout: {
+          action: 'userLogout',
           title: 'User Logout',
           type: 'globalCallback',
           callback: handleLogout,
@@ -52,6 +54,7 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
     } else if (userProvider === 'basic') {
       userCallbacks = {
         login: {
+          action: 'userLogin',
           title: 'User Login',
           type: 'globalCallback',
           callback: handleLogin,
@@ -97,6 +100,7 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
           }
         },
         refreshDetails: {
+          action: 'userRefreshDetails',
           title: 'User Refresh Details',
           type: 'globalCallback',
           callback: handleRefreshDetails,
@@ -117,6 +121,7 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
           }
         },
         logout: {
+          action: 'userLogout',
           title: 'User Logout',
           type: 'globalCallback',
           callback: handleLogout,

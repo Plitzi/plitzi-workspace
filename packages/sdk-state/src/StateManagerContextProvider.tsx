@@ -57,7 +57,7 @@ const StateManagerContextProvider = ({
   );
 
   const [state, setState] = useState<Record<string, unknown>>(() => {
-    const keepState: boolean = get(settings, 'keepState', false) as boolean;
+    const keepState: boolean = get(settings, 'keepState', false);
     const storeMode: string = get(settings, 'stateStorage', '');
     if (keepState && storeMode) {
       return {

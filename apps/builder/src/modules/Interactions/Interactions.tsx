@@ -1,39 +1,38 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
 import get from 'lodash/get';
+import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import utility from '@plitzi/sdk-interactions/utility';
+import utility from '@plitzi/sdk-interactions/utility/index';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
-// Alias
 import Workflow from './components/Workflow';
 
-/**
- * @param {{
- *   className?: string;
- *   id?: string;
- *   interactions?: object;
- *   onChange?: (interactions: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Interactions = props => {
-  const { className = '', id = '', interactions = emptyObject, onChange = noop } = props;
-  const { interactionsManager } = use(InteractionsContext);
-  const { triggers } = useMemo(() => interactionsManager.getSubscriptor(id) ?? {}, [id, interactionsManager]);
+import type { Element, InteractionCallback } from '@plitzi/sdk-shared';
 
-  const handleWorkflowChange = useCallback(workflow => onChange(workflow), [onChange]);
+export type InteractionsProps = {
+  className?: string;
+  id?: string;
+  interactions?: Element['definition']['interactions'];
+  onChange?: (interactions: Element['definition']['interactions']) => void;
+};
+
+const Interactions = ({ className = '', id = '', interactions = emptyObject, onChange }: InteractionsProps) => {
+  const { interactionsManager } = use(InteractionsContext);
+  const subscriptor = useMemo(() => interactionsManager.getSubscriptor(id), [id, interactionsManager]);
+
+  const handleWorkflowChange = useCallback(
+    (workflow: Element['definition']['interactions']) => onChange?.(workflow),
+    [onChange]
+  );
 
   const nodeDefinitions = useMemo(() => {
-    const definitions = [...Object.values(utility)];
-    if (!triggers) {
+    const definitions = [...Object.values(utility)] as InteractionCallback[];
+    if (!subscriptor) {
       return definitions;
     }
 
+    const { triggers } = subscriptor;
     Object.keys(triggers).forEach(triggerKey => {
       const { title = `Trigger ${triggerKey}`, params = {}, preview = {} } = triggers[triggerKey];
       definitions.push({ action: triggerKey, title, type: 'trigger', params, preview, elementId: id });
@@ -56,10 +55,10 @@ const Interactions = props => {
     });
 
     return definitions;
-  }, [id, triggers, interactionsManager]);
+  }, [id, subscriptor, interactionsManager]);
 
   return (
-    <div className={classNames('flex flex-col grow', className)}>
+    <div className={classNames('flex grow flex-col', className)}>
       <Workflow
         key={id}
         nodes={interactions}

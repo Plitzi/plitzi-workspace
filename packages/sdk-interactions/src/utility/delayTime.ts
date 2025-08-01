@@ -1,15 +1,15 @@
-const callback = ({ time }: { time: number }) =>
-  new Promise(res => {
-    setTimeout(res, time);
-  });
+import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 
-const delayTime = {
+const delayTime: InteractionBaseCallback<{ time: number }> = {
   action: 'delayTime',
   title: 'Delay Time',
   type: 'utility',
-  params: { time: { label: 'Time (Milliseconds)' } },
+  params: { time: { label: 'Time (Milliseconds)', type: 'text' } },
   preview: {},
-  callback
+  callback: ({ time }) =>
+    new Promise(res => {
+      setTimeout(res, time);
+    })
 };
 
 export default delayTime;

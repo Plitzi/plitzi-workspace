@@ -1,33 +1,28 @@
-// Packages
-import React, { useCallback, use, useEffect, useState } from 'react';
+import Button from '@plitzi/plitzi-ui/Button';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
 import isEqual from 'lodash/isEqual';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import { useCallback, use, useEffect, useState } from 'react';
 
-// Monorepo
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
-/**
- * @param {{
- *   className?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const StateManager = props => {
-  const { className = '' } = props;
+export type StateManagerProps = {
+  className?: string;
+};
+
+const StateManager = ({ className = '' }: StateManagerProps) => {
   const { state, setState } = use(StateManagerContext);
   const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
   const { addToast } = useToast();
 
-  const handleChange = useCallback(v => setValue(v), []);
+  const handleChange = useCallback((value: string) => setValue(value), []);
 
   const handleClickSave = useCallback(() => {
     try {
-      setState(JSON.parse(value));
+      setState(JSON.parse(value) as Record<string, unknown>);
       setValue(JSON.stringify(JSON.parse(value), null, 2));
-    } catch (e) {
+    } catch {
       addToast('Json Malformed, Please fix it and try again', {
         appeareance: 'error',
         autoDismiss: true,
@@ -40,6 +35,7 @@ const StateManager = props => {
     if (!isEqual(value, state)) {
       setValue(JSON.stringify(state, null, 2));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
@@ -51,7 +47,7 @@ const StateManager = props => {
           size="custom"
           className="mr-2 rounded-sm bg-white p-2"
           onClick={handleClickSave}
-          tilte="Save State"
+          title="Save State"
         >
           <i className="fa-solid fa-floppy-disk" />
         </Button>

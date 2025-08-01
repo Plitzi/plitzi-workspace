@@ -8,7 +8,15 @@ import EventBridge from '@plitzi/sdk-event-bridge';
 import { flowTrigger } from './InteractionsHelper';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
-import type { ElementInteraction, EventBridgeEvent, InteractionBaseCallback, Subscriptor } from '@plitzi/sdk-shared';
+import type {
+  ElementInteraction,
+  EventBridgeEvent,
+  InteractionBaseCallback,
+  InteractionCallback,
+  QueryParams,
+  RouteParams,
+  Subscriptor
+} from '@plitzi/sdk-shared';
 
 class InteractionsManager {
   eventBridge: InstanceType<typeof EventBridge>;
@@ -16,10 +24,10 @@ class InteractionsManager {
   childManagers: InteractionsManager[];
   interactionsData: Record<string, string | number | boolean>;
   subscriptors: Record<string, Subscriptor>;
-  callbacksAvailables: Record<string, Record<string, InteractionBaseCallback> | undefined>;
+  callbacksAvailables: Record<string, Record<string, InteractionCallback>>;
   interactionsRunning: Record<string, boolean>;
 
-  constructor(currentPageId = '', routeParams: Record<string, string> = {}, queryParams: Record<string, string> = {}) {
+  constructor(currentPageId = '', routeParams: RouteParams = {}, queryParams: QueryParams = {}) {
     this.eventBridge = new EventBridge();
     this.parentManager = undefined;
     this.childManagers = [];
@@ -115,7 +123,7 @@ class InteractionsManager {
   unsubscribe(id: string) {
     this.eventBridge.off('interaction', id as EventBridgeEvent);
     delete this.subscriptors[id];
-    if (this.callbacksAvailables[id]) {
+    if (this.callbacksAvailables[id] as Record<string, InteractionCallback> | undefined) {
       delete this.callbacksAvailables[id];
     }
   }
@@ -153,7 +161,7 @@ class InteractionsManager {
   }
 
   _getCallbacksAvailablesInternal() {
-    let callbacks = {};
+    let callbacks: Record<string, Record<string, InteractionCallback>> = {};
     if (this.childManagers.length > 0) {
       for (const childManager of this.childManagers) {
         callbacks = { ...callbacks, ...childManager._getCallbacksAvailablesInternal() };
@@ -170,7 +178,7 @@ class InteractionsManager {
 
     const rootManager = this.getRootManager();
 
-    return rootManager?._getCallbacksAvailablesInternal();
+    return rootManager?._getCallbacksAvailablesInternal() ?? {};
   }
 
   interactionTrigger(subscriptorId: string, eventName: string, params: Record<string, unknown> = {}) {

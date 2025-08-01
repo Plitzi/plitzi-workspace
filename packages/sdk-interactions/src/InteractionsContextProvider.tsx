@@ -5,13 +5,14 @@ import InteractionsContext from './InteractionsContext';
 import InteractionsManager from './InteractionsManager';
 
 import type { InteractionsContextValue } from './InteractionsContext';
+import type { QueryParams, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type InteractionsContextProviderProps = {
   children?: ReactNode;
   currentPageId: string;
-  routeParams: Record<string, string>;
-  queryParams: Record<string, string>;
+  routeParams: RouteParams;
+  queryParams: QueryParams;
 };
 
 const InteractionsContextProvider = ({

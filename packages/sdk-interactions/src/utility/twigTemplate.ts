@@ -1,37 +1,9 @@
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
-type CallbackParams = { template: string; returnMode: 'jsonObject' | 'json' | 'text' };
+import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 
-const callback = (params: CallbackParams) => {
-  const { template, returnMode } = params;
-  let content: string | object = '';
-  try {
-    content = processTwig(template, params);
-  } catch (e) {
-    console.error(e);
-  }
-
-  if (returnMode === 'jsonObject') {
-    try {
-      return { content: JSON.parse(content as string) as object };
-    } catch (e) {
-      console.error(e);
-    }
-  } else if (returnMode === 'json') {
-    try {
-      JSON.parse(content as string);
-
-      return { content };
-    } catch {
-      return { content: '' };
-    }
-  }
-
-  return { content };
-};
-
-const delayTime = {
+const delayTime: InteractionBaseCallback<{ returnMode: 'jsonObject' | 'json' | 'text'; template: string }> = {
   action: 'twigTemplate',
   title: 'Twig Template',
   type: 'utility',
@@ -51,7 +23,7 @@ const delayTime = {
       label: 'Template',
       canBind: false,
       defaultValue: '',
-      type: (params: CallbackParams) => {
+      type: params => {
         const { returnMode } = params;
         if (returnMode === 'text') {
           return 'codemirror-text';
@@ -61,7 +33,7 @@ const delayTime = {
       }
     }
   },
-  preview: (params: CallbackParams) => {
+  preview: params => {
     const { template, returnMode } = params;
     if (returnMode === 'jsonObject') {
       try {
@@ -84,7 +56,33 @@ const delayTime = {
 
     return { template: '', content: '' };
   },
-  callback
+  callback: params => {
+    const { template, returnMode } = params;
+    let content: string | object = '';
+    try {
+      content = processTwig(template, params);
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (returnMode === 'jsonObject') {
+      try {
+        return { content: JSON.parse(content as string) as object };
+      } catch (e) {
+        console.error(e);
+      }
+    } else if (returnMode === 'json') {
+      try {
+        JSON.parse(content as string);
+
+        return { content };
+      } catch {
+        return { content: '' };
+      }
+    }
+
+    return { content };
+  }
 };
 
 export default delayTime;

@@ -1,59 +1,11 @@
-type CallbackParams = { url: string; method: string; authorizationToken: string; body: { [key: string]: unknown } };
+import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 
-const callback = async (params: CallbackParams) => {
-  const { url, authorizationToken, body } = params;
-  let { method } = params;
-  let response: { status?: number; data?: string } = {};
-
-  try {
-    method = method.toUpperCase();
-    const headers: { [key: string]: string } = {};
-    if (authorizationToken) {
-      headers.Authorization = `Bearer ${authorizationToken}`;
-    }
-
-    Object.values(body).forEach(value => {
-      if (value instanceof Blob && headers['Content-Type'] !== 'multipart/form-data') {
-        headers['Content-Type'] = 'multipart/form-data';
-
-        return;
-      }
-    });
-
-    const formData = new FormData();
-    Object.entries(body).forEach(([key, value]) => {
-      formData.append(key, value as string);
-    });
-
-    const fetchOptions: { method: CallbackParams['method']; headers: { [key: string]: string }; body?: FormData } = {
-      method,
-      headers,
-      body: formData
-    };
-    if (method === 'get') {
-      delete fetchOptions.body;
-    }
-
-    const res = await fetch(url, fetchOptions);
-
-    let data: string = '';
-    try {
-      data = (await res.json()) as string;
-    } catch {
-      // nothing, just ignore
-    }
-
-    response = { status: res.status, data };
-  } catch (e) {
-    console.error(e);
-  } finally {
-    // test
-  }
-
-  return { response };
-};
-
-const delayTime = {
+const delayTime: InteractionBaseCallback<{
+  url: string;
+  method: string;
+  body: Record<string, string | Blob>;
+  authorizationToken: string;
+}> = {
   action: 'webHook',
   title: 'Webhook',
   type: 'utility',
@@ -76,7 +28,54 @@ const delayTime = {
     authorizationToken: { canBind: true, defaultValue: '', type: 'text', label: 'Authorization Token' }
   },
   preview: { url: '', method: '', response: { status: '', data: '' } },
-  callback
+  callback: async params => {
+    const { url, authorizationToken, body } = params;
+    let { method } = params;
+    let response: { status?: number; data?: string } = {};
+
+    try {
+      method = method.toUpperCase();
+      const headers: { [key: string]: string } = {};
+      if (authorizationToken) {
+        headers.Authorization = `Bearer ${authorizationToken}`;
+      }
+
+      Object.values(body).forEach(value => {
+        if (value instanceof Blob && headers['Content-Type'] !== 'multipart/form-data') {
+          headers['Content-Type'] = 'multipart/form-data';
+
+          return;
+        }
+      });
+
+      const formData = new FormData() as FormData | undefined;
+      Object.entries(body).forEach(([key, value]) => {
+        formData?.append(key, value);
+      });
+
+      const fetchOptions = { method, headers, body: formData };
+      if (method === 'get') {
+        delete fetchOptions.body;
+      }
+
+      const res = await fetch(url, fetchOptions);
+
+      let data: string = '';
+      try {
+        data = (await res.json()) as string;
+      } catch {
+        // nothing, just ignore
+      }
+
+      response = { status: res.status, data };
+    } catch (e) {
+      console.error(e);
+    } finally {
+      // test
+    }
+
+    return { response };
+  }
 };
 
 export default delayTime;

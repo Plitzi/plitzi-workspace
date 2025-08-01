@@ -26,12 +26,16 @@ export type InteractionNode = {
   whenParams?: Record<string, RuleValue>;
 };
 
-export type InteractionParamType = 'boolean' | 'select' | 'text';
-export type InteractionCallbackParamValues = Record<keyof InteractionBaseCallback['params'], unknown>;
-export type InteractionCallbackParam = {
+export type InteractionParamType = 'boolean' | 'select' | 'text' | 'codemirror-text' | 'codemirror-json';
+export type InteractionCallbackParamValues<
+  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+> = T;
+export type InteractionCallbackParam<
+  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+> = {
   canBind?: boolean;
   label?: string;
-  when?: boolean | ((params: InteractionCallbackParamValues) => boolean);
+  when?: boolean | ((params: InteractionCallbackParamValues<T>) => boolean);
 } & (
   | { type: 'text'; defaultValue?: string | number }
   | { type: 'textarea'; defaultValue?: string }
@@ -41,32 +45,36 @@ export type InteractionCallbackParam = {
       defaultValue?: string;
       options:
         | { label: string; value: string }[]
-        | ((params: InteractionCallbackParamValues) => { label: string; value: string }[]);
+        | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
     }
   | {
-      type: (params: InteractionCallbackParamValues) => InteractionParamType;
+      type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
       defaultValue?: unknown;
       options?:
         | { label: string; value: string }[]
-        | ((params: InteractionCallbackParamValues) => { label: string; value: string }[]);
+        | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
     }
 );
 
 export type InteractionCallbackPreview = string | Record<string, string>;
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
-export type InteractionBaseCallback = {
+export type InteractionBaseCallback<
+  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+> = {
+  action: string;
   title: string;
   type: InteractionCallbackType;
   params: Record<string, InteractionCallbackParam>;
-  callback?: (params: InteractionCallbackParamValues) => unknown;
+  callback?: (params: InteractionCallbackParamValues<T>) => unknown;
   postCallback?: InteractionPostCallback;
-  preview?: InteractionCallbackPreviews;
+  preview?: InteractionCallbackPreviews | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackPreviews);
   enabled?: boolean;
 };
 
-export type InteractionCallback = InteractionBaseCallback & {
-  action: string; // Name of the action
+export type InteractionCallback<
+  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+> = InteractionBaseCallback<T> & {
   elementId: string; // When is globalCallback or utility, we just put the source as elementId
 };
 
