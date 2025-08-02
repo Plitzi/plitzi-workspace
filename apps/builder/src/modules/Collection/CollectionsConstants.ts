@@ -43,10 +43,11 @@ export const fieldTypes = {
   // multiReference: { icon: '', label: 'Multi-reference' }
 };
 
-export const collectionFieldTypeToInteractions = type => {
-  let finalType = type;
+export const collectionFieldTypeToInteractions = (type: keyof typeof fieldParams | 'boolean') => {
+  let finalType: 'boolean' | 'select' | 'text';
   switch (type) {
     case 'switch':
+    case 'boolean':
       finalType = 'boolean';
       break;
 

@@ -30,6 +30,7 @@ export type InteractionParamType = 'boolean' | 'select' | 'text' | 'codemirror-t
 export type InteractionCallbackParamValues<
   T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
 > = T;
+export type InteractionCallbackParamOption = { label: string; value: string };
 export type InteractionCallbackParam<
   T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
 > = {
@@ -44,8 +45,10 @@ export type InteractionCallbackParam<
       type: 'select';
       defaultValue?: string;
       options:
-        | { label: string; value: string }[]
-        | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
+        | InteractionCallbackParamOption[]
+        | ((
+            params: InteractionCallbackParamValues<T>
+          ) => InteractionCallbackParamOption[] | Promise<InteractionCallbackParamOption[]>);
     }
   | {
       type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
@@ -56,7 +59,7 @@ export type InteractionCallbackParam<
     }
 );
 
-export type InteractionCallbackPreview = string | Record<string, string>;
+export type InteractionCallbackPreview = string | Record<string, unknown>;
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
 export type InteractionBaseCallback<
@@ -65,7 +68,11 @@ export type InteractionBaseCallback<
   action: string;
   title: string;
   type: InteractionCallbackType;
-  params: Record<string, InteractionCallbackParam>;
+  params:
+    | Record<string, InteractionCallbackParam<T>>
+    | ((
+        params: InteractionCallbackParamValues<T>
+      ) => Record<string, InteractionCallbackParam<T>> | Promise<Record<string, InteractionCallbackParam<T>>>);
   callback?: (params: InteractionCallbackParamValues<T>) => unknown;
   postCallback?: InteractionPostCallback;
   preview?: InteractionCallbackPreviews | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackPreviews);
