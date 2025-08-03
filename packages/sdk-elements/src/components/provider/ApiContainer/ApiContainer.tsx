@@ -155,19 +155,28 @@ const ApiContainer = ({
     const label = get(internalProps, 'definition.label', 'Api Container') as string;
 
     return {
-      performQuery: { title: `Perform Query ${label}`, type: 'callback', callback: refetch, preview: {}, params: {} }
+      performQuery: {
+        action: 'performQuery',
+        title: `Perform Query ${label}`,
+        type: 'callback',
+        callback: refetch,
+        preview: {},
+        params: {}
+      }
     };
   }, [internalProps, refetch]);
 
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       onApiError: {
+        action: 'onApiError',
         title: 'On Api Error',
         type: 'trigger',
         params: {},
         preview: { url: '', method: '', status: '', data: '' }
       },
       onApiSuccess: {
+        action: 'onApiSuccess',
         title: 'On Api Success',
         type: 'trigger',
         params: {},

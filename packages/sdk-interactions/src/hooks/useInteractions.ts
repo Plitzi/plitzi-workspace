@@ -1,4 +1,4 @@
-import { use, useLayoutEffect } from 'react';
+import { use, useEffect } from 'react';
 
 import InteractionsContext from '../InteractionsContext';
 
@@ -12,20 +12,10 @@ export type UseInteractionsProps = {
   getAdditionalParams?: Subscriptor['getAdditionalParams'];
 };
 
-const useInteractions = ({
-  id,
-  interactions = {},
-  triggers = {},
-  callbacks = {},
-  getAdditionalParams
-}: UseInteractionsProps) => {
+const useInteractions = ({ id, interactions, triggers, callbacks, getAdditionalParams }: UseInteractionsProps) => {
   const { interactionsManager } = use(InteractionsContext);
 
-  useLayoutEffect(() => {
-    if (typeof window !== 'undefined') {
-      return;
-    }
-
+  useEffect(() => {
     interactionsManager.subscribe(id, interactions, triggers, callbacks, getAdditionalParams);
 
     return () => {

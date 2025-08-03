@@ -89,12 +89,13 @@ const ModalContainer = ({
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       onModalOpen: {
+        action: 'onModalOpen',
         title: 'On Modal Open',
         type: 'trigger',
         params: { metadata: { type: 'text', defaultValue: '' } },
         preview: { metadata: '' }
       },
-      onModalClose: { title: 'On Modal Close', type: 'trigger', preview: {}, params: {} }
+      onModalClose: { action: 'onModalClose', title: 'On Modal Close', type: 'trigger', preview: {}, params: {} }
     }),
     []
   );
@@ -104,13 +105,21 @@ const ModalContainer = ({
 
     return {
       openModal: {
+        action: 'openModal',
         title: `Open ${label}`,
         type: 'callback',
         callback: handleOpenModal,
         params: { metadata: { type: 'text', defaultValue: '' } },
         preview: { metadata: '' }
       },
-      closeModal: { title: `Close ${label}`, type: 'callback', callback: handleClickClose, params: {}, preview: {} }
+      closeModal: {
+        action: 'closeModal',
+        title: `Close ${label}`,
+        type: 'callback',
+        callback: handleClickClose,
+        params: {},
+        preview: {}
+      }
     };
   }, [handleClickClose, handleOpenModal, internalProps]);
 

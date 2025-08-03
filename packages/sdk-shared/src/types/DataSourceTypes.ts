@@ -58,6 +58,9 @@ export type DataSourceContextValue = {
   addSource: <T = unknown>(id: string, meta?: SourceMeta) => Context<T>;
   updateFields: (id: string, fields: SourceMeta['fields']) => void;
   removeSource: (id: string) => void;
-  getSources: (id?: string) => Record<string, Source> | Source | undefined;
+  getSources: {
+    (id: string): Source | undefined;
+    (): Record<string, Source>;
+  };
   getSourcesByElementId: (schemaFlat?: Schema['flat'], id?: string) => Record<string, Source>;
 };

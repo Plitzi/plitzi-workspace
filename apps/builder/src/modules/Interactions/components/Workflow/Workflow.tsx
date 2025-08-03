@@ -1,40 +1,31 @@
-// Packages
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
-import get from 'lodash/get';
 import debounce from 'lodash/debounce';
+import get from 'lodash/get';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-
-// Relatives
+import WorkflowContextProvider from './WorkflowContextProvider';
 import WorkflowFlow from './WorkflowFlow';
 import WorkflowHeader from './WorkflowHeader';
-import WorkflowContextProvider from './WorkflowContextProvider';
 
-/**
- * @param {{
- *   className?: string;
- *   nodes?: object;
- *   triggerTitle?: string;
- *   callbackTitle?: string;
- *   nodeDefinitions?: object;
- *   direction?: 'horizontal' | 'vertical';
- *   onChange?: (nodes: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Workflow = props => {
-  const {
-    className = '',
-    nodes: nodesProp = emptyObject,
-    triggerTitle = 'When this happens...',
-    callbackTitle = 'Do this...',
-    nodeDefinitions = emptyObject,
-    direction = 'vertical',
-    onChange = noop
-  } = props;
+import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
+
+export type WorkflowProps = {
+  nodes?: Record<string, ElementInteraction>;
+  triggerTitle?: string;
+  callbackTitle?: string;
+  nodeDefinitions?: InteractionCallback[];
+  direction?: 'horizontal' | 'vertical';
+  onChange?: (nodes: Record<string, ElementInteraction>) => void;
+};
+
+const Workflow = ({
+  nodes: nodesProp,
+  triggerTitle = 'When this happens...',
+  callbackTitle = 'Do this...',
+  nodeDefinitions,
+  direction = 'vertical',
+  onChange
+}: WorkflowProps) => {
   const [nodes, setNodes] = useState(() => {
     if (Array.isArray(nodesProp)) {
       return {};
@@ -42,22 +33,23 @@ const Workflow = props => {
 
     return nodesProp ?? {};
   });
-  const onChangeDebounced = useMemo(() => debounce(onChange, 100), [onChange]);
+  const onChangeDebounced = useMemo(() => (onChange ? debounce(onChange, 100) : undefined), [onChange]);
 
   const flows = useMemo(() => {
-    if (!nodes) {
-      return [];
-    }
-
     const nodesList = Object.values(nodes);
     const triggers = nodesList.filter(node => node.type === 'trigger');
 
     return triggers.map(trigger => {
-      const sequence = { id: trigger.id, title: trigger.title, trigger, nodes: {} };
+      const sequence = {
+        id: trigger.id,
+        title: trigger.title,
+        trigger,
+        nodes: {} as Record<string, ElementInteraction>
+      };
       let node = trigger;
-      while (node) {
-        if (sequence.nodes[node.id]) {
-          throw new Error('Infnite Loop');
+      while (node as ElementInteraction | undefined) {
+        if (sequence.nodes[node.id] as ElementInteraction | undefined) {
+          throw new Error('Infinite Loop');
         }
 
         sequence.nodes[node.id] = node;
@@ -68,7 +60,7 @@ const Workflow = props => {
     });
   }, [nodes]);
 
-  const [flowId, setFlowId] = useState(get(flows, '0.id'));
+  const [flowId, setFlowId] = useState<string | undefined>(get(flows, '0.id'));
 
   const flow = useMemo(() => flows.find(flow => flow.id === flowId), [flowId, flows]);
 
@@ -78,7 +70,7 @@ const Workflow = props => {
       if (Array.isArray(nodesProp)) {
         setNodes({});
       } else {
-        setNodes(nodesProp);
+        setNodes(nodesProp ?? {});
       }
     } else {
       init.current = true;
@@ -86,24 +78,23 @@ const Workflow = props => {
   }, [nodesProp]);
 
   const handleChange = useCallback(
-    (nodes, debounced = false) => {
+    (nodes: Record<string, ElementInteraction>, debounced: boolean = false) => {
       if (debounced) {
         setNodes(nodes);
-        onChangeDebounced(nodes);
+        onChangeDebounced?.(nodes);
       } else {
-        onChange(nodes);
+        onChange?.(nodes);
       }
     },
-    [onChange]
+    [onChange, onChangeDebounced]
   );
 
   return (
     <div
       className={classNames(
-        'flex flex-col items-center p-4 h-full',
-        className,
+        'flex h-full flex-col items-center p-2',
         'bg-[linear-gradient(90deg,#80808014_1px,transparent_0),linear-gradient(180deg,#80808014_1px,transparent_0)] bg-[size:16px_16px]',
-        { 'justify-center': flows && flows.length === 0 }
+        { 'justify-center': flows.length === 0 }
       )}
     >
       <WorkflowContextProvider

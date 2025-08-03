@@ -109,24 +109,28 @@ const DialogContainer = ({
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       onDialogAccept: {
+        action: 'onDialogAccept',
         title: 'On Dialog Accept',
         type: 'trigger',
         params: { metadata: { type: 'text', defaultValue: '' } },
         preview: { metadata: '' }
       },
       onDialogReject: {
+        action: 'onDialogReject',
         title: 'On Dialog Reject',
         type: 'trigger',
         params: { metadata: { type: 'text', defaultValue: '' } },
         preview: { metadata: '' }
       },
       onDialogOpen: {
+        action: 'onDialogOpen',
         title: 'On Dialog Open',
         type: 'trigger',
         params: { metadata: { type: 'text', defaultValue: '' } },
         preview: { metadata: '' }
       },
       onDialogClose: {
+        action: 'onDialogClose',
         title: 'On Dialog Close',
         type: 'trigger',
         params: { metadata: { type: 'text', defaultValue: '' } },
@@ -141,13 +145,21 @@ const DialogContainer = ({
 
     return {
       openDialog: {
+        action: 'openDialog',
         title: `Open ${label}`,
         type: 'callback',
         callback: handleOpeDialog,
         params: { metadata: { type: 'text', defaultValue: '' } },
         preview: { metadata: '' }
       },
-      closeDialog: { title: `Close ${label}`, type: 'callback', callback: handleClickClose, preview: {}, params: {} }
+      closeDialog: {
+        action: 'closeDialog',
+        title: `Close ${label}`,
+        type: 'callback',
+        callback: handleClickClose,
+        preview: {},
+        params: {}
+      }
     };
   }, [handleClickClose, handleOpeDialog, internalProps]);
 

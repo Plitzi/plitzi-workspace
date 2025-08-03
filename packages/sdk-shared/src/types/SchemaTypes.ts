@@ -1,4 +1,4 @@
-import type { InteractionCallbackType } from './InteractionTypes';
+import type { InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -26,7 +26,7 @@ export type ElementInteraction = {
   title: string;
   type: InteractionCallbackType;
   action: string;
-  params: Record<string, unknown>;
+  params: InteractionCallbackParamValues;
   preview: Record<string, unknown>;
   elementId: Element['id'];
   beforeNode: string;

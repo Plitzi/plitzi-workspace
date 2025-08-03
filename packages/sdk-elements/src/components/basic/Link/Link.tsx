@@ -60,7 +60,7 @@ const Link = ({
       return urlAux;
     }
 
-    return getPageFullPath(flat, pageFolders, href, true) as string;
+    return getPageFullPath(flat, pageFolders, href, true);
   }, [mode, href, flat, pageFolders, queryParams, routeParams]);
 
   const handleClick = (e: MouseEvent) => {

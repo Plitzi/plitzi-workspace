@@ -1,56 +1,49 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { produce } from 'immer';
 import get from 'lodash/get';
-import set from 'lodash/set';
-import noop from 'lodash/noop';
 import omit from 'lodash/omit';
+import set from 'lodash/set';
 import upperFirst from 'lodash/upperFirst';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-// Monorepo
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 
-// Relatives
 import WorkflowContext from './WorkflowContext';
 import { generateID } from '../../../../helpers/utils';
 
-const nodeDefinitionsDefault = [];
+import type { WorkflowContextValue } from './WorkflowContext';
+import type { ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   nodes: object;
- *   direction: 'horizontal' | 'vertical';
- *   nodeDefinitions: object[];
- *   onChange: (nodes: object) => void;
- *   setFlowId: (flowId: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const WorkflowContextProvider = props => {
-  const {
-    children,
-    nodes = emptyObject,
-    direction = 'horizontal',
-    nodeDefinitions = nodeDefinitionsDefault,
-    setFlowId = noop,
-    onChange = noop
-  } = props;
-  const { elementSelected } = use(BuilderSelectedContext);
+export type WorkflowContextProviderProps = {
+  children: ReactNode;
+  nodes: Record<string, ElementInteraction>;
+  direction: 'horizontal' | 'vertical';
+  nodeDefinitions?: InteractionCallback[];
+  onChange: (nodes: Record<string, ElementInteraction>, debounced?: boolean) => void;
+  setFlowId: (flowId: string) => void;
+};
+
+const WorkflowContextProvider = ({
+  children,
+  nodes,
+  direction = 'horizontal',
+  nodeDefinitions,
+  setFlowId,
+  onChange
+}: WorkflowContextProviderProps) => {
   const { getSources } = use(DataSourceContext);
-  const [previewData, setPreviewData] = useState({});
-  const [dataSourceContent, setDataSourceContent] = useState({});
+  const [previewData, setPreviewData] = useState<Record<string, ElementInteraction['preview']>>({});
+  const [dataSourceContent, setDataSourceContent] = useState<Record<string, SourceField[]>>({});
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
 
   const addNode = useCallback(
-    (nodeType, siblingNodeId = '', flowId = '') => {
+    (nodeType: ElementInteraction['type'], siblingNodeId: string = '', flowId: string = '') => {
       const id = `node_${generateID()}`;
       onChange(
         produce(nodesRef.current, draft => {
-          if (siblingNodeId && !draft[siblingNodeId]) {
+          if (siblingNodeId && !(draft[siblingNodeId] as ElementInteraction | undefined)) {
             return;
           }
 
@@ -69,7 +62,7 @@ const WorkflowContextProvider = props => {
           };
 
           const siblingNodeBefore = draft[siblingNodeId];
-          if (!siblingNodeBefore) {
+          if (!(siblingNodeBefore as ElementInteraction | undefined)) {
             draft[id] = newNode;
 
             return;
@@ -82,12 +75,12 @@ const WorkflowContextProvider = props => {
           siblingNodeBefore.afterNode = id;
 
           // Update After sibling
-          if (siblingNodeAfter) {
+          if (siblingNodeAfter as ElementInteraction | undefined) {
             siblingNodeAfter.beforeNode = id;
           }
 
           // Set Node relationship
-          newNode.afterNode = siblingNodeAfter?.id ?? '';
+          newNode.afterNode = (siblingNodeAfter as ElementInteraction | undefined)?.id ?? '';
           newNode.beforeNode = siblingNodeBefore.id;
 
           draft[id] = newNode;
@@ -98,14 +91,14 @@ const WorkflowContextProvider = props => {
         setFlowId(id);
       }
     },
-    [onChange]
+    [onChange, setFlowId]
   );
 
   const updateNode = useCallback(
-    node => {
+    (node: ElementInteraction) => {
       onChange(
         produce(nodesRef.current, draft => {
-          if (node && node.id) {
+          if (node.id) {
             set(draft, node.id, { ...get(draft, node.id, {}), ...node });
           }
         }),
@@ -116,15 +109,15 @@ const WorkflowContextProvider = props => {
   );
 
   const removeNode = useCallback(
-    nodeId => {
+    (nodeId: string) => {
       onChange(
         produce(nodesRef.current, draft => {
           const node = draft[nodeId];
-          if (!node) {
+          if (!(node as ElementInteraction | undefined)) {
             return;
           }
 
-          const nodesToDelete = [];
+          const nodesToDelete: ElementInteraction[] = [];
           if (node.type === 'trigger') {
             // Trigger
             const dependantNodes = Object.values(draft).filter(nodeAux => nodeAux.flowId === node.flowId);
@@ -134,15 +127,15 @@ const WorkflowContextProvider = props => {
             nodesToDelete.push(node);
             const beforeNode = draft[node.beforeNode];
             const afterNode = draft[node.afterNode];
-            if (beforeNode && afterNode) {
+            if ((beforeNode as ElementInteraction | undefined) && (afterNode as ElementInteraction | undefined)) {
               beforeNode.afterNode = afterNode.id;
-            } else if (beforeNode) {
+            } else if (beforeNode as ElementInteraction | undefined) {
               beforeNode.afterNode = '';
             }
 
-            if (afterNode && beforeNode) {
+            if ((afterNode as ElementInteraction | undefined) && (beforeNode as ElementInteraction | undefined)) {
               afterNode.beforeNode = beforeNode.id;
-            } else if (afterNode) {
+            } else if (afterNode as ElementInteraction | undefined) {
               afterNode.beforeNode = '';
             }
           }
@@ -156,16 +149,19 @@ const WorkflowContextProvider = props => {
     [onChange]
   );
 
-  const getNode = useCallback(nodeId => (nodeId ? nodesRef.current[nodeId] : nodesRef.current), []);
+  const getNode = useCallback(
+    (nodeId: string) => (nodeId ? nodesRef.current[nodeId] : nodesRef.current),
+    []
+  ) as WorkflowContextValue['getNode'];
 
   const getDefinition = useCallback(
-    (type, action, elementId = '') =>
-      nodeDefinitions.find(n => n.type === type && (!n.elementId || n.elementId === elementId) && n.action === action),
+    (type: ElementInteraction['type'], action: string, elementId: string = '') =>
+      nodeDefinitions?.find(n => n.type === type && (!n.elementId || n.elementId === elementId) && n.action === action),
     [nodeDefinitions]
   );
 
   const moveNode = useCallback(
-    (nodeId, direction = 'down') => {
+    (nodeId: string, direction: 'up' | 'down' = 'down') => {
       onChange(
         produce(nodesRef.current, draft => {
           if (!nodeId) {
@@ -173,7 +169,7 @@ const WorkflowContextProvider = props => {
           }
 
           const node = draft[nodeId];
-          if (!draft[nodeId]) {
+          if (!(draft[nodeId] as ElementInteraction | undefined)) {
             return;
           }
 
@@ -183,7 +179,7 @@ const WorkflowContextProvider = props => {
             case 'up': {
               // Relationships
               set(draft, `${beforeNode.beforeNode}.afterNode`, node.id);
-              if (afterNode) {
+              if (afterNode as ElementInteraction | undefined) {
                 set(draft, `${afterNode.id}.beforeNode`, beforeNode.id);
               }
 
@@ -191,7 +187,7 @@ const WorkflowContextProvider = props => {
               set(draft, `${node.id}.beforeNode`, beforeNode.beforeNode);
               set(draft, `${node.id}.afterNode`, beforeNode.id);
               set(draft, `${beforeNode.id}.beforeNode`, node.id);
-              if (afterNode) {
+              if (afterNode as ElementInteraction | undefined) {
                 set(draft, `${beforeNode.id}.afterNode`, afterNode.id);
               } else {
                 set(draft, `${beforeNode.id}.afterNode`, '');
@@ -203,7 +199,7 @@ const WorkflowContextProvider = props => {
             case 'down': {
               // Relationships
               set(draft, `${beforeNode.id}.afterNode`, afterNode.id);
-              if (get(draft, `${afterNode.id}.afterNode`)) {
+              if (get(draft, `${afterNode.id}.afterNode`) as ElementInteraction | undefined) {
                 set(draft, `${afterNode.afterNode}.beforeNode`, node.id);
               }
 
@@ -211,7 +207,7 @@ const WorkflowContextProvider = props => {
               set(draft, `${node.id}.beforeNode`, afterNode.id);
               set(draft, `${node.id}.afterNode`, afterNode.afterNode);
               set(draft, `${afterNode.id}.afterNode`, node.id);
-              if (beforeNode) {
+              if (beforeNode as ElementInteraction | undefined) {
                 set(draft, `${afterNode.id}.beforeNode`, beforeNode.id);
               } else {
                 set(draft, `${afterNode.id}.beforeNode`, '');
@@ -228,29 +224,33 @@ const WorkflowContextProvider = props => {
     [onChange]
   );
 
-  const setPreviewNode = useCallback((id, data) => {
-    if (data === undefined) {
+  const setPreviewNode = useCallback((id: string, data?: ElementInteraction['preview']) => {
+    if (!data) {
       setPreviewData(state => omit(state, [id]));
     } else {
       setPreviewData(state => ({ ...state, [id]: data }));
     }
   }, []);
 
-  const dataSource = useMemo(
+  const dataSource = useMemo<Record<string, Source['meta']>>(
     () => Object.values(getSources()).reduce((acum, source) => ({ ...acum, [source.meta.source]: source.meta }), {}),
-    [elementSelected, getSources]
+    [getSources]
   );
 
   const loadSources = useCallback(async () => {
-    const sourcesLoaded = await Object.keys(dataSource).reduce(
-      async (acum, sourceKey) => ({ ...(await acum), [sourceKey]: (await dataSource[sourceKey].fields(true)) ?? {} }),
-      Promise.resolve({})
-    );
+    const sourcesLoaded = await Object.keys(dataSource).reduce(async (acum, sourceKey) => {
+      let fields = dataSource[sourceKey].fields;
+      if (typeof fields === 'function') {
+        fields = await fields(); // {}
+      }
+
+      return { ...(await acum), [sourceKey]: fields };
+    }, Promise.resolve({}));
     setDataSourceContent(sourcesLoaded);
   }, [dataSource]);
 
   useEffect(() => {
-    loadSources();
+    void loadSources();
   }, [loadSources]);
 
   const workflowMemo = useMemo(

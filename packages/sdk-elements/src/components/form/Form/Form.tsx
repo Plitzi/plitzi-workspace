@@ -185,6 +185,7 @@ const Form = ({
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       onSubmit: {
+        action: 'onSubmit',
         title: 'On Form Submit',
         type: 'trigger',
         params: {},
@@ -257,8 +258,15 @@ const Form = ({
     const label = get(internalProps, 'definition.label', 'Form') as string;
 
     return {
-      performReset: { title: `Reset ${label}`, type: 'callback', callback: handleReset, params: {} },
+      performReset: {
+        action: 'performReset',
+        title: `Reset ${label}`,
+        type: 'callback',
+        callback: handleReset,
+        params: {}
+      },
       setFieldValue: {
+        action: 'setFieldValue',
         title: `Set Field Value ${label}`,
         type: 'callback',
         callback: handleSetFieldValue,
@@ -274,6 +282,7 @@ const Form = ({
         }
       },
       setFieldError: {
+        action: 'setFieldError',
         title: `Set Field Error ${label}`,
         type: 'callback',
         callback: handleSetFieldError,

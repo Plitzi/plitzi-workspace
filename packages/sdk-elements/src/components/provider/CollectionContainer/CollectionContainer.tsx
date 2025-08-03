@@ -79,7 +79,16 @@ const CollectionContainer = ({
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
     const label = get(internalProps, 'definition.label', 'Collection Container') as string;
 
-    return { performQuery: { title: `Refresh ${label}`, type: 'callback', callback: fetch, preview: {}, params: {} } };
+    return {
+      performQuery: {
+        action: 'performQuery',
+        title: `Refresh ${label}`,
+        type: 'callback',
+        callback: fetch,
+        preview: {},
+        params: {}
+      }
+    };
   }, [fetch, internalProps]);
 
   if (!collection && previewMode) {

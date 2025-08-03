@@ -1,31 +1,27 @@
-// Packages
-import React, { useCallback, use, useMemo, useState } from 'react';
-import classNames from 'classnames';
-import noop from 'lodash/noop';
+/* eslint-disable no-async-promise-executor */
+import Select2 from '@plitzi/plitzi-ui/Select2';
 import get from 'lodash/get';
-import Select2 from '@plitzi/plitzi-ui-components/Select2';
+import { useCallback, use, useMemo, useState } from 'react';
 
-// Monorepo
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
-// Relatives
 import WorkflowContext from '../WorkflowContext';
 
-/**
- * @param {{
- *   className?: string;
- *   nodeId?: string;
- *   id?: string;
- *   value?: string;
- *   onChange?: (id: string, value: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const ParamBinding = props => {
-  const { className = '', nodeId: nodeIdProp = '', id = '', value = '', onChange = noop } = props;
+import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
+import type { ElementInteraction, SourceMeta } from '@plitzi/sdk-shared';
+
+export type ParamBindingProps = {
+  className?: string;
+  nodeId?: string;
+  id: keyof ElementInteraction;
+  value?: string;
+  onChange?: (id: keyof ElementInteraction, value: string | boolean | number) => void;
+};
+
+const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: ParamBindingProps) => {
   const { previewData, getNode, dataSource } = use(WorkflowContext);
   const nodeFullPath = useMemo(() => get(value.match(/(?<token>[a-zA-Z0-9-._]+)/gim), '0', ''), [value]);
-  const [node, setNode] = useState(() => {
+  const [node, setNode] = useState<{ value: string; label: string } | undefined>(() => {
     const nodeValue = get(value.match(/(?<token>[a-zA-Z0-9-]+)/gim), '0', '');
     if (!nodeValue) {
       return undefined;
@@ -35,38 +31,38 @@ const ParamBinding = props => {
   });
 
   const handleChangeNode = useCallback(
-    option => {
+    (option?: Exclude<Option, OptionGroup>) => {
       if (!option) {
         setNode(undefined);
-        onChange(id, '');
+        onChange?.(id, '');
 
         return;
       }
 
       const nodeId = option.value;
       setNode({ value: nodeId, label: get(getNode(nodeId), 'title', nodeId) });
-      onChange(id, '');
+      onChange?.(id, '');
     },
-    [onChange, id, getNode, previewData]
+    [onChange, id, getNode]
   );
 
   const handleChangePath = useCallback(
-    option => {
+    (option?: Exclude<Option, OptionGroup>) => {
       if (!option?.value) {
-        onChange(id, '');
-      } else if (option.value && !option.value.includes(node.value)) {
+        onChange?.(id, '');
+      } else if (option.value && node && !option.value.includes(node.value)) {
         // Custom Node
-        onChange(id, `{{ ${node.value}.${option.value} }}`);
+        onChange?.(id, `{{ ${node.value}.${option.value} }}`);
       } else {
-        onChange(id, `{{ ${option.value} }}`);
+        onChange?.(id, `{{ ${option.value} }}`);
       }
     },
-    [id, onChange, node?.value]
+    [node, onChange, id]
   );
 
   const fieldsDataSource = useMemo(
     () =>
-      Object.keys(dataSource).reduce(
+      Object.keys(dataSource).reduce<Exclude<Option, OptionGroup>[]>(
         (acum1, source) => [...acum1, { value: source, label: dataSource[source].name }],
         []
       ),
@@ -74,15 +70,18 @@ const ParamBinding = props => {
   );
 
   const nodes = getNode();
-  const previewNodes = useMemo(() => {
+  const previewNodes = useMemo<Exclude<Option, OptionGroup>[]>(() => {
     const nodePosition = Object.keys(previewData).findIndex(nodeIdAux => nodeIdAux === nodeIdProp);
 
     return Object.keys(previewData)
       .filter((nodeId, index) => nodeId !== nodeIdProp && (nodePosition === -1 || index < nodePosition))
-      .reduce((acum, nodeId) => [...acum, { value: nodeId, label: get(nodes, `${nodeId}.title`, nodeId) }], []);
-  }, [previewData, id, nodeIdProp, nodes]);
+      .reduce<Exclude<Option, OptionGroup>[]>(
+        (acum, nodeId) => [...acum, { value: nodeId, label: get(nodes, `${nodeId}.title`, nodeId) as string }],
+        []
+      );
+  }, [previewData, nodeIdProp, nodes]);
 
-  const finalNodes = useMemo(
+  const finalNodes = useMemo<OptionGroup[]>(
     () => [
       { label: 'Data Sources', options: fieldsDataSource },
       { label: 'Nodes', options: previewNodes }
@@ -90,34 +89,34 @@ const ParamBinding = props => {
     [fieldsDataSource, previewNodes]
   );
 
-  const pathOptions = useMemo(() => {
+  const pathOptions = useMemo<Option[] | Promise<Option[]>>(() => {
     if (!node || !node.value) {
       return [];
     }
 
-    let paths = [];
-    if (!node.value.startsWith('node_') && dataSource[node.value]) {
+    let paths: Promise<Exclude<Option, OptionGroup>[]> | Exclude<Option, OptionGroup>[] = [];
+    if (!node.value.startsWith('node_') && (dataSource[node.value] as SourceMeta | undefined)) {
       // Its Data Source
       paths = new Promise(async resolve => {
         let { fields } = dataSource[node.value];
         if (typeof fields === 'function') {
-          fields = await fields(true);
+          fields = await fields();
         }
 
         if (!Array.isArray(fields)) {
           fields = [];
         }
 
-        fields = fields.map(field => ({ value: `${node.value}.${field.path}`, label: field.name }));
-        if (nodeFullPath && !fields.find(field => field.value === nodeFullPath)) {
-          fields.push({ value: nodeFullPath, label: nodeFullPath.replace(`${node.value}.`, '') });
+        const finalFields = fields.map(field => ({ value: `${node.value}.${field.path}`, label: field.name }));
+        if (nodeFullPath && !finalFields.find(field => field.value === nodeFullPath)) {
+          finalFields.push({ value: nodeFullPath, label: nodeFullPath.replace(`${node.value}.`, '') });
         }
 
-        resolve(fields);
+        resolve(finalFields);
       });
-    } else if (previewData[node.value]) {
+    } else if (previewData[node.value] as Record<string, unknown> | undefined) {
       // Its Node
-      paths = getPathsFromObeject(previewData[node.value]).reduce(
+      paths = getPathsFromObeject(previewData[node.value]).reduce<Exclude<Option, OptionGroup>[]>(
         (acum, path) => [...acum, { value: `${node.value}.${path}`, label: path }],
         []
       );
@@ -127,15 +126,14 @@ const ParamBinding = props => {
       }
     }
 
-    return paths;
-  }, [node, previewData, value, nodeFullPath, dataSource]);
+    return paths as Option[];
+  }, [node, previewData, nodeFullPath, dataSource]);
 
   return (
-    <div className={classNames('', className)}>
+    <div className="flex grow basis-0 flex-col gap-2 overflow-hidden">
       <Select2
-        className="rounded-sm"
-        size="sm"
-        isClearable
+        size="xs"
+        clearable
         placeholder="Select a Source"
         value={node}
         onChange={handleChangeNode}
@@ -143,8 +141,7 @@ const ParamBinding = props => {
       />
       {node && (
         <Select2
-          className="rounded-sm mt-2"
-          size="sm"
+          size="xs"
           placeholder="Select a Binding"
           value={nodeFullPath}
           onChange={handleChangePath}

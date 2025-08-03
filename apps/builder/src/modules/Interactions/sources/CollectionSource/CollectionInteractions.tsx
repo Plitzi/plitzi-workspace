@@ -15,7 +15,7 @@ export type CollectionInteractionsProps = {
 
 const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
-  const { collections, addRecord, updateRecord, fetchRecords, removeRecord } = use(CollectionContext);
+  const { collections, addRecord, updateRecord, removeRecord } = use(CollectionContext);
 
   const validateCollection = useCallback((collection: Collection, values: Record<string, unknown>) => {
     if (!(collection as Collection | undefined)) {
@@ -201,7 +201,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
               defaultValue: undefined,
               type: 'select',
               when: params => !!params.collectionId,
-              options: async params => {
+              options: params => {
                 const { collectionId } = params;
                 const collection = collections[collectionId];
                 if (!collectionId || !(collection as Collection | undefined)) {
@@ -209,9 +209,8 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
                 }
 
                 const primaryField = Object.values(collection.fields).find(field => field.params.primary);
-                const response = await fetchRecords(collectionId);
 
-                return response?.edges.map(record => {
+                return collection['records'].map(record => {
                   let label = '';
                   if (primaryField) {
                     label = record.values[primaryField.machineName] as string;
@@ -269,7 +268,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
             defaultValue: undefined,
             type: 'select',
             when: params => !!params.collectionId,
-            options: async params => {
+            options: params => {
               const { collectionId } = params;
               const collection = collections[collectionId];
               if (!collectionId || !(collection as Collection | undefined)) {
@@ -277,9 +276,8 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
               }
 
               const primaryField = Object.values(collection.fields).find(field => field.params.primary);
-              const response = await fetchRecords(collectionId);
 
-              return response?.edges.map(record => {
+              return collection['records'].map(record => {
                 let label = '';
                 if (primaryField) {
                   label = record.values[primaryField.machineName] as string;
@@ -297,7 +295,6 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
     [
       collections,
       collectionsParsed,
-      fetchRecords,
       handleAddCollectionRecord,
       handleRemoveCollectionRecord,
       handleUpdateCollectionRecord

@@ -1,13 +1,14 @@
-import get from 'lodash/get';
+import { useValueMemo } from '@plitzi/plitzi-ui';
 import pick from 'lodash/pick';
 import { useMemo } from 'react';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';
 
 const useElementProps = (id: string, schema: Schema) => {
+  const element = useValueMemo(schema.flat[id] as Element | undefined);
   const elementProps = useMemo(
-    () => pick(get(schema, `flat.${id}`, { attributes: {}, definition: {} }), ['attributes', 'definition']),
-    [schema, id]
+    () => pick(element ?? { attributes: {}, definition: {} }, ['attributes', 'definition']),
+    [element]
   );
 
   return elementProps as { attributes: Element['attributes']; definition: Element['definition'] };

@@ -27,10 +27,13 @@ export type InteractionNode = {
 };
 
 export type InteractionParamType = 'boolean' | 'select' | 'text' | 'codemirror-text' | 'codemirror-json';
+
 export type InteractionCallbackParamValues<
   T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
 > = T;
+
 export type InteractionCallbackParamOption = { label: string; value: string };
+
 export type InteractionCallbackParam<
   T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
 > = {
@@ -40,15 +43,15 @@ export type InteractionCallbackParam<
 } & (
   | { type: 'text'; defaultValue?: string | number }
   | { type: 'textarea'; defaultValue?: string }
+  | { type: 'codemirror-text'; defaultValue?: string }
+  | { type: 'codemirror-json'; defaultValue?: string }
   | { type: 'boolean'; defaultValue?: boolean }
   | {
       type: 'select';
       defaultValue?: string;
       options:
         | InteractionCallbackParamOption[]
-        | ((
-            params: InteractionCallbackParamValues<T>
-          ) => InteractionCallbackParamOption[] | Promise<InteractionCallbackParamOption[]>);
+        | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackParamOption[]);
     }
   | {
       type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
@@ -60,6 +63,7 @@ export type InteractionCallbackParam<
 );
 
 export type InteractionCallbackPreview = string | Record<string, unknown>;
+
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
 export type InteractionBaseCallback<
@@ -70,9 +74,7 @@ export type InteractionBaseCallback<
   type: InteractionCallbackType;
   params:
     | Record<string, InteractionCallbackParam<T>>
-    | ((
-        params: InteractionCallbackParamValues<T>
-      ) => Record<string, InteractionCallbackParam<T>> | Promise<Record<string, InteractionCallbackParam<T>>>);
+    | ((params: InteractionCallbackParamValues<T>) => Record<string, InteractionCallbackParam<T>>);
   callback?: (params: InteractionCallbackParamValues<T>) => unknown;
   postCallback?: InteractionPostCallback;
   preview?: InteractionCallbackPreviews | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackPreviews);

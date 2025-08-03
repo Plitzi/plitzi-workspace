@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
+import { useValueMemo } from '@plitzi/plitzi-ui';
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import classNames from 'classnames';
 import { useMemo, useRef } from 'react';
@@ -19,16 +20,17 @@ export type WithElementProps<T> = {
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const WithElementComponent = (props: WithElementProps<T>) => {
+    const internalPropsProp = useValueMemo(props.internalProps);
     const ref = useRef<HTMLElement>(undefined);
     const { plitziJsxSkipHOC = false, plitziCustomComponent = false } = props; // Props from JSX
     if (plitziJsxSkipHOC) {
       return useMemo(
-        () => <WrappedComponent {...props} internalProps={{ plitziJsxSkipHOC: true, ...props.internalProps }} />,
-        [props]
+        () => <WrappedComponent {...props} internalProps={{ plitziJsxSkipHOC: true, ...internalPropsProp }} />,
+        [internalPropsProp, props]
       );
     }
 
-    const { internalProps, children, className } = useElement(props.internalProps, {
+    const { internalProps, children, className } = useElement(internalPropsProp, {
       plitziCustomComponent,
       children: props.children,
       className: props.className

@@ -4,7 +4,6 @@ import get from 'lodash/get';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
@@ -13,24 +12,28 @@ import type { Context, FC, JSX, ReactNode, RefObject } from 'react';
 
 const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
   onClick: {
+    action: 'onClick',
     title: 'On Click',
     type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   onMouseEnter: {
+    action: 'onMouseEnter',
     title: 'On Mouse Enter',
     type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   onMouseLeave: {
+    action: 'onMouseLeave',
     title: 'On Mouse Leave',
     type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   onHover: {
+    action: 'onHover',
     title: 'On Hover',
     type: 'trigger',
     preview: { propagateEvent: '' },
@@ -55,8 +58,8 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   children,
   tag = 'div' as T,
   className = '',
-  interactionTriggers = emptyObject,
-  interactionCallbacks = emptyObject,
+  interactionTriggers,
+  interactionCallbacks,
   internalProps,
   ...otherProps
 }: RootElementProps<T>) => {

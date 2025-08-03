@@ -1,72 +1,69 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, memo } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import { useCallback, use, useEffect, useMemo, memo } from 'react';
 
-// Monorepo
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
-// Relatives
-import NodeHeader from './NodeHeader';
 import NodeBody from './NodeBody';
+import NodeHeader from './NodeHeader';
 import WorkflowContext from '../WorkflowContext';
 import NodeFooter from './NodeFooter';
-import NodeWhen from './NodeWhen';
 import NodePreview from './NodePreview';
+import NodeWhen from './NodeWhen';
 
-/**
- * @param {{
- *   className?: string;
- *   id?: string;
- *   title?: string;
- *   type?: 'trigger' | 'callback' | 'utility' | 'globalCallback';
- *   canDelete?: boolean;
- *   action?: string;
- *   elementId?: string;
- *   enabled?: boolean;
- *   beforeNode?: string;
- *   afterNode?: string;
- *   triggerId?: string;
- *   params?: object;
- *   when?: object;
- *   preview?: object;
- *   isOpened?: boolean;
- *   onOpened?: (id: string, isOpened: boolean) => void;
- *   onRemove?: (id: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const WorkflowNode = props => {
-  const {
-    className = '',
-    id = '',
-    title = 'Title',
-    type = 'callback',
-    canDelete = false,
-    action = '',
-    elementId = '',
-    enabled = false,
-    beforeNode = '',
-    afterNode = '',
-    triggerId = '',
-    params = emptyObject,
-    when = emptyObject,
-    preview = emptyObject,
-    isOpened = false,
-    onOpened = noop,
-    onRemove = noop
-  } = props;
+import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { ElementInteraction, InteractionCallbackParam, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+
+export type WorkflowNodeProps = {
+  id?: string;
+  title?: string;
+  type?: 'trigger' | 'callback' | 'utility' | 'globalCallback';
+  canDelete?: boolean;
+  action?: string;
+  elementId?: string;
+  enabled?: boolean;
+  beforeNode?: string;
+  afterNode?: string;
+  triggerId?: string;
+  params?: InteractionCallbackParamValues;
+  when?: RuleGroup;
+  preview?: Record<string, unknown>;
+  isOpened?: boolean;
+  onOpened?: (id: string, isOpened: boolean) => void;
+  onRemove?: (id: string) => void;
+};
+
+const WorkflowNode = ({
+  id = '',
+  title = 'Title',
+  type = 'callback',
+  canDelete = false,
+  action = '',
+  elementId = '',
+  enabled = false,
+  beforeNode = '',
+  afterNode = '',
+  triggerId = '',
+  params,
+  when,
+  preview,
+  isOpened = false,
+  onOpened,
+  onRemove
+}: WorkflowNodeProps) => {
   const { previewData, getNode, updateNode, setPreviewNode, nodeDefinitions, dataSourceContent } = use(WorkflowContext);
 
-  const handleClickOpen = useCallback(() => onOpened(id, !isOpened), [id, isOpened, onOpened]);
+  const handleClickOpen = useCallback(() => onOpened?.(id, !isOpened), [id, isOpened, onOpened]);
 
-  const handleClickRemove = useCallback(() => onRemove(id), [id]);
+  const handleClickRemove = useCallback(() => onRemove?.(id), [id, onRemove]);
 
-  const handleChange = useCallback(node => updateNode({ id, ...node }), [id, updateNode]);
+  const handleChange = useCallback(
+    (node: Partial<ElementInteraction>) => updateNode({ ...node, id } as ElementInteraction),
+    [id, updateNode]
+  );
 
   const nodeDefinition = useMemo(
     () =>
-      nodeDefinitions.find(n => n.type === type && (!n.elementId || n.elementId === elementId) && n.action === action),
+      nodeDefinitions?.find(n => n.type === type && (!n.elementId || n.elementId === elementId) && n.action === action),
     [nodeDefinitions, type, elementId, action]
   );
 
@@ -77,28 +74,24 @@ const WorkflowNode = props => {
 
     const { preview: nodePreview } = nodeDefinition;
     if (typeof nodePreview === 'function') {
-      return nodePreview(params);
+      return nodePreview(params ?? {});
     }
 
-    if (typeof nodePreview === 'object') {
-      return nodePreview;
-    }
+    return nodePreview;
+  }, [nodeDefinition, params]);
 
-    return undefined;
-  }, [nodeDefinition, params?.template]);
-
-  const nodeParams = useMemo(() => {
+  const nodeParams = useMemo<Record<string, InteractionCallbackParam>>(() => {
     if (typeof nodeDefinition?.params === 'function') {
-      return nodeDefinition?.params(params);
+      return nodeDefinition.params(params ?? {});
     }
 
-    return nodeDefinition?.params;
-  }, [nodeDefinition?.params, params]);
+    return nodeDefinition?.params ?? {};
+  }, [nodeDefinition, params]);
 
   useEffect(() => {
     if (typeof preview === 'object' && Object.keys(preview).length > 0) {
       setPreviewNode(id, { ...preview });
-    } else if (typeof defaultPreview === 'object') {
+    } else if (defaultPreview && typeof defaultPreview === 'object') {
       setPreviewNode(id, { ...defaultPreview });
     }
 
@@ -107,7 +100,7 @@ const WorkflowNode = props => {
     };
   }, [setPreviewNode, defaultPreview, preview, id]);
 
-  const fields = useMemo(() => {
+  const fields = useMemo<Record<string, { name: string; label: string; placeholder: string; group: string }>>(() => {
     const dataSource = Object.keys(dataSourceContent).reduce(
       (acum1, source) => ({
         ...acum1,
@@ -163,18 +156,17 @@ const WorkflowNode = props => {
     }, {});
 
     return { ...dataSource, ...nodesParsed };
-  }, [dataSourceContent, previewData, getNode, previewData]);
+  }, [dataSourceContent, previewData, getNode]);
 
   return (
     <div
-      className={classNames(
-        'w-full border-2 rounded-xl',
-        { 'border-gray-300': !isOpened, 'border-blue-500': isOpened },
-        className
-      )}
+      className={classNames('w-full rounded-xl border-2 bg-white', {
+        'border-gray-300': !isOpened,
+        'border-blue-500': isOpened
+      })}
     >
       <NodeHeader
-        className={classNames({ 'border-b-2 border-gray-300 border-dotted': isOpened })}
+        className={classNames({ 'border-b-2 border-dotted border-gray-300': isOpened })}
         id={id}
         title={title}
         type={type}
@@ -184,7 +176,6 @@ const WorkflowNode = props => {
         nodeDefinitions={nodeDefinitions}
         nodeDefinition={nodeDefinition}
         isOpened={isOpened}
-        isFirstNode={!beforeNode || beforeNode === triggerId}
         enabled={enabled}
         canUp={!!beforeNode && beforeNode !== triggerId}
         canDown={!!afterNode}

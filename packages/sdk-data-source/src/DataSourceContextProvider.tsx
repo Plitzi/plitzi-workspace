@@ -12,7 +12,7 @@ import PageStateSource from './sources/PageStateSource';
 import UserSource from './sources/UserSource';
 import VariablesSource from './sources/VariablesSource';
 
-import type { Schema, Source, SourceMeta } from '@plitzi/sdk-shared';
+import type { DataSourceContextValue, Schema, Source, SourceMeta } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 export type DataSourceContextProviderProps = {
@@ -61,7 +61,7 @@ const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourc
       return sourcesRef.current;
     },
     [sourcesRef]
-  );
+  ) as DataSourceContextValue['getSources'];
 
   const handleGetSourcesByElementId = useCallback(
     (schemaFlat?: Schema['flat'], id?: string) => {

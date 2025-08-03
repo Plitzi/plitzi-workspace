@@ -21,6 +21,7 @@ import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 // Relatives
 import SchemaReducer, { SchemaActions } from './SchemaReducer';
+import { useValueMemo } from '@plitzi/plitzi-ui';
 
 /**
  * @param {{
@@ -508,15 +509,16 @@ const SchemaContextProvider = props => {
     schemaUpdateSettings
   ]);
 
+  const pageDefinitions = useValueMemo(pick(get(schema, 'flat', {}), get(schema, 'pages', [])), 'soft');
   const mainSchemaValueMemo = useMemo(
     () => ({
       pages: get(schema, 'pages', []),
-      pageDefinitions: pick(get(schema, 'flat', {}), get(schema, 'pages', [])),
+      pageDefinitions,
       pageFolders: get(schema, 'pageFolders', []),
       settings: get(schema, 'settings', {}),
       variables: get(schema, 'variables', [])
     }),
-    [schema.pages, schema.settings, schema.pageFolders, schema.variables, schema.flat]
+    [schema.pages, schema.settings, schema.pageFolders, schema.variables, pageDefinitions]
   );
 
   const schemaSettings = useMemo(() => schema.settings, [schema.settings]);

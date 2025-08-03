@@ -63,6 +63,7 @@ const Page = ({
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({
       onPageLoad: {
+        action: 'onPageLoad',
         title: 'On Page Load',
         type: 'trigger',
         params: {

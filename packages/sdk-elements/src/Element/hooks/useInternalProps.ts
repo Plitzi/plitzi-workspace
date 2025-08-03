@@ -106,6 +106,7 @@ const getInteractions = (
   postCallback: InteractionPostCallback
 ): Record<string, InteractionBaseCallback> => ({
   setState: {
+    action: 'setState',
     title: `Update ${definition.label}`,
     type: 'callback',
     callback,
