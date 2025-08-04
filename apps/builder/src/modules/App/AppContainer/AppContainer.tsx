@@ -31,10 +31,10 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { eventBridge } = use(EventBridgeContext);
   const { currentPageId } = use(NavigationContext);
   const [tabSelected, setTabSelected] = useState<string>('');
-  const [sourceState, setSourceState] = useState<{ sourceId: string }>({ sourceId: '' });
+  const [sourceState, setSourceState] = useState<{ sourceId?: string }>({ sourceId: '' });
   const { sourceId } = sourceState;
 
-  const handleSourceChange = useCallback((newSourceId: string) => setSourceState({ sourceId: newSourceId }), []);
+  const handleSourceChange = useCallback((newSourceId?: string) => setSourceState({ sourceId: newSourceId }), []);
 
   const builderHandler = useCallback(
     (event: EventBridgeEvent, data: unknown[]) => void eventBridge.emit('main', event, ...data),

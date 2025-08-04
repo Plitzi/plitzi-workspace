@@ -21,8 +21,8 @@ export const getPopups = ({
   sourceId,
   handleSourceChange
 }: {
-  sourceId: string;
-  handleSourceChange: (id: string) => void;
+  sourceId?: string;
+  handleSourceChange: (id?: string) => void;
 }): {
   left: PopupInstance[];
   right: PopupInstance[];

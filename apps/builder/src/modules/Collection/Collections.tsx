@@ -1,30 +1,27 @@
-// Packages
-import React, { use, useCallback } from 'react';
-import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import classNames from 'classnames';
+import { use, useCallback } from 'react';
 
-// Relatives
 import CollectionContext from './CollectionContext';
 
-/**
- * @param {{
- *   collectionId?: string;
- *   onSourceChange?: (collectionId?: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Collections = props => {
-  const { collectionId, onSourceChange } = props;
+import type { MouseEvent } from 'react';
+
+export type CollectionsProps = {
+  collectionId?: string;
+  onSourceChange?: (collectionId?: string) => void;
+};
+
+const Collections = ({ collectionId, onSourceChange }: CollectionsProps) => {
   const { showDialog } = useModal();
   const { collections, removeCollection } = use(CollectionContext);
 
   const handleClickAddCollection = useCallback(() => onSourceChange?.(undefined), [onSourceChange]);
 
   const handleClickRemoveCollection = useCallback(
-    id => async e => {
+    (id: string) => async (e: MouseEvent<HTMLElement>) => {
       e.stopPropagation();
       const response = await showDialog(
         <Modal.Header>
@@ -39,16 +36,16 @@ const Collections = props => {
       );
 
       if (response) {
-        removeCollection(id);
+        void removeCollection(id);
         if (collectionId === id) {
-          onSourceChange();
+          onSourceChange?.();
         }
       }
     },
-    [showDialog, removeCollection, onSourceChange]
+    [showDialog, removeCollection, collectionId, onSourceChange]
   );
 
-  const handleClick = useCallback(collectionId => () => onSourceChange(collectionId), [onSourceChange]);
+  const handleClick = useCallback((collectionId: string) => () => onSourceChange?.(collectionId), [onSourceChange]);
 
   return (
     <Flex direction="column" gap={4} className="w-full">
