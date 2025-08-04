@@ -1,23 +1,19 @@
-// Packages
-import React, { useCallback, use, useMemo, useState } from 'react';
 import Button from '@plitzi/plitzi-ui/Button';
-import Input from '@plitzi/plitzi-ui/Input';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
+import { useCallback, use, useMemo, useState } from 'react';
 
-// Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-
-// Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
 import VariableForm from './models/VariableForm';
 import Variable from './Variable';
 
-/** @returns {React.ReactElement} */
+import type { SchemaVariable } from '@plitzi/sdk-shared';
+
 const Variables = () => {
   const { showModal } = useModal();
   const { addToast } = useToast();
@@ -35,10 +31,10 @@ const Variables = () => {
     [routeParams, queryParams, hostname, environment]
   );
 
-  const handleChangeFilter = useCallback(value => setFilter(value), [setFilter]);
+  const handleChangeFilter = useCallback((value: string) => setFilter(value), [setFilter]);
 
   const handleClickAddVariable = useCallback(async () => {
-    const response = await showModal(
+    const response = await showModal<SchemaVariable>(
       <Modal.Header>
         <h4>Add Variable</h4>
       </Modal.Header>,
@@ -51,8 +47,8 @@ const Variables = () => {
 
     if (response) {
       const { name, category, value, type, subValues } = response;
-      if (!variables.find(variable => variable.name === name)) {
-        schemaAddVariable({ name, category, value, type, subValues });
+      if (!variables?.find(variable => variable.name === name)) {
+        void schemaAddVariable?.({ name, category, value, type, subValues });
       } else {
         addToast(
           <span>
@@ -62,14 +58,17 @@ const Variables = () => {
         );
       }
     }
-  }, [showModal, schemaAddVariable, variables, routeParams, queryParams, hostname, addToast]);
+  }, [showModal, whenData, variables, schemaAddVariable, addToast]);
 
-  const handleClickRemove = useCallback(name => schemaRemoveVariable(name), [schemaRemoveVariable]);
+  const handleClickRemove = useCallback((name: string) => schemaRemoveVariable?.(name), [schemaRemoveVariable]);
 
-  const handleChange = useCallback((name, values) => schemaUpdateVariable({ name, ...values }), [schemaUpdateVariable]);
+  const handleChange = useCallback(
+    (name: string, values: Omit<SchemaVariable, 'name'>) => schemaUpdateVariable?.({ ...values, name }),
+    [schemaUpdateVariable]
+  );
 
   const variablesFiltered = useMemo(
-    () => Object.values(variables).filter(variable => variable.name.toLowerCase().includes(filter.toLowerCase())),
+    () => Object.values(variables ?? []).filter(variable => variable.name.toLowerCase().includes(filter.toLowerCase())),
     [variables, filter]
   );
 

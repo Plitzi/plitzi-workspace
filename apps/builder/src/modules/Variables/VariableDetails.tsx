@@ -1,35 +1,28 @@
-// Packages
-import React, { useCallback } from 'react';
+import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import QueryBuilderFormatter from '@plitzi/plitzi-ui/QueryBuilder/helpers/QueryBuilderFormatter';
+import { useCallback } from 'react';
 
-// Relatives
 import VariableValue from './VariableValue';
 
-/**
- * @param {{
- *   name?: string;
- *   type?: string;
- *   subValues?: [{ value: string; when: object }];
- * }} props
- * @returns {React.ReactElement}
- */
-const VariableDetails = props => {
-  const { name, subValues = [], type = 'text' } = props;
+import type { SchemaVariable } from '@plitzi/sdk-shared';
+
+export type VariableDetailsProps = {
+  name?: SchemaVariable['name'];
+  type?: SchemaVariable['type'];
+  subValues?: SchemaVariable['subValues'];
+};
+
+const VariableDetails = ({ name, subValues = [], type = 'text' }: VariableDetailsProps) => {
   const { addToast } = useToast();
 
   const handleClickCopy = useCallback(() => {
-    if (!navigator) {
-      return;
-    }
-
-    navigator.clipboard.writeText(`{{${name}}}`);
+    void navigator.clipboard.writeText(`{{${name}}}`);
     addToast('Variable copied into the clipboard', {
       appeareance: 'success',
       autoDismiss: true,
       placement: 'top-right'
     });
-  }, [name]);
+  }, [addToast, name]);
 
   return (
     <div className="flex w-full flex-col gap-2">

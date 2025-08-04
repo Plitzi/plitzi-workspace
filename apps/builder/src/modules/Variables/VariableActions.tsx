@@ -1,11 +1,17 @@
-// Packages
-import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui/Button';
-// import Button from '@plitzi/plitzi-ui-components/Button';
+import classNames from 'classnames';
 
-const VariableActions = ({ onUpdate, onRemove, selected }) => (
+import type { MouseEvent } from 'react';
+
+export type VariableActionsProps = {
+  onUpdate?: (e: MouseEvent) => void;
+  onRemove?: (e: MouseEvent) => void;
+  selected?: boolean;
+};
+
+const VariableActions = ({ onUpdate, onRemove, selected = false }: VariableActionsProps) => (
   <div
-    className={classNames('flex gap-2 items-center text-xs', { flex: selected, 'group-hover:flex hidden': !selected })}
+    className={classNames('flex items-center gap-2 text-xs', { flex: selected, 'hidden group-hover:flex': !selected })}
   >
     <Button intent="custom" size="custom" border="none" onClick={onUpdate} title="Update">
       <Button.Icon intent="primary" icon="fas fa-pen" />

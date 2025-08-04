@@ -93,6 +93,26 @@ export type SchemaContextValue = {
   schema: Schema;
   style?: Style;
   definition?: { rootId: string }; // for segments and templates
+  // When is main Schema in builder
+  dispatchSchema?: unknown;
+  schemaUpdate?: unknown;
+  schemaAddElement?: unknown;
+  schemaUpdateElement?: unknown;
+  schemaMoveElement?: unknown;
+  schemaCloneElement?: unknown;
+  schemaRemoveElement?: unknown;
+  schemaAddPage?: unknown;
+  schemaHomePage?: unknown;
+  schemaUpdatePage?: unknown;
+  schemaRemovePage?: unknown;
+  schemaAddPageFolder?: unknown;
+  schemaUpdatePageFolder?: unknown;
+  schemaRemovePageFolder?: unknown;
+  schemaAddVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => Promise<void>;
+  schemaUpdateVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => Promise<void>;
+  schemaRemoveVariable?: (name: string, fromSubscriptions?: boolean) => Promise<void>;
+  schemaAddTemplate?: unknown;
+  schemaUpdateSettings?: unknown;
 };
 
 // Raw
