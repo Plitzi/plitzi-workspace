@@ -39,26 +39,26 @@ const VariableValue = ({
           label={label}
           placeholder={placeholder}
           size="xs"
-          className="w-full"
+          className="w-full min-w-0"
         />
       )}
       {valueType === 'select' && (
-        <Form.Select name={name} label={label} placeholder={placeholder} size="xs" className="w-full" />
+        <Form.Select name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
       )}
       {valueType === 'select2' && (
-        <Form.Select2 name={name} label={label} placeholder={placeholder} size="xs" className="w-full" />
+        <Form.Select2 name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
       )}
       {valueType === 'textarea' && (
-        <Form.TextArea name={name} label={label} placeholder={placeholder} size="xs" className="w-full" />
+        <Form.TextArea name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
       )}
       {valueType === 'switch' && (
-        <Form.Switch name={name} label={label} placeholder={placeholder} size="xs" className="w-full" />
+        <Form.Switch name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
       )}
       {valueType === 'checkbox' && (
-        <Form.Checkbox name={name} label={label} placeholder={placeholder} size="xs" className="w-full" />
+        <Form.Checkbox name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
       )}
       {valueType === 'color' && (
-        <Form.Color name={name} label={label} placeholder={placeholder} size="xs" className="w-full" />
+        <Form.Color name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
       )}
       {isSubValue && (
         <VariableSubValueActions
