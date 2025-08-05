@@ -47,7 +47,7 @@ const VariableSubValue = ({
     <div className="flex min-w-0 grow basis-0 flex-col gap-2 rounded-sm border border-gray-300 p-2">
       <VariableValue
         valueType={valueType}
-        name={`subValues.${index}.when`}
+        name={`subValues.${index}.value`}
         isSubValue
         index={index}
         indexLimit={indexLimit}
@@ -56,7 +56,7 @@ const VariableSubValue = ({
         onClickDown={onClickDown}
       />
       <Form.Custom
-        name="when"
+        name={`subValues.${index}.when`}
         render={({ field: { ref, value, onChange }, fieldState: { error } }) => (
           <div className="flex flex-col gap-2" ref={ref}>
             <Heading as="h5" className="mb-4">

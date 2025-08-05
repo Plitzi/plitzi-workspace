@@ -13,7 +13,7 @@ export type VariableProps = {
   name?: string;
   category?: string;
   value?: string;
-  type?: string;
+  type?: SchemaVariable['type'];
   subValues?: SchemaVariable['subValues'];
   whenData?: {
     routeParams: RouteParams;

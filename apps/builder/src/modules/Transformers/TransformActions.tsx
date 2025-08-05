@@ -1,31 +1,26 @@
-// Packages
-import React, { useMemo } from 'react';
-import Select2 from '@plitzi/plitzi-ui-components/Select2';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import noop from 'lodash/noop';
+import Button from '@plitzi/plitzi-ui/Button';
+import Select2 from '@plitzi/plitzi-ui/Select2';
+import { useMemo } from 'react';
 
-/**
- * @param {{
- *   className?: string;
- *   mode?: string;
- *   disabled?: boolean;
- *   onChangeMode?: (mode: string) => void;
- *   onClickEraser?: () => void;
- *   onTransform?: () => void;
- *   onImport?: () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const TransformActions = props => {
-  const {
-    mode = 'horizontal',
-    disabled,
-    onChangeMode = noop,
-    onClickEraser = noop,
-    onTransform = noop,
-    onImport = noop
-  } = props;
+import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 
+export type TransformActionsProps = {
+  mode?: 'horizontal' | 'vertical';
+  disabled?: boolean;
+  onChangeMode?: (mode?: Exclude<Option, OptionGroup>) => void;
+  onClickEraser?: () => void;
+  onTransform?: () => void;
+  onImport?: () => void;
+};
+
+const TransformActions = ({
+  mode = 'horizontal',
+  disabled,
+  onChangeMode,
+  onClickEraser,
+  onTransform,
+  onImport
+}: TransformActionsProps) => {
   const options = useMemo(
     () => [
       // { value: 'html', label: 'Html' },
@@ -42,14 +37,14 @@ const TransformActions = props => {
         <i className="fa-solid fa-eraser" />
       </Button>
       <Select2
-        className="rounded-sm w-[150px]"
+        className="w-[150px] rounded-sm"
         size="sm"
         placeholder="Select mode"
         value={mode}
         onChange={onChangeMode}
         options={options}
         isSearchable={false}
-        isClearable={false}
+        clearable={false}
       />
       <Button size="sm" className="rounded-sm" disabled={disabled} onClick={onTransform} title="Transform">
         {disabled ? 'Loading...' : 'Compile'}
