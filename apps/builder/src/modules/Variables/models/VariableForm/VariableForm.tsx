@@ -55,6 +55,8 @@ const VariableForm = ({
     config: { schema: variableFormSchema }
   });
 
+  console.log(value, subValues);
+
   const { fields, append, remove, move } = useFieldArray({
     control: form.formMethods.control,
     name: 'subValues',
@@ -100,25 +102,19 @@ const VariableForm = ({
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
         <div className="flex gap-2">
-          <Form.Input name="name" label="Name" size="sm" disabled={!isNewRecord} />
-          <Form.Select2
-            name="type"
-            label="Type"
-            size="sm"
-            onChange={handleChangeType}
-            options={[
-              { value: 'text', label: 'Text' },
-              { value: 'number', label: 'Number' },
-              { value: 'email', label: 'Email' },
-              { value: 'password', label: 'Password' },
-              { value: 'select', label: 'Select' },
-              { value: 'select2', label: 'Select2' },
-              { value: 'checkbox', label: 'Checkbox' },
-              { value: 'textarea', label: 'Textarea' },
-              { value: 'color', label: 'Color' },
-              { value: 'switch', label: 'Switch' }
-            ]}
-          />
+          <Form.Input name="name" label="Name" size="sm" disabled={!isNewRecord} className="w-full grow basis-0" />
+          <Form.Select name="type" label="Type" size="sm" onChange={handleChangeType} className="w-full grow basis-0">
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="email">Email</option>
+            <option value="password">Password</option>
+            <option value="select">Select</option>
+            <option value="select2">Select2</option>
+            <option value="checkbox">Checkbox</option>
+            <option value="switch">Switch</option>
+            <option value="textarea">Text Area</option>
+            <option value="color">Color</option>
+          </Form.Select>
         </div>
         <VariableValue valueType={watchType} hasSubValues={hasSubValues} name="value" />
         {hasSubValues && (
@@ -132,7 +128,6 @@ const VariableForm = ({
               <div key={field.id} className="flex gap-2">
                 <VariableSubValue
                   whenData={whenData}
-                  control={form.formMethods.control}
                   valueType={watchType}
                   index={index}
                   indexLimit={fields.length - 1}
