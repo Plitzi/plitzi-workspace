@@ -1,37 +1,30 @@
-// Packages
-import React, { useCallback, use, useMemo, useRef, useState } from 'react';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
+import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import ContainerResizable from '@plitzi/plitzi-ui-components/ContainerResizable';
-import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import { useCallback, use, useMemo, useRef, useState } from 'react';
 
-// Monorepo
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-
-// Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
 import TransformPreview from './TransformPreview';
 
-/**
- * @param {{
- *   className?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const Transform = props => {
-  const { className = '' } = props;
-  const editorRef = useRef();
+import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
+import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
+import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { ClipboardEvent } from 'react';
+
+const Transform = () => {
+  const editorRef = useRef<HTMLElement | null>(null);
   const { server, webKey } = use(NetworkContext);
   const { addToast } = useToast();
   const {
@@ -40,16 +33,18 @@ const Transform = props => {
   } = use(BuilderContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const { rootDOM } = use(ContainerRootContext);
-  const [mode, setMode] = useState('html-tailwind');
+  const [mode, setMode] = useState<'html-tailwind' | 'webflow'>('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);
-  const [layoutMode, setLayoutMode] = useState('horizontal');
+  const [layoutMode, setLayoutMode] = useState<'horizontal' | 'vertical'>('horizontal');
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const [preview, setPreview] = useState(EMPTY_SCHEMA);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState<string>('');
 
   const transformQuery = useCallback(
-    async content => {
-      const response = await networkQuery('/utils/transform-to-schema', { body: content, mode }, 'post');
+    async (content: string) => {
+      const response = await networkQuery<{
+        data: { definition: { rootId: string }; schema: Schema; style: Style };
+      }>('/utils/transform-to-schema', { body: content, mode }, 'post');
       const data = get(response, 'data');
       if (!data) {
         return EMPTY_SCHEMA;
@@ -65,7 +60,7 @@ const Transform = props => {
     setPreview(data);
   }, [content, transformQuery]);
 
-  const handleClickImport = useCallback(async () => {
+  const handleClickImport = useCallback(() => {
     if (!elementSelected) {
       addToast('Select an element before import the template', {
         appeareance: 'info',
@@ -77,9 +72,9 @@ const Transform = props => {
     }
 
     const rootId = get(preview, 'definition.rootId');
-    const baseElement = get(preview, `schema.flat.${rootId}`);
-    const elements = get(preview, 'schema.flat');
-    const stylePlatform = get(preview, 'style.platform', {});
+    const baseElement = get(preview, `schema.flat.${rootId}`, undefined);
+    const elements = get(preview, 'schema.flat', undefined);
+    const stylePlatform = get(preview, 'style.platform', undefined);
     if (!rootId || !baseElement || !elements || !stylePlatform) {
       addToast('The template seems to be empty or something is missing', {
         appeareance: 'info',
@@ -90,27 +85,27 @@ const Transform = props => {
       return;
     }
 
-    // set(baseElement, 'definition.rootId', baseElementId);
-    // Object.values(elements).forEach(element => {
-    //   set(elements, `${element.id}.definition.rootId`, baseElementId);
-    // });
+    set(baseElement, 'definition.rootId', baseElementId);
+    Object.values(elements).forEach(element => {
+      set(elements, `${element.id}.definition.rootId`, baseElementId);
+    });
 
-    // set(baseElement, 'definition.parentId', elementSelected);
+    set(baseElement, 'definition.parentId', elementSelected);
 
-    // builderHandler(
-    //   'schemaAddTemplate',
-    //   elementSelected,
-    //   pick(baseElement, ['id', 'definition', 'attributes']),
-    //   'inside',
-    //   elements,
-    //   stylePlatform
-    // );
-  }, [builderHandler, elementSelected, preview, baseElementId]);
+    builderHandler(
+      'schemaAddTemplate',
+      elementSelected,
+      pick(baseElement, ['id', 'definition', 'attributes']),
+      'inside',
+      elements,
+      stylePlatform
+    );
+  }, [elementSelected, preview, baseElementId, builderHandler, addToast]);
 
-  const handleChangeContent = useCallback(value => setContent(value), [setContent]);
+  const handleChangeContent = useCallback((value: string) => setContent(value), [setContent]);
 
-  const handlePaste = useCallback(async e => {
-    if (!editorRef.current || !editorRef.current.contains(e.target)) {
+  const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
+    if (!editorRef.current || !editorRef.current.contains(e.target as HTMLDivElement)) {
       return;
     }
 
@@ -118,9 +113,9 @@ const Transform = props => {
     if (clipboardData.types.includes('application/json')) {
       setContent(clipboardData.getData('application/json'));
     }
-  });
+  }, []);
 
-  const resizeHandles = useMemo(() => {
+  const resizeHandles = useMemo<ResizeHandle[]>(() => {
     if (layoutMode === 'horizontal') {
       return ['w'];
     }
@@ -129,14 +124,17 @@ const Transform = props => {
   }, [layoutMode]);
 
   const handleChangeMode = useCallback(
-    e => {
-      setMode(e.value);
+    (option?: Exclude<Option, OptionGroup>) => {
+      setMode((option?.value ?? 'html-tailwind') as typeof mode);
       setPreview(EMPTY_SCHEMA);
     },
     [setMode]
   );
 
-  const handleChangeLayoutMode = useCallback(e => setLayoutMode(e.value), [setLayoutMode]);
+  const handleChangeLayoutMode = useCallback(
+    (option?: Exclude<Option, OptionGroup>) => setLayoutMode((option?.value ?? 'horizontal') as typeof layoutMode),
+    [setLayoutMode]
+  );
 
   const handleClickEditorVisible = useCallback(() => setEditorVisible(!isEditorVisible), [isEditorVisible]);
 
@@ -150,14 +148,14 @@ const Transform = props => {
       case 'webflow':
         return 'json';
 
-      case 'tailwind':
+      case 'html-tailwind':
       default:
         return 'html';
     }
   }, [mode]);
 
   return (
-    <div className={classNames('flex h-full flex-col', className)}>
+    <div className="flex h-full flex-col">
       <div className={classNames('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
         <div className="flex grow basis-0 flex-col overflow-y-auto">
           <TransformPreview preview={preview} />

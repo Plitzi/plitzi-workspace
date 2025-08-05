@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 
 export type TransformActionsProps = {
-  mode?: 'horizontal' | 'vertical';
+  mode?: 'html-tailwind' | 'webflow';
   disabled?: boolean;
   onChangeMode?: (mode?: Exclude<Option, OptionGroup>) => void;
   onClickEraser?: () => void;
@@ -14,7 +14,7 @@ export type TransformActionsProps = {
 };
 
 const TransformActions = ({
-  mode = 'horizontal',
+  mode = 'html-tailwind',
   disabled,
   onChangeMode,
   onClickEraser,

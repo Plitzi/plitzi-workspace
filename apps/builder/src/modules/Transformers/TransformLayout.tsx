@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 
 export type TransformLayoutProps = {
-  layoutMode?: string;
+  layoutMode?: 'horizontal' | 'vertical';
   isEditorVisible?: boolean;
   onClickEditorVisible?: () => void;
   onLayoutModeChange?: (value?: Exclude<Option, OptionGroup>) => void;
