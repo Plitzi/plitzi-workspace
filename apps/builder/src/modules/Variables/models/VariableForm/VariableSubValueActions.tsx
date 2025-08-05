@@ -1,30 +1,23 @@
-// Packages
-import React from 'react';
 import Button from '@plitzi/plitzi-ui/Button';
-import noop from 'lodash/noop';
 
-/**
- * @param {{
- *   indexLimit?: number;
- *   index?: number;
- *   onClickRemove?: () => void;
- *   onClickUp?: () => void;
- *   onClickDown?: () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const VariableSubValueActions = props => {
-  const { indexLimit = 0, index = 0, onClickRemove = noop, onClickUp = noop, onClickDown = noop } = props;
+export type VariableSubValueActionsProps = {
+  indexLimit?: number;
+  index?: number;
+  onClickRemove?: () => void;
+  onClickUp?: () => void;
+  onClickDown?: () => void;
+};
 
+const VariableSubValueActions = ({
+  indexLimit = 0,
+  index = 0,
+  onClickRemove,
+  onClickUp,
+  onClickDown
+}: VariableSubValueActionsProps) => {
   return (
     <div className="flex gap-2">
-      <Button
-        intent="danger"
-        size="xs"
-        onClick={onClickRemove}
-        title="Remove"
-        className="aspect-square"
-      >
+      <Button intent="danger" size="xs" onClick={onClickRemove} title="Remove" className="aspect-square">
         <i className="fas fa-trash-alt" />
       </Button>
       {index > 0 && (

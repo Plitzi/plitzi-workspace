@@ -61,7 +61,7 @@ export type Element = {
 export type SchemaVariable = {
   name: string;
   category: string;
-  type: string;
+  type: 'text' | 'number' | 'email' | 'password' | 'select' | 'select2' | 'checkbox' | 'textarea' | 'color' | 'switch';
   value: string;
   subValues: { when: RuleGroup; value: string }[];
 };

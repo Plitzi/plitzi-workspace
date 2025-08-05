@@ -40,7 +40,7 @@ const Variables = () => {
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body className="max-h-[500px] overflow-y-auto">
-          <VariableForm onSubmit={onSubmit} onClose={onClose} className="p-3" whenData={whenData} isNewRecord />
+          <VariableForm onSubmit={onSubmit} onClose={onClose} whenData={whenData} isNewRecord />
         </Modal.Body>
       )
     );
