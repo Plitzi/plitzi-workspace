@@ -77,34 +77,6 @@ const VariableSubValue = ({
           </div>
         )}
       />
-      {/* <Controller
-        control={control}
-        rules={{ required: true, validate: value => (value?.rules?.length > 0 ? true : 'This field is required') }}
-        name={`subValues.${index}.when`}
-        render={({ field: { onChange, value }, fieldState: { error } }) => {
-          let errorMessage = '';
-          if (error?.type === 'required' || error?.type === 'validate') {
-            errorMessage = error?.message || 'This field is required';
-          }
-
-          return (
-            <div className="flex flex-col">
-              <label className="mb-1 text-xs font-medium text-gray-500">When</label>
-              <QueryBuilder
-                direction="vertical"
-                intent="gray"
-                className="w-full"
-                query={value}
-                fields={fieldsDataSource}
-                onChange={query => onChange(query)}
-                showBranches
-                hasError={!!errorMessage}
-              />
-              {errorMessage && <div className="mt-1 text-sm text-red-500">{errorMessage}</div>}
-            </div>
-          );
-        }}
-      /> */}
     </div>
   );
 };
