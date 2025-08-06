@@ -1,27 +1,15 @@
-// Packages
-import React, { useCallback, useMemo, useState, use } from 'react';
-import classNames from 'classnames';
+import Button from '@plitzi/plitzi-ui/Button';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
-import Dropdown from '@plitzi/plitzi-ui-components/Dropdown';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import { useCallback, useMemo, useState, use } from 'react';
 
-// Monorepo
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-
-// Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-/**
- * @param {{
- *   className?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const StyleAdvanceEditor = props => {
-  const { className = '' } = props;
+const StyleAdvanceEditor = () => {
   const {
     schema: {
       settings: { customCss: customCssProp }
@@ -33,22 +21,29 @@ const StyleAdvanceEditor = props => {
       return '';
     }
 
-    return customCssProp ?? '';
+    return customCssProp;
   });
-  const schemaUpdateSettingsDebounce = useMemo(() => debounce(schemaUpdateSettings, 500), [schemaUpdateSettings]);
+  const schemaUpdateSettingsDebounce = useMemo(
+    () => schemaUpdateSettings && debounce(schemaUpdateSettings, 500),
+    [schemaUpdateSettings]
+  );
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
 
   const handleChange = useCallback(
-    value => {
-      schemaUpdateSettingsDebounce(value, 'customCss');
-      setCustomCss(value);
+    (value: string | number | boolean) => {
+      schemaUpdateSettingsDebounce?.(value, 'customCss');
+      setCustomCss(value as string);
     },
     [setCustomCss, schemaUpdateSettingsDebounce]
   );
 
   const handleFormat = useCallback(async () => {
-    const response = await networkQuery('/utils/prettier-parser', { data: customCss, parser: 'css' }, 'post');
+    const response = await networkQuery<{ data: string }>(
+      '/utils/prettier-parser',
+      { data: customCss, parser: 'css' },
+      'post'
+    );
     if (!response || !response.data) {
       return;
     }
@@ -56,32 +51,32 @@ const StyleAdvanceEditor = props => {
     const customCssPretty = get(response, 'data', customCss);
     if (customCssPretty !== customCss) {
       setCustomCss(customCssPretty);
-      schemaUpdateSettingsDebounce(customCssPretty, 'customCss');
+      schemaUpdateSettingsDebounce?.(customCssPretty, 'customCss');
     }
-  }, [setCustomCss, schemaUpdateSettingsDebounce, customCss]);
+  }, [networkQuery, customCss, schemaUpdateSettingsDebounce]);
 
   return (
-    <div className={classNames('h-full w-full flex flex-col relative', className)}>
+    <div className="relative flex h-full w-full flex-col">
       <CodeMirror value={customCss} theme="dark" lineWrapping onChange={handleChange} />
-      <div className="flex absolute top-3 right-3">
+      <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"
           size="custom"
-          className="p-2 bg-white rounded-sm mr-2"
+          className="mr-2 rounded-sm bg-white p-2"
           onClick={handleFormat}
-          tilte="Auto format"
+          title="Auto format"
           disabled={networkLoading}
         >
           <i className="fa-solid fa-wand-magic-sparkles" />
         </Button>
-        <Dropdown showIcon={false} containerLeftOffset={-208}>
-          <Dropdown.Content>
-            <Button intent="custom" size="custom" className="p-2 bg-white rounded-sm">
+        <ContainerFloating containerLeftOffset={-208} containerTopOffset={4}>
+          <ContainerFloating.Trigger>
+            <Button intent="custom" size="custom" className="rounded-sm bg-white p-2">
               <i className="fa-solid fa-circle-info" />
             </Button>
-          </Dropdown.Content>
-          <Dropdown.Container>
-            <div className="w-60 flex flex-col items-center justify-center p-4 text-center">
+          </ContainerFloating.Trigger>
+          <ContainerFloating.Content>
+            <div className="flex w-60 flex-col items-center justify-center p-4 text-center">
               <p>Add your own CSS code here to customize the appearance and layout of your site.</p>
               <a
                 href="https://codex.wordpress.org/CSS"
@@ -96,8 +91,8 @@ const StyleAdvanceEditor = props => {
                 <span className="font-bold">Ctrl + Space</span> to autocomplete.
               </p>
             </div>
-          </Dropdown.Container>
-        </Dropdown>
+          </ContainerFloating.Content>
+        </ContainerFloating>
       </div>
     </div>
   );

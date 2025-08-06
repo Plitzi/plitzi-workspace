@@ -112,7 +112,7 @@ export type SchemaContextValue = {
   schemaUpdateVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => Promise<void>;
   schemaRemoveVariable?: (name: string, fromSubscriptions?: boolean) => Promise<void>;
   schemaAddTemplate?: unknown;
-  schemaUpdateSettings?: unknown;
+  schemaUpdateSettings?: (value: string | number | boolean, path: string, fromSubscriptions?: boolean) => Promise<void>;
 };
 
 // Raw

@@ -115,14 +115,13 @@ const StyleInspector = ({
   const handleChangeStyleSelector = useCallback((value: string) => setStyleSelector?.(value), [setStyleSelector]);
 
   return (
-    <div className="w-full flex flex-col grow">
-      <div className="flex flex-col w-full py-2 border-b border-gray-300 gap-1">
+    <div className="flex w-full grow flex-col">
+      <div className="flex w-full flex-col gap-1 border-b border-gray-300 py-2">
         <div className="flex items-center justify-between">
           <label>Style Selector</label>
-          <div className="flex items-center py-1 gap-2 text-xs">
+          <div className="flex items-center gap-2 py-1 text-xs">
             Dev Mode
             <Switch
-              className="!w-auto"
               size="sm"
               intent="secondary"
               checked={cache.viewMode === 'advanced'}
@@ -132,7 +131,7 @@ const StyleInspector = ({
           </div>
         </div>
         <Selector
-          className="w-full min-h-0"
+          className="min-h-0 w-full"
           style={style}
           disabled={mode === 'manager'}
           value={selector}
@@ -155,7 +154,7 @@ const StyleInspector = ({
           </div>
         )}
       </div>
-      <div className="flex flex-col grow overflow-auto basis-0">
+      <div className="flex grow basis-0 flex-col overflow-auto">
         {cache.viewMode === 'advanced' && (
           <InspectorModeAdvanced selectors={selectors} selector={selectorSelected?.name} displayMode={displayMode} />
         )}

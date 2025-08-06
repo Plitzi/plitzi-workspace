@@ -1,14 +1,14 @@
-// Packages
-import React, { useCallback, use, useMemo } from 'react';
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import { useCallback, use, useMemo } from 'react';
 
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
-/** @returns {React.ReactElement} */
+import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
+
 const StyleViewer = () => {
   const { elementSelected } = use(BuilderSelectedContext);
   const {
@@ -19,11 +19,11 @@ const StyleViewer = () => {
   } = use(BuilderStyleContext);
 
   const selectorToString = useCallback(
-    selector => {
+    (selector: string) => {
       let style = '';
       if (!isEmpty(selector)) {
         Object.keys(platform).forEach(mode => {
-          const segment = platform[mode][selector];
+          const segment = platform[mode as DisplayMode][selector] as StyleItem | undefined;
 
           if (segment) {
             style = `${style}/* ${mode} */\n${segment.cache}\n`;
@@ -42,13 +42,16 @@ const StyleViewer = () => {
   );
 
   const styleSelectors = useMemo(
-    () => get(flat, `${elementSelected}.definition.styleSelectors`, {}),
+    () =>
+      get(flat, `${elementSelected}.definition.styleSelectors`) as unknown as
+        | Element['definition']['styleSelectors']
+        | undefined,
     [elementSelected, flat]
   );
 
   const style = useMemo(
     () =>
-      Object.values(styleSelectors).reduce(
+      Object.values(styleSelectors ?? {}).reduce(
         (acum, selector) => `${acum}${acum === '' ? '' : '\n'}${selectorToString(selector)}`,
         ''
       ),
@@ -56,7 +59,7 @@ const StyleViewer = () => {
   );
 
   return (
-    <div className="flex flex-col grow">
+    <div className="flex grow flex-col">
       <CodeMirror theme="dark" readOnly value={style} />
     </div>
   );
