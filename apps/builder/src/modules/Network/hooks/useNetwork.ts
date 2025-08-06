@@ -24,7 +24,7 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true 
   const networkQuery = useCallback(
     async <T = unknown>(
       url: string,
-      params: FormData | Record<string, string> = {},
+      params: FormData | Record<string, string | object | number | boolean> = {},
       method = 'get',
       accessToken = ''
     ) => {
@@ -47,7 +47,7 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true 
 
         let formData = params;
         const valuesArray = params instanceof FormData ? Array.from(params.values()) : Object.values(params);
-        valuesArray.forEach((value: string | Blob) => {
+        valuesArray.forEach(value => {
           if (value instanceof Blob && headers.get('Content-Type') !== 'multipart/form-data') {
             headers.delete('Content-Type');
 

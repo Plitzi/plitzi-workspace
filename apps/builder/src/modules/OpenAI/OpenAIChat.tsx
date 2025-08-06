@@ -1,56 +1,48 @@
-// Packages
-import React, { useCallback, use, useEffect, useState, useTransition, useRef } from 'react';
-import classNames from 'classnames';
-import get from 'lodash/get';
-import Input from '@plitzi/plitzi-ui-components/Input';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import Input from '@plitzi/plitzi-ui/Input';
+import get from 'lodash/get';
+import { useCallback, use, useEffect, useState, useTransition, useRef } from 'react';
 
-// Monorepo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-
-// Alias
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
-import useMediaRecorder from './hooks/useMediaRecorder';
-import VoiceVisualizer from './components/VoiceVisualizer';
 import Chat from './components/Chat';
+import VoiceVisualizer from './components/VoiceVisualizer';
+import useMediaRecorder from './hooks/useMediaRecorder';
 
-/**
- * @param {{
- *   className?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const OpenAIChat = props => {
-  const { className = '' } = props;
-  const chatRef = useRef();
+import type { OpenAIMessage } from './types/openAI';
+import type { KeyboardEvent } from 'react';
+
+const OpenAIChat = () => {
+  const chatRef = useRef<HTMLDivElement | null>(null);
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const { currentPageId } = use(NavigationContext);
   const { elementSelected } = use(BuilderSelectedContext);
-  const [threadId, setThreadId] = useStorage('builder-state.assistantAI.threadId', ''); // <string>
-  const [conversation, setConversation] = useState([]);
+  const [threadId, setThreadId] = useStorage<string>('builder-state.assistantAI.threadId', '');
+  const [conversation, setConversation] = useState<OpenAIMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const [retrieveMessagePending, setRetrieveMessagePending] = useTransition();
 
   const getThreadMessages = useCallback(
-    async threadId => {
-      const response = await networkQuery(`/assistant/thread/messages?threadId=${threadId}`);
-      if (!response || !response?.messages) {
+    async (threadId: string) => {
+      const response = await networkQuery<{ messages?: OpenAIMessage[] }>(
+        `/assistant/thread/messages?threadId=${threadId}`
+      );
+      if (!response || !response.messages) {
         return;
       }
 
-      setConversation(response?.messages.reverse());
+      setConversation(response.messages.reverse());
     },
     [networkQuery]
   );
 
   const initAssistant = useCallback(async () => {
-    const response = await networkQuery('/assistant/thread', {}, 'post');
+    const response = await networkQuery<{ threadId: string }>('/assistant/thread', {}, 'post');
     if (!response) {
       return;
     }
@@ -58,18 +50,22 @@ const OpenAIChat = props => {
     const threadIdResponse = get(response, 'threadId', '');
     await getThreadMessages(threadIdResponse);
     setThreadId(threadIdResponse);
-  }, [getThreadMessages, threadId, setThreadId]);
+  }, [networkQuery, getThreadMessages, setThreadId]);
 
   const askToAssistant = useCallback(
-    message => {
+    (message: string) => {
       setRetrieveMessagePending(async () => {
-        const responseAsk = await networkQuery('/assistant/thread/message', { threadId, message }, 'post');
+        const responseAsk = await networkQuery<{ message: OpenAIMessage }>(
+          '/assistant/thread/message',
+          { threadId, message },
+          'post'
+        );
         if (!responseAsk?.message) {
           return;
         }
 
         setConversation(state => [...state, responseAsk.message]);
-        const responseRetrieve = await networkQuery(
+        const responseRetrieve = await networkQuery<{ messages: OpenAIMessage[] }>(
           '/assistant/thread/retrieve-message',
           { threadId, context: { currentPageId, elementSelected } },
           'post'
@@ -84,16 +80,16 @@ const OpenAIChat = props => {
     [threadId, networkQuery, currentPageId, elementSelected, setRetrieveMessagePending]
   );
 
-  const handleClickAsk = useCallback(async () => {
+  const handleClickAsk = useCallback(() => {
     setMessageInput('');
     askToAssistant(messageInput);
-  }, [messageInput, askToAssistant, threadId]);
+  }, [messageInput, askToAssistant]);
 
   const onFinishRecording = useCallback(
-    async (audioUrl, audioBlob) => {
+    async (_audioUrl: string, audioBlob: Blob) => {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'audio.webm');
-      const response = await networkQuery('/assistant/transcription', formData, 'post');
+      const response = await networkQuery<{ transcript: string }>('/assistant/transcription', formData, 'post');
       if (!response || !response.transcript) {
         return;
       }
@@ -103,7 +99,7 @@ const OpenAIChat = props => {
       // const reply = await askToAssistant(response.transcript);
       // setPreview(reply);
     },
-    [askToAssistant]
+    [networkQuery]
   );
 
   const { start, resume, pause, stop, recording, audioData, paused } = useMediaRecorder({
@@ -120,9 +116,9 @@ const OpenAIChat = props => {
     pause();
   }, [pause, resume, paused]);
 
-  const handleClickTranscript = useCallback(async () => {
+  const handleClickTranscript = useCallback(() => {
     if (!recording) {
-      start();
+      void start();
 
       return;
     }
@@ -130,10 +126,10 @@ const OpenAIChat = props => {
     stop();
   }, [start, stop, recording]);
 
-  const handleChangeMessage = useCallback(e => setMessageInput(e.target.value), []);
+  const handleChangeMessage = useCallback((value: string) => setMessageInput(value), []);
 
   const handleMessageKeyDown = useCallback(
-    e => {
+    (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !retrieveMessagePending) {
         handleClickAsk();
       }
@@ -144,15 +140,16 @@ const OpenAIChat = props => {
   const handleClickClearConversation = useCallback(() => {
     setConversation([]);
     setThreadId('');
-    initAssistant();
+    void initAssistant();
   }, [initAssistant, setThreadId]);
 
   useEffect(() => {
     if (!threadId) {
-      initAssistant();
+      void initAssistant();
     } else {
-      getThreadMessages(threadId);
+      void getThreadMessages(threadId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -161,22 +158,21 @@ const OpenAIChat = props => {
       return;
     }
 
-    document.getElementById(id).scrollIntoView({ behavior: 'instant', block: 'end', inline: 'nearest' });
+    document.getElementById(id)?.scrollIntoView({ behavior: 'instant', block: 'end', inline: 'nearest' });
   }, [conversation]);
 
   const loading = retrieveMessagePending || networkLoading;
 
   return (
-    <div className={classNames('relative flex h-full min-h-0 flex-col', className)}>
+    <div className="relative flex h-full min-h-0 flex-col">
       <div className="flex grow flex-col border-b border-gray-300">
-        <Chat className="m-3 flex grow basis-0" messages={conversation} ref={chatRef} />
+        <Chat messages={conversation} ref={chatRef} />
       </div>
       <div className="flex gap-2 p-2">
         <div className="flex grow basis-0 gap-4">
           {!recording && (
             <Input
               className="min-w-0 grow basis-0"
-              inputClassName="rounded-sm min-w-0 basis-0"
               value={messageInput}
               size="sm"
               onChange={handleChangeMessage}
@@ -198,11 +194,11 @@ const OpenAIChat = props => {
         {recording && (
           <div className="flex overflow-hidden rounded-sm">
             <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
-              {!paused && <i className="fa-solid fa-pause" />}
-              {paused && <i className="fa-solid fa-play" />}
+              {!paused && <Button.Icon icon="fa-solid fa-pause" />}
+              {paused && <Button.Icon icon="fa-solid fa-play" />}
             </Button>
             <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickTranscript}>
-              <i className="fa-solid fa-stop" />
+              <Button.Icon icon="fa-solid fa-stop" />
             </Button>
           </div>
         )}
@@ -210,18 +206,17 @@ const OpenAIChat = props => {
           <Button
             className="w-[38px] rounded-sm"
             size="sm"
-            intent={recording ? 'danger' : 'primary'}
+            intent="primary"
             disabled={loading}
             onClick={handleClickTranscript}
           >
-            {!recording && <i className="fa-solid fa-microphone" />}
-            {recording && <i className="fa-solid fa-stop" />}
+            <Button.Icon icon="fa-solid fa-microphone" />
           </Button>
         )}
         {!recording && (
           <Button size="sm" className="w-[38px] rounded-sm" disabled={loading} onClick={handleClickAsk} title="Ask">
-            {!loading && <i className="fa-solid fa-star" />}
-            {loading && <i className="fa-solid fa-sync fa-spin" />}
+            {!loading && <Button.Icon icon="fa-solid fa-star" />}
+            {loading && <Button.Icon icon="fa-solid fa-sync fa-spin" />}
           </Button>
         )}
         <Button
@@ -232,7 +227,7 @@ const OpenAIChat = props => {
           onClick={handleClickClearConversation}
           title="Clear the conversation"
         >
-          <i className="fa-solid fa-eraser" />
+          <Button.Icon icon="fa-solid fa-eraser" />
         </Button>
       </div>
       <div className="mx-2 flex items-center justify-end text-xs">{threadId}</div>

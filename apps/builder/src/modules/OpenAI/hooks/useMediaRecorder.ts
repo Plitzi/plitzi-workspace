@@ -1,29 +1,34 @@
-// Packages
 import { useCallback, useRef, useState } from 'react';
-import noop from 'lodash/noop';
 
-const useMediaRecorder = props => {
-  const {
-    mimeType = 'audio/webm',
-    onPausedRecording = noop,
-    onResumedRecording = noop,
-    onUpdate = noop,
-    onFinish = noop
-  } = props;
+export type UseMediaRecorderProps = {
+  mimeType?: string;
+  onPausedRecording?: () => void;
+  onResumedRecording?: () => void;
+  onUpdate?: (chunks: Blob[], chunk: Blob) => void;
+  onFinish?: (audioUrl: string, audioBlob: Blob) => void | Promise<void>;
+};
+
+const useMediaRecorder = ({
+  mimeType = 'audio/webm',
+  onPausedRecording,
+  onResumedRecording,
+  onUpdate,
+  onFinish
+}: UseMediaRecorderProps) => {
   const [permission, setPermission] = useState(false);
-  const [error, setError] = useState(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [recording, setRecording] = useState(false);
   const [audioData, setAudioData] = useState(new Uint8Array(0));
   const [paused, setPaused] = useState(false);
 
-  const chunksRef = useRef([]);
-  const mediaRecorderRef = useRef(undefined);
+  const chunksRef = useRef<Blob[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | undefined>(undefined);
 
-  const audioContextRef = useRef(undefined);
-  const analyserRef = useRef(undefined);
-  const dataArrayRef = useRef(undefined);
-  const sourceRef = useRef(undefined);
-  const rafRecordingRef = useRef(undefined);
+  const audioContextRef = useRef<AudioContext | undefined>(undefined);
+  const analyserRef = useRef<AnalyserNode | undefined>(undefined);
+  const dataArrayRef = useRef<Uint8Array | undefined>(undefined);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | undefined>(undefined);
+  const rafRecordingRef = useRef<number | undefined>(undefined);
 
   const getMicrophonePermission = useCallback(async () => {
     if ('MediaRecorder' in window) {
@@ -44,7 +49,7 @@ const useMediaRecorder = props => {
 
         return streamData;
       } catch (err) {
-        setError(err.essage);
+        setError((err as Error).message);
       }
     } else {
       setError('The MediaRecorder API is not supported in your browser.');
@@ -77,7 +82,7 @@ const useMediaRecorder = props => {
   // };
 
   const mediaDataAvailable = useCallback(
-    event => {
+    (event: BlobEvent) => {
       // processBlob(event.data);
       chunksRef.current.push(event.data);
       if (typeof onUpdate === 'function') {
@@ -90,24 +95,28 @@ const useMediaRecorder = props => {
   const mediaDataStop = useCallback(() => {
     const audioBlob = new Blob(chunksRef.current);
     const audioUrl = URL.createObjectURL(audioBlob);
-    onFinish(audioUrl, audioBlob);
+    void onFinish?.(audioUrl, audioBlob);
 
-    mediaRecorderRef.current.removeEventListener('dataavailable', mediaDataAvailable);
-    mediaRecorderRef.current.removeEventListener('stop', mediaDataStop);
+    mediaRecorderRef.current?.removeEventListener('dataavailable', mediaDataAvailable);
+    mediaRecorderRef.current?.removeEventListener('stop', mediaDataStop);
 
-    const tracks = mediaRecorderRef.current.stream.getTracks();
-    tracks.forEach(track => {
+    const tracks = mediaRecorderRef.current?.stream.getTracks();
+    tracks?.forEach(track => {
       track.stop();
     });
 
     mediaRecorderRef.current = undefined;
-  }, [onFinish]);
+  }, [mediaDataAvailable, onFinish]);
 
-  const recordingFrame = () => {
+  const recordingFrame = useCallback(() => {
+    if (!dataArrayRef.current) {
+      return;
+    }
+
     analyserRef.current?.getByteTimeDomainData(dataArrayRef.current);
     setAudioData(new Uint8Array(dataArrayRef.current));
     rafRecordingRef.current = requestAnimationFrame(recordingFrame);
-  };
+  }, []);
 
   const startRecording = useCallback(async () => {
     const stream = await getMicrophonePermission();
@@ -129,10 +138,10 @@ const useMediaRecorder = props => {
 
     setRecording(true);
     recordingFrame();
-  }, [permission, onUpdate, getMicrophonePermission, mediaDataAvailable, mediaDataStop]);
+  }, [getMicrophonePermission, mimeType, mediaDataAvailable, mediaDataStop, recordingFrame]);
 
   const pauseRecording = useCallback(() => {
-    if (!mediaRecorderRef.current || mediaRecorderRef.current?.state !== 'recording') {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
       return;
     }
 
@@ -141,14 +150,14 @@ const useMediaRecorder = props => {
       onPausedRecording();
     }
 
-    mediaRecorderRef.current?.pause();
+    mediaRecorderRef.current.pause();
     if (rafRecordingRef.current) {
       cancelAnimationFrame(rafRecordingRef.current);
     }
-  }, []);
+  }, [onPausedRecording]);
 
   const resumeRecording = useCallback(() => {
-    if (!mediaRecorderRef.current || mediaRecorderRef.current?.state !== 'paused') {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'paused') {
       return;
     }
 
@@ -157,16 +166,16 @@ const useMediaRecorder = props => {
     }
 
     setPaused(false);
-    mediaRecorderRef.current?.resume();
+    mediaRecorderRef.current.resume();
     rafRecordingRef.current = requestAnimationFrame(recordingFrame);
-  }, [onResumedRecording]);
+  }, [onResumedRecording, recordingFrame]);
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = useCallback(() => {
     if (!permission) {
       return;
     }
 
-    mediaRecorderRef.current.stop();
+    mediaRecorderRef.current?.stop();
 
     if (sourceRef.current) {
       sourceRef.current.disconnect();
@@ -177,7 +186,7 @@ const useMediaRecorder = props => {
     }
 
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close();
+      void audioContextRef.current.close();
     }
 
     if (rafRecordingRef.current) {
@@ -187,9 +196,8 @@ const useMediaRecorder = props => {
     setPaused(false);
     setRecording(false);
     setAudioData(new Uint8Array(0));
-    cancelAnimationFrame(recordingFrame);
     chunksRef.current = [];
-  }, [permission, onFinish]);
+  }, [permission]);
 
   return {
     start: startRecording,

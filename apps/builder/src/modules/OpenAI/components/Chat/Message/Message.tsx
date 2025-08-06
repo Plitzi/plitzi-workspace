@@ -1,19 +1,15 @@
-// Packages
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
-// Relatives
 import MessageHtml from './modes/MessageHtml';
 import MessageText from './modes/MessageText';
 
-/**
- * @param {{
- *   className?: string;
- *   message: object[];
- * }} props
- * @returns {React.ReactElement}
- */
-const Message = props => {
-  const { className = '', message = [] } = props;
+import type { OpenAIContentType } from '@pmodules/OpenAI/types/openAI';
+
+export type MessageProps = {
+  message: { type: OpenAIContentType; content: string }[];
+};
+
+const Message = ({ message = [] }: MessageProps) => {
   const messageParsed = useMemo(
     () =>
       message
@@ -33,7 +29,7 @@ const Message = props => {
               return { type: 'text', content: contentPart };
             }
 
-            return { type: match.groups.codeType, content: match[0] };
+            return { type: match.groups?.codeType as 'html' | 'text', content: match[0] };
           });
         })
         .reduce((acum, item) => [...acum, ...item], []),
@@ -45,10 +41,10 @@ const Message = props => {
       {messageParsed.map((messageItem, index) => {
         const { type, content } = messageItem;
         if (type === 'html') {
-          return <MessageHtml className={className} key={index} content={content} />;
+          return <MessageHtml key={index} content={content} />;
         }
 
-        return <MessageText className={className} key={index} content={content} />;
+        return <MessageText key={index} content={content} />;
       })}
     </div>
   );
