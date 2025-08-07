@@ -26,18 +26,57 @@ export const SchemaActions = {
   SCHEMA_UPDATE_ELEMENT: 'SCHEMA_UPDATE_ELEMENT',
   SCHEMA_ADD_TEMPLATE: 'SCHEMA_ADD_TEMPLATE',
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS'
-};
+} as const;
 
-const SchemaReducer = (
-  state: Schema,
-  action: { type: keyof typeof SchemaActions } & Record<Exclude<string, 'type'>, unknown>
-) => {
+export type SchemaReducerActions =
+  | { type: 'SCHEMA_UPDATE'; schema: Schema }
+  | { type: 'SCHEMA_ADD_PAGE'; page: Element }
+  | { type: 'SCHEMA_HOME_PAGE'; pageId: string }
+  | { type: 'SCHEMA_UPDATE_PAGE'; page: Element }
+  | { type: 'SCHEMA_REMOVE_PAGE'; pageId: string }
+  | { type: 'SCHEMA_ADD_PAGE_FOLDER'; pageFolder: PageFolder }
+  | { type: 'SCHEMA_UPDATE_PAGE_FOLDER'; pageFolder: PageFolder }
+  | { type: 'SCHEMA_REMOVE_PAGE_FOLDER'; pageFolderId: string }
+  | { type: 'SCHEMA_ADD_VARIABLE'; variable: SchemaVariable }
+  | { type: 'SCHEMA_UPDATE_VARIABLE'; variable: SchemaVariable }
+  | { type: 'SCHEMA_REMOVE_VARIABLE'; name: string }
+  | {
+      type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_TEMPLATE';
+      to: string;
+      data: Element;
+      dropPosition: DropPosition;
+      initialItems: { [key: string]: Element };
+      variables?: SchemaVariable[];
+    }
+  | { type: 'SCHEMA_REMOVE_ELEMENT'; elementId: string }
+  | {
+      type: 'SCHEMA_MOVE_ELEMENT';
+      elementId: string;
+      from: string;
+      to: string;
+      dropPosition: DropPosition;
+    }
+  | {
+      type: 'SCHEMA_CLONE_ELEMENT';
+      to: string;
+      data: Element;
+      dropPosition: DropPosition;
+      initialItems: { [key: string]: Element };
+    }
+  | { type: 'SCHEMA_UPDATE_ELEMENT'; element: Element }
+  | {
+      type: 'SCHEMA_UPDATE_SETTINGS';
+      path: string;
+      value: string | number | boolean;
+    };
+
+const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
   switch (action.type) {
     case SchemaActions.SCHEMA_UPDATE:
-      return { ...state, ...(action.schema as Schema) };
+      return { ...state, ...action.schema };
 
     case SchemaActions.SCHEMA_ADD_PAGE: {
-      const { page } = action as { type: keyof typeof SchemaActions; page: Element };
+      const { page } = action;
 
       return produce(state, draft => {
         set(draft, 'flat', { ...draft.flat, [page.id]: page });
@@ -47,7 +86,7 @@ const SchemaReducer = (
 
     case SchemaActions.SCHEMA_HOME_PAGE: {
       const { flat, pages } = state;
-      const { pageId } = action as { type: keyof typeof SchemaActions; pageId: string };
+      const { pageId } = action;
 
       let oldPage: Element | undefined;
       pages.forEach(pageId => {
@@ -75,7 +114,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_UPDATE_PAGE: {
-      const { page } = action as { type: keyof typeof SchemaActions; page: Element };
+      const { page } = action;
 
       return produce(state, draft => {
         set(draft.flat, page.id, page);
@@ -83,7 +122,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_REMOVE_PAGE: {
-      const { pageId } = action as { type: keyof typeof SchemaActions; pageId: string };
+      const { pageId } = action;
 
       return produce(state, draft => {
         FlatMap.removeElement(draft.flat, pageId, true);
@@ -92,7 +131,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_ADD_PAGE_FOLDER: {
-      const { pageFolder } = action as { type: keyof typeof SchemaActions; pageFolder: PageFolder };
+      const { pageFolder } = action;
 
       return produce(state, draft => {
         draft.pageFolders.push(pageFolder);
@@ -100,7 +139,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_UPDATE_PAGE_FOLDER: {
-      const { pageFolder } = action as { type: keyof typeof SchemaActions; pageFolder: PageFolder };
+      const { pageFolder } = action;
 
       return produce(state, draft => {
         const index = draft.pageFolders.findIndex(p => p.id === pageFolder.id);
@@ -113,7 +152,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_REMOVE_PAGE_FOLDER: {
-      const { pageFolderId } = action as { type: keyof typeof SchemaActions; pageFolderId: string };
+      const { pageFolderId } = action;
 
       return produce(state, draft => {
         draft.pageFolders = draft.pageFolders.filter(pageFolder => pageFolder.id !== pageFolderId);
@@ -121,7 +160,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_ADD_VARIABLE: {
-      const { variable } = action as { type: keyof typeof SchemaActions; variable: SchemaVariable };
+      const { variable } = action;
 
       return produce(state, draft => {
         if (!draft.variables) {
@@ -133,7 +172,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_UPDATE_VARIABLE: {
-      const { variable } = action as { type: keyof typeof SchemaActions; variable: SchemaVariable };
+      const { variable } = action;
 
       return produce(state, draft => {
         const index = draft.variables?.findIndex(v => v.name === variable.name) ?? -1;
@@ -146,7 +185,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_REMOVE_VARIABLE: {
-      const { name } = action as { type: keyof typeof SchemaActions; name: string };
+      const { name } = action;
 
       return produce(state, draft => {
         draft.variables = draft.variables?.filter(variable => variable.name !== name) ?? [];
@@ -155,20 +194,7 @@ const SchemaReducer = (
 
     case SchemaActions.SCHEMA_ADD_TEMPLATE:
     case SchemaActions.SCHEMA_ADD_ELEMENT: {
-      const {
-        to,
-        data,
-        dropPosition,
-        initialItems,
-        variables = []
-      } = action as {
-        type: keyof typeof SchemaActions;
-        data: Element;
-        variables?: SchemaVariable[];
-        to: string;
-        dropPosition: DropPosition;
-        initialItems: { [key: string]: Element };
-      };
+      const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
         FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
@@ -180,7 +206,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_REMOVE_ELEMENT: {
-      const { elementId } = action as { type: keyof typeof SchemaActions; elementId: string };
+      const { elementId } = action;
 
       return produce(state, draft => {
         FlatMap.removeElement(draft.flat, elementId);
@@ -188,13 +214,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_MOVE_ELEMENT: {
-      const { from, to, elementId, dropPosition } = action as {
-        type: keyof typeof SchemaActions;
-        elementId: string;
-        from: string;
-        to: string;
-        dropPosition: DropPosition;
-      };
+      const { from, to, elementId, dropPosition } = action;
 
       return produce(state, draft => {
         FlatMap.moveElement(draft.flat, from, to, elementId, dropPosition);
@@ -202,13 +222,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_CLONE_ELEMENT: {
-      const { to, data, dropPosition, initialItems } = action as {
-        type: keyof typeof SchemaActions;
-        to: string;
-        data: Element;
-        dropPosition: DropPosition;
-        initialItems: { [key: string]: Element };
-      };
+      const { to, data, dropPosition, initialItems } = action;
 
       return produce(state, draft => {
         FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
@@ -216,7 +230,7 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_UPDATE_ELEMENT: {
-      const { element } = action as { type: keyof typeof SchemaActions; element: Element };
+      const { element } = action;
 
       return produce(state, draft => {
         set(draft.flat, element.id, element);
@@ -224,11 +238,8 @@ const SchemaReducer = (
     }
 
     case SchemaActions.SCHEMA_UPDATE_SETTINGS: {
-      const { path, value } = action as {
-        type: keyof typeof SchemaActions;
-        path: string;
-        value: string | number | boolean;
-      };
+      const { path, value } = action;
+
       return produce(state, draft => {
         if (path && has(state.settings, path)) {
           set(draft.settings, path, value);

@@ -1,12 +1,17 @@
 import { useCallback, useMemo, useReducer, useRef } from 'react';
 
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
+import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 import { StyleActions } from '@pmodules/Style/StyleReducer';
 
 import UndoableContext from './UndoableContext';
 import UndoableReducer, { initialState } from './UndoableReducer';
 
 import type { UndoableItem } from './UndoableContext';
+import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
+import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
+import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
 import type { ReactNode } from 'react';
 
 export type UndoableContextProducerProps = {
@@ -18,30 +23,47 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
   const undoableRef = useRef(undoable);
   undoableRef.current = undoable;
 
-  const processItem = useCallback((item: UndoableItem, isUndo = true) => {
-    const {
-      action: { type },
-      prevState,
-      nextState,
-      dispatch
-    } = item;
-    switch (type) {
-      case SchemaActions[type]: {
-        dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: isUndo ? prevState : nextState });
+  const processItem = useCallback(
+    (
+      item:
+        | UndoableItem<Schema, SchemaReducerActions>
+        | UndoableItem<Style, StyleReducerActions>
+        | UndoableItem<Record<string, Segment>, SegmentsReducerActions>,
+      isUndo = true
+    ) => {
+      switch (item.action.type) {
+        case SchemaActions[item.action.type]: {
+          item = item as UndoableItem<Schema, SchemaReducerActions>;
+          item.dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: isUndo ? item.prevState : item.nextState });
 
-        return;
+          return;
+        }
+
+        case StyleActions[item.action.type]: {
+          item = item as UndoableItem<Style, StyleReducerActions>;
+          item.dispatch({ type: StyleActions.STYLE_UPDATE, style: isUndo ? item.prevState : item.nextState });
+
+          return;
+        }
+
+        case SegmentsActions[item.action.type]: {
+          item = item as UndoableItem<Record<string, Segment>, SegmentsReducerActions>;
+          const segmentId = (item.prevState as unknown as SegmentsReducerActions).segmentId;
+          item.dispatch({
+            type: SegmentsActions.SEGMENTS_UPDATE,
+            segment: isUndo ? item.prevState[segmentId] : item.nextState[segmentId],
+            segmentId
+          });
+
+          return;
+        }
+
+        default:
+          return;
       }
-
-      case StyleActions[type]: {
-        dispatch({ type: StyleActions.STYLE_UPDATE, style: isUndo ? prevState : nextState });
-
-        return;
-      }
-
-      default:
-        return;
-    }
-  }, []);
+    },
+    []
+  );
 
   const undoableAddUndo = useCallback(
     (
@@ -89,10 +111,10 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
 
   const undoableMiddleware = useCallback(
     (
-      action: UndoableItem['action'],
       prevState: UndoableItem['prevState'],
       state: UndoableItem['nextState'],
-      dispatch: UndoableItem['dispatch']
+      dispatch: UndoableItem['dispatch'],
+      action: UndoableItem['action']
     ) => undoableAddUndo(prevState, action, state, dispatch),
     [undoableAddUndo]
   );

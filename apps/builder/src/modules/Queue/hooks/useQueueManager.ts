@@ -1,6 +1,5 @@
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
-import omit from 'lodash/omit';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
@@ -9,8 +8,11 @@ import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 import { StyleActions } from '@pmodules/Style/StyleReducer';
 
 import type { QueueItem, QueuePriority } from '../QueueContext';
-import type { Element, PageFolder, Schema, SchemaVariable, Segment, Style, DropPosition } from '@plitzi/sdk-shared';
+import type { Element, Schema, SchemaVariable, Segment, Style } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@pmodules/Network/NetworkContext';
+import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
+import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
+import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
 
 export type UseQueueManagerProps = {
   delay?: number;
@@ -35,16 +37,14 @@ const useQueueManager = ({
   const processingRef = useRef(processing);
   processingRef.current = processing;
 
-  const parseItem = useCallback((rawItem: QueueItem) => {
-    const { action } = rawItem;
-
-    return { type: action.type, data: omit(action, ['type']) };
-  }, []);
-
   const processItem = useCallback(
-    async (item: QueueItem) => {
-      const itemParsed = parseItem(item);
-      switch (itemParsed.type) {
+    async (
+      item:
+        | QueueItem<Schema, SchemaReducerActions>
+        | QueueItem<Style, StyleReducerActions>
+        | QueueItem<Record<string, Segment>, SegmentsReducerActions>
+    ) => {
+      switch (item.action.type) {
         // Schema
 
         case SchemaActions.SCHEMA_ADD_PAGE: {
@@ -52,7 +52,7 @@ const useQueueManager = ({
         }
 
         case SchemaActions.SCHEMA_HOME_PAGE: {
-          const { pageId } = itemParsed.data as { pageId: string };
+          const { pageId } = item.action;
           const {
             prevState: { flat }
           } = item as { prevState: Schema };
@@ -70,13 +70,13 @@ const useQueueManager = ({
         }
 
         case SchemaActions.SCHEMA_UPDATE_PAGE: {
-          const { page } = itemParsed.data as { page: Element };
+          const { page } = item.action;
 
           return mutate('SpaceUpdatePage', { page });
         }
 
         case SchemaActions.SCHEMA_REMOVE_PAGE: {
-          const { pageId } = itemParsed.data as { pageId: string };
+          const { pageId } = item.action;
 
           return mutate('SpaceRemovePage', { pageId });
         }
@@ -86,43 +86,37 @@ const useQueueManager = ({
         }
 
         case SchemaActions.SCHEMA_UPDATE_PAGE_FOLDER: {
-          const { pageFolder } = itemParsed.data as { pageFolder: PageFolder };
+          const { pageFolder } = item.action;
 
           return mutate('SpaceUpdatePageFolder', { pageFolder });
         }
 
         case SchemaActions.SCHEMA_REMOVE_PAGE_FOLDER: {
-          const { pageFolderId } = itemParsed.data as { pageFolderId: string };
+          const { pageFolderId } = item.action;
 
           return mutate('SpaceRemovePageFolder', { pageFolderId });
         }
 
         case SchemaActions.SCHEMA_ADD_VARIABLE: {
-          const { variable } = itemParsed.data as { variable: SchemaVariable };
+          const { variable } = item.action;
 
           return mutate('SpaceAddVariable', variable);
         }
 
         case SchemaActions.SCHEMA_UPDATE_VARIABLE: {
-          const { variable } = itemParsed.data;
+          const { variable } = item.action;
 
           return mutate('SpaceUpdateVariable', { variable });
         }
 
         case SchemaActions.SCHEMA_REMOVE_VARIABLE: {
-          const { name } = itemParsed.data;
+          const { name } = item.action;
 
           return mutate('SpaceRemoveVariable', { name });
         }
 
         case SchemaActions.SCHEMA_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems, variables } = itemParsed.data as {
-            data: Element;
-            to: string;
-            dropPosition: DropPosition;
-            initialItems: Record<string, Element>;
-            variables: SchemaVariable[];
-          };
+          const { data, to, dropPosition, initialItems, variables } = item.action;
 
           return mutate('SpaceAddElement', {
             element: data,
@@ -134,30 +128,25 @@ const useQueueManager = ({
         }
 
         case SchemaActions.SCHEMA_UPDATE_ELEMENT: {
-          const { element } = itemParsed.data;
+          const { element } = item.action;
 
           return mutate('SpaceUpdateElement', { element });
         }
 
         case SchemaActions.SCHEMA_REMOVE_ELEMENT: {
-          const { elementId } = itemParsed.data;
+          const { elementId } = item.action;
 
           return mutate('SpaceRemoveElement', { elementId });
         }
 
         case SchemaActions.SCHEMA_MOVE_ELEMENT: {
-          const { elementId, from, to, dropPosition } = itemParsed.data;
+          const { elementId, from, to, dropPosition } = item.action;
 
           return mutate('SpaceMoveElement', { elementId, from, to, dropPosition });
         }
 
         case SchemaActions.SCHEMA_CLONE_ELEMENT: {
-          const { data, to, dropPosition, initialItems } = itemParsed.data as {
-            data: Element;
-            to: string;
-            dropPosition: DropPosition;
-            initialItems: Record<string, Element>;
-          };
+          const { data, to, dropPosition, initialItems } = item.action;
 
           return mutate('SpaceCloneElement', {
             element: data,
@@ -168,13 +157,13 @@ const useQueueManager = ({
         }
 
         case SchemaActions.SCHEMA_UPDATE_SETTINGS: {
-          const { value, path } = itemParsed.data;
+          const { value, path } = item.action;
 
           return mutate('SpaceUpdateSettings', { value, path });
         }
 
         case SchemaActions.SCHEMA_UPDATE: {
-          const { schema, queryFailed } = itemParsed.data;
+          const { schema, queryFailed } = item.action as typeof item.action & { queryFailed?: boolean };
           if (queryFailed) {
             return null;
           }
@@ -191,43 +180,43 @@ const useQueueManager = ({
         // Style
 
         case StyleActions.STYLE_ADD_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value } = item.action;
 
           return mutate('StyleAddSelector', { displayMode, selector, type: selectorType, path, style: value });
         }
 
         case StyleActions.STYLE_UPDATE_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value } = item.action;
 
           return mutate('StyleUpdateSelector', { displayMode, selector, type: selectorType, path, style: value });
         }
 
         case StyleActions.STYLE_REMOVE_SELECTOR: {
-          const { selector } = itemParsed.data;
+          const { selector } = item.action;
 
           return mutate('StyleRemoveSelector', { selector });
         }
 
         case StyleActions.STYLE_ADD_VARIABLE: {
-          const { variable, value } = itemParsed.data;
+          const { variable, value } = item.action;
 
           return mutate('StyleAddVariable', { variable, value });
         }
 
         case StyleActions.STYLE_UPDATE_VARIABLE: {
-          const { variable, value } = itemParsed.data;
+          const { variable, value } = item.action;
 
           return mutate('StyleUpdateVariable', { variable, value });
         }
 
         case StyleActions.STYLE_REMOVE_VARIABLE: {
-          const { variable } = itemParsed.data;
+          const { variable } = item.action;
 
           return mutate('StyleRemoveVariable', { variable });
         }
 
         case StyleActions.STYLE_UPDATE: {
-          const { style, queryFailed } = itemParsed.data;
+          const { style, queryFailed } = item.action as typeof item.action & { queryFailed?: boolean };
           if (queryFailed) {
             return null;
           }
@@ -244,14 +233,8 @@ const useQueueManager = ({
         // Schema + Style
 
         case SchemaActions.SCHEMA_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform, variables } = itemParsed.data as {
-            data: Element;
-            to: string;
-            dropPosition: DropPosition;
-            initialItems: Record<string, Element>;
-            variables: SchemaVariable[];
-            templatePlatform: Style['platform'];
-          };
+          const { data, dropPosition, initialItems, to, templatePlatform, variables } =
+            item.action as typeof item.action & { templatePlatform: Style['platform'] };
 
           return mutate('SpaceAddTemplate', {
             element: data,
@@ -266,19 +249,14 @@ const useQueueManager = ({
         // segments
 
         case SegmentsActions.SEGMENTS_REMOVE: {
-          const { segmentId } = itemParsed.data;
+          const { segmentId } = item.action;
 
           return mutate('SegmentRemove', { id: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems, variables, segmentId } = itemParsed.data as {
-            data: Element;
-            to: string;
-            dropPosition: DropPosition;
-            initialItems: Record<string, Element>;
+          const { data, to, dropPosition, initialItems, variables, segmentId } = item.action as typeof item.action & {
             variables: SchemaVariable[];
-            segmentId: string;
           };
 
           return mutate('SegmentAddElement', {
@@ -292,25 +270,25 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_UPDATE_ELEMENT: {
-          const { element, segmentId } = itemParsed.data;
+          const { element, segmentId } = item.action;
 
           return mutate('SegmentUpdateElement', { element, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_REMOVE_ELEMENT: {
-          const { elementId, segmentId } = itemParsed.data;
+          const { elementId, segmentId } = item.action;
 
           return mutate('SegmentRemoveElement', { elementId, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_MOVE_ELEMENT: {
-          const { elementId, from, to, dropPosition, segmentId } = itemParsed.data;
+          const { elementId, from, to, dropPosition, segmentId } = item.action;
 
           return mutate('SegmentMoveElement', { elementId, from, to, dropPosition, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_ADD_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value, segmentId } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value, segmentId } = item.action;
 
           return mutate('SegmentStyleAddSelector', {
             displayMode,
@@ -323,7 +301,7 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_UPDATE_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value, segmentId } = itemParsed.data;
+          const { displayMode, selector, selectorType, path, value, segmentId } = item.action;
 
           return mutate('SegmentStyleUpdateSelector', {
             displayMode,
@@ -336,39 +314,31 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_REMOVE_SELECTOR: {
-          const { selector, segmentId } = itemParsed.data;
+          const { selector, segmentId } = item.action;
 
           return mutate('SegmentStyleRemoveSelector', { selector, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_ADD_VARIABLE: {
-          const { variable, value, segmentId } = itemParsed.data;
+          const { variable, value, segmentId } = item.action;
 
           return mutate('SegmentStyleAddVariable', { variable, value, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_UPDATE_VARIABLE: {
-          const { variable, value, segmentId } = itemParsed.data;
+          const { variable, value, segmentId } = item.action;
 
           return mutate('SegmentStyleUpdateVariable', { variable, value, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_REMOVE_VARIABLE: {
-          const { variable, segmentId } = itemParsed.data;
+          const { variable, segmentId } = item.action;
 
           return mutate('SegmentStyleRemoveVariable', { variable, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform, variables, segmentId } = itemParsed.data as {
-            data: Element;
-            to: string;
-            dropPosition: DropPosition;
-            initialItems: Record<string, Element>;
-            variables: SchemaVariable[];
-            templatePlatform: Style['platform'];
-            segmentId: string;
-          };
+          const { data, dropPosition, initialItems, to, templatePlatform, variables, segmentId } = item.action;
 
           return mutate('SegmentAddTemplate', {
             element: data,
@@ -382,13 +352,7 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_CLONE_ELEMENT: {
-          const { data, to, dropPosition, initialItems, segmentId } = itemParsed.data as {
-            data: Element;
-            to: string;
-            dropPosition: DropPosition;
-            initialItems: Record<string, Element>;
-            segmentId: string;
-          };
+          const { data, to, dropPosition, initialItems, segmentId } = item.action;
 
           return mutate('SegmentCloneElement', {
             element: data,
@@ -400,8 +364,8 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_UPDATE: {
-          const { segment, queryFailed } = itemParsed.data as { segment: Segment; queryFailed: unknown };
-          if (queryFailed || !segment.id) {
+          const { segment, queryFailed } = item.action as typeof item.action & { queryFailed?: boolean };
+          if (queryFailed || !segment || !segment.id) {
             return null;
           }
 
@@ -419,39 +383,58 @@ const useQueueManager = ({
           return null;
       }
     },
-    [parseItem, mutate]
+    [mutate]
   );
 
-  const revertItem = useCallback((item: QueueItem) => {
-    const {
-      action: { type },
-      // state,
-      prevState,
-      dispatch
-    } = item;
-    switch (type) {
-      case SchemaActions[type]: {
-        dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: prevState, queryFailed: true });
+  const revertItem = useCallback(
+    (
+      item:
+        | QueueItem<Schema, SchemaReducerActions>
+        | QueueItem<Style, StyleReducerActions>
+        | QueueItem<Record<string, Segment>, SegmentsReducerActions>
+    ) => {
+      switch (item.action.type) {
+        case SchemaActions[item.action.type]: {
+          item = item as QueueItem<Schema, SchemaReducerActions>;
+          item.dispatch({
+            type: SchemaActions.SCHEMA_UPDATE,
+            schema: item.prevState,
+            queryFailed: true
+          } as SchemaReducerActions);
 
-        return;
+          return;
+        }
+
+        case StyleActions[item.action.type]: {
+          item = item as QueueItem<Style, StyleReducerActions>;
+          item.dispatch({
+            type: StyleActions.STYLE_UPDATE,
+            style: item.prevState,
+            queryFailed: true
+          } as StyleReducerActions);
+
+          return;
+        }
+
+        case SegmentsActions[item.action.type]: {
+          item = item as QueueItem<Record<string, Segment>, SegmentsReducerActions>;
+          const segmentId = (item.prevState as unknown as SegmentsReducerActions).segmentId;
+          item.dispatch({
+            type: SegmentsActions.SEGMENTS_UPDATE,
+            segment: item.prevState[segmentId],
+            segmentId,
+            queryFailed: true
+          } as SegmentsReducerActions);
+
+          return;
+        }
+
+        default:
+          return;
       }
-
-      case StyleActions[type]: {
-        dispatch({ type: StyleActions.STYLE_UPDATE, style: prevState, queryFailed: true });
-
-        return;
-      }
-
-      case SegmentsActions[type]: {
-        dispatch({ type: SegmentsActions.SEGMENTS_UPDATE, segments: prevState, queryFailed: true });
-
-        return;
-      }
-
-      default:
-        return;
-    }
-  }, []);
+    },
+    []
+  );
 
   const processQueue = useCallback(async () => {
     const { queueNormal } = queues;

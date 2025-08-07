@@ -35,12 +35,63 @@ export const SegmentsActions = {
   SEGMENTS_ADD_VARIABLE: 'SEGMENTS_ADD_VARIABLE',
   SEGMENTS_UPDATE_VARIABLE: 'SEGMENTS_UPDATE_VARIABLE',
   SEGMENTS_REMOVE_VARIABLE: 'SEGMENTS_REMOVE_VARIABLE'
-};
+} as const;
 
-const SegmentsReducer = (
-  state: Record<string, Segment>,
-  action: { type: keyof typeof SegmentsActions; segmentId: string; segment?: Segment }
-) => {
+type SegmentsReducerActionsBase = { segmentId: string; segment?: Segment };
+
+export type SegmentsReducerActions =
+  | ({ type: 'SEGMENTS_ADD' } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_UPDATE' } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_REMOVE' } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_ADD_ELEMENT';
+      to: Element['id'];
+      data: Element;
+      dropPosition: DropPosition;
+      initialItems: Record<string, Element>;
+    } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_REMOVE_ELEMENT'; elementId: string } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_CLONE_ELEMENT';
+      to: string;
+      data: Element;
+      dropPosition: DropPosition;
+      initialItems: Record<string, Element>;
+    } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_MOVE_ELEMENT';
+      from: string;
+      to: string;
+      elementId: string;
+      dropPosition: DropPosition;
+    } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_UPDATE_ELEMENT'; element: Element } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_ADD_SELECTOR' | 'SEGMENTS_UPDATE_SELECTOR';
+      displayMode: DisplayMode;
+      selector: string;
+      selectorType: TagType;
+      path: string;
+      value?: StyleItem['attributes'];
+    } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_REMOVE_SELECTOR'; selector: string } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_ADD_VARIABLE' | 'SEGMENTS_UPDATE_VARIABLE';
+      variable: string;
+      value: string;
+    } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_REMOVE_VARIABLE'; variable: string } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_ADD_TEMPLATE';
+      to: string;
+      data: Element;
+      dropPosition: DropPosition;
+      initialItems: Record<string, Element>;
+      templatePlatform: Style['platform'];
+      variables: SchemaVariable[];
+    } & SegmentsReducerActionsBase);
+
+const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducerActions) => {
   const { segmentId } = action;
   let { segment } = action;
   if (segmentId && !segment) {
@@ -64,15 +115,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_ADD_ELEMENT: {
-      const { to, data, dropPosition, initialItems } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        to: Element['id'];
-        data: Element;
-        dropPosition: DropPosition;
-        initialItems: Record<string, Element>;
-      };
+      const { to, data, dropPosition, initialItems } = action;
 
       return produce(state, (draft: Record<string, Segment>) => {
         FlatMap.addElement(
@@ -86,12 +129,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_REMOVE_ELEMENT: {
-      const { elementId } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        elementId: string;
-      };
+      const { elementId } = action;
 
       return produce(state, draft => {
         FlatMap.removeElement(get(draft, `${identifier}.schema.flat`) as unknown as Schema['flat'], elementId);
@@ -99,15 +137,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_CLONE_ELEMENT: {
-      const { to, data, dropPosition, initialItems } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        to: string;
-        data: Element;
-        dropPosition: DropPosition;
-        initialItems: Record<string, Element>;
-      };
+      const { to, data, dropPosition, initialItems } = action;
 
       return produce(state, draft => {
         FlatMap.addElement(
@@ -121,15 +151,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_MOVE_ELEMENT: {
-      const { from, to, elementId, dropPosition } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        from: string;
-        to: string;
-        elementId: string;
-        dropPosition: DropPosition;
-      };
+      const { from, to, elementId, dropPosition } = action;
 
       return produce(state, draft => {
         FlatMap.moveElement(
@@ -143,12 +165,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_UPDATE_ELEMENT: {
-      const { element } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        element: Element;
-      };
+      const { element } = action;
 
       return produce(state, draft => {
         set(draft, `${identifier}.schema.flat[${element.id}]`, element);
@@ -157,22 +174,7 @@ const SegmentsReducer = (
 
     case SegmentsActions.SEGMENTS_ADD_SELECTOR:
     case SegmentsActions.SEGMENTS_UPDATE_SELECTOR: {
-      const {
-        displayMode,
-        selector,
-        selectorType = 'class',
-        path,
-        value
-      } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        displayMode: DisplayMode;
-        selector: string;
-        selectorType: TagType;
-        path: string;
-        value?: StyleItem['attributes'];
-      };
+      const { displayMode, selector, selectorType = 'class', path, value } = action;
 
       if (!path) {
         return produce(state, draft => {
@@ -223,12 +225,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_REMOVE_SELECTOR: {
-      const { selector } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        selector: string;
-      };
+      const { selector } = action;
 
       return produce(state, draft => {
         const platform = omit(get(draft, `${identifier}.style.platform`, {}));
@@ -242,13 +239,7 @@ const SegmentsReducer = (
 
     case SegmentsActions.SEGMENTS_ADD_VARIABLE:
     case SegmentsActions.SEGMENTS_UPDATE_VARIABLE: {
-      const { variable, value } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        variable: string;
-        value: string;
-      };
+      const { variable, value } = action;
 
       return produce(state, draft => {
         if (!variable) {
@@ -260,12 +251,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_REMOVE_VARIABLE: {
-      const { variable } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        variable: string;
-      };
+      const { variable } = action;
 
       return produce(state, draft => {
         if (draft[identifier].style.variables[variable]) {
@@ -275,17 +261,7 @@ const SegmentsReducer = (
     }
 
     case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {
-      const { to, data, dropPosition, initialItems, templatePlatform, variables } = action as {
-        type: keyof typeof SegmentsActions;
-        segmentId: string;
-        segment?: Segment;
-        to: string;
-        data: Element;
-        dropPosition: DropPosition;
-        initialItems: Record<string, Element>;
-        templatePlatform: Style['platform'];
-        variables: SchemaVariable[];
-      };
+      const { to, data, dropPosition, initialItems, templatePlatform, variables } = action;
       const newState = produce(state, draft => {
         const segment = draft[identifier] as Segment | undefined;
         if (!segment) {

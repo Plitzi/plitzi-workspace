@@ -1,12 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext } from 'react';
 
-import type { Dispatch } from 'react';
+import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
+import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
+import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
+import type { ActionDispatch } from 'react';
 
-export type QueueItem = {
-  action: { type: string } & Record<Exclude<string, 'type'>, unknown>;
-  prevState: unknown;
-  state: unknown;
-  dispatch: Dispatch<unknown>;
+export type QueueItem<TState = any, TDispatchAction = any> = {
+  action: TDispatchAction;
+  prevState: TState;
+  state: TState;
+  dispatch: ActionDispatch<[action: TDispatchAction]>;
 };
 
 export type QueuePriority = 'normal' | 'urgent' | 'all';
@@ -17,14 +23,10 @@ export type QueueContextValue = {
     enqueue: (items?: QueueItem | QueueItem[], priority?: QueuePriority) => void;
     getIsProcessing: () => boolean;
   };
-  enqueueMiddleware: (
-    action: {
-      type: string;
-    } & Record<Exclude<string, 'type'>, unknown>,
-    prevState: unknown,
-    state: unknown,
-    dispatch: Dispatch<unknown>
-  ) => void;
+  enqueueMiddleware: ReducerMiddlewareCallback<
+    Schema | Style | Record<string, Segment>,
+    [action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions]
+  >;
 };
 
 const queueContextDefaultValue = { queueManager: {}, enqueueMiddleware: () => {} } as unknown as QueueContextValue;

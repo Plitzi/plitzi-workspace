@@ -18,32 +18,46 @@ export const StyleActions = {
   STYLE_UPDATE_VARIABLE: 'STYLE_UPDATE_VARIABLE',
   STYLE_REMOVE_VARIABLE: 'STYLE_REMOVE_VARIABLE',
   STYLE_ADD_TEMPLATE: 'STYLE_ADD_TEMPLATE'
-};
+} as const;
 
-const StyleReducer = (
-  state: Style,
-  action: { type: keyof typeof StyleActions } & Record<Exclude<string, 'type'>, unknown>
-) => {
+export type StyleReducerActions =
+  | { type: 'STYLE_UPDATE'; style: Style; fromSubscriptions?: boolean }
+  | {
+      type: 'STYLE_ADD_SELECTOR';
+      displayMode: DisplayMode;
+      selector: string;
+      path: string;
+      selectorType?: TagType;
+      value: StyleItem['attributes'];
+      fromSubscriptions?: boolean;
+    }
+  | {
+      type: 'STYLE_UPDATE_SELECTOR';
+      displayMode: DisplayMode;
+      selector: string;
+      path: string;
+      selectorType?: TagType;
+      value: StyleItem['attributes'];
+      fromSubscriptions?: boolean;
+    }
+  | { type: 'STYLE_REMOVE_SELECTOR'; selector: string; fromSubscriptions?: boolean }
+  | {
+      type: 'STYLE_ADD_VARIABLE' | 'STYLE_UPDATE_VARIABLE';
+      variable: string;
+      value: string;
+      fromSubscriptions?: boolean;
+    }
+  | { type: 'STYLE_REMOVE_VARIABLE'; variable: string; fromSubscriptions?: boolean }
+  | { type: 'STYLE_ADD_TEMPLATE'; platform: Style['platform']; fromSubscriptions?: boolean };
+
+const StyleReducer = (state: Style, action: StyleReducerActions) => {
   switch (action.type) {
     case StyleActions.STYLE_UPDATE: {
-      return { ...state, ...(action.style as Style) };
+      return { ...state, ...action.style };
     }
 
     case StyleActions.STYLE_ADD_SELECTOR: {
-      const {
-        displayMode,
-        selector,
-        path,
-        selectorType = 'class',
-        value
-      } = action as {
-        type: keyof typeof StyleActions;
-        displayMode: DisplayMode;
-        selector: string;
-        path: string;
-        selectorType?: TagType;
-        value: StyleItem['attributes'];
-      };
+      const { displayMode, selector, path, selectorType = 'class', value } = action;
 
       return produce(state, draft => {
         if (StyleMap.addSelector(draft.platform, displayMode, selector, selectorType, path, value)) {
@@ -53,20 +67,7 @@ const StyleReducer = (
     }
 
     case StyleActions.STYLE_UPDATE_SELECTOR: {
-      const {
-        displayMode,
-        selector,
-        path,
-        selectorType = 'class',
-        value
-      } = action as {
-        type: keyof typeof StyleActions;
-        displayMode: DisplayMode;
-        selector: string;
-        path: string;
-        selectorType?: TagType;
-        value: StyleItem['attributes'];
-      };
+      const { displayMode, selector, path, selectorType = 'class', value } = action;
 
       return produce(state, draft => {
         if (StyleMap.updateSelector(draft.platform, displayMode, selector, selectorType, path, value)) {
@@ -76,7 +77,7 @@ const StyleReducer = (
     }
 
     case StyleActions.STYLE_REMOVE_SELECTOR: {
-      const { selector } = action as { type: keyof typeof StyleActions; selector: string };
+      const { selector } = action;
 
       return produce(state, draft => {
         if (StyleMap.removeSelector(draft.platform, selector)) {
@@ -87,7 +88,7 @@ const StyleReducer = (
 
     case StyleActions.STYLE_ADD_VARIABLE:
     case StyleActions.STYLE_UPDATE_VARIABLE: {
-      const { variable, value } = action as { type: keyof typeof StyleActions; variable: string; value: string };
+      const { variable, value } = action;
 
       return produce(state, draft => {
         if (!variable) {
@@ -99,7 +100,7 @@ const StyleReducer = (
     }
 
     case StyleActions.STYLE_REMOVE_VARIABLE: {
-      const { variable } = action as { type: keyof typeof StyleActions; variable: 'string' };
+      const { variable } = action;
 
       return produce(state, draft => {
         if (draft.variables[variable]) {
@@ -109,7 +110,7 @@ const StyleReducer = (
     }
 
     case StyleActions.STYLE_ADD_TEMPLATE: {
-      const { platform: newPlatform } = action as { type: keyof typeof StyleActions; platform: Style['platform'] };
+      const { platform: newPlatform } = action;
 
       return produce(state, draft => {
         const platform = omit(get(draft, 'platform', {})) as Style['platform'];

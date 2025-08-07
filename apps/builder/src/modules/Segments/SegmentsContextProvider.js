@@ -1,7 +1,7 @@
 // Packages
 import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 import get from 'lodash/get';
-import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
+import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 
 // Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';

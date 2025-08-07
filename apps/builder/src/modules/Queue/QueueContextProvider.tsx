@@ -6,7 +6,11 @@ import useQueueManager from './hooks/useQueueManager';
 import QueueContext from './QueueContext';
 import QueueStatusContext from './QueueStatusContext';
 
-import type { Dispatch, ReactNode } from 'react';
+import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
+import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
+import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
+import type { ActionDispatch, ReactNode } from 'react';
 
 export type QueueContextProviderProps = {
   children: ReactNode;
@@ -25,10 +29,10 @@ const QueueContextProvider = ({ children, includeSubscriptions = true }: QueueCo
 
   const enqueueMiddleware = useCallback(
     (
-      action: { type: string } & Record<Exclude<string, 'type'>, unknown>,
-      prevState: unknown,
-      state: unknown,
-      dispatch: Dispatch<unknown>
+      prevState: Style | Schema | Record<string, Segment>,
+      state: Style | Schema | Record<string, Segment>,
+      dispatch: ActionDispatch<[action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions]>,
+      action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions
     ) => queueManager.enqueue({ action, prevState, state, dispatch }, 'normal'),
     [queueManager]
   );

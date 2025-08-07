@@ -1,13 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext } from 'react';
 
 import type { UndoableReducerActions } from './UndoableReducer';
-import type { SchemaActions } from '@pmodules/Schema/SchemaReducer';
-import type { StyleActions } from '@pmodules/Style/StyleReducer';
-import type { ActionDispatch, AnyActionArg } from 'react';
+import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
+import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
+import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
+import type { ActionDispatch } from 'react';
 
-export type UndoableItem<TState = unknown, TDispatchAction extends AnyActionArg = [action: unknown]> = {
-  action: { type: keyof (typeof SchemaActions & typeof StyleActions) } & Record<string, unknown>;
-  dispatch: ActionDispatch<TDispatchAction>;
+export type UndoableItem<TState = any, TDispatchAction = any> = {
+  action: TDispatchAction;
+  dispatch: ActionDispatch<[action: TDispatchAction]>;
   nextState: TState;
   prevState: TState;
 };
@@ -27,12 +31,10 @@ export type UndoableContextValue = {
   undoableUndo: () => void;
   undoableRedo: () => void;
   undoableClearHistory: () => void;
-  undoableMiddleware: (
-    action: UndoableItem['action'],
-    prevState: UndoableItem['prevState'],
-    state: UndoableItem['nextState'],
-    dispatch: UndoableItem['dispatch']
-  ) => void;
+  undoableMiddleware: ReducerMiddlewareCallback<
+    Schema | Style | Record<string, Segment>,
+    [action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions]
+  >;
 };
 
 const undoableContextDefaultValue = {} as UndoableContextValue;
