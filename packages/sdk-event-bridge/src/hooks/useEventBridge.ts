@@ -10,11 +10,16 @@ const useEventBridge = (
   module: EventBridgeModule,
   callbacks: Partial<Record<EventBridgeEvent, EventBridgeCallback>> = {},
   params: EventBridgeParams = {},
-  context = EventBridgeContext
+  context = EventBridgeContext,
+  disabled: boolean = false
 ) => {
   const { eventBridge } = use(context);
 
   useEffect(() => {
+    if (disabled) {
+      return;
+    }
+
     if (!(eventBridge as EventBridge | undefined) || !(module as string)) {
       return undefined;
     }
@@ -32,7 +37,7 @@ const useEventBridge = (
         }
       });
     };
-  }, [module, callbacks, eventBridge, params]);
+  }, [module, callbacks, eventBridge, params, disabled]);
 
   return eventBridge;
 };

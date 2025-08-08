@@ -95,24 +95,45 @@ export type SchemaContextValue = {
   definition?: { rootId: string }; // for segments and templates
   // When is main Schema in builder
   dispatchSchema?: unknown;
-  schemaUpdate?: unknown;
-  schemaAddElement?: unknown;
-  schemaUpdateElement?: unknown;
-  schemaMoveElement?: unknown;
-  schemaCloneElement?: unknown;
-  schemaRemoveElement?: unknown;
-  schemaAddPage?: unknown;
-  schemaHomePage?: unknown;
-  schemaUpdatePage?: unknown;
-  schemaRemovePage?: unknown;
-  schemaAddPageFolder?: unknown;
-  schemaUpdatePageFolder?: unknown;
-  schemaRemovePageFolder?: unknown;
-  schemaAddVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => Promise<void>;
-  schemaUpdateVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => Promise<void>;
-  schemaRemoveVariable?: (name: string, fromSubscriptions?: boolean) => Promise<void>;
-  schemaAddTemplate?: unknown;
-  schemaUpdateSettings?: (value: string | number | boolean, path: string, fromSubscriptions?: boolean) => Promise<void>;
+  schemaUpdate?: (newSchema: SchemaRaw, fromSubscriptions?: boolean) => void;
+  schemaAddElement?: (
+    to: string,
+    data: Element,
+    dropPosition?: DropPosition,
+    initialItems?: Record<string, Element>,
+    variables?: SchemaVariable[],
+    fromSubscriptions?: boolean
+  ) => void;
+  schemaUpdateElement?: (element: Element, fromSubscriptions?: boolean) => void;
+  schemaMoveElement?: (
+    from: string,
+    to: string,
+    elementId: string,
+    dropPosition?: DropPosition,
+    fromSubscriptions?: boolean
+  ) => void;
+  schemaCloneElement?: (elementId: string, targetId?: string, fromSubscriptions?: boolean) => void;
+  schemaRemoveElement?: (elementId: string, fromSubscriptions?: boolean) => void;
+  schemaAddPage?: (page: Element, fromSubscriptions?: boolean) => Promise<void>;
+  schemaHomePage?: (pageId: string, fromSubscriptions?: boolean) => void;
+  schemaUpdatePage?: (page: Element, fromSubscriptions?: boolean) => void;
+  schemaRemovePage?: (pageId: string, fromSubscriptions?: boolean) => void;
+  schemaAddPageFolder?: (pageFolder: PageFolder, fromSubscriptions?: boolean) => Promise<void>;
+  schemaUpdatePageFolder?: (pageFolder: PageFolder, fromSubscriptions?: boolean) => void;
+  schemaRemovePageFolder?: (pageFolderId: string, fromSubscriptions?: boolean) => void;
+  schemaAddVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => void;
+  schemaUpdateVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => void;
+  schemaRemoveVariable?: (name: string, fromSubscriptions?: boolean) => void;
+  schemaAddTemplate?: (
+    to: string,
+    data: Element,
+    dropPosition?: DropPosition,
+    initialItems?: Record<string, Element>,
+    templatePlatform?: Style['platform'],
+    variables?: SchemaVariable[],
+    fromSubscriptions?: boolean
+  ) => void;
+  schemaUpdateSettings?: (value: string | number | boolean, path?: string, fromSubscriptions?: boolean) => void;
 };
 
 // Raw
@@ -120,7 +141,7 @@ export type SchemaContextValue = {
 export type SchemaRaw = {
   flat: Element[];
   variables?: SchemaVariable[];
-  setings: Schema['settings'];
+  settings: Schema['settings'];
   pages: Element['id'][];
   pageFolders: PageFolder[];
 };

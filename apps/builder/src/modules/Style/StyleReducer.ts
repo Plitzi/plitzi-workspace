@@ -20,35 +20,36 @@ export const StyleActions = {
   STYLE_ADD_TEMPLATE: 'STYLE_ADD_TEMPLATE'
 } as const;
 
-export type StyleReducerActions =
-  | { type: 'STYLE_UPDATE'; style: Style; fromSubscriptions?: boolean }
-  | {
-      type: 'STYLE_ADD_SELECTOR';
-      displayMode: DisplayMode;
-      selector: string;
-      path: string;
-      selectorType: TagType;
-      value: StyleItem['attributes'];
-      fromSubscriptions?: boolean;
-    }
-  | {
-      type: 'STYLE_UPDATE_SELECTOR';
-      displayMode: DisplayMode;
-      selector: string;
-      path: string;
-      selectorType: TagType;
-      value: StyleItem['attributes'];
-      fromSubscriptions?: boolean;
-    }
-  | { type: 'STYLE_REMOVE_SELECTOR'; selector: string; fromSubscriptions?: boolean }
-  | {
-      type: 'STYLE_ADD_VARIABLE' | 'STYLE_UPDATE_VARIABLE';
-      variable: string;
-      value: string;
-      fromSubscriptions?: boolean;
-    }
-  | { type: 'STYLE_REMOVE_VARIABLE'; variable: string; fromSubscriptions?: boolean }
-  | { type: 'STYLE_ADD_TEMPLATE'; platform: Style['platform']; fromSubscriptions?: boolean };
+export type StyleReducerActionsBase = { fromSubscriptions?: boolean };
+
+export type StyleReducerActions = StyleReducerActionsBase &
+  (
+    | { type: 'STYLE_UPDATE'; style: Style }
+    | {
+        type: 'STYLE_ADD_SELECTOR';
+        displayMode: DisplayMode;
+        selector: string;
+        path: string;
+        selectorType: TagType;
+        value: StyleItem['attributes'];
+      }
+    | {
+        type: 'STYLE_UPDATE_SELECTOR';
+        displayMode: DisplayMode;
+        selector: string;
+        path: string;
+        selectorType: TagType;
+        value: StyleItem['attributes'];
+      }
+    | { type: 'STYLE_REMOVE_SELECTOR'; selector: string }
+    | {
+        type: 'STYLE_ADD_VARIABLE' | 'STYLE_UPDATE_VARIABLE';
+        variable: string;
+        value: string;
+      }
+    | { type: 'STYLE_REMOVE_VARIABLE'; variable: string }
+    | { type: 'STYLE_ADD_TEMPLATE'; platform: Style['platform'] }
+  );
 
 const StyleReducer = (state: Style, action: StyleReducerActions) => {
   switch (action.type) {

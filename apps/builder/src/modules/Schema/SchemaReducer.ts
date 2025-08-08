@@ -28,47 +28,51 @@ export const SchemaActions = {
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS'
 } as const;
 
-export type SchemaReducerActions =
-  | { type: 'SCHEMA_UPDATE'; schema: Schema }
-  | { type: 'SCHEMA_ADD_PAGE'; page: Element }
-  | { type: 'SCHEMA_HOME_PAGE'; pageId: string }
-  | { type: 'SCHEMA_UPDATE_PAGE'; page: Element }
-  | { type: 'SCHEMA_REMOVE_PAGE'; pageId: string }
-  | { type: 'SCHEMA_ADD_PAGE_FOLDER'; pageFolder: PageFolder }
-  | { type: 'SCHEMA_UPDATE_PAGE_FOLDER'; pageFolder: PageFolder }
-  | { type: 'SCHEMA_REMOVE_PAGE_FOLDER'; pageFolderId: string }
-  | { type: 'SCHEMA_ADD_VARIABLE'; variable: SchemaVariable }
-  | { type: 'SCHEMA_UPDATE_VARIABLE'; variable: SchemaVariable }
-  | { type: 'SCHEMA_REMOVE_VARIABLE'; name: string }
-  | {
-      type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_TEMPLATE';
-      to: string;
-      data: Element;
-      dropPosition: DropPosition;
-      initialItems: { [key: string]: Element };
-      variables?: SchemaVariable[];
-    }
-  | { type: 'SCHEMA_REMOVE_ELEMENT'; elementId: string }
-  | {
-      type: 'SCHEMA_MOVE_ELEMENT';
-      elementId: string;
-      from: string;
-      to: string;
-      dropPosition: DropPosition;
-    }
-  | {
-      type: 'SCHEMA_CLONE_ELEMENT';
-      to: string;
-      data: Element;
-      dropPosition: DropPosition;
-      initialItems: { [key: string]: Element };
-    }
-  | { type: 'SCHEMA_UPDATE_ELEMENT'; element: Element }
-  | {
-      type: 'SCHEMA_UPDATE_SETTINGS';
-      path: string;
-      value: string | number | boolean;
-    };
+export type SchemaReducerActionsBase = { fromSubscriptions?: boolean };
+
+export type SchemaReducerActions = SchemaReducerActionsBase &
+  (
+    | { type: 'SCHEMA_UPDATE'; schema: Schema }
+    | { type: 'SCHEMA_ADD_PAGE'; page: Element }
+    | { type: 'SCHEMA_HOME_PAGE'; pageId: string }
+    | { type: 'SCHEMA_UPDATE_PAGE'; page: Element }
+    | { type: 'SCHEMA_REMOVE_PAGE'; pageId: string }
+    | { type: 'SCHEMA_ADD_PAGE_FOLDER'; pageFolder: PageFolder }
+    | { type: 'SCHEMA_UPDATE_PAGE_FOLDER'; pageFolder: PageFolder }
+    | { type: 'SCHEMA_REMOVE_PAGE_FOLDER'; pageFolderId: string }
+    | { type: 'SCHEMA_ADD_VARIABLE'; variable: SchemaVariable }
+    | { type: 'SCHEMA_UPDATE_VARIABLE'; variable: SchemaVariable }
+    | { type: 'SCHEMA_REMOVE_VARIABLE'; name: string }
+    | {
+        type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_TEMPLATE';
+        to: string;
+        data: Element;
+        dropPosition: DropPosition;
+        initialItems: Record<string, Element>;
+        variables?: SchemaVariable[];
+      }
+    | { type: 'SCHEMA_REMOVE_ELEMENT'; elementId: string }
+    | {
+        type: 'SCHEMA_MOVE_ELEMENT';
+        elementId: string;
+        from: string;
+        to: string;
+        dropPosition: DropPosition;
+      }
+    | {
+        type: 'SCHEMA_CLONE_ELEMENT';
+        to: string;
+        data: Element;
+        dropPosition: DropPosition;
+        initialItems: Record<string, Element>;
+      }
+    | { type: 'SCHEMA_UPDATE_ELEMENT'; element: Element }
+    | {
+        type: 'SCHEMA_UPDATE_SETTINGS';
+        path: string;
+        value: string | number | boolean;
+      }
+  );
 
 const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
   switch (action.type) {
