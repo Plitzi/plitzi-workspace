@@ -89,7 +89,7 @@ const OverlayButtonContainer = ({
   }, [addPopup, existsPopup, mode]);
 
   const handleClickAsTemplate = async () => {
-    const response = await showModal<{ name: string; description: string }>(
+    const response = await showModal<{ name: string; description?: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -102,7 +102,7 @@ const OverlayButtonContainer = ({
 
     if (response) {
       const { name, description } = response;
-      void builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
+      void builderTemplatesContext.elementAsTemplate(schema, style, name, description ?? '', element);
       addToast(
         <div>
           Template <b>{name}</b> Created

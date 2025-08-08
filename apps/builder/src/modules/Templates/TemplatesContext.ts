@@ -7,7 +7,7 @@ export type Template = {
   definition: {
     name: string;
     description: string;
-    baseEleemntId: Element['id'];
+    baseElementId: Element['id'];
   };
   schema: Schema;
   style: Style;
@@ -18,7 +18,7 @@ export type TemplateRaw = {
   definition: {
     name: string;
     description: string;
-    baseEleemntId: Element['id'];
+    baseElementId: Element['id'];
   };
   schema: SchemaRaw;
   style: Style;
@@ -36,7 +36,7 @@ export type TemplatesContextValue = {
     description: string,
     element: Element
   ) => Promise<void>;
-  templatesAddMutation: (name: string, description: string, schema: Schema, style: Style) => Promise<void>;
+  templatesAddMutation: (name: string, description: string, schema?: Schema, style?: Style) => Promise<void>;
   templatesUpdateMutation: (template: Template) => Promise<void>;
   templatesRemoveMutation: (id: string) => Promise<void>;
 };

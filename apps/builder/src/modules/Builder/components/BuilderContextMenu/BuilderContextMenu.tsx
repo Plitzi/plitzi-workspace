@@ -167,7 +167,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   };
 
   const handleClickAsTemplate = async () => {
-    const response = await showModal<{ name: string; description: string }>(
+    const response = await showModal<{ name: string; description?: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -180,12 +180,12 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
 
     if (response && element) {
       const { name, description } = response;
-      void builderTemplatesContext.elementAsTemplate(schema, style, name, description, element);
+      void builderTemplatesContext.elementAsTemplate(schema, style, name, description ?? '', element);
     }
   };
 
   const handleClickAsSegment = async () => {
-    const response = await showModal<{ name: string; description: string }>(
+    const response = await showModal<{ name: string; description?: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -198,7 +198,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
 
     if (response && element) {
       const { name, description } = response;
-      void builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
+      void builderSegmentsContext.elementAsSegment(schema, style, name, description ?? '', element);
     }
   };
 

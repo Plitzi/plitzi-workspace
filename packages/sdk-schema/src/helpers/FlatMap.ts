@@ -389,9 +389,9 @@ class FlatMap {
 
   flatAsTemplate = (style: Style, elementId: Element['id'], excludeRoot = false) => {
     const elementsStyle: Style = { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' };
-    let variables = [] as SchemaVariable[];
+    let variables: SchemaVariable[] = [];
     if (!elementId) {
-      return { elements: {}, elementsStyle, variables };
+      return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
     }
 
     const element = get(this.flat, elementId) as Element | undefined;
@@ -401,7 +401,7 @@ class FlatMap {
 
     const elements = this.cloneElements(elementId, element.definition.parentId);
     if (!elements.item) {
-      return { elements: {}, elementsStyle, variables };
+      return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
     }
 
     Object.values(elements.acum).forEach(element => {
