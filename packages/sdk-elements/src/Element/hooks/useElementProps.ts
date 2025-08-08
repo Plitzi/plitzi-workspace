@@ -1,4 +1,4 @@
-import { useValueMemo } from '@plitzi/plitzi-ui';
+import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import pick from 'lodash/pick';
 import { useMemo } from 'react';
 

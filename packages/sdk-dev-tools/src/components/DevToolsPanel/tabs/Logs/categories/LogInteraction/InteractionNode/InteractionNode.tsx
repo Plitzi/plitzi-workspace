@@ -6,7 +6,7 @@ import NodeHeader from './NodeHeader';
 import NodeMetadata from './NodeMetadata';
 import NodeWhen from './NodeWhen';
 
-import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui';
+import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
 export type InteractionNodeProps = {
   className?: string;
@@ -36,7 +36,7 @@ const InteractionNode = ({
   );
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex w-full flex-col">
       <Heading as="h4" className="m-0">
         {name}
       </Heading>

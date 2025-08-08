@@ -11,7 +11,7 @@ import { StyleConstants } from '@plitzi/sdk-shared/style/styleConstants';
 
 import { cssToSelectors, getReadOnlyRangesFromContent, formatCssFromSelector } from '../../../StyleHelper';
 
-import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui';
+import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { DisplayMode, StyleBaseItem, StyleItem } from '@plitzi/sdk-shared';
 
 export type InspectorModeAdvancedProps = {

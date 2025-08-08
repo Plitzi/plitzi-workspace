@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import { useValueMemo } from '@plitzi/plitzi-ui';
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
+import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import classNames from 'classnames';
 import { useMemo, useRef } from 'react';
 
