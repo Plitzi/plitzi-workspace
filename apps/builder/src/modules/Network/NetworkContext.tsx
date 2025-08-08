@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext } from 'react';
 
 import type Mutations from './Mutations';
 import type Queries from './Queries';
-import type { ApolloError, FetchPolicy } from '@apollo/client/core';
+import type Subscriptions from './Subscriptions';
+import type { ApolloError, FetchPolicy, FetchResult, Observable } from '@apollo/client/core';
 import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 
 export type NetworkContextValue = {
@@ -20,7 +22,15 @@ export type NetworkContextValue = {
     silentError?: boolean
   ) => Promise<T | ApolloError | undefined | null>;
   // subscribe: () => void;
-  subscriptionManager: unknown;
+  subscriptionManager: {
+    subscribe: (
+      subscriptionKey: keyof typeof Subscriptions,
+      variables: Record<string, unknown>,
+      callback: (result: FetchResult) => void
+    ) => false | Observable<FetchResult<any>> | null;
+    unsubscribe: (subscriptionKey: keyof typeof Subscriptions | (keyof typeof Subscriptions)[]) => void;
+    stop: () => void;
+  };
   webKey: string;
   instanceId: string;
   server: Server;
@@ -33,15 +43,19 @@ const networkContextDefaultValue: NetworkContextValue = {
   mutate: async () => {},
   query: async () => {},
   subscribe: () => {},
-  subscriptionManager: {},
+  subscriptionManager: {
+    subscribe: () => {},
+    unsubscribe: () => {},
+    stop: () => {}
+  },
   webKey: '',
   instanceId: '',
   server: {} as NetworkContextValue['server'],
   userKey: '',
   webId: '',
   environment: 'development'
-} as NetworkContextValue;
+} as unknown as NetworkContextValue;
 
-const NetworkContext = createContext(networkContextDefaultValue);
+const NetworkContext = createContext<NetworkContextValue>(networkContextDefaultValue);
 
 export default NetworkContext;

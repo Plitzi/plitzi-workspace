@@ -27,7 +27,7 @@ export type StyleReducerActions =
       displayMode: DisplayMode;
       selector: string;
       path: string;
-      selectorType?: TagType;
+      selectorType: TagType;
       value: StyleItem['attributes'];
       fromSubscriptions?: boolean;
     }
@@ -36,7 +36,7 @@ export type StyleReducerActions =
       displayMode: DisplayMode;
       selector: string;
       path: string;
-      selectorType?: TagType;
+      selectorType: TagType;
       value: StyleItem['attributes'];
       fromSubscriptions?: boolean;
     }

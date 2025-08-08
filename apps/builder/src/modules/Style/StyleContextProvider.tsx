@@ -1,33 +1,34 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
+import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import get from 'lodash/get';
-import useReducerWithMiddleware from '@plitzi/plitzi-ui-components/hooks/useReducerWithMiddleware';
+import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
-// Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
-
-// Alias
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-// Relatives
 import StyleReducer, { StyleActions } from './StyleReducer';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   style?: Record<string, any>;
- *   includeSubscriptions?: boolean;
- *   type?: 'normal' | 'partial' | 'template';
- * }} props
- * @returns {React.ReactElement}
- */
-const StyleContextProvider = props => {
-  const { children, style: styleProp, includeSubscriptions = true, type = 'normal' } = props;
+import type { StyleReducerActions } from './StyleReducer';
+import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type { DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
+
+export type StyleContextProviderProps = {
+  children: React.ReactNode;
+  style?: Style;
+  includeSubscriptions?: boolean;
+  type?: 'normal' | 'partial' | 'template';
+};
+
+const StyleContextProvider = ({
+  children,
+  style: styleProp,
+  includeSubscriptions = true,
+  type = 'normal'
+}: StyleContextProviderProps) => {
   const { subscriptionManager } = use(NetworkContext);
   const internalData = use(NetworkInternalContext);
   const stylePropMemo = useMemo(() => {
@@ -41,27 +42,37 @@ const StyleContextProvider = props => {
       default:
         return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
     }
-  }, [styleProp]);
+  }, [internalData.style, styleProp, type]);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
-  const middlewareMemo = useMemo(
-    () => [
-      { middleware: undoableMiddleware, filterCallback: action => !action.fromSubscriptions },
-      { middleware: enqueueMiddleware, filterCallback: action => !action.fromSubscriptions }
-    ],
-    [undoableMiddleware]
-  );
-  const [style, dispatchStyle] = useReducerWithMiddleware(StyleReducer, stylePropMemo, middlewareMemo);
-  const styleRef = useRef(style);
+  const [style, dispatchStyle] = useReducerWithMiddleware(StyleReducer, stylePropMemo, [
+    {
+      middleware: undoableMiddleware as ReducerMiddlewareCallback<Style, [action: StyleReducerActions]>,
+      filterCallback: action => !action.fromSubscriptions
+    },
+    {
+      middleware: enqueueMiddleware as ReducerMiddlewareCallback<Style, [action: StyleReducerActions]>,
+      filterCallback: action => !action.fromSubscriptions
+    }
+  ]);
+  const styleRef = useRef<Style>(style);
   styleRef.current = style;
 
   const styleUpdate = useCallback(
-    (style, fromSubscriptions = false) => dispatchStyle({ type: StyleActions.STYLE_UPDATE, style, fromSubscriptions }),
+    (style: Style, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_UPDATE, style, fromSubscriptions }),
     [dispatchStyle]
   );
 
   const styleAddSelector = useCallback(
-    (displayMode, selector, type, path, value, fromSubscriptions = false) => {
+    (
+      displayMode: DisplayMode,
+      selector: string,
+      type: TagType,
+      path: string,
+      value: StyleItem['attributes'],
+      fromSubscriptions = false
+    ) => {
       if (!selector) {
         selector = makeSelector(type);
       }
@@ -80,7 +91,14 @@ const StyleContextProvider = props => {
   );
 
   const styleUpdateSelector = useCallback(
-    (displayMode, selector, type, path, value, fromSubscriptions = false) =>
+    (
+      displayMode: DisplayMode,
+      selector: string,
+      type: TagType,
+      path: string,
+      value: StyleItem['attributes'],
+      fromSubscriptions = false
+    ) =>
       dispatchStyle({
         type: StyleActions.STYLE_UPDATE_SELECTOR,
         displayMode,
@@ -94,73 +112,111 @@ const StyleContextProvider = props => {
   );
 
   const styleRemoveSelector = useCallback(
-    (selector, fromSubscriptions = false) =>
+    (selector: string, fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_REMOVE_SELECTOR, selector, fromSubscriptions }),
     [dispatchStyle]
   );
 
   const styleAddVariable = useCallback(
-    (variable, value, fromSubscriptions = false) =>
+    (variable: string, value: string, fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_ADD_VARIABLE, variable, value, fromSubscriptions }),
     [dispatchStyle]
   );
 
   const styleUpdateVariable = useCallback(
-    (variable, value, fromSubscriptions = false) =>
+    (variable: string, value: string, fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_UPDATE_VARIABLE, variable, value, fromSubscriptions }),
     [dispatchStyle]
   );
 
   const styleRemoveVariable = useCallback(
-    (variable, fromSubscriptions = false) =>
+    (variable: string, fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_REMOVE_VARIABLE, variable, fromSubscriptions }),
-    []
+    [dispatchStyle]
   );
 
   const styleAddTemplate = useCallback(
-    (platform, fromSubscriptions = false) =>
+    (platform: Style['platform'], fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_ADD_TEMPLATE, platform, fromSubscriptions }),
     [dispatchStyle]
   );
 
   useEffect(() => {
-    if (subscriptionManager && includeSubscriptions) {
+    if (includeSubscriptions) {
       subscriptionManager.subscribe('StyleUpdated', {}, data => {
-        const style = get(data, 'data.StyleUpdated', {});
+        const style = get(data, 'data.StyleUpdated', {}) as Style;
         styleUpdate(style, true);
       });
 
       subscriptionManager.subscribe('StyleAddSelector', {}, data => {
-        const { displayMode, selector, type, path, style } = get(data, 'data.StyleAddSelector', {});
+        const { displayMode, selector, type, path, style } = get(data, 'data.StyleAddSelector', {}) as {
+          displayMode: DisplayMode;
+          selector: string;
+          path: string;
+          type: TagType;
+          style: StyleItem['attributes'];
+          fromSubscriptions?: boolean;
+        };
         styleAddSelector(displayMode, selector, type, path, style, true);
       });
 
       subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
-        const { displayMode, selector, type, path, style } = get(data, 'data.StyleUpdateSelector', {});
+        const { displayMode, selector, type, path, style } = get(data, 'data.StyleUpdateSelector', {}) as {
+          displayMode: DisplayMode;
+          selector: string;
+          path: string;
+          type: TagType;
+          style: StyleItem['attributes'];
+          fromSubscriptions?: boolean;
+        };
         styleUpdateSelector(displayMode, selector, type, path, style, true);
       });
 
       subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {
-        const { selector } = get(data, 'data.StyleRemoveSelector', {});
+        const { selector } = get(data, 'data.StyleRemoveSelector', {}) as { selector: string };
         styleRemoveSelector(selector, true);
       });
 
       subscriptionManager.subscribe('StyleAddVariable', {}, data => {
-        const { variable, value } = get(data, 'data.StyleAddVariable', {});
+        const { variable, value } = get(data, 'data.StyleAddVariable', {}) as { variable: string; value: string };
         styleAddVariable(variable, value, true);
       });
 
       subscriptionManager.subscribe('StyleUpdateVariable', {}, data => {
-        const { variable, value } = get(data, 'data.StyleUpdateVariable', {});
+        const { variable, value } = get(data, 'data.StyleUpdateVariable', {}) as { variable: string; value: string };
         styleUpdateVariable(variable, value, true);
       });
 
       subscriptionManager.subscribe('StyleRemoveVariable', {}, data => {
-        const { variable } = get(data, 'data.StyleRemoveVariable', {});
+        const { variable } = get(data, 'data.StyleRemoveVariable', {}) as { variable: string };
         styleRemoveVariable(variable, true);
       });
     }
-  }, [subscriptionManager, includeSubscriptions]);
+
+    return () => {
+      if (includeSubscriptions) {
+        subscriptionManager.unsubscribe([
+          'StyleUpdated',
+          'StyleAddSelector',
+          'StyleUpdateSelector',
+          'StyleRemoveSelector',
+          'StyleAddVariable',
+          'StyleUpdateVariable',
+          'StyleRemoveVariable'
+        ]);
+      }
+    };
+  }, [
+    subscriptionManager,
+    includeSubscriptions,
+    styleUpdate,
+    styleAddSelector,
+    styleUpdateSelector,
+    styleRemoveSelector,
+    styleAddVariable,
+    styleUpdateVariable,
+    styleRemoveVariable
+  ]);
 
   const styleContextMemo = useMemo(() => ({ style }), [style]);
 

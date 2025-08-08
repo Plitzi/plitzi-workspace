@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import Subscriptions from '../Subscriptions';
 
-import type { ApolloClient, FetchResult, Observable } from '@apollo/client/core';
+import type { ApolloClient, FetchResult } from '@apollo/client/core';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
 
@@ -13,8 +13,10 @@ export type UseSubscriptionsManagerProps = {
   disabled?: boolean;
 };
 
+type Subscription = { closed: boolean; unsubscribe(): void; name: keyof typeof Subscriptions };
+
 const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: UseSubscriptionsManagerProps) => {
-  const subscriptions = useRef<Observable<FetchResult<unknown>>[]>([]);
+  const subscriptions = useRef<Subscription[]>([]);
 
   const subscribe = useCallback(
     (
@@ -37,34 +39,49 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
         variables: { ...variables, environment }
       });
 
-      subscriptionObserver.subscribe(callback, err => onMessage?.(`Subscription Error: ${err}`, 'error'));
+      const subscription = subscriptionObserver.subscribe(callback, err =>
+        onMessage?.(`Subscription Error: ${err}`, 'error')
+      ) as Subscription;
 
-      subscriptions.current.push(subscriptionObserver);
+      subscription.name = subscriptionKey;
+      subscriptions.current.push(subscription);
 
       return subscriptionObserver;
     },
     [client, onMessage, environment, disabled]
   );
 
+  const unsubscribe = useCallback((subscriptionKey: keyof typeof Subscriptions | (keyof typeof Subscriptions)[]) => {
+    if (typeof subscriptionKey === 'string') {
+      subscriptionKey = [subscriptionKey];
+    }
+
+    const subscriptionsToStop = subscriptions.current.filter(
+      subscription => subscriptionKey.includes[subscription.name]
+    );
+
+    subscriptionsToStop.forEach(subscription => {
+      subscription.unsubscribe();
+    });
+
+    subscriptions.current = subscriptions.current.filter(subscription => !subscription.closed);
+  }, []);
+
   const stop = useCallback(() => {
-    // stop all subscriptions
-    subscriptions.current.forEach((/* subscription */) => {
-      // subscription.unsubscribe();
-      // console.log(subscription);
+    subscriptions.current.forEach(subscription => {
+      subscription.unsubscribe();
     });
 
     subscriptions.current = [];
   }, [subscriptions]);
 
   useEffect(() => {
-    // reSync(client);
-
     return () => {
       stop();
     };
   }, [stop]);
 
-  const subscriptionsManagerMemo = useMemo(() => ({ subscribe, stop }), [subscribe, stop]);
+  const subscriptionsManagerMemo = useMemo(() => ({ subscribe, unsubscribe, stop }), [subscribe, unsubscribe, stop]);
 
   return subscriptionsManagerMemo;
 };
