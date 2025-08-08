@@ -123,13 +123,13 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(true), [onCloseDeleteSelector]);
 
   return (
-    <div className="flex flex-col gap-2 pt-2 pr-2 border-r border-gray-300 grow basis-0 overflow-auto max-w-[350px]">
+    <div className="flex max-w-[350px] grow basis-0 flex-col gap-2 overflow-auto border-r border-gray-300 pt-2 pr-2">
       <Button intent="primary" size="sm" className="w-full" iconPlacement="before" onClick={onOpenAddSelector}>
         <Button.Icon icon="fas fa-tint" size="md" className="text-base" />
         New Selector
       </Button>
       <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} />
-      <div className="flex flex-col grow basis-0 overflow-y-auto">
+      <div className="flex grow basis-0 flex-col overflow-y-auto">
         {finalSelectors.map(selector => {
           const { name, type } = selector;
 
