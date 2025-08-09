@@ -37,7 +37,7 @@ export const SegmentsActions = {
   SEGMENTS_REMOVE_VARIABLE: 'SEGMENTS_REMOVE_VARIABLE'
 } as const;
 
-type SegmentsReducerActionsBase = { segmentId: string; segment?: Segment };
+type SegmentsReducerActionsBase = { segmentId: string; segment?: Segment; fromSubscriptions?: boolean };
 
 export type SegmentsReducerActions =
   | ({ type: 'SEGMENTS_ADD' } & SegmentsReducerActionsBase)
@@ -49,6 +49,7 @@ export type SegmentsReducerActions =
       data: Element;
       dropPosition: DropPosition;
       initialItems: Record<string, Element>;
+      variables: SchemaVariable[];
     } & SegmentsReducerActionsBase)
   | ({ type: 'SEGMENTS_REMOVE_ELEMENT'; elementId: string } & SegmentsReducerActionsBase)
   | ({
@@ -115,7 +116,7 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
     }
 
     case SegmentsActions.SEGMENTS_ADD_ELEMENT: {
-      const { to, data, dropPosition, initialItems } = action;
+      const { to, data, dropPosition, initialItems, variables } = action;
 
       return produce(state, (draft: Record<string, Segment>) => {
         FlatMap.addElement(
@@ -125,6 +126,14 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
           dropPosition,
           initialItems
         );
+
+        if (variables.length > 0) {
+          set(
+            draft,
+            `${identifier}.schema.variables`,
+            FlatMap.addVariables(get(draft, `${identifier}.schema.variables`, []) as SchemaVariable[], variables)
+          );
+        }
       });
     }
 

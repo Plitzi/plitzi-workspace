@@ -7,7 +7,7 @@ import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
 
-import type { Style, Element, Schema, SchemaVariable, DisplayMode, StyleItem, DropPosition } from '@plitzi/sdk-shared';
+import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
 
 export const EMPTY_SCHEMA = {
   schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] } as Schema,
@@ -323,6 +323,54 @@ class FlatMap {
     return true;
   };
 
+  // Variables
+
+  addVariables = (variables: Schema['variables']) => {
+    if ((variables as Schema['variables'] | undefined) && variables.length > 0) {
+      const variablesToAppend = variables.filter(variable => !this.variables.find(v => v.name === variable.name));
+      this.variables.push(...variablesToAppend);
+
+      return variablesToAppend.length > 0;
+    }
+
+    return false;
+  };
+
+  addVariable = (variable: SchemaVariable) => {
+    if (!(variable as SchemaVariable | undefined)) {
+      return false;
+    }
+
+    return this.addVariables([variable]);
+  };
+
+  updateVariable = (variable: SchemaVariable) => {
+    if (!(variable as SchemaVariable | undefined)) {
+      return false;
+    }
+
+    const pos = this.variables.findIndex(variable => variable.name === variable.name);
+    if (pos === -1) {
+      return false;
+    }
+
+    this.variables[pos] = variable;
+
+    return true;
+  };
+
+  removeVariables = (variables: string[]) => {
+    variables = variables.filter(Boolean);
+    const initialSize = this.variables.length;
+    this.variables = this.variables.filter(variable => variables.includes(variable.name));
+
+    return initialSize !== this.variables.length;
+  };
+
+  removeVariable = (variable: string) => {
+    return this.removeVariables([variable]);
+  };
+
   // Extra Methods
 
   parentTree = (elementId: Element['id']) => {
@@ -416,7 +464,7 @@ class FlatMap {
       });
 
       // Variables
-      if (this.variables && this.variables.length > 0) {
+      if (this.variables.length > 0) {
         const elementVariables = this.getElementVariables(style, id, elements.acum);
         variables = [...variables, ...elementVariables];
       }
@@ -439,11 +487,7 @@ class FlatMap {
   // Semi - Static
 
   getElementVariables = (style: Style, elementId: Element['id'], flat = this.flat, variables = this.variables) => {
-    const variablesFound: SchemaVariable[] = [];
-    if (!variables) {
-      return variablesFound;
-    }
-
+    const variablesFound: Schema['variables'] = [];
     const selectors = get(flat, `${elementId}.definition.styleSelectors`) as unknown as
       | Element['definition']['styleSelectors']
       | undefined;
@@ -511,6 +555,43 @@ class FlatMap {
 
   static removeElement = (flat: Schema['flat'], elementId: Element['id'], removePage = false) =>
     this.getInstance({ flat }).removeElement(elementId, removePage);
+
+  // Variables - Static
+
+  static addVariables = (schemaVariables: Schema['variables'], variables: Schema['variables']) => {
+    const instance = this.getInstance({ variables: schemaVariables });
+    instance.addVariables(variables);
+
+    return instance.variables;
+  };
+
+  static addVariable = (schemaVariables: Schema['variables'], variable: SchemaVariable) => {
+    const instance = this.getInstance({ variables: schemaVariables });
+    instance.addVariable(variable);
+
+    return instance.variables;
+  };
+
+  static updateVariable = (schemaVariables: Schema['variables'], variable: SchemaVariable) => {
+    const instance = this.getInstance({ variables: schemaVariables });
+    instance.updateVariable(variable);
+
+    return instance.variables;
+  };
+
+  static removeVariables = (schemaVariables: Schema['variables'], variables: string[]) => {
+    const instance = this.getInstance({ variables: schemaVariables });
+    instance.removeVariables(variables);
+
+    return instance.variables;
+  };
+
+  static removeVariable = (schemaVariables: Schema['variables'], variable: string) => {
+    const instance = this.getInstance({ variables: schemaVariables });
+    instance.removeVariable(variable);
+
+    return instance.variables;
+  };
 
   // Extra Methods - Static
 

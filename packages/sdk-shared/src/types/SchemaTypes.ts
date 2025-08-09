@@ -70,7 +70,7 @@ export type PageFolder = { id: string; name: string; slug: string; parentId?: Pa
 
 export type Schema = {
   flat: Record<string, Element>;
-  variables?: SchemaVariable[];
+  variables: SchemaVariable[];
   settings: {
     keepState?: boolean;
     stateStorage?: 'sessionStorage' | 'localStorage';
@@ -140,7 +140,7 @@ export type SchemaContextValue = {
 
 export type SchemaRaw = {
   flat: Element[];
-  variables?: SchemaVariable[];
+  variables: SchemaVariable[];
   settings: Schema['settings'];
   pages: Element['id'][];
   pageFolders: PageFolder[];
