@@ -1,27 +1,30 @@
-// Packages
-import React, { useCallback, use, useEffect, useState, useMemo } from 'react';
-import omit from 'lodash/omit';
-import debounce from 'lodash/debounce';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import debounce from 'lodash/debounce';
+import omit from 'lodash/omit';
+import { useCallback, use, useEffect, useState, useMemo } from 'react';
 
-// Relatives
-import SegmentsContext from './SegmentsContext';
-import Segment from './Segment';
 import SegmentForm from './models/SegmentForm';
+import Segment from './Segment';
+import SegmentsContext from './SegmentsContext';
 
-/** @returns {React.ReactElement} */
+import type { Segment as TSegment } from '@plitzi/sdk-shared';
+
 const Segments = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const [data, setData] = useState({ cursor: undefined, hasNextPage: false, segments: {} });
+  const [data, setData] = useState<{ cursor?: string; hasNextPage: boolean; segments: Record<string, TSegment> }>({
+    cursor: undefined,
+    hasNextPage: false,
+    segments: {}
+  });
   const { showModal } = useModal();
   const { segmentsFetch, segmentAddMutation } = use(SegmentsContext);
 
   const fetch = useCallback(
-    async (name, more = false) => {
+    async (name: string, more = false) => {
       setLoading(true);
       const query = {};
       if (name) {
@@ -31,7 +34,7 @@ const Segments = () => {
       const result = await segmentsFetch(query, data.cursor, 20);
       if (result) {
         const { pageInfo, edges } = result;
-        if (!edges) {
+        if (!(edges as undefined | TSegment[])) {
           setLoading(false);
 
           return;
@@ -41,7 +44,7 @@ const Segments = () => {
         setData({
           cursor: pageInfo.nextCursor,
           hasNextPage: pageInfo.hasNextPage,
-          segments: more ? { ...data.segments, segments } : segments
+          segments: (more ? { ...data.segments, segments } : segments) as Record<string, TSegment>
         });
         setLoading(false);
       }
@@ -52,37 +55,35 @@ const Segments = () => {
   const fetchDebounce = useMemo(() => debounce(fetch, 500), [fetch]);
 
   useEffect(() => {
-    fetch('');
+    void fetch('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRefresh = useCallback(
-    (identifier, segment) => {
-      setData(state => {
-        const { segments } = state;
-        if (!segments[identifier]) {
-          return state;
-        }
+  const handleRefresh = useCallback((identifier: string, segment?: TSegment) => {
+    setData(state => {
+      const { segments } = state;
+      if (!(segments[identifier] as TSegment | undefined)) {
+        return state;
+      }
 
-        if (!segment) {
-          return { ...state, segments: omit(segments, [identifier]) };
-        }
+      if (!segment) {
+        return { ...state, segments: omit(segments, [identifier]) };
+      }
 
-        return { ...state, segments: { ...segments, [identifier]: segment } };
-      });
-    },
-    [filter]
-  );
+      return { ...state, segments: { ...segments, [identifier]: segment } };
+    });
+  }, []);
 
   const handleChange = useCallback(
-    value => {
+    (value: string) => {
       setFilter(value);
-      fetchDebounce(value);
+      void fetchDebounce(value);
     },
-    [setFilter]
+    [fetchDebounce]
   );
 
   const handleClickAddSegment = useCallback(async () => {
-    const response = await showModal(
+    const response = await showModal<{ name: string; description: string }>(
       <Modal.Header>
         <h4>Add Segment</h4>
       </Modal.Header>,
@@ -95,10 +96,10 @@ const Segments = () => {
 
     if (response) {
       const { name, description } = response;
-      segmentAddMutation(name, description);
-      fetchDebounce(filter);
+      void segmentAddMutation(name, description);
+      void fetchDebounce(filter);
     }
-  }, [showModal, segmentAddMutation, filter]);
+  }, [showModal, segmentAddMutation, fetchDebounce, filter]);
 
   const { segments } = data;
 
@@ -116,7 +117,6 @@ const Segments = () => {
       <div className="mt-2 h-px bg-gray-200" />
       <Flex direction="column">
         {!loading &&
-          segments &&
           Object.values(segments).map((segment, key) => {
             const {
               id,
@@ -131,6 +131,7 @@ const Segments = () => {
                 id={id}
                 identifier={identifier}
                 name={name}
+                description={description}
                 variables={variables}
                 onParentRefresh={handleRefresh}
               />

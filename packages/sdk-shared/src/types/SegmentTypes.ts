@@ -1,3 +1,4 @@
+import type { PageInfo } from './CollectionTypes';
 import type { DropPosition, Element, Schema, SchemaRaw, SchemaVariable } from './SchemaTypes';
 import type { DisplayMode, Style, StyleItem, TagType } from './StyleTypes';
 
@@ -18,7 +19,11 @@ export type SegmentsContextValue = {
   segments: Record<string, Segment>;
   dispatchSegments?: unknown;
   segmentGet: (identifier: string) => Promise<Segment>;
-  segmentsFetch: (filter?: string, cursor?: string, limit?: number) => Promise<Segment[]>;
+  segmentsFetch: (
+    filter?: string | object,
+    cursor?: string,
+    limit?: number
+  ) => Promise<{ edges: Segment[]; pageInfo: PageInfo } | undefined | null>;
   segmentsAdd: (segment: Segment) => void;
   segmentsUpdate: (segment: Segment) => void;
   segmentsRemove: (id: Segment['id']) => void;
@@ -83,8 +88,8 @@ export type SegmentsContextValue = {
   segmentAddMutation: (
     name: string,
     description: string,
-    schema: Schema,
-    style: Style,
+    schema?: Schema,
+    style?: Style,
     variables?: SchemaVariable[]
   ) => Promise<void>;
 };

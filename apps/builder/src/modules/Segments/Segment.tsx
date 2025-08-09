@@ -1,35 +1,39 @@
-// Packages
-import React, { useCallback, use } from 'react';
-import noop from 'lodash/noop';
-import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import usePopup from '@plitzi/plitzi-ui/Popup/usePopup';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import Icon from '@plitzi/plitzi-ui/Icon';
+import { ApolloError } from '@apollo/client/errors';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import Icon from '@plitzi/plitzi-ui/Icon';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
+import { useCallback, use } from 'react';
 
-// Alias
-import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 import BuilderPopup from '@pmodules/Builder/BuilderPopup';
+import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
+import PublishForm from './models/PublishForm';
 import SegmentForm from './models/SegmentForm';
 import SegmentsContext from './SegmentsContext';
-import PublishForm from './models/PublishForm';
 
-/**
- * @param {{
- *   id?: string;
- *   identifier?: string;
- *   name?: string;
- *   description?: string;
- *   variables?: object[];
- *   onParentRefresh?: (identifier: string, segment: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Segment = props => {
-  const { id = '', identifier = '', name = '', description = '', variables = [], onParentRefresh = noop } = props;
+import type { SchemaVariable, Segment as TSegment } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
+
+export type SegmentProps = {
+  id?: string;
+  identifier?: string;
+  name?: string;
+  description?: string;
+  variables?: SchemaVariable[];
+  onParentRefresh?: (identifier: string, segment?: TSegment) => void;
+};
+
+const Segment = ({
+  id = '',
+  identifier = '',
+  name = '',
+  description = '',
+  variables = [],
+  onParentRefresh
+}: SegmentProps) => {
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
@@ -42,9 +46,9 @@ const Segment = props => {
   });
 
   const handleClickUpdateSegment = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
-      const response = await showModal(
+      const response = await showModal<{ name: string; identifier: string; description: string }>(
         <Modal.Header>
           <h4>Update Segment</h4>
         </Modal.Header>,
@@ -66,14 +70,14 @@ const Segment = props => {
         const segment = await segmentGet(identifier);
         const newSegment = { ...segment, identifier, definition: { ...segment.definition, name, description } };
         segmentsUpdate(newSegment);
-        onParentRefresh(identifier, newSegment);
+        onParentRefresh?.(identifier, newSegment);
       }
     },
-    [identifier, showModal, name, description, segmentGet, onParentRefresh]
+    [showModal, identifier, name, description, segmentGet, segmentsUpdate, onParentRefresh]
   );
 
   const handleClickRemove = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
       const response = await showDialog(
         <Modal.Header>
@@ -89,17 +93,17 @@ const Segment = props => {
 
       if (response) {
         segmentsRemove(id);
-        onParentRefresh(identifier);
+        onParentRefresh?.(identifier);
       }
     },
     [id, identifier, segmentsRemove, showDialog, onParentRefresh]
   );
 
   const handleClickBuilder = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
       const segment = await segmentGet(identifier);
-      if (!existsPopup('segmentBuilder') && segment) {
+      if (!existsPopup('segmentBuilder') && (segment as TSegment | undefined)) {
         addPopup('segmentBuilder', <BuilderPopup segmentIdentifier={identifier} />, {
           icon: <i className="fa-solid fa-puzzle-piece text-base" />,
           title: `Segment - ${name}`,
@@ -127,8 +131,15 @@ const Segment = props => {
       )
     );
     if (response) {
-      const result = await mutate('SegmentPublish', { ...response, contextId: id });
-      if (result) {
+      const result = await mutate<{
+        environment: 'live' | 'staging' | 'development';
+        revision: string;
+        description: string;
+      }>('SegmentPublish', {
+        ...response,
+        contextId: id
+      });
+      if (result && !(result instanceof ApolloError)) {
         addToast(
           <span>
             Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
