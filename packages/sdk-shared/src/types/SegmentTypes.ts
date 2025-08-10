@@ -18,7 +18,7 @@ export type Segment = {
 export type SegmentsContextValue = {
   segments: Record<string, Segment>;
   dispatchSegments?: unknown;
-  segmentGet: (identifier: string) => Promise<Segment>;
+  segmentGet: (identifier: string) => Promise<Segment | undefined>;
   segmentsFetch: (
     filter?: string | object,
     cursor?: string,

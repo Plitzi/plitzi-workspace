@@ -1,33 +1,47 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
-import get from 'lodash/get';
+import { ApolloError } from '@apollo/client/errors';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import get from 'lodash/get';
+import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
-// Monorepo
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
-
-// Alias
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-// Relatives
 import SegmentsContext from './SegmentsContext';
 import SegmentsReducer, { SegmentsActions } from './SegmentsReducer';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   segments?: object;
- *   includeSubscriptions?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const SegmentsContextProvider = props => {
-  const { children, segments: segmentsProp, includeSubscriptions = true } = props;
+import type { SegmentsReducerActions } from './SegmentsReducer';
+import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type {
+  SchemaVariable,
+  Segment,
+  SegmentRaw,
+  DropPosition,
+  Style,
+  Element,
+  Schema,
+  DisplayMode,
+  TagType,
+  StyleItem,
+  PageInfo
+} from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type SegmentsContextProviderProps = {
+  children: ReactNode;
+  segments?: Record<string, Segment>;
+  includeSubscriptions?: boolean;
+};
+
+const SegmentsContextProvider = ({
+  children,
+  segments: segmentsProp,
+  includeSubscriptions = true
+}: SegmentsContextProviderProps) => {
   const { query, mutate, subscriptionManager } = use(NetworkContext);
   const internalData = use(NetworkInternalContext);
   const { enqueueMiddleware } = use(QueueContext);
@@ -37,84 +51,116 @@ const SegmentsContextProvider = props => {
       return segmentsProp;
     }
 
-    return internalData.segments ?? {};
-  }, [segmentsProp]);
-  const middlewareMemo = useMemo(
-    () => [
-      { middleware: undoableMiddleware, filterCallback: action => !action.fromSubscriptions },
-      { middleware: enqueueMiddleware, filterCallback: action => !action.fromSubscriptions }
-    ],
-    [undoableMiddleware]
-  );
-  const [segments, dispatchSegments] = useReducerWithMiddleware(SegmentsReducer, segmentsPropMemo, middlewareMemo);
+    return internalData.segments;
+  }, [internalData.segments, segmentsProp]);
+  const [segments, dispatchSegments] = useReducerWithMiddleware(SegmentsReducer, segmentsPropMemo, [
+    {
+      middleware: undoableMiddleware as ReducerMiddlewareCallback<
+        Record<string, Segment>,
+        [action: SegmentsReducerActions]
+      >,
+      filterCallback: action => !action.fromSubscriptions
+    },
+    {
+      middleware: enqueueMiddleware as ReducerMiddlewareCallback<
+        Record<string, Segment>,
+        [action: SegmentsReducerActions]
+      >,
+      filterCallback: action => !action.fromSubscriptions
+    }
+  ]);
   const segmentsRef = useRef(segments);
   segmentsRef.current = segments;
 
   const segmentsFetch = useCallback(
-    async (filter, cursor, limit) => {
-      const result = await query('Segments', { environment: 'main', filter, cursor, limit }, 'network-only');
+    async (filter?: string | object, cursor?: string, limit?: number) => {
+      const result = await query<{ edges: SegmentRaw[]; pageInfo: PageInfo }>(
+        'Segments',
+        { environment: 'main', filter, cursor, limit },
+        'network-only'
+      );
 
-      return result;
+      if (result instanceof ApolloError || !result) {
+        return undefined;
+      }
+
+      return {
+        ...result,
+        edges: result.edges.map<Segment>((segmentRaw: SegmentRaw) => ({
+          ...segmentRaw,
+          schema: {
+            ...get(segmentRaw, 'schema'),
+            flat: get(segmentRaw, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+          }
+        }))
+      };
     },
     [query]
   );
 
   const segmentGet = useCallback(
-    async identifier => {
-      if (segmentsRef.current[identifier]) {
+    async (identifier: string) => {
+      if (segmentsRef.current[identifier] as Segment | undefined) {
         return segmentsRef.current[identifier];
       }
 
-      let segment = await query('Segment', { environment: 'main', identifier }, 'network-only');
-      if (segment) {
-        segment = {
-          ...segment,
-          schema: {
-            ...get(segment, 'schema'),
-            flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-          }
-        };
-
-        dispatchSegments({ type: SegmentsActions.SEGMENTS_ADD, segment, fromSubscriptions: true });
+      const segmentRaw = await query<SegmentRaw>('Segment', { environment: 'main', identifier }, 'network-only');
+      if (!segmentRaw || segmentRaw instanceof ApolloError) {
+        return;
       }
+
+      const segment: Segment = {
+        ...segmentRaw,
+        schema: {
+          ...get(segmentRaw, 'schema'),
+          flat: get(segmentRaw, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+        }
+      };
+
+      // as subscription (to populate the reducer)
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_ADD,
+        segmentId: segment.id,
+        segment,
+        fromSubscriptions: true
+      });
 
       return segment;
     },
-    [query]
+    [dispatchSegments, query]
   );
 
   const segmentsAdd = useCallback(
-    segment => {
-      if (Array.isArray(get(segment, 'schema.flat', []))) {
-        segment = {
-          ...segment,
-          schema: {
-            ...get(segment, 'schema'),
-            flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-          }
-        };
-      }
-
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_ADD, segment });
+    (segment: Segment) => {
+      dispatchSegments({ type: SegmentsActions.SEGMENTS_ADD, segment, segmentId: segment.id });
     },
     [dispatchSegments]
   );
 
   const segmentsUpdate = useCallback(
-    segment => dispatchSegments({ type: SegmentsActions.SEGMENTS_UPDATE, segment }),
+    (segment: Segment) => dispatchSegments({ type: SegmentsActions.SEGMENTS_UPDATE, segment, segmentId: segment.id }),
     [dispatchSegments]
   );
 
   const segmentsRemove = useCallback(
-    segmentId => dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE, segmentId }),
+    (segmentId: string) => dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE, segmentId }),
     [dispatchSegments]
   );
 
   // General Actions
 
   const segmentAddTemplate = useCallback(
-    (segmentId, to, data, dropPosition, initialItems, templatePlatform, variables, fromSubscriptions = false) => {
-      return dispatchSegments({
+    (
+      segmentId: string,
+      to: string,
+      data: Element,
+      dropPosition: DropPosition,
+      initialItems: Record<string, Element>,
+      templatePlatform: Style['platform'],
+      variables: SchemaVariable[],
+      fromSubscriptions = false
+    ) => {
+      dispatchSegments({
         type: SegmentsActions.SEGMENTS_ADD_TEMPLATE,
         segmentId,
         to,
@@ -132,7 +178,15 @@ const SegmentsContextProvider = props => {
   // Schema Actions
 
   const segmentAddElement = useCallback(
-    (segmentId, to, data, dropPosition = 'inside', initialItems = {}, variables = [], fromSubscriptions = false) =>
+    (
+      segmentId: string,
+      to: string,
+      data: Element,
+      dropPosition: DropPosition = 'inside',
+      initialItems: Record<string, Element> = {},
+      variables: SchemaVariable[] = [],
+      fromSubscriptions = false
+    ) => {
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_ADD_ELEMENT,
         segmentId,
@@ -142,18 +196,19 @@ const SegmentsContextProvider = props => {
         initialItems,
         variables,
         fromSubscriptions
-      }),
+      });
+    },
     [dispatchSegments]
   );
 
   const segmentUpdateElement = useCallback(
-    (segmentId, element, fromSubscriptions = false) =>
+    (segmentId: string, element: Element, fromSubscriptions = false) =>
       dispatchSegments({ type: SegmentsActions.SEGMENTS_UPDATE_ELEMENT, segmentId, element, fromSubscriptions }),
     [dispatchSegments]
   );
 
   const segmentRemoveElement = useCallback(
-    (segmentId, elementId, fromSubscriptions = false) =>
+    (segmentId: string, elementId: string, fromSubscriptions = false) =>
       dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE_ELEMENT, segmentId, elementId, fromSubscriptions }),
     [dispatchSegments]
   );
@@ -184,7 +239,14 @@ const SegmentsContextProvider = props => {
   // );
 
   const segmentMoveElement = useCallback(
-    (segmentId, from, to, elementId, dropPosition = 'inside', fromSubscriptions = false) =>
+    (
+      segmentId: string,
+      from: string,
+      to: string,
+      elementId: string,
+      dropPosition: DropPosition = 'inside',
+      fromSubscriptions = false
+    ) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_MOVE_ELEMENT,
         segmentId,
@@ -200,7 +262,15 @@ const SegmentsContextProvider = props => {
   // Style Actions
 
   const segmentAddSelector = useCallback(
-    (segmentId, displayMode, selector, type, path, value, fromSubscriptions = false) =>
+    (
+      segmentId: string,
+      displayMode: DisplayMode,
+      selector: string,
+      type: TagType,
+      path: string,
+      value?: StyleItem['attributes'],
+      fromSubscriptions = false
+    ) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_ADD_SELECTOR,
         segmentId,
@@ -215,7 +285,15 @@ const SegmentsContextProvider = props => {
   );
 
   const segmentUpdateSelector = useCallback(
-    (segmentId, displayMode, selector, type, path, value, fromSubscriptions = false) =>
+    (
+      segmentId: string,
+      displayMode: DisplayMode,
+      selector: string,
+      type: TagType,
+      path: string,
+      value?: StyleItem['attributes'],
+      fromSubscriptions = false
+    ) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_UPDATE_SELECTOR,
         segmentId,
@@ -230,19 +308,19 @@ const SegmentsContextProvider = props => {
   );
 
   const segmentRemoveSelector = useCallback(
-    (segmentId, selector, fromSubscriptions = false) =>
+    (segmentId: string, selector: string, fromSubscriptions = false) =>
       dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE_SELECTOR, segmentId, selector, fromSubscriptions }),
     [dispatchSegments]
   );
 
   const segmentAddVariable = useCallback(
-    (segmentId, variable, value, fromSubscriptions = false) =>
+    (segmentId: string, variable: string, value: string, fromSubscriptions = false) =>
       dispatchSegments({ type: SegmentsActions.SEGMENTS_ADD_VARIABLE, segmentId, variable, value, fromSubscriptions }),
     [dispatchSegments]
   );
 
   const segmentUpdateVariable = useCallback(
-    (segmentId, variable, value, fromSubscriptions = false) =>
+    (segmentId: string, variable: string, value: string, fromSubscriptions = false) =>
       dispatchSegments({
         type: SegmentsActions.SEGMENTS_UPDATE_VARIABLE,
         segmentId,
@@ -254,19 +332,23 @@ const SegmentsContextProvider = props => {
   );
 
   const segmentRemoveVariable = useCallback(
-    (segmentId, variable, fromSubscriptions = false) =>
+    (segmentId: string, variable: string, fromSubscriptions = false) =>
       dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE_VARIABLE, segmentId, variable, fromSubscriptions }),
     [dispatchSegments]
   );
 
   const elementAsSegment = useCallback(
-    async (schema, style, name, description, element) => {
-      if (!element) {
+    async (schema: Schema, style: Style, name: string, description: string, element: Element) => {
+      if (!(element as Element | undefined)) {
         return;
       }
 
       const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, element.id);
-      const result = await mutate('SegmentAdd', {
+      if (!elements.item) {
+        return;
+      }
+
+      const result = await mutate<SegmentRaw>('SegmentAdd', {
         name,
         description,
         baseElementId: elements.item.id,
@@ -274,8 +356,16 @@ const SegmentsContextProvider = props => {
         style: { ...elementsStyle, cache: generateCache(elementsStyle) },
         variables
       });
-      if (result) {
-        segmentsAdd(result);
+      if (result && !(result instanceof ApolloError)) {
+        const segment: Segment = {
+          ...result,
+          schema: {
+            ...get(result, 'schema'),
+            flat: get(result, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+          }
+        };
+
+        segmentsAdd(segment);
       }
     },
     [segmentsAdd, mutate]
@@ -291,7 +381,15 @@ const SegmentsContextProvider = props => {
           initialItems = [],
           variables = [],
           contextId
-        } = get(data, 'data.SegmentAddElement', {});
+        } = get(data, 'data.SegmentAddElement', {}) as {
+          to: string;
+          element: Element;
+          dropPosition: DropPosition;
+          initialItems: Element[];
+          templatePlatform: Style['platform'];
+          variables: SchemaVariable[];
+          contextId: string;
+        };
         segmentAddElement(
           contextId,
           to,
@@ -303,25 +401,50 @@ const SegmentsContextProvider = props => {
         );
       });
       subscriptionManager.subscribe('SegmentUpdateElement', {}, data => {
-        const { element, contextId } = get(data, 'data.SegmentUpdateElement', {});
+        const { element, contextId } = get(data, 'data.SegmentUpdateElement', {}) as {
+          element: Element;
+          contextId: string;
+        };
         segmentUpdateElement(contextId, element, true);
       });
       subscriptionManager.subscribe('SegmentRemoveElement', {}, data => {
-        const { elementId, contextId } = get(data, 'data.SegmentRemoveElement', {});
+        const { elementId, contextId } = get(data, 'data.SegmentRemoveElement', {}) as {
+          elementId: string;
+          contextId: string;
+        };
         segmentRemoveElement(contextId, elementId, true);
       });
       subscriptionManager.subscribe('SegmentMoveElement', {}, data => {
-        const { from, to, elementId, dropPosition, contextId } = get(data, 'data.SegmentMoveElement', {});
+        const { from, to, elementId, dropPosition, contextId } = get(data, 'data.SegmentMoveElement', {}) as {
+          from: string;
+          to: string;
+          elementId: string;
+          dropPosition: DropPosition;
+          contextId: string;
+        };
         segmentMoveElement(contextId, from, to, elementId, dropPosition, true);
       });
       subscriptionManager.subscribe('SegmentCloneElement', {}, data => {
-        const { element, to, dropPosition, initialItems = [], contextId } = get(data, 'data.SegmentCloneElement', {});
+        const {
+          element,
+          to,
+          dropPosition,
+          initialItems = [],
+          contextId
+        } = get(data, 'data.SegmentCloneElement', {}) as {
+          element: Element;
+          to: string;
+          dropPosition: DropPosition;
+          initialItems: Element[];
+          contextId: string;
+        };
         segmentAddElement(
           contextId,
           to,
           element,
           dropPosition,
           initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
+          [], // @todo: variables
           true
         );
       });
@@ -334,7 +457,15 @@ const SegmentsContextProvider = props => {
           initialItems = [],
           variables = [],
           contextId
-        } = get(data, 'data.SegmentAddTemplate', {});
+        } = get(data, 'data.SegmentAddTemplate', {}) as {
+          element: Element;
+          styles: Style['platform'];
+          to: string;
+          dropPosition: DropPosition;
+          initialItems: Element[];
+          variables: SchemaVariable[];
+          contextId: string;
+        };
         segmentAddTemplate(
           contextId,
           to,
@@ -347,7 +478,18 @@ const SegmentsContextProvider = props => {
         );
       });
       subscriptionManager.subscribe('SegmentStyleAddSelector', {}, data => {
-        const { displayMode, selector, type, path, style, contextId } = get(data, 'data.SegmentStyleAddSelector', {});
+        const { displayMode, selector, type, path, style, contextId } = get(
+          data,
+          'data.SegmentStyleAddSelector',
+          {}
+        ) as {
+          displayMode: DisplayMode;
+          selector: string;
+          path: string;
+          type: TagType;
+          style: StyleItem['attributes'];
+          contextId: string;
+        };
         segmentAddSelector(contextId, displayMode, selector, type, path, style, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
@@ -355,39 +497,99 @@ const SegmentsContextProvider = props => {
           data,
           'data.SegmentStyleUpdateSelector',
           {}
-        );
+        ) as {
+          displayMode: DisplayMode;
+          selector: string;
+          path: string;
+          type: TagType;
+          style: StyleItem['attributes'];
+          contextId: string;
+        };
         segmentUpdateSelector(contextId, displayMode, selector, type, path, style, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
-        const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {});
+        const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {
+          selector: string;
+          contextId: string;
+        };
         segmentRemoveSelector(contextId, selector, true);
       });
 
       subscriptionManager.subscribe('SegmentStyleAddVariable', {}, data => {
-        const { variable, value, contextId } = get(data, 'data.SegmentStyleAddVariable', {});
+        const { variable, value, contextId } = get(data, 'data.SegmentStyleAddVariable', {}) as {
+          variable: string;
+          value: string;
+          contextId: string;
+        };
         segmentAddVariable(contextId, variable, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateVariable', {}, data => {
-        const { variable, value, contextId } = get(data, 'data.SegmentStyleUpdateVariable', {});
+        const { variable, value, contextId } = get(data, 'data.SegmentStyleUpdateVariable', {}) as {
+          variable: string;
+          value: string;
+          contextId: string;
+        };
         segmentUpdateVariable(contextId, variable, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveVariable', {}, data => {
-        const { variable, contextId } = get(data, 'data.SegmentStyleRemoveVariable', {});
+        const { variable, contextId } = get(data, 'data.SegmentStyleRemoveVariable', {}) as {
+          variable: string;
+          contextId: string;
+        };
         segmentRemoveVariable(contextId, variable, true);
       });
     }
-  }, [subscriptionManager, includeSubscriptions]);
+
+    return () => {
+      subscriptionManager.unsubscribe([
+        'SegmentAddElement',
+        'SegmentUpdateElement',
+        'SegmentRemoveElement',
+        'SegmentMoveElement',
+        'SegmentCloneElement',
+        'SegmentAddTemplate',
+        'SegmentStyleAddSelector',
+        'SegmentStyleUpdateSelector',
+        'SegmentStyleRemoveSelector',
+        'SegmentStyleAddVariable',
+        'SegmentStyleUpdateVariable',
+        'SegmentStyleRemoveVariable'
+      ]);
+    };
+  }, [
+    subscriptionManager,
+    includeSubscriptions,
+    segmentAddElement,
+    segmentUpdateElement,
+    segmentRemoveElement,
+    segmentMoveElement,
+    segmentAddTemplate,
+    segmentAddSelector,
+    segmentUpdateSelector,
+    segmentRemoveSelector,
+    segmentAddVariable,
+    segmentUpdateVariable,
+    segmentRemoveVariable
+  ]);
 
   // Mutations
 
   const segmentAddMutation = useCallback(
-    async (name, description, schema, style, variables = []) => {
-      const result = await mutate('SegmentAdd', { name, description, schema, style, variables });
-      if (result) {
-        segmentsAdd(result);
+    async (name: string, description: string, schema?: Schema, style?: Style, variables: SchemaVariable[] = []) => {
+      const result = await mutate<SegmentRaw>('SegmentAdd', { name, description, schema, style, variables });
+      if (result && !(result instanceof ApolloError)) {
+        const segment: Segment = {
+          ...result,
+          schema: {
+            ...get(result, 'schema'),
+            flat: get(result, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+          }
+        };
+
+        segmentsAdd(segment);
       }
     },
-    [segmentsAdd]
+    [mutate, segmentsAdd]
   );
 
   const events = useMemo(
@@ -409,13 +611,12 @@ const SegmentsContextProvider = props => {
       styleAddTemplate: segmentAddTemplate
     }),
     [
-      segmentsAdd,
       segmentsUpdate,
-      segmentsRemove,
       segmentAddElement,
       segmentUpdateElement,
-      segmentMoveElement,
       segmentRemoveElement,
+      segmentMoveElement,
+      segmentAddTemplate,
       segmentAddSelector,
       segmentUpdateSelector,
       segmentRemoveSelector,

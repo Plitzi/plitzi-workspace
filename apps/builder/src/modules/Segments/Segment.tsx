@@ -68,7 +68,15 @@ const Segment = ({
       if (response) {
         const { identifier, name, description } = response;
         const segment = await segmentGet(identifier);
-        const newSegment = { ...segment, identifier, definition: { ...segment.definition, name, description } };
+        if (!segment) {
+          return;
+        }
+
+        const newSegment = {
+          ...segment,
+          identifier,
+          definition: { ...segment.definition, name, description }
+        };
         segmentsUpdate(newSegment);
         onParentRefresh?.(identifier, newSegment);
       }
@@ -103,7 +111,7 @@ const Segment = ({
     async (e: MouseEvent) => {
       e.stopPropagation();
       const segment = await segmentGet(identifier);
-      if (!existsPopup('segmentBuilder') && (segment as TSegment | undefined)) {
+      if (!existsPopup('segmentBuilder') && segment) {
         addPopup('segmentBuilder', <BuilderPopup segmentIdentifier={identifier} />, {
           icon: <i className="fa-solid fa-puzzle-piece text-base" />,
           title: `Segment - ${name}`,
