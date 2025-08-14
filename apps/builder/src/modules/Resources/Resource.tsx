@@ -1,48 +1,41 @@
-// Packages
-import React, { useState, use, useCallback } from 'react';
-import classNames from 'classnames';
-import noop from 'lodash/noop';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
+import Button from '@plitzi/plitzi-ui/Button';
+import Heading from '@plitzi/plitzi-ui/Heading';
+import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import Heading from '@plitzi/plitzi-ui-components/Heading';
-import Button from '@plitzi/plitzi-ui-components/Button';
-import Input from '@plitzi/plitzi-ui-components/Input';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
+import classNames from 'classnames';
+import { useState, use, useCallback } from 'react';
 
-// Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-
-// Alias
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
 import ResourceContent from './ResourceManager/ResourceContent';
+import ResourceName from './ResourceManager/ResourceName';
 import ResourceType from './ResourceManager/ResourceType';
 import ResourceUploadStatus from './ResourceManager/ResourceUploadStatus';
-import ResourceName from './ResourceManager/ResourceName';
 
-/**
- * @param {{
- *   className?: string;
- *   id?: string;
- *   type?: 'image' | 'video' | 'document' | 'plugin';
- *   src?: string;
- *   title?: string;
- *   metadata?: object;
- *   onRemove?: (id: string) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const Resource = props => {
-  const {
-    className = '',
-    id = '',
-    type = 'image',
-    src = '',
-    title = '',
-    metadata = emptyObject,
-    onRemove = noop
-  } = props;
+import type { PluginManifest } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
+
+export type ResourceProps = {
+  className?: string;
+  id?: string;
+  type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
+  src?: string;
+  title?: string;
+  metadata?: PluginManifest;
+  onRemove?: (id: string) => void;
+};
+
+const Resource = ({
+  className = '',
+  id = '',
+  type = 'image',
+  src = '',
+  title = '',
+  metadata,
+  onRemove
+}: ResourceProps) => {
   const { onDragStart } = useDragElement({ type, attributes: { src } });
   const { mutate } = use(NetworkContext);
   const { showModal, showDialog } = useModal();
@@ -51,7 +44,7 @@ const Resource = props => {
   const { addToast } = useToast();
 
   const handleClickCopyUrl = useCallback(() => {
-    navigator.clipboard.writeText(src);
+    void navigator.clipboard.writeText(src);
     addToast('URL has been copied to clipboard', {
       appeareance: 'info',
       autoDismiss: true,
@@ -64,7 +57,7 @@ const Resource = props => {
       return;
     }
 
-    showModal(
+    void showModal(
       <Modal.Header>
         <h4 className="font-bold">Resource Details</h4>
       </Modal.Header>,
@@ -72,7 +65,7 @@ const Resource = props => {
         <div className="mx-4 mt-2 mb-4 flex gap-4">
           <div className="flex">
             <div className="flex flex-col">
-              <Heading type="h5" className="mb-1">
+              <Heading as="h5" className="mb-1">
                 Preview
               </Heading>
               <div className="rounded-sm border border-gray-400 p-1">
@@ -81,12 +74,12 @@ const Resource = props => {
             </div>
           </div>
           <div className="flex grow basis-0 flex-col overflow-hidden">
-            <Heading type="h5" className="mb-1">
+            <Heading as="h5" className="mb-1">
               Information
             </Heading>
             <div className="flex flex-col">
               <div className="flex items-center">
-                <Heading type="h6" className="w-[50px] font-bold">
+                <Heading as="h6" className="w-[50px] font-bold">
                   Title:
                 </Heading>
                 <div className="ml-2 truncate" title={title}>
@@ -94,16 +87,16 @@ const Resource = props => {
                 </div>
               </div>
               <div className="flex items-center">
-                <Heading type="h6" className="w-[50px] font-bold">
+                <Heading as="h6" className="w-[50px] font-bold">
                   Type:
                 </Heading>
                 <div className="ml-2">{type}</div>
               </div>
               <div className="flex items-center">
-                <Heading type="h6" className="w-[50px] font-bold">
+                <Heading as="h6" className="w-[50px] font-bold">
                   Url:
                 </Heading>
-                <Input value={src} size="sm" className="mx-2 grow basis-0" inputClassName="rounded-sm" readOnly />
+                <Input value={src} size="sm" className="mx-2 grow basis-0" readOnly />
                 <Button title="Copy Url" className="rounded-sm" onClick={handleClickCopyUrl}>
                   <i className="fa-solid fa-copy" />
                 </Button>
@@ -116,7 +109,7 @@ const Resource = props => {
   }, [handleClickCopyUrl, showModal, src, title, type]);
 
   const handleClickRemove = useCallback(
-    async e => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
       const response = await showDialog(
         <Modal.Header>
@@ -136,10 +129,10 @@ const Resource = props => {
         setRemoving(true);
         await mutate('SpaceRemoveResource', { resourceId: id });
         setRemoving(false);
-        onRemove(id);
+        onRemove?.(id);
       }
     },
-    [id, onRemove, showDialog]
+    [id, mutate, onRemove, showDialog]
   );
 
   const handleMouseEnter = () => setHovered(true);

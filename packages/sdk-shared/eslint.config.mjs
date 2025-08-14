@@ -54,7 +54,7 @@ export default tsEslint.config({
     'prefer-const': ['error', { destructuring: 'any', ignoreReadBeforeAssign: false }],
     // semi: ['warn', 'never'],
     'react/jsx-key': ['warn', { checkFragmentShorthand: true }],
-    'prettier/prettier': ['warn', { trillingComma: 'es5' }],
+    'prettier/prettier': ['warn', { trailingComma: 'none' }],
     '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
     'import/order': [
       'error',

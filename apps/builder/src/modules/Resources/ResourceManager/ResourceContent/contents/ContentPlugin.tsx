@@ -1,37 +1,31 @@
-// Packages
-import React, { useMemo } from 'react';
 import classNames from 'classnames';
+import { useMemo } from 'react';
 
-// Relatives
 import formatBytes from '../../helpers/formatBytes';
 
-/**
- * @param {{
- *   className?: string;
- *   backgroundColor?: string;
- *   icon?: string;
- *   name?: string;
- *   version?: string;
- *   author?: string;
- *   size?: number;
- *   components?: string;
- *   isUploaded?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const ContentPlugin = props => {
-  const {
-    className = '',
-    backgroundColor = '#4422ee',
-    icon = 'https://cdn.plitzi.com/resources/img/favicon.svg',
-    name = 'Plugin Name',
-    version = 'v0.0.0',
-    author = 'Plitzi Team',
-    size = 0,
-    components = 'No components',
-    isUploaded = false
-  } = props;
+export type ContentPluginProps = {
+  className?: string;
+  backgroundColor?: string;
+  icon?: string;
+  name?: string;
+  version?: string;
+  author?: string;
+  size?: number;
+  components?: string;
+  isUploaded?: boolean;
+};
 
+const ContentPlugin = ({
+  className = '',
+  backgroundColor = '#4422ee',
+  icon = 'https://cdn.plitzi.com/resources/img/favicon.svg',
+  name = 'Plugin Name',
+  version = 'v0.0.0',
+  author = 'Plitzi Team',
+  size = 0,
+  components = 'No components',
+  isUploaded = false
+}: ContentPluginProps) => {
   // const handleClickSettings = useCallback(async () => {
   //   const response = await showModal(
   //     <Modal.Header>
@@ -54,17 +48,17 @@ const ContentPlugin = props => {
   const finalSize = useMemo(() => formatBytes(size), [size]);
 
   return (
-    <div className={classNames('group flex flex-col m-2 gap-2 overflow-hidden', className)}>
+    <div className={classNames('group m-2 flex flex-col gap-2 overflow-hidden', className)}>
       <div className="flex items-center gap-3">
         <div
-          className="h-11 w-11 flex items-center justify-center shrink-0 rounded-lg bg-gray-500"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-500"
           style={{ backgroundColor }}
         >
-          <div className="p-1 flex items-center justify-center rounded-sm bg-white">
+          <div className="flex items-center justify-center rounded-sm bg-white p-1">
             <img src={icon} alt="" className="h-6 w-6" />
           </div>
         </div>
-        <div className="flex flex-col grow basis-0 font-bold">
+        <div className="flex grow basis-0 flex-col font-bold">
           <div className="truncate">{name}</div>
           <div className="text-xs">{version}</div>
         </div>

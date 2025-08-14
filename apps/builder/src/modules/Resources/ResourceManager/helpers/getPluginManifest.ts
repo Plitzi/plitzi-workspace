@@ -1,7 +1,8 @@
-// Packages
 import JSZip from 'jszip';
 
-const readJsons = async (file, filePath) => {
+import type { PluginManifest } from '@plitzi/sdk-shared';
+
+const readJsons = async (file: File, filePath: string) => {
   try {
     // this part does the same thing, but with different syntax
     const zip = await JSZip.loadAsync(file);
@@ -11,7 +12,7 @@ const readJsons = async (file, filePath) => {
     }
 
     const jsonData = await zipFile.async('string');
-    return JSON.parse(jsonData);
+    return JSON.parse(jsonData) as PluginManifest;
   } catch (e) {
     console.error(e); // error handling
   }
@@ -19,7 +20,7 @@ const readJsons = async (file, filePath) => {
   return undefined;
 };
 
-const getPluginManifest = async file => {
+const getPluginManifest = async (file: File) => {
   const manifest = await readJsons(file, 'plugin-manifest.json');
   if (!manifest) {
     return undefined;

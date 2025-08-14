@@ -1,17 +1,10 @@
-// Packages
-import React from 'react';
+export type ResourceTypeProps = {
+  type?: 'image' | 'video' | 'plugin' | 'application' | 'document';
+};
 
-/**
- * @param {{
- *   type?: 'image' | 'video' | 'plugin' | 'document';
- * }} props
- * @returns {React.ReactElement}
- */
-const ResourceType = props => {
-  const { type = 'image' } = props;
-
+const ResourceType = ({ type = 'image' }: ResourceTypeProps) => {
   return (
-    <div className="absolute bottom-0 right-0 bg-white p-1 rounded-tl flex items-center justify-center">
+    <div className="absolute right-0 bottom-0 flex items-center justify-center rounded-tl bg-white p-1">
       {type === 'image' && <i className="fa-solid fa-image" title="Image" />}
       {type === 'video' && <i className="fa-solid fa-film" title="Video" />}
       {type === 'plugin' && <i className="fa-solid fa-puzzle-piece" title="Plugin" />}

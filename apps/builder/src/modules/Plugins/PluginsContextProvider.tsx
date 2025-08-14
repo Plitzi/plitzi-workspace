@@ -142,7 +142,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   );
 
   const getPluginSettings = useCallback(
-    (pluginType: string, attribute?: string, defaultValue = '') => {
+    (pluginType: string, attribute?: string, defaultValue: string | number | boolean = '') => {
       if (!attribute) {
         return get(plugins, `${pluginType}.settings`, {});
       }
@@ -155,12 +155,12 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   const setPluginSettings = useCallback(
     async (pluginType: string, attribute: string, value: string) => {
       if (!(plugins[pluginType] as ComponentDefinition | undefined)) {
-        return;
+        return false;
       }
 
       const plugin = cloneDeep(plugins[pluginType]);
       set(plugin, `settings.${attribute}`, value);
-      await update(plugin);
+      return await update(plugin);
     },
     [plugins, update]
   );

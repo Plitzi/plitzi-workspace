@@ -98,11 +98,15 @@ export type PluginsContextValue = {
   plugins: Record<string, ComponentDefinition>;
   dispatchPlugins?: unknown;
   fetch?: unknown;
-  add?: unknown;
-  setSettings?: unknown;
-  getSettings?: unknown;
-  update?: unknown;
-  remove?: unknown;
+  add?: (pluginType: string, resource?: string) => Promise<boolean>;
+  setSettings?: (pluginType: string, attribute: string, value: string) => Promise<boolean>;
+  getSettings?: (
+    pluginType: string,
+    attribute?: string,
+    defaultValue?: string | number | boolean
+  ) => ComponentDefinition['settings'] | string | number | boolean;
+  update?: (plugin: ComponentDefinition, resource?: string) => Promise<boolean>;
+  remove?: (pluginType: string) => Promise<boolean>;
   registerCustomAssets: (assets: Asset[]) => void;
   unregisterCustomAssets: (assets: string[]) => void;
   pluginStyles?: Record<string, string[]>;

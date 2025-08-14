@@ -1,75 +1,84 @@
-// Packages
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import classNames from 'classnames';
-import noop from 'lodash/noop';
+import { ApolloError } from '@apollo/client/errors';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
+import classNames from 'classnames';
+import { useState, useEffect, useRef, useCallback, use } from 'react';
 
-// Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
-import ResourceUploadStatus from './ResourceUploadStatus';
 import ResourceContent from './ResourceContent';
-import ResourceType from './ResourceType';
 import ResourceName from './ResourceName';
+import ResourceType from './ResourceType';
+import ResourceUploadStatus from './ResourceUploadStatus';
 
-/**
- * @param {{
- *   className?: string;
- *   id?: string;
- *   file?: object;
- *   type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
- *   title?: string;
- *   src?: string;
- *   metadata?: object;
- *   mutate?: (data: any) => void;
- *   onUploaded?: (resource: any) => void;
- *   onUploadCancel?: (file: File) => void;
- *   onError?: (e: Error) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const TemporalResource = props => {
-  const {
-    id = '',
-    type = 'image',
-    src = '',
-    title = '',
-    className = '',
-    file,
-    metadata = emptyObject,
-    mutate = noop,
-    onUploaded = noop,
-    onError: onErrorProp = noop,
-    onUploadCancel = noop
-  } = props;
+import type { Resource, ResourceFile, ResourceWithFile } from '../types';
+import type { PluginManifest } from '@plitzi/sdk-shared';
+
+export type TemporalResourceProps = {
+  className?: string;
+  id?: string;
+  file?: ResourceFile;
+  type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
+  title?: string;
+  src?: string;
+  metadata?: PluginManifest;
+  onUploaded?: (resource: ResourceWithFile) => void;
+  onUploadCancel?: (file: File) => void;
+  onError?: (e: Error) => void;
+};
+
+const TemporalResource = ({
+  id = '',
+  type = 'image',
+  src = '',
+  title = '',
+  className = '',
+  file,
+  metadata,
+  onUploaded,
+  onError: onErrorProp,
+  onUploadCancel
+}: TemporalResourceProps) => {
+  const { mutate } = use(NetworkContext);
   const [isUploaded, setIsUploaded] = useState(!!id);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progressUpload, setProgressUpload] = useState(0);
   const [hovered, setHovered] = useState(false);
-  const [error, setError] = useState(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
   const { addToast } = useToast();
-  const abortHandler = useRef(null);
+  const abortHandler = useRef<null | (() => void)>(null);
 
-  const onProgress = ev => {
+  const onProgress = useCallback((ev: { loaded: number; total: number }) => {
     const progress = ev.loaded / ev.total;
     setProgressUpload(Math.round(progress * 100));
     if (progress === 1) {
       setProcessing(true);
     }
-  };
+  }, []);
 
-  const onAbortPossible = abortHandlerInternal => {
+  const onAbortPossible = useCallback((abortHandlerInternal: () => void) => {
     abortHandler.current = abortHandlerInternal;
-  };
+  }, []);
 
-  const onError = e => {
-    console.log(e);
-    onErrorProp(e);
-  };
+  const onError = useCallback(
+    (e: Error) => {
+      console.log(e);
+      onErrorProp?.(e);
+    },
+    [onErrorProp]
+  );
 
-  const handleClickUpload = async () => {
+  const handleClickUpload = useCallback(async () => {
+    if (!file) {
+      addToast('File missing', {
+        appeareance: 'info',
+        autoDismiss: true,
+        placement: 'top-right'
+      });
+
+      return;
+    }
+
     if (isUploaded) {
       addToast('Resource already uploaded', {
         appeareance: 'info',
@@ -81,34 +90,29 @@ const TemporalResource = props => {
     }
 
     setUploading(true);
-    const response = await mutate(
+    const response = await mutate<Resource>(
       'SpaceAddResource',
       { resource: file, type, compression: type === 'plugin' ? 'gzip' : undefined },
       false,
       false,
-      {
-        customFetch: true,
-        onProgress,
-        onAbortPossible,
-        onError
-      }
+      { customFetch: true, onProgress, onAbortPossible, onError }
     );
 
-    if (response instanceof Error) {
-      setError(response);
+    if (response instanceof Error || response instanceof ApolloError) {
+      setError(response.message);
       setProgressUpload(0);
-    } else if (type === 'plugin') {
+    } else if (file.type === 'plugin') {
       setIsUploaded(true);
-      onUploaded({ ...response, file, metadata: file.metadata });
+      onUploaded?.({ ...response, file, metadata: file.metadata } as ResourceWithFile);
     } else {
       setIsUploaded(true);
-      onUploaded({ ...response, file });
+      onUploaded?.({ ...response, file } as ResourceWithFile);
     }
 
     setUploading(false);
     setProcessing(false);
     abortHandler.current = null;
-  };
+  }, [addToast, file, isUploaded, mutate, onAbortPossible, onError, onProgress, onUploaded, type]);
 
   useEffect(() => {
     return () => {
@@ -119,7 +123,7 @@ const TemporalResource = props => {
         abortHandler.current = null;
       }
     };
-  }, [abortHandler.current, isUploaded]);
+  }, [isUploaded, uploading]);
 
   const handleClickCancelUpload = useCallback(() => {
     if (abortHandler.current && uploading && !isUploaded) {
@@ -129,12 +133,14 @@ const TemporalResource = props => {
       setProgressUpload(0);
     }
 
-    onUploadCancel(file);
-  }, [abortHandler.current, file, isUploaded, onUploadCancel, setUploading, setProgressUpload]);
+    if (file) {
+      onUploadCancel?.(file);
+    }
+  }, [uploading, isUploaded, onUploadCancel, file]);
 
-  const handleMouseEnter = () => setHovered(true);
+  const handleMouseEnter = useCallback(() => setHovered(true), []);
 
-  const handleMouseLeave = () => setHovered(false);
+  const handleMouseLeave = useCallback(() => setHovered(false), []);
 
   return (
     <div
@@ -145,7 +151,7 @@ const TemporalResource = props => {
         className
       )}
     >
-      <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file.size} />
+      <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file?.size} />
       <ResourceType type={type} />
       {file?.name && <ResourceName name={file.name} />}
       {(uploading || processing || hovered) && (

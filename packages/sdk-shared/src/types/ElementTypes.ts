@@ -50,8 +50,9 @@ export type ComponentDefinition = Pick<
   assets: Asset[];
   manifest: PluginManifest;
   market: Omit<PluginManifest, 'name'> & { category: string };
-  settings: { [key: string]: unknown };
+  settings: { [key: string]: string | number | boolean };
   type: string;
   subPlugins: string[];
   resource: string;
+  isMain?: boolean;
 } & PluginManifest['runtime'];

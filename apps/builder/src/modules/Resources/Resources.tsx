@@ -1,41 +1,63 @@
-// Packages
-import React, { useCallback, use, useEffect, useMemo, useState } from 'react';
-import get from 'lodash/get';
-import classNames from 'classnames';
+import { ApolloError } from '@apollo/client/errors';
+import Heading from '@plitzi/plitzi-ui/Heading';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import Heading from '@plitzi/plitzi-ui-components/Heading';
+import classNames from 'classnames';
+import get from 'lodash/get';
+import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
-// Monorepo
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-
-// Alias
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
 import Resource from './Resource';
 import ResourceManager from './ResourceManager';
 
+import type { ResourceFile, ResourceWithFile, Resource as TResource } from './types';
+import type { ComponentDefinition, PageInfo } from '@plitzi/sdk-shared';
+
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
-/** @returns {React.ReactElement} */
 const Resources = () => {
-  const { query, mutate } = use(NetworkContext);
+  const { query } = use(NetworkContext);
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [, /* hasNextPage */ setHasNextPage] = useState(false);
-  const [resources, setResources] = useState([]);
+  const [resources, setResources] = useState<TResource[]>([]);
   const { plugins, remove, add } = use(PluginsContext);
 
-  const handleResourceRemoved = resource => () => {
-    if (resource.type === 'plugin') {
-      const plugin = Object.values(plugins).find(plugin => plugin.type === resource?.metadata?.root && plugin.isMain);
-      if (plugin) {
-        remove(plugin.type);
-      }
-    }
+  const fetch = useCallback(
+    async (search: string) => {
+      setLoading(true);
+      const result = await query<{ pageInfo: PageInfo; edges: TResource[] }>(
+        'SpaceResources',
+        { filter: { name: { contains: search } }, pageSize: 30 },
+        'network-only'
+      );
 
-    fetch('');
-  };
+      if (result instanceof ApolloError || !result) {
+        return;
+      }
+
+      const { pageInfo, edges } = result;
+      setResources(edges);
+      setHasNextPage(pageInfo.hasNextPage);
+      setLoading(false);
+    },
+    [query]
+  );
+
+  const handleResourceRemoved = useCallback(
+    (resource: TResource) => () => {
+      if (resource.type === 'plugin') {
+        const plugin = Object.values(plugins).find(plugin => plugin.type === resource.metadata.root && plugin.isMain);
+        if (plugin) {
+          void remove?.(plugin.type);
+        }
+      }
+
+      void fetch('');
+    },
+    [fetch, plugins, remove]
+  );
 
   // const handleResourceUpdated = type => async settings => {
   //   const plugin = plugins[type];
@@ -57,44 +79,29 @@ const Resources = () => {
   //   }
   // };
 
-  const fetch = async search => {
-    setLoading(true);
-    const result = await query(
-      'SpaceResources',
-      { filter: { name: { contains: search } }, pageSize: 30 },
-      'network-only'
-    );
-    if (!(result instanceof Error)) {
-      const { pageInfo, edges } = result;
-      setResources(edges);
-      setHasNextPage(pageInfo.hasNextPage);
-      setLoading(false);
-    }
-  };
-
   const handleUploaded = useCallback(
-    resource => {
+    (resource: ResourceWithFile) => {
       if (resource.type === 'plugin') {
         const pluginType = get(resource, 'metadata.root');
         const path = get(resource, 'path');
         if (pluginType && path) {
-          add(pluginType, path);
+          void add?.(pluginType, path);
         }
       }
 
-      fetch('');
+      void fetch('');
     },
-    [fetch]
+    [add, fetch]
   );
 
   const handleUploadAdded = useCallback(
-    resource => {
+    (resource: ResourceFile) => {
       if (resource.resourceType !== 'plugin') {
         return true;
       }
 
-      const pluginType = get(resource, 'metadata.root');
-      if (plugins[pluginType]) {
+      const pluginType = get(resource, 'metadata.root') as string;
+      if (plugins[pluginType] as ComponentDefinition | undefined) {
         addToast(
           <div>
             Plugin <b>{get(resource, 'metadata.definition.name')}</b> already installed
@@ -113,7 +120,8 @@ const Resources = () => {
   );
 
   useEffect(() => {
-    fetch('');
+    void fetch('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const finalResources = useMemo(() => {
@@ -137,14 +145,13 @@ const Resources = () => {
     <div className="flex w-full grow basis-0 flex-col overflow-y-auto">
       <ResourceManager
         className="shrink-0"
-        mutate={mutate}
         uploadTypes={uploadTypes}
         onUploaded={handleUploaded}
         onUploadAdded={handleUploadAdded}
       />
       {!loading && finalResources.length > 0 && (
         <div className="flex min-h-[200px] grow basis-0 flex-col overflow-y-auto px-2">
-          <Heading type="h5" className="mb-2">
+          <Heading as="h5" className="mb-2">
             Uploaded
           </Heading>
           <div className="grid grid-cols-2 gap-2 overflow-y-auto pb-1">
@@ -156,7 +163,7 @@ const Resources = () => {
                 type={resource.type}
                 title={resource.name}
                 src={resource.path}
-                metadata={resource.metadata}
+                metadata={resource.type === 'plugin' ? resource.metadata : undefined}
                 onRemove={handleResourceRemoved(resource)}
               />
             ))}
