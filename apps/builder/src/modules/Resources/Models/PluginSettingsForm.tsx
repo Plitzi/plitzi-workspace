@@ -7,9 +7,7 @@ export type PluginSettingsFormProps = {
   onSubmit?: (values: object) => void;
 };
 
-const PluginSettingsForm = ({
-  className = '' /* , values = emptyObject, onSubmit = noop, onClose = noop */
-}: PluginSettingsFormProps) => {
+const PluginSettingsForm = ({ className = '' /* , values, onSubmit, onClose */ }: PluginSettingsFormProps) => {
   // const handleSubmit = (isValid, values) => {
   //   if (isValid) {
   //     onSubmit(values);
