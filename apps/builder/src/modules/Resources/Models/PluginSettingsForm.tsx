@@ -1,22 +1,15 @@
-// Packages
-import React from 'react';
 import classNames from 'classnames';
-// import noop from 'lodash/noop';
 
-// Monorepo
-// import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+export type PluginSettingsFormProps = {
+  className?: string;
+  values?: object;
+  onClose?: () => void;
+  onSubmit?: (values: object) => void;
+};
 
-/**
- * @param {{
- *   className?: string;
- *   values?: object;
- *   onClose?: () => void;
- *   onSubmit?: (values: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const PluginSettingsForm = props => {
-  const { className = '' /* , values = emptyObject, onSubmit = noop, onClose = noop */ } = props;
+const PluginSettingsForm = ({
+  className = '' /* , values = emptyObject, onSubmit = noop, onClose = noop */
+}: PluginSettingsFormProps) => {
   // const handleSubmit = (isValid, values) => {
   //   if (isValid) {
   //     onSubmit(values);
