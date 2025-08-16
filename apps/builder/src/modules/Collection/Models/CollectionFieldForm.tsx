@@ -25,8 +25,14 @@ const collectionFieldFormSchema = z.object({
     'option',
     'file'
   ]),
-  name: z.string().min(5),
-  machineName: z.string().min(5),
+  name: z
+    .string()
+    .min(5)
+    .regex(/^[a-zA-Z _-]+$/),
+  machineName: z
+    .string()
+    .min(5)
+    .regex(/^[a-zA-Z_-]+$/),
   params: z.object({
     required: z.boolean(),
     primary: z.boolean()
