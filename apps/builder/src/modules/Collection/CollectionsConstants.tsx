@@ -1,3 +1,5 @@
+import Icon from '@plitzi/plitzi-ui/Icon';
+
 export const fieldParams = {
   text: { required: true, minLength: 5, maxLength: 30, multiline: false },
   richText: {},
@@ -81,3 +83,9 @@ export const recordStatus = {
   STATUS_ARCHIVED: 'archived',
   STATUS_CREATED: 'created'
 };
+
+export const fieldTypesOptions = Object.keys(fieldTypes).map(typeKey => ({
+  label: typeKey,
+  value: typeKey,
+  icon: <Icon icon={fieldTypes[typeKey as keyof typeof fieldTypes].icon} size="xs" />
+}));

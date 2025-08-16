@@ -140,7 +140,7 @@ const CollectionContextProvider = props => {
   const fetchCollections = useCallback(
     async (filter, cursor, limit, append = [], store = true) => {
       const result = await query('Collections', { filter, cursor, limit }, 'network-only');
-      if (!result) {
+      if (!result | !result.edges) {
         return null;
       }
 
