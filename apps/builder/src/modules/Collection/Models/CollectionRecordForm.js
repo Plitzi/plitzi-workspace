@@ -39,7 +39,7 @@ const CollectionRecordForm = props => {
 
   const { control, handleSubmit } = useForm({ defaultValues: values });
 
-  const handleSubmitInternal = values => onSubmit({ record: { id, status: recordStatus.STATUS_PUBLISHED, values } });
+  const handleSubmitInternal = values => onSubmit({ record: { id, status: 'published', values } });
 
   // Pending do when is just created to publish later in the future
 

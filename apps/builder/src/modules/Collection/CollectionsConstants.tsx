@@ -76,14 +76,6 @@ export const collectionFieldTypeToInteractions = (type: keyof typeof fieldParams
   return finalType;
 };
 
-export const recordStatus = {
-  STATUS_PUBLISHED: 'published',
-  STATUS_DRAFT: 'draft',
-  STATUS_DELETED: 'deleted',
-  STATUS_ARCHIVED: 'archived',
-  STATUS_CREATED: 'created'
-};
-
 export const fieldTypesOptions = Object.keys(fieldTypes).map(typeKey => ({
   label: typeKey,
   value: typeKey,

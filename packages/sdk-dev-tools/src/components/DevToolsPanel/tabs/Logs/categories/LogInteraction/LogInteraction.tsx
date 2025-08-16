@@ -8,10 +8,6 @@ import LogInteractionHeader from './LogInteractionHeader';
 import type { LogInteraction as TLogInteraction } from '../../../../../../DevToolsContext';
 import type { ReactNode } from 'react';
 
-export const LOG_INTERACTION_STATUS_SUCCESS = 'success';
-export const LOG_INTERACTION_STATUS_FAILED = 'failed';
-export const LOG_INTERACTION_STATUS_SKIPPED = 'skipped';
-
 const iconCollapsed = <i className="fa-solid fa-angle-right" />;
 const iconExpanded = <i className="fa-solid fa-angle-down" />;
 
@@ -33,11 +29,11 @@ const LogInteraction = ({
   );
 
   return (
-    <ContainerCollapsable className="w-full border-b last:border-b-none border-gray-300 px-2 py-1" collapsed>
+    <ContainerCollapsable className="last:border-b-none w-full border-b border-gray-300 px-2 py-1" collapsed>
       <ContainerCollapsable.Header
         title="Test"
         placement="left"
-        className={{ header: 'flex items-center justify-center mr-1 w-4 h-4', headerTitle: 'overflow-hidden' }}
+        className={{ header: 'mr-1 flex h-4 w-4 items-center justify-center', headerTitle: 'overflow-hidden' }}
         iconCollapsed={iconCollapsed}
         iconExpanded={iconExpanded}
       >
