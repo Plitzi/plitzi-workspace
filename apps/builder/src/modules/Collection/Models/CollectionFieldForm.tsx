@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import snakeCase from 'lodash/snakeCase';
@@ -6,9 +7,10 @@ import { z } from 'zod';
 
 import { fieldTypesOptions } from '../CollectionsConstants';
 
-import type { fieldTypes } from '../CollectionsConstants';
+import type { CollectionField } from '@plitzi/sdk-shared';
 
-const collectionFieldFormSchema = z.object({
+export const collectionFieldSchema = z.object({
+  id: z.string(),
   type: z.enum([
     'text',
     'richText',
@@ -43,12 +45,15 @@ export type CollectionFieldFormProps = {
   isNewField?: boolean;
   name?: string;
   machineName?: string;
-  type?: keyof typeof fieldTypes;
-  params?: object;
-  onSubmit?: (values: object) => void;
+  type?: CollectionField['type'];
+  params?: CollectionField['params'];
+  onSubmit?: (values: z.infer<typeof collectionFieldSchema>) => void;
   onValidate?: (
-    values: object
-  ) => { key: 'name' | 'machineName' | 'type' | 'params.required' | 'params.primary'; message: string } | null;
+    values: z.infer<typeof collectionFieldSchema>
+  ) =>
+    | { key: 'name' | 'machineName' | 'type' | 'params.required' | 'params.primary'; message: string }
+    | null
+    | undefined;
 };
 
 const CollectionFieldForm = ({
@@ -61,11 +66,11 @@ const CollectionFieldForm = ({
 }: CollectionFieldFormProps) => {
   const form = useForm({
     initialValues: { name, machineName, params, type },
-    config: { schema: collectionFieldFormSchema }
+    config: { schema: collectionFieldSchema }
   });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof collectionFieldFormSchema>) => {
+    (values: z.infer<typeof collectionFieldSchema>) => {
       const error = onValidate?.(values);
       if (error) {
         form.formMethods.setError(error.key, { message: error.message });
@@ -105,16 +110,16 @@ const CollectionFieldForm = ({
           <Form.Select2 name="type" size="xs" className="w-auto" options={fieldTypesOptions} />
         </div>
         <div className="flex w-[100px] items-center justify-center text-xl">
-          <Form.Checkbox name="params.required" />
+          <Form.Checkbox name="params.required" size="xs" />
         </div>
         <div className="flex w-[100px] items-center justify-center text-xl">
-          <Form.Checkbox name="params.primary" />
+          <Form.Checkbox name="params.primary" size="xs" />
         </div>
         <div className="flex w-[150px] items-center justify-center gap-4">
-          <Button type="reset" size="sm">
+          <Button type="reset" size="xs">
             <Button.Icon icon="fas fa-trash" intent="danger" className="cursor-pointer p-1" />
           </Button>
-          <Button type="submit" size="sm">
+          <Button type="submit" size="xs">
             <Button.Icon icon="fa-solid fa-check" intent="success" />
           </Button>
         </div>

@@ -12,7 +12,21 @@ export type CollectionField = {
   id: string;
   name: string;
   machineName: string;
-  type: 'text' | 'number' | 'boolean' | 'date';
+  type:
+    | 'text'
+    | 'richText'
+    | 'image'
+    | 'multiImage'
+    | 'video'
+    | 'link'
+    | 'email'
+    | 'phone'
+    | 'number'
+    | 'date'
+    | 'switch'
+    | 'color'
+    | 'option'
+    | 'file';
   params: { primary: boolean; required: boolean };
 };
 
@@ -66,7 +80,7 @@ export type CollectionContextValue = {
   removeCollection: (id: string) => Promise<Collection>;
   fetchRecords: (
     collectionId: string,
-    filter?: string,
+    filter?: string | object,
     cursor?: string,
     limit?: number,
     append?: CollectionRecord[],

@@ -31,7 +31,7 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
         return;
       }
 
-      const response = await showModal<{ record: CollectionRecord }>(
+      const response = await showModal<{ record: Omit<CollectionRecord, 'createdAt' | 'updatedAt'> }>(
         <Modal.Header>
           <h4>{name} Record</h4>
         </Modal.Header>,
@@ -52,7 +52,7 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
 
       if (response) {
         const { status, values } = response.record;
-        void updateRecord?.(id, recordId, status, values);
+        void updateRecord(id, recordId, status, values);
       }
     },
     [id, records, fields, name, showModal, updateRecord]
@@ -73,7 +73,7 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
       );
 
       if (response) {
-        void removeRecord?.(id, recordId);
+        void removeRecord(id, recordId);
       }
     },
     [id, removeRecord, showDialog]
@@ -85,7 +85,7 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
         return;
       }
 
-      const result = await fetchRecords?.(id, '{}', cursor as string, 20, append ? records : []);
+      const result = await fetchRecords(id, {}, cursor as string, 20, append ? records : []);
       if (result) {
         const { pageInfo } = result;
         setCursor(pageInfo.nextCursor);
@@ -104,7 +104,7 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
   const handleClickMore = useCallback(() => fetch(true), [fetch]);
 
   const handleClickAddRecord = useCallback(async () => {
-    const response = await showModal<{ record: CollectionRecord }>(
+    const response = await showModal<{ record: Omit<CollectionRecord, 'createdAt' | 'updatedAt'> }>(
       <Modal.Header>
         <h4>Add {name} Record</h4>
       </Modal.Header>,
@@ -117,9 +117,9 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
       { style: { width: '500px', maxHeight: '80vh', maxWidth: 'none' } }
     );
 
-    if (response) {
+    if (response && id) {
       const { status, values } = response.record;
-      void addRecord?.(id, status, values);
+      void addRecord(id, status, values);
     }
   }, [id, fields, name, showModal, addRecord]);
 

@@ -23,13 +23,13 @@ const ContainerCollections = ({ collectionId = '', onSourceChange }: ContainerCo
   const handleCancel = useCallback(() => setUpdateMode(false), [setUpdateMode]);
 
   const handleSubmitCollection = useCallback(
-    async (collection: TCollection) => {
+    async (collection: Omit<TCollection, 'records'>) => {
       const { id, name, namePlural, description, privacy, fields } = collection;
       let result: TCollection;
-      if (!id && addCollection) {
+      if (!id) {
         result = await addCollection(name, namePlural, description, privacy, fields);
         onSourceChange?.(result.id);
-      } else if (updateCollection) {
+      } else {
         result = await updateCollection(id, name, namePlural, description, privacy, fields);
         setUpdateMode(false);
       }
