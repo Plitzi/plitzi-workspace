@@ -30,7 +30,7 @@ const CollectionRecord = ({
       return 'Not Set';
     }
 
-    return moment(publishedAt).format('MMMM DD, YYYY');
+    return moment.utc(publishedAt * 1000).format('MMMM DD, YYYY');
   }, [publishedAt]);
 
   return (

@@ -106,9 +106,11 @@ const InitQuery = gql`
         records(limit: 20) {
           edges {
             id
+            status
             values
             createdAt
             updatedAt
+            publishedAt
           }
           pageInfo {
             hasPrevPage

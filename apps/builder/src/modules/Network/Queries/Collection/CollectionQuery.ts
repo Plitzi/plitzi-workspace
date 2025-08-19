@@ -12,9 +12,11 @@ const CollectionQuery = gql`
       records(filter: $recordsFilter, limit: 20) {
         edges {
           id
+          status
           values
           createdAt
           updatedAt
+          publishedAt
         }
         pageInfo {
           hasPrevPage

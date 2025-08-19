@@ -80,19 +80,19 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
   );
 
   const fetch = useCallback(
-    async (append = false) => {
-      if ((append && !cursor) || !id) {
+    async (recordsToAppend: CollectionRecord[] = []) => {
+      if ((recordsToAppend.length > 0 && !cursor) || !id) {
         return;
       }
 
-      const result = await fetchRecords(id, {}, cursor as string, 20, append ? records : []);
+      const result = await fetchRecords(id, {}, cursor as string, 20, recordsToAppend);
       if (result) {
         const { pageInfo } = result;
         setCursor(pageInfo.nextCursor);
         setHasNextPage(pageInfo.hasNextPage);
       }
     },
-    [cursor, fetchRecords, id, records]
+    [cursor, fetchRecords, id]
   );
 
   useEffect(() => {
@@ -101,7 +101,7 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
 
   const handleClickSettings = useCallback(() => onUpdateMode?.(true), [onUpdateMode]);
 
-  const handleClickMore = useCallback(() => fetch(true), [fetch]);
+  const handleClickMore = useCallback(() => fetch(records), [records, fetch]);
 
   const handleClickAddRecord = useCallback(async () => {
     const response = await showModal<{ record: Omit<CollectionRecord, 'createdAt' | 'updatedAt'> }>(

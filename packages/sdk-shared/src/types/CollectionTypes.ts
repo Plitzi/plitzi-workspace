@@ -36,6 +36,7 @@ export type CollectionRecord = {
   status: 'draft' | 'published' | 'archived';
   createdAt: number;
   updatedAt: number;
+  publishedAt?: number;
 };
 
 export type Collection = {
