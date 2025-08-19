@@ -18,8 +18,6 @@ const ContainerCollections = ({ collectionId = '', onSourceChange }: ContainerCo
   const { collections, addCollection, updateCollection } = use(CollectionContext);
   const collection = get(collections, collectionId, undefined);
 
-  // const { records, fields, name } = get(collections, id, {}) as TCollection;
-
   const handleCancel = useCallback(() => setUpdateMode(false), [setUpdateMode]);
 
   const handleSubmitCollection = useCallback(

@@ -1,4 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useEffect, useState } from 'react';
 
@@ -125,18 +126,19 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
 
   return (
     <div className="flex w-full grow basis-0 flex-col p-4">
-      <div className="mb-4 flex w-full items-center justify-end">
+      <div className="mb-4 flex w-full items-center justify-between">
+        <Heading as="h5">Records</Heading>
         <div className="flex">
-          <Button className="mr-2 rounded-md" title="Export">
-            <i className="fas fa-cloud-download-alt" />
+          <Button className="mr-2 rounded-md" title="Export" size="sm">
+            <Button.Icon icon="fas fa-cloud-download-alt" />
           </Button>
-          <Button className="mr-2 rounded-md" title="Import">
-            <i className="fas fa-cloud-upload-alt" />
+          <Button className="mr-2 rounded-md" title="Import" size="sm">
+            <Button.Icon icon="fas fa-cloud-upload-alt" />
           </Button>
-          <Button className="mr-2 rounded-md" onClick={handleClickSettings} title="Settings">
-            <i className="fas fa-cog" />
+          <Button className="mr-2 rounded-md" onClick={handleClickSettings} title="Settings" size="sm">
+            <Button.Icon icon="fas fa-cog" />
           </Button>
-          <Button className="rounded-md capitalize" onClick={handleClickAddRecord}>{`New ${name}`}</Button>
+          <Button className="rounded-md capitalize" onClick={handleClickAddRecord} size="sm">{`New ${name}`}</Button>
         </div>
       </div>
       <div className="overflow-auto">
