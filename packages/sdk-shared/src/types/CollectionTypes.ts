@@ -54,30 +54,26 @@ export type CollectionContextValue = {
     filter: string,
     cursor?: string,
     limit?: number,
-    append?: CollectionRecord[],
+    append?: Collection[],
     store?: boolean
   ) => Promise<Collection[]>;
-  fetchCollection: (
-    id: string,
-    recordsFilter: string,
-    store?: boolean
-  ) => Promise<Omit<Collection, 'records'> & { records: { pageInfo: PageInfo; edges: CollectionRecord[] } }>;
+  fetchCollection: (id: string, recordsFilter: string, store?: boolean) => Promise<CollectionRaw | undefined>;
   addCollection: (
     name: string,
     namePlural: string,
     description: string,
-    privacy: 'public' | 'private',
-    fields: Record<string, CollectionField>
-  ) => Promise<Collection>;
+    privacy: Collection['privacy'],
+    fields: Collection['fields']
+  ) => Promise<Collection | undefined>;
   updateCollection: (
     id: string,
     name: string,
     namePlural: string,
     description: string,
-    privacy: 'public' | 'private',
-    fields: Record<string, CollectionField>
-  ) => Promise<Collection>;
-  removeCollection: (id: string) => Promise<Collection>;
+    privacy: Collection['privacy'],
+    fields: Collection['fields']
+  ) => Promise<Collection | undefined>;
+  removeCollection: (id: string) => Promise<boolean>;
   fetchRecords: (
     collectionId: string,
     filter?: string | object,
@@ -85,22 +81,22 @@ export type CollectionContextValue = {
     limit?: number,
     append?: CollectionRecord[],
     store?: boolean
-  ) => Promise<{ pageInfo: PageInfo; edges: CollectionRecord[] } | undefined | null>;
+  ) => Promise<{ pageInfo: PageInfo; edges: CollectionRecord[] } | undefined>;
   fetchRecord: (collectionId: string, id: string, store?: boolean) => Promise<CollectionRecord | undefined>;
   addRecord: (
     collectionId: string,
-    status: string,
+    status: CollectionRecord['status'],
     values: CollectionRecord['values'],
     updateStore?: boolean
-  ) => Promise<CollectionRecord>;
+  ) => Promise<CollectionRecord | undefined>;
   updateRecord: (
     collectionId: string,
     recordId: string,
-    status: string,
+    status: CollectionRecord['status'],
     values: CollectionRecord['values'],
     updateStore?: boolean
-  ) => Promise<CollectionRecord>;
-  removeRecord: (collectionId: string, recordId: string, updateStore?: boolean) => Promise<CollectionRecord>;
+  ) => Promise<CollectionRecord | undefined>;
+  removeRecord: (collectionId: string, recordId: string, updateStore?: boolean) => Promise<boolean>;
 };
 
 // Raws

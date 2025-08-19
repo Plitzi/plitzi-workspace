@@ -6,7 +6,12 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import { collectionFieldTypeToInteractions } from '@pmodules/Collection/CollectionsConstants';
 
-import type { Collection, InteractionBaseCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type {
+  Collection,
+  CollectionRecord,
+  InteractionBaseCallback,
+  InteractionCallbackParamValues
+} from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type CollectionInteractionsProps = {
@@ -45,7 +50,9 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
   }, []);
 
   const handleAddCollectionRecord = useCallback(
-    async (params: InteractionCallbackParamValues<{ collectionId: string; recordStatus: string }>) => {
+    async (
+      params: InteractionCallbackParamValues<{ collectionId: string; recordStatus: CollectionRecord['status'] }>
+    ) => {
       const { collectionId, recordStatus = 'draft' } = params;
       const collection = get(collections, collectionId, undefined);
       if (!collection) {
@@ -67,7 +74,11 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
 
   const handleUpdateCollectionRecord = useCallback(
     async (
-      params: InteractionCallbackParamValues<{ collectionId: string; recordStatus: string; recordId: string }>
+      params: InteractionCallbackParamValues<{
+        collectionId: string;
+        recordStatus: CollectionRecord['status'];
+        recordId: string;
+      }>
     ) => {
       const { collectionId, recordStatus = 'draft', recordId } = params;
       const collection = get(collections, collectionId, undefined);

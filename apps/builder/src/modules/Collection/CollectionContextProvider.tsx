@@ -1,24 +1,22 @@
-// Packages
-import React, { useCallback, use, useMemo, useReducer, useRef } from 'react';
+import { ApolloError } from '@apollo/client/errors';
 import omit from 'lodash/omit';
+import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
-// Alias
 import CollectionContext from '@pmodules/Collection/CollectionContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
+import NetworkContext from '@pmodules/Network/NetworkContext';
 
-// Relatives
 import CollectionReducer, { CollectionsActions } from './CollectionReducer';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   collections?: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const CollectionContextProvider = props => {
-  const { children, collections: collectionsProp } = props;
+import type { Collection, CollectionRaw, CollectionRecord, PageInfo } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type CollectionContextProviderProps = {
+  children: ReactNode;
+  collections?: Record<string, Collection>;
+};
+
+const CollectionContextProvider = ({ children, collections: collectionsProp }: CollectionContextProviderProps) => {
   const { query, mutate } = use(NetworkContext);
   const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
@@ -26,14 +24,14 @@ const CollectionContextProvider = props => {
       return collectionsProp;
     }
 
-    return internalData.collections ?? {};
-  }, [collectionsProp]);
+    return internalData.collections;
+  }, [collectionsProp, internalData.collections]);
   const [collections, dispatchCollection] = useReducer(CollectionReducer, collectionsPropMemo);
   const collectionsRef = useRef(collections);
   collectionsRef.current = collections;
 
   const collectionsAdd = useCallback(
-    collection => {
+    (collection: Collection) => {
       dispatchCollection({
         type: CollectionsActions.COLLECTIONS_ADD,
         collections: { ...collectionsRef.current, [collection.id]: collection }
@@ -43,7 +41,7 @@ const CollectionContextProvider = props => {
   );
 
   const collectionsAddMany = useCallback(
-    collectionsToAdd => {
+    (collectionsToAdd: Collection[]) => {
       const collectionsToAddAux = {};
       collectionsToAdd.forEach(collection => {
         collectionsToAddAux[collection.id] = collection;
@@ -58,7 +56,7 @@ const CollectionContextProvider = props => {
   );
 
   const collectionsUpdate = useCallback(
-    collection => {
+    (collection: Collection) => {
       dispatchCollection({
         type: CollectionsActions.COLLECTIONS_UPDATE,
         collections: { ...collectionsRef.current, [collection.id]: collection }
@@ -68,7 +66,7 @@ const CollectionContextProvider = props => {
   );
 
   const collectionsRemove = useCallback(
-    collectionId => {
+    (collectionId: string) => {
       dispatchCollection({
         type: CollectionsActions.COLLECTIONS_REMOVE,
         collections: omit(collectionsRef.current, [collectionId])
@@ -78,8 +76,8 @@ const CollectionContextProvider = props => {
   );
 
   const collectionRecordsAdd = useCallback(
-    (collectionId, record) => {
-      if (!collectionsRef.current[collectionId]) {
+    (collectionId: string, record: CollectionRecord) => {
+      if (!(collectionsRef.current[collectionId] as Collection | undefined)) {
         return;
       }
 
@@ -93,8 +91,8 @@ const CollectionContextProvider = props => {
   );
 
   const collectionRecordsAddMany = useCallback(
-    (collectionId, records) => {
-      if (!collectionsRef.current[collectionId]) {
+    (collectionId: string, records: CollectionRecord[]) => {
+      if (!(collectionsRef.current[collectionId] as Collection | undefined)) {
         return;
       }
 
@@ -108,8 +106,8 @@ const CollectionContextProvider = props => {
   );
 
   const collectionRecordsUpdate = useCallback(
-    (collectionId, record) => {
-      if (!collectionsRef.current[collectionId]) {
+    (collectionId: string, record: CollectionRecord) => {
+      if (!(collectionsRef.current[collectionId] as Collection | undefined)) {
         return;
       }
 
@@ -123,8 +121,8 @@ const CollectionContextProvider = props => {
   );
 
   const collectionRecordsRemove = useCallback(
-    (collectionId, recordId) => {
-      if (!collectionsRef.current[collectionId]) {
+    (collectionId: string, recordId: string) => {
+      if (!(collectionsRef.current[collectionId] as Collection | undefined)) {
         return;
       }
 
@@ -138,35 +136,35 @@ const CollectionContextProvider = props => {
   );
 
   const fetchCollections = useCallback(
-    async (filter, cursor, limit, append = [], store = true) => {
-      const result = await query('Collections', { filter, cursor, limit }, 'network-only');
-      if (!result | !result.edges) {
-        return null;
+    async (filter: string | object, cursor?: string, limit?: number, append: Collection[] = [], store = true) => {
+      const result = await query<{ edges: Collection[] }>('Collections', { filter, cursor, limit }, 'network-only');
+      if (!result || result instanceof ApolloError) {
+        return [];
       }
 
       if (store) {
         collectionsAddMany([...append, ...result.edges]);
       }
 
-      return result;
+      return result.edges;
     },
     [query, collectionsAddMany]
   );
 
   const fetchCollection = useCallback(
-    async (id, recordsFilter, store = true) => {
-      const variables = { id };
+    async (id: string, recordsFilter: string, store = true) => {
+      const variables: { id: string; recordsFilter?: string } = { id };
       if (recordsFilter) {
         variables.recordsFilter = recordsFilter;
       }
 
-      const result = await query('Collection', variables, 'network-only');
-      if (!result || result.errors) {
-        return null;
+      const result = await query<CollectionRaw>('Collection', variables, 'network-only');
+      if (!result || result instanceof ApolloError) {
+        return undefined;
       }
 
       if (store) {
-        collectionsAdd({ ...result, records: result.records.edges ?? [] });
+        collectionsAdd({ ...result, records: result.records.edges });
       }
 
       return result;
@@ -177,10 +175,21 @@ const CollectionContextProvider = props => {
   // Queries
 
   const fetchRecords = useCallback(
-    async (collectionId, filter, cursor, limit, append = [], store = true) => {
-      const result = await query('CollectionRecords', { collectionId, filter, cursor, limit }, 'network-only');
-      if (!result) {
-        return null;
+    async (
+      collectionId: string,
+      filter?: string | object,
+      cursor?: string,
+      limit?: number,
+      append: CollectionRecord[] = [],
+      store = true
+    ) => {
+      const result = await query<{ pageInfo: PageInfo; edges: CollectionRecord[] }>(
+        'CollectionRecords',
+        { collectionId, filter, cursor, limit },
+        'network-only'
+      );
+      if (!result || result instanceof ApolloError) {
+        return undefined;
       }
 
       if (store) {
@@ -193,10 +202,10 @@ const CollectionContextProvider = props => {
   );
 
   const fetchRecord = useCallback(
-    async (collectionId, id, store = true) => {
-      const result = await query('CollectionRecord', { collectionId, id }, 'network-only');
-      if (!result) {
-        return null;
+    async (collectionId: string, id: string, store = true) => {
+      const result = await query<CollectionRecord>('CollectionRecord', { collectionId, id }, 'network-only');
+      if (!result || result instanceof ApolloError) {
+        return undefined;
       }
 
       if (store) {
@@ -211,73 +220,116 @@ const CollectionContextProvider = props => {
   // Mutations
 
   const addCollection = useCallback(
-    async (name, namePlural, description, privacy, fields) => {
-      const result = await mutate('CollectionAdd', { name, namePlural, description, privacy, fields });
-      if (result) {
+    async (
+      name: string,
+      namePlural: string,
+      description: string,
+      privacy: Collection['privacy'],
+      fields: Collection['fields']
+    ) => {
+      const result = await mutate<Collection>('CollectionAdd', { name, namePlural, description, privacy, fields });
+      if (result && !(result instanceof ApolloError)) {
         collectionsAdd(result);
+
+        return result;
       }
 
-      return result;
+      return undefined;
     },
     [mutate, collectionsAdd]
   );
 
   const updateCollection = useCallback(
-    async (id, name, namePlural, description, privacy, fields) => {
-      const result = await mutate('CollectionUpdate', { id, name, namePlural, description, privacy, fields });
-      if (result) {
+    async (
+      id: string,
+      name: string,
+      namePlural: string,
+      description: string,
+      privacy: Collection['privacy'],
+      fields: Collection['fields']
+    ) => {
+      const result = await mutate<Collection>('CollectionUpdate', {
+        id,
+        name,
+        namePlural,
+        description,
+        privacy,
+        fields
+      });
+      if (result && !(result instanceof ApolloError)) {
         collectionsUpdate(result);
+
+        return result;
       }
 
-      return result;
+      return undefined;
     },
     [mutate, collectionsUpdate]
   );
 
   const removeCollection = useCallback(
-    async id => {
-      const result = await mutate('CollectionRemove', { id });
-      if (result) {
+    async (id: string) => {
+      const result = await mutate<Collection>('CollectionRemove', { id });
+      if (result && !(result instanceof ApolloError)) {
         collectionsRemove(id);
+
+        return true;
       }
 
-      return result;
+      return false;
     },
     [mutate, collectionsRemove]
   );
 
   const addRecord = useCallback(
-    async (collectionId, status, values, updateStore = true) => {
-      const result = await mutate('CollectionAddRecord', { collectionId, status, values });
-      if (result && updateStore) {
+    async (
+      collectionId: string,
+      status: CollectionRecord['status'],
+      values: CollectionRecord['values'],
+      updateStore = true
+    ) => {
+      const result = await mutate<CollectionRecord>('CollectionAddRecord', { collectionId, status, values });
+      if (result && !(result instanceof ApolloError) && updateStore) {
         collectionRecordsAdd(collectionId, result);
+
+        return result;
       }
 
-      return result;
+      return undefined;
     },
     [mutate, collectionRecordsAdd]
   );
 
   const updateRecord = useCallback(
-    async (collectionId, id, status, values, updateStore = true) => {
-      const result = await mutate('CollectionUpdateRecord', { id, status, values });
-      if (result && updateStore) {
+    async (
+      collectionId: string,
+      id: string,
+      status: CollectionRecord['status'],
+      values: CollectionRecord['values'],
+      updateStore = true
+    ) => {
+      const result = await mutate<CollectionRecord>('CollectionUpdateRecord', { id, status, values });
+      if (result && !(result instanceof ApolloError) && updateStore) {
         collectionRecordsUpdate(collectionId, result);
+
+        return result;
       }
 
-      return result;
+      return undefined;
     },
     [mutate, collectionRecordsUpdate]
   );
 
   const removeRecord = useCallback(
-    async (collectionId, id, updateStore = true) => {
+    async (collectionId: string, id: string, updateStore = true) => {
       const result = await mutate('CollectionRemoveRecord', { id });
       if (result && updateStore) {
         collectionRecordsRemove(collectionId, id);
+
+        return true;
       }
 
-      return !!result;
+      return false;
     },
     [mutate, collectionRecordsRemove]
   );
