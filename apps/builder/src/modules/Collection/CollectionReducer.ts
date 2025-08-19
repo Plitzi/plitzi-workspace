@@ -1,7 +1,8 @@
-// Packages
+import { produce } from 'immer';
 import get from 'lodash/get';
 import set from 'lodash/set';
-import { produce } from 'immer';
+
+import type { Collection, CollectionRecord } from '@plitzi/sdk-shared';
 
 export const CollectionsActions = {
   COLLECTIONS_ADD: 'COLLECTIONS_ADD',
@@ -12,9 +13,19 @@ export const CollectionsActions = {
   COLLECTION_RECORDS_ADD_MANY: 'COLLECTION_RECORDS_ADD_MANY',
   COLLECTION_RECORDS_UPDATE: 'COLLECTION_RECORDS_UPDATE',
   COLLECTION_RECORDS_REMOVE: 'COLLECTION_RECORDS_REMOVE'
-};
+} as const;
 
-const CollectionReducer = (state, action = {}) => {
+export type StyleReducerActions =
+  | {
+      type: 'COLLECTIONS_ADD' | 'COLLECTIONS_ADD_MANY' | 'COLLECTIONS_UPDATE' | 'COLLECTIONS_REMOVE';
+      collections: Record<string, Collection>;
+    }
+  | { type: 'COLLECTION_RECORDS_ADD'; collectionId: string; record: CollectionRecord }
+  | { type: 'COLLECTION_RECORDS_ADD_MANY'; collectionId: string; records: CollectionRecord[] }
+  | { type: 'COLLECTION_RECORDS_UPDATE'; collectionId: string; record: CollectionRecord }
+  | { type: 'COLLECTION_RECORDS_REMOVE'; collectionId: string; recordId: string };
+
+const CollectionReducer = (state: Record<string, Collection>, action: StyleReducerActions) => {
   switch (action.type) {
     case CollectionsActions.COLLECTIONS_ADD:
     case CollectionsActions.COLLECTIONS_ADD_MANY:
@@ -25,7 +36,7 @@ const CollectionReducer = (state, action = {}) => {
 
     case CollectionsActions.COLLECTION_RECORDS_ADD: {
       return produce(state, draft => {
-        const records = get(draft, `${action.collectionId}.records`);
+        const records = get(draft, `${action.collectionId}.records`, []) as CollectionRecord[];
         set(draft, `${action.collectionId}.records`, [...records, action.record]);
       });
     }
@@ -38,7 +49,7 @@ const CollectionReducer = (state, action = {}) => {
 
     case CollectionsActions.COLLECTION_RECORDS_UPDATE: {
       return produce(state, draft => {
-        const records = get(draft, `${action.collectionId}.records`);
+        const records = get(draft, `${action.collectionId}.records`, []) as CollectionRecord[];
         const recordIndex = records.findIndex(record => record.id === action.record.id);
         set(draft, `${action.collectionId}.records.${recordIndex}`, action.record);
       });
@@ -49,7 +60,7 @@ const CollectionReducer = (state, action = {}) => {
 
       return produce(state, draft => {
         const collection = state[collectionId];
-        if (!collection) {
+        if (!(collection as Collection | undefined)) {
           return;
         }
 
