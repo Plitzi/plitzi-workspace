@@ -1,4 +1,10 @@
-export const initialCanvasSetup = ({ canvas, backgroundColor }) => {
+export const initialCanvasSetup = ({
+  canvas,
+  backgroundColor
+}: {
+  canvas: HTMLCanvasElement;
+  backgroundColor: string;
+}) => {
   const { height, width } = canvas;
   const halfWidth = Math.round(width / 2);
   const context = canvas.getContext('2d');

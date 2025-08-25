@@ -1,4 +1,6 @@
-export const parsePlugin = pluginRaw => {
+import type { MarketPlacePluginRaw, MarketPlacePlugin } from '../types';
+
+export const parsePlugin = (pluginRaw: MarketPlacePluginRaw): MarketPlacePlugin => {
   const { name, description, type, market, revisions, version, latestVersion, createdAt, updatedAt } = pluginRaw;
   const { icon, backgroundColor, owner, category, verified, website } = market;
 
@@ -6,7 +8,7 @@ export const parsePlugin = pluginRaw => {
     name,
     description,
     type,
-    latestVersion: latestVersion.version,
+    latestVersion: latestVersion?.version,
     version,
     owner,
     verified,

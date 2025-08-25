@@ -44,7 +44,7 @@ const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
 const nativeEventsList = ['onClick', 'onFocus', 'onBlur', 'onMouseEnter', 'onMouseLeave'];
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
-  ref?: RefObject<HTMLElement>;
+  ref?: RefObject<HTMLElement | null>;
   children?: ReactNode;
   tag?: T;
   className?: string;

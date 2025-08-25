@@ -1,66 +1,63 @@
-// Packages
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
+import { useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { drawByLiveStream, initialCanvasSetup } from './helpers'; //  drawByBlob, getBarsData,
 // import { useWebWorker } from '../../hooks/useWebWorker';
 
-const autioDataDefault = [];
+import type { RefObject } from 'react';
 
-/**
- * @param {{
- *   className?: string;
- *   audioData?: number[];
- *   recordingPaused?: boolean;
- *   isRecording?: boolean;
- *   speed?: number;
- *   backgroundColor?: string;
- *   mainBarColor?: string;
- *   barWidth?: number;
- *   gap?: number;
- *   rounded?: number;
- *   animateCurrentPick?: boolean;
- *   fullscreen?: boolean;
- *   ref?: React.RefObject<HTMLCanvasElement>;
- * }} props
- * @returns {React.ReactElement}
- */
-const VoiceVisualizer = props => {
-  const {
-    ref,
-    className = 'h-[100px]',
-    audioData = autioDataDefault,
-    recordingPaused = false,
-    isRecording = false,
-    speed = 3,
-    backgroundColor = 'transparent',
-    mainBarColor = '#FFFFFF',
-    barWidth = 2,
-    gap = 1,
-    rounded = 5,
-    animateCurrentPick = true,
-    fullscreen = false
-  } = props;
+export type VoiceVisualizerProps = {
+  className?: string;
+  audioData?: Uint8Array<ArrayBuffer>;
+  recordingPaused?: boolean;
+  isRecording?: boolean;
+  speed?: number;
+  backgroundColor?: string;
+  mainBarColor?: string;
+  barWidth?: number;
+  gap?: number;
+  rounded?: number;
+  animateCurrentPick?: boolean;
+  fullscreen?: boolean;
+  ref?: RefObject<HTMLCanvasElement | null>;
+};
+
+const VoiceVisualizer = ({
+  ref,
+  className = 'h-[100px]',
+  audioData,
+  recordingPaused = false,
+  isRecording = false,
+  speed = 3,
+  backgroundColor = 'transparent',
+  mainBarColor = '#FFFFFF',
+  barWidth = 2,
+  gap = 1,
+  rounded = 5,
+  animateCurrentPick = true,
+  fullscreen = false
+}: VoiceVisualizerProps) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  useImperativeHandle(ref, () => canvasRef.current!, [canvasRef]);
   const formattedSpeed = Math.trunc(speed);
   const formattedGap = Math.trunc(gap);
   const formattedBarWidth = Math.trunc(barWidth);
   const unit = formattedBarWidth + formattedGap * formattedBarWidth;
-
-  const canvasRef = ref ?? useRef(ref);
   const picksRef = useRef([]);
   const indexSpeedRef = useRef(formattedSpeed);
   const indexRef = useRef(formattedBarWidth);
   const index2Ref = useRef(formattedBarWidth);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!canvasRef.current) {
       return;
     }
 
     const { width, height } = canvasRef.current.getBoundingClientRect();
     setSize({ width, height });
-  }, [canvasRef.current]);
+  }, []);
 
   // const {
   //   result: barsData,
@@ -68,12 +65,12 @@ const VoiceVisualizer = props => {
   //   run
   // } = useWebWorker({ fn: getBarsData, initialValue: [], onMessageReceived: completedAudioProcessing });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!canvasRef.current) {
       return;
     }
 
-    if (indexSpeedRef.current >= formattedSpeed || !audioData.length) {
+    if (indexSpeedRef.current >= formattedSpeed || !audioData?.length) {
       indexSpeedRef.current = 0;
       drawByLiveStream({
         audioData,
@@ -83,7 +80,7 @@ const VoiceVisualizer = props => {
         canvas: canvasRef.current,
         picks: picksRef.current,
         isRecording,
-        recordingPaused,
+        isPausedRecording: recordingPaused,
         backgroundColor,
         mainBarColor,
         barWidth: formattedBarWidth,
@@ -95,7 +92,6 @@ const VoiceVisualizer = props => {
 
     indexSpeedRef.current += 1;
   }, [
-    canvasRef.current,
     audioData,
     formattedBarWidth,
     backgroundColor,
@@ -103,7 +99,10 @@ const VoiceVisualizer = props => {
     rounded,
     isRecording,
     recordingPaused,
-    fullscreen
+    fullscreen,
+    formattedSpeed,
+    unit,
+    animateCurrentPick
   ]);
 
   // useEffect(() => {
@@ -153,7 +152,7 @@ const VoiceVisualizer = props => {
     if (canvasRef.current) {
       initialCanvasSetup({ canvas: canvasRef.current, backgroundColor });
     }
-  }, [canvasRef.current, backgroundColor]);
+  }, [backgroundColor]);
 
   // function completedAudioProcessing() {
   //   if (audioRef?.current) {

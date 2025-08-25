@@ -33,7 +33,7 @@ export const isUrl = (str: string) => {
   return false;
 };
 
-export const hexToRGB = (hex: string, alpha: string) => {
+export const hexToRGB = (hex: string, alpha: number) => {
   if (!hex) {
     return false;
   }

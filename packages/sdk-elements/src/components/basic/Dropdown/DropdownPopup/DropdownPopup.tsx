@@ -12,11 +12,11 @@ type InternalPropsSubProps = {
   onClick: (e: MouseEvent) => void;
   openPopup?: boolean;
   parameters?: CSSProperties;
-  popupRef?: RefObject<unknown>;
+  popupRef?: RefObject<HTMLElement | null>;
 };
 
 export type DropdownPopupProps = {
-  ref?: RefObject<HTMLElement>;
+  ref?: RefObject<HTMLElement | null>;
   internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   className?: string;
   children?: ReactNode;
@@ -28,7 +28,7 @@ const DropdownPopup = ({ ref, className = '', internalProps, children }: Dropdow
 
   return (
     <RootElement
-      ref={popupRef as RefObject<HTMLElement>}
+      ref={popupRef}
       internalProps={internalProps}
       className={classNames('plitzi-component__dropdown-popup', className, {
         'popup-container--no-visible': !openPopup || !parameters

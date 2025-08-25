@@ -1,7 +1,8 @@
-// Relatives
 import { initialCanvasSetup } from './initialCanvasSetup';
 import { paintLine } from './paintLine';
 import { paintLineFromCenterToRight } from './paintLineFromCenterToRight';
+
+import type { RefObject } from 'react';
 
 export const drawByLiveStream = ({
   audioData,
@@ -18,6 +19,21 @@ export const drawByLiveStream = ({
   rounded,
   animateCurrentPick,
   fullscreen
+}: {
+  audioData?: Uint8Array<ArrayBuffer>;
+  unit: number;
+  index: RefObject<number>;
+  index2: RefObject<number>;
+  canvas: HTMLCanvasElement;
+  isRecording: boolean;
+  isPausedRecording: boolean;
+  picks: ({ startY: number; barHeight: number } | null)[];
+  backgroundColor: string;
+  barWidth: number;
+  mainBarColor: string;
+  rounded: number;
+  animateCurrentPick: boolean;
+  fullscreen: boolean;
 }) => {
   const canvasData = initialCanvasSetup({ canvas, backgroundColor });
   if (!canvasData) {
@@ -34,7 +50,7 @@ export const drawByLiveStream = ({
         index2.current = 0;
         const startY = ((height - (maxPick / 258) * height) / height) * 100;
         const barHeight = ((-height + (maxPick / 258) * height * 2) / height) * 100;
-        let newPick = null;
+        let newPick: { startY: number; barHeight: number } | null = null;
         if (index.current === barWidth) {
           newPick = { startY, barHeight };
         }
@@ -49,6 +65,7 @@ export const drawByLiveStream = ({
         if (picks.length > finalWidth / barWidth) {
           picks.pop();
         }
+
         picks.unshift(newPick);
       }
 

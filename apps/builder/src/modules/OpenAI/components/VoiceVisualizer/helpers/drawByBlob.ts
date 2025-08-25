@@ -2,7 +2,23 @@
 import { initialCanvasSetup } from './initialCanvasSetup';
 import { paintLine } from './paintLine';
 
-export const drawByBlob = ({ barsData, canvas, barWidth, gap, backgroundColor, mainBarColor, rounded }) => {
+export const drawByBlob = ({
+  barsData,
+  canvas,
+  barWidth,
+  gap,
+  backgroundColor,
+  mainBarColor,
+  rounded
+}: {
+  barsData: { max: number }[];
+  canvas: HTMLCanvasElement;
+  barWidth: number;
+  gap: number;
+  backgroundColor: string;
+  mainBarColor: string;
+  rounded: number;
+}) => {
   const canvasData = initialCanvasSetup({ canvas, backgroundColor });
   if (!canvasData) {
     return;

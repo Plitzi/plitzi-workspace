@@ -97,7 +97,7 @@ export type PluginsContextValue = {
   assets: Record<string, Asset>;
   plugins: Record<string, ComponentDefinition>;
   dispatchPlugins?: unknown;
-  fetch?: unknown;
+  fetch?: (filter: object, cursor: string, limit: number) => Promise<unknown>;
   add?: (pluginType: string, resource?: string) => Promise<boolean>;
   setSettings?: (pluginType: string, attribute: string, value: string) => Promise<boolean>;
   getSettings?: (

@@ -1,8 +1,24 @@
-export const paintLine = ({ context, color, rounded, x, y, w, h }) => {
+export const paintLine = ({
+  context,
+  color,
+  rounded,
+  x,
+  y,
+  w,
+  h
+}: {
+  context: CanvasRenderingContext2D;
+  color: string;
+  rounded: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}) => {
   context.fillStyle = color;
   context.beginPath();
 
-  if (context.roundRect) {
+  if (typeof context.roundRect !== 'undefined') {
     // ensuring roundRect is supported by the browser
     context.roundRect(x, y, w, h, rounded);
     context.fill();

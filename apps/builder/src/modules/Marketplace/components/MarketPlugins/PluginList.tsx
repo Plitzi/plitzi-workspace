@@ -1,22 +1,15 @@
-// Packages
-import React from 'react';
-import noop from 'lodash/noop';
-
-// Relatives
 import PluginItem from './PluginItem';
 
-const pluginsDefault = [];
+import type { MarketPlacePluginRaw } from '@pmodules/Marketplace/types';
 
-/**
- * @param {{
- *   plugins?: any[];
- *   onClick?: (plugin: any) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const PluginList = ({ plugins = pluginsDefault, onClick = noop }) => (
-  <div className="grid grid-cols-4 gap-4 mt-8">
-    {plugins.map((plugin, i) => {
+export type PluginListProps = {
+  plugins?: MarketPlacePluginRaw[];
+  onClick?: (plugin: string) => void;
+};
+
+const PluginList = ({ plugins, onClick }: PluginListProps) => (
+  <div className="mt-8 grid grid-cols-4 gap-4">
+    {plugins?.map((plugin, i) => {
       const {
         name,
         description,

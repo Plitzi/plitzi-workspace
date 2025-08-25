@@ -11,9 +11,10 @@ export type PluginsReducerActions =
   | { type: 'remove'; pluginType: string }
   | { type: 'removeMany'; pluginTypes: string[] };
 
-export type PluginsReducerState = Record<string, ComponentDefinition>;
-
-const PluginsReducer = (state: PluginsReducerState, action: PluginsReducerActions) => {
+const PluginsReducer = (
+  state: Record<string, ComponentDefinition>,
+  action: PluginsReducerActions
+): Record<string, ComponentDefinition> => {
   switch (action.type) {
     case 'init':
     case 'addMany':
