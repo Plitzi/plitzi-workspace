@@ -143,31 +143,31 @@ const build = (env, args) => {
             }
           ]
         },
-        {
-          test: /(\.jsx|\.js)$/,
-          exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
-          use: [
-            {
-              loader: 'thread-loader',
-              options: {
-                poolTimeout: watch ? Infinity : 2000
-              }
-            },
-            {
-              loader: 'babel-loader',
-              options: {
-                presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]], // [classic] will disable new JSX compiler and [automatic] will enable it
-                plugins: [
-                  '@babel/plugin-proposal-class-properties',
-                  '@babel/plugin-transform-runtime',
-                  '@babel/plugin-transform-async-to-generator',
-                  '@babel/plugin-transform-private-methods',
-                  env.WEBPACK_SERVE && 'react-refresh/babel'
-                ].filter(Boolean)
-              }
-            }
-          ]
-        },
+        // {
+        //   test: /(\.jsx|\.js)$/,
+        //   exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
+        //   use: [
+        //     {
+        //       loader: 'thread-loader',
+        //       options: {
+        //         poolTimeout: watch ? Infinity : 2000
+        //       }
+        //     },
+        //     {
+        //       loader: 'babel-loader',
+        //       options: {
+        //         presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]], // [classic] will disable new JSX compiler and [automatic] will enable it
+        //         plugins: [
+        //           '@babel/plugin-proposal-class-properties',
+        //           '@babel/plugin-transform-runtime',
+        //           '@babel/plugin-transform-async-to-generator',
+        //           '@babel/plugin-transform-private-methods',
+        //           env.WEBPACK_SERVE && 'react-refresh/babel'
+        //         ].filter(Boolean)
+        //       }
+        //     }
+        //   ]
+        // },
         {
           test: /\.(png|jpg|gif|svg)$/,
           loader: 'url-loader',
