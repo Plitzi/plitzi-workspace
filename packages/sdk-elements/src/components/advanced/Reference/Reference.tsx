@@ -47,16 +47,19 @@ const Reference = ({
     settings: { previewMode, environment },
     contexts: { SchemaContext, SegmentsContext }
   } = usePlitziServiceContext();
-  const [reference, setReference] = useState<{
-    element?: Element;
-    elementType: string;
-    referenceContextData: { schema: Schema; prevSchema?: Schema };
-  }>();
+  const [reference, setReference] = useState<
+    | {
+        element?: Element;
+        elementType: string;
+        referenceContextData: { schema: Schema; prevSchema?: Schema };
+      }
+    | undefined
+  >();
   const { schema: mainSchema } = use(SchemaContext);
   const { segments, segmentGet } = use(SegmentsContext);
 
   const loadReference = useCallback(async () => {
-    let element: Element | undefined;
+    let element: Element;
     let referenceSchema: Schema | undefined;
     switch (referenceType) {
       case 'segment': {
@@ -69,9 +72,9 @@ const Reference = ({
           return;
         }
 
-        const baseElementId = get(segment, 'definition.baseElementId') as string;
+        const baseElementId = get(segment, 'definition.baseElementId');
         referenceSchema = get(segment, 'schema');
-        element = get(segment, `schema.flat.${baseElementId}`) as Element | undefined;
+        element = get(segment, `schema.flat.${baseElementId}`);
 
         break;
       }
@@ -83,7 +86,7 @@ const Reference = ({
       }
     }
 
-    if (!element) {
+    if (!(element as Element | undefined)) {
       return;
     }
 
@@ -110,8 +113,12 @@ const Reference = ({
   );
 
   const internalPropsMemo = useMemo<InternalPropsSTG1>(
-    () => ({ id, rootId, className: styleSelectors.base }),
-    [styleSelectors, id, rootId]
+    () => ({
+      id: reference?.element?.id ?? '',
+      rootId: rootId,
+      className: styleSelectors.base
+    }),
+    [reference?.element?.id, rootId, styleSelectors.base]
   );
   if (!reference) {
     return (

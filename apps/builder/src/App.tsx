@@ -2,6 +2,7 @@ import { InMemoryCache } from '@apollo/client/cache';
 import { ApolloClient, ApolloLink } from '@apollo/client/core';
 import { SetContextLink } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename';
 import { ApolloProvider } from '@apollo/client/react';
 import { getMainDefinition } from '@apollo/client/utilities';
 // eslint-disable-next-line
@@ -83,6 +84,7 @@ const App = (props: AppProps) => {
         return undefined;
       }
 
+      const noTypenameFromVariablesLink = new RemoveTypenameFromVariablesLink();
       const httpWithUploadLink = new UploadHttpLink({ uri: server.graphqlServer, fetch: customFetch });
       const authLink = new SetContextLink(prev => {
         const base = (prev.headers ?? {}) as Record<string, string>;
@@ -103,7 +105,7 @@ const App = (props: AppProps) => {
 
       if (!includeSubscriptions || !server.subscriptionServer) {
         return new ApolloClient({
-          link: authLink.concat(httpWithUploadLink),
+          link: authLink.concat(noTypenameFromVariablesLink, httpWithUploadLink),
           cache: new InMemoryCache()
         });
       }
@@ -140,7 +142,7 @@ const App = (props: AppProps) => {
           );
         },
         wsLink,
-        authLink.concat(httpWithUploadLink)
+        authLink.concat(noTypenameFromVariablesLink, httpWithUploadLink)
       );
 
       const client: ApolloClient & {

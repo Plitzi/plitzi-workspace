@@ -27,9 +27,8 @@ const useElement = (
     contexts: { SchemaContext, DataSourceContext, EventBridgeContext }
   } = usePlitziServiceContext();
   const { useDataSource } = use(DataSourceContext);
-  const { schema } = use(SchemaContext);
+  const { prevSchema, schema } = use(SchemaContext);
   const { id } = internalProps;
-  const { prevSchema } = use(SchemaContext);
   const element = useElementProps(id, schema);
 
   const sourceFilter = useMemo(() => {

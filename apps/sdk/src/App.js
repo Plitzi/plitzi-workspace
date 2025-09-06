@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { StaticRouter } from 'react-router';
 import { SetContextLink } from '@apollo/client/link/context';
 import { InMemoryCache } from '@apollo/client/cache';
+import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename';
 import { ApolloClient, HttpLink } from '@apollo/client/core';
 import { ApolloProvider } from '@apollo/client/react';
 import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
@@ -104,8 +105,9 @@ const App = props => {
   const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);
 
   const initClient = useCallback(async () => {
+    const noTypenameFromVariablesLink = new RemoveTypenameFromVariablesLink();
     const httpLink = new HttpLink({ uri: finalServer.graphqlServer });
-    const cache = new InMemoryCache({ addTypename: false });
+    const cache = new InMemoryCache();
     if (cacheTimeout) {
       const newPersistor = new CachePersistor({
         key: `cache-${webId}`,
@@ -136,7 +138,7 @@ const App = props => {
     }));
 
     // Init Client
-    const client = new ApolloClient({ link: authLink.concat(httpLink), cache });
+    const client = new ApolloClient({ link: authLink.concat(noTypenameFromVariablesLink, httpLink), cache });
     setClient(client);
   }, [finalServer, VERSION, webKey, webId, cacheTimeout]);
 

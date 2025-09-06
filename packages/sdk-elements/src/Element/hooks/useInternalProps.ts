@@ -204,7 +204,7 @@ const useInternalProps = ({
         setState(prevState =>
           produce(prevState, draft => {
             const result = params(draft as T);
-            if (!result || typeof result !== 'object') {
+            if (!(result as T | undefined) || typeof result !== 'object') {
               return;
             }
 
