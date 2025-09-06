@@ -196,7 +196,7 @@ const Dropdown = ({
       options: [],
       childrenParsed: []
     };
-    Children.forEach(children, child => {
+    Children.forEach(children, (child, i) => {
       if (!isValidElement(child)) {
         return;
       }
@@ -206,16 +206,22 @@ const Dropdown = ({
         components.options.push(
           cloneElement<InternalPropsSTG0>(child as ReactElement<InternalPropsSTG0>, {
             ...childProps,
-            internalProps: { ...childProps.internalProps, onClick: handleClickPopup, openPopup, parameters, popupRef }
+            internalProps: { ...childProps.internalProps, onClick: handleClickPopup, openPopup, parameters, popupRef },
+            key: `${internalProps.id}-${i}`
           })
         );
       } else {
-        components.childrenParsed.push(child);
+        components.childrenParsed.push(
+          cloneElement<InternalPropsSTG0>(child as ReactElement<InternalPropsSTG0>, {
+            ...childProps,
+            key: `${internalProps.id}-${i}`
+          })
+        );
       }
     });
 
     return components;
-  }, [children, handleClickPopup, openPopup, parameters]);
+  }, [children, handleClickPopup, internalProps.id, openPopup, parameters]);
 
   return (
     <RootElement

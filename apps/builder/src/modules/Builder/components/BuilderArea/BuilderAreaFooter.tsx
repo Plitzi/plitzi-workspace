@@ -114,7 +114,7 @@ const BuilderAreaFooter = ({ setDragTree }: BuilderAreaFooterProps) => {
           className="mr-2 h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="Tools"
         >
-          <i className="fas fa-tools" />
+          <Button.Icon icon="fas fa-tools" />
         </Button>
         <Button
           intent="custom"
@@ -123,7 +123,7 @@ const BuilderAreaFooter = ({ setDragTree }: BuilderAreaFooterProps) => {
           className="mr-2 h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="Layer Manager"
         >
-          <i className="fas fa-stream" />
+          <Button.Icon icon="fas fa-stream" />
         </Button>
         <Button
           intent="custom"
@@ -132,7 +132,7 @@ const BuilderAreaFooter = ({ setDragTree }: BuilderAreaFooterProps) => {
           className="h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="Advance Style"
         >
-          <i className="fas fa-code" />
+          <Button.Icon icon="fas fa-code" />
         </Button>
         <Button
           intent="custom"
@@ -141,7 +141,7 @@ const BuilderAreaFooter = ({ setDragTree }: BuilderAreaFooterProps) => {
           className="h-9 w-9 text-gray-500 hover:bg-gray-200"
           title="State Manager"
         >
-          <i className="fa-solid fa-sliders" />
+          <Button.Icon icon="fa-solid fa-sliders" />
         </Button>
         {featureFlag.assistanceAI && (
           <Button
@@ -151,7 +151,7 @@ const BuilderAreaFooter = ({ setDragTree }: BuilderAreaFooterProps) => {
             className="h-9 w-9 text-gray-500 hover:bg-gray-200"
             title="Assistant"
           >
-            <i className="fa-solid fa-star" />
+            <Button.Icon icon="fa-solid fa-star" />
           </Button>
         )}
         <Button
