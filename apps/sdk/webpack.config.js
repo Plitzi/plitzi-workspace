@@ -36,7 +36,7 @@ const packages = {
 
 // process.traceDeprecation = true // enable in case to debug node
 
-const build = (env, args) => {
+const buildBase = (env, args) => {
   const devMode = args.mode !== 'production';
   const onlyGzip = env.onlyGzip || false;
   const onlyAnalyze = env.onlyAnalyze || false;
@@ -87,17 +87,6 @@ const build = (env, args) => {
     target: 'web',
     watchOptions: {
       ignored: /(node_modules|packages\/[a-z-]+\/dist)/
-    },
-    devServer: {
-      compress: true,
-      allowedHosts: 'all',
-      hot: true,
-      liveReload: false,
-      historyApiFallback: true,
-      static: {
-        directory: path.join(__dirname, 'dist')
-      },
-      port: 3001
     },
     module: {
       rules: [
@@ -201,21 +190,12 @@ const build = (env, args) => {
         }
       ]
     },
+    externals: { react: 'react', 'react-dom': 'react-dom', 'react-dom/client': 'react-dom/client' },
     plugins: [
-      new PlitziPlugin({ isHost: true }),
       new webpack.DefinePlugin({
         VERSION: JSON.stringify(PACKAGE.version)
       }),
       new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /(es|pt|en).js/),
-      new HandlebarsPlugin({
-        data: {
-          title: '',
-          jsPath: '/plitzi-sdk.js',
-          cssPath: '/plitzi-sdk.css'
-        },
-        output: path.join(process.cwd(), 'dist', '[name].html'),
-        entry: path.join(process.cwd(), 'index.hbs')
-      }),
       new WebpackAssetsManifest({
         output: 'app-manifest.json',
         integrity: true,
@@ -298,17 +278,14 @@ const build = (env, args) => {
 };
 
 const buildSSR = (env, args) => {
-  const modules = build(env, args);
+  const modules = buildBase(env, args);
 
   return {
     ...modules,
     entry: { 'plitzi-sdk': './src/indexSSR.js' },
     target: 'node',
-    output: {
-      ...modules.output,
-      path: `${modules.output.path}/ssr/`
-    },
-    devServer: undefined,
+    output: { ...modules.output, path: `${modules.output.path}/ssr/` },
+    externals: {},
     plugins: [
       new PlitziPlugin({
         isHost: true,
@@ -333,8 +310,44 @@ const buildSSR = (env, args) => {
   };
 };
 
-if (process.argv.includes('measure') || process.argv.includes('watch')) {
-  module.exports = [build];
+const buildCDN = (env, args) => {
+  const modules = buildBase(env, args);
+
+  return {
+    ...modules,
+    devServer: {
+      compress: true,
+      allowedHosts: 'all',
+      hot: true,
+      liveReload: false,
+      historyApiFallback: true,
+      static: {
+        directory: path.join(__dirname, 'dist')
+      },
+      port: 3001
+    },
+    output: { ...modules.output, path: `${modules.output.path}/cdn/` },
+    externals: {},
+    plugins: [
+      new PlitziPlugin({ isHost: true }),
+      new HandlebarsPlugin({
+        data: {
+          title: '',
+          jsPath: env.WEBPACK_SERVE ? '/plitzi-sdk.js' : '/cdn/plitzi-sdk.js',
+          cssPath: env.WEBPACK_SERVE ? '/plitzi-sdk.css' : '/cdn/plitzi-sdk.css'
+        },
+        output: path.join(process.cwd(), 'dist', '[name].html'),
+        entry: path.join(process.cwd(), 'index.hbs')
+      }),
+      ...modules.plugins
+    ]
+  };
+};
+
+if (process.argv.includes('serve')) {
+  module.exports = [buildCDN];
+} else if (process.argv.includes('measure') || process.argv.includes('watch')) {
+  module.exports = [buildBase, buildCDN];
 } else {
-  module.exports = [build, buildSSR];
+  module.exports = [buildBase, buildSSR, buildCDN];
 }

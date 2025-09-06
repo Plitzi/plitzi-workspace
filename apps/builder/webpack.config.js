@@ -36,7 +36,7 @@ const packages = {
 
 // process.traceDeprecation = true; // enable in case to debug node
 
-const build = (env, args) => {
+const buildBase = (env, args) => {
   const devMode = args.mode !== 'production';
   const onlyGzip = env.onlyGzip || false;
   const onlyAnalyze = env.onlyAnalyze || false;
@@ -214,26 +214,9 @@ const build = (env, args) => {
         }
       ]
     },
+    externals: { react: 'react', 'react-dom': 'react-dom', 'react-dom/client': 'react-dom/client' },
     plugins: [
-      new PlitziPlugin({
-        isHost: true,
-        shared: {
-          react: { singleton: true, requiredVersion: false, eager: true },
-          'react-dom': { singleton: true, requiredVersion: false, eager: true },
-          'react-router': { singleton: true, requiredVersion: false, eager: true },
-          'react-router-dom': { singleton: true, requiredVersion: false, eager: true }
-        }
-      }),
       new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /(es|pt|en).js/),
-      new HandlebarsPlugin({
-        data: {
-          title: '',
-          jsPath: '/plitzi-builder.js',
-          cssPath: '/plitzi-builder.css'
-        },
-        output: path.join(process.cwd(), 'dist', '[name].html'),
-        entry: path.join(process.cwd(), 'index.hbs')
-      }),
       !isDevServer &&
         new WebpackAssetsManifest({
           output: 'app-manifest.json',
@@ -312,5 +295,51 @@ const build = (env, args) => {
 
   return modules;
 };
+const buildCDN = (env, args) => {
+  const modules = buildBase(env, args);
 
-module.exports = [build];
+  return {
+    ...modules,
+    devServer: {
+      compress: true,
+      allowedHosts: 'all',
+      hot: true,
+      liveReload: false,
+      historyApiFallback: true,
+      static: {
+        directory: path.join(__dirname, 'dist')
+      },
+      port: 3000
+    },
+    output: { ...modules.output, path: `${modules.output.path}/cdn/` },
+    externals: {},
+    plugins: [
+      new PlitziPlugin({
+        isHost: true,
+        shared: {
+          react: { singleton: true, requiredVersion: false, eager: true },
+          'react-dom': { singleton: true, requiredVersion: false, eager: true },
+          'react-router': { singleton: true, requiredVersion: false, eager: true },
+          'react-router-dom': { singleton: true, requiredVersion: false, eager: true }
+        }
+      }),
+      new HandlebarsPlugin({
+        data: {
+          title: '',
+          jsPath: env.WEBPACK_SERVE ? '/plitzi-builder.js' : '/cdn/plitzi-builder.js',
+          cssPath: env.WEBPACK_SERVE ? '/plitzi-builder.css' : '/cdn/plitzi-builder.css'
+        },
+        output: path.join(process.cwd(), 'dist', '[name].html'),
+        entry: path.join(process.cwd(), 'index.hbs')
+      }),
+      ...modules.plugins
+    ]
+  };
+};
+
+
+if (process.argv.includes('serve')) {
+  module.exports = [buildCDN];
+} else {
+  module.exports = [buildBase, buildCDN];
+}
