@@ -1,4 +1,3 @@
-import { ApolloError } from '@apollo/client/errors';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import get from 'lodash/get';
 import { useCallback, use, useEffect, useMemo, useRef } from 'react';
@@ -80,7 +79,7 @@ const SegmentsContextProvider = ({
         'network-only'
       );
 
-      if (result instanceof ApolloError || !result) {
+      if (result instanceof Error || !result) {
         return undefined;
       }
 
@@ -101,12 +100,12 @@ const SegmentsContextProvider = ({
   const segmentGet = useCallback(
     async (identifier: string) => {
       if (segmentsRef.current[identifier] as Segment | undefined) {
-        return segmentsRef.current[identifier];
+        return segmentsRef.current[identifier] as Segment;
       }
 
       const segmentRaw = await query<SegmentRaw>('Segment', { environment: 'main', identifier }, 'network-only');
-      if (!segmentRaw || segmentRaw instanceof ApolloError) {
-        return;
+      if (!segmentRaw || segmentRaw instanceof Error) {
+        return undefined;
       }
 
       const segment: Segment = {
@@ -356,7 +355,7 @@ const SegmentsContextProvider = ({
         style: { ...elementsStyle, cache: generateCache(elementsStyle) },
         variables
       });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         const segment: Segment = {
           ...result,
           schema: {
@@ -577,7 +576,7 @@ const SegmentsContextProvider = ({
   const segmentAddMutation = useCallback(
     async (name: string, description: string, schema?: Schema, style?: Style, variables: SchemaVariable[] = []) => {
       const result = await mutate<SegmentRaw>('SegmentAdd', { name, description, schema, style, variables });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         const segment: Segment = {
           ...result,
           schema: {

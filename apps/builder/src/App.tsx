@@ -1,22 +1,22 @@
-import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
-import { ApolloClient, split } from '@apollo/client/core';
-import { setContext } from '@apollo/client/link/context';
-import { WebSocketLink } from '@apollo/client/link/ws';
-import { ApolloProvider } from '@apollo/client/react/context';
+import { InMemoryCache } from '@apollo/client/cache';
+import { ApolloClient, ApolloLink } from '@apollo/client/core';
+import { SetContextLink } from '@apollo/client/link/context';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { ApolloProvider } from '@apollo/client/react';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { sdkComponents } from '@plitzi/plitzi-sdk';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
-import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import classNames from 'classnames';
 import { Kind, OperationTypeNode } from 'graphql';
+import { createClient } from 'graphql-ws';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { SubscriptionClient } from 'subscriptions-transport-ws';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
@@ -29,9 +29,9 @@ import packageSettings from '../package.json';
 
 import './assets/index.scss';
 
-import type { NormalizedCacheObject } from '@apollo/client/core';
 import type { ComponentPlugin, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { BuilderPluginProps } from '@pmodules/Builder';
+import type { Client } from 'graphql-ws';
 import type { ReactNode } from 'react';
 
 export type AppProps = {
@@ -76,60 +76,60 @@ const App = (props: AppProps) => {
       webKey: string,
       includeSubscriptions: boolean,
       instanceId: string
-    ):
-      | (ApolloClient<NormalizedCacheObject> & { wsLink?: WebSocketLink; subscriptionClient?: SubscriptionClient })
-      | undefined => {
+    ): (ApolloClient & { wsLink?: GraphQLWsLink; subscriptionClient?: Client }) | undefined => {
       if (!server) {
         return undefined;
       }
 
-      const httpWithUploadLink = createUploadLink({ uri: server.graphqlServer, fetch: customFetch });
-      const authLink = setContext((_, { headers }) => ({
-        headers: {
-          ...(headers as Record<string, string>),
+      const httpWithUploadLink = new UploadHttpLink({ uri: server.graphqlServer, fetch: customFetch });
+      const authLink = new SetContextLink(prev => {
+        const base = (prev.headers ?? {}) as Record<string, string>;
+        const headers: Record<string, string> = {
+          ...base,
           'plitzi-instance-id': instanceId,
           'plitzi-access-token': userKey,
           'sdk-version': packageSettings.version,
-          'Apollo-Require-Preflight': 'true',
-          authorization: webKey ? `Bearer ${webKey}` : ''
+          'Apollo-Require-Preflight': 'true'
+        };
+
+        if (webKey) {
+          headers.authorization = `Bearer ${webKey}`;
         }
-      }));
+
+        return { headers };
+      });
 
       if (!includeSubscriptions || !server.subscriptionServer) {
         return new ApolloClient({
           link: authLink.concat(httpWithUploadLink),
-          cache: new InMemoryCache({ addTypename: false })
+          cache: new InMemoryCache()
         });
       }
 
-      const subscriptionClient = new SubscriptionClient(server.subscriptionServer, {
-        reconnect: true,
-        reconnectionAttempts: Infinity,
+      const subscriptionClient = createClient({
+        url: server.subscriptionServer,
+        shouldRetry: () => true,
+        retryAttempts: Infinity,
         connectionParams: { authToken: webKey, instanceId, userToken: userKey },
-        connectionCallback: (error: Error[] | { message: string } | undefined) => {
-          if (!error || Array.isArray(error)) {
-            return;
-          }
-
-          const { message } = error;
-          if (message === 'Space Not Allowed') {
-            subscriptionClient.close();
-          } else if (message === 'Invalid Token') {
-            subscriptionClient.close();
-          } else if (message === 'Missing auth token') {
-            subscriptionClient.close();
-          } else if (message === 'Missing instanceId') {
-            subscriptionClient.close();
-          } else if (message === 'Access Not Authorized') {
-            subscriptionClient.close();
-          } else if (message === 'Token Invalid') {
-            subscriptionClient.close();
+        onNonLazyError: error => {
+          if (error instanceof Error) {
+            const { message } = error;
+            if (
+              message === 'Space Not Allowed' ||
+              message === 'Invalid Token' ||
+              message === 'Missing auth token' ||
+              message === 'Missing instanceId' ||
+              message === 'Access Not Authorized' ||
+              message === 'Token Invalid'
+            ) {
+              void subscriptionClient.dispose();
+            }
           }
         }
       });
 
-      const wsLink = new WebSocketLink(subscriptionClient);
-      const link = split(
+      const wsLink = new GraphQLWsLink(subscriptionClient);
+      const link = ApolloLink.split(
         ({ query }) => {
           const definition = getMainDefinition(query);
 
@@ -141,10 +141,10 @@ const App = (props: AppProps) => {
         authLink.concat(httpWithUploadLink)
       );
 
-      const client: ApolloClient<NormalizedCacheObject> & {
-        wsLink?: WebSocketLink;
-        subscriptionClient?: SubscriptionClient;
-      } = new ApolloClient({ link, cache: new InMemoryCache({ addTypename: false }) });
+      const client: ApolloClient & {
+        wsLink?: GraphQLWsLink;
+        subscriptionClient?: Client;
+      } = new ApolloClient({ link, cache: new InMemoryCache() });
 
       client.wsLink = wsLink;
       client.subscriptionClient = subscriptionClient;
@@ -190,7 +190,7 @@ const App = (props: AppProps) => {
     return () => {
       const ws = client.subscriptionClient;
       if (ws) {
-        ws.close();
+        void ws.dispose();
       }
     };
   }, [client]);

@@ -1,4 +1,3 @@
-import { ApolloError } from '@apollo/client/errors';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
@@ -33,7 +32,7 @@ const Resources = () => {
         'network-only'
       );
 
-      if (result instanceof ApolloError || !result) {
+      if (result instanceof Error || !result) {
         return;
       }
 

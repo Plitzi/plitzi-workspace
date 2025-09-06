@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-deprecated */
-/* eslint-disable react-refresh/only-export-components */
-
-import { ApolloError } from '@apollo/client/core';
-import { withApollo } from '@apollo/client/react/hoc';
+import { CombinedGraphQLErrors } from '@apollo/client/core';
+import { useApolloClient } from '@apollo/client/react';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
@@ -19,8 +16,7 @@ import NetworkContext from './NetworkContext';
 import Queries from './Queries';
 
 import type { NetworkInternalContextValue } from './contexts/NetworkInternalContext';
-import type { ApolloClient, ApolloQueryResult, FetchPolicy, FetchResult } from '@apollo/client/core';
-import type { WithApolloClient } from '@apollo/client/react/hoc';
+import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type {
   Server,
   CollectionRecord,
@@ -35,7 +31,7 @@ import type {
 } from '@plitzi/sdk-shared';
 import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DocumentNode } from 'graphql';
-import type { FunctionComponent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {
   children: ReactNode;
@@ -44,7 +40,6 @@ export type NetworkContextProviderProps = {
   userKey?: string;
   instanceId: string;
   server: Server;
-  client: ApolloClient<unknown>;
   environment?: ServerEnvironment;
 };
 
@@ -55,9 +50,9 @@ const NetworkContextProvider = ({
   userKey = '',
   instanceId,
   server,
-  client, // hoc
   environment = 'development'
 }: NetworkContextProviderProps) => {
+  const client = useApolloClient();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -70,12 +65,12 @@ const NetworkContextProvider = ({
       variables?: Record<string, unknown>,
       fetchPolicy: FetchPolicy = 'network-only',
       silentError = false
-    ): Promise<T | ApolloError | undefined | null> => {
+    ): Promise<T | Error | undefined | null> => {
       if (!(Queries[queryKey] as DocumentNode | undefined)) {
         addToast('Query not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
       }
 
-      let result: ApolloQueryResult<T>;
+      let result: ApolloClient.QueryResult<T>;
       try {
         result = await client.query<T>({
           query: Queries[queryKey],
@@ -87,7 +82,7 @@ const NetworkContextProvider = ({
           addToast(`Query ${queryKey} Failed`, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
         }
 
-        if (e instanceof ApolloError && e.networkError) {
+        if (CombinedGraphQLErrors.is(e)) {
           addToast('Network Not Available, Please try again', {
             appeareance: 'error',
             autoDismiss: true,
@@ -95,14 +90,14 @@ const NetworkContextProvider = ({
           });
         }
 
-        return e as ApolloError;
+        return e as Error;
       }
 
       if (result.data && result.data[queryKey] !== undefined) {
         return result.data[queryKey] as T;
       }
 
-      return result.data;
+      return result.data as T;
     },
     [addToast, client, environment]
   );
@@ -114,14 +109,14 @@ const NetworkContextProvider = ({
       silentError = false,
       includeEnvironment = true,
       uploadOptions = {}
-    ): Promise<T | ApolloError | undefined | null> => {
+    ): Promise<T | Error | undefined | null> => {
       if (!(Mutations[mutationKey] as DocumentNode | undefined)) {
         addToast('Mutation not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
         return undefined;
       }
 
-      let result: FetchResult<T>;
+      let result: ApolloClient.MutateResult<T>;
       // let abortHandler;
       try {
         result = await client.mutate({
@@ -143,7 +138,7 @@ const NetworkContextProvider = ({
           }
         });
       } catch (e) {
-        if (!silentError && (e instanceof Error || e instanceof ApolloError)) {
+        if (!silentError && (e instanceof Error || e instanceof Error)) {
           addToast(`Mutation ${mutationKey} Failed (${e.message})`, {
             appeareance: 'error',
             autoDismiss: true,
@@ -151,7 +146,7 @@ const NetworkContextProvider = ({
           });
         }
 
-        if (e instanceof ApolloError && e.networkError) {
+        if (e instanceof Error && e.networkError) {
           addToast('Network Not Available, Please try again', {
             appeareance: 'error',
             autoDismiss: true,
@@ -159,7 +154,7 @@ const NetworkContextProvider = ({
           });
         }
 
-        return e as ApolloError;
+        return e as Error;
       }
 
       if (result.data && result.data[mutationKey] !== undefined) {
@@ -171,9 +166,9 @@ const NetworkContextProvider = ({
     [addToast, client, environment]
   );
 
-  const connectivityStatus = () => {
+  const connectivityStatus = useCallback(() => {
     console.log(window.navigator.onLine);
-  };
+  }, []);
 
   const initQuery = useCallback(async () => {
     const response = await query<{
@@ -186,7 +181,7 @@ const NetworkContextProvider = ({
       Collections: { edges: CollectionRaw[] };
       Templates: { edges: Template[] };
     }>('Init', { environment, limit: 99 }, 'network-only', true);
-    if (response instanceof ApolloError) {
+    if (CombinedGraphQLErrors.is(response) || response instanceof Error) {
       setLoading(false);
       if (response.networkError && 'statusCode' in response.networkError && response.networkError.statusCode === 401) {
         setError('Access not authorized');
@@ -294,6 +289,4 @@ const NetworkContextProvider = ({
   );
 };
 
-export default withApollo(
-  NetworkContextProvider as FunctionComponent<WithApolloClient<Omit<NetworkContextProviderProps, 'client'>>>
-);
+export default NetworkContextProvider;

@@ -2,11 +2,10 @@
 import React, { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { StaticRouter } from 'react-router';
-import { createHttpLink } from '@apollo/client/link/http/createHttpLink';
-import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache';
-import { ApolloClient } from '@apollo/client/core/ApolloClient';
-import { ApolloProvider } from '@apollo/client/react/context';
-import { setContext } from '@apollo/client/link/context';
+import { SetContextLink } from '@apollo/client/link/context';
+import { InMemoryCache } from '@apollo/client/cache';
+import { ApolloClient, HttpLink } from '@apollo/client/core';
+import { ApolloProvider } from '@apollo/client/react';
 import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
 import get from 'lodash/get';
 import classNames from 'classnames';
@@ -105,7 +104,7 @@ const App = props => {
   const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);
 
   const initClient = useCallback(async () => {
-    const httpLink = createHttpLink({ uri: finalServer.graphqlServer });
+    const httpLink = new HttpLink({ uri: finalServer.graphqlServer });
     const cache = new InMemoryCache({ addTypename: false });
     if (cacheTimeout) {
       const newPersistor = new CachePersistor({
@@ -132,7 +131,7 @@ const App = props => {
     }
 
     // Init Auth Link
-    const authLink = setContext((_, { headers }) => ({
+    const authLink = new SetContextLink((_, { headers }) => ({
       headers: { ...headers, 'sdk-version': VERSION, authorization: webKey ? `Bearer ${webKey}` : '' }
     }));
 

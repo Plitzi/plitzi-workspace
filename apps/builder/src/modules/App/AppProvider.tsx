@@ -18,7 +18,7 @@ import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppProviderProps = {
-  children: ReactNode;
+  children?: ReactNode;
   instanceId: string;
   webKey: string;
   webId: string;

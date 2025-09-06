@@ -65,7 +65,6 @@ export default defineConfig(({ mode, command }) => {
       },
       extensions: ['.js', '.ts', '.tsx']
     },
-    css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
     build: {
       lib: {
         entry: ['./src/index.ts']

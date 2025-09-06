@@ -1,4 +1,3 @@
-import { ApolloError } from '@apollo/client/errors';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
 import { useState, useEffect, useRef, useCallback, use } from 'react';
@@ -98,7 +97,7 @@ const TemporalResource = ({
       { customFetch: true, onProgress, onAbortPossible, onError }
     );
 
-    if (response instanceof Error || response instanceof ApolloError) {
+    if (response instanceof Error || response instanceof Error) {
       setError(response.message);
       setProgressUpload(0);
     } else if (file.type === 'plugin') {

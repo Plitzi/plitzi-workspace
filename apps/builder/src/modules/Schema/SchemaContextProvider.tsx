@@ -25,7 +25,7 @@ import type { DropPosition, Element, PageFolder, Schema, SchemaRaw, SchemaVariab
 import type { ReactNode } from 'react';
 
 export type SchemaContextProviderProps = {
-  children: ReactNode;
+  children?: ReactNode;
   type?: 'main' | 'partial' | 'template' | 'segment';
   schema?: Schema;
   includeSubscriptions?: boolean;

@@ -1,4 +1,3 @@
-import { ApolloError } from '@apollo/client/errors';
 import omit from 'lodash/omit';
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
@@ -138,7 +137,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
   const fetchCollections = useCallback(
     async (filter: string | object, cursor?: string, limit?: number, append: Collection[] = [], store = true) => {
       const result = await query<{ edges: Collection[] }>('Collections', { filter, cursor, limit }, 'network-only');
-      if (!result || result instanceof ApolloError) {
+      if (!result || result instanceof Error) {
         return [];
       }
 
@@ -159,7 +158,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       }
 
       const result = await query<CollectionRaw>('Collection', variables, 'network-only');
-      if (!result || result instanceof ApolloError) {
+      if (!result || result instanceof Error) {
         return undefined;
       }
 
@@ -188,7 +187,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
         { collectionId, filter, cursor, limit },
         'network-only'
       );
-      if (!result || result instanceof ApolloError) {
+      if (!result || result instanceof Error) {
         return undefined;
       }
 
@@ -204,7 +203,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
   const fetchRecord = useCallback(
     async (collectionId: string, id: string, store = true) => {
       const result = await query<CollectionRecord>('CollectionRecord', { collectionId, id }, 'network-only');
-      if (!result || result instanceof ApolloError) {
+      if (!result || result instanceof Error) {
         return undefined;
       }
 
@@ -228,7 +227,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       fields: Collection['fields']
     ) => {
       const result = await mutate<Collection>('CollectionAdd', { name, namePlural, description, privacy, fields });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         collectionsAdd(result);
 
         return result;
@@ -256,7 +255,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
         privacy,
         fields
       });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         collectionsUpdate(result);
 
         return result;
@@ -270,7 +269,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
   const removeCollection = useCallback(
     async (id: string) => {
       const result = await mutate<Collection>('CollectionRemove', { id });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         collectionsRemove(id);
 
         return true;
@@ -289,7 +288,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       updateStore = true
     ) => {
       const result = await mutate<CollectionRecord>('CollectionAddRecord', { collectionId, status, values });
-      if (result && !(result instanceof ApolloError) && updateStore) {
+      if (result && !(result instanceof Error) && updateStore) {
         collectionRecordsAdd(collectionId, result);
 
         return result;
@@ -309,7 +308,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       updateStore = true
     ) => {
       const result = await mutate<CollectionRecord>('CollectionUpdateRecord', { id, status, values });
-      if (result && !(result instanceof ApolloError) && updateStore) {
+      if (result && !(result instanceof Error) && updateStore) {
         collectionRecordsUpdate(collectionId, result);
 
         return result;

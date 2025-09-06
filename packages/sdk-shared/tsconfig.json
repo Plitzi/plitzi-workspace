@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    /* to allow jsdoc be converted to ts */
+    "allowJs": true,
+    "maxNodeModuleJsDepth": 5,
+
     "composite": true,
     "target": "ES2023",
     "useDefineForClassFields": true,

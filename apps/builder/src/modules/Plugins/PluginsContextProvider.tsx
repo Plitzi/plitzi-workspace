@@ -1,4 +1,3 @@
-import { ApolloError } from '@apollo/client/errors';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
@@ -102,7 +101,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   const add = useCallback(
     async (pluginType: string, resource?: string) => {
       const result = await mutate<{ plugins: PluginRaw[] }>('SpaceAddPlugin', { pluginType, resource });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         const plugin = result.plugins.find(plug => plug.type === pluginType);
         if (!plugin) {
           return false;
@@ -124,7 +123,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   const update = useCallback(
     async (plugin: ComponentDefinition, resource?: string) => {
       const result = await mutate<{ plugins: PluginRaw[] }>('SpaceUpdatePlugin', { pluginType: plugin.type, resource });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         const newPlugin = result.plugins.find(plug => plug.type === plugin.type);
         if (!newPlugin) {
           return false;

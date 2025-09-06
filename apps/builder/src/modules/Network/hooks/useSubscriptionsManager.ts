@@ -2,13 +2,13 @@ import { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import Subscriptions from '../Subscriptions';
 
-import type { ApolloClient, FetchResult } from '@apollo/client/core';
+import type { ApolloClient } from '@apollo/client/core';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
 
 export type UseSubscriptionsManagerProps = {
   onMessage?: (message: ReactNode, type?: 'info' | 'success' | 'warning' | 'error' | 'default') => void;
-  client: ApolloClient<unknown>;
+  client: ApolloClient;
   environment?: string;
   disabled?: boolean;
 };
@@ -22,7 +22,7 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
     (
       subscriptionKey: keyof typeof Subscriptions,
       variables: Record<string, unknown>,
-      callback: (result: FetchResult) => void
+      callback: (result: ApolloClient.SubscribeResult) => void
     ) => {
       if (disabled) {
         return false;
@@ -39,9 +39,10 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
         variables: { ...variables, environment }
       });
 
-      const subscription = subscriptionObserver.subscribe(callback, err =>
-        onMessage?.(`Subscription Error: ${err}`, 'error')
-      ) as Subscription;
+      const subscription = subscriptionObserver.subscribe({
+        next: callback,
+        error: err => onMessage?.(`Subscription Error: ${err}`, 'error')
+      }) as unknown as Subscription;
 
       subscription.name = subscriptionKey;
       subscriptions.current.push(subscription);

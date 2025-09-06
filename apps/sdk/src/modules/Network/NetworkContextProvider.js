@@ -1,6 +1,6 @@
 // Packages
+import { useApolloClient } from '@apollo/client/react';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { withApollo } from '@apollo/client/react/hoc/withApollo';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
@@ -44,10 +44,9 @@ const NetworkContextProvider = props => {
     offlineMode = false,
     offlineData,
     offlineDataType = 'json',
-    debugMode = false,
-    // hocs
-    client
+    debugMode = false
   } = props;
+  const client = useApolloClient();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [internalData, setInternalData] = useState({});
@@ -248,4 +247,4 @@ const NetworkContextProvider = props => {
   );
 };
 
-export default withApollo(NetworkContextProvider);
+export default NetworkContextProvider;

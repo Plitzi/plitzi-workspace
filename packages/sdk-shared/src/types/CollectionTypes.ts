@@ -109,5 +109,5 @@ export type CollectionRaw = {
   description: string;
   privacy: 'public' | 'private';
   fields: Record<string, CollectionField>;
-  records: { edges: CollectionRecord[] };
+  records: { pageInfo: PageInfo; edges: CollectionRecord[] };
 };

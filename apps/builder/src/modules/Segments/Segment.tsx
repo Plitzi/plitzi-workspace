@@ -1,4 +1,3 @@
-import { ApolloError } from '@apollo/client/errors';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
@@ -147,7 +146,7 @@ const Segment = ({
         ...response,
         contextId: id
       });
-      if (result && !(result instanceof ApolloError)) {
+      if (result && !(result instanceof Error)) {
         addToast(
           <span>
             Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
