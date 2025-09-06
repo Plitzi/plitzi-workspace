@@ -7,7 +7,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG0, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactElement, ReactNode, RefObject } from 'react';
 
 type InternalPropsSubProps = {
@@ -191,23 +191,26 @@ const Dropdown = ({
     return parameters;
   }, [openPopup, ref, popupRef, calculatePosition]);
 
-  const { options } = useMemo(() => {
-    const components: { options: ReactNode[] } = {
-      options: []
+  const { options, childrenParsed } = useMemo(() => {
+    const components: { options: ReactNode[]; childrenParsed: ReactNode[] } = {
+      options: [],
+      childrenParsed: []
     };
     Children.forEach(children, child => {
       if (!isValidElement(child)) {
         return;
       }
 
-      const childProps = child.props as Record<string, unknown>;
+      const childProps = child.props as { type: string; [key: string]: unknown; internalProps: InternalPropsSTG0 };
       if (childProps.type === 'dropdownPopup') {
         components.options.push(
-          cloneElement<Record<string, unknown>>(child as ReactElement<Record<string, unknown>>, {
+          cloneElement<InternalPropsSTG0>(child as ReactElement<InternalPropsSTG0>, {
             ...childProps,
-            internalProps: { onClick: handleClickPopup, openPopup, parameters, popupRef }
+            internalProps: { ...childProps.internalProps, onClick: handleClickPopup, openPopup, parameters, popupRef }
           })
         );
+      } else {
+        components.childrenParsed.push(child);
       }
     });
 
@@ -223,6 +226,7 @@ const Dropdown = ({
       })}
       onClick={handleClick}
     >
+      {childrenParsed}
       {options}
       {openPopup && backgroundDisabled && previewMode && (
         <div

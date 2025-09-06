@@ -1,4 +1,4 @@
-// import Input from '@plitzi/plitzi-ui-components/Input';
+// import Input from '@plitzi/plitzi-ui/Input';
 // import get from 'lodash/get';
 // import { useCallback, useMemo } from 'react';
 
@@ -13,7 +13,7 @@ export type LinearGradientModeProps = {
 };
 
 const LinearGradientMode = (/* { partialValue, onChange }: LinearGradientModeProps */) => {
-  // const handleChangeImage = useCallback((e: ChangeEvent<HTMLInputElement>) => onChange?.(e.target.value), [onChange]);
+  // const handleChangeImage = useCallback((value: string) => onChange?.(value), [onChange]);
 
   // const backgroundImage = useMemo(
   //   () => get(partialValue.match(/\((?<content>.*)\)/im), 'groups.content', ''),

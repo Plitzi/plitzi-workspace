@@ -1,4 +1,3 @@
-// import InputMetric from '@plitzi/plitzi-ui-components/InputMetric';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -66,8 +65,8 @@ const BorderRadius = ({ values, onChange, onChangeSegment }: BorderRadiusProps) 
         <CategoryOption value={all} units={units} onChange={onChange} type="metric" />
       </CategorySection>
       {showRadiusIndividuals && (
-        <div className="grid grid-cols-3 grid-rows-3 grid-cols-[1fr_auto_1fr]">
-          <div className="flex items-center justify-self-end max-w-[80px]">
+        <div className="grid grid-cols-3 grid-cols-[1fr_auto_1fr] grid-rows-3">
+          <div className="flex max-w-[80px] items-center justify-self-end">
             <CategoryOption
               value={borderTopLeft}
               onChange={onChangeSegment?.('border-top-left-radius')}
@@ -76,7 +75,7 @@ const BorderRadius = ({ values, onChange, onChangeSegment }: BorderRadiusProps) 
               className="text-center"
             />
           </div>
-          <div className="col-start-3 flex items-center justify-self-start max-w-[80px]">
+          <div className="col-start-3 flex max-w-[80px] items-center justify-self-start">
             <CategoryOption
               value={borderTopRight}
               onChange={onChangeSegment?.('border-top-right-radius')}
@@ -85,31 +84,31 @@ const BorderRadius = ({ values, onChange, onChangeSegment }: BorderRadiusProps) 
               className="text-center"
             />
           </div>
-          <div className="row-start-2 col-start-2 flex items-center justify-center">
-            <div className="grid grid-cols-2 grid-rows-2 w-10 h-10 gap-2">
+          <div className="col-start-2 row-start-2 flex items-center justify-center">
+            <div className="grid h-10 w-10 grid-cols-2 grid-rows-2 gap-2">
               <div
-                className="border-t-3 border-l-3 h-4 w-4"
+                className="h-4 w-4 border-t-3 border-l-3"
                 style={{
                   borderTopLeftRadius: borderTopLeft,
                   borderColor: borderTopLeft === '0px' ? 'currentColor' : '#5900D6'
                 }}
               />
               <div
-                className="border-t-3 border-r-3 h-4 w-4"
+                className="h-4 w-4 border-t-3 border-r-3"
                 style={{
                   borderTopRightRadius: borderTopRight,
                   borderColor: borderTopRight === '0px' ? 'currentColor' : '#5900D6'
                 }}
               />
               <div
-                className="border-b-3 border-l-3 h-4 w-4"
+                className="h-4 w-4 border-b-3 border-l-3"
                 style={{
                   borderBottomLeftRadius: borderBottomLeft,
                   borderColor: borderBottomLeft === '0px' ? 'currentColor' : '#5900D6'
                 }}
               />
               <div
-                className="border-b-3 border-r-3 h-4 w-4"
+                className="h-4 w-4 border-r-3 border-b-3"
                 style={{
                   borderBottomRightRadius: borderBottomRight,
                   borderColor: borderBottomRight === '0px' ? 'currentColor' : '#5900D6'
@@ -117,7 +116,7 @@ const BorderRadius = ({ values, onChange, onChangeSegment }: BorderRadiusProps) 
               />
             </div>
           </div>
-          <div className="row-start-3 flex items-center justify-self-end max-w-[80px]">
+          <div className="row-start-3 flex max-w-[80px] items-center justify-self-end">
             <CategoryOption
               value={borderBottomLeft}
               onChange={onChangeSegment?.('border-bottom-left-radius')}
@@ -126,7 +125,7 @@ const BorderRadius = ({ values, onChange, onChangeSegment }: BorderRadiusProps) 
               className="text-center"
             />
           </div>
-          <div className="col-start-3 row-start-3 flex items-center justify-self-start max-w-[80px]">
+          <div className="col-start-3 row-start-3 flex max-w-[80px] items-center justify-self-start">
             <CategoryOption
               value={borderBottomRight}
               onChange={onChangeSegment?.('border-bottom-right-radius')}
