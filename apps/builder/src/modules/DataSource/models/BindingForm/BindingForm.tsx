@@ -24,7 +24,7 @@ export const bindingForm = z.object({
     z.object({
       type: z.enum(['utility', 'unknown']),
       action: z.string(),
-      params: z.record(z.any())
+      params: z.record(z.string(), z.any())
     })
   )
 });

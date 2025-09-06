@@ -68,7 +68,7 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
 
     const handleChange = useCallback(
       (e: ChangeEvent<HTMLInputElement>) => {
-        if (typeof e.target.checked === 'boolean' || subType === 'switch') {
+        if (e.target.type === 'radio' || e.target.type === 'checkbox' || subType === 'switch') {
           setFieldValue(name, e.target.checked);
         } else {
           setFieldValue(name, e.target.value);

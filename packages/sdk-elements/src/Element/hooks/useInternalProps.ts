@@ -204,9 +204,13 @@ const useInternalProps = ({
         setState(prevState =>
           produce(prevState, draft => {
             const result = params(draft as T);
-            if (typeof result === 'object') {
-              omit(result, cache.attributesBinded);
+            if (!result || typeof result !== 'object') {
+              return;
             }
+
+            omit(result, cache.attributesBinded);
+
+            return { ...draft, ...result };
           })
         );
 

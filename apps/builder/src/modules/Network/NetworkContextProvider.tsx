@@ -146,7 +146,7 @@ const NetworkContextProvider = ({
           });
         }
 
-        if (e instanceof Error && e.networkError) {
+        if (e instanceof Error && 'networkError' in e) {
           addToast('Network Not Available, Please try again', {
             appeareance: 'error',
             autoDismiss: true,
@@ -183,9 +183,13 @@ const NetworkContextProvider = ({
     }>('Init', { environment, limit: 99 }, 'network-only', true);
     if (CombinedGraphQLErrors.is(response) || response instanceof Error) {
       setLoading(false);
-      if (response.networkError && 'statusCode' in response.networkError && response.networkError.statusCode === 401) {
+      if (
+        'networkError' in response &&
+        'statusCode' in (response.networkError as { statusCode?: number }) &&
+        (response.networkError as { statusCode?: number }).statusCode === 401
+      ) {
         setError('Access not authorized');
-      } else if (response.networkError) {
+      } else if ('networkError' in response) {
         setError('Service not available');
       } else {
         setError(response.message);

@@ -128,7 +128,7 @@ const UserBaseContextProvider = ({
         accessToken: manager.accessToken
       }
     };
-  }, [manager, previewMode]);
+  }, [manager, manager?.isAuthenticated, previewMode]);
 
   return <UserContext value={valueMemo}>{!loading && children}</UserContext>;
 };

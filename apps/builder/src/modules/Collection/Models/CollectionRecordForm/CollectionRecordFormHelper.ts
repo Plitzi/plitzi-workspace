@@ -16,7 +16,7 @@ export function makeCollectionRecordSchema(fields?: z.infer<typeof collectionFie
   }
 
   // Construir el shape de values dinámicamente
-  const valuesShape: Record<string, z.ZodTypeAny> = {};
+  const valuesShape: Record<string, z.ZodType> = {};
 
   for (const field of fields) {
     switch (field.type) {

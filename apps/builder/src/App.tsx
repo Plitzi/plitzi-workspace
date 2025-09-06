@@ -4,6 +4,8 @@ import { SetContextLink } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { ApolloProvider } from '@apollo/client/react';
 import { getMainDefinition } from '@apollo/client/utilities';
+// eslint-disable-next-line
+// @ts-ignore
 import { sdkComponents } from '@plitzi/plitzi-sdk';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';

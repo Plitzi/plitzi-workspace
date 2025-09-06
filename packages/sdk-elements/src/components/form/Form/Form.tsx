@@ -114,16 +114,12 @@ const Form = ({
         value = '';
       }
 
-      setElementState<{ values: Record<string, unknown> | undefined }>(state => ({
-        ...state,
-        values: { ...state.values, [name]: value }
-      }));
-      setElementState<{ errors: Record<string, unknown> | undefined }>(state => {
-        if (!state.errors || !state.errors[name]) {
-          return state;
+      setElementState<{ values?: Record<string, unknown>; errors?: Record<string, unknown> }>(state => {
+        if (state.errors && state.errors[name]) {
+          return { ...state, values: { ...state.values, [name]: value }, errors: omit(state.errors, [name]) };
         }
 
-        return { ...state, errors: omit(state.errors, [name]) };
+        return { ...state, values: { ...state.values, [name]: value } };
       });
     },
     [setElementState]

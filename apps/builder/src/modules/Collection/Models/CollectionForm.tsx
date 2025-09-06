@@ -38,7 +38,7 @@ const collectionSchema = z.object({
     .regex(/^[a-zA-Z _-]+$/),
   description: z.string(),
   privacy: z.enum(['public', 'private']),
-  fields: z.record(collectionFieldSchema)
+  fields: z.record(z.string(), collectionFieldSchema)
 });
 
 export type CollectionFormProps = {

@@ -19,7 +19,7 @@ const variableFormSchema = z.object({
   category: z.string().min(4),
   type: z.enum(['text', 'number', 'email', 'password', 'select', 'select2', 'checkbox', 'textarea', 'color', 'switch']),
   value: z.string().min(3),
-  subValues: z.array(z.object({})).optional()
+  subValues: z.array(z.record(z.string(), z.any())).optional()
 });
 
 export type VariableFormProps = {
@@ -54,8 +54,6 @@ const VariableForm = ({
     initialValues: { name, category, value, type, subValues },
     config: { schema: variableFormSchema }
   });
-
-  console.log(value, subValues);
 
   const { fields, append, remove, move } = useFieldArray({
     control: form.formMethods.control,

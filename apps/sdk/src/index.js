@@ -1,6 +1,6 @@
 // Packages
 import React, { useCallback } from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // Monorepo
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -62,7 +62,7 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
     );
   };
 
-  const root = ReactDOM.createRoot(document.getElementById(widgetContainer));
+  const root = createRoot(document.getElementById(widgetContainer));
   root.render(<Widget />);
 }
 
@@ -75,7 +75,7 @@ if (typeof window !== 'undefined' && window.plitziCache) {
 
   // if (window.plitziCachePlugins) {
   //   generatePluginPromises(window.plitziCachePlugins).then(pluginsProcessed => {
-  //     ReactDOM.hydrateRoot(
+  //     hydrateRoot(
   //       document.getElementById('plitzi-sdk-root'),
   //       <App {...window.plitziCache} debugMode={debugMode}>
   //         {pluginsProcessed.map(({ type, Component }) => (
@@ -85,13 +85,13 @@ if (typeof window !== 'undefined' && window.plitziCache) {
   //     );
   //   });
   // } else {
-  //   ReactDOM.hydrateRoot(
+  //   hydrateRoot(
   //     document.getElementById('plitzi-sdk-root'),
   //     <App {...window.plitziCache} debugMode={debugMode} />
   //   );
   // }
 
-  ReactDOM.hydrateRoot(
+  hydrateRoot(
     document.getElementById('plitzi-sdk-root'),
     <App {...(window.plitziCache ?? {})} debugMode={debugMode} />
   );

@@ -4,7 +4,7 @@ import { createContext } from 'react';
 import type Mutations from './Mutations';
 import type Queries from './Queries';
 import type Subscriptions from './Subscriptions';
-import type { FetchPolicy, FetchResult, Observable } from '@apollo/client/core';
+import type { ApolloClient, ApolloLink, FetchPolicy, Observable } from '@apollo/client/core';
 import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 
 export type NetworkContextValue = {
@@ -26,8 +26,8 @@ export type NetworkContextValue = {
     subscribe: (
       subscriptionKey: keyof typeof Subscriptions,
       variables: Record<string, unknown>,
-      callback: (result: FetchResult) => void
-    ) => false | Observable<FetchResult<any>> | null;
+      callback: (result: ApolloClient.SubscribeResult) => void
+    ) => false | Observable<ApolloLink.Result<any>> | null;
     unsubscribe: (subscriptionKey: keyof typeof Subscriptions | (keyof typeof Subscriptions)[]) => void;
     stop: () => void;
   };

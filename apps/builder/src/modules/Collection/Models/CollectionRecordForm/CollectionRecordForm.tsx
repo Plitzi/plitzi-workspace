@@ -26,7 +26,7 @@ const CollectionRecordForm = ({
 }: CollectionRecordFormProps) => {
   const collectionRecordSchema = useMemo(() => makeCollectionRecordSchema(fields), [fields]);
   const form = useForm({
-    initialValues: { id, status: 'published', values },
+    initialValues: { id, status: 'published', values: (values ?? {}) as object },
     config: { schema: collectionRecordSchema }
   });
 
