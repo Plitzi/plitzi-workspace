@@ -23,10 +23,10 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "changeset": "changeset",
-    "release": "yarn workspaces foreach -A npm publish --tolerate-republish --registry=https://npm.pkg.github.com",
     "generate-tarballs": "yarn workspaces foreach -A exec yarn pack",
     "check-tgz": "yarn generate-tarballs && bash -c 'for tgz in packages/*/*.tgz apps/*/*.tgz; do echo \"---- $tgz ----\"; if tar -xOzf \"$tgz\" package/package.json | grep -q \"workspace:*\"; then echo \"⚠️  Contiene workspace:*\"; else echo \"✅ No workspace:*\"; fi; done'",
-    "ci:publish": "yarn workspaces foreach -A --topological-dev --verbose 'yarn publish || true' && changeset tag"
+    "ci:publish": "yarn workspaces foreach -A exec yarn npm publish --access restricted && changeset tag",
+    "ci:publish-v2": "bash -c 'for dir in packages/* apps/*; do (cd \"$dir\" && yarn npm publish || true); done' && changeset tag"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.0.0",
