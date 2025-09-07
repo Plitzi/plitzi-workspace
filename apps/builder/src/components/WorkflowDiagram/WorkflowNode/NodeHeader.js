@@ -89,7 +89,7 @@ const NodeHeader = props => {
           {type === 'callback' && <i className="fa-solid fa-puzzle-piece" />}
         </div>
         <Select
-          className="rounded basis-0 grow border-none hover:bg-gray-100 hover:px-1 font-bold !ring-0 not-hover:bg-none cursor-pointer text-xs py-1 px-1 ml-2"
+          className="rounded-sm basis-0 grow border-none hover:bg-gray-100 hover:px-1 font-bold !ring-0 [&:not(:hover)]:bg-none cursor-pointer text-xs py-1 px-1 ml-2"
           size="custom"
           intent="custom"
           value={type}
@@ -101,7 +101,7 @@ const NodeHeader = props => {
         <NodeActions onRemove={onRemove} />
       </div>
       <Select2
-        className="rounded w-full"
+        className="rounded-sm w-full"
         size="sm"
         placeholder={`Select a ${upperFirst(type)}`}
         value={`${elementId ? `${elementId}_` : ''}${action}`}

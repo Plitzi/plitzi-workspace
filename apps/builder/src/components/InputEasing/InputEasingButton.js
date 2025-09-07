@@ -20,7 +20,7 @@ const InputEasingButton = props => {
       type="button"
       title={title}
       onClick={onClick}
-      className={classNames('h-6 w-6 m-1 p-1 rounded hover:bg-gray-100', className)}
+      className={classNames('h-6 w-6 m-1 p-1 rounded-sm hover:bg-gray-100', className)}
     >
       <svg viewBox="0 0 30 30" className="overflow-visible">
         {children}

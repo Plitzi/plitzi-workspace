@@ -1,0 +1,26 @@
+import Link from './Link';
+import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+
+import type { Meta, StoryObj } from '@storybook/react';
+
+const meta = {
+  title: 'Link',
+  component: Link,
+  // parameters: {
+  //   layout: 'centered'
+  // }
+  tags: ['autodocs'],
+  argTypes: {},
+  args: {}
+} satisfies Meta<typeof Link>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = {
+  args: {
+    internalProps: defaultInternalProps
+  },
+  render: args => <Link {...args} />
+};

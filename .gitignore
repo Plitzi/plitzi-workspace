@@ -1,5 +1,7 @@
 node_modules
 dist
+tests
+!src/tests
 build
 .env
 yarn-error.log

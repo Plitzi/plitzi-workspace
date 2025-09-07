@@ -1,13 +1,13 @@
 // Packages
+import { useApolloClient } from '@apollo/client/react';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { withApollo } from '@apollo/client/react/hoc/withApollo';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
 
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/FlatMap';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 
 // Relatives
 import NetworkContext from './NetworkContext';
@@ -44,10 +44,9 @@ const NetworkContextProvider = props => {
     offlineMode = false,
     offlineData,
     offlineDataType = 'json',
-    debugMode = false,
-    // hocs
-    client
+    debugMode = false
   } = props;
+  const client = useApolloClient();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [internalData, setInternalData] = useState({});
@@ -205,6 +204,7 @@ const NetworkContextProvider = props => {
 
     let plugins = {};
     if (data.plugins && data.plugins.length > 0) {
+      // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, scope, module, settings, subPlugins
       plugins = await pluginParseDefinition(data.plugins, !debugMode);
     }
 
@@ -247,4 +247,4 @@ const NetworkContextProvider = props => {
   );
 };
 
-export default withApollo(NetworkContextProvider);
+export default NetworkContextProvider;

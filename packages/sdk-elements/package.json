@@ -5,36 +5,41 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./ComponentContext": "./dist/Component/ComponentContext.js",
-    "./ComponentProvider": "./dist/Component/ComponentProvider.js",
-    "./RootElement": "./dist/Element/RootElement.js",
-    "./ReplicaProvider": "./dist/Element/ReplicaProvider.js",
-    "./withElement": "./dist/Element/hocs/withElement.js",
-    "./JsxManager": "./dist/Element/JsxManager.js",
-    "./PluginRemote": "./dist/Element/PluginRemote.js",
-    "./PluginManager": "./dist/Element/PluginManager.js",
-    "./ElementConstants": "./dist/Element/ElementConstants.js",
-    "./elementUtils": "./dist/Element/helpers/elementUtils.js",
-    "./components": "./dist/components/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es",
+      "require": "./dist/index.cjs"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
+    }
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
-    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
+    "build-assets:prod": "tsc && vite build"
   },
   "type": "module",
-  "devDependencies": {
-    "@babel/cli": "^7.25.9",
-    "@babel/core": "^7.26.0",
-    "eslint": "^9.14.0"
-  },
   "dependencies": {
-    "@plitzi/sdk-data-source": "*",
-    "@plitzi/sdk-dev-tools": "*",
-    "@plitzi/sdk-event-bridge": "*",
-    "@plitzi/sdk-shared": "*",
+    "@plitzi/sdk-data-source": "workspace:*",
+    "@plitzi/sdk-dev-tools": "workspace:*",
+    "@plitzi/sdk-event-bridge": "workspace:*",
+    "@plitzi/sdk-interactions": "workspace:*",
+    "@plitzi/sdk-schema": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
     "immer": "^10.1.1",
     "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "eslint": "^9.34.0",
+    "vite": "^7.1.3",
+    "vitest": "^3.2.4"
   }
 }

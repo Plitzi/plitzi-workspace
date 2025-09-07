@@ -32,13 +32,16 @@
       "dependsOn": ["^lint-style:fix"],
       "cache": false
     },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "cache": false
+    },
     "build-assets:dev": {
       "dependsOn": ["^build-assets:dev"],
       "cache": false,
       "outputs": ["dist/**"]
     },
     "build-assets:dev-watch": {
-      "dependsOn": [],
       "cache": false,
       "persistent": true,
       "outputs": ["dist/**"]

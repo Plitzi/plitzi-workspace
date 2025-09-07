@@ -3,14 +3,14 @@ import React, { use, useMemo, useRef, useCallback } from 'react';
 import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
 
 // Monorepo
-import DataSourceContext from '@plitzi/sdk-data-source/DataSourceContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
@@ -71,7 +71,7 @@ const Sdk = props => {
     return `.plitzi-sdk{${cssVariables}}\n${cache}${segmentsCss.join('')}\n${schemaSettings?.customCss}`;
   }, [schemaSettings?.customCss, segments, cache, variables]);
   const styleParsed = useMemo(
-    () => `${style[0][1]}\n${style[1][1]}\n${css}\n${externalStyle}`,
+    () => `${style[0][1]}\n${style[0][1]}\n${css}\n${externalStyle}`,
     [style, css, externalStyle]
   );
 

@@ -3,9 +3,9 @@ import React, { useMemo } from 'react';
 import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { Page } from '@plitzi/sdk-elements/components';
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 // Alias
 import MadeInPlitzi from '@components/MadeInPlitzi';

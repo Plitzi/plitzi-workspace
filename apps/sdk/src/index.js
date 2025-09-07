@@ -1,19 +1,17 @@
 // Packages
 import React, { useCallback } from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // Monorepo
-import ComponentContext from '@plitzi/sdk-elements/ComponentContext';
-import ComponentProvider from '@plitzi/sdk-elements/ComponentProvider';
-import RootElement from '@plitzi/sdk-elements/RootElement';
-import withElement from '@plitzi/sdk-elements/withElement';
-import JsxManager from '@plitzi/sdk-elements/JsxManager';
-import PluginRemote from '@plitzi/sdk-elements/PluginRemote';
-import PluginManager from '@plitzi/sdk-elements/PluginManager';
-import ReplicaProvider from '@plitzi/sdk-elements/ReplicaProvider';
-import { PARTIAL_SCHEMA_TYPE_ELEMENT, PARTIAL_SCHEMA_TYPE_SEGMENT } from '@plitzi/sdk-elements/ElementConstants';
-import { generatePluginPromises } from '@plitzi/sdk-elements/elementUtils';
-import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/usePlitziServiceContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
+import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
+import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
+import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
+import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 // Alias
 import Sdk, {
@@ -64,7 +62,7 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
     );
   };
 
-  const root = ReactDOM.createRoot(document.getElementById(widgetContainer));
+  const root = createRoot(document.getElementById(widgetContainer));
   root.render(<Widget />);
 }
 
@@ -75,23 +73,28 @@ if (typeof window !== 'undefined' && window.plitziCache) {
     disableReactDevTools();
   }
 
-  if (window.plitziCachePlugins) {
-    generatePluginPromises(window.plitziCachePlugins).then(pluginsProcessed => {
-      ReactDOM.hydrateRoot(
-        document.getElementById('plitzi-sdk-root'),
-        <App {...window.plitziCache} debugMode={debugMode}>
-          {pluginsProcessed.map(({ type, Component }) => (
-            <Sdk.Plugin key={type} renderType={type} component={Component} />
-          ))}
-        </App>
-      );
-    });
-  } else {
-    ReactDOM.hydrateRoot(
-      document.getElementById('plitzi-sdk-root'),
-      <App {...window.plitziCache} debugMode={debugMode} />
-    );
-  }
+  // if (window.plitziCachePlugins) {
+  //   generatePluginPromises(window.plitziCachePlugins).then(pluginsProcessed => {
+  //     hydrateRoot(
+  //       document.getElementById('plitzi-sdk-root'),
+  //       <App {...window.plitziCache} debugMode={debugMode}>
+  //         {pluginsProcessed.map(({ type, Component }) => (
+  //           <Sdk.Plugin key={type} renderType={type} component={Component} />
+  //         ))}
+  //       </App>
+  //     );
+  //   });
+  // } else {
+  //   hydrateRoot(
+  //     document.getElementById('plitzi-sdk-root'),
+  //     <App {...window.plitziCache} debugMode={debugMode} />
+  //   );
+  // }
+
+  hydrateRoot(
+    document.getElementById('plitzi-sdk-root'),
+    <App {...(window.plitziCache ?? {})} debugMode={debugMode} />
+  );
 }
 
 /**
@@ -165,19 +168,13 @@ export {
   RENDER_MODE_SHADOW,
   RENDER_MODE_SSR,
   RENDER_MODE_WIDGET,
-  PARTIAL_SCHEMA_TYPE_ELEMENT,
-  PARTIAL_SCHEMA_TYPE_SEGMENT,
   sdkComponents
 };
 
 export const version = VERSION;
 
-export const getStateManager = () => {
-  return stateManager;
-};
+export const getStateManager = () => stateManager;
 
-export const getEventBridge = () => {
-  return eventBridge;
-};
+export const getEventBridge = () => eventBridge;
 
 export default PlitziSdk;

@@ -1,0 +1,33 @@
+import { createContext } from 'react';
+
+import type { Element, EventBridgeEvent, PluginBuilder } from '../../types';
+import type { Dispatch, SetStateAction } from 'react';
+
+export type BuilderContextValue = {
+  mode: 'normal' | 'template' | 'segment';
+  schemaName: string;
+  setMultiPagesMode: Dispatch<SetStateAction<boolean>>;
+  multiPagesMode: boolean;
+  hasMultiPages: boolean;
+  baseContext: { baseElementId: string };
+  baseElementIdOriginal: string;
+  builderSetBaseContext: (id?: string) => void;
+  builderElementPermissions: {
+    (element: Element, path: string, defaultValue?: boolean): boolean;
+    (element: Element, path?: undefined, defaultValue?: boolean): PluginBuilder;
+    (element: Element, path?: string, defaultValue?: boolean): boolean | PluginBuilder;
+  };
+  builderHandler: (event: EventBridgeEvent, ...data: unknown[]) => void;
+  updateElement: (
+    elementId: string,
+    attributeKey: string,
+    attributeValue: unknown,
+    category?: 'attributes' | 'definition'
+  ) => void;
+};
+
+const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValue;
+
+const BuilderContext = createContext<BuilderContextValue>(builderContextDefaultValue);
+
+export default BuilderContext;

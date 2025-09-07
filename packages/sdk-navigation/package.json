@@ -5,27 +5,40 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./NavigationHelper": "./dist/NavigationHelper.js",
-    "./NavigationContext": "./dist/NavigationContext.js",
-    "./useNavigation": "./dist/hooks/useNavigation.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es",
+      "require": "./dist/index.cjs"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*",
+      "require": "./dist/*"
+    }
   },
   "scripts": {
     "lint": "eslint ./src",
-    "build-assets:dev-watch": "babel src --out-dir dist --copy-files --no-copy-ignored --watch",
-    "build-assets:prod": "babel src --out-dir dist --copy-files --no-copy-ignored"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
+    "build-assets:prod": "tsc && vite build"
   },
   "type": "module",
   "devDependencies": {
-    "@babel/cli": "^7.25.9",
-    "@babel/core": "^7.26.0",
-    "eslint": "^9.14.0"
+    "eslint": "^9.34.0",
+    "vite": "^7.1.3",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@plitzi/sdk-shared": "*",
+    "@plitzi/sdk-shared": "workspace:*",
     "lodash": "^4.17.21",
-    "react": "19.0.0-rc-66855b96-20241106",
-    "react-dom": "19.0.0-rc-66855b96-20241106",
-    "react-router-dom": "^6.28.0"
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "react-router": "^7.8.2",
+    "react-router-dom": "^7.8.2"
   }
 }

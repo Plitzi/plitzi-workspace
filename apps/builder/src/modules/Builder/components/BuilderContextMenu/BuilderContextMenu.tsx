@@ -1,0 +1,319 @@
+import Card from '@plitzi/plitzi-ui/Card';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import get from 'lodash/get';
+import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
+import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import SegmentsContext from '@pmodules/Segments/SegmentsContext';
+import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
+import TemplatesContext from '@pmodules/Templates/TemplatesContext';
+
+import BuilderElementTools from '../BuilderElementTools';
+import BuilderContextMenuItem from './BuilderContextMenuItem';
+import BuilderContextSubMenu from './BuilderContextSubMenu';
+
+import type { Element } from '@plitzi/sdk-shared';
+
+export type BuilderContextMenuProps = {
+  width?: number;
+  iframeDOM?: HTMLIFrameElement | null;
+  zoom?: number;
+  getWindow?: () => Window | null;
+};
+
+const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: BuilderContextMenuProps) => {
+  const { showModal } = useModal();
+  const { existsPopup, addPopup } = usePopup();
+  const ref = useRef<HTMLDivElement>(null);
+  const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
+  const [xPos, setXPos] = useState('0px');
+  const [yPos, setYPos] = useState('0px');
+  const [showMenu, setShowMenu] = useState(false);
+  const { builderElementPermissions, builderHandler } = use(BuilderContext);
+  const builderTemplatesContext = use(TemplatesContext);
+  const builderSegmentsContext = use(SegmentsContext);
+  const { elementSelected, setSelected } = use(BuilderSelectedContext);
+  const {
+    schema,
+    schema: { flat }
+  } = use(BuilderSchemaContext);
+  const { style } = use(BuilderStyleContext);
+  const element = useMemo(() => (elementSelected ? flat[elementSelected] : undefined), [elementSelected, flat]);
+  const componentConfig = useMemo(
+    () => (element ? builderElementPermissions(element) : {}),
+    [element, builderElementPermissions]
+  );
+
+  const calculatePosition = useCallback(() => {
+    let innerHeight = 0;
+    let innerWidth = 0;
+    ({ innerHeight, innerWidth } = getWindow?.() ?? { innerHeight: 0, innerWidth: 0 });
+    let { x, y } = clickPosition;
+    const separation = 5;
+    if (x + separation + width > innerWidth) {
+      x = x - separation - width;
+    }
+
+    const height = get(ref.current, 'offsetHeight', 0);
+    if (height && y + separation + height > innerHeight) {
+      y = y - separation - height;
+    }
+
+    if (zoom !== 1) {
+      x /= zoom;
+      y /= zoom;
+    }
+
+    setXPos(`${x}px`);
+    setYPos(`${y}px`);
+  }, [clickPosition, getWindow, width, zoom]);
+
+  const handleContextMenu = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (showMenu) {
+        setShowMenu(false);
+
+        return;
+      }
+
+      const closest = (e.target as HTMLElement).closest('.builder__context-menu');
+      if (closest) {
+        return;
+      }
+
+      setShowMenu(true);
+      setClickPosition({ x: e.clientX, y: e.clientY });
+    },
+    [showMenu]
+  );
+
+  const handleClick = useCallback(() => setShowMenu(false), []);
+
+  useEffect(() => {
+    if (iframeDOM && iframeDOM.contentWindow) {
+      iframeDOM.contentWindow.document.addEventListener('click', handleClick);
+      iframeDOM.contentWindow.document.addEventListener('contextmenu', handleContextMenu);
+    }
+
+    return () => {
+      if (iframeDOM && iframeDOM.contentWindow) {
+        iframeDOM.contentWindow.document.removeEventListener('click', handleClick);
+        iframeDOM.contentWindow.document.removeEventListener('contextmenu', handleContextMenu);
+      }
+    };
+  }, [handleClick, handleContextMenu, iframeDOM]);
+
+  useLayoutEffect(() => {
+    if (ref.current && showMenu) {
+      calculatePosition();
+    }
+  }, [calculatePosition, showMenu]);
+
+  const getPath = useCallback(
+    (id?: string, reverse = false, skip: number = 0): string[] => {
+      if (!id) {
+        return [];
+      }
+
+      const element = flat[id];
+      if (!(element as Element | undefined)) {
+        return [];
+      }
+
+      const {
+        definition: { parentId }
+      } = element;
+
+      if (!parentId) {
+        return [id];
+      }
+
+      if (skip > 0) {
+        return getPath(parentId, reverse, skip - 1);
+      }
+
+      if (reverse) {
+        return [id, ...getPath(parentId, true, skip - 1)];
+      }
+
+      return [...getPath(parentId, false, skip - 1), id];
+    },
+    [flat]
+  );
+
+  const handleClickDelete = () => {
+    builderHandler('schemaRemoveElement', elementSelected);
+    setShowMenu(false);
+  };
+
+  const handleClickTools = () => {
+    if (!existsPopup('element-tools')) {
+      addPopup('element-tools', <BuilderElementTools />, {
+        icon: <i className="fas fa-tools text-base" />,
+        title: 'Tools',
+        resizeHandles: ['se'],
+        width: 350,
+        placement: 'floating'
+      });
+    }
+
+    setShowMenu(false);
+  };
+
+  const handleClickAsTemplate = async () => {
+    const response = await showModal<{ name: string; description?: string }>(
+      <Modal.Header>
+        <h4>Add Template</h4>
+      </Modal.Header>,
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
+    );
+
+    if (response && element) {
+      const { name, description } = response;
+      void builderTemplatesContext.elementAsTemplate(schema, style, name, description ?? '', element);
+    }
+  };
+
+  const handleClickAsSegment = async () => {
+    const response = await showModal<{ name: string; description?: string }>(
+      <Modal.Header>
+        <h4>Add Template</h4>
+      </Modal.Header>,
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
+    );
+
+    if (response && element) {
+      const { name, description } = response;
+      void builderSegmentsContext.elementAsSegment(schema, style, name, description ?? '', element);
+    }
+  };
+
+  const handleClickCopy = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    iframeDOM?.contentWindow?.document.execCommand('copy');
+  }, [iframeDOM]);
+
+  const handleClickDuplicate = useCallback(() => {
+    builderHandler('schemaCloneElement', elementSelected);
+    setShowMenu(false);
+  }, [builderHandler, elementSelected]);
+
+  const handleClickParent = useCallback(
+    (parentId: string) => () => {
+      setSelected(parentId);
+      setShowMenu(false);
+    },
+    [setSelected]
+  );
+
+  const path = getPath(elementSelected, true, 1);
+  const subMenuMemo = useMemo(
+    () =>
+      path
+        .filter(segment => (flat[segment] as Element | undefined) && segment !== elementSelected)
+        .map(segment => {
+          const {
+            definition: { label }
+          } = flat[segment];
+
+          return { key: segment, value: label };
+        }),
+    [path, flat, elementSelected]
+  );
+
+  if (!showMenu) {
+    return null;
+  }
+
+  if (!elementSelected) {
+    return (
+      <Card
+        ref={ref}
+        className="builder__context-menu z-[99999999] flex flex-col p-3 shadow-2xl"
+        style={{
+          position: 'fixed',
+          top: yPos,
+          left: xPos,
+          width,
+          transform: `scale(${1 / zoom})`,
+          transformOrigin: 'top left'
+        }}
+      >
+        <Card.Body className="w-full">
+          <div className="flex h-20 items-center justify-center rounded-sm border-2 border-dashed p-3">
+            No components selected. Click on a component to select it
+          </div>
+        </Card.Body>
+      </Card>
+    );
+  }
+
+  const { canDelete = true, canTemplate = true } = componentConfig;
+  const items = get(element, 'definition.items');
+
+  return (
+    <Card
+      ref={ref}
+      className="builder__context-menu z-[99999999] flex rounded-sm shadow-2xl"
+      style={{
+        position: 'fixed',
+        top: yPos,
+        left: xPos,
+        width,
+        transform: `scale(${1 / zoom})`,
+        transformOrigin: 'top left'
+      }}
+    >
+      <Card.Body className="w-full">
+        <div className="flex w-full flex-col">
+          <BuilderContextSubMenu
+            onClick={handleClickParent}
+            iframeDOM={iframeDOM}
+            parentRef={ref}
+            items={subMenuMemo}
+          />
+          <BuilderContextMenuItem title="Copy Element" shortcut="CTRL / CMD + C" onClick={handleClickCopy}>
+            <i className="fas fa-copy" />
+          </BuilderContextMenuItem>
+          <BuilderContextMenuItem title="Open Tools" shortcut="CTRL +" onClick={handleClickTools}>
+            <i className="fas fa-tools" />
+          </BuilderContextMenuItem>
+          {!!items && canTemplate && (
+            <BuilderContextMenuItem title="Save As Template" shortcut="CTRL +" onClick={handleClickAsTemplate}>
+              <i className="fas fa-cube" />
+            </BuilderContextMenuItem>
+          )}
+          {!!items && canTemplate && (
+            <BuilderContextMenuItem title="Save As Segment" shortcut="CTRL +" onClick={handleClickAsSegment}>
+              <i className="fas fa-cube" />
+            </BuilderContextMenuItem>
+          )}
+          <BuilderContextMenuItem title="Duplicate Element" shortcut="CTRL +" onClick={handleClickDuplicate}>
+            <i className="far fa-clone" />
+          </BuilderContextMenuItem>
+          {canDelete && (
+            <BuilderContextMenuItem title=" Delete Element" shortcut="CTRL +" onClick={handleClickDelete}>
+              <i className="fas fa-trash-alt text-red-400" />
+            </BuilderContextMenuItem>
+          )}
+        </div>
+      </Card.Body>
+    </Card>
+  );
+};
+
+export default memo(BuilderContextMenu);

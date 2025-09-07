@@ -1,0 +1,20 @@
+import { gql } from '@apollo/client/core';
+
+const SpaceUpdateVariableSubscription = gql`
+  subscription ($environment: String!) {
+    SpaceUpdateVariable(environment: $environment) {
+      variable {
+        name
+        category
+        type
+        value
+        subValues {
+          when
+          value
+        }
+      }
+    }
+  }
+`;
+
+export default SpaceUpdateVariableSubscription;

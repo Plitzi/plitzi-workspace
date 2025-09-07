@@ -23,5 +23,6 @@
     "tablet": {},
     "mobile": {}
   },
+  "variables": {},
   "cache": ".heading-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}.button-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}"
 }

@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url); // get the resolved path to t
 const __dirname = path.dirname(__filename); // get the name of the directory
 
 export default {
+  preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   coverageReporters: ['clover', 'json', 'lcov', 'text', 'html'],
   setupFilesAfterEnv: ['@plitzi/sdk-shared/jest.setup'],

@@ -57,7 +57,7 @@ const WorkflowActions = props => {
         <Button
           intent="custom"
           size="custom"
-          className="rounded px-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-500 mr-4"
+          className="rounded-sm px-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-500 mr-4"
           onClick={handleClickLayout}
         >
           Layout
@@ -65,7 +65,7 @@ const WorkflowActions = props => {
         <Button
           intent="custom"
           size="custom"
-          className="rounded px-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-500"
+          className="rounded-sm px-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-500"
           onClick={handleClickAddNode}
         >
           + Node
@@ -74,7 +74,7 @@ const WorkflowActions = props => {
       <Button
         intent="custom"
         size="custom"
-        className="flex items-start flex items-center px-2 text-sm text-white hover:text-red-100 bg-red-500"
+        className="flex items-center px-2 text-sm text-white hover:text-red-100 bg-red-500"
         onClick={handleRemoveAll}
         title="Remove All Nodes"
       >

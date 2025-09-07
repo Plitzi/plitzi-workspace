@@ -3,7 +3,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HandlebarsPlugin = require('handlebars-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
-const WebpackAssetsManifest = require('webpack-assets-manifest');
+const { WebpackAssetsManifest } = require('webpack-assets-manifest');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
@@ -18,9 +18,25 @@ const PACKAGE = require('./package.json');
 
 const DESTINATION = path.resolve(__dirname, './dist/');
 
+const packages = {
+  '@plitzi/sdk-auth': path.resolve(__dirname, '../../packages/sdk-auth/src'),
+  '@plitzi/sdk-data-source': path.resolve(__dirname, '../../packages/sdk-data-source/src'),
+  '@plitzi/sdk-dev-tools': path.resolve(__dirname, '../../packages/sdk-dev-tools/src'),
+  '@plitzi/sdk-elements': path.resolve(__dirname, '../../packages/sdk-elements/src'),
+  '@plitzi/sdk-event-bridge': path.resolve(__dirname, '../../packages/sdk-event-bridge/src'),
+  '@plitzi/sdk-interactions': path.resolve(__dirname, '../../packages/sdk-interactions/src'),
+  '@plitzi/sdk-navigation': path.resolve(__dirname, '../../packages/sdk-navigation/src'),
+  '@plitzi/sdk-plugins': path.resolve(__dirname, '../../packages/sdk-plugins/src'),
+  '@plitzi/sdk-schema': path.resolve(__dirname, '../../packages/sdk-schema/src'),
+  '@plitzi/sdk-shared': path.resolve(__dirname, '../../packages/sdk-shared/src'),
+  '@plitzi/sdk-state': path.resolve(__dirname, '../../packages/sdk-state/src'),
+  '@plitzi/sdk-style': path.resolve(__dirname, '../../packages/sdk-style/src'),
+  '@plitzi/sdk-variables': path.resolve(__dirname, '../../packages/sdk-variables/src')
+};
+
 // process.traceDeprecation = true // enable in case to debug node
 
-const build = (env, args) => {
+const buildBase = (env, args) => {
   const devMode = args.mode !== 'production';
   const onlyGzip = env.onlyGzip || false;
   const onlyAnalyze = env.onlyAnalyze || false;
@@ -35,8 +51,10 @@ const build = (env, args) => {
       // modules to load
       // can be any module, i. e.
       'babel-loader',
+      'ts-loader',
       '@babel/preset-env',
       '@babel/preset-react',
+      '@babel/preset-typescript',
       '@babel/plugin-proposal-class-properties',
       '@babel/plugin-transform-runtime',
       '@babel/plugin-transform-private-methods'
@@ -46,6 +64,7 @@ const build = (env, args) => {
   let modules = {
     entry: { 'plitzi-sdk': './src/index.js' },
     output: {
+      pathinfo: false,
       path: DESTINATION,
       filename: '[name].js',
       chunkFilename: 'plitzi-sdk-chunk-[name].js',
@@ -57,6 +76,7 @@ const build = (env, args) => {
     },
     resolve: {
       symlinks: devMode,
+      extensions: ['.js', '.mjs', '.es', '.cjs', '.ts', '.tsx'],
       alias: {
         '@modules': path.resolve('./src/modules'),
         '@components': path.resolve('./src/components'),
@@ -65,19 +85,48 @@ const build = (env, args) => {
       }
     },
     target: 'web',
-    devServer: {
-      compress: true,
-      allowedHosts: 'all',
-      hot: true,
-      liveReload: false,
-      historyApiFallback: true,
-      static: {
-        directory: path.join(__dirname, 'dist')
-      },
-      port: 3001
+    watchOptions: {
+      ignored: /(node_modules|packages\/[a-z-]+\/dist)/
     },
     module: {
       rules: [
+        {
+          test: /\.(ts|tsx)$/,
+          include: devMode
+            ? [path.resolve(__dirname, 'src'), ...Object.values(packages)]
+            : [path.resolve(__dirname, 'src')],
+          use: [
+            {
+              loader: 'thread-loader',
+              options: {
+                poolTimeout: watch ? Infinity : 2000
+              }
+            },
+            {
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true,
+                happyPackMode: true
+              }
+            },
+            {
+              loader: 'babel-loader',
+              options: {
+                presets: [
+                  '@babel/preset-env',
+                  ['@babel/preset-react', { runtime: 'automatic' }], // [classic] will disable new JSX compiler and [automatic] will enable it
+                  '@babel/preset-typescript'
+                ],
+                plugins: [
+                  '@babel/plugin-proposal-class-properties',
+                  '@babel/plugin-transform-runtime',
+                  '@babel/plugin-transform-private-methods',
+                  env.WEBPACK_SERVE && 'react-refresh/babel'
+                ].filter(Boolean)
+              }
+            }
+          ]
+        },
         {
           test: /(\.jsx|\.js)$/,
           exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
@@ -91,7 +140,10 @@ const build = (env, args) => {
             {
               loader: 'babel-loader',
               options: {
-                presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]], // [classic] will disable new JSX compiler and [automatic] will enable it
+                presets: [
+                  '@babel/preset-env',
+                  ['@babel/preset-react', { runtime: 'automatic' }] // [classic] will disable new JSX compiler and [automatic] will enable it
+                ],
                 plugins: [
                   '@babel/plugin-proposal-class-properties',
                   '@babel/plugin-transform-runtime',
@@ -103,7 +155,7 @@ const build = (env, args) => {
           ]
         },
         {
-          test: /\.(png|jpg|gif|svg|...)$/,
+          test: /\.(png|jpg|gif|svg)$/,
           loader: 'url-loader',
           exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/
         },
@@ -138,21 +190,12 @@ const build = (env, args) => {
         }
       ]
     },
+    externals: { react: 'react', 'react-dom': 'react-dom', 'react-dom/client': 'react-dom/client' },
     plugins: [
-      new PlitziPlugin({ isHost: true }),
       new webpack.DefinePlugin({
         VERSION: JSON.stringify(PACKAGE.version)
       }),
       new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /(es|pt|en).js/),
-      new HandlebarsPlugin({
-        data: {
-          title: '',
-          jsPath: '/plitzi-sdk.js',
-          cssPath: '/plitzi-sdk.css'
-        },
-        output: path.join(process.cwd(), 'dist', '[name].html'),
-        entry: path.join(process.cwd(), 'index.hbs')
-      }),
       new WebpackAssetsManifest({
         output: 'app-manifest.json',
         integrity: true,
@@ -196,7 +239,8 @@ const build = (env, args) => {
   }
 
   if (devMode) {
-    modules.devtool = 'source-map';
+    modules.devtool = 'cheap-module-source-map';
+    modules.resolve.alias = { ...modules.resolve.alias, ...packages };
   } else {
     modules.optimization = {
       usedExports: true,
@@ -234,17 +278,14 @@ const build = (env, args) => {
 };
 
 const buildSSR = (env, args) => {
-  const modules = build(env, args);
+  const modules = buildBase(env, args);
 
   return {
     ...modules,
     entry: { 'plitzi-sdk': './src/indexSSR.js' },
     target: 'node',
-    output: {
-      ...modules.output,
-      path: `${modules.output.path}/ssr/`
-    },
-    devServer: undefined,
+    output: { ...modules.output, path: `${modules.output.path}/ssr/` },
+    externals: {},
     plugins: [
       new PlitziPlugin({
         isHost: true,
@@ -269,8 +310,44 @@ const buildSSR = (env, args) => {
   };
 };
 
-if (process.argv.includes('measure') || process.argv.includes('watch')) {
-  module.exports = [build];
+const buildCDN = (env, args) => {
+  const modules = buildBase(env, args);
+
+  return {
+    ...modules,
+    devServer: {
+      compress: true,
+      allowedHosts: 'all',
+      hot: true,
+      liveReload: false,
+      historyApiFallback: true,
+      static: {
+        directory: path.join(__dirname, 'dist')
+      },
+      port: 3001
+    },
+    output: { ...modules.output, path: `${modules.output.path}/cdn/` },
+    externals: {},
+    plugins: [
+      new PlitziPlugin({ isHost: true }),
+      new HandlebarsPlugin({
+        data: {
+          title: '',
+          jsPath: env.WEBPACK_SERVE ? '/plitzi-sdk.js' : '/cdn/plitzi-sdk.js',
+          cssPath: env.WEBPACK_SERVE ? '/plitzi-sdk.css' : '/cdn/plitzi-sdk.css'
+        },
+        output: path.join(process.cwd(), 'dist', '[name].html'),
+        entry: path.join(process.cwd(), 'index.hbs')
+      }),
+      ...modules.plugins
+    ]
+  };
+};
+
+if (process.argv.includes('serve')) {
+  module.exports = [buildCDN];
+} else if (process.argv.includes('measure') || process.argv.includes('watch')) {
+  module.exports = [buildBase, buildCDN];
 } else {
-  module.exports = [build, buildSSR];
+  module.exports = [buildBase, buildSSR, buildCDN];
 }

@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    /* to allow jsdoc be converted to ts */
+    "allowJs": true,
+    "maxNodeModuleJsDepth": 5,
+
+    "composite": true,
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "emitDeclarationOnly": true,
+    "jsx": "react-jsx", // @todo: react/jsx-runtime
+
+    /* Linting */
+    "strict": true,
+    "resolveJsonModule": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      // "@icons/*": ["./src/icons/*"],
+      // "@components/*": ["./src/components/*"],
+      // "@hooks/*": ["./src/hooks/*"],
+      // "@/*": ["./src/*"]
+    },
+    "rootDir": "./",
+    "outDir": "./dist"
+  },
+  "include": [
+    "**/*.json",
+    "src/*.ts",
+    "src/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vite.config.ts",
+    "setupTests.ts",
+    "package.json"
+  ]
+}

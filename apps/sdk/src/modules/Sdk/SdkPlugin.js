@@ -1,5 +1,3 @@
-// Packages
-
 /**
  * @param {{
  *   renderType: string;

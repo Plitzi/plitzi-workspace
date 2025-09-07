@@ -34,14 +34,14 @@ const NodeBodyParam = props => {
   );
 
   return (
-    <div className={classNames('flex flex-col w-full not-first:mt-4', className)}>
+    <div className={classNames('flex flex-col w-full [&:not(:first-child)]:mt-4', className)}>
       <label htmlFor={id}>{upperFirst(id)}</label>
       {type === 'text' && (
-        <Input className="w-full" inputClassName="rounded" id={id} value={value} onChange={handleChange} />
+        <Input className="w-full" inputClassName="rounded-sm" id={id} value={value} onChange={handleChange} />
       )}
       {type === 'select' && (
         <Select2
-          className="rounded w-full"
+          className="rounded-sm w-full"
           size="sm"
           placeholder={`Select a ${upperFirst(id)}`}
           value={value}

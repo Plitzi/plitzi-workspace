@@ -5,7 +5,7 @@ import noop from 'lodash/noop';
 import get from 'lodash/get';
 
 // Monorepo
-import { emptyObject } from '@plitzi/sdk-shared/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 // Relatives
 import NodeBodyParam from './NodeBodyParam';

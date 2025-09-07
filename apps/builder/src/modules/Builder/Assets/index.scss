@@ -1,5 +1,0 @@
-@use 'sass:meta';
-
-// Components
-@include meta.load-css('../components/BuilderBreadcrumb/Assets');
-@include meta.load-css('../components/BuilderTree/Assets');

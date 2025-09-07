@@ -1,0 +1,278 @@
+import get from 'lodash/get';
+import moment from 'moment';
+
+import type { UseCacheReturn } from '@plitzi/plitzi-ui/Cache';
+
+export type BasicProviderProps = {
+  cache?: Record<string, unknown>;
+  setCache?: UseCacheReturn[1];
+  clearCache?: UseCacheReturn[3];
+  loginUrl?: string;
+  refreshUrl?: string;
+  detailsPath?: string;
+  tokenPath?: string;
+  expirationTimePath?: string;
+};
+
+class BasicProvider {
+  userDetails?: Record<string, unknown>;
+  accessData?: string;
+  expireAt?: number;
+  isAuthenticated?: boolean;
+  accessToken?: string;
+  setCache?: UseCacheReturn[1];
+  clearCache?: UseCacheReturn[3];
+  paths?: { detailsPath?: string; tokenPath?: string; expirationTimePath?: string };
+  network?: { loginUrl?: string; refreshUrl?: string };
+  expireHandler?: NodeJS.Timeout;
+
+  constructor({
+    cache,
+    setCache,
+    clearCache,
+    loginUrl,
+    refreshUrl,
+    detailsPath = '',
+    tokenPath = '',
+    expirationTimePath = ''
+  }: BasicProviderProps = {}) {
+    // Props
+    if (cache) {
+      this.userDetails = get(cache, 'details') as Record<string, unknown> | undefined;
+      this.accessToken = get(cache, 'access_token', undefined) as string;
+      this.expireAt = get(cache, 'expire_at', 0) as number;
+      this.isAuthenticated = !!this.accessToken;
+    } else {
+      this.reset(false);
+    }
+
+    // Cache
+    this.setCache = setCache;
+    this.clearCache = clearCache;
+
+    // Others
+    this.expireHandler = undefined;
+    this.network = { loginUrl, refreshUrl };
+    this.paths = { detailsPath, tokenPath, expirationTimePath };
+
+    if (this.isAuthenticated) {
+      this.refreshDetails()
+        .then(data => {
+          if (data.errors) {
+            this.logout();
+          } else {
+            this.setExpiration();
+          }
+        })
+        .catch(() => this.logout());
+    }
+  }
+
+  #loginAsToken = async (token: string) => {
+    this.accessToken = token;
+    this.isAuthenticated = true;
+    const data = await this.refreshDetails(false);
+    if (data.errors) {
+      return {
+        errors: {
+          token: 'Invalid token'
+        }
+      };
+    }
+
+    return data;
+  };
+
+  #loginAsNormal = async (username: string, password: string) => {
+    const response = await this.#networkQuery(this.network?.loginUrl ?? '', { username, password }, 'post');
+    const token = get(response, `data.${this.paths?.tokenPath}`, '') as string;
+    if (!token) {
+      return {
+        errors: {
+          username: 'Invalid username or password',
+          password: 'Invalid username or password'
+        }
+      };
+    }
+
+    return this.#loginAsToken(token);
+  };
+
+  login = async (params: { mode?: 'token' | 'normal'; username?: string; password?: string; token?: string }) => {
+    const { mode = 'normal', username = '', password = '', token } = params;
+    let response;
+    if (mode === 'token' && token) {
+      response = await this.#loginAsToken(token);
+    } else if (mode === 'normal' && username && password) {
+      response = await this.#loginAsNormal(username, password);
+    }
+
+    if (response?.errors) {
+      this.reset(false);
+
+      return response;
+    }
+
+    this.setExpiration();
+    this.syncCache();
+
+    return {
+      success: this.isAuthenticated,
+      access_token: this.accessToken,
+      expires_at: this.expireAt,
+      details: this.userDetails
+    };
+  };
+
+  refreshDetails = async (invalidateCache = true) => {
+    if (!this.isAuthenticated || !this.accessToken || !this.network?.refreshUrl) {
+      return { errors: 'Invalid request' };
+    }
+
+    const response = await this.#networkQuery(this.network.refreshUrl, {}, 'get', this.accessToken);
+    if (response.status === 500) {
+      return { skip: true, errors: undefined };
+    }
+
+    if (this.paths?.detailsPath) {
+      this.userDetails = get(response, `data.${this.paths.detailsPath}`, {});
+    } else {
+      this.userDetails = get(response, 'data') as Record<string, unknown> | undefined;
+    }
+
+    if (!this.userDetails) {
+      return { errors: 'Invalid user details' };
+    }
+
+    if (this.paths?.expirationTimePath) {
+      this.expireAt = get(response, this.paths.expirationTimePath, 0) as number;
+    }
+    if (invalidateCache) {
+      this.syncCache();
+    }
+
+    return {
+      errors: undefined,
+      success: this.isAuthenticated,
+      access_token: this.accessToken,
+      expires_at: this.expireAt,
+      details: this.userDetails
+    };
+  };
+
+  logout = () => {
+    if (!this.isAuthenticated) {
+      return false;
+    }
+
+    this.reset();
+
+    return true;
+  };
+
+  can = (permission: string) => {
+    //  || !this.userDetails.details
+    if (!this.userDetails) {
+      return false;
+    }
+
+    return (get(this.userDetails, 'details.permissions', []) as string[]).includes(permission);
+  };
+
+  // Others
+
+  setExpiration = () => {
+    if (!this.isAuthenticated) {
+      return false;
+    }
+
+    const remainingTime = (this.expireAt ?? 0) - Math.floor(moment.utc().valueOf() / 1000);
+    if (remainingTime <= 0) {
+      return false;
+    }
+
+    if (this.expireHandler) {
+      clearTimeout(this.expireHandler);
+    }
+
+    this.expireHandler = setTimeout(() => {
+      this.expireHandler = undefined;
+      this.logout();
+    }, remainingTime * 1000);
+
+    return true;
+  };
+
+  syncCache = () => {
+    this.setCache?.({
+      access_token: this.accessToken,
+      details: this.userDetails,
+      expire_at: this.expireAt
+    });
+  };
+
+  reset = (invalidateCache = true) => {
+    if (invalidateCache) {
+      this.clearCache?.();
+    }
+
+    this.userDetails = undefined;
+    this.accessToken = undefined;
+    this.expireAt = 0;
+    this.isAuthenticated = false;
+    if (this.expireHandler) {
+      clearTimeout(this.expireHandler);
+      this.expireHandler = undefined;
+    }
+  };
+
+  #networkQuery = async (url: string, params: Record<string, string | Blob> = {}, method = 'get', accessToken = '') => {
+    let result;
+    try {
+      method = method.toLowerCase();
+      const headers: Record<string, string> = {};
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+
+      Object.values(params).forEach(value => {
+        if (value instanceof Blob && headers['Content-Type'] !== 'multipart/form-data') {
+          headers['Content-Type'] = 'multipart/form-data';
+
+          return;
+        }
+      });
+
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      const fetchOptions: { method: string; headers: Record<string, string>; body?: typeof formData } = {
+        method,
+        headers,
+        body: formData
+      };
+      if (method === 'get') {
+        if (fetchOptions.body) {
+          delete fetchOptions.body;
+        }
+      }
+
+      const response = await fetch(url, fetchOptions);
+      result = { status: response.status, data: (await response.json()) as unknown };
+      if (response.status === 204 && method === 'delete') {
+        result = { status: response.status, data: true };
+      } else if (response.status >= 400) {
+        result = { status: response.status, data: undefined };
+      }
+    } catch (e) {
+      result = { status: 500, data: undefined };
+      console.error(e);
+    }
+
+    return result;
+  };
+}
+
+export default BasicProvider;

@@ -1,0 +1,110 @@
+import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
+import classNames from 'classnames';
+import get from 'lodash/get';
+import { useCallback, use, useMemo } from 'react';
+
+import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss'; // Style
+import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import AppContext from '@pmodules/App/AppContext';
+import CollectionContext from '@pmodules/Collection/CollectionContext';
+import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
+import NetworkContext from '@pmodules/Network/NetworkContext';
+import SegmentsContext from '@pmodules/Segments/SegmentsContext';
+
+import type { Schema } from '@plitzi/sdk-shared';
+
+import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // SDK Style
+
+export type BuilderAreaPreviewProps = {
+  id?: string;
+  className?: string;
+  previewMode?: boolean;
+  schema?: Schema;
+  styleCache?: string;
+};
+
+const BuilderAreaPreview = ({
+  id = '',
+  className = '',
+  previewMode = false,
+  schema,
+  styleCache = ''
+}: BuilderAreaPreviewProps) => {
+  const { settings, flat } = schema ?? {};
+  const { displayBorderComponents } = use(AppContext);
+
+  const getWindow = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      return window;
+    }
+
+    // @todo: Hmm what to put here
+    return { innerWidth: 1440, innerHeight: 900 } as Window;
+  }, []);
+
+  const plitziContextValue = useMemo(
+    () => ({
+      settings: { previewMode, ...settings },
+      root: { baseElementId: id },
+      utils: { getWindow },
+      customContexts: {},
+      contexts: {
+        CollectionContext,
+        ComponentContext,
+        PluginsContext,
+        DataSourceContext,
+        SchemaContext,
+        NetworkContext,
+        NavigationContext,
+        StateManagerContext,
+        InteractionsContext,
+        SegmentsContext,
+        EventBridgeContext
+      }
+    }),
+    [previewMode, settings, id, getWindow]
+  );
+
+  const css = useMemo(() => {
+    const css = `${styleCache}\n${settings?.customCss}`;
+
+    return `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${css}`;
+  }, [settings, styleCache]);
+
+  const { components } = use(ComponentContext);
+  const element = useMemo(() => get(flat, id), [id, flat]);
+  const Plugin = useMemo(() => element && get(components, get(element, 'definition.type')), [components, element]);
+  const internalProps = useMemo(() => ({ id, rootId: id }), [id]);
+
+  return (
+    <ContainerFrame className={classNames('builder-area flex', className)} css={css}>
+      <PlitziServiceProvider value={plitziContextValue}>
+        <DataSourceContextProvider>
+          <InteractionsBuilderContextProvider>
+            <div
+              className={classNames('builder-iframe', {
+                'builder--display-component-border display-component-border--black':
+                  displayBorderComponents === 'black',
+                'builder--display-component-border display-component-border--white': displayBorderComponents === 'white'
+              })}
+              style={{ width: '100%', display: 'flex', height: '100%' }}
+            >
+              {Plugin && <Plugin internalProps={internalProps} />}
+            </div>
+          </InteractionsBuilderContextProvider>
+        </DataSourceContextProvider>
+      </PlitziServiceProvider>
+    </ContainerFrame>
+  );
+};
+
+export default BuilderAreaPreview;

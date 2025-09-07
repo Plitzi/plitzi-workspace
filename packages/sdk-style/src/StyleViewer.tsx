@@ -1,0 +1,63 @@
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
+import { useCallback, useMemo } from 'react';
+
+import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
+
+export type StyleViewerProps = {
+  elementSelected: string;
+  schema: object;
+  style: Style;
+};
+
+const StyleViewer = ({ elementSelected, schema, style }: StyleViewerProps) => {
+  const flat = useMemo(() => get(schema, 'flat', {}), [schema]);
+  const platform = useMemo(() => get(style, 'platform', {}) as Style['platform'], [style]);
+
+  const selectorToString = useCallback(
+    (selector: string) => {
+      let style = '';
+      if (!isEmpty(selector)) {
+        selector = btoa(selector);
+        Object.keys(platform).forEach(mode => {
+          const segment = platform[mode as DisplayMode][selector] as StyleItem | undefined;
+
+          if (segment) {
+            style = `${style}/* ${mode} */\n${segment.cache}\n`;
+          }
+        });
+
+        style = style.replace(/(;)/gim, '$1\n');
+        style = style.replace(/([a-z0-9\-_])({)/gim, '$1 $2\n');
+        style = style.replace(/(})(\.)/gim, '$1\n$2');
+        style = style.replace(/^([a-z\-:0-9#; %._(),]+)$/gim, '  $1');
+      }
+
+      return style;
+    },
+    [platform]
+  );
+
+  const styleSelectors = useMemo(
+    () => get(flat, `${elementSelected}.definition.styleSelectors`, {}) as { [key: string]: string },
+    [elementSelected, flat]
+  );
+
+  const styleStr = useMemo(
+    () =>
+      Object.values(styleSelectors).reduce(
+        (acum, selector) => `${acum}${acum === '' ? '' : '\n'}${selectorToString(selector)}`,
+        ''
+      ),
+    [styleSelectors, selectorToString]
+  );
+
+  return (
+    <div className="flex grow flex-col">
+      <CodeMirror theme="dark" readOnly className="h-full" value={styleStr} />
+    </div>
+  );
+};
+
+export default StyleViewer;
