@@ -11,7 +11,8 @@
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/plitzi"
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com/"
   },
   "main": "dist/plitzi-builder.js",
   "dependencies": {

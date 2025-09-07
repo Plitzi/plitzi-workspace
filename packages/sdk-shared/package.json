@@ -1,6 +1,10 @@
 {
   "name": "@plitzi/sdk-shared",
   "version": "0.24.2",
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com/"
+  },
   "files": [
     "dist",
     "eslint.config.mjs",

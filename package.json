@@ -26,7 +26,7 @@
     "release": "yarn workspaces foreach -A npm publish --tolerate-republish --registry=https://npm.pkg.github.com",
     "generate-tarballs": "yarn workspaces foreach -A exec yarn pack",
     "check-tgz": "yarn generate-tarballs && bash -c 'for tgz in packages/*/*.tgz apps/*/*.tgz; do echo \"---- $tgz ----\"; if tar -xOzf \"$tgz\" package/package.json | grep -q \"workspace:*\"; then echo \"⚠️  Contiene workspace:*\"; else echo \"✅ No workspace:*\"; fi; done'",
-    "ci-publish": "yarn workspaces foreach -A -- npm publish --tolerate-republish"
+    "ci:publish": "yarn workspaces foreach -A --topological-dev --verbose 'yarn publish || true' && changeset tag"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.0.0",

@@ -18,7 +18,8 @@
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/plitzi"
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com/"
   },
   "dependencies": {
     "@apollo/client": "^4.0.4",
