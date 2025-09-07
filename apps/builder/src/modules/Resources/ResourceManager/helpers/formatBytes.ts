@@ -1,5 +1,5 @@
 function formatBytes(bytes: number, decimals = 2) {
-  if (!+bytes) {
+  if (!bytes) {
     return '0 Bytes';
   }
 

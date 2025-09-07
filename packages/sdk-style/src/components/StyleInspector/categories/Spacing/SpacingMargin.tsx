@@ -60,10 +60,10 @@ const SpacingMargin = ({
   } = values ?? {};
 
   return (
-    <div className="flex flex-col bg-white border border-gray-300 rounded-md relative cursor-pointer select-none">
-      <div className="flex justify-center items-center py-0.5">
+    <div className="relative flex cursor-pointer flex-col rounded-md border border-gray-300 bg-white select-none">
+      <div className="flex items-center justify-center py-0.5">
         <InspectorLabel
-          className="top-0 left-0 absolute text-[10px] overflow-hidden rounded-br-md !p-0"
+          className="absolute top-0 left-0 overflow-hidden rounded-br-md !p-0 text-[10px]"
           size="custom"
           keyValue={keyValue}
         >
@@ -75,8 +75,8 @@ const SpacingMargin = ({
           onClick={handleClickSelect(MARGIN_TOP)}
         />
       </div>
-      <div className="flex justify-center items-center">
-        <div className="px-0.5 flex items-center justify-center">
+      <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center px-0.5">
           <SpacingNumber
             value={marginLeft}
             active={fragmentSelected === MARGIN_LEFT}
@@ -90,7 +90,7 @@ const SpacingMargin = ({
           isLinked={isLinked}
           onLinkSelected={onLinkSelected}
         />
-        <div className="px-0.5 flex items-center justify-center">
+        <div className="flex items-center justify-center px-0.5">
           <SpacingNumber
             value={marginRight}
             active={fragmentSelected === MARGIN_RIGHT}
@@ -98,7 +98,7 @@ const SpacingMargin = ({
           />
         </div>
       </div>
-      <div className="flex justify-center items-center py-0.5">
+      <div className="flex items-center justify-center py-0.5">
         <SpacingNumber
           value={marginBottom}
           active={fragmentSelected === MARGIN_BOTTOM}

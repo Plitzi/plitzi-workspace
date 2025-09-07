@@ -36,7 +36,7 @@ const SizeOverflow = ({ value, onChange }: SizeOverflowProps) => {
       },
       {
         value: 'auto',
-        icon: <div className="text-xs select-none px-1">Auto</div>,
+        icon: <div className="px-1 text-xs select-none">Auto</div>,
         description: '',
         active: value === 'auto',
         size: 'custom' as const

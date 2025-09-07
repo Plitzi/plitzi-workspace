@@ -54,21 +54,21 @@ const SpacingEditor = ({ fragmentSelected, value, onChange }: SpacingEditorProps
   const segment = fragmentSelected.split('-')[0];
 
   return (
-    <div className="bg-white mt-2 border border-gray-300 rounded-sm select-none">
-      <div className="px-1 pt-1 grid grid-cols-2 gap-2 items-center">
-        <div className="flex items-center capitalize mr-1">
+    <div className="mt-2 rounded-sm border border-gray-300 bg-white select-none">
+      <div className="grid grid-cols-2 items-center gap-2 px-1 pt-1">
+        <div className="mr-1 flex items-center capitalize">
           <Icon className="mr-1">{iconsMap[fragmentSelected as keyof typeof iconsMap]}</Icon>
-          <div className="text-xs truncate">{fragmentSelected.split('-').join(' ')}</div>
+          <div className="truncate text-xs">{fragmentSelected.split('-').join(' ')}</div>
         </div>
         <MetricInput value={value as string | undefined} size="sm" onChange={handleChange} className="rounded-sm" />
       </div>
       <div className="flex">
         {segment === 'margin' && (
-          <Button intent="secondary" size="xs" className="w-14 grow m-1" onClick={handleClick('auto')}>
+          <Button intent="secondary" size="xs" className="m-1 w-14 grow" onClick={handleClick('auto')}>
             Auto
           </Button>
         )}
-        <div className="grid grid-cols-4 grid-rows-2 gap-2 w-full m-1">
+        <div className="m-1 grid w-full grid-cols-4 grid-rows-2 gap-2">
           <Button intent="secondary" size="xs" onClick={handleClick('0px')}>
             0
           </Button>

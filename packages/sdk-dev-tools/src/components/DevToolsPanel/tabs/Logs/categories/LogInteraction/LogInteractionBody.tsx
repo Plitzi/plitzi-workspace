@@ -15,7 +15,7 @@ export type LogInteractionBodyProps = {
 
 const LogInteractionBody = ({ node, nodes, startTime, endTime, duration, elementId }: LogInteractionBodyProps) => {
   return (
-    <div className="flex flex-col m-2 gap-4">
+    <div className="m-2 flex flex-col gap-4">
       <BodyHeader
         triggerName={node.title}
         startTime={startTime}

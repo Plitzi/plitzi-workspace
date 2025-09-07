@@ -75,7 +75,7 @@ const useCollectionContext = (
 
   const fetchCollectionInternal = useCallback(async () => {
     setLoading(true);
-    const collectionInternal = await fetchCollection?.(source, queryCompiled);
+    const collectionInternal = await fetchCollection(source, queryCompiled);
     setLoading(false);
     if (collectionInternal?.records && collectionInternal.records.edges.length > 0) {
       populateRecords(collectionInternal, collectionInternal.records);
@@ -88,7 +88,7 @@ const useCollectionContext = (
     }
 
     setLoading(true);
-    const result = await fetchRecords?.(
+    const result = await fetchRecords(
       source,
       queryCompiled,
       !appendResults && cursor ? undefined : cursor,

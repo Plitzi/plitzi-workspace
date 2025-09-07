@@ -46,14 +46,14 @@ const BoxShadowItem = ({ value = '1px 1px 3px 1px black', onChange, onRemove }: 
     () => [
       {
         value: '',
-        icon: <div className="text-xs select-none px-1">Outside</div>,
+        icon: <div className="px-1 text-xs select-none">Outside</div>,
         description: '',
         active: type === '',
         size: 'custom' as const
       },
       {
         value: 'inset',
-        icon: <div className="text-xs select-none px-1">Inside</div>,
+        icon: <div className="px-1 text-xs select-none">Inside</div>,
         description: '',
         active: type === 'inset',
         size: 'custom' as const
@@ -64,9 +64,9 @@ const BoxShadowItem = ({ value = '1px 1px 3px 1px black', onChange, onRemove }: 
 
   return (
     <ContainerFloating className="w-full" closeOnClick={false}>
-      <ContainerFloating.Trigger className="py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded-sm w-full select-none">
+      <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 px-2 py-0.5 select-none hover:bg-gray-100">
         <div className="flex items-center">
-          <div className="h-5 w-5 mr-1 rounded-sm" style={{ backgroundColor: color }} />
+          <div className="mr-1 h-5 w-5 rounded-sm" style={{ backgroundColor: color }} />
           <div className="flex">{value}</div>
         </div>
         <div className="flex">
@@ -74,7 +74,7 @@ const BoxShadowItem = ({ value = '1px 1px 3px 1px black', onChange, onRemove }: 
         </div>
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="w-[260px]">
-        <div className="p-2 flex flex-col w-full gap-2">
+        <div className="flex w-full flex-col gap-2 p-2">
           <CategorySection label="Type">
             <CategoryOption onChange={handleChange('type')} type="iconGroup" items={itemsType} />
           </CategorySection>

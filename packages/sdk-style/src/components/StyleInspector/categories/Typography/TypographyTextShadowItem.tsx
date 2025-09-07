@@ -31,9 +31,9 @@ const TypographyTextShadowItem = ({ value = '', onRemove, onChange }: Typography
 
   return (
     <ContainerFloating className="w-full" closeOnClick={false}>
-      <ContainerFloating.Trigger className="py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded-sm w-full select-none">
+      <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 px-2 py-0.5 select-none hover:bg-gray-100">
         <div className="flex items-center">
-          <div className="h-5 w-5 mr-1 rounded-sm" style={{ backgroundColor: color }} />
+          <div className="mr-1 h-5 w-5 rounded-sm" style={{ backgroundColor: color }} />
           <div>{value}</div>
         </div>
         <div className="flex">
@@ -41,7 +41,7 @@ const TypographyTextShadowItem = ({ value = '', onRemove, onChange }: Typography
         </div>
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="w-[260px]">
-        <div className="p-2 flex flex-col w-full gap-2">
+        <div className="flex w-full flex-col gap-2 p-2">
           <CategorySection>
             <CategoryOption
               className="min-w-0"

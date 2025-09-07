@@ -40,7 +40,7 @@ const StyleSelectorTag = ({
 
   return (
     <div
-      className={classNames('group flex gap-2 justify-between items-center border-t border-gray-300 p-1', {
+      className={classNames('group flex items-center justify-between gap-2 border-t border-gray-300 p-1', {
         'hover:bg-gray-200': !active,
         'bg-gray-200': active
       })}
@@ -54,7 +54,7 @@ const StyleSelectorTag = ({
           </Button>
         </div>
         {elementsCount > 0 && (
-          <div className="flex items-center justify-center rounded-sm bg-secondary-400 text-white px-1.5 min-w-8">
+          <div className="bg-secondary-400 flex min-w-8 items-center justify-center rounded-sm px-1.5 text-white">
             {elementsCount}
           </div>
         )}

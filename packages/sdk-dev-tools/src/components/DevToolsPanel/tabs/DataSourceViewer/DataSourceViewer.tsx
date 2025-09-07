@@ -28,7 +28,7 @@ const DataSourceViewer = ({ elementSelected }: DataSourceViewerProps) => {
   }, [getData, elementSelected]);
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex h-full w-full flex-col">
       <JsonView value={dataSource} style={jsonViewStyle} enableClipboard={false} indentWidth={2} collapsed={2} />
     </div>
   );

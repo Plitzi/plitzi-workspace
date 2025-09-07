@@ -29,7 +29,7 @@ const SelectorSuggestions = ({ onSelect, onCreate, selector = '', selectors = []
   }, [selectors, selector]);
 
   return (
-    <div className="flex flex-col py-2 px-2 gap-2 w-full">
+    <div className="flex w-full flex-col gap-2 px-2 py-2">
       {selector && !alreadyExists && <SuggestionsCreator selector={selector} onClick={handleClickCreate} />}
       <SuggestionsList selectors={finalSelectors} onSelect={handleClick} />
     </div>

@@ -81,7 +81,7 @@ const InspectorModeBasic = ({
       element={element}
       inheritData={inheritData}
     >
-      <div className="flex flex-col justify-between grow">
+      <div className="flex grow flex-col justify-between">
         <div className="flex flex-col gap-1">
           {isList && <List isCollapsed={collapsedCache.list ?? true} onCollapse={handleChangeCollapse} />}
           {isList && <ListItem isCollapsed={collapsedCache.listItem ?? true} onCollapse={handleChangeCollapse} />}
@@ -101,7 +101,7 @@ const InspectorModeBasic = ({
           <Border isCollapsed={collapsedCache.border ?? true} onCollapse={handleChangeCollapse} />
           <Effects isCollapsed={collapsedCache.effects ?? true} onCollapse={handleChangeCollapse} />
         </div>
-        <div className="flex items-center justify-end px-2 py-1 gap-2 text-xs">
+        <div className="flex items-center justify-end gap-2 px-2 py-1 text-xs">
           Show All Options
           <Switch className="!w-auto" size="sm" checked={showAllOptions} onChange={handleChangeShowAllOptions} />
         </div>

@@ -47,8 +47,8 @@ const Variables = () => {
 
     if (response) {
       const { name, category, value, type, subValues } = response;
-      if (!variables?.find(variable => variable.name === name)) {
-        void schemaAddVariable?.({ name, category, value, type, subValues });
+      if (!(variables as SchemaVariable[] | undefined) || !variables.find(variable => variable.name === name)) {
+        schemaAddVariable?.({ name, category, value, type, subValues });
       } else {
         addToast(
           <span>
@@ -68,7 +68,10 @@ const Variables = () => {
   );
 
   const variablesFiltered = useMemo(
-    () => Object.values(variables ?? []).filter(variable => variable.name.toLowerCase().includes(filter.toLowerCase())),
+    () =>
+      Object.values((variables as SchemaVariable[] | undefined) ?? []).filter(variable =>
+        variable.name.toLowerCase().includes(filter.toLowerCase())
+      ),
     [variables, filter]
   );
 

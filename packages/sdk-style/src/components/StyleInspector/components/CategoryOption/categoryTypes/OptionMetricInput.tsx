@@ -52,7 +52,7 @@ const OptionMetricInput = ({
         units={units}
         allowedWords={allowedWords}
         onChange={handleChange}
-        className={classNames('min-w-0 w-full', className)}
+        className={classNames('w-full min-w-0', className)}
       />
     </div>
   );

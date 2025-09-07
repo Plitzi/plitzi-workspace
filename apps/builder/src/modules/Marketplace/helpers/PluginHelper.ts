@@ -8,7 +8,7 @@ export const parsePlugin = (pluginRaw: MarketPlacePluginRaw): MarketPlacePlugin 
     name,
     description,
     type,
-    latestVersion: latestVersion?.version,
+    latestVersion: latestVersion.version,
     version,
     owner,
     verified,

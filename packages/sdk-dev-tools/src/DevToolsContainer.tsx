@@ -30,7 +30,7 @@ const DevToolsContainer = ({ children, enabled = false }: DevToolsContainerProps
           'h-screen': orientation === 'vertical'
         })}
       >
-        <div className="basis-0 grow overflow-auto">{children}</div>
+        <div className="grow basis-0 overflow-auto">{children}</div>
         <DevToolsPanel orientation={orientation} onChangeOrientation={handleChangeOrientation} />
       </div>
     </DevToolsContextProvider>

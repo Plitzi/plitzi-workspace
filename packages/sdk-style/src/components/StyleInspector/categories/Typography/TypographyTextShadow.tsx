@@ -45,7 +45,7 @@ const TypographyTextShadow = ({ value, onChange }: TypographyTextShadowProps) =>
 
   return (
     <CategorySection direction="column">
-      <div className="w-full flex justify-between">
+      <div className="flex w-full justify-between">
         <InspectorLabel keyValue={['text-shadow']}>Text Shadow</InspectorLabel>
         <button className="cursor-pointer" type="button" onClick={handleClickAddItem}>
           <i className="fas fa-plus" />

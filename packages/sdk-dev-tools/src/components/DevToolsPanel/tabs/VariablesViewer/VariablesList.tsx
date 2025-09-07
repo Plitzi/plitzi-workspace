@@ -5,7 +5,7 @@ import type { SchemaVariable } from '@plitzi/sdk-shared';
 export type VariablesListProps = { variables?: SchemaVariable[]; variablesParsed?: Record<string, string> };
 
 const VariablesList = ({ variables, variablesParsed }: VariablesListProps) => (
-  <div className="flex flex-col w-full">
+  <div className="flex w-full flex-col">
     {(variables ?? []).map((variable, i) => (
       <VariablesListItem key={i} name={variable.name} type={variable.type} value={variablesParsed?.[variable.name]} />
     ))}

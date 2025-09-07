@@ -32,7 +32,7 @@ const DetailsValue = ({
       return (
         <div className="flex flex-col">
           {value.map((item: string, i) => (
-            <div key={i} className="text-purple-400 cursor-pointer" onClick={handleClickElement(item)}>
+            <div key={i} className="cursor-pointer text-purple-400" onClick={handleClickElement(item)}>
               {get(schema, `flat.${item}.definition.label`, item)}
             </div>
           ))}
@@ -42,7 +42,7 @@ const DetailsValue = ({
 
     if (attribute && ['rootId', 'parentId'].includes(attribute) && isDefinition) {
       return (
-        <div className="text-purple-400 cursor-pointer" onClick={handleClickElement(value as string)}>
+        <div className="cursor-pointer text-purple-400" onClick={handleClickElement(value as string)}>
           {get(schema, `flat.${value as string}.definition.label`, value) as string}
         </div>
       );

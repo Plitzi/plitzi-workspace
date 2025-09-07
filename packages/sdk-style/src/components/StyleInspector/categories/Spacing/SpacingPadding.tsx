@@ -48,11 +48,11 @@ const SpacingPadding = ({
   } = values ?? {};
 
   return (
-    <div className="relative border rounded-md border-gray-300 grow">
-      <div className="flex justify-center items-center py-0.5">
+    <div className="relative grow rounded-md border border-gray-300">
+      <div className="flex items-center justify-center py-0.5">
         <InspectorLabel
           keyValue={keyValue}
-          className="top-0 left-0 absolute text-[10px] overflow-hidden rounded-br-md !p-0"
+          className="absolute top-0 left-0 overflow-hidden rounded-br-md !p-0 text-[10px]"
           size="custom"
         >
           PADDING
@@ -63,8 +63,8 @@ const SpacingPadding = ({
           onClick={handleClickSelect(PADDING_TOP)}
         />
       </div>
-      <div className="flex justify-center items-center">
-        <div className="px-0.5 flex items-center justify-center">
+      <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center px-0.5">
           <SpacingNumber
             value={paddingLeft}
             active={fragmentSelected === PADDING_LEFT}
@@ -72,13 +72,13 @@ const SpacingPadding = ({
           />
         </div>
         <div
-          className="flex items-center justify-center py-1 bg-slate-100 grow border border-gray-300 rounded-md"
+          className="flex grow items-center justify-center rounded-md border border-gray-300 bg-slate-100 py-1"
           onClick={onLinkSelected}
         >
           {isLinked && <i className="fa-solid fa-link text-sm" />}
           {!isLinked && <i className="fa-solid fa-link-slash text-sm" />}
         </div>
-        <div className="px-0.5 flex items-center justify-center">
+        <div className="flex items-center justify-center px-0.5">
           <SpacingNumber
             value={paddingRight}
             active={fragmentSelected === PADDING_RIGHT}
@@ -86,7 +86,7 @@ const SpacingPadding = ({
           />
         </div>
       </div>
-      <div className="flex justify-center items-center py-0.5">
+      <div className="flex items-center justify-center py-0.5">
         <SpacingNumber
           value={paddingBottom}
           active={fragmentSelected === PADDING_BOTTOM}

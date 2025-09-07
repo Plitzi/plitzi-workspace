@@ -30,7 +30,7 @@ const BodyContent = ({ className, node, nodes }: BodyContentProps) => {
       />
       <div className="border-r border-gray-300" />
       {nodeSelectedId && (
-        <div className="flex grow basis-0 min-w-0">
+        <div className="flex min-w-0 grow basis-0">
           <InteractionNode
             whenParams={nodeSelected.whenParams}
             status={nodeSelected.status}

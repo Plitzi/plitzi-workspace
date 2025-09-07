@@ -22,8 +22,8 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
 
   return (
     <CategorySection label="" keys={[TOP, BOTTOM, LEFT, RIGHT]} className="justify-center">
-      <div className="grid grid-cols-3 gap-2 items-center justify-center place-items-center">
-        <div className="col-start-2 flex items-center justify-center max-w-[80px]">
+      <div className="grid grid-cols-3 place-items-center items-center justify-center gap-2">
+        <div className="col-start-2 flex max-w-[80px] items-center justify-center">
           <CategoryOption
             keys={[TOP]}
             value={top}
@@ -34,7 +34,7 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
             className="text-center"
           />
         </div>
-        <div className="row-start-2 flex items-center justify-self-end max-w-[80px]">
+        <div className="row-start-2 flex max-w-[80px] items-center justify-self-end">
           <CategoryOption
             keys={[LEFT]}
             value={left}
@@ -45,14 +45,14 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
             className="text-center"
           />
         </div>
-        <div className="row-start-2 grid grid-cols-3 gap-2 w-full h-24 place-items-center auto-rows-fr">
-          <div className="col-start-2 bg-gray-300 w-0.5 h-full" />
-          <div className="row-start-2 bg-gray-300 w-full h-0.5" />
-          <div className="row-start-2 bg-gray-300 w-8 h-8 rounded" />
-          <div className="row-start-2 bg-gray-300 w-full h-0.5" />
-          <div className="col-start-2 row-start-3 bg-gray-300 w-0.5 h-full" />
+        <div className="row-start-2 grid h-24 w-full auto-rows-fr grid-cols-3 place-items-center gap-2">
+          <div className="col-start-2 h-full w-0.5 bg-gray-300" />
+          <div className="row-start-2 h-0.5 w-full bg-gray-300" />
+          <div className="row-start-2 h-8 w-8 rounded bg-gray-300" />
+          <div className="row-start-2 h-0.5 w-full bg-gray-300" />
+          <div className="col-start-2 row-start-3 h-full w-0.5 bg-gray-300" />
         </div>
-        <div className="row-start-2 flex items-center justify-self-start max-w-[80px]">
+        <div className="row-start-2 flex max-w-[80px] items-center justify-self-start">
           <CategoryOption
             keys={[RIGHT]}
             value={right}
@@ -63,7 +63,7 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
             className="text-center"
           />
         </div>
-        <div className="col-start-2 row-start-3 flex items-center justify-center max-w-[80px]">
+        <div className="col-start-2 row-start-3 flex max-w-[80px] items-center justify-center">
           <CategoryOption
             keys={[BOTTOM]}
             value={bottom}

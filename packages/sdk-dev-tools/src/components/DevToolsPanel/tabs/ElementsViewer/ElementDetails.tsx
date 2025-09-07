@@ -14,7 +14,7 @@ export type ElementDetailsProps = {
 };
 
 const ElementDetails = ({ definition, attributes, onSelectElement }: ElementDetailsProps) => (
-  <ContainerTabs className="grow p-4 w-full overflow-hidden gap-4">
+  <ContainerTabs className="w-full grow gap-4 overflow-hidden p-4">
     <ContainerTabs.Tabs items={tabs} />
     <ContainerTabs.TabContent className="flex-col">
       <DetailsDefinition definition={definition} onSelectElement={onSelectElement} />

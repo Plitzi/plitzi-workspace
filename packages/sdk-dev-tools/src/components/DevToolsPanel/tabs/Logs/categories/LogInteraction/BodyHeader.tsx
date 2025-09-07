@@ -4,6 +4,7 @@ import { use, useCallback, useMemo } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
+import type { Element } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type BodyHeaderProps = {
@@ -41,8 +42,8 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: Bo
   }, [elementDOM]);
 
   return (
-    <div className="flex gap-4 justify-around">
-      <div className="flex flex-col grow basis-0 gap-2 min-w-0">
+    <div className="flex justify-around gap-4">
+      <div className="flex min-w-0 grow basis-0 flex-col gap-2">
         <div className="flex items-center gap-1 font-bold">
           <i className="fa-regular fa-clock" />
           Times
@@ -63,7 +64,7 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: Bo
         </div>
       </div>
       <div className="border-r border-gray-300" />
-      <div className="flex flex-col grow basis-0 gap-2 min-w-0">
+      <div className="flex min-w-0 grow basis-0 flex-col gap-2">
         <div className="flex items-center gap-1">
           <i className="fa-solid fa-circle-info" />
           Details
@@ -80,12 +81,12 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: Bo
           <div className="flex gap-1">
             <span>Element:</span>
             <span
-              className="truncate text-blue-500 cursor-pointer"
+              className="cursor-pointer truncate text-blue-500"
               onClick={handleClick}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              {element?.definition.label} [{elementId}]
+              {(element as Element | undefined)?.definition.label} [{elementId}]
             </span>
           </div>
         </div>

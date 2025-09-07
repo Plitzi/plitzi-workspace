@@ -88,14 +88,14 @@ const TransitionItem = ({ value = '', onRemove, onChange }: TransitionItemProps)
 
   return (
     <ContainerFloating className="w-full" closeOnClick={false}>
-      <ContainerFloating.Trigger className="py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded-sm w-full select-none">
+      <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 px-2 py-0.5 select-none hover:bg-gray-100">
         <div className="flex items-center">{`${property} ${duration} after ${delay}`}</div>
         <div className="flex">
           <Icon size="xs" icon="fas fa-trash-alt" onClick={onRemove} intent="danger" title="Remove" />
         </div>
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="w-[260px]">
-        <div className="p-2 flex flex-col w-full gap-2">
+        <div className="flex w-full flex-col gap-2 p-2">
           <CategorySection label="Property">
             <CategoryOption onChange={handleChange('property')} type="select" value={property}>
               <optgroup label="Common">
@@ -184,13 +184,13 @@ const TransitionItem = ({ value = '', onRemove, onChange }: TransitionItemProps)
           <CategorySection label="Easing">
             <ContainerFloating containerLeftOffset={-92} containerTopOffset={154} closeOnClick={false}>
               <ContainerFloating.Trigger>
-                <Icon className="border rounded-sm p-0.5 border-gray-300" size="xl">
+                <Icon className="rounded-sm border border-gray-300 p-0.5" size="xl">
                   <EffectsTransitionEase />
                 </Icon>
               </ContainerFloating.Trigger>
-              <ContainerFloating.Content className="w-[260px] h-[456px] flex flex-col items-center overflow-y-auto">
+              <ContainerFloating.Content className="flex h-[456px] w-[260px] flex-col items-center overflow-y-auto">
                 <InputEasingList className="w-[260px]" onChange={handleChange('easing')} />
-                <div className="flex flex-col m-2">
+                <div className="m-2 flex flex-col">
                   <div className="flex" onClick={handleClickEaseAnimation}>
                     <Icon icon={loopHandler ? 'fas fa-pause' : 'fas fa-play'} />
                     <InspectorLabel>{!loopHandler ? 'Play' : 'Pause'}</InspectorLabel>
@@ -208,7 +208,7 @@ const TransitionItem = ({ value = '', onRemove, onChange }: TransitionItemProps)
               </ContainerFloating.Content>
             </ContainerFloating>
             <Input
-              className="grow w-full"
+              className="w-full grow"
               type="text"
               size="xs"
               value={easingValue.toString()}

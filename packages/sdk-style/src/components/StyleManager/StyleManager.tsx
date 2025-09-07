@@ -35,17 +35,17 @@ const StyleManager = () => {
   );
 
   return (
-    <div className="h-full flex flex-col grow overflow-auto">
+    <div className="flex h-full grow flex-col overflow-auto">
       <div className="flex grow overflow-auto">
         <ManagerSelector selectors={selectors} flatList={flatList} selected={selected} onSelect={setSelected} />
-        <div className="flex flex-col grow basis-0 overflow-auto">
+        <div className="flex grow basis-0 flex-col overflow-auto">
           {selected && (
             <BuilderStyleContext value={builderStyleValueMemo}>
               <StyleInspector mode="manager" styleSelectors={styleSelectorsMemo} allowStyleSelector={false} />
             </BuilderStyleContext>
           )}
           {!selected && (
-            <div className="m-3 p-3 border-2 border-dashed border-gray-300 rounded-sm text-center select-none">
+            <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center select-none">
               No selector or element selected. Click on one to select it.
             </div>
           )}

@@ -68,23 +68,23 @@ const SelectorItem = ({
   return (
     <div
       className={classNames(
-        'px-2 py-1.5 relative flex items-center rounded-sm text-white select-none cursor-pointer gap-1',
+        'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1.5 text-white select-none',
         className,
         {
           'bg-secondary-400': active,
           'bg-gray-500': !active,
           'max-w-[126px]': editable,
-          'min-w-0 max-w-full': !editable
+          'max-w-full min-w-0': !editable
         }
       )}
       onClick={handleClick}
       title={`${type}: ${selector}`}
     >
-      <div className="flex basis-0 grow min-w-0 text-xs">
+      <div className="flex min-w-0 grow basis-0 text-xs">
         <div className="truncate">
           {editable && (
             <Contenteditable
-              className="focus-visible:px-1 focus-visible:m-[1px] focus-visible:outline-dashed focus-visible:outline-1 inline"
+              className="inline focus-visible:m-[1px] focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
               value={selector}
               onChange={handleChange}
               openMode="doubleClick"

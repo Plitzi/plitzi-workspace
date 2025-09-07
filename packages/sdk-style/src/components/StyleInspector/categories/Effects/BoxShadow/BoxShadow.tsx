@@ -47,7 +47,7 @@ const BoxShadow = ({ value = '', onChange }: BoxShadowProps) => {
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <InspectorLabel keyValue={['box-shadow']}>Box Shadow</InspectorLabel>
         <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
       </div>

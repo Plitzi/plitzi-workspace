@@ -30,7 +30,7 @@ const Progress = ({ progress = 0, xFrom = 0, xTo = 0, yFrom = 0, yTo = 0, value 
   const py = y(easing ? easing(progress) : 0);
   const prog = `M${px},${sy} L${px},${py} L${sx},${py}`;
 
-  return <path className="fill-transparent stroke-1 stroke-blue-400" d={prog} />;
+  return <path className="fill-transparent stroke-blue-400 stroke-1" d={prog} />;
 };
 
 export default Progress;

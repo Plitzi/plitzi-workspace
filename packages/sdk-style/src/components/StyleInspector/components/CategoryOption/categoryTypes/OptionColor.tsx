@@ -12,7 +12,7 @@ const OptionColor = ({ className, value, onChange }: OptionColorProps) => {
   return (
     <ColorPicker
       size="xs"
-      className={{ root: 'min-w-0 w-full', input: className }}
+      className={{ root: 'w-full min-w-0', input: className }}
       value={value as string}
       onChange={onChange}
     />

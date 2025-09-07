@@ -54,29 +54,29 @@ const ItemOptions = ({
   return (
     <ContainerFloating closeOnClick={false}>
       <ContainerFloating.Trigger>
-        <Icon icon="fa-solid fa-ellipsis-vertical" className="!min-w-3 w-3 h-4" />
+        <Icon icon="fa-solid fa-ellipsis-vertical" className="h-4 w-3 !min-w-3" />
       </ContainerFloating.Trigger>
-      <ContainerFloating.Content className="text-gray-700 text-xs">
-        <div className="py-1 bg-gray-50">
-          <div className="font-bold mb-1 px-2">Actions</div>
+      <ContainerFloating.Content className="text-xs text-gray-700">
+        <div className="bg-gray-50 py-1">
+          <div className="mb-1 px-2 font-bold">Actions</div>
           <ul className="flex flex-col gap-1 px-2">
-            <li onClick={handleClickDuplicate} className="hover:bg-gray-200 px-2 py-1 rounded-sm">
+            <li onClick={handleClickDuplicate} className="rounded-sm px-2 py-1 hover:bg-gray-200">
               Duplicate
             </li>
-            <li onClick={handleClickRemove} className="hover:bg-gray-200 px-2 py-1 rounded-sm">
+            <li onClick={handleClickRemove} className="rounded-sm px-2 py-1 hover:bg-gray-200">
               Remove
             </li>
-            <li onClick={handleClickDelete} className="text-red-400 hover:bg-gray-200 px-2 py-1 rounded-sm">
+            <li onClick={handleClickDelete} className="rounded-sm px-2 py-1 text-red-400 hover:bg-gray-200">
               Delete
             </li>
           </ul>
-          <div className="bg-gray-300 h-[1px] w-full my-2" />
-          <div className="font-bold mb-1 px-2">States</div>
+          <div className="my-2 h-[1px] w-full bg-gray-300" />
+          <div className="mb-1 px-2 font-bold">States</div>
           <ul className="flex flex-col gap-1 px-2">
             {['none', 'hover', 'active', 'focus'].map((stateItem, i) => (
               <li
                 key={i}
-                className="flex items-center hover:bg-gray-200 px-2 py-1 rounded-sm gap-1"
+                className="flex items-center gap-1 rounded-sm px-2 py-1 hover:bg-gray-200"
                 onClick={handleClickState(stateItem)}
               >
                 {(state === stateItem || (state === '' && stateItem === 'none')) && (

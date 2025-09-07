@@ -24,7 +24,7 @@ const LogsSummaryItem = ({
 
   return (
     <div
-      className={classNames('flex items-center gap-3 px-2 py-1 cursor-pointer text-sm', className, {
+      className={classNames('flex cursor-pointer items-center gap-3 px-2 py-1 text-sm', className, {
         'bg-gray-200': selected,
         'hover:bg-gray-200': !selected
       })}

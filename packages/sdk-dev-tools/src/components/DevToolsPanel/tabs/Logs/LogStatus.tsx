@@ -13,7 +13,7 @@ export type LogStatusProps = {
 const LogStatus = ({ className, logType = 'info', iconClassName, children }: LogStatusProps) => {
   return (
     <div
-      className={classNames('flex items-center gap-1 px-2 rounded-lg text-sm', className, {
+      className={classNames('flex items-center gap-1 rounded-lg px-2 text-sm', className, {
         'bg-red-500 text-white': logType === 'danger',
         'bg-orange-500 text-white': logType === 'warning',
         'bg-blue-500 text-white': logType === 'info',

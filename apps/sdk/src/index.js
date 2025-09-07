@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // Packages
 import React, { useCallback } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';

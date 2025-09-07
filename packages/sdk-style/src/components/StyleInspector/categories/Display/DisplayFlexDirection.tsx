@@ -36,14 +36,14 @@ const DisplayFlexDirection = ({ value = 'row', isReverse = false, onChange }: Di
     () => [
       {
         value: isReverse ? 'row-reverse' : 'row',
-        icon: <div className="text-xs select-none px-1">Horizontal</div>,
+        icon: <div className="px-1 text-xs select-none">Horizontal</div>,
         description: '',
         active: value === 'row' || value === 'row-reverse',
         size: 'custom' as const
       },
       {
         value: isReverse ? 'column-reverse' : 'column',
-        icon: <div className="text-xs select-none px-1">Vertical</div>,
+        icon: <div className="px-1 text-xs select-none">Vertical</div>,
         description: '',
         active: value === 'column' || value === 'column-reverse',
         size: 'custom' as const

@@ -155,9 +155,9 @@ const Background = ({ isCollapsed = true, onCollapse }: BackgroundProps) => {
   return (
     <CategoryContainer title="Background" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="inspector__background flex flex-col gap-2">
-        <div className="mx-auto border border-gray-300 rounded-sm p-1 w-16 h-16 bg-white">
+        <div className="mx-auto h-16 w-16 rounded-sm border border-gray-300 bg-white p-1">
           <div
-            className="h-full w-full bg-no-repeat bg-contain bg-center"
+            className="h-full w-full bg-contain bg-center bg-no-repeat"
             style={{ backgroundImage: bgImage as string }}
           />
         </div>

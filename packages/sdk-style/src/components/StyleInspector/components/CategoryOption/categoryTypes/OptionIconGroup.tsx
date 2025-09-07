@@ -18,7 +18,7 @@ export type OptionIconGroupProps = {
 
 const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
   const itemsParsed = useMemo(
-    () => items.filter(item => typeof item.isVisible !== 'boolean' || !!item.isVisible),
+    () => items.filter(item => typeof item.isVisible !== 'boolean' || item.isVisible),
     [items]
   );
 

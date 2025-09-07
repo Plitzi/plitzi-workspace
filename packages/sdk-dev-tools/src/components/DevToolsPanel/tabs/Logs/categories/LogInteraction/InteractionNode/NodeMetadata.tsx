@@ -21,7 +21,7 @@ const NodeMetadata = ({ when, whenParams }: NodeMetadataProps) => {
   }, [whenParams, when]);
 
   return (
-    <div className="flex grow whitespace-pre text-xs">
+    <div className="flex grow text-xs whitespace-pre">
       <pre dangerouslySetInnerHTML={{ __html: content }} />
     </div>
   );

@@ -1,8 +1,8 @@
 import { InMemoryCache } from '@apollo/client/cache';
 import { ApolloClient, ApolloLink } from '@apollo/client/core';
 import { SetContextLink } from '@apollo/client/link/context';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { ApolloProvider } from '@apollo/client/react';
 import { getMainDefinition } from '@apollo/client/utilities';
 // eslint-disable-next-line

@@ -167,7 +167,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { variable } = action;
 
       return produce(state, draft => {
-        if (!draft.variables) {
+        if (!(draft.variables as SchemaVariable[] | undefined)) {
           draft.variables = [];
         }
 
@@ -177,10 +177,13 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
 
     case SchemaActions.SCHEMA_UPDATE_VARIABLE: {
       const { variable } = action;
+      if (!(state.variables as SchemaVariable[] | undefined)) {
+        return;
+      }
 
       return produce(state, draft => {
-        const index = draft.variables?.findIndex(v => v.name === variable.name) ?? -1;
-        if (index === -1 || !draft.variables?.[index]) {
+        const index = draft.variables.findIndex(v => v.name === variable.name);
+        if (!draft.variables[index]) {
           return;
         }
 
@@ -190,9 +193,12 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
 
     case SchemaActions.SCHEMA_REMOVE_VARIABLE: {
       const { name } = action;
+      if (!(state.variables as SchemaVariable[] | undefined)) {
+        return;
+      }
 
       return produce(state, draft => {
-        draft.variables = draft.variables?.filter(variable => variable.name !== name) ?? [];
+        draft.variables = draft.variables.filter(variable => variable.name !== name);
       });
     }
 
@@ -203,8 +209,11 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       return produce(state, draft => {
         FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
         if (variables.length > 0) {
-          const variablesToAppend = variables.filter(variable => !draft.variables?.find(v => v.name === variable.name));
-          set(draft, 'variables', [...(draft.variables ?? []), ...variablesToAppend]);
+          const variablesToAppend = variables.filter(
+            variable =>
+              (draft.variables as SchemaVariable[] | undefined) && !draft.variables.find(v => v.name === variable.name)
+          );
+          set(draft, 'variables', [...((draft.variables as SchemaVariable[] | undefined) ?? []), ...variablesToAppend]);
         }
       });
     }

@@ -36,14 +36,14 @@ const DisplayFlex = ({ value, isReverse = false, onChange }: DisplayFlexProps) =
     () => [
       {
         value: isReverse ? 'nowrap-reverse' : 'nowrap',
-        icon: <div className="text-xs whitespace-nowrap select-none px-1">Don&apos;t Wrap</div>,
+        icon: <div className="px-1 text-xs whitespace-nowrap select-none">Don&apos;t Wrap</div>,
         description: '',
         active: value === 'nowrap' || value === 'nowrap-reverse',
         size: 'custom' as const
       },
       {
         value: isReverse ? 'wrap-reverse' : 'wrap',
-        icon: <div className="text-xs select-none px-1">Wrap</div>,
+        icon: <div className="px-1 text-xs select-none">Wrap</div>,
         description: '',
         active: value === 'wrap' || value === 'wrap-reverse',
         size: 'custom' as const

@@ -19,7 +19,7 @@ const ElementsViewer = ({ className, elementSelected, onSelectElement }: Element
   const { currentPageId } = use(NavigationContext);
   const { schema } = use(SchemaContext);
   const elements = useMemo<Element[]>(
-    () => Object.values(schema.flat).filter(element => element?.definition.rootId === currentPageId) as Element[],
+    () => Object.values(schema.flat).filter(element => element.definition.rootId === currentPageId),
     [schema.flat, currentPageId]
   );
   const element = useMemo(() => elements.find(element => element.id === elementSelected), [elements, elementSelected]);

@@ -46,7 +46,7 @@ const Filter = ({ value, onChange }: FilterProps) => {
 
   return (
     <>
-      <div className="w-full flex justify-between">
+      <div className="flex w-full justify-between">
         <InspectorLabel keyValue={['filter']}>Filters</InspectorLabel>
         <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
       </div>

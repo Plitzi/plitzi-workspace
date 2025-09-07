@@ -60,28 +60,28 @@ const TransformItem = ({ value = 'translate3d(0px, 0px, 0px)', onRemove, onChang
     () => [
       {
         value: 'translate3d',
-        icon: <div className="text-xs select-none px-1">Move</div>,
+        icon: <div className="px-1 text-xs select-none">Move</div>,
         description: '',
         active: type === 'translate3d',
         size: 'custom' as const
       },
       {
         value: 'scale3d',
-        icon: <div className="text-xs select-none px-1">Scale</div>,
+        icon: <div className="px-1 text-xs select-none">Scale</div>,
         description: '',
         active: type === 'scale3d',
         size: 'custom' as const
       },
       {
         value: 'rotate',
-        icon: <div className="text-xs select-none px-1">Rotate</div>,
+        icon: <div className="px-1 text-xs select-none">Rotate</div>,
         description: '',
         active: type === 'rotate',
         size: 'custom' as const
       },
       {
         value: 'skew',
-        icon: <div className="text-xs select-none px-1">Skew</div>,
+        icon: <div className="px-1 text-xs select-none">Skew</div>,
         description: '',
         active: type === 'skew',
         size: 'custom' as const
@@ -104,14 +104,14 @@ const TransformItem = ({ value = 'translate3d(0px, 0px, 0px)', onRemove, onChang
 
   return (
     <ContainerFloating className="w-full" closeOnClick={false}>
-      <ContainerFloating.Trigger className="py-0.5 px-2 flex justify-between items-center border border-gray-300 cursor-pointer hover:bg-gray-100 rounded-sm w-full select-none">
+      <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 px-2 py-0.5 select-none hover:bg-gray-100">
         <div className="flex items-center">{value}</div>
         <div className="flex">
           <Icon size="xs" icon="fas fa-trash-alt" onClick={onRemove} intent="danger" title="Remove" />
         </div>
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="w-[260px]">
-        <div className="p-2 flex flex-col w-full gap-2">
+        <div className="flex w-full flex-col gap-2 p-2">
           <CategorySection label="Type">
             <CategoryOption onChange={handleChange('type')} type="iconGroup" items={itemsType} />
           </CategorySection>

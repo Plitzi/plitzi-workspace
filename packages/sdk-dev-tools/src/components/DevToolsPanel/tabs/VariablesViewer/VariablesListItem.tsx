@@ -8,7 +8,7 @@ export type VariablesListItemProps = {
 
 const VariablesListItem = ({ name, type, value }: VariablesListItemProps) => (
   <div className="flex justify-between px-2 py-1 hover:bg-gray-100">
-    <div className="flex gap-2 items-center">
+    <div className="flex items-center gap-2">
       <div className="font-bold">{name}</div>
       <div className="text-sm">({type})</div>
     </div>

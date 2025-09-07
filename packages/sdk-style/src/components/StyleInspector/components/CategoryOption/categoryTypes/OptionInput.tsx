@@ -14,7 +14,7 @@ const OptionInput = ({ value, className, onChange }: OptionInputProps) => {
       size="xs"
       value={value as string}
       onChange={onChange}
-      className={{ root: 'min-w-0 w-full', input: className }}
+      className={{ root: 'w-full min-w-0', input: className }}
     />
   );
 };

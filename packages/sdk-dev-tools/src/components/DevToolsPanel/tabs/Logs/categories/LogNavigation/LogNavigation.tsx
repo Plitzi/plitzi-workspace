@@ -18,7 +18,7 @@ export type LogNavigationProps = {
 };
 
 const LogNavigation = ({ time, message, params }: LogNavigationProps) => (
-  <ContainerCollapsable className="w-full border-b last:border-b-none border-gray-300 px-2 py-1" collapsed>
+  <ContainerCollapsable className="last:border-b-none w-full border-b border-gray-300 px-2 py-1" collapsed>
     <ContainerCollapsable.Header
       title={<LogNavigationHeader status={params?.status} message={message} time={time} />}
       placement="left"

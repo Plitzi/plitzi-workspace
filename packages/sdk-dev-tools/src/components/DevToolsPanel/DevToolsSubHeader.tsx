@@ -96,7 +96,7 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
 
   return (
     <div
-      className={classNames('flex border-b border-gray-300 px-2 py-1 gap-2 items-center justify-between', className)}
+      className={classNames('flex items-center justify-between gap-2 border-b border-gray-300 px-2 py-1', className)}
     >
       <div className="flex gap-2">
         <DevToolsButton

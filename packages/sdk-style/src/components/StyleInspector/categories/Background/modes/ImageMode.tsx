@@ -86,21 +86,21 @@ const ImageMode = ({ onChange }: ImageModeProps) => {
     () => [
       {
         value: 'auto',
-        icon: <div className="text-xs select-none px-1">Custom</div>,
+        icon: <div className="px-1 text-xs select-none">Custom</div>,
         description: '',
         active: customSize,
         size: 'custom' as const
       },
       {
         value: 'cover',
-        icon: <div className="text-xs select-none px-1">Cover</div>,
+        icon: <div className="px-1 text-xs select-none">Cover</div>,
         description: '',
         active: backgroundSize === 'cover',
         size: 'custom' as const
       },
       {
         value: 'contain',
-        icon: <div className="text-xs select-none px-1">Contain</div>,
+        icon: <div className="px-1 text-xs select-none">Contain</div>,
         description: 'Reverse Direction',
         active: backgroundSize === 'contain',
         size: 'custom' as const
@@ -143,14 +143,14 @@ const ImageMode = ({ onChange }: ImageModeProps) => {
     () => [
       {
         value: 'fixed',
-        icon: <div className="text-xs select-none px-1">Fixed</div>,
+        icon: <div className="px-1 text-xs select-none">Fixed</div>,
         description: '',
         active: backgroundAttachment === 'fixed',
         size: 'custom' as const
       },
       {
         value: 'scroll',
-        icon: <div className="text-xs select-none px-1">Not Fixed</div>,
+        icon: <div className="px-1 text-xs select-none">Not Fixed</div>,
         description: '',
         active: backgroundAttachment === 'scroll',
         size: 'custom' as const

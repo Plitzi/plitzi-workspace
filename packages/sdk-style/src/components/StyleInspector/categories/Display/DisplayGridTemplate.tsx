@@ -77,14 +77,14 @@ const DisplayGridTemplate = ({
     () => [
       {
         value: 'row',
-        icon: <div className="text-xs whitespace-nowrap select-none px-1">Row</div>,
+        icon: <div className="px-1 text-xs whitespace-nowrap select-none">Row</div>,
         description: '',
         active: templateAutoFlow === 'row',
         size: 'custom' as const
       },
       {
         value: 'column',
-        icon: <div className="text-xs select-none px-1">Column</div>,
+        icon: <div className="px-1 text-xs select-none">Column</div>,
         description: '',
         active: templateAutoFlow === 'column',
         size: 'custom' as const

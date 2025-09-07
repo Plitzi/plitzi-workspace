@@ -128,6 +128,7 @@ const UserBaseContextProvider = ({
         accessToken: manager.accessToken
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manager, manager?.isAuthenticated, previewMode]);
 
   return <UserContext value={valueMemo}>{!loading && children}</UserContext>;

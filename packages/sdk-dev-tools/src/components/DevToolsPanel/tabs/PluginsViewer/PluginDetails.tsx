@@ -19,9 +19,9 @@ const PluginDetails = ({ author, settings, label, version }: PluginDetailsProps)
   }, [settings]);
 
   return (
-    <div className="grow flex basis-0 grow p-4 h-full">
+    <div className="flex h-full grow basis-0 p-4">
       <div className="flex flex-col gap-4">
-        <div className="font-bold text-2xl">{label}</div>
+        <div className="text-2xl font-bold">{label}</div>
         <div className="flex flex-col">
           <div className="font-bold">Version</div>
           <div>{version}</div>

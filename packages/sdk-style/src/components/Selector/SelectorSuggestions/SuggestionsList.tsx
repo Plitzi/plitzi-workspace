@@ -9,9 +9,9 @@ export type SuggestionsListProps = {
 
 const SuggestionsList = ({ selectors = [], onSelect }: SuggestionsListProps) => {
   return (
-    <div className="flex flex-col w-full">
-      <div className="text-sm font-bold mb-1 w-full">Tokens Availables</div>
-      <div className="flex flex-col overflow-y-auto items-start max-h-[250px] text-xs gap-1">
+    <div className="flex w-full flex-col">
+      <div className="mb-1 w-full text-sm font-bold">Tokens Availables</div>
+      <div className="flex max-h-[250px] flex-col items-start gap-1 overflow-y-auto text-xs">
         {selectors.map((selector, index) => (
           <SelectorItem
             className="cursor-pointer"
@@ -24,7 +24,7 @@ const SuggestionsList = ({ selectors = [], onSelect }: SuggestionsListProps) => 
           />
         ))}
         {selectors.length === 0 && (
-          <div className="p-3 border-2 border-dashed border-gray-300 rounded-sm text-center w-full">
+          <div className="w-full rounded-sm border-2 border-dashed border-gray-300 p-3 text-center">
             No tokens availables
           </div>
         )}

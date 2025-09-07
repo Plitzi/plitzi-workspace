@@ -22,9 +22,9 @@ const ElementsList = ({ elements, elementSelected, onSelect }: ElementsListProps
   const handleChangeFilter = useCallback((filterValue: string) => setFilter(filterValue), []);
 
   return (
-    <div className="p-2 w-[300px] flex flex-col h-full border-r border-gray-300 gap-4">
+    <div className="flex h-full w-[300px] flex-col gap-4 border-r border-gray-300 p-2">
       <Input value={filter} onChange={handleChangeFilter} placeholder="Search..." size="sm" />
-      <div className="flex flex-col overflow-y-auto gap-1 text-xs">
+      <div className="flex flex-col gap-1 overflow-y-auto text-xs">
         {elementsSorted.map((element, i) => (
           <ElementsListItem
             key={i}

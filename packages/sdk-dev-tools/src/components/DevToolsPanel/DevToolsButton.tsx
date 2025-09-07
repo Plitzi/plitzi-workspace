@@ -13,10 +13,10 @@ export type DevToolsButtonProps = {
 const DevToolsButton = ({ className, iconClassName, title, isSelected = false, onClick }: DevToolsButtonProps) => (
   <i
     className={classNames(
-      'w-6 h-6 flex items-center justify-center border border-dotted p-0.5 cursor-pointer',
+      'flex h-6 w-6 cursor-pointer items-center justify-center border border-dotted p-0.5',
       {
-        'border-gray-500 hover:text-purple-500 hover:border-purple-500': !isSelected,
-        'text-purple-500 border-purple-500': isSelected
+        'border-gray-500 hover:border-purple-500 hover:text-purple-500': !isSelected,
+        'border-purple-500 text-purple-500': isSelected
       },
       className,
       iconClassName

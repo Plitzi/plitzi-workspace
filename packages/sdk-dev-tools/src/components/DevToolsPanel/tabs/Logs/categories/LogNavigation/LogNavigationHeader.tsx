@@ -36,8 +36,8 @@ const LogNavigationHeader = ({ status, message, time }: LogNavigationHeaderProps
   }, [status]);
 
   return (
-    <div className="flex justify-between w-full text-sm">
-      <div className="flex items-center gap-3 basis-0 grow min-w-0">
+    <div className="flex w-full justify-between text-sm">
+      <div className="flex min-w-0 grow basis-0 items-center gap-3">
         <span className="font-bold">{typeof time === 'string' ? time : time?.format()}</span>
         <div className="flex">
           <LogStatus logType={logType}>{statusMessage}</LogStatus>

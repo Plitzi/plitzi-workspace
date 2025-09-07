@@ -28,7 +28,9 @@ const ElementCategory = ({ components, category = '' }: ElementCategoryProps) =>
         {category}
       </Text>
       <div className="flex flex-wrap gap-2">
-        {componentsToRender?.map((component, key) => <Element key={key} component={component} />)}
+        {componentsToRender?.map((component, key) => (
+          <Element key={key} component={component} />
+        ))}
       </div>
     </div>
   );

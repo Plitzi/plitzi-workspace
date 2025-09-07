@@ -3,6 +3,7 @@ import { use, useMemo } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 
+import type { Element } from '@plitzi/sdk-shared';
 import type { Moment } from 'moment';
 
 export type LogNavigationBodyProps = {
@@ -18,8 +19,8 @@ const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavig
   const element = useMemo(() => get(schema, `flat.${elementId}`), [schema, elementId]);
 
   return (
-    <div className="flex gap-4 justify-around m-2">
-      <div className="flex flex-col grow basis-0 gap-2 min-w-0">
+    <div className="m-2 flex justify-around gap-4">
+      <div className="flex min-w-0 grow basis-0 flex-col gap-2">
         <div className="flex items-center gap-1 font-bold">
           <i className="fa-regular fa-clock" />
           Times
@@ -40,7 +41,7 @@ const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavig
         </div>
       </div>
       <div className="border-r border-gray-300" />
-      <div className="flex flex-col grow basis-0 gap-2 min-w-0">
+      <div className="flex min-w-0 grow basis-0 flex-col gap-2">
         <div className="flex items-center gap-1">
           <i className="fa-solid fa-circle-info" />
           Details
@@ -54,10 +55,10 @@ const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavig
             <span>Trigger:</span>
             <span className="truncate">-</span>
           </div>
-          {element && (
+          {(element as Element | undefined) && (
             <div className="flex gap-1">
               <span>Element:</span>
-              <span className="truncate text-blue-500 cursor-pointer">
+              <span className="cursor-pointer truncate text-blue-500">
                 {element.definition.label} [{elementId}]
               </span>
             </div>

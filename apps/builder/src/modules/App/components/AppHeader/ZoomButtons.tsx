@@ -3,7 +3,7 @@ import { useCallback, use, useMemo } from 'react';
 
 import AppContext from '@pmodules/App/AppContext';
 
-const zooms = [...Array(26).keys()].map(i => ({ label: `${50 + i * 10}%`, value: Number(0.5 + i * 0.1).toFixed(1) }));
+const zooms = [...Array(26).keys()].map(i => ({ label: `${50 + i * 10}%`, value: (0.5 + i * 0.1).toFixed(1) }));
 
 const ZoomButtons = () => {
   const { zoom = 1, setZoom, displayMode } = use(AppContext);
@@ -30,7 +30,7 @@ const ZoomButtons = () => {
   return (
     <div className="flex items-center gap-4">
       <div className="inline text-xs font-bold">{Math.floor(width / zoom)} PX</div>
-      <Select size="xs" value={Number(zoom).toFixed(1)} onChange={handleChange}>
+      <Select size="xs" value={zoom.toFixed(1)} onChange={handleChange}>
         {zooms.map(({ label, value }) => (
           <option key={value} value={value}>
             {label}

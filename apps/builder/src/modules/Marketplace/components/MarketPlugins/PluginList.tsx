@@ -24,7 +24,7 @@ const PluginList = ({ plugins, onClick }: PluginListProps) => (
           key={i}
           name={name}
           description={description}
-          latestVersion={latestVersion?.version}
+          latestVersion={latestVersion.version}
           type={type}
           icon={icon}
           website={website}

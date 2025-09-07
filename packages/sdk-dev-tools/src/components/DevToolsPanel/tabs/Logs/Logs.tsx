@@ -21,14 +21,14 @@ const Logs = ({ items = [], orientation = 'horizontal', onClear }: LogsProps) =>
   }, []);
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex border-b border-gray-300 px-2 py-1 gap-2 justify-between">
+    <div className="flex h-full w-full flex-col">
+      <div className="flex justify-between gap-2 border-b border-gray-300 px-2 py-1">
         <div />
         <button onClick={onClear}>Clear Logs</button>
       </div>
       <div
         className={classNames('flex h-full w-full overflow-hidden', {
-          'flex-col basis-0 grow': orientation === 'vertical'
+          'grow basis-0 flex-col': orientation === 'vertical'
         })}
       >
         <LogsSummary
@@ -38,7 +38,7 @@ const Logs = ({ items = [], orientation = 'horizontal', onClear }: LogsProps) =>
           orientation={orientation}
           onClick={handleClickSummary}
         />
-        <div className="flex flex-col basis-0 grow overflow-y-auto">
+        <div className="flex grow basis-0 flex-col overflow-y-auto">
           {items
             .filter(item => !logTypeSelected || item.logType === logTypeSelected)
             .map((item, i) => (

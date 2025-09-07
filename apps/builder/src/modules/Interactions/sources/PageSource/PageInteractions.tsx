@@ -100,7 +100,7 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
             ]
           },
           url: {
-            defaultValue: pageUrls.find(page => !!page.defaultPage)?.key ?? '',
+            defaultValue: pageUrls.find(page => page.defaultPage)?.key ?? '',
             type: params => (params.urlType === 'page' ? 'select' : 'text'),
             when: params => !!params.urlType,
             options: pageUrls.map(page => ({ value: page.key, label: page.label }))

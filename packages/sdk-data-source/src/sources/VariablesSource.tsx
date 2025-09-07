@@ -6,6 +6,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
+import type { SchemaVariable } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type VariablesSourceProps = {
@@ -25,21 +26,23 @@ const VariablesSource = ({ children, environment }: VariablesSourceProps) => {
   );
 
   const variablesParsed = useMemo<Record<string, unknown>>(() => {
-    return (
-      variables?.reduce<Record<string, unknown>>((acum, variable) => {
-        const { name, value, subValues } = variable;
-        if (!Array.isArray(subValues) || subValues.length === 0) {
-          return { ...acum, [name]: value };
-        }
+    if (!(variables as SchemaVariable[] | undefined)) {
+      return {};
+    }
 
-        const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
-        if (subValue) {
-          return { ...acum, [name]: subValue.value };
-        }
-
+    return variables.reduce<Record<string, unknown>>((acum, variable) => {
+      const { name, value, subValues } = variable;
+      if (!Array.isArray(subValues) || subValues.length === 0) {
         return { ...acum, [name]: value };
-      }, {}) ?? ({} as Record<string, unknown>)
-    );
+      }
+
+      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
+      if (subValue) {
+        return { ...acum, [name]: subValue.value };
+      }
+
+      return { ...acum, [name]: value };
+    }, {});
   }, [variables, whenData]);
 
   const sourceFields = useCallback(

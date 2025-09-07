@@ -95,7 +95,7 @@ export const getKeyDecoded = (webKey?: string, asWebId = false) => {
   let payload: unknown = {};
   try {
     if (typeof window !== 'undefined') {
-      payload = JSON.parse(window.atob(webKey.split('.')[1]).toString());
+      payload = JSON.parse(window.atob(webKey.split('.')[1]));
     } else {
       payload = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
     }
