@@ -192,9 +192,9 @@ jobs:
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
         run: exit 
         
-      # - name: Yarn Token
-      #   run: |
-      #     echo "npmAuthToken: ${{ secrets.NPM_AUTH_TOKEN }}" >> $HOME/.yarnrc.yml
+      - name: Yarn Token
+        run: |
+          echo "npmAuthToken: ${{ secrets.NPM_AUTH_TOKEN }}" >> $HOME/.yarnrc.yml
 
       - name: Publish to NPM
         id: changesets
