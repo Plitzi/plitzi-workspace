@@ -198,7 +198,7 @@ jobs:
         with:
           createGithubReleases: false
           # This expects you to have a script called release which does a build for your packages and calls changeset publish
-          publish: yarn changeset publish
+          publish: yarn workspaces foreach -A npm publish --tolerate-republish --registry=https://npm.pkg.github.com
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}

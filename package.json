@@ -22,7 +22,8 @@
     "build-assets:prod-analyze": "turbo build-assets:prod-analyze --parallel --concurrency=20",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "release": "yarn workspaces foreach -A npm publish --tolerate-republish --registry=https://npm.pkg.github.com"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.0.0",
