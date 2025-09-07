@@ -25,8 +25,7 @@
     "changeset": "changeset",
     "generate-tarballs": "yarn workspaces foreach -A exec yarn pack",
     "check-tgz": "yarn generate-tarballs && bash -c 'for tgz in packages/*/*.tgz apps/*/*.tgz; do echo \"---- $tgz ----\"; if tar -xOzf \"$tgz\" package/package.json | grep -q \"workspace:*\"; then echo \"⚠️  Contiene workspace:*\"; else echo \"✅ No workspace:*\"; fi; done'",
-    "ci:publish": "yarn workspaces foreach -A exec yarn npm publish --access restricted && changeset tag",
-    "ci:publish-v2": "bash -c 'for dir in packages/* apps/*; do (cd \"$dir\" && yarn npm publish || true); done' && changeset tag"
+    "ci:publish": "yarn workspaces foreach -A --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access restricted && changeset tag"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.0.0",

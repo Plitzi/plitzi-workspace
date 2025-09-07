@@ -155,7 +155,7 @@ jobs:
 
   publish-github:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-    needs: build-packages
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -211,7 +211,7 @@ jobs:
 
   publish-s3:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-    needs: lint
+    needs: publish-github
     runs-on: ubuntu-latest
     strategy:
       matrix:
