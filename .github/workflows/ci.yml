@@ -194,7 +194,7 @@ jobs:
         
       - name: Yarn Token
         run: |
-          echo "npmAuthToken: ${{ secrets.NPM_AUTH_TOKEN }}" >> $HOME/.yarnrc.yml
+          echo "npmAuthToken: ${{ secrets.NPM_AUTH_TOKEN }}" >> .yarnrc.yml
 
       - name: Publish to NPM
         id: changesets
