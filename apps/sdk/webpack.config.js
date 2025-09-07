@@ -282,7 +282,7 @@ const buildSSR = (env, args) => {
 
   return {
     ...modules,
-    entry: { 'plitzi-sdk': './src/indexSSR.js' },
+    entry: { 'plitzi-sdk': './src/indexSSR.ts' },
     target: 'node',
     output: { ...modules.output, path: `${modules.output.path}/ssr/` },
     externals: {},
