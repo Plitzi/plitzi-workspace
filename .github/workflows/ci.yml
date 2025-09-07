@@ -30,7 +30,7 @@ jobs:
 
       - name: Cache node_modules
         id: cache-packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -65,7 +65,7 @@ jobs:
 
       - name: Restore Cache node_modules
         id: cache-packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -73,7 +73,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
       - name: Restore Cache build
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-build
         with:
@@ -100,7 +100,7 @@ jobs:
           cache: 'yarn'
 
       - name: Restore Cache node_modules
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -109,7 +109,7 @@ jobs:
 
       - name: Restore Cache build
         id: cache-packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-build
         with:
@@ -143,7 +143,7 @@ jobs:
           # cache: 'yarn'
 
   #     - name: Restore Cache
-  #       uses: actions/cache@v2
+  #       uses: actions/cache@v4
   #       env:
   #         cache-name: cache-node-modules
   #       with:
@@ -172,7 +172,7 @@ jobs:
 
       - name: Restore Cache node_modules
         id: cache-packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -181,7 +181,7 @@ jobs:
 
       - name: Restore Cache build
         id: cache-build
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-build
         with:
@@ -226,7 +226,7 @@ jobs:
           cache: 'yarn'
 
       - name: Restore Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -234,7 +234,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
       - name: Restore Cache build
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-build
         with:
