@@ -16,7 +16,7 @@ export type TemplateFormProps = {
 };
 
 const TemplateForm = ({ name = 'New Template', description = '', onSubmit, onClose }: TemplateFormProps) => {
-  const form = useForm({ initialValues: { name, description }, config: { schema: templateFormSchema } });
+  const form = useForm({ defaultValues: { name, description }, config: { schema: templateFormSchema } });
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof templateFormSchema>) => onSubmit?.(values),

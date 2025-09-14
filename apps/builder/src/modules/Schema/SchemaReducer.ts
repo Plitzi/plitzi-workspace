@@ -178,7 +178,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
     case SchemaActions.SCHEMA_UPDATE_VARIABLE: {
       const { variable } = action;
       if (!(state.variables as SchemaVariable[] | undefined)) {
-        return;
+        return state;
       }
 
       return produce(state, draft => {
@@ -194,7 +194,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
     case SchemaActions.SCHEMA_REMOVE_VARIABLE: {
       const { name } = action;
       if (!(state.variables as SchemaVariable[] | undefined)) {
-        return;
+        return state;
       }
 
       return produce(state, draft => {

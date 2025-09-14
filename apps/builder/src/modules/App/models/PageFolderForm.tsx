@@ -33,7 +33,7 @@ const PageFolderForm = ({
   onClose,
   onSubmit
 }: PageFolderFormProps) => {
-  const form = useForm({ initialValues: { name, slug, parentId }, config: { schema: pageFolderFormSchema } });
+  const form = useForm({ defaultValues: { name, slug, parentId }, config: { schema: pageFolderFormSchema } });
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof pageFolderFormSchema>) => onSubmit?.(values),

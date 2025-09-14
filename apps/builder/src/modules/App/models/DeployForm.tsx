@@ -37,7 +37,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
   const { query } = use(NetworkContext);
   const { addToast } = useToast();
 
-  const form = useForm({ initialValues: { environment, domain, revision }, config: { schema: deployFormSchema } });
+  const form = useForm({ defaultValues: { environment, domain, revision }, config: { schema: deployFormSchema } });
   const watchEnvironment = useFormWatch(form.formMethods, 'environment');
   const watchDomain = useFormWatch(form.formMethods, 'domain');
   const domainSelected = useMemo(() => domains.find(domain => domain.domain === watchDomain), [domains, watchDomain]);

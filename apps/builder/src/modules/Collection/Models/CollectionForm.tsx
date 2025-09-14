@@ -66,7 +66,7 @@ const CollectionForm = ({
   const [fields, setFields] = useState(() => Object.values(fieldsProp ?? {}));
 
   const form = useForm({
-    initialValues: { name, namePlural, description, privacy },
+    defaultValues: { name, namePlural, description, privacy },
     config: { schema: collectionSchema }
   });
 

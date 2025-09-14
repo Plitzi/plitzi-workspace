@@ -19,7 +19,7 @@ export type SelectorFormProps = {
 };
 
 const SelectorForm = ({ name = '', onClose, onSubmit }: SelectorFormProps) => {
-  const form = useForm({ initialValues: { name }, config: { schema: selectorFormSchema } });
+  const form = useForm({ defaultValues: { name }, config: { schema: selectorFormSchema } });
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof selectorFormSchema>) => onSubmit?.(values),

@@ -25,7 +25,7 @@ const SegmentForm = ({
   onSubmit,
   onClose
 }: SegmentFormProps) => {
-  const form = useForm({ initialValues: { name, description, identifier }, config: { schema: segmentFormSchema } });
+  const form = useForm({ defaultValues: { name, description, identifier }, config: { schema: segmentFormSchema } });
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof segmentFormSchema>) => onSubmit?.(values),

@@ -18,7 +18,7 @@ export type PublishFormProps = {
 };
 
 const PublishForm = ({ environment = 'development', description = '', onClose, onSubmit }: PublishFormProps) => {
-  const form = useForm({ initialValues: { environment, description }, config: { schema: publishFormSchema } });
+  const form = useForm({ defaultValues: { environment, description }, config: { schema: publishFormSchema } });
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof publishFormSchema>) => onSubmit?.(values),

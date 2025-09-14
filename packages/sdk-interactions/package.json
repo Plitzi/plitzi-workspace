@@ -30,10 +30,10 @@
   "type": "module",
   "devDependencies": {
     "eslint": "^9.35.0",
-    "vite": "^7.1.4"
+    "vite": "^7.1.5"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.0",
+    "@plitzi/plitzi-ui": "^1.0.1",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

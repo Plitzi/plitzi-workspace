@@ -16,7 +16,7 @@ const variableFormSchema = z.object({
     .regex(/^(?:\w+\s+|)([a-zA-Z_][a-zA-Z0-9_]+)$/i, {
       message: 'Name only can be letters, numbers and _ -'
     }),
-  category: z.string().min(4),
+  // category: z.string().min(4),
   type: z.enum(['text', 'number', 'email', 'password', 'select', 'select2', 'checkbox', 'textarea', 'color', 'switch']),
   value: z.string().min(3),
   subValues: z.array(z.record(z.string(), z.any())).optional()
@@ -24,7 +24,7 @@ const variableFormSchema = z.object({
 
 export type VariableFormProps = {
   name?: SchemaVariable['name'];
-  category?: SchemaVariable['category'];
+  // category?: SchemaVariable['category'];
   value?: SchemaVariable['value'];
   type?: SchemaVariable['type'];
   subValues?: SchemaVariable['subValues'];
@@ -41,7 +41,7 @@ export type VariableFormProps = {
 
 const VariableForm = ({
   name = 'variable',
-  category = '',
+  // category = '',
   value = '',
   type = 'text',
   subValues,
@@ -51,7 +51,7 @@ const VariableForm = ({
   onClose
 }: VariableFormProps) => {
   const form = useForm({
-    initialValues: { name, category, value, type, subValues },
+    defaultValues: { name, value, type, subValues },
     config: { schema: variableFormSchema }
   });
 

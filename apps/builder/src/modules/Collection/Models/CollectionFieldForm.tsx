@@ -65,7 +65,7 @@ const CollectionFieldForm = ({
   onValidate
 }: CollectionFieldFormProps) => {
   const form = useForm({
-    initialValues: { name, machineName, params, type },
+    defaultValues: { name, machineName, params, type },
     config: { schema: collectionFieldSchema }
   });
 

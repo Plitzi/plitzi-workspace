@@ -57,8 +57,8 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
       subscriptionKey = [subscriptionKey];
     }
 
-    const subscriptionsToStop = subscriptions.current.filter(
-      subscription => subscriptionKey.includes[subscription.name]
+    const subscriptionsToStop = subscriptions.current.filter(subscription =>
+      subscriptionKey.includes(subscription.name)
     );
 
     subscriptionsToStop.forEach(subscription => {
@@ -82,7 +82,10 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
     };
   }, [stop]);
 
-  const subscriptionsManagerMemo = useMemo(() => ({ subscribe, unsubscribe, stop }), [subscribe, unsubscribe, stop]);
+  const subscriptionsManagerMemo = useMemo(
+    () => ({ subscribe, unsubscribe, stop, subscriptions }),
+    [subscribe, unsubscribe, stop, subscriptions]
+  );
 
   return subscriptionsManagerMemo;
 };

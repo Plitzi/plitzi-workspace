@@ -14,7 +14,7 @@ export type LayoutFormProps = {
 };
 
 const LayoutForm = ({ name = 'New Layout', onClose, onSubmit }: LayoutFormProps) => {
-  const form = useForm({ initialValues: { name }, config: { schema: layoutFormSchema } });
+  const form = useForm({ defaultValues: { name }, config: { schema: layoutFormSchema } });
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof layoutFormSchema>) => onSubmit?.(values),

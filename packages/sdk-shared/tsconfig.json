@@ -44,5 +44,6 @@
     "vite.config.ts",
     "setupTests.ts",
     "package.json"
-  ]
+  ],
+  "exclude": ["dist", "node_modules", "**/dist"]
 }

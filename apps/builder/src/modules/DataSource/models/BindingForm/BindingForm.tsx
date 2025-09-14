@@ -51,7 +51,7 @@ const BindingForm = ({
   onClose
 }: BindingFormProps) => {
   const form = useForm({
-    initialValues: { id: '', source: '', fromPath: '', toPath: '', when: {}, transformers: [], ...value },
+    defaultValues: { id: '', source: '', fromPath: '', toPath: '', when: {}, transformers: [], ...value },
     config: { schema: bindingForm }
   });
   const [step, setStep] = useState(0);

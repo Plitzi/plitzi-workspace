@@ -18,7 +18,7 @@ const SelectorForm = ({ className = '', onClose, onSubmit }: SelectorFormProps) 
       }),
     []
   );
-  const form = useForm({ initialValues: { name: '' }, config: { schema } });
+  const form = useForm({ defaultValues: { name: '' }, config: { schema } });
 
   const handleClickCancel = useCallback(() => void onClose?.(), [onClose]);
 

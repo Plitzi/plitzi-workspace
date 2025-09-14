@@ -19,7 +19,7 @@ export type PageFormProps = {
 };
 
 const PageForm = ({ name = 'New Page', pageFolder = '', pageFolders, onClose, onSubmit }: PageFormProps) => {
-  const form = useForm({ initialValues: { name, pageFolder }, config: { schema: pageFormSchema } });
+  const form = useForm({ defaultValues: { name, pageFolder }, config: { schema: pageFormSchema } });
 
   const handleSubmitInternal = useCallback((values: z.infer<typeof pageFormSchema>) => onSubmit?.(values), [onSubmit]);
 

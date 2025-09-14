@@ -34,18 +34,18 @@
     "build-assets:prod": "tsc && vite build"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.0",
+    "@plitzi/plitzi-ui": "^1.0.1",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "classnames": "^2.5.1",
     "immer": "^10.1.3",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
-    "zod": "^4.1.5"
+    "zod": "^4.1.8"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.20",
     "eslint": "^9.35.0",
-    "vite": "^7.1.4"
+    "vite": "^7.1.5"
   }
 }
