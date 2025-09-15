@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
 
-import { TEXT_ALIGN } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -44,7 +42,7 @@ const TypographyAlign = ({ partialValue, onChange }: TypographyAlignProps) => {
   );
 
   return (
-    <CategorySection label="Align" keys={[TEXT_ALIGN]}>
+    <CategorySection label="Align" keys={['text-align']}>
       <CategoryOption onChange={onChange} type="iconGroup" items={items} />
     </CategorySection>
   );

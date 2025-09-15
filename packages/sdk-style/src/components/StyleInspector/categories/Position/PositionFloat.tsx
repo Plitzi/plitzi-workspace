@@ -3,8 +3,6 @@ import FloatRight from '@plitzi/plitzi-ui/icons/FloatRight';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { FLOAT, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -25,23 +23,23 @@ const PositionFloat = ({ value, onChange }: PositionFloatProps) => {
         active: value === 'none'
       },
       {
-        value: LEFT,
+        value: 'left',
         icon: <FloatLeft />,
         description: 'Float Left',
-        active: value === LEFT
+        active: value === 'left'
       },
       {
-        value: RIGHT,
+        value: 'right',
         icon: <FloatRight />,
         description: 'Float Right',
-        active: value === RIGHT
+        active: value === 'right'
       }
     ],
     [value]
   );
 
   return (
-    <CategorySection label="Float" keys={[FLOAT]}>
+    <CategorySection label="Float" keys={['float']}>
       <CategoryOption onChange={onChange} type="iconGroup" items={items} />
     </CategorySection>
   );

@@ -1,8 +1,6 @@
 import { SizeOverflowScroll } from '@plitzi/plitzi-ui/icons';
 import { useMemo } from 'react';
 
-import { OVERFLOW } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -46,8 +44,8 @@ const SizeOverflow = ({ value, onChange }: SizeOverflowProps) => {
   );
 
   return (
-    <CategorySection label="Overflow" keys={[OVERFLOW]}>
-      <CategoryOption onChange={onChange?.(OVERFLOW)} type="iconGroup" items={items} />
+    <CategorySection label="Overflow" keys={['overflow']}>
+      <CategoryOption onChange={onChange?.('overflow')} type="iconGroup" items={items} />
     </CategorySection>
   );
 };

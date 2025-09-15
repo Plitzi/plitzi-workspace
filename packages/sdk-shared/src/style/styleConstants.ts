@@ -1,3 +1,5 @@
+import type { StyleCategory, StyleValue } from '../types';
+
 // Display
 export const DISPLAY = 'display';
 export const FLEX_WRAP = 'flex-wrap';
@@ -68,8 +70,8 @@ export const POSITION = 'position';
 export const FLOAT = 'float';
 export const CLEAR = 'clear';
 export const ZINDEX = 'z-index';
-export const BOTTOM = 'bottom';
 export const TOP = 'top';
+export const BOTTOM = 'bottom';
 export const LEFT = 'left';
 export const RIGHT = 'right';
 
@@ -85,14 +87,14 @@ export const OBJECT_FIT = 'object-fit';
 export const OBJECT_POSITION = 'object-position';
 
 // Spacing
-export const MARGIN_LEFT = 'margin-left';
-export const MARGIN_RIGHT = 'margin-right';
 export const MARGIN_TOP = 'margin-top';
 export const MARGIN_BOTTOM = 'margin-bottom';
-export const PADDING_LEFT = 'padding-left';
-export const PADDING_RIGHT = 'padding-right';
+export const MARGIN_LEFT = 'margin-left';
+export const MARGIN_RIGHT = 'margin-right';
 export const PADDING_TOP = 'padding-top';
 export const PADDING_BOTTOM = 'padding-bottom';
+export const PADDING_LEFT = 'padding-left';
+export const PADDING_RIGHT = 'padding-right';
 
 // Typography
 export const FONT_FAMILY = 'font-family';
@@ -324,3 +326,109 @@ export const StyleConstants = {
 } as const;
 
 export const StyleBindingsAllowed = Object.values(StyleConstants).map(attr => ({ path: attr, label: attr }));
+
+export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
+  // display
+  display: 'block',
+  'flex-wrap': 'nowrap',
+  'flex-direction': 'row',
+  'align-items': 'stretch',
+  'justify-content': 'flex-start',
+  'align-content': 'flex-start',
+  'row-gap': '0px',
+  'column-gap': '0px',
+  'grid-row-gap': '0px',
+  'grid-column-gap': '0px',
+  'grid-template-areas': 'none',
+  'grid-template-columns': 'none',
+  'grid-template-rows': 'none',
+  'grid-auto-flow': 'row',
+  'grid-auto-rows': 'auto',
+  'grid-auto-columns': 'auto',
+  // DisplayFlexChild
+  'align-self': 'auto',
+  order: '0',
+  'flex-grow': '0',
+  'flex-shrink': '1',
+  'flex-basis': 'auto',
+  // List
+  'list-style': 'disc',
+  // ListItem
+  'list-style-type': 'disc',
+  // Background
+  'background-color': 'transparent',
+  'background-image': 'url("https://cdn.plitzi.com/resources/img/background-image.svg")',
+  'background-position': '0px 0px',
+  'background-size': 'auto',
+  'background-repeat': 'repeat',
+  'background-attachment': 'scroll',
+  // Border
+  'border-top-style': 'solid',
+  'border-top-width': '0px',
+  'border-top-color': '#000000',
+  'border-bottom-style': 'solid',
+  'border-bottom-width': '0px',
+  'border-bottom-color': '#000000',
+  'border-left-style': 'solid',
+  'border-left-width': '0px',
+  'border-left-color': '#000000',
+  'border-right-style': 'solid',
+  'border-right-width': '0px',
+  'border-right-color': '#000000',
+  'border-top-left-radius': '0px',
+  'border-top-right-radius': '0px',
+  'border-bottom-left-radius': '0px',
+  'border-bottom-right-radius': '0px',
+  // Effects
+  opacity: '1',
+  cursor: 'auto',
+  transition: 'opacity 200ms ease 0ms',
+  'box-shadow': '1px 1px 3px 1px black',
+  filter: 'blur(5px)',
+  transform: 'translate3d(0px, 0px, 0px)',
+  // Position
+  position: 'static',
+  float: 'none',
+  clear: 'none',
+  'z-index': 0,
+  top: 'auto',
+  bottom: 'auto',
+  left: 'auto',
+  right: 'auto',
+  // Size
+  width: 'auto',
+  height: 'auto',
+  'min-width': '0px',
+  'min-height': '0px',
+  'max-width': 'none',
+  'max-height': 'none',
+  overflow: 'visible',
+  'object-fit': 'fill',
+  'object-position': '50% 50%',
+  // Spacing
+  'margin-top': '0px',
+  'margin-bottom': '0px',
+  'margin-left': '0px',
+  'margin-right': '0px',
+  'padding-top': '0px',
+  'padding-bottom': '0px',
+  'padding-left': '0px',
+  'padding-right': '0px',
+  // Typography
+  'font-family': 'Arial',
+  'font-weight': 400,
+  'font-size': '0px',
+  'line-height': '0px',
+  color: '#000000',
+  'text-align': 'left',
+  'font-style': 'normal',
+  'text-decoration': 'none',
+  'letter-spacing': '0px',
+  'text-indent': '0px',
+  'text-transform': 'none',
+  direction: 'ltr',
+  'white-space': 'normal',
+  'text-wrap': 'wrap',
+  'text-overflow': 'clip',
+  'text-shadow': ''
+};

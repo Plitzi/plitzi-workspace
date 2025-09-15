@@ -1,12 +1,5 @@
 import { useMemo } from 'react';
 
-import {
-  BORDER_TOP_COLOR,
-  BORDER_BOTTOM_COLOR,
-  BORDER_LEFT_COLOR,
-  BORDER_RIGHT_COLOR
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -21,10 +14,10 @@ export type BorderColorProps = {
 const BorderColor = ({ values, currentPlacement, onChange }: BorderColorProps) => {
   const value = useMemo(() => {
     const {
-      [BORDER_TOP_COLOR]: borderTop,
-      [BORDER_BOTTOM_COLOR]: borderBottom,
-      [BORDER_LEFT_COLOR]: borderLeft,
-      [BORDER_RIGHT_COLOR]: borderRight
+      'border-top-color': borderTop,
+      'border-bottom-color': borderBottom,
+      'border-left-color': borderLeft,
+      'border-right-color': borderRight
     } = values;
     switch (true) {
       case currentPlacement === 'all':
@@ -51,7 +44,7 @@ const BorderColor = ({ values, currentPlacement, onChange }: BorderColorProps) =
   }, [values, currentPlacement]);
   const keyValues = useMemo(() => {
     if (currentPlacement === 'all') {
-      return [BORDER_TOP_COLOR, BORDER_BOTTOM_COLOR, BORDER_LEFT_COLOR, BORDER_RIGHT_COLOR] as StyleCategory[];
+      return ['border-top-color', 'border-bottom-color', 'border-left-color', 'border-right-color'] as StyleCategory[];
     }
 
     return [`border-${currentPlacement}-color`] as StyleCategory[];

@@ -1,22 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import {
-  BORDER_RADIUS_TOP_LEFT,
-  BORDER_RADIUS_TOP_RIGHT,
-  BORDER_RADIUS_BOTTOM_LEFT,
-  BORDER_RADIUS_BOTTOM_RIGHT
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const keyValues = [
-  BORDER_RADIUS_TOP_LEFT,
-  BORDER_RADIUS_TOP_RIGHT,
-  BORDER_RADIUS_BOTTOM_LEFT,
-  BORDER_RADIUS_BOTTOM_RIGHT
+  'border-top-left-radius',
+  'border-top-right-radius',
+  'border-bottom-left-radius',
+  'border-bottom-right-radius'
 ] as StyleCategory[];
 
 const units = [
@@ -32,10 +25,10 @@ export type BorderRadiusProps = {
 
 const BorderRadius = ({ values, onChange, onChangeSegment }: BorderRadiusProps) => {
   const {
-    [BORDER_RADIUS_TOP_LEFT]: borderTopLeft,
-    [BORDER_RADIUS_TOP_RIGHT]: borderTopRight,
-    [BORDER_RADIUS_BOTTOM_LEFT]: borderBottomLeft,
-    [BORDER_RADIUS_BOTTOM_RIGHT]: borderBottomRight
+    'border-top-left-radius': borderTopLeft,
+    'border-top-right-radius': borderTopRight,
+    'border-bottom-left-radius': borderBottomLeft,
+    'border-bottom-right-radius': borderBottomRight
   } = values;
   const [showRadiusIndividuals, setShowRadiusIndividuals] = useState(
     borderTopLeft !== borderTopRight || borderTopLeft !== borderBottomLeft || borderTopLeft !== borderBottomRight

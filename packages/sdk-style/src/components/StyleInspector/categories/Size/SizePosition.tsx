@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-import { OBJECT_POSITION } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -24,13 +22,13 @@ const SizePosition = ({ value, onChange }: SizePositionProps) => {
         valueAux[1] = itemValue as string;
       }
 
-      onChange?.(OBJECT_POSITION)(valueAux.join(' ') as StyleValue);
+      onChange?.('object-position')(valueAux.join(' ') as StyleValue);
     },
     [onChange, valueParts]
   );
 
   return (
-    <CategorySection label="Object Pos" keys={[OBJECT_POSITION]}>
+    <CategorySection label="Object Pos" keys={['object-position']}>
       <CategoryOption
         label="Left"
         direction="column"

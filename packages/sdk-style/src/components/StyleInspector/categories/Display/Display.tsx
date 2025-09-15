@@ -1,24 +1,5 @@
 import { memo, useCallback, use } from 'react';
 
-import {
-  DISPLAY,
-  FLEX_WRAP,
-  FLEX_DIRECTION,
-  ALIGN_ITEMS,
-  JUSTIFY_CONTENT,
-  ALIGN_CONTENT,
-  COLUMN_GAP,
-  ROW_GAP,
-  GRID_ROW_GAP,
-  GRID_COLUMN_GAP,
-  GRID_TEMPLATE_AREAS,
-  GRID_TEMPLATE_COLUMNS,
-  GRID_TEMPLATE_ROWS,
-  GRID_AUTO_FLOW,
-  GRID_AUTO_ROWS,
-  GRID_AUTO_COLUMNS
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import DisplayElements from './DisplayElements';
 import DisplayFlex from './DisplayFlex';
 import DisplayFlexAlignContent from './DisplayFlexAlignContent';
@@ -35,89 +16,90 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
-  FLEX_DIRECTION,
-  FLEX_WRAP,
-  ALIGN_ITEMS,
-  JUSTIFY_CONTENT,
-  ALIGN_CONTENT,
-  COLUMN_GAP,
-  ROW_GAP,
-  GRID_ROW_GAP,
-  GRID_COLUMN_GAP,
-  GRID_TEMPLATE_AREAS,
-  GRID_TEMPLATE_COLUMNS,
-  GRID_TEMPLATE_ROWS,
-  GRID_AUTO_FLOW,
-  GRID_AUTO_ROWS,
-  GRID_AUTO_COLUMNS,
-  DISPLAY
+  'flex-direction',
+  'flex-wrap',
+  'align-items',
+  'justify-content',
+  'align-content',
+  'column-gap',
+  'row-gap',
+  'grid-row-gap',
+  'grid-column-gap',
+  'grid-template-areas',
+  'grid-template-columns',
+  'grid-template-rows',
+  'grid-auto-flow',
+  'grid-auto-rows',
+  'grid-auto-columns',
+  'display'
 ] as StyleCategory[];
 
 export type DisplayProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Display = ({ isCollapsed = true, onCollapse }: DisplayProps) => {
+const Display = ({ replaceTokens = false, isCollapsed = true, onCollapse }: DisplayProps) => {
   const { setValue } = use(StyleInspectorContext);
   const {
-    [DISPLAY]: display,
-    [FLEX_DIRECTION]: flexDirection,
-    [FLEX_WRAP]: flexWrap,
-    [ALIGN_ITEMS]: alignItems,
-    [JUSTIFY_CONTENT]: justifyContent,
-    [ROW_GAP]: rowGap,
-    [COLUMN_GAP]: columnGap,
-    [GRID_TEMPLATE_AREAS]: gridTemplateAreas,
-    [GRID_TEMPLATE_COLUMNS]: gridTemplateColumns,
-    [GRID_TEMPLATE_ROWS]: gridTemplateRows,
-    [GRID_AUTO_FLOW]: gridAutoFlow,
-    [GRID_AUTO_ROWS]: gridAutoRows,
-    [GRID_AUTO_COLUMNS]: gridAutoColumns,
-    [GRID_ROW_GAP]: gridRowGap,
-    [GRID_COLUMN_GAP]: gridColumnGap,
-    [ALIGN_CONTENT]: alignContent
-  } = useInspectorValues({ keys: dotKeys, asValue: true });
+    display,
+    'flex-direction': flexDirection,
+    'flex-wrap': flexWrap,
+    'align-items': alignItems,
+    'justify-content': justifyContent,
+    'row-gap': rowGap,
+    'column-gap': columnGap,
+    'grid-template-areas': gridTemplateAreas,
+    'grid-template-columns': gridTemplateColumns,
+    'grid-template-rows': gridTemplateRows,
+    'grid-auto-flow': gridAutoFlow,
+    'grid-auto-rows': gridAutoRows,
+    'grid-auto-columns': gridAutoColumns,
+    'grid-row-gap': gridRowGap,
+    'grid-column-gap': gridColumnGap,
+    'align-content': alignContent
+  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
 
   const handleChange = useCallback(
     (type: StyleCategory, partialValue: StyleValue) => {
       if (type === 'display') {
         setValue(
           [
-            FLEX_DIRECTION,
-            FLEX_WRAP,
-            ALIGN_ITEMS,
-            JUSTIFY_CONTENT,
-            ALIGN_CONTENT,
-            COLUMN_GAP,
-            ROW_GAP,
-            GRID_ROW_GAP,
-            GRID_COLUMN_GAP,
-            GRID_TEMPLATE_AREAS,
-            GRID_TEMPLATE_COLUMNS,
-            GRID_TEMPLATE_ROWS,
-            GRID_AUTO_FLOW,
-            GRID_AUTO_ROWS,
-            GRID_AUTO_COLUMNS,
-            DISPLAY
+            'flex-direction',
+            'flex-wrap',
+            'align-items',
+            'justify-content',
+            'align-content',
+            'column-gap',
+            'row-gap',
+            'grid-row-gap',
+            'grid-column-gap',
+            'grid-template-areas',
+            'grid-template-columns',
+            'grid-template-rows',
+            'grid-auto-flow',
+            'grid-auto-rows',
+            'grid-auto-columns',
+            'display'
           ] as const,
           {
-            [FLEX_DIRECTION]: undefined,
-            [FLEX_WRAP]: undefined,
-            [ALIGN_ITEMS]: undefined,
-            [JUSTIFY_CONTENT]: undefined,
-            [ALIGN_CONTENT]: undefined,
-            [ROW_GAP]: undefined,
-            [COLUMN_GAP]: undefined,
-            [GRID_ROW_GAP]: undefined,
-            [GRID_COLUMN_GAP]: undefined,
-            [GRID_TEMPLATE_AREAS]: undefined,
-            [GRID_TEMPLATE_COLUMNS]: undefined,
-            [GRID_TEMPLATE_ROWS]: undefined,
-            [GRID_AUTO_FLOW]: undefined,
-            [GRID_AUTO_ROWS]: undefined,
-            [GRID_AUTO_COLUMNS]: undefined,
-            [DISPLAY]: partialValue
+            'flex-direction': undefined,
+            'flex-wrap': undefined,
+            'align-items': undefined,
+            'justify-content': undefined,
+            'align-content': undefined,
+            'row-gap': undefined,
+            'column-gap': undefined,
+            'grid-row-gap': undefined,
+            'grid-column-gap': undefined,
+            'grid-template-areas': undefined,
+            'grid-template-columns': undefined,
+            'grid-template-rows': undefined,
+            'grid-auto-flow': undefined,
+            'grid-auto-rows': undefined,
+            'grid-auto-columns': undefined,
+            display: partialValue
           } as Record<StyleCategory, StyleValue | undefined>
         );
       } else {

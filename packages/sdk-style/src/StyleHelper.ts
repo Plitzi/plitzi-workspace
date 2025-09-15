@@ -242,7 +242,7 @@ export const calculateInheriting = (
 };
 
 export const calculateBindings = (element?: Element) => {
-  const metadata: { style: { [key: string]: string | number } } = { style: {} };
+  const metadata: { style: Record<StyleCategory, StyleValue> } = { style: {} as Record<StyleCategory, StyleValue> };
   if (!element) {
     return metadata;
   }

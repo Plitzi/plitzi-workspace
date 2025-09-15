@@ -10,30 +10,19 @@ import PaddingRight from '@plitzi/plitzi-ui/icons/PaddingRight';
 import PaddingTop from '@plitzi/plitzi-ui/icons/PaddingTop';
 import MetricInput from '@plitzi/plitzi-ui/MetricInput';
 
-import {
-  MARGIN_TOP,
-  MARGIN_BOTTOM,
-  MARGIN_LEFT,
-  MARGIN_RIGHT,
-  PADDING_TOP,
-  PADDING_BOTTOM,
-  PADDING_LEFT,
-  PADDING_RIGHT
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 // import InspectorButton from '@pmodules/Style/components/InspectorButton';
 
 const iconsMap = {
-  [MARGIN_TOP]: <MarginTop />,
-  [MARGIN_BOTTOM]: <MarginBottom />,
-  [MARGIN_LEFT]: <MarginLeft />,
-  [MARGIN_RIGHT]: <MarginRight />,
-  [PADDING_TOP]: <PaddingTop />,
-  [PADDING_BOTTOM]: <PaddingBottom />,
-  [PADDING_LEFT]: <PaddingLeft />,
-  [PADDING_RIGHT]: <PaddingRight />
+  'margin-top': <MarginTop />,
+  'margin-bottom': <MarginBottom />,
+  'margin-left': <MarginLeft />,
+  'margin-right': <MarginRight />,
+  'padding-top': <PaddingTop />,
+  'padding-bottom': <PaddingBottom />,
+  'padding-left': <PaddingLeft />,
+  'padding-right': <PaddingRight />
 } as const;
 
 export type SpacingEditorProps = {

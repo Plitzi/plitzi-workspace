@@ -1,8 +1,6 @@
 import ArrowReverse from '@plitzi/plitzi-ui/icons/ArrowReverse';
 import { useCallback, useMemo } from 'react';
 
-import { FLEX_DIRECTION } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -14,19 +12,19 @@ export type DisplayFlexDirectionProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [FLEX_DIRECTION];
+const keyValues: StyleCategory[] = ['flex-direction'];
 
 const DisplayFlexDirection = ({ value = 'row', isReverse = false, onChange }: DisplayFlexDirectionProps) => {
   const handleChange = useCallback(
     (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
       if (typeof newValue === 'boolean') {
         if (newValue) {
-          onChange?.(FLEX_DIRECTION, `${value as string}-reverse`);
+          onChange?.('flex-direction', `${value as string}-reverse`);
         } else {
-          onChange?.(FLEX_DIRECTION, (value as string).replace('-reverse', ''));
+          onChange?.('flex-direction', (value as string).replace('-reverse', ''));
         }
       } else {
-        onChange?.(FLEX_DIRECTION, newValue as StyleValue);
+        onChange?.('flex-direction', newValue as StyleValue);
       }
     },
     [onChange, value]

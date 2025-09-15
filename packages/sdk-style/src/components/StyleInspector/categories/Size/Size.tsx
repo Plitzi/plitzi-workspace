@@ -1,17 +1,5 @@
 import { memo, useCallback, use } from 'react';
 
-import {
-  WIDTH,
-  HEIGHT,
-  MIN_WIDTH,
-  MIN_HEIGHT,
-  MAX_WIDTH,
-  MAX_HEIGHT,
-  OVERFLOW,
-  OBJECT_FIT,
-  OBJECT_POSITION
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import SizeFit from './SizeFit';
 import SizeOverflow from './SizeOverflow';
 import SizePosition from './SizePosition';
@@ -24,39 +12,40 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
-  WIDTH,
-  HEIGHT,
-  MIN_WIDTH,
-  MIN_HEIGHT,
-  MAX_WIDTH,
-  MAX_HEIGHT,
-  OVERFLOW,
-  OBJECT_FIT,
-  OBJECT_POSITION
+  'width',
+  'height',
+  'min-width',
+  'min-height',
+  'max-width',
+  'max-height',
+  'overflow',
+  'object-fit',
+  'object-position'
 ] as StyleCategory[];
 
-const keyValueSize = [WIDTH, HEIGHT] as StyleCategory[];
-const keyValueSizeMin = [MIN_WIDTH, MIN_HEIGHT] as StyleCategory[];
-const keyValueSizeMax = [MAX_WIDTH, MAX_HEIGHT] as StyleCategory[];
+const keyValueSize = ['width', 'height'] as StyleCategory[];
+const keyValueSizeMin = ['min-width', 'min-height'] as StyleCategory[];
+const keyValueSizeMax = ['max-width', 'max-height'] as StyleCategory[];
 
 export type SizeProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Size = ({ isCollapsed = true, onCollapse }: SizeProps) => {
+const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizeProps) => {
   const { setValue } = use(StyleInspectorContext);
   const {
-    [WIDTH]: width,
-    [HEIGHT]: height,
-    [MIN_WIDTH]: minWidth,
-    [MIN_HEIGHT]: minHeight,
-    [MAX_WIDTH]: maxWidth,
-    [MAX_HEIGHT]: maxHeight,
-    [OVERFLOW]: overflow,
-    [OBJECT_POSITION]: objectPosition,
-    [OBJECT_FIT]: objectFit
-  } = useInspectorValues({ keys: dotKeys, asValue: true });
+    width,
+    height,
+    'min-width': minWidth,
+    'min-height': minHeight,
+    'max-width': maxWidth,
+    'max-height': maxHeight,
+    overflow,
+    'object-position': objectPosition,
+    'object-fit': objectFit
+  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('size', isCollapsed), [onCollapse]);
 
@@ -70,51 +59,51 @@ const Size = ({ isCollapsed = true, onCollapse }: SizeProps) => {
     <CategoryContainer title="Size" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <CategorySection label="Size" keys={keyValueSize}>
         <CategoryOption
-          keys={[WIDTH]}
+          keys={['width']}
           label="Width"
           preffix="W"
           value={width}
-          onChange={handleChange(WIDTH)}
+          onChange={handleChange('width')}
           type="metric"
         />
         <CategoryOption
-          keys={[HEIGHT]}
+          keys={['height']}
           label="Height"
           preffix="H"
           value={height}
-          onChange={handleChange(HEIGHT)}
+          onChange={handleChange('height')}
           type="metric"
         />
       </CategorySection>
       <CategorySection label="Min Size" keys={keyValueSizeMin}>
         <CategoryOption
-          keys={[MIN_WIDTH]}
+          keys={['min-width']}
           label="Width"
           value={minWidth}
-          onChange={handleChange(MIN_WIDTH)}
+          onChange={handleChange('min-width')}
           type="metric"
         />
         <CategoryOption
-          keys={[MIN_HEIGHT]}
+          keys={['min-height']}
           label="Height"
           value={minHeight}
-          onChange={handleChange(MIN_HEIGHT)}
+          onChange={handleChange('min-height')}
           type="metric"
         />
       </CategorySection>
       <CategorySection label="Max Size" keys={keyValueSizeMax}>
         <CategoryOption
-          keys={[MAX_WIDTH]}
+          keys={['max-width']}
           label="Width"
           value={maxWidth}
-          onChange={handleChange(MAX_WIDTH)}
+          onChange={handleChange('max-width')}
           type="metric"
         />
         <CategoryOption
-          keys={[MAX_HEIGHT]}
+          keys={['max-height']}
           label="Height"
           value={maxHeight}
-          onChange={handleChange(MAX_HEIGHT)}
+          onChange={handleChange('max-height')}
           type="metric"
         />
       </CategorySection>

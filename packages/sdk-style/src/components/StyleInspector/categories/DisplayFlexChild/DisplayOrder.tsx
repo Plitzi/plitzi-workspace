@@ -1,8 +1,6 @@
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useCallback, useMemo } from 'react';
 
-import { ORDER } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -13,11 +11,12 @@ export type DisplayOrderProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [ORDER];
+const keyValues: StyleCategory[] = ['order'];
 
 const DisplayOrder = ({ value, onChange }: DisplayOrderProps) => {
   const handleChange = useCallback(
-    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => onChange?.(ORDER, itemValue as StyleValue),
+    (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.('order', itemValue as StyleValue),
     [onChange]
   );
 

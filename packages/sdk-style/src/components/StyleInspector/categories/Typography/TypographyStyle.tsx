@@ -2,8 +2,6 @@ import TextDecorationOverline from '@plitzi/plitzi-ui/icons/TextDecorationOverli
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { FONT_STYLE, TEXT_DECORATION } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -66,11 +64,11 @@ const TypographyStyle = ({ fontStyle, textDecoration, onChange }: TypographyStyl
 
   return (
     <>
-      <CategorySection label="Italicize" keys={[FONT_STYLE]}>
-        <CategoryOption onChange={onChange?.(FONT_STYLE)} type="iconGroup" items={itemsItalicize} />
+      <CategorySection label="Italicize" keys={['font-style']}>
+        <CategoryOption onChange={onChange?.('font-style')} type="iconGroup" items={itemsItalicize} />
       </CategorySection>
-      <CategorySection label="Decoration" keys={[TEXT_DECORATION]}>
-        <CategoryOption onChange={onChange?.(TEXT_DECORATION)} type="iconGroup" items={itemsDecoration} />
+      <CategorySection label="Decoration" keys={['text-decoration']}>
+        <CategoryOption onChange={onChange?.('text-decoration')} type="iconGroup" items={itemsDecoration} />
       </CategorySection>
     </>
   );

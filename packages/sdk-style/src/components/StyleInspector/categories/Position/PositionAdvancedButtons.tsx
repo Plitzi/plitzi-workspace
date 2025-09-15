@@ -9,8 +9,6 @@ import PositionTopLeft from '@plitzi/plitzi-ui/icons/PositionTopLeft';
 import PositionTopRight from '@plitzi/plitzi-ui/icons/PositionTopRight';
 import { useMemo } from 'react';
 
-import { TOP, BOTTOM, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -22,7 +20,7 @@ export type PositionAdvancedButtonsProps = {
 };
 
 const PositionAdvancedButtons = ({ value, onChange }: PositionAdvancedButtonsProps) => {
-  const { [TOP]: top, [BOTTOM]: bottom, [LEFT]: left, [RIGHT]: right } = value ?? {};
+  const { top, bottom, left, right } = value ?? {};
 
   const items = useMemo(
     () => [

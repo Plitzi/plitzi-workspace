@@ -1,24 +1,5 @@
 import { memo, useCallback, use, useState } from 'react';
 
-import {
-  BORDER_TOP_STYLE,
-  BORDER_TOP_WIDTH,
-  BORDER_TOP_COLOR,
-  BORDER_BOTTOM_STYLE,
-  BORDER_BOTTOM_WIDTH,
-  BORDER_BOTTOM_COLOR,
-  BORDER_LEFT_STYLE,
-  BORDER_LEFT_WIDTH,
-  BORDER_LEFT_COLOR,
-  BORDER_RIGHT_STYLE,
-  BORDER_RIGHT_WIDTH,
-  BORDER_RIGHT_COLOR,
-  BORDER_RADIUS_TOP_LEFT,
-  BORDER_RADIUS_TOP_RIGHT,
-  BORDER_RADIUS_BOTTOM_LEFT,
-  BORDER_RADIUS_BOTTOM_RIGHT
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import BorderColor from './BorderColor';
 import BorderPlacements from './BorderPlacements';
 import BorderRadius from './BorderRadius';
@@ -31,33 +12,37 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
-  BORDER_TOP_STYLE,
-  BORDER_TOP_WIDTH,
-  BORDER_TOP_COLOR,
-  BORDER_BOTTOM_STYLE,
-  BORDER_BOTTOM_WIDTH,
-  BORDER_BOTTOM_COLOR,
-  BORDER_LEFT_STYLE,
-  BORDER_LEFT_WIDTH,
-  BORDER_LEFT_COLOR,
-  BORDER_RIGHT_STYLE,
-  BORDER_RIGHT_WIDTH,
-  BORDER_RIGHT_COLOR,
-  BORDER_RADIUS_TOP_LEFT,
-  BORDER_RADIUS_TOP_RIGHT,
-  BORDER_RADIUS_BOTTOM_LEFT,
-  BORDER_RADIUS_BOTTOM_RIGHT
+  'border-top-style',
+  'border-top-width',
+  'border-top-color',
+  'border-bottom-style',
+  'border-bottom-width',
+  'border-bottom-color',
+  'border-left-style',
+  'border-left-width',
+  'border-left-color',
+  'border-right-style',
+  'border-right-width',
+  'border-right-color',
+  'border-top-left-radius',
+  'border-top-right-radius',
+  'border-bottom-left-radius',
+  'border-bottom-right-radius'
 ] as StyleCategory[];
 
 export type BorderProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Border = ({ isCollapsed = true, onCollapse }: BorderProps) => {
+const Border = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BorderProps) => {
   const [currentPlacement, setCurrentPlacement] = useState<'all' | 'top' | 'bottom' | 'left' | 'right'>('all');
   const { setValue } = use(StyleInspectorContext);
-  const values = useInspectorValues({ keys: dotKeys, asValue: true }) as Record<StyleCategory, StyleValue | undefined>;
+  const values = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens }) as Record<
+    StyleCategory,
+    StyleValue | undefined
+  >;
 
   const handleChange = useCallback(
     (type: 'radius' | 'color' | 'style' | 'width' | StyleCategory) =>
@@ -65,22 +50,27 @@ const Border = ({ isCollapsed = true, onCollapse }: BorderProps) => {
         switch (type) {
           case 'radius': {
             setValue(
-              [BORDER_RADIUS_TOP_LEFT, BORDER_RADIUS_TOP_RIGHT, BORDER_RADIUS_BOTTOM_LEFT, BORDER_RADIUS_BOTTOM_RIGHT],
+              [
+                'border-top-left-radius',
+                'border-top-right-radius',
+                'border-bottom-left-radius',
+                'border-bottom-right-radius'
+              ],
               {
-                [BORDER_RADIUS_TOP_LEFT]: partialValue,
-                [BORDER_RADIUS_TOP_RIGHT]: partialValue,
-                [BORDER_RADIUS_BOTTOM_LEFT]: partialValue,
-                [BORDER_RADIUS_BOTTOM_RIGHT]: partialValue
+                ['border-top-left-radius']: partialValue,
+                ['border-top-right-radius']: partialValue,
+                ['border-bottom-left-radius']: partialValue,
+                ['border-bottom-right-radius']: partialValue
               } as Record<StyleCategory, StyleValue>
             );
 
             break;
           }
 
-          case BORDER_RADIUS_TOP_LEFT:
-          case BORDER_RADIUS_TOP_RIGHT:
-          case BORDER_RADIUS_BOTTOM_LEFT:
-          case BORDER_RADIUS_BOTTOM_RIGHT: {
+          case 'border-top-left-radius':
+          case 'border-top-right-radius':
+          case 'border-bottom-left-radius':
+          case 'border-bottom-right-radius': {
             setValue(type, partialValue as StyleValue);
 
             break;

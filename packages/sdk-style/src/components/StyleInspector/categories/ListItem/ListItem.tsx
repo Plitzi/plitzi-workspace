@@ -28,13 +28,14 @@ const LIST_ITEM_ROMAN = 'lower-roman';
 const dotKeys = [LIST_ITEM_TYPE] as StyleCategory[];
 
 export type ListItemProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const ListItem = ({ isCollapsed = true, onCollapse }: ListItemProps) => {
+const ListItem = ({ replaceTokens = false, isCollapsed = true, onCollapse }: ListItemProps) => {
   const { setValue } = use(StyleInspectorContext);
-  const { [LIST_ITEM_TYPE]: listItemStyle } = useInspectorValues({ keys: dotKeys, asValue: true });
+  const { [LIST_ITEM_TYPE]: listItemStyle } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('listItem', isCollapsed), [onCollapse]);
 

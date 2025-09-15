@@ -1,11 +1,9 @@
-import { OBJECT_FIT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-const keyValues = [OBJECT_FIT] as StyleCategory[];
+const keyValues = ['object-fit'] as StyleCategory[];
 
 export type SizeFitProps = {
   value?: StyleValue;
@@ -15,7 +13,7 @@ export type SizeFitProps = {
 const SizeFit = ({ value, onChange }: SizeFitProps) => {
   return (
     <CategorySection label="Object Fit" keys={keyValues}>
-      <CategoryOption keys={keyValues} label="" value={value} onChange={onChange?.(OBJECT_FIT)} type="select">
+      <CategoryOption keys={keyValues} label="" value={value} onChange={onChange?.('object-fit')} type="select">
         <option value="fill">Fill</option>
         <option value="contain">Contain</option>
         <option value="cover">Cover</option>

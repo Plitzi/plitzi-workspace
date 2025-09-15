@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-import { COLUMN_GAP, ROW_GAP } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -13,20 +11,20 @@ export type DisplayGapProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [ROW_GAP, COLUMN_GAP];
-const keyValues1: StyleCategory[] = [ROW_GAP];
-const keyValues2: StyleCategory[] = [COLUMN_GAP];
+const keyValues: StyleCategory[] = ['row-gap', 'column-gap'];
+const keyValues1: StyleCategory[] = ['row-gap'];
+const keyValues2: StyleCategory[] = ['column-gap'];
 
 const DisplayGap = ({ rowGap = '0px', columnGap = '0px', onChange }: DisplayGapProps) => {
   const handleChangeRow = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(ROW_GAP, itemValue as StyleValue),
+      onChange?.('row-gap', itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeColumn = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(COLUMN_GAP, itemValue as StyleValue),
+      onChange?.('column-gap', itemValue as StyleValue),
     [onChange]
   );
 

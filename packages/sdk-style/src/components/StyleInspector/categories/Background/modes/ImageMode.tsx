@@ -13,10 +13,11 @@ import useInspectorValues from '../../../hooks/useInspectorValues';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type ImageModeProps = {
+  replaceTokens?: boolean;
   onChange?: (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
 };
 
-const ImageMode = ({ onChange }: ImageModeProps) => {
+const ImageMode = ({ replaceTokens = false, onChange }: ImageModeProps) => {
   const {
     'background-image': bgImage,
     'background-size': backgroundSize,
@@ -25,7 +26,8 @@ const ImageMode = ({ onChange }: ImageModeProps) => {
     'background-repeat': backgroundRepeat
   } = useInspectorValues({
     keys: ['background-image', 'background-size', 'background-attachment', 'background-position', 'background-repeat'],
-    asValue: true
+    asValue: true,
+    replaceTokens
   });
 
   const backgroundImage = useMemo(

@@ -15,11 +15,12 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 const dotKeys = ['opacity', 'cursor', 'transition', 'box-shadow', 'filter', 'transform'] as StyleCategory[];
 
 export type EffectsProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Effects = ({ isCollapsed = true, onCollapse }: EffectsProps) => {
+const Effects = ({ replaceTokens = false, isCollapsed = true, onCollapse }: EffectsProps) => {
   const { setValue } = use(StyleInspectorContext);
   const {
     opacity,
@@ -39,7 +40,8 @@ const Effects = ({ isCollapsed = true, onCollapse }: EffectsProps) => {
       'box-shadow': undefined,
       filter: undefined,
       transform: undefined
-    }
+    },
+    replaceTokens
   });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('effects', isCollapsed), [onCollapse]);

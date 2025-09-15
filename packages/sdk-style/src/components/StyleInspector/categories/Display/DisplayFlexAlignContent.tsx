@@ -16,8 +16,6 @@ import AlignContentStretchColumn from '@plitzi/plitzi-ui/icons/AlignContentStret
 import AlignContentStretchRow from '@plitzi/plitzi-ui/icons/AlignContentStretchRow';
 import { useCallback, useMemo } from 'react';
 
-import { ALIGN_CONTENT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -30,7 +28,7 @@ export type DisplayFlexAlignContentProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [ALIGN_CONTENT];
+const keyValues: StyleCategory[] = ['align-content'];
 
 const DisplayFlexAlignContent = ({
   value,
@@ -40,7 +38,7 @@ const DisplayFlexAlignContent = ({
 }: DisplayFlexAlignContentProps) => {
   const handleChange = useCallback(
     (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(ALIGN_CONTENT, newValue as StyleValue),
+      onChange?.('align-content', newValue as StyleValue),
     [onChange]
   );
 

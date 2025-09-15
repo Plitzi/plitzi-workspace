@@ -1,33 +1,24 @@
 import { useCallback } from 'react';
 
-import { MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import SpacingNumber from './SpacingNumber';
 import SpacingPadding from './SpacingPadding';
 import InspectorLabel from '../../components/InspectorLabel';
 
-import type {
-  PADDING_BOTTOM,
-  PADDING_LEFT,
-  PADDING_RIGHT,
-  PADDING_TOP,
-  StyleCategory,
-  StyleValue
-} from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-const keyValue = [MARGIN_TOP, MARGIN_LEFT, MARGIN_RIGHT, MARGIN_BOTTOM] as StyleCategory[];
+const keyValue = ['margin-top', 'margin-left', 'margin-right', 'margin-bottom'] as StyleCategory[];
 
 export type SpacingMarginProps = {
   fragmentSelected?: StyleCategory;
   values?: {
-    [MARGIN_TOP]?: StyleValue;
-    [MARGIN_BOTTOM]?: StyleValue;
-    [MARGIN_LEFT]?: StyleValue;
-    [MARGIN_RIGHT]?: StyleValue;
-    [PADDING_TOP]?: StyleValue;
-    [PADDING_BOTTOM]?: StyleValue;
-    [PADDING_RIGHT]?: StyleValue;
-    [PADDING_LEFT]?: StyleValue;
+    'margin-top'?: StyleValue;
+    'margin-bottom'?: StyleValue;
+    'margin-left'?: StyleValue;
+    'margin-right'?: StyleValue;
+    'padding-top'?: StyleValue;
+    'padding-bottom'?: StyleValue;
+    'padding-right'?: StyleValue;
+    'padding-left'?: StyleValue;
   };
   isLinked?: boolean;
   onLinkSelected?: () => void;
@@ -53,10 +44,10 @@ const SpacingMargin = ({
   );
 
   const {
-    [MARGIN_TOP]: marginTop,
-    [MARGIN_BOTTOM]: marginBottom,
-    [MARGIN_LEFT]: marginLeft,
-    [MARGIN_RIGHT]: marginRight
+    'margin-top': marginTop,
+    'margin-bottom': marginBottom,
+    'margin-left': marginLeft,
+    'margin-right': marginRight
   } = values ?? {};
 
   return (
@@ -71,16 +62,16 @@ const SpacingMargin = ({
         </InspectorLabel>
         <SpacingNumber
           value={marginTop}
-          active={fragmentSelected === MARGIN_TOP}
-          onClick={handleClickSelect(MARGIN_TOP)}
+          active={fragmentSelected === 'margin-top'}
+          onClick={handleClickSelect('margin-top')}
         />
       </div>
       <div className="flex items-center justify-center">
         <div className="flex items-center justify-center px-0.5">
           <SpacingNumber
             value={marginLeft}
-            active={fragmentSelected === MARGIN_LEFT}
-            onClick={handleClickSelect(MARGIN_LEFT)}
+            active={fragmentSelected === 'margin-left'}
+            onClick={handleClickSelect('margin-left')}
           />
         </div>
         <SpacingPadding
@@ -93,16 +84,16 @@ const SpacingMargin = ({
         <div className="flex items-center justify-center px-0.5">
           <SpacingNumber
             value={marginRight}
-            active={fragmentSelected === MARGIN_RIGHT}
-            onClick={handleClickSelect(MARGIN_RIGHT)}
+            active={fragmentSelected === 'margin-right'}
+            onClick={handleClickSelect('margin-right')}
           />
         </div>
       </div>
       <div className="flex items-center justify-center py-0.5">
         <SpacingNumber
           value={marginBottom}
-          active={fragmentSelected === MARGIN_BOTTOM}
-          onClick={handleClickSelect(MARGIN_BOTTOM)}
+          active={fragmentSelected === 'margin-bottom'}
+          onClick={handleClickSelect('margin-bottom')}
         />
       </div>
     </div>

@@ -38,6 +38,7 @@ const InspectorModeBasic = ({
     {}
   );
   const [showAllOptions, setShowAllOptions] = useStorage<boolean>('builder-state.styleInspector.showAllOptions', false);
+  const [replaceTokens, setReplaceTokens] = useStorage<boolean>('builder-state.styleInspector.replaceTokens', false);
   const inheritData = useStyleInherit({ element, selector, styleSelector });
 
   const handleChangeCollapse = useCallback(
@@ -48,6 +49,11 @@ const InspectorModeBasic = ({
   const handleChangeShowAllOptions = useCallback(
     (e: ChangeEvent) => setShowAllOptions((e.target as HTMLInputElement).checked),
     [setShowAllOptions]
+  );
+
+  const handleChangeReplaceTokens = useCallback(
+    (e: ChangeEvent) => setReplaceTokens((e.target as HTMLInputElement).checked),
+    [setReplaceTokens]
   );
 
   const isList = useMemo(() => {
@@ -83,27 +89,72 @@ const InspectorModeBasic = ({
     >
       <div className="flex grow flex-col justify-between">
         <div className="flex flex-col gap-1">
-          {isList && <List isCollapsed={collapsedCache.list ?? true} onCollapse={handleChangeCollapse} />}
-          {isList && <ListItem isCollapsed={collapsedCache.listItem ?? true} onCollapse={handleChangeCollapse} />}
-          <Display isCollapsed={collapsedCache.display ?? true} onCollapse={handleChangeCollapse} />
+          {isList && (
+            <List
+              replaceTokens={replaceTokens}
+              isCollapsed={collapsedCache.list ?? true}
+              onCollapse={handleChangeCollapse}
+            />
+          )}
+          {isList && (
+            <ListItem
+              replaceTokens={replaceTokens}
+              isCollapsed={collapsedCache.listItem ?? true}
+              onCollapse={handleChangeCollapse}
+            />
+          )}
+          <Display
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.display ?? true}
+            onCollapse={handleChangeCollapse}
+          />
           {isFlexChild && (
             <DisplayFlexChild
+              replaceTokens={replaceTokens}
               isCollapsed={collapsedCache.displayFlexChild ?? true}
               isFlexVertical={isFlexVertical}
               onCollapse={handleChangeCollapse}
             />
           )}
-          <Spacing isCollapsed={collapsedCache.spacing ?? true} onCollapse={handleChangeCollapse} />
-          <Size isCollapsed={collapsedCache.size ?? true} onCollapse={handleChangeCollapse} />
-          <Position isCollapsed={collapsedCache.position ?? true} onCollapse={handleChangeCollapse} />
-          <Typography isCollapsed={collapsedCache.typography ?? true} onCollapse={handleChangeCollapse} />
-          <Background isCollapsed={collapsedCache.background ?? true} onCollapse={handleChangeCollapse} />
-          <Border isCollapsed={collapsedCache.border ?? true} onCollapse={handleChangeCollapse} />
-          <Effects isCollapsed={collapsedCache.effects ?? true} onCollapse={handleChangeCollapse} />
+          <Spacing
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.spacing ?? true}
+            onCollapse={handleChangeCollapse}
+          />
+          <Size
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.size ?? true}
+            onCollapse={handleChangeCollapse}
+          />
+          <Position
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.position ?? true}
+            onCollapse={handleChangeCollapse}
+          />
+          <Typography
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.typography ?? true}
+            onCollapse={handleChangeCollapse}
+          />
+          <Background
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.background ?? true}
+            onCollapse={handleChangeCollapse}
+          />
+          <Border
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.border ?? true}
+            onCollapse={handleChangeCollapse}
+          />
+          <Effects
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.effects ?? true}
+            onCollapse={handleChangeCollapse}
+          />
         </div>
-        <div className="flex items-center justify-end gap-2 px-2 py-1 text-xs">
-          Show All Options
-          <Switch className="!w-auto" size="sm" checked={showAllOptions} onChange={handleChangeShowAllOptions} />
+        <div className="flex items-center justify-end gap-4 px-2 py-1">
+          <Switch size="xs" label="Replace Tokens" checked={replaceTokens} onChange={handleChangeReplaceTokens} />
+          <Switch size="xs" label="Show All Options" checked={showAllOptions} onChange={handleChangeShowAllOptions} />
         </div>
       </div>
     </StyleInspectorProvider>

@@ -4,8 +4,6 @@ import ClearRight from '@plitzi/plitzi-ui/icons/ClearRight';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { CLEAR } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -48,7 +46,7 @@ const PositionClear = ({ value, onChange }: PositionClearProps) => {
   );
 
   return (
-    <CategorySection label="Clear" keys={[CLEAR]}>
+    <CategorySection label="Clear" keys={['clear']}>
       <CategoryOption onChange={onChange} type="iconGroup" items={items} />
     </CategorySection>
   );

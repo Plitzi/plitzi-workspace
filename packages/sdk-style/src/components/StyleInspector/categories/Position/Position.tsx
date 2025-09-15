@@ -5,8 +5,6 @@ import PositionRelative from '@plitzi/plitzi-ui/icons/PositionRelative';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, use, useMemo } from 'react';
 
-import { POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import PositionAdvanced from './PositionAdvanced';
 import PositionAdvancedButtons from './PositionAdvancedButtons';
 import PositionClear from './PositionClear';
@@ -19,32 +17,27 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-const STATIC = 'static';
-const RELATIVE = 'relative';
-const ABSOLUTE = 'absolute';
-const FIXED = 'fixed';
-const STICKY = 'sticky';
-
-const dotKeys = [POSITION, TOP, BOTTOM, ZINDEX, FLOAT, CLEAR, LEFT, RIGHT] as StyleCategory[];
-const keyValue = [POSITION, TOP, BOTTOM, LEFT, RIGHT] as StyleCategory[];
+const dotKeys = ['position', 'top', 'bottom', 'z-index', 'float', 'clear', 'left', 'right'] as StyleCategory[];
+const keyValue = ['position', 'top', 'bottom', 'left', 'right'] as StyleCategory[];
 
 export type PositionProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Position = ({ isCollapsed = true, onCollapse }: PositionProps) => {
+const Position = ({ replaceTokens = false, isCollapsed = true, onCollapse }: PositionProps) => {
   const { setValue } = use(StyleInspectorContext);
   const {
-    [POSITION]: position,
-    [TOP]: top,
-    [BOTTOM]: bottom,
-    [LEFT]: left,
-    [RIGHT]: right,
-    [FLOAT]: float,
-    [CLEAR]: clear,
-    [ZINDEX]: zIndex
-  } = useInspectorValues({ keys: dotKeys, asValue: true });
+    position,
+    top,
+    bottom,
+    left,
+    right,
+    float,
+    clear,
+    'z-index': zIndex
+  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
   const advancedbuttons = useMemo(
     () => ({ top, bottom, left, right }) as Record<StyleCategory, StyleValue>,
     [top, bottom, left, right]
@@ -70,31 +63,31 @@ const Position = ({ isCollapsed = true, onCollapse }: PositionProps) => {
         value: 'static',
         icon: <XMark />,
         description: 'Static',
-        active: position === STATIC
+        active: position === 'static'
       },
       {
         value: 'relative',
         icon: <PositionRelative />,
         description: 'Relative',
-        active: position === RELATIVE
+        active: position === 'relative'
       },
       {
         value: 'absolute',
         icon: <PositionAbsolute />,
         description: 'Absolute',
-        active: position === ABSOLUTE
+        active: position === 'absolute'
       },
       {
         value: 'fixed',
         icon: <PositionFixed />,
         description: 'Fixed',
-        active: position === FIXED
+        active: position === 'fixed'
       },
       {
         value: 'sticky',
         icon: <ListNumbers />,
         description: 'Sticky',
-        active: position === STICKY
+        active: position === 'sticky'
       }
     ],
     [position]
@@ -104,16 +97,16 @@ const Position = ({ isCollapsed = true, onCollapse }: PositionProps) => {
     <CategoryContainer title="Position" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="flex flex-col gap-2">
         <CategorySection keys={keyValue} label="Position">
-          <CategoryOption onChange={handleChange(POSITION)} type="iconGroup" items={items} />
+          <CategoryOption onChange={handleChange('position')} type="iconGroup" items={items} />
         </CategorySection>
-        {(position === FIXED || position === ABSOLUTE) && (
+        {(position === 'fixed' || position === 'absolute') && (
           <PositionAdvancedButtons value={advancedbuttons} onChange={handleChange('position-path')} />
         )}
         <PositionAdvanced value={advancedbuttons} onChange={handleChange} />
-        <PositionFloat value={float} onChange={handleChange(FLOAT)} />
-        <PositionClear value={clear} onChange={handleChange(CLEAR)} />
-        <CategorySection keys={[ZINDEX]} label="Z-Index">
-          <CategoryOption onChange={handleChange(ZINDEX)} type="input" value={zIndex as string} />
+        <PositionFloat value={float} onChange={handleChange('float')} />
+        <PositionClear value={clear} onChange={handleChange('clear')} />
+        <CategorySection keys={['z-index']} label="Z-Index">
+          <CategoryOption onChange={handleChange('z-index')} type="input" value={zIndex as string} />
         </CategorySection>
       </div>
     </CategoryContainer>

@@ -1,24 +1,5 @@
 import { memo, useCallback, use } from 'react';
 
-import {
-  FONT_FAMILY,
-  FONT_WEIGHT,
-  FONT_SIZE,
-  LINE_HEIGHT,
-  COLOR,
-  TEXT_ALIGN,
-  FONT_STYLE,
-  TEXT_DECORATION,
-  LETTER_SPACING,
-  TEXT_INDENT,
-  TEXT_TRANSFORM,
-  DIRECTION,
-  TEXT_SHADOW,
-  WHITE_SPACE,
-  TEXT_WRAP,
-  TEXT_OVERFLOW
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import TypographyAlign from './TypographyAlign';
 import { defaultFonts, weights } from './TypographyConstants';
 import TypographyFont from './TypographyFont';
@@ -34,52 +15,53 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
-  FONT_FAMILY,
-  FONT_WEIGHT,
-  FONT_SIZE,
-  LINE_HEIGHT,
-  COLOR,
-  TEXT_ALIGN,
-  FONT_STYLE,
-  TEXT_DECORATION,
-  LETTER_SPACING,
-  TEXT_INDENT,
-  TEXT_TRANSFORM,
-  DIRECTION,
-  TEXT_SHADOW,
-  WHITE_SPACE,
-  TEXT_WRAP,
-  TEXT_OVERFLOW
+  'font-family',
+  'font-weight',
+  'font-size',
+  'line-height',
+  'color',
+  'text-align',
+  'font-style',
+  'text-decoration',
+  'letter-spacing',
+  'text-indent',
+  'text-transform',
+  'direction',
+  'text-shadow',
+  'white-space',
+  'text-wrap',
+  'text-overflow'
 ] as StyleCategory[];
 
-const keyValueLetter = [LETTER_SPACING, TEXT_INDENT] as StyleCategory[];
+const keyValueLetter = ['letter-spacing', 'text-indent'] as StyleCategory[];
 
 export type TypographyProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   fonts?: { name: string; weights: string[] }[];
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) => {
+const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollapse }: TypographyProps) => {
   const { setValue } = use(StyleInspectorContext);
   const {
-    [FONT_FAMILY]: fontFamily,
-    [FONT_WEIGHT]: fontWeight,
-    [FONT_SIZE]: fontSize,
-    [FONT_STYLE]: fontStyle,
-    [TEXT_ALIGN]: textAlign,
-    [TEXT_DECORATION]: textDecoration,
-    [TEXT_INDENT]: textIndent,
-    [TEXT_TRANSFORM]: textTransform,
-    [TEXT_SHADOW]: textShadow,
-    [WHITE_SPACE]: whiteSpace,
-    [TEXT_WRAP]: textWrap,
-    [TEXT_OVERFLOW]: textOverflow,
-    [LINE_HEIGHT]: lineHeight,
-    [COLOR]: color,
-    [LETTER_SPACING]: letterSpacing,
-    [DIRECTION]: direction
-  } = useInspectorValues({ keys: dotKeys, asValue: true });
+    'font-family': fontFamily,
+    'font-weight': fontWeight,
+    'font-size': fontSize,
+    'font-style': fontStyle,
+    'text-align': textAlign,
+    'text-decoration': textDecoration,
+    'text-indent': textIndent,
+    'text-transform': textTransform,
+    'text-shadow': textShadow,
+    'white-space': whiteSpace,
+    'text-wrap': textWrap,
+    'text-overflow': textOverflow,
+    'line-height': lineHeight,
+    color,
+    'letter-spacing': letterSpacing,
+    direction
+  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('typography', isCollapsed), [onCollapse]);
 
@@ -93,10 +75,10 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
 
   return (
     <CategoryContainer title="Typography" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <TypographyAlign partialValue={textAlign} onChange={handleChange(TEXT_ALIGN)} />
-      <TypographyFont partialValue={fontFamily} fonts={fonts} onChange={handleChange(FONT_FAMILY)} />
-      <CategorySection label="Weight" keys={[FONT_WEIGHT]}>
-        <CategoryOption value={fontWeight} onChange={handleChange(FONT_WEIGHT)} type="select">
+      <TypographyAlign partialValue={textAlign} onChange={handleChange('text-align')} />
+      <TypographyFont partialValue={fontFamily} fonts={fonts} onChange={handleChange('font-family')} />
+      <CategorySection label="Weight" keys={['font-weight']}>
+        <CategoryOption value={fontWeight} onChange={handleChange('font-weight')} type="select">
           {Object.keys(weights).map(weight => (
             <option key={weight} value={weight} disabled={!fontSelected || !fontSelected.weights.includes(weight)}>
               {weights[Number(weight)]}
@@ -106,43 +88,43 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
       </CategorySection>
       <CategorySection label="">
         <CategoryOption
-          keys={[FONT_SIZE]}
+          keys={['font-size']}
           label="Size"
           value={fontSize}
-          onChange={handleChange(FONT_SIZE)}
+          onChange={handleChange('font-size')}
           type="metric"
         />
         <CategoryOption
-          keys={[LINE_HEIGHT]}
+          keys={['line-height']}
           label="Line Height"
           value={lineHeight}
-          onChange={handleChange(LINE_HEIGHT)}
+          onChange={handleChange('line-height')}
           type="metric"
         />
       </CategorySection>
-      <CategorySection label="Color" keys={[COLOR]}>
-        <CategoryOption type="color" value={color} onChange={handleChange(COLOR)} />
+      <CategorySection label="Color" keys={['color']}>
+        <CategoryOption type="color" value={color} onChange={handleChange('color')} />
       </CategorySection>
       <TypographyStyle fontStyle={fontStyle} textDecoration={textDecoration} onChange={handleChange} />
       <CategorySection label="Letter" keys={keyValueLetter}>
         <CategoryOption
-          keys={[LETTER_SPACING]}
+          keys={['letter-spacing']}
           label="Spacing"
           value={letterSpacing}
-          onChange={handleChange(LETTER_SPACING)}
+          onChange={handleChange('letter-spacing')}
           type="metric"
         />
         <CategoryOption
-          keys={[TEXT_INDENT]}
+          keys={['text-indent']}
           label="Indent"
           value={textIndent}
-          onChange={handleChange(TEXT_INDENT)}
+          onChange={handleChange('text-indent')}
           type="metric"
         />
       </CategorySection>
       <TypographyTransform textTransform={textTransform} direction={direction} onChange={handleChange} />
-      <CategorySection label="Breaking" keys={[WHITE_SPACE]}>
-        <CategoryOption value={whiteSpace} onChange={handleChange(WHITE_SPACE)} type="select">
+      <CategorySection label="Breaking" keys={['white-space']}>
+        <CategoryOption value={whiteSpace} onChange={handleChange('white-space')} type="select">
           <option value="normal">Normal</option>
           <option value="nowrap">No Wrap</option>
           <option value="pre">Pre</option>
@@ -151,8 +133,8 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
           <option value="break-spaces">Break Spaces</option>
         </CategoryOption>
       </CategorySection>
-      <CategorySection label="Wrap" keys={[TEXT_WRAP]}>
-        <CategoryOption value={textWrap} onChange={handleChange(TEXT_WRAP)} type="select">
+      <CategorySection label="Wrap" keys={['text-wrap']}>
+        <CategoryOption value={textWrap} onChange={handleChange('text-wrap')} type="select">
           <option value="wrap">Wrap</option>
           <option value="nowrap">No Wrap</option>
           <option value="balance">Balance</option>
@@ -160,8 +142,8 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
           <option value="stable">Stable</option>
         </CategoryOption>
       </CategorySection>
-      <CategorySection label="Overflow" keys={[TEXT_OVERFLOW]}>
-        <CategoryOption value={textOverflow} onChange={handleChange(TEXT_OVERFLOW)} type="select">
+      <CategorySection label="Overflow" keys={['text-overflow']}>
+        <CategoryOption value={textOverflow} onChange={handleChange('text-overflow')} type="select">
           <option value="clip">Clip</option>
           <option value="ellipsis">Ellipsis</option>
           <option value="string">String</option>
@@ -169,7 +151,7 @@ const Typography = ({ isCollapsed = true, fonts, onCollapse }: TypographyProps) 
           <option value="inherit">Inherit</option>
         </CategoryOption>
       </CategorySection>
-      <TypographyTextShadow value={textShadow} onChange={handleChange(TEXT_SHADOW)} />
+      <TypographyTextShadow value={textShadow} onChange={handleChange('text-shadow')} />
     </CategoryContainer>
   );
 };

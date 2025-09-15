@@ -4,13 +4,6 @@ import BorderStyleSolid from '@plitzi/plitzi-ui/icons/BorderStyleSolid';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import {
-  BORDER_TOP_STYLE,
-  BORDER_BOTTOM_STYLE,
-  BORDER_LEFT_STYLE,
-  BORDER_RIGHT_STYLE
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -25,10 +18,10 @@ export type BorderStyleProps = {
 const BorderStyle = ({ values, currentPlacement, onChange }: BorderStyleProps) => {
   const value = useMemo(() => {
     const {
-      [BORDER_TOP_STYLE]: borderTop,
-      [BORDER_BOTTOM_STYLE]: borderBottom,
-      [BORDER_LEFT_STYLE]: borderLeft,
-      [BORDER_RIGHT_STYLE]: borderRight
+      'border-top-style': borderTop,
+      'border-bottom-style': borderBottom,
+      'border-left-style': borderLeft,
+      'border-right-style': borderRight
     } = values;
     switch (true) {
       case currentPlacement === 'all':
@@ -86,7 +79,7 @@ const BorderStyle = ({ values, currentPlacement, onChange }: BorderStyleProps) =
 
   const keyValues = useMemo(() => {
     if (currentPlacement === 'all') {
-      return [BORDER_TOP_STYLE, BORDER_BOTTOM_STYLE, BORDER_LEFT_STYLE, BORDER_RIGHT_STYLE] as StyleCategory[];
+      return ['border-top-style', 'border-bottom-style', 'border-left-style', 'border-right-style'] as StyleCategory[];
     }
 
     return [`border-${currentPlacement}-style`] as StyleCategory[];

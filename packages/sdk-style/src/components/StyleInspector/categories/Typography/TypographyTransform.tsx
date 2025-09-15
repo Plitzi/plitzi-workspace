@@ -3,8 +3,6 @@ import TextDirectionRtl from '@plitzi/plitzi-ui/icons/TextDirectionRtl';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
-import { TEXT_TRANSFORM, DIRECTION } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -70,11 +68,11 @@ const TypographyTransform = ({ textTransform, direction, onChange }: TypographyT
 
   return (
     <>
-      <CategorySection label="Capitalize" keys={[TEXT_TRANSFORM]}>
-        <CategoryOption onChange={onChange?.(TEXT_TRANSFORM)} type="iconGroup" items={itemsTransform} />
+      <CategorySection label="Capitalize" keys={['text-transform']}>
+        <CategoryOption onChange={onChange?.('text-transform')} type="iconGroup" items={itemsTransform} />
       </CategorySection>
-      <CategorySection label="Direction" keys={[DIRECTION]}>
-        <CategoryOption onChange={onChange?.(DIRECTION)} type="iconGroup" items={itemsDirection} />
+      <CategorySection label="Direction" keys={['direction']}>
+        <CategoryOption onChange={onChange?.('direction')} type="iconGroup" items={itemsDirection} />
       </CategorySection>
     </>
   );

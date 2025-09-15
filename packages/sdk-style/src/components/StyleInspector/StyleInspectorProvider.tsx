@@ -8,6 +8,7 @@ import omit from 'lodash/omit';
 import set from 'lodash/set';
 import { useCallback, use, useMemo } from 'react';
 
+import { baseDefaultValue } from '@plitzi/sdk-shared';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
@@ -15,7 +16,6 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
-import { baseDefaultValue } from './StyleInspectorHelper';
 import { makeSelector, type StyleHelperMetaData } from '../../StyleHelper';
 
 import type { StyleInspectorContextValue } from './StyleInspectorContext';
@@ -43,12 +43,12 @@ const StyleInspectorProvider = ({
   const { style, setSelectorSelected } = use(BuilderStyleContext);
   const bindingData = useStyleBinding({ element });
   const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
-  const values = get(style, `platform.${displayMode}.${selector}.attributes`, {});
+  const values = get(style, `platform.${displayMode}.${selector}.attributes`, {}) as Record<StyleCategory, StyleValue>;
   const { useDataSource } = use(DataSourceContext);
   const { variables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
   const setValue: StyleInspectorContextValue['setValue'] = useCallback(
-    (styleKey: StyleCategory | StyleCategory[], value?: StyleValue | Record<StyleCategory, StyleValue | undefined>) => {
+    (styleKey: StyleCategory | StyleCategory[], value?: StyleValue | Partial<Record<StyleCategory, StyleValue>>) => {
       if (Array.isArray(styleKey)) {
         styleKey.forEach((styleKeyItem, i) => {
           if (get(bindingData, styleKeyItem as string)) {
@@ -66,12 +66,13 @@ const StyleInspectorProvider = ({
         if (typeof styleKey === 'string') {
           builderHandler('styleUpdateSelector', displayMode, selector, selectorType, styleKey, value);
         } else if (Array.isArray(styleKey) && typeof value === 'object') {
-          const newValues = { ...values, ...value };
-          Object.keys(newValues).forEach(k => {
-            if (newValues[k as StyleCategory] === undefined) {
-              delete newValues[k as StyleCategory];
+          const newValues = { ...values, ...value } as Partial<Record<StyleCategory, StyleValue>>;
+          (Object.keys(newValues) as StyleCategory[]).forEach(k => {
+            if (newValues[k] === undefined) {
+              delete newValues[k];
             }
           });
+
           builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', newValues);
         }
 
@@ -138,22 +139,25 @@ const StyleInspectorProvider = ({
     ]
   );
 
-  const getDefaultValue = useCallback((key?: string[] | string) => {
-    if (typeof key === 'object') {
-      const value: Record<string, string | number> = {};
-      key.forEach(k => {
-        value[k] = get(baseDefaultValue, k);
-      });
+  const getDefaultValue = useCallback(
+    (key?: StyleCategory[] | StyleCategory): StyleValue | Record<StyleCategory, StyleValue> => {
+      if (typeof key === 'object') {
+        const value: Record<string, string | number> = {};
+        key.forEach(k => {
+          value[k] = get(baseDefaultValue, k);
+        });
 
-      return value;
-    }
+        return value;
+      }
 
-    if (!key) {
-      return baseDefaultValue;
-    }
+      if (!key) {
+        return baseDefaultValue;
+      }
 
-    return get(baseDefaultValue, key);
-  }, []);
+      return get(baseDefaultValue, key);
+    },
+    []
+  );
 
   const resetValue = useCallback(
     (keys: StyleCategory | StyleCategory[]) => {
@@ -166,6 +170,8 @@ const StyleInspectorProvider = ({
     [setValue]
   );
 
+  console.log(bindingData);
+
   const inspectorContextValue = useMemo(
     () => ({
       values,
@@ -174,8 +180,8 @@ const StyleInspectorProvider = ({
       selector,
       setValue,
       resetValue,
-      inheritData: get(inheritData, 'style', emptyObject),
-      bindingData: get(bindingData, 'style', emptyObject),
+      inheritData: get(inheritData, 'style', emptyObject) as StyleHelperMetaData,
+      bindingData: get(bindingData, 'style', emptyObject) as Record<StyleCategory, StyleValue>,
       getDefaultValue
     }),
     [displayMode, selector, setValue, resetValue, inheritData, bindingData, getDefaultValue, values, variables]

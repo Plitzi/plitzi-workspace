@@ -14,8 +14,6 @@ import JustifyContentStartRow from '@plitzi/plitzi-ui/icons/JustifyContentStartR
 import JustifyContentStartRowReverse from '@plitzi/plitzi-ui/icons/JustifyContentStartRowReverse';
 import { useCallback, useMemo } from 'react';
 
-import { JUSTIFY_CONTENT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -28,12 +26,12 @@ export type DisplayFlexJustifyProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [JUSTIFY_CONTENT];
+const keyValues: StyleCategory[] = ['justify-content'];
 
 const DisplayFlexJustify = ({ value, isReverse = false, isRow = false, onChange }: DisplayFlexJustifyProps) => {
   const handleChange = useCallback(
     (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(JUSTIFY_CONTENT, newValue as StyleValue),
+      onChange?.('justify-content', newValue as StyleValue),
     [onChange]
   );
 

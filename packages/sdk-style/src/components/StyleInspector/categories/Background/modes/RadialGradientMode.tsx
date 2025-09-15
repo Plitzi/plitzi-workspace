@@ -1,6 +1,5 @@
 // import noop from 'lodash/noop';
 
-// import { BACKGROUND_IMAGE } from '@plitzi/sdk-shared/style/styleConstants';
 // import InputMetric from '../../../../InputMetric';
 // import InspectorLabel from '../../../InspectorLabel';
 
@@ -13,7 +12,7 @@ const RadialGradientMode = () => {
   // };
 
   // const { value } = this.props;
-  // const { [BACKGROUND_IMAGE]: backgroundImage } = value;
+  // const { 'background-image': backgroundImage } = value;
 
   return <div />;
 };

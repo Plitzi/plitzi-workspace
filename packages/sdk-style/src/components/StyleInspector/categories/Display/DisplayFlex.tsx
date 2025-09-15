@@ -1,14 +1,12 @@
 import ArrowReverse from '@plitzi/plitzi-ui/icons/ArrowReverse';
 import { useCallback, useMemo } from 'react';
 
-import { FLEX_WRAP } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-const keyValues: StyleCategory[] = [FLEX_WRAP];
+const keyValues: StyleCategory[] = ['flex-wrap'];
 
 export type DisplayFlexProps = {
   value?: StyleValue;
@@ -21,12 +19,12 @@ const DisplayFlex = ({ value, isReverse = false, onChange }: DisplayFlexProps) =
     (newValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
       if (typeof newValue === 'boolean') {
         if (newValue) {
-          onChange?.(FLEX_WRAP, `${value as string}-reverse`);
+          onChange?.('flex-wrap', `${value as string}-reverse`);
         } else {
-          onChange?.(FLEX_WRAP, (value as string).replace('-reverse', ''));
+          onChange?.('flex-wrap', (value as string).replace('-reverse', ''));
         }
       } else {
-        onChange?.(FLEX_WRAP, newValue as StyleValue);
+        onChange?.('flex-wrap', newValue as StyleValue);
       }
     },
     [onChange, value]

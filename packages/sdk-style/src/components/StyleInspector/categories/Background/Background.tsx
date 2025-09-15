@@ -22,20 +22,23 @@ const dotKeys = [
 ] as StyleCategory[];
 
 export type BackgroundProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Background = ({ isCollapsed = true, onCollapse }: BackgroundProps) => {
+const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BackgroundProps) => {
   const { setValue } = use(StyleInspectorContext);
   const { 'background-color': bgColor } = useInspectorValues({
     keys: ['background-color', 'background-size', 'background-attachment', 'background-position', 'background-repeat'],
-    asValue: true
+    asValue: true,
+    replaceTokens
   });
   const { 'background-image': bgImage } = useInspectorValues({
     keys: ['background-image'],
     asValue: true,
-    strictMode: true
+    strictMode: true,
+    replaceTokens
   });
   const [imgType, setImgType] = useState(() => {
     if (bgImage && (bgImage as string).includes('url')) {
@@ -169,7 +172,7 @@ const Background = ({ isCollapsed = true, onCollapse }: BackgroundProps) => {
             <option value="radial-gradient">Radial Gradient</option>
           </CategoryOption>
         </CategorySection>
-        {imgType === 'image' && <ImageMode onChange={handleChange} />}
+        {imgType === 'image' && <ImageMode replaceTokens={replaceTokens} onChange={handleChange} />}
         {/* {imgType === 'linear-gradient' && <LinearGradientMode partialValue={bgImage} />}
         {imgType === 'radial-gradient' && <RadialGradientMode partialValue={bgImage} />} */}
         {imgType === 'color' && (

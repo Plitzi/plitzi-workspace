@@ -1,16 +1,5 @@
 import { memo, useCallback, use, useState } from 'react';
 
-import {
-  MARGIN_TOP,
-  MARGIN_BOTTOM,
-  MARGIN_LEFT,
-  MARGIN_RIGHT,
-  PADDING_TOP,
-  PADDING_BOTTOM,
-  PADDING_LEFT,
-  PADDING_RIGHT
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import SpacingEditor from './SpacingEditor';
 import SpacingMargin from './SpacingMargin';
 import CategoryContainer from '../../components/CategoryContainer';
@@ -20,25 +9,26 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
-  MARGIN_TOP,
-  MARGIN_BOTTOM,
-  MARGIN_LEFT,
-  MARGIN_RIGHT,
-  PADDING_TOP,
-  PADDING_BOTTOM,
-  PADDING_LEFT,
-  PADDING_RIGHT
+  'margin-top',
+  'margin-bottom',
+  'margin-left',
+  'margin-right',
+  'padding-top',
+  'padding-bottom',
+  'padding-left',
+  'padding-right'
 ] as StyleCategory[];
 
 export type SpacingProps = {
+  replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Spacing = ({ isCollapsed = true, onCollapse }: SpacingProps) => {
+const Spacing = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SpacingProps) => {
   const [isLinked, setIsLinked] = useState(false);
   const { setValue } = use(StyleInspectorContext);
-  const values = useInspectorValues({ keys: dotKeys, asValue: true });
+  const values = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
   const [fragmentSelected, setFragmentSelected] = useState<StyleCategory | undefined>();
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('spacing', isCollapsed), [onCollapse]);
@@ -53,26 +43,26 @@ const Spacing = ({ isCollapsed = true, onCollapse }: SpacingProps) => {
         return;
       }
 
-      if ([MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT].includes(type)) {
+      if (['margin-top', 'margin-bottom', 'margin-left', 'margin-right'].includes(type)) {
         setValue(
-          [MARGIN_TOP, MARGIN_BOTTOM, MARGIN_LEFT, MARGIN_RIGHT] as const,
+          ['margin-top', 'margin-bottom', 'margin-left', 'margin-right'] as const,
           {
-            [MARGIN_TOP]: partialValue,
-            [MARGIN_BOTTOM]: partialValue,
-            [MARGIN_LEFT]: partialValue,
-            [MARGIN_RIGHT]: partialValue
+            'margin-top': partialValue,
+            'margin-bottom': partialValue,
+            'margin-left': partialValue,
+            'margin-right': partialValue
           } as Record<StyleCategory, StyleValue | undefined>
         );
       }
 
-      if ([PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT].includes(type)) {
+      if (['padding-top', 'padding-bottom', 'padding-left', 'padding-right'].includes(type)) {
         setValue(
-          [PADDING_TOP, PADDING_BOTTOM, PADDING_LEFT, PADDING_RIGHT] as const,
+          ['padding-top', 'padding-bottom', 'padding-left', 'padding-right'] as const,
           {
-            [PADDING_TOP]: partialValue,
-            [PADDING_BOTTOM]: partialValue,
-            [PADDING_LEFT]: partialValue,
-            [PADDING_RIGHT]: partialValue
+            'padding-top': partialValue,
+            'padding-bottom': partialValue,
+            'padding-left': partialValue,
+            'padding-right': partialValue
           } as Record<StyleCategory, StyleValue | undefined>
         );
       }

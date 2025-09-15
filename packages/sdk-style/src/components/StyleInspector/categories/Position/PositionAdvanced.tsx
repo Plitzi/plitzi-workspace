@@ -1,5 +1,3 @@
-import { TOP, BOTTOM, LEFT, RIGHT } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -18,16 +16,16 @@ const units = [
 const allowedWords = ['auto'];
 
 const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
-  const { [TOP]: top, [BOTTOM]: bottom, [LEFT]: left, [RIGHT]: right } = value ?? {};
+  const { top, bottom, left, right } = value ?? {};
 
   return (
-    <CategorySection label="" keys={[TOP, BOTTOM, LEFT, RIGHT]} className="justify-center">
+    <CategorySection label="" keys={['top', 'bottom', 'left', 'right']} className="justify-center">
       <div className="grid grid-cols-3 place-items-center items-center justify-center gap-2">
         <div className="col-start-2 flex max-w-[80px] items-center justify-center">
           <CategoryOption
-            keys={[TOP]}
+            keys={['top']}
             value={top}
-            onChange={onChange?.(TOP)}
+            onChange={onChange?.('top')}
             type="metric"
             units={units}
             allowedWords={allowedWords}
@@ -36,9 +34,9 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
         </div>
         <div className="row-start-2 flex max-w-[80px] items-center justify-self-end">
           <CategoryOption
-            keys={[LEFT]}
+            keys={['left']}
             value={left}
-            onChange={onChange?.(LEFT)}
+            onChange={onChange?.('left')}
             type="metric"
             units={units}
             allowedWords={allowedWords}
@@ -54,9 +52,9 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
         </div>
         <div className="row-start-2 flex max-w-[80px] items-center justify-self-start">
           <CategoryOption
-            keys={[RIGHT]}
+            keys={['right']}
             value={right}
-            onChange={onChange?.(RIGHT)}
+            onChange={onChange?.('right')}
             type="metric"
             units={units}
             allowedWords={allowedWords}
@@ -65,9 +63,9 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
         </div>
         <div className="col-start-2 row-start-3 flex max-w-[80px] items-center justify-center">
           <CategoryOption
-            keys={[BOTTOM]}
+            keys={['bottom']}
             value={bottom}
-            onChange={onChange?.(BOTTOM)}
+            onChange={onChange?.('bottom')}
             type="metric"
             units={units}
             allowedWords={allowedWords}

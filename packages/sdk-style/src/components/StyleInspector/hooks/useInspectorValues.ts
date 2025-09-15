@@ -2,11 +2,10 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 import { use, useMemo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { baseDefaultValue } from '@plitzi/sdk-shared';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import StyleInspectorContext from '../StyleInspectorContext';
-import { baseDefaultValue } from '../StyleInspectorHelper';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
 import type { DisplayMode, Style, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -19,12 +18,13 @@ export type UseInspectorValuesProps<TAsValue extends boolean> = {
   asValue?: TAsValue;
   defaultValues?: Partial<Record<StyleCategory, StyleValue>>;
   strictMode?: boolean;
+  replaceTokens?: boolean;
 };
 
 export type UseInspectorValuesReturn<TAsValue extends boolean> = TAsValue extends true
-  ? Style['platform'][DisplayMode][number]['attributes']
+  ? Record<StyleCategory, StyleValue>
   : {
-      values: Style['platform'][DisplayMode][number]['attributes'];
+      values: Record<StyleCategory, StyleValue>;
       hasInherit: boolean;
       hasBinding: boolean;
       hasVariables: boolean;
@@ -36,8 +36,9 @@ const useInspectorValues = <TAsValue extends boolean>({
   skipContext = false,
   context = {} as StyleInspectorContextValue,
   asValue = false as TAsValue,
-  defaultValues = emptyObject,
-  strictMode = false
+  defaultValues,
+  strictMode = false,
+  replaceTokens = false
 }: UseInspectorValuesProps<TAsValue>): UseInspectorValuesReturn<TAsValue> => {
   let { inheritData, bindingData, values, variables } = {} as StyleInspectorContextValue;
   if (skipContext) {
@@ -50,7 +51,7 @@ const useInspectorValues = <TAsValue extends boolean>({
     () =>
       !!keys &&
       !asValue &&
-      Object.keys(inheritData).filter(key => keys.includes(key as StyleCategory) || keys.length === 0).length > 0,
+      (Object.keys(inheritData) as StyleCategory[]).filter(key => keys.includes(key) || keys.length === 0).length > 0,
     [keys, inheritData, asValue]
   );
 
@@ -58,7 +59,7 @@ const useInspectorValues = <TAsValue extends boolean>({
     () =>
       !!keys &&
       !asValue &&
-      Object.keys(bindingData).filter(key => keys.includes(key as StyleCategory) || keys.length === 0).length > 0,
+      (Object.keys(bindingData) as StyleCategory[]).filter(key => keys.includes(key) || keys.length === 0).length > 0,
     [keys, bindingData, asValue]
   );
 
@@ -66,9 +67,8 @@ const useInspectorValues = <TAsValue extends boolean>({
     () =>
       !!keys &&
       !asValue &&
-      Object.keys(pick(values, keys)).filter(
-        key =>
-          typeof values[key as StyleCategory] === 'string' && (values[key as StyleCategory] as string).includes('var(')
+      (Object.keys(pick(values, keys)) as StyleCategory[]).filter(
+        key => typeof values[key] === 'string' && values[key].includes('var(')
       ).length > 0,
     [keys, values, asValue]
   );
@@ -92,9 +92,9 @@ const useInspectorValues = <TAsValue extends boolean>({
     }
 
     keys.forEach(key => {
-      let value: Style['platform'][DisplayMode][number]['attributes'][StyleCategory];
+      let value: StyleValue | undefined;
       if (strictMode) {
-        value = get(values, key, get(defaultValues, key));
+        value = get(values, key, get(defaultValues ?? ({} as Record<StyleCategory, StyleValue>), key));
       } else {
         value = get(
           values,
@@ -102,24 +102,30 @@ const useInspectorValues = <TAsValue extends boolean>({
           get(
             inheritData,
             `${key}.0.value`,
-            get(bindingData, `${key}.0.value`, get(defaultValues, key, baseDefaultValue[key]))
-          ) as StyleValue
+            get(
+              bindingData,
+              `${key}.0.value`,
+              get(defaultValues ?? ({} as Record<StyleCategory, StyleValue>), key, baseDefaultValue[key])
+            )
+          )
         );
       }
 
-      if (typeof value === 'string' && value.includes('var(')) {
-        [...value.matchAll(VARIABLE_REGEX)].forEach(match => {
-          if (match.groups?.token) {
-            value = (value as string).replace(match[0], get(variables, match.groups.token, match[0]) as string);
-          }
-        });
+      if (replaceTokens) {
+        if (typeof value === 'string' && value.includes('var(')) {
+          [...value.matchAll(VARIABLE_REGEX)].forEach(match => {
+            if (match.groups?.token) {
+              value = (value as string).replace(match[0], get(variables, match.groups.token, match[0]) as string);
+            }
+          });
+        }
       }
 
       valuesParsedAux[key] = value;
     });
 
     return valuesParsedAux;
-  }, [keys, strictMode, values, defaultValues, inheritData, bindingData, variables]);
+  }, [keys, strictMode, values, defaultValues, inheritData, bindingData, variables, replaceTokens]);
 
   if (asValue) {
     return valuesParsed as UseInspectorValuesReturn<TAsValue>;

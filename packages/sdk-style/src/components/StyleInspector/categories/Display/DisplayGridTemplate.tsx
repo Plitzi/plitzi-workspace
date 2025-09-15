@@ -1,14 +1,5 @@
 import { useCallback, useMemo } from 'react';
 
-import {
-  GRID_AUTO_COLUMNS,
-  GRID_AUTO_FLOW,
-  GRID_AUTO_ROWS,
-  GRID_TEMPLATE_AREAS,
-  GRID_TEMPLATE_COLUMNS,
-  GRID_TEMPLATE_ROWS
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -24,9 +15,9 @@ export type DisplayGridTemplateProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValuesDirection: StyleCategory[] = [GRID_AUTO_FLOW];
-const keyValueTemplate: StyleCategory[] = [GRID_TEMPLATE_COLUMNS, GRID_TEMPLATE_ROWS];
-const keyValueAuto: StyleCategory[] = [GRID_AUTO_COLUMNS, GRID_AUTO_ROWS];
+const keyValuesDirection: StyleCategory[] = ['grid-auto-flow'];
+const keyValueTemplate: StyleCategory[] = ['grid-template-columns', 'grid-template-rows'];
+const keyValueAuto: StyleCategory[] = ['grid-auto-columns', 'grid-auto-rows'];
 
 const DisplayGridTemplate = ({
   templateAreas = 'none',
@@ -39,37 +30,37 @@ const DisplayGridTemplate = ({
 }: DisplayGridTemplateProps) => {
   const handleChangeTemplateArea = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(GRID_TEMPLATE_AREAS, itemValue as StyleValue),
+      onChange?.('grid-template-areas', itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeTemplateRow = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(GRID_TEMPLATE_ROWS, itemValue as StyleValue),
+      onChange?.('grid-template-rows', itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeTemplateColumn = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(GRID_TEMPLATE_COLUMNS, itemValue as StyleValue),
+      onChange?.('grid-template-columns', itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeAutoRow = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(GRID_AUTO_ROWS, itemValue as StyleValue),
+      onChange?.('grid-auto-rows', itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeAutoColumn = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(GRID_AUTO_COLUMNS, itemValue as StyleValue),
+      onChange?.('grid-auto-columns', itemValue as StyleValue),
     [onChange]
   );
 
   const handleChangeAutoFlow = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(GRID_AUTO_FLOW, itemValue as StyleValue),
+      onChange?.('grid-auto-flow', itemValue as StyleValue),
     [onChange]
   );
 
@@ -100,21 +91,21 @@ const DisplayGridTemplate = ({
       </CategorySection>
       <CategorySection label="Template" keys={keyValueTemplate}>
         <CategoryOption
-          keys={[GRID_TEMPLATE_AREAS]}
+          keys={['grid-template-areas']}
           label="Area"
           value={templateAreas}
           onChange={handleChangeTemplateArea}
           type="metric"
         />
         <CategoryOption
-          keys={[GRID_TEMPLATE_ROWS]}
+          keys={['grid-template-rows']}
           label="Row"
           value={templateRows}
           onChange={handleChangeTemplateRow}
           type="input"
         />
         <CategoryOption
-          keys={[GRID_TEMPLATE_COLUMNS]}
+          keys={['grid-template-columns']}
           label="Column"
           value={templateColumns}
           onChange={handleChangeTemplateColumn}
@@ -123,14 +114,14 @@ const DisplayGridTemplate = ({
       </CategorySection>
       <CategorySection label="Default" keys={keyValueAuto}>
         <CategoryOption
-          keys={[GRID_AUTO_ROWS]}
+          keys={['grid-auto-rows']}
           label="Row"
           value={templateAutoRows}
           onChange={handleChangeAutoRow}
           type="metric"
         />
         <CategoryOption
-          keys={[GRID_AUTO_COLUMNS]}
+          keys={['grid-auto-columns']}
           label="Column"
           value={templateAutoColumns}
           onChange={handleChangeAutoColumn}

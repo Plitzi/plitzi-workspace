@@ -7,8 +7,6 @@ import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import classNames from 'classnames';
 import { useCallback, useMemo } from 'react';
 
-import { ALIGN_SELF } from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -20,12 +18,12 @@ export type DisplayAlignSelfProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [ALIGN_SELF];
+const keyValues: StyleCategory[] = ['align-self'];
 
 const DisplayAlignSelf = ({ value, isFlexVertical = false, onChange }: DisplayAlignSelfProps) => {
   const handleChange = useCallback(
     (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      onChange?.(ALIGN_SELF, itemValue as StyleValue),
+      onChange?.('align-self', itemValue as StyleValue),
     [onChange]
   );
 

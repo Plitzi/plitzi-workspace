@@ -6,14 +6,6 @@ import DisplayInline from '@plitzi/plitzi-ui/icons/DisplayInline';
 import DisplayInlineBlock from '@plitzi/plitzi-ui/icons/DisplayInlineBlock';
 import { useCallback, useMemo } from 'react';
 
-import {
-  ALIGN_ITEMS,
-  DISPLAY,
-  FLEX_DIRECTION,
-  FLEX_WRAP,
-  JUSTIFY_CONTENT
-} from '@plitzi/sdk-shared/style/styleConstants';
-
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -24,11 +16,11 @@ export type DisplayElementsProps = {
   onChange?: (type: StyleCategory, value: StyleValue) => void;
 };
 
-const keyValues: StyleCategory[] = [DISPLAY, FLEX_DIRECTION, ALIGN_ITEMS, JUSTIFY_CONTENT, FLEX_WRAP];
+const keyValues: StyleCategory[] = ['display', 'flex-direction', 'align-items', 'justify-content', 'flex-wrap'];
 
 const DisplayElements = ({ value = 'block', onChange }: DisplayElementsProps) => {
   const handleChange = useCallback(
-    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => onChange?.(DISPLAY, value as StyleValue),
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => onChange?.('display', value as StyleValue),
     [onChange]
   );
 
