@@ -1,12 +1,10 @@
-export const variablesToCss = (variables?: { [key: string]: string }) => {
+export const variablesToCss = (variables?: Record<string, string>) => {
   if (!variables) {
     return '';
   }
 
-  const cssVariables = Object.keys(variables)
+  return Object.keys(variables)
     .filter(key => typeof variables[key] === 'string' || typeof variables[key] === 'number')
-    .map(key => `--${key}:${variables[key]};`, '')
+    .map(key => `--${key}:"${variables[key]}";`, '')
     .join('\n');
-
-  return cssVariables;
 };

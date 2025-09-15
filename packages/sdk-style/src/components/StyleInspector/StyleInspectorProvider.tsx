@@ -170,8 +170,6 @@ const StyleInspectorProvider = ({
     [setValue]
   );
 
-  console.log(bindingData);
-
   const inspectorContextValue = useMemo(
     () => ({
       values,

@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.24.2",
+  "version": "0.24.3",
   "homepage": "./",
   "license": "MIT",
   "files": [
@@ -24,7 +24,6 @@
   "dependencies": {
     "@apollo/client": "^4.0.5",
     "@auth0/auth0-react": "^2.4.0",
-    "@plitzi/plitzi-plugin-typed": "^0.6.1",
     "@plitzi/plitzi-ui-components": "0.14.14",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",

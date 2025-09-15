@@ -37,10 +37,32 @@ export const EMPTY_STYLE_SCHEMA: Style = {
   cache: ''
 };
 
-export const processSelector = (selector: string, type?: TagType, attributes: StyleItem['attributes'] = {}) => {
+export const processCssString = (key: string, cssValue: string) => {
   const result: string[] = [];
-  Object.keys(attributes).forEach(key => {
-    result.push(`${key}:${attributes[key as StyleCategory]};`);
+  const varConcatRegex = /^var\((--[\w-]+)\)(\S.+)$/;
+  const match = cssValue.match(varConcatRegex);
+  if (match) {
+    const [, varName, rest] = match;
+    const parsedVar = `${varName}-parsed`;
+    const varDefinition = `${parsedVar}:var(${varName})${rest.trim()};`;
+    const finalValue = `${key}:var(${parsedVar});`;
+
+    result.push(varDefinition, finalValue);
+  } else {
+    result.push(`${key}:${cssValue};`);
+  }
+
+  return result;
+};
+
+export const processSelector = (
+  selector: string,
+  type?: TagType,
+  attributes: Partial<Record<StyleCategory, StyleValue>> = {}
+) => {
+  const result: string[] = [];
+  (Object.keys(attributes) as StyleCategory[]).forEach(key => {
+    result.push(...processCssString(key, attributes[key] as string));
   });
 
   let finalSelector = selector;
