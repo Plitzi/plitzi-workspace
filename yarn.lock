@@ -3485,22 +3485,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-plugin-typed@npm:^0.6.1":
-  version: 0.6.1
-  resolution: "@plitzi/plitzi-plugin-typed@npm:0.6.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-plugin-typed%2F0.6.1%2F415b4d4cd1fe502f8879de794f75af8c2d007a21"
-  dependencies:
-    "@plitzi/plitzi-sdk": "npm:^0.24.2"
-    "@plitzi/plitzi-ui": "npm:^1.0.0"
-    "@plitzi/plitzi-ui-components": "npm:^0.14.14"
-    typed.js: "npm:^2.1.0"
-  peerDependencies:
-    react: ^19.1.1
-    react-dom: ^19.1.1
-  checksum: 10c0/a9376ce3ddd08bdc2559989ea08489c04562b4f4e82629f463b6589cd602a39fbef7c45ab353634296b9857c5f770473c57b3f4184015005074f2253172033b0
-  languageName: node
-  linkType: hard
-
-"@plitzi/plitzi-sdk@npm:^0.24.2, @plitzi/plitzi-sdk@workspace:*, @plitzi/plitzi-sdk@workspace:apps/sdk":
+"@plitzi/plitzi-sdk@workspace:*, @plitzi/plitzi-sdk@workspace:apps/sdk":
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-sdk@workspace:apps/sdk"
   dependencies:
@@ -3518,7 +3503,6 @@ __metadata:
     "@babel/preset-env": "npm:^7.28.3"
     "@babel/preset-react": "npm:^7.27.1"
     "@babel/preset-typescript": "npm:^7.27.1"
-    "@plitzi/plitzi-plugin-typed": "npm:^0.6.1"
     "@plitzi/plitzi-ui-components": "npm:0.14.14"
     "@plitzi/plitzi-webpack": "npm:^0.3.5"
     "@plitzi/sdk-auth": "workspace:*"
@@ -3594,7 +3578,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui-components@npm:0.14.14, @plitzi/plitzi-ui-components@npm:^0.14.14":
+"@plitzi/plitzi-ui-components@npm:0.14.14":
   version: 0.14.14
   resolution: "@plitzi/plitzi-ui-components@npm:0.14.14::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-ui-components%2F0.14.14%2F085d35eeb089f48be27ea994ac08ded68f239d4c"
   dependencies:
@@ -3626,7 +3610,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@plitzi/plitzi-ui@npm:^1.0.0, @plitzi/plitzi-ui@npm:^1.0.2":
+"@plitzi/plitzi-ui@npm:^1.0.2":
   version: 1.0.2
   resolution: "@plitzi/plitzi-ui@npm:1.0.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.0.2%2F26d4d6665bd31b0ffcc891dda63713abbbe0dc20"
   dependencies:
@@ -19005,13 +18989,6 @@ __metadata:
     possible-typed-array-names: "npm:^1.0.0"
     reflect.getprototypeof: "npm:^1.0.6"
   checksum: 10c0/e38f2ae3779584c138a2d8adfa8ecf749f494af3cd3cdafe4e688ce51418c7d2c5c88df1bd6be2bbea099c3f7cea58c02ca02ed438119e91f162a9de23f61295
-  languageName: node
-  linkType: hard
-
-"typed.js@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "typed.js@npm:2.1.0"
-  checksum: 10c0/a85339064b0d96d01622ea4729436a36172aa0b634cf8e07c1735a5dd50bb35e92b97db412c307fa3364dc2c106efbf9ab7a0bd47a5268f5f7034b4a5effdab2
   languageName: node
   linkType: hard
 
