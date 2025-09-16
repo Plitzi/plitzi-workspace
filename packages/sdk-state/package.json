@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-state",
-  "version": "0.24.3",
+  "version": "0.24.4",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -11,7 +11,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./*": {

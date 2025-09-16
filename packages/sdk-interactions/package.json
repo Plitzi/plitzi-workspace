@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.24.3",
+  "version": "0.24.4",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -11,7 +11,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./*": {
@@ -33,7 +33,7 @@
     "vite": "^7.1.5"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.1",
+    "@plitzi/plitzi-ui": "^1.0.2",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

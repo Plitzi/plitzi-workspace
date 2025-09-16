@@ -143,6 +143,10 @@ const buildBase = (env, args) => {
             }
           ]
         },
+        {
+          test: /\.m?js$/,
+          resolve: { fullySpecified: false }
+        },
         // {
         //   test: /(\.jsx|\.js)$/,
         //   exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
@@ -336,7 +340,6 @@ const buildCDN = (env, args) => {
     ]
   };
 };
-
 
 if (process.argv.includes('serve')) {
   module.exports = [buildCDN];

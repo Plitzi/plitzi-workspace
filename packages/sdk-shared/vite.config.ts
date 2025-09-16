@@ -96,8 +96,8 @@ export default defineConfig(({ mode, command }) => {
             exports: 'named',
             preserveModules: true, // Keep module structure for tree-shaking
             preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
-            entryFileNames: '[name].[format]',
-            chunkFileNames: '[name].[format]',
+            entryFileNames: '[name].mjs',
+            chunkFileNames: '[name].mjs',
             assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
             globals: {
               react: 'React',

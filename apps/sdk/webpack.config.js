@@ -155,6 +155,10 @@ const buildBase = (env, args) => {
           ]
         },
         {
+          test: /\.m?js$/,
+          resolve: { fullySpecified: false }
+        },
+        {
           test: /\.(png|jpg|gif|svg)$/,
           loader: 'url-loader',
           exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/
