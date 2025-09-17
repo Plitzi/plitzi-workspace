@@ -7,7 +7,7 @@ import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderS
 
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
 
-import type { Element } from '@plitzi/sdk-shared/types/SchemaTypes';
+import type { Element } from '@plitzi/sdk-shared';
 
 export type BuilderBreadcrumbProps = {
   limit?: number;

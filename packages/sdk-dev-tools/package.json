@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-dev-tools",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"

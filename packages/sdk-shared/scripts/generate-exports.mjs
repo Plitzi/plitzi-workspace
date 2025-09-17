@@ -89,6 +89,6 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
 pkg.exports = { ...mainExports, ...generateExports(DIST) };
 
 // Write updated package.json
-fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 
 console.log('✅ package.json updated with automatic exports for the entire library');
