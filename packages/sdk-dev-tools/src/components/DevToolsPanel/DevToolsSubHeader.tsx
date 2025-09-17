@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import throttle from 'lodash/throttle';
+import throttle from 'lodash/throttle.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import DevToolsButton from './DevToolsButton';

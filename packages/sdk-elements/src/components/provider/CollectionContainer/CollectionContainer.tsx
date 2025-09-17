@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import capitalize from 'lodash/capitalize';
-import get from 'lodash/get';
+import capitalize from 'lodash/capitalize.js';
+import get from 'lodash/get.js';
 import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

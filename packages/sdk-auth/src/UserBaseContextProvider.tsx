@@ -1,6 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useMemo, use } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';

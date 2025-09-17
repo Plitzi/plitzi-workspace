@@ -2,9 +2,9 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { produce } from 'immer';
-import get from 'lodash/get';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import pick from 'lodash/pick.js';
+import set from 'lodash/set.js';
 import { use, useCallback, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

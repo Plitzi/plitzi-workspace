@@ -1,5 +1,5 @@
 import FormIcon from '@plitzi/plitzi-ui/icons/Form';
-import omit from 'lodash/omit';
+import omit from 'lodash/omit.js';
 
 import BaseFormControl from './FormControl';
 

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';

@@ -1,6 +1,6 @@
-import get from 'lodash/get';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import pick from 'lodash/pick.js';
+import set from 'lodash/set.js';
 
 import { StyleConstants, inheritableAttributesBase } from '@plitzi/sdk-shared';
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';

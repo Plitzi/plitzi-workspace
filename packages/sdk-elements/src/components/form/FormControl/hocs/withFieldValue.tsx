@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useCallback, use, useMemo, useEffect } from 'react';
 
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';

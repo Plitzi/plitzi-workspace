@@ -1,4 +1,4 @@
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useCallback, use, useMemo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';

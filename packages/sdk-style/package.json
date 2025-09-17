@@ -10,19 +10,608 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     },
-    "./components/*": {
-      "types": "./dist/components/*/index.d.ts",
-      "import": "./dist/components/*",
-      "require": "./dist/components/*"
+    "./StyleContext": {
+      "import": "./dist/src/StyleContext.mjs",
+      "types": "./dist/src/StyleContext.d.ts"
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*",
-      "require": "./dist/*"
+    "./StyleHelper": {
+      "import": "./dist/src/StyleHelper.mjs",
+      "types": "./dist/src/StyleHelper.d.ts"
+    },
+    "./StyleMap": {
+      "import": "./dist/src/StyleMap.mjs",
+      "types": "./dist/src/StyleMap.d.ts"
+    },
+    "./StyleViewer": {
+      "import": "./dist/src/StyleViewer.mjs",
+      "types": "./dist/src/StyleViewer.d.ts"
+    },
+    "./components": {
+      "import": "./dist/src/components/index.mjs",
+      "types": "./dist/src/components/index.d.ts"
+    },
+    "./components/InputEasing": {
+      "import": "./dist/src/components/InputEasing/index.mjs",
+      "types": "./dist/src/components/InputEasing/index.d.ts"
+    },
+    "./components/InputEasing/BezierEasing": {
+      "import": "./dist/src/components/InputEasing/BezierEasing.mjs",
+      "types": "./dist/src/components/InputEasing/BezierEasing.d.ts"
+    },
+    "./components/InputEasing/Curve": {
+      "import": "./dist/src/components/InputEasing/Curve.mjs",
+      "types": "./dist/src/components/InputEasing/Curve.d.ts"
+    },
+    "./components/InputEasing/Grid": {
+      "import": "./dist/src/components/InputEasing/Grid.mjs",
+      "types": "./dist/src/components/InputEasing/Grid.d.ts"
+    },
+    "./components/InputEasing/InputEasing": {
+      "import": "./dist/src/components/InputEasing/InputEasing.mjs",
+      "types": "./dist/src/components/InputEasing/InputEasing.d.ts"
+    },
+    "./components/InputEasing/InputEasingButton": {
+      "import": "./dist/src/components/InputEasing/InputEasingButton.mjs",
+      "types": "./dist/src/components/InputEasing/InputEasingButton.d.ts"
+    },
+    "./components/InputEasing/InputEasingHelper": {
+      "import": "./dist/src/components/InputEasing/InputEasingHelper.mjs",
+      "types": "./dist/src/components/InputEasing/InputEasingHelper.d.ts"
+    },
+    "./components/InputEasing/InputEasingList": {
+      "import": "./dist/src/components/InputEasing/InputEasingList.mjs",
+      "types": "./dist/src/components/InputEasing/InputEasingList.d.ts"
+    },
+    "./components/InputEasing/Progress": {
+      "import": "./dist/src/components/InputEasing/Progress.mjs",
+      "types": "./dist/src/components/InputEasing/Progress.d.ts"
+    },
+    "./components/InputEasing/index": {
+      "import": "./dist/src/components/InputEasing/index.mjs",
+      "types": "./dist/src/components/InputEasing/index.d.ts"
+    },
+    "./components/Selector": {
+      "import": "./dist/src/components/Selector/index.mjs",
+      "types": "./dist/src/components/Selector/index.d.ts"
+    },
+    "./components/Selector/Selector": {
+      "import": "./dist/src/components/Selector/Selector.mjs",
+      "types": "./dist/src/components/Selector/Selector.d.ts"
+    },
+    "./components/Selector/SelectorHelper": {
+      "import": "./dist/src/components/Selector/SelectorHelper.mjs",
+      "types": "./dist/src/components/Selector/SelectorHelper.d.ts"
+    },
+    "./components/Selector/SelectorItem": {
+      "import": "./dist/src/components/Selector/SelectorItem/index.mjs",
+      "types": "./dist/src/components/Selector/SelectorItem/index.d.ts"
+    },
+    "./components/Selector/SelectorItem/ItemOptions": {
+      "import": "./dist/src/components/Selector/SelectorItem/ItemOptions.mjs",
+      "types": "./dist/src/components/Selector/SelectorItem/ItemOptions.d.ts"
+    },
+    "./components/Selector/SelectorItem/SelectorItem": {
+      "import": "./dist/src/components/Selector/SelectorItem/SelectorItem.mjs",
+      "types": "./dist/src/components/Selector/SelectorItem/SelectorItem.d.ts"
+    },
+    "./components/Selector/SelectorItem/index": {
+      "import": "./dist/src/components/Selector/SelectorItem/index.mjs",
+      "types": "./dist/src/components/Selector/SelectorItem/index.d.ts"
+    },
+    "./components/Selector/SelectorSuggestions": {
+      "import": "./dist/src/components/Selector/SelectorSuggestions/index.mjs",
+      "types": "./dist/src/components/Selector/SelectorSuggestions/index.d.ts"
+    },
+    "./components/Selector/SelectorSuggestions/SelectorSuggestions": {
+      "import": "./dist/src/components/Selector/SelectorSuggestions/SelectorSuggestions.mjs",
+      "types": "./dist/src/components/Selector/SelectorSuggestions/SelectorSuggestions.d.ts"
+    },
+    "./components/Selector/SelectorSuggestions/SuggestionsCreator": {
+      "import": "./dist/src/components/Selector/SelectorSuggestions/SuggestionsCreator.mjs",
+      "types": "./dist/src/components/Selector/SelectorSuggestions/SuggestionsCreator.d.ts"
+    },
+    "./components/Selector/SelectorSuggestions/SuggestionsList": {
+      "import": "./dist/src/components/Selector/SelectorSuggestions/SuggestionsList.mjs",
+      "types": "./dist/src/components/Selector/SelectorSuggestions/SuggestionsList.d.ts"
+    },
+    "./components/Selector/SelectorSuggestions/index": {
+      "import": "./dist/src/components/Selector/SelectorSuggestions/index.mjs",
+      "types": "./dist/src/components/Selector/SelectorSuggestions/index.d.ts"
+    },
+    "./components/Selector/index": {
+      "import": "./dist/src/components/Selector/index.mjs",
+      "types": "./dist/src/components/Selector/index.d.ts"
+    },
+    "./components/SelectorForm": {
+      "import": "./dist/src/components/SelectorForm/index.mjs",
+      "types": "./dist/src/components/SelectorForm/index.d.ts"
+    },
+    "./components/SelectorForm/SelectorForm": {
+      "import": "./dist/src/components/SelectorForm/SelectorForm.mjs",
+      "types": "./dist/src/components/SelectorForm/SelectorForm.d.ts"
+    },
+    "./components/SelectorForm/index": {
+      "import": "./dist/src/components/SelectorForm/index.mjs",
+      "types": "./dist/src/components/SelectorForm/index.d.ts"
+    },
+    "./components/StyleInspector": {
+      "import": "./dist/src/components/StyleInspector/index.mjs",
+      "types": "./dist/src/components/StyleInspector/index.d.ts"
+    },
+    "./components/StyleInspector/StyleInspector": {
+      "import": "./dist/src/components/StyleInspector/StyleInspector.mjs",
+      "types": "./dist/src/components/StyleInspector/StyleInspector.d.ts"
+    },
+    "./components/StyleInspector/StyleInspectorContext": {
+      "import": "./dist/src/components/StyleInspector/StyleInspectorContext.mjs",
+      "types": "./dist/src/components/StyleInspector/StyleInspectorContext.d.ts"
+    },
+    "./components/StyleInspector/StyleInspectorProvider": {
+      "import": "./dist/src/components/StyleInspector/StyleInspectorProvider.mjs",
+      "types": "./dist/src/components/StyleInspector/StyleInspectorProvider.d.ts"
+    },
+    "./components/StyleInspector/categories/Background": {
+      "import": "./dist/src/components/StyleInspector/categories/Background/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Background/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Background/Background": {
+      "import": "./dist/src/components/StyleInspector/categories/Background/Background.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Background/Background.d.ts"
+    },
+    "./components/StyleInspector/categories/Background/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Background/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Background/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Background/modes/ImageMode": {
+      "import": "./dist/src/components/StyleInspector/categories/Background/modes/ImageMode.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Background/modes/ImageMode.d.ts"
+    },
+    "./components/StyleInspector/categories/Border": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Border/Border": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/Border.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/Border.d.ts"
+    },
+    "./components/StyleInspector/categories/Border/BorderColor": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/BorderColor.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/BorderColor.d.ts"
+    },
+    "./components/StyleInspector/categories/Border/BorderPlacements": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/BorderPlacements.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/BorderPlacements.d.ts"
+    },
+    "./components/StyleInspector/categories/Border/BorderRadius": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/BorderRadius.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/BorderRadius.d.ts"
+    },
+    "./components/StyleInspector/categories/Border/BorderStyle": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/BorderStyle.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/BorderStyle.d.ts"
+    },
+    "./components/StyleInspector/categories/Border/BorderWidth": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/BorderWidth.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/BorderWidth.d.ts"
+    },
+    "./components/StyleInspector/categories/Border/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Border/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Border/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Display": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/Display": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/Display.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/Display.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayElements": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayElements.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayElements.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayFlex": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayFlex.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayFlex.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayFlexAlignContent": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexAlignContent.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexAlignContent.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayFlexAlignItems": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexAlignItems.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexAlignItems.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayFlexDirection": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexDirection.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexDirection.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayFlexJustify": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexJustify.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayFlexJustify.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayGap": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayGap.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayGap.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayGridGap": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayGridGap.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayGridGap.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/DisplayGridTemplate": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/DisplayGridTemplate.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/DisplayGridTemplate.d.ts"
+    },
+    "./components/StyleInspector/categories/Display/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Display/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Display/index.d.ts"
+    },
+    "./components/StyleInspector/categories/DisplayFlexChild": {
+      "import": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/index.d.ts"
+    },
+    "./components/StyleInspector/categories/DisplayFlexChild/DisplayAlignSelf": {
+      "import": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/DisplayAlignSelf.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/DisplayAlignSelf.d.ts"
+    },
+    "./components/StyleInspector/categories/DisplayFlexChild/DisplayFlexChild": {
+      "import": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/DisplayFlexChild.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/DisplayFlexChild.d.ts"
+    },
+    "./components/StyleInspector/categories/DisplayFlexChild/DisplayOrder": {
+      "import": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/DisplayOrder.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/DisplayOrder.d.ts"
+    },
+    "./components/StyleInspector/categories/DisplayFlexChild/index": {
+      "import": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/DisplayFlexChild/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/BoxShadow": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/BoxShadow/BoxShadow": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/BoxShadow.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/BoxShadow.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/BoxShadow/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/BoxShadow/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Effects": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Effects.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Effects.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Filters/Filter": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Filters/Filter.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Filters/Filter.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Filters/FilterItem": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Filters/FilterItem.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Filters/FilterItem.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transform": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transform/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transform/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transform/Transform": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transform/Transform.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transform/Transform.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transform/TransformItem": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transform/TransformItem.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transform/TransformItem.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transform/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transform/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transform/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transition": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transition/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transition/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transition/Transition": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transition/Transition.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transition/Transition.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transition/TransitionItem": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transition/TransitionItem.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transition/TransitionItem.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/Transition/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Transition/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Transition/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Effects/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Effects/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Effects/index.d.ts"
+    },
+    "./components/StyleInspector/categories/List": {
+      "import": "./dist/src/components/StyleInspector/categories/List/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/List/index.d.ts"
+    },
+    "./components/StyleInspector/categories/List/List": {
+      "import": "./dist/src/components/StyleInspector/categories/List/List.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/List/List.d.ts"
+    },
+    "./components/StyleInspector/categories/List/index": {
+      "import": "./dist/src/components/StyleInspector/categories/List/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/List/index.d.ts"
+    },
+    "./components/StyleInspector/categories/ListItem": {
+      "import": "./dist/src/components/StyleInspector/categories/ListItem/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/ListItem/index.d.ts"
+    },
+    "./components/StyleInspector/categories/ListItem/ListItem": {
+      "import": "./dist/src/components/StyleInspector/categories/ListItem/ListItem.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/ListItem/ListItem.d.ts"
+    },
+    "./components/StyleInspector/categories/ListItem/index": {
+      "import": "./dist/src/components/StyleInspector/categories/ListItem/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/ListItem/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Position": {
+      "import": "./dist/src/components/StyleInspector/categories/Position/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Position/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Position/Position": {
+      "import": "./dist/src/components/StyleInspector/categories/Position/Position.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Position/Position.d.ts"
+    },
+    "./components/StyleInspector/categories/Position/PositionAdvanced": {
+      "import": "./dist/src/components/StyleInspector/categories/Position/PositionAdvanced.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Position/PositionAdvanced.d.ts"
+    },
+    "./components/StyleInspector/categories/Position/PositionAdvancedButtons": {
+      "import": "./dist/src/components/StyleInspector/categories/Position/PositionAdvancedButtons.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Position/PositionAdvancedButtons.d.ts"
+    },
+    "./components/StyleInspector/categories/Position/PositionClear": {
+      "import": "./dist/src/components/StyleInspector/categories/Position/PositionClear.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Position/PositionClear.d.ts"
+    },
+    "./components/StyleInspector/categories/Position/PositionFloat": {
+      "import": "./dist/src/components/StyleInspector/categories/Position/PositionFloat.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Position/PositionFloat.d.ts"
+    },
+    "./components/StyleInspector/categories/Position/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Position/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Position/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Size": {
+      "import": "./dist/src/components/StyleInspector/categories/Size/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Size/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Size/Size": {
+      "import": "./dist/src/components/StyleInspector/categories/Size/Size.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Size/Size.d.ts"
+    },
+    "./components/StyleInspector/categories/Size/SizeFit": {
+      "import": "./dist/src/components/StyleInspector/categories/Size/SizeFit.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Size/SizeFit.d.ts"
+    },
+    "./components/StyleInspector/categories/Size/SizeOverflow": {
+      "import": "./dist/src/components/StyleInspector/categories/Size/SizeOverflow.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Size/SizeOverflow.d.ts"
+    },
+    "./components/StyleInspector/categories/Size/SizePosition": {
+      "import": "./dist/src/components/StyleInspector/categories/Size/SizePosition.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Size/SizePosition.d.ts"
+    },
+    "./components/StyleInspector/categories/Size/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Size/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Size/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Spacing": {
+      "import": "./dist/src/components/StyleInspector/categories/Spacing/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Spacing/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Spacing/Spacing": {
+      "import": "./dist/src/components/StyleInspector/categories/Spacing/Spacing.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Spacing/Spacing.d.ts"
+    },
+    "./components/StyleInspector/categories/Spacing/SpacingEditor": {
+      "import": "./dist/src/components/StyleInspector/categories/Spacing/SpacingEditor.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Spacing/SpacingEditor.d.ts"
+    },
+    "./components/StyleInspector/categories/Spacing/SpacingMargin": {
+      "import": "./dist/src/components/StyleInspector/categories/Spacing/SpacingMargin.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Spacing/SpacingMargin.d.ts"
+    },
+    "./components/StyleInspector/categories/Spacing/SpacingNumber": {
+      "import": "./dist/src/components/StyleInspector/categories/Spacing/SpacingNumber.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Spacing/SpacingNumber.d.ts"
+    },
+    "./components/StyleInspector/categories/Spacing/SpacingPadding": {
+      "import": "./dist/src/components/StyleInspector/categories/Spacing/SpacingPadding.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Spacing/SpacingPadding.d.ts"
+    },
+    "./components/StyleInspector/categories/Spacing/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Spacing/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Spacing/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/index.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/Typography": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/Typography.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/Typography.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyAlign": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/TypographyAlign.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/TypographyAlign.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyConstants": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/TypographyConstants.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/TypographyConstants.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyFont": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/TypographyFont.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/TypographyFont.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyStyle": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/TypographyStyle.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/TypographyStyle.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyTextShadow": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/TypographyTextShadow.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/TypographyTextShadow.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyTextShadowItem": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/TypographyTextShadowItem.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/TypographyTextShadowItem.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyTransform": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/TypographyTransform.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/TypographyTransform.d.ts"
+    },
+    "./components/StyleInspector/categories/Typography/index": {
+      "import": "./dist/src/components/StyleInspector/categories/Typography/index.mjs",
+      "types": "./dist/src/components/StyleInspector/categories/Typography/index.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryContainer": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryContainer/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryContainer/index.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryContainer/CategoryContainer": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryContainer/CategoryContainer.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryContainer/CategoryContainer.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryContainer/index": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryContainer/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryContainer/index.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/index.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption/CategoryOption": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/CategoryOption.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/CategoryOption.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption/categoryTypes/OptionColor": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionColor.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionColor.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption/categoryTypes/OptionIconGroup": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionIconGroup.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionIconGroup.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption/categoryTypes/OptionInput": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionInput.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionInput.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption/categoryTypes/OptionMetricInput": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionMetricInput.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionMetricInput.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption/categoryTypes/OptionSelect": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionSelect.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/categoryTypes/OptionSelect.d.ts"
+    },
+    "./components/StyleInspector/components/CategoryOption/index": {
+      "import": "./dist/src/components/StyleInspector/components/CategoryOption/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategoryOption/index.d.ts"
+    },
+    "./components/StyleInspector/components/CategorySection": {
+      "import": "./dist/src/components/StyleInspector/components/CategorySection/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategorySection/index.d.ts"
+    },
+    "./components/StyleInspector/components/CategorySection/CategorySection": {
+      "import": "./dist/src/components/StyleInspector/components/CategorySection/CategorySection.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategorySection/CategorySection.d.ts"
+    },
+    "./components/StyleInspector/components/CategorySection/index": {
+      "import": "./dist/src/components/StyleInspector/components/CategorySection/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/CategorySection/index.d.ts"
+    },
+    "./components/StyleInspector/components/InspectorDots": {
+      "import": "./dist/src/components/StyleInspector/components/InspectorDots/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/InspectorDots/index.d.ts"
+    },
+    "./components/StyleInspector/components/InspectorDots/InspectorDots": {
+      "import": "./dist/src/components/StyleInspector/components/InspectorDots/InspectorDots.mjs",
+      "types": "./dist/src/components/StyleInspector/components/InspectorDots/InspectorDots.d.ts"
+    },
+    "./components/StyleInspector/components/InspectorDots/index": {
+      "import": "./dist/src/components/StyleInspector/components/InspectorDots/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/InspectorDots/index.d.ts"
+    },
+    "./components/StyleInspector/components/InspectorLabel": {
+      "import": "./dist/src/components/StyleInspector/components/InspectorLabel/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/InspectorLabel/index.d.ts"
+    },
+    "./components/StyleInspector/components/InspectorLabel/InspectorLabel": {
+      "import": "./dist/src/components/StyleInspector/components/InspectorLabel/InspectorLabel.mjs",
+      "types": "./dist/src/components/StyleInspector/components/InspectorLabel/InspectorLabel.d.ts"
+    },
+    "./components/StyleInspector/components/InspectorLabel/index": {
+      "import": "./dist/src/components/StyleInspector/components/InspectorLabel/index.mjs",
+      "types": "./dist/src/components/StyleInspector/components/InspectorLabel/index.d.ts"
+    },
+    "./components/StyleInspector/hooks/useInspectorValues": {
+      "import": "./dist/src/components/StyleInspector/hooks/useInspectorValues.mjs",
+      "types": "./dist/src/components/StyleInspector/hooks/useInspectorValues.d.ts"
+    },
+    "./components/StyleInspector/hooks/useStyleBinding": {
+      "import": "./dist/src/components/StyleInspector/hooks/useStyleBinding.mjs",
+      "types": "./dist/src/components/StyleInspector/hooks/useStyleBinding.d.ts"
+    },
+    "./components/StyleInspector/hooks/useStyleInherit": {
+      "import": "./dist/src/components/StyleInspector/hooks/useStyleInherit.mjs",
+      "types": "./dist/src/components/StyleInspector/hooks/useStyleInherit.d.ts"
+    },
+    "./components/StyleInspector/index": {
+      "import": "./dist/src/components/StyleInspector/index.mjs",
+      "types": "./dist/src/components/StyleInspector/index.d.ts"
+    },
+    "./components/StyleInspector/modes/InspectorModeAdvanced": {
+      "import": "./dist/src/components/StyleInspector/modes/InspectorModeAdvanced.mjs",
+      "types": "./dist/src/components/StyleInspector/modes/InspectorModeAdvanced.d.ts"
+    },
+    "./components/StyleInspector/modes/InspectorModeBasic": {
+      "import": "./dist/src/components/StyleInspector/modes/InspectorModeBasic.mjs",
+      "types": "./dist/src/components/StyleInspector/modes/InspectorModeBasic.d.ts"
+    },
+    "./components/StyleManager": {
+      "import": "./dist/src/components/StyleManager/index.mjs",
+      "types": "./dist/src/components/StyleManager/index.d.ts"
+    },
+    "./components/StyleManager/ManagerSelector": {
+      "import": "./dist/src/components/StyleManager/ManagerSelector.mjs",
+      "types": "./dist/src/components/StyleManager/ManagerSelector.d.ts"
+    },
+    "./components/StyleManager/StyleManager": {
+      "import": "./dist/src/components/StyleManager/StyleManager.mjs",
+      "types": "./dist/src/components/StyleManager/StyleManager.d.ts"
+    },
+    "./components/StyleManager/StyleSelectorTag": {
+      "import": "./dist/src/components/StyleManager/StyleSelectorTag.mjs",
+      "types": "./dist/src/components/StyleManager/StyleSelectorTag.d.ts"
+    },
+    "./components/StyleManager/index": {
+      "import": "./dist/src/components/StyleManager/index.mjs",
+      "types": "./dist/src/components/StyleManager/index.d.ts"
+    },
+    "./components/index": {
+      "import": "./dist/src/components/index.mjs",
+      "types": "./dist/src/components/index.d.ts"
+    },
+    "./index": {
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "type": "module",
@@ -32,19 +621,19 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev": "tsc && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc && vite build"
+    "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.2",
+    "@plitzi/plitzi-ui": "^1.0.4",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "classnames": "^2.5.1",
     "immer": "^10.1.3",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
-    "zod": "^4.1.8"
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.20",

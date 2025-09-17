@@ -1,8 +1,8 @@
 import { produce } from 'immer';
-import capitalize from 'lodash/capitalize';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
-import set from 'lodash/set';
+import capitalize from 'lodash/capitalize.js';
+import get from 'lodash/get.js';
+import omit from 'lodash/omit.js';
+import set from 'lodash/set.js';
 import { useMemo, useState, useCallback, useRef } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';

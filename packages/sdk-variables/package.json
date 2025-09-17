@@ -10,23 +10,29 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*",
-      "require": "./dist/*"
+    "./VariablesContext": {
+      "import": "./dist/src/VariablesContext.mjs",
+      "types": "./dist/src/VariablesContext.d.ts"
+    },
+    "./VariablesHelper": {
+      "import": "./dist/src/VariablesHelper.mjs",
+      "types": "./dist/src/VariablesHelper.d.ts"
+    },
+    "./index": {
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "type": "module",
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc --noEmit",
-    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev": "tsc && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc && vite build"
+    "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",

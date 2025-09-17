@@ -1,6 +1,6 @@
-import get from 'lodash/get';
-import omit from 'lodash/omit';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import omit from 'lodash/omit.js';
+import set from 'lodash/set.js';
 
 import { processSelector } from './StyleHelper';
 

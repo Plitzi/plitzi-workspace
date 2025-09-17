@@ -1,6 +1,6 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
+import get from 'lodash/get.js';
+import omit from 'lodash/omit.js';
 
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';

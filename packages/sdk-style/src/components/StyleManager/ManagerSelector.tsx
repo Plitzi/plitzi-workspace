@@ -3,9 +3,9 @@ import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
 import { produce } from 'immer';
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import isEmpty from 'lodash/isEmpty.js';
+import set from 'lodash/set.js';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

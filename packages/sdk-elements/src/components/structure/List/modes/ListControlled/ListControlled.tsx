@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useCallback, use, useMemo } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';

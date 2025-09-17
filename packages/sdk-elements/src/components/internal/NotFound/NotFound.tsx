@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';

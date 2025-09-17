@@ -1,6 +1,6 @@
 import { produce } from 'immer';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';

@@ -10,22 +10,80 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*",
-      "require": "./dist/*"
+    "./InteractionsContext": {
+      "import": "./dist/src/InteractionsContext.mjs",
+      "types": "./dist/src/InteractionsContext.d.ts"
+    },
+    "./InteractionsContextProvider": {
+      "import": "./dist/src/InteractionsContextProvider.mjs",
+      "types": "./dist/src/InteractionsContextProvider.d.ts"
+    },
+    "./InteractionsHelper": {
+      "import": "./dist/src/InteractionsHelper.mjs",
+      "types": "./dist/src/InteractionsHelper.d.ts"
+    },
+    "./InteractionsManager": {
+      "import": "./dist/src/InteractionsManager.mjs",
+      "types": "./dist/src/InteractionsManager.d.ts"
+    },
+    "./hooks/useInteractions": {
+      "import": "./dist/src/hooks/useInteractions.mjs",
+      "types": "./dist/src/hooks/useInteractions.d.ts"
+    },
+    "./index": {
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./sources": {
+      "import": "./dist/src/sources/index.mjs",
+      "types": "./dist/src/sources/index.d.ts"
+    },
+    "./sources/UserSource": {
+      "import": "./dist/src/sources/UserSource/index.mjs",
+      "types": "./dist/src/sources/UserSource/index.d.ts"
+    },
+    "./sources/UserSource/UserInteractions": {
+      "import": "./dist/src/sources/UserSource/UserInteractions.mjs",
+      "types": "./dist/src/sources/UserSource/UserInteractions.d.ts"
+    },
+    "./sources/UserSource/index": {
+      "import": "./dist/src/sources/UserSource/index.mjs",
+      "types": "./dist/src/sources/UserSource/index.d.ts"
+    },
+    "./sources/index": {
+      "import": "./dist/src/sources/index.mjs",
+      "types": "./dist/src/sources/index.d.ts"
+    },
+    "./utility": {
+      "import": "./dist/src/utility/index.mjs",
+      "types": "./dist/src/utility/index.d.ts"
+    },
+    "./utility/delayTime": {
+      "import": "./dist/src/utility/delayTime.mjs",
+      "types": "./dist/src/utility/delayTime.d.ts"
+    },
+    "./utility/index": {
+      "import": "./dist/src/utility/index.mjs",
+      "types": "./dist/src/utility/index.d.ts"
+    },
+    "./utility/twigTemplate": {
+      "import": "./dist/src/utility/twigTemplate.mjs",
+      "types": "./dist/src/utility/twigTemplate.d.ts"
+    },
+    "./utility/webHook": {
+      "import": "./dist/src/utility/webHook.mjs",
+      "types": "./dist/src/utility/webHook.d.ts"
     }
   },
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc --noEmit",
-    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev": "tsc && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc && vite build"
+    "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "devDependencies": {
@@ -33,7 +91,7 @@
     "vite": "^7.1.5"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.2",
+    "@plitzi/plitzi-ui": "^1.0.4",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

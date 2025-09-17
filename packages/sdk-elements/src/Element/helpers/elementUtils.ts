@@ -1,4 +1,4 @@
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 

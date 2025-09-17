@@ -1,5 +1,5 @@
 import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
-import isEmpty from 'lodash/isEmpty';
+import isEmpty from 'lodash/isEmpty.js';
 import { useMemo, useEffect, useState, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

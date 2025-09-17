@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/no-array-delete */
 // Packages
 import { produce } from 'immer';
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-import omit from 'lodash/omit';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import isEmpty from 'lodash/isEmpty.js';
+import omit from 'lodash/omit.js';
+import set from 'lodash/set.js';
 import { useCallback, use, useMemo } from 'react';
 
 import { baseDefaultValue } from '@plitzi/sdk-shared';

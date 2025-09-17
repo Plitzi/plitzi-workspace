@@ -5,7 +5,7 @@ import usePlitziServiceContext, { PlitziServiceProvider } from './hooks/usePlitz
 import * as schema from './schema';
 import * as style from './style';
 
-export * from './types';
+export type * from './types';
 export * from './helpers/utils';
 export * from './helpers/syntaxHighlight';
 export * from './helpers/twigWrapper';

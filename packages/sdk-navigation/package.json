@@ -10,14 +10,24 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*",
-      "require": "./dist/*"
+    "./NavigationContext": {
+      "import": "./dist/src/NavigationContext.mjs",
+      "types": "./dist/src/NavigationContext.d.ts"
+    },
+    "./NavigationHelper": {
+      "import": "./dist/src/NavigationHelper.mjs",
+      "types": "./dist/src/NavigationHelper.d.ts"
+    },
+    "./hooks/useNavigation": {
+      "import": "./dist/src/hooks/useNavigation.mjs",
+      "types": "./dist/src/hooks/useNavigation.d.ts"
+    },
+    "./index": {
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "scripts": {
@@ -27,13 +37,14 @@
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev": "tsc && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc && vite build"
+    "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "devDependencies": {
     "eslint": "^9.35.0",
+    "typescript": "^5.9.2",
     "vite": "^7.1.5",
     "vitest": "^3.2.4"
   },

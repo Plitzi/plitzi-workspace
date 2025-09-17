@@ -10,22 +10,28 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*",
-      "require": "./dist/*"
+    "./PluginHelper": {
+      "import": "./dist/src/PluginHelper.mjs",
+      "types": "./dist/src/PluginHelper.d.ts"
+    },
+    "./PluginsContext": {
+      "import": "./dist/src/PluginsContext.mjs",
+      "types": "./dist/src/PluginsContext.d.ts"
+    },
+    "./index": {
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc --noEmit",
-    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev": "tsc && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc && vite build"
+    "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "dependencies": {

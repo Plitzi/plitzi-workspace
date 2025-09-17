@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import get from 'lodash/get.js';
+import set from 'lodash/set.js';
 import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 

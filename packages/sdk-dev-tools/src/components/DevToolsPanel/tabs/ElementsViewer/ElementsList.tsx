@@ -1,5 +1,5 @@
 import Input from '@plitzi/plitzi-ui/Input';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useCallback, useMemo, useState } from 'react';
 
 import ElementsListItem from './ElementsListItem';

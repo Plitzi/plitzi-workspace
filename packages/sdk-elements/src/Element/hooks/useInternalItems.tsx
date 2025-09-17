@@ -1,4 +1,4 @@
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { isValidElement, useMemo } from 'react';
 
 import PluginManager from '../PluginManager';

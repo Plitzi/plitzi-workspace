@@ -8,8 +8,6 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
-import pkg from './package.json' with { type: 'json' };
-
 const importedPackages = new Set();
 
 export default defineConfig(({ mode, command }) => {
@@ -18,7 +16,7 @@ export default defineConfig(({ mode, command }) => {
       nodeResolve({ extensions: ['.ts', '.tsx'] }),
       react(),
       dts({
-        entryRoot: 'src',
+        // entryRoot: 'src',
         outDir: 'dist',
         rollupTypes: false,
         exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
@@ -66,30 +64,12 @@ export default defineConfig(({ mode, command }) => {
       extensions: ['.js', '.ts', '.tsx']
     },
     build: {
+      outDir: 'dist/src',
       lib: {
         entry: ['./src/index.ts']
-        // name: 'plitzi-ui',
       },
       rollupOptions: {
         treeshake: false,
-        external: [
-          ...Object.keys(pkg.dependencies),
-          'lodash/get',
-          'lodash/set',
-          'lodash/has',
-          'lodash/pick',
-          'lodash/capitalize',
-          'lodash/camelCase',
-          'lodash/omit',
-          'lodash/throttle',
-          'lodash/isEmpty',
-          'lodash/pick',
-          'react-router',
-          'react-router-dom',
-          'react/jsx-runtime',
-          'immer',
-          'moment'
-        ],
         output: [
           {
             format: 'es',

@@ -25,7 +25,7 @@
 //   }
 // ];
 
-import sharedConfig from '@plitzi/sdk-shared/eslint.config.ts.mjs';
+import sharedConfig from '../../packages/sdk-shared/eslint.config.mjs';
 import tsEslint from 'typescript-eslint';
 
 export default tsEslint.config({

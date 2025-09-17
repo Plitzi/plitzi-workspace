@@ -2,7 +2,7 @@
 import FlexGrowRow from '@plitzi/plitzi-ui/icons/FlexGrowRow';
 import FlexNoneRow from '@plitzi/plitzi-ui/icons/FlexNoneRow';
 import FlexShrinkRow from '@plitzi/plitzi-ui/icons/FlexShrinkRow';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash/isEqual.js';
 import { memo, useCallback, use, useMemo } from 'react';
 
 import DisplayAlignSelf from './DisplayAlignSelf';

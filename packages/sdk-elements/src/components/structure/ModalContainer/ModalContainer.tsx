@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';

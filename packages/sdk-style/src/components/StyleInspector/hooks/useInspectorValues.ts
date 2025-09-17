@@ -1,5 +1,5 @@
-import get from 'lodash/get';
-import pick from 'lodash/pick';
+import get from 'lodash/get.js';
+import pick from 'lodash/pick.js';
 import { use, useMemo } from 'react';
 
 import { baseDefaultValue } from '@plitzi/sdk-shared';

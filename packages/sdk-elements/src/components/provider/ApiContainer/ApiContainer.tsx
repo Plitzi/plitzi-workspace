@@ -2,7 +2,7 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import classNames from 'classnames';
 import Handlebars from 'handlebars';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';

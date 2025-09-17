@@ -172,6 +172,8 @@ const App = props => {
     return components;
   }, [children]);
 
+  // console.log(children, localCustomComponents);
+
   if (renderMode === RENDER_MODE_WIDGET) {
     return (
       <Provider>

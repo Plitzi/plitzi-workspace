@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import deepEqual from '@plitzi/plitzi-ui/utils/deepEqual';
-import debounce from 'lodash/debounce';
+import debounce from 'lodash/debounce.js';
 import { useCallback, use, useMemo, useState, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

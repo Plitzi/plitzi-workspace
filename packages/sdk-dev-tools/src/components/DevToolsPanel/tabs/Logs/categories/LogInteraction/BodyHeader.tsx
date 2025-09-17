@@ -1,4 +1,4 @@
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import moment from 'moment';
 import { use, useCallback, useMemo } from 'react';
 

@@ -1,5 +1,5 @@
-import get from 'lodash/get';
-import omit from 'lodash/omit';
+import get from 'lodash/get.js';
+import omit from 'lodash/omit.js';
 
 import type { PluginManifest, ComponentDefinition, PluginRaw, Asset } from '@plitzi/sdk-shared';
 

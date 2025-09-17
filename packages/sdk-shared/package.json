@@ -16,34 +16,136 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     },
-    "./eslint.config.mjs": "./eslint.config.old.mjs",
-    "./eslint.config.ts.mjs": "./eslint.config.mjs",
-    "./jest.config": "./jest.config.js",
-    "./jest.setup": "./jest.setup.js",
-    "./babel.config": "./babel.config.mjs",
-    "./tailwind.config": "./tailwind.config.js",
-    "./tsconfig.json": "./tsconfig.json",
-    "./setupTests.ts": "./setupTests.ts",
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*",
-      "require": "./dist/*"
+    "./builder": {
+      "import": "./dist/src/builder/index.mjs",
+      "types": "./dist/src/builder/index.d.ts"
+    },
+    "./builder/contexts": {
+      "import": "./dist/src/builder/contexts/index.mjs",
+      "types": "./dist/src/builder/contexts/index.d.ts"
+    },
+    "./builder/contexts/BuilderContext": {
+      "import": "./dist/src/builder/contexts/BuilderContext.mjs",
+      "types": "./dist/src/builder/contexts/BuilderContext.d.ts"
+    },
+    "./builder/contexts/BuilderHoveredContext": {
+      "import": "./dist/src/builder/contexts/BuilderHoveredContext.mjs",
+      "types": "./dist/src/builder/contexts/BuilderHoveredContext.d.ts"
+    },
+    "./builder/contexts/BuilderSchemaContext": {
+      "import": "./dist/src/builder/contexts/BuilderSchemaContext.mjs",
+      "types": "./dist/src/builder/contexts/BuilderSchemaContext.d.ts"
+    },
+    "./builder/contexts/BuilderSelectedContext": {
+      "import": "./dist/src/builder/contexts/BuilderSelectedContext.mjs",
+      "types": "./dist/src/builder/contexts/BuilderSelectedContext.d.ts"
+    },
+    "./builder/contexts/BuilderStyleContext": {
+      "import": "./dist/src/builder/contexts/BuilderStyleContext.mjs",
+      "types": "./dist/src/builder/contexts/BuilderStyleContext.d.ts"
+    },
+    "./builder/contexts/index": {
+      "import": "./dist/src/builder/contexts/index.mjs",
+      "types": "./dist/src/builder/contexts/index.d.ts"
+    },
+    "./builder/index": {
+      "import": "./dist/src/builder/index.mjs",
+      "types": "./dist/src/builder/index.d.ts"
+    },
+    "./dataSource": {
+      "import": "./dist/src/dataSource/index.mjs",
+      "types": "./dist/src/dataSource/index.d.ts"
+    },
+    "./dataSource/DataSourceContext": {
+      "import": "./dist/src/dataSource/DataSourceContext.mjs",
+      "types": "./dist/src/dataSource/DataSourceContext.d.ts"
+    },
+    "./dataSource/hooks": {
+      "import": "./dist/src/dataSource/hooks/index.mjs",
+      "types": "./dist/src/dataSource/hooks/index.d.ts"
+    },
+    "./dataSource/hooks/index": {
+      "import": "./dist/src/dataSource/hooks/index.mjs",
+      "types": "./dist/src/dataSource/hooks/index.d.ts"
+    },
+    "./dataSource/hooks/useDataSource": {
+      "import": "./dist/src/dataSource/hooks/useDataSource.mjs",
+      "types": "./dist/src/dataSource/hooks/useDataSource.d.ts"
+    },
+    "./dataSource/index": {
+      "import": "./dist/src/dataSource/index.mjs",
+      "types": "./dist/src/dataSource/index.d.ts"
+    },
+    "./elements": {
+      "import": "./dist/src/elements/index.mjs",
+      "types": "./dist/src/elements/index.d.ts"
+    },
+    "./elements/ComponentContext": {
+      "import": "./dist/src/elements/ComponentContext.mjs",
+      "types": "./dist/src/elements/ComponentContext.d.ts"
+    },
+    "./elements/index": {
+      "import": "./dist/src/elements/index.mjs",
+      "types": "./dist/src/elements/index.d.ts"
+    },
+    "./helpers/syntaxHighlight": {
+      "import": "./dist/src/helpers/syntaxHighlight.mjs",
+      "types": "./dist/src/helpers/syntaxHighlight.d.ts"
+    },
+    "./helpers/twigWrapper": {
+      "import": "./dist/src/helpers/twigWrapper.mjs",
+      "types": "./dist/src/helpers/twigWrapper.d.ts"
+    },
+    "./helpers/utils": {
+      "import": "./dist/src/helpers/utils.mjs",
+      "types": "./dist/src/helpers/utils.d.ts"
+    },
+    "./hooks/usePlitziServiceContext": {
+      "import": "./dist/src/hooks/usePlitziServiceContext.mjs",
+      "types": "./dist/src/hooks/usePlitziServiceContext.d.ts"
+    },
+    "./index": {
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./schema": {
+      "import": "./dist/src/schema/index.mjs",
+      "types": "./dist/src/schema/index.d.ts"
+    },
+    "./schema/index": {
+      "import": "./dist/src/schema/index.mjs",
+      "types": "./dist/src/schema/index.d.ts"
+    },
+    "./schema/schemaConstants": {
+      "import": "./dist/src/schema/schemaConstants.mjs",
+      "types": "./dist/src/schema/schemaConstants.d.ts"
+    },
+    "./style": {
+      "import": "./dist/src/style/index.mjs",
+      "types": "./dist/src/style/index.d.ts"
+    },
+    "./style/index": {
+      "import": "./dist/src/style/index.mjs",
+      "types": "./dist/src/style/index.d.ts"
+    },
+    "./style/styleConstants": {
+      "import": "./dist/src/style/styleConstants.mjs",
+      "types": "./dist/src/style/styleConstants.d.ts"
     }
   },
   "type": "module",
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc --noEmit",
-    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev": "tsc && vite build --mode development --minify false && node ./scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc && vite build"
+    "build-assets:prod": "tsc && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.2",
+    "@plitzi/plitzi-ui": "^1.0.4",
     "lodash": "^4.17.21",
     "react": "19.1.1",
     "react-dom": "19.1.1",
@@ -68,7 +170,7 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@types/twig": "^1.12.17",
-    "@vitejs/plugin-react": "^5.0.2",
+    "@vitejs/plugin-react": "^5.0.3",
     "@vitest/coverage-v8": "^3.2.4",
     "babel-minify": "^0.5.2",
     "eslint": "^9.35.0",
@@ -80,7 +182,7 @@
     "eslint-plugin-flowtype": "8.0.3",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jest": "^29.0.1",
-    "eslint-plugin-jsdoc": "^58.1.0",
+    "eslint-plugin-jsdoc": "^58.1.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",

@@ -1,14 +1,12 @@
-// import noop from 'lodash/noop';
-
 // import InputMetric from '../../../../InputMetric';
 // import InspectorLabel from '../../../InspectorLabel';
 
 /** @returns {React.ReactElement} */
 const RadialGradientMode = () => {
-  // const { partialValue, onChange = noop } = props;
+  // const { partialValue, onChange } = props;
 
   // const handleClick = (type, partialValue) => () => {
-  //   onChange(type, partialValue);
+  //   onChange?.(type, partialValue);
   // };
 
   // const { value } = this.props;

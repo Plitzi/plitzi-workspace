@@ -154,6 +154,7 @@ const buildBase = (env, args) => {
             }
           ]
         },
+        // Enable this only if there a .mjs complaining about imports
         {
           test: /\.m?js$/,
           resolve: { fullySpecified: false }

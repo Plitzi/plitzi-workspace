@@ -10,26 +10,52 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*",
-      "require": "./dist/*"
+    "./UserBaseContextProvider": {
+      "import": "./dist/src/UserBaseContextProvider.mjs",
+      "types": "./dist/src/UserBaseContextProvider.d.ts"
+    },
+    "./UserContext": {
+      "import": "./dist/src/UserContext.mjs",
+      "types": "./dist/src/UserContext.d.ts"
+    },
+    "./hocs/withUserProvider": {
+      "import": "./dist/src/hocs/withUserProvider.mjs",
+      "types": "./dist/src/hocs/withUserProvider.d.ts"
+    },
+    "./hooks/useAuth": {
+      "import": "./dist/src/hooks/useAuth/index.mjs",
+      "types": "./dist/src/hooks/useAuth/index.d.ts"
+    },
+    "./hooks/useAuth/index": {
+      "import": "./dist/src/hooks/useAuth/index.mjs",
+      "types": "./dist/src/hooks/useAuth/index.d.ts"
+    },
+    "./hooks/useAuth/managers/BasicProvider": {
+      "import": "./dist/src/hooks/useAuth/managers/BasicProvider.mjs",
+      "types": "./dist/src/hooks/useAuth/managers/BasicProvider.d.ts"
+    },
+    "./hooks/useAuth/useAuth": {
+      "import": "./dist/src/hooks/useAuth/useAuth.mjs",
+      "types": "./dist/src/hooks/useAuth/useAuth.d.ts"
+    },
+    "./index": {
+      "import": "./dist/src/index.mjs",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "type": "module",
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc --noEmit",
-    "build-assets:dev": "tsc && vite build --mode development --minify false",
+    "build-assets:dev": "tsc && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc && vite build"
+    "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.2",
+    "@plitzi/plitzi-ui": "^1.0.4",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",

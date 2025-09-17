@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash/get.js';
 import { useMemo } from 'react';
 
 import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
