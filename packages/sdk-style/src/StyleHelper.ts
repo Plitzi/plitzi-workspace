@@ -5,6 +5,8 @@ import set from 'lodash/set.js';
 import { StyleConstants, inheritableAttributesBase } from '@plitzi/sdk-shared';
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 
+import processCssString from './helpers/processCssString';
+
 import type {
   Schema,
   Element,
@@ -37,24 +39,6 @@ export const EMPTY_STYLE_SCHEMA: Style = {
   cache: ''
 };
 
-export const processCssString = (key: string, cssValue: string) => {
-  const result: string[] = [];
-  const varConcatRegex = /^var\((--[\w-]+)\)(\S.+)$/;
-  const match = cssValue.match(varConcatRegex);
-  if (match) {
-    const [, varName, rest] = match;
-    const parsedVar = `${varName}-parsed`;
-    const varDefinition = `${parsedVar}:var(${varName})${rest.trim()};`;
-    const finalValue = `${key}:var(${parsedVar});`;
-
-    result.push(varDefinition, finalValue);
-  } else {
-    result.push(`${key}:${cssValue};`);
-  }
-
-  return result;
-};
-
 export const processSelector = (
   selector: string,
   type?: TagType,
@@ -62,7 +46,8 @@ export const processSelector = (
 ) => {
   const result: string[] = [];
   (Object.keys(attributes) as StyleCategory[]).forEach(key => {
-    result.push(...processCssString(key, attributes[key] as string));
+    const partialResult = processCssString(key, attributes[key] as string);
+    result.push(...partialResult.variables, partialResult.value);
   });
 
   let finalSelector = selector;

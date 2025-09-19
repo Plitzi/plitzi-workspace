@@ -8,6 +8,7 @@ import get from 'lodash/get';
 import upperFirst from 'lodash/upperFirst';
 import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react';
 
+import { StyleBindingsAllowed } from '@plitzi/sdk-shared';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 
@@ -159,7 +160,7 @@ const DataSourceBinding = ({
   const bindingsAvailables = useMemo(
     () => ({
       attributes: Object.keys(attributes).map(attributeKey => ({ path: attributeKey, label: attributeKey })),
-      style: [],
+      style: StyleBindingsAllowed,
       initialState: [
         { path: 'visibility', label: 'Visibility' },
         ...Object.keys(definition.styleSelectors).map(styleSelector => ({

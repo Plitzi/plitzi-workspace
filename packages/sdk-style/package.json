@@ -609,6 +609,10 @@
       "import": "./dist/src/components/index.mjs",
       "types": "./dist/src/components/index.d.ts"
     },
+    "./helpers/processCssString": {
+      "import": "./dist/src/helpers/processCssString.mjs",
+      "types": "./dist/src/helpers/processCssString.d.ts"
+    },
     "./index": {
       "import": "./dist/src/index.mjs",
       "types": "./dist/src/index.d.ts"

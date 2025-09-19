@@ -107,7 +107,7 @@ export default defineConfig(({ mode, command }) => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: ['@plitzi/sdk-shared/setupTests.ts'],
+      setupFiles: ['../sdk-shared/setupTests.ts'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'html'],
