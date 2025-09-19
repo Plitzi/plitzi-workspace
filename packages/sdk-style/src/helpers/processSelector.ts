@@ -1,9 +1,11 @@
+import type { StyleCategory, StyleValue, TagType } from '@plitzi/sdk-shared';
+
 type CssResult = { variables: Record<string, string>; value: string };
 
 const getValue = (attribute: string, cssValue: string, nested: boolean = false) =>
   nested ? cssValue : `${attribute}:${cssValue};`;
 
-const processCssString = (attribute: string, value: string) => {
+export const processCssString = (attribute: string, value: string) => {
   const result: CssResult = { variables: {}, value: '' };
 
   const processCssFunction = (
@@ -100,4 +102,34 @@ const processCssString = (attribute: string, value: string) => {
   };
 };
 
-export default processCssString;
+const processSelector = (
+  selector: string,
+  type?: TagType,
+  attributes: Partial<Record<StyleCategory, StyleValue>> = {}
+) => {
+  const result: string[] = [];
+  (Object.keys(attributes) as StyleCategory[]).forEach(key => {
+    const partialResult = processCssString(key, attributes[key] as string);
+    result.push(...partialResult.variables, partialResult.value);
+  });
+
+  let finalSelector = selector;
+  switch (type) {
+    case 'class':
+    case 'state':
+      finalSelector = `.${selector}`;
+      break;
+
+    case 'id':
+      finalSelector = `#${selector}`;
+      break;
+
+    case 'element':
+    case 'parent':
+    default:
+  }
+
+  return `${finalSelector}{${result.join('')}}`;
+};
+
+export default processSelector;

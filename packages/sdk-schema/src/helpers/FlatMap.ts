@@ -5,7 +5,7 @@ import set from 'lodash/set.js';
 
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { calculateInheriting } from '@plitzi/sdk-style/StyleHelper';
+import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
 
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
 
@@ -495,6 +495,7 @@ class FlatMap {
       return variablesFound;
     }
 
+    const VARIABLE_REGEX_GLOBAL = new RegExp(VARIABLE_REGEX, 'g');
     Object.values(selectors)
       .filter(Boolean)
       .forEach(selector => {
@@ -505,10 +506,12 @@ class FlatMap {
           }
 
           Object.values(elementStyle.attributes)
-            .filter(attribute => typeof attribute === 'string' && attribute.includes('var('))
+            .filter(attribute => typeof attribute === 'string' && VARIABLE_REGEX.test(attribute))
             .forEach(attribute => {
-              [...(attribute as string).matchAll(VARIABLE_REGEX)].forEach(match => {
-                const variableFound = variables.find(variable => variable.name === match.groups?.token);
+              [...(attribute as string).matchAll(VARIABLE_REGEX_GLOBAL)].forEach(match => {
+                const variableFound = variables.find(
+                  variable => variable.name === match[1] || variable.name === match[2]
+                );
                 if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
                   variablesFound.push(variableFound);
                 }

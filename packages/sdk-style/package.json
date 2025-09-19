@@ -609,9 +609,41 @@
       "import": "./dist/src/components/index.mjs",
       "types": "./dist/src/components/index.d.ts"
     },
+    "./helpers": {
+      "import": "./dist/src/helpers/index.mjs",
+      "types": "./dist/src/helpers/index.d.ts"
+    },
+    "./helpers/calculateBindings": {
+      "import": "./dist/src/helpers/calculateBindings.mjs",
+      "types": "./dist/src/helpers/calculateBindings.d.ts"
+    },
+    "./helpers/calculateInheriting": {
+      "import": "./dist/src/helpers/calculateInheriting.mjs",
+      "types": "./dist/src/helpers/calculateInheriting.d.ts"
+    },
+    "./helpers/formatCssFromSelector": {
+      "import": "./dist/src/helpers/formatCssFromSelector.mjs",
+      "types": "./dist/src/helpers/formatCssFromSelector.d.ts"
+    },
+    "./helpers/generateStyleSelector": {
+      "import": "./dist/src/helpers/generateStyleSelector.mjs",
+      "types": "./dist/src/helpers/generateStyleSelector.d.ts"
+    },
+    "./helpers/index": {
+      "import": "./dist/src/helpers/index.mjs",
+      "types": "./dist/src/helpers/index.d.ts"
+    },
     "./helpers/processCssString": {
       "import": "./dist/src/helpers/processCssString.mjs",
       "types": "./dist/src/helpers/processCssString.d.ts"
+    },
+    "./helpers/processCssVariables": {
+      "import": "./dist/src/helpers/processCssVariables.mjs",
+      "types": "./dist/src/helpers/processCssVariables.d.ts"
+    },
+    "./helpers/processSelector": {
+      "import": "./dist/src/helpers/processSelector.mjs",
+      "types": "./dist/src/helpers/processSelector.d.ts"
     },
     "./index": {
       "import": "./dist/src/index.mjs",

@@ -21,7 +21,8 @@ const twigTemplate: DataSourceUtility<string, string | object, string> = {
   params: {
     template: {
       label: 'Template',
-      defaultValue: 'Token {{source}} from the value selected to bind previously, other tokens via autocomplete',
+      defaultValue:
+        'Tokens {{source}} from the value selected to bind previously, {{sourceTo}} is your original value, other tokens via autocomplete',
       type: 'codemirror-text'
     }
   },

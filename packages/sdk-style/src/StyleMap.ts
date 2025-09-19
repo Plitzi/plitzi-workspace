@@ -2,7 +2,7 @@ import get from 'lodash/get.js';
 import omit from 'lodash/omit.js';
 import set from 'lodash/set.js';
 
-import { processSelector } from './StyleHelper';
+import processSelector from './helpers/processSelector';
 
 import type { DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
 

@@ -54,6 +54,7 @@ const sanityValue = (value: string | boolean | number) => {
 const getProps = (
   element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] },
   internalProps: InternalPropsSTG1,
+  style: Record<string, string> = {} as Record<string, string>,
   plitziCustomComponent = false,
   dataSource = {} as Record<string, unknown>
 ) => {
@@ -64,9 +65,8 @@ const getProps = (
   }
 
   // Data Sources
-  let style = {};
   if (Object.keys(dataSource).length > 0) {
-    const bindingData = getBindingsDetails(dataSource, attributes, definition);
+    const bindingData = getBindingsDetails(dataSource, attributes, definition, style);
     ({ attributes, definition, style } = bindingData);
   }
 
@@ -178,6 +178,7 @@ export type UseInternalProps = {
   plitziCustomComponent?: boolean;
   dataSource: Record<string, unknown>;
   previewMode?: boolean;
+  style?: Record<string, string>;
 };
 
 const useInternalProps = ({
@@ -185,7 +186,8 @@ const useInternalProps = ({
   internalProps,
   plitziCustomComponent = false,
   dataSource,
-  previewMode = false
+  previewMode = false,
+  style
 }: UseInternalProps) => {
   const prevStateRef = useRef<Record<string, unknown>>({});
   const [state, setState] = useState<Record<string, unknown>>({});
@@ -292,7 +294,7 @@ const useInternalProps = ({
   }, []);
 
   const internalPropsParsed = useMemo<InternalPropsSTG2>(() => {
-    const internalPropsAux = getProps(element, internalProps, plitziCustomComponent, dataSource);
+    const internalPropsAux = getProps(element, internalProps, style, plitziCustomComponent, dataSource);
     const { attributes, definition } = internalPropsAux;
 
     return {
@@ -305,6 +307,7 @@ const useInternalProps = ({
     };
   }, [
     element,
+    style,
     internalProps,
     plitziCustomComponent,
     dataSource,

@@ -8,9 +8,9 @@ import get from 'lodash/get';
 import upperFirst from 'lodash/upperFirst';
 import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react';
 
-import { StyleBindingsAllowed } from '@plitzi/sdk-shared';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';

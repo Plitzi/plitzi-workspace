@@ -13,6 +13,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
 
 // Alias
 import CollectionContext from '@modules/Collection/CollectionContext';
@@ -67,8 +68,9 @@ const Sdk = props => {
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
     const cssVariables = variablesToCss(variables);
+    const cacheParsed = processCssVariables(cache, variables);
 
-    return `.plitzi-sdk{${cssVariables}}\n${cache}${segmentsCss.join('')}\n${schemaSettings?.customCss}`;
+    return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings?.customCss}`;
   }, [schemaSettings?.customCss, segments, cache, variables]);
   const styleParsed = useMemo(
     () => `${style[0][1]}\n${style[0][1]}\n${css}\n${externalStyle}`,
@@ -111,6 +113,7 @@ const Sdk = props => {
         ComponentContext,
         SchemaContext,
         SegmentsContext,
+        StyleContext,
         CollectionContext,
         NetworkContext,
         PluginsContext,

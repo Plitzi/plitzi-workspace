@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { calculateBindings } from '../../../StyleHelper';
+import calculateBindings from '../../../helpers/calculateBindings';
 
 import type { Element } from '@plitzi/sdk-shared';
 

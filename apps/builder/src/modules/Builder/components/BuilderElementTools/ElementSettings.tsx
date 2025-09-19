@@ -89,6 +89,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         ComponentContext,
         CollectionContext,
         NetworkContext,
+        StyleContext,
         PluginsContext,
         NavigationContext,
         DataSourceContext,

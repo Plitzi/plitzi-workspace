@@ -27,14 +27,15 @@ const getValue = (
 const getBindingsDetails = (
   dataSource: Record<string, unknown>,
   attributes: Element['attributes'],
-  definition: Element['definition']
+  definition: Element['definition'],
+  style: Record<string, string> = {}
 ) => {
   const { bindings } = definition;
   if (!bindings || (typeof bindings === 'object' && Object.keys(bindings).length === 0)) {
     return { attributes, style: {}, definition };
   }
 
-  return produce({ attributes: { ...attributes }, style: {}, definition: { ...definition } }, draft => {
+  return produce({ attributes: { ...attributes }, style: { ...style }, definition: { ...definition } }, draft => {
     Object.keys(bindings).forEach(bkey => {
       if (!Array.isArray(bindings[bkey]) || bindings[bkey].length === 0) {
         return;
@@ -59,6 +60,7 @@ const getBindingsDetails = (
           }
 
           let value = getValue(dataSource, source, fromPath, draft, bkey, toPath);
+          const toValue = get(draft, `${bkey}.${toPath}`, '');
           if (transformers && Array.isArray(transformers) && transformers.length > 0) {
             transformers.forEach(transformer => {
               const { type, action, params } = transformer;
@@ -71,7 +73,7 @@ const getBindingsDetails = (
                     break;
                   }
 
-                  value = callback(value, params, dataSource);
+                  value = callback(value, params, { ...dataSource, sourceTo: toValue });
                   break;
                 }
 

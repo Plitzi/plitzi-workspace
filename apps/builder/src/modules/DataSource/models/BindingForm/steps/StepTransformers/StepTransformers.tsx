@@ -5,7 +5,7 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
 import get from 'lodash/get';
 import set from 'lodash/set';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import utility from '@plitzi/sdk-data-source/utility/index';
 
@@ -23,6 +23,8 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
   const form = useFormContext<BindingSchema>();
   const { control, setValue } = form;
   const watchTransformers = useFormWatch(form, 'transformers');
+  const watchTransformersRef = useRef(watchTransformers);
+  watchTransformersRef.current = watchTransformers;
   const utilityOptions = useMemo(
     () => Object.values(utility).map(({ title, action }) => ({ label: title, value: action })),
     []
@@ -65,15 +67,15 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
   );
 
   const handleChangeParam = useCallback(
-    (index: number) => (id: string, paramValue: unknown) => {
+    (index: number, id: string, paramValue: unknown) => {
       setValue(
         'transformers',
-        produce(watchTransformers, draft => {
+        produce(watchTransformersRef.current, draft => {
           set(draft, `${index}.params.${id}`, paramValue);
         })
       );
     },
-    [setValue, watchTransformers]
+    [setValue]
   );
 
   return (
@@ -87,8 +89,6 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
             {value.map((transformer, i: number) => {
               const { action, params } = transformer;
               const paramDefinitions = get(utility, `${action}.params`, {}) as DataSourceUtilityParams;
-
-              console.log(paramDefinitions);
 
               return (
                 <div key={i} className="flex flex-col gap-4 rounded-sm border border-gray-300 p-2">
@@ -118,8 +118,9 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
                         id={paramKey}
                         value={paramValue}
                         label={label}
+                        index={i}
                         type={typeof type === 'function' ? type(params) : type}
-                        onChange={handleChangeParam(i)}
+                        onChange={handleChangeParam}
                         options={options}
                         dataSourceFields={dataSourceFields}
                       />

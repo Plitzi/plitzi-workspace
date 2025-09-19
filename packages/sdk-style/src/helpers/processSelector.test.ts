@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import processCssString from './processCssString';
+import { processCssString } from './processSelector';
 
-describe('processCssString', () => {
+describe('processCssString.processCssString', () => {
   it('generates a secondary variable only if concatenation breaks CSS', () => {
     let result = processCssString('background-image', 'url("var(--webUrl)/assets/img/bg.png")');
     expect(result).toEqual({

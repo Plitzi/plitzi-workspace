@@ -68,7 +68,7 @@ const useInspectorValues = <TAsValue extends boolean>({
       !!keys &&
       !asValue &&
       (Object.keys(pick(values, keys)) as StyleCategory[]).filter(
-        key => typeof values[key] === 'string' && values[key].includes('var(')
+        key => typeof values[key] === 'string' && VARIABLE_REGEX.test(values[key])
       ).length > 0,
     [keys, values, asValue]
   );
@@ -91,6 +91,7 @@ const useInspectorValues = <TAsValue extends boolean>({
       return valuesParsedAux;
     }
 
+    const VARIABLE_REGEX_GLOBAL = new RegExp(VARIABLE_REGEX, 'g');
     keys.forEach(key => {
       let value: StyleValue | undefined;
       if (strictMode) {
@@ -111,14 +112,13 @@ const useInspectorValues = <TAsValue extends boolean>({
         );
       }
 
-      if (replaceTokens) {
-        if (typeof value === 'string' && value.includes('var(')) {
-          [...value.matchAll(VARIABLE_REGEX)].forEach(match => {
-            if (match.groups?.token) {
-              value = (value as string).replace(match[0], get(variables, match.groups.token, match[0]) as string);
-            }
-          });
-        }
+      if (replaceTokens && typeof value === 'string' && VARIABLE_REGEX.test(value)) {
+        [...value.matchAll(VARIABLE_REGEX_GLOBAL)].forEach(match => {
+          value = (value as string).replace(
+            match[0],
+            get(variables, match[1] ? match[1] : match[2], match[0]) as string
+          );
+        });
       }
 
       valuesParsedAux[key] = value;

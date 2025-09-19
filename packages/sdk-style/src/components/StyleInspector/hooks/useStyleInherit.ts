@@ -4,7 +4,7 @@ import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSch
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
-import { calculateInheriting } from '../../../StyleHelper';
+import calculateInheriting from '../../../helpers/calculateInheriting';
 
 import type { Element } from '@plitzi/sdk-shared';
 

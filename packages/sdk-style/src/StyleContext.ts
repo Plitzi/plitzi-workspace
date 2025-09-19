@@ -2,9 +2,7 @@ import { createContext } from 'react';
 
 import { EMPTY_STYLE_SCHEMA } from './StyleHelper';
 
-import type { Style } from '@plitzi/sdk-shared';
-
-export type StyleContextValue = { style: Style };
+import type { StyleContextValue } from '@plitzi/sdk-shared';
 
 const styleContextDefaultValue: StyleContextValue = { style: EMPTY_STYLE_SCHEMA };
 

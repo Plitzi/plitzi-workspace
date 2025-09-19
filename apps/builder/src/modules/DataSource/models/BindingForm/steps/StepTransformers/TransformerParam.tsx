@@ -16,9 +16,10 @@ export type TransformerParamProps = {
   value?: string | number | boolean;
   label?: string;
   type?: DataSourceUtilityParamType;
+  index: number;
   options?: Option[] | Promise<Option[]>;
   dataSourceFields?: Record<string, SourceField[]>;
-  onChange?: (id: string, value: string | number | boolean) => void;
+  onChange?: (index: number, id: string, value: string | number | boolean) => void;
 };
 
 const TransformerParam = ({
@@ -26,20 +27,21 @@ const TransformerParam = ({
   id = '',
   value = '',
   type = 'text',
+  index,
   options,
   dataSourceFields,
   onChange
 }: TransformerParamProps) => {
-  const handleChangeText = useCallback((value: string) => onChange?.(id, value), [onChange, id]);
+  const handleChangeText = useCallback((value: string) => onChange?.(index, id, value), [onChange, index, id]);
 
   const handleChangeCheck = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => onChange?.(id, e.target.checked),
-    [onChange, id]
+    (e: ChangeEvent<HTMLInputElement>) => onChange?.(index, id, e.target.checked),
+    [onChange, index, id]
   );
 
   const handleChangeSelect = useCallback(
-    (option?: Exclude<Option, OptionGroup>) => onChange?.(id, option?.value ?? ''),
-    [onChange, id]
+    (option?: Exclude<Option, OptionGroup>) => onChange?.(index, id, option?.value ?? ''),
+    [onChange, index, id]
   );
 
   const label = useMemo(() => (!labelProp ? upperFirst(id) : labelProp), [labelProp, id]);
@@ -60,7 +62,8 @@ const TransformerParam = ({
         ],
         []
       ),
-      'source'
+      { type: 'token', value: 'source' },
+      { type: 'token', value: 'sourceTo' }
     ];
   }, [dataSourceFields]);
 

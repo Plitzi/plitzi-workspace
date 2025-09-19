@@ -3,7 +3,8 @@ import get from 'lodash/get.js';
 import omit from 'lodash/omit.js';
 import set from 'lodash/set.js';
 
-import { generateCache, processSelector } from './StyleHelper';
+import processSelector from './helpers/processSelector';
+import { generateCache } from './StyleHelper';
 
 import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
 

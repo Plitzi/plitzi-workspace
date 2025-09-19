@@ -4,7 +4,8 @@ import get from 'lodash/get';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 
-import { generateCache, generateStyleSelector, makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
+import { generateCache, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import { generateID } from '../../helpers/utils';
 

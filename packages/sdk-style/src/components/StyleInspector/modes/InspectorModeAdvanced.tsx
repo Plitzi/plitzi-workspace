@@ -9,7 +9,12 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { StyleConstants } from '@plitzi/sdk-shared/style/styleConstants';
 
-import { cssToSelectors, getReadOnlyRangesFromContent, formatCssFromSelector } from '../../../StyleHelper';
+// import { cssToSelectors, getReadOnlyRangesFromContent, formatCssFromSelector } from '../../../StyleHelper';
+
+import formatCssFromSelector, {
+  cssToSelectors,
+  getReadOnlyRangesFromContent
+} from '../../../helpers/formatCssFromSelector';
 
 import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { DisplayMode, StyleBaseItem, StyleItem } from '@plitzi/sdk-shared';

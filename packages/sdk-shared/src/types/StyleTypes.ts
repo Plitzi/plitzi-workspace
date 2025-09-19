@@ -23,3 +23,5 @@ export type Style = {
   platform: StylePlatform;
   cache: string;
 };
+
+export type StyleContextValue = { style: Style };

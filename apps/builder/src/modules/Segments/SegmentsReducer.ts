@@ -5,7 +5,8 @@ import omit from 'lodash/omit';
 import set from 'lodash/set';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import { generateCache, processSelector } from '@plitzi/sdk-style/StyleHelper';
+import processSelector from '@plitzi/sdk-style/helpers/processSelector';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import type {
   DisplayMode,

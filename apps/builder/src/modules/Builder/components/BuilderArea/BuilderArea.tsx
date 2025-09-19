@@ -18,6 +18,7 @@ import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -81,8 +82,9 @@ const BuilderArea = ({
   const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
   const css = useMemo(() => {
     const cssVariables = variablesToCss(variables);
+    const cacheParsed = processCssVariables(cache, variables);
 
-    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cache}\n${customCss}\n${externalStyle}`;
+    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cacheParsed}\n${customCss}\n${externalStyle}`;
   }, [customCss, cache, externalStyle, variables]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const [dragTree, setDragTreeState] = useState(false);
@@ -181,6 +183,7 @@ const BuilderArea = ({
         ComponentContext,
         ContainerRootContext,
         SchemaContext,
+        StyleContext,
         SegmentsContext,
         CollectionContext,
         NetworkContext,

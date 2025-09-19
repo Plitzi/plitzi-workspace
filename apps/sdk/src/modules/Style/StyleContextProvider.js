@@ -30,9 +30,9 @@ const StyleContextProvider = props => {
 
     switch (type) {
       case STYLE_TYPE_NORMAL:
-        return { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '', ...internalData.style };
+        return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '', ...internalData.style };
       default:
-        return { platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
+        return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
     }
   }, [styleProp, internalData]);
 

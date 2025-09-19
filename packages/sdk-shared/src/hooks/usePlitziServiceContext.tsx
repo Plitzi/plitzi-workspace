@@ -13,7 +13,8 @@ import type {
   PluginsContextValue,
   SchemaContextValue,
   SegmentsContextValue,
-  StateManagerContextValue
+  StateManagerContextValue,
+  StyleContextValue
 } from '../types';
 import type { Context, ReactNode } from 'react';
 
@@ -28,6 +29,7 @@ export type PlitziServiceContextValue = {
   contexts: {
     DataSourceContext: Context<DataSourceContextValue>;
     SchemaContext: Context<SchemaContextValue>;
+    StyleContext: Context<StyleContextValue>;
     SegmentsContext: Context<SegmentsContextValue>;
     NavigationContext: Context<NavigationContextValue>;
     CollectionContext: Context<CollectionContextValue>;
