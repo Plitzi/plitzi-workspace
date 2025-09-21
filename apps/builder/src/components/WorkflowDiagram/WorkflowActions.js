@@ -1,7 +1,7 @@
 // Packages
 import React, { useCallback, use } from 'react';
 import classNames from 'classnames';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 
 // Relatives
 import WorkflowContext from './WorkflowContext';

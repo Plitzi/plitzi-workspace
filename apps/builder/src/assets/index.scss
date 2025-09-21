@@ -1,7 +1,6 @@
 @use 'sass:meta';
 
 @import './tailwind.css';
-@import '@plitzi/plitzi-ui-components/style.css';
 @import '@plitzi/plitzi-ui/style.css';
 
 @include meta.load-css('./variables');

@@ -2,7 +2,7 @@
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import Button from '@plitzi/plitzi-ui-components/Button';
+import Button from '@plitzi/plitzi-ui/Button';
 
 /**
  * @param {{
@@ -17,11 +17,11 @@ const NodeActions = props => {
   const handleClickRemove = useCallback(() => onRemove(), [onRemove]);
 
   return (
-    <div className={classNames('flex flex-col justify-around h-full', className)}>
+    <div className={classNames('flex h-full flex-col justify-around', className)}>
       <Button
         intent="custom"
         size="custom"
-        className="flex items-start flex items-center w-7 h-7 text-sm text-red-400 hover:text-red-500"
+        className="flex h-7 w-7 items-center text-sm text-red-400 hover:text-red-500"
         onClick={handleClickRemove}
         title="Remove"
       >

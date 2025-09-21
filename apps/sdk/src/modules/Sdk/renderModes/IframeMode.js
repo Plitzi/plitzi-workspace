@@ -1,6 +1,6 @@
 // Packages
 import React, { useMemo } from 'react';
-import ContainerFrame from '@plitzi/plitzi-ui-components/ContainerFrame';
+import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';

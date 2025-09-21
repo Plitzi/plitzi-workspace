@@ -113,7 +113,7 @@ const CollectionRecordForm = ({
   //                   }
   //                   placeholder={fieldName}
   //                   className="mb-4 w-full"
-  //                   inputClassName={classNames('rounded-sm', { 'bg-blue-200': fieldHovered === i })}
+  //                   className={classNames({ 'bg-blue-200': fieldHovered === i })}
   //                   onChange={e => onChange(e.target.value)}
   //                   value={value}
   //                   error={error}

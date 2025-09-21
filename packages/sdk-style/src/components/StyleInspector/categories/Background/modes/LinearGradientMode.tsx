@@ -28,7 +28,7 @@ const LinearGradientMode = (/* { partialValue, onChange }: LinearGradientModePro
       </div>
       <div className="flex">
         <InspectorLabel label="Linear Gradient" sectionTitle />
-        <Input type="text" value={backgroundImage} onChange={handleChangeImage} inputClassName="rounded-b rounded-tr" />
+        <Input type="text" value={backgroundImage} onChange={handleChangeImage} />
       </div> */}
     </>
   );

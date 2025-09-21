@@ -1,6 +1,6 @@
 // Packages
 import React, { use, useMemo, useRef, useCallback } from 'react';
-import ContainerRootContext from '@plitzi/plitzi-ui-components/ContainerRoot/ContainerRootContext';
+import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 
 // Monorepo
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';

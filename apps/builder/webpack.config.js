@@ -31,7 +31,8 @@ const packages = {
   '@plitzi/sdk-shared': path.resolve(__dirname, '../../packages/sdk-shared/src'),
   '@plitzi/sdk-state': path.resolve(__dirname, '../../packages/sdk-state/src'),
   '@plitzi/sdk-style': path.resolve(__dirname, '../../packages/sdk-style/src'),
-  '@plitzi/sdk-variables': path.resolve(__dirname, '../../packages/sdk-variables/src')
+  '@plitzi/sdk-variables': path.resolve(__dirname, '../../packages/sdk-variables/src'),
+  '@plitzi/plitzi-sdk': path.resolve(__dirname, '../../apps/sdk/src')
 };
 
 // process.traceDeprecation = true; // enable in case to debug node
@@ -67,6 +68,7 @@ const buildBase = (env, args) => {
     entry: { 'plitzi-builder': './src/index' },
     output: {
       pathinfo: false,
+      chunkLoading: false,
       path: DESTINATION,
       filename: '[name].js',
       chunkFilename: 'plitzi-builder-chunk-[name].js',
@@ -86,6 +88,11 @@ const buildBase = (env, args) => {
         '@node_modules': path.resolve('node_modules'),
         '@pmodules': path.resolve('./src/modules'),
         '@pcomponents': path.resolve('./src/components'),
+        // SDK
+        '@modules': path.resolve('../sdk/src/modules'),
+        '@components': path.resolve('../sdk/src/components'),
+        '@plitzi/plitzi-sdk/plitzi-sdk.css': path.resolve('../sdk/dist/plitzi-sdk.css'),
+        handlebars: 'handlebars/dist/handlebars.min.js',
         path: false
       }
     },
@@ -148,31 +155,32 @@ const buildBase = (env, args) => {
           test: /\.m?js$/,
           resolve: { fullySpecified: false }
         },
-        // {
-        //   test: /(\.jsx|\.js)$/,
-        //   exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
-        //   use: [
-        //     {
-        //       loader: 'thread-loader',
-        //       options: {
-        //         poolTimeout: watch ? Infinity : 2000
-        //       }
-        //     },
-        //     {
-        //       loader: 'babel-loader',
-        //       options: {
-        //         presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]], // [classic] will disable new JSX compiler and [automatic] will enable it
-        //         plugins: [
-        //           '@babel/plugin-proposal-class-properties',
-        //           '@babel/plugin-transform-runtime',
-        //           '@babel/plugin-transform-async-to-generator',
-        //           '@babel/plugin-transform-private-methods',
-        //           env.WEBPACK_SERVE && 'react-refresh/babel'
-        //         ].filter(Boolean)
-        //       }
-        //     }
-        //   ]
-        // },
+        // @todo: USED DUE THAT THE SDK STILL IN JS
+        {
+          test: /(\.jsx|\.js)$/,
+          exclude: /(node_modules|bower_components)\/(?!(@plitzi\/sdk-[a-z0-9_-]+)\/).*/,
+          use: [
+            {
+              loader: 'thread-loader',
+              options: {
+                poolTimeout: watch ? Infinity : 2000
+              }
+            },
+            {
+              loader: 'babel-loader',
+              options: {
+                presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]], // [classic] will disable new JSX compiler and [automatic] will enable it
+                plugins: [
+                  '@babel/plugin-proposal-class-properties',
+                  '@babel/plugin-transform-runtime',
+                  '@babel/plugin-transform-async-to-generator',
+                  '@babel/plugin-transform-private-methods',
+                  env.WEBPACK_SERVE && 'react-refresh/babel'
+                ].filter(Boolean)
+              }
+            }
+          ]
+        },
         {
           test: /\.(png|jpg|gif|svg)$/,
           loader: 'url-loader',
@@ -300,6 +308,7 @@ const buildBase = (env, args) => {
 
   return modules;
 };
+
 const buildCDN = (env, args) => {
   const modules = buildBase(env, args);
 

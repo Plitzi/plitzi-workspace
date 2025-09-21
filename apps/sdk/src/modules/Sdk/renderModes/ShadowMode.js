@@ -1,6 +1,6 @@
 // Packages
 import React, { useMemo } from 'react';
-import ContainerShadow from '@plitzi/plitzi-ui-components/ContainerShadow';
+import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 
 // Monorepo
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';

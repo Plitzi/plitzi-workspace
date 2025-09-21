@@ -1,7 +1,7 @@
 @use 'sass:meta';
 
 .plitzi-component__markdown {
-  @include meta.load-css('@plitzi/plitzi-ui-components/Markdown/Assets/index.scss');
+  @include meta.load-css('@plitzi/plitzi-ui/Markdown/Assets/index.scss');
 
   &.plitzi-component__markdown--edit-mode {
     .markdown {

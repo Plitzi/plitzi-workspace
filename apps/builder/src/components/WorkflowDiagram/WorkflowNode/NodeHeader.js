@@ -2,8 +2,8 @@
 import React, { useCallback, use, useMemo } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
-import Select from '@plitzi/plitzi-ui-components/Select';
-import Select2 from '@plitzi/plitzi-ui-components/Select2';
+import Select from '@plitzi/plitzi-ui/Select';
+import Select2 from '@plitzi/plitzi-ui/Select2';
 import upperFirst from 'lodash/upperFirst';
 
 // Relatives
@@ -36,6 +36,7 @@ const NodeHeader = props => {
 
   const handleChangeType = useCallback(
     e => {
+      // @todo: this is broken, check plitzi-ui implementation
       e.stopPropagation();
       onChange({ type: e.target.value, action: '', elementId: '', params: {} });
     },
@@ -44,6 +45,7 @@ const NodeHeader = props => {
 
   const handleChangeAction = useCallback(
     option => {
+      // @todo: this is broken, check plitzi-ui implementation
       const { value } = option;
       let elementId = '';
       let action = value;
@@ -73,11 +75,11 @@ const NodeHeader = props => {
   );
 
   return (
-    <div className={classNames('flex flex-col p-2 w-full', className)}>
+    <div className={classNames('flex w-full flex-col p-2', className)}>
       <div className="flex items-center">
         <div
           className={classNames(
-            'flex items-center justify-center cursor-pointer border border-gray-300 rounded-xl h-12 w-12',
+            'flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl border border-gray-300',
             {
               'bg-blue-400 text-white': type === 'trigger',
               'bg-purple-400 text-white': type === 'callback'
@@ -89,7 +91,7 @@ const NodeHeader = props => {
           {type === 'callback' && <i className="fa-solid fa-puzzle-piece" />}
         </div>
         <Select
-          className="rounded-sm basis-0 grow border-none hover:bg-gray-100 hover:px-1 font-bold !ring-0 [&:not(:hover)]:bg-none cursor-pointer text-xs py-1 px-1 ml-2"
+          className="ml-2 grow basis-0 cursor-pointer rounded-sm border-none px-1 py-1 text-xs font-bold !ring-0 hover:bg-gray-100 hover:px-1 [&:not(:hover)]:bg-none"
           size="custom"
           intent="custom"
           value={type}
@@ -101,7 +103,7 @@ const NodeHeader = props => {
         <NodeActions onRemove={onRemove} />
       </div>
       <Select2
-        className="rounded-sm w-full"
+        className="w-full rounded-sm"
         size="sm"
         placeholder={`Select a ${upperFirst(type)}`}
         value={`${elementId ? `${elementId}_` : ''}${action}`}

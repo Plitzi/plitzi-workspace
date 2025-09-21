@@ -174,7 +174,7 @@ export {
   sdkComponents
 };
 
-export const version = VERSION;
+export const version = typeof VERSION !== 'undefined' ? VERSION : '';
 
 export const getStateManager = () => stateManager;
 

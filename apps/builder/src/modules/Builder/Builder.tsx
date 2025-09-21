@@ -9,6 +9,7 @@ import BuilderArea from './components/BuilderArea';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 
 import type { ComponentPlugin, BuilderContextValue } from '@plitzi/sdk-shared';
+import type { FC } from 'react';
 
 export type BuilderProps = {
   pages?: string[];
@@ -16,7 +17,7 @@ export type BuilderProps = {
   externalStyle?: string;
 };
 
-export type BuilderPluginProps = { renderType: string; component: ComponentPlugin };
+export type BuilderPluginProps = { renderType: string; component: ComponentPlugin; settings?: FC<unknown> };
 
 const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProps) => {
   const builderContextValue = use(BuilderContext);

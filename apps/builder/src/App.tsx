@@ -174,12 +174,13 @@ const App = (props: AppProps) => {
         return;
       }
 
-      const { renderType, component } = child.props as BuilderPluginProps;
+      const { renderType, component, settings } = child.props as BuilderPluginProps;
       if (!renderType || !(component as ComponentPlugin | undefined)) {
         return;
       }
 
       component.type = renderType;
+      component.pluginSettings = settings;
       localComponents[renderType] = component;
     });
 

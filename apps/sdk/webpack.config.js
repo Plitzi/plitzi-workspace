@@ -65,6 +65,7 @@ const buildBase = (env, args) => {
     entry: { 'plitzi-sdk': './src/index.js' },
     output: {
       pathinfo: false,
+      chunkLoading: false,
       path: DESTINATION,
       filename: '[name].js',
       chunkFilename: 'plitzi-sdk-chunk-[name].js',
@@ -195,7 +196,12 @@ const buildBase = (env, args) => {
         }
       ]
     },
-    externals: { react: 'react', 'react-dom': 'react-dom', 'react-dom/client': 'react-dom/client' },
+    externals: {
+      react: 'react',
+      'react-dom': 'react-dom',
+      'react-dom/client': 'react-dom/client',
+      'react-dom/server': 'react-dom/server'
+    },
     plugins: [
       new webpack.DefinePlugin({
         VERSION: JSON.stringify(PACKAGE.version)
@@ -290,7 +296,6 @@ const buildSSR = (env, args) => {
     entry: { 'plitzi-sdk': './src/indexSSR.ts' },
     target: 'node',
     output: { ...modules.output, path: `${modules.output.path}/ssr/` },
-    externals: {},
     plugins: [
       new PlitziPlugin({
         isHost: true,

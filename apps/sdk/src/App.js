@@ -11,7 +11,7 @@ import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
 import get from 'lodash/get';
 import classNames from 'classnames';
 import { HelmetProvider } from 'react-helmet-async';
-import ContainerRoot from '@plitzi/plitzi-ui-components/ContainerRoot';
+import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import Provider from '@plitzi/plitzi-ui/Provider';
 
 // Monorepo
@@ -171,8 +171,6 @@ const App = props => {
 
     return components;
   }, [children]);
-
-  // console.log(children, localCustomComponents);
 
   if (renderMode === RENDER_MODE_WIDGET) {
     return (

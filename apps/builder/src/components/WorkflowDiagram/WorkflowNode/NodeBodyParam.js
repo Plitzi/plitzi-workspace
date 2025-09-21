@@ -3,8 +3,8 @@ import React, { useCallback } from 'react';
 import classNames from 'classnames';
 import noop from 'lodash/noop';
 import upperFirst from 'lodash/upperFirst';
-import Input from '@plitzi/plitzi-ui-components/Input';
-import Select2 from '@plitzi/plitzi-ui-components/Select2';
+import Input from '@plitzi/plitzi-ui/Input';
+import Select2 from '@plitzi/plitzi-ui/Select2';
 
 const optionsDefault = [];
 
@@ -22,30 +22,21 @@ const optionsDefault = [];
 const NodeBodyParam = props => {
   const { className = '', id = '', value = '', type = 'text', options = optionsDefault, onChange = noop } = props;
 
-  const handleChange = useCallback(
-    e => {
-      if (type === 'text') {
-        onChange(id, e.target.value);
-      } else if (type === 'select') {
-        onChange(id, e.value);
-      }
-    },
-    [id, onChange]
-  );
+  const handleChange = useCallback(value => onChange(id, value), [id, onChange]);
+
+  const handleChangeSelect = useCallback(option => onChange(id, option?.value ?? ''), [id, onChange]);
 
   return (
-    <div className={classNames('flex flex-col w-full [&:not(:first-child)]:mt-4', className)}>
+    <div className={classNames('flex w-full flex-col [&:not(:first-child)]:mt-4', className)}>
       <label htmlFor={id}>{upperFirst(id)}</label>
-      {type === 'text' && (
-        <Input className="w-full" inputClassName="rounded-sm" id={id} value={value} onChange={handleChange} />
-      )}
+      {type === 'text' && <Input className="w-full" id={id} value={value} onChange={handleChange} />}
       {type === 'select' && (
         <Select2
-          className="rounded-sm w-full"
+          className="w-full"
           size="sm"
           placeholder={`Select a ${upperFirst(id)}`}
           value={value}
-          onChange={handleChange}
+          onChange={handleChangeSelect}
           options={options}
         />
       )}
