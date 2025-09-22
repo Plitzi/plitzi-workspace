@@ -28,7 +28,7 @@ const Resources = () => {
       setLoading(true);
       const result = await query<{ pageInfo: PageInfo; edges: TResource[] }>(
         'SpaceResources',
-        { filter: { name: { contains: search } }, pageSize: 30 },
+        { filter: search ? { name: { contains: search } } : {}, pageSize: 30 },
         'network-only'
       );
 

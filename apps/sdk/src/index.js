@@ -2,7 +2,6 @@
 // Packages
 import React, { useCallback } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
-// import PluginTyped from '@plitzi/plitzi-plugin-typed';
 
 // Monorepo
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -60,7 +59,6 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
         {pluginKeys.map(pluginType => (
           <Sdk.Plugin key={pluginType} renderType={pluginType} component={plugins[pluginType]} />
         ))}
-        {/* <PlitziSdk.Plugin renderType="typed" component={PluginTyped} /> */}
       </App>
     );
   };
