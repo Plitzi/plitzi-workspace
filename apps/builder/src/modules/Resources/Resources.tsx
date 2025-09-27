@@ -1,181 +1,121 @@
-import Heading from '@plitzi/plitzi-ui/Heading';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
-import get from 'lodash/get';
-import { useCallback, use, useEffect, useMemo, useState } from 'react';
+import Button from '@plitzi/plitzi-ui/Button';
+import Flex from '@plitzi/plitzi-ui/Flex';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { useCallback, use } from 'react';
+import useSWR from 'swr';
 
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-import Resource from './Resource';
-import ResourceManager from './ResourceManager';
+import ResourceCdnForm from './Models/ResourceCdnForm';
+import ResourcesCdn from './ResourcesCdn';
 
-import type { ResourceFile, ResourceWithFile, Resource as TResource } from './types';
-import type { ComponentDefinition, PageInfo } from '@plitzi/sdk-shared';
-
-const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
+import type { Cdn } from './types';
+import type { PageInfo } from '@plitzi/sdk-shared';
 
 const Resources = () => {
-  const { query } = use(NetworkContext);
-  const { addToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [, /* hasNextPage */ setHasNextPage] = useState(false);
-  const [resources, setResources] = useState<TResource[]>([]);
-  const { plugins, remove, add } = use(PluginsContext);
+  const { query, mutate } = use(NetworkContext);
+  const { showModal } = useModal();
+  const {
+    data,
+    isLoading,
+    mutate: mutateCdns
+  } = useSWR<{ edges?: Cdn[]; pageInfo?: PageInfo } | undefined | null>('SpaceCdns', query);
 
-  const fetch = useCallback(
-    async (search: string) => {
-      setLoading(true);
-      const result = await query<{ pageInfo: PageInfo; edges: TResource[] }>(
-        'SpaceResources',
-        { filter: search ? { name: { contains: search } } : {}, pageSize: 30 },
-        'network-only'
-      );
+  const handleClickAddCdn = useCallback(async () => {
+    const response = await showModal<{
+      name: string;
+      domain: string;
+      provider?: 's3' | 'r2';
+      region?: string;
+      endpoint?: string;
+      bucketName?: string;
+    }>(
+      <Modal.Header>
+        <h4>Add CDN Provider</h4>
+      </Modal.Header>,
+      ({ onSubmit, onClose }) => (
+        <Modal.Body>
+          <ResourceCdnForm onSubmit={onSubmit} onClose={onClose} />
+        </Modal.Body>
+      )
+    );
 
-      if (result instanceof Error || !result) {
-        return;
-      }
+    if (!response) {
+      return;
+    }
 
-      const { pageInfo, edges } = result;
-      setResources(edges);
-      setHasNextPage(pageInfo.hasNextPage);
-      setLoading(false);
-    },
-    [query]
-  );
+    const { name, domain, provider, region, endpoint, bucketName } = response;
 
-  const handleResourceRemoved = useCallback(
-    (resource: TResource) => () => {
-      if (resource.type === 'plugin') {
-        const plugin = Object.values(plugins).find(plugin => plugin.type === resource.metadata.root && plugin.isMain);
-        if (plugin) {
-          void remove?.(plugin.type);
-        }
-      }
+    const responseMutation = await mutate('SpaceAddCdn', { name, domain, provider, region, endpoint, bucketName });
+    if (!responseMutation || responseMutation instanceof Error) {
+      return;
+    }
 
-      void fetch('');
-    },
-    [fetch, plugins, remove]
-  );
-
-  // const handleResourceUpdated = type => async settings => {
-  //   const plugin = plugins[type];
-  //   if (!plugin) {
-  //     return;
-  //   }
-
-  //   if (await update({ ...plugin, settings: { ...plugin.settings, ...settings } })) {
-  //     addToast(
-  //       <div>
-  //         Plugin <b>{plugin.name}</b> Settings Updated
-  //       </div>,
-  //       {
-  //         appeareance: 'success',
-  //         autoDismiss: true,
-  //         placement: 'top-right'
-  //       }
-  //     );
-  //   }
-  // };
-
-  const handleUploaded = useCallback(
-    (resource: ResourceWithFile) => {
-      if (resource.type === 'plugin') {
-        const pluginType = get(resource, 'metadata.root');
-        const path = get(resource, 'path');
-        if (pluginType && path) {
-          void add?.(pluginType, path);
-        }
-      }
-
-      void fetch('');
-    },
-    [add, fetch]
-  );
-
-  const handleUploadAdded = useCallback(
-    (resource: ResourceFile) => {
-      if (resource.resourceType !== 'plugin') {
-        return true;
-      }
-
-      const pluginType = get(resource, 'metadata.root') as string;
-      if (plugins[pluginType] as ComponentDefinition | undefined) {
-        addToast(
-          <div>
-            Plugin <b>{get(resource, 'metadata.definition.name')}</b> already installed
-          </div>,
-          {
-            appeareance: 'info',
-            autoDismiss: true,
-            placement: 'top-right'
-          }
-        );
-      }
-
-      return !plugins[pluginType];
-    },
-    [plugins, addToast]
-  );
-
-  useEffect(() => {
-    void fetch('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const finalResources = useMemo(() => {
-    const pluginsArr = Object.values(plugins);
-
-    return resources.map(resource => {
-      if (resource.type === 'plugin') {
-        const plugin = pluginsArr.find(plugin => plugin.resource === resource.path);
-        if (!plugin) {
-          return resource;
-        }
-
-        return { ...resource, metadata: plugin.manifest };
-      }
-
-      return resource;
-    });
-  }, [resources, plugins]);
+    void mutateCdns();
+  }, [mutate, mutateCdns, showModal]);
 
   return (
-    <div className="flex w-full grow basis-0 flex-col overflow-y-auto">
-      <ResourceManager
-        className="shrink-0"
-        uploadTypes={uploadTypes}
-        onUploaded={handleUploaded}
-        onUploadAdded={handleUploadAdded}
-      />
-      {!loading && finalResources.length > 0 && (
-        <div className="flex min-h-[200px] grow basis-0 flex-col overflow-y-auto px-2">
-          <Heading as="h5" className="mb-2">
-            Uploaded
-          </Heading>
-          <div className="grid grid-cols-2 gap-2 overflow-y-auto pb-1">
-            {finalResources.map(resource => (
-              <Resource
-                className={classNames({ 'col-span-2': resource.type === 'plugin' })}
-                key={resource.id}
-                id={resource.id}
-                type={resource.type}
-                title={resource.name}
-                src={resource.path}
-                metadata={resource.type === 'plugin' ? resource.metadata : undefined}
-                onRemove={handleResourceRemoved(resource)}
-              />
-            ))}
-          </div>
+    <div className="flex w-full grow basis-0 flex-col gap-4 overflow-y-auto">
+      <Flex gap={2} direction="column">
+        <Button size="sm" onClick={handleClickAddCdn} iconPlacement="before">
+          <Button.Icon icon="fa-solid fa-plus" />
+          Add CDN Provider
+        </Button>
+        {/* <Input placeholder="Search" value={filter} onChange={handleChange} label="">
+          <Input.Icon icon="fa-solid fa-magnifying-glass" />
+        </Input> */}
+      </Flex>
+      {!isLoading && (
+        <div className="flex flex-col gap-4">
+          {data?.edges?.map((cdn, i) => (
+            <ResourcesCdn key={i} id={cdn.id} identifier={cdn.identifier} name={cdn.name} />
+          ))}
         </div>
       )}
-      {loading && (
+      {isLoading && (
         <div className="flex grow flex-col items-center justify-center">
           <i className="fa-solid fa-sync fa-spin fa-3x" title="Loading" />
         </div>
       )}
     </div>
   );
+
+  // return (
+  //   <div className="flex w-full grow basis-0 flex-col overflow-y-auto">
+  //     <ResourceManager
+  //       className="shrink-0"
+  //       uploadTypes={uploadTypes}
+  //       onUploaded={handleUploaded}
+  //       onUploadAdded={handleUploadAdded}
+  //     />
+  //     {!loading && finalResources.length > 0 && (
+  //       <div className="flex min-h-[200px] grow basis-0 flex-col overflow-y-auto px-2">
+  //         <Heading as="h5" className="mb-2">
+  //           Uploaded
+  //         </Heading>
+  //         <div className="grid grid-cols-2 gap-2 overflow-y-auto pb-1">
+  //           {finalResources.map(resource => (
+  //             <Resource
+  //               className={classNames({ 'col-span-2': resource.type === 'plugin' })}
+  //               key={resource.id}
+  //               id={resource.id}
+  //               type={resource.type}
+  //               title={resource.name}
+  //               src={resource.path}
+  //               metadata={resource.type === 'plugin' ? resource.metadata : undefined}
+  //               onRemove={handleResourceRemoved(resource)}
+  //             />
+  //           ))}
+  //         </div>
+  //       </div>
+  //     )}
+  //     {loading && (
+  //       <div className="flex grow flex-col items-center justify-center">
+  //         <i className="fa-solid fa-sync fa-spin fa-3x" title="Loading" />
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 };
 
 export default Resources;

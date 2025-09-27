@@ -6,12 +6,13 @@ import { useCallback, useState } from 'react';
 import getPluginManifest from './helpers/getPluginManifest';
 import TemporalResource from './TemporalResource';
 
-import type { ResourceFile, ResourceWithFile } from '../types';
+import type { ResourceFile, ResourceWithFile } from '../../types';
 
 const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 
 export type ResourceManagerProps = {
   className?: string;
+  cdnIdentifier?: string;
   uploadTypes?: string[];
   onUploaded?: (resource: ResourceWithFile) => void;
   onUploadAdded?: (file: ResourceFile) => boolean;
@@ -19,6 +20,7 @@ export type ResourceManagerProps = {
 
 const ResourceManager = ({
   className,
+  cdnIdentifier,
   uploadTypes = defaultUploadTypes,
   onUploaded,
   onUploadAdded
@@ -104,7 +106,7 @@ const ResourceManager = ({
         onError={handleError}
         error={error}
         types={uploadTypes}
-        className="h-40 p-4"
+        className="border-primary-500 mb-2 h-40 p-4"
         size="sm"
         maxSize={10240000}
       />
@@ -119,6 +121,7 @@ const ResourceManager = ({
               .map(file => (
                 <TemporalResource
                   key={file.id}
+                  cdnIdentifier={cdnIdentifier}
                   file={file}
                   type={file.resourceType}
                   title={file.name}

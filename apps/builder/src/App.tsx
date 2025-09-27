@@ -84,6 +84,7 @@ const App = (props: AppProps) => {
         return undefined;
       }
 
+      const cache = new InMemoryCache();
       const noTypenameFromVariablesLink = new RemoveTypenameFromVariablesLink();
       const httpWithUploadLink = new UploadHttpLink({ uri: server.graphqlServer, fetch: customFetch });
       const authLink = new SetContextLink(prev => {
@@ -103,11 +104,9 @@ const App = (props: AppProps) => {
         return { headers };
       });
 
+      const mainLink = ApolloLink.from([authLink, noTypenameFromVariablesLink, httpWithUploadLink]);
       if (!includeSubscriptions || !server.subscriptionServer) {
-        return new ApolloClient({
-          link: authLink.concat(noTypenameFromVariablesLink, httpWithUploadLink),
-          cache: new InMemoryCache()
-        });
+        return new ApolloClient({ link: mainLink, cache });
       }
 
       const subscriptionClient = createClient({
@@ -141,16 +140,11 @@ const App = (props: AppProps) => {
             definition.kind === Kind.OPERATION_DEFINITION && definition.operation === OperationTypeNode.SUBSCRIPTION
           );
         },
-        wsLink,
-        authLink.concat(noTypenameFromVariablesLink, httpWithUploadLink)
+        wsLink.concat(noTypenameFromVariablesLink),
+        mainLink
       );
 
-      const client: ApolloClient & {
-        wsLink?: GraphQLWsLink;
-        subscriptionClient?: Client;
-      } = new ApolloClient({ link, cache: new InMemoryCache() });
-
-      client.wsLink = wsLink;
+      const client: ApolloClient & { subscriptionClient?: Client } = new ApolloClient({ link, cache });
       client.subscriptionClient = subscriptionClient;
 
       return client;

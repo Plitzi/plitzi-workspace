@@ -9,10 +9,10 @@ import { useState, use, useCallback } from 'react';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-import ResourceContent from './ResourceManager/ResourceContent';
-import ResourceName from './ResourceManager/ResourceName';
-import ResourceType from './ResourceManager/ResourceType';
-import ResourceUploadStatus from './ResourceManager/ResourceUploadStatus';
+import ResourceContent from './components/ResourceManager/ResourceContent';
+import ResourceName from './components/ResourceManager/ResourceName';
+import ResourceType from './components/ResourceManager/ResourceType';
+import ResourceUploadStatus from './components/ResourceManager/ResourceUploadStatus';
 
 import type { PluginManifest } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';

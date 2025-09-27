@@ -1,10 +1,11 @@
 import { gql } from '@apollo/client/core';
 
 const SpaceResourcesQuery = gql`
-  query SpaceResourcesQuery($filter: PluginInput, $page: Int, $pageSize: Int, $offset: Int) {
-    SpaceResources(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
+  query SpaceResourcesQuery($cdnIdentifier: String!, $filter: ResourceInput, $page: Int, $pageSize: Int, $offset: Int) {
+    SpaceResources(cdnIdentifier: $cdnIdentifier, filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {
         id
+        cdnIdentifier
         name
         type
         size

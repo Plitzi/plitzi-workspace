@@ -20,6 +20,9 @@ import SegmentStyleUpdateSelectorMutation from './Segment/SegmentStyleUpdateSele
 import SegmentStyleUpdateVariableMutation from './Segment/SegmentStyleUpdateVariableMutation';
 import SegmentUpdateElementMutation from './Segment/SegmentUpdateElementMutation';
 import SegmentUpdateMutation from './Segment/SegmentUpdateMutation';
+import SpaceAddCdnMutation from './Space/cdns/SpaceAddCdnMutation';
+import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
+import SpaceUpdateCdnMutation from './Space/cdns/SpaceUpdateCdnMutation';
 import SpaceAddPageFolderMutation from './Space/folders/SpaceAddPageFolderMutation';
 import SpaceRemovePageFolderMutation from './Space/folders/SpaceRemovePageFolderMutation';
 import SpaceUpdatePageFolderMutation from './Space/folders/SpaceUpdatePageFolderMutation';
@@ -27,9 +30,10 @@ import SpaceAddPageMutation from './Space/pages/SpaceAddPageMutation';
 import SpaceHomePageMutation from './Space/pages/SpaceHomePageMutation';
 import SpaceRemovePageMutation from './Space/pages/SpaceRemovePageMutation';
 import SpaceUpdatePageMutation from './Space/pages/SpaceUpdatePageMutation';
+import SpaceAddResourceMutation from './Space/resources/SpaceAddResourceMutation';
+import SpaceRemoveResourceMutation from './Space/resources/SpaceRemoveResourceMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
-import SpaceAddResourceMutation from './Space/SpaceAddResourceMutation';
 import SpaceAddTemplateMutation from './Space/SpaceAddTemplateMutation';
 import SpaceCloneElementMutation from './Space/SpaceCloneElementMutation';
 import SpaceDeployMutation from './Space/SpaceDeployMutation';
@@ -37,7 +41,6 @@ import SpaceMoveElementMutation from './Space/SpaceMoveElementMutation';
 import SpacePublishMutation from './Space/SpacePublishMutation';
 import SpaceRemoveElementMutation from './Space/SpaceRemoveElementMutation';
 import SpaceRemovePluginMutation from './Space/SpaceRemovePluginMutation';
-import SpaceRemoveResourceMutation from './Space/SpaceRemoveResourceMutation';
 import SpaceUpdateElementMutation from './Space/SpaceUpdateElementMutation';
 import SpaceUpdateMutation from './Space/SpaceUpdateMutation';
 import SpaceUpdatePluginMutation from './Space/SpaceUpdatePluginMutation';
@@ -81,6 +84,9 @@ const Mutations = {
   SpaceRemovePlugin: SpaceRemovePluginMutation,
   SpaceAddResource: SpaceAddResourceMutation,
   SpaceRemoveResource: SpaceRemoveResourceMutation,
+  SpaceAddCdn: SpaceAddCdnMutation,
+  SpaceUpdateCdn: SpaceUpdateCdnMutation,
+  SpaceRemoveCdn: SpaceRemoveCdnMutation,
   SpacePublish: SpacePublishMutation,
   SpaceDeploy: SpaceDeployMutation,
   SpaceUpdateSettings: SpaceUpdateSettingsMutation,

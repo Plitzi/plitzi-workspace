@@ -6,6 +6,7 @@ import InitQuery from './InitQuery';
 import PluginsQuery from './PluginsQuery';
 import SegmentQuery from './Segment/SegmentQuery';
 import SegmentsQuery from './Segment/SegmentsQuery';
+import SpaceCdnsQuery from './Space/SpaceCdnsQuery';
 import SpaceDeploymentsQuery from './Space/SpaceDeploymentsQuery';
 import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
@@ -15,6 +16,7 @@ const Queries = {
   SpaceLatestRevision: SpaceLatestRevisionQuery,
   SpaceResources: SpaceResourcesQuery,
   SpaceDeployments: SpaceDeploymentsQuery,
+  SpaceCdns: SpaceCdnsQuery,
   Plugins: PluginsQuery,
   Collection: CollectionQuery,
   Collections: CollectionsQuery,

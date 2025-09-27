@@ -81,7 +81,7 @@
   "devDependencies": {
     "eslint": "^9.36.0",
     "typescript": "^5.9.2",
-    "vite": "^7.1.6"
+    "vite": "^7.1.7"
   },
   "dependencies": {
     "@plitzi/sdk-auth": "workspace:*",

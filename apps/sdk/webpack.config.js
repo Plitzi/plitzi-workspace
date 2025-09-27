@@ -354,7 +354,9 @@ const buildCDN = (env, args) => {
   };
 };
 
-if (process.argv.includes('serve')) {
+if (process.argv.includes('onlyAnalyze')) {
+  module.exports = [buildBase];
+} else if (process.argv.includes('serve')) {
   module.exports = [buildCDN];
 } else if (process.argv.includes('measure') || process.argv.includes('watch')) {
   module.exports = [buildBase, buildCDN];

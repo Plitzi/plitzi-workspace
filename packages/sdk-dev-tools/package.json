@@ -298,7 +298,7 @@
     "eslint": "^9.36.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "vite": "^7.1.6"
+    "vite": "^7.1.7"
   },
   "peerDependencies": {
     "react": "^19.1.1",
@@ -309,7 +309,7 @@
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@uiw/react-json-view": "^2.0.0-alpha.38",
+    "@uiw/react-json-view": "^2.0.0-alpha.39",
     "classnames": "^2.5.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1"

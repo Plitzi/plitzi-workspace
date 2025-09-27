@@ -53,7 +53,7 @@ const ContainerSettings = () => {
         void eventBridge.emit('main', 'schemaUpdateSettings', '', 'expirationTimePath');
         setSettings(state => ({
           ...state,
-          userProvider: value as 'basic' | 'auth0' | '',
+          [name]: value as 'basic' | 'auth0' | '',
           auth0Domain: '',
           auth0ClientId: '',
           loginUrl: '',

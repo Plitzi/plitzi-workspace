@@ -9,11 +9,12 @@ import ResourceName from './ResourceName';
 import ResourceType from './ResourceType';
 import ResourceUploadStatus from './ResourceUploadStatus';
 
-import type { Resource, ResourceFile, ResourceWithFile } from '../types';
+import type { Resource, ResourceFile, ResourceWithFile } from '../../types';
 import type { PluginManifest } from '@plitzi/sdk-shared';
 
 export type TemporalResourceProps = {
   className?: string;
+  cdnIdentifier?: string;
   id?: string;
   file?: ResourceFile;
   type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
@@ -26,6 +27,7 @@ export type TemporalResourceProps = {
 };
 
 const TemporalResource = ({
+  cdnIdentifier = '',
   id = '',
   type = 'image',
   src = '',
@@ -91,7 +93,7 @@ const TemporalResource = ({
     setUploading(true);
     const response = await mutate<Resource>(
       'SpaceAddResource',
-      { resource: file, type, compression: type === 'plugin' ? 'gzip' : undefined },
+      { cdnIdentifier, resource: file, type, compression: type === 'plugin' ? 'gzip' : undefined },
       false,
       false,
       { customFetch: true, onProgress, onAbortPossible, onError }
@@ -111,7 +113,7 @@ const TemporalResource = ({
     setUploading(false);
     setProcessing(false);
     abortHandler.current = null;
-  }, [addToast, file, isUploaded, mutate, onAbortPossible, onError, onProgress, onUploaded, type]);
+  }, [addToast, cdnIdentifier, file, isUploaded, mutate, onAbortPossible, onError, onProgress, onUploaded, type]);
 
   useEffect(() => {
     return () => {
