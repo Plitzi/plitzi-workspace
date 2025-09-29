@@ -8,15 +8,21 @@ import Resource from './Resource';
 import type { Resource as TResource } from './types';
 
 export type ResourcesListProps = {
+  className?: string;
   items: TResource[];
-  onRemove?: () => void;
+  onRemove?: (item: TResource) => void;
 };
 
-const ResourcesList = ({ items, onRemove }: ResourcesListProps) => {
+const ResourcesList = ({ className, items, onRemove }: ResourcesListProps) => {
   const { plugins, remove } = use(PluginsContext);
 
   const handleResourceRemoved = useCallback(
-    (resource: TResource) => () => {
+    (id: string) => {
+      const resource = items.find(item => item.id === id);
+      if (!resource) {
+        return;
+      }
+
       if (resource.type === 'plugin') {
         const plugin = Object.values(plugins).find(plugin => plugin.type === resource.metadata.root && plugin.isMain);
         if (plugin) {
@@ -24,13 +30,13 @@ const ResourcesList = ({ items, onRemove }: ResourcesListProps) => {
         }
       }
 
-      onRemove?.();
+      onRemove?.(resource);
     },
-    [onRemove, plugins, remove]
+    [items, onRemove, plugins, remove]
   );
 
   return (
-    <div className="grid grid-cols-2 gap-2 overflow-y-auto pb-1">
+    <div className={classNames('grid grid-cols-2 gap-2 overflow-y-auto pb-1', className)}>
       {items.map(resource => (
         <Resource
           className={classNames({ 'col-span-2': resource.type === 'plugin' })}
@@ -40,7 +46,7 @@ const ResourcesList = ({ items, onRemove }: ResourcesListProps) => {
           title={resource.name}
           src={resource.path}
           metadata={resource.type === 'plugin' ? resource.metadata : undefined}
-          onRemove={handleResourceRemoved(resource)}
+          onRemove={handleResourceRemoved}
         />
       ))}
     </div>

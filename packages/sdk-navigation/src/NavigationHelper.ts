@@ -79,7 +79,7 @@ function getPageFullPath(
   }
 
   const pageFoldersObj = pageFolders.reduce((acum, pageFolder) => ({ ...acum, [pageFolder.id]: pageFolder }), {});
-  const path = [recursiveFolderSlug(pageFoldersObj, folderId), pageSlug].filter(Boolean).join('/');
+  const path = [recursiveFolderSlug(pageFoldersObj, folderId), pageSlug ? pageSlug : pageId].filter(Boolean).join('/');
   if (asString) {
     return `/${path}`;
   }

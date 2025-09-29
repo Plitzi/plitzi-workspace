@@ -1,5 +1,20 @@
 import { gql } from '@apollo/client/core';
 
+import type { PageInfo } from '@plitzi/sdk-shared';
+
+export type Domain = {
+  default: boolean;
+  domain: string;
+  environment: 'main' | 'production' | 'staging' | 'development';
+  id: string;
+  isVerified: boolean;
+  revision: number | null;
+};
+
+export type TSpaceDeploymentsQuery = {
+  SpaceDeployments: { edges: Domain[]; pageInfo: PageInfo };
+};
+
 const SpaceDeploymentsQuery = gql`
   query SpaceDeploymentsQuery($filter: PluginInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceDeployments(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {

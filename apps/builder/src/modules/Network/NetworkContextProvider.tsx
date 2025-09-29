@@ -16,19 +16,9 @@ import NetworkContext from './NetworkContext';
 import Queries from './Queries';
 
 import type { NetworkInternalContextValue } from './contexts/NetworkInternalContext';
+import type { QueriesMap } from './Queries';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
-import type {
-  Server,
-  CollectionRecord,
-  SegmentRaw,
-  CollectionRaw,
-  ComponentDefinition,
-  PluginRaw,
-  Schema,
-  SchemaRaw,
-  Style,
-  ServerEnvironment
-} from '@plitzi/sdk-shared';
+import type { Server, CollectionRecord, ComponentDefinition, Schema, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
@@ -60,20 +50,23 @@ const NetworkContextProvider = ({
   const [internalData, setInternalData] = useState<NetworkInternalContextValue>({} as NetworkInternalContextValue);
 
   const query = useCallback(
-    async <T = unknown,>(
-      queryKey: keyof typeof Queries,
+    async <T extends keyof QueriesMap>(
+      queryKey: T,
       variables?: Record<string, unknown>,
       fetchPolicy: FetchPolicy = 'network-only',
       silentError = false
-    ): Promise<T | Error | undefined | null> => {
-      if (!(Queries[queryKey] as DocumentNode | undefined)) {
+    ): Promise<QueriesMap[T]> => {
+      const document = Queries[queryKey];
+      if (!(document as DocumentNode | undefined)) {
         addToast('Query not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
+
+        throw new Error(`Query ${queryKey} not found`);
       }
 
-      let result: ApolloClient.QueryResult<T>;
+      let result: ApolloClient.QueryResult<QueriesMap[T]>;
       try {
-        result = await client.query<T>({
-          query: Queries[queryKey],
+        result = await client.query<QueriesMap[T]>({
+          query: document,
           variables: { environment, ...variables },
           fetchPolicy
         });
@@ -90,14 +83,10 @@ const NetworkContextProvider = ({
           });
         }
 
-        return e as Error;
+        throw e;
       }
 
-      if (result.data && result.data[queryKey] !== undefined) {
-        return result.data[queryKey] as T;
-      }
-
-      return result.data as T;
+      return result.data as QueriesMap[T];
     },
     [addToast, client, environment]
   );
@@ -171,85 +160,69 @@ const NetworkContextProvider = ({
   }, []);
 
   const initQuery = useCallback(async () => {
-    const response = await query<{
-      Space?: {
-        plugins: PluginRaw[];
-        schema: SchemaRaw;
-        style: Style;
-        segments?: SegmentRaw[];
-      };
-      Collections: { edges: CollectionRaw[] };
-      Templates: { edges: Template[] };
-    }>('Init', { environment, limit: 99 }, 'network-only', true);
-    if (CombinedGraphQLErrors.is(response) || response instanceof Error) {
-      setLoading(false);
-      if (
-        'networkError' in response &&
-        'statusCode' in (response.networkError as { statusCode?: number }) &&
-        (response.networkError as { statusCode?: number }).statusCode === 401
-      ) {
-        setError('Access not authorized');
-      } else if ('networkError' in response) {
-        setError('Service not available');
-      } else {
-        setError(response.message);
-      }
+    try {
+      const response = await query('Init', { environment, limit: 99 }, 'network-only', true);
+      if (response as QueriesMap['Init'] | undefined) {
+        const data = cloneDeep(response);
+        const { Space, Collections, Templates } = data;
+        if (!Space) {
+          setError('Space Not Found');
+          setLoading(false);
 
-      return;
-    }
+          return;
+        }
 
-    if (response) {
-      const data = cloneDeep(response);
-      const { Space, Collections, Templates } = data;
-      if (!Space) {
-        setError('Space Not Found');
-        setLoading(false);
+        let plugins: Record<string, ComponentDefinition> = {};
+        if (Space.plugins.length > 0) {
+          plugins = await pluginParseDefinition(Space.plugins);
+          registerDefinition(plugins);
+        }
 
-        return;
-      }
-
-      let plugins: Record<string, ComponentDefinition> = {};
-      if (Space.plugins.length > 0) {
-        plugins = await pluginParseDefinition(Space.plugins);
-        registerDefinition(plugins);
-      }
-
-      setInternalData({
-        schema: {
-          ...EMPTY_SCHEMA.schema,
-          ...Space.schema,
-          flat: Space.schema.flat.reduce<Schema['flat']>((obj, item) => ({ ...obj, [item.id]: item }), {})
-        },
-        plugins,
-        style: Space.style,
-        templates: Templates.edges.reduce<Record<string, Template>>(
-          (obj, item) => ({ ...obj, [item.id as string]: item }),
-          {}
-        ),
-        collections: Collections.edges.reduce(
-          (obj, item) => ({
-            ...obj,
-            [item.id]: {
-              ...item,
-              records: item.records.edges.reduce<CollectionRecord[]>((obj2, itemRecord) => [...obj2, itemRecord], [])
-            }
-          }),
-          {}
-        ),
-        segments:
-          Space.segments
-            ?.map(segment => ({
-              ...segment,
-              schema: {
-                ...get(segment, 'schema'),
-                flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+        setInternalData({
+          schema: {
+            ...EMPTY_SCHEMA.schema,
+            ...Space.schema,
+            flat: Space.schema.flat.reduce<Schema['flat']>((obj, item) => ({ ...obj, [item.id]: item }), {})
+          },
+          plugins,
+          style: Space.style,
+          templates: Templates.edges.reduce<Record<string, Template>>(
+            (obj, item) => ({ ...obj, [item.id as string]: item }),
+            {}
+          ),
+          collections: Collections.edges.reduce(
+            (obj, item) => ({
+              ...obj,
+              [item.id]: {
+                ...item,
+                records: item.records.edges.reduce<CollectionRecord[]>((obj2, itemRecord) => [...obj2, itemRecord], [])
               }
-            }))
-            .reduce((obj, segment) => ({ ...obj, [segment.identifier]: segment }), {}) ?? {}
-      });
+            }),
+            {}
+          ),
+          segments:
+            Space.segments
+              ?.map(segment => ({
+                ...segment,
+                schema: {
+                  ...get(segment, 'schema'),
+                  flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+                }
+              }))
+              .reduce((obj, segment) => ({ ...obj, [segment.identifier]: segment }), {}) ?? {}
+        });
+      }
+    } catch (e: unknown) {
+      if ((e as Error).message === 'Failed to fetch') {
+        setError('Service not available');
+      } else if ('statusCode' in (e as Record<string, unknown>) && (e as Record<string, unknown>).statusCode === 401) {
+        setError('Access not authorized');
+      } else {
+        setError((e as Error).message);
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [environment, query, registerDefinition]);
 
   useEffect(() => {

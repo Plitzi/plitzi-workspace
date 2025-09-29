@@ -1,5 +1,11 @@
 import { gql } from '@apollo/client/core';
 
+import type { PageInfo } from '@plitzi/sdk-shared';
+
+export type TPluginsQuery = {
+  Plugins: { edges: unknown[]; pageInfo: PageInfo };
+};
+
 const PluginsQuery = gql`
   query PluginsQuery($filter: PluginInput, $page: Int, $pageSize: Int, $offset: Int) {
     Plugins(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {

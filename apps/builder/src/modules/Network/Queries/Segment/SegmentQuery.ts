@@ -1,5 +1,11 @@
 import { gql } from '@apollo/client/core';
 
+import type { SegmentRaw } from '@plitzi/sdk-shared';
+
+export type TSegmentQuery = {
+  Segment: SegmentRaw;
+};
+
 const SegmentQuery = gql`
   query SegmentQuery($id: String, $identifier: String, $environment: String!) {
     Segment(id: $id, identifier: $identifier, environment: $environment) {

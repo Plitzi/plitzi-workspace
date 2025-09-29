@@ -7,14 +7,7 @@ import { z } from 'zod';
 
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
-type Domain = {
-  default: boolean;
-  domain: string;
-  environment: 'main' | 'production' | 'staging' | 'development';
-  id: string;
-  isVerified: boolean;
-  revision: number | null;
-};
+import type { Domain } from '@pmodules/Network/Queries/Space/SpaceDeploymentsQuery';
 
 const deployFormSchema = z.object({
   environment: z.enum(['main', 'production', 'staging', 'development']),
@@ -45,18 +38,17 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
   useEffect(() => {
     const getLatestRevision = async () => {
       setLoading(true);
-      const result = await query<{ snapshot: { revision: number } | null } | undefined>(
-        'SpaceLatestRevision',
-        { environment: watchEnvironment },
-        'network-only'
-      );
-      setLoading(false);
-      if (result && !(result instanceof Error) && result.snapshot) {
-        setLatestRevision(result.snapshot.revision);
-      } else if (result instanceof Error) {
-        addToast(result.message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
-      } else {
-        setLatestRevision(0);
+      try {
+        const result = await query('SpaceLatestRevision', { environment: watchEnvironment }, 'network-only');
+        if ((result as typeof result | undefined) && result.SpaceLatestRevision) {
+          setLatestRevision(result.SpaceLatestRevision.snapshot.revision);
+        } else {
+          setLatestRevision(0);
+        }
+      } catch (e: unknown) {
+        addToast((e as Error).message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -80,14 +72,16 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    const result = await query<{
-      edges: Domain[];
-      pageInfo: { hasPrevPage: boolean; hasNextPage: boolean; from: number; to: number; total: number };
-    }>('SpaceDeployments', { pageSize: 30 }, 'network-only');
-    if (result && !(result instanceof Error)) {
-      const { /* pageInfo, */ edges } = result;
-      setDomains(edges);
-      // setHasNextPage(pageInfo.hasNextPage);
+    try {
+      const result = await query('SpaceDeployments', { pageSize: 30 }, 'network-only');
+      if (result as typeof result | undefined) {
+        const { /* pageInfo, */ edges } = result.SpaceDeployments;
+        setDomains(edges);
+        // setHasNextPage(pageInfo.hasNextPage);
+      }
+    } catch {
+      // Nothing
+    } finally {
       setLoading(false);
     }
   }, [query]);

@@ -1,6 +1,6 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
-import { useState, useEffect, useRef, useCallback, use } from 'react';
+import { useState, useEffect, useRef, useCallback, use, useMemo } from 'react';
 
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
@@ -19,7 +19,6 @@ export type TemporalResourceProps = {
   file?: ResourceFile;
   type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
   title?: string;
-  src?: string;
   metadata?: PluginManifest;
   onUploaded?: (resource: ResourceWithFile) => void;
   onUploadCancel?: (file: File) => void;
@@ -30,7 +29,6 @@ const TemporalResource = ({
   cdnIdentifier = '',
   id = '',
   type = 'image',
-  src = '',
   title = '',
   className = '',
   file,
@@ -48,6 +46,7 @@ const TemporalResource = ({
   const [error, setError] = useState<string | undefined>(undefined);
   const { addToast } = useToast();
   const abortHandler = useRef<null | (() => void)>(null);
+  const src = useMemo(() => (file ? URL.createObjectURL(file) : ''), [file]);
 
   const onProgress = useCallback((ev: { loaded: number; total: number }) => {
     const progress = ev.loaded / ev.total;

@@ -1,5 +1,11 @@
 import { gql } from '@apollo/client/core';
 
+import type { CollectionRaw } from '@plitzi/sdk-shared';
+
+export type TCollectionQuery = {
+  Collection: CollectionRaw;
+};
+
 const CollectionQuery = gql`
   query CollectionQuery($id: String!, $recordsFilter: JsonObject) {
     Collection(id: $id) {

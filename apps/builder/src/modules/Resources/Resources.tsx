@@ -2,24 +2,17 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
-import useSWR from 'swr';
 
+import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import ResourceCdnForm from './Models/ResourceCdnForm';
 import ResourcesCdn from './ResourcesCdn';
 
-import type { Cdn } from './types';
-import type { PageInfo } from '@plitzi/sdk-shared';
-
 const Resources = () => {
-  const { query, mutate } = use(NetworkContext);
+  const { mutate } = use(NetworkContext);
   const { showModal } = useModal();
-  const {
-    data,
-    isLoading,
-    mutate: mutateCdns
-  } = useSWR<{ edges?: Cdn[]; pageInfo?: PageInfo } | undefined | null>('SpaceCdns', query);
+  const { data, isLoading, mutate: mutateCdns } = useGraphQL('SpaceCdns');
 
   const handleClickAddCdn = useCallback(async () => {
     const response = await showModal<{
@@ -67,8 +60,8 @@ const Resources = () => {
       </Flex>
       {!isLoading && (
         <div className="flex flex-col gap-4">
-          {data?.edges?.map((cdn, i) => (
-            <ResourcesCdn key={i} id={cdn.id} identifier={cdn.identifier} name={cdn.name} />
+          {data?.SpaceCdns.edges.map((cdn, i) => (
+            <ResourcesCdn key={i} identifier={cdn.identifier} name={cdn.name} />
           ))}
         </div>
       )}

@@ -78,21 +78,27 @@ const Settings = ({ mode = 'page', href = '#', target = 'self', onUpdate }: Sett
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
-      <Select value={target} label="Target" onChange={handleChange('target')}>
+      <Select value={target} label="Target" onChange={handleChange('target')} size="sm">
         <option value="blank">Blank</option>
         <option value="self">Self</option>
         <option value="parent">Parent</option>
         <option value="top">Top</option>
       </Select>
-      <Select value={mode} label="Mode" onChange={handleChangeMode}>
+      <Select value={mode} label="Mode" onChange={handleChangeMode} size="sm">
         <option value="page">Space Page</option>
         <option value="internal">Inside Space</option>
         <option value="external">Outside Space</option>
       </Select>
-      {mode !== 'page' && <Input value={href} label="Url" onChange={handleChangeHref} />}
+      {mode !== 'page' && <Input value={href} label="Url" onChange={handleChangeHref} size="sm" />}
       {mode === 'page' && (
-        <>
-          <Select value={href} label="Url" onChange={handleChangeHref} className="rounded-t">
+        <div className="flex flex-col">
+          <Select
+            value={href}
+            label="Url"
+            onChange={handleChangeHref}
+            className={{ inputContainer: 'rounded-t' }}
+            size="sm"
+          >
             <option value="" disabled>
               Select a page
             </option>
@@ -102,8 +108,8 @@ const Settings = ({ mode = 'page', href = '#', target = 'self', onUpdate }: Sett
               </option>
             ))}
           </Select>
-          <div className="truncate rounded-b border-r border-b border-l border-gray-300 p-1 text-xs">{fullpath}</div>
-        </>
+          <div className="truncate rounded-b border-r border-b border-l border-gray-200 p-1 text-xs">{fullpath}</div>
+        </div>
       )}
     </div>
   );

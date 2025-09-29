@@ -1,5 +1,11 @@
 import { gql } from '@apollo/client/core';
 
+import type { CollectionRaw, PageInfo } from '@plitzi/sdk-shared';
+
+export type TCollectionsQuery = {
+  Collections: { edges: CollectionRaw[]; pageInfo: PageInfo };
+};
+
 const CollectionsQuery = gql`
   query CollectionsQuery($filter: JsonObject, $cursor: String, $limit: Int) {
     Collections(filter: $filter, cursor: $cursor, limit: $limit) {

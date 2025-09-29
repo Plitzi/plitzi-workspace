@@ -2,7 +2,7 @@
 import { createContext } from 'react';
 
 import type Mutations from './Mutations';
-import type Queries from './Queries';
+import type { QueriesMap } from './Queries';
 import type Subscriptions from './Subscriptions';
 import type { ApolloClient, ApolloLink, FetchPolicy, Observable } from '@apollo/client/core';
 import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
@@ -15,12 +15,12 @@ export type NetworkContextValue = {
     includeEnvironment?: boolean,
     uploadOptions?: object
   ) => Promise<T | Error | undefined | null>;
-  query: <T = unknown>(
-    queryKey: keyof typeof Queries,
+  query: <T extends keyof QueriesMap>(
+    queryKey: T,
     variables?: Record<string, unknown>,
     fetchPolicy?: FetchPolicy,
     silentError?: boolean
-  ) => Promise<T | Error | undefined | null>;
+  ) => Promise<QueriesMap[T]>;
   // subscribe: () => void;
   subscriptionManager: {
     subscribe: (

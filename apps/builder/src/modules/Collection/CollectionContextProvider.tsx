@@ -7,7 +7,7 @@ import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import CollectionReducer, { CollectionsActions } from './CollectionReducer';
 
-import type { Collection, CollectionRaw, CollectionRecord, PageInfo } from '@plitzi/sdk-shared';
+import type { Collection, CollectionRecord } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type CollectionContextProviderProps = {
@@ -136,16 +136,25 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
 
   const fetchCollections = useCallback(
     async (filter: string | object, cursor?: string, limit?: number, append: Collection[] = [], store = true) => {
-      const result = await query<{ edges: Collection[] }>('Collections', { filter, cursor, limit }, 'network-only');
-      if (!result || result instanceof Error) {
+      try {
+        const result = await query('Collections', { filter, cursor, limit }, 'network-only');
+        if (!(result as typeof result | undefined)) {
+          return [];
+        }
+
+        const collections = result.Collections.edges.map<Collection>(collection => ({
+          ...collection,
+          records: collection.records.edges.reduce<CollectionRecord[]>((obj2, record) => [...obj2, record], [])
+        }));
+
+        if (store) {
+          collectionsAddMany([...append, ...collections]);
+        }
+
+        return collections;
+      } catch {
         return [];
       }
-
-      if (store) {
-        collectionsAddMany([...append, ...result.edges]);
-      }
-
-      return result.edges;
     },
     [query, collectionsAddMany]
   );
@@ -157,16 +166,25 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
         variables.recordsFilter = recordsFilter;
       }
 
-      const result = await query<CollectionRaw>('Collection', variables, 'network-only');
-      if (!result || result instanceof Error) {
+      try {
+        const result = await query('Collection', variables, 'network-only');
+        if (!(result as typeof result | undefined)) {
+          return undefined;
+        }
+
+        const collection: Collection = {
+          ...result.Collection,
+          records: result.Collection.records.edges.reduce<CollectionRecord[]>((obj2, record) => [...obj2, record], [])
+        };
+
+        if (store) {
+          collectionsAdd(collection);
+        }
+
+        return collection;
+      } catch {
         return undefined;
       }
-
-      if (store) {
-        collectionsAdd({ ...result, records: result.records.edges });
-      }
-
-      return result;
     },
     [query, collectionsAdd]
   );
@@ -182,36 +200,40 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       append: CollectionRecord[] = [],
       store = true
     ) => {
-      const result = await query<{ pageInfo: PageInfo; edges: CollectionRecord[] }>(
-        'CollectionRecords',
-        { collectionId, filter, cursor, limit },
-        'network-only'
-      );
-      if (!result || result instanceof Error) {
+      try {
+        const result = await query('CollectionRecords', { collectionId, filter, cursor, limit }, 'network-only');
+        if (!(result as typeof result | undefined)) {
+          return undefined;
+        }
+
+        if (store) {
+          collectionRecordsAddMany(collectionId, [...append, ...result.CollectionRecords.edges]);
+        }
+
+        return result.CollectionRecords;
+      } catch {
         return undefined;
       }
-
-      if (store) {
-        collectionRecordsAddMany(collectionId, [...append, ...result.edges]);
-      }
-
-      return result;
     },
     [query, collectionRecordsAddMany]
   );
 
   const fetchRecord = useCallback(
     async (collectionId: string, id: string, store = true) => {
-      const result = await query<CollectionRecord>('CollectionRecord', { collectionId, id }, 'network-only');
-      if (!result || result instanceof Error) {
+      try {
+        const result = await query('CollectionRecord', { collectionId, id }, 'network-only');
+        if (!(result as typeof result | undefined)) {
+          return undefined;
+        }
+
+        if (store) {
+          collectionRecordsAdd(collectionId, result.CollectionRecord);
+        }
+
+        return result.CollectionRecord;
+      } catch {
         return undefined;
       }
-
-      if (store) {
-        collectionRecordsAdd(collectionId, result);
-      }
-
-      return result;
     },
     [query, collectionRecordsAdd]
   );

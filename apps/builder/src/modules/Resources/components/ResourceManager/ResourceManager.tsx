@@ -38,8 +38,8 @@ const ResourceManager = ({
 
       const files: ResourceFile[] = data as ResourceFile[];
       const filesApproved: ResourceFile[] = [];
-      for (const file of files) {
-        file.id = Date.now() + Math.floor(Math.random() * 200);
+      for (const [index, file] of files.entries()) {
+        file.id = index;
         const { type } = file;
         switch (type) {
           case 'image/gif':
@@ -126,7 +126,6 @@ const ResourceManager = ({
                   type={file.resourceType}
                   title={file.name}
                   metadata={file.metadata}
-                  src={URL.createObjectURL(file)}
                   onUploaded={handleResourceUploaded}
                   onUploadCancel={handleResourceUploadCancelled}
                 />

@@ -58,7 +58,7 @@ export type CollectionContextValue = {
     append?: Collection[],
     store?: boolean
   ) => Promise<Collection[]>;
-  fetchCollection: (id: string, recordsFilter: string, store?: boolean) => Promise<CollectionRaw | undefined>;
+  fetchCollection: (id: string, recordsFilter: string, store?: boolean) => Promise<Collection | undefined>;
   addCollection: (
     name: string,
     namePlural: string,

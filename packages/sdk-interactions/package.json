@@ -91,7 +91,7 @@
     "vite": "^7.1.7"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.6",
+    "@plitzi/plitzi-ui": "^1.0.7",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

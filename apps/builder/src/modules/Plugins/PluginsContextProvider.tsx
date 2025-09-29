@@ -93,14 +93,14 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
       // pluginsAddMany([...append, ...result.data.Plugins.edges]);
 
-      return result;
+      return result.Plugins;
     },
     [query]
   );
 
   const add = useCallback(
     async (pluginType: string, resource?: string) => {
-      const result = await mutate<{ plugins: PluginRaw[] }>('SpaceAddPlugin', { pluginType, resource });
+      const result = await mutate<{ plugins: PluginRaw[] }>('SpaceAddPlugin', { pluginType, resource, override: true });
       if (result && !(result instanceof Error)) {
         const plugin = result.plugins.find(plug => plug.type === pluginType);
         if (!plugin) {

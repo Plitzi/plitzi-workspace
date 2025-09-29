@@ -31,4 +31,11 @@ export type Cdn = {
   id: number;
   identifier: string;
   name: string;
+  domain: string;
+  provider: 's3' | 'r2';
+  region: string;
+  endpoint?: string;
+  bucketName: string;
+  createdAt: number;
+  updatedAt: number;
 };

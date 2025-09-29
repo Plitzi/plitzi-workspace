@@ -1,5 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Heading from '@plitzi/plitzi-ui/Heading';
+import Icon from '@plitzi/plitzi-ui/Icon';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
@@ -58,53 +59,66 @@ const Resource = ({
     }
 
     void showModal(
-      <Modal.Header>
+      <Modal.Header size="sm" alignItems="center">
         <h4 className="font-bold">Resource Details</h4>
       </Modal.Header>,
-      <Modal.Body>
-        <div className="mx-4 mt-2 mb-4 flex gap-4">
-          <div className="flex">
-            <div className="flex flex-col">
-              <Heading as="h5" className="mb-1">
-                Preview
-              </Heading>
-              <div className="rounded-sm border border-gray-400 p-1">
-                <ResourceContent className="h-[96px] w-[96px] rounded-sm" type={type} src={src} title={title} />
-              </div>
-            </div>
-          </div>
-          <div className="flex grow basis-0 flex-col overflow-hidden">
+      <Modal.Body direction="row" gap={4} size="sm">
+        <div className="flex">
+          <div className="flex flex-col">
             <Heading as="h5" className="mb-1">
-              Information
+              Preview
             </Heading>
-            <div className="flex flex-col">
-              <div className="flex items-center">
-                <Heading as="h6" className="w-[50px] font-bold">
-                  Title:
-                </Heading>
-                <div className="ml-2 truncate" title={title}>
-                  {title}
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Heading as="h6" className="w-[50px] font-bold">
-                  Type:
-                </Heading>
-                <div className="ml-2">{type}</div>
-              </div>
-              <div className="flex items-center">
-                <Heading as="h6" className="w-[50px] font-bold">
-                  Url:
-                </Heading>
-                <Input value={src} size="sm" className="mx-2 grow basis-0" readOnly />
-                <Button title="Copy Url" className="rounded-sm" onClick={handleClickCopyUrl}>
-                  <i className="fa-solid fa-copy" />
-                </Button>
-              </div>
+            <div className="group relative rounded-sm border border-gray-400 p-1">
+              <ResourceContent className="h-[96px] w-[96px] rounded-sm" type={type} src={src} title={title} />
+              {(type === 'image' || type === 'video') && (
+                <a
+                  target="_blank"
+                  href={src}
+                  className="invisible absolute top-2 right-2 cursor-pointer group-hover:visible"
+                >
+                  <Icon
+                    icon="fa-solid fa-arrow-up-right-from-square"
+                    className="rounded-sm bg-white p-1"
+                    size="custom"
+                  />
+                </a>
+              )}
             </div>
           </div>
         </div>
-      </Modal.Body>
+        <div className="flex grow basis-0 flex-col overflow-hidden">
+          <Heading as="h5" className="mb-1">
+            Information
+          </Heading>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <Heading as="h6" className="w-[50px] text-end font-bold">
+                Title:
+              </Heading>
+              <div className="font-sm truncate" title={title}>
+                {title}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Heading as="h6" className="w-[50px] text-end font-bold">
+                Type:
+              </Heading>
+              <div className="font-sm">{type}</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Heading as="h6" className="w-[50px] text-end font-bold">
+                Url:
+              </Heading>
+              <Input value={src} size="xs" className="grow basis-0" readOnly />
+              <Button title="Copy Url" size="sm" onClick={handleClickCopyUrl}>
+                <i className="fa-solid fa-copy" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal.Body>,
+      undefined,
+      { className: { card: 'min-w-[500px]' } }
     );
   }, [handleClickCopyUrl, showModal, src, title, type]);
 
@@ -116,12 +130,10 @@ const Resource = ({
           <h4>Remove Resource</h4>
         </Modal.Header>,
         <Modal.Body>
-          <div className="mx-4 my-2">
-            <h4>Do you want to remove this item ?</h4>
-          </div>
+          <h4>Do you want to remove this item ?</h4>
         </Modal.Body>,
         undefined,
-        undefined,
+        { size: 'sm' },
         id
       );
 
@@ -149,7 +161,11 @@ const Resource = ({
       draggable={canDrag}
       className={classNames(
         'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none',
-        { 'min-h-[164px]': type === 'plugin', 'min-h-[80px]': type !== 'plugin', 'cursor-grabbing': !canDrag },
+        {
+          'min-h-[164px]': type === 'plugin',
+          'min-h-[80px] cursor-pointer': type !== 'plugin',
+          'cursor-grabbing': !canDrag
+        },
         className
       )}
       onClick={handleClick}

@@ -25,8 +25,7 @@ import type {
   Schema,
   DisplayMode,
   TagType,
-  StyleItem,
-  PageInfo
+  StyleItem
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -73,26 +72,23 @@ const SegmentsContextProvider = ({
 
   const segmentsFetch = useCallback(
     async (filter?: string | object, cursor?: string, limit?: number) => {
-      const result = await query<{ edges: SegmentRaw[]; pageInfo: PageInfo }>(
-        'Segments',
-        { environment: 'main', filter, cursor, limit },
-        'network-only'
-      );
+      try {
+        const result = await query('Segments', { environment: 'main', filter, cursor, limit }, 'network-only');
+        const segmentsRaw = result.Segments;
 
-      if (result instanceof Error || !result) {
+        return {
+          ...segmentsRaw,
+          edges: segmentsRaw.edges.map<Segment>((segmentRaw: SegmentRaw) => ({
+            ...segmentRaw,
+            schema: {
+              ...get(segmentRaw, 'schema'),
+              flat: get(segmentRaw, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+            }
+          }))
+        };
+      } catch {
         return undefined;
       }
-
-      return {
-        ...result,
-        edges: result.edges.map<Segment>((segmentRaw: SegmentRaw) => ({
-          ...segmentRaw,
-          schema: {
-            ...get(segmentRaw, 'schema'),
-            flat: get(segmentRaw, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-          }
-        }))
-      };
     },
     [query]
   );
@@ -103,28 +99,30 @@ const SegmentsContextProvider = ({
         return segmentsRef.current[identifier] as Segment;
       }
 
-      const segmentRaw = await query<SegmentRaw>('Segment', { environment: 'main', identifier }, 'network-only');
-      if (!segmentRaw || segmentRaw instanceof Error) {
+      try {
+        const segmentRawResponse = await query('Segment', { environment: 'main', identifier }, 'network-only');
+        const segmentRaw = segmentRawResponse.Segment;
+
+        const segment: Segment = {
+          ...segmentRaw,
+          schema: {
+            ...get(segmentRaw, 'schema'),
+            flat: get(segmentRaw, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+          }
+        };
+
+        // as subscription (to populate the reducer)
+        dispatchSegments({
+          type: SegmentsActions.SEGMENTS_ADD,
+          segmentId: segment.id,
+          segment,
+          fromSubscriptions: true
+        });
+
+        return segment;
+      } catch {
         return undefined;
       }
-
-      const segment: Segment = {
-        ...segmentRaw,
-        schema: {
-          ...get(segmentRaw, 'schema'),
-          flat: get(segmentRaw, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-        }
-      };
-
-      // as subscription (to populate the reducer)
-      dispatchSegments({
-        type: SegmentsActions.SEGMENTS_ADD,
-        segmentId: segment.id,
-        segment,
-        fromSubscriptions: true
-      });
-
-      return segment;
     },
     [dispatchSegments, query]
   );
