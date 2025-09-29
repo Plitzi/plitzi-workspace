@@ -139,7 +139,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       try {
         const result = await query('Collections', { filter, cursor, limit }, 'network-only');
         if (!(result as typeof result | undefined)) {
-          return [];
+          return undefined;
         }
 
         const collections = result.Collections.edges.map<Collection>(collection => ({
@@ -151,9 +151,9 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
           collectionsAddMany([...append, ...collections]);
         }
 
-        return collections;
+        return result.Collections;
       } catch {
-        return [];
+        return undefined;
       }
     },
     [query, collectionsAddMany]
@@ -181,7 +181,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
           collectionsAdd(collection);
         }
 
-        return collection;
+        return result.Collection;
       } catch {
         return undefined;
       }
