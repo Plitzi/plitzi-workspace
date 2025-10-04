@@ -1,15 +1,8 @@
-// Packages
-import React from 'react';
+export type MadeInPlitziProps = {
+  pageId?: string;
+};
 
-/**
- * @param {{
- *   pageId?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const MadeInPlitzi = props => {
-  const { pageId = '' } = props;
-
+const MadeInPlitzi = ({ pageId = '' }: MadeInPlitziProps) => {
   return (
     <a
       className="made-in-plitzi"

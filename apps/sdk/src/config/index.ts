@@ -1,5 +1,10 @@
-export const getEnvironmentServer = (environment, server) => {
-  switch (environment) {
+import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
+
+export const getEnvironmentServer = (
+  env: ServerEnvironment,
+  server?: Partial<Omit<Server, 'ssrServer' | 'location'>>
+): Omit<Server, 'ssrServer' | 'location'> => {
+  switch (env) {
     case 'production': {
       return {
         // Dashboard
