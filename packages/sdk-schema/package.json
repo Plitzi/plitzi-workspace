@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-schema",
-  "version": "0.24.7",
+  "version": "0.24.8",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -52,9 +52,9 @@
     "prop-types": "^15.8.1"
   },
   "devDependencies": {
-    "eslint": "^9.36.0",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.7",
+    "eslint": "^9.37.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
     "vitest": "^3.2.4"
   }
 }

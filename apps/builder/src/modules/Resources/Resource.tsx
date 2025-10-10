@@ -20,7 +20,8 @@ import type { MouseEvent } from 'react';
 
 export type ResourceProps = {
   className?: string;
-  id?: string;
+  id: string;
+  cdnIdentifier: string;
   type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
   src?: string;
   title?: string;
@@ -30,7 +31,8 @@ export type ResourceProps = {
 
 const Resource = ({
   className = '',
-  id = '',
+  id,
+  cdnIdentifier,
   type = 'image',
   src = '',
   title = '',
@@ -139,12 +141,12 @@ const Resource = ({
 
       if (response) {
         setRemoving(true);
-        await mutate('SpaceRemoveResource', { resourceId: id });
+        await mutate('SpaceRemoveResource', { identifier: id, cdnIdentifier });
         setRemoving(false);
         onRemove?.(id);
       }
     },
-    [id, mutate, onRemove, showDialog]
+    [id, cdnIdentifier, mutate, onRemove, showDialog]
   );
 
   const handleMouseEnter = () => setHovered(true);

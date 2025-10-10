@@ -33,6 +33,20 @@ export const getEnvironmentServer = (
       };
     }
 
+    case 'development': {
+      return {
+        // Dashboard
+        apiServer: 'https://api-dev.plitzi.com',
+        ssrServer: 'https://ssr-dev.plitzi.com',
+        // SDK
+        nodeServer: 'https://server-dev.plitzi.com',
+        graphqlServer: 'https://server-dev.plitzi.com/graphql',
+        websocketServer: 'wss://server-dev.plitzi.com',
+        subscriptionServer: 'wss://server-dev.plitzi.com/subscriptions',
+        ...server
+      };
+    }
+
     default:
       return {
         // Dashboard

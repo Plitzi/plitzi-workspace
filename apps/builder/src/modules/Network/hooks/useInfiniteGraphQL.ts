@@ -10,7 +10,7 @@ import type { SWRInfiniteConfiguration } from 'swr/infinite';
 
 const useInfiniteGraphQL = <K extends keyof QueriesMap, T>(
   queryKey: K | null,
-  transform: (data: QueriesMap[K]) => { edges: T[]; pageInfo: PageInfo },
+  transform: (data: QueriesMap[K] | undefined) => { edges: T[]; pageInfo: PageInfo } | undefined,
   variables?: Record<string, unknown>,
   config?: SWRInfiniteConfiguration<QueriesMap[K]> & { pageSize?: number }
   // mode: 'query' | 'mutate' = 'query'
@@ -49,8 +49,11 @@ const useInfiniteGraphQL = <K extends keyof QueriesMap, T>(
     config
   );
 
-  const isEmpty = data?.[data.length - 1] && !transformMemo(data[data.length - 1]).pageInfo.hasNextPage;
-  const dataParsed = useMemo(() => data?.flatMap(subData => transformMemo(subData).edges) ?? [], [data, transformMemo]);
+  const isEmpty = (data?.[data.length - 1] && !transformMemo(data[data.length - 1])?.pageInfo.hasNextPage) ?? true;
+  const dataParsed = useMemo(
+    () => data?.flatMap(subData => transformMemo(subData)?.edges) ?? [],
+    [data, transformMemo]
+  );
 
   return {
     data: dataParsed,

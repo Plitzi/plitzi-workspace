@@ -54,6 +54,10 @@ export default tsEslint.config({
     'prefer-const': ['error', { destructuring: 'any', ignoreReadBeforeAssign: false }],
     // semi: ['warn', 'never'],
     'react/jsx-key': ['warn', { checkFragmentShorthand: true }],
+    'react-hooks/refs': 'off', // @todo: review later
+    'react-hooks/immutability': 'off', // @todo: review later
+    'react-hooks/set-state-in-effect': 'off', // @todo: review later
+    'react-hooks/preserve-manual-memoization': 'off', // @todo: review later
     'prettier/prettier': ['warn', { trailingComma: 'none' }],
     '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
     'import/order': [

@@ -42,6 +42,7 @@ const ResourcesList = ({ className, items, onRemove }: ResourcesListProps) => {
           className={classNames({ 'col-span-2': resource.type === 'plugin' })}
           key={resource.id}
           id={resource.id}
+          cdnIdentifier={resource.cdnIdentifier}
           type={resource.type}
           title={resource.name}
           src={resource.path}

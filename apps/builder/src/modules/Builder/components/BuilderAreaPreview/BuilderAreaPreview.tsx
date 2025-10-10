@@ -84,8 +84,19 @@ const BuilderAreaPreview = ({
 
   const { components } = use(ComponentContext);
   const element = useMemo(() => get(flat, id), [id, flat]);
-  const Plugin = useMemo(() => element && get(components, get(element, 'definition.type')), [components, element]);
-  const internalProps = useMemo(() => ({ id, rootId: id }), [id]);
+  const Plugin = useMemo(() => {
+    if (!element) {
+      return undefined;
+    }
+
+    const PluginNode = get(components, get(element, 'definition.type'), undefined);
+    if (!PluginNode) {
+      return undefined;
+    }
+
+    // eslint-disable-next-line react-hooks/static-components
+    return <PluginNode internalProps={{ id, rootId: id }} />;
+  }, [components, element, id]);
 
   return (
     <ContainerFrame className={classNames('builder-area flex', className)} css={css}>
@@ -100,7 +111,7 @@ const BuilderAreaPreview = ({
               })}
               style={{ width: '100%', display: 'flex', height: '100%' }}
             >
-              {Plugin && <Plugin internalProps={internalProps} />}
+              {Plugin}
             </div>
           </InteractionsBuilderContextProvider>
         </DataSourceContextProvider>

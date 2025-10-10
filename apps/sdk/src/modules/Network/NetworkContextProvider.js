@@ -140,7 +140,7 @@ const NetworkContextProvider = props => {
     );
     if (response instanceof Error) {
       setLoading(false);
-      if (response.networkError && response.networkError.statusCode === 401) {
+      if (response.statusCode === 401) {
         setError('Access not authorized');
       } else if (response.networkError) {
         setError('Service not available');

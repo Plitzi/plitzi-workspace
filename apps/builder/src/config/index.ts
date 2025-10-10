@@ -38,6 +38,24 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Se
       } as Server;
     }
 
+    case 'development': {
+      return {
+        // Dashboard
+        apiServer: 'https://api-dev.plitzi.com',
+        ssrServer: 'https://ssr-dev.plitzi.com',
+        // SDK
+        basePath: '/',
+        host: 'https://dev.plitzi.com',
+        nodeServer: 'https://server-dev.plitzi.com',
+        graphqlServer: 'https://server-dev.plitzi.com/graphql',
+        websocketServer: 'wss://server-dev.plitzi.com',
+        subscriptionServer: 'wss://server-dev.plitzi.com/subscriptions',
+        // Others
+        location: undefined,
+        ...server
+      } as Server;
+    }
+
     default:
       return {
         // Dashboard

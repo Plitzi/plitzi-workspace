@@ -1,11 +1,10 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import get from 'lodash/get';
 import { use, useCallback, useMemo } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import useInfiniteGraphQL from '@pmodules/Network/hooks/useInfiniteGraphQL';
+import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import ResourceManager from './components/ResourceManager';
 import ResourcesList from './ResourcesList';
@@ -24,16 +23,14 @@ const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', '
 const ResourcesCdn = ({ identifier, name, onRemove }: ResourcesCdnProps) => {
   const { addToast } = useToast();
   const { plugins, remove, add } = use(PluginsContext);
-  const { data, isLoading, isValidating, isEmpty, mutate, setSize } = useInfiniteGraphQL(
-    'SpaceResources',
-    data => data.SpaceResources,
-    { cdnIdentifier: identifier }
-  );
+  const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
+    cdnIdentifier: identifier
+  });
 
   const finalResources = useMemo(() => {
     const pluginsArr = Object.values(plugins);
 
-    return data.map(resource => {
+    return (data ?? []).map(resource => {
       if (resource.type === 'plugin') {
         const plugin = pluginsArr.find(plugin => plugin.resource === resource.path);
         if (!plugin) {
@@ -118,14 +115,6 @@ const ResourcesCdn = ({ identifier, name, onRemove }: ResourcesCdnProps) => {
     [mutate, plugins, remove]
   );
 
-  const handleClickLoadMore = useCallback(() => {
-    if (isLoading || isEmpty) {
-      return;
-    }
-
-    void setSize(state => state + 1);
-  }, [isEmpty, isLoading, setSize]);
-
   return (
     <div className="bg-primary-100/50 flex min-h-[200px] flex-col gap-2 overflow-y-auto rounded-lg p-2">
       <Heading as="h5">{name}</Heading>
@@ -145,11 +134,6 @@ const ResourcesCdn = ({ identifier, name, onRemove }: ResourcesCdnProps) => {
             onRemove={handleResourceRemoved}
           />
         </>
-      )}
-      {!isEmpty && (
-        <Button onClick={handleClickLoadMore} disabled={isLoading || isValidating} size="xs">
-          {isLoading || isValidating ? 'Loading...' : 'Load More'}
-        </Button>
       )}
     </div>
   );

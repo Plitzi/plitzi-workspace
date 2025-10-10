@@ -1,5 +1,16 @@
 # @plitzi/sdk-interactions
 
+## 0.24.8
+
+### Patch Changes
+
+- v0.24.8
+- Updated dependencies
+  - @plitzi/sdk-event-bridge@0.24.8
+  - @plitzi/sdk-dev-tools@0.24.8
+  - @plitzi/sdk-shared@0.24.8
+  - @plitzi/sdk-auth@0.24.8
+
 ## 0.24.7
 
 ### Patch Changes

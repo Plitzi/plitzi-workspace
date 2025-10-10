@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.24.7",
+  "version": "0.24.8",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -43,11 +43,11 @@
   },
   "type": "module",
   "devDependencies": {
-    "eslint": "^9.36.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.7",
+    "eslint": "^9.37.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
@@ -57,7 +57,7 @@
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
     "lodash": "^4.17.21",
-    "react-router": "^7.9.3",
-    "react-router-dom": "^7.9.3"
+    "react-router": "^7.9.4",
+    "react-router-dom": "^7.9.4"
   }
 }
