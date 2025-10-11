@@ -43,8 +43,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       () => (
         <ErrorBoundary>
           <WrappedComponent
-            {...props.extraProps}
             {...(internalProps.attributes as T)}
+            {...(props.extraProps as T)}
             className={classNames(className, definition.styleSelectors.base)}
             // Plitzi
             ref={ref}
