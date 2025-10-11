@@ -182,7 +182,7 @@ export const getPopups = ({
       active: false,
       settings: {
         icon: (
-          <Sidebar.Icon className="p-2" intent="tertiary" title="Variables">
+          <Sidebar.Icon className="p-2" intent="tertiary" title="State Manager">
             <StateManagerIcon />
           </Sidebar.Icon>
         ),
