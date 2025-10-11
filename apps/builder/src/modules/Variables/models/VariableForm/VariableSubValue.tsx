@@ -44,7 +44,7 @@ const VariableSubValue = ({
   );
 
   return (
-    <div className="flex min-w-0 grow basis-0 flex-col gap-2 rounded-sm border border-gray-300 p-2">
+    <div className="flex min-w-0 grow basis-0 flex-col gap-3 rounded-sm border border-gray-300 p-2">
       <VariableValue
         valueType={valueType}
         name={`subValues.${index}.value`}
@@ -58,10 +58,8 @@ const VariableSubValue = ({
       <Form.Custom
         name={`subValues.${index}.when`}
         render={({ field: { ref, value, onChange }, fieldState: { error } }) => (
-          <div className="flex flex-col gap-2" ref={ref}>
-            <Heading as="h5" className="mb-4">
-              When Happens
-            </Heading>
+          <div className="flex flex-col gap-1" ref={ref}>
+            <Heading as="h5">When Happens</Heading>
             <div className="flex flex-col">
               <QueryBuilder
                 direction="vertical"

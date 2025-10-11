@@ -9,7 +9,7 @@ import packageSettings from '../package.json';
 import { disableReactDevTools } from './helpers/security';
 
 import type { AppProps } from './App';
-import type { ComponentPlugin, Server } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export function render(
@@ -51,7 +51,7 @@ export type PlitziBuilderProps = {
   server?: Server;
   includeSubscriptions?: boolean;
   includeRealTime?: boolean;
-  builderEnvironment?: 'development' | 'staging' | 'production';
+  builderEnvironment?: ServerEnvironment;
   renderMode?: 'raw' | 'iframe' | 'shadow';
   externalStyle?: string;
   state?: object;

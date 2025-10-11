@@ -1,4 +1,4 @@
-export type ServerEnvironment = 'production' | 'staging' | 'development';
+export type ServerEnvironment = 'production' | 'staging' | 'development' | 'local';
 
 export type Server = {
   // Dashboard

@@ -16,7 +16,7 @@ const variableFormSchema = z.object({
     .regex(/^(?:\w+\s+|)([a-zA-Z_][a-zA-Z0-9_]+)$/i, {
       message: 'Name only can be letters, numbers and _ -'
     }),
-  category: z.string().min(4),
+  category: z.string(), // .min(4),
   type: z.enum(['text', 'number', 'email', 'password', 'select', 'select2', 'checkbox', 'textarea', 'color', 'switch']),
   value: z.string().min(3),
   subValues: z.array(z.record(z.string(), z.any())).optional()
@@ -114,7 +114,7 @@ const VariableForm = ({
             <option value="color">Color</option>
           </Form.Select>
         </div>
-        {/* <Form.Input name="category" label="Category" size="sm" className="w-full grow basis-0" /> */}
+        <Form.Input name="category" label="Category" size="sm" className="w-full grow basis-0" />
         <VariableValue valueType={watchType} hasSubValues={hasSubValues} name="value" />
         {hasSubValues && (
           <Alert intent="info" className="text-xs text-white" containerClassName="items-center">
