@@ -16,6 +16,7 @@ export type WithElementProps<T> = {
   internalProps: InternalPropsSTG1;
   className?: string;
   children?: ReactNode;
+  extraProps?: Record<string, unknown>;
 } & T;
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
@@ -42,6 +43,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       () => (
         <ErrorBoundary>
           <WrappedComponent
+            {...props.extraProps}
             {...(internalProps.attributes as T)}
             className={classNames(className, definition.styleSelectors.base)}
             // Plitzi
@@ -52,7 +54,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
           </WrappedComponent>
         </ErrorBoundary>
       ),
-      [internalProps, className, definition.styleSelectors.base, children]
+      [internalProps, className, definition.styleSelectors.base, children, props.extraProps]
     );
   };
 

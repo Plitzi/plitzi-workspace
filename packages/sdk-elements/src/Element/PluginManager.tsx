@@ -45,7 +45,13 @@ const PluginManager = ({ plitziElementLayout = undefined, type = '', internalPro
       return undefined;
     }
 
-    return <PluginInternal internalProps={internalPropsMemo} className={internalPropsMemo.className} />;
+    return (
+      <PluginInternal
+        internalProps={internalPropsMemo}
+        className={internalPropsMemo.className}
+        extraProps={PluginInternal.extraProps}
+      />
+    );
   }, [components, internalPropsMemo, type]);
 
   const remoteSettings = useMemo(() => {

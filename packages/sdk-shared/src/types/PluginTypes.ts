@@ -56,6 +56,7 @@ export type PluginManifest = {
 export type PluginBuilder = {
   canDelete?: boolean;
   canDragDrop?: boolean;
+  canSelect?: boolean;
   canMove?: boolean;
   canTemplate?: boolean;
   itemsAllowed?: string[];

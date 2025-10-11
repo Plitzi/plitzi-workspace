@@ -168,13 +168,14 @@ const App = (props: AppProps) => {
         return;
       }
 
-      const { renderType, component, settings, definition } = child.props as BuilderPluginProps;
+      const { renderType, component, settings, definition, ...extraProps } = child.props as BuilderPluginProps;
       if (!renderType || !(component as ComponentPlugin | undefined)) {
         return;
       }
 
       component.type = renderType;
       component.pluginSettings = settings;
+      component.extraProps = extraProps;
       if (definition) {
         component.content = definition;
       }

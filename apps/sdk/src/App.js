@@ -159,13 +159,14 @@ const App = props => {
         return;
       }
 
-      const { renderType, component, assets } = child.props;
+      const { renderType, component, assets, ...extraProps } = child.props;
       if (!renderType || !component) {
         return;
       }
 
       component.type = renderType;
       component.assets = assets;
+      component.extraProps = extraProps;
       components[renderType] = component;
     });
 

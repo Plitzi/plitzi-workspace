@@ -4,7 +4,7 @@ import { lazy, Suspense, use, useMemo } from 'react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
-import { nestedInject, ORIGIN_REMOTE } from '../Component/ComponentHelper';
+import { nestedInject } from '../Component/ComponentHelper';
 import { generatePluginModule } from './helpers/elementUtils';
 import withElement from './hocs/withElement';
 import useDynamicScript from './hooks/useDynamicScript';
@@ -39,11 +39,11 @@ function loadComponent(
     }
 
     plitziComponent.version = version;
-    plitziComponent.origin = ORIGIN_REMOTE;
+    plitziComponent.origin = 'remote';
     plitziComponent.type = type;
     plitziComponent.initialItems = initialItems;
     plitziComponent.pluginSettings = pluginSettings;
-    plitziComponent.plugins = nestedInject(plugins, ORIGIN_REMOTE);
+    plitziComponent.plugins = nestedInject(plugins, 'remote');
     if (autoRegister) {
       registerCallback(plitziComponent);
     }

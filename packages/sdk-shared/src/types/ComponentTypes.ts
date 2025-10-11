@@ -10,6 +10,7 @@ export type ComponentPlugin<T = unknown> = FC<
     plitziCustomComponent?: boolean;
     plitziJsxSkipHOC?: boolean;
     children?: ReactNode;
+    extraProps?: Record<string, unknown>;
   }
 > & {
   content: ComponentDefinition;
@@ -17,6 +18,7 @@ export type ComponentPlugin<T = unknown> = FC<
   assets: Asset[];
   plugins?: Record<string, ComponentPlugin<T>>;
   origin: ComponentOrigin;
+  extraProps?: Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pluginSettings?: FC<any>;
   version?: string;
