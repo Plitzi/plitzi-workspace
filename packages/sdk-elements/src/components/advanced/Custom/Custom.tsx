@@ -102,7 +102,7 @@ const Custom = ({
 
   const Plugin = components[renderType] as ComponentPlugin | undefined;
   if (Plugin) {
-    return <Plugin internalProps={internalPropsMemo} plitziCustomComponent />;
+    return <Plugin internalProps={internalPropsMemo} plitziCustomComponent extraProps={Plugin.extraProps} />;
   }
 
   return (
