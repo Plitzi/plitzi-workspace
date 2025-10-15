@@ -9,10 +9,9 @@ const processCssVariables = <T extends TokenMap>(
   variables: T = {} as T,
   opts: { missing?: string } = { missing: '' }
 ) => {
-  const re = /\{\{\s*([a-z0-9_\-.$]+)\s*\}\}/gi;
   const missing = opts.missing ?? '';
 
-  return cache.replace(re, (_, key: string) => {
+  return cache.replace(/\{\{\s*([a-z0-9_\-.$]+)\s*\}\}/gi, (_, key: string) => {
     const parts = key.split('.');
     let cur: unknown = variables;
 

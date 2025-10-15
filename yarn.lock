@@ -3456,7 +3456,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.28.3"
     "@babel/preset-react": "npm:^7.27.1"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.0.10"
+    "@plitzi/plitzi-ui": "npm:^1.0.11"
     "@plitzi/plitzi-webpack": "npm:^0.3.6"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3621,9 +3621,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.0.10":
-  version: 1.0.10
-  resolution: "@plitzi/plitzi-ui@npm:1.0.10::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.0.10%2Fcd1d4d412ef32b913b2a29d25d7a22504312a7ac"
+"@plitzi/plitzi-ui@npm:^1.0.11":
+  version: 1.0.11
+  resolution: "@plitzi/plitzi-ui@npm:1.0.11::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.0.11%2Fa232c83075b1b436319e44fe068725dbb70b646f"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.19.0"
     "@codemirror/commands": "npm:^6.9.0"
@@ -3654,7 +3654,7 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^13.0.0"
     zod: "npm:^4.1.12"
-  checksum: 10c0/9e58165fe8b4f7b41b453249082ba19614799d3b509c5cba6189642dff2d29208411d71bee90308bf93ea4b0365e9f4e369b4ea8c84b9eda261a7aa2db29cfa1
+  checksum: 10c0/c87d7632070aa67815be87106c1cb90f76c52d3448239f8513a31fee83d9c55228c1692cea72bd951409e92e6ce1bedbb5e7bc639debf6af2cf9815a1501152a
   languageName: node
   linkType: hard
 
@@ -3672,7 +3672,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.29.7"
-    "@plitzi/plitzi-ui": "npm:^1.0.10"
+    "@plitzi/plitzi-ui": "npm:^1.0.11"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.2"
     eslint: "npm:^9.37.0"
@@ -3687,7 +3687,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.0.10"
+    "@plitzi/plitzi-ui": "npm:^1.0.11"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3772,7 +3772,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.0.10"
+    "@plitzi/plitzi-ui": "npm:^1.0.11"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3841,7 +3841,7 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.27.1"
     "@babel/preset-env": "npm:^7.28.3"
     "@eslint/js": "npm:^9.37.0"
-    "@plitzi/plitzi-ui": "npm:^1.0.10"
+    "@plitzi/plitzi-ui": "npm:^1.0.11"
     "@rollup/plugin-node-resolve": "npm:^16.0.2"
     "@tailwindcss/forms": "npm:^0.5.10"
     "@testing-library/dom": "npm:^10.4.1"
@@ -3865,7 +3865,7 @@ __metadata:
     eslint-plugin-flowtype: "npm:8.0.3"
     eslint-plugin-import: "npm:^2.32.0"
     eslint-plugin-jest: "npm:^29.0.1"
-    eslint-plugin-jsdoc: "npm:^61.1.0"
+    eslint-plugin-jsdoc: "npm:^61.1.1"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
     eslint-plugin-prettier: "npm:^5.5.4"
     eslint-plugin-react: "npm:^7.37.5"
@@ -3913,7 +3913,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.0.10"
+    "@plitzi/plitzi-ui": "npm:^1.0.11"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/lodash": "npm:^4.17.20"
@@ -9778,9 +9778,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^61.1.0":
-  version: 61.1.0
-  resolution: "eslint-plugin-jsdoc@npm:61.1.0"
+"eslint-plugin-jsdoc@npm:^61.1.1":
+  version: 61.1.1
+  resolution: "eslint-plugin-jsdoc@npm:61.1.1"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.76.0"
     are-docs-informative: "npm:^0.0.2"
@@ -9796,7 +9796,7 @@ __metadata:
     spdx-expression-parse: "npm:^4.0.0"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/a8f7100778646348907a3e28af0fa8cb6e1569367fe7c040a8794e766b199956d7a33e6bbe8aa49fc702dd8fde3dfc367883f1c25fda3b55673dae5283bd0d3b
+  checksum: 10c0/b3a872e5b05b8b60c8d397e0535444c1905e37cfff18ddb43c4b87a53f645f4bd6b0a12dfb58ea53cdc2b806821c0255f95e39e5de7254331ca7b8d30ca262ed
   languageName: node
   linkType: hard
 
