@@ -18,7 +18,7 @@
   "dependencies": {
     "@apollo/client": "^4.0.7",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.0.11",
+    "@plitzi/plitzi-ui": "^1.0.13",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
@@ -70,7 +70,7 @@
     "cypress": "15.4.0",
     "eslint": "^9.37.0",
     "file-loader": "^6.2.0",
-    "flow-bin": "^0.287.0",
+    "flow-bin": "^0.288.0",
     "handlebars-webpack-plugin": "^2.2.1",
     "html-webpack-plugin": "^5.6.4",
     "jest": "^30.2.0",

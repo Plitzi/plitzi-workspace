@@ -90,6 +90,7 @@ const AppMain = props => {
         environment={environment}
         revision={revision}
         debugMode={debugMode}
+        renderMode={renderMode}
       >
         <SchemaContextProvider>
           <CollectionContextProvider>

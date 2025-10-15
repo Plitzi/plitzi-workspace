@@ -208,10 +208,7 @@ const App = props => {
 
   return (
     <Provider>
-      <ContainerRoot
-        className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
-        ssrMode={renderMode === RENDER_MODE_SSR}
-      >
+      <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
         <HelmetProvider>
           <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
             {client && (
@@ -228,6 +225,19 @@ const App = props => {
                   />
                 </ComponentProvider>
               </ApolloProvider>
+            )}
+            {!client && renderMode === 'ssr' && (
+              <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                <AppMain
+                  cacheTimeout={cacheTimeout}
+                  server={finalServer}
+                  webKey={webKey}
+                  renderMode={renderMode}
+                  debugMode={debugMode}
+                  webId={webId}
+                  {...sdkProps}
+                />
+              </ComponentProvider>
             )}
           </ReactRouter>
         </HelmetProvider>

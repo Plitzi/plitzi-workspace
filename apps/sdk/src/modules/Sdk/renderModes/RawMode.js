@@ -41,7 +41,7 @@ const RawMode = props => {
   }, [pageId]);
 
   return (
-    <SpaceContainer>
+    <SpaceContainer renderMode={renderMode}>
       <style dangerouslySetInnerHTML={{ __html: style }} />
       <PlitziServiceProvider value={plitziContextValue}>
         {pageId && renderMode !== RENDER_MODE_WIDGET && <Page key={pageId} internalProps={pageValueMemo} />}

@@ -29,6 +29,7 @@ import NetworkInternalContext from './contexts/NetworkInternalContext';
  *   offlineDataType: string;
  *   client: any;
  *   debugMode?: boolean;
+ *   renderMode?: 'ssr' | 'iframe' | 'widget' | 'raw' | 'shadow';
  * }} props
  * @returns {React.ReactElement}
  */
@@ -44,12 +45,24 @@ const NetworkContextProvider = props => {
     offlineMode = false,
     offlineData,
     offlineDataType = 'json',
-    debugMode = false
+    debugMode = false,
+    renderMode = 'iframe'
   } = props;
-  const client = useApolloClient();
-  const [loading, setLoading] = useState(true);
+  const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
+  const client = renderMode === 'ssr' && offlineDataAvailable ? undefined : useApolloClient();
+  const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState(false);
-  const [internalData, setInternalData] = useState({});
+  const [internalData, setInternalData] = useState(() => {
+    if (!offlineDataAvailable) {
+      return {};
+    }
+
+    if (offlineDataType === 'json') {
+      return { ...offlineData, plugins: {} };
+    }
+
+    return {};
+  });
 
   const query = useCallback(
     async (queryKey, variables, fetchPolicy = 'network-first') => {
@@ -195,20 +208,13 @@ const NetworkContextProvider = props => {
   };
 
   const initOfflineData = async () => {
-    let data = {};
-    if (offlineMode && offlineData && offlineData.schema && offlineDataType === 'json') {
-      data = offlineData;
-    } else if (offlineMode && offlineData && offlineDataType === 'yaml') {
-      data = {}; // @todo: helper to transform yaml to json
-    }
-
     let plugins = {};
-    if (data.plugins && data.plugins.length > 0) {
+    if (offlineData.plugins && offlineData.plugins.length > 0) {
       // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, scope, module, settings, subPlugins
-      plugins = await pluginParseDefinition(data.plugins, !debugMode);
+      plugins = await pluginParseDefinition(offlineData.plugins, !debugMode);
     }
 
-    setInternalData({ ...data, plugins });
+    setInternalData(state => ({ ...state, plugins }));
     setLoading(false);
   };
 
@@ -222,10 +228,10 @@ const NetworkContextProvider = props => {
         return state;
       });
       initQuery();
-    } else if (offlineMode && offlineData) {
+    } else if (offlineDataAvailable) {
       initOfflineData();
     }
-  }, [offlineMode && offlineData, offlineMode && offlineDataType, webKey, environment, debugMode]);
+  }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
   const networkValue = useMemo(
     () => ({ query, mutate, webKey, webId, server, environment }),

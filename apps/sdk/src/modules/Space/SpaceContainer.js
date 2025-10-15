@@ -1,21 +1,22 @@
-// Packages
-import React from 'react';
+import React, { use } from 'react';
 import ToastProvider from '@plitzi/plitzi-ui/Toast/ToastProvider';
 
-// Relatives
+import NetworkContext from '@modules/Network/NetworkContext';
+
 import SpaceContainerInternal from './SpaceContainerInternal';
 
 /**
  * @param {{
  *   children: React.ReactNode;
+ *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
  * }} props
  * @returns {React.ReactElement}
  */
-const SpaceContainer = props => {
-  const { children } = props;
+const SpaceContainer = ({ children, renderMode }) => {
+  const { webId } = use(NetworkContext);
 
   return (
-    <ToastProvider>
+    <ToastProvider containerId={renderMode === 'ssr' ? `toast-container-${webId}` : undefined}>
       <SpaceContainerInternal>{children}</SpaceContainerInternal>
     </ToastProvider>
   );

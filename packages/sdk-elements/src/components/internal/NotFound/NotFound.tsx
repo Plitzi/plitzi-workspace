@@ -2,6 +2,8 @@
 import classNames from 'classnames';
 import get from 'lodash/get.js';
 
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
@@ -16,6 +18,13 @@ export type NotFoundProps = {
 
 const NotFound = ({ ref, className = '', internalProps }: NotFoundProps) => {
   const label = get(internalProps, 'definition.label') as string;
+  const {
+    settings: { renderMode, previewMode }
+  } = usePlitziServiceContext();
+
+  if (renderMode === 'ssr' && previewMode) {
+    return undefined;
+  }
 
   return (
     <RootElement
