@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-variables",
-  "version": "0.24.10",
+  "version": "0.24.11",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
