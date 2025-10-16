@@ -1,5 +1,9 @@
 import { gql } from '@apollo/client/core';
 
+import type { Template } from '@pmodules/Templates/TemplatesContext';
+
+export type TTemplateAddMutation = Template;
+
 const TemplateAddMutation = gql`
   mutation TemplateAddMutation(
     $name: String!

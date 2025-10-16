@@ -1,15 +1,17 @@
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import TemplatesContext from './TemplatesContext';
 import TemplatesReducer, { TemplatesActions } from './TemplatesReducer';
 
 import type { Template } from './TemplatesContext';
-import type { Element, Schema, Style } from '@plitzi/sdk-shared';
+import type { Element, NetworkContextValue, Schema, Style } from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
 
 export type TemplatesContextProviderProps = {
@@ -18,7 +20,7 @@ export type TemplatesContextProviderProps = {
 };
 
 const TemplatesContextProvider = ({ children, templates: templatesProp }: TemplatesContextProviderProps) => {
-  const { mutate } = use(NetworkContext);
+  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const internalData = use(NetworkInternalContext);
   const templatesPropMemo = useMemo(() => {
     if (templatesProp) {
@@ -48,9 +50,9 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
 
   const templatesAddMutation = useCallback(
     async (name: string, description: string, schema?: Schema, style?: Style) => {
-      const result = await mutate<Template>('TemplateAdd', { name, description, schema, style });
-      if (result) {
-        templatesAdd(result as Template);
+      const result = await mutate('TemplateAdd', { name, description, schema, style });
+      if (result as typeof result | undefined) {
+        templatesAdd(result);
       }
     },
     [mutate, templatesAdd]
@@ -58,9 +60,9 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
 
   const templatesUpdateMutation = useCallback(
     async (template: Template) => {
-      const result = await mutate<Template>('TemplateUpdate', { id: template.id, template });
-      if (result) {
-        templatesUpdate(result as Template);
+      const result = await mutate('TemplateUpdate', { id: template.id, template });
+      if (result as typeof result | undefined) {
+        templatesUpdate(result);
       }
     },
     [mutate, templatesUpdate]
@@ -68,7 +70,8 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
 
   const templatesRemoveMutation = useCallback(
     async (id: string) => {
-      if (await mutate('TemplateRemove', { id })) {
+      const result = await mutate('TemplateRemove', { id });
+      if (result as typeof result | undefined) {
         templatesRemove(id);
       }
     },
@@ -82,7 +85,7 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
         return;
       }
 
-      const result = await mutate<Template>('TemplateAdd', {
+      const result = await mutate('TemplateAdd', {
         name,
         description,
         baseElementId: elements.item.id,
@@ -90,8 +93,8 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
         style: { ...elementsStyle, cache: generateCache(elementsStyle) },
         variables
       });
-      if (result) {
-        templatesAdd(result as Template);
+      if (result as typeof result | undefined) {
+        templatesAdd(result);
       }
     },
     [mutate, templatesAdd]

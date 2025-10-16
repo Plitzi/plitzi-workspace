@@ -8,12 +8,15 @@ import { useCallback, use, useMemo, useState, useReducer } from 'react';
 import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import PluginsReducer from './PluginsReducer';
 
-import type { PluginRaw, ComponentDefinition, Asset, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Asset, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
 
 export type PluginsContextProviderProps = {
@@ -32,7 +35,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   }, [internalData.plugins, pluginsProp]);
   const [plugins, dispatchPlugins] = useReducer(PluginsReducer, pluginsPropMemo);
   const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
-  const { mutate, query } = use(NetworkContext);
+  const { mutate, query } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const { components, registerDefinition, unregisterDefinition, unregister } = use(ComponentContext);
 
   const pluginsAdd = useCallback(
@@ -100,8 +103,8 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
   const add = useCallback(
     async (pluginType: string, resource?: string) => {
-      const result = await mutate<{ plugins: PluginRaw[] }>('SpaceAddPlugin', { pluginType, resource, override: true });
-      if (result && !(result instanceof Error)) {
+      const result = await mutate('SpaceAddPlugin', { pluginType, resource, override: true });
+      if (result as typeof result | undefined) {
         const plugin = result.plugins.find(plug => plug.type === pluginType);
         if (!plugin) {
           return false;
@@ -122,8 +125,8 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
   const update = useCallback(
     async (plugin: ComponentDefinition, resource?: string) => {
-      const result = await mutate<{ plugins: PluginRaw[] }>('SpaceUpdatePlugin', { pluginType: plugin.type, resource });
-      if (result && !(result instanceof Error)) {
+      const result = await mutate('SpaceUpdatePlugin', { pluginType: plugin.type, resource });
+      if (result as typeof result | undefined) {
         const newPlugin = result.plugins.find(plug => plug.type === plugin.type);
         if (!newPlugin) {
           return false;

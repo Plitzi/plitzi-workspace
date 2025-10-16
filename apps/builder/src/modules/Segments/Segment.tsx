@@ -5,15 +5,17 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use } from 'react';
 
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import BuilderPopup from '@pmodules/Builder/BuilderPopup';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import PublishForm from './models/PublishForm';
 import SegmentForm from './models/SegmentForm';
 import SegmentsContext from './SegmentsContext';
 
-import type { SchemaVariable, Segment as TSegment } from '@plitzi/sdk-shared';
+import type { NetworkContextValue, SchemaVariable, Segment as TSegment } from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { MouseEvent } from 'react';
 
 export type SegmentProps = {
@@ -37,7 +39,7 @@ const Segment = ({
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
   const { segmentGet, segmentsRemove, segmentsUpdate } = use(SegmentsContext);
-  const { mutate } = use(NetworkContext);
+  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const { onDragStart } = useDragElement({
     type: 'reference',
     attributes: { referenceType: 'segment', referenceId: identifier },
@@ -138,15 +140,8 @@ const Segment = ({
       )
     );
     if (response) {
-      const result = await mutate<{
-        environment: 'live' | 'staging' | 'development';
-        revision: string;
-        description: string;
-      }>('SegmentPublish', {
-        ...response,
-        contextId: id
-      });
-      if (result && !(result instanceof Error)) {
+      const result = await mutate('SegmentPublish', { ...response, contextId: id });
+      if (result as typeof result | undefined) {
         addToast(
           <span>
             Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully

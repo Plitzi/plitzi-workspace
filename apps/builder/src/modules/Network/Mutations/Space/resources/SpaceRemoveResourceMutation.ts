@@ -1,5 +1,9 @@
 import { gql } from '@apollo/client/core';
 
+import type { Resource } from '@pmodules/Resources/types';
+
+export type TSpaceRemoveResourceMutation = Resource;
+
 const SpaceRemoveResourceMutation = gql`
   mutation SpaceRemoveResourceMutation($identifier: String!, $cdnIdentifier: String!) {
     SpaceRemoveResource(identifier: $identifier, cdnIdentifier: $cdnIdentifier) {

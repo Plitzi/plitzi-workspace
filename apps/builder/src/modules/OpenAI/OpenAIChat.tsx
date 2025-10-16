@@ -6,8 +6,8 @@ import { useCallback, use, useEffect, useState, useTransition, useRef } from 're
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import Chat from './components/Chat';
 import VoiceVisualizer from './components/VoiceVisualizer';

@@ -1,5 +1,9 @@
 import { gql } from '@apollo/client/core';
 
+import type { SegmentRaw } from '@plitzi/sdk-shared';
+
+export type TSegmentAddMutation = SegmentRaw;
+
 const SegmentAddMutation = gql`
   mutation SegmentAddMutation(
     $name: String!

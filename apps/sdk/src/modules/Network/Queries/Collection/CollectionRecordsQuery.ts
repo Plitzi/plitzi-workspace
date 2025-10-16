@@ -1,5 +1,10 @@
-// Packages
 import { gql } from 'graphql-tag';
+
+import type { CollectionRecord, PageInfo } from '@plitzi/sdk-shared';
+
+export type TCollectionRecordsQuery = {
+  CollectionRecords: { edges: CollectionRecord[]; pageInfo: PageInfo };
+};
 
 const CollectionRecordsQuery = gql`
   query CollectionRecordsQuery($collectionId: String!, $filter: JsonObject, $cursor: String, $limit: Int) {

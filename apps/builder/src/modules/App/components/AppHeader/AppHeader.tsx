@@ -7,9 +7,9 @@ import { use, useState, useCallback, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
 import BorderButton from './BorderButton';
@@ -21,6 +21,9 @@ import AppContext from '../../AppContext';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
 
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type AppHeaderProps = {
@@ -31,7 +34,7 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
-  const { mutate } = use(NetworkContext);
+  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const queueProcessing = use(QueueStatusContext);
   const { currentPageId } = use(NavigationContext);
   const { previewMode, setPreviewMode } = use(AppContext);
@@ -60,8 +63,8 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
       return;
     }
 
-    const result = await mutate<{ revision: number; environment: string } | undefined>('SpacePublish', response);
-    if (result && !(result instanceof Error)) {
+    const result = await mutate('SpacePublish', response);
+    if (result as typeof result | undefined) {
       addToast(
         <div>
           Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
@@ -94,9 +97,9 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
     }
 
     setLoadingDeployment(true);
-    const result = await mutate<{ domain: string } | undefined>('SpaceDeploy', response, true);
+    const result = await mutate('SpaceDeploy', response, true);
     setLoadingDeployment(false);
-    if (result && !(result instanceof Error)) {
+    if (result as typeof result | undefined) {
       addToast(
         <div>
           Your snapshot have being published to <b>{result.domain}</b> Successfully

@@ -9,7 +9,7 @@ import { StyleActions } from '@pmodules/Style/StyleReducer';
 
 import type { QueueItem, QueuePriority } from '../QueueContext';
 import type { Element, Schema, SchemaVariable, Segment, Style } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@pmodules/Network/NetworkContext';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';

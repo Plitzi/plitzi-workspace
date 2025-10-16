@@ -1,4 +1,3 @@
-// Packages
 import { gql } from 'graphql-tag';
 
 const CollectionRemoveMutation = gql`

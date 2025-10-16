@@ -60,6 +60,100 @@ import TemplateAddMutation from './Template/TemplateAddMutation';
 import TemplateRemoveMutation from './Template/TemplateRemoveMutation';
 import TemplateUpdateMutation from './Template/TemplateUpdateMutation';
 
+import type { TCollectionAddMutation } from './Collection/CollectionAddMutation';
+import type { TCollectionAddRecordMutation } from './Collection/CollectionAddRecordMutation';
+import type { TCollectionRemoveMutation } from './Collection/CollectionRemoveMutation';
+import type { TCollectionRemoveRecordMutation } from './Collection/CollectionRemoveRecordMutation';
+import type { TCollectionUpdateMutation } from './Collection/CollectionUpdateMutation';
+import type { TCollectionUpdateRecordMutation } from './Collection/CollectionUpdateRecordMutation';
+import type { TSegmentAddMutation } from './Segment/SegmentAddMutation';
+import type { TSegmentPublishMutation } from './Segment/SegmentPublishMutation';
+import type { TSegmentUpdateMutation } from './Segment/SegmentUpdateMutation';
+import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
+import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
+import type { TSpaceUpdatePageFolderMutation } from './Space/folders/SpaceUpdatePageFolderMutation';
+import type { TSpaceAddPageMutation } from './Space/pages/SpaceAddPageMutation';
+import type { TSpaceHomePageMutation } from './Space/pages/SpaceHomePageMutation';
+import type { TSpaceRemovePageMutation } from './Space/pages/SpaceRemovePageMutation';
+import type { TSpaceUpdatePageMutation } from './Space/pages/SpaceUpdatePageMutation';
+import type { TSpaceAddResourceMutation } from './Space/resources/SpaceAddResourceMutation';
+import type { TSpaceRemoveResourceMutation } from './Space/resources/SpaceRemoveResourceMutation';
+import type { TSpaceAddPluginMutation } from './Space/SpaceAddPluginMutation';
+import type { TSpaceDeployMutation } from './Space/SpaceDeployMutation';
+import type { TSpacePublishMutation } from './Space/SpacePublishMutation';
+import type { TSpaceUpdatePluginMutation } from './Space/SpaceUpdatePluginMutation';
+import type { TTemplateAddMutation } from './Template/TemplateAddMutation';
+import type { TTemplateRemoveMutation } from './Template/TemplateRemoveMutation';
+import type { TTemplateUpdateMutation } from './Template/TemplateUpdateMutation';
+
+export type MutationsMap = {
+  SpaceUpdate: unknown;
+  SpaceUpdateSchema: unknown;
+  SpaceAddPage: TSpaceAddPageMutation;
+  SpaceHomePage: TSpaceHomePageMutation;
+  SpaceUpdatePage: TSpaceUpdatePageMutation;
+  SpaceRemovePage: TSpaceRemovePageMutation;
+  SpaceAddPageFolder: TSpaceAddPageFolderMutation;
+  SpaceUpdatePageFolder: TSpaceUpdatePageFolderMutation;
+  SpaceRemovePageFolder: TSpaceRemovePageFolderMutation;
+  SpaceAddVariable: unknown;
+  SpaceUpdateVariable: unknown;
+  SpaceRemoveVariable: unknown;
+  SpaceAddElement: unknown;
+  SpaceUpdateElement: unknown;
+  SpaceRemoveElement: unknown;
+  SpaceMoveElement: unknown;
+  SpaceCloneElement: unknown;
+  SpaceAddTemplate: unknown;
+  SpaceAddPlugin: TSpaceAddPluginMutation;
+  SpaceUpdatePlugin: TSpaceUpdatePluginMutation;
+  SpaceRemovePlugin: unknown;
+  SpaceAddResource: TSpaceAddResourceMutation;
+  SpaceRemoveResource: TSpaceRemoveResourceMutation;
+  SpaceAddCdn: unknown;
+  SpaceUpdateCdn: unknown;
+  SpaceRemoveCdn: unknown;
+  SpacePublish: TSpacePublishMutation;
+  SpaceDeploy: TSpaceDeployMutation;
+  SpaceUpdateSettings: unknown;
+
+  StyleAddSelector: unknown;
+  StyleUpdateSelector: unknown;
+  StyleRemoveSelector: unknown;
+  StyleAddVariable: unknown;
+  StyleUpdateVariable: unknown;
+  StyleRemoveVariable: unknown;
+  StyleUpdate: unknown;
+
+  SegmentAdd: TSegmentAddMutation;
+  SegmentUpdate: TSegmentUpdateMutation;
+  SegmentRemove: unknown;
+  SegmentAddElement: unknown;
+  SegmentUpdateElement: unknown;
+  SegmentRemoveElement: unknown;
+  SegmentMoveElement: unknown;
+  SegmentCloneElement: unknown;
+  SegmentAddTemplate: unknown;
+  SegmentStyleAddSelector: unknown;
+  SegmentStyleUpdateSelector: unknown;
+  SegmentStyleRemoveSelector: unknown;
+  SegmentStyleAddVariable: unknown;
+  SegmentStyleUpdateVariable: unknown;
+  SegmentStyleRemoveVariable: unknown;
+  SegmentPublish: TSegmentPublishMutation;
+
+  TemplateAdd: TTemplateAddMutation;
+  TemplateUpdate: TTemplateUpdateMutation;
+  TemplateRemove: TTemplateRemoveMutation;
+
+  CollectionAdd: TCollectionAddMutation;
+  CollectionUpdate: TCollectionUpdateMutation;
+  CollectionRemove: TCollectionRemoveMutation;
+  CollectionAddRecord: TCollectionAddRecordMutation;
+  CollectionUpdateRecord: TCollectionUpdateRecordMutation;
+  CollectionRemoveRecord: TCollectionRemoveRecordMutation;
+};
+
 const Mutations = {
   SpaceUpdate: SpaceUpdateMutation,
   SpaceUpdateSchema: SpaceUpdateSchemaMutation,

@@ -2,10 +2,12 @@ import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { use, useCallback, useMemo } from 'react';
 import useSWRInfinite from 'swr/infinite';
 
-import NetworkContext from '../NetworkContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import type { MutationsMap } from '../Mutations';
 import type { QueriesMap } from '../Queries';
 import type { PageInfo } from '@plitzi/sdk-shared';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { SWRInfiniteConfiguration } from 'swr/infinite';
 
 const useInfiniteGraphQL = <K extends keyof QueriesMap, T>(
@@ -15,7 +17,7 @@ const useInfiniteGraphQL = <K extends keyof QueriesMap, T>(
   config?: SWRInfiniteConfiguration<QueriesMap[K]> & { pageSize?: number }
   // mode: 'query' | 'mutate' = 'query'
 ) => {
-  const { query } = use(NetworkContext);
+  const { query } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const { pageSize = 10 } = config ?? {};
   const transformMemo = useValueMemo(transform, 'soft', { skipFunctions: true });
 

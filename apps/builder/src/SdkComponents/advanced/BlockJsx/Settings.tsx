@@ -9,7 +9,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 
-import type { NetworkContextValue } from '@pmodules/Network/NetworkContext';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ChangeEvent, Context } from 'react';
 
 // content is done in builder side and injected here as child

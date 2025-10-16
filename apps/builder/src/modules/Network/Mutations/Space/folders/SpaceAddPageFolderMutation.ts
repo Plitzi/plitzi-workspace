@@ -1,5 +1,9 @@
 import { gql } from '@apollo/client/core';
 
+import type { PageFolder } from '@plitzi/sdk-shared';
+
+export type TSpaceAddPageFolderMutation = PageFolder;
+
 const SpaceAddPageFolderMutation = gql`
   mutation SpaceAddPageFolderMutation($environment: String!, $name: String!, $slug: String!, $parentId: String) {
     SpaceAddPageFolder(environment: $environment, name: $name, slug: $slug, parentId: $parentId) {

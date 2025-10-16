@@ -17,7 +17,7 @@ import type {
   Schema,
   Style
 } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@pmodules/Network/NetworkContext';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 const getImageSize = async (file: File): Promise<{ height: number; width: number }> =>
   new Promise((resolve, reject) => {

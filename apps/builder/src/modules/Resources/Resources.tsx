@@ -3,8 +3,8 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import ResourceCdnForm from './Models/ResourceCdnForm';
 import ResourcesCdn from './ResourcesCdn';

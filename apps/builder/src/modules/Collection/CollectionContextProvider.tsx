@@ -1,13 +1,16 @@
 import omit from 'lodash/omit';
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import CollectionReducer, { CollectionsActions } from './CollectionReducer';
 
 import type { Collection, CollectionRecord } from '@plitzi/sdk-shared';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
 
 export type CollectionContextProviderProps = {
@@ -16,7 +19,7 @@ export type CollectionContextProviderProps = {
 };
 
 const CollectionContextProvider = ({ children, collections: collectionsProp }: CollectionContextProviderProps) => {
-  const { query, mutate } = use(NetworkContext);
+  const { query, mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
     if (collectionsProp) {
@@ -248,8 +251,8 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       privacy: Collection['privacy'],
       fields: Collection['fields']
     ) => {
-      const result = await mutate<Collection>('CollectionAdd', { name, namePlural, description, privacy, fields });
-      if (result && !(result instanceof Error)) {
+      const result = await mutate('CollectionAdd', { name, namePlural, description, privacy, fields });
+      if (result as typeof result | undefined) {
         collectionsAdd(result);
 
         return result;
@@ -269,7 +272,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       privacy: Collection['privacy'],
       fields: Collection['fields']
     ) => {
-      const result = await mutate<Collection>('CollectionUpdate', {
+      const result = await mutate('CollectionUpdate', {
         id,
         name,
         namePlural,
@@ -277,7 +280,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
         privacy,
         fields
       });
-      if (result && !(result instanceof Error)) {
+      if (result as typeof result | undefined) {
         collectionsUpdate(result);
 
         return result;
@@ -290,8 +293,8 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
 
   const removeCollection = useCallback(
     async (id: string) => {
-      const result = await mutate<Collection>('CollectionRemove', { id });
-      if (result && !(result instanceof Error)) {
+      const result = await mutate('CollectionRemove', { id });
+      if (result as typeof result | undefined) {
         collectionsRemove(id);
 
         return true;
@@ -309,8 +312,8 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       values: CollectionRecord['values'],
       updateStore = true
     ) => {
-      const result = await mutate<CollectionRecord>('CollectionAddRecord', { collectionId, status, values });
-      if (result && !(result instanceof Error) && updateStore) {
+      const result = await mutate('CollectionAddRecord', { collectionId, status, values });
+      if ((result as typeof result | undefined) && updateStore) {
         collectionRecordsAdd(collectionId, result);
 
         return result;
@@ -329,8 +332,8 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       values: CollectionRecord['values'],
       updateStore = true
     ) => {
-      const result = await mutate<CollectionRecord>('CollectionUpdateRecord', { id, status, values });
-      if (result && !(result instanceof Error) && updateStore) {
+      const result = await mutate('CollectionUpdateRecord', { id, status, values });
+      if ((result as typeof result | undefined) && updateStore) {
         collectionRecordsUpdate(collectionId, result);
 
         return result;
@@ -344,7 +347,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
   const removeRecord = useCallback(
     async (collectionId: string, id: string, updateStore = true) => {
       const result = await mutate('CollectionRemoveRecord', { id });
-      if (result && updateStore) {
+      if ((result as typeof result | undefined) && updateStore) {
         collectionRecordsRemove(collectionId, id);
 
         return true;

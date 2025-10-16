@@ -1,5 +1,9 @@
 import { gql } from '@apollo/client/core';
 
+import type { Collection } from '@plitzi/sdk-shared';
+
+export type TCollectionAddMutation = Collection;
+
 const CollectionAddMutation = gql`
   mutation CollectionAddMutation(
     $name: String!

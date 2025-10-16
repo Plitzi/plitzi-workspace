@@ -6,8 +6,8 @@ import get from 'lodash/get';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 const StyleAdvanceEditor = () => {
   const {

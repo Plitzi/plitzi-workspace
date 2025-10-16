@@ -1,5 +1,10 @@
-// Packages
 import { gql } from 'graphql-tag';
+
+import type { CollectionRecord } from '@plitzi/sdk-shared';
+
+export type TCollectionRecordQuery = {
+  CollectionRecord: CollectionRecord;
+};
 
 const CollectionRecordQuery = gql`
   query CollectionRecordQuery($id: String!, $collectionId: String!) {

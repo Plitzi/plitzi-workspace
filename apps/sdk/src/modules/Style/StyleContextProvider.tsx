@@ -1,40 +1,36 @@
-// Packages
-import React, { useMemo, use } from 'react';
+import { useMemo, use } from 'react';
 
-// Monorepo
+import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 
-// Alias
-import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
+import type { Style } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 export const STYLE_TYPE_NORMAL = 'normal';
 export const STYLE_TYPE_PARTIAL = 'partial';
 export const STYLE_TYPE_TEMPLATE = 'template';
 export const STYLE_TYPE_SEGMENT = 'segment';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   style: object;
- *   type: 'normal' | 'partial' | 'template' | 'segment';
- * }} props
- * @returns {React.ReactElement}
- */
-const StyleContextProvider = props => {
-  const { children, style: styleProp, type = STYLE_TYPE_NORMAL } = props;
+export type StyleContextProviderProps = {
+  children: ReactNode;
+  style?: Style;
+  type?: 'normal' | 'partial' | 'template' | 'segment';
+};
+
+const StyleContextProvider = ({ children, style: styleProp, type = 'normal' }: StyleContextProviderProps) => {
   const internalData = use(NetworkInternalContext);
-  const style = useMemo(() => {
+  const style = useMemo<Style>(() => {
     if (styleProp) {
       return styleProp;
     }
 
     switch (type) {
-      case STYLE_TYPE_NORMAL:
+      case 'normal':
         return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '', ...internalData.style };
       default:
         return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
     }
-  }, [styleProp, internalData]);
+  }, [styleProp, type, internalData.style]);
 
   const valueMemo = useMemo(() => ({ style }), [style]);
 

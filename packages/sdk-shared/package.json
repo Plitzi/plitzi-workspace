@@ -111,6 +111,18 @@
       "import": "./dist/src/index.mjs",
       "types": "./dist/src/index.d.ts"
     },
+    "./network": {
+      "import": "./dist/src/network/index.mjs",
+      "types": "./dist/src/network/index.d.ts"
+    },
+    "./network/NetworkContext": {
+      "import": "./dist/src/network/NetworkContext.mjs",
+      "types": "./dist/src/network/NetworkContext.d.ts"
+    },
+    "./network/index": {
+      "import": "./dist/src/network/index.mjs",
+      "types": "./dist/src/network/index.d.ts"
+    },
     "./schema": {
       "import": "./dist/src/schema/index.mjs",
       "types": "./dist/src/schema/index.d.ts"

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
 import { useMemo, useRef, useCallback, use, useEffect } from 'react';
@@ -12,8 +11,8 @@ import FlatMap, { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
@@ -21,7 +20,18 @@ import SchemaReducer, { SchemaActions } from './SchemaReducer';
 
 import type { SchemaReducerActions } from './SchemaReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import type { DropPosition, Element, PageFolder, Schema, SchemaRaw, SchemaVariable, Style } from '@plitzi/sdk-shared';
+import type {
+  DropPosition,
+  Element,
+  NetworkContextValue,
+  PageFolder,
+  Schema,
+  SchemaRaw,
+  SchemaVariable,
+  Style
+} from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
 
 export type SchemaContextProviderProps = {
@@ -37,7 +47,6 @@ const SchemaContextProvider = ({
   schema: schemaProp,
   includeSubscriptions = true
 }: SchemaContextProviderProps) => {
-  const { addToast } = useToast();
   const internalData = use(NetworkInternalContext);
   const { eventBridge } = use(EventBridgeContext);
   const schemaPropMemo = useMemo(() => {
@@ -68,7 +77,7 @@ const SchemaContextProvider = ({
     }
   ]);
   const schemaRef = useRef(schema);
-  const { mutate, subscriptionManager } = use(NetworkContext);
+  const { mutate, subscriptionManager } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   schemaRef.current = schema;
 
   const schemaUpdate = useCallback(
@@ -151,14 +160,12 @@ const SchemaContextProvider = ({
 
   const schemaAddPage = useCallback(
     async (page: Element, fromSubscriptions = false) => {
-      const result = await mutate<Element>('SpaceAddPage', page);
-      if (result instanceof Error) {
-        addToast(result.message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
-      } else if (result) {
+      const result = await mutate('SpaceAddPage', page);
+      if (result as typeof result | undefined) {
         dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE, page: result, fromSubscriptions });
       }
     },
-    [addToast, dispatchSchema, mutate]
+    [dispatchSchema, mutate]
   );
 
   const schemaHomePage = useCallback(
@@ -183,14 +190,12 @@ const SchemaContextProvider = ({
 
   const schemaAddPageFolder = useCallback(
     async (pageFolder: PageFolder, fromSubscriptions = false) => {
-      const result = await mutate<PageFolder>('SpaceAddPageFolder', pageFolder);
-      if (result instanceof Error) {
-        addToast(result.message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
-      } else if (result) {
+      const result = await mutate('SpaceAddPageFolder', pageFolder);
+      if (result as typeof result | undefined) {
         dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE_FOLDER, pageFolder: result, fromSubscriptions });
       }
     },
-    [addToast, dispatchSchema, mutate]
+    [dispatchSchema, mutate]
   );
 
   const schemaUpdatePageFolder = useCallback(

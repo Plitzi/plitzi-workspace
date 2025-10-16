@@ -10,8 +10,8 @@ import { useCallback, useEffect, use, useState } from 'react';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import TransformPreview from '@pmodules/Transformers/TransformPreview';
 
 import type { Schema, Style } from '@plitzi/sdk-shared';

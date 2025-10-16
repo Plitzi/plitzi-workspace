@@ -3,10 +3,10 @@ import get from 'lodash/get';
 import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 

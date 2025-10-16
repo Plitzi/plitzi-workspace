@@ -2,9 +2,11 @@ import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { use, useMemo } from 'react';
 import useSWR from 'swr';
 
-import NetworkContext from '../NetworkContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import type { MutationsMap } from '../Mutations';
 import type { QueriesMap } from '../Queries';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { KeyedMutator, SWRConfiguration } from 'swr';
 
 function useGraphQL<K extends keyof QueriesMap>(
@@ -37,7 +39,7 @@ function useGraphQL<K extends keyof QueriesMap, TK>(
   config?: SWRConfiguration<QueriesMap[K]>
   // mode: 'query' | 'mutate' = 'query'
 ) {
-  const { query } = use(NetworkContext);
+  const { query } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const fetcher = useMemo(() => (qKey: K, variables?: Record<string, unknown>) => query(qKey, variables), [query]);
   const transformMemo = useValueMemo(transform, 'soft', { skipFunctions: true });
   const swrFetcher = useMemo(

@@ -1,5 +1,10 @@
-// Packages
 import { gql } from 'graphql-tag';
+
+import type { PageInfo, SegmentRaw } from '@plitzi/sdk-shared';
+
+export type TSegmentsQuery = {
+  Segments: { edges: SegmentRaw[]; pageInfo: PageInfo };
+};
 
 const SegmentsQuery = gql`
   query SegmentsQuery($environment: String!, $filter: JsonObject, $cursor: String, $limit: Int) {

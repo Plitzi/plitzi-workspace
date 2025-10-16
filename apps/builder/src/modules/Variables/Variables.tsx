@@ -7,7 +7,7 @@ import { useCallback, use, useMemo, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import VariableForm from './models/VariableForm';
 import Variable from './Variable';

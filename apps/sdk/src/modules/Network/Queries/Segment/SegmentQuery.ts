@@ -1,5 +1,10 @@
-// Packages
 import { gql } from 'graphql-tag';
+
+import type { SegmentRaw } from '@plitzi/sdk-shared';
+
+export type TSegmentQuery = {
+  Segment: SegmentRaw;
+};
 
 const SegmentQuery = gql`
   query SegmentQuery($id: String, $identifier: String, $environment: String!) {

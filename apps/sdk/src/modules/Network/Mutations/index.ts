@@ -1,7 +1,6 @@
-// Relatives
 import CollectionAddRecordMutation from './Collection/CollectionAddRecordMutation';
-import CollectionUpdateRecordMutation from './Collection/CollectionUpdateRecordMutation';
 import CollectionRemoveRecordMutation from './Collection/CollectionRemoveRecordMutation';
+import CollectionUpdateRecordMutation from './Collection/CollectionUpdateRecordMutation';
 
 const Mutations = {
   CollectionAddRecord: CollectionAddRecordMutation,

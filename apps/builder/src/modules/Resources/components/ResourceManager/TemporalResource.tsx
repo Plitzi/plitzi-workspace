@@ -2,15 +2,17 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
 import { useState, useEffect, useRef, useCallback, use, useMemo } from 'react';
 
-import NetworkContext from '@pmodules/Network/NetworkContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import ResourceContent from './ResourceContent';
 import ResourceName from './ResourceName';
 import ResourceType from './ResourceType';
 import ResourceUploadStatus from './ResourceUploadStatus';
 
-import type { Resource, ResourceFile, ResourceWithFile } from '../../types';
-import type { PluginManifest } from '@plitzi/sdk-shared';
+import type { ResourceFile, ResourceWithFile } from '../../types';
+import type { NetworkContextValue, PluginManifest } from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 
 export type TemporalResourceProps = {
   className?: string;
@@ -37,7 +39,7 @@ const TemporalResource = ({
   onError: onErrorProp,
   onUploadCancel
 }: TemporalResourceProps) => {
-  const { mutate } = use(NetworkContext);
+  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const [isUploaded, setIsUploaded] = useState(!!id);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -90,7 +92,7 @@ const TemporalResource = ({
     }
 
     setUploading(true);
-    const response = await mutate<Resource>(
+    const response = await mutate(
       'SpaceAddResource',
       { cdnIdentifier, resource: file, type, compression: type === 'plugin' ? 'gzip' : undefined },
       false,
@@ -98,7 +100,7 @@ const TemporalResource = ({
       { customFetch: true, onProgress, onAbortPossible, onError }
     );
 
-    if (response instanceof Error || response instanceof Error) {
+    if (response instanceof Error) {
       setError(response.message);
       setProgressUpload(0);
     } else if (file.type === 'plugin') {

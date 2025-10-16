@@ -4,9 +4,9 @@ import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
@@ -27,6 +27,9 @@ import type {
   TagType,
   StyleItem
 } from '@plitzi/sdk-shared';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
 
 export type SegmentsContextProviderProps = {
@@ -40,7 +43,7 @@ const SegmentsContextProvider = ({
   segments: segmentsProp,
   includeSubscriptions = true
 }: SegmentsContextProviderProps) => {
-  const { query, mutate, subscriptionManager } = use(NetworkContext);
+  const { query, mutate, subscriptionManager } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const internalData = use(NetworkInternalContext);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
@@ -345,7 +348,7 @@ const SegmentsContextProvider = ({
         return;
       }
 
-      const result = await mutate<SegmentRaw>('SegmentAdd', {
+      const result = await mutate('SegmentAdd', {
         name,
         description,
         baseElementId: elements.item.id,
@@ -353,7 +356,7 @@ const SegmentsContextProvider = ({
         style: { ...elementsStyle, cache: generateCache(elementsStyle) },
         variables
       });
-      if (result && !(result instanceof Error)) {
+      if (result as typeof result | undefined) {
         const segment: Segment = {
           ...result,
           schema: {
@@ -573,8 +576,8 @@ const SegmentsContextProvider = ({
 
   const segmentAddMutation = useCallback(
     async (name: string, description: string, schema?: Schema, style?: Style, variables: SchemaVariable[] = []) => {
-      const result = await mutate<SegmentRaw>('SegmentAdd', { name, description, schema, style, variables });
-      if (result && !(result instanceof Error)) {
+      const result = await mutate('SegmentAdd', { name, description, schema, style, variables });
+      if (result as typeof result | undefined) {
         const segment: Segment = {
           ...result,
           schema: {

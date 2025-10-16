@@ -1,5 +1,16 @@
-// Packages
 import { gql } from 'graphql-tag';
+
+import type { CollectionRaw, PluginRaw, SchemaRaw, SegmentRaw, Style } from '@plitzi/sdk-shared';
+
+export type TInitQuery = {
+  Space?: {
+    plugins: PluginRaw[];
+    schema: SchemaRaw;
+    style: Style;
+    segments?: SegmentRaw[];
+  };
+  Collections: { edges: CollectionRaw[] };
+};
 
 const InitQuery = gql`
   query InitQuery($environment: String!, $revision: Int, $limit: Int!) {

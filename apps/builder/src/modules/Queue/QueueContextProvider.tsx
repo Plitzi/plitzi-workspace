@@ -1,6 +1,6 @@
 import { useCallback, use, useMemo } from 'react';
 
-import NetworkContext from '@pmodules/Network/NetworkContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import useQueueManager from './hooks/useQueueManager';
 import QueueContext from './QueueContext';

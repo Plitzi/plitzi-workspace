@@ -17,7 +17,7 @@ import type { Context, ReactNode } from 'react';
 
 export type DataSourceContextProviderProps = {
   children: ReactNode;
-  environment?: 'main' | 'production' | 'development' | 'staging';
+  environment?: 'local' | 'main' | 'production' | 'development' | 'staging';
 };
 
 const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourceContextProviderProps) => {

@@ -7,8 +7,8 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
 import { useState, use, useCallback } from 'react';
 
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 import ResourceContent from './components/ResourceManager/ResourceContent';
 import ResourceName from './components/ResourceManager/ResourceName';

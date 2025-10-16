@@ -17,6 +17,7 @@ import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyl
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
@@ -25,7 +26,6 @@ import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 

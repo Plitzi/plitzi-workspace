@@ -8,17 +8,25 @@ import { useCallback, use, useEffect, useMemo, useState } from 'react';
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import NetworkInternalContext from './contexts/NetworkInternalContext';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 import Mutations from './Mutations';
-import NetworkContext from './NetworkContext';
 import Queries from './Queries';
 
 import type { NetworkInternalContextValue } from './contexts/NetworkInternalContext';
+import type { MutationsMap } from './Mutations';
 import type { QueriesMap } from './Queries';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
-import type { Server, CollectionRecord, ComponentDefinition, Schema, ServerEnvironment } from '@plitzi/sdk-shared';
+import type {
+  Server,
+  CollectionRecord,
+  ComponentDefinition,
+  Schema,
+  ServerEnvironment,
+  NetworkContextValue
+} from '@plitzi/sdk-shared';
 import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
@@ -92,23 +100,23 @@ const NetworkContextProvider = ({
   );
 
   const mutate = useCallback(
-    async <T = unknown,>(
-      mutationKey: keyof typeof Mutations,
+    async <T extends keyof MutationsMap>(
+      mutationKey: T,
       variables?: Record<string, unknown>,
       silentError = false,
       includeEnvironment = true,
       uploadOptions = {}
-    ): Promise<T | Error | undefined | null> => {
+    ): Promise<MutationsMap[T]> => {
       if (!(Mutations[mutationKey] as DocumentNode | undefined)) {
         addToast('Mutation not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
-        return undefined;
+        return undefined as MutationsMap[T];
       }
 
-      let result: ApolloClient.MutateResult<T>;
+      let result: ApolloClient.MutateResult<MutationsMap[T]>;
       // let abortHandler;
       try {
-        result = await client.mutate({
+        result = await client.mutate<MutationsMap[T]>({
           mutation: Mutations[mutationKey],
           variables: includeEnvironment ? { environment, ...variables } : variables,
           context: {
@@ -143,14 +151,14 @@ const NetworkContextProvider = ({
           });
         }
 
-        return e as Error;
+        return e as MutationsMap[T];
       }
 
-      if (result.data && result.data[mutationKey] !== undefined) {
-        return result.data[mutationKey] as T;
+      if (result.data && (result.data as unknown as MutationsMap)[mutationKey] !== undefined) {
+        return (result.data as unknown as MutationsMap)[mutationKey];
       }
 
-      return result.data;
+      return result.data as MutationsMap[T];
     },
     [addToast, client, environment]
   );
@@ -260,7 +268,7 @@ const NetworkContextProvider = ({
   }
 
   return (
-    <NetworkContext value={networkValue}>
+    <NetworkContext value={networkValue as NetworkContextValue<QueriesMap, MutationsMap>}>
       <NetworkInternalContext value={internalData}>{children}</NetworkInternalContext>
     </NetworkContext>
   );

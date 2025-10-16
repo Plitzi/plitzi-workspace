@@ -3515,6 +3515,7 @@ __metadata:
     terser-webpack-plugin: "npm:^5.3.14"
     thread-loader: "npm:^4.0.4"
     twig: "npm:^1.17.1"
+    typescript: "npm:^5.9.3"
     url-loader: "npm:^4.1.1"
     uuid: "npm:^13.0.0"
     webpack: "npm:^5.102.1"

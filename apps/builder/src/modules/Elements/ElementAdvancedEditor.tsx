@@ -7,8 +7,8 @@ import get from 'lodash/get';
 import { useCallback, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 
 export type ElementAdvancedEditorProps = {
   className?: string;

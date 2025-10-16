@@ -5,8 +5,10 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useState, useEffect, useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
-import NetworkContext from '@pmodules/Network/NetworkContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { Domain } from '@pmodules/Network/Queries/Space/SpaceDeploymentsQuery';
 
 const deployFormSchema = z.object({
@@ -27,7 +29,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
   const [loading, setLoading] = useState(false);
   const [domains, setDomains] = useState<Domain[]>([]);
   const [latestRevision, setLatestRevision] = useState<number>(0);
-  const { query } = use(NetworkContext);
+  const { query } = use(NetworkContext) as NetworkContextValue<QueriesMap>;
   const { addToast } = useToast();
 
   const form = useForm({ defaultValues: { environment, domain, revision }, config: { schema: deployFormSchema } });

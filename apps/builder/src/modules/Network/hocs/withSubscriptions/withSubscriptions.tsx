@@ -4,11 +4,11 @@ import set from 'lodash/set';
 import { memo, useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
 
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
 
 import { isRealTimeEvent, isRealTimeSelfEvent } from '../../helpers/EventTypes';
-import NetworkContext from '../../NetworkContext';
 
 import type {
   RealTimeEvent,

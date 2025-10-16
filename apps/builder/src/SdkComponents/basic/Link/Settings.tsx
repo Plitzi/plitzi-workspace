@@ -7,7 +7,7 @@ import { useMemo, use, useCallback, useEffect } from 'react';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import type { NetworkContextValue } from '@pmodules/Network/NetworkContext';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { Context } from 'react';
 
 type SettingsProps = {

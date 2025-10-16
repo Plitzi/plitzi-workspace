@@ -13,12 +13,12 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import AppContext from '@pmodules/App/AppContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
-import NetworkContext from '@pmodules/Network/NetworkContext';
 import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 import type { Schema } from '@plitzi/sdk-shared';
