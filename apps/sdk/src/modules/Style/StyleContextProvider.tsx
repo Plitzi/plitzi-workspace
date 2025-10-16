@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { useMemo, use } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
