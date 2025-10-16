@@ -2,9 +2,10 @@
 import React, { useMemo, use, useRef, useCallback, useState, useEffect } from 'react';
 import get from 'lodash/get';
 
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
-import NetworkContext from '@modules/Network/NetworkContext';
 
 // Relatives
 import SegmentsContext from './SegmentsContext';

@@ -14,10 +14,10 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 // Alias
 import CollectionContext from '@modules/Collection/CollectionContext';
-import NetworkContext from '@modules/Network/NetworkContext';
 import SegmentsContext from '@modules/Segments/SegmentsContext';
 
 // Relatives

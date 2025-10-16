@@ -1,8 +1,9 @@
 // Packages
 import React, { useCallback, use, useMemo } from 'react';
 
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+
 // Alias
-import NetworkContext from '@modules/Network/NetworkContext';
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 
 // Relatives

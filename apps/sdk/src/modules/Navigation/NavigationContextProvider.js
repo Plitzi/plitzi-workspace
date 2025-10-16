@@ -12,10 +12,10 @@ import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 // Alias
 import { RENDER_MODE_IFRAME, RENDER_MODE_SSR, RENDER_MODE_WIDGET } from '@modules/Sdk/Sdk';
-import NetworkContext from '@modules/Network/NetworkContext';
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 
 /**

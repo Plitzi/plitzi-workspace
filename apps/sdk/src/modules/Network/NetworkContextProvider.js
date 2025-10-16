@@ -8,9 +8,9 @@ import noop from 'lodash/noop';
 // Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 // Relatives
-import NetworkContext from './NetworkContext';
 import Queries from './Queries';
 import Mutations from './Mutations';
 import NetworkInternalContext from './contexts/NetworkInternalContext';
