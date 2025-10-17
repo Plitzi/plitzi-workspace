@@ -1,57 +1,63 @@
-// Packages
 import { useApolloClient } from '@apollo/client/react';
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import noop from 'lodash/noop';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
-// Monorepo
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-// Relatives
-import Queries from './Queries';
-import Mutations from './Mutations';
 import NetworkInternalContext from './contexts/NetworkInternalContext';
+import Mutations from './Mutations';
+import Queries from './Queries';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   cacheTimeout?: number;
- *   server: string;
- *   revision: number;
- *   webKey: string;
- *   webId: number;
- *   environment: 'development' | 'staging' | 'production';
- *   offlineMode: boolean;
- *   offlineData: object;
- *   offlineDataType: string;
- *   client: any;
- *   debugMode?: boolean;
- *   renderMode?: 'ssr' | 'iframe' | 'widget' | 'raw' | 'shadow';
- * }} props
- * @returns {React.ReactElement}
- */
-const NetworkContextProvider = props => {
-  const {
-    children,
-    cacheTimeout = 0,
-    server,
-    revision,
-    webKey = '',
-    webId = 0,
-    environment = 'development',
-    offlineMode = false,
-    offlineData,
-    offlineDataType = 'json',
-    debugMode = false,
-    renderMode = 'iframe'
-  } = props;
+import type { MutationsMap } from './Mutations';
+import type { QueriesMap } from './Queries';
+import type { OfflineData } from '../../types';
+import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
+import type { Server } from '@plitzi/sdk-shared';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { ReactNode } from 'react';
+
+export type NetworkContextProviderProps = {
+  children: ReactNode;
+  cacheTimeout?: number;
+  server: Server;
+  revision: number;
+  webKey?: string;
+  webId?: string;
+  userKey?: string;
+  instanceId: string;
+  environment?: 'development' | 'staging' | 'production';
+  offlineMode?: boolean;
+  offlineData?: OfflineData;
+  offlineDataType?: 'json' | 'compact';
+  debugMode?: boolean;
+  renderMode?: 'ssr' | 'iframe' | 'widget' | 'raw' | 'shadow';
+};
+
+const NetworkContextProvider = ({
+  children,
+  cacheTimeout = 0,
+  server,
+  revision,
+  webKey = '',
+  webId = '',
+  userKey = '',
+  instanceId,
+  environment = 'development',
+  offlineMode = false,
+  offlineData,
+  offlineDataType = 'json',
+  debugMode = false,
+  renderMode = 'iframe'
+}: NetworkContextProviderProps) => {
   const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const client = renderMode === 'ssr' && offlineDataAvailable ? undefined : useApolloClient();
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<ReactNode | undefined>(undefined);
   const [internalData, setInternalData] = useState(() => {
     if (!offlineDataAvailable) {
       return {};
@@ -65,47 +71,53 @@ const NetworkContextProvider = props => {
   });
 
   const query = useCallback(
-    async (queryKey, variables, fetchPolicy = 'network-first') => {
-      if (!Queries[queryKey]) {
+    async <T extends keyof QueriesMap>(
+      queryKey: T,
+      variables?: Record<string, unknown>,
+      fetchPolicy: FetchPolicy = 'network-only'
+    ): Promise<{ success: boolean; result?: QueriesMap[T]; error?: string | Error }> => {
+      const document = Queries[queryKey];
+      if (!(document as DocumentNode | undefined)) {
         setError('Query Not Found');
 
-        return null;
+        throw new Error(`Query ${queryKey} not found`);
       }
 
-      let result;
+      let result: ApolloClient.QueryResult<QueriesMap[T]> | undefined;
       try {
-        result = await client.query({
-          query: Queries[queryKey],
+        result = await client?.query<QueriesMap[T]>({
+          query: document,
           variables: { environment, ...variables },
           fetchPolicy
         });
-      } catch (e) {
-        return e;
+      } catch (e: unknown) {
+        return { success: false, result: undefined, error: (e as Error).message };
       }
 
       if (!result) {
         setError('Network Not Available, Please try again');
       }
 
-      if (result.data && result.data[queryKey] !== undefined) {
-        return result.data[queryKey];
-      }
-
-      return result;
+      return { success: true, result: result?.data };
     },
-    [client]
+    [client, environment]
   );
 
   const mutate = useCallback(
-    async (mutationKey, variables, includeEnvironment = true, uploadOptions = {}) => {
-      if (!Mutations[mutationKey]) {
+    async <T extends keyof MutationsMap>(
+      mutationKey: T,
+      variables?: Record<string, unknown>,
+      includeEnvironment = true,
+      uploadOptions = {}
+    ): Promise<{ success: boolean; result?: MutationsMap[T]; error?: string | Error }> => {
+      if (!(Mutations[mutationKey] as DocumentNode | undefined)) {
         return { success: false, result: undefined, error: 'Mutation Not Found' };
       }
 
-      let result;
+      let result: ApolloClient.MutateResult<MutationsMap[T]> | undefined;
       // let abortHandler;
       try {
-        result = await client.mutate({
+        result = await client?.mutate({
           mutation: Mutations[mutationKey],
           variables: includeEnvironment ? { environment, ...variables } : variables,
           context: {
@@ -123,25 +135,25 @@ const NetworkContextProvider = props => {
             }
           }
         });
-      } catch (e) {
-        return { success: false, result: undefined, error: e.message };
+      } catch (e: unknown) {
+        return { success: false, result: undefined, error: e as Error };
       }
 
       if (!result) {
         return { success: false, result: undefined, error: 'Network Not Available, Please try again' };
       }
 
-      if (result.data && result.data[mutationKey] !== undefined) {
-        return { success: true, result: result.data[mutationKey] };
+      if (result.data && (result.data as Record<string, unknown>)[mutationKey] !== undefined) {
+        return { success: true, result: (result.data as unknown as MutationsMap)[mutationKey] };
       }
 
-      return { success: true, result };
+      return { success: true, result: result.data };
     },
-    [client]
+    [client, environment]
   );
 
   const initQuery = async () => {
-    let revisionAux = revision;
+    let revisionAux: number | undefined = revision;
     if (typeof revision !== 'number' || revision === 0) {
       revisionAux = undefined;
     }
@@ -149,23 +161,24 @@ const NetworkContextProvider = props => {
     const response = await query(
       'Init',
       { environment, revision: revisionAux, limit: 99 },
-      cacheTimeout === 0 ? 'network-first' : 'cache-first'
+      cacheTimeout === 0 ? 'network-only' : 'cache-first'
     );
-    if (response instanceof Error) {
+    if (response.error instanceof Error) {
       setLoading(false);
-      if (response.statusCode === 401) {
-        setError('Access not authorized');
-      } else if (response.networkError) {
-        setError('Service not available');
-      } else {
-        setError(response.message);
-      }
+      setError(typeof response.error === 'string' ? response.error : response.error.message);
+      // if (response.error.statusCode === 401) {
+      //   setError('Access not authorized');
+      // } else if (response.networkError) {
+      //   setError('Service not available');
+      // } else {
+      //   setError(response.message);
+      // }
 
       return;
     }
 
-    if (response.data) {
-      const data = cloneDeep(response.data);
+    if (response.success && response.result) {
+      const data = cloneDeep(response.result);
       const { Space, Collections } = data;
       if (!Space) {
         setError(
@@ -179,15 +192,15 @@ const NetworkContextProvider = props => {
       }
 
       let plugins = {};
-      if (Space.plugins && Space.plugins.length > 0) {
-        plugins = await pluginParseDefinition(Space.plugins, !debugMode);
+      if (Space.plugins.length > 0) {
+        plugins = await pluginParseDefinition(Space.plugins);
       }
 
       setInternalData({
         schema: {
           ...EMPTY_SCHEMA.schema,
           ...Space.schema,
-          flat: Space.schema.flat?.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}) ?? {}
+          flat: Space.schema.flat.reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
         },
         plugins,
         style: Space.style,
@@ -209,9 +222,9 @@ const NetworkContextProvider = props => {
 
   const initOfflineData = async () => {
     let plugins = {};
-    if (offlineData.plugins && offlineData.plugins.length > 0) {
+    if (offlineData?.plugins && offlineData.plugins.length > 0) {
       // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, scope, module, settings, subPlugins
-      plugins = await pluginParseDefinition(offlineData.plugins, !debugMode);
+      plugins = await pluginParseDefinition(offlineData.plugins);
     }
 
     setInternalData(state => ({ ...state, plugins }));
@@ -227,15 +240,16 @@ const NetworkContextProvider = props => {
 
         return state;
       });
-      initQuery();
+      void initQuery();
     } else if (offlineDataAvailable) {
-      initOfflineData();
+      void initOfflineData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
-  const networkValue = useMemo(
-    () => ({ query, mutate, webKey, webId, server, environment }),
-    [query, mutate, webKey, webId, server, environment]
+  const networkValue = useMemo<NetworkContextValue<QueriesMap, MutationsMap>>(
+    () => ({ query, mutate, webKey, webId, server, environment, instanceId, userKey }),
+    [query, mutate, webKey, webId, server, environment, instanceId, userKey]
   );
 
   if (error) {

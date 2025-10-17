@@ -9,7 +9,7 @@ import TemplatesContext from './TemplatesContext';
 import TemplatesReducer, { TemplatesActions } from './TemplatesReducer';
 
 import type { Template } from './TemplatesContext';
-import type { Element, NetworkContextValue, Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, Element, Schema, Style } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
@@ -20,7 +20,7 @@ export type TemplatesContextProviderProps = {
 };
 
 const TemplatesContextProvider = ({ children, templates: templatesProp }: TemplatesContextProviderProps) => {
-  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const internalData = use(NetworkInternalContext);
   const templatesPropMemo = useMemo(() => {
     if (templatesProp) {
@@ -50,9 +50,9 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
 
   const templatesAddMutation = useCallback(
     async (name: string, description: string, schema?: Schema, style?: Style) => {
-      const result = await mutate('TemplateAdd', { name, description, schema, style });
-      if (result as typeof result | undefined) {
-        templatesAdd(result);
+      const response = await mutate('TemplateAdd', { name, description, schema, style });
+      if (response.result) {
+        templatesAdd(response.result);
       }
     },
     [mutate, templatesAdd]
@@ -60,9 +60,9 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
 
   const templatesUpdateMutation = useCallback(
     async (template: Template) => {
-      const result = await mutate('TemplateUpdate', { id: template.id, template });
-      if (result as typeof result | undefined) {
-        templatesUpdate(result);
+      const response = await mutate('TemplateUpdate', { id: template.id, template });
+      if (response.result) {
+        templatesUpdate(response.result);
       }
     },
     [mutate, templatesUpdate]
@@ -85,7 +85,7 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
         return;
       }
 
-      const result = await mutate('TemplateAdd', {
+      const response = await mutate('TemplateAdd', {
         name,
         description,
         baseElementId: elements.item.id,
@@ -93,8 +93,8 @@ const TemplatesContextProvider = ({ children, templates: templatesProp }: Templa
         style: { ...elementsStyle, cache: generateCache(elementsStyle) },
         variables
       });
-      if (result as typeof result | undefined) {
-        templatesAdd(result);
+      if (response.result) {
+        templatesAdd(response.result);
       }
     },
     [mutate, templatesAdd]

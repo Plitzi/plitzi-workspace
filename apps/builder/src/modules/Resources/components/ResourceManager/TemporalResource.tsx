@@ -10,7 +10,7 @@ import ResourceType from './ResourceType';
 import ResourceUploadStatus from './ResourceUploadStatus';
 
 import type { ResourceFile, ResourceWithFile } from '../../types';
-import type { NetworkContextValue, PluginManifest } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, PluginManifest } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 
@@ -39,7 +39,7 @@ const TemporalResource = ({
   onError: onErrorProp,
   onUploadCancel
 }: TemporalResourceProps) => {
-  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const [isUploaded, setIsUploaded] = useState(!!id);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -100,15 +100,15 @@ const TemporalResource = ({
       { customFetch: true, onProgress, onAbortPossible, onError }
     );
 
-    if (response instanceof Error) {
-      setError(response.message);
+    if (response.error instanceof Error) {
+      setError(response.error instanceof Error ? response.error.message : response.error);
       setProgressUpload(0);
     } else if (file.type === 'plugin') {
       setIsUploaded(true);
-      onUploaded?.({ ...response, file, metadata: file.metadata } as ResourceWithFile);
+      onUploaded?.({ ...response.result, file, metadata: file.metadata } as ResourceWithFile);
     } else {
       setIsUploaded(true);
-      onUploaded?.({ ...response, file } as ResourceWithFile);
+      onUploaded?.({ ...response.result, file } as ResourceWithFile);
     }
 
     setUploading(false);

@@ -14,7 +14,7 @@ import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalCo
 import PluginsReducer from './PluginsReducer';
 
 import type { ComponentDefinition, Asset, ComponentPlugin } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
@@ -35,7 +35,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   }, [internalData.plugins, pluginsProp]);
   const [plugins, dispatchPlugins] = useReducer(PluginsReducer, pluginsPropMemo);
   const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
-  const { mutate, query } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate, query } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const { components, registerDefinition, unregisterDefinition, unregister } = use(ComponentContext);
 
   const pluginsAdd = useCallback(
@@ -92,20 +92,20 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       // @todo: revisar esto
       // , append = []
       // const { pluginsAddMany } = this.props;
-      const result = await query('Plugins', { filter, cursor, limit }, 'network-only');
+      const response = await query('Plugins', { filter, cursor, limit }, 'network-only');
 
       // pluginsAddMany([...append, ...result.data.Plugins.edges]);
 
-      return result.Plugins;
+      return response.result?.Plugins ?? [];
     },
     [query]
   );
 
   const add = useCallback(
     async (pluginType: string, resource?: string) => {
-      const result = await mutate('SpaceAddPlugin', { pluginType, resource, override: true });
-      if (result as typeof result | undefined) {
-        const plugin = result.plugins.find(plug => plug.type === pluginType);
+      const response = await mutate('SpaceAddPlugin', { pluginType, resource, override: true });
+      if (response.result) {
+        const plugin = response.result.plugins.find(plug => plug.type === pluginType);
         if (!plugin) {
           return false;
         }
@@ -125,9 +125,9 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
   const update = useCallback(
     async (plugin: ComponentDefinition, resource?: string) => {
-      const result = await mutate('SpaceUpdatePlugin', { pluginType: plugin.type, resource });
-      if (result as typeof result | undefined) {
-        const newPlugin = result.plugins.find(plug => plug.type === plugin.type);
+      const response = await mutate('SpaceUpdatePlugin', { pluginType: plugin.type, resource });
+      if (response.result) {
+        const newPlugin = response.result.plugins.find(plug => plug.type === plugin.type);
         if (!newPlugin) {
           return false;
         }
@@ -169,8 +169,8 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
   const remove = useCallback(
     async (pluginType: string) => {
-      const result = await mutate('SpaceRemovePlugin', { pluginType });
-      if (result) {
+      const response = await mutate('SpaceRemovePlugin', { pluginType });
+      if (response.result) {
         const subPlugins = get(plugins, `${pluginType}.subPlugins`, []) as string[];
         pluginsRemove([pluginType, ...subPlugins]);
         setPluginStyleAssets(state => getStyle(omit(state, [pluginType])));

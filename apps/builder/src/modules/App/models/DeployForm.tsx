@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { Domain } from '@pmodules/Network/Queries/Space/SpaceDeploymentsQuery';
 
@@ -29,7 +29,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
   const [loading, setLoading] = useState(false);
   const [domains, setDomains] = useState<Domain[]>([]);
   const [latestRevision, setLatestRevision] = useState<number>(0);
-  const { query } = use(NetworkContext) as NetworkContextValue<QueriesMap>;
+  const { query } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap>;
   const { addToast } = useToast();
 
   const form = useForm({ defaultValues: { environment, domain, revision }, config: { schema: deployFormSchema } });
@@ -41,9 +41,9 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
     const getLatestRevision = async () => {
       setLoading(true);
       try {
-        const result = await query('SpaceLatestRevision', { environment: watchEnvironment }, 'network-only');
-        if ((result as typeof result | undefined) && result.SpaceLatestRevision) {
-          setLatestRevision(result.SpaceLatestRevision.snapshot.revision);
+        const response = await query('SpaceLatestRevision', { environment: watchEnvironment }, 'network-only');
+        if (response.result && response.result.SpaceLatestRevision) {
+          setLatestRevision(response.result.SpaceLatestRevision.snapshot.revision);
         } else {
           setLatestRevision(0);
         }
@@ -75,9 +75,9 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
   const fetch = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await query('SpaceDeployments', { pageSize: 30 }, 'network-only');
-      if (result as typeof result | undefined) {
-        const { /* pageInfo, */ edges } = result.SpaceDeployments;
+      const response = await query('SpaceDeployments', { pageSize: 30 }, 'network-only');
+      if (response.result) {
+        const { /* pageInfo, */ edges } = response.result.SpaceDeployments;
         setDomains(edges);
         // setHasNextPage(pageInfo.hasNextPage);
       }

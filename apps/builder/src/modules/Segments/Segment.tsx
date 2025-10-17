@@ -13,7 +13,7 @@ import PublishForm from './models/PublishForm';
 import SegmentForm from './models/SegmentForm';
 import SegmentsContext from './SegmentsContext';
 
-import type { NetworkContextValue, SchemaVariable, Segment as TSegment } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, SchemaVariable, Segment as TSegment } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { MouseEvent } from 'react';
@@ -39,7 +39,7 @@ const Segment = ({
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
   const { segmentGet, segmentsRemove, segmentsUpdate } = use(SegmentsContext);
-  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const { onDragStart } = useDragElement({
     type: 'reference',
     attributes: { referenceType: 'segment', referenceId: identifier },
@@ -140,11 +140,12 @@ const Segment = ({
       )
     );
     if (response) {
-      const result = await mutate('SegmentPublish', { ...response, contextId: id });
-      if (result as typeof result | undefined) {
+      const responseMutation = await mutate('SegmentPublish', { ...response, contextId: id });
+      if (responseMutation.result) {
         addToast(
           <span>
-            Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
+            Snapshot <b>{`${responseMutation.result.environment}:${responseMutation.result.revision}`}</b> Created
+            Successfully
           </span>,
           {
             appeareance: 'success',

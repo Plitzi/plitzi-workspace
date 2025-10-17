@@ -42,6 +42,51 @@ import StyleUpdatedSubscription from './Style/StyleUpdatedSubscription'; // Othe
 import StyleUpdateSelectorSubscription from './Style/StyleUpdateSelectorSubscription';
 import StyleUpdateVariableSubscription from './Style/StyleUpdateVariableSubscription';
 
+export type SubscriptionsMap = {
+  CollaboratorConnected: unknown;
+  CollaboratorDisconnected: unknown;
+  SpaceUpdated: unknown;
+  StyleUpdated: unknown;
+
+  SpaceAddPage: unknown;
+  SpaceHomePage: unknown;
+  SpaceUpdatePage: unknown;
+  SpaceRemovePage: unknown;
+  SpaceAddPageFolder: unknown;
+  SpaceUpdatePageFolder: unknown;
+  SpaceRemovePageFolder: unknown;
+  SpaceAddVariable: unknown;
+  SpaceUpdateVariable: unknown;
+  SpaceRemoveVariable: unknown;
+  SpaceAddElement: unknown;
+  SpaceUpdateElement: unknown;
+  SpaceRemoveElement: unknown;
+  SpaceMoveElement: unknown;
+  SpaceCloneElement: unknown;
+  SpaceAddTemplate: unknown;
+  SpaceUpdateSettings: unknown;
+
+  StyleAddSelector: unknown;
+  StyleUpdateSelector: unknown;
+  StyleRemoveSelector: unknown;
+  StyleAddVariable: unknown;
+  StyleUpdateVariable: unknown;
+  StyleRemoveVariable: unknown;
+
+  SegmentAddElement: unknown;
+  SegmentUpdateElement: unknown;
+  SegmentRemoveElement: unknown;
+  SegmentMoveElement: unknown;
+  SegmentCloneElement: unknown;
+  SegmentAddTemplate: unknown;
+  SegmentStyleAddSelector: unknown;
+  SegmentStyleUpdateSelector: unknown;
+  SegmentStyleRemoveSelector: unknown;
+  SegmentStyleAddVariable: unknown;
+  SegmentStyleUpdateVariable: unknown;
+  SegmentStyleRemoveVariable: unknown;
+};
+
 const Subscriptions = {
   CollaboratorConnected: CollaboratorConnectedSubscription,
   CollaboratorDisconnected: CollaboratorDisconnectedSubscription,

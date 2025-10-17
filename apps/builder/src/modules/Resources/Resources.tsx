@@ -9,8 +9,12 @@ import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import ResourceCdnForm from './Models/ResourceCdnForm';
 import ResourcesCdn from './ResourcesCdn';
 
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
+
 const Resources = () => {
-  const { mutate } = use(NetworkContext);
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const { showModal } = useModal();
   const { data, isLoading, mutate: mutateCdns } = useGraphQL('SpaceCdns');
 
@@ -40,7 +44,7 @@ const Resources = () => {
     const { name, domain, provider, region, endpoint, bucketName } = response;
 
     const responseMutation = await mutate('SpaceAddCdn', { name, domain, provider, region, endpoint, bucketName });
-    if (!responseMutation || responseMutation instanceof Error) {
+    if (!responseMutation.success) {
       return;
     }
 

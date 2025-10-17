@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import Subscriptions from '../Subscriptions';
 
+import type { SubscriptionsMap } from './../Subscriptions';
 import type { ApolloClient } from '@apollo/client/core';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
@@ -13,16 +14,16 @@ export type UseSubscriptionsManagerProps = {
   disabled?: boolean;
 };
 
-type Subscription = { closed: boolean; unsubscribe(): void; name: keyof typeof Subscriptions };
+type Subscription = { closed: boolean; unsubscribe(): void; name: keyof SubscriptionsMap };
 
 const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: UseSubscriptionsManagerProps) => {
   const subscriptions = useRef<Subscription[]>([]);
 
   const subscribe = useCallback(
-    (
-      subscriptionKey: keyof typeof Subscriptions,
+    <T extends keyof SubscriptionsMap>(
+      subscriptionKey: T,
       variables: Record<string, unknown>,
-      callback: (result: ApolloClient.SubscribeResult) => void
+      callback: (result: ApolloClient.SubscribeResult<SubscriptionsMap[T]>) => void
     ) => {
       if (disabled) {
         return false;
@@ -52,7 +53,7 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
     [client, onMessage, environment, disabled]
   );
 
-  const unsubscribe = useCallback((subscriptionKey: keyof typeof Subscriptions | (keyof typeof Subscriptions)[]) => {
+  const unsubscribe = useCallback((subscriptionKey: keyof SubscriptionsMap | (keyof SubscriptionsMap)[]) => {
     if (typeof subscriptionKey === 'string') {
       subscriptionKey = [subscriptionKey];
     }

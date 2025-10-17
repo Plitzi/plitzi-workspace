@@ -14,13 +14,13 @@ type NetworkContextValueBase<
     silentError?: boolean,
     includeEnvironment?: boolean,
     uploadOptions?: object
-  ) => Promise<M[T]>;
+  ) => Promise<{ success: boolean; result?: M[T]; error?: string | Error }>;
   query: <T extends keyof Q>(
     queryKey: T,
     variables?: Record<string, unknown>,
     fetchPolicy?: FetchPolicy,
     silentError?: boolean
-  ) => Promise<Q[T]>;
+  ) => Promise<{ success: boolean; result?: Q[T]; error?: string | Error }>;
   webKey: string;
   instanceId: string;
   server: Server;
@@ -35,10 +35,10 @@ export type NetworkContextValueBuilder<
   S extends Record<string, unknown> = Record<string, unknown>
 > = NetworkContextValueBase<Q, M> & {
   subscriptionManager: {
-    subscribe: (
-      subscriptionKey: keyof S,
+    subscribe: <T extends keyof S>(
+      subscriptionKey: T,
       variables: Record<string, unknown>,
-      callback: (result: ApolloClient.SubscribeResult) => void
+      callback: (result: ApolloClient.SubscribeResult<S[T]>) => void
     ) => false | Observable<ApolloLink.Result<any>> | null;
     unsubscribe: (subscriptionKey: keyof S | (keyof S)[]) => void;
     stop: () => void;
@@ -49,8 +49,14 @@ export type NetworkContextValue<
   Q extends Record<string, unknown> = Record<string, unknown>,
   M extends Record<string, unknown> = Record<string, unknown>,
   S extends Record<string, unknown> = Record<string, unknown>,
-  T extends 'builder' | 'sdk' = 'builder'
+  T extends 'builder' | 'sdk' = 'sdk'
 > = T extends 'builder' ? NetworkContextValueBuilder<Q, M, S> : NetworkContextValueBase<Q, M>;
+
+export type BuilderNetworkContextValue<
+  Q extends Record<string, unknown> = Record<string, unknown>,
+  M extends Record<string, unknown> = Record<string, unknown>,
+  S extends Record<string, unknown> = Record<string, unknown>
+> = NetworkContextValue<Q, M, S, 'builder'>;
 
 const networkContextDefaultValue: NetworkContextValue = {
   mutate: async () => {},

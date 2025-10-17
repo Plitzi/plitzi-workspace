@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const getRandomInteger = (min: number, max: number) => Math.random() * (max - min) + min;
 
-export const compose = (...funcs) => {
+type AnyFunc = (...args: any[]) => any;
+
+export const compose = (...funcs: Array<AnyFunc>): AnyFunc => {
   if (funcs.length === 0) {
-    // infer the argument type so it is usable in inference down the line
     return (arg: any) => arg;
   }
 
@@ -15,7 +16,7 @@ export const compose = (...funcs) => {
 
   return funcs.reduce(
     (a, b) =>
-      (...args) =>
+      (...args: any[]) =>
         a(b(...args))
   );
 };

@@ -21,9 +21,9 @@ import SchemaReducer, { SchemaActions } from './SchemaReducer';
 import type { SchemaReducerActions } from './SchemaReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type {
+  BuilderNetworkContextValue,
   DropPosition,
   Element,
-  NetworkContextValue,
   PageFolder,
   Schema,
   SchemaRaw,
@@ -77,7 +77,7 @@ const SchemaContextProvider = ({
     }
   ]);
   const schemaRef = useRef(schema);
-  const { mutate, subscriptionManager } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   schemaRef.current = schema;
 
   const schemaUpdate = useCallback(
@@ -160,9 +160,9 @@ const SchemaContextProvider = ({
 
   const schemaAddPage = useCallback(
     async (page: Element, fromSubscriptions = false) => {
-      const result = await mutate('SpaceAddPage', page);
-      if (result as typeof result | undefined) {
-        dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE, page: result, fromSubscriptions });
+      const response = await mutate('SpaceAddPage', page);
+      if (response.result) {
+        dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE, page: response.result, fromSubscriptions });
       }
     },
     [dispatchSchema, mutate]
@@ -190,9 +190,9 @@ const SchemaContextProvider = ({
 
   const schemaAddPageFolder = useCallback(
     async (pageFolder: PageFolder, fromSubscriptions = false) => {
-      const result = await mutate('SpaceAddPageFolder', pageFolder);
-      if (result as typeof result | undefined) {
-        dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE_FOLDER, pageFolder: result, fromSubscriptions });
+      const response = await mutate('SpaceAddPageFolder', pageFolder);
+      if (response.result) {
+        dispatchSchema({ type: SchemaActions.SCHEMA_ADD_PAGE_FOLDER, pageFolder: response.result, fromSubscriptions });
       }
     },
     [dispatchSchema, mutate]

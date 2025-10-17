@@ -27,7 +27,7 @@ import type {
   TagType,
   StyleItem
 } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
@@ -43,7 +43,10 @@ const SegmentsContextProvider = ({
   segments: segmentsProp,
   includeSubscriptions = true
 }: SegmentsContextProviderProps) => {
-  const { query, mutate, subscriptionManager } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { query, mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
+    QueriesMap,
+    MutationsMap
+  >;
   const internalData = use(NetworkInternalContext);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
@@ -76,8 +79,12 @@ const SegmentsContextProvider = ({
   const segmentsFetch = useCallback(
     async (filter?: string | object, cursor?: string, limit?: number) => {
       try {
-        const result = await query('Segments', { environment: 'main', filter, cursor, limit }, 'network-only');
-        const segmentsRaw = result.Segments;
+        const response = await query('Segments', { environment: 'main', filter, cursor, limit }, 'network-only');
+        if (!response.result) {
+          return undefined;
+        }
+
+        const segmentsRaw = response.result.Segments;
 
         return {
           ...segmentsRaw,
@@ -103,9 +110,12 @@ const SegmentsContextProvider = ({
       }
 
       try {
-        const segmentRawResponse = await query('Segment', { environment: 'main', identifier }, 'network-only');
-        const segmentRaw = segmentRawResponse.Segment;
+        const response = await query('Segment', { environment: 'main', identifier }, 'network-only');
+        if (!response.result) {
+          return undefined;
+        }
 
+        const segmentRaw = response.result.Segment;
         const segment: Segment = {
           ...segmentRaw,
           schema: {
@@ -348,7 +358,7 @@ const SegmentsContextProvider = ({
         return;
       }
 
-      const result = await mutate('SegmentAdd', {
+      const response = await mutate('SegmentAdd', {
         name,
         description,
         baseElementId: elements.item.id,
@@ -356,12 +366,12 @@ const SegmentsContextProvider = ({
         style: { ...elementsStyle, cache: generateCache(elementsStyle) },
         variables
       });
-      if (result as typeof result | undefined) {
+      if (response.result) {
         const segment: Segment = {
-          ...result,
+          ...response.result,
           schema: {
-            ...get(result, 'schema'),
-            flat: get(result, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+            ...get(response.result, 'schema'),
+            flat: get(response.result, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
           }
         };
 
@@ -576,13 +586,13 @@ const SegmentsContextProvider = ({
 
   const segmentAddMutation = useCallback(
     async (name: string, description: string, schema?: Schema, style?: Style, variables: SchemaVariable[] = []) => {
-      const result = await mutate('SegmentAdd', { name, description, schema, style, variables });
-      if (result as typeof result | undefined) {
+      const response = await mutate('SegmentAdd', { name, description, schema, style, variables });
+      if (response.result) {
         const segment: Segment = {
-          ...result,
+          ...response.result,
           schema: {
-            ...get(result, 'schema'),
-            flat: get(result, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+            ...get(response.result, 'schema'),
+            flat: get(response.result, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
           }
         };
 

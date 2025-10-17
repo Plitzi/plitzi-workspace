@@ -21,7 +21,7 @@ import AppContext from '../../AppContext';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
 
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { Dispatch, SetStateAction } from 'react';
@@ -34,7 +34,7 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
-  const { mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const queueProcessing = use(QueueStatusContext);
   const { currentPageId } = use(NavigationContext);
   const { previewMode, setPreviewMode } = use(AppContext);
@@ -63,16 +63,17 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
       return;
     }
 
-    const result = await mutate('SpacePublish', response);
-    if (result as typeof result | undefined) {
+    const responseMutation = await mutate('SpacePublish', response);
+    if (responseMutation.result) {
       addToast(
         <div>
-          Snapshot <b>{`${result.environment}:${result.revision}`}</b> Created Successfully
+          Snapshot <b>{`${responseMutation.result.environment}:${responseMutation.result.revision}`}</b> Created
+          Successfully
         </div>,
         { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
       );
-    } else if (result instanceof Error) {
-      addToast(result.message, {
+    } else if (responseMutation.error) {
+      addToast(responseMutation.error instanceof Error ? responseMutation.error.message : responseMutation.error, {
         appeareance: 'error',
         autoDismiss: true,
         placement: 'top-right'
@@ -97,12 +98,12 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
     }
 
     setLoadingDeployment(true);
-    const result = await mutate('SpaceDeploy', response, true);
+    const responseMutation = await mutate('SpaceDeploy', response, true);
     setLoadingDeployment(false);
-    if (result as typeof result | undefined) {
+    if (responseMutation.result) {
       addToast(
         <div>
-          Your snapshot have being published to <b>{result.domain}</b> Successfully
+          Your snapshot have being published to <b>{responseMutation.result.domain}</b> Successfully
         </div>,
         {
           appeareance: 'success',
@@ -110,8 +111,8 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
           placement: 'top-right'
         }
       );
-    } else if (result instanceof Error) {
-      addToast(result.message, {
+    } else if (responseMutation.error) {
+      addToast(responseMutation.error instanceof Error ? responseMutation.error.message : responseMutation.error, {
         appeareance: 'error',
         autoDismiss: true,
         placement: 'top-right'

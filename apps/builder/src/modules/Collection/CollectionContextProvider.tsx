@@ -8,7 +8,7 @@ import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalCo
 import CollectionReducer, { CollectionsActions } from './CollectionReducer';
 
 import type { Collection, CollectionRecord } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
@@ -19,7 +19,7 @@ export type CollectionContextProviderProps = {
 };
 
 const CollectionContextProvider = ({ children, collections: collectionsProp }: CollectionContextProviderProps) => {
-  const { query, mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { query, mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
     if (collectionsProp) {
@@ -140,12 +140,12 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
   const fetchCollections = useCallback(
     async (filter: string | object, cursor?: string, limit?: number, append: Collection[] = [], store = true) => {
       try {
-        const result = await query('Collections', { filter, cursor, limit }, 'network-only');
-        if (!(result as typeof result | undefined)) {
+        const response = await query('Collections', { filter, cursor, limit }, 'network-only');
+        if (!response.result) {
           return undefined;
         }
 
-        const collections = result.Collections.edges.map<Collection>(collection => ({
+        const collections = response.result.Collections.edges.map<Collection>(collection => ({
           ...collection,
           records: collection.records.edges.reduce<CollectionRecord[]>((obj2, record) => [...obj2, record], [])
         }));
@@ -154,7 +154,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
           collectionsAddMany([...append, ...collections]);
         }
 
-        return result.Collections;
+        return response.result.Collections;
       } catch {
         return undefined;
       }
@@ -170,21 +170,21 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       }
 
       try {
-        const result = await query('Collection', variables, 'network-only');
-        if (!(result as typeof result | undefined)) {
+        const response = await query('Collection', variables, 'network-only');
+        if (!response.result) {
           return undefined;
         }
 
         const collection: Collection = {
-          ...result.Collection,
-          records: result.Collection.records.edges.reduce<CollectionRecord[]>((obj2, record) => [...obj2, record], [])
+          ...response.result.Collection,
+          records: response.result.Collection.records.edges
         };
 
         if (store) {
           collectionsAdd(collection);
         }
 
-        return result.Collection;
+        return response.result.Collection;
       } catch {
         return undefined;
       }
@@ -204,16 +204,16 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       store = true
     ) => {
       try {
-        const result = await query('CollectionRecords', { collectionId, filter, cursor, limit }, 'network-only');
-        if (!(result as typeof result | undefined)) {
+        const response = await query('CollectionRecords', { collectionId, filter, cursor, limit }, 'network-only');
+        if (!response.result) {
           return undefined;
         }
 
         if (store) {
-          collectionRecordsAddMany(collectionId, [...append, ...result.CollectionRecords.edges]);
+          collectionRecordsAddMany(collectionId, [...append, ...response.result.CollectionRecords.edges]);
         }
 
-        return result.CollectionRecords;
+        return response.result.CollectionRecords;
       } catch {
         return undefined;
       }
@@ -224,16 +224,16 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
   const fetchRecord = useCallback(
     async (collectionId: string, id: string, store = true) => {
       try {
-        const result = await query('CollectionRecord', { collectionId, id }, 'network-only');
-        if (!(result as typeof result | undefined)) {
+        const response = await query('CollectionRecord', { collectionId, id }, 'network-only');
+        if (!response.result) {
           return undefined;
         }
 
         if (store) {
-          collectionRecordsAdd(collectionId, result.CollectionRecord);
+          collectionRecordsAdd(collectionId, response.result.CollectionRecord);
         }
 
-        return result.CollectionRecord;
+        return response.result.CollectionRecord;
       } catch {
         return undefined;
       }
@@ -251,11 +251,11 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       privacy: Collection['privacy'],
       fields: Collection['fields']
     ) => {
-      const result = await mutate('CollectionAdd', { name, namePlural, description, privacy, fields });
-      if (result as typeof result | undefined) {
-        collectionsAdd(result);
+      const response = await mutate('CollectionAdd', { name, namePlural, description, privacy, fields });
+      if (response.result) {
+        collectionsAdd(response.result);
 
-        return result;
+        return response.result;
       }
 
       return undefined;
@@ -272,7 +272,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       privacy: Collection['privacy'],
       fields: Collection['fields']
     ) => {
-      const result = await mutate('CollectionUpdate', {
+      const response = await mutate('CollectionUpdate', {
         id,
         name,
         namePlural,
@@ -280,10 +280,10 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
         privacy,
         fields
       });
-      if (result as typeof result | undefined) {
-        collectionsUpdate(result);
+      if (response.result) {
+        collectionsUpdate(response.result);
 
-        return result;
+        return response.result;
       }
 
       return undefined;
@@ -293,8 +293,8 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
 
   const removeCollection = useCallback(
     async (id: string) => {
-      const result = await mutate('CollectionRemove', { id });
-      if (result as typeof result | undefined) {
+      const response = await mutate('CollectionRemove', { id });
+      if (response.success && response.result) {
         collectionsRemove(id);
 
         return true;
@@ -312,11 +312,11 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       values: CollectionRecord['values'],
       updateStore = true
     ) => {
-      const result = await mutate('CollectionAddRecord', { collectionId, status, values });
-      if ((result as typeof result | undefined) && updateStore) {
-        collectionRecordsAdd(collectionId, result);
+      const response = await mutate('CollectionAddRecord', { collectionId, status, values });
+      if (response.result && updateStore) {
+        collectionRecordsAdd(collectionId, response.result);
 
-        return result;
+        return response.result;
       }
 
       return undefined;
@@ -332,11 +332,11 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       values: CollectionRecord['values'],
       updateStore = true
     ) => {
-      const result = await mutate('CollectionUpdateRecord', { id, status, values });
-      if ((result as typeof result | undefined) && updateStore) {
-        collectionRecordsUpdate(collectionId, result);
+      const response = await mutate('CollectionUpdateRecord', { id, status, values });
+      if (response.result && updateStore) {
+        collectionRecordsUpdate(collectionId, response.result);
 
-        return result;
+        return response.result;
       }
 
       return undefined;

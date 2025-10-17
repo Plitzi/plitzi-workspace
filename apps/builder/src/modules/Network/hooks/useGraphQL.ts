@@ -6,7 +6,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import type { MutationsMap } from '../Mutations';
 import type { QueriesMap } from '../Queries';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { KeyedMutator, SWRConfiguration } from 'swr';
 
 function useGraphQL<K extends keyof QueriesMap>(
@@ -39,13 +39,13 @@ function useGraphQL<K extends keyof QueriesMap, TK>(
   config?: SWRConfiguration<QueriesMap[K]>
   // mode: 'query' | 'mutate' = 'query'
 ) {
-  const { query } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { query } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const fetcher = useMemo(() => (qKey: K, variables?: Record<string, unknown>) => query(qKey, variables), [query]);
   const transformMemo = useValueMemo(transform, 'soft', { skipFunctions: true });
   const swrFetcher = useMemo(
     () =>
-      ([qKey, vars]: [qKey: K, vars: Record<string, unknown>]) =>
-        fetcher(qKey, vars),
+      async ([qKey, vars]: [qKey: K, vars: Record<string, unknown>]) =>
+        (await fetcher(qKey, vars)).result as QueriesMap[K],
     [fetcher]
   );
 

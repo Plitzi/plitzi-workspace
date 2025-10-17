@@ -14,7 +14,7 @@ import StyleReducer, { StyleActions } from './StyleReducer';
 
 import type { StyleReducerActions } from './StyleReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import type { DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
 
 export type StyleContextProviderProps = {
   children: React.ReactNode;
@@ -29,7 +29,7 @@ const StyleContextProvider = ({
   includeSubscriptions = true,
   type = 'normal'
 }: StyleContextProviderProps) => {
-  const { subscriptionManager } = use(NetworkContext);
+  const { subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue;
   const internalData = use(NetworkInternalContext);
   const stylePropMemo = useMemo(() => {
     if (styleProp) {

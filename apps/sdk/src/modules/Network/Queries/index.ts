@@ -4,6 +4,7 @@ import CollectionRecordsQuery from './Collection/CollectionRecordsQuery';
 import CollectionsQuery from './Collection/CollectionsQuery';
 import InitQuery from './InitQuery';
 import SegmentQuery from './Segment/SegmentQuery';
+import SegmentsQuery from './Segment/SegmentsQuery';
 
 import type { TCollectionQuery } from './Collection/CollectionQuery';
 import type { TCollectionRecordQuery } from './Collection/CollectionRecordQuery';
@@ -29,7 +30,8 @@ const Queries = {
   Collections: CollectionsQuery,
   CollectionRecords: CollectionRecordsQuery,
   CollectionRecord: CollectionRecordQuery,
-  Segment: SegmentQuery
+  Segment: SegmentQuery,
+  Segments: SegmentsQuery
 };
 
 export default Queries;

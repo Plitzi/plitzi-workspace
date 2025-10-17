@@ -18,6 +18,7 @@ import Queries from './Queries';
 import type { NetworkInternalContextValue } from './contexts/NetworkInternalContext';
 import type { MutationsMap } from './Mutations';
 import type { QueriesMap } from './Queries';
+import type { SubscriptionsMap } from './Subscriptions';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type {
   Server,
@@ -25,7 +26,7 @@ import type {
   ComponentDefinition,
   Schema,
   ServerEnvironment,
-  NetworkContextValue
+  BuilderNetworkContextValue
 } from '@plitzi/sdk-shared';
 import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DocumentNode } from 'graphql';
@@ -44,7 +45,7 @@ export type NetworkContextProviderProps = {
 const NetworkContextProvider = ({
   children,
   webKey = '',
-  webId,
+  webId = '',
   userKey = '',
   instanceId,
   server,
@@ -63,7 +64,7 @@ const NetworkContextProvider = ({
       variables?: Record<string, unknown>,
       fetchPolicy: FetchPolicy = 'network-only',
       silentError = false
-    ): Promise<QueriesMap[T]> => {
+    ): Promise<{ success: boolean; result?: QueriesMap[T]; error?: string | Error }> => {
       const document = Queries[queryKey];
       if (!(document as DocumentNode | undefined)) {
         addToast('Query not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
@@ -94,7 +95,7 @@ const NetworkContextProvider = ({
         throw e;
       }
 
-      return result.data as QueriesMap[T];
+      return { success: true, result: result.data };
     },
     [addToast, client, environment]
   );
@@ -106,11 +107,11 @@ const NetworkContextProvider = ({
       silentError = false,
       includeEnvironment = true,
       uploadOptions = {}
-    ): Promise<MutationsMap[T]> => {
+    ): Promise<{ success: boolean; result?: MutationsMap[T]; error?: string | Error }> => {
       if (!(Mutations[mutationKey] as DocumentNode | undefined)) {
         addToast('Mutation not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
-        return undefined as MutationsMap[T];
+        return { success: false, result: undefined, error: 'Mutation Not Found' };
       }
 
       let result: ApolloClient.MutateResult<MutationsMap[T]>;
@@ -134,7 +135,7 @@ const NetworkContextProvider = ({
             }
           }
         });
-      } catch (e) {
+      } catch (e: unknown) {
         if (!silentError && (e instanceof Error || e instanceof Error)) {
           addToast(`Mutation ${mutationKey} Failed (${e.message})`, {
             appeareance: 'error',
@@ -151,14 +152,14 @@ const NetworkContextProvider = ({
           });
         }
 
-        return e as MutationsMap[T];
+        return { success: false, result: undefined, error: e as Error };
       }
 
-      if (result.data && (result.data as unknown as MutationsMap)[mutationKey] !== undefined) {
-        return (result.data as unknown as MutationsMap)[mutationKey];
+      if (result.data && (result.data as Record<string, unknown>)[mutationKey] !== undefined) {
+        return { success: true, result: (result.data as unknown as MutationsMap)[mutationKey] };
       }
 
-      return result.data as MutationsMap[T];
+      return { success: true, result: result.data };
     },
     [addToast, client, environment]
   );
@@ -170,8 +171,8 @@ const NetworkContextProvider = ({
   const initQuery = useCallback(async () => {
     try {
       const response = await query('Init', { environment, limit: 99 }, 'network-only', true);
-      if (response as QueriesMap['Init'] | undefined) {
-        const data = cloneDeep(response);
+      if (response.success && response.result) {
+        const data = cloneDeep(response.result);
         const { Space, Collections, Templates } = data;
         if (!Space) {
           setError('Space Not Found');
@@ -254,7 +255,7 @@ const NetworkContextProvider = ({
 
   const subscriptionManager = useSubscriptionsManager({ client, environment, onMessage: handleMessage });
 
-  const networkValue = useMemo(
+  const networkValue = useMemo<BuilderNetworkContextValue<QueriesMap, MutationsMap, SubscriptionsMap>>(
     () => ({ mutate, query, subscriptionManager, webKey, instanceId, server, userKey, webId, environment }),
     [mutate, query, subscriptionManager, webKey, instanceId, server, userKey, webId, environment]
   );
@@ -268,7 +269,7 @@ const NetworkContextProvider = ({
   }
 
   return (
-    <NetworkContext value={networkValue as NetworkContextValue<QueriesMap, MutationsMap>}>
+    <NetworkContext value={networkValue}>
       <NetworkInternalContext value={internalData}>{children}</NetworkInternalContext>
     </NetworkContext>
   );
