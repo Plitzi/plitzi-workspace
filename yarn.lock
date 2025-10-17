@@ -3610,6 +3610,7 @@ __metadata:
     thread-loader: "npm:^4.0.4"
     ts-loader: "npm:^9.5.4"
     twig: "npm:^1.17.1"
+    typescript: "npm:^5.9.3"
     url-loader: "npm:^4.1.1"
     webpack: "npm:^5.102.1"
     webpack-assets-manifest: "npm:^6.3.0"

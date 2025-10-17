@@ -103,6 +103,7 @@
     "terser-webpack-plugin": "^5.3.14",
     "thread-loader": "^4.0.4",
     "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
     "url-loader": "^4.1.1",
     "webpack": "^5.102.1",
     "webpack-assets-manifest": "^6.3.0",

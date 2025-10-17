@@ -14,7 +14,7 @@ import Queries from './Queries';
 
 import type { MutationsMap } from './Mutations';
 import type { QueriesMap } from './Queries';
-import type { OfflineData } from '../../types';
+import type { OfflineData, OfflineDataRaw } from '../../types';
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
 import type { Server } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
@@ -31,7 +31,7 @@ export type NetworkContextProviderProps = {
   instanceId: string;
   environment?: 'development' | 'staging' | 'production';
   offlineMode?: boolean;
-  offlineData?: OfflineData;
+  offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'compact';
   debugMode?: boolean;
   renderMode?: 'ssr' | 'iframe' | 'widget' | 'raw' | 'shadow';
@@ -58,16 +58,12 @@ const NetworkContextProvider = ({
   const client = renderMode === 'ssr' && offlineDataAvailable ? undefined : useApolloClient();
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState<ReactNode | undefined>(undefined);
-  const [internalData, setInternalData] = useState(() => {
-    if (!offlineDataAvailable) {
-      return {};
-    }
-
-    if (offlineDataType === 'json') {
+  const [internalData, setInternalData] = useState<OfflineData>(() => {
+    if (offlineDataAvailable && offlineDataType === 'json') {
       return { ...offlineData, plugins: {} };
     }
 
-    return {};
+    return {} as OfflineData;
   });
 
   const query = useCallback(
