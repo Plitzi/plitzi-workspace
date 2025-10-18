@@ -188,9 +188,9 @@ const App = ({
 
   const ReactRouter = renderMode === 'ssr' && typeof window === 'undefined' ? StaticRouter : BrowserRouter;
 
-  const routerParams = {};
+  const routerParams = {} as { location: Location | string };
   if (renderMode === 'ssr' && typeof window === 'undefined') {
-    routerParams.location = finalServer.requestUrl;
+    routerParams.location = finalServer.requestUrl ?? '';
   }
 
   return (

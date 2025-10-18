@@ -16,7 +16,7 @@ export const STYLE_TYPE_SEGMENT = 'segment';
 
 export type StateManagerContextProviderProps = {
   children: ReactNode;
-  webId: string;
+  webId: number;
   state?: Record<string, unknown>;
   onInit?: (value: Record<string, unknown>) => void;
 };

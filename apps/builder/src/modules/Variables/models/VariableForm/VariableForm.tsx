@@ -7,7 +7,7 @@ import { z } from 'zod';
 import VariableSubValue from './VariableSubValue';
 import VariableValue from './VariableValue';
 
-import type { QueryParams, RouteParams, SchemaVariable, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { Environment, QueryParams, RouteParams, SchemaVariable } from '@plitzi/sdk-shared';
 
 const variableFormSchema = z.object({
   name: z
@@ -32,7 +32,7 @@ export type VariableFormProps = {
     routeParams: RouteParams;
     queryParams: QueryParams;
     hostname?: string;
-    environment: ServerEnvironment;
+    environment: Environment;
   };
   isNewRecord?: boolean;
   onClose?: () => void;

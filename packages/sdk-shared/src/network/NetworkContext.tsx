@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext } from 'react';
 
-import type { Server, ServerEnvironment } from '../types';
+import type { Environment, Server } from '../types';
 import type { ApolloClient, ApolloLink, FetchPolicy, Observable } from '@apollo/client/core';
 
 type NetworkContextValueBase<
@@ -26,7 +26,7 @@ type NetworkContextValueBase<
   server: Server;
   userKey: string;
   webId: number;
-  environment: ServerEnvironment;
+  environment: Environment;
 };
 
 export type NetworkContextValueBuilder<

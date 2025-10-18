@@ -1,19 +1,10 @@
 import { useCallback, useState } from 'react';
 
+import type { Server } from '@plitzi/sdk-shared';
+
 export type UseNetworkProps = {
   initLoading?: boolean;
-  server?: {
-    // Dashboard
-    apiServer: string;
-    ssrServer: string;
-    // SDK
-    basePath: string;
-    host: string;
-    nodeServer: string;
-    graphqlServer: string;
-    websocketServer: string;
-    subscriptionServer: string;
-  } & Record<string, string>;
+  server?: Server;
   webKey?: string;
   internalUsage?: boolean;
 };

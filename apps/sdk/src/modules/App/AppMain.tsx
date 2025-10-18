@@ -24,7 +24,7 @@ export type AppMainProps = {
   webId: number;
   environment?: Environment;
   currentPageId?: string;
-  server?: Server;
+  server: Server;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';

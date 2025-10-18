@@ -6,7 +6,7 @@ import VariableActions from './VariableActions';
 import VariableDetails from './VariableDetails';
 import VariableValue from './VariableValue';
 
-import type { QueryParams, RouteParams, SchemaVariable, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { Environment, QueryParams, RouteParams, SchemaVariable } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type VariableProps = {
@@ -19,7 +19,7 @@ export type VariableProps = {
     routeParams: RouteParams;
     queryParams: QueryParams;
     hostname?: string;
-    environment: ServerEnvironment;
+    environment: Environment;
   };
   onChange?: (name: string, value: Omit<SchemaVariable, 'name'>) => void;
   onRemove: (name: string) => void;

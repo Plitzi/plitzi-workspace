@@ -12,12 +12,12 @@ import PageStateSource from './sources/PageStateSource';
 import UserSource from './sources/UserSource';
 import VariablesSource from './sources/VariablesSource';
 
-import type { DataSourceContextValue, Schema, Source, SourceMeta } from '@plitzi/sdk-shared';
+import type { DataSourceContextValue, Environment, Schema, Source, SourceMeta } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 export type DataSourceContextProviderProps = {
   children: ReactNode;
-  environment?: 'local' | 'main' | 'production' | 'development' | 'staging';
+  environment?: Environment;
 };
 
 const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourceContextProviderProps) => {

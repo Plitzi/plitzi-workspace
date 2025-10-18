@@ -25,8 +25,8 @@ import type {
   CollectionRecord,
   ComponentDefinition,
   Schema,
-  ServerEnvironment,
-  BuilderNetworkContextValue
+  BuilderNetworkContextValue,
+  Environment
 } from '@plitzi/sdk-shared';
 import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DocumentNode } from 'graphql';
@@ -35,17 +35,17 @@ import type { ReactNode } from 'react';
 export type NetworkContextProviderProps = {
   children: ReactNode;
   webKey?: string;
-  webId: string;
+  webId: number;
   userKey?: string;
   instanceId: string;
   server: Server;
-  environment?: ServerEnvironment;
+  environment?: Environment;
 };
 
 const NetworkContextProvider = ({
   children,
   webKey = '',
-  webId = '',
+  webId,
   userKey = '',
   instanceId,
   server,

@@ -87,28 +87,25 @@ export const makeId = (length: number, includeMayus = true, includeNumbers = tru
   return result;
 };
 
-export const getKeyDecoded = (webKey?: string, asWebId = false) => {
+export function getKeyDecoded(webKey: string, asWebId: true): number;
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: false): T;
+export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: boolean): T | number {
   if (!webKey) {
-    return 0;
+    return 0 as T;
   }
 
-  let payload: unknown = {};
+  let payload: T = {} as T;
   try {
-    if (typeof window !== 'undefined') {
-      payload = JSON.parse(window.atob(webKey.split('.')[1]));
-    } else {
-      payload = JSON.parse(Buffer.from(webKey.split('.')[1], 'base64').toString());
-    }
+    const data = webKey.split('.')[1];
+    const json = typeof window !== 'undefined' ? window.atob(data) : Buffer.from(data, 'base64').toString();
+    payload = JSON.parse(json) as T;
   } catch {
-    return 0;
+    return 0 as T;
   }
 
-  if (asWebId) {
-    return get(payload, 'data.spaceId', 0) as number;
-  }
-
-  return payload;
-};
+  return asWebId ? (get(payload, 'data.spaceId', 0) as number) : payload;
+}
 
 export function ParamsFromURL(query?: string) {
   if (!query && typeof window !== 'undefined') {

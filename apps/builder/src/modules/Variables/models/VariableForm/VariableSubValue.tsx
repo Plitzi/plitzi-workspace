@@ -8,7 +8,7 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import VariableValue from './VariableValue';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { QueryParams, RouteParams, SchemaVariable, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { Environment, QueryParams, RouteParams, SchemaVariable } from '@plitzi/sdk-shared';
 
 export type VariableSubValueProps = {
   valueType?: SchemaVariable['type'];
@@ -16,7 +16,7 @@ export type VariableSubValueProps = {
     routeParams: RouteParams;
     queryParams: QueryParams;
     hostname?: string;
-    environment: ServerEnvironment;
+    environment: Environment;
   };
   index?: number;
   indexLimit?: number;

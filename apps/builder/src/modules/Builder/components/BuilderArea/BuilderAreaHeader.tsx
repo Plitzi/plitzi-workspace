@@ -83,7 +83,7 @@ const BuilderAreaHeader = ({
   const defaultPage = get(element, 'attributes.default', false);
 
   const domainName = useMemo(() => {
-    let name = domain || 'https://subdomain.plitzi.app';
+    let name: string = domain || 'https://subdomain.plitzi.app';
     if (name && !defaultPage) {
       name = `${name}${fullpath.replaceAll('//', '/')}`;
     }
@@ -100,7 +100,7 @@ const BuilderAreaHeader = ({
       return title;
     }
 
-    let name = domain || 'https://subdomain.plitzi.app';
+    let name: string = domain || 'https://subdomain.plitzi.app';
     if (name && !defaultPage) {
       name = `${name}${fullpath.replaceAll('//', '/')}`;
     }

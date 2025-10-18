@@ -57,7 +57,7 @@ const App = (props: AppProps) => {
     className = 'min-h-screen',
     builderEnvironment = 'production'
   } = props;
-  const webId = useMemo(() => getKeyDecoded(webKey, true) as string, [webKey]);
+  const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [instanceId, setInstanceId] = useStorage<string>(`web_${webId}_state.instanceId`, '', 'sessionStorage');
   const server = useMemo(() => getEnvironmentServer(builderEnvironment, serverProp), [builderEnvironment, serverProp]);
 

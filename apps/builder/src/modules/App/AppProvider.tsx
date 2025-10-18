@@ -14,15 +14,15 @@ import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
 import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
-import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { Environment, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppProviderProps = {
   children?: ReactNode;
   instanceId: string;
   webKey: string;
-  webId: string;
-  environment: ServerEnvironment;
+  webId: number;
+  environment: Environment;
   userKey: string;
   server: Server;
   includeSubscriptions: boolean;

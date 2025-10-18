@@ -7,11 +7,7 @@ import PlitziSdk, {
   ComponentContext,
   usePlitziServiceContext,
   PlitziServiceProvider,
-  RootElement,
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR
+  RootElement
 } from '.';
 
 export {
@@ -20,10 +16,6 @@ export {
   usePlitziServiceContext,
   PlitziServiceProvider,
   RootElement,
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
   renderToPipeableStream
 };
 

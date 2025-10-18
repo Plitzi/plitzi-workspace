@@ -23,7 +23,7 @@ import type { ReactNode } from 'react';
 export type NetworkContextProviderProps = {
   children: ReactNode;
   cacheTimeout?: number;
-  server?: Server;
+  server: Server;
   revision?: number;
   webKey?: string;
   webId: number;

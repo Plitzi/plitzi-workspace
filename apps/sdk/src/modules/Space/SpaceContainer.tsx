@@ -5,7 +5,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import SpaceContainerInternal from './SpaceContainerInternal';
 
-import type { RenderMode } from '../../types';
+import type { RenderMode } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type SpaceContainerProps = {
