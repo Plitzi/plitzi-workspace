@@ -9,3 +9,5 @@ export type OfflineDataRaw = {
 };
 
 export type OfflineData = Omit<OfflineDataRaw, 'plugins'> & { plugins: Record<string, ComponentDefinition> };
+
+export type RenderMode = 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';

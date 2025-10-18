@@ -25,7 +25,7 @@ type NetworkContextValueBase<
   instanceId: string;
   server: Server;
   userKey: string;
-  webId: string;
+  webId: number;
   environment: ServerEnvironment;
 };
 

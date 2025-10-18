@@ -62,7 +62,7 @@ const buildBase = (env, args) => {
   );
 
   let modules = {
-    entry: { 'plitzi-sdk': './src/index.js' },
+    entry: { 'plitzi-sdk': './src/index' },
     output: {
       pathinfo: false,
       chunkLoading: false,

@@ -1,18 +1,19 @@
-import React, { use } from 'react';
-import ToastProvider from '@plitzi/plitzi-ui/Toast/ToastProvider';
+import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
+import { use } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import SpaceContainerInternal from './SpaceContainerInternal';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
- * }} props
- * @returns {React.ReactElement}
- */
-const SpaceContainer = ({ children, renderMode }) => {
+import type { RenderMode } from '../../types';
+import type { ReactNode } from 'react';
+
+export type SpaceContainerProps = {
+  children: ReactNode;
+  renderMode?: RenderMode;
+};
+
+const SpaceContainer = ({ children, renderMode }: SpaceContainerProps) => {
   const { webId } = use(NetworkContext);
 
   return (

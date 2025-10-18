@@ -1,7 +1,7 @@
 import { createContext } from 'react';
 
-import type { OfflineDataParsed } from '../../../types';
+import type { OfflineData } from '../../../types';
 
-const NetworkInternalContext = createContext<OfflineDataParsed>({} as OfflineDataParsed);
+const NetworkInternalContext = createContext<OfflineData>({} as OfflineData);
 
 export default NetworkInternalContext;

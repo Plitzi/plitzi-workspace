@@ -1,29 +1,24 @@
-// Packages
-import React, { useMemo, use } from 'react';
 import get from 'lodash/get';
 import pick from 'lodash/pick';
+import { useMemo, use } from 'react';
 
-// Monorepo
+import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 
-// Alias
-import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
-
-// Relatives
 import SchemaPagesContext from './SchemaPagesContext';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   type: 'normal' | 'partial' | 'template' | 'segment';
- *   schema: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const SchemaContextProvider = props => {
-  const { children, type = 'normal', schema: schemaProp } = props;
+import type { Element, Schema } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type SchemaContextProviderProps = {
+  children: ReactNode;
+  type?: 'normal' | 'partial' | 'template' | 'segment';
+  schema?: Schema;
+};
+
+const SchemaContextProvider = ({ children, type = 'normal', schema: schemaProp }: SchemaContextProviderProps) => {
   const internalData = use(NetworkInternalContext);
   const schema = useMemo(() => {
     if (schemaProp) {
@@ -36,13 +31,14 @@ const SchemaContextProvider = props => {
       default:
         return EMPTY_SCHEMA.schema;
     }
-  }, [schemaProp, internalData]);
+  }, [schemaProp, type, internalData.schema]);
   const valueMemo = useMemo(() => ({ schema }), [schema]);
   const schemaPages = useMemo(
     () => ({
       pages: get(schema, 'pages', []),
-      pageDefinitions: pick(get(schema, 'flat', {}), get(schema, 'pages', []))
+      pageDefinitions: pick(get(schema, 'flat', {}), get(schema, 'pages', [])) as Record<string, Element>
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [schema.pages]
   );
   const schemaSettings = useMemo(() => schema.settings, [schema.settings]);

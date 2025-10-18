@@ -1,6 +1,5 @@
-// Packages
 import { createContext } from 'react';
 
-const SpaceContext = createContext();
+const SpaceContext = createContext<Record<string, unknown>>({});
 
 export default SpaceContext;

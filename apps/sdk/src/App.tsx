@@ -1,85 +1,68 @@
-// Packages
-import React, { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { StaticRouter } from 'react-router';
-import { SetContextLink } from '@apollo/client/link/context';
 import { InMemoryCache } from '@apollo/client/cache';
-import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename';
 import { ApolloClient, HttpLink } from '@apollo/client/core';
+import { SetContextLink } from '@apollo/client/link/context';
+import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename';
 import { ApolloProvider } from '@apollo/client/react';
-import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
-import get from 'lodash/get';
-import classNames from 'classnames';
-import { HelmetProvider } from 'react-helmet-async';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import Provider from '@plitzi/plitzi-ui/Provider';
+import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
+import classNames from 'classnames';
+import get from 'lodash/get';
+import { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
+import { StaticRouter } from 'react-router';
+import { BrowserRouter } from 'react-router-dom';
 
-// Monorepo
+import AppMain from '@modules/App/AppMain';
+import sdkComponents from '@modules/Element';
+import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
-// Alias
-import SdkPlugin from '@modules/Sdk/SdkPlugin';
-import { RENDER_MODE_IFRAME, RENDER_MODE_SSR, RENDER_MODE_WIDGET } from '@modules/Sdk';
-import AppMain from '@modules/App/AppMain';
-import sdkComponents from '@modules/Element';
-
-// Relatives
 import { getEnvironmentServer } from './config';
 
-/**
- * @param {{
- *   className: string;
- *   children: React.ReactNode;
- *   cacheTimeout?: number;
- *   revision: number;
- *   webKey: string;
- *   environment: string;
- *   currentPageId: string;
- *   sdkEnvironment: string;
- *   server: {
- *     graphqlServer: string;
- *     basePath: string;
- *     subscriptionServer: string;
- *     host: string;
- *     websocketServer: string;
- *   };
- *   offlineMode: boolean;
- *   offlineData: {
- *     schema: object;
- *     style: object;
- *     plugins: object;
- *     segments: object[];
- *   };
- *   offlineDataType: 'json' | 'yaml';
- *   renderMode: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
- *   debugMode: boolean;
- *   previewMode: boolean;
- *   externalStyle: string;
- *   state: object;
- *   debugMode: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const App = props => {
-  const {
-    className = 'min-h-screen',
-    children,
-    cacheTimeout = 0,
-    // Space
-    webKey = '',
-    // Server
-    server = undefined,
-    // Extra
-    sdkEnvironment = 'production',
-    renderMode = RENDER_MODE_IFRAME,
-    debugMode: debugModeProp = false,
-    ...sdkProps
-  } = props;
+import type { OfflineDataRaw } from './types';
+import type { RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type AppProps = {
+  className?: string;
+  children?: ReactNode;
+  cacheTimeout?: number;
+  revision?: number;
+  webKey: string;
+  environment?: string;
+  currentPageId?: string;
+  sdkEnvironment?: ServerEnvironment;
+  server?: Server;
+  offlineMode?: boolean;
+  offlineData?: OfflineDataRaw;
+  offlineDataType?: 'json' | 'yaml';
+  renderMode?: RenderMode;
+  debugMode?: boolean;
+  previewMode?: boolean;
+  externalStyle?: string;
+  state?: Record<string, unknown>;
+};
+
+const App = ({
+  className = 'min-h-screen',
+  children,
+  cacheTimeout = 0,
+  // Space
+  webKey = '',
+  // Server
+  server = undefined,
+  // Extra
+  sdkEnvironment = 'production',
+  renderMode = 'iframe',
+  debugMode: debugModeProp = false,
+  ...sdkProps
+}: AppProps) => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [debugMode, setDebugMode] = useState(false);
-  const [client, setClient] = useState();
-  const [, setPersistor] = useState();
+  const [client, setClient] = useState<ApolloClient>();
+  const [, setPersistor] = useState<CachePersistor<unknown>>();
 
   useEffect(() => {
     console.log(
@@ -88,8 +71,8 @@ const App = props => {
     );
   }, []);
 
-  const handleKeyDown = useCallback(e => {
-    if (e.shiftKey && e.keyCode === 123) {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.shiftKey && e.key === 'F12') {
       setDebugMode(state => !state);
     }
   }, []);
@@ -119,13 +102,13 @@ const App = props => {
 
       // Invalidate Cache
       const currentTime = new Date().valueOf();
-      const TTL = parseInt(localStorage.getItem(`cache-${webId}-TTL`) ?? 0);
+      const TTL = parseInt(localStorage.getItem(`cache-${webId}-TTL`) ?? '0');
       const TTLFuture = currentTime + cacheTimeout * 1000; // 1 minute
       if (!TTL) {
-        localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
+        localStorage.setItem(`cache-${webId}-TTL`, `${TTLFuture}`);
       } else if (currentTime > TTL) {
-        localStorage.setItem(`cache-${webId}-TTL`, TTLFuture);
-        newPersistor.purge();
+        localStorage.setItem(`cache-${webId}-TTL`, `${TTLFuture}`);
+        void newPersistor.purge();
       }
 
       await newPersistor.restore();
@@ -133,9 +116,23 @@ const App = props => {
     }
 
     // Init Auth Link
-    const authLink = new SetContextLink((_, { headers }) => ({
-      headers: { ...headers, 'sdk-version': VERSION, authorization: webKey ? `Bearer ${webKey}` : '' }
-    }));
+    // const authLink = new SetContextLink((_, { headers }) => ({
+    //   headers: { ...headers, 'sdk-version': VERSION, authorization: webKey ? `Bearer ${webKey}` : '' }
+    // }));
+
+    const authLink = new SetContextLink((prevContext, operation) => {
+      // const headers = prevContext.headers ?? {};
+
+      console.log(prevContext.headers, operation.headers);
+
+      return {
+        headers: {
+          ...(prevContext.headers as Record<string, string>),
+          'sdk-version': VERSION,
+          authorization: webKey ? `Bearer ${webKey}` : ''
+        }
+      };
+    });
 
     // Init Client
     const client = new ApolloClient({ link: authLink.concat(noTypenameFromVariablesLink, httpLink), cache });
@@ -173,7 +170,7 @@ const App = props => {
     return components;
   }, [children]);
 
-  if (renderMode === RENDER_MODE_WIDGET) {
+  if (renderMode === 'widget') {
     return (
       <Provider>
         <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
@@ -199,10 +196,10 @@ const App = props => {
     );
   }
 
-  const ReactRouter = renderMode === RENDER_MODE_SSR && typeof window === 'undefined' ? StaticRouter : BrowserRouter;
+  const ReactRouter = renderMode === 'ssr' && typeof window === 'undefined' ? StaticRouter : BrowserRouter;
 
   const routerParams = {};
-  if (renderMode === RENDER_MODE_SSR && typeof window === 'undefined') {
+  if (renderMode === 'ssr' && typeof window === 'undefined') {
     routerParams.location = finalServer.requestUrl;
   }
 

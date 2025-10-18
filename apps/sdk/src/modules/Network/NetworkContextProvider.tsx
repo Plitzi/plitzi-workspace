@@ -16,23 +16,23 @@ import type { MutationsMap } from './Mutations';
 import type { QueriesMap } from './Queries';
 import type { OfflineData, OfflineDataRaw } from '../../types';
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
-import type { Server } from '@plitzi/sdk-shared';
+import type { Environment, Server } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {
   children: ReactNode;
   cacheTimeout?: number;
-  server: Server;
-  revision: number;
+  server?: Server;
+  revision?: number;
   webKey?: string;
-  webId?: string;
+  webId: number;
   userKey?: string;
   instanceId: string;
-  environment?: 'development' | 'staging' | 'production';
+  environment?: Environment;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
-  offlineDataType?: 'json' | 'compact';
+  offlineDataType?: 'json' | 'yaml';
   debugMode?: boolean;
   renderMode?: 'ssr' | 'iframe' | 'widget' | 'raw' | 'shadow';
 };
@@ -43,7 +43,7 @@ const NetworkContextProvider = ({
   server,
   revision,
   webKey = '',
-  webId = '',
+  webId,
   userKey = '',
   instanceId,
   environment = 'development',

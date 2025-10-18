@@ -1,38 +1,43 @@
-// Packages
-import { useCallback, use, useMemo } from 'react';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
+import { useCallback, use, useMemo } from 'react';
 
-// Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-// import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-// import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- * }} props
- * @returns {React.ReactElement}
- */
-const SpaceContainerInternal = props => {
-  const { children } = props;
+import type { ToastTypeOptions, ToastPosition } from '@plitzi/plitzi-ui/Toast';
+import type { InteractionBaseCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type SpaceContainerInternalProps = {
+  children: ReactNode;
+};
+
+const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
   const { addToast } = useToast();
   const { useInteractions } = use(InteractionsContext);
   // const { Helmet } = use(NavigationContext);
   // const { head } = use(SchemaSettingsContext);
 
   const handleAddNotification = useCallback(
-    params => {
-      const { placement, appeareance, autoDismiss, transitionDuration, autoDismissTimeout } = params;
+    (
+      params: InteractionCallbackParamValues<{
+        content: string;
+        placement: string;
+        appeareance: string;
+        autoDismiss: boolean;
+        autoDismissTimeout?: number;
+      }>
+    ) => {
+      const { placement, appeareance, autoDismiss, autoDismissTimeout } = params;
       let { content } = params;
       if (typeof content !== 'string') {
         content = JSON.stringify(content);
       }
 
       addToast(<div className="whitespace-break-spaces">{content}</div>, {
-        appeareance,
+        appeareance: appeareance as ToastTypeOptions,
         autoDismiss,
-        placement,
-        transitionDuration,
+        placement: placement as ToastPosition,
+        // transitionDuration,
         autoDismissTimeout
       });
     },
@@ -43,6 +48,7 @@ const SpaceContainerInternal = props => {
     () => ({
       addNotification: {
         title: 'Add Notification',
+        action: 'addNotification',
         type: 'globalCallback',
         callback: handleAddNotification,
         preview: {},
@@ -85,15 +91,25 @@ const SpaceContainerInternal = props => {
           autoDismissTimeout: {
             label: 'Auto Dismiss Timeout',
             defaultValue: 5000,
-            when: params => !!params.autoDismiss
+            type: 'text',
+            when: params => params.autoDismiss
           }
         }
-      }
+      } as InteractionBaseCallback<{
+        content: string;
+        placement: string;
+        appeareance: string;
+        autoDismiss: boolean;
+        autoDismissTimeout?: number;
+      }>
     }),
     [handleAddNotification]
   );
 
-  useInteractions({ id: 'space', callbacks: interactionCallbacks });
+  useInteractions({
+    id: 'space',
+    callbacks: interactionCallbacks as unknown as Record<string, InteractionBaseCallback>
+  });
 
   // @todo: we need to render space headers here
 
