@@ -15,7 +15,7 @@ export type Segment = {
   identifier: string;
 };
 
-export type SegmentsContextValue = {
+export type BuilderSegmentsContextValue = {
   segments: Record<string, Segment>;
   dispatchSegments?: unknown;
   segmentGet: (identifier: string) => Promise<Segment | undefined>;
@@ -93,6 +93,10 @@ export type SegmentsContextValue = {
     variables?: SchemaVariable[]
   ) => Promise<void>;
 };
+
+export type SegmentsContextValue<T extends 'builder' | 'sdk' = 'sdk'> = T extends 'builder'
+  ? BuilderSegmentsContextValue
+  : Pick<BuilderSegmentsContextValue, 'segments' | 'segmentGet'>;
 
 // Raws
 

@@ -3,8 +3,8 @@ import { PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use, useMemo } from 'react';
 
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import Builder from '@pmodules/Builder';
-import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 export type ContainerDefaultProps = {
   previewMode?: boolean;

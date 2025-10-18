@@ -28,7 +28,7 @@ export type NetworkContextProviderProps = {
   webKey?: string;
   webId: number;
   userKey?: string;
-  instanceId: string;
+  instanceId?: string;
   environment?: Environment;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;

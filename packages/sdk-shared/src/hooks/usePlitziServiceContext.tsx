@@ -3,6 +3,7 @@
 import { createContext, use } from 'react';
 
 import type { BuilderContextValue } from '../builder';
+import type { NetworkContextValue } from '../network';
 import type {
   CollectionContextValue,
   ComponentContextValue,
@@ -38,7 +39,7 @@ export type PlitziServiceContextValue = {
     EventBridgeContext: Context<EventBridgeContextValue>;
     PluginsContext: Context<PluginsContextValue>;
     InteractionsContext: Context<InteractionsContextValue>;
-    NetworkContext: Context<any>;
+    NetworkContext: Context<NetworkContextValue>;
     BuilderContext?: Context<BuilderContextValue>;
   };
 } & Record<string, unknown>;

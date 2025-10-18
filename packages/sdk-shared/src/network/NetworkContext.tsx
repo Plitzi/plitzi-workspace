@@ -22,7 +22,6 @@ type NetworkContextValueBase<
     silentError?: boolean
   ) => Promise<{ success: boolean; result?: Q[T]; error?: string | Error }>;
   webKey: string;
-  instanceId: string;
   server: Server;
   userKey: string;
   webId: number;
@@ -34,6 +33,7 @@ export type NetworkContextValueBuilder<
   M extends Record<string, unknown> = Record<string, unknown>,
   S extends Record<string, unknown> = Record<string, unknown>
 > = NetworkContextValueBase<Q, M> & {
+  instanceId: string;
   subscriptionManager: {
     subscribe: <T extends keyof S>(
       subscriptionKey: T,

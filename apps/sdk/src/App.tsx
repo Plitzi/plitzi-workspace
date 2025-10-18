@@ -22,7 +22,8 @@ import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { getEnvironmentServer } from './config';
 
 import type { OfflineDataRaw } from './types';
-import type { RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
+import type { ComponentPlugin, Environment, RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppProps = {
@@ -31,7 +32,7 @@ export type AppProps = {
   cacheTimeout?: number;
   revision?: number;
   webKey: string;
-  environment?: string;
+  environment?: Environment;
   currentPageId?: string;
   sdkEnvironment?: ServerEnvironment;
   server?: Server;
@@ -146,8 +147,8 @@ const App = ({
         return;
       }
 
-      const { renderType, component, assets, ...extraProps } = child.props;
-      if (!renderType || !component) {
+      const { renderType, component, assets = [], ...extraProps } = child.props as SdkPluginProps;
+      if (!renderType || !(component as ComponentPlugin | undefined)) {
         return;
       }
 

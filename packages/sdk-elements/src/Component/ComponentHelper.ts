@@ -23,8 +23,12 @@ export const getPlugins = (component: ComponentPlugin | undefined) => {
 
 // Local
 
-export const processLocalPlugins = (plugins: Record<string, ComponentPlugin>) => {
+export const processLocalPlugins = (plugins?: Record<string, ComponentPlugin>) => {
   let pluginsProcessed = {};
+  if (!plugins) {
+    return pluginsProcessed;
+  }
+
   Object.values(plugins).forEach(comp => {
     if (comp.type) {
       pluginsProcessed = { ...pluginsProcessed, ...getPlugins(comp) };
@@ -58,8 +62,12 @@ export const nestedInject = (plugins: Record<string, ComponentPlugin> | undefine
   return pluginsProcessed;
 };
 
-export const processLocalCustomPlugins = (localComponents: Record<string, ComponentPlugin>) => {
+export const processLocalCustomPlugins = (localComponents?: Record<string, ComponentPlugin>) => {
   let pluginsProcessed = {};
+  if (!localComponents) {
+    return pluginsProcessed;
+  }
+
   Object.values(localComponents).forEach(comp => {
     if (!comp.type) {
       return;

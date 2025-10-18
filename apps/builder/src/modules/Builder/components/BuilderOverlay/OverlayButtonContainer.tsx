@@ -9,8 +9,8 @@ import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHo
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import SegmentForm from '@pmodules/Segments/models/SegmentForm';
-import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
 import TemplatesContext from '@pmodules/Templates/TemplatesContext';
 
@@ -18,7 +18,7 @@ import OverlayButton from './OverlayButton';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, SegmentsContextValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type OverlayButtonContainerProps = {
@@ -46,7 +46,7 @@ const OverlayButtonContainer = ({
   const { setHovered } = use(BuilderHoveredContext);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const builderTemplatesContext = use(TemplatesContext);
-  const builderSegmentsContext = use(SegmentsContext);
+  const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
   const { schema } = use(BuilderSchemaContext);
   const { style } = use(BuilderStyleContext);
   const { builderHandler, builderElementPermissions, mode } = use(BuilderContext);

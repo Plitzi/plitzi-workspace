@@ -3,9 +3,9 @@ import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
-import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 import type { EventBridgeEvent, Segment } from '@plitzi/sdk-shared';
 

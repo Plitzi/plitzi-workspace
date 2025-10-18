@@ -5,12 +5,12 @@ import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-import SegmentsContext from './SegmentsContext';
 import SegmentsReducer, { SegmentsActions } from './SegmentsReducer';
 
 import type { SegmentsReducerActions } from './SegmentsReducer';
@@ -25,7 +25,8 @@ import type {
   Schema,
   DisplayMode,
   TagType,
-  StyleItem
+  StyleItem,
+  SegmentsContextValue
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
@@ -638,7 +639,7 @@ const SegmentsContextProvider = ({
 
   useEventBridge('segment', events);
 
-  const segmentsContextValue = useMemo(
+  const segmentsContextValue = useMemo<SegmentsContextValue<'builder'>>(
     () => ({
       segments,
       dispatchSegments,

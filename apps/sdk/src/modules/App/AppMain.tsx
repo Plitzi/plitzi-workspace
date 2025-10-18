@@ -28,7 +28,7 @@ export type AppMainProps = {
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
-  instanceId: string;
+  instanceId?: string;
   renderMode?: RenderMode;
   sdkStylePath?: string;
   previewMode?: boolean;
@@ -85,7 +85,12 @@ const AppMain = ({
               <StyleContextProvider>
                 <EventBridgeContextProvider onInit={onInitEventBridge}>
                   <SegmentsContextProvider>
-                    <UserBaseContextProvider previewMode={previewMode} webId={webId} environment={environment}>
+                    <UserBaseContextProvider
+                      previewMode={previewMode}
+                      webId={webId}
+                      environment={environment}
+                      server={server}
+                    >
                       <NavigationContextProvider
                         renderMode={renderMode}
                         currentPageId={currentPageId}

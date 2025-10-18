@@ -1,31 +1,24 @@
-// Packages
-import React, { use } from 'react';
 import classNames from 'classnames';
+import { use } from 'react';
 
-// Monorepo
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-// Alias
-import { RENDER_MODE_WIDGET } from '@modules/Sdk';
-
-// Relatives
 import App from '../../../../App';
 
-/**
- * @param {{
- *   ref: React.MutableRefObject<HTMLElement>;
- *   internalProps: object;
- *   className: string;
- *   spaceKey: string;
- *   environment: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const PlitziSdk = props => {
-  const { ref, internalProps = emptyObject, className = '', spaceKey = '', environment = 'main' } = props;
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { RefObject } from 'react';
+
+export type PlitziSdkProps = {
+  ref?: RefObject<HTMLElement>;
+  internalProps?: InternalPropsSTG2;
+  className?: string;
+  spaceKey?: string;
+  environment?: string;
+};
+
+const PlitziSdk = ({ ref, internalProps, className, spaceKey, environment = 'main' }: PlitziSdkProps) => {
   const {
     settings: { previewMode },
     contexts: { NetworkContext }
@@ -42,7 +35,7 @@ const PlitziSdk = props => {
         <App
           webKey={spaceKey}
           environment={environment}
-          renderMode={RENDER_MODE_WIDGET}
+          renderMode="widget"
           server={server}
           className="h-full w-full"
         />
@@ -51,6 +44,7 @@ const PlitziSdk = props => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default withElement(PlitziSdk);
 
 export { PlitziSdk };

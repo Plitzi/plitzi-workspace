@@ -4,6 +4,7 @@ import * as utils from './helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from './hooks/usePlitziServiceContext';
 import * as network from './network';
 import * as schema from './schema';
+import * as segments from './segments';
 import * as style from './style';
 
 export type * from './types';
@@ -17,5 +18,16 @@ export * from './schema';
 export * from './elements';
 export * from './dataSource';
 export * from './network';
+export * from './segments';
 
-export { usePlitziServiceContext, PlitziServiceProvider, syntaxHighlight, utils, style, schema, dataSource, network };
+export {
+  usePlitziServiceContext,
+  PlitziServiceProvider,
+  syntaxHighlight,
+  utils,
+  style,
+  schema,
+  dataSource,
+  network,
+  segments
+};

@@ -3,7 +3,6 @@ import omit from 'lodash/omit.js';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import { defaultElements } from '..';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
@@ -12,16 +11,12 @@ import type { ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type ComponentProviderProps = {
-  localComponents: Record<string, ComponentPlugin>;
-  localCustomComponents: Record<string, ComponentPlugin>;
+  localComponents?: Record<string, ComponentPlugin>;
+  localCustomComponents?: Record<string, ComponentPlugin>;
   children?: ReactNode;
 };
 
-const ComponentProvider = ({
-  localComponents = emptyObject,
-  localCustomComponents = emptyObject,
-  children
-}: ComponentProviderProps) => {
+const ComponentProvider = ({ localComponents, localCustomComponents, children }: ComponentProviderProps) => {
   const localComponentsParsed = useMemo<Record<string, ComponentPlugin>>(
     () => ({
       ...processLocalPlugins(defaultElements as unknown as Record<string, ComponentPlugin>),

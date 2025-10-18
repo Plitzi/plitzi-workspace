@@ -18,7 +18,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 // Alias
 import CollectionContext from '@modules/Collection/CollectionContext';
-import SegmentsContext from '@modules/Segments/SegmentsContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 
 // Relatives
 import RawMode from './renderModes/RawMode';

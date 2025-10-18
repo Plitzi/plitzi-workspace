@@ -135,6 +135,18 @@
       "import": "./dist/src/schema/schemaConstants.mjs",
       "types": "./dist/src/schema/schemaConstants.d.ts"
     },
+    "./segments": {
+      "import": "./dist/src/segments/index.mjs",
+      "types": "./dist/src/segments/index.d.ts"
+    },
+    "./segments/SegmentsContext": {
+      "import": "./dist/src/segments/SegmentsContext.mjs",
+      "types": "./dist/src/segments/SegmentsContext.d.ts"
+    },
+    "./segments/index": {
+      "import": "./dist/src/segments/index.mjs",
+      "types": "./dist/src/segments/index.d.ts"
+    },
     "./style": {
       "import": "./dist/src/style/index.mjs",
       "types": "./dist/src/style/index.d.ts"

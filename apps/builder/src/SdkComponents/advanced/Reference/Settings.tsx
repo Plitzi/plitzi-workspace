@@ -5,7 +5,7 @@ import { useCallback, use, useMemo } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { Element, Schema, Segment } from '@plitzi/sdk-shared';
+import type { Element, Schema, Segment, SegmentsContextValue } from '@plitzi/sdk-shared';
 
 type SettingsProps = {
   referenceType?: 'element' | 'segment' | '';
@@ -24,7 +24,7 @@ const Settings = ({
     contexts: { SchemaContext, SegmentsContext }
   } = usePlitziServiceContext();
   const { schema } = use(SchemaContext);
-  const { segments, segmentGet, segmentsFetch } = use(SegmentsContext);
+  const { segments, segmentGet, segmentsFetch } = use(SegmentsContext) as SegmentsContextValue<'builder'>;
 
   const handleChangeReferenceType = useCallback(
     (option?: Exclude<Option, OptionGroup>) => {

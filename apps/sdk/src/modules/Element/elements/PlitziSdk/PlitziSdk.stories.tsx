@@ -1,7 +1,3 @@
-// Packages
-import React from 'react';
-
-// Relatives
 import { PlitziSdk } from './PlitziSdk';
 
 export default {

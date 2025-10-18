@@ -8,7 +8,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
-import SegmentsContext from '@pmodules/Segments/SegmentsContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
 import TemplatesContext from '@pmodules/Templates/TemplatesContext';
 
@@ -16,7 +16,7 @@ import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, SegmentsContextValue } from '@plitzi/sdk-shared';
 
 export type BuilderContextMenuProps = {
   width?: number;
@@ -35,7 +35,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const [showMenu, setShowMenu] = useState(false);
   const { builderElementPermissions, builderHandler } = use(BuilderContext);
   const builderTemplatesContext = use(TemplatesContext);
-  const builderSegmentsContext = use(SegmentsContext);
+  const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
     schema,

@@ -18,7 +18,7 @@ import type { ReactNode } from 'react';
 export type UserBaseContextProviderProps = {
   previewMode?: boolean;
   children?: ReactNode;
-  webId?: string | number;
+  webId: number;
   server: Server;
   environment?: string;
 };
@@ -26,7 +26,7 @@ export type UserBaseContextProviderProps = {
 const UserBaseContextProvider = ({
   previewMode = true,
   children,
-  webId = 0,
+  webId,
   server,
   environment = 'live'
 }: UserBaseContextProviderProps) => {

@@ -6,11 +6,12 @@ import debounce from 'lodash/debounce';
 import omit from 'lodash/omit';
 import { useCallback, use, useEffect, useState, useMemo } from 'react';
 
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+
 import SegmentForm from './models/SegmentForm';
 import Segment from './Segment';
-import SegmentsContext from './SegmentsContext';
 
-import type { Segment as TSegment } from '@plitzi/sdk-shared';
+import type { SegmentsContextValue, Segment as TSegment } from '@plitzi/sdk-shared';
 
 const Segments = () => {
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,7 @@ const Segments = () => {
     segments: {}
   });
   const { showModal } = useModal();
-  const { segmentsFetch, segmentAddMutation } = use(SegmentsContext);
+  const { segmentsFetch, segmentAddMutation } = use(SegmentsContext) as SegmentsContextValue<'builder'>;
 
   const fetch = useCallback(
     async (name: string, more = false) => {

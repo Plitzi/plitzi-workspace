@@ -24,13 +24,18 @@ import { disableReactDevTools } from './helpers/security';
 import './assets/index.scss';
 
 import type { OfflineDataRaw } from './types';
-import type { RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, Environment, RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 let stateManager;
 let eventBridge;
 
-export function render(widgetContainer, params = {}, plugins = {}, debugMode = false) {
+export function render(
+  widgetContainer: string,
+  params = {},
+  plugins: Record<string, ComponentPlugin> = {},
+  debugMode = false
+) {
   const Widget = () => {
     const pluginKeys = Object.keys(plugins);
     if (process.env.NODE_ENV === 'production' && !debugMode) {
@@ -59,8 +64,11 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
     );
   };
 
-  const root = createRoot(document.getElementById(widgetContainer));
-  root.render(<Widget />);
+  const rootDOM = document.getElementById(widgetContainer);
+  if (rootDOM) {
+    const root = createRoot(rootDOM);
+    root.render(<Widget />);
+  }
 }
 
 declare global {
@@ -105,7 +113,7 @@ export type PlitziSdkProps = {
   cacheTimeout?: number;
   revision?: number;
   webKey: string;
-  environment?: string;
+  environment?: Environment;
   currentPageId?: string;
   sdkEnvironment?: ServerEnvironment;
   server?: Server;

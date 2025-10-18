@@ -28,11 +28,11 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import AppContext from '@pmodules/App/AppContext';
 import CollectionContext from '@pmodules/Collection/CollectionContext';
-import SegmentsContext from '@pmodules/Segments/SegmentsContext';
 
 import { defaultElementsSettings } from '../../../../SdkComponents';
 

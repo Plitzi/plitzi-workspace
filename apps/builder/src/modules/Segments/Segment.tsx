@@ -6,14 +6,19 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import BuilderPopup from '@pmodules/Builder/BuilderPopup';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import PublishForm from './models/PublishForm';
 import SegmentForm from './models/SegmentForm';
-import SegmentsContext from './SegmentsContext';
 
-import type { BuilderNetworkContextValue, SchemaVariable, Segment as TSegment } from '@plitzi/sdk-shared';
+import type {
+  BuilderNetworkContextValue,
+  SchemaVariable,
+  SegmentsContextValue,
+  Segment as TSegment
+} from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { MouseEvent } from 'react';
@@ -38,7 +43,7 @@ const Segment = ({
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { segmentGet, segmentsRemove, segmentsUpdate } = use(SegmentsContext);
+  const { segmentGet, segmentsRemove, segmentsUpdate } = use(SegmentsContext) as SegmentsContextValue<'builder'>;
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const { onDragStart } = useDragElement({
     type: 'reference',
