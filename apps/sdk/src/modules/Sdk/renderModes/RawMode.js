@@ -13,7 +13,6 @@ import MadeInPlitzi from '@components/MadeInPlitzi';
 
 // Relatives
 import SpaceContainer from '../../Space/SpaceContainer';
-import { RENDER_MODE_RAW, RENDER_MODE_WIDGET } from '../Sdk';
 
 /**
  * @param {{
@@ -25,10 +24,10 @@ import { RENDER_MODE_RAW, RENDER_MODE_WIDGET } from '../Sdk';
  * @returns {React.ReactElement}
  */
 const RawMode = props => {
-  const { pageId = '', style = '', plitziContextValue, renderMode = RENDER_MODE_RAW } = props;
+  const { pageId = '', style = '', plitziContextValue, renderMode = 'raw' } = props;
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
   let schema;
-  if (renderMode === RENDER_MODE_WIDGET) {
+  if (renderMode === 'widget') {
     ({ schema } = use(SchemaContext));
   }
 
@@ -44,8 +43,8 @@ const RawMode = props => {
     <SpaceContainer renderMode={renderMode}>
       <style dangerouslySetInnerHTML={{ __html: style }} />
       <PlitziServiceProvider value={plitziContextValue}>
-        {pageId && renderMode !== RENDER_MODE_WIDGET && <Page key={pageId} internalProps={pageValueMemo} />}
-        {pageId && renderMode === RENDER_MODE_WIDGET && (
+        {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo} />}
+        {pageId && renderMode === 'widget' && (
           <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />
         )}
       </PlitziServiceProvider>

@@ -29,12 +29,6 @@ import SdkPlugin from './SdkPlugin';
 // Style
 import style from '!!css-loader!postcss-loader!sass-loader!../../assets/index.scss'; // eslint-disable-line
 
-export const RENDER_MODE_RAW = 'raw';
-export const RENDER_MODE_IFRAME = 'iframe';
-export const RENDER_MODE_SHADOW = 'shadow';
-export const RENDER_MODE_SSR = 'ssr';
-export const RENDER_MODE_WIDGET = 'widget';
-
 /**
  * @param {{
  *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
@@ -47,7 +41,7 @@ export const RENDER_MODE_WIDGET = 'widget';
  */
 const Sdk = props => {
   const {
-    renderMode = RENDER_MODE_IFRAME,
+    renderMode = 'iframe',
     externalStyle = '',
     environment = 'main',
     previewMode = true,
@@ -126,7 +120,7 @@ const Sdk = props => {
     [getWindow, currentPageId, schemaSettings]
   );
 
-  if (renderMode === RENDER_MODE_RAW || renderMode === RENDER_MODE_SSR || renderMode === RENDER_MODE_WIDGET) {
+  if (renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') {
     return (
       <RawMode
         renderMode={renderMode}
@@ -137,7 +131,7 @@ const Sdk = props => {
     );
   }
 
-  if (renderMode === RENDER_MODE_SHADOW) {
+  if (renderMode === 'shadow') {
     return (
       <ShadowMode style={styleParsed} plitziContextValue={plitziContextValue} pageId={currentPageId} assets={assets} />
     );

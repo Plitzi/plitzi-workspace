@@ -12,13 +12,6 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 // Alias
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
-import {
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET
-} from '@modules/Sdk/Sdk';
 
 /**
  * @param {{
@@ -30,7 +23,7 @@ import {
  * @returns {React.ReactElement}
  */
 const PluginsContextProvider = props => {
-  const { children, renderMode = RENDER_MODE_IFRAME, plugins: pluginsProp, sdkStylePath = './plitzi-sdk.css' } = props;
+  const { children, renderMode = 'iframe', plugins: pluginsProp, sdkStylePath = './plitzi-sdk.css' } = props;
   const [temporalCustomStyles, setTemporalCustomStyles] = useState({});
   const internalData = use(NetworkInternalContext);
   const plugins = useMemo(() => {
@@ -111,7 +104,7 @@ const PluginsContextProvider = props => {
 
   const assetsState = useMemo(() => {
     const extraAssets = {};
-    if (renderMode === RENDER_MODE_IFRAME || renderMode === RENDER_MODE_SHADOW) {
+    if (renderMode === 'iframe' || renderMode === 'shadow') {
       extraAssets['static-99'] = {
         type: 'link',
         id: 'static-99',
@@ -171,7 +164,7 @@ const PluginsContextProvider = props => {
   return (
     <>
       <Helmet>
-        {(renderMode === RENDER_MODE_RAW || renderMode === RENDER_MODE_SSR || renderMode === RENDER_MODE_WIDGET) &&
+        {(renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') &&
           helmetAssets}
       </Helmet>
       <PluginsContext value={pluginsContextValue}>{children}</PluginsContext>
