@@ -87,7 +87,7 @@ const NetworkContextProvider = ({
           fetchPolicy
         });
       } catch (e: unknown) {
-        return { success: false, result: undefined, error: (e as Error).message };
+        return { success: false, result: undefined, error: e as Error };
       }
 
       if (!result) {
@@ -159,16 +159,17 @@ const NetworkContextProvider = ({
       { environment, revision: revisionAux, limit: 99 },
       cacheTimeout === 0 ? 'network-only' : 'cache-first'
     );
-    if (response.error instanceof Error) {
+    if (response.error) {
       setLoading(false);
-      setError(typeof response.error === 'string' ? response.error : response.error.message);
-      // if (response.error.statusCode === 401) {
-      //   setError('Access not authorized');
-      // } else if (response.networkError) {
-      //   setError('Service not available');
-      // } else {
-      //   setError(response.message);
-      // }
+      if (typeof response.error === 'string') {
+        setError(response.error);
+      } else if ('statusCode' in response.error && response.error.statusCode === 401) {
+        setError('Access not authorized');
+      } else if ('networkError' in response.error && response.error.networkError) {
+        setError('Service not available');
+      } else {
+        setError(response.error.message);
+      }
 
       return;
     }

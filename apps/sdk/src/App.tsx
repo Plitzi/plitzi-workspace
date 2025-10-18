@@ -116,28 +116,18 @@ const App = ({
     }
 
     // Init Auth Link
-    // const authLink = new SetContextLink((_, { headers }) => ({
-    //   headers: { ...headers, 'sdk-version': VERSION, authorization: webKey ? `Bearer ${webKey}` : '' }
-    // }));
-
-    const authLink = new SetContextLink((prevContext, operation) => {
-      // const headers = prevContext.headers ?? {};
-
-      console.log(prevContext.headers, operation.headers);
-
-      return {
-        headers: {
-          ...(prevContext.headers as Record<string, string>),
-          'sdk-version': VERSION,
-          authorization: webKey ? `Bearer ${webKey}` : ''
-        }
-      };
-    });
+    const authLink = new SetContextLink(prevContext => ({
+      headers: {
+        ...(prevContext.headers as Record<string, string>),
+        'sdk-version': VERSION,
+        authorization: webKey ? `Bearer ${webKey}` : ''
+      }
+    }));
 
     // Init Client
     const client = new ApolloClient({ link: authLink.concat(noTypenameFromVariablesLink, httpLink), cache });
     setClient(client);
-  }, [finalServer, VERSION, webKey, webId, cacheTimeout]);
+  }, [finalServer, webKey, webId, cacheTimeout]);
 
   useEffect(() => {
     initClient().catch(console.error);

@@ -1,35 +1,31 @@
 /* eslint-disable react-refresh/only-export-components */
-// Packages
-import React, { useCallback } from 'react';
+
+import { useCallback } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
-// Monorepo
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+// This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
+// eslint-disable-next-line import/order
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import sdkComponents from '@modules/Element';
+import Sdk from '@modules/Sdk';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
-import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
+import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
+import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-// Alias
-import Sdk, {
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET
-} from '@modules/Sdk';
-import sdkComponents from '@modules/Element';
-
-// Relatives
-import { disableReactDevTools } from './helpers/security';
 import App from './App';
+import { disableReactDevTools } from './helpers/security';
 
 // SDK Style
 import './assets/index.scss';
+
+import type { OfflineDataRaw } from './types';
+import type { RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 let stateManager;
 let eventBridge;
@@ -67,10 +63,15 @@ export function render(widgetContainer, params = {}, plugins = {}, debugMode = f
   root.render(<Widget />);
 }
 
+declare global {
+  interface Window {
+    plitziCache?: PlitziSdkProps;
+  }
+}
+
 if (typeof window !== 'undefined' && window.plitziCache) {
   // SSR
-  const debugMode = false;
-  if (process.env.NODE_ENV === 'production' && !debugMode && typeof window !== 'undefined') {
+  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
     disableReactDevTools();
   }
 
@@ -92,58 +93,43 @@ if (typeof window !== 'undefined' && window.plitziCache) {
   //   );
   // }
 
-  hydrateRoot(
-    document.getElementById('plitzi-sdk-root'),
-    <App {...(window.plitziCache ?? {})} debugMode={debugMode} />
-  );
+  const elementDOM = document.getElementById('plitzi-sdk-root');
+  if (elementDOM) {
+    hydrateRoot(elementDOM, <App {...(window.plitziCache ?? {})} debugMode={false} />);
+  }
 }
 
-/**
- * @param {{
- *   className: string;
- *   children: React.ReactNode;
- *   cacheTimeout?: number;
- *   revision: number;
- *   webKey: string;
- *   environment: string;
- *   currentPageId: string;
- *   sdkEnvironment: string;
- *   server: {
- *     graphqlServer: string;
- *     basePath: string;
- *     subscriptionServer: string;
- *     host: string;
- *     websocketServer: string;
- *   };
- *   offlineMode: boolean;
- *   offlineData: {
- *     schema: object;
- *     style: object;
- *     plugins: object;
- *     segments: object[];
- *   };
- *   offlineDataType: 'json' | 'yaml';
- *   renderMode: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
- *   debugMode: boolean;
- *   previewMode: boolean;
- *   externalStyle: string;
- *   state: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const PlitziSdk = props => {
-  const {
-    debugMode = false,
-    // App
-    children,
-    // Space
-    webKey = '',
-    environment = 'main',
-    // Extra
-    renderMode = RENDER_MODE_IFRAME,
-    ...otherProps
-  } = props;
+export type PlitziSdkProps = {
+  className?: string;
+  children?: ReactNode;
+  cacheTimeout?: number;
+  revision?: number;
+  webKey: string;
+  environment?: string;
+  currentPageId?: string;
+  sdkEnvironment?: ServerEnvironment;
+  server?: Server;
+  offlineMode?: boolean;
+  offlineData?: OfflineDataRaw;
+  offlineDataType?: 'json' | 'yaml';
+  renderMode?: RenderMode;
+  debugMode?: boolean;
+  previewMode?: boolean;
+  externalStyle?: string;
+  state?: Record<string, unknown>;
+};
 
+const PlitziSdk = ({
+  debugMode = false,
+  // App
+  children,
+  // Space
+  webKey = '',
+  environment = 'main',
+  // Extra
+  renderMode = 'iframe',
+  ...otherProps
+}: PlitziSdkProps) => {
   return (
     <App {...otherProps} renderMode={renderMode} debugMode={debugMode} webKey={webKey} environment={environment}>
       {children}
@@ -164,11 +150,6 @@ export {
   PluginManager,
   PluginRemote,
   ReplicaProvider,
-  RENDER_MODE_IFRAME,
-  RENDER_MODE_RAW,
-  RENDER_MODE_SHADOW,
-  RENDER_MODE_SSR,
-  RENDER_MODE_WIDGET,
   sdkComponents
 };
 
