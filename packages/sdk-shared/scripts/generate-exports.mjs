@@ -16,6 +16,9 @@ const makeExportPath = file => `./${path.relative(process.cwd(), file).replace(/
  */
 function generateExports(dir, prefix = '.') {
   const exportsObj = {};
+  if (!fs.existsSync(dir)) {
+    return exportsObj;
+  }
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const entryPath = path.join(dir, entry.name);
@@ -26,9 +29,9 @@ function generateExports(dir, prefix = '.') {
     if (entry.isDirectory()) {
       // For folders, check if index.mjs / index.cjs / index.d.ts exist
       const indexFiles = {
+        types: path.join(entryPath, 'index.d.ts'),
         import: path.join(entryPath, 'index.mjs'),
-        require: path.join(entryPath, 'index.cjs'),
-        types: path.join(entryPath, 'index.d.ts')
+        require: path.join(entryPath, 'index.cjs')
       };
 
       const exportEntry = {};
@@ -48,9 +51,9 @@ function generateExports(dir, prefix = '.') {
     } else if (entry.isFile() && entry.name.endsWith('.mjs')) {
       // For single .mjs files
       const files = {
+        types: entryPath.replace(/\.mjs$/, '.d.ts'),
         import: entryPath,
-        require: entryPath.replace(/\.mjs$/, '.cjs'),
-        types: entryPath.replace(/\.mjs$/, '.d.ts')
+        require: entryPath.replace(/\.mjs$/, '.cjs')
       };
       const exportEntry = {};
       for (const [type, filePath] of Object.entries(files)) {
@@ -70,9 +73,9 @@ function generateExports(dir, prefix = '.') {
 
 // Handle the main entry of the library (dist/index.*)
 const mainIndex = {
+  types: path.join(DIST, 'index.d.ts'),
   import: path.join(DIST, 'index.mjs'),
-  require: path.join(DIST, 'index.cjs'),
-  types: path.join(DIST, 'index.d.ts')
+  require: path.join(DIST, 'index.cjs')
 };
 const mainExports = {};
 for (const [type, file] of Object.entries(mainIndex)) {
