@@ -6,7 +6,7 @@ import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext'
 import Collection from '@pmodules/Collection/Collection';
 import CollectionForm from '@pmodules/Collection/Models/CollectionForm';
 
-import type { Collection as TCollection } from '@plitzi/sdk-shared';
+import type { BuilderCollectionContextValue, Collection as TCollection } from '@plitzi/sdk-shared';
 
 export type ContainerCollectionsProps = {
   collectionId?: string;
@@ -15,7 +15,7 @@ export type ContainerCollectionsProps = {
 
 const ContainerCollections = ({ collectionId = '', onSourceChange }: ContainerCollectionsProps) => {
   const [updateMode, setUpdateMode] = useState(!collectionId);
-  const { collections, addCollection, updateCollection } = use(CollectionContext);
+  const { collections, addCollection, updateCollection } = use(CollectionContext) as BuilderCollectionContextValue;
   const collection = get(collections, collectionId, undefined);
 
   const handleCancel = useCallback(() => setUpdateMode(false), [setUpdateMode]);

@@ -15,7 +15,7 @@ export const CollectionsActions = {
   COLLECTION_RECORDS_REMOVE: 'COLLECTION_RECORDS_REMOVE'
 } as const;
 
-export type StyleReducerActions =
+export type CollectionReducerActions =
   | {
       type: 'COLLECTIONS_ADD' | 'COLLECTIONS_ADD_MANY' | 'COLLECTIONS_UPDATE' | 'COLLECTIONS_REMOVE';
       collections: Record<string, Collection>;
@@ -25,7 +25,7 @@ export type StyleReducerActions =
   | { type: 'COLLECTION_RECORDS_UPDATE'; collectionId: string; record: CollectionRecord }
   | { type: 'COLLECTION_RECORDS_REMOVE'; collectionId: string; recordId: string };
 
-const CollectionReducer = (state: Record<string, Collection>, action: StyleReducerActions) => {
+const CollectionReducer = (state: Record<string, Collection>, action: CollectionReducerActions) => {
   switch (action.type) {
     case CollectionsActions.COLLECTIONS_ADD:
     case CollectionsActions.COLLECTIONS_ADD_MANY:

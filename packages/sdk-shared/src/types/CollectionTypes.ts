@@ -49,7 +49,7 @@ export type Collection = {
   records: CollectionRecord[];
 };
 
-export type CollectionContextValue = {
+export type BuilderCollectionContextValue = {
   collections: Record<string, Collection>;
   fetchCollections: (
     filter: string,
@@ -99,6 +99,41 @@ export type CollectionContextValue = {
   ) => Promise<CollectionRecord | undefined>;
   removeRecord: (collectionId: string, recordId: string, updateStore?: boolean) => Promise<boolean>;
 };
+
+export type SdkCollectionContextValue = {
+  collections: Record<string, Collection>;
+  fetchCollections: (
+    filter: string,
+    cursor?: string,
+    limit?: number
+  ) => Promise<{ edges: CollectionRaw[]; pageInfo: PageInfo } | undefined>;
+  fetchCollection: (id: string, recordsFilter: string) => Promise<CollectionRaw | undefined>;
+  fetchRecords: (
+    collectionId: string,
+    filter?: string | object,
+    cursor?: string,
+    limit?: number
+  ) => Promise<{ pageInfo: PageInfo; edges: CollectionRecord[] } | undefined>;
+  fetchRecord: (collectionId: string, id: string) => Promise<CollectionRecord | undefined>;
+  addRecord: (
+    collectionId: string,
+    status: CollectionRecord['status'],
+    values: CollectionRecord['values'],
+    updateStore?: boolean
+  ) => Promise<CollectionRecord | undefined>;
+  updateRecord: (
+    collectionId: string,
+    recordId: string,
+    status: CollectionRecord['status'],
+    values: CollectionRecord['values'],
+    updateStore?: boolean
+  ) => Promise<CollectionRecord | undefined>;
+  removeRecord: (collectionId: string, recordId: string, updateStore?: boolean) => Promise<boolean>;
+};
+
+export type CollectionContextValue<T extends 'builder' | 'sdk' = 'sdk'> = T extends 'builder'
+  ? BuilderCollectionContextValue
+  : SdkCollectionContextValue;
 
 // Raws
 

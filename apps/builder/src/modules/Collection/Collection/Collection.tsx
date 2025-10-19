@@ -8,7 +8,7 @@ import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext'
 import CollectionRecords from './CollectionRecords';
 import CollectionRecordForm from '../Models/CollectionRecordForm';
 
-import type { Collection as TCollection, CollectionRecord } from '@plitzi/sdk-shared';
+import type { Collection as TCollection, CollectionRecord, BuilderCollectionContextValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type CollectionProps = {
@@ -23,7 +23,9 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
   const { showModal, showDialog } = useModal();
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const { addRecord, updateRecord, removeRecord, fetchRecords } = use(CollectionContext);
+  const { addRecord, updateRecord, removeRecord, fetchRecords } = use(
+    CollectionContext
+  ) as BuilderCollectionContextValue;
 
   const handleClickUpdateRecord = useCallback(
     (recordId: string) => async (e: MouseEvent) => {

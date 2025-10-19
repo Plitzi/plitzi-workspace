@@ -7,6 +7,7 @@ import { use, useCallback } from 'react';
 
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 
+import type { BuilderCollectionContextValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type CollectionsProps = {
@@ -16,7 +17,7 @@ export type CollectionsProps = {
 
 const Collections = ({ collectionId, onSourceChange }: CollectionsProps) => {
   const { showDialog } = useModal();
-  const { collections, removeCollection } = use(CollectionContext);
+  const { collections, removeCollection } = use(CollectionContext) as BuilderCollectionContextValue;
 
   const handleClickAddCollection = useCallback(() => onSourceChange?.(undefined), [onSourceChange]);
 

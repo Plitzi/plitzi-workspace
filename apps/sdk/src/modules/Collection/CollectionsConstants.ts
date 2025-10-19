@@ -1,4 +1,4 @@
-export const collectionFieldTypeToInteractions = type => {
+export const collectionFieldTypeToInteractions = (type: string) => {
   let finalType = type;
   switch (type) {
     case 'switch':
@@ -34,4 +34,4 @@ export const recordStatus = {
   STATUS_DELETED: 'deleted',
   STATUS_ARCHIVED: 'archived',
   STATUS_CREATED: 'created'
-};
+} as const;
