@@ -21,6 +21,7 @@
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
   },
+  "type": "module",
   "dependencies": {
     "@apollo/client": "^4.0.7",
     "@auth0/auth0-react": "^2.8.0",
