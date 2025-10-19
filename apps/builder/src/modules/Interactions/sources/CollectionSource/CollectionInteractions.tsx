@@ -3,7 +3,7 @@ import pick from 'lodash/pick';
 import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import CollectionContext from '@pmodules/Collection/CollectionContext';
+import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import { collectionFieldTypeToInteractions } from '@pmodules/Collection/CollectionsConstants';
 
 import type {

@@ -5,7 +5,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import classNames from 'classnames';
 import { use, useCallback } from 'react';
 
-import CollectionContext from './CollectionContext';
+import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 
 import type { MouseEvent } from 'react';
 

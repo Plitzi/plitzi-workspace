@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { CollectionContextValue } from '@plitzi/sdk-shared';
+import type { CollectionContextValue } from '../types';
 
 const collectionContextDefaultValue = {} as CollectionContextValue;
 

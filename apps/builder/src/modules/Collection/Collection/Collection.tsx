@@ -3,8 +3,9 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useEffect, useState } from 'react';
 
+import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
+
 import CollectionRecords from './CollectionRecords';
-import CollectionContext from '../CollectionContext';
 import CollectionRecordForm from '../Models/CollectionRecordForm';
 
 import type { Collection as TCollection, CollectionRecord } from '@plitzi/sdk-shared';

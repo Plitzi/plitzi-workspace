@@ -5,9 +5,9 @@ import pick from 'lodash/pick';
 
 // Monorepo
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 
 // Alias
-import CollectionContext from '@modules/Collection/CollectionContext';
 import { collectionFieldTypeToInteractions } from '@modules/Collection/CollectionsConstants';
 
 /**

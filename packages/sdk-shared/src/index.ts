@@ -1,3 +1,4 @@
+import * as collections from './collections';
 import * as dataSource from './dataSource';
 import syntaxHighlight from './helpers/syntaxHighlight';
 import * as utils from './helpers/utils';
@@ -19,6 +20,7 @@ export * from './elements';
 export * from './dataSource';
 export * from './network';
 export * from './segments';
+export * from './collections';
 
 export {
   usePlitziServiceContext,
@@ -29,5 +31,6 @@ export {
   schema,
   dataSource,
   network,
-  segments
+  segments,
+  collections
 };

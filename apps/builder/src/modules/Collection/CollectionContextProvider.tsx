@@ -1,8 +1,8 @@
 import omit from 'lodash/omit';
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
+import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import CollectionContext from '@pmodules/Collection/CollectionContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 
 import CollectionReducer, { CollectionsActions } from './CollectionReducer';

@@ -55,6 +55,18 @@
       "import": "./dist/src/builder/index.mjs",
       "types": "./dist/src/builder/index.d.ts"
     },
+    "./collections": {
+      "import": "./dist/src/collections/index.mjs",
+      "types": "./dist/src/collections/index.d.ts"
+    },
+    "./collections/CollectionContext": {
+      "import": "./dist/src/collections/CollectionContext.mjs",
+      "types": "./dist/src/collections/CollectionContext.d.ts"
+    },
+    "./collections/index": {
+      "import": "./dist/src/collections/index.mjs",
+      "types": "./dist/src/collections/index.d.ts"
+    },
     "./dataSource": {
       "import": "./dist/src/dataSource/index.mjs",
       "types": "./dist/src/dataSource/index.d.ts"

@@ -2,8 +2,8 @@ import Card from '@plitzi/plitzi-ui/Card';
 import get from 'lodash/get';
 import { useCallback, use, useState } from 'react';
 
+import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import Collection from '@pmodules/Collection/Collection';
-import CollectionContext from '@pmodules/Collection/CollectionContext';
 import CollectionForm from '@pmodules/Collection/Models/CollectionForm';
 
 import type { Collection as TCollection } from '@plitzi/sdk-shared';
