@@ -1,38 +1,42 @@
-const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const HandlebarsPlugin = require('handlebars-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin');
-const { WebpackAssetsManifest } = require('webpack-assets-manifest');
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const TerserPlugin = require('terser-webpack-plugin');
-const PlitziPlugin = require('@plitzi/plitzi-webpack');
-const webpack = require('webpack');
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
-const threadLoader = require('thread-loader');
+import path from 'path';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import HandlebarsPlugin from 'handlebars-webpack-plugin';
+import { CleanWebpackPlugin } from 'clean-webpack-plugin';
+import CompressionPlugin from 'compression-webpack-plugin';
+import { WebpackAssetsManifest } from 'webpack-assets-manifest';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+import TerserPlugin from 'terser-webpack-plugin';
+import webpack from 'webpack';
+import PlitziPlugin from '@plitzi/plitzi-webpack';
+import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
+import SpeedMeasurePlugin from 'speed-measure-webpack-plugin';
+import threadLoader from 'thread-loader';
+import * as sassEmbedded from 'sass-embedded';
 
 const smp = new SpeedMeasurePlugin();
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const PACKAGE = require('./package.json');
 
-const DESTINATION = path.resolve(__dirname, './dist/');
+const baseUrl = new URL('.', import.meta.url);
+const DESTINATION = path.resolve(baseUrl.pathname, './dist/');
 
 const packages = {
-  '@plitzi/sdk-auth': path.resolve(__dirname, '../../packages/sdk-auth/src'),
-  '@plitzi/sdk-data-source': path.resolve(__dirname, '../../packages/sdk-data-source/src'),
-  '@plitzi/sdk-dev-tools': path.resolve(__dirname, '../../packages/sdk-dev-tools/src'),
-  '@plitzi/sdk-elements': path.resolve(__dirname, '../../packages/sdk-elements/src'),
-  '@plitzi/sdk-event-bridge': path.resolve(__dirname, '../../packages/sdk-event-bridge/src'),
-  '@plitzi/sdk-interactions': path.resolve(__dirname, '../../packages/sdk-interactions/src'),
-  '@plitzi/sdk-navigation': path.resolve(__dirname, '../../packages/sdk-navigation/src'),
-  '@plitzi/sdk-plugins': path.resolve(__dirname, '../../packages/sdk-plugins/src'),
-  '@plitzi/sdk-schema': path.resolve(__dirname, '../../packages/sdk-schema/src'),
-  '@plitzi/sdk-shared': path.resolve(__dirname, '../../packages/sdk-shared/src'),
-  '@plitzi/sdk-state': path.resolve(__dirname, '../../packages/sdk-state/src'),
-  '@plitzi/sdk-style': path.resolve(__dirname, '../../packages/sdk-style/src'),
-  '@plitzi/sdk-variables': path.resolve(__dirname, '../../packages/sdk-variables/src'),
-  '@plitzi/plitzi-sdk': path.resolve(__dirname, '../../apps/sdk/src')
+  '@plitzi/sdk-auth': path.resolve(baseUrl.pathname, '../../packages/sdk-auth/src'),
+  '@plitzi/sdk-data-source': path.resolve(baseUrl.pathname, '../../packages/sdk-data-source/src'),
+  '@plitzi/sdk-dev-tools': path.resolve(baseUrl.pathname, '../../packages/sdk-dev-tools/src'),
+  '@plitzi/sdk-elements': path.resolve(baseUrl.pathname, '../../packages/sdk-elements/src'),
+  '@plitzi/sdk-event-bridge': path.resolve(baseUrl.pathname, '../../packages/sdk-event-bridge/src'),
+  '@plitzi/sdk-interactions': path.resolve(baseUrl.pathname, '../../packages/sdk-interactions/src'),
+  '@plitzi/sdk-navigation': path.resolve(baseUrl.pathname, '../../packages/sdk-navigation/src'),
+  '@plitzi/sdk-plugins': path.resolve(baseUrl.pathname, '../../packages/sdk-plugins/src'),
+  '@plitzi/sdk-schema': path.resolve(baseUrl.pathname, '../../packages/sdk-schema/src'),
+  '@plitzi/sdk-shared': path.resolve(baseUrl.pathname, '../../packages/sdk-shared/src'),
+  '@plitzi/sdk-state': path.resolve(baseUrl.pathname, '../../packages/sdk-state/src'),
+  '@plitzi/sdk-style': path.resolve(baseUrl.pathname, '../../packages/sdk-style/src'),
+  '@plitzi/sdk-variables': path.resolve(baseUrl.pathname, '../../packages/sdk-variables/src'),
+  '@plitzi/plitzi-sdk': path.resolve(baseUrl.pathname, '../../apps/sdk/src')
 };
 
 // process.traceDeprecation = true; // enable in case to debug node
@@ -72,11 +76,15 @@ const buildBase = (env, args) => {
       path: DESTINATION,
       filename: '[name].js',
       chunkFilename: 'plitzi-builder-chunk-[name].js',
-      library: 'PlitziBuilder',
-      libraryTarget: 'umd',
+      library: {
+        type: 'module'
+      },
       crossOriginLoading: 'anonymous',
       globalObject: "(typeof self !== 'undefined' ? self : this)",
       publicPath: 'auto'
+    },
+    experiments: {
+      outputModule: true
     },
     watchOptions: {
       ignored: ['**/*.test.js', '**/*.spec.js']
@@ -107,7 +115,7 @@ const buildBase = (env, args) => {
       liveReload: false,
       historyApiFallback: true,
       static: {
-        directory: path.join(__dirname, 'dist')
+        directory: path.join(baseUrl.pathname, 'dist')
       },
       port: 3000
     },
@@ -116,8 +124,8 @@ const buildBase = (env, args) => {
         {
           test: /\.(ts|tsx)$/,
           include: devMode
-            ? [path.resolve(__dirname, 'src'), ...Object.values(packages)]
-            : [path.resolve(__dirname, 'src')],
+            ? [path.resolve(baseUrl.pathname, 'src'), ...Object.values(packages)]
+            : [path.resolve(baseUrl.pathname, 'src')],
           use: [
             {
               loader: 'thread-loader',
@@ -183,7 +191,7 @@ const buildBase = (env, args) => {
             {
               loader: 'sass-loader',
               options: {
-                implementation: require('sass-embedded'),
+                implementation: sassEmbedded,
                 sourceMap: devMode,
                 sassOptions: { quietDeps: true }
               }
@@ -295,7 +303,7 @@ const buildCDN = (env, args) => {
       liveReload: false,
       historyApiFallback: true,
       static: {
-        directory: path.join(__dirname, 'dist')
+        directory: path.join(baseUrl.pathname, 'dist')
       },
       port: 3000
     },
@@ -317,16 +325,23 @@ const buildCDN = (env, args) => {
           jsPath: env.WEBPACK_SERVE ? '/plitzi-builder.js' : '/cdn/plitzi-builder.js',
           cssPath: env.WEBPACK_SERVE ? '/plitzi-builder.css' : '/cdn/plitzi-builder.css'
         },
-        output: path.join(process.cwd(), 'dist', '[name].html'),
-        entry: path.join(process.cwd(), 'index.hbs')
+        output: path.join(baseUrl.pathname, 'dist', '[name].html'),
+        entry: path.join(baseUrl.pathname, 'index.hbs')
       }),
       ...modules.plugins
     ]
   };
 };
 
-if (process.argv.includes('serve')) {
-  module.exports = [buildCDN];
+let config;
+if (process.argv.includes('onlyAnalyze')) {
+  config = [buildBase];
+} else if (process.argv.includes('serve')) {
+  config = [buildCDN];
+} else if (process.argv.includes('measure') || process.argv.includes('watch')) {
+  config = [buildBase, buildCDN];
 } else {
-  module.exports = [buildBase, buildCDN];
+  config = [buildBase, buildCDN]; // buildSSR @todo: in the future maybe ?
 }
+
+export default config;

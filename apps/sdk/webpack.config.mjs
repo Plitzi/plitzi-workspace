@@ -13,7 +13,6 @@ import SpeedMeasurePlugin from 'speed-measure-webpack-plugin';
 import threadLoader from 'thread-loader';
 import * as sassEmbedded from 'sass-embedded';
 
-// import PACKAGE from './package.json' assert { type: 'json' };
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const PACKAGE = require('./package.json');
@@ -314,7 +313,7 @@ const buildCDN = (env, args) => {
       liveReload: false,
       historyApiFallback: true,
       static: {
-        directory: path.join(process.cwd(), 'dist')
+        directory: path.join(baseUrl.pathname, 'dist')
       },
       port: 3001
     },
@@ -328,8 +327,8 @@ const buildCDN = (env, args) => {
           jsPath: env.WEBPACK_SERVE ? '/plitzi-sdk.js' : '/cdn/plitzi-sdk.js',
           cssPath: env.WEBPACK_SERVE ? '/plitzi-sdk.css' : '/cdn/plitzi-sdk.css'
         },
-        output: path.join(process.cwd(), 'dist', '[name].html'),
-        entry: path.join(process.cwd(), 'index.hbs')
+        output: path.join(baseUrl.pathname, 'dist', '[name].html'),
+        entry: path.join(baseUrl.pathname, 'index.hbs')
       }),
       ...modules.plugins
     ]

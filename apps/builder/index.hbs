@@ -38,7 +38,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   </noscript>
 
-  <script type="text/javascript" src="{{jsPath}}"></script>
+  <link rel="modulepreload" href="{{jsPath}}" crossorigin="anonymous" fetchpriority="high" />
+  <link rel="preload" href="{{cssPath}}" as="style" fetchpriority="high" />
   <link href="{{cssPath}}" rel="stylesheet" />
 </head>
 
@@ -47,8 +48,10 @@
     You need to enable JavaScript to run this app.
   </noscript>
   <div id="plitzi-builder"></div>
-  <script>
-    PlitziBuilder.render(
+  <script type="module">
+    import PlitziBuilder, { render } from '{{jsPath}}';
+
+    render(
       'plitzi-builder', // DOM container element
       {
         webKey: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjAxMjYxODEsImlzcyI6WyJodHRwOlwvXC9sb2NhbGhvc3QiXSwibmJmIjoxNzYwMTI2MTgxLCJhdWQiOlsiaHR0cDpcL1wvbG9jYWxob3N0IiwiaHR0cDpcL1wvbG9jYWxob3N0OjQwMDAiLCJodHRwOlwvXC9sb2NhbGhvc3Q6ODg4OCIsImh0dHA6XC9cL2xvY2FsaG9zdDo4ODg5IiwiaHR0cDpcL1wvbG9jYWxob3N0OjMwMDAiLCJodHRwOlwvXC9sb2NhbGhvc3Q6MzAwMSIsImh0dHBzOlwvXC93ZWJzaXRlLnBsaXR6aS5hcHAiXSwiZGF0YSI6eyJzcGFjZUlkIjoxfSwidmVyc2lvbiI6MX0.NRMcL5eVugSkBGED6qX-OlX7mzTz7-V8Zsumkd1JoCM',
