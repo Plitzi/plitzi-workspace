@@ -207,7 +207,7 @@ const App = (props: AppProps) => {
             <ApolloProvider client={client}>
               <ComponentProvider
                 localCustomComponents={localComponents}
-                localComponents={sdkComponents as Record<string, ComponentPlugin>}
+                localComponents={sdkComponents as unknown as Record<string, ComponentPlugin>}
               >
                 <ToastProvider>
                   <AppMain
