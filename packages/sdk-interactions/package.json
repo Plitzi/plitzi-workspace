@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,72 +10,72 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./InteractionsContext": {
-      "import": "./dist/src/InteractionsContext.mjs",
-      "types": "./dist/src/InteractionsContext.d.ts"
+      "types": "./dist/src/InteractionsContext.d.ts",
+      "import": "./dist/src/InteractionsContext.mjs"
     },
     "./InteractionsContextProvider": {
-      "import": "./dist/src/InteractionsContextProvider.mjs",
-      "types": "./dist/src/InteractionsContextProvider.d.ts"
+      "types": "./dist/src/InteractionsContextProvider.d.ts",
+      "import": "./dist/src/InteractionsContextProvider.mjs"
     },
     "./InteractionsHelper": {
-      "import": "./dist/src/InteractionsHelper.mjs",
-      "types": "./dist/src/InteractionsHelper.d.ts"
+      "types": "./dist/src/InteractionsHelper.d.ts",
+      "import": "./dist/src/InteractionsHelper.mjs"
     },
     "./InteractionsManager": {
-      "import": "./dist/src/InteractionsManager.mjs",
-      "types": "./dist/src/InteractionsManager.d.ts"
+      "types": "./dist/src/InteractionsManager.d.ts",
+      "import": "./dist/src/InteractionsManager.mjs"
     },
     "./hooks/useInteractions": {
-      "import": "./dist/src/hooks/useInteractions.mjs",
-      "types": "./dist/src/hooks/useInteractions.d.ts"
+      "types": "./dist/src/hooks/useInteractions.d.ts",
+      "import": "./dist/src/hooks/useInteractions.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./sources": {
-      "import": "./dist/src/sources/index.mjs",
-      "types": "./dist/src/sources/index.d.ts"
+      "types": "./dist/src/sources/index.d.ts",
+      "import": "./dist/src/sources/index.mjs"
     },
     "./sources/UserSource": {
-      "import": "./dist/src/sources/UserSource/index.mjs",
-      "types": "./dist/src/sources/UserSource/index.d.ts"
+      "types": "./dist/src/sources/UserSource/index.d.ts",
+      "import": "./dist/src/sources/UserSource/index.mjs"
     },
     "./sources/UserSource/UserInteractions": {
-      "import": "./dist/src/sources/UserSource/UserInteractions.mjs",
-      "types": "./dist/src/sources/UserSource/UserInteractions.d.ts"
+      "types": "./dist/src/sources/UserSource/UserInteractions.d.ts",
+      "import": "./dist/src/sources/UserSource/UserInteractions.mjs"
     },
     "./sources/UserSource/index": {
-      "import": "./dist/src/sources/UserSource/index.mjs",
-      "types": "./dist/src/sources/UserSource/index.d.ts"
+      "types": "./dist/src/sources/UserSource/index.d.ts",
+      "import": "./dist/src/sources/UserSource/index.mjs"
     },
     "./sources/index": {
-      "import": "./dist/src/sources/index.mjs",
-      "types": "./dist/src/sources/index.d.ts"
+      "types": "./dist/src/sources/index.d.ts",
+      "import": "./dist/src/sources/index.mjs"
     },
     "./utility": {
-      "import": "./dist/src/utility/index.mjs",
-      "types": "./dist/src/utility/index.d.ts"
+      "types": "./dist/src/utility/index.d.ts",
+      "import": "./dist/src/utility/index.mjs"
     },
     "./utility/delayTime": {
-      "import": "./dist/src/utility/delayTime.mjs",
-      "types": "./dist/src/utility/delayTime.d.ts"
+      "types": "./dist/src/utility/delayTime.d.ts",
+      "import": "./dist/src/utility/delayTime.mjs"
     },
     "./utility/index": {
-      "import": "./dist/src/utility/index.mjs",
-      "types": "./dist/src/utility/index.d.ts"
+      "types": "./dist/src/utility/index.d.ts",
+      "import": "./dist/src/utility/index.mjs"
     },
     "./utility/twigTemplate": {
-      "import": "./dist/src/utility/twigTemplate.mjs",
-      "types": "./dist/src/utility/twigTemplate.d.ts"
+      "types": "./dist/src/utility/twigTemplate.d.ts",
+      "import": "./dist/src/utility/twigTemplate.mjs"
     },
     "./utility/webHook": {
-      "import": "./dist/src/utility/webHook.mjs",
-      "types": "./dist/src/utility/webHook.d.ts"
+      "types": "./dist/src/utility/webHook.d.ts",
+      "import": "./dist/src/utility/webHook.mjs"
     }
   },
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-auth",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,40 +10,40 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./UserBaseContextProvider": {
-      "import": "./dist/src/UserBaseContextProvider.mjs",
-      "types": "./dist/src/UserBaseContextProvider.d.ts"
+      "types": "./dist/src/UserBaseContextProvider.d.ts",
+      "import": "./dist/src/UserBaseContextProvider.mjs"
     },
     "./UserContext": {
-      "import": "./dist/src/UserContext.mjs",
-      "types": "./dist/src/UserContext.d.ts"
+      "types": "./dist/src/UserContext.d.ts",
+      "import": "./dist/src/UserContext.mjs"
     },
     "./hocs/withUserProvider": {
-      "import": "./dist/src/hocs/withUserProvider.mjs",
-      "types": "./dist/src/hocs/withUserProvider.d.ts"
+      "types": "./dist/src/hocs/withUserProvider.d.ts",
+      "import": "./dist/src/hocs/withUserProvider.mjs"
     },
     "./hooks/useAuth": {
-      "import": "./dist/src/hooks/useAuth/index.mjs",
-      "types": "./dist/src/hooks/useAuth/index.d.ts"
+      "types": "./dist/src/hooks/useAuth/index.d.ts",
+      "import": "./dist/src/hooks/useAuth/index.mjs"
     },
     "./hooks/useAuth/index": {
-      "import": "./dist/src/hooks/useAuth/index.mjs",
-      "types": "./dist/src/hooks/useAuth/index.d.ts"
+      "types": "./dist/src/hooks/useAuth/index.d.ts",
+      "import": "./dist/src/hooks/useAuth/index.mjs"
     },
     "./hooks/useAuth/managers/BasicProvider": {
-      "import": "./dist/src/hooks/useAuth/managers/BasicProvider.mjs",
-      "types": "./dist/src/hooks/useAuth/managers/BasicProvider.d.ts"
+      "types": "./dist/src/hooks/useAuth/managers/BasicProvider.d.ts",
+      "import": "./dist/src/hooks/useAuth/managers/BasicProvider.mjs"
     },
     "./hooks/useAuth/useAuth": {
-      "import": "./dist/src/hooks/useAuth/useAuth.mjs",
-      "types": "./dist/src/hooks/useAuth/useAuth.d.ts"
+      "types": "./dist/src/hooks/useAuth/useAuth.d.ts",
+      "import": "./dist/src/hooks/useAuth/useAuth.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     }
   },
   "type": "module",

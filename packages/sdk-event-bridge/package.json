@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-event-bridge",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,32 +10,32 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./EventBridge": {
-      "import": "./dist/src/EventBridge.mjs",
-      "types": "./dist/src/EventBridge.d.ts"
+      "types": "./dist/src/EventBridge.d.ts",
+      "import": "./dist/src/EventBridge.mjs"
     },
     "./EventBridgeContext": {
-      "import": "./dist/src/EventBridgeContext.mjs",
-      "types": "./dist/src/EventBridgeContext.d.ts"
+      "types": "./dist/src/EventBridgeContext.d.ts",
+      "import": "./dist/src/EventBridgeContext.mjs"
     },
     "./EventBridgeContextProvider": {
-      "import": "./dist/src/EventBridgeContextProvider.mjs",
-      "types": "./dist/src/EventBridgeContextProvider.d.ts"
+      "types": "./dist/src/EventBridgeContextProvider.d.ts",
+      "import": "./dist/src/EventBridgeContextProvider.mjs"
     },
     "./EventBridgeHelper": {
-      "import": "./dist/src/EventBridgeHelper.mjs",
-      "types": "./dist/src/EventBridgeHelper.d.ts"
+      "types": "./dist/src/EventBridgeHelper.d.ts",
+      "import": "./dist/src/EventBridgeHelper.mjs"
     },
     "./hooks/useEventBridge": {
-      "import": "./dist/src/hooks/useEventBridge.mjs",
-      "types": "./dist/src/hooks/useEventBridge.d.ts"
+      "types": "./dist/src/hooks/useEventBridge.d.ts",
+      "import": "./dist/src/hooks/useEventBridge.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     }
   },
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-variables",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,20 +10,20 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./VariablesContext": {
-      "import": "./dist/src/VariablesContext.mjs",
-      "types": "./dist/src/VariablesContext.d.ts"
+      "types": "./dist/src/VariablesContext.d.ts",
+      "import": "./dist/src/VariablesContext.mjs"
     },
     "./VariablesHelper": {
-      "import": "./dist/src/VariablesHelper.mjs",
-      "types": "./dist/src/VariablesHelper.d.ts"
+      "types": "./dist/src/VariablesHelper.d.ts",
+      "import": "./dist/src/VariablesHelper.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     }
   },
   "type": "module",

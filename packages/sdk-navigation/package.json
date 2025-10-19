@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,24 +10,24 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./NavigationContext": {
-      "import": "./dist/src/NavigationContext.mjs",
-      "types": "./dist/src/NavigationContext.d.ts"
+      "types": "./dist/src/NavigationContext.d.ts",
+      "import": "./dist/src/NavigationContext.mjs"
     },
     "./NavigationHelper": {
-      "import": "./dist/src/NavigationHelper.mjs",
-      "types": "./dist/src/NavigationHelper.d.ts"
+      "types": "./dist/src/NavigationHelper.d.ts",
+      "import": "./dist/src/NavigationHelper.mjs"
     },
     "./hooks/useNavigation": {
-      "import": "./dist/src/hooks/useNavigation.mjs",
-      "types": "./dist/src/hooks/useNavigation.d.ts"
+      "types": "./dist/src/hooks/useNavigation.d.ts",
+      "import": "./dist/src/hooks/useNavigation.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     }
   },
   "scripts": {

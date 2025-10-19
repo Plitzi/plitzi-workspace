@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-schema",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,28 +10,28 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./SchemaContext": {
-      "import": "./dist/src/SchemaContext.mjs",
-      "types": "./dist/src/SchemaContext.d.ts"
+      "types": "./dist/src/SchemaContext.d.ts",
+      "import": "./dist/src/SchemaContext.mjs"
     },
     "./SchemaMainContext": {
-      "import": "./dist/src/SchemaMainContext.mjs",
-      "types": "./dist/src/SchemaMainContext.d.ts"
+      "types": "./dist/src/SchemaMainContext.d.ts",
+      "import": "./dist/src/SchemaMainContext.mjs"
     },
     "./SchemaSettingsContext": {
-      "import": "./dist/src/SchemaSettingsContext.mjs",
-      "types": "./dist/src/SchemaSettingsContext.d.ts"
+      "types": "./dist/src/SchemaSettingsContext.d.ts",
+      "import": "./dist/src/SchemaSettingsContext.mjs"
     },
     "./helpers/FlatMap": {
-      "import": "./dist/src/helpers/FlatMap.mjs",
-      "types": "./dist/src/helpers/FlatMap.d.ts"
+      "types": "./dist/src/helpers/FlatMap.d.ts",
+      "import": "./dist/src/helpers/FlatMap.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     }
   },
   "type": "module",

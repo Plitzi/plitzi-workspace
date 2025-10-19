@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -16,160 +16,160 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./builder": {
-      "import": "./dist/src/builder/index.mjs",
-      "types": "./dist/src/builder/index.d.ts"
+      "types": "./dist/src/builder/index.d.ts",
+      "import": "./dist/src/builder/index.mjs"
     },
     "./builder/contexts": {
-      "import": "./dist/src/builder/contexts/index.mjs",
-      "types": "./dist/src/builder/contexts/index.d.ts"
+      "types": "./dist/src/builder/contexts/index.d.ts",
+      "import": "./dist/src/builder/contexts/index.mjs"
     },
     "./builder/contexts/BuilderContext": {
-      "import": "./dist/src/builder/contexts/BuilderContext.mjs",
-      "types": "./dist/src/builder/contexts/BuilderContext.d.ts"
+      "types": "./dist/src/builder/contexts/BuilderContext.d.ts",
+      "import": "./dist/src/builder/contexts/BuilderContext.mjs"
     },
     "./builder/contexts/BuilderHoveredContext": {
-      "import": "./dist/src/builder/contexts/BuilderHoveredContext.mjs",
-      "types": "./dist/src/builder/contexts/BuilderHoveredContext.d.ts"
+      "types": "./dist/src/builder/contexts/BuilderHoveredContext.d.ts",
+      "import": "./dist/src/builder/contexts/BuilderHoveredContext.mjs"
     },
     "./builder/contexts/BuilderSchemaContext": {
-      "import": "./dist/src/builder/contexts/BuilderSchemaContext.mjs",
-      "types": "./dist/src/builder/contexts/BuilderSchemaContext.d.ts"
+      "types": "./dist/src/builder/contexts/BuilderSchemaContext.d.ts",
+      "import": "./dist/src/builder/contexts/BuilderSchemaContext.mjs"
     },
     "./builder/contexts/BuilderSelectedContext": {
-      "import": "./dist/src/builder/contexts/BuilderSelectedContext.mjs",
-      "types": "./dist/src/builder/contexts/BuilderSelectedContext.d.ts"
+      "types": "./dist/src/builder/contexts/BuilderSelectedContext.d.ts",
+      "import": "./dist/src/builder/contexts/BuilderSelectedContext.mjs"
     },
     "./builder/contexts/BuilderStyleContext": {
-      "import": "./dist/src/builder/contexts/BuilderStyleContext.mjs",
-      "types": "./dist/src/builder/contexts/BuilderStyleContext.d.ts"
+      "types": "./dist/src/builder/contexts/BuilderStyleContext.d.ts",
+      "import": "./dist/src/builder/contexts/BuilderStyleContext.mjs"
     },
     "./builder/contexts/index": {
-      "import": "./dist/src/builder/contexts/index.mjs",
-      "types": "./dist/src/builder/contexts/index.d.ts"
+      "types": "./dist/src/builder/contexts/index.d.ts",
+      "import": "./dist/src/builder/contexts/index.mjs"
     },
     "./builder/index": {
-      "import": "./dist/src/builder/index.mjs",
-      "types": "./dist/src/builder/index.d.ts"
+      "types": "./dist/src/builder/index.d.ts",
+      "import": "./dist/src/builder/index.mjs"
     },
     "./collections": {
-      "import": "./dist/src/collections/index.mjs",
-      "types": "./dist/src/collections/index.d.ts"
+      "types": "./dist/src/collections/index.d.ts",
+      "import": "./dist/src/collections/index.mjs"
     },
     "./collections/CollectionContext": {
-      "import": "./dist/src/collections/CollectionContext.mjs",
-      "types": "./dist/src/collections/CollectionContext.d.ts"
+      "types": "./dist/src/collections/CollectionContext.d.ts",
+      "import": "./dist/src/collections/CollectionContext.mjs"
     },
     "./collections/index": {
-      "import": "./dist/src/collections/index.mjs",
-      "types": "./dist/src/collections/index.d.ts"
+      "types": "./dist/src/collections/index.d.ts",
+      "import": "./dist/src/collections/index.mjs"
     },
     "./dataSource": {
-      "import": "./dist/src/dataSource/index.mjs",
-      "types": "./dist/src/dataSource/index.d.ts"
+      "types": "./dist/src/dataSource/index.d.ts",
+      "import": "./dist/src/dataSource/index.mjs"
     },
     "./dataSource/DataSourceContext": {
-      "import": "./dist/src/dataSource/DataSourceContext.mjs",
-      "types": "./dist/src/dataSource/DataSourceContext.d.ts"
+      "types": "./dist/src/dataSource/DataSourceContext.d.ts",
+      "import": "./dist/src/dataSource/DataSourceContext.mjs"
     },
     "./dataSource/hooks": {
-      "import": "./dist/src/dataSource/hooks/index.mjs",
-      "types": "./dist/src/dataSource/hooks/index.d.ts"
+      "types": "./dist/src/dataSource/hooks/index.d.ts",
+      "import": "./dist/src/dataSource/hooks/index.mjs"
     },
     "./dataSource/hooks/index": {
-      "import": "./dist/src/dataSource/hooks/index.mjs",
-      "types": "./dist/src/dataSource/hooks/index.d.ts"
+      "types": "./dist/src/dataSource/hooks/index.d.ts",
+      "import": "./dist/src/dataSource/hooks/index.mjs"
     },
     "./dataSource/hooks/useDataSource": {
-      "import": "./dist/src/dataSource/hooks/useDataSource.mjs",
-      "types": "./dist/src/dataSource/hooks/useDataSource.d.ts"
+      "types": "./dist/src/dataSource/hooks/useDataSource.d.ts",
+      "import": "./dist/src/dataSource/hooks/useDataSource.mjs"
     },
     "./dataSource/index": {
-      "import": "./dist/src/dataSource/index.mjs",
-      "types": "./dist/src/dataSource/index.d.ts"
+      "types": "./dist/src/dataSource/index.d.ts",
+      "import": "./dist/src/dataSource/index.mjs"
     },
     "./elements": {
-      "import": "./dist/src/elements/index.mjs",
-      "types": "./dist/src/elements/index.d.ts"
+      "types": "./dist/src/elements/index.d.ts",
+      "import": "./dist/src/elements/index.mjs"
     },
     "./elements/ComponentContext": {
-      "import": "./dist/src/elements/ComponentContext.mjs",
-      "types": "./dist/src/elements/ComponentContext.d.ts"
+      "types": "./dist/src/elements/ComponentContext.d.ts",
+      "import": "./dist/src/elements/ComponentContext.mjs"
     },
     "./elements/index": {
-      "import": "./dist/src/elements/index.mjs",
-      "types": "./dist/src/elements/index.d.ts"
+      "types": "./dist/src/elements/index.d.ts",
+      "import": "./dist/src/elements/index.mjs"
     },
     "./helpers/syntaxHighlight": {
-      "import": "./dist/src/helpers/syntaxHighlight.mjs",
-      "types": "./dist/src/helpers/syntaxHighlight.d.ts"
+      "types": "./dist/src/helpers/syntaxHighlight.d.ts",
+      "import": "./dist/src/helpers/syntaxHighlight.mjs"
     },
     "./helpers/twigWrapper": {
-      "import": "./dist/src/helpers/twigWrapper.mjs",
-      "types": "./dist/src/helpers/twigWrapper.d.ts"
+      "types": "./dist/src/helpers/twigWrapper.d.ts",
+      "import": "./dist/src/helpers/twigWrapper.mjs"
     },
     "./helpers/utils": {
-      "import": "./dist/src/helpers/utils.mjs",
-      "types": "./dist/src/helpers/utils.d.ts"
+      "types": "./dist/src/helpers/utils.d.ts",
+      "import": "./dist/src/helpers/utils.mjs"
     },
     "./hooks/usePlitziServiceContext": {
-      "import": "./dist/src/hooks/usePlitziServiceContext.mjs",
-      "types": "./dist/src/hooks/usePlitziServiceContext.d.ts"
+      "types": "./dist/src/hooks/usePlitziServiceContext.d.ts",
+      "import": "./dist/src/hooks/usePlitziServiceContext.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./network": {
-      "import": "./dist/src/network/index.mjs",
-      "types": "./dist/src/network/index.d.ts"
+      "types": "./dist/src/network/index.d.ts",
+      "import": "./dist/src/network/index.mjs"
     },
     "./network/NetworkContext": {
-      "import": "./dist/src/network/NetworkContext.mjs",
-      "types": "./dist/src/network/NetworkContext.d.ts"
+      "types": "./dist/src/network/NetworkContext.d.ts",
+      "import": "./dist/src/network/NetworkContext.mjs"
     },
     "./network/index": {
-      "import": "./dist/src/network/index.mjs",
-      "types": "./dist/src/network/index.d.ts"
+      "types": "./dist/src/network/index.d.ts",
+      "import": "./dist/src/network/index.mjs"
     },
     "./schema": {
-      "import": "./dist/src/schema/index.mjs",
-      "types": "./dist/src/schema/index.d.ts"
+      "types": "./dist/src/schema/index.d.ts",
+      "import": "./dist/src/schema/index.mjs"
     },
     "./schema/index": {
-      "import": "./dist/src/schema/index.mjs",
-      "types": "./dist/src/schema/index.d.ts"
+      "types": "./dist/src/schema/index.d.ts",
+      "import": "./dist/src/schema/index.mjs"
     },
     "./schema/schemaConstants": {
-      "import": "./dist/src/schema/schemaConstants.mjs",
-      "types": "./dist/src/schema/schemaConstants.d.ts"
+      "types": "./dist/src/schema/schemaConstants.d.ts",
+      "import": "./dist/src/schema/schemaConstants.mjs"
     },
     "./segments": {
-      "import": "./dist/src/segments/index.mjs",
-      "types": "./dist/src/segments/index.d.ts"
+      "types": "./dist/src/segments/index.d.ts",
+      "import": "./dist/src/segments/index.mjs"
     },
     "./segments/SegmentsContext": {
-      "import": "./dist/src/segments/SegmentsContext.mjs",
-      "types": "./dist/src/segments/SegmentsContext.d.ts"
+      "types": "./dist/src/segments/SegmentsContext.d.ts",
+      "import": "./dist/src/segments/SegmentsContext.mjs"
     },
     "./segments/index": {
-      "import": "./dist/src/segments/index.mjs",
-      "types": "./dist/src/segments/index.d.ts"
+      "types": "./dist/src/segments/index.d.ts",
+      "import": "./dist/src/segments/index.mjs"
     },
     "./style": {
-      "import": "./dist/src/style/index.mjs",
-      "types": "./dist/src/style/index.d.ts"
+      "types": "./dist/src/style/index.d.ts",
+      "import": "./dist/src/style/index.mjs"
     },
     "./style/index": {
-      "import": "./dist/src/style/index.mjs",
-      "types": "./dist/src/style/index.d.ts"
+      "types": "./dist/src/style/index.d.ts",
+      "import": "./dist/src/style/index.mjs"
     },
     "./style/styleConstants": {
-      "import": "./dist/src/style/styleConstants.mjs",
-      "types": "./dist/src/style/styleConstants.d.ts"
+      "types": "./dist/src/style/styleConstants.d.ts",
+      "import": "./dist/src/style/styleConstants.mjs"
     }
   },
   "type": "module",

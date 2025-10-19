@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-data-source",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,64 +10,64 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./DataSourceContextProvider": {
-      "import": "./dist/src/DataSourceContextProvider.mjs",
-      "types": "./dist/src/DataSourceContextProvider.d.ts"
+      "types": "./dist/src/DataSourceContextProvider.d.ts",
+      "import": "./dist/src/DataSourceContextProvider.mjs"
     },
     "./helpers/getBindingsDetails": {
-      "import": "./dist/src/helpers/getBindingsDetails.mjs",
-      "types": "./dist/src/helpers/getBindingsDetails.d.ts"
+      "types": "./dist/src/helpers/getBindingsDetails.d.ts",
+      "import": "./dist/src/helpers/getBindingsDetails.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./sources/NavigationSource": {
-      "import": "./dist/src/sources/NavigationSource.mjs",
-      "types": "./dist/src/sources/NavigationSource.d.ts"
+      "types": "./dist/src/sources/NavigationSource.d.ts",
+      "import": "./dist/src/sources/NavigationSource.mjs"
     },
     "./sources/PageStateSource": {
-      "import": "./dist/src/sources/PageStateSource.mjs",
-      "types": "./dist/src/sources/PageStateSource.d.ts"
+      "types": "./dist/src/sources/PageStateSource.d.ts",
+      "import": "./dist/src/sources/PageStateSource.mjs"
     },
     "./sources/UserSource": {
-      "import": "./dist/src/sources/UserSource.mjs",
-      "types": "./dist/src/sources/UserSource.d.ts"
+      "types": "./dist/src/sources/UserSource.d.ts",
+      "import": "./dist/src/sources/UserSource.mjs"
     },
     "./sources/VariablesSource": {
-      "import": "./dist/src/sources/VariablesSource.mjs",
-      "types": "./dist/src/sources/VariablesSource.d.ts"
+      "types": "./dist/src/sources/VariablesSource.d.ts",
+      "import": "./dist/src/sources/VariablesSource.mjs"
     },
     "./utility": {
-      "import": "./dist/src/utility/index.mjs",
-      "types": "./dist/src/utility/index.d.ts"
+      "types": "./dist/src/utility/index.d.ts",
+      "import": "./dist/src/utility/index.mjs"
     },
     "./utility/arrayMap": {
-      "import": "./dist/src/utility/arrayMap.mjs",
-      "types": "./dist/src/utility/arrayMap.d.ts"
+      "types": "./dist/src/utility/arrayMap.d.ts",
+      "import": "./dist/src/utility/arrayMap.mjs"
     },
     "./utility/capitalize": {
-      "import": "./dist/src/utility/capitalize.mjs",
-      "types": "./dist/src/utility/capitalize.d.ts"
+      "types": "./dist/src/utility/capitalize.d.ts",
+      "import": "./dist/src/utility/capitalize.mjs"
     },
     "./utility/dateConverter": {
-      "import": "./dist/src/utility/dateConverter.mjs",
-      "types": "./dist/src/utility/dateConverter.d.ts"
+      "types": "./dist/src/utility/dateConverter.d.ts",
+      "import": "./dist/src/utility/dateConverter.mjs"
     },
     "./utility/index": {
-      "import": "./dist/src/utility/index.mjs",
-      "types": "./dist/src/utility/index.d.ts"
+      "types": "./dist/src/utility/index.d.ts",
+      "import": "./dist/src/utility/index.mjs"
     },
     "./utility/staticValue": {
-      "import": "./dist/src/utility/staticValue.mjs",
-      "types": "./dist/src/utility/staticValue.d.ts"
+      "types": "./dist/src/utility/staticValue.d.ts",
+      "import": "./dist/src/utility/staticValue.mjs"
     },
     "./utility/twigTemplate": {
-      "import": "./dist/src/utility/twigTemplate.mjs",
-      "types": "./dist/src/utility/twigTemplate.d.ts"
+      "types": "./dist/src/utility/twigTemplate.d.ts",
+      "import": "./dist/src/utility/twigTemplate.mjs"
     }
   },
   "scripts": {

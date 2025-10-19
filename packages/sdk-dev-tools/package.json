@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-dev-tools",
-  "version": "0.24.11",
+  "version": "0.24.12",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -10,280 +10,280 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./DevToolsContainer": {
-      "import": "./dist/src/DevToolsContainer.mjs",
-      "types": "./dist/src/DevToolsContainer.d.ts"
+      "types": "./dist/src/DevToolsContainer.d.ts",
+      "import": "./dist/src/DevToolsContainer.mjs"
     },
     "./DevToolsContext": {
-      "import": "./dist/src/DevToolsContext.mjs",
-      "types": "./dist/src/DevToolsContext.d.ts"
+      "types": "./dist/src/DevToolsContext.d.ts",
+      "import": "./dist/src/DevToolsContext.mjs"
     },
     "./DevToolsContextProvider": {
-      "import": "./dist/src/DevToolsContextProvider.mjs",
-      "types": "./dist/src/DevToolsContextProvider.d.ts"
+      "types": "./dist/src/DevToolsContextProvider.d.ts",
+      "import": "./dist/src/DevToolsContextProvider.mjs"
     },
     "./components/DevToolsPanel": {
-      "import": "./dist/src/components/DevToolsPanel/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/index.mjs"
     },
     "./components/DevToolsPanel/DevToolsBody": {
-      "import": "./dist/src/components/DevToolsPanel/DevToolsBody.mjs",
-      "types": "./dist/src/components/DevToolsPanel/DevToolsBody.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/DevToolsBody.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/DevToolsBody.mjs"
     },
     "./components/DevToolsPanel/DevToolsButton": {
-      "import": "./dist/src/components/DevToolsPanel/DevToolsButton.mjs",
-      "types": "./dist/src/components/DevToolsPanel/DevToolsButton.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/DevToolsButton.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/DevToolsButton.mjs"
     },
     "./components/DevToolsPanel/DevToolsHeader": {
-      "import": "./dist/src/components/DevToolsPanel/DevToolsHeader.mjs",
-      "types": "./dist/src/components/DevToolsPanel/DevToolsHeader.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/DevToolsHeader.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/DevToolsHeader.mjs"
     },
     "./components/DevToolsPanel/DevToolsPanel": {
-      "import": "./dist/src/components/DevToolsPanel/DevToolsPanel.mjs",
-      "types": "./dist/src/components/DevToolsPanel/DevToolsPanel.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/DevToolsPanel.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/DevToolsPanel.mjs"
     },
     "./components/DevToolsPanel/DevToolsSubHeader": {
-      "import": "./dist/src/components/DevToolsPanel/DevToolsSubHeader.mjs",
-      "types": "./dist/src/components/DevToolsPanel/DevToolsSubHeader.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/DevToolsSubHeader.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/DevToolsSubHeader.mjs"
     },
     "./components/DevToolsPanel/index": {
-      "import": "./dist/src/components/DevToolsPanel/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/index.mjs"
     },
     "./components/DevToolsPanel/tabs/DataSourceViewer": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.mjs"
     },
     "./components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer.mjs"
     },
     "./components/DevToolsPanel/tabs/DataSourceViewer/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/DataSourceViewer/index.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/DetailsValue": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsValue.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsValue.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsValue.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/DetailsValue.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/ElementDetails": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementDetails.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementDetails.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementDetails.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementDetails.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/ElementsList": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsList.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsList.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsList.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsList.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/ElementsViewer/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/Log": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/Log.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/Log.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/Log.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/Log.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/LogStatus": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatus.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatus.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatus.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatus.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/LogStatusIcon": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatusIcon.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatusIcon.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatusIcon.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogStatusIcon.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/Logs": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/Logs.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/Logs.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/Logs.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/Logs.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/LogsSummary": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummary": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummary.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummary.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummary.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummary.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummaryItem": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummaryItem.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummaryItem.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummaryItem.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/LogsSummaryItem.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/LogsSummary/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/LogsSummary/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyContent": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyContent.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyContent.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyContent.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyContent.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyHeader": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyHeader.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyHeader.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyHeader.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/BodyHeader.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTree": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTree.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTree.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTree.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTree.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTreeNode": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTreeNode.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTreeNode.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTreeNode.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/ExecutionTreeNode.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/ExecutionTree/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/InteractionNode": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/InteractionNode.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/InteractionNode.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/InteractionNode.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/InteractionNode.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeHeader": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeHeader.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeHeader.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeHeader.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeHeader.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeMetadata": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeMetadata.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeMetadata.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeMetadata.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeMetadata.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeWhen": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeWhen.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeWhen.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeWhen.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/NodeWhen.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/InteractionNode/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteraction": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteraction.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteraction.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteraction.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteraction.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionBody": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionBody.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionBody.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionBody.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionBody.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionHeader": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionHeader.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionHeader.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionHeader.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionHeader.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogNavigation": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigation": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigation.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigation.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigation.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigation.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationBody": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationBody.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationBody.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationBody.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationBody.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationHeader": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationHeader.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationHeader.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationHeader.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/LogNavigationHeader.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/Logs/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/Logs/index.mjs"
     },
     "./components/DevToolsPanel/tabs/PluginsViewer/PluginDetails": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginDetails.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginDetails.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginDetails.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginDetails.mjs"
     },
     "./components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer.mjs"
     },
     "./components/DevToolsPanel/tabs/VariablesViewer": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.mjs"
     },
     "./components/DevToolsPanel/tabs/VariablesViewer/VariableValue": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariableValue.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariableValue.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariableValue.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariableValue.mjs"
     },
     "./components/DevToolsPanel/tabs/VariablesViewer/VariablesList": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesList.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesList.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesList.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesList.mjs"
     },
     "./components/DevToolsPanel/tabs/VariablesViewer/VariablesListItem": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesListItem.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesListItem.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesListItem.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesListItem.mjs"
     },
     "./components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer.mjs"
     },
     "./components/DevToolsPanel/tabs/VariablesViewer/index": {
-      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.mjs",
-      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts"
+      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.mjs"
     },
     "./components/List": {
-      "import": "./dist/src/components/List/index.mjs",
-      "types": "./dist/src/components/List/index.d.ts"
+      "types": "./dist/src/components/List/index.d.ts",
+      "import": "./dist/src/components/List/index.mjs"
     },
     "./components/List/List": {
-      "import": "./dist/src/components/List/List.mjs",
-      "types": "./dist/src/components/List/List.d.ts"
+      "types": "./dist/src/components/List/List.d.ts",
+      "import": "./dist/src/components/List/List.mjs"
     },
     "./components/List/ListItem": {
-      "import": "./dist/src/components/List/ListItem.mjs",
-      "types": "./dist/src/components/List/ListItem.d.ts"
+      "types": "./dist/src/components/List/ListItem.d.ts",
+      "import": "./dist/src/components/List/ListItem.mjs"
     },
     "./components/List/index": {
-      "import": "./dist/src/components/List/index.mjs",
-      "types": "./dist/src/components/List/index.d.ts"
+      "types": "./dist/src/components/List/index.d.ts",
+      "import": "./dist/src/components/List/index.mjs"
     },
     "./index": {
-      "import": "./dist/src/index.mjs",
-      "types": "./dist/src/index.d.ts"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
     },
     "./utils/PlitziConsole": {
-      "import": "./dist/src/utils/PlitziConsole.mjs",
-      "types": "./dist/src/utils/PlitziConsole.d.ts"
+      "types": "./dist/src/utils/PlitziConsole.d.ts",
+      "import": "./dist/src/utils/PlitziConsole.mjs"
     }
   },
   "scripts": {
