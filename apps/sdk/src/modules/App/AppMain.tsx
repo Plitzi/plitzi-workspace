@@ -16,7 +16,13 @@ import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeCont
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 
 import type { OfflineDataRaw } from '../../types';
-import type { Environment, Server, RenderMode } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  Server,
+  RenderMode,
+  StateManagerContextValue,
+  EventBridgeContextValue
+} from '@plitzi/sdk-shared';
 
 export type AppMainProps = {
   revision?: number;
@@ -34,9 +40,9 @@ export type AppMainProps = {
   previewMode?: boolean;
   debugMode?: boolean;
   state?: Record<string, unknown>;
-  onInitEventBridge?: () => void;
-  onInitStateManager?: (value: Record<string, unknown>) => void;
   cacheTimeout?: number;
+  onInitStateManager?: (instance: StateManagerContextValue) => void;
+  onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
 
 const AppMain = ({

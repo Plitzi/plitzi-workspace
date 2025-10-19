@@ -1,32 +1,27 @@
-// Packages
-import React, { useMemo, use } from 'react';
 import get from 'lodash/get';
+import { useMemo, use } from 'react';
 
-// Monorepo
+import MadeInPlitzi from '@components/MadeInPlitzi';
 import { Page } from '@plitzi/sdk-elements/components';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-// Alias
-import MadeInPlitzi from '@components/MadeInPlitzi';
-
-// Relatives
 import SpaceContainer from '../../Space/SpaceContainer';
 
-/**
- * @param {{
- *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
- *   pageId?: string;
- *   style?: string;
- *   plitziContextValue: object;
- * }} props
- * @returns {React.ReactElement}
- */
-const RawMode = props => {
-  const { pageId = '', style = '', plitziContextValue, renderMode = 'raw' } = props;
+import type { InternalPropsSTG2, RenderMode, Schema } from '@plitzi/sdk-shared';
+import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+
+export type RawModeProps = {
+  renderMode?: RenderMode;
+  pageId?: string;
+  style?: string;
+  plitziContextValue: PlitziServiceContextValue;
+};
+
+const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'raw' }: RawModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
-  let schema;
+  let schema: Schema | undefined;
   if (renderMode === 'widget') {
     ({ schema } = use(SchemaContext));
   }
@@ -37,16 +32,14 @@ const RawMode = props => {
     }
 
     return 'page';
-  }, [pageId]);
+  }, [pageId, schema]);
 
   return (
     <SpaceContainer renderMode={renderMode}>
       <style dangerouslySetInnerHTML={{ __html: style }} />
       <PlitziServiceProvider value={plitziContextValue}>
-        {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo} />}
-        {pageId && renderMode === 'widget' && (
-          <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />
-        )}
+        {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo as InternalPropsSTG2} />}
+        {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
       </PlitziServiceProvider>
       <MadeInPlitzi pageId={pageId} />
     </SpaceContainer>

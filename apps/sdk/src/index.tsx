@@ -24,15 +24,23 @@ import { disableReactDevTools } from './helpers/security';
 import './assets/index.scss';
 
 import type { OfflineDataRaw } from './types';
-import type { ComponentPlugin, Environment, RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type {
+  ComponentPlugin,
+  Environment,
+  EventBridgeContextValue,
+  RenderMode,
+  Server,
+  ServerEnvironment,
+  StateManagerContextValue
+} from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-let stateManager;
-let eventBridge;
+let stateManager: StateManagerContextValue;
+let eventBridge: EventBridgeContextValue;
 
 export function render(
   widgetContainer: string,
-  params = {},
+  params = {} as PlitziSdkProps,
   plugins: Record<string, ComponentPlugin> = {},
   debugMode = false
 ) {
@@ -42,11 +50,11 @@ export function render(
       disableReactDevTools();
     }
 
-    const handleInitStateManager = useCallback(instance => {
+    const handleInitStateManager = useCallback((instance: StateManagerContextValue) => {
       stateManager = instance;
     }, []);
 
-    const handleInitEventBridge = useCallback(instance => {
+    const handleInitEventBridge = useCallback((instance: EventBridgeContextValue) => {
       eventBridge = instance;
     }, []);
 
@@ -132,7 +140,7 @@ const PlitziSdk = ({
   // App
   children,
   // Space
-  webKey = '',
+  webKey,
   environment = 'main',
   // Extra
   renderMode = 'iframe',

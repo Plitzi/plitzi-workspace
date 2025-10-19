@@ -23,7 +23,15 @@ import { getEnvironmentServer } from './config';
 
 import type { OfflineDataRaw } from './types';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
-import type { ComponentPlugin, Environment, RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type {
+  ComponentPlugin,
+  Environment,
+  EventBridgeContextValue,
+  RenderMode,
+  Server,
+  ServerEnvironment,
+  StateManagerContextValue
+} from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppProps = {
@@ -44,6 +52,8 @@ export type AppProps = {
   previewMode?: boolean;
   externalStyle?: string;
   state?: Record<string, unknown>;
+  onInitStateManager?: (instance: StateManagerContextValue) => void;
+  onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
 
 const App = ({

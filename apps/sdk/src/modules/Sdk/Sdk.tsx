@@ -1,60 +1,57 @@
-// Packages
-import React, { use, useMemo, useRef, useCallback } from 'react';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
+import { use, useMemo, useRef, useCallback } from 'react';
 
-// Monorepo
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
-import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-
-// Alias
 import CollectionContext from '@modules/Collection/CollectionContext';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
-// Relatives
-import RawMode from './renderModes/RawMode';
 import IframeMode from './renderModes/IframeMode';
+import RawMode from './renderModes/RawMode';
 import ShadowMode from './renderModes/ShadowMode';
 import SdkPlugin from './SdkPlugin';
 
-// Style
-import style from '!!css-loader!postcss-loader!sass-loader!../../assets/index.scss'; // eslint-disable-line
+import type { Environment, RenderMode } from '@plitzi/sdk-shared';
 
-/**
- * @param {{
- *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
- *   externalStyle?: string;
- *   environment?: string;
- *   previewMode?: boolean;
- *   debugMode?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const Sdk = props => {
-  const {
-    renderMode = 'iframe',
-    externalStyle = '',
-    environment = 'main',
-    previewMode = true,
-    debugMode = false
-  } = props;
+// Style
+// eslint-disable-next-line
+// @ts-ignore
+import style from '!!css-loader!postcss-loader!sass-loader!../../assets/index.scss';
+
+export type SdkProps = {
+  renderMode?: RenderMode;
+  externalStyle?: string;
+  environment?: Environment;
+  previewMode?: boolean;
+  debugMode?: boolean;
+};
+
+const Sdk = ({
+  renderMode = 'iframe',
+  externalStyle = '',
+  environment = 'main',
+  previewMode = true,
+  debugMode = false
+}: SdkProps) => {
   const { currentPageId } = use(NavigationContext);
   const { assets } = use(PluginsContext);
-  const iframeRef = useRef(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootDOM } = use(ContainerRootContext);
   const schemaSettings = use(SchemaSettingsContext);
   const { segments } = use(SegmentsContext);
   const { useDataSource } = use(DataSourceContext);
-  const { variables } = useDataSource({ id: '', mode: 'read' });
+  const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
 
   const {
     style: { cache }
@@ -64,15 +61,13 @@ const Sdk = props => {
     const cssVariables = variablesToCss(variables);
     const cacheParsed = processCssVariables(cache, variables);
 
-    return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings?.customCss}`;
-  }, [schemaSettings?.customCss, segments, cache, variables]);
-  const styleParsed = useMemo(
-    () => `${style[0][1]}\n${style[0][1]}\n${css}\n${externalStyle}`,
-    [style, css, externalStyle]
-  );
+    return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}`;
+  }, [schemaSettings.customCss, segments, cache, variables]);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const styleParsed = useMemo(() => `${style[0][1]}\n${style[0][1]}\n${css}\n${externalStyle}`, [css, externalStyle]);
 
   const getWindow = useCallback(() => {
-    if (iframeRef && iframeRef.current) {
+    if (iframeRef.current) {
       return iframeRef.current.contentWindow;
     }
 
@@ -81,7 +76,7 @@ const Sdk = props => {
     }
 
     // @todo: Hmm what to put here
-    return { innerWidth: 1440, innerHeight: 900 };
+    return { innerWidth: 1440, innerHeight: 900 } as Window;
   }, [iframeRef]);
 
   const plitziContextValue = useMemo(
@@ -114,10 +109,11 @@ const Sdk = props => {
         NavigationContext,
         DataSourceContext,
         StateManagerContext,
+        EventBridgeContext,
         InteractionsContext
       }
     }),
-    [getWindow, currentPageId, schemaSettings]
+    [previewMode, debugMode, currentPageId, renderMode, environment, schemaSettings, getWindow, rootDOM]
   );
 
   if (renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') {

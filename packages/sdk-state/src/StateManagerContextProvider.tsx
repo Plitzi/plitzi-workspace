@@ -7,6 +7,7 @@ import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
 import StateManagerContext from './StateManagerContext';
 
+import type { StateManagerContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export const STYLE_TYPE_NORMAL = 'normal';
@@ -18,7 +19,7 @@ export type StateManagerContextProviderProps = {
   children: ReactNode;
   webId: number;
   state?: Record<string, unknown>;
-  onInit?: (value: Record<string, unknown>) => void;
+  onInit?: (instance: StateManagerContextValue) => void;
 };
 
 const StateManagerContextProvider = ({

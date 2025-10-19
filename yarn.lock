@@ -3769,6 +3769,7 @@ __metadata:
     eslint: "npm:^9.38.0"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
+    typescript: "npm:^5.9.3"
     vite: "npm:^7.1.10"
   languageName: unknown
   linkType: soft
