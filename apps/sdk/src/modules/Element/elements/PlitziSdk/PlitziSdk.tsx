@@ -7,7 +7,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import App from '../../../../App';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Environment, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type PlitziSdkProps = {
@@ -15,7 +15,7 @@ export type PlitziSdkProps = {
   internalProps?: InternalPropsSTG2;
   className?: string;
   spaceKey?: string;
-  environment?: string;
+  environment?: Environment;
 };
 
 const PlitziSdk = ({ ref, internalProps, className, spaceKey, environment = 'main' }: PlitziSdkProps) => {

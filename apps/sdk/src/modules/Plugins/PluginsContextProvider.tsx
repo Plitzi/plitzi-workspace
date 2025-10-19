@@ -1,44 +1,44 @@
-// Packages
-import React, { useCallback, use, useMemo, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import omit from 'lodash/omit';
+import { useCallback, use, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 
-// Monorepo
+import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import { getStyle } from '@plitzi/sdk-plugins/PluginHelper';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
-// Alias
-import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
+import type { Asset, ComponentDefinition, ComponentPlugin, RenderMode } from '@plitzi/sdk-shared';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   renderMode?: 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
- *   plugins?: object;
- *   sdkStylePath?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const PluginsContextProvider = props => {
-  const { children, renderMode = 'iframe', plugins: pluginsProp, sdkStylePath = './plitzi-sdk.css' } = props;
-  const [temporalCustomStyles, setTemporalCustomStyles] = useState({});
+export type PluginsContextProviderProps = {
+  children: React.ReactNode;
+  renderMode?: RenderMode;
+  plugins?: Record<string, ComponentDefinition>;
+  sdkStylePath?: string;
+};
+
+const PluginsContextProvider = ({
+  children,
+  renderMode = 'iframe',
+  plugins: pluginsProp,
+  sdkStylePath = './plitzi-sdk.css'
+}: PluginsContextProviderProps) => {
+  const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
   const internalData = use(NetworkInternalContext);
   const plugins = useMemo(() => {
     if (pluginsProp) {
       return pluginsProp;
     }
 
-    return internalData.plugins ?? {};
+    return internalData.plugins;
   }, [pluginsProp, internalData]);
   const { components } = use(ComponentContext);
 
   // plugins
 
   const getPluginSettings = useCallback(
-    (pluginType, attribute = null, defaultValue = '') => {
+    (pluginType: string, attribute?: string, defaultValue: string | number | boolean = '') => {
       if (!attribute) {
         return get(plugins, `${pluginType}.settings`, {});
       }
@@ -48,8 +48,8 @@ const PluginsContextProvider = props => {
     [plugins]
   );
 
-  const registerCustomAssets = useCallback((assets = []) => {
-    const assetsProcessed = assets.reduce((acum, asset) => {
+  const registerCustomAssets = useCallback((assets: Asset[] = []) => {
+    const assetsProcessed = assets.reduce<Record<string, Asset>>((acum, asset) => {
       let url = '';
       if (asset.type === 'script') {
         url = asset.params.src;
@@ -73,7 +73,7 @@ const PluginsContextProvider = props => {
     setTemporalCustomStyles(state => ({ ...state, ...assetsProcessed }));
   }, []);
 
-  const unregisterCustomAssets = useCallback((assets = []) => {
+  const unregisterCustomAssets = useCallback((assets: string[] = []) => {
     const keys = assets.filter(asset => !isEmpty(asset)).map(asset => btoa(asset));
     setTemporalCustomStyles(state => omit(state, keys));
   }, []);
@@ -82,27 +82,28 @@ const PluginsContextProvider = props => {
 
   const pluginStyleAssets = useMemo(() => getStyle(plugins), [plugins]);
 
-  const pluginCustomStyleAssets = useMemo(
+  const pluginCustomStyleAssets = useMemo<Record<string, Asset>>(
     () =>
       Object.keys(components)
         .filter(compKey => components[compKey].origin === 'local-custom')
-        .reduce(
-          (acum, compKey) => ({
+        .reduce((acum, compKey) => {
+          const assets = get(components, `${compKey}.assets`, []) as ComponentPlugin['assets'];
+
+          return {
             ...acum,
-            ...get(components, `${compKey}.assets`, []).reduce(
-              (acum, asset, i) => ({
-                ...acum,
+            ...assets.reduce(
+              (acum2, asset, i) => ({
+                ...acum2,
                 [`${compKey}-${i}`]: { type: 'link', id: `${compKey}-${i}`, params: asset }
               }),
               {}
             )
-          }),
-          {}
-        ),
-    [plugins]
+          };
+        }, {}),
+    [components]
   );
 
-  const assetsState = useMemo(() => {
+  const assetsState = useMemo<Record<string, Asset>>(() => {
     const extraAssets = {};
     if (renderMode === 'iframe' || renderMode === 'shadow') {
       extraAssets['static-99'] = {
@@ -163,10 +164,7 @@ const PluginsContextProvider = props => {
 
   return (
     <>
-      <Helmet>
-        {(renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') &&
-          helmetAssets}
-      </Helmet>
+      <Helmet>{(renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') && helmetAssets}</Helmet>
       <PluginsContext value={pluginsContextValue}>{children}</PluginsContext>
     </>
   );

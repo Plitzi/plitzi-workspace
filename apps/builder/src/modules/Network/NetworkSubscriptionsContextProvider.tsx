@@ -10,6 +10,7 @@ import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
 import { isRealTimeEvent, isRealTimeSelfEvent } from './helpers/EventTypes';
 
 import type { RealTimeEvent, RealTimeMessage, RealTimeMessageCallback, SubscriptionCollaborator } from './types';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
 export type NetworkSubscriptionsContextProviderProps = {
@@ -28,7 +29,7 @@ const NetworkSubscriptionsContextProvider = ({
     Record<RealTimeEvent, Record<string, RealTimeMessageCallback>>
   >({} as Record<RealTimeEvent, Record<string, RealTimeMessageCallback>>);
   const [collaborators, setCollaborators] = useState<SubscriptionCollaborator[]>([]);
-  const { webKey, instanceId, server, userKey } = use(NetworkContext);
+  const { webKey, instanceId, server, userKey } = use(NetworkContext) as BuilderNetworkContextValue;
 
   const processMessage = useCallback(
     (e: MessageEvent) => {
