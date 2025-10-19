@@ -7,9 +7,6 @@ import { useMemo, use, useCallback, useEffect } from 'react';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { Context } from 'react';
-
 type SettingsProps = {
   mode?: 'page' | 'internal' | 'external';
   href?: string;
@@ -24,7 +21,7 @@ const Settings = ({ mode = 'page', href = '#', target = 'self', onUpdate }: Sett
   const {
     schema: { pages: pageIds, flat, pageFolders }
   } = use(SchemaContext);
-  const { server } = use<NetworkContextValue>(NetworkContext as Context<NetworkContextValue>);
+  const { server } = use(NetworkContext);
   const domain = useMemo(() => get(server, 'domain', 'https://subdomain.plitzi.app'), [server]);
   const pageUrls = useMemo(() => {
     const pages = pick(flat, pageIds);

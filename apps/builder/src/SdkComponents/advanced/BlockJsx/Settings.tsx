@@ -9,8 +9,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { ChangeEvent, Context } from 'react';
+import type { ChangeEvent } from 'react';
 
 // content is done in builder side and injected here as child
 
@@ -31,7 +30,7 @@ const Settings = ({
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
-  const { server, webKey } = use(NetworkContext as Context<NetworkContextValue>);
+  const { server, webKey } = use(NetworkContext);
   const [error, setError] = useState<{ message: string; reasonCode: number } | undefined>(undefined);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
 
