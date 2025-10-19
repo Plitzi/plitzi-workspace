@@ -42,8 +42,8 @@ const NavigationContextProvider = ({
   const navigate = renderMode !== 'widget' ? useNavigate() : undefined;
 
   const paths = useMemo(
-    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server?.basePath, previewMode),
-    [pages, pageDefinitions, pageFolders, authenticated, server?.basePath, previewMode]
+    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
+    [pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 
   const matchResult = useMemo<{
