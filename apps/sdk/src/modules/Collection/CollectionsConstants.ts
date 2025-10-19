@@ -27,11 +27,3 @@ export const collectionFieldTypeToInteractions = (type: string) => {
 
   return finalType;
 };
-
-export const recordStatus = {
-  STATUS_PUBLISHED: 'published',
-  STATUS_DRAFT: 'draft',
-  STATUS_DELETED: 'deleted',
-  STATUS_ARCHIVED: 'archived',
-  STATUS_CREATED: 'created'
-} as const;
