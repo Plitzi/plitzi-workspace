@@ -19,15 +19,20 @@ export function render(
   debugMode = false
 ) {
   const Widget = () => {
-    const pluginKeys = Object.keys(plugins);
     if (process.env.NODE_ENV === 'production' && !debugMode) {
       disableReactDevTools();
     }
 
     return (
       <App {...params}>
-        {pluginKeys.map(pluginType => (
-          <Builder.Plugin key={pluginType} renderType={pluginType} component={plugins[pluginType]} />
+        {Object.keys(plugins).map(pluginType => (
+          <Builder.Plugin
+            key={pluginType}
+            renderType={pluginType}
+            settings={plugins[pluginType].pluginSettings}
+            definition={plugins[pluginType].content}
+            component={plugins[pluginType]}
+          />
         ))}
       </App>
     );
@@ -73,5 +78,7 @@ const PlitziBuilder = (props: PlitziBuilderProps) => {
 PlitziBuilder.Plugin = Builder.Plugin;
 
 export const { version } = packageSettings;
+
+export * from '@plitzi/plitzi-sdk';
 
 export default PlitziBuilder;

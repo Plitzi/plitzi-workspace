@@ -209,7 +209,13 @@ const buildBase = (env, args) => {
         }
       ]
     },
-    externals: { react: 'react', 'react-dom': 'react-dom', 'react-dom/client': 'react-dom/client' },
+    externals: {
+      react: 'react',
+      'react/jsx-runtime': 'react/jsx-runtime',
+      'react-dom': 'react-dom',
+      'react-dom/client': 'react-dom/client',
+      'react-dom/server': 'react-dom/server'
+    },
     plugins: [
       new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /(es|pt|en).js/),
       !isDevServer &&
@@ -293,6 +299,11 @@ const buildBase = (env, args) => {
 
 const buildCDN = (env, args) => {
   const modules = buildBase(env, args);
+  const devMode = args.mode !== 'production';
+
+  const reactVersionRaw =
+    PACKAGE.dependencies?.react || PACKAGE.devDependencies?.react || PACKAGE.peerDependencies?.react;
+  const reactVersion = reactVersionRaw.replace(/^[^\d]*/, '');
 
   return {
     ...modules,
@@ -307,8 +318,6 @@ const buildCDN = (env, args) => {
       },
       port: 3000
     },
-    output: { ...modules.output, path: `${modules.output.path}/cdn/` },
-    externals: {},
     plugins: [
       new PlitziPlugin({
         isHost: true,
@@ -322,8 +331,19 @@ const buildCDN = (env, args) => {
       new HandlebarsPlugin({
         data: {
           title: '',
-          jsPath: env.WEBPACK_SERVE ? '/plitzi-builder.js' : '/cdn/plitzi-builder.js',
-          cssPath: env.WEBPACK_SERVE ? '/plitzi-builder.css' : '/cdn/plitzi-builder.css'
+          jsPath: '/plitzi-builder.js',
+          cssPath: '/plitzi-builder.css',
+          react: devMode ? `https://esm.sh/react@${reactVersion}?dev` : `https://esm.sh/react@${reactVersion}`,
+          reactJsx: devMode
+            ? `https://esm.sh/react@${reactVersion}/jsx-runtime?dev`
+            : `https://esm.sh/react@${reactVersion}/jsx-runtime`,
+          reactDom: devMode
+            ? `https://esm.sh/react-dom@${reactVersion}?dev`
+            : `https://esm.sh/react-dom@${reactVersion}`,
+          reactDomClient: devMode
+            ? `https://esm.sh/react-dom@${reactVersion}/client?dev`
+            : `https://esm.sh/react-dom@${reactVersion}/client`,
+          version: PACKAGE.version
         },
         output: path.join(baseUrl.pathname, 'dist', '[name].html'),
         entry: path.join(baseUrl.pathname, 'index.hbs')
@@ -334,14 +354,14 @@ const buildCDN = (env, args) => {
 };
 
 let config;
-if (process.argv.includes('onlyAnalyze')) {
+if (process.argv.includes('onlyAnalyze') || process.argv.includes('measure')) {
   config = [buildBase];
 } else if (process.argv.includes('serve')) {
   config = [buildCDN];
-} else if (process.argv.includes('measure') || process.argv.includes('watch')) {
-  config = [buildBase, buildCDN];
+} else if (process.argv.includes('watch')) {
+  config = [buildCDN];
 } else {
-  config = [buildBase, buildCDN]; // buildSSR @todo: in the future maybe ?
+  config = [buildBase];
 }
 
 export default config;

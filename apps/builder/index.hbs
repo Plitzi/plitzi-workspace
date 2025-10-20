@@ -48,6 +48,18 @@
     You need to enable JavaScript to run this app.
   </noscript>
   <div id="plitzi-builder"></div>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "{{react}}",
+        "react-dom": "{{reactDom}}",
+        "react-dom/client": "{{reactDomClient}}",
+        "react/jsx-runtime": "{{reactJsx}}",
+        "@plitzi/plitzi-sdk": "{{jsPath}}",
+        "@plitzi/plitzi-builder": "{{jsPath}}"
+      }
+    }
+  </script>
   <script type="module">
     import PlitziBuilder, { render } from '{{jsPath}}';
 
