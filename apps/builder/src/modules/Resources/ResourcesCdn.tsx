@@ -1,4 +1,5 @@
 import Heading from '@plitzi/plitzi-ui/Heading';
+import Icon from '@plitzi/plitzi-ui/Icon';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import get from 'lodash/get';
 import { use, useCallback, useMemo } from 'react';
@@ -134,6 +135,11 @@ const ResourcesCdn = ({ identifier, name, onRemove }: ResourcesCdnProps) => {
             onRemove={handleResourceRemoved}
           />
         </>
+      )}
+      {isLoading && (
+        <div className="flex w-full justify-center pt-2 pb-4">
+          <Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />
+        </div>
       )}
     </div>
   );

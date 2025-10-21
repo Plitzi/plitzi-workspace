@@ -74,7 +74,7 @@
     "@storybook/react": "^9.1.13",
     "@storybook/react-webpack5": "^9.1.13",
     "@storybook/testing-library": "^0.2.2",
-    "@tailwindcss/postcss": "^4.1.14",
+    "@tailwindcss/postcss": "^4.1.15",
     "babel-loader": "^10.0.0",
     "clean-webpack-plugin": "^4.0.0",
     "compression-webpack-plugin": "^11.1.0",
