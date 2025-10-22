@@ -45,7 +45,7 @@ import {
   ContainerWindow,
   Popup
 } from '@plitzi/plitzi-ui/components';
-import get from 'lodash/get.js';
+import get from 'lodash/get';
 import * as React from 'react';
 import * as ReactJSX from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';
@@ -58,9 +58,9 @@ import RootElement from '../RootElement';
 
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
 
-type PlitziModule = {
+type PlitziModuleLegacy = {
   default?: (
-    plitziModule: PlitziModule,
+    plitziModule: PlitziModuleLegacy,
     args: { window: Window; document: Document; Navigator: Navigator; navigator: Window['navigator'] } | undefined,
     externals: Record<string, object>
   ) => Promise<{ default: ComponentPlugin } & ComponentPlugin>;
@@ -68,6 +68,13 @@ type PlitziModule = {
   ComponentContext: typeof ComponentContext;
   usePlitziServiceContext: typeof usePlitziServiceContext;
   RootElement: typeof RootElement;
+};
+
+type PlitziModule = {
+  default: ComponentPlugin;
+  version?: string;
+  initialItems?: string[];
+  plugins?: Record<string, ComponentPlugin>;
 };
 
 const components = {
@@ -118,51 +125,45 @@ const components = {
   Popup
 };
 
-export const generatePluginModule = async (url: string, asES6 = true, pluginScope = '') => {
-  let Module;
+export const generatePluginModule = async (url: string, asESM = true, pluginScope = '') => {
+  let Module: PlitziModule;
   try {
-    const plitziModules: PlitziModule = {
-      default: undefined, // we dont need default export, normally should be PlitziSdk
-      ComponentProvider,
-      ComponentContext,
-      usePlitziServiceContext,
-      RootElement
-    };
-
-    const externals = {
-      __WEBPACK_EXTERNAL_MODULE_react__: React,
-      __WEBPACK_EXTERNAL_MODULE_react_dom__: ReactDOM,
-      __WEBPACK_EXTERNAL_MODULE_react_jsx_runtime__: ReactJSX,
-      __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules,
-      ...Object.keys(components).reduce((acum, componentName) => {
-        return {
-          ...acum,
-          [`__WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_ui_${componentName}__`]:
-            components[componentName as keyof typeof components]
-        };
-      }, {})
-    };
-
-    if (asES6) {
+    if (asESM) {
       const response = await fetch(url);
       const moduleBlob = new Blob([await response.text()], { type: 'text/javascript' });
       const blobUrl = URL.createObjectURL(moduleBlob);
-      const ModuleWrapper = (await import(/* webpackIgnore:true */ blobUrl)) as undefined | PlitziModule;
-      if (!ModuleWrapper || typeof ModuleWrapper === 'function') {
-        return undefined;
-      }
-
-      // Pass down SDK webpack context
-      Module = await ModuleWrapper.default?.(plitziModules, undefined, externals);
+      Module = (await import(/* webpackIgnore:true */ blobUrl)) as PlitziModule;
     } else {
+      const plitziModules: PlitziModuleLegacy = {
+        default: undefined, // we dont need default export, normally should be PlitziSdk
+        ComponentProvider,
+        ComponentContext,
+        usePlitziServiceContext,
+        RootElement
+      };
+
+      const externals = {
+        __WEBPACK_EXTERNAL_MODULE_react__: React,
+        __WEBPACK_EXTERNAL_MODULE_react_dom__: ReactDOM,
+        __WEBPACK_EXTERNAL_MODULE_react_jsx_runtime__: ReactJSX,
+        __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules,
+        ...Object.keys(components).reduce((acum, componentName) => {
+          return {
+            ...acum,
+            [`__WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_ui_${componentName}__`]:
+              components[componentName as keyof typeof components]
+          };
+        }, {})
+      };
+
       // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
-      const ModuleWrapper = get(window, `plitziPlugins.${pluginScope}`) as PlitziModule['default'] | undefined;
+      const ModuleWrapper = get(window, `plitziPlugins.${pluginScope}`) as PlitziModuleLegacy['default'] | undefined;
       if (!ModuleWrapper || typeof ModuleWrapper !== 'function') {
         return undefined;
       }
 
       // Pass down SDK webpack context
-      Module = await ModuleWrapper(plitziModules, undefined, externals);
+      Module = (await ModuleWrapper(plitziModules, undefined, externals)) as PlitziModule;
     }
   } catch (e) {
     console.log(e);

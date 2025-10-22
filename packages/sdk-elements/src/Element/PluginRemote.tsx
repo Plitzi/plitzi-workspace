@@ -13,6 +13,7 @@ import type { ComponentContextValue, ComponentPlugin, InternalPropsSTG1 } from '
 
 function loadComponent(
   url: string,
+  isESM: boolean,
   pluginScope: string,
   registerCallback: ComponentContextValue['register'],
   NotFoundNode: ComponentPlugin,
@@ -21,7 +22,7 @@ function loadComponent(
 ) {
   return async () => {
     // Based on ES6 Module
-    const Module = await generatePluginModule(url, false, pluginScope);
+    const Module = await generatePluginModule(url, isESM, pluginScope);
     if (!Module) {
       return { default: NotFoundNode };
     }
@@ -74,11 +75,12 @@ const PluginRemote = ({
 }: PluginRemoteProps) => {
   const { register, components } = use(ComponentContext);
   const NotFoundNode = useMemo(() => components.notFound, [components]);
-  const { ready, failed } = useDynamicScript({ url });
+  const isESM = url.endsWith('.mjs') || url.includes('.esm.') || url.includes('.module.');
+  const { ready, failed } = useDynamicScript({ url, type: isESM ? 'module' : 'text/javascript' });
   const Component = useMemo(
-    () => lazy(loadComponent(url, scope, register, NotFoundNode, autoRegister, plitziJsxSkipHOC)),
+    () => lazy(loadComponent(url, isESM, scope, register, NotFoundNode, autoRegister, plitziJsxSkipHOC)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [url, scope]
+    [url, scope, isESM]
   );
 
   if (!ready) {
