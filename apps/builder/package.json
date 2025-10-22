@@ -60,7 +60,6 @@
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
-    "@plitzi/plitzi-webpack": "^0.3.6",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.1",
     "@tailwindcss/postcss": "^4.1.15",
     "@types/lodash": "^4.17.20",

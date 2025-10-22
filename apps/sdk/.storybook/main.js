@@ -1,7 +1,6 @@
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const webpack = require('webpack');
-const PlitziPlugin = require('@plitzi/plitzi-webpack');
 const PACKAGE = require('../package.json');
 
 module.exports = {
@@ -68,9 +67,6 @@ module.exports = {
 
     config.plugins = [
       ...config.plugins,
-      new PlitziPlugin({
-        isStorybook: true
-      }),
       new MiniCssExtractPlugin({}),
       new webpack.DefinePlugin({
         VERSION: JSON.stringify(PACKAGE.version)

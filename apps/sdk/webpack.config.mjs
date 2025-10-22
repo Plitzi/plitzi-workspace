@@ -7,7 +7,6 @@ import { WebpackAssetsManifest } from 'webpack-assets-manifest';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import TerserPlugin from 'terser-webpack-plugin';
 import webpack from 'webpack';
-import PlitziPlugin from '@plitzi/plitzi-webpack';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import SpeedMeasurePlugin from 'speed-measure-webpack-plugin';
 import threadLoader from 'thread-loader';
@@ -276,18 +275,6 @@ const buildSSR = (env, args) => {
     target: 'node',
     output: { ...modules.output, path: `${modules.output.path}/ssr/` },
     plugins: [
-      new PlitziPlugin({
-        isHost: true,
-        exposes: [
-          './src/services/hooks/usePlitziServiceContext',
-          './src/modules/Component/ComponentContext',
-          './src/modules/Component/ComponentProvider'
-        ],
-        shared: {
-          react: { singleton: true, requiredVersion: false, eager: true },
-          'react-dom': { singleton: true, requiredVersion: false, eager: true }
-        }
-      }),
       new webpack.DefinePlugin({
         VERSION: JSON.stringify(PACKAGE.version)
       }),
@@ -321,7 +308,6 @@ const buildCDN = (env, args) => {
       port: 3001
     },
     plugins: [
-      new PlitziPlugin({ isHost: true }),
       new HandlebarsPlugin({
         data: {
           title: '',

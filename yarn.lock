@@ -3458,7 +3458,6 @@ __metadata:
     "@babel/preset-react": "npm:^7.27.1"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.0.17"
-    "@plitzi/plitzi-webpack": "npm:^0.3.6"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
@@ -3549,7 +3548,6 @@ __metadata:
     "@babel/preset-env": "npm:^7.28.3"
     "@babel/preset-react": "npm:^7.27.1"
     "@babel/preset-typescript": "npm:^7.27.1"
-    "@plitzi/plitzi-webpack": "npm:^0.3.6"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
@@ -3658,15 +3656,6 @@ __metadata:
     uuid: "npm:^13.0.0"
     zod: "npm:^4.1.12"
   checksum: 10c0/c6cd784e9296352875a4672e9227ea6b61ef76498a13021aa447b7b622ba4b729ed68fb68e7715bbc8a8ed3546c8b3bf2bc2ac7245fed8a4ed7b1a0c3c0913b0
-  languageName: node
-  linkType: hard
-
-"@plitzi/plitzi-webpack@npm:^0.3.6":
-  version: 0.3.6
-  resolution: "@plitzi/plitzi-webpack@npm:0.3.6::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40Plitzi%2Fplitzi-webpack%2F0.3.6%2Fd4c6cf29fa5dbe40c74ec9dc663c1f11af6ed856"
-  peerDependencies:
-    webpack: ^5.102.1
-  checksum: 10c0/ec612a0af672a942ab9215a91b9aa084527a9cd05399f9a70fbdc938006d32fd128a3adc5b0e50855195d345995383266a191c9eb6084eeac0baac50b5bf4288
   languageName: node
   linkType: hard
 
