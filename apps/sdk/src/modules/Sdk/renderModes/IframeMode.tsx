@@ -25,7 +25,7 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
 
   return (
-    <ContainerFrame ref={ref} id="i-sdk" css={style} assets={assets} className="grow">
+    <ContainerFrame ref={ref} id="i-sdk" css={style} assets={assets} className="w-full grow">
       <SpaceContainer>
         <PlitziServiceProvider value={plitziContextValue}>
           {pageId && <Page key={pageId} internalProps={pageValueMemo as InternalPropsSTG2} />}

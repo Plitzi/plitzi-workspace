@@ -26,7 +26,11 @@ const StyleContextProvider = ({ children, style: styleProp, type = 'normal' }: S
 
     switch (type) {
       case 'normal': {
-        const { variables = {}, platform = { desktop: {}, tablet: {}, mobile: {} }, cache = '' } = internalData.style;
+        const {
+          variables = {},
+          platform = { desktop: {}, tablet: {}, mobile: {} },
+          cache = ''
+        } = (internalData.style as Style | undefined) ?? {};
 
         return { variables, platform, cache };
       }

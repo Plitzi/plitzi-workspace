@@ -109,11 +109,7 @@ const PluginsContextProvider = ({
       extraAssets['static-99'] = {
         type: 'link',
         id: 'static-99',
-        params: {
-          type: 'text/css',
-          href: sdkStylePath,
-          rel: 'stylesheet'
-        }
+        params: { type: 'text/css', href: sdkStylePath, rel: 'stylesheet' }
       };
     }
 
