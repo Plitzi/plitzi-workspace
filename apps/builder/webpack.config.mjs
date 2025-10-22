@@ -48,6 +48,10 @@ const buildBase = (env, args) => {
   const measure = env.measure || false;
   const isDevServer = !!env.WEBPACK_SERVE;
 
+  const reactVersionRaw =
+    PACKAGE.dependencies?.react || PACKAGE.devDependencies?.react || PACKAGE.peerDependencies?.react;
+  const reactVersion = reactVersionRaw.replace(/^[^\d]*/, '');
+
   threadLoader.warmup(
     {
       poolTimeout: watch ? Infinity : 2000
@@ -84,6 +88,17 @@ const buildBase = (env, args) => {
     },
     experiments: {
       outputModule: true
+    },
+    devServer: {
+      compress: true,
+      allowedHosts: 'all',
+      hot: true,
+      liveReload: false,
+      historyApiFallback: true,
+      static: {
+        directory: path.join(baseUrl.pathname, 'dist')
+      },
+      port: 3000
     },
     watchOptions: {
       ignored: ['**/*.test.js', '**/*.spec.js']
@@ -216,6 +231,26 @@ const buildBase = (env, args) => {
       'react-dom/server': 'react-dom/server'
     },
     plugins: [
+      new HandlebarsPlugin({
+        data: {
+          title: '',
+          jsPath: '/plitzi-builder.js',
+          cssPath: '/plitzi-builder.css',
+          react: devMode ? `https://esm.sh/react@${reactVersion}?dev` : `https://esm.sh/react@${reactVersion}`,
+          reactJsx: devMode
+            ? `https://esm.sh/react@${reactVersion}/jsx-runtime?dev`
+            : `https://esm.sh/react@${reactVersion}/jsx-runtime`,
+          reactDom: devMode
+            ? `https://esm.sh/react-dom@${reactVersion}?dev`
+            : `https://esm.sh/react-dom@${reactVersion}`,
+          reactDomClient: devMode
+            ? `https://esm.sh/react-dom@${reactVersion}/client?dev`
+            : `https://esm.sh/react-dom@${reactVersion}/client`,
+          version: PACKAGE.version
+        },
+        output: path.join(baseUrl.pathname, 'dist', '[name].html'),
+        entry: path.join(baseUrl.pathname, 'index.hbs')
+      }),
       new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /(es|pt|en).js/),
       !isDevServer &&
         new WebpackAssetsManifest({
@@ -296,62 +331,4 @@ const buildBase = (env, args) => {
   return modules;
 };
 
-const buildCDN = (env, args) => {
-  const modules = buildBase(env, args);
-  const devMode = args.mode !== 'production';
-
-  const reactVersionRaw =
-    PACKAGE.dependencies?.react || PACKAGE.devDependencies?.react || PACKAGE.peerDependencies?.react;
-  const reactVersion = reactVersionRaw.replace(/^[^\d]*/, '');
-
-  return {
-    ...modules,
-    devServer: {
-      compress: true,
-      allowedHosts: 'all',
-      hot: true,
-      liveReload: false,
-      historyApiFallback: true,
-      static: {
-        directory: path.join(baseUrl.pathname, 'dist')
-      },
-      port: 3000
-    },
-    plugins: [
-      new HandlebarsPlugin({
-        data: {
-          title: '',
-          jsPath: '/plitzi-builder.js',
-          cssPath: '/plitzi-builder.css',
-          react: devMode ? `https://esm.sh/react@${reactVersion}?dev` : `https://esm.sh/react@${reactVersion}`,
-          reactJsx: devMode
-            ? `https://esm.sh/react@${reactVersion}/jsx-runtime?dev`
-            : `https://esm.sh/react@${reactVersion}/jsx-runtime`,
-          reactDom: devMode
-            ? `https://esm.sh/react-dom@${reactVersion}?dev`
-            : `https://esm.sh/react-dom@${reactVersion}`,
-          reactDomClient: devMode
-            ? `https://esm.sh/react-dom@${reactVersion}/client?dev`
-            : `https://esm.sh/react-dom@${reactVersion}/client`,
-          version: PACKAGE.version
-        },
-        output: path.join(baseUrl.pathname, 'dist', '[name].html'),
-        entry: path.join(baseUrl.pathname, 'index.hbs')
-      }),
-      ...modules.plugins
-    ]
-  };
-};
-
-let config;
-if (process.argv.includes('onlyAnalyze') || process.argv.includes('measure')) {
-  config = [buildBase];
-} else if (process.argv.includes('serve')) {
-  config = [buildCDN];
-} else if (process.argv.includes('watch')) {
-  config = [buildCDN];
-} else {
-  config = [buildBase];
-}
-
-export default config;
+export default [buildBase];
