@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-style",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -671,7 +671,7 @@
     "@types/lodash": "^4.17.20",
     "eslint": "^9.38.0",
     "typescript": "^5.9.3",
-    "vite": "^7.1.11",
-    "vitest": "^4.0.1"
+    "vite": "^7.1.12",
+    "vitest": "^4.0.2"
   }
 }

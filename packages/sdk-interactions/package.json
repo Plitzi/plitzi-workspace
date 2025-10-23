@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -88,7 +88,7 @@
   "type": "module",
   "devDependencies": {
     "eslint": "^9.38.0",
-    "vite": "^7.1.11"
+    "vite": "^7.1.12"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.0.17",
