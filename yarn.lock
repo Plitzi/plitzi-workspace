@@ -3658,6 +3658,7 @@ __metadata:
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.2"
     eslint: "npm:^9.38.0"
+    eslint-plugin-import: "npm:^2.32.0"
     jest: "npm:^30.2.0"
     prettier-plugin-tailwindcss: "npm:^0.7.1"
     react-router: "npm:^7.9.4"
