@@ -28,6 +28,8 @@ export type InternalPropsSTG1<T extends InternalPropsExtension = InternalPropsEx
     rootId: string;
     type: ElementLayoutType;
   };
+  // Related to inject properties, for example Custom Element
+  attributes?: Element['attributes'];
 };
 
 export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG1<T> & {

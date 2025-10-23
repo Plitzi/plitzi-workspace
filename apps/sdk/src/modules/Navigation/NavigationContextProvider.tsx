@@ -12,6 +12,7 @@ import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import type { NavigationStatus } from '@plitzi/sdk-navigation/NavigationContext';
 import type { NavigationContextValue, RenderMode, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
@@ -47,10 +48,7 @@ const NavigationContextProvider = ({
   );
 
   const matchResult = useMemo<{
-    action: {
-      type: 'authenticated' | 'accessDenied' | 'redirect' | 'notFound' | 'normal';
-      path?: string;
-    };
+    action: { type: NavigationStatus; path?: string };
     pathMatch?: PathMatch;
     pageId?: string;
   }>(() => {
@@ -168,7 +166,7 @@ const NavigationContextProvider = ({
     return 'Access Denied';
   }
 
-  if (action.type === 'redirect') {
+  if (action.type === 'redirect' && renderMode !== 'ssr') {
     return <Navigate to={action.path ?? ''} replace />;
   }
 

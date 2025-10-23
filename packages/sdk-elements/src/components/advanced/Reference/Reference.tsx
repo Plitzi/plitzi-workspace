@@ -2,7 +2,7 @@
 import classNames from 'classnames';
 import capitalize from 'lodash/capitalize.js';
 import get from 'lodash/get.js';
-import { useCallback, use, useEffect, useMemo, useState } from 'react';
+import { useCallback, use, useEffect, useMemo, useState, useRef } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -47,29 +47,23 @@ const Reference = ({
     settings: { previewMode, environment },
     contexts: { SchemaContext, SegmentsContext }
   } = usePlitziServiceContext();
-  const [reference, setReference] = useState<
-    | {
-        element?: Element;
-        elementType: string;
-        referenceContextData: { schema: Schema; prevSchema?: Schema };
-      }
-    | undefined
-  >();
   const { schema: mainSchema } = use(SchemaContext);
   const { segments, segmentGet } = use(SegmentsContext);
 
-  const loadReference = useCallback(async () => {
+  const schemaRef = useRef(mainSchema);
+  schemaRef.current = mainSchema;
+
+  const segmentsRef = useRef(segments);
+  segmentsRef.current = segments;
+
+  const getReference = useCallback((referenceId: string, referenceType: ElementLayoutType) => {
     let element: Element;
     let referenceSchema: Schema | undefined;
     switch (referenceType) {
       case 'segment': {
-        let segment = get(segments, referenceId) as Segment | undefined;
-        if (!segment && referenceId) {
-          segment = await segmentGet(referenceId);
-        }
-
+        const segment = get(segmentsRef.current, referenceId) as Segment | undefined;
         if (!segment) {
-          return;
+          return undefined;
         }
 
         const baseElementId = get(segment, 'definition.baseElementId');
@@ -81,25 +75,81 @@ const Reference = ({
 
       case 'element':
       default: {
-        element = get(mainSchema, `flat.${referenceId}`);
-        referenceSchema = mainSchema;
+        element = get(schemaRef.current, `flat.${referenceId}`);
+        referenceSchema = schemaRef.current;
       }
     }
 
     if (!(element as Element | undefined)) {
-      return;
+      return undefined;
     }
 
-    setReference({
+    return {
       element,
       elementType: get(element, 'definition.type'),
-      referenceContextData: { schema: referenceSchema, prevSchema: mainSchema }
-    });
-  }, [referenceType, mainSchema, segments, referenceId, segmentGet]);
+      referenceContextData: { schema: referenceSchema, prevSchema: schemaRef.current }
+    };
+  }, []);
+
+  const [reference, setReference] = useState<
+    | { element?: Element; elementType: string; referenceContextData: { schema: Schema; prevSchema?: Schema } }
+    | undefined
+  >(getReference(referenceId, referenceType));
+
+  const loadReference = useCallback(
+    async (referenceId: string, referenceType: ElementLayoutType) => {
+      const data = getReference(referenceId, referenceType);
+      if (data) {
+        setReference(data);
+
+        return;
+      }
+
+      let element: Element;
+      let referenceSchema: Schema | undefined;
+      switch (referenceType) {
+        case 'segment': {
+          let segment: Segment | undefined;
+          if (referenceId) {
+            segment = await segmentGet(referenceId);
+          }
+
+          if (!segment) {
+            return;
+          }
+
+          const baseElementId = get(segment, 'definition.baseElementId');
+          referenceSchema = get(segment, 'schema');
+          element = get(segment, `schema.flat.${baseElementId}`);
+
+          break;
+        }
+
+        case 'element':
+        default: {
+          element = get(schemaRef.current, `flat.${referenceId}`);
+          referenceSchema = schemaRef.current;
+        }
+      }
+
+      if (!(element as Element | undefined)) {
+        setReference(undefined);
+
+        return;
+      }
+
+      setReference({
+        element,
+        elementType: get(element, 'definition.type'),
+        referenceContextData: { schema: referenceSchema, prevSchema: schemaRef.current }
+      });
+    },
+    [getReference, segmentGet]
+  );
 
   useEffect(() => {
-    void loadReference();
-  }, [loadReference]);
+    void loadReference(referenceId, referenceType);
+  }, [loadReference, referenceId, referenceType]);
 
   const plitziElementLayoutMemo = useMemo(
     () => ({
@@ -120,6 +170,7 @@ const Reference = ({
     }),
     [reference?.element?.id, rootId, styleSelectors.base]
   );
+
   if (!reference) {
     return (
       <RootElement
@@ -129,7 +180,11 @@ const Reference = ({
           'reference--build-mode': !previewMode
         })}
       >
-        {!previewMode && <div className="reference__label">Element Reference {capitalize(referenceType)}</div>}
+        {!previewMode && (
+          <div className="reference__label">
+            Element Reference <b>{capitalize(referenceType)}</b>
+          </div>
+        )}
       </RootElement>
     );
   }

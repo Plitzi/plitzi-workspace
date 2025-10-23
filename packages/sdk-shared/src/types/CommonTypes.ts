@@ -14,6 +14,7 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
   websocketServer: string;
   subscriptionServer: string;
   location?: Location;
+  isAuthenticated?: boolean;
 } & T;
 
 export type RenderMode = 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';

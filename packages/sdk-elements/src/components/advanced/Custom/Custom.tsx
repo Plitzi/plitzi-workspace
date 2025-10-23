@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
+import pick from 'lodash/pick';
 import { use, useEffect, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -9,7 +10,7 @@ import withElement from '../../../Element/hocs/withElement';
 import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
-import type { Asset, ComponentPlugin, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Asset, ComponentPlugin, Element, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
@@ -40,22 +41,26 @@ const Custom = ({
   } = usePlitziServiceContext();
   const { registerCustomAssets, unregisterCustomAssets } = use(PluginsContext);
   const { components } = use(ComponentContext);
-  const settingsParsed = useMemo(() => {
+  const settingsParsed = useMemo<Element['attributes'] | false>(() => {
     if (!settings) {
-      return {};
+      return {} as Element['attributes'];
     }
 
     try {
-      return JSON.parse(settings) as Record<string, unknown>;
+      return JSON.parse(settings) as Element['attributes'];
     } catch {
       // Nothing here
     }
 
-    return {};
+    return false;
   }, [settings]);
-  const internalPropsMemo = useMemo<InternalPropsSTG2>(
-    () => ({ ...internalProps, attributes: settingsParsed }),
-    [internalProps, settingsParsed]
+  const settingsMalformed = settingsParsed === false;
+  const internalPropsMemo = useMemo<InternalPropsSTG1>(
+    () => ({
+      ...(pick(internalProps, ['id', 'rootId']) as { id: string; rootId: string }),
+      attributes: settingsMalformed ? {} : settingsParsed
+    }),
+    [internalProps, settingsMalformed, settingsParsed]
   );
   const assetsParsed = useMemo<Asset[]>(() => {
     if (!assets) {
@@ -88,7 +93,7 @@ const Custom = ({
     };
   }, [assetsParsed, registerCustomAssets, unregisterCustomAssets]);
 
-  if (isPlugin && scriptUrl && pluginScope) {
+  if (isPlugin && scriptUrl && pluginScope && !settingsMalformed) {
     return (
       <PluginRemote
         url={scriptUrl}
@@ -101,21 +106,18 @@ const Custom = ({
   }
 
   const Plugin = components[renderType] as ComponentPlugin | undefined;
-  if (Plugin) {
+  if (Plugin && !settingsMalformed) {
     return <Plugin internalProps={internalPropsMemo} plitziCustomComponent extraProps={Plugin.extraProps} />;
   }
 
   return (
-    <RootElement
-      ref={ref}
-      internalProps={internalPropsMemo}
-      className={classNames('plitzi-component__custom', className)}
-    >
-      {renderType && (
+    <RootElement ref={ref} internalProps={internalProps} className={classNames('plitzi-component__custom', className)}>
+      {renderType && !settingsMalformed && (
         <span>
           Custom Component <b>{renderType}</b> Not Found
         </span>
       )}
+      {settingsMalformed && <span>Settings Malformed</span>}
       {!renderType && <span>Custom Component</span>}
     </RootElement>
   );

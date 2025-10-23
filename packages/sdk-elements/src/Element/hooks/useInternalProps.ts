@@ -64,6 +64,11 @@ const getProps = (
     attributes = omit(attributes, ['settings']);
   }
 
+  if (internalProps.attributes) {
+    // Attribute injection, for example custom element (concat custom props + settings)
+    attributes = { ...attributes, ...internalProps.attributes };
+  }
+
   // Data Sources
   if (Object.keys(dataSource).length > 0) {
     const bindingData = getBindingsDetails(dataSource, attributes, definition, style);

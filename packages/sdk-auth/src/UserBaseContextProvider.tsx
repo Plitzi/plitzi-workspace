@@ -12,7 +12,7 @@ import withUserProvider from './hocs/withUserProvider';
 import useAuth from './hooks/useAuth';
 import UserContext from './UserContext';
 
-import type { Server } from '@plitzi/sdk-shared';
+import type { Environment, RenderMode, Server, UserContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type UserBaseContextProviderProps = {
@@ -20,7 +20,8 @@ export type UserBaseContextProviderProps = {
   children?: ReactNode;
   webId: number;
   server: Server;
-  environment?: string;
+  environment?: Environment;
+  renderMode?: RenderMode;
 };
 
 const UserBaseContextProvider = ({
@@ -28,7 +29,8 @@ const UserBaseContextProvider = ({
   children,
   webId,
   server,
-  environment = 'live'
+  environment = 'live',
+  renderMode = 'iframe'
 }: UserBaseContextProviderProps) => {
   const {
     userProvider,
@@ -113,23 +115,22 @@ const UserBaseContextProvider = ({
         refreshDetails: undefined,
         can: undefined,
         authenticated: false,
-        user: { details: {}, accessToken: '' }
+        user: { details: {}, accessToken: '' } as UserContextValue['user']
       };
     }
 
+    const { login, logout, refreshDetails, can, isAuthenticated, userDetails, accessToken } = manager;
+
     return {
-      login: manager.login,
-      logout: manager.logout,
-      refreshDetails: manager.refreshDetails,
-      can: manager.can,
-      authenticated: manager.isAuthenticated || !previewMode,
-      user: {
-        details: manager.userDetails,
-        accessToken: manager.accessToken
-      }
+      login,
+      logout,
+      refreshDetails,
+      can,
+      authenticated: isAuthenticated || !previewMode || (renderMode === 'ssr' && !!server.isAuthenticated),
+      user: (renderMode !== 'ssr' ? { details: userDetails, accessToken } : server.user) as UserContextValue['user']
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manager, manager?.isAuthenticated, previewMode]);
+  }, [manager, manager?.isAuthenticated, previewMode, renderMode, server.isAuthenticated]);
 
   return <UserContext value={valueMemo}>{!loading && children}</UserContext>;
 };

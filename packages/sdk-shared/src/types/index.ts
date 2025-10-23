@@ -12,3 +12,4 @@ export type * from './CollectionTypes';
 export type * from './ComponentTypes';
 export type * from './StateTypes';
 export type * from './CommonTypes';
+export type * from './AuthTypes';

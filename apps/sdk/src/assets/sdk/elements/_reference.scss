@@ -4,12 +4,10 @@
 }
 
 .reference--build-mode {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  .reference__label {
-    left: 50%;
-    top: 50%;
-    position: absolute;
-    transform: translate(-50%, -50%);
-  }
+  // .reference__label {
+  // }
 }
