@@ -72,7 +72,7 @@ export function render(
     );
   };
 
-  const rootDOM = document.getElementById(widgetContainer);
+  const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
   if (rootDOM) {
     const root = createRoot(rootDOM);
     root.render(<Widget />);
