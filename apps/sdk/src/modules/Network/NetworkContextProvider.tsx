@@ -22,7 +22,6 @@ import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {
   children: ReactNode;
-  cacheTimeout?: number;
   server: Server;
   revision?: number;
   webKey?: string;
@@ -39,7 +38,6 @@ export type NetworkContextProviderProps = {
 
 const NetworkContextProvider = ({
   children,
-  cacheTimeout = 0,
   server,
   revision,
   webKey = '',
@@ -154,11 +152,7 @@ const NetworkContextProvider = ({
       revisionAux = undefined;
     }
 
-    const response = await query(
-      'Init',
-      { environment, revision: revisionAux, limit: 99 },
-      cacheTimeout === 0 ? 'network-only' : 'cache-first'
-    );
+    const response = await query('Init', { environment, revision: revisionAux, limit: 99 }, 'network-only');
     if (response.error) {
       setLoading(false);
       if (typeof response.error === 'string') {

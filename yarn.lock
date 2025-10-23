@@ -3559,7 +3559,6 @@ __metadata:
     "@storybook/react-webpack5": "npm:^9.1.13"
     "@storybook/testing-library": "npm:^0.2.2"
     "@tailwindcss/postcss": "npm:^4.1.15"
-    apollo3-cache-persist: "npm:^0.15.0"
     babel-loader: "npm:^10.0.0"
     classnames: "npm:^2.5.1"
     clean-webpack-plugin: "npm:^4.0.0"
@@ -3658,7 +3657,6 @@ __metadata:
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.2"
     eslint: "npm:^9.38.0"
-    eslint-plugin-import: "npm:^2.32.0"
     jest: "npm:^30.2.0"
     prettier-plugin-tailwindcss: "npm:^0.7.1"
     react-router: "npm:^7.9.4"
@@ -6818,15 +6816,6 @@ __metadata:
     graphql: 14 - 16
     rxjs: ^7.3.0
   checksum: 10c0/2a31bab3bcadae186f79d375387b8845a133d6577e96c9f91dc2f2bc099acf658707863761c8627adb10166c5b80ecbd97106f0616f7c30b3e11d72cc25b2592
-  languageName: node
-  linkType: hard
-
-"apollo3-cache-persist@npm:^0.15.0":
-  version: 0.15.0
-  resolution: "apollo3-cache-persist@npm:0.15.0"
-  peerDependencies:
-    "@apollo/client": ^3.7.17
-  checksum: 10c0/6470fcdf218ac0ee60cfeb08f9e65ff79a69746b9b40ec1ca60a171bce38cc12cfb5a32122e3e8420a789854d64adeea19ca450e7ffab122ec79b875f84350eb
   languageName: node
   linkType: hard
 

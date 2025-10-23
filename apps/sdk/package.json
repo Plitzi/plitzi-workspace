@@ -37,7 +37,6 @@
     "@plitzi/sdk-state": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
-    "apollo3-cache-persist": "^0.15.0",
     "classnames": "^2.5.1",
     "graphql": "^16.11.0",
     "handlebars": "^4.7.8",

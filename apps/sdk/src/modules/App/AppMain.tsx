@@ -40,13 +40,11 @@ export type AppMainProps = {
   previewMode?: boolean;
   debugMode?: boolean;
   state?: Record<string, unknown>;
-  cacheTimeout?: number;
   onInitStateManager?: (instance: StateManagerContextValue) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
 
 const AppMain = ({
-  cacheTimeout = 0,
   // Space
   revision,
   webKey = '',
@@ -72,7 +70,6 @@ const AppMain = ({
   const childrenMemo = useMemo(
     () => (
       <NetworkContextProvider
-        cacheTimeout={cacheTimeout}
         webKey={webKey}
         webId={webId}
         instanceId={instanceId}
@@ -129,7 +126,6 @@ const AppMain = ({
       </NetworkContextProvider>
     ),
     [
-      cacheTimeout,
       currentPageId,
       debugMode,
       environment,

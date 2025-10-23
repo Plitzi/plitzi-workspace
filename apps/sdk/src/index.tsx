@@ -118,7 +118,6 @@ if (typeof window !== 'undefined' && window.plitziCache) {
 export type PlitziSdkProps = {
   className?: string;
   children?: ReactNode;
-  cacheTimeout?: number;
   revision?: number;
   webKey: string;
   environment?: Environment;
