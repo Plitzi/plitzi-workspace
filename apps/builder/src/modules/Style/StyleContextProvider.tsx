@@ -20,7 +20,7 @@ export type StyleContextProviderProps = {
   children: React.ReactNode;
   style?: Style;
   includeSubscriptions?: boolean;
-  type?: 'normal' | 'partial' | 'template';
+  type?: 'normal' | 'partial' | 'template' | 'segment';
 };
 
 const StyleContextProvider = ({

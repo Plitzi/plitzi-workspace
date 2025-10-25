@@ -1,7 +1,6 @@
 import { gql } from '@apollo/client/core';
 
-import type { PageInfo } from '@plitzi/sdk-shared';
-import type { Cdn } from '@pmodules/Resources/types';
+import type { Cdn, PageInfo } from '@plitzi/sdk-shared';
 
 export type TSpaceCdnsQuery = {
   SpaceCdns: { edges: Cdn[]; pageInfo: PageInfo };

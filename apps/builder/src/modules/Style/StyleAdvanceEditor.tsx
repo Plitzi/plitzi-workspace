@@ -57,7 +57,7 @@ const StyleAdvanceEditor = () => {
 
   return (
     <div className="relative flex h-full w-full flex-col">
-      <CodeMirror value={customCss} theme="dark" lineWrapping onChange={handleChange} />
+      <CodeMirror className="h-full" value={customCss} theme="dark" lineWrapping onChange={handleChange} />
       <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"

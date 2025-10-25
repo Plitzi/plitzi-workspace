@@ -6,11 +6,6 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 import type { Style } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-export const STYLE_TYPE_NORMAL = 'normal';
-export const STYLE_TYPE_PARTIAL = 'partial';
-export const STYLE_TYPE_TEMPLATE = 'template';
-export const STYLE_TYPE_SEGMENT = 'segment';
-
 export type StyleContextProviderProps = {
   children: ReactNode;
   style?: Style;

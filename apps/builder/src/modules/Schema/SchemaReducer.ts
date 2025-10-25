@@ -5,7 +5,7 @@ import set from 'lodash/set';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
-import type { Element, PageFolder, Schema, SchemaVariable, DropPosition } from '@plitzi/sdk-shared';
+import type { Element, PageFolder, Schema, SchemaVariable, DropPosition, Style } from '@plitzi/sdk-shared';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',
@@ -50,6 +50,7 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
         dropPosition: DropPosition;
         initialItems: Record<string, Element>;
         variables?: SchemaVariable[];
+        style?: Style; // used when adding a template
       }
     | { type: 'SCHEMA_REMOVE_ELEMENT'; elementId: string }
     | {

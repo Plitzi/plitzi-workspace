@@ -168,7 +168,7 @@ const Segment = ({
       <div className="flex grow basis-0 flex-col overflow-hidden">
         <div className="group-hover:text-primary-400 truncate font-bold">{name}</div>
       </div>
-      <div className="hidden group-hover:flex">
+      <div className="hidden gap-1 group-hover:flex">
         <Icon
           icon="fas fa-pen"
           onClick={handleClickUpdateSegment}

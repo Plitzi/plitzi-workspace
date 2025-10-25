@@ -11,7 +11,6 @@ import QueueContextProvider from '@pmodules/Queue/QueueContextProvider';
 import SchemaContextProvider from '@pmodules/Schema/SchemaContextProvider';
 import SegmentsContextProvider from '@pmodules/Segments/SegmentsContextProvider';
 import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
-import TemplatesContextProvider from '@pmodules/Templates/TemplatesContextProvider';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
 import type { Environment, Server } from '@plitzi/sdk-shared';
@@ -59,28 +58,24 @@ const AppProvider = ({
           <UndoableContextProducer>
             <EventBridgeContextProvider>
               <SegmentsContextProvider>
-                <TemplatesContextProvider>
-                  <CollectionContextProvider>
-                    <PluginsContextProvider>
-                      <ModalProvider>
-                        <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
-                          <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                            <UserBaseContextProvider
-                              server={server}
-                              previewMode={previewMode}
-                              webId={webId}
-                              environment={environment}
-                            >
-                              <NavigationContextProvider previewMode={previewMode}>
-                                {children}
-                              </NavigationContextProvider>
-                            </UserBaseContextProvider>
-                          </StyleContextProvider>
-                        </SchemaContextProvider>
-                      </ModalProvider>
-                    </PluginsContextProvider>
-                  </CollectionContextProvider>
-                </TemplatesContextProvider>
+                <CollectionContextProvider>
+                  <PluginsContextProvider>
+                    <ModalProvider>
+                      <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
+                        <StyleContextProvider includeSubscriptions={includeSubscriptions}>
+                          <UserBaseContextProvider
+                            server={server}
+                            previewMode={previewMode}
+                            webId={webId}
+                            environment={environment}
+                          >
+                            <NavigationContextProvider previewMode={previewMode}>{children}</NavigationContextProvider>
+                          </UserBaseContextProvider>
+                        </StyleContextProvider>
+                      </SchemaContextProvider>
+                    </ModalProvider>
+                  </PluginsContextProvider>
+                </CollectionContextProvider>
               </SegmentsContextProvider>
             </EventBridgeContextProvider>
           </UndoableContextProducer>

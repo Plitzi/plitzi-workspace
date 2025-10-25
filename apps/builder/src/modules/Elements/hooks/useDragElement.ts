@@ -1,29 +1,34 @@
 import { produce } from 'immer';
+import get from 'lodash/get';
+import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 import sneakCase from 'lodash/snakeCase';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import { generateID } from '../../../helpers/utils';
 
 import type { ComponentDefinition } from '@plitzi/sdk-shared';
+import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DragEvent } from 'react';
 
 export type UseDragElementProps = {
   attributes?: Record<string, unknown>;
   type: string;
   variables?: object[];
+  manifest?: Template;
   onParentRefresh?: (identifier: string, segment: object) => void;
 };
 
-const useDragElement = ({ attributes, type, variables }: UseDragElementProps) => {
+const useDragElement = ({ attributes, type, variables, manifest }: UseDragElementProps) => {
   const { componentDefinitions } = use(ComponentContext);
   const { eventBridge } = use(EventBridgeContext);
 
-  const onDragStart = useCallback(
+  const onDragElement = useCallback(
     (e: DragEvent) => {
       let element = pick(componentDefinitions[type], ['definition', 'attributes']);
       if (!(element as ComponentDefinition | undefined)) {
@@ -60,15 +65,54 @@ const useDragElement = ({ attributes, type, variables }: UseDragElementProps) =>
         });
       }
 
-      e.stopPropagation();
-      void eventBridge.emit('builder', 'builderSetSelected', null);
-      e.dataTransfer.setDragImage(e.currentTarget, -5, -5);
       e.dataTransfer.setData(
         `add##${sneakCase(element.definition.type)}`,
         JSON.stringify({ id: generateID(), element, variables })
       );
     },
-    [componentDefinitions, type, attributes, eventBridge, variables]
+    [attributes, componentDefinitions, type, variables]
+  );
+
+  const onDragTemplate = useCallback(
+    (e: DragEvent) => {
+      if (!manifest) {
+        return;
+      }
+
+      const flat = get(manifest, 'schema.flat', {});
+      const variables = get(manifest, 'schema.variables', []);
+      const templateBaseElementId = get(manifest, 'definition.baseElementId', '');
+      const itemsToAdd = FlatMap.cloneElements(flat, templateBaseElementId);
+      if (!itemsToAdd.item) {
+        return;
+      }
+
+      e.dataTransfer.setData(
+        'add##plitzi-template',
+        JSON.stringify({
+          elements: omit(itemsToAdd.acum, [itemsToAdd.item.id]),
+          baseElement: itemsToAdd.item,
+          style: get(manifest, 'style', {}),
+          variables
+        })
+      );
+    },
+    [manifest]
+  );
+
+  const onDragStart = useCallback(
+    (e: DragEvent) => {
+      e.stopPropagation();
+      void eventBridge.emit('builder', 'builderSetSelected', null);
+      e.dataTransfer.setDragImage(e.currentTarget, -5, -5);
+
+      if (type === 'template') {
+        onDragTemplate(e);
+      } else {
+        onDragElement(e);
+      }
+    },
+    [eventBridge, type, onDragTemplate, onDragElement]
   );
 
   return { onDragStart };

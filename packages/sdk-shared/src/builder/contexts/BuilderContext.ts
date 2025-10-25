@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { Element, EventBridgeEvent, PluginBuilder } from '../../types';
+import type { Element, EventBridgeEvent, PluginBuilder, Schema, Style } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderContextValue = {
@@ -24,6 +24,14 @@ export type BuilderContextValue = {
     attributeValue: unknown,
     category?: 'attributes' | 'definition'
   ) => void;
+  elementAsTemplate: (
+    cdnIdentifier: string,
+    schema: Schema,
+    style: Style,
+    name: string,
+    description: string,
+    element: Element
+  ) => Promise<void>;
 };
 
 const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValue;

@@ -1,5 +1,7 @@
+import type { ResourceType as TResourceType } from '@plitzi/sdk-shared';
+
 export type ResourceTypeProps = {
-  type?: 'image' | 'video' | 'plugin' | 'application' | 'document';
+  type?: TResourceType;
 };
 
 const ResourceType = ({ type = 'image' }: ResourceTypeProps) => {
@@ -8,7 +10,8 @@ const ResourceType = ({ type = 'image' }: ResourceTypeProps) => {
       {type === 'image' && <i className="fa-solid fa-image" title="Image" />}
       {type === 'video' && <i className="fa-solid fa-film" title="Video" />}
       {type === 'plugin' && <i className="fa-solid fa-puzzle-piece" title="Plugin" />}
-      {!['image', 'video', 'plugin'].includes(type) && <i className="fa-solid fa-file" title="Plugin" />}
+      {type === 'template' && <i className="fa-solid fa-cube" title="Template" />}
+      {!['image', 'video', 'plugin', 'template'].includes(type) && <i className="fa-solid fa-file" title="Plugin" />}
     </div>
   );
 };

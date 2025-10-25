@@ -233,12 +233,11 @@ const useQueueManager = ({
         // Schema + Style
 
         case SchemaActions.SCHEMA_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform, variables } =
-            item.action as typeof item.action & { templatePlatform: Style['platform'] };
+          const { data, dropPosition, initialItems, to, variables, style } = item.action;
 
           return mutate('SpaceAddTemplate', {
             element: data,
-            styles: templatePlatform,
+            style,
             to,
             dropPosition,
             initialItems: Object.values(initialItems),

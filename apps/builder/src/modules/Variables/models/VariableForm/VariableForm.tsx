@@ -98,10 +98,10 @@ const VariableForm = ({
 
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
-      <Form.Body>
-        <div className="flex gap-2">
-          <Form.Input name="name" label="Name" size="sm" disabled={!isNewRecord} className="w-full grow basis-0" />
-          <Form.Select name="type" label="Type" size="sm" onChange={handleChangeType} className="w-full grow basis-0">
+      <Form.Body gap={2}>
+        <div className="flex gap-4">
+          <Form.Input name="name" label="Name" size="xs" disabled={!isNewRecord} className="w-full grow basis-0" />
+          <Form.Select name="type" label="Type" size="xs" onChange={handleChangeType} className="w-full grow basis-0">
             <option value="text">Text</option>
             <option value="number">Number</option>
             <option value="email">Email</option>
@@ -114,7 +114,7 @@ const VariableForm = ({
             <option value="color">Color</option>
           </Form.Select>
         </div>
-        <Form.Input name="category" label="Category" size="sm" className="w-full grow basis-0" />
+        <Form.Input name="category" label="Category" size="xs" className="w-full grow basis-0" />
         <VariableValue valueType={watchType} hasSubValues={hasSubValues} name="value" />
         {hasSubValues && (
           <Alert intent="info" className="text-xs text-white" containerClassName="items-center">
@@ -143,10 +143,10 @@ const VariableForm = ({
         </div>
       </Form.Body>
       <Form.Footer justify="end">
-        <Button onClick={onClose} size="sm">
+        <Button onClick={onClose} size="xs">
           Cancel
         </Button>
-        <Button type="submit" size="sm">
+        <Button type="submit" size="xs">
           Submit
         </Button>
       </Form.Footer>

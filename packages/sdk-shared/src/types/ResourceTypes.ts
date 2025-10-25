@@ -1,4 +1,6 @@
-import type { PluginManifest } from '@plitzi/sdk-shared';
+import type { PluginManifest } from './PluginTypes';
+
+export type ResourceType = 'image' | 'video' | 'document' | 'application' | 'plugin' | 'template';
 
 export type Resource =
   | {
@@ -6,7 +8,7 @@ export type Resource =
       cdnIdentifier: string;
       name: string;
       path: string;
-      type: 'image' | 'video' | 'document' | 'application';
+      type: Exclude<ResourceType, 'plugin'>;
       size: number;
     }
   | {
@@ -23,7 +25,7 @@ export type ResourceWithFile = Resource & { file: File };
 
 export type ResourceFile = File & {
   id: number;
-  resourceType: 'image' | 'video' | 'document' | 'application' | 'plugin';
+  resourceType: ResourceType;
   metadata?: PluginManifest;
 };
 

@@ -129,7 +129,7 @@ export type SchemaContextValue = {
     data: Element,
     dropPosition?: DropPosition,
     initialItems?: Record<string, Element>,
-    templatePlatform?: Style['platform'],
+    templatePlatform?: Style,
     variables?: SchemaVariable[],
     fromSubscriptions?: boolean
   ) => void;

@@ -103,6 +103,10 @@
       "types": "./dist/src/elements/index.d.ts",
       "import": "./dist/src/elements/index.mjs"
     },
+    "./helpers/fetchManifest": {
+      "types": "./dist/src/helpers/fetchManifest.d.ts",
+      "import": "./dist/src/helpers/fetchManifest.mjs"
+    },
     "./helpers/syntaxHighlight": {
       "types": "./dist/src/helpers/syntaxHighlight.d.ts",
       "import": "./dist/src/helpers/syntaxHighlight.mjs"

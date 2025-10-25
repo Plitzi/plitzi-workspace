@@ -56,9 +56,6 @@ import StyleRemoveVariableMutation from './Style/StyleRemoveVariableMutation';
 import StyleUpdateMutation from './Style/StyleUpdateMutation';
 import StyleUpdateSelectorMutation from './Style/StyleUpdateSelectorMutation';
 import StyleUpdateVariableMutation from './Style/StyleUpdateVariableMutation';
-import TemplateAddMutation from './Template/TemplateAddMutation';
-import TemplateRemoveMutation from './Template/TemplateRemoveMutation';
-import TemplateUpdateMutation from './Template/TemplateUpdateMutation';
 
 import type { TCollectionAddMutation } from './Collection/CollectionAddMutation';
 import type { TCollectionAddRecordMutation } from './Collection/CollectionAddRecordMutation';
@@ -82,9 +79,6 @@ import type { TSpaceAddPluginMutation } from './Space/SpaceAddPluginMutation';
 import type { TSpaceDeployMutation } from './Space/SpaceDeployMutation';
 import type { TSpacePublishMutation } from './Space/SpacePublishMutation';
 import type { TSpaceUpdatePluginMutation } from './Space/SpaceUpdatePluginMutation';
-import type { TTemplateAddMutation } from './Template/TemplateAddMutation';
-import type { TTemplateRemoveMutation } from './Template/TemplateRemoveMutation';
-import type { TTemplateUpdateMutation } from './Template/TemplateUpdateMutation';
 
 export type MutationsMap = {
   SpaceUpdate: unknown;
@@ -141,10 +135,6 @@ export type MutationsMap = {
   SegmentStyleUpdateVariable: unknown;
   SegmentStyleRemoveVariable: unknown;
   SegmentPublish: TSegmentPublishMutation;
-
-  TemplateAdd: TTemplateAddMutation;
-  TemplateUpdate: TTemplateUpdateMutation;
-  TemplateRemove: TTemplateRemoveMutation;
 
   CollectionAdd: TCollectionAddMutation;
   CollectionUpdate: TCollectionUpdateMutation;
@@ -209,10 +199,6 @@ const Mutations = {
   SegmentStyleUpdateVariable: SegmentStyleUpdateVariableMutation,
   SegmentStyleRemoveVariable: SegmentStyleRemoveVariableMutation,
   SegmentPublish: SegmentPublishMutation,
-
-  TemplateAdd: TemplateAddMutation,
-  TemplateUpdate: TemplateUpdateMutation,
-  TemplateRemove: TemplateRemoveMutation,
 
   CollectionAdd: CollectionAddMutation,
   CollectionUpdate: CollectionUpdateMutation,

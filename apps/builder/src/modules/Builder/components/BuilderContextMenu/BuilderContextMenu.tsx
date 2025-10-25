@@ -9,9 +9,8 @@ import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSch
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
-import TemplatesContext from '@pmodules/Templates/TemplatesContext';
 
+import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
@@ -33,8 +32,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const [xPos, setXPos] = useState('0px');
   const [yPos, setYPos] = useState('0px');
   const [showMenu, setShowMenu] = useState(false);
-  const { builderElementPermissions, builderHandler } = use(BuilderContext);
-  const builderTemplatesContext = use(TemplatesContext);
+  const { builderElementPermissions, builderHandler, elementAsTemplate } = use(BuilderContext);
   const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
@@ -167,7 +165,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   };
 
   const handleClickAsTemplate = async () => {
-    const response = await showModal<{ name: string; description?: string }>(
+    const response = await showModal<{ name: string; description?: string; cdnIdentifier: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -179,8 +177,8 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     );
 
     if (response && element) {
-      const { name, description } = response;
-      void builderTemplatesContext.elementAsTemplate(schema, style, name, description ?? '', element);
+      const { name, description, cdnIdentifier } = response;
+      void elementAsTemplate(cdnIdentifier, schema, style, name, description ?? '', element);
     }
   };
 
@@ -243,7 +241,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     return (
       <Card
         ref={ref}
-        className="builder__context-menu z-[99999999] flex flex-col p-3 shadow-2xl"
+        className="builder__context-menu z-99999999 flex flex-col p-3 shadow-2xl"
         style={{
           position: 'fixed',
           top: yPos,
@@ -268,7 +266,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   return (
     <Card
       ref={ref}
-      className="builder__context-menu z-[99999999] flex rounded-sm shadow-2xl"
+      className="builder__context-menu z-99999999 flex rounded-sm shadow-2xl"
       style={{
         position: 'fixed',
         top: yPos,

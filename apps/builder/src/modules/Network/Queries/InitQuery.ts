@@ -1,7 +1,6 @@
 import { gql } from '@apollo/client/core';
 
 import type { CollectionRaw, PluginRaw, SchemaRaw, SegmentRaw, Style } from '@plitzi/sdk-shared';
-import type { Template } from '@pmodules/Templates/TemplatesContext';
 
 export type TInitQuery = {
   Space?: {
@@ -11,7 +10,6 @@ export type TInitQuery = {
     segments?: SegmentRaw[];
   };
   Collections: { edges: CollectionRaw[] };
-  Templates: { edges: Template[] };
 };
 
 const InitQuery = gql`
@@ -99,14 +97,6 @@ const InitQuery = gql`
         platform
         variables
         cache
-      }
-    }
-    Templates(limit: $limit) {
-      edges {
-        id
-        definition
-        schema
-        style
       }
     }
     Collections(cursor: $cursor, limit: $limit) {

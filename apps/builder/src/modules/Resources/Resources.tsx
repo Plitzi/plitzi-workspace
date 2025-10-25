@@ -1,5 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
@@ -71,48 +72,11 @@ const Resources = () => {
       )}
       {isLoading && (
         <div className="flex grow flex-col items-center justify-center">
-          <i className="fa-solid fa-sync fa-spin fa-3x" title="Loading" />
+          <Icon icon="fa-solid fa-sync fa-spin fa-3x" title="Loading" />
         </div>
       )}
     </div>
   );
-
-  // return (
-  //   <div className="flex w-full grow basis-0 flex-col overflow-y-auto">
-  //     <ResourceManager
-  //       className="shrink-0"
-  //       uploadTypes={uploadTypes}
-  //       onUploaded={handleUploaded}
-  //       onUploadAdded={handleUploadAdded}
-  //     />
-  //     {!loading && finalResources.length > 0 && (
-  //       <div className="flex min-h-[200px] grow basis-0 flex-col overflow-y-auto px-2">
-  //         <Heading as="h5" className="mb-2">
-  //           Uploaded
-  //         </Heading>
-  //         <div className="grid grid-cols-2 gap-2 overflow-y-auto pb-1">
-  //           {finalResources.map(resource => (
-  //             <Resource
-  //               className={classNames({ 'col-span-2': resource.type === 'plugin' })}
-  //               key={resource.id}
-  //               id={resource.id}
-  //               type={resource.type}
-  //               title={resource.name}
-  //               src={resource.path}
-  //               metadata={resource.type === 'plugin' ? resource.metadata : undefined}
-  //               onRemove={handleResourceRemoved(resource)}
-  //             />
-  //           ))}
-  //         </div>
-  //       </div>
-  //     )}
-  //     {loading && (
-  //       <div className="flex grow flex-col items-center justify-center">
-  //         <i className="fa-solid fa-sync fa-spin fa-3x" title="Loading" />
-  //       </div>
-  //     )}
-  //   </div>
-  // );
 };
 
 export default Resources;

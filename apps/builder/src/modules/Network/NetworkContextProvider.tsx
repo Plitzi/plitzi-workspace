@@ -28,7 +28,6 @@ import type {
   BuilderNetworkContextValue,
   Environment
 } from '@plitzi/sdk-shared';
-import type { Template } from '@pmodules/Templates/TemplatesContext';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
 
@@ -173,7 +172,7 @@ const NetworkContextProvider = ({
       const response = await query('Init', { environment, limit: 99 }, 'network-only', true);
       if (response.success && response.result) {
         const data = cloneDeep(response.result);
-        const { Space, Collections, Templates } = data;
+        const { Space, Collections } = data;
         if (!Space) {
           setError('Space Not Found');
           setLoading(false);
@@ -195,10 +194,6 @@ const NetworkContextProvider = ({
           },
           plugins,
           style: Space.style,
-          templates: Templates.edges.reduce<Record<string, Template>>(
-            (obj, item) => ({ ...obj, [item.id as string]: item }),
-            {}
-          ),
           collections: Collections.edges.reduce(
             (obj, item) => ({
               ...obj,

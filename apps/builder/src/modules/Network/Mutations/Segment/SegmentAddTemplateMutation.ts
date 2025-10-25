@@ -4,7 +4,7 @@ const SegmentAddTemplateMutation = gql`
   mutation SegmentAddTemplateMutation(
     $environment: String!
     $element: Json!
-    $styles: Json!
+    $style: Json
     $dropPosition: String!
     $to: String!
     $initialItems: [Json]!
@@ -14,7 +14,7 @@ const SegmentAddTemplateMutation = gql`
     SegmentAddTemplate(
       environment: $environment
       element: $element
-      styles: $styles
+      style: $style
       dropPosition: $dropPosition
       to: $to
       initialItems: $initialItems

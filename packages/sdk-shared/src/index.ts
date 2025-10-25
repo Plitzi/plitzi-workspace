@@ -1,5 +1,6 @@
 import * as collections from './collections';
 import * as dataSource from './dataSource';
+import fetchManifest from './helpers/fetchManifest';
 import syntaxHighlight from './helpers/syntaxHighlight';
 import * as utils from './helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from './hooks/usePlitziServiceContext';
@@ -9,9 +10,11 @@ import * as segments from './segments';
 import * as style from './style';
 
 export type * from './types';
+
 export * from './helpers/utils';
 export * from './helpers/syntaxHighlight';
 export * from './helpers/twigWrapper';
+export * from './helpers/fetchManifest';
 export * from './hooks/usePlitziServiceContext';
 export * from './builder';
 export * from './style';
@@ -26,6 +29,7 @@ export {
   usePlitziServiceContext,
   PlitziServiceProvider,
   syntaxHighlight,
+  fetchManifest,
   utils,
   style,
   schema,

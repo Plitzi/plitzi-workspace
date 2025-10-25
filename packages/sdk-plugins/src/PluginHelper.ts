@@ -1,6 +1,8 @@
 import get from 'lodash/get.js';
 import omit from 'lodash/omit.js';
 
+import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
+
 import type { PluginManifest, ComponentDefinition, PluginRaw, Asset } from '@plitzi/sdk-shared';
 
 const getComponentDefinition = (
@@ -76,24 +78,12 @@ const getComponentDefinition = (
   }
 };
 
-const fetchPluginsManifest = async (pluginManifest: string) => {
-  let responseContent: PluginManifest | undefined;
-  try {
-    const response = await fetch(pluginManifest, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
-    responseContent = (await response.json()) as PluginManifest;
-
-    return responseContent;
-  } catch {
-    return responseContent;
-  }
-};
-
 export const fetchPluginsManifests = async (manifests: string[]) => {
   if (!Array.isArray(manifests) || manifests.length === 0) {
     return {};
   }
 
-  const promises = manifests.map(pluginManifest => fetchPluginsManifest(pluginManifest));
+  const promises = manifests.map(pluginManifest => fetchManifest<PluginManifest>(pluginManifest));
   const responses = await Promise.allSettled(promises);
 
   return responses.reduce((acum, response) => {

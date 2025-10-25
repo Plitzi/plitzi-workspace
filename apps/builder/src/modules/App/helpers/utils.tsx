@@ -9,7 +9,6 @@ import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
 import StateManager from '@pmodules/StateManager/StateManager';
 import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
-import Templates from '@pmodules/Templates';
 import Variables from '@pmodules/Variables';
 
 import { featureFlag } from '../../../config';
@@ -121,21 +120,6 @@ export const getPopups = ({
       settings: {
         icon: 'fa-solid fa-diamond',
         title: 'Segments',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'templates',
-      component: <Templates />,
-      active: false,
-      settings: {
-        icon: 'fa-solid fa-clone',
-        title: 'Templates',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,

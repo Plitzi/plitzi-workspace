@@ -40,7 +40,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
 
   return (
     <div className={classNames('relative flex h-full w-full flex-col', className)}>
-      <CodeMirror value={value} theme="dark" lineWrapping onChange={handleChange} mode="json" />
+      <CodeMirror className="h-full" value={value} theme="dark" lineWrapping onChange={handleChange} mode="json" />
       <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"

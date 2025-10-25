@@ -3,12 +3,12 @@ import { useMemo } from 'react';
 
 import ContentPlugin from './contents/ContentPlugin';
 
-import type { PluginManifest } from '@plitzi/sdk-shared';
+import type { PluginManifest, ResourceType } from '@plitzi/sdk-shared';
 
 export type ResourceContentProps = {
   className?: string;
   src?: string;
-  type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
+  type?: ResourceType;
   title?: string;
   metadata?: PluginManifest;
   size?: number;
@@ -24,9 +24,7 @@ const ResourceContent = ({
   size = 0,
   isUploaded = false
 }: ResourceContentProps) => {
-  const componentsAvailables = useMemo(() => {
-    return Object.keys(metadata?.pluginSchema || {}).join(', ');
-  }, [metadata]);
+  const componentsAvailables = useMemo(() => Object.keys(metadata?.pluginSchema || {}).join(', '), [metadata]);
 
   return (
     <>

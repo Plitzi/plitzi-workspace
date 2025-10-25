@@ -82,7 +82,7 @@ const Variables = () => {
           <Button.Icon icon="fa-solid fa-plus" />
           New Variable
         </Button>
-        <Input placeholder="Search Variables" value={filter} onChange={handleChangeFilter} label="">
+        <Input placeholder="Search Variables" size="sm" value={filter} onChange={handleChangeFilter}>
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>

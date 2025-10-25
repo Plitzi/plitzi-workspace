@@ -8,10 +8,9 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import ResourceManager from './components/ResourceManager';
-import ResourcesList from './ResourcesList';
+import ResourcesList from './components/ResourcesList';
 
-import type { ResourceFile, ResourceWithFile, Resource as TResource } from './types';
-import type { ComponentDefinition } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, ResourceFile, ResourceWithFile, Resource as TResource } from '@plitzi/sdk-shared';
 
 export type ResourcesCdnProps = {
   identifier: string;

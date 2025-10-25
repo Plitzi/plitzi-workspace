@@ -11,10 +11,9 @@ import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderS
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import SegmentForm from '@pmodules/Segments/models/SegmentForm';
-import TemplateForm from '@pmodules/Templates/Models/TemplateForm';
-import TemplatesContext from '@pmodules/Templates/TemplatesContext';
 
 import OverlayButton from './OverlayButton';
+import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
@@ -45,11 +44,10 @@ const OverlayButtonContainer = ({
   const { existsPopup, addPopup } = usePopup();
   const { setHovered } = use(BuilderHoveredContext);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
-  const builderTemplatesContext = use(TemplatesContext);
   const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
   const { schema } = use(BuilderSchemaContext);
   const { style } = use(BuilderStyleContext);
-  const { builderHandler, builderElementPermissions, mode } = use(BuilderContext);
+  const { builderHandler, builderElementPermissions, mode, elementAsTemplate } = use(BuilderContext);
   const {
     definition: { items }
   } = element;
@@ -89,7 +87,7 @@ const OverlayButtonContainer = ({
   }, [addPopup, existsPopup, mode]);
 
   const handleClickAsTemplate = async () => {
-    const response = await showModal<{ name: string; description?: string }>(
+    const response = await showModal<{ name: string; description?: string; cdnIdentifier: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -101,8 +99,8 @@ const OverlayButtonContainer = ({
     );
 
     if (response) {
-      const { name, description } = response;
-      void builderTemplatesContext.elementAsTemplate(schema, style, name, description ?? '', element);
+      const { name, description, cdnIdentifier } = response;
+      void elementAsTemplate(cdnIdentifier, schema, style, name, description ?? '', element);
       addToast(
         <div>
           Template <b>{name}</b> Created

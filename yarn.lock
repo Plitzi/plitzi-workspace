@@ -3659,8 +3659,8 @@ __metadata:
     webpack-subresource-integrity: "npm:^5.2.0-rc.1"
     zod: "npm:^4.1.12"
   peerDependencies:
-    react: ^19.1.1
-    react-dom: ^19.1.1
+    react: ^19
+    react-dom: ^19
   languageName: unknown
   linkType: soft
 
@@ -3750,8 +3750,8 @@ __metadata:
     webpack-dev-server: "npm:^5.2.2"
     webpack-subresource-integrity: "npm:^5.2.0-rc.1"
   peerDependencies:
-    react: ^19.1.1
-    react-dom: ^19.1.1
+    react: ^19
+    react-dom: ^19
   languageName: unknown
   linkType: soft
 
@@ -3939,6 +3939,7 @@ __metadata:
     eslint: "npm:^9.38.0"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
+    typescript: "npm:^5.9.3"
     vite: "npm:^7.1.12"
   languageName: unknown
   linkType: soft

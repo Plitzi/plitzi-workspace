@@ -16,6 +16,8 @@ import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSch
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import AppContext from '@pmodules/App/AppContext';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -31,8 +33,11 @@ import type {
   PluginBuilder,
   Schema,
   Style,
-  DropPosition
+  DropPosition,
+  BuilderNetworkContextValue
 } from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 
 export type BuilderProviderProps = {
   children: React.ReactNode;
@@ -56,6 +61,7 @@ const BuilderProvider = ({
   onBaseElementChange
 }: BuilderProviderProps) => {
   const { displayMode } = use(AppContext);
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
@@ -338,7 +344,7 @@ const BuilderProvider = ({
           pick(dataCloned.item, ['id', 'definition', 'attributes']),
           dropPosition,
           dataCloned.acum,
-          dataParsed.style.platform,
+          dataParsed.style,
           dataParsed.variables
         );
 
@@ -397,6 +403,54 @@ const BuilderProvider = ({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [getElement, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]
+  );
+
+  const elementAsTemplate = useCallback(
+    async (
+      cdnIdentifier: string,
+      schema: Schema,
+      style: Style,
+      name: string,
+      description: string,
+      element: Element
+    ) => {
+      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, element.id);
+      if (!elements.item) {
+        return;
+      }
+
+      const jsonData = {
+        definition: { name, description, baseElementId: elements.item.id },
+        schema: { flat: elements.acum, variables },
+        style: { ...elementsStyle, cache: generateCache(elementsStyle) }
+      };
+
+      // const jsonBlob = new Blob([JSON.stringify(jsonData)], { type: 'application/json' });
+      const file = new File([JSON.stringify(jsonData, null, 2)], `${name}.json`, {
+        type: 'application/json',
+        lastModified: Date.now()
+      });
+      const response = await mutate(
+        'SpaceAddResource',
+        { cdnIdentifier, resource: file, type: 'template', compression: undefined },
+        false,
+        false,
+        { customFetch: true }
+      );
+
+      // const response = await mutate('TemplateAdd', {
+      //   name,
+      //   description,
+      //   baseElementId: elements.item.id,
+      //   elements: elements.acum,
+      //   style: { ...elementsStyle, cache: generateCache(elementsStyle) },
+      //   variables
+      // });
+      // if (response.result) {
+      //   templatesAdd(response.result);
+      // }
+    },
+    [mutate]
   );
 
   const setVisibility = useCallback(
@@ -509,7 +563,8 @@ const BuilderProvider = ({
       builderSetBaseContext,
       builderElementPermissions,
       builderHandler,
-      updateElement
+      updateElement,
+      elementAsTemplate
     }),
     [
       mode,
@@ -522,7 +577,8 @@ const BuilderProvider = ({
       builderSetBaseContext,
       builderElementPermissions,
       builderHandler,
-      updateElement
+      updateElement,
+      elementAsTemplate
     ]
   );
 

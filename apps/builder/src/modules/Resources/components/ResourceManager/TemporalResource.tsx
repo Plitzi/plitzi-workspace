@@ -9,8 +9,13 @@ import ResourceName from './ResourceName';
 import ResourceType from './ResourceType';
 import ResourceUploadStatus from './ResourceUploadStatus';
 
-import type { ResourceFile, ResourceWithFile } from '../../types';
-import type { BuilderNetworkContextValue, PluginManifest } from '@plitzi/sdk-shared';
+import type {
+  BuilderNetworkContextValue,
+  PluginManifest,
+  ResourceFile,
+  ResourceType as TResourceType,
+  ResourceWithFile
+} from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 
@@ -19,7 +24,7 @@ export type TemporalResourceProps = {
   cdnIdentifier?: string;
   id?: string;
   file?: ResourceFile;
-  type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
+  type?: TResourceType;
   title?: string;
   metadata?: PluginManifest;
   onUploaded?: (resource: ResourceWithFile) => void;

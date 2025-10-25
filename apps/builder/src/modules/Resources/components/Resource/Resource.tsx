@@ -4,25 +4,25 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
 import { useState, use, useCallback } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
-import ResourceContent from './components/ResourceManager/ResourceContent';
-import ResourceName from './components/ResourceManager/ResourceName';
-import ResourceType from './components/ResourceManager/ResourceType';
-import ResourceUploadStatus from './components/ResourceManager/ResourceUploadStatus';
+import ResourceContent from '../ResourceManager/ResourceContent';
+import ResourceImage from './subTypes/ResourceImage';
+import ResourcePlugin from './subTypes/ResourcePlugin/ResourcePlugin';
+import ResourceTemplate from './subTypes/ResourceTemplate';
+import ResourceUnknown from './subTypes/ResourceUnknown';
+import ResourceVideo from './subTypes/ResourceVideo';
 
-import type { PluginManifest } from '@plitzi/sdk-shared';
+import type { PluginManifest, ResourceType as TResourceType } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type ResourceProps = {
   className?: string;
   id: string;
   cdnIdentifier: string;
-  type?: 'image' | 'video' | 'document' | 'application' | 'plugin';
+  type?: TResourceType;
   src?: string;
   title?: string;
   metadata?: PluginManifest;
@@ -39,10 +39,8 @@ const Resource = ({
   metadata,
   onRemove
 }: ResourceProps) => {
-  const { onDragStart } = useDragElement({ type, attributes: { src } });
   const { mutate } = use(NetworkContext);
   const { showModal, showDialog } = useModal();
-  const [hovered, setHovered] = useState(false);
   const [removing, setRemoving] = useState(false);
   const { addToast } = useToast();
 
@@ -149,46 +147,32 @@ const Resource = ({
     [id, cdnIdentifier, mutate, onRemove, showDialog]
   );
 
-  const handleMouseEnter = () => setHovered(true);
+  const sharedProps = {
+    className,
+    id,
+    cdnIdentifier,
+    title,
+    removing,
+    onClick: handleClick,
+    onRemove: handleClickRemove
+  };
 
-  const handleMouseLeave = () => setHovered(false);
+  switch (type) {
+    case 'template':
+      return <ResourceTemplate {...sharedProps} src={src} />;
 
-  const canDrag = ['video', 'image'].includes(type);
+    case 'image':
+      return <ResourceImage {...sharedProps} src={src} />;
 
-  return (
-    <div
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onDragStart={canDrag ? onDragStart : undefined}
-      draggable={canDrag}
-      className={classNames(
-        'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none',
-        {
-          'min-h-[164px]': type === 'plugin',
-          'min-h-[80px] cursor-pointer': type !== 'plugin',
-          'cursor-grabbing': !canDrag
-        },
-        className
-      )}
-      onClick={handleClick}
-    >
-      <ResourceContent type={type} src={src} title={title} metadata={metadata} isUploaded />
-      {hovered && (
-        <div className="absolute top-1 right-1 flex aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1">
-          <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={handleClickRemove} />
-        </div>
-      )}
-      <ResourceType type={type} />
-      {title && <ResourceName name={title} />}
-      <div
-        className="absolute top-1 left-1 flex aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1 hover:text-blue-400"
-        title="Information"
-      >
-        <i className="fa-solid fa-circle-info" />
-      </div>
-      {removing && <ResourceUploadStatus processing={removing} />}
-    </div>
-  );
+    case 'video':
+      return <ResourceVideo {...sharedProps} src={src} />;
+
+    case 'plugin':
+      return <ResourcePlugin {...sharedProps} src={src} metadata={metadata} />;
+
+    default:
+      return <ResourceUnknown {...sharedProps} type={type} />;
+  }
 };
 
 export default Resource;

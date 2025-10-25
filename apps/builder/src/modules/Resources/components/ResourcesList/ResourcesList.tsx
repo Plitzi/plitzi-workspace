@@ -3,9 +3,9 @@ import { use, useCallback } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
-import Resource from './Resource';
+import Resource from '../Resource';
 
-import type { Resource as TResource } from './types';
+import type { Resource as TResource } from '@plitzi/sdk-shared';
 
 export type ResourcesListProps = {
   className?: string;
@@ -39,7 +39,7 @@ const ResourcesList = ({ className, items, onRemove }: ResourcesListProps) => {
     <div className={classNames('grid grid-cols-2 gap-2 overflow-y-auto pb-1', className)}>
       {items.map(resource => (
         <Resource
-          className={classNames({ 'col-span-2': resource.type === 'plugin' })}
+          className={classNames({ 'col-span-2': resource.type === 'plugin' || resource.type === 'template' })}
           key={resource.id}
           id={resource.id}
           cdnIdentifier={resource.cdnIdentifier}

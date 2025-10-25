@@ -58,7 +58,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
           renderRightPopup={false}
           renderFloatingPopup={!previewMode}
         >
-          <div className="bg-grayviolet-200 relative flex max-w-[100vw] grow basis-0 overflow-hidden">
+          <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
             {!previewMode && <AppSidebar onSelect={setTabSelected} />}
             <div className="flex grow basis-0 flex-col overflow-hidden">
               {!['collections', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(tabSelected) && (

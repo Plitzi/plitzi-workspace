@@ -239,7 +239,7 @@ const SchemaContextProvider = ({
       data: Element,
       dropPosition: DropPosition = 'inside',
       initialItems: Record<string, Element> = {},
-      templatePlatform?: Style['platform'],
+      style?: Style,
       variables: SchemaVariable[] = [],
       fromSubscriptions = false
     ) => {
@@ -250,10 +250,11 @@ const SchemaContextProvider = ({
         dropPosition,
         initialItems,
         variables,
+        style,
         fromSubscriptions
       });
 
-      void eventBridge.emit('main', 'styleAddTemplate', templatePlatform, true);
+      void eventBridge.emit('main', 'styleAddTemplate', style?.platform, true);
     },
     [dispatchSchema, eventBridge]
   );
@@ -410,14 +411,14 @@ const SchemaContextProvider = ({
       subscriptionManager.subscribe('SpaceAddTemplate', {}, data => {
         const {
           element,
-          stylePlatform,
+          style,
           to,
           dropPosition,
           initialItems = [],
           variables = []
         } = get(data, 'data.SpaceAddTemplate', {}) as {
           element: Element;
-          stylePlatform: Style['platform'];
+          style: Style;
           to: string;
           dropPosition: DropPosition;
           initialItems?: Element[];
@@ -428,7 +429,7 @@ const SchemaContextProvider = ({
           element,
           dropPosition,
           initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
-          stylePlatform,
+          style,
           variables,
           true
         );
