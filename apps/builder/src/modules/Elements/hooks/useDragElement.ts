@@ -12,8 +12,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import { generateID } from '../../../helpers/utils';
 
-import type { ComponentDefinition } from '@plitzi/sdk-shared';
-import type { Template } from '@pmodules/Templates/TemplatesContext';
+import type { ComponentDefinition, Template } from '@plitzi/sdk-shared';
 import type { DragEvent } from 'react';
 
 export type UseDragElementProps = {

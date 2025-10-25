@@ -430,25 +430,13 @@ const BuilderProvider = ({
         type: 'application/json',
         lastModified: Date.now()
       });
-      const response = await mutate(
+      await mutate(
         'SpaceAddResource',
         { cdnIdentifier, resource: file, type: 'template', compression: undefined },
         false,
         false,
         { customFetch: true }
       );
-
-      // const response = await mutate('TemplateAdd', {
-      //   name,
-      //   description,
-      //   baseElementId: elements.item.id,
-      //   elements: elements.acum,
-      //   style: { ...elementsStyle, cache: generateCache(elementsStyle) },
-      //   variables
-      // });
-      // if (response.result) {
-      //   templatesAdd(response.result);
-      // }
     },
     [mutate]
   );

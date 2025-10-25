@@ -9,7 +9,7 @@ import ResourceName from '../../../ResourceManager/ResourceName';
 import ResourceType from '../../../ResourceManager/ResourceType';
 import ResourceUploadStatus from '../../../ResourceManager/ResourceUploadStatus';
 
-import type { Template } from '@pmodules/Templates/TemplatesContext';
+import type { Template } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type ResourceTemplateProps = {

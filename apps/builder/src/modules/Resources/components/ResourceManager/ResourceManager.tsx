@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 import getPluginManifest from './helpers/getPluginManifest';
 import TemporalResource from './TemporalResource';
 
-import type { ResourceFile, ResourceWithFile } from '../../types';
+import type { ResourceFile, ResourceWithFile } from '@plitzi/sdk-shared';
 
 const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 

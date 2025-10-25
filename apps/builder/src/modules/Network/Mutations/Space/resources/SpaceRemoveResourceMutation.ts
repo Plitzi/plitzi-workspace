@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client/core';
 
-import type { Resource } from '@pmodules/Resources/types';
+import type { Resource } from '@plitzi/sdk-shared';
 
 export type TSpaceRemoveResourceMutation = Resource;
 
