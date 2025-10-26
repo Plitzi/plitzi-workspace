@@ -1,3 +1,4 @@
+import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
@@ -15,12 +16,14 @@ import type { ComponentDefinition, ResourceFile, ResourceWithFile, Resource as T
 export type ResourcesCdnProps = {
   identifier: string;
   name: string;
+  isCollapsed?: boolean;
+  onCollapse?: (category: string, isCollapsed: boolean) => void;
   onRemove?: () => void;
 };
 
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
-const ResourcesCdn = ({ identifier, name, onRemove }: ResourcesCdnProps) => {
+const ResourcesCdn = ({ identifier, name, isCollapsed, onCollapse, onRemove }: ResourcesCdnProps) => {
   const { addToast } = useToast();
   const { plugins, remove, add } = use(PluginsContext);
   const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
@@ -115,32 +118,50 @@ const ResourcesCdn = ({ identifier, name, onRemove }: ResourcesCdnProps) => {
     [mutate, plugins, remove]
   );
 
+  const handleCollapse = useCallback(
+    (isCollapsed: boolean) => onCollapse?.(identifier, isCollapsed),
+    [identifier, onCollapse]
+  );
+
   return (
-    <div className="bg-primary-100/50 flex min-h-[200px] flex-col gap-2 overflow-y-auto rounded-lg p-2">
-      <Heading as="h5">{name}</Heading>
-      <ResourceManager
-        className="shrink-0"
-        cdnIdentifier={identifier}
-        uploadTypes={uploadTypes}
-        onUploaded={handleUploaded}
-        onUploadAdded={handleUploadAdded}
-      />
-      {!isLoading && finalResources.length > 0 && (
-        <>
-          <Heading as="h5">Uploaded</Heading>
-          <ResourcesList
-            items={finalResources}
-            className="max-h-[400px] overflow-y-auto"
-            onRemove={handleResourceRemoved}
-          />
-        </>
-      )}
-      {isLoading && (
-        <div className="flex w-full justify-center pt-2 pb-4">
-          <Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />
-        </div>
-      )}
-    </div>
+    <ContainerCollapsable collapsed={isCollapsed} onChange={handleCollapse}>
+      <ContainerCollapsable.Header
+        className={{ header: 'group', headerSlot: 'flex items-center gap-2' }}
+        title={<Heading as="h5">{name}</Heading>}
+        placement="right"
+        iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
+        iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
+      >
+        <div className="rounded border px-1 text-xs">{finalResources.length}</div>
+        <Icon icon="fa-solid fa-pencil" className="hidden cursor-pointer group-hover:block" title="Update" />
+        <Icon
+          intent="danger"
+          icon="fas fa-trash-alt"
+          className="hidden cursor-pointer group-hover:block"
+          title="Remove"
+        />
+      </ContainerCollapsable.Header>
+      <ContainerCollapsable.Content className="flex flex-col gap-3 py-2">
+        <ResourceManager
+          className="shrink-0"
+          cdnIdentifier={identifier}
+          uploadTypes={uploadTypes}
+          onUploaded={handleUploaded}
+          onUploadAdded={handleUploadAdded}
+        />
+        {!isLoading && finalResources.length > 0 && (
+          <>
+            <Heading as="h5">Uploaded</Heading>
+            <ResourcesList items={finalResources} className="overflow-y-auto" onRemove={handleResourceRemoved} />
+          </>
+        )}
+        {isLoading && (
+          <div className="flex w-full justify-center pt-2 pb-4">
+            <Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />
+          </div>
+        )}
+      </ContainerCollapsable.Content>
+    </ContainerCollapsable>
   );
 };
 

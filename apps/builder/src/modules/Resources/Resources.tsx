@@ -1,5 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
@@ -18,6 +19,16 @@ const Resources = () => {
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const { showModal } = useModal();
   const { data, isLoading, mutate: mutateCdns } = useGraphQL('SpaceCdns');
+
+  const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
+    'builder-state.resources.cdn.collapsedCache',
+    {}
+  );
+
+  const handleChangeCollapse = useCallback(
+    (id: string, isCollapsed: boolean) => setCollapsedCache(state => ({ ...state, [id]: isCollapsed })),
+    [setCollapsedCache]
+  );
 
   const handleClickAddCdn = useCallback(async () => {
     const response = await showModal<{
@@ -66,7 +77,13 @@ const Resources = () => {
       {!isLoading && (
         <div className="flex flex-col gap-4">
           {data?.SpaceCdns.edges.map((cdn, i) => (
-            <ResourcesCdn key={i} identifier={cdn.identifier} name={cdn.name} />
+            <ResourcesCdn
+              key={i}
+              identifier={cdn.identifier}
+              name={cdn.name}
+              isCollapsed={collapsedCache[cdn.identifier] ?? true}
+              onCollapse={handleChangeCollapse}
+            />
           ))}
         </div>
       )}
