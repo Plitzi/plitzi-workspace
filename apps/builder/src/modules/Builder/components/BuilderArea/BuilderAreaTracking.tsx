@@ -171,7 +171,6 @@ const BuilderAreaTracking = ({
         }
 
         case 'Escape': {
-          console.log('Escape pressed', elementSelected, setSelected);
           if (elementSelected) {
             setSelected(undefined);
           } else if (!elementSelected && baseElementId !== baseElementIdOriginal) {

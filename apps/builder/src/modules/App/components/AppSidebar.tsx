@@ -27,7 +27,7 @@ const AppSidebar = ({ onSelect }: AppSidebarProps) => {
   return (
     <PopupSidePanel
       size="md"
-      className="max-h-[calc(_100vh_-_48px)] overflow-y-auto"
+      className="max-h-[calc(100vh-48px)] overflow-y-auto"
       placementTabs="left"
       placement="left"
       separatorsBefore={separatorsBefore}
