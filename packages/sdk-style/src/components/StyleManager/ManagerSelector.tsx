@@ -160,11 +160,15 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           <h4>Remove Selector</h4>
         </Modal.Header>
         <Modal.Body>
-          <h4 className="px-3 py-2">Do you want to remove this item ?</h4>
+          <h4>Do you want to remove this item ?</h4>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={handleCloseModal}>Cancel</Button>
-          <Button onClick={handleSubmitModal}>Submit</Button>
+          <Button onClick={handleCloseModal} size="sm">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmitModal} size="sm">
+            Submit
+          </Button>
         </Modal.Footer>
       </Modal>
     </div>
