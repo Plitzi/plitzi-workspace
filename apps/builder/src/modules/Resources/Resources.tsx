@@ -81,6 +81,7 @@ const Resources = () => {
               key={i}
               identifier={cdn.identifier}
               name={cdn.name}
+              prefix={`${cdn.domain}/${cdn.prefix}/assets`}
               isCollapsed={collapsedCache[cdn.identifier] ?? true}
               onCollapse={handleChangeCollapse}
             />

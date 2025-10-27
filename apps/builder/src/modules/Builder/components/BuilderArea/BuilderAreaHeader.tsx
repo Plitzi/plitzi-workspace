@@ -112,7 +112,7 @@ const BuilderAreaHeader = ({
     <Flex
       items="center"
       gap={4}
-      className="h-10 min-h-[40px] rounded-tl-lg rounded-tr-lg border-b border-gray-300 bg-white pr-2 pl-4"
+      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-300 bg-white pr-2 pl-4"
     >
       <Flex items="center" gap={2}>
         <div

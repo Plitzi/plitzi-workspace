@@ -167,7 +167,7 @@ const Directory = ({
         placement="right"
         iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-left" />}
         iconExpanded={<Icon size="sm" icon="fa-solid fa-angle-down" />}
-        className="!p-0"
+        className="p-0!"
         title={titleMemo}
       >
         {!isRootFolder && (

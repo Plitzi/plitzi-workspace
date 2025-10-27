@@ -16,6 +16,7 @@ import type { ComponentDefinition, ResourceFile, ResourceWithFile, Resource as T
 export type ResourcesCdnProps = {
   identifier: string;
   name: string;
+  prefix: string;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
   onRemove?: () => void;
@@ -23,7 +24,7 @@ export type ResourcesCdnProps = {
 
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
-const ResourcesCdn = ({ identifier, name, isCollapsed, onCollapse, onRemove }: ResourcesCdnProps) => {
+const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRemove }: ResourcesCdnProps) => {
   const { addToast } = useToast();
   const { plugins, remove, add } = use(PluginsContext);
   const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
@@ -84,26 +85,6 @@ const ResourcesCdn = ({ identifier, name, isCollapsed, onCollapse, onRemove }: R
     [plugins, addToast]
   );
 
-  // const handleResourceUpdated = type => async settings => {
-  //   const plugin = plugins[type];
-  //   if (!plugin) {
-  //     return;
-  //   }
-
-  //   if (await update({ ...plugin, settings: { ...plugin.settings, ...settings } })) {
-  //     addToast(
-  //       <div>
-  //         Plugin <b>{plugin.name}</b> Settings Updated
-  //       </div>,
-  //       {
-  //         appeareance: 'success',
-  //         autoDismiss: true,
-  //         placement: 'top-right'
-  //       }
-  //     );
-  //   }
-  // };
-
   const handleResourceRemoved = useCallback(
     (resource: TResource) => {
       if (resource.type === 'plugin') {
@@ -132,7 +113,7 @@ const ResourcesCdn = ({ identifier, name, isCollapsed, onCollapse, onRemove }: R
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
-        <div className="rounded border px-1 text-xs">{finalResources.length}</div>
+        <div className="rounded border border-gray-500 px-1 text-xs text-gray-500">{finalResources.length}</div>
         <Icon icon="fa-solid fa-pencil" className="hidden cursor-pointer group-hover:block" title="Update" />
         <Icon
           intent="danger"
@@ -150,10 +131,12 @@ const ResourcesCdn = ({ identifier, name, isCollapsed, onCollapse, onRemove }: R
           onUploadAdded={handleUploadAdded}
         />
         {!isLoading && finalResources.length > 0 && (
-          <>
-            <Heading as="h5">Uploaded</Heading>
-            <ResourcesList items={finalResources} className="overflow-y-auto" onRemove={handleResourceRemoved} />
-          </>
+          <ResourcesList
+            prefix={prefix}
+            items={finalResources}
+            className="overflow-y-auto"
+            onRemove={handleResourceRemoved}
+          />
         )}
         {isLoading && (
           <div className="flex w-full justify-center pt-2 pb-4">

@@ -24,6 +24,7 @@ const SpaceAddCdnMutation = gql`
       region
       endpoint
       bucketName
+      prefix
     }
   }
 `;

@@ -26,6 +26,7 @@ const SpaceUpdateCdnMutation = gql`
       region
       endpoint
       bucketName
+      prefix
     }
   }
 `;

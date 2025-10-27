@@ -22,7 +22,7 @@ const resourceCdnFormSchema = z.discriminatedUnion('provider', [
   })
 ]);
 
-export type SpaceCdnFormProps = {
+export type ResourceCdnFormProps = {
   className?: string;
   name?: string;
   domain?: string;
@@ -43,7 +43,7 @@ const ResourceCdnForm = ({
   bucketName = '',
   onSubmit,
   onClose
-}: SpaceCdnFormProps) => {
+}: ResourceCdnFormProps) => {
   const form = useForm({
     defaultValues: { name, domain, provider, region, endpoint, bucketName },
     config: { schema: resourceCdnFormSchema }

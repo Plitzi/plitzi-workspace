@@ -38,6 +38,7 @@ export type Cdn = {
   region: string;
   endpoint?: string;
   bucketName: string;
+  prefix: string;
   createdAt: number;
   updatedAt: number;
 };

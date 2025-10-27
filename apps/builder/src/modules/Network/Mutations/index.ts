@@ -31,6 +31,7 @@ import SpaceHomePageMutation from './Space/pages/SpaceHomePageMutation';
 import SpaceRemovePageMutation from './Space/pages/SpaceRemovePageMutation';
 import SpaceUpdatePageMutation from './Space/pages/SpaceUpdatePageMutation';
 import SpaceAddResourceMutation from './Space/resources/SpaceAddResourceMutation';
+import SpaceMoveResourceMutation from './Space/resources/SpaceMoveResourceMutation';
 import SpaceRemoveResourceMutation from './Space/resources/SpaceRemoveResourceMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
@@ -74,6 +75,7 @@ import type { TSpaceHomePageMutation } from './Space/pages/SpaceHomePageMutation
 import type { TSpaceRemovePageMutation } from './Space/pages/SpaceRemovePageMutation';
 import type { TSpaceUpdatePageMutation } from './Space/pages/SpaceUpdatePageMutation';
 import type { TSpaceAddResourceMutation } from './Space/resources/SpaceAddResourceMutation';
+import type { TSpaceMoveResourceMutation } from './Space/resources/SpaceMoveResourceMutation';
 import type { TSpaceRemoveResourceMutation } from './Space/resources/SpaceRemoveResourceMutation';
 import type { TSpaceAddPluginMutation } from './Space/SpaceAddPluginMutation';
 import type { TSpaceDeployMutation } from './Space/SpaceDeployMutation';
@@ -103,6 +105,7 @@ export type MutationsMap = {
   SpaceUpdatePlugin: TSpaceUpdatePluginMutation;
   SpaceRemovePlugin: unknown;
   SpaceAddResource: TSpaceAddResourceMutation;
+  SpaceMoveResource: TSpaceMoveResourceMutation;
   SpaceRemoveResource: TSpaceRemoveResourceMutation;
   SpaceAddCdn: unknown;
   SpaceUpdateCdn: unknown;
@@ -167,6 +170,7 @@ const Mutations = {
   SpaceUpdatePlugin: SpaceUpdatePluginMutation,
   SpaceRemovePlugin: SpaceRemovePluginMutation,
   SpaceAddResource: SpaceAddResourceMutation,
+  SpaceMoveResource: SpaceMoveResourceMutation,
   SpaceRemoveResource: SpaceRemoveResourceMutation,
   SpaceAddCdn: SpaceAddCdnMutation,
   SpaceUpdateCdn: SpaceUpdateCdnMutation,
