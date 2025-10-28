@@ -111,20 +111,21 @@ const ResourceDirectory = ({
         },
         className
       )}
-      // collapsed={items.length !== 0}
       onDragOver={handleFolderDragOver}
       onDragLeave={handleFolderDragLeave}
       onDrop={handleFolderDrop}
     >
       <ContainerCollapsable.Header
         className={{
-          header: classNames('group', { 'pointer-events-none': isDragging }),
-          headerSlot: 'flex items-center gap-2'
+          header: classNames('group w-full', { 'pointer-events-none': isDragging }),
+          headerSlot: 'flex items-center gap-2',
+          headerContainer: 'grow basis-0 overflow-hidden',
+          headerTitle: 'w-full grow basis-0'
         }}
         title={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2">
             <Icon size="sm" icon="fa-solid fa-folder-open" />
-            {name}
+            <div className="truncate">{name}</div>
           </div>
         }
         placement="right"
@@ -146,14 +147,13 @@ const ResourceDirectory = ({
         )}
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={classNames('max-h-[432px] overflow-y-auto', { 'pointer-events-none': isDragging })}
+        className={classNames('max-h-[350px] overflow-y-auto', { 'pointer-events-none': isDragging })}
       >
         {items.length > 0 && (
           <div className="mt-2 block columns-3 gap-2">
             {items.map(resource => (
               <Resource
                 className="mb-2"
-                // className={classNames({ 'col-span-2': resource.type === 'plugin' || resource.type === 'template' })}
                 key={resource.id}
                 id={resource.id}
                 cdnIdentifier={resource.cdnIdentifier}

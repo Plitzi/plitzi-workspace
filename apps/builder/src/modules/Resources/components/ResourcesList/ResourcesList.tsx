@@ -55,7 +55,7 @@ const getDirectories = (
   prefix: string = 'https://cdn.plitzi.com/website/assets/',
   items: TResource[] = []
 ): ResourceDirectory[] => {
-  const directoriesMap: { [key: string]: TResource[] } = { test: [] };
+  const directoriesMap: { [key: string]: TResource[] } = { testVeryLongHeyDamn12345678999999: [] };
 
   items.forEach(item => {
     const { id, type } = item;

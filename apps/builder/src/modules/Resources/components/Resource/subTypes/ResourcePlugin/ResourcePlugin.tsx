@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import PluginContent from './PluginContent';
 import ResourceUploadStatus from '../../../ResourceManager/ResourceUploadStatus';
+import ResourceRemoveButton from '../../ResourceRemoveButton';
 
 import type { PluginManifest } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -39,9 +40,7 @@ const ResourcePlugin = ({ className, metadata, removing, onClick, onRemove }: Re
         size={0}
         isUploaded
       />
-      <div className="absolute top-1 right-1 hidden aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1 group-hover:flex">
-        <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={onRemove} />
-      </div>
+      <ResourceRemoveButton onRemove={onRemove} />
       {removing && <ResourceUploadStatus processing={removing} />}
     </div>
   );

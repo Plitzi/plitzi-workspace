@@ -5,6 +5,7 @@ import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 import { ResourcesListContext } from '@pmodules/Resources/components/ResourcesList/ResourcesListProvider';
 
 import ResourceUploadStatus from '../../../ResourceManager/ResourceUploadStatus';
+import ResourceRemoveButton from '../../ResourceRemoveButton';
 
 import type { DragEvent, MouseEvent } from 'react';
 
@@ -52,9 +53,7 @@ const ResourceVideo = ({
       onClick={onClick}
     >
       <video draggable={false} src={src} muted className="h-auto w-full object-cover" title={title} />
-      <div className="absolute top-1/2 left-1/2 hidden aspect-square -translate-1/2 cursor-pointer items-center justify-center rounded-full bg-white px-1 group-hover:flex">
-        <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={onRemove} />
-      </div>
+      <ResourceRemoveButton onRemove={onRemove} />
       {removing && <ResourceUploadStatus processing={removing} />}
     </div>
   );

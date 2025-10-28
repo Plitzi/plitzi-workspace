@@ -48,8 +48,8 @@ const PluginContent = ({
   const finalSize = useMemo(() => formatBytes(size), [size]);
 
   return (
-    <div className={classNames('group m-2 flex flex-col gap-2 overflow-hidden', className)}>
-      <div className="flex items-center gap-3">
+    <div className={classNames('group m-2 flex flex-col gap-1 overflow-hidden', className)}>
+      <div className="flex items-center gap-2">
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-500"
           style={{ backgroundColor }}
@@ -63,7 +63,7 @@ const PluginContent = ({
           <div className="text-xs">{version}</div>
         </div>
       </div>
-      <div className="inline-flex gap-1 text-sm">
+      <div className="flex gap-1 text-sm">
         <div className="font-bold">Author:</div>
         <div className="truncate">{author}</div>
       </div>

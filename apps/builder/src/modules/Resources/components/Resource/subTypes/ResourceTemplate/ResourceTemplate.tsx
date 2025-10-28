@@ -5,8 +5,9 @@ import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import TemplateContent from './TemplateContent';
-import ResourceName from '../../../ResourceManager/ResourceName';
 import ResourceUploadStatus from '../../../ResourceManager/ResourceUploadStatus';
+import ResourceName from '../../ResourceName';
+import ResourceRemoveButton from '../../ResourceRemoveButton';
 
 import type { Template } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -37,32 +38,25 @@ const ResourceTemplate = ({ className, title, src, removing, onClick, onRemove }
 
   const { onDragStart } = useDragElement({ type: 'template', manifest });
 
-  if (loading) {
+  if (loading || !manifest) {
     return undefined;
   }
+
+  const { definition, schema, style } = manifest;
 
   return (
     <div
       onDragStart={onDragStart}
       draggable
       className={classNames(
-        'group relative flex min-h-[164px] w-full cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none [column-span:all]',
+        'group relative flex w-full cursor-grabbing flex-col overflow-hidden rounded-md border border-gray-300 select-none [column-span:all]',
         className
       )}
       onClick={onClick}
     >
-      {manifest && (
-        <TemplateContent
-          name={manifest.definition.name}
-          baseElementId={manifest.definition.baseElementId}
-          schema={manifest.schema}
-          style={manifest.style}
-        />
-      )}
-      <div className="absolute top-1 right-1 hidden aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1 group-hover:flex">
-        <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={onRemove} />
-      </div>
-      {title && <ResourceName name={title} />}
+      <TemplateContent baseElementId={definition.baseElementId} schema={schema} style={style} />
+      <ResourceRemoveButton onRemove={onRemove} />
+      <ResourceName name={definition.name ? definition.name : title} />
       {removing && <ResourceUploadStatus processing={removing} />}
     </div>
   );
