@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 
 import ResourceDirectoryForm from '@pmodules/Resources/Models/ResourceDirectoryForm';
 
+import { getDirectories, sortDirectories } from './ListHelper';
 import ResourcesDirectory from './ResourceDirectory';
 import ResourcesListProvider from './ResourcesListProvider';
 
@@ -20,80 +21,6 @@ export type ResourcesListProps = {
 };
 
 export type ResourceDirectory = { name: string; items: TResource[]; canDrop: boolean };
-
-const defaultFolderName = 'All Resources';
-
-const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
-  if (a.name === defaultFolderName) {
-    return -1;
-  }
-
-  if (b.name === defaultFolderName) {
-    return 1;
-  }
-
-  if (a.name === 'Plugins' && b.name !== 'Plugins') {
-    return 1;
-  }
-
-  if (b.name === 'Plugins' && a.name !== 'Plugins') {
-    return -1;
-  }
-
-  if (a.name === 'Templates' && b.name !== 'Templates') {
-    return 1;
-  }
-
-  if (b.name === 'Templates' && a.name !== 'Templates') {
-    return -1;
-  }
-
-  return a.name.localeCompare(b.name);
-};
-
-const getDirectories = (
-  prefix: string = 'https://cdn.plitzi.com/website/assets/',
-  items: TResource[] = []
-): ResourceDirectory[] => {
-  const directoriesMap: { [key: string]: TResource[] } = { testVeryLongHeyDamn12345678999999: [] };
-
-  items.forEach(item => {
-    const { id, type } = item;
-    if (id.startsWith(prefix) && !['plugin', 'template'].includes(type)) {
-      const pathAfterPrefix = id.substring(prefix.length);
-      const parts = pathAfterPrefix.split('/');
-      const directoryName = parts.length > 1 ? parts[0] : defaultFolderName;
-
-      if (!(directoriesMap[directoryName] as undefined | TResource[])) {
-        directoriesMap[directoryName] = [];
-      }
-
-      directoriesMap[directoryName].push(item);
-    } else if (type === 'plugin') {
-      if (!(directoriesMap['Plugins'] as undefined | TResource[])) {
-        directoriesMap['Plugins'] = [];
-      }
-
-      directoriesMap['Plugins'].push(item);
-    } else if (type === 'template') {
-      if (!(directoriesMap['Templates'] as undefined | TResource[])) {
-        directoriesMap['Templates'] = [];
-      }
-
-      directoriesMap['Templates'].push(item);
-    } else {
-      if (!(directoriesMap[defaultFolderName] as undefined | TResource[])) {
-        directoriesMap[defaultFolderName] = [];
-      }
-
-      directoriesMap[defaultFolderName].push(item);
-    }
-  });
-
-  return Object.entries(directoriesMap)
-    .map(([name, items]) => ({ name, items, canDrop: !['Plugins', 'Templates'].includes(name) }))
-    .sort(sortDirectories);
-};
 
 const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesListProps) => {
   const { showModal } = useModal();

@@ -2,11 +2,12 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import classNames from 'classnames';
-import { use, useCallback, useState } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 import Resource from '../Resource';
+import { formatFolderName } from './ListHelper';
 import { ResourcesListContext } from './ResourcesListProvider';
 
 import type { Resource as TResource } from '@plitzi/sdk-shared';
@@ -34,6 +35,7 @@ const ResourceDirectory = ({
   const [isDragging, setIsDragging] = useState(false);
   const { plugins, remove } = use(PluginsContext);
   const { draggingFile } = use(ResourcesListContext);
+  const nameFormatted = useMemo(() => formatFolderName(name), [name]);
 
   const handleResourceRemoved = useCallback(
     (id: string) => {
@@ -125,7 +127,7 @@ const ResourceDirectory = ({
         title={
           <div className="flex w-full items-center gap-2">
             <Icon size="sm" icon="fa-solid fa-folder-open" />
-            <div className="truncate">{name}</div>
+            <div className="truncate">{nameFormatted}</div>
           </div>
         }
         placement="right"
