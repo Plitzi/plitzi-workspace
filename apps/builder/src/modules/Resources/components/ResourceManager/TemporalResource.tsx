@@ -6,7 +6,6 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import ResourceContent from './ResourceContent';
 import ResourceName from './ResourceName';
-import ResourceType from './ResourceType';
 import ResourceUploadStatus from './ResourceUploadStatus';
 
 import type {
@@ -159,7 +158,6 @@ const TemporalResource = ({
       )}
     >
       <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file?.size} />
-      <ResourceType type={type} />
       {file?.name && <ResourceName name={file.name} />}
       {(uploading || processing || hovered) && (
         <ResourceUploadStatus

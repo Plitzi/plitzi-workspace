@@ -7,6 +7,7 @@ import { use, useCallback, useState } from 'react';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 import Resource from '../Resource';
+import { ResourcesListContext } from './ResourcesListProvider';
 
 import type { Resource as TResource } from '@plitzi/sdk-shared';
 import type { DragEvent, MouseEvent } from 'react';
@@ -32,6 +33,7 @@ const ResourceDirectory = ({
 }: ResourcesDirectoryProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const { plugins, remove } = use(PluginsContext);
+  const { draggingFile } = use(ResourcesListContext);
 
   const handleResourceRemoved = useCallback(
     (id: string) => {
@@ -61,42 +63,41 @@ const ResourceDirectory = ({
   );
 
   const handleFolderDragOver = useCallback(
-    (e: DragEvent) => {
+    (e: DragEvent<HTMLElement>) => {
       e.preventDefault();
-      if (!canDrop) {
+      if (!canDrop || isDragging || draggingFile?.directoryName === name) {
         return;
       }
 
-      // console.log(e.dataTransfer.getData('text/plain'));
       setIsDragging(true);
     },
-    [canDrop]
+    [canDrop, draggingFile?.directoryName, isDragging, name]
   );
 
   const handleFolderDrop = useCallback(
     (e: DragEvent) => {
       e.preventDefault();
-      if (!canDrop) {
+      if (!canDrop || draggingFile?.directoryName === name) {
         return;
       }
 
       setIsDragging(false);
       // Handle dropped files here
-      console.log('DROPPED HERE');
+      console.log('DROPPED HERE', draggingFile);
     },
-    [canDrop]
+    [canDrop, draggingFile, name]
   );
 
   const handleFolderDragLeave = useCallback(
     (e: DragEvent) => {
       e.preventDefault();
-      if (!canDrop) {
+      if (!canDrop || draggingFile?.directoryName === name) {
         return;
       }
 
       setIsDragging(false);
     },
-    [canDrop]
+    [canDrop, draggingFile?.directoryName, name]
   );
 
   return (
@@ -116,7 +117,10 @@ const ResourceDirectory = ({
       onDrop={handleFolderDrop}
     >
       <ContainerCollapsable.Header
-        className={{ header: 'group', headerSlot: 'flex items-center gap-2' }}
+        className={{
+          header: classNames('group', { 'pointer-events-none': isDragging }),
+          headerSlot: 'flex items-center gap-2'
+        }}
         title={
           <div className="flex items-center gap-2">
             <Icon size="sm" icon="fa-solid fa-folder-open" />
@@ -141,7 +145,9 @@ const ResourceDirectory = ({
           </>
         )}
       </ContainerCollapsable.Header>
-      <ContainerCollapsable.Content className="max-h-[432px] overflow-y-auto">
+      <ContainerCollapsable.Content
+        className={classNames('max-h-[432px] overflow-y-auto', { 'pointer-events-none': isDragging })}
+      >
         {items.length > 0 && (
           <div className="mt-2 block columns-3 gap-2">
             {items.map(resource => (
@@ -155,6 +161,7 @@ const ResourceDirectory = ({
                 title={resource.name}
                 src={resource.path}
                 metadata={resource.type === 'plugin' ? resource.metadata : undefined}
+                directoryName={name}
                 onRemove={handleResourceRemoved}
               />
             ))}

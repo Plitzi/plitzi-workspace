@@ -1,10 +1,18 @@
+import classNames from 'classnames';
+
 export type ResourceNameProps = {
   name?: string;
+  fullWidth?: boolean;
 };
 
-const ResourceName = ({ name }: ResourceNameProps) => {
+const ResourceName = ({ name, fullWidth = false }: ResourceNameProps) => {
   return (
-    <div className="absolute right-8 bottom-0 left-0 flex max-w-[200px] items-center truncate overflow-hidden rounded-tr bg-white p-1 px-2 text-xs">
+    <div
+      className={classNames(
+        'absolute right-4 bottom-0 left-0 flex items-center truncate overflow-hidden bg-white p-1 px-2 text-xs',
+        { 'w-full': fullWidth, 'max-w-[200px] rounded-tr': !fullWidth }
+      )}
+    >
       <div className="truncate" title={name}>
         {name}
       </div>

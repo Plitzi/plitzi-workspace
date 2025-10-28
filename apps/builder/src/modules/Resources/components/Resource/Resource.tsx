@@ -8,11 +8,11 @@ import { useState, use, useCallback } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import ResourceFile from './subTypes/ResourceFile';
 import ResourceContent from '../ResourceManager/ResourceContent';
 import ResourceImage from './subTypes/ResourceImage';
 import ResourcePlugin from './subTypes/ResourcePlugin/ResourcePlugin';
 import ResourceTemplate from './subTypes/ResourceTemplate';
-import ResourceUnknown from './subTypes/ResourceUnknown';
 import ResourceVideo from './subTypes/ResourceVideo';
 
 import type { PluginManifest, ResourceType as TResourceType } from '@plitzi/sdk-shared';
@@ -26,6 +26,7 @@ export type ResourceProps = {
   src?: string;
   title?: string;
   metadata?: PluginManifest;
+  directoryName?: string;
   onRemove?: (id: string) => void;
 };
 
@@ -37,6 +38,7 @@ const Resource = ({
   src = '',
   title = '',
   metadata,
+  directoryName = '',
   onRemove
 }: ResourceProps) => {
   const { mutate } = use(NetworkContext);
@@ -153,6 +155,7 @@ const Resource = ({
     cdnIdentifier,
     title,
     removing,
+    directoryName,
     onClick: handleClick,
     onRemove: handleClickRemove
   };
@@ -171,7 +174,7 @@ const Resource = ({
       return <ResourcePlugin {...sharedProps} src={src} metadata={metadata} />;
 
     default:
-      return <ResourceUnknown {...sharedProps} type={type} />;
+      return <ResourceFile {...sharedProps} />;
   }
 };
 

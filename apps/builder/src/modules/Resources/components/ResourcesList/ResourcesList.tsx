@@ -7,7 +7,8 @@ import { useCallback, useState } from 'react';
 
 import ResourceDirectoryForm from '@pmodules/Resources/Models/ResourceDirectoryForm';
 
-import ResourcesDirectory from '../ResourceDirectory';
+import ResourcesDirectory from './ResourceDirectory';
+import ResourcesListProvider from './ResourcesListProvider';
 
 import type { Resource as TResource } from '@plitzi/sdk-shared';
 
@@ -20,42 +21,41 @@ export type ResourcesListProps = {
 
 export type ResourceDirectory = { name: string; items: TResource[]; canDrop: boolean };
 
-const sortDirectories =
-  (defaultFolderName: string = 'All Resources') =>
-  (a: ResourceDirectory, b: ResourceDirectory) => {
-    if (a.name === defaultFolderName) {
-      return -1;
-    }
+const defaultFolderName = 'All Resources';
 
-    if (b.name === defaultFolderName) {
-      return 1;
-    }
+const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
+  if (a.name === defaultFolderName) {
+    return -1;
+  }
 
-    if (a.name === 'Plugins' && b.name !== 'Plugins') {
-      return 1;
-    }
+  if (b.name === defaultFolderName) {
+    return 1;
+  }
 
-    if (b.name === 'Plugins' && a.name !== 'Plugins') {
-      return -1;
-    }
+  if (a.name === 'Plugins' && b.name !== 'Plugins') {
+    return 1;
+  }
 
-    if (a.name === 'Templates' && b.name !== 'Templates') {
-      return 1;
-    }
+  if (b.name === 'Plugins' && a.name !== 'Plugins') {
+    return -1;
+  }
 
-    if (b.name === 'Templates' && a.name !== 'Templates') {
-      return -1;
-    }
+  if (a.name === 'Templates' && b.name !== 'Templates') {
+    return 1;
+  }
 
-    return a.name.localeCompare(b.name);
-  };
+  if (b.name === 'Templates' && a.name !== 'Templates') {
+    return -1;
+  }
+
+  return a.name.localeCompare(b.name);
+};
 
 const getDirectories = (
   prefix: string = 'https://cdn.plitzi.com/website/assets/',
-  items: TResource[] = [],
-  defaultFolderName: string = 'All Resources'
+  items: TResource[] = []
 ): ResourceDirectory[] => {
-  const directoriesMap: { [key: string]: TResource[] } = {};
+  const directoriesMap: { [key: string]: TResource[] } = { test: [] };
 
   items.forEach(item => {
     const { id, type } = item;
@@ -92,7 +92,7 @@ const getDirectories = (
 
   return Object.entries(directoriesMap)
     .map(([name, items]) => ({ name, items, canDrop: !['Plugins', 'Templates'].includes(name) }))
-    .sort(sortDirectories(defaultFolderName));
+    .sort(sortDirectories);
 };
 
 const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesListProps) => {
@@ -122,7 +122,7 @@ const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesLis
 
     const { name } = response;
 
-    setDirectories(state => [...state, { name, items: [], canDrop: true }].sort(sortDirectories()));
+    setDirectories(state => [...state, { name, items: [], canDrop: true }].sort(sortDirectories));
   }, [showModal, directories]);
 
   const handleClickRemoveDirectory = useCallback(
@@ -153,17 +153,19 @@ const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesLis
       <Button size="sm" onClick={handleAddDirectory}>
         Add Directory
       </Button>
-      {directories.map(directory => (
-        <ResourcesDirectory
-          key={directory.name}
-          name={directory.name}
-          items={directory.items}
-          defaultDirectory={directory.name === 'All Resources'}
-          canDrop={directory.canDrop}
-          onRemoveDirectory={handleClickRemoveDirectory}
-          onRemove={onRemove}
-        />
-      ))}
+      <ResourcesListProvider>
+        {directories.map(directory => (
+          <ResourcesDirectory
+            key={directory.name}
+            name={directory.name}
+            items={directory.items}
+            defaultDirectory={directory.name === 'All Resources'}
+            canDrop={directory.canDrop}
+            onRemoveDirectory={handleClickRemoveDirectory}
+            onRemove={onRemove}
+          />
+        ))}
+      </ResourcesListProvider>
     </div>
   );
 };

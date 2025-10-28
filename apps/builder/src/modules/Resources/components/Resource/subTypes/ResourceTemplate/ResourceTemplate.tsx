@@ -6,7 +6,6 @@ import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import TemplateContent from './TemplateContent';
 import ResourceName from '../../../ResourceManager/ResourceName';
-import ResourceType from '../../../ResourceManager/ResourceType';
 import ResourceUploadStatus from '../../../ResourceManager/ResourceUploadStatus';
 
 import type { Template } from '@plitzi/sdk-shared';
@@ -47,7 +46,7 @@ const ResourceTemplate = ({ className, title, src, removing, onClick, onRemove }
       onDragStart={onDragStart}
       draggable
       className={classNames(
-        'group relative flex min-h-[164px] w-full cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none',
+        'group relative flex min-h-[164px] w-full cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none [column-span:all]',
         className
       )}
       onClick={onClick}
@@ -63,14 +62,7 @@ const ResourceTemplate = ({ className, title, src, removing, onClick, onRemove }
       <div className="absolute top-1 right-1 hidden aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1 group-hover:flex">
         <i className="fa-solid fa-circle-xmark hover:text-red-400" title="Remove" onClick={onRemove} />
       </div>
-      <ResourceType type="template" />
       {title && <ResourceName name={title} />}
-      <div
-        className="absolute top-1 left-1 flex aspect-square cursor-pointer items-center justify-center rounded-full bg-white px-1 hover:text-blue-400"
-        title="Information"
-      >
-        <i className="fa-solid fa-circle-info" />
-      </div>
       {removing && <ResourceUploadStatus processing={removing} />}
     </div>
   );
