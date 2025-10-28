@@ -15,7 +15,6 @@ import type { MouseEvent } from 'react';
 export type ResourceTemplateProps = {
   className?: string;
   id: string;
-  cdnIdentifier: string;
   src: string;
   title?: string;
   removing?: boolean;

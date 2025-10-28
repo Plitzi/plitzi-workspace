@@ -132,9 +132,10 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
         />
         {!isLoading && finalResources.length > 0 && (
           <ResourcesList
+            className="overflow-y-auto"
             prefix={prefix}
             items={finalResources}
-            className="overflow-y-auto"
+            cdnIdentifier={identifier}
             onRemove={handleResourceRemoved}
           />
         )}

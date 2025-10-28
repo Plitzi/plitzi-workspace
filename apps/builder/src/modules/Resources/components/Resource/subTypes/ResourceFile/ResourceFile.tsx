@@ -9,7 +9,6 @@ import type { MouseEvent } from 'react';
 export type ResourceFileProps = {
   className?: string;
   id: string;
-  cdnIdentifier: string;
   title?: string;
   removing?: boolean;
   onClick?: () => void;

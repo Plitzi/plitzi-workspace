@@ -11,7 +11,6 @@ import type { MouseEvent } from 'react';
 export type ResourcePluginProps = {
   className?: string;
   id: string;
-  cdnIdentifier: string;
   src: string;
   metadata?: PluginManifest;
   removing?: boolean;

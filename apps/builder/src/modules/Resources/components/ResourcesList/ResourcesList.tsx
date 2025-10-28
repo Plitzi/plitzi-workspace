@@ -17,12 +17,13 @@ export type ResourcesListProps = {
   className?: string;
   items: TResource[];
   prefix: string;
+  cdnIdentifier: string;
   onRemove?: (item: TResource) => void;
 };
 
 export type ResourceDirectory = { name: string; items: TResource[]; canDrop: boolean };
 
-const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesListProps) => {
+const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onRemove }: ResourcesListProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const [directories, setDirectories] = useState<ResourceDirectory[]>(() => getDirectories(prefix, items));
@@ -88,6 +89,7 @@ const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesLis
             items={directory.items}
             defaultDirectory={directory.name === 'All Resources'}
             canDrop={directory.canDrop}
+            cdnIdentifier={cdnIdentifier}
             onRemoveDirectory={handleClickRemoveDirectory}
             onRemove={onRemove}
           />

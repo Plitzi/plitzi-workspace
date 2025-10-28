@@ -12,7 +12,6 @@ import type { DragEvent, MouseEvent } from 'react';
 export type ResourceVideoProps = {
   className?: string;
   id: string;
-  cdnIdentifier: string;
   src: string;
   title?: string;
   removing?: boolean;

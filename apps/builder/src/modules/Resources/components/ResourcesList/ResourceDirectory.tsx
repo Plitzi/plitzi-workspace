@@ -5,12 +5,15 @@ import classNames from 'classnames';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import Resource from '../Resource';
 import { formatFolderName } from './ListHelper';
 import { ResourcesListContext } from './ResourcesListProvider';
 
-import type { Resource as TResource } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, Resource as TResource } from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { DragEvent, MouseEvent } from 'react';
 
 export type ResourcesDirectoryProps = {
@@ -19,6 +22,7 @@ export type ResourcesDirectoryProps = {
   items: TResource[];
   defaultDirectory?: boolean;
   canDrop?: boolean;
+  cdnIdentifier: string;
   onRemove?: (item: TResource) => void;
   onRemoveDirectory?: (name?: string) => void;
 };
@@ -29,9 +33,11 @@ const ResourceDirectory = ({
   items,
   defaultDirectory = false,
   canDrop = true,
+  cdnIdentifier,
   onRemove,
   onRemoveDirectory
 }: ResourcesDirectoryProps) => {
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const [isDragging, setIsDragging] = useState(false);
   const { plugins, remove } = use(PluginsContext);
   const { draggingFile } = use(ResourcesListContext);
@@ -77,17 +83,26 @@ const ResourceDirectory = ({
   );
 
   const handleFolderDrop = useCallback(
-    (e: DragEvent) => {
+    async (e: DragEvent) => {
       e.preventDefault();
-      if (!canDrop || draggingFile?.directoryName === name) {
+      if (!canDrop || !draggingFile || draggingFile.directoryName === name) {
         return;
       }
 
       setIsDragging(false);
       // Handle dropped files here
       console.log('DROPPED HERE', draggingFile);
+
+      const response = await mutate(
+        'SpaceMoveResource',
+        { cdnIdentifier, identifier: draggingFile.id, prefix: 'test_abc' },
+        false,
+        false,
+        { customFetch: true }
+      );
+      console.log(response);
     },
-    [canDrop, draggingFile, name]
+    [canDrop, cdnIdentifier, draggingFile, mutate, name]
   );
 
   const handleFolderDragLeave = useCallback(
@@ -109,7 +124,7 @@ const ResourceDirectory = ({
         {
           'border border-dashed border-orange-500 bg-orange-100': items.length === 0,
           'bg-slate-100': items.length > 0,
-          'bg-purple-500': isDragging
+          'outline-2 -outline-offset-2 outline-black': isDragging
         },
         className
       )}
