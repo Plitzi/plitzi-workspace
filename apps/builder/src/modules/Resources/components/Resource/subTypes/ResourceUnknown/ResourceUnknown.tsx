@@ -22,7 +22,7 @@ const ResourceUnknown = ({ className, title, type, removing, onClick, onRemove }
   return (
     <div
       className={classNames(
-        'group relative flex min-h-[80px] w-full cursor-pointer overflow-hidden rounded-md border border-gray-300 select-none',
+        'group relative flex min-h-20 w-full cursor-pointer overflow-hidden rounded-md border border-gray-300 select-none',
         className
       )}
       onClick={onClick}

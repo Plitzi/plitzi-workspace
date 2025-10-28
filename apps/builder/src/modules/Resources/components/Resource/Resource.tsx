@@ -69,7 +69,7 @@ const Resource = ({
               Preview
             </Heading>
             <div className="group relative rounded-sm border border-gray-400 p-1">
-              <ResourceContent className="h-[96px] w-[96px] rounded-sm" type={type} src={src} title={title} />
+              <ResourceContent className="h-24 w-24 rounded-sm" type={type} src={src} title={title} />
               {(type === 'image' || type === 'video') && (
                 <a
                   target="_blank"

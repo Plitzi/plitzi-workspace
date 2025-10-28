@@ -27,7 +27,7 @@ const ResourceImage = ({ className, title, src, removing, onClick, onRemove }: R
       onDragStart={onDragStart}
       draggable
       className={classNames(
-        'group relative flex min-h-[80px] w-full cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none',
+        'group relative flex min-h-20 w-full cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none',
         className
       )}
       onClick={onClick}

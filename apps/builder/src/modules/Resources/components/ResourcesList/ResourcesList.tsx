@@ -18,16 +18,49 @@ export type ResourcesListProps = {
   onRemove?: (item: TResource) => void;
 };
 
+export type ResourceDirectory = { name: string; items: TResource[]; canDrop: boolean };
+
+const sortDirectories =
+  (defaultFolderName: string = 'All Resources') =>
+  (a: ResourceDirectory, b: ResourceDirectory) => {
+    if (a.name === defaultFolderName) {
+      return -1;
+    }
+
+    if (b.name === defaultFolderName) {
+      return 1;
+    }
+
+    if (a.name === 'Plugins' && b.name !== 'Plugins') {
+      return 1;
+    }
+
+    if (b.name === 'Plugins' && a.name !== 'Plugins') {
+      return -1;
+    }
+
+    if (a.name === 'Templates' && b.name !== 'Templates') {
+      return 1;
+    }
+
+    if (b.name === 'Templates' && a.name !== 'Templates') {
+      return -1;
+    }
+
+    return a.name.localeCompare(b.name);
+  };
+
 const getDirectories = (
   prefix: string = 'https://cdn.plitzi.com/website/assets/',
   items: TResource[] = [],
   defaultFolderName: string = 'All Resources'
-): { name: string; items: TResource[] }[] => {
+): ResourceDirectory[] => {
   const directoriesMap: { [key: string]: TResource[] } = {};
 
   items.forEach(item => {
-    if (item.id.startsWith(prefix)) {
-      const pathAfterPrefix = item.id.substring(prefix.length);
+    const { id, type } = item;
+    if (id.startsWith(prefix) && !['plugin', 'template'].includes(type)) {
+      const pathAfterPrefix = id.substring(prefix.length);
       const parts = pathAfterPrefix.split('/');
       const directoryName = parts.length > 1 ? parts[0] : defaultFolderName;
 
@@ -36,6 +69,18 @@ const getDirectories = (
       }
 
       directoriesMap[directoryName].push(item);
+    } else if (type === 'plugin') {
+      if (!(directoriesMap['Plugins'] as undefined | TResource[])) {
+        directoriesMap['Plugins'] = [];
+      }
+
+      directoriesMap['Plugins'].push(item);
+    } else if (type === 'template') {
+      if (!(directoriesMap['Templates'] as undefined | TResource[])) {
+        directoriesMap['Templates'] = [];
+      }
+
+      directoriesMap['Templates'].push(item);
     } else {
       if (!(directoriesMap[defaultFolderName] as undefined | TResource[])) {
         directoriesMap[defaultFolderName] = [];
@@ -45,15 +90,15 @@ const getDirectories = (
     }
   });
 
-  return Object.entries(directoriesMap).map(([name, items]) => ({ name, items }));
+  return Object.entries(directoriesMap)
+    .map(([name, items]) => ({ name, items, canDrop: !['Plugins', 'Templates'].includes(name) }))
+    .sort(sortDirectories(defaultFolderName));
 };
 
 const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesListProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const [directories, setDirectories] = useState<{ name: string; items: TResource[] }[]>(() =>
-    getDirectories(prefix, items)
-  );
+  const [directories, setDirectories] = useState<ResourceDirectory[]>(() => getDirectories(prefix, items));
 
   useDidUpdateEffect(() => {
     setDirectories(getDirectories(prefix, items));
@@ -77,7 +122,7 @@ const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesLis
 
     const { name } = response;
 
-    setDirectories(state => [...state, { name, items: [] }]);
+    setDirectories(state => [...state, { name, items: [], canDrop: true }].sort(sortDirectories()));
   }, [showModal, directories]);
 
   const handleClickRemoveDirectory = useCallback(
@@ -114,6 +159,7 @@ const ResourcesList = ({ className, prefix = '', items, onRemove }: ResourcesLis
           name={directory.name}
           items={directory.items}
           defaultDirectory={directory.name === 'All Resources'}
+          canDrop={directory.canDrop}
           onRemoveDirectory={handleClickRemoveDirectory}
           onRemove={onRemove}
         />

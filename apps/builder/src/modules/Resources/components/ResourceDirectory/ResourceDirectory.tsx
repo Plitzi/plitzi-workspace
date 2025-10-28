@@ -2,20 +2,21 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import classNames from 'classnames';
-import { use, useCallback } from 'react';
+import { use, useCallback, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 import Resource from '../Resource';
 
 import type { Resource as TResource } from '@plitzi/sdk-shared';
-import type { MouseEvent } from 'react';
+import type { DragEvent, MouseEvent } from 'react';
 
 export type ResourcesDirectoryProps = {
   className?: string;
   name?: string;
   items: TResource[];
   defaultDirectory?: boolean;
+  canDrop?: boolean;
   onRemove?: (item: TResource) => void;
   onRemoveDirectory?: (name?: string) => void;
 };
@@ -25,9 +26,11 @@ const ResourceDirectory = ({
   name,
   items,
   defaultDirectory = false,
+  canDrop = true,
   onRemove,
   onRemoveDirectory
 }: ResourcesDirectoryProps) => {
+  const [isDragging, setIsDragging] = useState(false);
   const { plugins, remove } = use(PluginsContext);
 
   const handleResourceRemoved = useCallback(
@@ -57,17 +60,60 @@ const ResourceDirectory = ({
     [name, onRemoveDirectory]
   );
 
+  const handleFolderDragOver = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      if (!canDrop) {
+        return;
+      }
+
+      // console.log(e.dataTransfer.getData('text/plain'));
+      setIsDragging(true);
+    },
+    [canDrop]
+  );
+
+  const handleFolderDrop = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      if (!canDrop) {
+        return;
+      }
+
+      setIsDragging(false);
+      // Handle dropped files here
+      console.log('DROPPED HERE');
+    },
+    [canDrop]
+  );
+
+  const handleFolderDragLeave = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      if (!canDrop) {
+        return;
+      }
+
+      setIsDragging(false);
+    },
+    [canDrop]
+  );
+
   return (
     <ContainerCollapsable
       className={classNames(
         'w-full gap-2 rounded p-2',
         {
           'border border-dashed border-orange-500 bg-orange-100': items.length === 0,
-          'bg-slate-100': items.length > 0
+          'bg-slate-100': items.length > 0,
+          'bg-purple-500': isDragging
         },
         className
       )}
-      collapsed={items.length !== 0}
+      // collapsed={items.length !== 0}
+      onDragOver={handleFolderDragOver}
+      onDragLeave={handleFolderDragLeave}
+      onDrop={handleFolderDrop}
     >
       <ContainerCollapsable.Header
         className={{ header: 'group', headerSlot: 'flex items-center gap-2' }}
@@ -95,7 +141,7 @@ const ResourceDirectory = ({
           </>
         )}
       </ContainerCollapsable.Header>
-      <ContainerCollapsable.Content>
+      <ContainerCollapsable.Content className="max-h-[432px] overflow-y-auto">
         {items.length > 0 && (
           <div className="mt-2 block columns-3 gap-2">
             {items.map(resource => (
