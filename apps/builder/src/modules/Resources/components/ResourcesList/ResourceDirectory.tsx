@@ -95,14 +95,13 @@ const ResourceDirectory = ({
       setIsDragging(false);
       setIsFileMoving(true);
       try {
-        const response = await mutate(
+        await mutate(
           'SpaceMoveResource',
           { cdnIdentifier, identifier: draggingFile.id, prefix: isDefault ? '' : name },
           false,
           false,
           { customFetch: true }
         );
-        console.log(response);
         onChange?.();
 
         setIsFileMoving(false);
