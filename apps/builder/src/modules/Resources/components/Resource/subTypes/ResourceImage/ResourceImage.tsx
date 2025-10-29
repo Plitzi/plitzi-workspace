@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { use, useCallback } from 'react';
+import { use, useCallback, useState } from 'react';
 
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 import { ResourcesListContext } from '@pmodules/Resources/components/ResourcesList/ResourcesListProvider';
@@ -33,19 +33,24 @@ const ResourceImage = ({
   onRemove
 }: ResourceImageProps) => {
   const { onDragStart } = useDragElement({ type: 'image', attributes: { src } });
+  const [isDragging, setIsDragging] = useState(false);
   const { setDraggingFile } = use(ResourcesListContext);
 
   const handleDragStart = useCallback(
     (e: DragEvent) => {
       onDragStart(e);
       setDraggingFile({ id, type: 'image', directoryName });
+      setIsDragging(true);
     },
     [directoryName, id, onDragStart, setDraggingFile]
   );
 
+  const handleDragEnd = useCallback(() => setIsDragging(false), []);
+
   return (
     <div
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       draggable={!isLoading}
       className={classNames(
         'group relative flex w-full cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none',
@@ -54,7 +59,7 @@ const ResourceImage = ({
       onClick={onClick}
     >
       <img draggable={false} src={src} alt={title} className="h-auto w-full object-cover" title={title} />
-      <ResourceRemoveButton onRemove={onRemove} />
+      {!isDragging && <ResourceRemoveButton onRemove={onRemove} />}
       {(isLoading || removing) && <ResourceLoading />}
     </div>
   );

@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { use, useCallback } from 'react';
+import { use, useCallback, useState } from 'react';
 
 import { ResourcesListContext } from '@pmodules/Resources/components/ResourcesList/ResourcesListProvider';
 
@@ -8,7 +8,7 @@ import ResourceName from '../../ResourceName';
 import ResourceRemoveButton from '../../ResourceRemoveButton';
 
 import type { ResourceType } from '@plitzi/sdk-shared';
-import type { MouseEvent } from 'react';
+import type { DragEvent, MouseEvent } from 'react';
 
 export type ResourceFileProps = {
   className?: string;
@@ -34,14 +34,22 @@ const ResourceFile = ({
   onRemove
 }: ResourceFileProps) => {
   const { setDraggingFile } = use(ResourcesListContext);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleDragStart = useCallback(() => {
-    setDraggingFile({ id, type, directoryName });
-  }, [directoryName, id, setDraggingFile, type]);
+  const handleDragStart = useCallback(
+    (e: DragEvent) => {
+      e.stopPropagation();
+      setDraggingFile({ id, type, directoryName });
+    },
+    [directoryName, id, setDraggingFile, type]
+  );
+
+  const handleDragEnd = useCallback(() => setIsDragging(false), []);
 
   return (
     <div
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       draggable={!isLoading}
       className={classNames(
         'group relative flex w-full cursor-pointer flex-col justify-center overflow-hidden rounded-md border border-gray-300 select-none',
@@ -52,7 +60,7 @@ const ResourceFile = ({
       <div className="flex aspect-video h-full w-full grow items-center justify-center">
         <i className="fa-solid fa-file fa-2x text-gray-300" title="Unknown" />
       </div>
-      <ResourceRemoveButton onRemove={onRemove} />
+      {!isDragging && <ResourceRemoveButton onRemove={onRemove} />}
       {(isLoading || removing) && <ResourceLoading />}
       {title && <ResourceName name={title} fullWidth />}
     </div>
