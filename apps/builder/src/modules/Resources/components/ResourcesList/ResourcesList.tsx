@@ -23,7 +23,13 @@ export type ResourcesListProps = {
   onRemove?: (item: TResource) => void;
 };
 
-export type ResourceDirectory = { name: string; items: TResource[]; canDrop: boolean; isDefault: boolean };
+export type ResourceDirectory = {
+  name: string;
+  items: TResource[];
+  canDrop: boolean;
+  isDefault: boolean;
+  canRemove: boolean;
+};
 
 const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange, onRemove }: ResourcesListProps) => {
   const { showModal } = useModal();
@@ -52,7 +58,9 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange,
 
     const { name } = response;
 
-    setDirectories(state => [...state, { name, items: [], canDrop: true, isDefault: false }].sort(sortDirectories));
+    setDirectories(state =>
+      [...state, { name, items: [], canDrop: true, isDefault: false, canRemove: true }].sort(sortDirectories)
+    );
   }, [showModal, directories]);
 
   const handleClickRemoveDirectory = useCallback(
@@ -89,6 +97,7 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange,
             name={directory.name}
             items={directory.items}
             isDefault={directory.isDefault}
+            canRemove={directory.canRemove}
             canDrop={directory.canDrop}
             cdnIdentifier={cdnIdentifier}
             onRemoveDirectory={handleClickRemoveDirectory}

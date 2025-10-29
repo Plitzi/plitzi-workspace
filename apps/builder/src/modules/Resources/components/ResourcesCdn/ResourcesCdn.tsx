@@ -182,7 +182,7 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
             onUploadAdded={handleUploadAdded}
           />
         )}
-        {!isLoading && !removing && finalResources.length > 0 && (
+        {!isLoading && !removing && (
           <ResourcesList
             className="overflow-y-auto"
             prefix={prefix}

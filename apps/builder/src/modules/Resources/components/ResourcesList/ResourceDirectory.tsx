@@ -22,6 +22,7 @@ export type ResourcesDirectoryProps = {
   items: TResource[];
   isDefault?: boolean;
   canDrop?: boolean;
+  canRemove?: boolean;
   cdnIdentifier: string;
   onChange?: () => void;
   onRemove?: (item: TResource) => void;
@@ -33,6 +34,7 @@ const ResourceDirectory = ({
   name,
   items,
   isDefault = false,
+  canRemove = true,
   canDrop = true,
   cdnIdentifier,
   onChange,
@@ -131,12 +133,13 @@ const ResourceDirectory = ({
       className={classNames(
         'w-full gap-2 rounded p-2',
         {
-          'border border-dashed border-orange-500 bg-orange-100': items.length === 0,
-          'bg-slate-100': items.length > 0,
+          'border border-dashed border-orange-500 bg-orange-100': items.length === 0 && !isDefault,
+          'bg-slate-100': items.length > 0 || isDefault,
           'outline-2 -outline-offset-2 outline-black': isDragging
         },
         className
       )}
+      collapsed
       onDragOver={handleFolderDragOver}
       onDragLeave={handleFolderDragLeave}
       onDrop={handleFolderDrop}
@@ -159,7 +162,7 @@ const ResourceDirectory = ({
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
         <div className="rounded border border-gray-500 px-1 text-xs text-gray-500">{items.length}</div>
-        {!isDefault && (
+        {!isDefault && canRemove && (
           <>
             <Icon icon="fa-solid fa-pencil" className="hidden cursor-pointer group-hover:block" title="Update" />
             <Icon
@@ -194,7 +197,7 @@ const ResourceDirectory = ({
             ))}
           </div>
         )}
-        {items.length === 0 && (
+        {!isDefault && items.length === 0 && (
           <Alert intent="warning" size="xs" solid={false}>
             <span className="text-xs leading-3">
               No resources in this directory. Drag and drop resources here or this folder will be removed automatically

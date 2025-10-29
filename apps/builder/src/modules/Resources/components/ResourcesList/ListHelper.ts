@@ -35,7 +35,7 @@ const getDirectories = (
   prefix: string = 'https://cdn.plitzi.com/website/assets/',
   items: Resource[] = []
 ): ResourceDirectory[] => {
-  const directoriesMap: { [key: string]: Resource[] } = {};
+  const directoriesMap: { [key: string]: Resource[] } = { [defaultFolderName]: [], Templates: [], Plugins: [] };
 
   items.forEach(item => {
     const { id, type } = item;
@@ -71,12 +71,11 @@ const getDirectories = (
   });
 
   return Object.entries(directoriesMap)
-    .map(([name, items]) => ({
-      name,
-      items,
-      canDrop: !['Plugins', 'Templates'].includes(name),
-      isDefault: name === defaultFolderName
-    }))
+    .map(([name, items]) => {
+      const isDefault = [defaultFolderName, 'Plugins', 'Templates'].includes(name);
+
+      return { name, items, canDrop: !['Plugins', 'Templates'].includes(name), canRemove: !isDefault, isDefault };
+    })
     .sort(sortDirectories);
 };
 
