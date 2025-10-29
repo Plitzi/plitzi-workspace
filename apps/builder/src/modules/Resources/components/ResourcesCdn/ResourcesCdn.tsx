@@ -119,9 +119,9 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
     [identifier, onCollapse]
   );
 
-  const handleClickUpdate = useCallback((e: MouseEvent) => {
-    e.stopPropagation();
-  }, []);
+  // const handleClickUpdate = useCallback((e: MouseEvent) => {
+  //   e.stopPropagation();
+  // }, []);
 
   const handleClickRemove = useCallback(
     async (e: MouseEvent) => {
@@ -158,12 +158,12 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
         <div className="rounded border border-gray-500 px-1 text-xs text-gray-500">{finalResources.length}</div>
-        <Icon
+        {/* <Icon
           icon="fa-solid fa-pencil"
           className="hidden cursor-pointer group-hover:block"
           title="Update"
           onClick={handleClickUpdate}
-        />
+        /> */}
         <Icon
           intent="danger"
           icon="fas fa-trash-alt"
