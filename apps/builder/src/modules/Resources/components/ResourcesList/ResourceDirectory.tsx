@@ -1,6 +1,7 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Icon from '@plitzi/plitzi-ui/Icon';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
 import { use, useCallback, useMemo, useState } from 'react';
 
@@ -8,7 +9,6 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import Resource from '../Resource';
-import { formatFolderName } from './ListHelper';
 import { ResourcesListContext } from './ResourcesListProvider';
 
 import type { BuilderNetworkContextValue, Resource as TResource } from '@plitzi/sdk-shared';
@@ -20,9 +20,10 @@ export type ResourcesDirectoryProps = {
   className?: string;
   name?: string;
   items: TResource[];
-  defaultDirectory?: boolean;
+  isDefault?: boolean;
   canDrop?: boolean;
   cdnIdentifier: string;
+  onChange?: () => void;
   onRemove?: (item: TResource) => void;
   onRemoveDirectory?: (name?: string) => void;
 };
@@ -31,17 +32,19 @@ const ResourceDirectory = ({
   className,
   name,
   items,
-  defaultDirectory = false,
+  isDefault = false,
   canDrop = true,
   cdnIdentifier,
+  onChange,
   onRemove,
   onRemoveDirectory
 }: ResourcesDirectoryProps) => {
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { addToast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const { plugins, remove } = use(PluginsContext);
-  const { draggingFile } = use(ResourcesListContext);
-  const nameFormatted = useMemo(() => formatFolderName(name), [name]);
+  const { draggingFile, isFileMoving, setIsFileMoving } = use(ResourcesListContext);
+  const nameFormatted = useMemo(() => name?.replace(/[_-]+/g, ' '), [name]);
 
   const handleResourceRemoved = useCallback(
     (id: string) => {
@@ -90,19 +93,26 @@ const ResourceDirectory = ({
       }
 
       setIsDragging(false);
-      // Handle dropped files here
-      console.log('DROPPED HERE', draggingFile);
+      setIsFileMoving(true);
+      try {
+        const response = await mutate(
+          'SpaceMoveResource',
+          { cdnIdentifier, identifier: draggingFile.id, prefix: isDefault ? '' : name },
+          false,
+          false,
+          { customFetch: true }
+        );
+        console.log(response);
+        onChange?.();
 
-      const response = await mutate(
-        'SpaceMoveResource',
-        { cdnIdentifier, identifier: draggingFile.id, prefix: 'test_abc' },
-        false,
-        false,
-        { customFetch: true }
-      );
-      console.log(response);
+        setIsFileMoving(false);
+      } catch (e: unknown) {
+        addToast((e as Error).message, { appeareance: 'warning', autoDismiss: true, placement: 'top-right' });
+      } finally {
+        setIsFileMoving(false);
+      }
     },
-    [canDrop, cdnIdentifier, draggingFile, mutate, name]
+    [canDrop, draggingFile, name, setIsFileMoving, mutate, cdnIdentifier, isDefault, onChange, addToast]
   );
 
   const handleFolderDragLeave = useCallback(
@@ -150,7 +160,7 @@ const ResourceDirectory = ({
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
         <div className="rounded border border-gray-500 px-1 text-xs text-gray-500">{items.length}</div>
-        {!defaultDirectory && (
+        {!isDefault && (
           <>
             <Icon icon="fa-solid fa-pencil" className="hidden cursor-pointer group-hover:block" title="Update" />
             <Icon
@@ -179,6 +189,7 @@ const ResourceDirectory = ({
                 src={resource.path}
                 metadata={resource.type === 'plugin' ? resource.metadata : undefined}
                 directoryName={name}
+                isLoading={draggingFile?.id === resource.id && isFileMoving}
                 onRemove={handleResourceRemoved}
               />
             ))}

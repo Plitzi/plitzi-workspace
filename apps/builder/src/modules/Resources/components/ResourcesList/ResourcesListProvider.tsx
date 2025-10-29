@@ -7,7 +7,9 @@ type ResourceDragging = { id: string; type: ResourceType; directoryName: string 
 
 export type ResourcesListContextValue = {
   draggingFile?: ResourceDragging;
+  isFileMoving: boolean;
   setDraggingFile: Dispatch<SetStateAction<ResourceDragging | undefined>>;
+  setIsFileMoving: Dispatch<SetStateAction<boolean>>;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -17,7 +19,11 @@ export type ResourcesListProviderProps = { children: ReactNode };
 
 const ResourcesListProvider = ({ children }) => {
   const [draggingFile, setDraggingFile] = useState<ResourceDragging | undefined>();
-  const contextValue = useMemo(() => ({ draggingFile, setDraggingFile }), [draggingFile, setDraggingFile]);
+  const [isFileMoving, setIsFileMoving] = useState<boolean>(false);
+  const contextValue = useMemo(
+    () => ({ draggingFile, isFileMoving, setDraggingFile, setIsFileMoving }),
+    [draggingFile, isFileMoving]
+  );
 
   return <ResourcesListContext value={contextValue}>{children}</ResourcesListContext>;
 };

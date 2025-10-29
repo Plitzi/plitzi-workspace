@@ -27,6 +27,7 @@ export type ResourceProps = {
   title?: string;
   metadata?: PluginManifest;
   directoryName?: string;
+  isLoading?: boolean;
   onRemove?: (id: string) => void;
 };
 
@@ -39,6 +40,7 @@ const Resource = ({
   title = '',
   metadata,
   directoryName = '',
+  isLoading = false,
   onRemove
 }: ResourceProps) => {
   const { mutate } = use(NetworkContext);
@@ -156,6 +158,7 @@ const Resource = ({
     title,
     removing,
     directoryName,
+    isLoading,
     onClick: handleClick,
     onRemove: handleClickRemove
   };
@@ -174,7 +177,7 @@ const Resource = ({
       return <ResourcePlugin {...sharedProps} src={src} metadata={metadata} />;
 
     default:
-      return <ResourceFile {...sharedProps} />;
+      return <ResourceFile {...sharedProps} type={type} />;
   }
 };
 

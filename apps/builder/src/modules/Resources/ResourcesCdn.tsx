@@ -99,6 +99,8 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
     [mutate, plugins, remove]
   );
 
+  const handleChange = useCallback(() => void mutate(), [mutate]);
+
   const handleCollapse = useCallback(
     (isCollapsed: boolean) => onCollapse?.(identifier, isCollapsed),
     [identifier, onCollapse]
@@ -136,6 +138,7 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
             prefix={prefix}
             items={finalResources}
             cdnIdentifier={identifier}
+            onChange={handleChange}
             onRemove={handleResourceRemoved}
           />
         )}

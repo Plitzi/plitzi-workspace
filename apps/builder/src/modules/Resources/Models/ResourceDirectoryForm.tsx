@@ -9,8 +9,8 @@ const resourceCdnFormSchema = (directories: { name: string }[] = []) =>
       .string()
       .min(6)
       .max(50)
-      .regex(/^[a-zA-Z0-9 _-]+$/, {
-        message: 'Only letters, numbers, spaces, hyphens, and underscores are allowed'
+      .regex(/^[a-zA-Z0-9_-]+$/, {
+        message: 'Only letters, numbers, hyphens, and underscores are allowed'
       })
       .refine(val => !directories.some(d => d.name.toLowerCase() === val.toLowerCase()), {
         message: 'This name already exists'
@@ -26,7 +26,7 @@ export type ResourceDirectoryFormProps = {
 };
 
 const ResourceDirectoryForm = ({
-  name = 'New Directory',
+  name = 'New_Directory',
   directories,
   onSubmit,
   onClose

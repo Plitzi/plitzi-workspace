@@ -5,7 +5,7 @@ import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import TemplateContent from './TemplateContent';
-import ResourceUploadStatus from '../../../ResourceManager/ResourceUploadStatus';
+import ResourceLoading from '../../ResourceLoading';
 import ResourceName from '../../ResourceName';
 import ResourceRemoveButton from '../../ResourceRemoveButton';
 
@@ -18,11 +18,20 @@ export type ResourceTemplateProps = {
   src: string;
   title?: string;
   removing?: boolean;
+  isLoading?: boolean;
   onClick?: () => void;
   onRemove?: (e: MouseEvent) => void;
 };
 
-const ResourceTemplate = ({ className, title, src, removing, onClick, onRemove }: ResourceTemplateProps) => {
+const ResourceTemplate = ({
+  className,
+  title,
+  src,
+  removing = false,
+  isLoading = false,
+  onClick,
+  onRemove
+}: ResourceTemplateProps) => {
   const [manifest, setManifest] = useState<Template | undefined>();
   const [loading, setLoading] = useState(true);
 
@@ -55,8 +64,8 @@ const ResourceTemplate = ({ className, title, src, removing, onClick, onRemove }
     >
       <TemplateContent baseElementId={definition.baseElementId} schema={schema} style={style} />
       <ResourceRemoveButton onRemove={onRemove} />
+      {(isLoading || removing) && <ResourceLoading />}
       <ResourceName name={definition.name ? definition.name : title} />
-      {removing && <ResourceUploadStatus processing={removing} />}
     </div>
   );
 };

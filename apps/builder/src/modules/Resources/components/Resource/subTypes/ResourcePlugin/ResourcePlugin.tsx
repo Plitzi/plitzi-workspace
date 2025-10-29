@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import { useMemo } from 'react';
 
 import PluginContent from './PluginContent';
-import ResourceUploadStatus from '../../../ResourceManager/ResourceUploadStatus';
+import ResourceLoading from '../../ResourceLoading';
 import ResourceRemoveButton from '../../ResourceRemoveButton';
 
 import type { PluginManifest } from '@plitzi/sdk-shared';
@@ -14,11 +14,19 @@ export type ResourcePluginProps = {
   src: string;
   metadata?: PluginManifest;
   removing?: boolean;
+  isLoading?: boolean;
   onClick?: () => void;
   onRemove?: (e: MouseEvent) => void;
 };
 
-const ResourcePlugin = ({ className, metadata, removing, onClick, onRemove }: ResourcePluginProps) => {
+const ResourcePlugin = ({
+  className,
+  metadata,
+  removing = false,
+  isLoading = false,
+  onClick,
+  onRemove
+}: ResourcePluginProps) => {
   const componentsAvailables = useMemo(() => Object.keys(metadata?.pluginSchema || {}).join(', '), [metadata]);
 
   return (
@@ -40,7 +48,7 @@ const ResourcePlugin = ({ className, metadata, removing, onClick, onRemove }: Re
         isUploaded
       />
       <ResourceRemoveButton onRemove={onRemove} />
-      {removing && <ResourceUploadStatus processing={removing} />}
+      {(isLoading || removing) && <ResourceLoading />}
     </div>
   );
 };

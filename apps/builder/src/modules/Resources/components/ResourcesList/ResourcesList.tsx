@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import Button from '@plitzi/plitzi-ui/Button';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
@@ -18,12 +19,13 @@ export type ResourcesListProps = {
   items: TResource[];
   prefix: string;
   cdnIdentifier: string;
+  onChange?: () => void;
   onRemove?: (item: TResource) => void;
 };
 
-export type ResourceDirectory = { name: string; items: TResource[]; canDrop: boolean };
+export type ResourceDirectory = { name: string; items: TResource[]; canDrop: boolean; isDefault: boolean };
 
-const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onRemove }: ResourcesListProps) => {
+const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange, onRemove }: ResourcesListProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const [directories, setDirectories] = useState<ResourceDirectory[]>(() => getDirectories(prefix, items));
@@ -50,7 +52,7 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onRemove 
 
     const { name } = response;
 
-    setDirectories(state => [...state, { name, items: [], canDrop: true }].sort(sortDirectories));
+    setDirectories(state => [...state, { name, items: [], canDrop: true, isDefault: false }].sort(sortDirectories));
   }, [showModal, directories]);
 
   const handleClickRemoveDirectory = useCallback(
@@ -61,7 +63,6 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onRemove 
       }
 
       if (directory.items.length > 0) {
-        // eslint-disable-next-line quotes
         addToast("You can't remove this folder with resources, move or remove all of the resources", {
           appeareance: 'warning',
           autoDismiss: true,
@@ -87,10 +88,11 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onRemove 
             key={directory.name}
             name={directory.name}
             items={directory.items}
-            defaultDirectory={directory.name === 'All Resources'}
+            isDefault={directory.isDefault}
             canDrop={directory.canDrop}
             cdnIdentifier={cdnIdentifier}
             onRemoveDirectory={handleClickRemoveDirectory}
+            onChange={onChange}
             onRemove={onRemove}
           />
         ))}
