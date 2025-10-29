@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.25.1",
+  "version": "0.25.2",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
