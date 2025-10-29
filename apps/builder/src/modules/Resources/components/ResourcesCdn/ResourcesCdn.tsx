@@ -1,17 +1,28 @@
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import Icon from '@plitzi/plitzi-ui/Icon';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import get from 'lodash/get';
-import { use, useCallback, useMemo } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
-import ResourceManager from './components/ResourceManager';
-import ResourcesList from './components/ResourcesList';
+import ResourceManager from '../ResourceManager';
+import ResourcesList from '../ResourcesList';
 
-import type { ComponentDefinition, ResourceFile, ResourceWithFile, Resource as TResource } from '@plitzi/sdk-shared';
+import type {
+  ComponentDefinition,
+  NetworkContextValue,
+  ResourceFile,
+  ResourceWithFile,
+  Resource as TResource
+} from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
+import type { MouseEvent } from 'react';
 
 export type ResourcesCdnProps = {
   identifier: string;
@@ -19,14 +30,17 @@ export type ResourcesCdnProps = {
   prefix: string;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
-  onRemove?: () => void;
+  onRemove?: (identifier: string) => void;
 };
 
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
 const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRemove }: ResourcesCdnProps) => {
   const { addToast } = useToast();
+  const { showDialog } = useModal();
+  const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
+  const { mutate: networkMutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
     cdnIdentifier: identifier
   });
@@ -59,9 +73,8 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
       }
 
       void mutate();
-      onRemove?.();
     },
-    [add, mutate, onRemove]
+    [add, mutate]
   );
 
   const handleUploadAdded = useCallback(
@@ -106,6 +119,35 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
     [identifier, onCollapse]
   );
 
+  const handleClickUpdate = useCallback((e: MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleClickRemove = useCallback(
+    async (e: MouseEvent) => {
+      e.stopPropagation();
+      const response = await showDialog(
+        <Modal.Header>
+          <h4>Remove CDN</h4>
+        </Modal.Header>,
+        <Modal.Body>
+          <h4>Do you want to remove this cdn ?</h4>
+        </Modal.Body>,
+        undefined,
+        { size: 'sm' },
+        identifier
+      );
+
+      if (response) {
+        setRemoving(true);
+        await networkMutate('SpaceRemoveCdn', { identifier });
+        setRemoving(false);
+        onRemove?.(identifier);
+      }
+    },
+    [identifier, networkMutate, onRemove, showDialog]
+  );
+
   return (
     <ContainerCollapsable collapsed={isCollapsed} onChange={handleCollapse}>
       <ContainerCollapsable.Header
@@ -116,23 +158,31 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
         <div className="rounded border border-gray-500 px-1 text-xs text-gray-500">{finalResources.length}</div>
-        <Icon icon="fa-solid fa-pencil" className="hidden cursor-pointer group-hover:block" title="Update" />
+        <Icon
+          icon="fa-solid fa-pencil"
+          className="hidden cursor-pointer group-hover:block"
+          title="Update"
+          onClick={handleClickUpdate}
+        />
         <Icon
           intent="danger"
           icon="fas fa-trash-alt"
           className="hidden cursor-pointer group-hover:block"
           title="Remove"
+          onClick={handleClickRemove}
         />
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content className="flex flex-col gap-3 py-2">
-        <ResourceManager
-          className="shrink-0"
-          cdnIdentifier={identifier}
-          uploadTypes={uploadTypes}
-          onUploaded={handleUploaded}
-          onUploadAdded={handleUploadAdded}
-        />
-        {!isLoading && finalResources.length > 0 && (
+        {!removing && (
+          <ResourceManager
+            className="shrink-0"
+            cdnIdentifier={identifier}
+            uploadTypes={uploadTypes}
+            onUploaded={handleUploaded}
+            onUploadAdded={handleUploadAdded}
+          />
+        )}
+        {!isLoading && !removing && finalResources.length > 0 && (
           <ResourcesList
             className="overflow-y-auto"
             prefix={prefix}
@@ -142,11 +192,12 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
             onRemove={handleResourceRemoved}
           />
         )}
-        {isLoading && (
-          <div className="flex w-full justify-center pt-2 pb-4">
-            <Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />
-          </div>
-        )}
+        {isLoading ||
+          (removing && (
+            <div className="flex w-full justify-center pt-2 pb-4">
+              <Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />
+            </div>
+          ))}
       </ContainerCollapsable.Content>
     </ContainerCollapsable>
   );

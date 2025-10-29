@@ -8,8 +8,8 @@ import { useCallback, use } from 'react';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
+import ResourcesCdn from './components/ResourcesCdn';
 import ResourceCdnForm from './Models/ResourceCdnForm';
-import ResourcesCdn from './ResourcesCdn';
 
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
@@ -63,6 +63,8 @@ const Resources = () => {
     void mutateCdns();
   }, [mutate, mutateCdns, showModal]);
 
+  const handleRemove = useCallback(() => void mutateCdns(), [mutateCdns]);
+
   return (
     <div className="flex w-full grow basis-0 flex-col gap-4 overflow-y-auto">
       <Flex gap={2} direction="column">
@@ -84,6 +86,7 @@ const Resources = () => {
               prefix={`${cdn.prefix}/assets`}
               isCollapsed={collapsedCache[cdn.identifier] ?? true}
               onCollapse={handleChangeCollapse}
+              onRemove={handleRemove}
             />
           ))}
         </div>
