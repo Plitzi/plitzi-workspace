@@ -4,6 +4,8 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 const publishFormSchema = z.object({
   environment: z.enum(['development', 'staging', 'live']),
   description: z.string().max(200, { message: 'Description must be less than 200 characters' })
@@ -13,15 +15,15 @@ export type PublishFormProps = {
   className?: string;
   environment?: 'development' | 'staging' | 'live';
   description?: string;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof publishFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof publishFormSchema>) => void;
 };
 
 const PublishForm = ({ environment = 'development', description = '', onClose, onSubmit }: PublishFormProps) => {
   const form = useForm({ defaultValues: { environment, description }, config: { schema: publishFormSchema } });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof publishFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof publishFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 

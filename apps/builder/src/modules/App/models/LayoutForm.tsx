@@ -3,21 +3,23 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 const layoutFormSchema = z.object({
   name: z.string().min(3, { message: 'Too Short' }).max(20, { message: 'Too Long' })
 });
 
 export type LayoutFormProps = {
   name?: string;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof layoutFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof layoutFormSchema>) => void;
 };
 
 const LayoutForm = ({ name = 'New Layout', onClose, onSubmit }: LayoutFormProps) => {
   const form = useForm({ defaultValues: { name }, config: { schema: layoutFormSchema } });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof layoutFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof layoutFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 

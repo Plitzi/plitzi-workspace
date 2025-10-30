@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { makeCollectionRecordSchema } from './CollectionRecordFormHelper';
 
 import type { CollectionField, CollectionRecord } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
 import type { z } from 'zod';
 
 export type CollectionRecordFormProps = {
@@ -12,8 +13,11 @@ export type CollectionRecordFormProps = {
   fields?: CollectionField[];
   previewMode?: boolean;
   values?: CollectionRecord['values'];
-  onClose?: () => void;
-  onSubmit?: ({ record }: { record: Omit<CollectionRecord, 'createdAt' | 'updatedAt'> }) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (
+    e: MouseEvent | undefined,
+    { record }: { record: Omit<CollectionRecord, 'createdAt' | 'updatedAt'> }
+  ) => void;
 };
 
 const CollectionRecordForm = ({
@@ -31,7 +35,7 @@ const CollectionRecordForm = ({
   });
 
   const handleSubmitInternal = useCallback(
-    (record: z.infer<typeof collectionRecordSchema>) => onSubmit?.({ record }),
+    (record: z.infer<typeof collectionRecordSchema>) => onSubmit?.(undefined, { record }),
     [onSubmit]
   );
 

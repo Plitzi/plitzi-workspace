@@ -3,6 +3,8 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 const segmentFormSchema = z.object({
   identifier: z.string(),
   name: z.string().min(2),
@@ -14,8 +16,8 @@ export type SegmentFormProps = {
   identifier?: string;
   name?: string;
   description?: string;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof segmentFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof segmentFormSchema>) => void;
 };
 
 const SegmentForm = ({
@@ -28,7 +30,7 @@ const SegmentForm = ({
   const form = useForm({ defaultValues: { name, description, identifier }, config: { schema: segmentFormSchema } });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof segmentFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof segmentFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 

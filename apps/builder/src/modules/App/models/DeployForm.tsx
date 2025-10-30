@@ -10,6 +10,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { Domain } from '@pmodules/Network/Queries/Space/SpaceDeploymentsQuery';
+import type { MouseEvent } from 'react';
 
 const deployFormSchema = z.object({
   environment: z.enum(['main', 'production', 'staging', 'development']),
@@ -21,8 +22,8 @@ export type DeployFormProps = {
   environment?: 'main' | 'production' | 'staging' | 'development';
   domain?: string;
   revision?: number;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof deployFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof deployFormSchema>) => void;
 };
 
 const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, onSubmit }: DeployFormProps) => {
@@ -64,9 +65,9 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof deployFormSchema>) => {
       if (values.revision) {
-        onSubmit?.(values);
+        onSubmit?.(undefined, values);
       } else {
-        onSubmit?.({ ...values, revision: 0 });
+        onSubmit?.(undefined, { ...values, revision: 0 });
       }
     },
     [onSubmit]

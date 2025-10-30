@@ -3,6 +3,8 @@ import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 const resourceCdnFormSchema = z.discriminatedUnion('provider', [
   z.object({
     provider: z.literal('s3'),
@@ -30,8 +32,8 @@ export type ResourceCdnFormProps = {
   region?: string;
   endpoint?: string;
   bucketName?: string;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof resourceCdnFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof resourceCdnFormSchema>) => void;
 };
 
 const ResourceCdnForm = ({
@@ -62,7 +64,7 @@ const ResourceCdnForm = ({
   );
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof resourceCdnFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof resourceCdnFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 

@@ -17,7 +17,6 @@ const SpaceAddCdnMutation = gql`
       endpoint: $endpoint
       bucketName: $bucketName
     ) {
-      id
       name
       identifier
       provider

@@ -2,7 +2,7 @@ import { gql } from '@apollo/client/core';
 
 const SpaceUpdateCdnMutation = gql`
   mutation SpaceUpdateCdnMutation(
-    $id: Int!
+    $identifier: String!
     $name: String!
     $domain: String!
     $provider: String!
@@ -11,7 +11,7 @@ const SpaceUpdateCdnMutation = gql`
     $bucketName: String!
   ) {
     SpaceUpdateCdn(
-      id: $id
+      identifier: $identifier
       name: $name
       domain: $domain
       provider: $provider
@@ -19,7 +19,6 @@ const SpaceUpdateCdnMutation = gql`
       endpoint: $endpoint
       bucketName: $bucketName
     ) {
-      id
       name
       identifier
       provider

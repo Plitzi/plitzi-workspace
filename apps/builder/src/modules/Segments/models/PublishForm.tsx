@@ -4,6 +4,8 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 const publishFormSchema = z.object({
   environment: z.enum(['production', 'staging', 'development']),
   description: z.string()
@@ -12,15 +14,15 @@ const publishFormSchema = z.object({
 export type PublishFormProps = {
   environment?: 'production' | 'staging' | 'development';
   description?: string;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof publishFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof publishFormSchema>) => void;
 };
 
 const PublishForm = ({ environment = 'development', description = '', onClose, onSubmit }: PublishFormProps) => {
   const form = useForm({ defaultValues: { environment, description }, config: { schema: publishFormSchema } });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof publishFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof publishFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 

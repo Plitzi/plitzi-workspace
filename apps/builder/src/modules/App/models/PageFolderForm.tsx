@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { z } from 'zod';
 
 import type { PageFolder } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
 
 const pageFolderFormSchema = z.object({
   name: z.string().min(3, { message: 'Too Short' }).max(20, { message: 'Too Long' }),
@@ -21,8 +22,8 @@ export type PageFolderFormProps = {
   slug?: string;
   parentId?: string;
   pageFolders?: PageFolder[];
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof pageFolderFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof pageFolderFormSchema>) => void;
 };
 
 const PageFolderForm = ({
@@ -36,7 +37,7 @@ const PageFolderForm = ({
   const form = useForm({ defaultValues: { name, slug, parentId }, config: { schema: pageFolderFormSchema } });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof pageFolderFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof pageFolderFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 

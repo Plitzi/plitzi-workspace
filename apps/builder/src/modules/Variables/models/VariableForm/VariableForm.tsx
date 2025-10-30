@@ -8,6 +8,7 @@ import VariableSubValue from './VariableSubValue';
 import VariableValue from './VariableValue';
 
 import type { Environment, QueryParams, RouteParams, SchemaVariable } from '@plitzi/sdk-shared';
+import type { MouseEvent } from 'react';
 
 const variableFormSchema = z.object({
   name: z
@@ -35,8 +36,8 @@ export type VariableFormProps = {
     environment: Environment;
   };
   isNewRecord?: boolean;
-  onClose?: () => void;
-  onSubmit?: (values: SchemaVariable) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: SchemaVariable) => void;
 };
 
 const VariableForm = ({
@@ -64,7 +65,7 @@ const VariableForm = ({
   const watchSubValues = useFormWatch(form.formMethods, 'subValues');
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof variableFormSchema>) => onSubmit?.(values as SchemaVariable),
+    (values: z.infer<typeof variableFormSchema>) => onSubmit?.(undefined, values as SchemaVariable),
     [onSubmit]
   );
 

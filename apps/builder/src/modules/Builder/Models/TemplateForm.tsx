@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
+import type { MouseEvent } from 'react';
+
 const templateFormSchema = z.object({
   name: z.string().min(3).max(20),
   description: z.string().max(200).optional(),
@@ -15,8 +17,8 @@ export type TemplateFormProps = {
   name?: string;
   description?: string;
   cdnIdentifier?: string;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof templateFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof templateFormSchema>) => void;
 };
 
 const TemplateForm = ({
@@ -30,7 +32,7 @@ const TemplateForm = ({
   const { data, isLoading } = useGraphQL('SpaceCdns', data => data?.SpaceCdns.edges);
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof templateFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof templateFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 
@@ -41,7 +43,7 @@ const TemplateForm = ({
         <Form.TextArea name="description" label="Template Description" placeholder="Template Description" />
         <Form.Select loading={isLoading} name="cdnIdentifier" placeholder="Select a provider" label="CDN Provider">
           {data?.map(cdn => (
-            <option key={cdn.id} value={cdn.identifier}>
+            <option key={cdn.identifier} value={cdn.identifier}>
               {cdn.name}
             </option>
           ))}

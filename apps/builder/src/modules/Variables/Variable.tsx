@@ -55,7 +55,7 @@ const Variable = ({
   const handleClickCancel = useCallback(() => setEditMode(false), [setEditMode]);
 
   const handleClickSubmit = useCallback(
-    (values: SchemaVariable) => {
+    (_e: MouseEvent | undefined, values: SchemaVariable) => {
       onChange?.(name, omit(values, ['name']));
       setEditMode(false);
     },

@@ -3,6 +3,8 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 const resourceCdnFormSchema = (directories: { name: string }[] = []) =>
   z.object({
     name: z
@@ -21,8 +23,8 @@ export type ResourceDirectoryFormProps = {
   className?: string;
   name?: string;
   directories?: { name: string; items: unknown[] }[];
-  onClose?: () => void;
-  onSubmit?: (values: { name: string }) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: { name: string }) => void;
 };
 
 const ResourceDirectoryForm = ({
@@ -37,7 +39,10 @@ const ResourceDirectoryForm = ({
     config: { schema }
   });
 
-  const handleSubmitInternal = useCallback((values: z.infer<typeof schema>) => onSubmit?.(values), [onSubmit]);
+  const handleSubmitInternal = useCallback(
+    (values: z.infer<typeof schema>) => onSubmit?.(undefined, values),
+    [onSubmit]
+  );
 
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
