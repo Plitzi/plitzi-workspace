@@ -39,7 +39,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
 
   const handleCloseAddSelector = useCallback(
-    (values?: { name: string }) => {
+    (_e: MouseEvent | React.MouseEvent | undefined, values?: { name: string }) => {
       if (values) {
         const { name } = values;
         builderHandler('styleAddSelector', displayMode, name, 'class');
@@ -75,7 +75,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   }, []);
 
   const handleCloseDeleteSelector = useCallback(
-    (value?: boolean, selector?: string) => {
+    (_e: MouseEvent | React.MouseEvent | undefined, value?: boolean, selector?: string) => {
       if (!value || !selector) {
         return;
       }
@@ -104,7 +104,10 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
     string
   >({ id: 'delete-selector', onClose: handleCloseDeleteSelector });
 
-  const handleClickDelete = useCallback((selector: string) => onOpenDeleteSelector(selector), [onOpenDeleteSelector]);
+  const handleClickDelete = useCallback(
+    (selector: string) => onOpenDeleteSelector(undefined, selector),
+    [onOpenDeleteSelector]
+  );
 
   const elementCounts = useMemo<Record<string, number>>(
     () =>
@@ -118,9 +121,9 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
     [finalSelectors, flatList, elementHasSelector]
   );
 
-  const handleCloseModal = useCallback(() => void onCloseDeleteSelector(false), [onCloseDeleteSelector]);
+  const handleCloseModal = useCallback(() => void onCloseDeleteSelector(undefined, false), [onCloseDeleteSelector]);
 
-  const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(true), [onCloseDeleteSelector]);
+  const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
 
   return (
     <div className="flex max-w-[350px] grow basis-0 flex-col gap-2 overflow-auto border-r border-gray-300 pt-2 pr-2">

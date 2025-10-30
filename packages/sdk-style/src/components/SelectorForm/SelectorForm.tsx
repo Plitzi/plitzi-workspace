@@ -4,10 +4,12 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 export type SelectorFormProps = {
   className?: string;
-  onClose?: () => void | Promise<void>;
-  onSubmit?: (values: { name: string }) => void | Promise<void>;
+  onClose?: (e?: MouseEvent) => void | Promise<void>;
+  onSubmit?: (e: MouseEvent | undefined, values: { name: string }) => void | Promise<void>;
 };
 
 const SelectorForm = ({ className = '', onClose, onSubmit }: SelectorFormProps) => {
@@ -20,9 +22,12 @@ const SelectorForm = ({ className = '', onClose, onSubmit }: SelectorFormProps) 
   );
   const form = useForm({ defaultValues: { name: '' }, config: { schema } });
 
-  const handleClickCancel = useCallback(() => void onClose?.(), [onClose]);
+  const handleClickCancel = useCallback((e: MouseEvent) => void onClose?.(e), [onClose]);
 
-  const handleSubmitInternal = useCallback((values: z.infer<typeof schema>) => onSubmit?.(values), [onSubmit]);
+  const handleSubmitInternal = useCallback(
+    (values: z.infer<typeof schema>) => onSubmit?.(undefined, values),
+    [onSubmit]
+  );
 
   // const validateName = (value: string) => {
   //   const regex = /^([a-zA-Z.#]{1}([a-zA-Z0-9\-_.#: ]+)?)$/i;
