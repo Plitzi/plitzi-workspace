@@ -30,7 +30,6 @@ export type ResourceFile = File & {
 };
 
 export type Cdn = {
-  id: number;
   identifier: string;
   name: string;
   domain: string;
@@ -39,6 +38,14 @@ export type Cdn = {
   endpoint?: string;
   bucketName: string;
   prefix: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type Credential = {
+  identifier: string;
+  name: string;
+  provider: 's3' | 'r2';
   createdAt: number;
   updatedAt: number;
 };

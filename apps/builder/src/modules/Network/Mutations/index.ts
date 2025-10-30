@@ -23,6 +23,9 @@ import SegmentUpdateMutation from './Segment/SegmentUpdateMutation';
 import SpaceAddCdnMutation from './Space/cdns/SpaceAddCdnMutation';
 import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
 import SpaceUpdateCdnMutation from './Space/cdns/SpaceUpdateCdnMutation';
+import SpaceAddCredentialMutation from './Space/credentials/SpaceAddCredentialMutation';
+import SpaceRemoveCredentialMutation from './Space/credentials/SpaceRemoveCredentialMutation';
+import SpaceUpdateCredentialMutation from './Space/credentials/SpaceUpdateCredentialMutation';
 import SpaceAddPageFolderMutation from './Space/folders/SpaceAddPageFolderMutation';
 import SpaceRemovePageFolderMutation from './Space/folders/SpaceRemovePageFolderMutation';
 import SpaceUpdatePageFolderMutation from './Space/folders/SpaceUpdatePageFolderMutation';
@@ -110,6 +113,9 @@ export type MutationsMap = {
   SpaceAddCdn: unknown;
   SpaceUpdateCdn: unknown;
   SpaceRemoveCdn: unknown;
+  SpaceAddCredential: unknown;
+  SpaceUpdateCredential: unknown;
+  SpaceRemoveCredential: unknown;
   SpacePublish: TSpacePublishMutation;
   SpaceDeploy: TSpaceDeployMutation;
   SpaceUpdateSettings: unknown;
@@ -175,6 +181,9 @@ const Mutations = {
   SpaceAddCdn: SpaceAddCdnMutation,
   SpaceUpdateCdn: SpaceUpdateCdnMutation,
   SpaceRemoveCdn: SpaceRemoveCdnMutation,
+  SpaceAddCredential: SpaceAddCredentialMutation,
+  SpaceUpdateCredential: SpaceUpdateCredentialMutation,
+  SpaceRemoveCredential: SpaceRemoveCredentialMutation,
   SpacePublish: SpacePublishMutation,
   SpaceDeploy: SpaceDeployMutation,
   SpaceUpdateSettings: SpaceUpdateSettingsMutation,

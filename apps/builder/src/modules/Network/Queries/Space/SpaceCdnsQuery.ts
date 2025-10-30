@@ -10,7 +10,6 @@ const SpaceCdnsQuery = gql`
   query SpaceCdnsQuery($filter: CdnInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceCdns(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {
-        id
         identifier
         name
         domain
