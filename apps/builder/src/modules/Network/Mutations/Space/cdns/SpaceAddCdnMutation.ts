@@ -24,6 +24,9 @@ const SpaceAddCdnMutation = gql`
       endpoint
       bucketName
       prefix
+      credential {
+        identifier
+      }
     }
   }
 `;

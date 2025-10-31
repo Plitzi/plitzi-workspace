@@ -29,6 +29,14 @@ export type ResourceFile = File & {
   metadata?: PluginManifest;
 };
 
+export type Credential = {
+  identifier: string;
+  name: string;
+  provider: 's3' | 'r2';
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Cdn = {
   identifier: string;
   name: string;
@@ -38,14 +46,7 @@ export type Cdn = {
   endpoint?: string;
   bucketName: string;
   prefix: string;
-  createdAt: number;
-  updatedAt: number;
-};
-
-export type Credential = {
-  identifier: string;
-  name: string;
-  provider: 's3' | 'r2';
+  credential?: Credential;
   createdAt: number;
   updatedAt: number;
 };

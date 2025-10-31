@@ -18,6 +18,9 @@ const SpaceCdnsQuery = gql`
         endpoint
         bucketName
         prefix
+        credential {
+          identifier
+        }
         createdAt
         updatedAt
       }

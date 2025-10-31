@@ -26,6 +26,9 @@ const SpaceUpdateCdnMutation = gql`
       endpoint
       bucketName
       prefix
+      credential {
+        identifier
+      }
     }
   }
 `;
