@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.25.3",
+  "version": "0.25.4",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -43,12 +43,12 @@
   },
   "type": "module",
   "devDependencies": {
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
-    "vitest": "^4.0.5"
+    "vitest": "^4.0.6"
   },
   "peerDependencies": {
     "react": "^19.1.1",
