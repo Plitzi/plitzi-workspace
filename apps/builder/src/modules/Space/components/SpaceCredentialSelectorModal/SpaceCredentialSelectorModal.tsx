@@ -43,7 +43,7 @@ const SpaceCredentialSelectorModal = ({
 
   const handleCloseForm = useCallback(() => setNewCredential(undefined), []);
 
-  const [id, open, onOpen, onClose] = useDisclosure({ open: true });
+  const [id, open, onOpen, onClose] = useDisclosure();
   const { data = [], mutate } = useGraphQL(open ? 'SpaceCredentials' : null, data => data?.SpaceCredentials.edges, {});
 
   useDidUpdateEffect(() => {
