@@ -79,7 +79,7 @@ const BuilderAreaFooter = ({ setDragTree }: BuilderAreaFooterProps) => {
     if (!existsPopup('transform')) {
       addPopup('transform', <Transform />, {
         icon: <i className="fa-brands fa-nfc-symbol text-base" />,
-        title: 'Import And Transform',
+        title: 'Transform And Import',
         height: 400,
         width: 800,
         allowLeftSide: mode === 'normal',
