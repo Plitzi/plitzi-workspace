@@ -17,7 +17,9 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
@@ -31,6 +33,7 @@ export type BuilderAreaPreviewProps = {
   previewMode?: boolean;
   schema?: Schema;
   styleCache?: string;
+  variables?: Record<string, string>;
 };
 
 const BuilderAreaPreview = ({
@@ -38,7 +41,8 @@ const BuilderAreaPreview = ({
   className = '',
   previewMode = false,
   schema,
-  styleCache = ''
+  styleCache = '',
+  variables
 }: BuilderAreaPreviewProps) => {
   const { settings, flat } = schema ?? {};
   const { displayBorderComponents } = use(AppContext);
@@ -77,10 +81,11 @@ const BuilderAreaPreview = ({
   );
 
   const css = useMemo(() => {
-    const css = `${styleCache}\n${settings?.customCss}`;
+    const cssVariables = variablesToCss(variables);
+    const cacheParsed = processCssVariables(styleCache, variables);
 
-    return `${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${css}`;
-  }, [settings, styleCache]);
+    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cacheParsed}\n${settings?.customCss}`;
+  }, [settings?.customCss, styleCache, variables]);
 
   const { components } = use(ComponentContext);
   const element = useMemo(() => get(flat, id), [id, flat]);
