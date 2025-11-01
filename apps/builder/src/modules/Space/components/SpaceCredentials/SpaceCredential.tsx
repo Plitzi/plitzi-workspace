@@ -59,7 +59,7 @@ const SpaceCredential = ({
         <Heading as="h6">{name}</Heading>
         {selected && (
           <div className="flex">
-            <Icon size="2xl" intent="primary" icon="fa-solid fa-circle-check" />
+            <Icon size="2xl" intent="primaryActive" icon="fa-solid fa-circle-check" className="cursor-default" />
           </div>
         )}
       </div>

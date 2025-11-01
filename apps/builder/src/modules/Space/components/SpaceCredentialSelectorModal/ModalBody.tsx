@@ -9,8 +9,8 @@ import type { Credential } from '@plitzi/sdk-shared';
 
 export type ModalBodyProps = {
   credentials?: Credential[];
-  onClickAddCredential?: () => void;
   credentialSelected?: string;
+  onClickAddCredential?: () => void;
   onSelectCredential?: (identifier: string) => void;
   onRemoveCredential?: (identifier: string) => void;
 };

@@ -43,7 +43,7 @@ const SpaceCredentialSelectorModal = ({
 
   const handleCloseForm = useCallback(() => setNewCredential(undefined), []);
 
-  const [id, open, onOpen, onClose] = useDisclosure();
+  const [id, open, onOpen, onClose] = useDisclosure({ open: true });
   const { data = [], mutate } = useGraphQL(open ? 'SpaceCredentials' : null, data => data?.SpaceCredentials.edges, {});
 
   useDidUpdateEffect(() => {
@@ -67,7 +67,6 @@ const SpaceCredentialSelectorModal = ({
         secretAccessKey?: string;
       }
     ) => {
-      console.log('submit');
       const response = await mutateNetwork('SpaceAddCredential', {
         name,
         provider,
