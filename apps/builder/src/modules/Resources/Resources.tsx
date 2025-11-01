@@ -63,6 +63,8 @@ const Resources = () => {
     void mutateCdns();
   }, [mutate, mutateCdns, showModal]);
 
+  const handleChange = useCallback(() => void mutateCdns(), [mutateCdns]);
+
   const handleRemove = useCallback(() => void mutateCdns(), [mutateCdns]);
 
   return (
@@ -84,8 +86,10 @@ const Resources = () => {
               identifier={cdn.identifier}
               name={cdn.name}
               prefix={`${cdn.prefix}/assets`}
+              credentialIdentifier={cdn.credential?.identifier}
               isCollapsed={collapsedCache[cdn.identifier] ?? true}
               onCollapse={handleChangeCollapse}
+              onChange={handleChange}
               onRemove={handleRemove}
             />
           ))}

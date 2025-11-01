@@ -13,6 +13,11 @@ const SpaceCredentialsQuery = gql`
         identifier
         name
         provider
+        inUse
+        usedIn {
+          usedFrom
+          name
+        }
         createdAt
         updatedAt
       }

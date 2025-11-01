@@ -6,6 +6,11 @@ const SpaceAddCredentialMutation = gql`
       name
       identifier
       provider
+      inUse
+      usedIn {
+        usedFrom
+        name
+      }
     }
   }
 `;

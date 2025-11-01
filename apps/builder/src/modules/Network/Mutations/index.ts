@@ -22,6 +22,7 @@ import SegmentUpdateElementMutation from './Segment/SegmentUpdateElementMutation
 import SegmentUpdateMutation from './Segment/SegmentUpdateMutation';
 import SpaceAddCdnMutation from './Space/cdns/SpaceAddCdnMutation';
 import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
+import SpaceSetCdnCredentialMutation from './Space/cdns/SpaceSetCdnCredentialMutation';
 import SpaceUpdateCdnMutation from './Space/cdns/SpaceUpdateCdnMutation';
 import SpaceAddCredentialMutation from './Space/credentials/SpaceAddCredentialMutation';
 import SpaceRemoveCredentialMutation from './Space/credentials/SpaceRemoveCredentialMutation';
@@ -70,6 +71,10 @@ import type { TCollectionUpdateRecordMutation } from './Collection/CollectionUpd
 import type { TSegmentAddMutation } from './Segment/SegmentAddMutation';
 import type { TSegmentPublishMutation } from './Segment/SegmentPublishMutation';
 import type { TSegmentUpdateMutation } from './Segment/SegmentUpdateMutation';
+import type { TSpaceAddCdnMutation } from './Space/cdns/SpaceAddCdnMutation';
+import type { TSpaceRemoveCdnMutation } from './Space/cdns/SpaceRemoveCdnMutation';
+import type { TSpaceSetCdnCredentialMutation } from './Space/cdns/SpaceSetCdnCredentialMutation';
+import type { TSpaceUpdateCdnMutation } from './Space/cdns/SpaceUpdateCdnMutation';
 import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
 import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
 import type { TSpaceUpdatePageFolderMutation } from './Space/folders/SpaceUpdatePageFolderMutation';
@@ -110,9 +115,10 @@ export type MutationsMap = {
   SpaceAddResource: TSpaceAddResourceMutation;
   SpaceMoveResource: TSpaceMoveResourceMutation;
   SpaceRemoveResource: TSpaceRemoveResourceMutation;
-  SpaceAddCdn: unknown;
-  SpaceUpdateCdn: unknown;
-  SpaceRemoveCdn: unknown;
+  SpaceAddCdn: TSpaceAddCdnMutation;
+  SpaceUpdateCdn: TSpaceUpdateCdnMutation;
+  SpaceSetCdnCredential: TSpaceSetCdnCredentialMutation;
+  SpaceRemoveCdn: TSpaceRemoveCdnMutation;
   SpaceAddCredential: unknown;
   SpaceUpdateCredential: unknown;
   SpaceRemoveCredential: unknown;
@@ -180,6 +186,7 @@ const Mutations = {
   SpaceRemoveResource: SpaceRemoveResourceMutation,
   SpaceAddCdn: SpaceAddCdnMutation,
   SpaceUpdateCdn: SpaceUpdateCdnMutation,
+  SpaceSetCdnCredential: SpaceSetCdnCredentialMutation,
   SpaceRemoveCdn: SpaceRemoveCdnMutation,
   SpaceAddCredential: SpaceAddCredentialMutation,
   SpaceUpdateCredential: SpaceUpdateCredentialMutation,

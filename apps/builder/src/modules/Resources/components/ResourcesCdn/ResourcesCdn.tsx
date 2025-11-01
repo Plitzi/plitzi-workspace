@@ -9,6 +9,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+import SpaceCredentialSelectorModal from '@pmodules/Space/components/SpaceCredentialSelectorModal';
 
 import ResourceManager from '../ResourceManager';
 import ResourcesList from '../ResourcesList';
@@ -28,19 +29,30 @@ export type ResourcesCdnProps = {
   identifier: string;
   name: string;
   prefix: string;
+  credentialIdentifier?: string;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
+  onChange?: (identifier: string) => void;
   onRemove?: (identifier: string) => void;
 };
 
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
-const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRemove }: ResourcesCdnProps) => {
+const ResourcesCdn = ({
+  identifier,
+  name,
+  prefix,
+  credentialIdentifier,
+  isCollapsed,
+  onCollapse,
+  onChange,
+  onRemove
+}: ResourcesCdnProps) => {
   const { addToast } = useToast();
   const { showDialog } = useModal();
   const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
-  const { mutate: networkMutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
   const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
     cdnIdentifier: identifier
   });
@@ -123,6 +135,19 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
   //   e.stopPropagation();
   // }, []);
 
+  const handleSelectCredential = useCallback(
+    async (credentialIdentifier: string) => {
+      const response = await mutateNetwork('SpaceSetCdnCredential', { identifier, credentialIdentifier });
+      if (!response.success) {
+        return;
+      }
+
+      onChange?.(identifier);
+      void mutate();
+    },
+    [identifier, mutate, mutateNetwork, onChange]
+  );
+
   const handleClickRemove = useCallback(
     async (e: MouseEvent) => {
       e.stopPropagation();
@@ -140,12 +165,12 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
 
       if (response) {
         setRemoving(true);
-        await networkMutate('SpaceRemoveCdn', { identifier });
+        await mutateNetwork('SpaceRemoveCdn', { identifier });
         setRemoving(false);
         onRemove?.(identifier);
       }
     },
-    [identifier, networkMutate, onRemove, showDialog]
+    [identifier, mutateNetwork, onRemove, showDialog]
   );
 
   return (
@@ -164,6 +189,14 @@ const ResourcesCdn = ({ identifier, name, prefix, isCollapsed, onCollapse, onRem
           title="Update"
           onClick={handleClickUpdate}
         /> */}
+        <SpaceCredentialSelectorModal selected={credentialIdentifier} onSelect={handleSelectCredential}>
+          <Icon
+            // intent="primary"
+            icon="fa-solid fa-key"
+            className="hidden cursor-pointer group-hover:block"
+            title="Credentials"
+          />
+        </SpaceCredentialSelectorModal>
         <Icon
           intent="danger"
           icon="fas fa-trash-alt"

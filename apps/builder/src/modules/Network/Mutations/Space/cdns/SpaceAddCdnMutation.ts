@@ -1,5 +1,9 @@
 import { gql } from '@apollo/client/core';
 
+import type { Cdn } from '@plitzi/sdk-shared';
+
+export type TSpaceAddCdnMutation = Cdn;
+
 const SpaceAddCdnMutation = gql`
   mutation SpaceAddCdnMutation(
     $name: String!

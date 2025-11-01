@@ -3,6 +3,8 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { MouseEvent } from 'react';
+
 const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
   z.object({
     provider: z.literal('s3'),
@@ -24,8 +26,8 @@ export type SpaceCredentialFormProps = {
   provider?: 's3' | 'r2';
   accessKeyId?: string;
   secretAccessKey?: string;
-  onClose?: () => void;
-  onSubmit?: (values: z.infer<typeof spaceCredentialFormSchema>) => void;
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => void;
 };
 
 const SpaceCredentialForm = ({
@@ -42,7 +44,7 @@ const SpaceCredentialForm = ({
   });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof spaceCredentialFormSchema>) => onSubmit?.(values),
+    (values: z.infer<typeof spaceCredentialFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 
