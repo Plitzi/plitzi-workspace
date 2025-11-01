@@ -220,7 +220,7 @@ const BuilderArea = ({
       <div
         className={classNames('mx-auto mb-2 flex w-full grow basis-0 flex-col shadow', {
           'max-w-[1440px]': displayMode === 'desktop',
-          'max-w-[768px]': displayMode === 'tablet',
+          'max-w-3xl': displayMode === 'tablet',
           'max-w-[425px]': displayMode === 'mobile'
         })}
       >
