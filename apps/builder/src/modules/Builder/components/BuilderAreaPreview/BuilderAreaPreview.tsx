@@ -84,7 +84,7 @@ const BuilderAreaPreview = ({
     const cssVariables = variablesToCss(variables);
     const cacheParsed = processCssVariables(styleCache, variables);
 
-    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cacheParsed}\n${settings?.customCss}`;
+    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cacheParsed}\n${settings?.customCss ?? ''}`;
   }, [settings?.customCss, styleCache, variables]);
 
   const { components } = use(ComponentContext);
