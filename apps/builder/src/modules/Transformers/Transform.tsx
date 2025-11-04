@@ -21,7 +21,7 @@ import TransformPreview from './TransformPreview';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { Schema, Style } from '@plitzi/sdk-shared';
-import type { ClipboardEvent } from 'react';
+import type { ChangeEvent, ClipboardEvent } from 'react';
 
 const Transform = () => {
   const editorRef = useRef<HTMLElement | null>(null);
@@ -39,6 +39,7 @@ const Transform = () => {
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const [preview, setPreview] = useState(EMPTY_SCHEMA);
   const [content, setContent] = useState<string>('');
+  const [previewMode, setPreviewMode] = useState(true);
 
   const transformQuery = useCallback(
     async (content: string) => {
@@ -131,6 +132,11 @@ const Transform = () => {
     [setMode]
   );
 
+  const handleChangePreviewMode = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => setPreviewMode(e.target.checked),
+    []
+  );
+
   const handleChangeLayoutMode = useCallback(
     (option?: Exclude<Option, OptionGroup>) => setLayoutMode((option?.value ?? 'horizontal') as typeof layoutMode),
     [setLayoutMode]
@@ -158,7 +164,7 @@ const Transform = () => {
     <div className="flex h-full flex-col">
       <div className={classNames('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
         <div className="flex grow basis-0 flex-col overflow-y-auto">
-          <TransformPreview preview={preview} />
+          <TransformPreview preview={preview} previewMode={previewMode} />
         </div>
         {isEditorVisible && (
           <div
@@ -211,6 +217,8 @@ const Transform = () => {
         <TransformActions
           mode={mode}
           disabled={networkLoading}
+          previewMode={previewMode}
+          onChangePreviewMode={handleChangePreviewMode}
           onChangeMode={handleChangeMode}
           onClickEraser={handleClickEraser}
           onTransform={handleClickTransform}

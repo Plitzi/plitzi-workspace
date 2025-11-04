@@ -1,13 +1,17 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Select2 from '@plitzi/plitzi-ui/Select2';
+import Switch from '@plitzi/plitzi-ui/Switch';
 import { useMemo } from 'react';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
+import type { ChangeEvent } from 'react';
 
 export type TransformActionsProps = {
   mode?: 'html-tailwind' | 'webflow';
   disabled?: boolean;
+  previewMode?: boolean;
   onChangeMode?: (mode?: Exclude<Option, OptionGroup>) => void;
+  onChangePreviewMode?: (e: ChangeEvent<HTMLInputElement>) => void;
   onClickEraser?: () => void;
   onTransform?: () => void;
   onImport?: () => void;
@@ -16,7 +20,9 @@ export type TransformActionsProps = {
 const TransformActions = ({
   mode = 'html-tailwind',
   disabled,
+  previewMode = true,
   onChangeMode,
+  onChangePreviewMode,
   onClickEraser,
   onTransform,
   onImport
@@ -32,7 +38,14 @@ const TransformActions = ({
   );
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
+      <Switch
+        label="Preview Mode"
+        className={{ root: 'w-30', input: 'w-30 items-center' }}
+        size="sm"
+        checked={previewMode}
+        onChange={onChangePreviewMode}
+      />
       <Button size="sm" className="rounded-sm" title="Clean Up" onClick={onClickEraser}>
         <i className="fa-solid fa-eraser" />
       </Button>

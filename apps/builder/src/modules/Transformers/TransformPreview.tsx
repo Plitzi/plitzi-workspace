@@ -8,9 +8,10 @@ import type { Schema, Style } from '@plitzi/sdk-shared';
 
 export type TransformPreviewProps = {
   preview: { schema: Schema; style: Style; definition: { rootId: string } };
+  previewMode?: boolean;
 };
 
-const TransformPreview = ({ preview }: TransformPreviewProps) => {
+const TransformPreview = ({ preview, previewMode = true }: TransformPreviewProps) => {
   const schemaMemo = useMemo(() => ({ schema: preview.schema }), [preview.schema]);
   const styleMemo = useMemo(() => ({ style: preview.style }), [preview.style]);
 
@@ -19,7 +20,7 @@ const TransformPreview = ({ preview }: TransformPreviewProps) => {
       <SchemaContext value={schemaMemo}>
         <StyleContext value={styleMemo}>
           <BuilderAreaPreview
-            previewMode
+            previewMode={previewMode}
             className="min-h-full w-full"
             schema={schemaMemo.schema}
             id={preview.definition.rootId}
