@@ -2,6 +2,7 @@
 import BlockHtml from './advanced/BlockHtml';
 import BlockJsx from './advanced/BlockJsx';
 import Custom from './advanced/Custom';
+import NodeHtml from './advanced/NodeHtml';
 import Reference from './advanced/Reference';
 // Basic
 import Button from './basic/Button';
@@ -37,6 +38,7 @@ export * from './advanced/BlockHtml';
 export * from './advanced/BlockJsx';
 export * from './advanced/Custom';
 export * from './advanced/Reference';
+export * from './advanced/NodeHtml';
 export * from './basic/Button';
 export * from './basic/Dropdown';
 export * from './basic/Heading';
@@ -62,6 +64,7 @@ export * from './structure/ModalContainer';
 export * from './structure/TabContainer';
 
 export {
+  NodeHtml,
   Dropdown,
   NotFound,
   Loading,

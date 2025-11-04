@@ -9,6 +9,7 @@ export const defaultElements = {
   custom: components.Custom,
   reference: components.Reference,
   blockHtml: components.BlockHtml,
+  nodeHtml: components.NodeHtml,
   blockJsx: components.BlockJsx,
   page: components.Page,
   container: components.Container,

@@ -1,6 +1,7 @@
 import BlockHtml from './advanced/BlockHtml/Settings';
 import BlockJsx from './advanced/BlockJsx/Settings';
 import Custom from './advanced/Custom/Settings';
+import NodeHtml from './advanced/NodeHtml/Settings';
 import PlitziSdk from './advanced/PlitziSdk/Settings';
 import Reference from './advanced/Reference/Settings';
 import Button from './basic/Button/Settings';
@@ -51,6 +52,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   paragraph: Paragraph,
   text: Text,
   markdown: Markdown,
+  nodeHtml: NodeHtml,
   list: List,
   link: Link,
   form: Form,

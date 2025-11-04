@@ -34,7 +34,7 @@ const Container = ({ ref, className = '', subType = 'div', internalProps, childr
       ref={ref}
       tag={subType}
       internalProps={internalProps}
-      className={classNames('plitzi-component__container', className)}
+      className={classNames(`plitzi-component__container plitzi-component__container-${subType}`, className)}
     >
       {children}
     </RootElement>

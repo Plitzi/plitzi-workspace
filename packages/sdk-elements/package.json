@@ -549,6 +549,7 @@
   },
   "devDependencies": {
     "eslint": "^9.39.0",
+    "react": "^19.2.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
     "vitest": "^4.0.6"

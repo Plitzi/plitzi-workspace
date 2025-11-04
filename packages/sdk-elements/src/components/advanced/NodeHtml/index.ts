@@ -1,14 +1,16 @@
-import BaseBlockHtml from './BlockHtml';
+import BaseNodeHtml from './NodeHtml';
 
-const BlockHtml = Object.assign(BaseBlockHtml, {
-  type: 'blockHtml',
+const NodeHtml = Object.assign(BaseNodeHtml, {
+  type: 'nodeHtml',
   content: {
     attributes: {
-      content: ''
+      subType: 'div'
     },
     definition: {
-      label: 'HTML Block',
-      type: 'blockHtml',
+      label: 'Html Node',
+      type: 'nodeHtml',
+      description: '',
+      items: [],
       bindings: {},
       styleSelectors: {
         base: ''
@@ -36,12 +38,28 @@ const BlockHtml = Object.assign(BaseBlockHtml, {
       icon: 'fa-brands fa-html5'
     },
     defaultStyle: {
-      name: 'HTML Block',
+      name: 'Html Node',
       displayMode: 'desktop',
-      style: {}
+      style: {
+        base: {
+          'min-width': '50px',
+          'min-height': '50px'
+        }
+      },
+      subTypes: {
+        hr: {
+          name: 'HR Node',
+          displayMode: 'desktop',
+          style: {
+            base: {
+              'border-top-width': '1px'
+            }
+          }
+        }
+      }
     },
     settings: {}
   }
 });
 
-export default BlockHtml;
+export default NodeHtml;
