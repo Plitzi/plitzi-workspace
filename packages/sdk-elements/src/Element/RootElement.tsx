@@ -64,15 +64,16 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   interactionTriggers,
   interactionCallbacks,
   internalProps,
+  style: styleProp,
   ...otherProps
 }: RootElementProps<T>) => {
   const styleParsed = useMemo(() => {
-    if (!otherProps.style) {
+    if (!styleProp || typeof styleProp !== 'string') {
       return undefined;
     }
 
-    return parseStyle(otherProps.style);
-  }, [otherProps.style]);
+    return parseStyle(styleProp);
+  }, [styleProp]);
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
   if (!Tag || !internalProps) {
     console.error('One of these parameters [tag, internalProps] are missing:', Tag, internalProps);
@@ -112,7 +113,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 
   if (!InteractionsContext || !DataSourceContext) {
     return (
-      <Tag ref={ref} style={style} className={className} {...otherProps} {...params}>
+      <Tag ref={ref} style={{ ...style, ...styleParsed }} className={className} {...otherProps} {...params}>
         {children}
       </Tag>
     );
@@ -215,7 +216,14 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }, [debugMode, dataSourceContextRef, id]);
 
   return (
-    <Tag ref={ref} className={className} style={styleParsed} {...otherProps} {...params} {...eventsAttached}>
+    <Tag
+      ref={ref}
+      style={{ ...style, ...styleParsed }}
+      className={className}
+      {...otherProps}
+      {...params}
+      {...eventsAttached}
+    >
       {children}
     </Tag>
   );
