@@ -6,6 +6,8 @@ import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import parseStyle from './helpers/parseStyle';
+
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionBaseCallback, InternalPropsSTG2, DataSourceContextValue } from '@plitzi/sdk-shared';
 import type { Context, FC, JSX, ReactNode, RefObject } from 'react';
@@ -51,7 +53,8 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   interactionTriggers?: Record<string, InteractionBaseCallback>;
   interactionCallbacks?: Record<string, InteractionBaseCallback>;
   internalProps?: InternalPropsSTG2;
-} & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref'>;
+  style?: string;
+} & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref' | 'style'>;
 
 const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   ref,
@@ -63,6 +66,13 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   internalProps,
   ...otherProps
 }: RootElementProps<T>) => {
+  const styleParsed = useMemo(() => {
+    if (!otherProps.style) {
+      return undefined;
+    }
+
+    return parseStyle(otherProps.style);
+  }, [otherProps.style]);
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
   if (!Tag || !internalProps) {
     console.error('One of these parameters [tag, internalProps] are missing:', Tag, internalProps);
@@ -205,7 +215,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }, [debugMode, dataSourceContextRef, id]);
 
   return (
-    <Tag ref={ref} style={style} className={className} {...otherProps} {...params} {...eventsAttached}>
+    <Tag ref={ref} className={className} style={styleParsed} {...otherProps} {...params} {...eventsAttached}>
       {children}
     </Tag>
   );

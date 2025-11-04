@@ -26,15 +26,17 @@ export type ContainerProps = {
     | 'dd';
   internalProps: InternalPropsSTG2;
   children?: ReactNode;
+  style?: string;
 };
 
-const Container = ({ ref, className = '', subType = 'div', internalProps, children }: ContainerProps) => {
+const Container = ({ ref, className = '', subType = 'div', internalProps, children, style }: ContainerProps) => {
   return (
     <RootElement
       ref={ref}
       tag={subType}
       internalProps={internalProps}
       className={classNames(`plitzi-component__container plitzi-component__container-${subType}`, className)}
+      style={style}
     >
       {children}
     </RootElement>
