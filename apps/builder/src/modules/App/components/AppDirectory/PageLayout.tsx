@@ -30,7 +30,7 @@ const PageLayout = ({ id = '', name = '', onSelect, onRemove }: PageLayoutProps)
       onClick={onSelect}
     >
       <ContainerAutoScale className="flex h-[150px] w-full items-center justify-center overflow-hidden">
-        <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="h-full w-full" />
+        <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="h-full w-full" previewMode />
       </ContainerAutoScale>
       <div className="hidden group-hover:flex">
         <div className="absolute top-0 right-0 bottom-0 left-0 bg-black opacity-50" />
