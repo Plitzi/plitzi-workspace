@@ -10,7 +10,7 @@ import AppContext from './AppContext';
 import AppProvider from './AppProvider';
 
 import type { AppContextValue } from './AppContext';
-import type { Environment, Server } from '@plitzi/sdk-shared';
+import type { DisplayMode, Environment, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppMainProps = {
@@ -45,7 +45,7 @@ const AppMain = ({
   const [displayBorderComponents, setDisplayBorderComponents] =
     useState<AppContextValue['displayBorderComponents']>('black');
   const [zoom, setZoom] = useState(1);
-  const [displayMode, setDisplayMode] = useState<AppContextValue['displayMode']>('desktop');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
 
   const appValueMemo = useMemo(

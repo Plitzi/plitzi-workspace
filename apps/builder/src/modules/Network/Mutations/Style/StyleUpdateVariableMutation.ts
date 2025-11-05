@@ -6,6 +6,7 @@ const StyleUpdateVariableMutation = gql`
       id
       variables
       platform
+      mode
       cache
     }
   }

@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 
+import type { DisplayMode } from '@plitzi/sdk-shared';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type AppContextValue = {
@@ -10,8 +11,8 @@ export type AppContextValue = {
   setDisplayBorderComponents: Dispatch<SetStateAction<'black' | 'white' | 'none'>>;
   zoom: number;
   setZoom: Dispatch<SetStateAction<number>>;
-  displayMode: 'desktop' | 'tablet' | 'mobile';
-  setDisplayMode: Dispatch<SetStateAction<'desktop' | 'tablet' | 'mobile'>>;
+  displayMode: DisplayMode;
+  setDisplayMode: Dispatch<SetStateAction<DisplayMode>>;
   mobilePreview: boolean;
   setMobilePreview: Dispatch<SetStateAction<boolean>>;
 };

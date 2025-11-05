@@ -82,8 +82,9 @@ const InitQuery = gql`
           }
         }
         style {
-          variables
           platform
+          variables
+          mode
           cache
         }
       }
@@ -96,6 +97,7 @@ const InitQuery = gql`
         id
         platform
         variables
+        mode
         cache
       }
     }

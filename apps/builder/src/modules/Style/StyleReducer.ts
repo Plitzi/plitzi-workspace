@@ -17,7 +17,8 @@ export const StyleActions = {
   STYLE_ADD_VARIABLE: 'STYLE_ADD_VARIABLE',
   STYLE_UPDATE_VARIABLE: 'STYLE_UPDATE_VARIABLE',
   STYLE_REMOVE_VARIABLE: 'STYLE_REMOVE_VARIABLE',
-  STYLE_ADD_TEMPLATE: 'STYLE_ADD_TEMPLATE'
+  STYLE_ADD_TEMPLATE: 'STYLE_ADD_TEMPLATE',
+  STYLE_UPDATE_SETTINGS: 'STYLE_UPDATE_SETTINGS'
 } as const;
 
 export type StyleReducerActionsBase = { fromSubscriptions?: boolean };
@@ -49,6 +50,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
       }
     | { type: 'STYLE_REMOVE_VARIABLE'; variable: string }
     | { type: 'STYLE_ADD_TEMPLATE'; platform: Style['platform'] }
+    | { type: 'STYLE_UPDATE_SETTINGS'; path: string; value: string }
   );
 
 const StyleReducer = (state: Style, action: StyleReducerActions) => {
@@ -120,6 +122,16 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
         });
         draft.platform = platform;
         draft.cache = generateCache({ platform } as Style);
+      });
+    }
+
+    case StyleActions.STYLE_UPDATE_SETTINGS: {
+      const { path, value } = action;
+
+      return produce(state, draft => {
+        if (path === 'mode') {
+          set(draft, 'mode', value);
+        }
       });
     }
 

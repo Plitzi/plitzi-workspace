@@ -2,7 +2,9 @@ import type { StyleConstants } from '../style/styleConstants';
 
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
 
-export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
+export type DisplayMode = 'desktop' | 'tablet' | 'mobile' | 'raw';
+
+export type StyleMode = 'mobile-first' | 'desktop-first';
 
 export type StyleValue = number | string;
 
@@ -21,6 +23,7 @@ export type StylePlatform = Record<DisplayMode, Record<string, StyleItem>>;
 export type Style = {
   variables: { [key: string]: string };
   platform: StylePlatform;
+  mode?: StyleMode;
   cache: string;
 };
 

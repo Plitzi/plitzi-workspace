@@ -29,7 +29,8 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'styleAddVariable',
     'styleUpdateVariable',
     'styleRemoveVariable',
-    'styleAddTemplate'
+    'styleAddTemplate',
+    'styleUpdateSettings'
   ],
   builder: ['builderSetBaseContext', 'builderSetSelected', 'builderSetHovered'],
   segment: [],

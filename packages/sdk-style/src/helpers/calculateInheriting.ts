@@ -25,7 +25,7 @@ const getDataStyle = (
   } = element;
 
   // get element display mode styles (mobile -> tablet -> desktop)
-  (['desktop', 'tablet', 'mobile'] as DisplayMode[]).forEach(mode => {
+  (['desktop', 'tablet', 'mobile', 'raw'] as DisplayMode[]).forEach(mode => {
     const selectorSegments = Object.values(
       pick(get(platform, mode, {}), get(styleSelectors, styleSelector, '').split(' '))
     );

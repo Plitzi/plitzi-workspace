@@ -7,6 +7,7 @@ import BuilderOverlay from '../BuilderOverlay';
 import BuilderOverlayDistance from '../BuilderOverlay/BuilderOverlayDistance';
 import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 
+import type { DisplayMode } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BuilderAreaOverlayProps = {
@@ -14,7 +15,7 @@ export type BuilderAreaOverlayProps = {
   baseElementId?: string;
   dragTree?: boolean;
   zoom?: number;
-  displayMode?: 'desktop' | 'tablet' | 'mobile';
+  displayMode?: DisplayMode;
   previewMode?: boolean;
 };
 

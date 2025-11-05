@@ -8,11 +8,15 @@ import { useCallback, use, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 import type { ChangeEvent } from 'react';
 
 const ContainerSettings = () => {
   const { settings: settingsProp } = use(SchemaMainContext);
+  const {
+    style: { mode }
+  } = use(StyleContext);
   const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp);
@@ -70,6 +74,13 @@ const ContainerSettings = () => {
         setSettings(state => ({ ...state, [name]: value }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
       }
+    },
+    [eventBridge]
+  );
+
+  const handleChangeMode = useCallback(
+    (value: string) => {
+      void eventBridge.emit('main', 'styleUpdateSettings', 'mode', value);
     },
     [eventBridge]
   );
@@ -147,6 +158,13 @@ const ContainerSettings = () => {
               />
             </>
           )}
+        </div>
+        <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
+          <Heading as="h4">Style Settings</Heading>
+          <Select size="sm" name="mode" value={mode} onChange={handleChangeMode} label="Style Mode" placeholder="None">
+            <option value="desktop-first">Desktop First</option>
+            <option value="mobile-first">Mobile First</option>
+          </Select>
         </div>
         <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
           <Heading as="h4">State Settings</Heading>

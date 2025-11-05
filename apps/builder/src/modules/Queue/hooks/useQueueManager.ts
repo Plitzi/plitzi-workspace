@@ -10,13 +10,15 @@ import { StyleActions } from '@pmodules/Style/StyleReducer';
 import type { QueueItem, QueuePriority } from '../QueueContext';
 import type { Element, Schema, SchemaVariable, Segment, Style } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
 
 export type UseQueueManagerProps = {
   delay?: number;
-  mutate: NetworkContextValue['mutate'];
+  mutate: NetworkContextValue<QueriesMap, MutationsMap>['mutate'];
   maxRetries?: number;
   retryTimeout?: number;
   disabled?: boolean;
@@ -222,6 +224,12 @@ const useQueueManager = ({
           }
 
           return mutate('StyleUpdate', { style });
+        }
+
+        case StyleActions.STYLE_UPDATE_SETTINGS: {
+          const { path, value } = item.action;
+
+          return mutate('StyleUpdateSettings', { path, value });
         }
 
         // case StyleActions[itemParsed.type]: {

@@ -14,7 +14,7 @@ import OverlayButtonResize from './OverlayButtonResize';
 import OverlaySpacing from './OverlaySpacing';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { Element } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type OverlayNormalProps = {
@@ -24,7 +24,7 @@ export type OverlayNormalProps = {
   refIframe?: RefObject<HTMLIFrameElement | null>;
   elementDOM?: HTMLElement | null;
   hideActions?: boolean;
-  displayMode?: 'desktop' | 'tablet' | 'mobile';
+  displayMode?: DisplayMode;
   container?: OverlayRect;
   selector?: string;
   zoom?: number;

@@ -6,6 +6,7 @@ const StyleRemoveSelectorMutation = gql`
       id
       variables
       platform
+      mode
       cache
     }
   }

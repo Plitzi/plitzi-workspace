@@ -40,6 +40,7 @@ import StyleRemoveSelectorSubscription from './Style/StyleRemoveSelectorSubscrip
 import StyleRemoveVariableSubscription from './Style/StyleRemoveVariableSubscription';
 import StyleUpdatedSubscription from './Style/StyleUpdatedSubscription'; // Other Style Subscriptions
 import StyleUpdateSelectorSubscription from './Style/StyleUpdateSelectorSubscription';
+import StyleUpdateSettingsSubscription from './Style/StyleUpdateSettingsSubscription';
 import StyleUpdateVariableSubscription from './Style/StyleUpdateVariableSubscription';
 
 export type SubscriptionsMap = {
@@ -72,6 +73,7 @@ export type SubscriptionsMap = {
   StyleAddVariable: unknown;
   StyleUpdateVariable: unknown;
   StyleRemoveVariable: unknown;
+  StyleUpdateSettings: unknown;
 
   SegmentAddElement: unknown;
   SegmentUpdateElement: unknown;
@@ -117,6 +119,7 @@ const Subscriptions = {
   StyleAddVariable: StyleAddVariableSubscription,
   StyleUpdateVariable: StyleUpdateVariableSubscription,
   StyleRemoveVariable: StyleRemoveVariableSubscription,
+  StyleUpdateSettings: StyleUpdateSettingsSubscription,
 
   SegmentAddElement: SegmentAddElementSubscription,
   SegmentUpdateElement: SegmentUpdateElementSubscription,

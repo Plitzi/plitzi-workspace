@@ -60,6 +60,7 @@ import StyleRemoveSelectorMutation from './Style/StyleRemoveSelectorMutation';
 import StyleRemoveVariableMutation from './Style/StyleRemoveVariableMutation';
 import StyleUpdateMutation from './Style/StyleUpdateMutation';
 import StyleUpdateSelectorMutation from './Style/StyleUpdateSelectorMutation';
+import StyleUpdateSettingsMutation from './Style/StyleUpdateSettingsMutation';
 import StyleUpdateVariableMutation from './Style/StyleUpdateVariableMutation';
 
 import type { TCollectionAddMutation } from './Collection/CollectionAddMutation';
@@ -133,6 +134,7 @@ export type MutationsMap = {
   StyleUpdateVariable: unknown;
   StyleRemoveVariable: unknown;
   StyleUpdate: unknown;
+  StyleUpdateSettings: unknown;
 
   SegmentAdd: TSegmentAddMutation;
   SegmentUpdate: TSegmentUpdateMutation;
@@ -202,6 +204,7 @@ const Mutations = {
   StyleUpdateVariable: StyleUpdateVariableMutation,
   StyleRemoveVariable: StyleRemoveVariableMutation,
   StyleUpdate: StyleUpdateMutation,
+  StyleUpdateSettings: StyleUpdateSettingsMutation,
 
   SegmentAdd: SegmentAddMutation,
   SegmentUpdate: SegmentUpdateMutation,

@@ -40,7 +40,12 @@ const StyleContextProvider = ({
       case 'normal':
         return internalData.style;
       default:
-        return { variables: {}, platform: { desktop: {}, tablet: {}, mobile: {} }, cache: '' };
+        return {
+          variables: {},
+          platform: { desktop: {}, tablet: {}, mobile: {}, raw: {} },
+          cache: '',
+          mode: 'desktop-first' as const
+        };
     }
   }, [internalData.style, styleProp, type]);
   const { enqueueMiddleware } = use(QueueContext);
@@ -141,6 +146,13 @@ const StyleContextProvider = ({
     [dispatchStyle]
   );
 
+  const styleUpdateSettings = useCallback(
+    (path: string, value: string, fromSubscriptions = false) => {
+      dispatchStyle({ type: StyleActions.STYLE_UPDATE_SETTINGS, path, value, fromSubscriptions });
+    },
+    [dispatchStyle]
+  );
+
   useEffect(() => {
     if (includeSubscriptions) {
       subscriptionManager.subscribe('StyleUpdated', {}, data => {
@@ -191,6 +203,11 @@ const StyleContextProvider = ({
         const { variable } = get(data, 'data.StyleRemoveVariable', {}) as { variable: string };
         styleRemoveVariable(variable, true);
       });
+
+      subscriptionManager.subscribe('StyleUpdateSettings', {}, data => {
+        const { path, value } = get(data, 'data.StyleUpdateSettings', {}) as { path: string; value: string };
+        styleUpdateSettings(path, value, true);
+      });
     }
 
     return () => {
@@ -202,7 +219,8 @@ const StyleContextProvider = ({
           'StyleRemoveSelector',
           'StyleAddVariable',
           'StyleUpdateVariable',
-          'StyleRemoveVariable'
+          'StyleRemoveVariable',
+          'styleUpdateSettings'
         ]);
       }
     };
@@ -215,7 +233,8 @@ const StyleContextProvider = ({
     styleRemoveSelector,
     styleAddVariable,
     styleUpdateVariable,
-    styleRemoveVariable
+    styleRemoveVariable,
+    styleUpdateSettings
   ]);
 
   const styleContextMemo = useMemo(() => ({ style }), [style]);
@@ -229,7 +248,8 @@ const StyleContextProvider = ({
       styleAddVariable,
       styleUpdateVariable,
       styleRemoveVariable,
-      styleAddTemplate
+      styleAddTemplate,
+      styleUpdateSettings
     }),
     [
       styleUpdate,
@@ -239,7 +259,8 @@ const StyleContextProvider = ({
       styleAddVariable,
       styleUpdateVariable,
       styleRemoveVariable,
-      styleAddTemplate
+      styleAddTemplate,
+      styleUpdateSettings
     ]
   );
 

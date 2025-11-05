@@ -30,6 +30,7 @@ export type EventBridgeEvent =
   | 'styleUpdateVariable'
   | 'styleRemoveVariable'
   | 'styleAddTemplate'
+  | 'styleUpdateSettings'
   // Builder Events
   | 'builderSetBaseContext'
   | 'builderSetSelected'
