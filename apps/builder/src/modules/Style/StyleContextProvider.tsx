@@ -42,7 +42,7 @@ const StyleContextProvider = ({
       default:
         return {
           variables: {},
-          platform: { desktop: {}, tablet: {}, mobile: {}, raw: {} },
+          platform: { desktop: {}, tablet: {}, mobile: {} },
           cache: '',
           mode: 'desktop-first' as const
         };

@@ -11,7 +11,12 @@ import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, Sche
 
 export const EMPTY_SCHEMA = {
   schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] } as Schema,
-  style: { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' } as Style,
+  style: {
+    platform: { desktop: {}, tablet: {}, mobile: {} },
+    variables: {},
+    mode: 'desktop-first',
+    cache: ''
+  } as Style,
   definition: { rootId: '' } // for segments and templates
 };
 

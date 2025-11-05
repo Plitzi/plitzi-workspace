@@ -1,3 +1,4 @@
+import Alert from '@plitzi/plitzi-ui/Alert';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
@@ -12,6 +13,7 @@ import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 
 import TransformActions from './TransformActions';
@@ -21,7 +23,7 @@ import TransformPreview from './TransformPreview';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { Schema, Style } from '@plitzi/sdk-shared';
-import type { ChangeEvent, ClipboardEvent } from 'react';
+import type { ClipboardEvent } from 'react';
 
 const Transform = () => {
   const editorRef = useRef<HTMLElement | null>(null);
@@ -31,6 +33,9 @@ const Transform = () => {
     builderHandler,
     baseContext: { baseElementId }
   } = use(BuilderContext);
+  const {
+    style: { mode: styleMode }
+  } = use(StyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const { rootDOM } = use(ContainerRootContext);
   const [mode, setMode] = useState<'html-tailwind' | 'webflow'>('html-tailwind');
@@ -39,7 +44,7 @@ const Transform = () => {
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const [preview, setPreview] = useState(EMPTY_SCHEMA);
   const [content, setContent] = useState<string>('');
-  const [previewMode, setPreviewMode] = useState(true);
+  const [hideAlert, setHideAlert] = useState(false);
 
   const transformQuery = useCallback(
     async (content: string) => {
@@ -59,6 +64,7 @@ const Transform = () => {
   const handleClickTransform = useCallback(async () => {
     const data = await transformQuery(content);
     setPreview(data);
+    setHideAlert(false);
   }, [content, transformQuery]);
 
   const handleClickImport = useCallback(() => {
@@ -116,6 +122,8 @@ const Transform = () => {
     }
   }, []);
 
+  const handleClickCloseAlert = useCallback(() => setHideAlert(true), []);
+
   const resizeHandles = useMemo<ResizeHandle[]>(() => {
     if (layoutMode === 'horizontal') {
       return ['w'];
@@ -130,11 +138,6 @@ const Transform = () => {
       setPreview(EMPTY_SCHEMA);
     },
     [setMode]
-  );
-
-  const handleChangePreviewMode = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => setPreviewMode(e.target.checked),
-    []
   );
 
   const handleChangeLayoutMode = useCallback(
@@ -160,11 +163,32 @@ const Transform = () => {
     }
   }, [mode]);
 
+  const warning = styleMode !== preview.style.mode && !!preview.definition.rootId;
+
   return (
     <div className="flex h-full flex-col">
       <div className={classNames('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
-        <div className="flex grow basis-0 flex-col overflow-y-auto">
-          <TransformPreview preview={preview} previewMode={previewMode} />
+        <div className="relative flex grow basis-0 flex-col overflow-y-auto">
+          <TransformPreview preview={preview} previewMode />
+          {warning && !hideAlert && (
+            <div className="absolute right-1 bottom-1 left-0">
+              <Alert intent="warning" solid={false} size="xs" closeable onClick={handleClickCloseAlert}>
+                {mode === 'html-tailwind' && (
+                  <p className="inline gap-1">
+                    {'Tailwind uses a mobile-first breakpoint system, '}
+                    <a
+                      href="https://tailwindcss.com/docs/responsive-design"
+                      target="_blank"
+                      className="font-bold underline"
+                    >
+                      Click Here
+                    </a>
+                    {' for more information or update your settings'}
+                  </p>
+                )}
+              </Alert>
+            </div>
+          )}
         </div>
         {isEditorVisible && (
           <div
@@ -187,7 +211,7 @@ const Transform = () => {
               axis={layoutMode === 'horizontal' ? 'x' : 'y'}
             >
               <div
-                className={classNames('flex grow', { 'flex-col': layoutMode === 'horizontal' })}
+                className={classNames('relative flex grow', { 'flex-col': layoutMode === 'horizontal' })}
                 onPaste={handlePaste}
               >
                 <CodeMirror
@@ -207,7 +231,7 @@ const Transform = () => {
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between border-t border-gray-400 p-2">
+      <div className="flex items-center justify-between gap-3 border-t border-gray-400 p-2">
         <TransformLayout
           layoutMode={layoutMode}
           onLayoutModeChange={handleChangeLayoutMode}
@@ -216,9 +240,10 @@ const Transform = () => {
         />
         <TransformActions
           mode={mode}
-          disabled={networkLoading}
-          previewMode={previewMode}
-          onChangePreviewMode={handleChangePreviewMode}
+          loading={networkLoading}
+          compileDisabled={content === '' || networkLoading}
+          disabled={networkLoading || !preview.definition.rootId}
+          warning={warning}
           onChangeMode={handleChangeMode}
           onClickEraser={handleClickEraser}
           onTransform={handleClickTransform}

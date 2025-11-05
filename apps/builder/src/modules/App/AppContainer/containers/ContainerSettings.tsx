@@ -1,3 +1,4 @@
+import Alert from '@plitzi/plitzi-ui/Alert';
 import Card from '@plitzi/plitzi-ui/Card';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import Heading from '@plitzi/plitzi-ui/Heading';
@@ -161,7 +162,17 @@ const ContainerSettings = () => {
         </div>
         <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
           <Heading as="h4">Style Settings</Heading>
-          <Select size="sm" name="mode" value={mode} onChange={handleChangeMode} label="Style Mode" placeholder="None">
+          <Alert intent="info" size="xs">
+            Keep on mind that changing this can impact your style
+          </Alert>
+          <Select
+            size="sm"
+            name="mode"
+            value={mode}
+            onChange={handleChangeMode}
+            label="Style Mode (Breakpoint system)"
+            placeholder="None"
+          >
             <option value="desktop-first">Desktop First</option>
             <option value="mobile-first">Mobile First</option>
           </Select>

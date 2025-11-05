@@ -2,7 +2,7 @@ import type { StyleConstants } from '../style/styleConstants';
 
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
 
-export type DisplayMode = 'desktop' | 'tablet' | 'mobile' | 'raw';
+export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
 
 export type StyleMode = 'mobile-first' | 'desktop-first';
 

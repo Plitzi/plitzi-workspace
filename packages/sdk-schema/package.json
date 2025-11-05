@@ -52,9 +52,9 @@
     "prop-types": "^15.8.1"
   },
   "devDependencies": {
-    "eslint": "^9.39.0",
+    "eslint": "^9.39.1",
     "typescript": "^5.9.3",
-    "vite": "^7.1.12",
-    "vitest": "^4.0.6"
+    "vite": "^7.2.0",
+    "vitest": "^4.0.7"
   }
 }

@@ -17,6 +17,7 @@ export type StyleHelperMetaData = {
 export const EMPTY_STYLE_SCHEMA: Style = {
   variables: {},
   platform: { desktop: {}, tablet: {}, mobile: {} },
+  mode: 'desktop-first',
   cache: ''
 };
 
@@ -55,35 +56,69 @@ export const selectorToString = (
   return value.join(separator);
 };
 
+const defaultWidth: Record<string, string> = { desktop: '64rem', tablet: '48rem', mobile: '0' };
+
+const toPx = (key: string): number => {
+  if (key === 'mobile') {
+    return 0;
+  }
+
+  if (key === 'tablet') {
+    return 768;
+  }
+
+  if (key === 'desktop') {
+    return 1024;
+  }
+
+  const match = key.match(/(\d*\.?\d+)(px|rem)/);
+  if (!match) {
+    return 0;
+  }
+
+  const value = parseFloat(match[1]);
+  const unit = match[2];
+
+  return unit === 'rem' ? value * 16 : value;
+};
+
 export const generateCache = (style: Style) => {
-  const { platform } = style;
-  const cache = [];
-  if (Object.keys(platform.desktop).length > 0) {
-    const style = Object.values(platform.desktop)
-      .map(s => s.cache)
-      .join('\n');
-    if (style !== '') {
-      cache.push(style);
-    }
-  }
+  const { platform, mode = 'desktop-first' } = style;
+  const cache: string[] = [];
 
-  if (Object.keys(platform.tablet).length > 0) {
-    const style = Object.values(platform.tablet)
-      .map(s => s.cache)
-      .join('\n');
-    if (style !== '') {
-      cache.push(`@media screen and (max-width: 768px) {${style}}`);
-    }
-  }
+  const orderedKeys = Object.keys(platform).sort((a, b) =>
+    mode === 'mobile-first' ? toPx(a) - toPx(b) : toPx(b) - toPx(a)
+  ) as DisplayMode[];
 
-  if (Object.keys(platform.mobile).length > 0) {
-    const style = Object.values(platform.mobile)
+  orderedKeys.forEach((displayMode, i) => {
+    const styleBlock = Object.values(platform[displayMode])
       .map(s => s.cache)
       .join('\n');
-    if (style !== '') {
-      cache.push(`@media screen and (max-width: 425px) {${style}}`);
+    if (!styleBlock) {
+      return;
     }
-  }
+
+    const width = defaultWidth[displayMode] ?? displayMode;
+
+    if (mode === 'mobile-first') {
+      if (width === '0' || displayMode === 'mobile') {
+        cache.push(styleBlock);
+      } else {
+        cache.push(`@media (min-width: ${width}) {${styleBlock}}`);
+      }
+    } else {
+      const prevKey = orderedKeys[i - 1] as DisplayMode | undefined;
+      const nextWidth = prevKey ? (defaultWidth[prevKey] ?? prevKey) : undefined;
+
+      if (displayMode === 'desktop' || width === '0') {
+        cache.push(styleBlock);
+      } else if (nextWidth) {
+        cache.push(`@media (max-width: ${nextWidth}) and (min-width: ${width}) {${styleBlock}}`);
+      } else {
+        cache.push(`@media (max-width: ${width}) {${styleBlock}}`);
+      }
+    }
+  });
 
   return cache.join('\n');
 };
