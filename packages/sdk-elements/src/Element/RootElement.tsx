@@ -10,7 +10,7 @@ import parseStyle from './helpers/parseStyle';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionBaseCallback, InternalPropsSTG2, DataSourceContextValue } from '@plitzi/sdk-shared';
-import type { Context, FC, JSX, ReactNode, RefObject } from 'react';
+import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
   onClick: {
@@ -53,7 +53,7 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   interactionTriggers?: Record<string, InteractionBaseCallback>;
   interactionCallbacks?: Record<string, InteractionBaseCallback>;
   internalProps?: InternalPropsSTG2;
-  style?: string;
+  style?: string | CSSProperties;
 } & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref' | 'style'>;
 
 const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({

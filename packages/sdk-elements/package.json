@@ -45,6 +45,10 @@
       "types": "./dist/src/Element/helpers/elementUtils.d.ts",
       "import": "./dist/src/Element/helpers/elementUtils.mjs"
     },
+    "./Element/helpers/parseStyle": {
+      "types": "./dist/src/Element/helpers/parseStyle.d.ts",
+      "import": "./dist/src/Element/helpers/parseStyle.mjs"
+    },
     "./Element/hocs/withElement": {
       "types": "./dist/src/Element/hocs/withElement.d.ts",
       "import": "./dist/src/Element/hocs/withElement.mjs"
@@ -112,6 +116,18 @@
     "./components/advanced/Custom/index": {
       "types": "./dist/src/components/advanced/Custom/index.d.ts",
       "import": "./dist/src/components/advanced/Custom/index.mjs"
+    },
+    "./components/advanced/NodeHtml": {
+      "types": "./dist/src/components/advanced/NodeHtml/index.d.ts",
+      "import": "./dist/src/components/advanced/NodeHtml/index.mjs"
+    },
+    "./components/advanced/NodeHtml/NodeHtml": {
+      "types": "./dist/src/components/advanced/NodeHtml/NodeHtml.d.ts",
+      "import": "./dist/src/components/advanced/NodeHtml/NodeHtml.mjs"
+    },
+    "./components/advanced/NodeHtml/index": {
+      "types": "./dist/src/components/advanced/NodeHtml/index.d.ts",
+      "import": "./dist/src/components/advanced/NodeHtml/index.mjs"
     },
     "./components/advanced/Reference": {
       "types": "./dist/src/components/advanced/Reference/index.d.ts",

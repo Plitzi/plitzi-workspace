@@ -1,8 +1,12 @@
 import type { CSSProperties } from 'react';
 
-const parseStyle = (style: string = ''): CSSProperties | undefined => {
+const parseStyle = (style: string | CSSProperties = ''): CSSProperties | undefined => {
   if (!style) {
     return undefined;
+  }
+
+  if (typeof style === 'object') {
+    return style;
   }
 
   return Object.fromEntries(
