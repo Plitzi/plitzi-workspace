@@ -1,6 +1,4 @@
-const style = document.createElement('span').style;
-
-const isColor = (color: string) => {
+const isColor = (style: CSSStyleDeclaration, color: string) => {
   style.color = '';
   style.color = color;
 
@@ -8,6 +6,7 @@ const isColor = (color: string) => {
 };
 
 export const variablesToCss = (variables?: Record<string, string>) => {
+  const styleDOM = typeof document !== 'undefined' && document.createElement('span').style;
   if (!variables) {
     return '';
   }
@@ -16,7 +15,7 @@ export const variablesToCss = (variables?: Record<string, string>) => {
     .filter(key => typeof variables[key] === 'string' || typeof variables[key] === 'number')
     .map(key => {
       const value = variables[key];
-      if (isColor(value)) {
+      if (styleDOM && isColor(styleDOM, value)) {
         return `--${key}:${value};`;
       }
 

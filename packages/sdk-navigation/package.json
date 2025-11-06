@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.25.5",
+  "version": "0.25.6",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"

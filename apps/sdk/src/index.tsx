@@ -109,7 +109,7 @@ if (typeof window !== 'undefined' && window.plitziCache) {
   //   );
   // }
 
-  const elementDOM = document.getElementById('plitzi-sdk-root');
+  const elementDOM = typeof document !== 'undefined' && document.getElementById('plitzi-sdk-root');
   if (elementDOM) {
     hydrateRoot(elementDOM, <App {...(window.plitziCache ?? {})} debugMode={false} />);
   }
