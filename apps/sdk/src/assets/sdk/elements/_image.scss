@@ -1,6 +1,7 @@
 .plitzi-component__image {
   height: 140px;
   width: 140px;
+  display: block;
 
   &.image--edit-mode > img {
     height: 100%;

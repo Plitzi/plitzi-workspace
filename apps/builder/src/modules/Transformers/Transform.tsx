@@ -171,7 +171,7 @@ const Transform = () => {
         <div className="relative flex grow basis-0 flex-col overflow-y-auto">
           <TransformPreview preview={preview} previewMode />
           {warning && !hideAlert && (
-            <div className="absolute right-1 bottom-1 left-0">
+            <div className="absolute right-1 bottom-1 left-1">
               <Alert intent="warning" solid={false} size="xs" closeable onClick={handleClickCloseAlert}>
                 {mode === 'html-tailwind' && (
                   <p className="inline gap-1">
