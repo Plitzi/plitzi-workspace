@@ -6,7 +6,6 @@ import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 import Directory from './Directory';
 import DirectoryHeader from './DirectoryHeader';
-import PageLayouts from './PageLayouts';
 
 const AppDirectory = () => {
   const { pageFolders } = use(SchemaMainContext);
@@ -24,8 +23,6 @@ const AppDirectory = () => {
         pageFolders={pageFolders}
         isRootFolder
       />
-      <div className="w-full border-t border-gray-200" />
-      <PageLayouts />
     </Flex>
   );
 };

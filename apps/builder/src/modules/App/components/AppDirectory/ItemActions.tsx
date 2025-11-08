@@ -17,16 +17,24 @@ export type PageActionsProps = {
   id?: string;
   active?: boolean;
   zoom?: boolean;
+  type: string;
   defaultPage?: boolean;
   onZoom?: (e: MouseEvent) => void;
 };
 
-const PageActions = ({ id = '', active = false, zoom = false, defaultPage = false, onZoom }: PageActionsProps) => {
+const ItemActions = ({
+  id = '',
+  type = '',
+  active = false,
+  zoom = false,
+  defaultPage = false,
+  onZoom
+}: PageActionsProps) => {
   const {
     schema: { flat }
   } = use(SchemaContext);
   const { eventBridge } = use(EventBridgeContext);
-  const { navigate } = use(NavigationContext);
+  const { navigate, currentPageId } = use(NavigationContext);
   const { showDialog } = useModal();
   const { addToast } = useToast();
 
@@ -69,7 +77,7 @@ const PageActions = ({ id = '', active = false, zoom = false, defaultPage = fals
     [flat, id, defaultPage, showDialog, addToast, eventBridge]
   );
 
-  const handleClickRemovePage = useCallback(
+  const handleClickRemove = useCallback(
     async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
@@ -89,7 +97,7 @@ const PageActions = ({ id = '', active = false, zoom = false, defaultPage = fals
 
       const response = await showDialog(
         <Modal.Header>
-          <h4>Remove Page</h4>
+          <h4>{`Remove ${type === 'page' ? 'Page' : 'Layout'}`}</h4>
         </Modal.Header>,
         <Modal.Body>
           <div className="px-4 py-2">
@@ -101,12 +109,19 @@ const PageActions = ({ id = '', active = false, zoom = false, defaultPage = fals
         id
       );
 
-      if (response) {
+      if (!response) {
+        return;
+      }
+
+      if (type === 'page') {
         void eventBridge.emit('main', 'schemaRemovePage', id);
         navigate('/');
+      } else if (type === 'layoutContainer') {
+        void eventBridge.emit('builder', 'builderSetBaseContext', currentPageId);
+        void eventBridge.emit('main', 'schemaRemoveElement', id);
       }
     },
-    [flat, id, defaultPage, showDialog, addToast, eventBridge, navigate]
+    [flat, id, defaultPage, showDialog, type, addToast, eventBridge, navigate, currentPageId]
   );
 
   return (
@@ -115,7 +130,7 @@ const PageActions = ({ id = '', active = false, zoom = false, defaultPage = fals
       items="center"
       className={classNames({ 'hidden group-hover:flex': !active && !zoom && !defaultPage })}
     >
-      {!defaultPage && (
+      {!defaultPage && type === 'page' && (
         <Icon
           size="xs"
           cursor="pointer"
@@ -144,11 +159,11 @@ const PageActions = ({ id = '', active = false, zoom = false, defaultPage = fals
           intent="danger"
           cursor="pointer"
           title="Remove Page"
-          onClick={handleClickRemovePage}
+          onClick={handleClickRemove}
         />
       </Flex>
     </Flex>
   );
 };
 
-export default PageActions;
+export default ItemActions;

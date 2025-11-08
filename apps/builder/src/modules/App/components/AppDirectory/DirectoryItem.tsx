@@ -2,36 +2,34 @@ import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Text from '@plitzi/plitzi-ui/Text';
-import get from 'lodash/get';
+// import get from 'lodash/get';
 import { useCallback, use, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
-import PageActions from './PageActions';
+import ItemActions from './ItemActions';
 
 import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-export type PageProps = {
-  id?: string;
+export type DirectoryItemProps = {
+  element: Element;
   active?: boolean;
   nestedLevel?: number;
 };
 
-const Page = ({ id = '', active = false, nestedLevel = 0 }: PageProps) => {
-  const {
-    schema,
-    schema: { flat }
-  } = use(SchemaContext);
+const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryItemProps) => {
+  const { schema } = use(SchemaContext);
   const {
     style: { cache }
   } = use(StyleContext);
+  const { eventBridge } = use(EventBridgeContext);
   const [zoom, setZoom] = useState(false);
   const styleMemo = useMemo(() => ({ paddingLeft: nestedLevel * 16 }), [nestedLevel]);
-  const page = useMemo(() => get(flat, id, undefined), [flat, id]);
 
   const handleClickZoom = useCallback((e: MouseEvent) => {
     e.stopPropagation();
@@ -39,37 +37,55 @@ const Page = ({ id = '', active = false, nestedLevel = 0 }: PageProps) => {
     setZoom(state => !state);
   }, []);
 
-  if (!page) {
-    return undefined;
-  }
-
   const {
+    id,
     attributes: { name, default: defaultPage },
     definition: { label, type }
-  } = page as Element & { attributes: { name: string; default: boolean } };
+  } = element as Element & { attributes: { name: string; default: boolean } };
+
+  const handleClick = useCallback(
+    (e: MouseEvent) => {
+      if (type === 'layoutContainer') {
+        e.stopPropagation();
+        e.preventDefault();
+        void eventBridge.emit('builder', 'builderSetBaseContext', id);
+      }
+    },
+    [eventBridge, id, type]
+  );
 
   return (
     <Flex className="group">
-      <Link to={id} className="flex min-w-0 grow basis-0 flex-col">
+      <Link to={id} className="flex min-w-0 grow basis-0 flex-col" onClick={handleClick}>
         <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
             <Icon
-              size="xs"
+              size="sm"
               cursor="pointer"
               active={active}
               intent={active ? 'primary' : 'custom'}
-              icon={defaultPage ? 'fas fa-home' : 'fa-solid fa-file'}
+              icon={
+                type === 'layoutContainer' ? 'fa-solid fa-border-all' : defaultPage ? 'fas fa-home' : 'fa-solid fa-file'
+              }
+              title={type === 'layoutContainer' ? 'Layout' : 'Page'}
             />
             <Text size="sm" isTruncated active={active}>
               {name ? name : label ? label : type}
             </Text>
           </Flex>
-          <PageActions id={id} active={active} zoom={zoom} defaultPage={defaultPage} onZoom={handleClickZoom} />
+          <ItemActions
+            id={id}
+            active={active}
+            type={type}
+            zoom={zoom}
+            defaultPage={defaultPage}
+            onZoom={handleClickZoom}
+          />
         </Flex>
         {zoom && (
-          <div className="m-4 rounded-sm border border-gray-300 p-4">
+          <div className="relative my-2 rounded-sm border border-gray-300">
             <ContainerAutoScale className="flex h-[150px] w-full items-center justify-center overflow-hidden rounded-sm">
-              <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="h-full w-full" />
+              <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="h-full w-full" previewMode />
             </ContainerAutoScale>
           </div>
         )}
@@ -78,4 +94,4 @@ const Page = ({ id = '', active = false, nestedLevel = 0 }: PageProps) => {
   );
 };
 
-export default Page;
+export default DirectoryItem;

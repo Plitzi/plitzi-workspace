@@ -57,7 +57,7 @@ const SpaceCredentialForm = ({
           <option value="r2">Cloudflare R2</option>
         </Form.Select>
         <Form.Input name="accessKeyId" label="Access Key ID" size="xs" />
-        <Form.Input name="secretAccessKey" label="Access Key ID" size="xs" />
+        <Form.Input name="secretAccessKey" label="Secret Access Key" size="xs" />
       </Form.Body>
       <Form.Footer justify="end">
         <Button onClick={onClose} size="sm">
