@@ -129,7 +129,7 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
   }, []);
 
   return (
-    <div className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+    <div className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
       <div className="flex h-full items-center gap-4">
         <div className="bg-grayviolet-200 flex h-8 w-20 items-center justify-between rounded-lg px-3" id="plitzi-logo">
           <a href={origin}>

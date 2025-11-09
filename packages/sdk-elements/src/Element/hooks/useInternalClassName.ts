@@ -23,8 +23,9 @@ const useInternalClassName = ({ className, internalProps, previewMode, baseEleme
         'plitzi-component': !previewMode && !plitziElementLayout,
         'plitzi-component--layout': !previewMode && !!plitziElementLayout,
         with__container: !previewMode && !!items,
-        'container--empty': !previewMode && !!items && items.length === 0,
-        'container--base-element': !previewMode && !!items && baseElementId === id
+        'container--empty': !previewMode && !!items && items.length === 0 && !plitziElementLayout,
+        'container--base-element': !previewMode && !!items && baseElementId === id,
+        'plitzi-component--layout-body': plitziElementLayout && id === plitziElementLayout.containerId
       }),
     [className, visibility, previewMode, plitziElementLayout, items, id, baseElementId]
   );

@@ -27,7 +27,7 @@ const useInternalItems = ({
   const { items } = definition;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const layoutKeyIdentifier = useMemo(() => Math.round(Math.random() * 100), [plitziElementLayout]);
-  const newSchemaContext = useMemo(() => ({ schema: newSchema }), [newSchema]);
+  const newSchemaContext = useMemo(() => (prevSchema ? { schema: newSchema } : undefined), [newSchema, prevSchema]);
 
   return useMemo<ReactNode | undefined>(() => {
     if (!plitziElementLayout && !children && (!items || items.length === 0)) {
@@ -71,7 +71,8 @@ const useInternalItems = ({
       plitziElementLayout &&
       plitziElementLayout.type === 'segment' &&
       plitziElementLayout.containerId === id &&
-      prevSchema
+      prevSchema &&
+      newSchemaContext
     ) {
       return (
         <SchemaContext value={newSchemaContext}>
@@ -80,12 +81,7 @@ const useInternalItems = ({
       );
     }
 
-    // Output
-    if (itemsParsed.length === 1) {
-      return itemsParsed[0];
-    }
-
-    return itemsParsed;
+    return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
   }, [
     plitziElementLayout,
     children,

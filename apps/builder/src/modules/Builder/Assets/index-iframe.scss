@@ -46,6 +46,20 @@ body {
       }
     }
 
+    .plitzi-component__layout-container:not(.plitzi-component) {
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        clip-path: var(--child-clip, polygon(0 0, 100% 0, 100% 100%, 0 100%));
+        z-index: 999999;
+      }
+    }
+
     // .with__container {
     //   &.container--empty:not(.container--base-element):not(.container--empty--skip),
     //   .plitzi-component__plitzi-sdk.with__plitzi-sdk {
