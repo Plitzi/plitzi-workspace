@@ -61,10 +61,13 @@ const Sdk = ({
     const cssVariables = variablesToCss(variables);
     const cacheParsed = processCssVariables(cache, variables);
 
-    return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}`;
-  }, [schemaSettings.customCss, segments, cache, variables]);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const styleParsed = useMemo(() => `${style[0][1]}\n${style[0][1]}\n${css}\n${externalStyle}`, [css, externalStyle]);
+    if (renderMode === 'iframe' || renderMode === 'shadow') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return `${style[0][1]}.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
+    }
+
+    return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
+  }, [segments, variables, cache, renderMode, schemaSettings.customCss, externalStyle]);
 
   const getWindow = useCallback(() => {
     if (iframeRef.current) {
@@ -118,24 +121,17 @@ const Sdk = ({
 
   if (renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') {
     return (
-      <RawMode
-        renderMode={renderMode}
-        style={styleParsed}
-        plitziContextValue={plitziContextValue}
-        pageId={currentPageId}
-      />
+      <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
     );
   }
 
   if (renderMode === 'shadow') {
-    return (
-      <ShadowMode style={styleParsed} plitziContextValue={plitziContextValue} pageId={currentPageId} assets={assets} />
-    );
+    return <ShadowMode style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} assets={assets} />;
   }
 
   return (
     <IframeMode
-      style={styleParsed}
+      style={css}
       plitziContextValue={plitziContextValue}
       pageId={currentPageId}
       assets={assets}
