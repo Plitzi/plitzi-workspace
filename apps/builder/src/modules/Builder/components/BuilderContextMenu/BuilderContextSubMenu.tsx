@@ -1,90 +1,61 @@
 import Card from '@plitzi/plitzi-ui/Card';
 import classNames from 'classnames';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 
-import type { RefObject } from 'react';
-
-const itemsDefault = [];
+import type { MouseEvent } from 'react';
 
 export type BuilderContextSubMenuProps = {
   items?: { key: string; value: string }[];
   width?: number;
   iframeDOM?: HTMLIFrameElement | null;
-  parentRef?: RefObject<HTMLDivElement | null>;
-  onClick?: (key: string) => () => void;
+  onClick?: (e: MouseEvent, id: string) => void;
 };
 
-const BuilderContextSubMenu = ({
-  items = itemsDefault,
-  width = 150,
-  iframeDOM,
-  parentRef,
-  onClick
-}: BuilderContextSubMenuProps) => {
+const BuilderContextSubMenu = ({ items, width = 150, iframeDOM, onClick }: BuilderContextSubMenuProps) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [top, setTop] = useState('0px');
-  const [left, setLeft] = useState('0px');
   const ref = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = () => {
-    if (!ref.current) {
+  const handleMouseEnter = useCallback(() => {
+    if (!ref.current || !iframeDOM) {
       return;
-    }
-
-    let { innerWidth } = window;
-    if (!iframeDOM) {
-      return;
-    }
-
-    innerWidth = iframeDOM.contentWindow?.innerWidth ?? 0;
-    const { offsetTop, offsetWidth, offsetLeft } = ref.current;
-    const { offsetLeft: parentOffsetLeft } = parentRef?.current ?? { offsetLeft: 0 };
-    let left = offsetLeft + offsetWidth;
-    if (parentOffsetLeft + offsetWidth + width > innerWidth) {
-      left = offsetLeft - width;
     }
 
     setShowMenu(true);
-    setTop(`${offsetTop}px`);
-    setLeft(`${left}px`);
-  };
+  }, [iframeDOM]);
 
-  const handleMouseLeave = () => setShowMenu(false);
+  const handleMouseLeave = useCallback(() => setShowMenu(false), []);
 
   return (
     <div
       ref={ref}
       className={classNames(
-        'flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100',
-        { 'rounded-tr': items.length === 0 }
+        'relative flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100',
+        { 'rounded-tr': items?.length === 0 }
       )}
       // onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseOver={handleMouseEnter}
     >
-      <div className="flex items-center">
-        {/* <i className="" /> */}
-        Select Parent Element
-        {showMenu && items.length > 0 && (
-          <Card
-            className="absolute z-[99999999] flex rounded-tl-none rounded-bl-none shadow-2xl"
-            style={{ position: 'absolute', top, left, width: `${width}px` }}
-          >
-            <Card.Body className="w-full">
-              <div className="flex w-full flex-col">
-                {items.map(item => (
-                  <BuilderContextMenuItem key={item.key} title={item.value} onClick={onClick?.(item.key)} />
-                ))}
-              </div>
-            </Card.Body>
-          </Card>
-        )}
-      </div>
+      <div className="flex items-center">Select Parent Element</div>
       <div className="context-sub-menu__arrow">
         <i className="fas fa-chevron-right" />
       </div>
+      {showMenu && items && items.length > 0 && (
+        <Card
+          className="absolute top-0 left-full z-[99999999] flex overflow-hidden rounded-none rounded-l-none rounded-r-sm bg-slate-100 shadow-2xl"
+          style={{ width: `${width}px` }}
+        >
+          <Card.Body className="w-full">
+            <div className="flex w-full flex-col">
+              {items.map(item => (
+                <BuilderContextMenuItem key={item.key} id={item.key} title={item.value} onClick={onClick} />
+              ))}
+            </div>
+          </Card.Body>
+        </Card>
+      )}
     </div>
   );
 };

@@ -1,7 +1,8 @@
+import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import WorkflowContextProvider from './WorkflowContextProvider';
 import WorkflowFlow from './WorkflowFlow';
@@ -64,16 +65,11 @@ const Workflow = ({
 
   const flow = useMemo(() => flows.find(flow => flow.id === flowId), [flowId, flows]);
 
-  const init = useRef(false);
-  useEffect(() => {
-    if (init.current) {
-      if (Array.isArray(nodesProp)) {
-        setNodes({});
-      } else {
-        setNodes(nodesProp ?? {});
-      }
+  useDidUpdateEffect(() => {
+    if (Array.isArray(nodesProp)) {
+      setNodes({});
     } else {
-      init.current = true;
+      setNodes(nodesProp ?? {});
     }
   }, [nodesProp]);
 
@@ -93,7 +89,7 @@ const Workflow = ({
     <div
       className={classNames(
         'flex h-full flex-col items-center p-2',
-        'bg-[linear-gradient(90deg,#80808014_1px,transparent_0),linear-gradient(180deg,#80808014_1px,transparent_0)] bg-[size:16px_16px]',
+        'bg-[linear-gradient(90deg,#80808014_1px,transparent_0),linear-gradient(180deg,#80808014_1px,transparent_0)] bg-size-[16px_16px]',
         { 'justify-center': flows.length === 0 }
       )}
     >

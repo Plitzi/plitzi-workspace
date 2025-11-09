@@ -185,7 +185,7 @@
     "build-assets:prod": "tsc && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.26",
+    "@plitzi/plitzi-ui": "^1.0.27",
     "lodash": "^4.17.21",
     "twig": "^1.17.1"
   },
@@ -213,7 +213,7 @@
     "@types/react-dom": "^19.2.2",
     "@types/twig": "^1.12.17",
     "@vitejs/plugin-react": "^5.1.0",
-    "@vitest/coverage-v8": "^4.0.7",
+    "@vitest/coverage-v8": "^4.0.8",
     "babel-minify": "^0.5.2",
     "eslint": "^9.39.1",
     "eslint-config-airbnb": "^19.0.4",
@@ -230,21 +230,21 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
-    "eslint-plugin-storybook": "^10.0.5",
+    "eslint-plugin-storybook": "^10.0.6",
     "globals": "^16.5.0",
     "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwindcss": "^4.1.16",
+    "tailwindcss": "^4.1.17",
     "ts-jest": "^29.4.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.3",
-    "vite": "^7.2.0",
+    "vite": "^7.2.2",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-react": "^4.0.1",
-    "vitest": "^4.0.7",
+    "vitest": "^4.0.8",
     "vitest-fetch-mock": "^0.4.5"
   }
 }

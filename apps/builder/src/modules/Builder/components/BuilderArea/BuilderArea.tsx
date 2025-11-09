@@ -1,6 +1,5 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
-import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 import get from 'lodash/get';
@@ -37,7 +36,6 @@ import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorA
 
 import type { ComponentPlugin, DisplayMode } from '@plitzi/sdk-shared';
 
-import styleTailwind from '!!css-loader!postcss-loader!sass-loader!../../Assets/index-iframe-tailwind.scss';
 import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../Assets/index-iframe.scss';
 import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // SDK Styles
 
@@ -297,22 +295,12 @@ const BuilderArea = ({
                       />
                     ))}
                 </BuilderAreaTracking>
-                <ContainerShadow>
-                  {Object.values(assets)
-                    .filter(asset => asset.type === 'link')
-                    .map((asset, i) => (
-                      <ContainerShadow.Link key={i} href={asset.params.href} />
-                    ))}
-                  <ContainerShadow.Content>
-                    <style>{styleTailwind[0][1]}</style>
-                    {!previewMode && iframeActive && (
-                      <BuilderContextMenu iframeDOM={ref.current} getWindow={getWindow} zoom={zoom} />
-                    )}
-                  </ContainerShadow.Content>
-                </ContainerShadow>
               </>
             )}
           </ContainerFrame>
+          {!previewMode && iframeActive && (
+            <BuilderContextMenu iframeDOM={ref.current} getWindow={getWindow} zoom={zoom} />
+          )}
         </div>
       </div>
       {!multiPagesMode && mode === 'normal' && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}

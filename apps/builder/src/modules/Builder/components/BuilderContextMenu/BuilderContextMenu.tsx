@@ -74,11 +74,6 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (showMenu) {
-        setShowMenu(false);
-
-        return;
-      }
 
       const closest = (e.target as HTMLElement).closest('.builder__context-menu');
       if (closest) {
@@ -86,22 +81,35 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
       }
 
       setShowMenu(true);
-      setClickPosition({ x: e.clientX, y: e.clientY });
+      const iframeRect = iframeDOM?.getBoundingClientRect();
+      if (!iframeRect) {
+        return;
+      }
+
+      setClickPosition({ x: iframeRect.left + e.clientX, y: iframeRect.top + e.clientY });
     },
-    [showMenu]
+    [iframeDOM]
   );
 
-  const handleClick = useCallback(() => setShowMenu(false), []);
+  const handleClick = useCallback(() => {
+    if (!showMenu) {
+      return;
+    }
+
+    setShowMenu(false);
+  }, [showMenu]);
 
   useEffect(() => {
     if (iframeDOM && iframeDOM.contentWindow) {
       iframeDOM.contentWindow.document.addEventListener('click', handleClick);
+      window.document.addEventListener('click', handleClick);
       iframeDOM.contentWindow.document.addEventListener('contextmenu', handleContextMenu);
     }
 
     return () => {
       if (iframeDOM && iframeDOM.contentWindow) {
         iframeDOM.contentWindow.document.removeEventListener('click', handleClick);
+        window.document.removeEventListener('click', handleClick);
         iframeDOM.contentWindow.document.removeEventListener('contextmenu', handleContextMenu);
       }
     };
@@ -211,7 +219,8 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   }, [builderHandler, elementSelected]);
 
   const handleClickParent = useCallback(
-    (parentId: string) => () => {
+    (e: React.MouseEvent, parentId: string) => {
+      e.stopPropagation();
       setSelected(parentId);
       setShowMenu(false);
     },
@@ -234,7 +243,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   );
 
   if (!showMenu) {
-    return null;
+    return undefined;
   }
 
   if (!elementSelected) {
@@ -266,7 +275,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   return (
     <Card
       ref={ref}
-      className="builder__context-menu z-99999999 flex rounded-sm shadow-2xl"
+      className="builder__context-menu z-99999999 flex overflow-visible rounded-sm bg-slate-100 shadow-2xl"
       style={{
         position: 'fixed',
         top: yPos,
@@ -278,12 +287,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     >
       <Card.Body className="w-full">
         <div className="flex w-full flex-col">
-          <BuilderContextSubMenu
-            onClick={handleClickParent}
-            iframeDOM={iframeDOM}
-            parentRef={ref}
-            items={subMenuMemo}
-          />
+          <BuilderContextSubMenu onClick={handleClickParent} iframeDOM={iframeDOM} items={subMenuMemo} />
           <BuilderContextMenuItem title="Copy Element" shortcut="CTRL / CMD + C" onClick={handleClickCopy}>
             <i className="fas fa-copy" />
           </BuilderContextMenuItem>
