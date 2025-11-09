@@ -163,16 +163,13 @@ const ResourceDirectory = ({
       >
         <div className="rounded border border-gray-500 px-1 text-xs text-gray-500">{items.length}</div>
         {!isDefault && canRemove && (
-          <>
-            <Icon icon="fa-solid fa-pencil" className="hidden cursor-pointer group-hover:block" title="Update" />
-            <Icon
-              intent="danger"
-              icon="fas fa-trash-alt"
-              className="hidden cursor-pointer group-hover:block"
-              title="Remove"
-              onClick={handleClickRemoveDirectory}
-            />
-          </>
+          <Icon
+            intent="danger"
+            icon="fas fa-trash-alt"
+            className="hidden cursor-pointer group-hover:block"
+            title="Remove"
+            onClick={handleClickRemoveDirectory}
+          />
         )}
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
