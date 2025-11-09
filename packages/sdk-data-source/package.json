@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-data-source",
-  "version": "0.25.8",
+  "version": "0.25.9",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
