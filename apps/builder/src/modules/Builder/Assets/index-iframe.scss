@@ -50,13 +50,13 @@ body {
       position: relative;
 
       &::before {
-        content: '';
         position: absolute;
-        inset: 0;
+        z-index: 999999;
         background: rgba(0, 0, 0, 0.5);
+        content: '';
+        inset: 0;
         pointer-events: none;
         clip-path: var(--child-clip, polygon(0 0, 100% 0, 100% 100%, 0 100%));
-        z-index: 999999;
       }
     }
 
