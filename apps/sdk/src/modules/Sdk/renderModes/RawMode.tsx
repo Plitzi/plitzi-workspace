@@ -1,5 +1,6 @@
 import get from 'lodash/get';
 import { useMemo, use } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 import MadeInPlitzi from '@components/MadeInPlitzi';
 import { Page } from '@plitzi/sdk-elements/components';
@@ -36,7 +37,11 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
 
   return (
     <SpaceContainer>
-      <style dangerouslySetInnerHTML={{ __html: style }} />
+      <Helmet>
+        <style type="text/css" rel="stylesheet" key="plitzi-runtime-style">
+          {style}
+        </style>
+      </Helmet>
       <PlitziServiceProvider value={plitziContextValue}>
         {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo as InternalPropsSTG2} />}
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
