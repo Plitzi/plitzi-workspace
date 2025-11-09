@@ -37,7 +37,6 @@ import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorA
 import type { ComponentPlugin, DisplayMode } from '@plitzi/sdk-shared';
 
 import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../Assets/index-iframe.scss';
-import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // SDK Styles
 
 export type BuilderAreaProps = {
   className?: string;
@@ -82,7 +81,7 @@ const BuilderArea = ({
     const cssVariables = variablesToCss(variables);
     const cacheParsed = processCssVariables(cache, variables);
 
-    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cacheParsed}\n${customCss}\n${externalStyle}`;
+    return `:root{${cssVariables}}\n${styleFrame[0][1]}\n${cacheParsed}\n${customCss}\n${externalStyle}`;
   }, [customCss, cache, externalStyle, variables]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const [dragTree, setDragTreeState] = useState(false);

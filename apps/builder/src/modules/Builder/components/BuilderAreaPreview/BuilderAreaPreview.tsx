@@ -25,8 +25,6 @@ import InteractionsBuilderContextProvider from '@pmodules/Interactions/Interacti
 
 import type { Schema } from '@plitzi/sdk-shared';
 
-import sdkStyle from '!css-loader!postcss-loader!@plitzi/plitzi-sdk/plitzi-sdk.css'; // SDK Style
-
 export type BuilderAreaPreviewProps = {
   id?: string;
   className?: string;
@@ -84,7 +82,7 @@ const BuilderAreaPreview = ({
     const cssVariables = variablesToCss(variables);
     const cacheParsed = processCssVariables(styleCache, variables);
 
-    return `:root{${cssVariables}}\n${sdkStyle[0][1]}\n${styleFrame[0][1]}\n${cacheParsed}\n${settings?.customCss ?? ''}`;
+    return `:root{${cssVariables}}\n${styleFrame[0][1]}\n${cacheParsed}\n${settings?.customCss ?? ''}`;
   }, [settings?.customCss, styleCache, variables]);
 
   const { components } = use(ComponentContext);
