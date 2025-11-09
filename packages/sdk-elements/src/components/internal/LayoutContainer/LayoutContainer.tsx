@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
+import throttle from 'lodash/throttle';
 import { useCallback, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -23,16 +24,13 @@ const LayoutContainer = ({ ref, className = '', internalProps, children, subType
     settings: { previewMode }
   } = usePlitziServiceContext();
 
-  const updateMask = useCallback((elementDOM?: HTMLElement, childElementDOM?: Element | null) => {
-    if (!elementDOM || !childElementDOM) {
+  const updateMask = useCallback((parent?: HTMLElement, child?: Element | null) => {
+    if (!parent || !child) {
       return;
     }
 
-    const parent = elementDOM;
-    const child = childElementDOM;
-    const childRect = child.getBoundingClientRect();
-
     const offset = 0;
+    const childRect = child.getBoundingClientRect();
     const top = childRect.top - offset;
     const left = childRect.left - offset;
     const right = left + childRect.width + offset * 2;
@@ -56,7 +54,19 @@ const LayoutContainer = ({ ref, className = '', internalProps, children, subType
       return;
     }
 
-    updateMask(ref.current, ref.current.querySelector('.plitzi-component--layout-body'));
+    const handleResize = throttle((entries: ResizeObserverEntry[]) => {
+      for (const e of entries) {
+        updateMask(e.target as HTMLElement, e.target.querySelector('.plitzi-component--layout-body'));
+      }
+    }, 150);
+
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(ref.current);
+
+    return () => {
+      handleResize.cancel();
+      observer.disconnect();
+    };
   }, [internalProps.plitziElementLayout, previewMode, ref, updateMask]);
 
   return (
