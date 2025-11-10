@@ -12,7 +12,7 @@
     "./plitzi-sdk.css": "./dist/plitzi-sdk.css",
     "./ssr": "./dist/ssr/plitzi-sdk.js",
     "./cdn": "./dist/cdn/plitzi-sdk.js",
-    "./full": "./dist/loader.js"
+    "./loader/next": "./dist/loaders/loader-next.js"
   },
   "repository": {
     "type": "https",
