@@ -139,7 +139,7 @@ const App = ({
     );
   }
 
-  const ReactRouter = renderMode === 'ssr' && typeof window === 'undefined' ? StaticRouter : BrowserRouter;
+  const ReactRouter = renderMode === 'ssr' || typeof window === 'undefined' ? StaticRouter : BrowserRouter;
 
   const routerParams = {} as { location: Location | string };
   if (renderMode === 'ssr' && typeof window === 'undefined') {
