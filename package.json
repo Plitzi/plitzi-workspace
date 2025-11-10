@@ -20,6 +20,7 @@
     "build-assets:prod-measure": "turbo build-assets:prod-measure --parallel --concurrency=20",
     "build-assets:prod-gzip": "turbo build-assets:prod-gzip",
     "build-assets:prod-analyze": "turbo build-assets:prod-analyze --parallel --concurrency=20",
+    "build-loader": "turbo build-loader --parallel --concurrency=20",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "changeset": "changeset",
