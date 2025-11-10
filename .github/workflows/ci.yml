@@ -83,6 +83,9 @@ jobs:
       - name: Yarn Build
         run: yarn build-assets:prod
 
+      - name: Yarn Build Loader
+        run: yarn build-loader
+
   lint:
     needs: build-packages
     runs-on: ubuntu-latest
@@ -133,14 +136,14 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@v4
 
-      # - name: Enable Corepack
-      # run: corepack enable
+  # - name: Enable Corepack
+  # run: corepack enable
 
   #     - uses: actions/setup-node@v4
   #       with:
   #         node-version: 24
   #         registry-url: https://npm.pkg.github.com/plitzi
-          # cache: 'yarn'
+  # cache: 'yarn'
 
   #     - name: Restore Cache
   #       uses: actions/cache@v4
@@ -190,8 +193,8 @@ jobs:
 
       - name: Validate Cache
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
-        run: exit 
-        
+        run: exit
+
       - name: Yarn Token
         run: |
           echo "npmAuthToken: ${{ secrets.NPM_AUTH_TOKEN }}" >> .yarnrc.yml

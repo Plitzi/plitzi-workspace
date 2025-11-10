@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import HandlebarsPlugin from 'handlebars-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
@@ -11,8 +11,8 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import SpeedMeasurePlugin from 'speed-measure-webpack-plugin';
 import threadLoader from 'thread-loader';
 import * as sassEmbedded from 'sass-embedded';
-
 import { createRequire } from 'module';
+
 const require = createRequire(import.meta.url);
 const PACKAGE = require('./package.json');
 

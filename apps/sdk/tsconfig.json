@@ -9,17 +9,11 @@
       "@components/*": ["./src/components/*"]
     }
   },
-  // "paths": {
-  //   "@pmodules/*": ["./src/modules/*"],
-  //   "@pcomponents/*": ["./src/components/*"]
-  // },
   "include": [
     "../sdk-shared/vite.config.ts",
     "../sdk-shared/package.json",
     "global.d.ts",
     "**/*.json",
-    "src/*.ts",
-    "src/*.tsx",
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts",
