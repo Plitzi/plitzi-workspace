@@ -86,11 +86,6 @@
       "dependsOn": ["^build-assets:prod-analyze"],
       "cache": false,
       "outputs": ["dist/**"]
-    },
-    "build-loader": {
-      "dependsOn": ["^build-loader"],
-      "cache": false,
-      "outputs": ["dist/**"]
     }
   }
 }

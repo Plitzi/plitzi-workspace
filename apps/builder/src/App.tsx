@@ -19,7 +19,7 @@ import { createClient } from 'graphql-ws';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
@@ -67,6 +67,15 @@ const App = (props: AppProps) => {
       'background: linear-gradient(60deg, #01d0e2 0%, #4422ee 100%);\n  color: white;\n  display: block;\n  line-height: 25px;\n  height: 25px;\n  padding: 5px;'
     );
   }, []);
+
+  let hasBrowserRouter = false as boolean;
+  try {
+    // This logic is used to identify if the builder is inside another app with react-router, for example in the SDK
+    useLocation();
+    hasBrowserRouter = true;
+  } catch {
+    hasBrowserRouter = false;
+  }
 
   useEffect(() => {
     const instanceId = uuidv4();
@@ -199,28 +208,33 @@ const App = (props: AppProps) => {
     };
   }, [client]);
 
+  const childrenParsed = useMemo(
+    () =>
+      client && (
+        <ApolloProvider client={client}>
+          <ComponentProvider
+            localCustomComponents={localComponents}
+            localComponents={sdkComponents as unknown as Record<string, ComponentPlugin>}
+          >
+            <ToastProvider>
+              <AppMain
+                {...omit(props, ['children', 'server', 'builderEnvironment'])}
+                server={server}
+                instanceId={instanceId}
+                webId={webId}
+              />
+            </ToastProvider>
+          </ComponentProvider>
+        </ApolloProvider>
+      ),
+    [client, instanceId, localComponents, props, server, webId]
+  );
+
   return (
     <Provider>
       <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
-        <BrowserRouter basename={get(server, 'basePath', '/')}>
-          {client && (
-            <ApolloProvider client={client}>
-              <ComponentProvider
-                localCustomComponents={localComponents}
-                localComponents={sdkComponents as unknown as Record<string, ComponentPlugin>}
-              >
-                <ToastProvider>
-                  <AppMain
-                    {...omit(props, ['children', 'server', 'builderEnvironment'])}
-                    server={server}
-                    instanceId={instanceId}
-                    webId={webId}
-                  />
-                </ToastProvider>
-              </ComponentProvider>
-            </ApolloProvider>
-          )}
-        </BrowserRouter>
+        {!hasBrowserRouter && <BrowserRouter basename={get(server, 'basePath', '/')}>{childrenParsed}</BrowserRouter>}
+        {hasBrowserRouter && childrenParsed}
       </ContainerRoot>
     </Provider>
   );

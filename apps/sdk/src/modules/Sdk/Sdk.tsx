@@ -21,13 +21,11 @@ import IframeMode from './renderModes/IframeMode';
 import RawMode from './renderModes/RawMode';
 import ShadowMode from './renderModes/ShadowMode';
 import SdkPlugin from './SdkPlugin';
-
-import type { Environment, RenderMode } from '@plitzi/sdk-shared';
-
-// Style
 // eslint-disable-next-line
 // @ts-ignore
-import style from '!!css-loader!postcss-loader!sass-loader!../../assets/index.scss';
+import style from '../../assets/index.scss?inline';
+
+import type { Environment, RenderMode } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   renderMode?: RenderMode;
@@ -62,8 +60,7 @@ const Sdk = ({
     const cacheParsed = processCssVariables(cache, variables);
 
     if (renderMode === 'iframe' || renderMode === 'shadow') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      return `${style[0][1]}.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
+      return `${style}.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
     }
 
     return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;

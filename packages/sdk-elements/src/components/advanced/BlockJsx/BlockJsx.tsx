@@ -73,9 +73,8 @@ const BlockJsx = ({
       let jsxModule;
       let error: string | undefined = undefined;
       try {
-        jsxModule = (await import(/*webpackIgnore:true*/ `data:text/javascript;base64,${data}`)) as {
-          default?: ComponentPlugin;
-        };
+        data = `data:text/javascript;base64,${data}`;
+        jsxModule = (await import(/* @vite-ignore */ /* webpackIgnore: true */ data)) as { default?: ComponentPlugin };
       } catch (e: unknown) {
         if (e instanceof Error) {
           error = e.message;

@@ -2,12 +2,12 @@ import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Text from '@plitzi/plitzi-ui/Text';
-// import get from 'lodash/get';
 import { useCallback, use, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
@@ -27,6 +27,9 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
   const {
     style: { cache }
   } = use(StyleContext);
+  const {
+    server: { basePath }
+  } = use(NetworkContext);
   const { eventBridge } = use(EventBridgeContext);
   const [zoom, setZoom] = useState(false);
   const styleMemo = useMemo(() => ({ paddingLeft: nestedLevel * 16 }), [nestedLevel]);
@@ -56,7 +59,12 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
 
   return (
     <Flex className="group">
-      <Link to={id} className="flex min-w-0 grow basis-0 flex-col" onClick={handleClick}>
+      <Link
+        to={basePath ? `${basePath}/${id}` : id}
+        relative="path"
+        className="flex min-w-0 grow basis-0 flex-col"
+        onClick={handleClick}
+      >
         <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
             <Icon

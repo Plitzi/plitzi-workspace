@@ -41,7 +41,7 @@ const BuilderAreaHeader = ({
     schema: { flat, pageFolders }
   } = use(BuilderSchemaContext);
   const {
-    server: { domain }
+    server: { domain, basePath }
   } = use(NetworkContext);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
 
@@ -159,7 +159,7 @@ const BuilderAreaHeader = ({
                 </Icon>
               )}
               {multiPagesMode && (
-                <Link to={baseElementId}>
+                <Link to={basePath ? `${basePath}/${baseElementId}` : baseElementId}>
                   <Icon title="Zoom in on this page">
                     <PageOverviewZoom />
                   </Icon>

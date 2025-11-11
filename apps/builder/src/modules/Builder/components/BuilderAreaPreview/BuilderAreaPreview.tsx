@@ -3,7 +3,6 @@ import classNames from 'classnames';
 import get from 'lodash/get';
 import { useCallback, use, useMemo } from 'react';
 
-import styleFrame from '!!css-loader!postcss-loader!sass-loader!../../../Builder/Assets/index-iframe.scss'; // Style
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -22,6 +21,8 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
+
+import styleFrame from '../../../Builder/Assets/index-iframe.scss?inline';
 
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -82,7 +83,7 @@ const BuilderAreaPreview = ({
     const cssVariables = variablesToCss(variables);
     const cacheParsed = processCssVariables(styleCache, variables);
 
-    return `:root{${cssVariables}}\n${styleFrame[0][1]}\n${cacheParsed}\n${settings?.customCss ?? ''}`;
+    return `:root{${cssVariables}}\n${styleFrame}\n${cacheParsed}\n${settings?.customCss ?? ''}`;
   }, [settings?.customCss, styleCache, variables]);
 
   const { components } = use(ComponentContext);

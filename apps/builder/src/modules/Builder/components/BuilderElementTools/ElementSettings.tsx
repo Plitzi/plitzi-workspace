@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import Button from '@plitzi/plitzi-ui/Button';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
@@ -11,6 +10,7 @@ import KVInput from '@plitzi/plitzi-ui/KVInput';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
+import uiStyle from '@plitzi/plitzi-ui/style.css?inline';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useMemo } from 'react';
@@ -39,10 +39,6 @@ import { defaultElementsSettings } from '../../../../SdkComponents';
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
-
-// eslint-disable-next-line
-// @ts-ignore
-import uiStyle from '!css-loader!postcss-loader!@plitzi/plitzi-ui/style.css'; // UI Style
 
 const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Select2, Switch, QueryBuilder, KVInput };
 
@@ -155,7 +151,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
           <ContainerShadow.Link key={i} href={style} />
         ))}
         <ContainerShadow.Content>
-          <style>{uiStyle[0][1]}</style>
+          <style>{uiStyle}</style>
           {children}
         </ContainerShadow.Content>
       </ContainerShadow>

@@ -131,8 +131,9 @@ export const generatePluginModule = async (url: string, asESM = true, pluginScop
     if (asESM) {
       const response = await fetch(url);
       const moduleBlob = new Blob([await response.text()], { type: 'text/javascript' });
-      const blobUrl = URL.createObjectURL(moduleBlob);
-      Module = (await import(/* webpackIgnore:true */ blobUrl)) as PlitziModule;
+      Module = (await import(
+        /* @vite-ignore */ /* webpackIgnore: true */ URL.createObjectURL(moduleBlob)
+      )) as PlitziModule;
     } else {
       const plitziModules: PlitziModuleLegacy = {
         default: undefined, // we dont need default export, normally should be PlitziSdk
