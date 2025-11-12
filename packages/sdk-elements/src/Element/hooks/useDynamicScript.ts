@@ -32,7 +32,7 @@ const useDynamicScript = ({
       });
 
       script.addEventListener('error', () => {
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development' && !existingScript) {
           console.error(`Dynamic Script Error: ${url}`);
         }
 
