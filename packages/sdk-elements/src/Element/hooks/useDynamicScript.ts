@@ -10,33 +10,40 @@ const useDynamicScript = ({
   useEffect(() => {
     let script: HTMLScriptElement | undefined;
     if (url) {
-      script = document.createElement('script');
-      script.src = url;
-      script.type = type;
-      script.async = true;
+      const existingScript = document.querySelector(`script[src="${url}"]`);
+      if (!existingScript) {
+        script = document.createElement('script');
+        script.src = url;
+        script.type = type;
+        script.async = true;
+      } else {
+        script = existingScript as HTMLScriptElement;
+      }
 
       setReady(false);
       setFailed(false);
 
-      script.onload = () => {
+      script.addEventListener('load', () => {
         if (process.env.NODE_ENV === 'development') {
           console.log(`Dynamic Script Loaded: ${url}`);
         }
 
         setReady(true);
-      };
+      });
 
-      script.onerror = () => {
+      script.addEventListener('error', () => {
         if (process.env.NODE_ENV === 'development') {
           console.error(`Dynamic Script Error: ${url}`);
         }
 
         setReady(true);
         setFailed(true);
-      };
+      });
 
       try {
-        document.head.appendChild(script);
+        if (!existingScript) {
+          document.head.appendChild(script);
+        }
       } catch {
         setReady(true);
         setFailed(true);
