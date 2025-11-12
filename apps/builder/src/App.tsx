@@ -233,7 +233,7 @@ const App = (props: AppProps) => {
   return (
     <Provider>
       <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
-        {!hasBrowserRouter && <BrowserRouter basename={get(server, 'basePath', '/')}>{childrenParsed}</BrowserRouter>}
+        {!hasBrowserRouter && <BrowserRouter basename={get(server, 'basePath', '')}>{childrenParsed}</BrowserRouter>}
         {hasBrowserRouter && childrenParsed}
       </ContainerRoot>
     </Provider>

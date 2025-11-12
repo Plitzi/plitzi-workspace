@@ -1,6 +1,6 @@
 import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 
-export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Server>): Server => {
+const getConfig = (env: ServerEnvironment, server?: Partial<Server>) => {
   switch (env) {
     case 'production': {
       return {
@@ -8,7 +8,7 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Se
         apiServer: 'https://api.plitzi.com',
         ssrServer: 'https://ssr.plitzi.com',
         // SDK
-        basePath: '/',
+        basePath: '',
         host: 'https://plitzi.com',
         nodeServer: 'https://server.plitzi.com',
         graphqlServer: 'https://server.plitzi.com/graphql',
@@ -26,7 +26,7 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Se
         apiServer: 'https://api-stg.plitzi.com',
         ssrServer: 'https://ssr-stg.plitzi.com',
         // SDK
-        basePath: '/',
+        basePath: '',
         host: 'https://stg.plitzi.com',
         nodeServer: 'https://server-stg.plitzi.com',
         graphqlServer: 'https://server-stg.plitzi.com/graphql',
@@ -44,7 +44,7 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Se
         apiServer: 'https://api-dev.plitzi.com',
         ssrServer: 'https://ssr-dev.plitzi.com',
         // SDK
-        basePath: '/',
+        basePath: '',
         host: 'https://dev.plitzi.com',
         nodeServer: 'https://server-dev.plitzi.com',
         graphqlServer: 'https://server-dev.plitzi.com/graphql',
@@ -62,7 +62,7 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Se
         apiServer: 'http://localhost',
         ssrServer: 'http://localhost:4000',
         // SDK
-        basePath: '/',
+        basePath: '',
         host: 'http://localhost',
         nodeServer: 'http://localhost:8888',
         graphqlServer: 'http://localhost:8888/graphql',
@@ -73,6 +73,17 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Se
         ...server
       } as Server;
   }
+};
+
+export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Server>): Server => {
+  const config = getConfig(env, server);
+  if (config.basePath === '/') {
+    config.basePath = '';
+  } else if (config.basePath) {
+    config.basePath = config.basePath.replaceAll('//', '/');
+  }
+
+  return config;
 };
 
 // Experimental Functionality Flag
