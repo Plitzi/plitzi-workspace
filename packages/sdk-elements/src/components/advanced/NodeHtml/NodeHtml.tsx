@@ -1,5 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
+import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import classNames from 'classnames';
+import { useMemo } from 'react';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -16,13 +18,25 @@ export type NodeHtmlProps<T extends keyof JSX.IntrinsicElements = 'span'> = {
 } & Omit<HTMLAttributes<T>, 'class'>;
 
 const NodeHtml = ({ ref, className = '', subType = 'span', internalProps, children, ...otherProps }: NodeHtmlProps) => {
+  const otherPropsMemo = useValueMemo(otherProps);
+  const otherPropsParsed = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(otherPropsMemo).map(([key, value]) => [
+          key.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase()),
+          value
+        ])
+      ),
+    [otherPropsMemo]
+  );
+
   return (
     <RootElement
       ref={ref}
       tag={subType}
       internalProps={internalProps}
       className={classNames(`plitzi-component__node-html plitzi-component__node-html-${subType}`, className)}
-      {...(otherProps as Record<string, unknown>)}
+      {...(otherPropsParsed as Record<string, unknown>)}
     >
       {children}
     </RootElement>
