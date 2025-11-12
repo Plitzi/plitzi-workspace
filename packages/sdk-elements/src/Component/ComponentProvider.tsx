@@ -154,7 +154,16 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
       components: totalComponents.current,
       componentDefinitions
     }),
-    [register, unregister, registerDefinition, unregisterDefinition, getComponent, componentDefinitions]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      register,
+      unregister,
+      registerDefinition,
+      unregisterDefinition,
+      getComponent,
+      componentDefinitions,
+      totalComponents.current
+    ]
   );
 
   return <ComponentContext value={componentsContextValue}>{children}</ComponentContext>;

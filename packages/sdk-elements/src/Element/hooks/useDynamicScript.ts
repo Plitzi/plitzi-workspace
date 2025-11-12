@@ -9,8 +9,8 @@ const useDynamicScript = ({
 
   useEffect(() => {
     let script: HTMLScriptElement | undefined;
+    const existingScript = document.querySelector(`script[src="${url}"]`);
     if (url) {
-      const existingScript = document.querySelector(`script[src="${url}"]`);
       if (!existingScript) {
         script = document.createElement('script');
         script.src = url;
@@ -24,7 +24,7 @@ const useDynamicScript = ({
       setFailed(false);
 
       script.addEventListener('load', () => {
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development' && !existingScript) {
           console.log(`Dynamic Script Loaded: ${url}`);
         }
 
@@ -51,12 +51,10 @@ const useDynamicScript = ({
     }
 
     return () => {
-      if (url && script) {
+      if (url && script && !existingScript) {
         if (process.env.NODE_ENV === 'development') {
           console.log(`Dynamic Script Removed: ${url}`);
         }
-
-        document.head.removeChild(script);
       }
     };
   }, [type, url]);
