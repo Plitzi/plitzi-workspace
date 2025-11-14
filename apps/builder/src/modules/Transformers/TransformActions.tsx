@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 
 export type TransformActionsProps = {
-  mode?: 'html-tailwind' | 'webflow';
+  mode?: 'html-tailwind' | 'webflow' | 'html';
   loading?: boolean;
   disabled?: boolean;
   compileDisabled?: boolean;
@@ -43,7 +43,7 @@ const TransformActions = ({
         <i className="fa-solid fa-eraser" />
       </Button>
       <Select2
-        className="w-[150px] rounded-sm"
+        className={{ trigger: 'min-w-[150px]' }}
         size="sm"
         placeholder="Select mode"
         value={mode}

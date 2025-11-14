@@ -1,3 +1,4 @@
+import Accordion from '@plitzi/plitzi-ui/Accordion';
 import Alert from '@plitzi/plitzi-ui/Alert';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
@@ -38,19 +39,20 @@ const Transform = () => {
   } = use(StyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const { rootDOM } = use(ContainerRootContext);
-  const [mode, setMode] = useState<'html-tailwind' | 'webflow'>('html-tailwind');
+  const [mode, setMode] = useState<'html-tailwind' | 'webflow' | 'html'>('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);
   const [layoutMode, setLayoutMode] = useState<'horizontal' | 'vertical'>('horizontal');
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const [preview, setPreview] = useState(EMPTY_SCHEMA);
   const [content, setContent] = useState<string>('');
+  const [customCss, setCustomCss] = useState<string>('');
   const [hideAlert, setHideAlert] = useState(false);
 
   const transformQuery = useCallback(
-    async (content: string) => {
+    async (content: string, customCss: string) => {
       const response = await networkQuery<{
         data: { definition: { rootId: string }; schema: Schema; style: Style };
-      }>('/utils/transform-to-schema', { body: content, mode }, 'post');
+      }>('/utils/transform-to-schema', { body: content, mode, 'custom-css': customCss }, 'post');
       const data = get(response, 'data');
       if (!data) {
         return EMPTY_SCHEMA;
@@ -62,10 +64,10 @@ const Transform = () => {
   );
 
   const handleClickTransform = useCallback(async () => {
-    const data = await transformQuery(content);
+    const data = await transformQuery(content, customCss);
     setPreview(data);
     setHideAlert(false);
-  }, [content, transformQuery]);
+  }, [content, customCss, transformQuery]);
 
   const handleClickImport = useCallback(() => {
     if (!elementSelected) {
@@ -110,6 +112,8 @@ const Transform = () => {
   }, [elementSelected, preview, baseElementId, builderHandler, addToast]);
 
   const handleChangeContent = useCallback((value: string) => setContent(value), [setContent]);
+
+  const handleChangeCustomStyle = useCallback((value: string) => setCustomCss(value), [setCustomCss]);
 
   const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
     if (!editorRef.current || !editorRef.current.contains(e.target as HTMLDivElement)) {
@@ -165,6 +169,18 @@ const Transform = () => {
 
   const warning = styleMode !== preview.style.mode && !!preview.definition.rootId;
 
+  const modeParsed = useMemo(() => {
+    if (mode === 'html-tailwind') {
+      return 'Html + Tailwind';
+    }
+
+    if (mode === 'webflow') {
+      return 'Webflow';
+    }
+
+    return 'Html';
+  }, [mode]);
+
   return (
     <div className="flex h-full flex-col">
       <div className={classNames('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
@@ -211,21 +227,45 @@ const Transform = () => {
               axis={layoutMode === 'horizontal' ? 'x' : 'y'}
             >
               <div
-                className={classNames('relative flex grow', { 'flex-col': layoutMode === 'horizontal' })}
+                className={classNames('relative flex grow flex-col', { 'flex-col': layoutMode === 'horizontal' })}
                 onPaste={handlePaste}
               >
-                <CodeMirror
-                  ref={editorRef}
-                  className={classNames('grow', {
-                    'h-full': layoutMode === 'horizontal',
-                    'w-full grow': layoutMode === 'vertical'
-                  })}
-                  value={content}
-                  theme="dark"
-                  mode={cmMode}
-                  lineWrapping
-                  onChange={handleChangeContent}
-                />
+                <Accordion grow multi size="xs" gap={0}>
+                  <Accordion.Item className={{ itemDivider: 'translate-y-0' }}>
+                    <Accordion.Item.Header title={modeParsed} />
+                    <Accordion.Item.Content className="p-0">
+                      <CodeMirror
+                        ref={editorRef}
+                        className={classNames('grow', {
+                          'h-full': layoutMode === 'horizontal',
+                          'w-full': layoutMode === 'vertical'
+                        })}
+                        value={content}
+                        theme="dark"
+                        mode={cmMode}
+                        lineWrapping
+                        onChange={handleChangeContent}
+                      />
+                    </Accordion.Item.Content>
+                  </Accordion.Item>
+                  <Accordion.Item>
+                    <Accordion.Item.Header title="Custom Styles" />
+                    <Accordion.Item.Content className="p-0">
+                      <CodeMirror
+                        ref={editorRef}
+                        mode="css"
+                        className={classNames('grow', {
+                          'h-full': layoutMode === 'horizontal',
+                          'w-full': layoutMode === 'vertical'
+                        })}
+                        value={customCss}
+                        theme="dark"
+                        lineWrapping
+                        onChange={handleChangeCustomStyle}
+                      />
+                    </Accordion.Item.Content>
+                  </Accordion.Item>
+                </Accordion>
               </div>
             </ContainerResizable>
           </div>

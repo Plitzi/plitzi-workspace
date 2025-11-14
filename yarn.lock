@@ -131,7 +131,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.1.0, @babel/core@npm:^7.18.9, @babel/core@npm:^7.23.9, @babel/core@npm:^7.24.4, @babel/core@npm:^7.27.4, @babel/core@npm:^7.28.4, @babel/core@npm:^7.28.5, @babel/core@npm:^7.9.6":
+"@babel/core@npm:^7.1.0, @babel/core@npm:^7.18.9, @babel/core@npm:^7.23.9, @babel/core@npm:^7.24.4, @babel/core@npm:^7.27.4, @babel/core@npm:^7.28.5, @babel/core@npm:^7.9.6":
   version: 7.28.5
   resolution: "@babel/core@npm:7.28.5"
   dependencies:
@@ -3366,7 +3366,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.28.5"
     "@babel/preset-react": "npm:^7.28.5"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.0.29"
+    "@plitzi/plitzi-ui": "npm:^1.0.30"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
@@ -3405,7 +3405,7 @@ __metadata:
     react-dom: "npm:19.2.0"
     react-hook-form: "npm:^7.66.0"
     react-refresh: "npm:^0.18.0"
-    react-router-dom: "npm:^7.9.5"
+    react-router-dom: "npm:^7.9.6"
     react-test-renderer: "npm:^19.2.0"
     sass: "npm:^1.94.0"
     sass-embedded: "npm:^1.93.3"
@@ -3490,7 +3490,7 @@ __metadata:
     react-dom: "npm:^19.2.0"
     react-helmet-async: "npm:^2.0.5"
     react-refresh: "npm:^0.18.0"
-    react-router-dom: "npm:^7.9.5"
+    react-router-dom: "npm:^7.9.6"
     react-test-renderer: "npm:^19.2.0"
     rollup-plugin-visualizer: "npm:^6.0.5"
     sass: "npm:^1.94.0"
@@ -3515,9 +3515,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.0.29":
-  version: 1.0.29
-  resolution: "@plitzi/plitzi-ui@npm:1.0.29::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.0.29%2Fae2341a254c3a160f7930973b20e0cc011a733c4"
+"@plitzi/plitzi-ui@npm:^1.0.30":
+  version: 1.0.30
+  resolution: "@plitzi/plitzi-ui@npm:1.0.30::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.0.30%2Fe420b41fed60838b041824e833b5dca85b7f22c0"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.19.1"
     "@codemirror/commands": "npm:^6.10.0"
@@ -3548,7 +3548,7 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^13.0.0"
     zod: "npm:^4.1.12"
-  checksum: 10c0/ec1de4d6111ed9260b74c145f1a6ef5b32fdb5424dcd05dbf7872dd3e91f97eb6116c1df4ac240044403109436ceb11b97fe8875edb1b0a12ce0e3b93570978f
+  checksum: 10c0/f10d5010811228aa9ecc0f344b99bf79b322d48331a1843280946dd126eb120c86a62378f780a4fa77bd49593541f2bdeb65d2deaf67acec32f0c6d5f568d0c0
   languageName: node
   linkType: hard
 
@@ -3557,13 +3557,13 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.29.7"
-    "@plitzi/plitzi-ui": "npm:^1.0.29"
+    "@plitzi/plitzi-ui": "npm:^1.0.30"
     "@plitzi/sdk-shared": "workspace:*"
-    "@types/react": "npm:^19.2.3"
+    "@types/react": "npm:^19.2.4"
     eslint: "npm:^9.39.1"
     jest: "npm:^30.2.0"
     prettier-plugin-tailwindcss: "npm:^0.7.1"
-    react-router: "npm:^7.9.5"
+    react-router: "npm:^7.9.6"
     turbo: "npm:^2.6.1"
   languageName: unknown
   linkType: soft
@@ -3572,7 +3572,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.0.29"
+    "@plitzi/plitzi-ui": "npm:^1.0.30"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3662,7 +3662,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.0.29"
+    "@plitzi/plitzi-ui": "npm:^1.0.30"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3683,8 +3683,8 @@ __metadata:
     lodash: "npm:^4.17.21"
     react: "npm:^19.2.0"
     react-dom: "npm:^19.2.0"
-    react-router: "npm:^7.9.5"
-    react-router-dom: "npm:^7.9.5"
+    react-router: "npm:^7.9.6"
+    react-router-dom: "npm:^7.9.6"
     typescript: "npm:^5.9.3"
     vite: "npm:^7.2.2"
     vitest: "npm:^4.0.8"
@@ -3733,7 +3733,7 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.27.1"
     "@babel/preset-env": "npm:^7.28.5"
     "@eslint/js": "npm:^9.39.1"
-    "@plitzi/plitzi-ui": "npm:^1.0.29"
+    "@plitzi/plitzi-ui": "npm:^1.0.30"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@tailwindcss/forms": "npm:^0.5.10"
     "@testing-library/dom": "npm:^10.4.1"
@@ -3742,10 +3742,10 @@ __metadata:
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:^14.6.1"
     "@types/lodash": "npm:^4.17.20"
-    "@types/react": "npm:^19.2.3"
-    "@types/react-dom": "npm:^19.2.2"
+    "@types/react": "npm:^19.2.4"
+    "@types/react-dom": "npm:^19.2.3"
     "@types/twig": "npm:^1.12.17"
-    "@vitejs/plugin-react": "npm:^5.1.0"
+    "@vitejs/plugin-react": "npm:^5.1.1"
     "@vitest/coverage-v8": "npm:^4.0.8"
     babel-minify: "npm:^0.5.2"
     eslint: "npm:^9.39.1"
@@ -3757,7 +3757,7 @@ __metadata:
     eslint-plugin-flowtype: "npm:8.0.3"
     eslint-plugin-import: "npm:^2.32.0"
     eslint-plugin-jest: "npm:^29.1.0"
-    eslint-plugin-jsdoc: "npm:^61.1.12"
+    eslint-plugin-jsdoc: "npm:^61.2.1"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
     eslint-plugin-prettier: "npm:^5.5.4"
     eslint-plugin-react: "npm:^7.37.5"
@@ -3805,7 +3805,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.0.29"
+    "@plitzi/plitzi-ui": "npm:^1.0.30"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/lodash": "npm:^4.17.20"
@@ -3833,10 +3833,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rolldown/pluginutils@npm:1.0.0-beta.43":
-  version: 1.0.0-beta.43
-  resolution: "@rolldown/pluginutils@npm:1.0.0-beta.43"
-  checksum: 10c0/1c17a0b16c277a0fdbab080fd22ef91e37c1f0d710ecfdacb6a080068062eb14ff030d0e9d2ec2325a1d4246dba0c49625755c82c0090f6cbf98d16e80183e02
+"@rolldown/pluginutils@npm:1.0.0-beta.47":
+  version: 1.0.0-beta.47
+  resolution: "@rolldown/pluginutils@npm:1.0.0-beta.47"
+  checksum: 10c0/eb0cfa7334d66f090c47eaac612174936b05f26e789352428cb6e03575b590f355de30d26b42576ea4e613d8887b587119d19b2e4b3a8909ceb232ca1cf746c8
   languageName: node
   linkType: hard
 
@@ -5126,21 +5126,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^19.2.2":
-  version: 19.2.2
-  resolution: "@types/react-dom@npm:19.2.2"
+"@types/react-dom@npm:^19.2.3":
+  version: 19.2.3
+  resolution: "@types/react-dom@npm:19.2.3"
   peerDependencies:
     "@types/react": ^19.2.0
-  checksum: 10c0/6154dfb8e7a638313d7fa15b2b16494f2235afda4c43be37d10f34e5c7a730f6b95117facb5e6eebc73b15cceea7f6da23be46cda5d2262fd00fd7e6069547e3
+  checksum: 10c0/b486ebe0f4e2fb35e2e108df1d8fc0927ca5d6002d5771e8a739de11239fe62d0e207c50886185253c99eb9dedfeeb956ea7429e5ba17f6693c7acb4c02f8cd1
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.2.3":
-  version: 19.2.3
-  resolution: "@types/react@npm:19.2.3"
+"@types/react@npm:^19.2.4":
+  version: 19.2.4
+  resolution: "@types/react@npm:19.2.4"
   dependencies:
     csstype: "npm:^3.0.2"
-  checksum: 10c0/12db8df36b9a0c8f7a602d0684e53731a43da4519f963fa3d1f4d4cac10b3bd31f2c838be74fe111174fff631e80b8e3d645fdfed477eb0632ab972241d05d67
+  checksum: 10c0/c878262c4bce047e53a44ef644088fce359ebdfdca7060a4ac1717c8362563b9506a7ebae145977836e95d5948b8f8b426dcd516044c3a3c0563a6f1b60408ce
   languageName: node
   linkType: hard
 
@@ -5543,19 +5543,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitejs/plugin-react@npm:^5.1.0":
-  version: 5.1.0
-  resolution: "@vitejs/plugin-react@npm:5.1.0"
+"@vitejs/plugin-react@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "@vitejs/plugin-react@npm:5.1.1"
   dependencies:
-    "@babel/core": "npm:^7.28.4"
+    "@babel/core": "npm:^7.28.5"
     "@babel/plugin-transform-react-jsx-self": "npm:^7.27.1"
     "@babel/plugin-transform-react-jsx-source": "npm:^7.27.1"
-    "@rolldown/pluginutils": "npm:1.0.0-beta.43"
+    "@rolldown/pluginutils": "npm:1.0.0-beta.47"
     "@types/babel__core": "npm:^7.20.5"
     react-refresh: "npm:^0.18.0"
   peerDependencies:
     vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
-  checksum: 10c0/e192a12e2b854df109eafb1d06c0bc848e8e2b162c686aa6b999b1048658983e72674b2068ccc37562fcce44d32ad92b65f3a4e1897a0cb7859c2ee69cc63eac
+  checksum: 10c0/e590efaea1eabfbb1beb6e8c9fac0742fd299808e3368e63b2825ce24740adb8a28fcb2668b14b7ca1bdb42890cfefe94d02dd358dcbbf8a27ddf377b9a82abf
   languageName: node
   linkType: hard
 
@@ -9026,9 +9026,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^61.1.12":
-  version: 61.1.12
-  resolution: "eslint-plugin-jsdoc@npm:61.1.12"
+"eslint-plugin-jsdoc@npm:^61.2.1":
+  version: 61.2.1
+  resolution: "eslint-plugin-jsdoc@npm:61.2.1"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.76.0"
     "@es-joy/resolve.exports": "npm:1.2.0"
@@ -9046,7 +9046,7 @@ __metadata:
     to-valid-identifier: "npm:^1.0.0"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/a0d291796029f8c3711ece955afde3cbac2b366735ad99f22723e4d53e54b9dcb6224a7a23369d9bf95a25c01e64b7cf6e7807218b73a18fd33bfe6eabf0bbdd
+  checksum: 10c0/c2288ab5cffcb8a21adc4b7baa26d253c616463367d52157bdcce322135fd9d141fa5f0d27bd1a8c9d93db16dc1727d9a5c58bf6d2008ed0849e6c4b2f811384
   languageName: node
   linkType: hard
 
@@ -14782,21 +14782,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^7.9.5":
-  version: 7.9.5
-  resolution: "react-router-dom@npm:7.9.5"
+"react-router-dom@npm:^7.9.6":
+  version: 7.9.6
+  resolution: "react-router-dom@npm:7.9.6"
   dependencies:
-    react-router: "npm:7.9.5"
+    react-router: "npm:7.9.6"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/e54fdfa211e356bd89e3c12b1f89537058357ef21b6a05f55456e0defaab8e77b7495e035ff6999b17a9a2e6f8204d46cf5897fe56e5d3db9458109a014efc4d
+  checksum: 10c0/63984c46385da232655b9e3a8a99f6dd7b94c36827be6e954f246c362f83740b5f59b1de99cae81da3b0cef2220d701dcc22e4fafb4a84600541e1c0450b9d57
   languageName: node
   linkType: hard
 
-"react-router@npm:7.9.5, react-router@npm:^7.9.5":
-  version: 7.9.5
-  resolution: "react-router@npm:7.9.5"
+"react-router@npm:7.9.6, react-router@npm:^7.9.6":
+  version: 7.9.6
+  resolution: "react-router@npm:7.9.6"
   dependencies:
     cookie: "npm:^1.0.1"
     set-cookie-parser: "npm:^2.6.0"
@@ -14806,7 +14806,7 @@ __metadata:
   peerDependenciesMeta:
     react-dom:
       optional: true
-  checksum: 10c0/e961816b4096a6ca97fc53626fc6532014c0de4c45bf6c234b8205eb4f94be8f357d67819e4f4f58507f79ef9bda4c3f70031a8dd13c7045e3ad0ecb12f819e3
+  checksum: 10c0/2a177bbe19021e3b8211df849ea5b3f3a4f482327e6de3341aaeaa4f1406dc9be7b675b229eefea6761e04a59a40ccaaf8188f2ee88eb2d0b2a6b6448daea368
   languageName: node
   linkType: hard
 

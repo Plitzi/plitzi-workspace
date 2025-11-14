@@ -42,7 +42,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "react-helmet-async": "^2.0.5",
-    "react-router-dom": "^7.9.5",
+    "react-router-dom": "^7.9.6",
     "twig": "^1.17.1",
     "vite": "^7.2.2",
     "vite-plugin-dts": "^4.5.4",
