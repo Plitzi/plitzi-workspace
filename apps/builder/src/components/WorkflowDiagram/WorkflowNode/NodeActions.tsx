@@ -1,20 +1,14 @@
-// Packages
-import React, { useCallback } from 'react';
-import classNames from 'classnames';
-import noop from 'lodash/noop';
 import Button from '@plitzi/plitzi-ui/Button';
+import classNames from 'classnames';
+import { useCallback } from 'react';
 
-/**
- * @param {{
- *   className?: string;
- *   onRemove?: () => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const NodeActions = props => {
-  const { className = '', onRemove = noop } = props;
+export type NodeActionsProps = {
+  className?: string;
+  onRemove?: () => void;
+};
 
-  const handleClickRemove = useCallback(() => onRemove(), [onRemove]);
+const NodeActions = ({ className = '', onRemove }: NodeActionsProps) => {
+  const handleClickRemove = useCallback(() => onRemove?.(), [onRemove]);
 
   return (
     <div className={classNames('flex h-full flex-col justify-around', className)}>

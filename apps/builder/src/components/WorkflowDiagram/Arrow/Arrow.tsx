@@ -1,46 +1,42 @@
-// Packages
-import React, { useMemo } from 'react';
 import classNames from 'classnames';
+import { useMemo } from 'react';
 
-// Relatives
-import { getCubicBezierSVGPath } from './helpers/path';
 import { interpolateCubicBezierAngle } from './helpers/interpolation';
+import { getCubicBezierSVGPath } from './helpers/path';
 import { getDistance } from '../helpers/workflowUtils';
 import { getCurveHorizontal, getCurveVertical } from './helpers/arrowUtils';
 
-/**
- * @param {{
- *   className?: string;
- *   direction?: 'horizontal' | 'vertical';
- *   dotRadius?: number;
- *   fromRadius?: number;
- *   curveRate?: number;
- *   fromX?: number;
- *   fromY?: number;
- *   toX?: number;
- *   toY?: number;
- *   offsetX?: number;
- *   offsetY?: number;
- *   isPreview?: boolean;
- * }} props
- * @returns {React.ReactElement}
- */
-const Arrow = props => {
-  const {
-    className = '',
-    direction = 'horizontal',
-    dotRadius = 8,
-    fromRadius = 4,
-    curveRate = 0.75,
-    fromX = 128,
-    fromY = 128,
-    toX = 256,
-    toY = 256,
-    offsetX = 0,
-    offsetY = 0,
-    isPreview = false,
-    ...otherProps
-  } = props;
+export type ArrowProps = {
+  className?: string;
+  direction?: 'horizontal' | 'vertical';
+  dotRadius?: number;
+  fromRadius?: number;
+  curveRate?: number;
+  fromX?: number;
+  fromY?: number;
+  toX?: number;
+  toY?: number;
+  offsetX?: number;
+  offsetY?: number;
+  isPreview?: boolean;
+  onDoubleClick?: () => void;
+};
+
+const Arrow = ({
+  className = '',
+  direction = 'horizontal',
+  dotRadius = 8,
+  fromRadius = 4,
+  curveRate = 0.75,
+  fromX = 128,
+  fromY = 128,
+  toX = 256,
+  toY = 256,
+  offsetX = 0,
+  offsetY = 0,
+  isPreview = false,
+  ...otherProps
+}: ArrowProps) => {
   const width = getDistance(fromX, toX);
   const height = getDistance(fromY, toY);
 
@@ -69,13 +65,13 @@ const Arrow = props => {
           isPreview
         );
     }
-  }, [direction, fromRadius, fromX, fromY, toX, toY, dotRadius, isPreview]);
+  }, [direction, fromX, fromY, toX, toY, width, height, dotRadius, curveRate, isPreview]);
   const svgPath = useMemo(() => getCubicBezierSVGPath(curve), [curve]);
   const endAngle = useMemo(() => interpolateCubicBezierAngle(curve, 1), [curve]);
 
   return (
     <svg
-      className={classNames('absolute stroke-gray-500 fill-gray-500', className)}
+      className={classNames('absolute fill-gray-500 stroke-gray-500', className)}
       viewBox={`0 0 ${width + dotRadius * 2} ${height + dotRadius * 2}`}
       style={{
         width: width + dotRadius * 2,

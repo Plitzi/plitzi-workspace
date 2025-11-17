@@ -1,36 +1,29 @@
-// Packages
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-export const LIMIT_MODE_PARENT = 'parent';
-export const LIMIT_MODE_WINDOW = 'window';
-export const LIMIT_MODE_NONE = 'none';
+import type { ReactNode } from 'react';
 
-/**
- * @param {{
- *   x?: number;
- *   y?: number;
- *   limitMode?: 'parent' | 'window' | 'none';
- *   children?: React.ReactNode;
- *   className?: string;
- *   updateOnDragging?: boolean;
- *   onPositionChanged?: (x: number, y: number) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const NodeDraggable = props => {
-  const {
-    x = 0,
-    y = 0,
-    limitMode = LIMIT_MODE_WINDOW,
-    children,
-    className = '',
-    updateOnDragging = false,
-    onPositionChanged = noop,
-    ...otherProps
-  } = props;
-  const elementRef = useRef();
+export type NodeDraggableProps = {
+  x?: number;
+  y?: number;
+  limitMode?: 'parent' | 'window' | 'none';
+  children?: ReactNode;
+  className?: string;
+  updateOnDragging?: boolean;
+  onPositionChanged?: (x: number, y: number) => void;
+};
+
+const NodeDraggable = ({
+  x = 0,
+  y = 0,
+  limitMode = 'window',
+  children,
+  className = '',
+  updateOnDragging = false,
+  onPositionChanged,
+  ...otherProps
+}: NodeDraggableProps) => {
+  const elementRef = useRef<HTMLDivElement | null>(null);
   const xRef = useRef(x);
   const yRef = useRef(y);
   const [dragging, setDragging] = useState(false);
@@ -38,23 +31,23 @@ const NodeDraggable = props => {
   const [offsetY, setOffsetY] = useState(y);
   const [TX, setTX] = useState(0);
   const [TY, setTY] = useState(0);
-  const [containerRect, setContainerRect] = useState({});
+  const [containerRect, setContainerRect] = useState<DOMRect>({} as DOMRect);
   const [, setReRender] = useState(false);
 
-  const handleMouseMove = e => {
+  const handleMouseMove = (e: React.MouseEvent | MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (dragging) {
+    if (dragging && elementRef.current) {
       const rect = elementRef.current.getBoundingClientRect();
       let newX = offsetX + e.clientX - TX;
       let newY = offsetY + e.clientY - TY;
-      if (newX + rect.width > containerRect.width && limitMode !== LIMIT_MODE_NONE) {
+      if (newX + rect.width > containerRect.width && limitMode !== 'none') {
         newX = containerRect.width - rect.width;
       } else if (newX < 0) {
         newX = 0;
       }
 
-      if (newY + rect.height > containerRect.height && limitMode !== LIMIT_MODE_NONE) {
+      if (newY + rect.height > containerRect.height && limitMode !== 'none') {
         newY = containerRect.height - rect.height;
       } else if (newY < 0) {
         newY = 0;
@@ -67,16 +60,16 @@ const NodeDraggable = props => {
       elementRef.current.style.top = `${newY}px`;
 
       if (updateOnDragging) {
-        onPositionChanged(newX, newY);
+        onPositionChanged?.(newX, newY);
       }
     }
   };
 
-  const handleMouseUp = e => {
+  const handleMouseUp = (e: React.MouseEvent | MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (offsetX !== xRef.current || offsetY !== yRef.current) {
-      onPositionChanged(xRef.current, yRef.current);
+      onPositionChanged?.(xRef.current, yRef.current);
     }
 
     setDragging(false);
@@ -102,6 +95,7 @@ const NodeDraggable = props => {
         window.removeEventListener('touchend', handleTouchEnd, false);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragging, containerRect]);
 
   useLayoutEffect(() => {
@@ -116,16 +110,16 @@ const NodeDraggable = props => {
     }
   }, [x, y]);
 
-  const handleMouseDown = e => {
-    let rect = {};
-    if (limitMode === LIMIT_MODE_PARENT) {
+  const handleMouseDown = (e: React.MouseEvent | MouseEvent) => {
+    let rect: DOMRect = {} as DOMRect;
+    if (limitMode === 'parent') {
       if (!elementRef.current || !elementRef.current.parentNode) {
-        rect = { height: window.innerHeight, width: window.innerWidth };
+        rect = { height: window.innerHeight, width: window.innerWidth } as DOMRect;
+      } else {
+        rect = (elementRef.current.parentNode as HTMLElement).getBoundingClientRect();
       }
-
-      rect = elementRef.current.parentNode.getBoundingClientRect();
     } else {
-      rect = { height: window.innerHeight, width: window.innerWidth };
+      rect = { height: window.innerHeight, width: window.innerWidth } as DOMRect;
     }
 
     if (e.button === 0) {
@@ -140,13 +134,13 @@ const NodeDraggable = props => {
     }
   };
 
-  const handleTouchMove = e => {
+  const handleTouchMove = (e: TouchEvent | React.TouchEvent) => {
     e.stopPropagation();
     if (e.changedTouches.length > 1) {
       e.preventDefault();
     }
 
-    if (dragging) {
+    if (dragging && elementRef.current) {
       const rect = elementRef.current.getBoundingClientRect();
       const { clientX, clientY } = e.touches[0];
       let newX = offsetX + clientX - TX;
@@ -170,7 +164,7 @@ const NodeDraggable = props => {
       elementRef.current.style.top = `${newY}px`;
 
       if (updateOnDragging) {
-        onPositionChanged(newX, newY);
+        onPositionChanged?.(newX, newY);
       }
     }
   };
@@ -179,10 +173,10 @@ const NodeDraggable = props => {
     setDragging(false);
     setOffsetX(xRef.current);
     setOffsetY(yRef.current);
-    onPositionChanged(xRef.current, yRef.current);
+    onPositionChanged?.(xRef.current, yRef.current);
   };
 
-  const handleTouchStart = e => {
+  const handleTouchStart = (e: TouchEvent | React.TouchEvent) => {
     e.stopPropagation();
     setDragging(true);
     setTX(e.touches[0].clientX);
@@ -191,7 +185,7 @@ const NodeDraggable = props => {
 
   return (
     <div
-      className={classNames('flex absolute cursor-move select-none', className)}
+      className={classNames('absolute flex cursor-move select-none', className)}
       ref={elementRef}
       style={{ top: yRef.current, left: xRef.current }}
       onMouseDown={handleMouseDown}

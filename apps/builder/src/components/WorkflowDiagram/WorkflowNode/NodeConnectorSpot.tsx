@@ -1,58 +1,54 @@
-// Packages
-import React, { use, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import { use, useEffect, useMemo, useRef, useState } from 'react';
 
-// Relatives
+import Arrow from '../Arrow';
 import { calculatePosition } from '../helpers/workflowUtils';
-import Arrow from '../Arrow/Arrow';
 import WorkflowContext from '../WorkflowContext';
 
-/**
- * @param {{
- *   className: string;
- *   id: string;
- *   parentNodeId: string;
- *   placement: 'top' | 'bottom' | 'left' | 'right';
- *   mode: 'in' | 'out';
- *   width: number;
- *   height: number;
- *   parentWidth: number;
- *   parentHeight: number;
- *   posX: number;
- *   posY: number;
- *   step: number;
- *   totalSteps: number;
- *   borderWidth: number;
- *   limit: number;
- *   onChange: (arg0: any) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const NodeConnectorSpot = props => {
-  const {
-    id = '',
-    className = '',
-    placement = 'right',
-    mode = 'out',
-    posX: posXProp = 0,
-    posY: posYProp = 0,
-    parentNodeId = '',
-    step = 1,
-    totalSteps = 1,
-    width = 16,
-    height = 16,
-    parentWidth = 0,
-    parentHeight = 0,
-    borderWidth = 0,
-    limit,
-    onChange = noop
-  } = props;
+export type NodeConnectorSpotProps = {
+  className?: string;
+  id: string;
+  parentNodeId: string;
+  placement: 'top' | 'bottom' | 'left' | 'right';
+  mode: 'in' | 'out';
+  width?: number;
+  height?: number;
+  parentWidth: number;
+  parentHeight: number;
+  step?: number;
+  totalSteps?: number;
+  borderWidth?: number;
+  limit?: number;
+  onChange: (arg0: {
+    id: string;
+    mode: 'in' | 'out';
+    placement: 'top' | 'bottom' | 'left' | 'right';
+    limit?: number;
+    position: { x: number; y: number };
+  }) => void;
+};
+
+const NodeConnectorSpot = ({
+  id = '',
+  className = '',
+  placement = 'right',
+  mode = 'out',
+  parentNodeId = '',
+  step = 1,
+  totalSteps = 1,
+  width = 16,
+  height = 16,
+  parentWidth = 0,
+  parentHeight = 0,
+  borderWidth = 0,
+  limit,
+  onChange
+}: NodeConnectorSpotProps) => {
   const [dragging, setDragging] = useState(false);
   const [TX, setTX] = useState(0);
   const [TY, setTY] = useState(0);
   const [connPos, setConnPos] = useState({ x: 0, y: 0 });
-  const ref = useRef();
+  const ref = useRef<HTMLDivElement | null>(null);
   const { direction, bindNodes } = use(WorkflowContext);
   const posX = useMemo(() => {
     let newPosX = 0;
@@ -86,7 +82,7 @@ const NodeConnectorSpot = props => {
     }
 
     return newPosX;
-  }, [posXProp, parentWidth, borderWidth, direction]);
+  }, [parentWidth, borderWidth, direction, placement, width, step, totalSteps]);
   const posY = useMemo(() => {
     let newPosY = 0;
     const pHeight = parentHeight - borderWidth * 2;
@@ -117,7 +113,7 @@ const NodeConnectorSpot = props => {
     }
 
     return newPosY;
-  }, [posYProp, parentHeight, borderWidth, direction]);
+  }, [parentHeight, borderWidth, direction, placement, height, step, totalSteps]);
 
   useEffect(() => {
     if (dragging) {
@@ -137,9 +133,10 @@ const NodeConnectorSpot = props => {
         window.removeEventListener('touchend', handleTouchEnd, false);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragging]);
 
-  const handleMouseMove = e => {
+  const handleMouseMove = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (dragging) {
@@ -150,12 +147,12 @@ const NodeConnectorSpot = props => {
     }
   };
 
-  const handleMouseUp = e => {
+  const handleMouseUp = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setDragging(false);
     setConnPos({ x: 0, y: 0 });
-    const { nodeId, connectorId } = e.target.dataset;
+    const { nodeId, connectorId } = (e.target as HTMLElement).dataset;
     if (!nodeId || !connectorId) {
       return;
     }
@@ -163,7 +160,7 @@ const NodeConnectorSpot = props => {
     bindNodes(parentNodeId, nodeId, id, connectorId);
   };
 
-  const handleMouseDown = e => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (e.button === 0) {
@@ -176,7 +173,7 @@ const NodeConnectorSpot = props => {
     }
   };
 
-  const handleTouchMove = e => {
+  const handleTouchMove = (e: TouchEvent) => {
     e.stopPropagation();
     if (e.changedTouches.length > 1) {
       e.preventDefault();
@@ -190,10 +187,10 @@ const NodeConnectorSpot = props => {
     }
   };
 
-  const handleTouchEnd = e => {
+  const handleTouchEnd = (e: TouchEvent) => {
     setDragging(false);
     setConnPos({ x: 0, y: 0 });
-    const { nodeId, connectorId } = e.target.dataset;
+    const { nodeId, connectorId } = (e.target as HTMLElement).dataset;
     if (!nodeId || !connectorId) {
       return;
     }
@@ -201,7 +198,7 @@ const NodeConnectorSpot = props => {
     bindNodes(parentNodeId, nodeId, id, connectorId);
   };
 
-  const handleTouchStart = e => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     e.stopPropagation();
     setDragging(true);
     setTX(e.touches[0].clientX);
@@ -210,13 +207,13 @@ const NodeConnectorSpot = props => {
 
   useEffect(() => {
     onChange({ id, mode, placement, limit, position: { x: posX, y: posY } });
-  }, [id, mode, direction, step, totalSteps, limit, posX, posY]);
+  }, [id, mode, direction, step, totalSteps, limit, posX, posY, onChange, placement]);
 
   return (
     <div
       ref={ref}
-      className={classNames('flex rounded-full absolute z-20', className, {
-        'hover:!w-6 hover:!h-6': !dragging,
+      className={classNames('absolute z-20 flex rounded-full', className, {
+        'hover:h-6! hover:w-6!': !dragging,
         'bg-purple-500': mode === 'in',
         'bg-green-500': mode === 'out',
         'translate-x-[-50%] translate-y-[-50%]': placement === 'right' || placement === 'left'

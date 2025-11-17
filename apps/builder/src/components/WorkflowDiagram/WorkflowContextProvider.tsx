@@ -1,67 +1,58 @@
-// Packages
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
+import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import { produce } from 'immer';
-import get from 'lodash/get';
-import set from 'lodash/set';
-import noop from 'lodash/noop';
 import debounce from 'lodash/debounce';
+import get from 'lodash/get';
 import has from 'lodash/has';
+import set from 'lodash/set';
+import { useCallback, useMemo, useState } from 'react';
 
-// Relatives
+import { getCenter, getSegment } from './helpers/workflowLayoutUtils';
 import WorkflowContext from './WorkflowContext';
 import { generateID } from '../../helpers/utils';
 
-const nodeDefinitionsDefault = [];
+import type { Node, WorkflowDirection, NodeConnection, Connector } from './WorkflowContext';
+import type { RefObject } from 'react';
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   template: object;
- *   containerRef: React.RefObject;
- *   direction?: 'horizontal' | 'vertical';
- *   nodeDefinitions?: object[];
- *   addNodePositionX?: number;
- *   addNodePositionY?: number;
- *   onChange?: (template: object) => void;
- * }} props
- * @returns {React.ReactElement}
- */
-const WorkflowContextProvider = props => {
-  const {
-    children,
-    template,
-    containerRef,
-    direction = 'horizontal',
-    nodeDefinitions = nodeDefinitionsDefault,
-    addNodePositionX = 0,
-    addNodePositionY = 0,
-    onChange = noop
-  } = props;
-  const [nodes, setNodes] = useState(() => get(template, 'nodes', {}));
-  const onChangeDebounced = useMemo(() => debounce(onChange, 100), [onChange]);
-  const init = useRef(false);
+const INITIAL_SEPARATION_NODES = 50;
+const SEPARATION_NODES = 30;
 
-  useLayoutEffect(() => {
-    if (init.current) {
-      init.current = false;
-      setNodes(get(template, 'nodes', {}));
-    }
+export type WorkflowContextProviderProps = {
+  children: React.ReactNode;
+  template?: object;
+  containerRef: RefObject<HTMLDivElement | null>;
+  direction?: 'horizontal' | 'vertical';
+  nodeDefinitions?: object[];
+  addNodePositionX?: number;
+  addNodePositionY?: number;
+  onChange?: (template: object) => void;
+};
+
+const WorkflowContextProvider = ({
+  children,
+  template,
+  containerRef,
+  direction = 'horizontal',
+  nodeDefinitions,
+  addNodePositionX = 0,
+  addNodePositionY = 0,
+  onChange
+}: WorkflowContextProviderProps) => {
+  const [nodes, setNodes] = useState<Record<string, Node>>(() => get(template, 'nodes', {}));
+  const onChangeDebounced = useMemo(() => onChange && debounce(onChange, 100), [onChange]);
+
+  useDidUpdateEffect(() => {
+    onChangeDebounced?.({ ...template, nodes });
   }, [template]);
 
-  useEffect(() => {
-    if (!init.current) {
-      init.current = true;
-
-      return;
-    }
-
-    onChangeDebounced({ ...template, nodes });
-  }, [nodes, onChangeDebounced]);
-
   const registerNode = useCallback(
-    node =>
+    (node: Node) =>
       setNodes(state =>
         produce(state, draft => {
+          if (!containerRef.current) {
+            return;
+          }
+
           const { offsetHeight, offsetWidth } = containerRef.current;
           draft[node.id] = node;
           let newX = offsetWidth / 2;
@@ -77,11 +68,11 @@ const WorkflowContextProvider = props => {
           set(draft, `${node.id}.position`, { x: newX, y: newY });
         })
       ),
-    [containerRef]
+    [addNodePositionX, addNodePositionY, containerRef]
   );
 
   const unregisterNode = useCallback(
-    nodeId =>
+    (nodeId: string) =>
       setNodes(state =>
         produce(state, draft => {
           // Delete Connections
@@ -99,15 +90,15 @@ const WorkflowContextProvider = props => {
   );
 
   const updateNode = useCallback(
-    (node, reset = false) =>
+    (node: Node, reset = false) =>
       setNodes(state =>
         produce(state, draft => {
           if (!has(draft, node.id)) {
             return;
           }
 
-          const currentNode = get(draft, node.id, {});
-          if (node.type) {
+          const currentNode = get(draft, node.id);
+          if ((node.type as string) && (currentNode.type === 'trigger' || currentNode.type === 'callback')) {
             const connectorIn = Object.values(currentNode.connectors).find(connector => connector.mode === 'in');
             const connectorOut = Object.values(currentNode.connectors).find(connector => connector.mode === 'out');
             // Update Connections
@@ -143,13 +134,7 @@ const WorkflowContextProvider = props => {
           }
 
           if (reset) {
-            set(draft, node.id, {
-              ...currentNode,
-              type: 'callback',
-              action: '',
-              params: {},
-              ...node
-            });
+            set(draft, node.id, { ...currentNode, action: '', params: {}, ...node });
           } else {
             set(draft, node.id, { ...currentNode, ...node });
           }
@@ -159,10 +144,10 @@ const WorkflowContextProvider = props => {
   );
 
   const updateNodePosition = useCallback(
-    (nodeId, x, y) =>
+    (nodeId: string, x: number, y: number) =>
       setNodes(state => {
-        const oldX = get(state, `${nodeId}.position.x`);
-        const oldY = get(state, `${nodeId}.position.y`);
+        const oldX = get(state, `${nodeId}.position.x`, 0);
+        const oldY = get(state, `${nodeId}.position.y`, 0);
         if (oldX === x && oldY === y) {
           return state;
         }
@@ -175,7 +160,7 @@ const WorkflowContextProvider = props => {
   );
 
   const updateNodeConnector = useCallback(
-    (nodeId, connector) =>
+    (nodeId: string, connector: Connector) =>
       setNodes(state =>
         produce(state, draft => {
           set(draft, `${nodeId}.connectors.${connector.id}`, connector);
@@ -184,10 +169,10 @@ const WorkflowContextProvider = props => {
     []
   );
 
-  const getNode = useCallback(nodeId => get(nodes, nodeId), [nodes]);
+  const getNode = useCallback((nodeId: string) => get(nodes, nodeId), [nodes]);
 
   const bindNodes = useCallback(
-    (nodeFromId, nodeToId, connectorFromId, connectorToId) =>
+    (nodeFromId: string, nodeToId: string, connectorFromId: string, connectorToId: string) =>
       setNodes(state =>
         produce(state, draft => {
           // Check Parameters
@@ -195,8 +180,8 @@ const WorkflowContextProvider = props => {
             return;
           }
 
-          const connectorFrom = get(draft, `${nodeFromId}.connectors.${connectorFromId}`);
-          const connectorTo = get(draft, `${nodeToId}.connectors.${connectorToId}`);
+          const connectorFrom = get(draft, `${nodeFromId}.connectors.${connectorFromId}`) as unknown as Connector;
+          const connectorTo = get(draft, `${nodeToId}.connectors.${connectorToId}`) as unknown as Connector;
           // Check if connectors are in this direction out -> in
           if (connectorFrom.mode !== 'out' || connectorTo.mode !== 'in') {
             return;
@@ -239,97 +224,102 @@ const WorkflowContextProvider = props => {
             title: 'Connector',
             type: 'connector',
             from: { id: nodeFromId, connector: connectorFromId },
-            to: { id: nodeToId, connector: connectorToId }
+            to: { id: nodeToId, connector: connectorToId },
+            position: { x: 0, y: 0 }
           };
         })
       ),
-    [nodes]
+    []
   );
 
-  const wipeNodes = useCallback(() => setNodes({}, []));
+  const wipeNodes = useCallback(() => setNodes({}), []);
 
-  // Layouts
+  const processNode = useCallback(
+    (
+      node: Node,
+      distance: number,
+      step: number,
+      steps: number,
+      acum: number,
+      offset = INITIAL_SEPARATION_NODES,
+      direction: WorkflowDirection = 'horizontal'
+    ) => {
+      const center = getCenter(distance, step + 1, steps) + distance * offset;
+      const nodeDOM = containerRef.current?.querySelector(`#${node.id}`) as HTMLElement | undefined;
+      switch (direction) {
+        case 'vertical': {
+          node.position.x = center;
+          node.position.y = acum;
+          if (nodeDOM) {
+            const { offsetWidth, offsetHeight } = nodeDOM;
+            node.position.x -= offsetWidth / 2;
+            acum += offsetHeight;
+          } else {
+            acum += 200;
+          }
 
-  const getSegment = (size, steps = 1) => size * (1 / steps);
-
-  const getCenter = (size, step = 1, steps = 1) => {
-    if (step <= 0) {
-      step = 1;
-    }
-
-    const segment = getSegment(size, steps);
-    const segments = (step - 1) * segment;
-    const halfSegment = segment / 2;
-
-    return segments + halfSegment;
-  };
-
-  const INITIAL_SEPARATION_NODES = 50;
-  const SEPARATION_NODES = 30;
-
-  const processNode = (
-    node,
-    distance,
-    step,
-    steps,
-    acum,
-    offset = INITIAL_SEPARATION_NODES,
-    direction = 'horizontal'
-  ) => {
-    const center = getCenter(distance, step + 1, steps) + distance * offset;
-    const nodeDOM = containerRef.current.querySelector(`#${node.id}`);
-    switch (direction) {
-      case 'vertical': {
-        node.position.x = center;
-        node.position.y = acum;
-        if (nodeDOM) {
-          const { offsetWidth, offsetHeight } = nodeDOM;
-          node.position.x -= offsetWidth / 2;
-          acum += offsetHeight;
-        } else {
-          acum += 200;
+          break;
         }
 
-        break;
-      }
-
-      case 'horizontal':
-      default: {
-        node.position.x = acum;
-        node.position.y = center;
-        if (nodeDOM) {
-          const { offsetWidth, offsetHeight } = nodeDOM;
-          node.position.y -= offsetHeight / 2;
-          acum += offsetWidth;
-        } else if (acum > 0) {
-          acum += 250;
+        case 'horizontal':
+        default: {
+          node.position.x = acum;
+          node.position.y = center;
+          if (nodeDOM) {
+            const { offsetWidth, offsetHeight } = nodeDOM;
+            node.position.y -= offsetHeight / 2;
+            acum += offsetWidth;
+          } else if (acum > 0) {
+            acum += 250;
+          }
         }
       }
-    }
 
-    return acum;
-  };
+      return acum;
+    },
+    [containerRef]
+  );
 
-  const processNodes = (nodes, parentNode, distance, acum = 0, offset = 0, direction = 'horizontal') => {
-    const connectors = nodes.filter(node => node.type === 'connector' && node.from.id === parentNode.id);
-    connectors.forEach((connector, i) => {
-      const node = nodes.find(node => node.id === connector.to.id && connector.from.id === parentNode.id);
-      const newAcum = processNode(node, distance, i, connectors.length, acum + SEPARATION_NODES, offset, direction);
-      processNodes(
-        nodes,
-        node,
-        getSegment(distance, connectors.length),
-        newAcum + SEPARATION_NODES,
-        offset + i,
-        direction
+  const processNodes = useCallback(
+    (
+      nodes: Node[],
+      parentNode: Node | undefined,
+      distance: number,
+      acum = 0,
+      offset = 0,
+      direction: WorkflowDirection = 'horizontal'
+    ) => {
+      const connectors = nodes.filter(
+        (node): node is NodeConnection => node.type === 'connector' && node.from.id === parentNode?.id
       );
-    });
-  };
+      connectors.forEach((connector, i) => {
+        const node = nodes.find(node => node.id === connector.to.id && connector.from.id === parentNode?.id);
+        if (!node) {
+          return;
+        }
+
+        const newAcum = processNode(node, distance, i, connectors.length, acum + SEPARATION_NODES, offset, direction);
+        processNodes(
+          nodes,
+          node,
+          getSegment(distance, connectors.length),
+          newAcum + SEPARATION_NODES,
+          offset + i,
+          direction
+        );
+      });
+    },
+    [processNode]
+  );
 
   const performLayout = useCallback(
-    (direction = 'horizontal') => {
+    (direction: WorkflowDirection = 'horizontal') => {
       setNodes(state =>
         produce(state, draft => {
+          if (!containerRef.current) {
+            return;
+          }
+
           const draftList = Object.values(draft);
           const triggerNodes = draftList.filter(node => node.type === 'trigger');
           const { offsetHeight, offsetWidth } = containerRef.current;
@@ -375,7 +365,7 @@ const WorkflowContextProvider = props => {
         })
       );
     },
-    [nodes]
+    [containerRef, processNode, processNodes]
   );
 
   const workflowMemo = useMemo(

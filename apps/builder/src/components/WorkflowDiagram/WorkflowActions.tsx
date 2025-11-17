@@ -1,20 +1,15 @@
-// Packages
-import React, { useCallback, use } from 'react';
-import classNames from 'classnames';
 import Button from '@plitzi/plitzi-ui/Button';
+import classNames from 'classnames';
+import { useCallback, use } from 'react';
 
-// Relatives
 import WorkflowContext from './WorkflowContext';
 import { generateID } from '../../helpers/utils';
 
-/**
- * @param {{
- *   className?: string;
- * }} props
- * @returns {React.ReactElement}
- */
-const WorkflowActions = props => {
-  const { className = '' } = props;
+export type WorkflowActionsProps = {
+  className?: string;
+};
+
+const WorkflowActions = ({ className = '' }: WorkflowActionsProps) => {
   const { nodes, direction, registerNode, wipeNodes, performLayout } = use(WorkflowContext);
 
   const handleClickAddNode = useCallback(() => {
@@ -47,17 +42,17 @@ const WorkflowActions = props => {
     }
   }, [nodes, registerNode]);
 
-  const handleClickLayout = useCallback(() => performLayout(direction), [direction]);
+  const handleClickLayout = useCallback(() => performLayout(direction), [direction, performLayout]);
 
   const handleRemoveAll = useCallback(() => wipeNodes(), [wipeNodes]);
 
   return (
     <div className={classNames('flex bg-white', className)}>
-      <div className="flex py-1 px-2">
+      <div className="flex px-2 py-1">
         <Button
           intent="custom"
           size="custom"
-          className="rounded-sm px-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-500 mr-4"
+          className="mr-4 rounded-sm bg-blue-100 px-2 text-xs text-blue-500 hover:bg-blue-200"
           onClick={handleClickLayout}
         >
           Layout
@@ -65,7 +60,7 @@ const WorkflowActions = props => {
         <Button
           intent="custom"
           size="custom"
-          className="rounded-sm px-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-500"
+          className="rounded-sm bg-blue-100 px-2 text-xs text-blue-500 hover:bg-blue-200"
           onClick={handleClickAddNode}
         >
           + Node
@@ -74,7 +69,7 @@ const WorkflowActions = props => {
       <Button
         intent="custom"
         size="custom"
-        className="flex items-center px-2 text-sm text-white hover:text-red-100 bg-red-500"
+        className="flex items-center bg-red-500 px-2 text-sm text-white hover:text-red-100"
         onClick={handleRemoveAll}
         title="Remove All Nodes"
       >

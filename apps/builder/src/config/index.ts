@@ -90,7 +90,8 @@ export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Se
 // @todo: make this based on the user later and add launchDarkly
 const featureFlag = {
   assistanceAI: false,
-  variables: true
+  variables: true,
+  sitemap: false
 };
 
 export { featureFlag };

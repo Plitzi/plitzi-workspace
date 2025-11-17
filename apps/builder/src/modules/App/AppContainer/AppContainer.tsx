@@ -15,7 +15,8 @@ import ContainerDefault from './containers/ContainerDefault';
 import ContainerIntegrations from './containers/ContainerIntegrations';
 import ContainerMarketplace from './containers/ContainerMarketplace';
 import ContainerSettings from './containers/ContainerSettings';
-// import ContainerSitemap from './containers/ContainerSitemap';
+import ContainerSitemap from './containers/ContainerSitemap';
+import { featureFlag } from '../../../config';
 import { getPopups } from '../helpers/utils';
 
 import type { EventBridgeEvent } from '@plitzi/sdk-shared';
@@ -69,8 +70,8 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
               )}
               {tabSelected === 'marketplace' && <ContainerMarketplace />}
               {tabSelected === 'integrations' && <ContainerIntegrations />}
+              {featureFlag.sitemap && tabSelected === 'sitemap' && <ContainerSitemap />}
               {tabSelected === 'settings' && <ContainerSettings />}
-              {/* {tabSelected === 'sitemap' && <ContainerSitemap />} */}
             </div>
           </div>
         </PopupProvider>

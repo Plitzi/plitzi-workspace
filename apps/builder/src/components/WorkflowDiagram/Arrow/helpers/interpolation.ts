@@ -8,17 +8,20 @@
  * B(t) = (1 - t)^3P0 + 3(1 - t)^2tP1 + 3(1 - t)t^2P2 + t^3P3 Adapted from https://github.com/pbeshai/vis-utils
  */
 
-/**
- * @param {{
- *   start: { x: number; y: number };
- *   control1: { x: number; y: number };
- *   control2: { x: number; y: number };
- *   end: { x: number; y: number };
- * }} bezier
- * @param {number} t
- * @returns {{ x: number; y: number }}
- */
-export function interpolateCubicBezier({ start, control1, control2, end }, t) {
+export function interpolateCubicBezier(
+  {
+    start,
+    control1,
+    control2,
+    end
+  }: {
+    start: { x: number; y: number };
+    control1: { x: number; y: number };
+    control2: { x: number; y: number };
+    end: { x: number; y: number };
+  },
+  t: number
+) {
   /**
    * Get the point on the curve at a given t, where t is a number between 0 and 1.
    *
@@ -43,17 +46,20 @@ export function interpolateCubicBezier({ start, control1, control2, end }, t) {
  * Adapted from https://github.com/pbeshai/vis-utils
  */
 
-/**
- * @param {{
- *   start: { x: number; y: number };
- *   control1: { x: number; y: number };
- *   control2: { x: number; y: number };
- *   end: { x: number; y: number };
- * }} bezier
- * @param {number} t
- * @returns {number}
- */
-export function interpolateCubicBezierAngle({ start, control1, control2, end }, t) {
+export function interpolateCubicBezierAngle(
+  {
+    start,
+    control1,
+    control2,
+    end
+  }: {
+    start: { x: number; y: number };
+    control1: { x: number; y: number };
+    control2: { x: number; y: number };
+    end: { x: number; y: number };
+  },
+  t: number
+) {
   /**
    * Get the angle of the point on the curve at a given t, where t is a number between 0 and 1.
    *

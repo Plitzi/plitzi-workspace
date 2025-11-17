@@ -1,8 +1,13 @@
-// Relatives
 import { getCurve } from './path';
 import { angle2Points } from '../../helpers/workflowUtils';
 
-const getFromPosition = (fromPoint, toPoint, width, height, dotRadius) => {
+const getFromPosition = (
+  fromPoint: { x: number; y: number },
+  toPoint: { x: number; y: number },
+  width: number,
+  height: number,
+  dotRadius: number
+) => {
   const { x: fromX, y: fromY } = fromPoint;
   const { x: toX, y: toY } = toPoint;
   const fromPosition = { x: 0, y: 0 };
@@ -21,7 +26,15 @@ const getFromPosition = (fromPoint, toPoint, width, height, dotRadius) => {
   return fromPosition;
 };
 
-const getCurveHorizontal = (fromPoint, toPoint, width, height, dotRadius = 8, curveRate = 0.75, isPreview = false) => {
+const getCurveHorizontal = (
+  fromPoint: { x: number; y: number },
+  toPoint: { x: number; y: number },
+  width: number,
+  height: number,
+  dotRadius: number = 8,
+  curveRate: number = 0.75,
+  isPreview: boolean = false
+) => {
   const fromPosition = getFromPosition(fromPoint, toPoint, width, height, dotRadius);
   const { x: fromX, y: fromY } = fromPoint;
   const { x: toX, y: toY } = toPoint;
@@ -106,7 +119,15 @@ const getCurveHorizontal = (fromPoint, toPoint, width, height, dotRadius = 8, cu
   return getCurve(fromPosition, toPosition, { flip }, curveRate);
 };
 
-const getCurveVertical = (fromPoint, toPoint, width, height, dotRadius = 8, curveRate = 0.75, isPreview = false) => {
+const getCurveVertical = (
+  fromPoint: { x: number; y: number },
+  toPoint: { x: number; y: number },
+  width: number,
+  height: number,
+  dotRadius: number = 8,
+  curveRate: number = 0.75,
+  isPreview: boolean = false
+) => {
   const fromPosition = getFromPosition(fromPoint, toPoint, width, height, dotRadius);
   const { x: fromX, y: fromY } = fromPoint;
   const { x: toX, y: toY } = toPoint;

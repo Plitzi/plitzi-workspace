@@ -1,16 +1,5 @@
 // Get a list of points set up at the center of every side of the box (left, right, top, bottom)
-/**
- * @param {{
- *   x: number;
- *   y: number;
- *   w: number;
- * }} box
- * @returns {{
- *   x: number;
- *   y: number;
- * }[]}
- */
-export function getBoxBounds(box) {
+export function getBoxBounds(box: { x: number; y: number; h: number; w: number }) {
   return [
     { x: box.x, y: box.y + box.h / 2 }, // left
     { x: box.x + box.w, y: box.y + box.h / 2 }, // right
@@ -19,41 +8,28 @@ export function getBoxBounds(box) {
   ];
 }
 
-export function euclideanDistance(pointA, pointB) {
+export function euclideanDistance(pointA: { x: number; y: number }, pointB: { x: number; y: number }) {
   return Math.hypot(pointA.x - pointB.x, pointA.y - pointB.y);
 }
 
-export function xDistance(pointA, pointB) {
+export function xDistance(pointA: { x: number; y: number }, pointB: { x: number; y: number }) {
   return Math.abs(pointA.x - pointB.x);
 }
 
-export function yDistance(pointA, pointB) {
+export function yDistance(pointA: { x: number; y: number }, pointB: { x: number; y: number }) {
   return Math.abs(pointA.y - pointB.y);
 }
 
 // Find the ideal points to draw an edge between the two boxes by finding the shortest linear distance between the two.
-/**
- * @param {{
- *   x: number;
- *   y: number;
- *   w: number;
- * }} startBox
- * @param {{
- *   x: number;
- *   y: number;
- *   w: number;
- * }} endBox
- * @returns {{
- *   startPoint: { x: number; y: number };
- *   endPoint: { x: number; y: number };
- * }}
- */
-export function getIdealBoxSides(startBox, endBox) {
+export function getIdealBoxSides(
+  startBox: { x: number; y: number; h: number; w: number },
+  endBox: { x: number; y: number; h: number; w: number }
+) {
   const startPts = getBoxBounds(startBox);
   const endPts = getBoxBounds(endBox);
 
-  let minDistanceSource = [Infinity, { x: 0, y: 0 }];
-  let minDistanceTarget = [Infinity, { x: 0, y: 0 }];
+  let minDistanceSource: [number, { x: number; y: number }] = [Infinity, { x: 0, y: 0 }];
+  let minDistanceTarget: [number, { x: number; y: number }] = [Infinity, { x: 0, y: 0 }];
 
   startPts.forEach(pointA => {
     endPts.forEach(pointB => {
@@ -75,18 +51,9 @@ export function getIdealBoxSides(startBox, endBox) {
 }
 
 // Infer if a point is on the left or right side of a box
-/**
- * @param {{
- *   x: number;
- *   y: number;
- * }} point
- * @param {{
- *   x: number;
- *   y: number;
- *   w: number;
- * }} box
- * @returns {boolean}
- */
-export function isPointOnLeftOrRightSide(point, box) {
+export function isPointOnLeftOrRightSide(
+  point: { x: number; y: number },
+  box: { x: number; y: number; h: number; w: number }
+) {
   return point.x === box.x || point.x === box.x + box.w;
 }
