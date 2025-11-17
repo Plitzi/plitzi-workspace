@@ -98,11 +98,11 @@ const WorkflowContextProvider = ({
           }
 
           const currentNode = get(draft, node.id);
-          if ((node.type as string) && (currentNode.type === 'trigger' || currentNode.type === 'callback')) {
+          if ((node.type as string) && (currentNode.type === 'root' || currentNode.type === 'node')) {
             const connectorIn = Object.values(currentNode.connectors).find(connector => connector.mode === 'in');
             const connectorOut = Object.values(currentNode.connectors).find(connector => connector.mode === 'out');
             // Update Connections
-            if (currentNode.type !== 'trigger' && node.type === 'trigger' && connectorIn) {
+            if (currentNode.type !== 'root' && node.type === 'root' && connectorIn) {
               Object.values(draft)
                 .filter(node => node.type === 'connector' && node.to.id === currentNode.id)
                 .forEach(node => {
@@ -110,7 +110,7 @@ const WorkflowContextProvider = ({
                 });
 
               delete currentNode.connectors[connectorIn.id];
-            } else if (currentNode.type !== 'callback' && node.type === 'callback') {
+            } else if (currentNode.type !== 'node' && node.type === 'node') {
               if (!connectorIn) {
                 const idConnectorIn = `connector_${generateID()}`;
                 set(draft, `${node.id}.connectors.${idConnectorIn}`, {
@@ -321,7 +321,7 @@ const WorkflowContextProvider = ({
           }
 
           const draftList = Object.values(draft);
-          const triggerNodes = draftList.filter(node => node.type === 'trigger');
+          const triggerNodes = draftList.filter(node => node.type === 'root');
           const { offsetHeight, offsetWidth } = containerRef.current;
           triggerNodes.forEach((triggerNode, i) => {
             switch (direction) {

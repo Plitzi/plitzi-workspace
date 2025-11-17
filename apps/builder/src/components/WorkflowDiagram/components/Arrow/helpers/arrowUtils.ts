@@ -1,5 +1,5 @@
 import { getCurve } from './path';
-import { angle2Points } from '../../helpers/workflowUtils';
+import { angle2Points } from '../../../helpers/workflowUtils';
 
 const getFromPosition = (
   fromPoint: { x: number; y: number },

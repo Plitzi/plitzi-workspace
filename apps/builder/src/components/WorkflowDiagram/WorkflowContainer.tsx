@@ -1,9 +1,9 @@
 import classNames from 'classnames';
 import { use, useEffect } from 'react';
 
+import WorkflowNode from './components/WorkflowNode';
 import WorkflowActions from './WorkflowActions';
 import WorkflowContext from './WorkflowContext';
-import WorkflowNode from './WorkflowNode/WorkflowNode';
 
 export type WorkflowContainerProps = {
   className?: string;

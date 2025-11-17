@@ -2,10 +2,10 @@ import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import get from 'lodash/get';
 import { useCallback, use, useMemo, useState } from 'react';
 
+import WorkflowContext from '../../../WorkflowContext';
 import Arrow from '../../Arrow';
-import WorkflowContext from '../../WorkflowContext';
 
-import type { Node, NodeConnection } from '../../WorkflowContext';
+import type { Node, NodeConnection } from '../../../WorkflowContext';
 
 export type NodeConnectorProps = {
   className?: string;

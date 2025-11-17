@@ -1,9 +1,9 @@
 import classNames from 'classnames';
 import { use, useEffect, useMemo, useRef, useState } from 'react';
 
+import { calculatePosition } from '../../helpers/workflowUtils';
+import WorkflowContext from '../../WorkflowContext';
 import Arrow from '../Arrow';
-import { calculatePosition } from '../helpers/workflowUtils';
-import WorkflowContext from '../WorkflowContext';
 
 export type NodeConnectorSpotProps = {
   className?: string;

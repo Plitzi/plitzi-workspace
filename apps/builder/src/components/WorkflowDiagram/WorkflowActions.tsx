@@ -19,7 +19,7 @@ const WorkflowActions = ({ className = '' }: WorkflowActionsProps) => {
     if (Object.keys(nodes).length === 0) {
       registerNode({
         id,
-        type: 'trigger',
+        type: 'root',
         action: '',
         position: { x: 0, y: 0 },
         connectors: {
@@ -29,7 +29,7 @@ const WorkflowActions = ({ className = '' }: WorkflowActionsProps) => {
     } else {
       registerNode({
         id,
-        type: 'callback',
+        type: 'node',
         action: '',
         position: { x: 0, y: 0 },
         connectors: {

@@ -3,18 +3,18 @@ import classNames from 'classnames';
 import throttle from 'lodash/throttle';
 import { useCallback, use, useEffect, useRef, useState } from 'react';
 
-import NodeDraggable from './NodeDraggable';
-import WorkflowContext from '../WorkflowContext';
 import NodeActions from './NodeActions';
 import NodeConnectorSpot from './NodeConnectorSpot';
+import NodeDraggable from './NodeDraggable';
+import WorkflowContext from '../../WorkflowContext';
 import NodeConnector from './nodes/NodeConnector';
 
-import type { Connector } from '../WorkflowContext';
+import type { Connector } from '../../WorkflowContext';
 
 export type WorkflowNodeProps = {
   className?: string;
   id?: string;
-  type?: 'trigger' | 'callback' | 'connector';
+  type?: 'root' | 'node' | 'connector';
   position?: { x: number; y: number };
   connectors?: Record<string, Connector>;
   params?: object;
@@ -23,7 +23,7 @@ export type WorkflowNodeProps = {
 const WorkflowNode = ({
   className = '',
   id = '',
-  type = 'trigger',
+  type = 'root',
   position,
   connectors,
   ...otherProps
@@ -77,7 +77,7 @@ const WorkflowNode = ({
 
   return (
     <>
-      {(type === 'trigger' || type === 'callback') && (
+      {type !== 'connector' && (
         <NodeDraggable
           className={classNames('z-10 min-h-[200px]', className)}
           updateOnDragging

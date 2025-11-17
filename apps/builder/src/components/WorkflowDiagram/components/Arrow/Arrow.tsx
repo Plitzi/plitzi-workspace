@@ -1,10 +1,10 @@
 import classNames from 'classnames';
 import { useMemo } from 'react';
 
+import { getCurveHorizontal, getCurveVertical } from './helpers/arrowUtils';
 import { interpolateCubicBezierAngle } from './helpers/interpolation';
 import { getCubicBezierSVGPath } from './helpers/path';
-import { getDistance } from '../helpers/workflowUtils';
-import { getCurveHorizontal, getCurveVertical } from './helpers/arrowUtils';
+import { getDistance } from '../../helpers/workflowUtils';
 
 export type ArrowProps = {
   className?: string;

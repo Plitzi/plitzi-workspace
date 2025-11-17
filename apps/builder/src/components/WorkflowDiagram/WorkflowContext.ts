@@ -25,7 +25,7 @@ export type NodeConnection = {
 export type NodeNormal = {
   id: string;
   title?: string;
-  type: 'trigger' | 'callback';
+  type: 'root' | 'node';
   action: string;
   position: { x: number; y: number };
   connectors: Record<string, Connector>;
