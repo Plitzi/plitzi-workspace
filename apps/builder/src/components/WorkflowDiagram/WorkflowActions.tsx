@@ -24,8 +24,7 @@ const WorkflowActions = ({ className = '' }: WorkflowActionsProps) => {
         position: { x: 0, y: 0 },
         connectors: {
           [idConnectorToOut]: { id: idConnectorToOut, mode: 'out', placement: 'right', limit: undefined }
-        },
-        params: {}
+        }
       });
     } else {
       registerNode({
@@ -36,8 +35,7 @@ const WorkflowActions = ({ className = '' }: WorkflowActionsProps) => {
         connectors: {
           [idConnectorToIn]: { id: idConnectorToIn, mode: 'in', placement: 'left', limit: 1 },
           [idConnectorToOut]: { id: idConnectorToOut, mode: 'out', placement: 'right', limit: undefined }
-        },
-        params: {}
+        }
       });
     }
   }, [nodes, registerNode]);
