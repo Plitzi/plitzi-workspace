@@ -231,7 +231,6 @@ const NodeConnectorSpot = ({
           fromY={Math.floor(height / 2)}
           toX={connPos.x}
           toY={connPos.y}
-          isPreview
         />
       )}
     </div>

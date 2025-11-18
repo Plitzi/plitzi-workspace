@@ -17,7 +17,6 @@ export type WorkflowNodeProps = {
   type?: 'root' | 'node' | 'connector';
   position?: { x: number; y: number };
   connectors?: Record<string, Connector>;
-  params?: object;
 };
 
 const WorkflowNode = ({
@@ -119,7 +118,7 @@ const WorkflowNode = ({
           </div>
         </NodeDraggable>
       )}
-      {type === 'connector' && <NodeConnector id={id} {...otherProps} offsetX={1} offsetY={1} />}
+      {type === 'connector' && <NodeConnector id={id} {...otherProps} />}
     </>
   );
 };

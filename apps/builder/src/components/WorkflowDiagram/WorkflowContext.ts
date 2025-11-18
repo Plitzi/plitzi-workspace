@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 
+import type { ConnectionLineType } from './types';
 import type { RefObject } from 'react';
 
 export type WorkflowDirection = 'horizontal' | 'vertical';
@@ -10,6 +11,7 @@ export type Connector = {
   id: string;
   limit?: number;
   mode: ConnectorMode;
+  position?: { x: number; y: number };
   placement: ConnectorPlacement;
 };
 
@@ -19,7 +21,7 @@ export type NodeConnection = {
   type: 'connector';
   from: { id: string; connector: Connector['id'] };
   to: { id: string; connector: Connector['id'] };
-  position: { x: number; y: number };
+  position?: { x: number; y: number };
 };
 
 export type NodeNormal = {
@@ -27,7 +29,7 @@ export type NodeNormal = {
   title?: string;
   type: 'root' | 'node';
   action: string;
-  position: { x: number; y: number };
+  position?: { x: number; y: number };
   connectors: Record<string, Connector>;
 };
 
@@ -36,6 +38,7 @@ export type Node = NodeNormal | NodeConnection;
 export type WorkflowContextValue = {
   nodes: Record<string, Node>;
   direction: WorkflowDirection;
+  connectionLineType: ConnectionLineType;
   containerRef: RefObject<HTMLDivElement | null>;
   nodeDefinitions?: object[];
   registerNode: (node: Node) => void;

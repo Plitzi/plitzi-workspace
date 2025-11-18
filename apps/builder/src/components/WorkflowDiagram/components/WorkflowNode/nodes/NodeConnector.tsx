@@ -12,12 +12,10 @@ export type NodeConnectorProps = {
   id?: string;
   from?: NodeConnection['from'];
   to?: NodeConnection['to'];
-  offsetX?: number;
-  offsetY?: number;
 };
 
-const NodeConnector = ({ className = '', id = '', from, to, offsetX = 0, offsetY = 0 }: NodeConnectorProps) => {
-  const { direction, getNode, unregisterNode } = use(WorkflowContext);
+const NodeConnector = ({ className = '', id = '', from, to }: NodeConnectorProps) => {
+  const { direction, connectionLineType, getNode, unregisterNode } = use(WorkflowContext);
   const [fromNode, setFromNode] = useState<Node | undefined>(() => getNode(from?.id ?? ''));
   const [toNode, setToNode] = useState<Node | undefined>(() => getNode(to?.id ?? ''));
 
@@ -61,12 +59,11 @@ const NodeConnector = ({ className = '', id = '', from, to, offsetX = 0, offsetY
     <Arrow
       className={className}
       direction={direction}
+      type={connectionLineType}
       fromX={fromPosition.x}
       fromY={fromPosition.y}
       toX={toPosition.x}
       toY={toPosition.y}
-      offsetX={offsetX}
-      offsetY={offsetY}
       onDoubleClick={handleDoubleClick}
     />
   );

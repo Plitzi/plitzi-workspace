@@ -1,16 +1,17 @@
 import classNames from 'classnames';
 import { useRef } from 'react';
 
+import { ConnectionLineType } from './types';
 import WorkflowContainer from './WorkflowContainer';
 import WorkflowContextProvider from './WorkflowContextProvider';
 
-const nodeDefinitionsDefault = [];
+import type { Node } from './WorkflowContext';
 
 export type WorkflowDiagramProps = {
   className?: string;
   direction?: 'horizontal' | 'vertical';
-  template?: object;
-  nodeDefinitions?: object[];
+  connectionLineType?: ConnectionLineType;
+  template?: { nodes: Record<string, Node> };
   onChange?: (template: object) => void;
   addNodePositionX?: number;
   addNodePositionY?: number;
@@ -19,8 +20,8 @@ export type WorkflowDiagramProps = {
 const WorkflowDiagram = ({
   className = '',
   direction = 'horizontal',
+  connectionLineType = ConnectionLineType.Bezier,
   template,
-  nodeDefinitions = nodeDefinitionsDefault,
   onChange,
   addNodePositionX = 0,
   addNodePositionY = 0
@@ -40,7 +41,7 @@ const WorkflowDiagram = ({
         containerRef={ref}
         template={template}
         direction={direction}
-        nodeDefinitions={nodeDefinitions}
+        connectionLineType={connectionLineType}
         addNodePositionX={addNodePositionX}
         addNodePositionY={addNodePositionY}
         onChange={onChange}

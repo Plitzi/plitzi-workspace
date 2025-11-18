@@ -8,6 +8,7 @@ import set from 'lodash/set';
 import { useCallback, useMemo, useState } from 'react';
 
 import { getCenter, getSegment } from './helpers/workflowLayoutUtils';
+import { ConnectionLineType } from './types';
 import WorkflowContext from './WorkflowContext';
 import { generateID } from '../../helpers/utils';
 
@@ -19,10 +20,10 @@ const SEPARATION_NODES = 30;
 
 export type WorkflowContextProviderProps = {
   children: React.ReactNode;
-  template?: object;
+  template?: { nodes: Record<string, Node> };
   containerRef: RefObject<HTMLDivElement | null>;
   direction?: 'horizontal' | 'vertical';
-  nodeDefinitions?: object[];
+  connectionLineType?: ConnectionLineType;
   addNodePositionX?: number;
   addNodePositionY?: number;
   onChange?: (template: object) => void;
@@ -33,7 +34,7 @@ const WorkflowContextProvider = ({
   template,
   containerRef,
   direction = 'horizontal',
-  nodeDefinitions,
+  connectionLineType = ConnectionLineType.Bezier,
   addNodePositionX = 0,
   addNodePositionY = 0,
   onChange
@@ -248,6 +249,10 @@ const WorkflowContextProvider = ({
       const nodeDOM = containerRef.current?.querySelector(`#${node.id}`) as HTMLElement | undefined;
       switch (direction) {
         case 'vertical': {
+          if (!node.position) {
+            node.position = { x: 0, y: 0 };
+          }
+
           node.position.x = center;
           node.position.y = acum;
           if (nodeDOM) {
@@ -263,6 +268,10 @@ const WorkflowContextProvider = ({
 
         case 'horizontal':
         default: {
+          if (!node.position) {
+            node.position = { x: 0, y: 0 };
+          }
+
           node.position.x = acum;
           node.position.y = center;
           if (nodeDOM) {
@@ -372,8 +381,8 @@ const WorkflowContextProvider = ({
     () => ({
       nodes,
       direction,
+      connectionLineType,
       containerRef,
-      nodeDefinitions,
       registerNode,
       unregisterNode,
       updateNode,
@@ -387,8 +396,8 @@ const WorkflowContextProvider = ({
     [
       nodes,
       direction,
+      connectionLineType,
       containerRef,
-      nodeDefinitions,
       registerNode,
       unregisterNode,
       updateNode,

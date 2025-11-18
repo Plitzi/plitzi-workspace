@@ -1,95 +1,77 @@
 import classNames from 'classnames';
 import { useMemo } from 'react';
 
-import { getCurveHorizontal, getCurveVertical } from './helpers/arrowUtils';
-import { interpolateCubicBezierAngle } from './helpers/interpolation';
-import { getCubicBezierSVGPath } from './helpers/path';
-import { getDistance } from '../../helpers/workflowUtils';
+import { ConnectionLineType, Position } from '../../types';
+import { getBezierPath } from './helpers/getBezierPath';
+import { getSimpleBezierPath } from './helpers/getSimpleBezierPath';
+import { getSmoothStepPath } from './helpers/getSmoothStepPath';
+import { getStraightPath } from './helpers/getStraightPath';
 
 export type ArrowProps = {
   className?: string;
   direction?: 'horizontal' | 'vertical';
-  dotRadius?: number;
-  fromRadius?: number;
-  curveRate?: number;
+  type?: ConnectionLineType;
+  // dotRadius?: number;
   fromX?: number;
   fromY?: number;
   toX?: number;
   toY?: number;
-  offsetX?: number;
-  offsetY?: number;
-  isPreview?: boolean;
   onDoubleClick?: () => void;
 };
 
 const Arrow = ({
   className = '',
   direction = 'horizontal',
-  dotRadius = 8,
-  fromRadius = 4,
-  curveRate = 0.75,
+  type = ConnectionLineType.Bezier,
+  // dotRadius = 8,
   fromX = 128,
   fromY = 128,
   toX = 256,
   toY = 256,
-  offsetX = 0,
-  offsetY = 0,
-  isPreview = false,
+  onDoubleClick,
   ...otherProps
 }: ArrowProps) => {
-  const width = getDistance(fromX, toX);
-  const height = getDistance(fromY, toY);
+  const svgPath = useMemo(() => {
+    const params = {
+      sourceX: fromX,
+      sourceY: fromY,
+      targetX: toX,
+      targetY: toY,
+      sourcePosition: direction === 'horizontal' ? Position.Right : Position.Bottom,
+      targetPosition: direction === 'horizontal' ? Position.Left : Position.Top
+    };
+    switch (type) {
+      case ConnectionLineType.Bezier:
+        return getBezierPath({ ...params, curvature: 0 });
+      case ConnectionLineType.Step:
+        return getSmoothStepPath({ ...params, borderRadius: 0 });
+      case ConnectionLineType.SmoothStep:
+        return getSmoothStepPath(params);
+      case ConnectionLineType.SimpleBezier:
+        return getSimpleBezierPath(params);
 
-  const curve = useMemo(() => {
-    switch (direction) {
-      case 'vertical':
-        return getCurveVertical(
-          { x: fromX, y: fromY },
-          { x: toX, y: toY },
-          width,
-          height,
-          dotRadius,
-          curveRate,
-          isPreview
-        );
-
-      case 'horizontal':
       default:
-        return getCurveHorizontal(
-          { x: fromX, y: fromY },
-          { x: toX, y: toY },
-          width,
-          height,
-          dotRadius,
-          curveRate,
-          isPreview
-        );
+        return getStraightPath(params);
     }
-  }, [direction, fromX, fromY, toX, toY, width, height, dotRadius, curveRate, isPreview]);
-  const svgPath = useMemo(() => getCubicBezierSVGPath(curve), [curve]);
-  const endAngle = useMemo(() => interpolateCubicBezierAngle(curve, 1), [curve]);
+  }, [direction, fromX, fromY, toX, toY, type]);
 
   return (
     <svg
-      className={classNames('absolute fill-gray-500 stroke-gray-500', className)}
-      viewBox={`0 0 ${width + dotRadius * 2} ${height + dotRadius * 2}`}
-      style={{
-        width: width + dotRadius * 2,
-        height: height + dotRadius * 2,
-        top: (fromY > toY ? toY - dotRadius : fromY - dotRadius) + offsetY,
-        left: (fromX > toX ? toX - dotRadius : fromX - dotRadius) + offsetX
-      }}
-      strokeWidth={3}
+      className={classNames(
+        'pointer-events-none absolute z-1 overflow-visible fill-gray-500 stroke-gray-500',
+        className
+      )}
+      strokeWidth={2}
       {...otherProps}
     >
-      <circle cx={curve.start.x} cy={curve.start.y} r={fromRadius} />
       <path
-        d={svgPath}
+        d={svgPath[0]}
         fill="none"
-        className="animate-[dashdraw_0.5s_linear_infinite]"
+        className="pointer-events-auto z-10 animate-[dashdraw_0.5s_linear_infinite]"
         style={{ strokeDasharray: 5 }}
+        onClick={() => console.log('hey')}
+        onDoubleClick={onDoubleClick}
       />
-      <polygon points="0,-6 12,0, 0,6" transform={`translate(${curve.end.x},${curve.end.y}) rotate(${endAngle})`} />
     </svg>
   );
 };
