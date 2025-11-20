@@ -72,12 +72,7 @@ const Grid = ({ xFrom = 0, xTo = 0, yFrom = 0, yTo = 0 }: GridProps) => {
         Progress
       </text>
       <path className="" strokeWidth="1px" d={ticksBottom} />
-      <text
-        className="text-xs"
-        style={{ textAnchor: 'end', dominantBaseline: 'text-before-edge' }}
-        x={x(1)}
-        y={y(0) + 5}
-      >
+      <text className="text-xs" style={{ textAnchor: 'end' }} x={x(1)} y={y(0) + 5}>
         Time
       </text>
     </g>
