@@ -1,8 +1,8 @@
 import Card from '@plitzi/plitzi-ui/Card';
 import { use, useMemo } from 'react';
 
-import WorkflowDiagram from '@pcomponents/WorkflowDiagram';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import WorkflowDiagram from '@pmodules/App/components/WorkflowDiagram';
 
 const ContainerSitemap = () => {
   const { pageDefinitions, pageFolders } = use(SchemaMainContext);

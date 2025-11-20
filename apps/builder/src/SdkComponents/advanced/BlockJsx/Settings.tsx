@@ -75,7 +75,7 @@ const Settings = ({
       <ElementAdvancedEditor className="grow" value={content} mode="js" onChange={handleChangeContent} />
       <div className="flex flex-col py-2">
         {error && (
-          <Alert className="mb-4 text-white" containerClassName="overflow-x-auto" iconClassName="" intent="error">
+          <Alert className="mb-4 text-white" intent="error">
             <div className="flex flex-col text-xs">
               <div className="whitespace-pre">{error.message}</div>
               <div className="my-2">

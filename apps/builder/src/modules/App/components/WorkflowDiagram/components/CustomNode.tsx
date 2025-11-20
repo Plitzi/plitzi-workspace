@@ -36,10 +36,10 @@ export const CustomNode = memo(({ data }: NodeProps<NodeDirectoryPage>) => {
 
       <Card className="h-[150px] w-[200px] p-2 shadow-md transition-shadow hover:shadow-lg">
         <Card.Header>
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-1">
             <Icon
               icon={data.type === 'folder' ? 'fa-regular fa-folder' : 'fa-regular fa-file'}
-              className="mt-0.5 h-5 w-5 shrink-0 text-slate-600"
+              className="mt-0.5 h-5 shrink-0 text-slate-600"
             />
             <div className="min-w-0 flex-1">
               <h3 className="text-foreground truncate text-sm font-semibold">{data.label}</h3>
@@ -48,7 +48,7 @@ export const CustomNode = memo(({ data }: NodeProps<NodeDirectoryPage>) => {
           </div>
         </Card.Header>
         <Card.Body>
-          <div className="space-y-2 p-4">
+          <div className="space-y-2 py-2">
             <div className="flex items-center gap-2">
               <Badge solid={false} intent="custom" size="xs" icon={config.icon} className={config.color}>
                 {config.label}
