@@ -42,7 +42,7 @@ const schemaToSitemap = (pages: ElementPage[], folders: PageFolder[]) => {
     });
   }
 
-  const walk = (folderId: string) => {
+  const walk = (folderId: string, folderPath = '') => {
     const items = children.get(folderId) || [];
     const result: Template['nodes'] = [];
 
@@ -50,28 +50,22 @@ const schemaToSitemap = (pages: ElementPage[], folders: PageFolder[]) => {
       if (item.type === 'page') {
         const { id, attributes: { name = 'Page', slug = '', accessLevel = 'public', seoPageDescription = '' } = {} } =
           item.data;
-
-        result.push({
-          id,
-          type: 'page',
-          title: name,
-          path: `/${slug.replace(/^\//, '')}`,
-          accessLevel,
-          description: seoPageDescription
-        });
+        const path = `${folderPath}/${slug.replace(/^\//, '')}`;
+        result.push({ id, type: 'page', title: name, path, accessLevel, description: seoPageDescription });
       }
 
       if (item.type === 'folder') {
         const { id, name, slug } = item.data;
+        const path = `${folderPath}/${slug.replace(/^\//, '')}`;
 
         result.push({
           id,
           type: 'folder',
           title: name,
-          path: `/${slug.replace(/^\//, '')}`,
+          path,
           accessLevel: 'none',
           description: '',
-          children: walk(id)
+          children: walk(id, path)
         });
       }
     }
