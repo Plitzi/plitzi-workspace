@@ -27,6 +27,25 @@ describe('Testing FlatMap', () => {
         default: true,
         name: 'Home'
       }
+    },
+    '62f70064f2882d5ee31dcf72': {
+      id: '62f70064f2882d5ee31dcf72',
+      definition: {
+        label: 'Page',
+        type: 'page',
+        bindings: {},
+        parentId: undefined,
+        rootId: '62f70064f2882d5ee31dcf72',
+        items: [],
+        styleSelectors: {
+          base: ''
+        }
+      },
+      attributes: {
+        slug: '',
+        default: false,
+        name: 'Page 2'
+      }
     }
   };
   const element1 = {
@@ -102,6 +121,25 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
+        }
+      },
       '62f89157c38ce9ef02b7a5a6': {
         id: '62f89157c38ce9ef02b7a5a6',
         attributes: {
@@ -140,6 +178,25 @@ describe('Testing FlatMap', () => {
           slug: '',
           default: true,
           name: 'Home'
+        }
+      },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
         }
       },
       '62f89157c38ce9ef02b7a5a6': {
@@ -198,6 +255,25 @@ describe('Testing FlatMap', () => {
           slug: '',
           default: true,
           name: 'Home'
+        }
+      },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
         }
       },
       '62f89157c38ce9ef02b7a5a6': {
@@ -284,6 +360,25 @@ describe('Testing FlatMap', () => {
           default: true,
           name: 'Home'
         }
+      },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
+        }
       }
     });
 
@@ -308,6 +403,25 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
+        }
+      },
       '62f89157c38ce9ef02b7a5a6': {
         id: '62f89157c38ce9ef02b7a5a6',
         attributes: {
@@ -328,6 +442,77 @@ describe('Testing FlatMap', () => {
     });
 
     expect(instance.removeElement('62f89157c38ce9ef02b7a5a6')).toBe(true);
+    expect(instance.flat).toStrictEqual({
+      '62f70064f2882d5ee31dcf71': {
+        id: '62f70064f2882d5ee31dcf71',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf71',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: true,
+          name: 'Home'
+        }
+      },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
+        }
+      }
+    });
+  });
+
+  it('FlatMap Remove Element Page', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    expect(instance instanceof FlatMap).toBe(true);
+    // Should remove normal page
+    expect(instance.removeElement('62f70064f2882d5ee31dcf72', true)).toBe(true);
+    expect(instance.flat).toStrictEqual({
+      '62f70064f2882d5ee31dcf71': {
+        id: '62f70064f2882d5ee31dcf71',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf71',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: true,
+          name: 'Home'
+        }
+      }
+    });
+
+    // Should not remove default page
+    expect(instance.removeElement('62f70064f2882d5ee31dcf71', true)).toBe(false);
     expect(instance.flat).toStrictEqual({
       '62f70064f2882d5ee31dcf71': {
         id: '62f70064f2882d5ee31dcf71',
@@ -385,6 +570,25 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
+        }
+      },
       '62f89157c38ce9ef02b7a5a6': {
         id: '62f89157c38ce9ef02b7a5a6',
         attributes: {
@@ -428,6 +632,25 @@ describe('Testing FlatMap', () => {
           slug: '',
           default: true,
           name: 'Home'
+        }
+      },
+      '62f70064f2882d5ee31dcf72': {
+        id: '62f70064f2882d5ee31dcf72',
+        definition: {
+          label: 'Page',
+          type: 'page',
+          bindings: {},
+          parentId: undefined,
+          rootId: '62f70064f2882d5ee31dcf72',
+          items: [],
+          styleSelectors: {
+            base: ''
+          }
+        },
+        attributes: {
+          slug: '',
+          default: false,
+          name: 'Page 2'
         }
       },
       '62f89157c38ce9ef02b7a5a6': {

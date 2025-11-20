@@ -294,7 +294,11 @@ class FlatMap {
 
   removeElement = (elementId: Element['id'], removePage = false) => {
     const element = this.flat[elementId] as Element | undefined;
-    if (!element || (element.definition.type === 'page' && !removePage)) {
+    if (
+      !element ||
+      (element.definition.type === 'page' && !removePage) ||
+      (removePage && get(element, 'attributes.default', false))
+    ) {
       return false;
     }
 
@@ -304,12 +308,8 @@ class FlatMap {
     }
 
     const parentId = get(element, 'definition.parentId');
-    if (!parentId) {
-      return false;
-    }
-
-    const parent = this.flat[parentId] as Element | undefined;
-    if (parent) {
+    const parent = parentId ? this.flat[parentId] : undefined;
+    if (parentId && parent) {
       const {
         definition: { items = [] }
       } = parent;

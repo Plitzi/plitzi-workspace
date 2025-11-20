@@ -1,11 +1,12 @@
-import type { SitemapNode } from '../WorkflowDiagram';
+import type { WorkflowNode } from '../WorkflowDiagram';
 import type { Node, Edge } from '@xyflow/react';
 
 export type AccessLevel = 'none' | 'public' | 'authenticated';
 
 export interface FlowNode extends Node {
   data: {
-    label: string;
+    id: string;
+    title: string;
     accessLevel: 'none' | 'public' | 'authenticated';
     type: 'page' | 'folder';
     path?: string;
@@ -16,7 +17,7 @@ export interface FlowNode extends Node {
 }
 
 const sitemapToFlow = (
-  nodes: SitemapNode[],
+  nodes: WorkflowNode[],
   parentId: string | null = null,
   level: number = 0,
   xOffset: number = 0
@@ -25,45 +26,35 @@ const sitemapToFlow = (
   const flowEdges: Edge[] = [];
 
   let currentX = xOffset;
-  const ySpacing = 200;
+  const ySpacing = 210;
   const xSpacing = 250;
 
   nodes.forEach(node => {
-    const nodeId = node.id;
+    const { id, title, accessLevel, type, path, description, icon } = node;
     const y = level * ySpacing;
 
     flowNodes.push({
-      id: nodeId,
+      id,
       type: 'custom',
       position: { x: currentX, y },
-      data: {
-        label: node.title,
-        accessLevel: node.accessLevel,
-        type: node.type,
-        path: node.path,
-        description: node.description,
-        icon: node.icon,
-        isExpanded: true
-      }
+      data: { id, title, accessLevel, type, path, description, icon, isExpanded: true }
     });
 
     if (parentId) {
       flowEdges.push({
-        id: `${parentId}-${nodeId}`,
+        id: `${parentId}-${id}`,
         source: parentId,
-        target: nodeId,
+        target: id,
         type: 'smoothstep',
         animated: true,
         style: { strokeWidth: 2 }
       });
     }
 
-    if (node.type === 'folder' && node.children.length > 0) {
-      const childResult = sitemapToFlow(node.children, nodeId, level + 1, currentX);
-
+    if (type === 'folder' && node.children.length > 0) {
+      const childResult = sitemapToFlow(node.children, id, level + 1, currentX);
       flowNodes.push(...childResult.nodes);
       flowEdges.push(...childResult.edges);
-
       const childrenWidth = childResult.nodes.filter(node => node.data.type !== 'folder').length * xSpacing;
       currentX += Math.max(xSpacing, childrenWidth);
     } else {

@@ -11,7 +11,7 @@ import {
   // type Edge,
   Panel
 } from '@xyflow/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CustomNode } from './components/CustomNode';
 import schemaToSitemap from './helpers/schemaToSitemap';
@@ -26,42 +26,50 @@ const nodeTypes = {
 
 export type AccessLevel = 'none' | 'public' | 'authenticated';
 
-export type SitemapPage = {
+export type WorkflowNodePage = {
   type: 'page';
   path: string;
 };
 
-export type SitemapFolder = {
+export type WorkflowNodeFolder = {
   type: 'folder';
   path?: string;
-  children: SitemapNode[];
+  children: WorkflowNode[];
 };
 
-export type SitemapNode = {
+export type WorkflowNode = {
   id: string;
   title: string;
   accessLevel: AccessLevel;
   description?: string;
   icon?: string;
-} & (SitemapPage | SitemapFolder);
+} & (WorkflowNodePage | WorkflowNodeFolder);
 
 export type Template = {
   version: string;
   lastUpdated: Date;
-  nodes: SitemapNode[];
+  nodes: WorkflowNode[];
 };
 
 export type WorkflowDiagramProps = {
   pages: Element[];
   pageFolders: PageFolder[];
+  onAddNode?: (nodeType: 'page' | 'folder' | 'custom') => void;
+  onRemoveNode?: (node: WorkflowNode[]) => void;
 };
 
-const WorkflowDiagram = ({ pages, pageFolders }: WorkflowDiagramProps) => {
+const WorkflowDiagram = ({ pages, pageFolders, onAddNode, onRemoveNode }: WorkflowDiagramProps) => {
   const sitemapNodes = useMemo(() => schemaToSitemap(pages as ElementPage[], pageFolders), [pages, pageFolders]);
   const { nodes: flowNodes, edges: flowEdges } = useMemo(() => sitemapToFlow(sitemapNodes), [sitemapNodes]);
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
+
+  const handleSelectionChange = useCallback(
+    ({ nodes }: { nodes: Node[] }) => setSelectedNodes(nodes.map(n => n.id)),
+    []
+  );
 
   const handleAutoLayout = useCallback(() => {
     const { nodes: layoutNodes, edges: layoutEdges } = sitemapToFlow(sitemapNodes);
@@ -69,13 +77,24 @@ const WorkflowDiagram = ({ pages, pageFolders }: WorkflowDiagramProps) => {
     setEdges(layoutEdges);
   }, [sitemapNodes, setNodes, setEdges]);
 
+  const handleAddPage = useCallback(() => onAddNode?.('page'), [onAddNode]);
+
+  const handleAddFolder = useCallback(() => onAddNode?.('folder'), [onAddNode]);
+
+  const handleRemoveNode = useCallback(() => {
+    const nodesFiltered = selectedNodes
+      .map(selectedNode => nodes.find(node => node.id === selectedNode)?.data)
+      .filter(Boolean) as WorkflowNode[];
+    onRemoveNode?.(nodesFiltered);
+  }, [selectedNodes, nodes, onRemoveNode]);
+
   const getColor = useCallback((node: Node) => {
     const { accessLevel } = node.data;
     switch (accessLevel) {
       case 'public':
-        return '#10b981'; // Emerald
+        return '#1AC4CA'; // Emerald
       case 'authenticated':
-        return '#3b82f6'; // Blue
+        return '#5900D6'; // Blue
       default:
         return '#64748b'; // Slate
     }
@@ -87,6 +106,7 @@ const WorkflowDiagram = ({ pages, pageFolders }: WorkflowDiagramProps) => {
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onSelectionChange={handleSelectionChange}
       nodeTypes={nodeTypes}
       fitView
       minZoom={0.1}
@@ -99,7 +119,25 @@ const WorkflowDiagram = ({ pages, pageFolders }: WorkflowDiagramProps) => {
 
       <Panel position="top-left" className="space-x-2">
         <Card className="flex gap-2 p-2">
-          <Card.Body>
+          <Card.Body gap={2}>
+            <Button size="sm" intent="primary" onClick={handleAddPage} iconPlacement="before">
+              <Button.Icon icon="fa-solid fa-plus" />
+              Page
+            </Button>
+            <Button size="sm" intent="secondary" onClick={handleAddFolder} iconPlacement="before">
+              <Button.Icon icon="fa-solid fa-plus" />
+              Folder
+            </Button>
+            <Button
+              size="sm"
+              intent="danger"
+              onClick={handleRemoveNode}
+              iconPlacement="before"
+              disabled={selectedNodes.length === 0}
+            >
+              <Button.Icon icon="fa-solid fa-trash-can" />
+              {`Remove ${selectedNodes.length > 0 ? `(${selectedNodes.length})` : ''}`}
+            </Button>
             <Button size="sm" intent="custom" onClick={handleAutoLayout} iconPlacement="before">
               <Button.Icon icon="fa-solid fa-border-all" />
               Auto Layout

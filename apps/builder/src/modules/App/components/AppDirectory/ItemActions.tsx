@@ -100,9 +100,7 @@ const ItemActions = ({
           <h4>{`Remove ${type === 'page' ? 'Page' : 'Layout'}`}</h4>
         </Modal.Header>,
         <Modal.Body>
-          <div className="px-4 py-2">
-            <h4>Do you want to remove this item ?</h4>
-          </div>
+          <h4>Do you want to remove this item ?</h4>
         </Modal.Body>,
         undefined,
         undefined,
