@@ -28,13 +28,13 @@
     "ci:publish": "yarn workspaces foreach -A --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access restricted && changeset tag"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.30",
+    "@plitzi/plitzi-ui": "^1.1.1",
     "@plitzi/sdk-shared": "workspace:*",
     "react-router": "^7.9.6"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
-    "@types/react": "^19.2.4",
+    "@types/react": "^19.2.6",
     "eslint": "^9.39.1",
     "jest": "^30.2.0",
     "prettier-plugin-tailwindcss": "^0.7.1",

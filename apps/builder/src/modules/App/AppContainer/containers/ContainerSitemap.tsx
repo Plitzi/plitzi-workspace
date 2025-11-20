@@ -1,15 +1,18 @@
 import Card from '@plitzi/plitzi-ui/Card';
+import { use, useMemo } from 'react';
 
-import WorkflowDiagram from '@pcomponents/WorkflowDiagram/WorkflowDiagram';
-// import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import WorkflowDiagram from '@pcomponents/WorkflowDiagram';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
 const ContainerSitemap = () => {
-  // const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
+  const { pageDefinitions, pageFolders } = use(SchemaMainContext);
+
+  const pages = useMemo(() => Object.values(pageDefinitions), [pageDefinitions]);
 
   return (
     <Card className="relative flex grow flex-col">
       <Card.Body className="overflow-hidden" grow>
-        <WorkflowDiagram direction="vertical" />
+        <WorkflowDiagram pages={pages} pageFolders={pageFolders} />
       </Card.Body>
     </Card>
   );

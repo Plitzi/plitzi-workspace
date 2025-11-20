@@ -658,7 +658,7 @@
     "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.0.30",
+    "@plitzi/plitzi-ui": "^1.1.1",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "classnames": "^2.5.1",
@@ -672,6 +672,6 @@
     "eslint": "^9.39.1",
     "typescript": "^5.9.3",
     "vite": "^7.2.2",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.10"
   }
 }

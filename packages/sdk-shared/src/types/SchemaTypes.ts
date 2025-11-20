@@ -52,10 +52,10 @@ export type ElementDefinition = {
   };
 };
 
-export type Element = {
+export type Element<TAttributes extends Record<string, unknown> = Omit<{ [key: string]: unknown }, 'subType'>> = {
   id: string;
+  attributes: TAttributes & { subType?: string };
   definition: Omit<{ [key: string]: unknown }, keyof ElementDefinition> & ElementDefinition;
-  attributes: Omit<{ [key: string]: unknown }, 'subType'> & { subType?: string };
 };
 
 export type SchemaVariable = {

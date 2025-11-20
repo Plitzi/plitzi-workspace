@@ -2,6 +2,7 @@
 
 @import './tailwind.css';
 @import '@plitzi/plitzi-ui/style.css';
+@import '@xyflow/react/dist/style.css';
 
 @include meta.load-css('./variables');
 
