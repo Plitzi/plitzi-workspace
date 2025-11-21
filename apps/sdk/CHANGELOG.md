@@ -1,5 +1,24 @@
 # @plitzi/plitzi-sdk
 
+## 0.26.1
+
+### Patch Changes
+
+- v0.26.1
+- Updated dependencies
+  - @plitzi/sdk-auth@0.26.1
+  - @plitzi/sdk-dev-tools@0.26.1
+  - @plitzi/sdk-elements@0.26.1
+  - @plitzi/sdk-event-bridge@0.26.1
+  - @plitzi/sdk-interactions@0.26.1
+  - @plitzi/sdk-navigation@0.26.1
+  - @plitzi/sdk-plugins@0.26.1
+  - @plitzi/sdk-schema@0.26.1
+  - @plitzi/sdk-shared@0.26.1
+  - @plitzi/sdk-state@0.26.1
+  - @plitzi/sdk-style@0.26.1
+  - @plitzi/sdk-variables@0.26.1
+
 ## 0.26.0
 
 ### Minor Changes
