@@ -1,8 +1,8 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
-import debounce from 'lodash/debounce';
-import get from 'lodash/get';
+import debounce from 'lodash-es/debounce';
+import get from 'lodash-es/get';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';

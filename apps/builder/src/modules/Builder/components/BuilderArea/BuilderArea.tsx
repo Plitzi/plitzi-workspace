@@ -1,8 +1,8 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import classNames from 'classnames';
-import debounce from 'lodash/debounce';
-import get from 'lodash/get';
+import debounce from 'lodash-es/debounce';
+import get from 'lodash-es/get';
 import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

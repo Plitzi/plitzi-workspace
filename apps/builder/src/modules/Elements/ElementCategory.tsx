@@ -1,5 +1,5 @@
 import Text from '@plitzi/plitzi-ui/Text';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useMemo } from 'react';
 
 import Element from './Element';

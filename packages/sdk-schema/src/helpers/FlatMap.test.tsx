@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep.js';
+import cloneDeep from 'lodash-es/cloneDeep.js';
 import { describe, it, expect } from 'vitest';
 
 import FlatMap from './FlatMap';

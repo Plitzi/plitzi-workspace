@@ -1,8 +1,8 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
-import camelCase from 'lodash/camelCase.js';
-import get from 'lodash/get.js';
-import set from 'lodash/set.js';
+import camelCase from 'lodash-es/camelCase.js';
+import get from 'lodash-es/get.js';
+import set from 'lodash-es/set.js';
 
 import utility from '../utility';
 

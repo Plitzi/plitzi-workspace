@@ -1,7 +1,7 @@
 import { produce } from 'immer';
-import get from 'lodash/get';
-import has from 'lodash/has';
-import set from 'lodash/set';
+import get from 'lodash-es/get';
+import has from 'lodash-es/has';
+import set from 'lodash-es/set';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 

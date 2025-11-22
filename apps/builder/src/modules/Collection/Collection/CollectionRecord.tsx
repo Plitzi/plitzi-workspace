@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import isEmpty from 'lodash/isEmpty';
+import isEmpty from 'lodash-es/isEmpty';
 import moment from 'moment';
 import { useMemo } from 'react';
 

@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { use, useState, useCallback, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

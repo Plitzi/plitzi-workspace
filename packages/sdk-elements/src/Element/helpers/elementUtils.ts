@@ -45,7 +45,7 @@ import {
   ContainerWindow,
   Popup
 } from '@plitzi/plitzi-ui/components';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import * as React from 'react';
 import * as ReactJSX from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';

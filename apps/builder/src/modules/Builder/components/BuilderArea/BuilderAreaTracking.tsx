@@ -1,7 +1,7 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
-import get from 'lodash/get';
-import throttle from 'lodash/throttle';
+import get from 'lodash-es/get';
+import throttle from 'lodash-es/throttle';
 import { use, useRef, useCallback, useMemo, useEffect } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';

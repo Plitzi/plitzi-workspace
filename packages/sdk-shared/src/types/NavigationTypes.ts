@@ -1,4 +1,4 @@
-import type { Helmet } from 'react-helmet-async';
+import type { Helmet } from '@dr.pogodin/react-helmet';
 
 export type QueryParams = Record<string, string[] | string | undefined>;
 export type RouteParams = Record<string, string[] | string | undefined>;

@@ -1,4 +1,4 @@
-import get from 'lodash/get.js';
+import get from 'lodash-es/get.js';
 
 const isAuthenticated = (authData: { isAuthenticated: boolean }, userProvider = '', previewMode = true) => {
   let authenticated = false;

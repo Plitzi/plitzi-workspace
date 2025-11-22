@@ -42,7 +42,8 @@ export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
   plugins: Record<string, ComponentPlugin> = {},
-  debugMode = false
+  debugMode = false,
+  ssrMode = false
 ) {
   const Widget = () => {
     const pluginKeys = Object.keys(plugins);
@@ -73,10 +74,25 @@ export function render(
   };
 
   const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
-  if (rootDOM) {
+  if (!rootDOM) {
+    return;
+  }
+
+  if (!ssrMode) {
     const root = createRoot(rootDOM);
     root.render(<Widget />);
+  } else {
+    hydrateRoot(rootDOM, <App {...(window.plitziCache ?? {})} debugMode={false} />);
   }
+}
+
+export function renderSSR(widgetContainer: string, debugMode = false) {
+  const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
+  if (!rootDOM || typeof window === 'undefined' || !window.plitziCache) {
+    return;
+  }
+
+  hydrateRoot(rootDOM, <App {...(window.plitziCache ?? {})} debugMode={debugMode} />);
 }
 
 declare global {
@@ -119,7 +135,7 @@ export type PlitziSdkProps = {
   className?: string;
   children?: ReactNode;
   revision?: number;
-  webKey: string;
+  webKey?: string;
   environment?: Environment;
   currentPageId?: string;
   sdkEnvironment?: ServerEnvironment;
@@ -137,9 +153,9 @@ export type PlitziSdkProps = {
 const PlitziSdk = ({
   debugMode = false,
   // App
-  children,
+  children = undefined,
   // Space
-  webKey,
+  webKey = '',
   environment = 'main',
   // Extra
   renderMode = 'iframe',

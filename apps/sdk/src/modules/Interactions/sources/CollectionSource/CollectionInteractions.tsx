@@ -1,5 +1,5 @@
-import get from 'lodash/get';
-import pick from 'lodash/pick';
+import get from 'lodash-es/get';
+import pick from 'lodash-es/pick';
 import { useCallback, use, useMemo } from 'react';
 
 import { collectionFieldTypeToInteractions } from '@modules/Collection/CollectionsConstants';

@@ -3,9 +3,9 @@ import Button from '@plitzi/plitzi-ui/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import classNames from 'classnames';
 import { produce } from 'immer';
-import capitalize from 'lodash/capitalize';
-import get from 'lodash/get';
-import upperFirst from 'lodash/upperFirst';
+import capitalize from 'lodash-es/capitalize';
+import get from 'lodash-es/get';
+import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react';
 
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';

@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash-es/isEqual';
 import { useCallback, use, useEffect, useState } from 'react';
 
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';

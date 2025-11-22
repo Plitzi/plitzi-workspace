@@ -1,4 +1,4 @@
-import get from 'lodash/get.js';
+import get from 'lodash-es/get.js';
 import { useMemo, use, useCallback } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';

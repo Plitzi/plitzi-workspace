@@ -1,4 +1,4 @@
-import set from 'lodash/set.js';
+import set from 'lodash-es/set.js';
 
 import { StyleConstants } from '@plitzi/sdk-shared';
 

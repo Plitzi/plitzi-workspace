@@ -1,10 +1,10 @@
 import { ApolloProvider } from '@apollo/client/react';
+import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
-import { HelmetProvider } from 'react-helmet-async';
 import { StaticRouter } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -35,7 +35,7 @@ export type AppProps = {
   className?: string;
   children?: ReactNode;
   revision?: number;
-  webKey: string;
+  webKey?: string;
   environment?: Environment;
   currentPageId?: string;
   sdkEnvironment?: ServerEnvironment;

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { produce } from 'immer';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
-import set from 'lodash/set';
-import upperFirst from 'lodash/upperFirst';
+import get from 'lodash-es/get';
+import omit from 'lodash-es/omit';
+import set from 'lodash-es/set';
+import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';

@@ -1,5 +1,5 @@
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import pick from 'lodash/pick.js';
+import pick from 'lodash-es/pick.js';
 import { useMemo } from 'react';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';

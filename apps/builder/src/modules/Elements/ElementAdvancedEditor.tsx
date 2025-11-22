@@ -2,8 +2,8 @@ import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import classNames from 'classnames';
-import capitalize from 'lodash/capitalize';
-import get from 'lodash/get';
+import capitalize from 'lodash-es/capitalize';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';

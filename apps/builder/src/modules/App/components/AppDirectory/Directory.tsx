@@ -5,7 +5,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Text from '@plitzi/plitzi-ui/Text';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import upperFirst from 'lodash/upperFirst';
+import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

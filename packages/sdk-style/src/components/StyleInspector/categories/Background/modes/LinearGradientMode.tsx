@@ -1,5 +1,5 @@
 // import Input from '@plitzi/plitzi-ui/Input';
-// import get from 'lodash/get.js';
+// import get from 'lodash-es/get.js';
 // import { useCallback, useMemo } from 'react';
 
 // import InputAngle from '@pcomponents/InputAngle/InputAngle';

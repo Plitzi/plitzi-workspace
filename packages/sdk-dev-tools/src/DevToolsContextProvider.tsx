@@ -1,4 +1,4 @@
-import omit from 'lodash/omit.js';
+import omit from 'lodash-es/omit.js';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
 import DevToolsContext from './DevToolsContext';

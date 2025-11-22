@@ -3,7 +3,7 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';

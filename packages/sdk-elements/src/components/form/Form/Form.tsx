@@ -1,9 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import classNames from 'classnames';
 import { produce } from 'immer';
-import capitalize from 'lodash/capitalize.js';
-import get from 'lodash/get.js';
-import omit from 'lodash/omit.js';
+import capitalize from 'lodash-es/capitalize.js';
+import get from 'lodash-es/get.js';
+import omit from 'lodash-es/omit.js';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';

@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm } from '@plitzi/plitzi-ui/Form';
-import snakeCase from 'lodash/snakeCase';
+import snakeCase from 'lodash-es/snakeCase';
 import { useCallback } from 'react';
 import { z } from 'zod';
 

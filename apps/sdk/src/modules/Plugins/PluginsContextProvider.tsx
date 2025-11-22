@@ -1,8 +1,8 @@
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-import omit from 'lodash/omit';
+import { Helmet } from '@dr.pogodin/react-helmet';
+import get from 'lodash-es/get';
+import isEmpty from 'lodash-es/isEmpty';
+import omit from 'lodash-es/omit';
 import { useCallback, use, useMemo, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import { getStyle } from '@plitzi/sdk-plugins/PluginHelper';

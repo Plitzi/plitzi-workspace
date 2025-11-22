@@ -3,8 +3,8 @@ import Form, { useFormContext, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import get from 'lodash-es/get';
+import set from 'lodash-es/set';
 import { useCallback, useMemo, useRef } from 'react';
 
 import utility from '@plitzi/sdk-data-source/utility/index';

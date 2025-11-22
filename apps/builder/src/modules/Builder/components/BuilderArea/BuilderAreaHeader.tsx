@@ -5,7 +5,7 @@ import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
 import PageOverviewZoom from '@plitzi/plitzi-ui/icons/PageOverviewZoom';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 

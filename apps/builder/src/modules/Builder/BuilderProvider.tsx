@@ -1,9 +1,9 @@
 import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
 import { produce } from 'immer';
-import camelCase from 'lodash/camelCase';
-import get from 'lodash/get';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
+import camelCase from 'lodash-es/camelCase';
+import get from 'lodash-es/get';
+import pick from 'lodash-es/pick';
+import set from 'lodash-es/set';
 import { useCallback, use, useMemo, useState, useRef, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

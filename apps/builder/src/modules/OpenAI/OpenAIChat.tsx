@@ -1,7 +1,7 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Input from '@plitzi/plitzi-ui/Input';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useEffect, useState, useTransition, useRef } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';

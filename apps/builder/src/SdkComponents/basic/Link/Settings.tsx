@@ -1,7 +1,7 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import get from 'lodash/get';
-import pick from 'lodash/pick';
+import get from 'lodash-es/get';
+import pick from 'lodash-es/pick';
 import { useMemo, use, useCallback, useEffect } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';

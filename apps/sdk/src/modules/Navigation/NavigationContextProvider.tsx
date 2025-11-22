@@ -1,6 +1,6 @@
-import get from 'lodash/get';
+import { Helmet } from '@dr.pogodin/react-helmet';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';

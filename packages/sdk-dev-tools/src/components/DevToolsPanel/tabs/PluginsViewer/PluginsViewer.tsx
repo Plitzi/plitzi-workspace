@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import capitalize from 'lodash/capitalize.js';
+import capitalize from 'lodash-es/capitalize.js';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';

@@ -1,9 +1,9 @@
 import { produce } from 'immer';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
-import sneakCase from 'lodash/snakeCase';
+import get from 'lodash-es/get';
+import omit from 'lodash-es/omit';
+import pick from 'lodash-es/pick';
+import set from 'lodash-es/set';
+import sneakCase from 'lodash-es/snakeCase';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

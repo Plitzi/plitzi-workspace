@@ -1,6 +1,6 @@
 import classNames from 'classnames';
-import camelCase from 'lodash/camelCase';
-import debounce from 'lodash/debounce';
+import camelCase from 'lodash-es/camelCase';
+import debounce from 'lodash-es/debounce';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

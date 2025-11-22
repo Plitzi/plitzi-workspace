@@ -1,6 +1,6 @@
 import React, { Component, createRef } from 'react';
 import classNames from 'classnames';
-import noop from 'lodash/noop';
+import noop from 'lodash-es/noop';
 
 import Grid from './Grid';
 import Progress from './Progress';
@@ -143,7 +143,7 @@ class InputEasing extends Component {
 
     return (
       <svg
-        className={classNames('select-none overflow-visible', className)}
+        className={classNames('overflow-visible select-none', className)}
         ref={inputRef}
         width={width}
         height={height}
@@ -167,7 +167,7 @@ class InputEasing extends Component {
                 cy={cy1}
                 r={handleRadius}
                 onMouseDown={this.handleMouseDown('bottom')}
-                className="cursor-pointer stroke-blue-400 fill-blue-400 stroke-[3px] group-hover:fill-white group-hover:stroke-[6px]"
+                className="cursor-pointer fill-blue-400 stroke-blue-400 stroke-[3px] group-hover:fill-white group-hover:stroke-[6px]"
               />
             </g>
             <g className="group">
@@ -183,7 +183,7 @@ class InputEasing extends Component {
                 cy={cy2}
                 r={handleRadius}
                 onMouseDown={this.handleMouseDown('top')}
-                className="cursor-pointer stroke-blue-400 fill-blue-400 stroke-[3px] group-hover:fill-white group-hover:stroke-[6px]"
+                className="cursor-pointer fill-blue-400 stroke-blue-400 stroke-[3px] group-hover:fill-white group-hover:stroke-[6px]"
               />
             </g>
           </>

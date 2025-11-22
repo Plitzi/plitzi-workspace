@@ -1,5 +1,5 @@
 import Select2 from '@plitzi/plitzi-ui/Select2';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

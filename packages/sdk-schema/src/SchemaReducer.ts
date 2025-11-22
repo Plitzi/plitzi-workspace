@@ -1,7 +1,7 @@
 import { produce } from 'immer';
-import get from 'lodash/get.js';
-import has from 'lodash/has.js';
-import set from 'lodash/set.js';
+import get from 'lodash-es/get.js';
+import has from 'lodash-es/has.js';
+import set from 'lodash-es/set.js';
 
 import FlatMap from './helpers/FlatMap';
 

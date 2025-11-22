@@ -1,6 +1,6 @@
-import get from 'lodash/get.js';
-import omit from 'lodash/omit.js';
-import set from 'lodash/set.js';
+import get from 'lodash-es/get.js';
+import omit from 'lodash-es/omit.js';
+import set from 'lodash-es/set.js';
 
 import processSelector from './helpers/processSelector';
 

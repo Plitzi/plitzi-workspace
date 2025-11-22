@@ -1,8 +1,8 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import Switch from '@plitzi/plitzi-ui/Switch';
-import get from 'lodash/get';
-import upperFirst from 'lodash/upperFirst';
+import get from 'lodash-es/get';
+import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import utility from '@plitzi/sdk-data-source/utility/index';

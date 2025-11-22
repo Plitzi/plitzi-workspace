@@ -1,4 +1,4 @@
-import lodashCapitalize from 'lodash/capitalize.js';
+import lodashCapitalize from 'lodash-es/capitalize.js';
 
 import type { DataSourceUtility } from '@plitzi/sdk-shared';
 

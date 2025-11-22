@@ -1,7 +1,7 @@
 import { useApolloClient } from '@apollo/client/react';
-import cloneDeep from 'lodash/cloneDeep';
-import get from 'lodash/get';
-import noop from 'lodash/noop';
+import cloneDeep from 'lodash-es/cloneDeep';
+import get from 'lodash-es/get';
+import noop from 'lodash-es/noop';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';

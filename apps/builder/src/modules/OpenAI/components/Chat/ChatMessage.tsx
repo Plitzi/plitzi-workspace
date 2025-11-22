@@ -1,4 +1,4 @@
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useMemo } from 'react';
 
 import Message from './Message';

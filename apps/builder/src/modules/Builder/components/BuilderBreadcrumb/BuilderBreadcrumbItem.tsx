@@ -1,6 +1,6 @@
 import ContentEditable from '@plitzi/plitzi-ui/ContentEditable';
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { memo, use, useCallback, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

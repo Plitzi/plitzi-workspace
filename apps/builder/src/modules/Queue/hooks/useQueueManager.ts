@@ -1,5 +1,5 @@
-import debounce from 'lodash/debounce';
-import get from 'lodash/get';
+import debounce from 'lodash-es/debounce';
+import get from 'lodash-es/get';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';

@@ -55,11 +55,11 @@
     "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.2",
+    "@plitzi/plitzi-ui": "^1.1.6",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "moment": "^2.30.1"
   },
   "devDependencies": {

@@ -2,7 +2,7 @@ import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import Input from '@plitzi/plitzi-ui/Input';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Select from '@plitzi/plitzi-ui/Select';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { use, useCallback, useMemo } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';

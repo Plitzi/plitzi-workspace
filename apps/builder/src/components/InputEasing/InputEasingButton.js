@@ -1,6 +1,6 @@
 // Packages
 import React from 'react';
-import noop from 'lodash/noop';
+import noop from 'lodash-es/noop';
 import classNames from 'classnames';
 
 /**
@@ -20,7 +20,7 @@ const InputEasingButton = props => {
       type="button"
       title={title}
       onClick={onClick}
-      className={classNames('h-6 w-6 m-1 p-1 rounded-sm hover:bg-gray-100', className)}
+      className={classNames('m-1 h-6 w-6 rounded-sm p-1 hover:bg-gray-100', className)}
     >
       <svg viewBox="0 0 30 30" className="overflow-visible">
         {children}

@@ -1,7 +1,7 @@
 import Icon from '@plitzi/plitzi-ui/Icon';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { use, useCallback, useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';

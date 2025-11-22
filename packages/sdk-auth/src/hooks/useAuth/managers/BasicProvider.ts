@@ -1,4 +1,4 @@
-import get from 'lodash/get.js';
+import get from 'lodash-es/get.js';
 import moment from 'moment';
 
 import type { UseCacheReturn } from '@plitzi/plitzi-ui/Cache';

@@ -1,8 +1,8 @@
 import { useFormContext, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
-import get from 'lodash/get';
-import upperFirst from 'lodash/upperFirst';
+import get from 'lodash-es/get';
+import upperFirst from 'lodash-es/upperFirst';
 import { useMemo } from 'react';
 
 import utility from '@plitzi/sdk-data-source/utility/index';

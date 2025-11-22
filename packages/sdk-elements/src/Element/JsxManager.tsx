@@ -1,5 +1,5 @@
-import camelCase from 'lodash/camelCase.js';
-import get from 'lodash/get.js';
+import camelCase from 'lodash-es/camelCase.js';
+import get from 'lodash-es/get.js';
 import { memo, useCallback, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';

@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';

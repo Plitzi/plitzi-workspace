@@ -1,6 +1,6 @@
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import capitalize from 'lodash/capitalize.js';
+import capitalize from 'lodash-es/capitalize.js';
 import { useCallback } from 'react';
 
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';

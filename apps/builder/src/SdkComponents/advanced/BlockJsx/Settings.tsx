@@ -2,7 +2,7 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useState } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

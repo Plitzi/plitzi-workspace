@@ -1,4 +1,4 @@
-import set from 'lodash/set.js';
+import set from 'lodash-es/set.js';
 
 import type { Element, ElementBinding, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 

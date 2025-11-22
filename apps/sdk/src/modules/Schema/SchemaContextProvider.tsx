@@ -1,5 +1,5 @@
-import get from 'lodash/get';
-import pick from 'lodash/pick';
+import get from 'lodash-es/get';
+import pick from 'lodash-es/pick';
 import { useMemo, use } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';

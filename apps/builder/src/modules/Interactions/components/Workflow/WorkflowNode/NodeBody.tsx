@@ -1,4 +1,4 @@
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback } from 'react';
 
 import NodeBodyParam from './NodeBodyParam';

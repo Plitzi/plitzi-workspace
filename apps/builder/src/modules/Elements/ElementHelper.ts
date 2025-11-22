@@ -1,6 +1,6 @@
-import cloneDeep from 'lodash/cloneDeep';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
+import cloneDeep from 'lodash-es/cloneDeep';
+import pick from 'lodash-es/pick';
+import set from 'lodash-es/set';
 
 import { generateID } from '../../helpers/utils';
 

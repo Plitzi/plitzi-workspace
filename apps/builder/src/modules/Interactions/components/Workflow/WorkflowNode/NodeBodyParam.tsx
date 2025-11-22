@@ -5,7 +5,7 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import classNames from 'classnames';
-import upperFirst from 'lodash/upperFirst';
+import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { isValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';

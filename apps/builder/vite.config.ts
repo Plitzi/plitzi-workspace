@@ -7,15 +7,14 @@ import path from 'node:path';
 
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import react from '@vitejs/plugin-react';
-import handlebars from 'handlebars';
+import ejs from 'ejs';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from 'vite';
 import viteCompression from 'vite-plugin-compression';
 // import dts from 'vite-plugin-dts';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 
-import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { Plugin, ViteDevServer } from 'vite';
+import type { Plugin } from 'vite';
 
 const require = createRequire(import.meta.url);
 const PACKAGE = require('./package.json') as {
@@ -48,19 +47,20 @@ const packages = {
 
 // const importedPackages = new Set();
 
-function handlebarsPlugin(devMode: boolean): Plugin {
+function ejsPlugin(devMode: boolean): Plugin {
   return {
-    name: 'vite-plugin-handlebars-index',
+    name: 'vite-plugin-ejs-index',
 
-    configureServer(server: ViteDevServer) {
-      server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
-        if (req.url === '/' || req.url === '/index.html') {
-          const templatePath = path.resolve(__dirname, 'index.hbs');
-          const template = fs.readFileSync(templatePath, 'utf-8');
-          const html = handlebars.compile(template)({
-            title: '',
-            jsPath: '/dist/plitzi-builder.js',
-            cssPath: '/dist/plitzi-builder.css',
+    generateBundle() {
+      const templatePath = path.resolve(__dirname, './index.html');
+      if (fs.existsSync(templatePath)) {
+        const template = fs.readFileSync(templatePath, 'utf-8');
+        const html = ejs.render(
+          template,
+          {
+            title: 'Plitzi Demo',
+            jsPath: '/plitzi-builder.js',
+            cssPath: '/plitzi-builder.css',
             react: devMode ? `https://esm.sh/react@${reactVersion}?dev` : `https://esm.sh/react@${reactVersion}`,
             reactJsx: devMode
               ? `https://esm.sh/react@${reactVersion}/jsx-runtime?dev`
@@ -72,29 +72,10 @@ function handlebarsPlugin(devMode: boolean): Plugin {
               ? `https://esm.sh/react-dom@${reactVersion}/client?dev`
               : `https://esm.sh/react-dom@${reactVersion}/client`,
             version: PACKAGE.version
-          });
-          res.setHeader('Content-Type', 'text/html');
-          res.end(html);
-
-          return;
-        }
-        next();
-      });
-    },
-
-    generateBundle() {
-      const templatePath = path.resolve(__dirname, 'src/index.hbs');
-      if (fs.existsSync(templatePath)) {
-        const template = fs.readFileSync(templatePath, 'utf-8');
-        const html = handlebars.compile(template)({
-          env: 'production',
-          title: 'Plitzi SDK'
-        });
-        this.emitFile({
-          type: 'asset',
-          fileName: 'index.html',
-          source: html
-        });
+          },
+          { async: false }
+        );
+        this.emitFile({ type: 'asset', fileName: 'index.html', source: html as string });
       }
     }
   };
@@ -126,8 +107,9 @@ export default defineConfig(({ mode, command }) => {
           : `https://esm.sh/react-dom@${reactVersion}/client`,
         version: PACKAGE.version
       }),
-      command === 'build' && handlebarsPlugin(devMode),
-      !isWatch && viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip }),
+      command === 'build' && ejsPlugin(devMode),
+      !isWatch &&
+        viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-builder.(js|css)$/ }),
       // dts({
       //   entryRoot: 'src',
       //   outDir: 'dist',

@@ -1,6 +1,6 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Switch from '@plitzi/plitzi-ui/Switch';
-import get from 'lodash/get.js';
+import get from 'lodash-es/get.js';
 import { useCallback, useMemo } from 'react';
 
 import Background from '../categories/Background';

@@ -361,6 +361,10 @@
       "types": "./dist/src/components/media/Image/Image.d.ts",
       "import": "./dist/src/components/media/Image/Image.mjs"
     },
+    "./components/media/Image/ImageHelper": {
+      "types": "./dist/src/components/media/Image/ImageHelper.d.ts",
+      "import": "./dist/src/components/media/Image/ImageHelper.mjs"
+    },
     "./components/media/Image/index": {
       "types": "./dist/src/components/media/Image/index.d.ts",
       "import": "./dist/src/components/media/Image/index.mjs"
@@ -561,7 +565,7 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "immer": "^10.2.0",
-    "lodash": "^4.17.21"
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "eslint": "^9.39.1",

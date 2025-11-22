@@ -1,6 +1,6 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import classNames from 'classnames';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';

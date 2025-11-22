@@ -1,6 +1,6 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import omit from 'lodash/omit';
-import set from 'lodash/set';
+import omit from 'lodash-es/omit';
+import set from 'lodash-es/set';
 import { useCallback, use, useLayoutEffect, useMemo, useState } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';

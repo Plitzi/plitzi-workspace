@@ -1,11 +1,11 @@
 import JsonView from '@uiw/react-json-view';
-import { vscodeTheme } from '@uiw/react-json-view/vscode';
+import * as vscode from '@uiw/react-json-view/vscode';
 import { useMemo, use } from 'react';
 
 import DevToolsContext from '../../../../DevToolsContext';
 
 const jsonViewStyle = {
-  ...vscodeTheme,
+  ...vscode.vscodeTheme,
   width: '100%',
   height: '100%',
   overflow: 'auto',

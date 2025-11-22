@@ -1,6 +1,6 @@
 /* eslint-disable no-async-promise-executor */
 import Select2 from '@plitzi/plitzi-ui/Select2';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';

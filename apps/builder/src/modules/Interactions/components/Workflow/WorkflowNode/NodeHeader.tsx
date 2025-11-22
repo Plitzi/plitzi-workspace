@@ -3,9 +3,9 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import classNames from 'classnames';
-import get from 'lodash/get';
-import startCase from 'lodash/startCase';
-import upperFirst from 'lodash/upperFirst';
+import get from 'lodash-es/get';
+import startCase from 'lodash-es/startCase';
+import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useMemo, use } from 'react';
 
 import WorkflowContext from '../WorkflowContext';

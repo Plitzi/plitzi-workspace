@@ -1,6 +1,6 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
-import get from 'lodash/get.js';
-import isEmpty from 'lodash/isEmpty.js';
+import get from 'lodash-es/get.js';
+import isEmpty from 'lodash-es/isEmpty.js';
 import { useCallback, useMemo } from 'react';
 
 import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';

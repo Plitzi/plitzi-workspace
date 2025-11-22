@@ -1,6 +1,6 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Tree from '@plitzi/plitzi-ui/Tree';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

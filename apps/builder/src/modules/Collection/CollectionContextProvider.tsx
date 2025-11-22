@@ -1,4 +1,4 @@
-import omit from 'lodash/omit';
+import omit from 'lodash-es/omit';
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';

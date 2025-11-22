@@ -5,9 +5,9 @@ import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import classNames from 'classnames';
-import get from 'lodash/get';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
+import get from 'lodash-es/get';
+import pick from 'lodash-es/pick';
+import set from 'lodash-es/set';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';

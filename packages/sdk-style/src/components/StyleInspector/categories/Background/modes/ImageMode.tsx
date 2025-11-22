@@ -3,7 +3,7 @@ import BackgroundTileX from '@plitzi/plitzi-ui/icons/BackgroundTileX';
 import BackgroundTileXY from '@plitzi/plitzi-ui/icons/BackgroundTileXY';
 import BackgroundTileY from '@plitzi/plitzi-ui/icons/BackgroundTileY';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
-import get from 'lodash/get.js';
+import get from 'lodash-es/get.js';
 import { useCallback, useMemo } from 'react';
 
 import CategoryOption from '../../../components/CategoryOption';

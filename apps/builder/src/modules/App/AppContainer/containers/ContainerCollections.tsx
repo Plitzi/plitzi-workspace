@@ -1,5 +1,5 @@
 import Card from '@plitzi/plitzi-ui/Card';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 import { useCallback, use, useState } from 'react';
 
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';

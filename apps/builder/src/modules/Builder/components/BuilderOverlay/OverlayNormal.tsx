@@ -1,8 +1,8 @@
 import ContentEditable from '@plitzi/plitzi-ui/ContentEditable';
 import classNames from 'classnames';
 import { produce } from 'immer';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import get from 'lodash-es/get';
+import set from 'lodash-es/set';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

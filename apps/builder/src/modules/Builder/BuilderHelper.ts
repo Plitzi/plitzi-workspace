@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { produce } from 'immer';
-import get from 'lodash/get';
-import pick from 'lodash/pick';
-import set from 'lodash/set';
+import get from 'lodash-es/get';
+import pick from 'lodash-es/pick';
+import set from 'lodash-es/set';
 
 import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
 import { generateCache, makeSelector } from '@plitzi/sdk-style/StyleHelper';
