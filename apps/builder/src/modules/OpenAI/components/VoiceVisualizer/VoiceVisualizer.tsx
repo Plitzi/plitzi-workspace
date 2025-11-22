@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { drawByLiveStream, initialCanvasSetup } from './helpers'; //  drawByBlob, getBarsData,
@@ -161,7 +161,7 @@ const VoiceVisualizer = ({
   // }
 
   return (
-    <canvas className={classNames('w-full', className)} ref={canvasRef} {...size}>
+    <canvas className={clsx('w-full', className)} ref={canvasRef} {...size}>
       Your browser does not support HTML5 Canvas.
     </canvas>
   );

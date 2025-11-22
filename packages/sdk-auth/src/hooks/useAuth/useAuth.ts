@@ -78,10 +78,11 @@ const useAuth = ({
   }, [manager]);
 
   useEffect(() => {
-    window.addEventListener('focus', () => void handleWindowFocus());
+    const method = () => void handleWindowFocus();
+    window.addEventListener('focus', method);
 
     return () => {
-      window.removeEventListener('focus', () => void handleWindowFocus());
+      window.removeEventListener('focus', method);
     };
   }, [handleWindowFocus]);
 

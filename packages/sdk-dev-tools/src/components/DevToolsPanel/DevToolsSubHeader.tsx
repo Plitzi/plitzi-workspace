@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import throttle from 'lodash-es/throttle.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -95,9 +95,7 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
   }, [handleClick, handleMouseMove, selectorEnabled]);
 
   return (
-    <div
-      className={classNames('flex items-center justify-between gap-2 border-b border-gray-300 px-2 py-1', className)}
-    >
+    <div className={clsx('flex items-center justify-between gap-2 border-b border-gray-300 px-2 py-1', className)}>
       <div className="flex gap-2">
         <DevToolsButton
           iconClassName="fa-regular fa-hand-pointer"

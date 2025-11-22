@@ -1,6 +1,6 @@
 import useStateDebounce from '@plitzi/plitzi-ui/hooks/useStateDebounce';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { use, useMemo, useCallback, useRef } from 'react';
 
@@ -105,7 +105,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   } = element;
 
   return (
-    <div className={classNames('mt-2 flex min-w-0 grow flex-col gap-4', { [`element-${type}`]: type })}>
+    <div className={clsx('mt-2 flex min-w-0 grow flex-col gap-4', { [`element-${type}`]: type })}>
       <BuilderBreadcrumb limit={4} />
       <ToolsList onSelect={handleClickListItems} selected={selected} />
       <div className="flex grow basis-0 flex-col overflow-y-auto">

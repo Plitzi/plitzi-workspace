@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import set from 'lodash-es/set.js';
 import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
@@ -105,7 +105,7 @@ const BlockJsx = ({
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__block-jsx', className, {
+      className={clsx('plitzi-component__block-jsx', className, {
         'block-jsx--empty': contentCache === '' || !contentCache || !JsxModule
       })}
     >

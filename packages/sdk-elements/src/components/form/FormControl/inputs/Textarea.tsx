@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useRef } from 'react';
 
 import type { ChangeEvent, MouseEvent } from 'react';
@@ -39,7 +39,7 @@ const Textarea = ({
   return (
     <textarea
       ref={inputRef}
-      className={classNames('form-control__textarea-container', className)}
+      className={clsx('form-control__textarea-container', className)}
       id={id}
       name={name}
       placeholder={placeholder}

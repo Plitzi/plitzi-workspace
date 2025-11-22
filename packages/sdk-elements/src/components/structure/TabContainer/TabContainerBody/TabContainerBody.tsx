@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { Children, cloneElement, isValidElement, useMemo } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
@@ -46,7 +46,7 @@ const TabContainerBody = ({ ref, className = '', internalProps, children }: TabC
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__tab-container-body', className)}
+      className={clsx('plitzi-component__tab-container-body', className)}
     >
       {childrenParsed}
     </RootElement>

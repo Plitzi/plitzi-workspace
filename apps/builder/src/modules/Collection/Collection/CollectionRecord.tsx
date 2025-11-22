@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import isEmpty from 'lodash-es/isEmpty';
 import moment from 'moment';
 import { useMemo } from 'react';
@@ -58,7 +58,7 @@ const CollectionRecord = ({
         })}
       <div className="flex w-32 items-start justify-center select-none">
         <div
-          className={classNames('rounded-sm border px-4 capitalize', {
+          className={clsx('rounded-sm border px-4 capitalize', {
             'border-orange-400 text-orange-400': status === 'draft',
             'border-red-400 text-red-400': status === 'archived',
             'border-blue-400 text-blue-400': status === 'published'

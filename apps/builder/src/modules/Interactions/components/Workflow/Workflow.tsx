@@ -1,5 +1,5 @@
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import debounce from 'lodash-es/debounce';
 import get from 'lodash-es/get';
 import { useCallback, useMemo, useState } from 'react';
@@ -87,7 +87,7 @@ const Workflow = ({
 
   return (
     <div
-      className={classNames(
+      className={clsx(
         'flex h-full flex-col items-center p-2',
         'bg-[linear-gradient(90deg,#80808014_1px,transparent_0),linear-gradient(180deg,#80808014_1px,transparent_0)] bg-size-[16px_16px]',
         { 'justify-center': flows.length === 0 }

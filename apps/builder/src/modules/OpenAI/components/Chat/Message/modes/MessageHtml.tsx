@@ -1,7 +1,7 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import pick from 'lodash-es/pick';
 import set from 'lodash-es/set';
@@ -103,7 +103,7 @@ const MessageHtml = ({ content = '' }: MessageHtmlProps) => {
   return (
     <div className="flex text-sm">
       <div
-        className={classNames('flex w-full overflow-x-auto', {
+        className={clsx('flex w-full overflow-x-auto', {
           'rounded-sm border border-gray-300 p-0': viewMode === 'preview' && !fullScreen,
           'absolute top-0 right-0 bottom-0 left-0 z-10 bg-white': fullScreen
         })}
@@ -127,7 +127,7 @@ const MessageHtml = ({ content = '' }: MessageHtmlProps) => {
         </Button>
         <Button
           size={fullScreen ? 'md' : 'sm'}
-          className={classNames('rounded-sm', {
+          className={clsx('rounded-sm', {
             'h-6 w-6': !fullScreen,
             'absolute top-4 right-4 z-20 h-10 w-10 text-lg': fullScreen
           })}

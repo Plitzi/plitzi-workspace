@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import camelCase from 'lodash-es/camelCase';
 import debounce from 'lodash-es/debounce';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -300,7 +300,7 @@ const BuilderOverlayDrag = ({ refIframe, sizeOffset = 2, zoom = 1 }: BuilderOver
 
   return (
     <div
-      className={classNames('builder__overlay overlay--drag', {
+      className={clsx('builder__overlay overlay--drag', {
         'overlay--red': !dropAllowed,
         'overlay--blue': dropAllowed,
         'overlay--drag-inside': dropPosition === 'inside' || !dropAllowed

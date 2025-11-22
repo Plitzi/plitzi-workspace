@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use, useCallback } from 'react';
 
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
@@ -62,7 +62,7 @@ const Collections = ({ collectionId, onSourceChange }: CollectionsProps) => {
           return (
             <div
               key={i}
-              className={classNames('flex w-full cursor-pointer items-center justify-between', {
+              className={clsx('flex w-full cursor-pointer items-center justify-between', {
                 'text-primary-500': collectionId === id
               })}
               onClick={handleClick(id)}

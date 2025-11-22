@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import Handlebars from 'handlebars';
 import { useMemo, use } from 'react';
 
@@ -80,7 +80,7 @@ const Link = ({
       ref,
       style,
       target: `_${target}`,
-      className: classNames('plitzi-component__link', className)
+      className: clsx('plitzi-component__link', className)
     };
     if (!previewMode) {
       return { ...propsToReturn, 'href-disabled': url };

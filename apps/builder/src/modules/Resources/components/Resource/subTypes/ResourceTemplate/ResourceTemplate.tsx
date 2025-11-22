@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
 import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
@@ -56,7 +56,7 @@ const ResourceTemplate = ({
     <div
       onDragStart={onDragStart}
       draggable
-      className={classNames(
+      className={clsx(
         'group relative flex w-full cursor-grabbing flex-col overflow-hidden rounded-md border border-gray-300 select-none [column-span:all]',
         className
       )}

@@ -4,7 +4,7 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import pick from 'lodash-es/pick';
 import set from 'lodash-es/set';
@@ -183,7 +183,7 @@ const Transform = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className={classNames('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
+      <div className={clsx('flex h-full overflow-y-auto', { 'flex-col': layoutMode === 'vertical' })}>
         <div className="relative flex grow basis-0 flex-col overflow-y-auto">
           <TransformPreview preview={preview} previewMode />
           {warning && !hideAlert && (
@@ -208,7 +208,7 @@ const Transform = () => {
         </div>
         {isEditorVisible && (
           <div
-            className={classNames('flex bg-white', {
+            className={clsx('flex bg-white', {
               'h-full': layoutMode === 'horizontal',
               'w-full': layoutMode === 'vertical'
             })}
@@ -227,7 +227,7 @@ const Transform = () => {
               axis={layoutMode === 'horizontal' ? 'x' : 'y'}
             >
               <div
-                className={classNames('relative flex grow flex-col', { 'flex-col': layoutMode === 'horizontal' })}
+                className={clsx('relative flex grow flex-col', { 'flex-col': layoutMode === 'horizontal' })}
                 onPaste={handlePaste}
               >
                 <Accordion grow multi size="xs" gap={0}>
@@ -236,7 +236,7 @@ const Transform = () => {
                     <Accordion.Item.Content className="p-0">
                       <CodeMirror
                         ref={editorRef}
-                        className={classNames('grow', {
+                        className={clsx('grow', {
                           'h-full': layoutMode === 'horizontal',
                           'w-full': layoutMode === 'vertical'
                         })}
@@ -254,7 +254,7 @@ const Transform = () => {
                       <CodeMirror
                         ref={editorRef}
                         mode="css"
-                        className={classNames('grow', {
+                        className={clsx('grow', {
                           'h-full': layoutMode === 'horizontal',
                           'w-full': layoutMode === 'vertical'
                         })}

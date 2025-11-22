@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import moment from 'moment';
 import { useCallback, useMemo } from 'react';
@@ -35,7 +35,7 @@ const ExecutionTree = ({ className, nodeId, nodes, selected, onSelect }: Executi
   const handleClick = useCallback((id: string) => onSelect?.(id), [onSelect]);
 
   return (
-    <div className={classNames('flex flex-col gap-2', className)}>
+    <div className={clsx('flex flex-col gap-2', className)}>
       <div className="flex items-center gap-1">
         <i className="fa-solid fa-code-merge" /> Execution Tree
       </div>

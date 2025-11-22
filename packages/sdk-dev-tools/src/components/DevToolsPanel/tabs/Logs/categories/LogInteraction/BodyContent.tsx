@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -20,7 +20,7 @@ const BodyContent = ({ className, node, nodes }: BodyContentProps) => {
   const handleSelect = useCallback((id?: string) => setSelectedNodeId(id), []);
 
   return (
-    <div className={classNames('flex', className)}>
+    <div className={clsx('flex', className)}>
       <ExecutionTree
         className="grow basis-0"
         nodeId={node.id}

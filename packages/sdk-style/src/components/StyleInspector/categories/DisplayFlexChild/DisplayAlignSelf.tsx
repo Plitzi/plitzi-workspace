@@ -4,7 +4,7 @@ import AlignSelfEndRow from '@plitzi/plitzi-ui/icons/AlignSelfEndRow';
 import AlignSelfStartRow from '@plitzi/plitzi-ui/icons/AlignSelfStartRow';
 import AlignSelfStretchRow from '@plitzi/plitzi-ui/icons/AlignSelfStretchRow';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
 import CategoryOption from '../../components/CategoryOption';
@@ -37,25 +37,25 @@ const DisplayAlignSelf = ({ value, isFlexVertical = false, onChange }: DisplayAl
       },
       {
         value: 'flex-start',
-        icon: <AlignSelfStartRow className={classNames({ '-rotate-90': isFlexVertical })} />,
+        icon: <AlignSelfStartRow className={clsx({ '-rotate-90': isFlexVertical })} />,
         description: 'Align Start',
         active: value === 'flex-start'
       },
       {
         value: 'center',
-        icon: <AlignSelfCenterRow className={classNames({ '-rotate-90': isFlexVertical })} />,
+        icon: <AlignSelfCenterRow className={clsx({ '-rotate-90': isFlexVertical })} />,
         description: 'Align Center',
         active: value === 'center'
       },
       {
         value: 'flex-end',
-        icon: <AlignSelfEndRow className={classNames({ '-rotate-90': isFlexVertical })} />,
+        icon: <AlignSelfEndRow className={clsx({ '-rotate-90': isFlexVertical })} />,
         description: 'Align End',
         active: value === 'flex-end'
       },
       {
         value: 'stretch',
-        icon: <AlignSelfStretchRow className={classNames({ '-rotate-90': isFlexVertical })} />,
+        icon: <AlignSelfStretchRow className={clsx({ '-rotate-90': isFlexVertical })} />,
         description: 'Align Stretch',
         active: value === 'stretch'
       },

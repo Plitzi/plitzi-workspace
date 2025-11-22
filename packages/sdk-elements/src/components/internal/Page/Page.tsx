@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -85,13 +85,13 @@ const Page = ({
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__page', className)}
+      className={clsx('plitzi-component__page', className)}
       interactionTriggers={interactionTriggers}
     >
       {seoEnabled && previewMode && Helmet && (
         <Helmet>
-          {seoPageTitle && <title>{seoPageTitle}</title>}
-          {seoPageDescription && <meta name="description" content={seoPageDescription} />}
+          {!!seoPageTitle && <title>{seoPageTitle}</title>}
+          {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}
         </Helmet>
       )}
       {layout && <LayoutContainerPlugin internalProps={layoutInternalProps} />}

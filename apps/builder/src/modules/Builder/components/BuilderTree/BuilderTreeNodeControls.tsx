@@ -1,6 +1,6 @@
 import Icon from '@plitzi/plitzi-ui/Icon';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { use, useCallback, useMemo } from 'react';
 
@@ -92,7 +92,7 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
 
   return (
     <div
-      className={classNames('justify-end gap-2', {
+      className={clsx('justify-end gap-2', {
         flex: selected || !isVisible || hovered,
         hidden: !selected && isVisible && !hovered
       })}

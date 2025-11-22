@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -35,7 +35,7 @@ const NodeHtml = ({ ref, className = '', subType = 'span', internalProps, childr
       ref={ref}
       tag={subType}
       internalProps={internalProps}
-      className={classNames(`plitzi-component__node-html plitzi-component__node-html-${subType}`, className)}
+      className={clsx(`plitzi-component__node-html plitzi-component__node-html-${subType}`, className)}
       {...(otherPropsParsed as Record<string, unknown>)}
     >
       {children}

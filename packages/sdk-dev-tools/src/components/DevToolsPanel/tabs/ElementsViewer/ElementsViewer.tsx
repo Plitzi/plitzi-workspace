@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -27,7 +27,7 @@ const ElementsViewer = ({ className, elementSelected, onSelectElement }: Element
   const handleElementSelected = useCallback((id?: string) => onSelectElement(id), [onSelectElement]);
 
   return (
-    <div className={classNames('flex h-full w-full', className)}>
+    <div className={clsx('flex h-full w-full', className)}>
       <ElementsList elements={elements} elementSelected={elementSelected} onSelect={handleElementSelected} />
       {elementSelected && (
         <ElementDetails

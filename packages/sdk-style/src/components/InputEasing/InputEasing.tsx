@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { Component, createRef } from 'react';
 
 import Curve from './Curve';
@@ -143,12 +143,7 @@ class InputEasing extends Component {
     const cys2 = cy2 - handleRadius * Math.sin(a2);
 
     return (
-      <svg
-        className={classNames('overflow-visible select-none', className)}
-        ref={inputRef}
-        width={width}
-        height={height}
-      >
+      <svg className={clsx('overflow-visible select-none', className)} ref={inputRef} width={width} height={height}>
         <Grid {...sharedProps} />
         <Progress {...sharedProps} value={value} progress={progress} />
         <Curve {...sharedProps} value={value} />

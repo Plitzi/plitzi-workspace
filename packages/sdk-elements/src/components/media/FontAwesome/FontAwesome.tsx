@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -35,9 +35,9 @@ const FontAwesome = ({
       <RootElement
         ref={ref}
         internalProps={internalProps}
-        className={classNames('plitzi-component__fontawesome fontawesome--edit-mode', className)}
+        className={clsx('plitzi-component__fontawesome fontawesome--edit-mode', className)}
       >
-        <i className={classNames(icon, size, iconAnimation)} />
+        <i className={clsx(icon, size, iconAnimation)} />
       </RootElement>
     );
   }
@@ -47,7 +47,7 @@ const FontAwesome = ({
       ref={ref}
       tag="i"
       internalProps={internalProps}
-      className={classNames('plitzi-component__fontawesome', className, icon, size, iconAnimation)}
+      className={clsx('plitzi-component__fontawesome', className, icon, size, iconAnimation)}
     />
   );
 };

@@ -1,5 +1,5 @@
 import ContentEditable from '@plitzi/plitzi-ui/ContentEditable';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { produce } from 'immer';
 import get from 'lodash-es/get';
 import set from 'lodash-es/set';
@@ -167,7 +167,7 @@ const OverlayNormal = ({
   return (
     <div
       ref={ref}
-      className={classNames('builder__overlay', {
+      className={clsx('builder__overlay', {
         'overlay--red': hoverRemove,
         'overlay--blue': !hoverRemove,
         'overlay--empty': items && items.length === 0
@@ -219,7 +219,7 @@ const OverlayNormal = ({
       )}
       {isCollaborator && collaboratorName && (
         <div
-          className={classNames('overlay__collaborator-name', {
+          className={clsx('overlay__collaborator-name', {
             'collaborator-name--bottom': container.y < 30,
             'collaborator-name--xs': container.width < 70
           })}

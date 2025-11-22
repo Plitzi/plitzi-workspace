@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import capitalize from 'lodash-es/capitalize.js';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useMemo } from 'react';
@@ -100,7 +100,7 @@ const CollectionContainer = ({
       ref={ref}
       internalProps={internalProps}
       interactionCallbacks={interactionCallbacks}
-      className={classNames('plitzi-component__collection-container', className, {
+      className={clsx('plitzi-component__collection-container', className, {
         'collection-container--context-empty': !collection
       })}
     >

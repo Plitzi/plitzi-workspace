@@ -1,5 +1,5 @@
 import Card from '@plitzi/plitzi-ui/Card';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 
 import BuilderContextMenuItem from './BuilderContextMenuItem';
@@ -30,7 +30,7 @@ const BuilderContextSubMenu = ({ items, width = 150, iframeDOM, onClick }: Build
   return (
     <div
       ref={ref}
-      className={classNames(
+      className={clsx(
         'relative flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100',
         { 'rounded-tr': items?.length === 0 }
       )}

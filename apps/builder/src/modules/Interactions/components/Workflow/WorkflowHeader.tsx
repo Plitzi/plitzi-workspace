@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Select from '@plitzi/plitzi-ui/Select';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { useCallback, use } from 'react';
 
@@ -39,7 +39,7 @@ const WorkflowHeader = ({ flows, flowId = '', setFlowId }: WorkflowHeaderProps) 
 
   return (
     <div
-      className={classNames('flex justify-between gap-1 bg-white px-2 py-1', {
+      className={clsx('flex justify-between gap-1 bg-white px-2 py-1', {
         'w-full rounded-2xl border border-gray-300': flows.length > 0
       })}
     >

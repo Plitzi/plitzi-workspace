@@ -4,7 +4,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
 import PageOverviewZoom from '@plitzi/plitzi-ui/icons/PageOverviewZoom';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -116,19 +116,19 @@ const BuilderAreaHeader = ({
     >
       <Flex items="center" gap={2}>
         <div
-          className={classNames('h-3 w-3 rounded-full', {
+          className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
         />
         <div
-          className={classNames('h-3 w-3 rounded-full', {
+          className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
         />
         <div
-          className={classNames('h-3 w-3 rounded-full', {
+          className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
             'bg-gray-300': !isActive
           })}
@@ -140,10 +140,7 @@ const BuilderAreaHeader = ({
           </Button>
         )}
       </Flex>
-      <div
-        title="Default Page"
-        className={classNames({ 'text-primary-400': defaultPage, 'text-gray-400': !defaultPage })}
-      >
+      <div title="Default Page" className={clsx({ 'text-primary-400': defaultPage, 'text-gray-400': !defaultPage })}>
         <Icon icon="fas fa-home" />
       </div>
       <Flex items="center" grow className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none">

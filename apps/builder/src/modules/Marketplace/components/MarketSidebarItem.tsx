@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 export type MarketSidebarItemProps = {
@@ -20,7 +20,7 @@ const MarketSidebarItem = ({
 
   return (
     <li
-      className={classNames('flex cursor-pointer items-center justify-center py-2 select-none', className, {
+      className={clsx('flex cursor-pointer items-center justify-center py-2 select-none', className, {
         'font-bold text-blue-400': isSelected,
         'hover:text-blue-400': !isSelected
       })}

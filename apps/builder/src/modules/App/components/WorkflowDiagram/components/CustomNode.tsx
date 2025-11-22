@@ -2,7 +2,7 @@ import Badge from '@plitzi/plitzi-ui/Badge';
 import Card from '@plitzi/plitzi-ui/Card';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import { Handle, Position } from '@xyflow/react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { memo } from 'react';
 
 import type { WorkflowNode } from '../WorkflowDiagram';
@@ -38,7 +38,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<Node<WorkflowNode>
       />
 
       <Card
-        className={classNames('h-[150px] w-[200px] p-2 shadow-md transition-shadow hover:shadow-lg', {
+        className={clsx('h-[150px] w-[200px] p-2 shadow-md transition-shadow hover:shadow-lg', {
           'ring-2 ring-blue-500 ring-offset-2': selected
         })}
       >
@@ -46,7 +46,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<Node<WorkflowNode>
           <div className="flex w-full items-start gap-1">
             <Icon
               icon={data.type === 'folder' ? 'fa-regular fa-folder' : 'fa-regular fa-file'}
-              className={classNames('mt-0.5 h-5 shrink-0 text-slate-600', {
+              className={clsx('mt-0.5 h-5 shrink-0 text-slate-600', {
                 'text-yellow-600': data.type === 'folder',
                 'text-slate-600': data.type !== 'folder'
               })}

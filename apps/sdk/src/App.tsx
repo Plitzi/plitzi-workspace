@@ -2,7 +2,7 @@ import { ApolloProvider } from '@apollo/client/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import Provider from '@plitzi/plitzi-ui/Provider';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
 import { StaticRouter } from 'react-router';
@@ -119,7 +119,7 @@ const App = ({
   if (renderMode === 'widget') {
     return (
       <Provider>
-        <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
+        <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
           <HelmetProvider>
             <ApolloProvider client={client}>
               <ComponentProvider localCustomComponents={localCustomComponents}>
@@ -148,7 +148,7 @@ const App = ({
 
   return (
     <Provider>
-      <ContainerRoot className={classNames('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
+      <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
         <HelmetProvider>
           <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
             <ApolloProvider client={client}>

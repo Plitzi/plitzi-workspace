@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import { useMemo } from 'react';
 
@@ -18,7 +18,7 @@ const useInternalClassName = ({ className, internalProps, previewMode, baseEleme
 
   return useMemo(
     () =>
-      classNames(className, {
+      clsx(className, {
         'plitzi-component--hidden': visibility === false || visibility === 'false',
         'plitzi-component': !previewMode && !plitziElementLayout,
         'plitzi-component--layout': !previewMode && !!plitziElementLayout,

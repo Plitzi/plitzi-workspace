@@ -5,7 +5,6 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import react from '@vitejs/plugin-react';
 import ejs from 'ejs';
@@ -93,7 +92,6 @@ export default defineConfig(({ mode, command }) => {
     plugins: [
       nodeResolve({ extensions: ['.js', '.mjs', '.ts', '.tsx'] }),
       react(),
-      commonjs(),
       ViteEjsPlugin({
         title: 'Plitzi SDK',
         description: '',
@@ -180,13 +178,17 @@ export default defineConfig(({ mode, command }) => {
       alias: {
         '@modules': path.resolve('./src/modules'),
         '@components': path.resolve('./src/components'),
+        'decode-named-character-reference': path.resolve(
+          __dirname,
+          '../../node_modules/decode-named-character-reference/index.js'
+        ),
         ...(devMode ? packages : {})
       },
       extensions: ['.js', '.mjs', '.ts', '.tsx']
     },
     build: {
       outDir: 'dist',
-      // ssrEmitAssets: true,
+      ssrEmitAssets: true,
       lib: {
         entry: ['./src/index.tsx']
       },
@@ -232,6 +234,7 @@ export default defineConfig(({ mode, command }) => {
       emptyOutDir: !devMode
     },
     define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
       VERSION: JSON.stringify(PACKAGE.version)
     },
     test: {

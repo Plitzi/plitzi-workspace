@@ -4,7 +4,7 @@ import BorderPlacementCenter from '@plitzi/plitzi-ui/icons/BorderPlacementCenter
 import BorderPlacementLeft from '@plitzi/plitzi-ui/icons/BorderPlacementLeft';
 import BorderPlacementRight from '@plitzi/plitzi-ui/icons/BorderPlacementRight';
 import BorderPlacementTop from '@plitzi/plitzi-ui/icons/BorderPlacementTop';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 export type Placement = 'all' | 'top' | 'bottom' | 'left' | 'right';
@@ -24,7 +24,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
     <div className="mx-auto grid grid-cols-3 grid-rows-3 place-items-center gap-2">
       <Icon
         size="2xl"
-        className={classNames('col-start-2 cursor-pointer rounded p-0.5', {
+        className={clsx('col-start-2 cursor-pointer rounded p-0.5', {
           'bg-primary-100': currentPlacement === 'top'
         })}
         onClick={handleClick('top')}
@@ -35,7 +35,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
 
       <Icon
         size="2xl"
-        className={classNames('row-start-2 cursor-pointer rounded p-0.5', {
+        className={clsx('row-start-2 cursor-pointer rounded p-0.5', {
           'bg-primary-100': currentPlacement === 'left'
         })}
         onClick={handleClick('left')}
@@ -45,7 +45,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
       </Icon>
       <Icon
         size="2xl"
-        className={classNames('row-start-2 grid cursor-pointer grid-cols-3 rounded p-0.5', {
+        className={clsx('row-start-2 grid cursor-pointer grid-cols-3 rounded p-0.5', {
           'bg-primary-100': currentPlacement === 'all'
         })}
         onClick={handleClick('all')}
@@ -55,7 +55,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
       </Icon>
       <Icon
         size="2xl"
-        className={classNames('row-start-2 cursor-pointer rounded p-0.5', {
+        className={clsx('row-start-2 cursor-pointer rounded p-0.5', {
           'bg-primary-100': currentPlacement === 'right'
         })}
         onClick={handleClick('right')}
@@ -65,7 +65,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
       </Icon>
       <Icon
         size="2xl"
-        className={classNames('col-start-2 row-start-3 cursor-pointer rounded p-0.5', {
+        className={clsx('col-start-2 row-start-3 cursor-pointer rounded p-0.5', {
           'bg-primary-100': currentPlacement === 'bottom'
         })}
         onClick={handleClick('bottom')}

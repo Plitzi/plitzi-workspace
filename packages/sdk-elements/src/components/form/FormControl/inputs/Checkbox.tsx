@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import type { ChangeEvent } from 'react';
@@ -30,7 +30,7 @@ const Checkbox = ({
 
   return (
     <input
-      className={classNames('form-control__checkbox-container', className)}
+      className={clsx('form-control__checkbox-container', className)}
       id={id}
       name={name}
       type="checkbox"

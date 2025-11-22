@@ -1,6 +1,6 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 
 import type { ReactNode } from 'react';
@@ -61,7 +61,7 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', onUpdate }: S
           iconsContent.push(
             <div
               key={iconClass}
-              className={classNames(
+              className={clsx(
                 'flex h-8 w-8 cursor-pointer items-center justify-center rounded-md p-2 hover:bg-blue-200 hover:text-white',
                 { 'bg-[#339af0] text-white': iconClass === icon }
               )}

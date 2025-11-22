@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import MarkdownUI from '@plitzi/plitzi-ui/Markdown';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -26,7 +26,7 @@ const Markdown = ({ ref, content = 'Markdown', className = '', internalProps }: 
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames(
+      className={clsx(
         'plitzi-component__markdown',
         { 'plitzi-component__markdown--edit-mode': !previewMode },
         className

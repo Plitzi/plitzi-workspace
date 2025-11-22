@@ -1,5 +1,5 @@
 import { Heading, Icon } from '@plitzi/plitzi-ui/components';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import moment from 'moment';
 import { useCallback, useMemo } from 'react';
 
@@ -49,7 +49,7 @@ const SpaceCredential = ({
 
   return (
     <div
-      className={classNames('group relative flex cursor-pointer flex-col gap-2 rounded border p-2', {
+      className={clsx('group relative flex cursor-pointer flex-col gap-2 rounded border p-2', {
         'hover:bg-primary-100/30 border-gray-300': !selected,
         'border-primary-400 bg-primary-100/50': selected
       })}

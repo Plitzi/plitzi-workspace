@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import type { Orientation } from '../../DevToolsContainer';
@@ -27,7 +27,7 @@ const DevToolsHeader = ({
     <div className="flex grow justify-between border-b border-b-gray-300 bg-gray-200 select-none">
       <div className="flex">
         <div
-          className={classNames('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
+          className={clsx('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
             'border-purple-500 text-purple-500': tabSelected === 'logs',
             'border-transparent': tabSelected !== 'logs'
           })}
@@ -36,7 +36,7 @@ const DevToolsHeader = ({
           Logs
         </div>
         <div
-          className={classNames('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
+          className={clsx('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
             'border-purple-500 text-purple-500': tabSelected === 'dataSources',
             'border-transparent': tabSelected !== 'dataSources'
           })}
@@ -45,7 +45,7 @@ const DevToolsHeader = ({
           Data Sources
         </div>
         <div
-          className={classNames('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
+          className={clsx('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
             'border-purple-500 text-purple-500': tabSelected === 'elements',
             'border-transparent': tabSelected !== 'elements'
           })}
@@ -54,7 +54,7 @@ const DevToolsHeader = ({
           Elements
         </div>
         <div
-          className={classNames('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
+          className={clsx('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
             'border-purple-500 text-purple-500': tabSelected === 'variables',
             'border-transparent': tabSelected !== 'variables'
           })}
@@ -63,7 +63,7 @@ const DevToolsHeader = ({
           Variables
         </div>
         <div
-          className={classNames('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
+          className={clsx('cursor-pointer border-b-4 px-2 py-1 hover:bg-gray-100 hover:text-inherit', {
             'border-purple-500 text-purple-500': tabSelected === 'plugins',
             'border-transparent': tabSelected !== 'plugins'
           })}

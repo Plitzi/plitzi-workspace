@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -27,11 +27,7 @@ const NotFound = ({ ref, className = '', internalProps }: NotFoundProps) => {
   }
 
   return (
-    <RootElement
-      ref={ref}
-      internalProps={internalProps}
-      className={classNames('plitzi-component__not-found', className)}
-    >
+    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__not-found', className)}>
       <span>
         {label && (
           <>

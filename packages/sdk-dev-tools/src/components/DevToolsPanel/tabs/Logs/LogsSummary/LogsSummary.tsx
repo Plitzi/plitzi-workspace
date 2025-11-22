@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo, useCallback } from 'react';
 
 import LogsSummaryItem from './LogsSummaryItem';
@@ -30,7 +30,7 @@ const LogsSummary = ({ className, orientation = 'horizontal', items, logTypeSele
 
   return (
     <div
-      className={classNames('flex border-gray-300 select-none', className, {
+      className={clsx('flex border-gray-300 select-none', className, {
         'flex-col border-r': orientation === 'horizontal',
         'border-b': orientation === 'vertical'
       })}

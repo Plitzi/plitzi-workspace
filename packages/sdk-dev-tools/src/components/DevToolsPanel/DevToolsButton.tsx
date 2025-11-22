@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import type { MouseEvent } from 'react';
 
@@ -12,7 +12,7 @@ export type DevToolsButtonProps = {
 
 const DevToolsButton = ({ className, iconClassName, title, isSelected = false, onClick }: DevToolsButtonProps) => (
   <i
-    className={classNames(
+    className={clsx(
       'flex h-6 w-6 cursor-pointer items-center justify-center border border-dotted p-0.5',
       {
         'border-gray-500 hover:border-purple-500 hover:text-purple-500': !isSelected,

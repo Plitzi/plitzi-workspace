@@ -79,55 +79,15 @@ export function render(
   }
 
   if (!ssrMode) {
-    const root = createRoot(rootDOM);
-    root.render(<Widget />);
+    createRoot(rootDOM).render(<Widget />);
   } else {
-    hydrateRoot(rootDOM, <App {...(window.plitziCache ?? {})} debugMode={false} />);
+    hydrateRoot(rootDOM, <Widget />);
   }
-}
-
-export function renderSSR(widgetContainer: string, debugMode = false) {
-  const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
-  if (!rootDOM || typeof window === 'undefined' || !window.plitziCache) {
-    return;
-  }
-
-  hydrateRoot(rootDOM, <App {...(window.plitziCache ?? {})} debugMode={debugMode} />);
 }
 
 declare global {
   interface Window {
     plitziCache?: PlitziSdkProps;
-  }
-}
-
-if (typeof window !== 'undefined' && window.plitziCache) {
-  // SSR
-  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
-    disableReactDevTools();
-  }
-
-  // if (window.plitziCachePlugins) {
-  //   generatePluginPromises(window.plitziCachePlugins).then(pluginsProcessed => {
-  //     hydrateRoot(
-  //       document.getElementById('plitzi-sdk-root'),
-  //       <App {...window.plitziCache} debugMode={debugMode}>
-  //         {pluginsProcessed.map(({ type, Component }) => (
-  //           <Sdk.Plugin key={type} renderType={type} component={Component} />
-  //         ))}
-  //       </App>
-  //     );
-  //   });
-  // } else {
-  //   hydrateRoot(
-  //     document.getElementById('plitzi-sdk-root'),
-  //     <App {...window.plitziCache} debugMode={debugMode} />
-  //   );
-  // }
-
-  const elementDOM = typeof document !== 'undefined' && document.getElementById('plitzi-sdk-root');
-  if (elementDOM) {
-    hydrateRoot(elementDOM, <App {...(window.plitziCache ?? {})} debugMode={false} />);
   }
 }
 

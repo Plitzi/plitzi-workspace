@@ -185,7 +185,7 @@
     "build-assets:prod": "tsc && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.6",
+    "@plitzi/plitzi-ui": "^1.1.7",
     "lodash-es": "^4.17.21",
     "twig": "^1.17.1"
   },

@@ -1,5 +1,5 @@
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -67,7 +67,7 @@ const SelectorItem = ({
 
   return (
     <div
-      className={classNames(
+      className={clsx(
         'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1.5 text-white select-none',
         className,
         {

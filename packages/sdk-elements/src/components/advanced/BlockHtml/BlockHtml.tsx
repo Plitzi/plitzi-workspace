@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -98,7 +98,7 @@ const BlockHtml = ({ ref, content = '', className = '', internalProps }: BlockHt
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__block-html', className, {
+      className={clsx('plitzi-component__block-html', className, {
         'block-html--empty': content === '' || !content
       })}
       dangerouslySetInnerHTML={{ __html: content }}

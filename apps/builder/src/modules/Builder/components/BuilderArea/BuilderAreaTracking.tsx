@@ -1,5 +1,5 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import throttle from 'lodash-es/throttle';
 import { use, useRef, useCallback, useMemo, useEffect } from 'react';
@@ -360,7 +360,7 @@ const BuilderAreaTracking = ({
 
   return (
     <div
-      className={classNames(className, {
+      className={clsx(className, {
         'builder--display-component-border display-component-border--black':
           displayBorderComponents === 'black' && !previewMode,
         'builder--display-component-border display-component-border--white':

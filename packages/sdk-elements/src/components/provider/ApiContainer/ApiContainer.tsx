@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import Handlebars from 'handlebars';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo } from 'react';
@@ -191,7 +191,7 @@ const ApiContainer = ({
       ref={ref}
       tag={subType}
       internalProps={internalProps}
-      className={classNames('plitzi-component__api-container', className)}
+      className={clsx('plitzi-component__api-container', className)}
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >

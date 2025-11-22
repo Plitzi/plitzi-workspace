@@ -3,7 +3,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
 import ResourceDirectoryForm from '@pmodules/Resources/Models/ResourceDirectoryForm';
@@ -86,7 +86,7 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange,
   );
 
   return (
-    <div className={classNames('flex w-full flex-col gap-4 overflow-y-auto', className)}>
+    <div className={clsx('flex w-full flex-col gap-4 overflow-y-auto', className)}>
       <Button size="sm" onClick={handleAddDirectory}>
         Add Directory
       </Button>

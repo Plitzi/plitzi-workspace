@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import type { MouseEvent, ReactNode, RefObject } from 'react';
@@ -33,7 +33,7 @@ const Label = ({
 
   if (!previewMode) {
     return (
-      <label ref={ref} className={classNames(`form-control__label-${type}`, className)} onClick={handleClick}>
+      <label ref={ref} className={clsx(`form-control__label-${type}`, className)} onClick={handleClick}>
         {children}
         {required && children && <span className="form-control__label--required">*</span>}
       </label>
@@ -41,7 +41,7 @@ const Label = ({
   }
 
   return (
-    <label ref={ref} className={classNames(`form-control__label-${type}`, className)} htmlFor={targetInput}>
+    <label ref={ref} className={clsx(`form-control__label-${type}`, className)} htmlFor={targetInput}>
       {children}
       {required && children && <span className="form-control__label--required">*</span>}
     </label>

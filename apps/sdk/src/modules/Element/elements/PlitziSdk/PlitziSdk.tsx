@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use } from 'react';
 
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
@@ -29,7 +29,7 @@ const PlitziSdk = ({ ref, internalProps, className, spaceKey, environment = 'mai
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__plitzi-sdk', className, { 'with__plitzi-sdk': !previewMode })}
+      className={clsx('plitzi-component__plitzi-sdk', className, { 'with__plitzi-sdk': !previewMode })}
     >
       {spaceKey && (
         <App

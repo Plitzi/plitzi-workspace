@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import Button from '@plitzi/plitzi-ui/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { produce } from 'immer';
 import capitalize from 'lodash-es/capitalize';
 import get from 'lodash-es/get';
@@ -226,7 +226,7 @@ const DataSourceBinding = ({
                 )}
                 {bindingFormValues[fkey] && (
                   <div
-                    className={classNames('border-t border-gray-300 px-4 py-4', {
+                    className={clsx('border-t border-gray-300 px-4 py-4', {
                       'mt-4': binding && Object.keys(bindings[fkey]).length > 0,
                       'border-b': i !== bindingCategories.length - 1
                     })}

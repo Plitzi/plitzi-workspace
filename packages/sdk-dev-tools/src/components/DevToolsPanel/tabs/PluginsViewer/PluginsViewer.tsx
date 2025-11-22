@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import capitalize from 'lodash-es/capitalize.js';
 import { use, useCallback, useMemo, useState } from 'react';
 
@@ -41,7 +41,7 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
   const handleItemSelected = useCallback((pluginSelected?: ListItem<Plugin>) => setPlugin(pluginSelected), []);
 
   return (
-    <div className={classNames('flex h-full w-full', className)}>
+    <div className={clsx('flex h-full w-full', className)}>
       <List className="w-[300px] p-2" items={pluginsParsed} value={plugin} onSelect={handleItemSelected} />
       {plugin && (
         <PluginDetails

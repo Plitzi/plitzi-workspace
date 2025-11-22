@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Select2 from '@plitzi/plitzi-ui/Select2';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -31,7 +31,7 @@ const TransformLayout = ({
       <Button
         size="xs"
         title="Hide/Show Editor"
-        className={classNames('rounded-sm', { 'opacity-70': !isEditorVisible })}
+        className={clsx('rounded-sm', { 'opacity-70': !isEditorVisible })}
         onClick={onClickEditorVisible}
       >
         <i className="fas fa-code" />

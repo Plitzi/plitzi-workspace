@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -39,7 +39,7 @@ const Video = ({
       <RootElement
         ref={ref}
         internalProps={internalProps}
-        className={classNames('plitzi-component__video video--edit-mode', className)}
+        className={clsx('plitzi-component__video video--edit-mode', className)}
       >
         <video src={src} autoPlay={autoPlay} playsInline={playsInline} loop={loop} muted={muted}>
           <track kind="captions" />
@@ -54,7 +54,7 @@ const Video = ({
       draggable={false}
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__video', className)}
+      className={clsx('plitzi-component__video', className)}
       src={src}
       autoPlay={autoPlay}
       playsInline={playsInline}

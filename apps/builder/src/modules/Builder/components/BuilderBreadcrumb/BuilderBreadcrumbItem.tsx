@@ -1,5 +1,5 @@
 import ContentEditable from '@plitzi/plitzi-ui/ContentEditable';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { memo, use, useCallback, useMemo } from 'react';
 
@@ -48,7 +48,7 @@ const BuilderBreadcrumbItem = ({
 
   return (
     <li
-      className={classNames(
+      className={clsx(
         'breadcrumb__item flex items-center gap-2 text-xs select-none before:text-black not-first:before:content-[">"] first:before:content-none',
         className,
         { 'hover:text-primary-500': !isActive, 'text-primary-500': isActive }

@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { memo, use, useCallback } from 'react';
 
 import useInspectorValues from '../../hooks/useInspectorValues';
@@ -38,7 +38,7 @@ const InspectorLabel = ({
 
   return (
     <div
-      className={classNames('inspector__label flex min-w-[50px] shrink-0 items-center select-none', className, {
+      className={clsx('inspector__label flex min-w-[50px] shrink-0 items-center select-none', className, {
         'text-xs': size === 'small',
         'text-sm': size === 'medium',
         'text-base': size === 'normal',
@@ -47,7 +47,7 @@ const InspectorLabel = ({
       title={typeof children === 'string' ? children : undefined}
     >
       <label
-        className={classNames('m-0 truncate', {
+        className={clsx('m-0 truncate', {
           'px-1': !sectionTitle,
           'rounded-tl rounded-tr border border-gray-300 bg-gray-100 px-2 font-bold': sectionTitle,
           'cursor-pointer bg-blue-200 text-blue-400': hasValues && !hasBinding && !hasVariables,

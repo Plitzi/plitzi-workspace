@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
@@ -156,22 +156,22 @@ const ModalContainer = ({
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__modal-container', className)}
+      className={clsx('plitzi-component__modal-container', className)}
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
       <div
-        className={classNames('modal-container__background', styleSelectors.backgroundContainer)}
+        className={clsx('modal-container__background', styleSelectors.backgroundContainer)}
         onClick={handleClickBackground}
       />
-      <div className={classNames('modal-container__root', styleSelectors.rootContainer)}>
-        <div className={classNames('modal-container__header', styleSelectors.headerContainer)}>
-          <div className={classNames('modal-container__header__title', styleSelectors.headerTitle)}>
+      <div className={clsx('modal-container__root', styleSelectors.rootContainer)}>
+        <div className={clsx('modal-container__header', styleSelectors.headerContainer)}>
+          <div className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
             {title ? title : 'Modal Header'}
           </div>
           <i className="fa-solid fa-xmark" title="Close" onClick={handleClickClose} />
         </div>
-        <div className={classNames('modal-container__body', styleSelectors.bodyContainer)}>
+        <div className={clsx('modal-container__body', styleSelectors.bodyContainer)}>
           <ModalContext value={internalMetadata}>{children}</ModalContext>
         </div>
       </div>

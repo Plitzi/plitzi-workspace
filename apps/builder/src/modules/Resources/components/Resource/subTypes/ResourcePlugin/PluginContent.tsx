@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import formatBytes from '@pmodules/Resources/components/ResourceManager/helpers/formatBytes';
@@ -48,7 +48,7 @@ const PluginContent = ({
   const finalSize = useMemo(() => formatBytes(size), [size]);
 
   return (
-    <div className={classNames('group m-2 flex flex-col gap-1 overflow-hidden', className)}>
+    <div className={clsx('group m-2 flex flex-col gap-1 overflow-hidden', className)}>
       <div className="flex items-center gap-2">
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-500"

@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import ContentPlugin from './contents/ContentPlugin';
@@ -43,7 +43,7 @@ const ResourceContent = ({
         />
       )}
       {!['image', 'video', 'plugin'].includes(type) && (
-        <div className={classNames('flex items-center justify-center', className)}>
+        <div className={clsx('flex items-center justify-center', className)}>
           <i className="fa-solid fa-file fa-3x text-gray-300" title="Plugin" />
         </div>
       )}

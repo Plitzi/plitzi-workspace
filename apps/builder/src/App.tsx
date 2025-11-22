@@ -13,7 +13,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
 import get from 'lodash-es/get';
@@ -232,7 +232,7 @@ const App = (props: AppProps) => {
 
   return (
     <Provider>
-      <ContainerRoot className={classNames('plitzi-builder flex items-stretch', className)}>
+      <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
         {!hasBrowserRouter && <BrowserRouter basename={get(server, 'basePath', '')}>{childrenParsed}</BrowserRouter>}
         {hasBrowserRouter && childrenParsed}
       </ContainerRoot>

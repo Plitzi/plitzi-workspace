@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import startCase from 'lodash-es/startCase';
 import upperFirst from 'lodash-es/upperFirst';
@@ -164,17 +164,14 @@ const NodeHeader = ({
   }, [optionsMemo, elementId, action, type]);
 
   return (
-    <div className={classNames('flex gap-2 p-2', className)}>
+    <div className={clsx('flex gap-2 p-2', className)}>
       <div className="flex flex-col items-center justify-center">
         <div
-          className={classNames(
-            'flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-gray-300',
-            {
-              'bg-blue-400 text-white': type === 'trigger',
-              'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
-              'bg-orange-400 text-white': type === 'utility'
-            }
-          )}
+          className={clsx('flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-gray-300', {
+            'bg-blue-400 text-white': type === 'trigger',
+            'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
+            'bg-orange-400 text-white': type === 'utility'
+          })}
           onClick={onClickOpen}
         >
           {type === 'trigger' && <i className="fa-solid fa-wand-magic-sparkles" />}

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import { useMemo } from 'react';
 
@@ -49,7 +49,7 @@ const Button = ({
       tag="button"
       type={previewMode ? subType : 'button'}
       internalProps={internalProps}
-      className={classNames('plitzi-component__button', className, {
+      className={clsx('plitzi-component__button', className, {
         'container--empty--skip': !previewMode && !children && content
       })}
       disabled={disabled}

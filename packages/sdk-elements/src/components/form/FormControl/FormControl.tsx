@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react-hooks/rules-of-hooks */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -71,11 +71,7 @@ const FormControl = ({
       <RootElement
         ref={ref}
         internalProps={internalProps}
-        className={classNames(
-          'plitzi-component__form-input',
-          { 'form-input--out-of-context': !previewMode },
-          className
-        )}
+        className={clsx('plitzi-component__form-input', { 'form-input--out-of-context': !previewMode }, className)}
       >
         <div>Form Input Only Works inside Form element</div>
       </RootElement>
@@ -105,7 +101,7 @@ const FormControl = ({
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames(
+      className={clsx(
         'plitzi-component__form-control',
         { 'form-control--invalid': error && previewMode, [`plitzi-component__form-control-${subType}`]: subType },
         className
@@ -253,7 +249,7 @@ const FormControl = ({
           disabled={disabled}
         />
       )} */}
-      {error && <div className={classNames('form-control__error-message', styleSelectors.error)}>{error}</div>}
+      {error && <div className={clsx('form-control__error-message', styleSelectors.error)}>{error}</div>}
     </RootElement>
   );
 };

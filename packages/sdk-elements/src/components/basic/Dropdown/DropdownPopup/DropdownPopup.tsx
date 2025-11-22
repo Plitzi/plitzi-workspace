@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useImperativeHandle } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
@@ -30,7 +30,7 @@ const DropdownPopup = ({ ref, className = '', internalProps, children }: Dropdow
     <RootElement
       ref={popupRef}
       internalProps={internalProps}
-      className={classNames('plitzi-component__dropdown-popup', className, {
+      className={clsx('plitzi-component__dropdown-popup', className, {
         'popup-container--no-visible': !openPopup || !parameters
       })}
       style={parameters}

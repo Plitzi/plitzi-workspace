@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo, use } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -36,7 +36,7 @@ const ListControlledItem = ({
 
   if (isTemplate) {
     return (
-      <div className={classNames('plitzi-component__controlled-list-item', className)}>
+      <div className={clsx('plitzi-component__controlled-list-item', className)}>
         <div className="controlled-list-item__counter">{`List Item - ${itemCount}`}</div>
         <ReplicaProvider>
           {ListContext && <ListContext value={dataSourceValue}>{children}</ListContext>}

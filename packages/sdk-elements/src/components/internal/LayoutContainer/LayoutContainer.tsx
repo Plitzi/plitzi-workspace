@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import throttle from 'lodash-es/throttle';
 import { useCallback, useEffect } from 'react';
 
@@ -74,7 +74,7 @@ const LayoutContainer = ({ ref, className = '', internalProps, children, subType
       ref={ref}
       tag={subType}
       internalProps={internalProps}
-      className={classNames('plitzi-component__layout-container', className)}
+      className={clsx('plitzi-component__layout-container', className)}
     >
       {children}
     </RootElement>

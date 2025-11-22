@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 export type HiddenProps = {
   className?: string;
@@ -20,7 +20,7 @@ const Hidden = ({
   previewMode = true
 }: HiddenProps) => {
   return (
-    <div className={classNames('form-control__input-hidden-container', className)}>
+    <div className={clsx('form-control__input-hidden-container', className)}>
       {previewMode && (
         <input
           className="input-container__input-hidden"

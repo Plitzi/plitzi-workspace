@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use } from 'react';
 
 import DevToolsContext from '../../DevToolsContext';
@@ -20,7 +20,7 @@ const DevToolsBody = ({ className, tabSelected, orientation, elementSelected, on
   const { logs, clearLogs } = use(DevToolsContext);
 
   return (
-    <div className={classNames('flex h-full w-full grow overflow-auto bg-gray-50', className)}>
+    <div className={clsx('flex h-full w-full grow overflow-auto bg-gray-50', className)}>
       <div className="flex w-full flex-col gap-2">
         {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
         {tabSelected === 'dataSources' && <DataSourceViewer elementSelected={elementSelected} />}

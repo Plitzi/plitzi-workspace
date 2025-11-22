@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import pick from 'lodash-es/pick';
 import { use, useEffect, useMemo } from 'react';
 
@@ -111,7 +111,7 @@ const Custom = ({
   }
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={classNames('plitzi-component__custom', className)}>
+    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__custom', className)}>
       {renderType && !settingsMalformed && (
         <span>
           Custom Component <b>{renderType}</b> Not Found

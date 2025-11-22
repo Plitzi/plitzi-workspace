@@ -2,7 +2,7 @@
 
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo, useRef } from 'react';
 
 import useElement from '../hooks/useElement';
@@ -45,7 +45,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
           <WrappedComponent
             {...(internalProps.attributes as T)}
             {...(props.extraProps as T)}
-            className={classNames(className, definition.styleSelectors.base)}
+            className={clsx(className, definition.styleSelectors.base)}
             // Plitzi
             ref={ref}
             internalProps={internalProps}

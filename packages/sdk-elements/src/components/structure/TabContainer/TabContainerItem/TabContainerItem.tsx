@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import React, { useCallback } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
@@ -38,7 +38,7 @@ const TabContainerItem = ({ className = '', internalProps, children, ref }: TabC
       ref={ref}
       internalProps={internalProps}
       onClick={handleClick}
-      className={classNames('plitzi-component__tab-container-item', className, {
+      className={clsx('plitzi-component__tab-container-item', className, {
         active: tabSelected === tabIndex
       })}
     >

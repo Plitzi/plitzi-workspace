@@ -1,5 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
 import { hexToRGB } from '../../../../helpers/utils';
@@ -35,7 +35,7 @@ const PluginItem = ({
 
   return (
     <div
-      className={classNames('flex w-full flex-col rounded-sm border border-gray-300 select-none', className)}
+      className={clsx('flex w-full flex-col rounded-sm border border-gray-300 select-none', className)}
       onClick={handleClick}
       style={{ backgroundImage: `linear-gradient(${backgroundColor} 20%, white)` }}
     >

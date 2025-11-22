@@ -1,7 +1,7 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import isEqual from 'lodash-es/isEqual';
 import { useCallback, use, useEffect, useState } from 'react';
 
@@ -39,7 +39,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
   }, [state]);
 
   return (
-    <div className={classNames('relative flex h-full w-full flex-col', className)}>
+    <div className={clsx('relative flex h-full w-full flex-col', className)}>
       <CodeMirror className="h-full" value={value} theme="dark" lineWrapping onChange={handleChange} mode="json" />
       <div className="absolute top-3 right-3 flex">
         <Button

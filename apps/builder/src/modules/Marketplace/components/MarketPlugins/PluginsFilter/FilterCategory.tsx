@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 export type FilterCategoryProps = {
@@ -20,7 +20,7 @@ const FilterCategory = ({
 
   return (
     <div
-      className={classNames(
+      className={clsx(
         'flex grow basis-0 cursor-pointer items-center justify-center px-2 py-1.5 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-gray-300',
         className,
         { 'bg-blue-100 font-bold': active }

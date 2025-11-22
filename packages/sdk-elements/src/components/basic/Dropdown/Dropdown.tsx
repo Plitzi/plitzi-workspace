@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { Children, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -227,7 +227,7 @@ const Dropdown = ({
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__dropdown', className, {
+      className={clsx('plitzi-component__dropdown', className, {
         'container--empty--skip': !previewMode && !children
       })}
       onClick={handleClick}
@@ -237,7 +237,7 @@ const Dropdown = ({
       {openPopup && backgroundDisabled && previewMode && (
         <div
           ref={backgroundContainerRef}
-          className={classNames('plitzi-component__dropdown__background-container', styleSelectors.backgroundContainer)}
+          className={clsx('plitzi-component__dropdown__background-container', styleSelectors.backgroundContainer)}
           onClick={handleClickBackgroundContainer}
         />
       )}

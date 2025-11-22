@@ -1,5 +1,5 @@
 import React, { Component, createRef } from 'react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import noop from 'lodash-es/noop';
 
 import Grid from './Grid';
@@ -143,7 +143,7 @@ class InputEasing extends Component {
 
     return (
       <svg
-        className={classNames('overflow-visible select-none', className)}
+        className={clsx('overflow-visible select-none', className)}
         ref={inputRef}
         width={width}
         height={height}

@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import type { LogType } from '../../../../../DevToolsContext';
@@ -24,14 +24,14 @@ const LogsSummaryItem = ({
 
   return (
     <div
-      className={classNames('flex cursor-pointer items-center gap-3 px-2 py-1 text-sm', className, {
+      className={clsx('flex cursor-pointer items-center gap-3 px-2 py-1 text-sm', className, {
         'bg-gray-200': selected,
         'hover:bg-gray-200': !selected
       })}
       onClick={handleClick}
     >
       <i
-        className={classNames({
+        className={clsx({
           'fa-regular fa-circle-xmark text-red-400': logType === 'danger',
           'fa-solid fa-triangle-exclamation text-orange-400': logType === 'warning',
           'fa-solid fa-circle-info text-blue-400': logType === 'info',

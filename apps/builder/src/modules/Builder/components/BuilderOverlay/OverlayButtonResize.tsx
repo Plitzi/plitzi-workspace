@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import debounce from 'lodash-es/debounce';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
@@ -214,7 +214,7 @@ const OverlayButtonResize = ({
   return (
     <button
       type="button"
-      className={classNames('overlay__button-resize', className, {
+      className={clsx('overlay__button-resize', className, {
         'resize--top-left': resizeHandle === 'nw',
         'resize--top-right': resizeHandle === 'ne',
         'resize--bottom-left': resizeHandle === 'sw',

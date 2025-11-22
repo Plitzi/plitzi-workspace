@@ -150,6 +150,17 @@ export default defineConfig(({ mode, command }) => {
       // }
       onlyAnalyze && visualizer({ filename: './dist/stats.html', open: true })
     ],
+    optimizeDeps: {
+      include: [
+        'style-to-js',
+        'debug',
+        'extend',
+        'lowlight',
+        'lowlight/lib/core',
+        'lowlight/lib/core',
+        '@babel/runtime/regenerator'
+      ]
+    },
     css: {
       preprocessorOptions: {
         scss: {
@@ -183,7 +194,8 @@ export default defineConfig(({ mode, command }) => {
           'react-dom/client',
           'react-dom/server',
           'react/jsx-runtime',
-          'react/jsx-dev-runtime'
+          'react/jsx-dev-runtime',
+          '@plitzi/plitzi-sdk'
         ],
         output: [
           {
@@ -217,6 +229,7 @@ export default defineConfig(({ mode, command }) => {
       emptyOutDir: !devMode
     },
     define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
       VERSION: JSON.stringify(PACKAGE.version)
     },
     test: {

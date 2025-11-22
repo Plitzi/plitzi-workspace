@@ -2,7 +2,7 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import ContainerFloating, { useFloating } from '@plitzi/plitzi-ui/ContainerFloating';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import omit from 'lodash-es/omit.js';
 import pick from 'lodash-es/pick.js';
@@ -261,7 +261,7 @@ const Selector = ({
     <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
       <ContainerFloating.Trigger className="w-full">
         <div
-          className={classNames('bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1', className, {
+          className={clsx('bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1', className, {
             'pointer-events-none cursor-not-allowed bg-gray-100': disabled,
             'cursor-pointer': !disabled
           })}

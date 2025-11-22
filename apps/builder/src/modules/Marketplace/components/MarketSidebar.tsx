@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Heading from '@plitzi/plitzi-ui/Heading';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
 import MarketSidebarItem from './MarketSidebarItem';
@@ -22,7 +22,7 @@ const MarketSidebar = ({ className = '', onSelect }: MarketSidebarProps) => {
   );
 
   return (
-    <div className={classNames('flex flex-col justify-between', className)}>
+    <div className={clsx('flex flex-col justify-between', className)}>
       <div className="flex flex-col">
         <Heading as="h3" className="mb-8">
           Explore

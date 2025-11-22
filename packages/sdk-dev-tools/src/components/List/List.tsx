@@ -1,5 +1,5 @@
 import Input from '@plitzi/plitzi-ui/Input';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 
 import ListItem from './ListItem';
@@ -35,7 +35,7 @@ const List = <T extends ListItem>({ items = [], className, value, onSelect }: Li
   const handleSelect = useCallback((id?: string) => onSelect?.(items.find(item => item.id === id)), [items, onSelect]);
 
   return (
-    <div className={classNames('flex h-full flex-col gap-4 border-r border-gray-300', className)}>
+    <div className={clsx('flex h-full flex-col gap-4 border-r border-gray-300', className)}>
       <Input value={filter} onChange={handleChangeFilter} placeholder="Search..." size="sm" />
       <div className="flex flex-col gap-1 overflow-y-auto text-sm">
         {itemsSorted.map((item, i) => (

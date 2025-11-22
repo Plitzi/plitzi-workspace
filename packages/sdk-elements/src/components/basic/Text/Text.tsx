@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -46,7 +46,7 @@ const Text = ({ ref, content = 'Text', className = '', internalProps }: TextProp
   );
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={classNames('plitzi-component__text', className)}>
+    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__text', className)}>
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable

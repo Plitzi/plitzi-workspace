@@ -1,5 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, memo } from 'react';
 
 import SelectorItem from '../Selector/SelectorItem';
@@ -40,7 +40,7 @@ const StyleSelectorTag = ({
 
   return (
     <div
-      className={classNames('group flex items-center justify-between gap-2 border-t border-gray-300 p-1', {
+      className={clsx('group flex items-center justify-between gap-2 border-t border-gray-300 p-1', {
         'hover:bg-gray-200': !active,
         'bg-gray-200': active
       })}
@@ -48,7 +48,7 @@ const StyleSelectorTag = ({
     >
       <SelectorItem editable={false} selector={label} type={type} active />
       <div className="flex">
-        <div className={classNames('mr-1', { flex: active, 'hidden group-hover:flex': !active })}>
+        <div className={clsx('mr-1', { flex: active, 'hidden group-hover:flex': !active })}>
           <Button intent="danger" size="xs" onClick={handleClickDelete}>
             <Button.Icon icon="fas fa-trash" />
           </Button>

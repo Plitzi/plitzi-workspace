@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, memo } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
@@ -160,13 +160,13 @@ const WorkflowNode = ({
 
   return (
     <div
-      className={classNames('w-full rounded-xl border-2 bg-white', {
+      className={clsx('w-full rounded-xl border-2 bg-white', {
         'border-gray-300': !isOpened,
         'border-blue-500': isOpened
       })}
     >
       <NodeHeader
-        className={classNames({ 'border-b-2 border-dotted border-gray-300': isOpened })}
+        className={clsx({ 'border-b-2 border-dotted border-gray-300': isOpened })}
         id={id}
         title={title}
         type={type}

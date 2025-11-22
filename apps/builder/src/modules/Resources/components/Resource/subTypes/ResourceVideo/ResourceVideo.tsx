@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use, useCallback, useState } from 'react';
 
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
@@ -51,7 +51,7 @@ const ResourceVideo = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       draggable={!isLoading}
-      className={classNames(
+      className={clsx(
         'group relative flex min-h-20 cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none',
         className
       )}

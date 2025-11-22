@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import RootElement from '../../../../Element/RootElement';
 
@@ -19,7 +19,7 @@ const ListBasic = ({ ref, className = '', subType = 'ul', internalProps, childre
       ref={ref}
       tag={subType}
       internalProps={internalProps}
-      className={classNames('plitzi-component__list', className)}
+      className={clsx('plitzi-component__list', className)}
     >
       {children}
     </RootElement>

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -44,7 +44,7 @@ const Image = ({
       <RootElement
         ref={ref}
         internalProps={internalProps}
-        className={classNames('plitzi-component__image image--edit-mode', className)}
+        className={clsx('plitzi-component__image image--edit-mode', className)}
       >
         <img draggable={false} src={src} alt={alt} loading={loadMode} onError={handleError} />
       </RootElement>
@@ -57,7 +57,7 @@ const Image = ({
       draggable={false}
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__image', className)}
+      className={clsx('plitzi-component__image', className)}
       src={src}
       alt={alt}
       loading={loadMode}

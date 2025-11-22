@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import PluginContent from './PluginContent';
@@ -31,7 +31,7 @@ const ResourcePlugin = ({
 
   return (
     <div
-      className={classNames(
+      className={clsx(
         'group relative flex w-full cursor-pointer overflow-hidden rounded-md border border-gray-300 select-none [column-span:all]',
         className
       )}

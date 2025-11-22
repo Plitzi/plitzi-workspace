@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
@@ -58,7 +58,7 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
   }, [id, subscriptor, interactionsManager]);
 
   return (
-    <div className={classNames('flex grow flex-col', className)}>
+    <div className={clsx('flex grow flex-col', className)}>
       <Workflow
         key={id}
         nodes={interactions}

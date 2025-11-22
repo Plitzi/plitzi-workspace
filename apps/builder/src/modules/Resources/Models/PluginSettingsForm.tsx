@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 export type PluginSettingsFormProps = {
   className?: string;
@@ -15,7 +15,7 @@ const PluginSettingsForm = ({ className = '' /* , values, onSubmit, onClose */ }
   // };
 
   return (
-    <div className={classNames('w-full', className)}>
+    <div className={clsx('w-full', className)}>
       {/* <Form onCancel={onClose} onSubmit={handleSubmit} values={values}>
         <FormContext.Consumer>
           {context => {

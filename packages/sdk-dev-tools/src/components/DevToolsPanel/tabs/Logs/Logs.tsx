@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useState, useCallback } from 'react';
 
 import Log from './Log';
@@ -27,12 +27,12 @@ const Logs = ({ items = [], orientation = 'horizontal', onClear }: LogsProps) =>
         <button onClick={onClear}>Clear Logs</button>
       </div>
       <div
-        className={classNames('flex h-full w-full overflow-hidden', {
+        className={clsx('flex h-full w-full overflow-hidden', {
           'grow basis-0 flex-col': orientation === 'vertical'
         })}
       >
         <LogsSummary
-          className={classNames({ 'h-full': orientation === 'horizontal' })}
+          className={clsx({ 'h-full': orientation === 'horizontal' })}
           logTypeSelected={logTypeSelected}
           items={items}
           orientation={orientation}

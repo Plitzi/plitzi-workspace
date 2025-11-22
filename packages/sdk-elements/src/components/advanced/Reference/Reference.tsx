@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import capitalize from 'lodash-es/capitalize.js';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo, useState, useRef } from 'react';
@@ -176,7 +176,7 @@ const Reference = ({
       <RootElement
         ref={ref}
         internalProps={internalProps}
-        className={classNames('plitzi-component__reference', className, {
+        className={clsx('plitzi-component__reference', className, {
           'reference--build-mode': !previewMode
         })}
       >
@@ -207,7 +207,7 @@ const Reference = ({
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__reference', className, {
+      className={clsx('plitzi-component__reference', className, {
         'reference--build-mode': !previewMode
       })}
     >

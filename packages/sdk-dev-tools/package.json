@@ -311,7 +311,7 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@uiw/react-json-view": "^2.0.0-alpha.39",
-    "classnames": "^2.5.1",
+    "clsx": "^2.1.1",
     "lodash-es": "^4.17.21",
     "moment": "^2.30.1"
   }

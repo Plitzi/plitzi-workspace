@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useState, useCallback } from 'react';
 
 import DevToolsPanel from './components/DevToolsPanel';
@@ -25,7 +25,7 @@ const DevToolsContainer = ({ children, enabled = false }: DevToolsContainerProps
   return (
     <DevToolsContextProvider>
       <div
-        className={classNames('flex grow overflow-auto', {
+        className={clsx('flex grow overflow-auto', {
           'flex-col': orientation === 'horizontal',
           'h-screen': orientation === 'vertical'
         })}

@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 
 export type InputProps = {
@@ -42,7 +42,7 @@ const Input = ({
   const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
 
   return (
-    <div className={classNames('form-control__input-container', className)} onClick={handleClickContainer}>
+    <div className={clsx('form-control__input-container', className)} onClick={handleClickContainer}>
       <input
         ref={inputRef}
         className="input-container__input"

@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useMemo, useRef } from 'react';
 
 import type { ChangeEvent, MouseEvent } from 'react';
@@ -65,7 +65,7 @@ const Select = ({
   }, [options]);
 
   return (
-    <div className={classNames('form-control__select-container', className)} onClick={handleClickContainer}>
+    <div className={clsx('form-control__select-container', className)} onClick={handleClickContainer}>
       <select
         ref={inputRef}
         id={id}

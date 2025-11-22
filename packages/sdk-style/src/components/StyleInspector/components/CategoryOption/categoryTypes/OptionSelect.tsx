@@ -1,5 +1,5 @@
 import Select from '@plitzi/plitzi-ui/Select';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -13,7 +13,7 @@ export type OptionSelectProps = {
 
 const OptionSelect = ({ children, className, value, onChange }: OptionSelectProps) => {
   return (
-    <Select size="xs" value={value as string} onChange={onChange} className={classNames('w-full min-w-0', className)}>
+    <Select size="xs" value={value as string} onChange={onChange} className={clsx('w-full min-w-0', className)}>
       {children}
     </Select>
   );

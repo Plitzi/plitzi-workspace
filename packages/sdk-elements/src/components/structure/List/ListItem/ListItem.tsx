@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
@@ -20,7 +20,7 @@ const ListItem = ({ ref, className = '', internalProps, children }: ListItemProp
       tag="li"
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__list-item', className)}
+      className={clsx('plitzi-component__list-item', className)}
     >
       {children}
     </RootElement>

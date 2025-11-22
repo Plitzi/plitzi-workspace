@@ -1,7 +1,7 @@
 // Packages
 import React from 'react';
 import noop from 'lodash-es/noop';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 // Relatives
 import InputEasingButton from './InputEasingButton';
@@ -17,7 +17,7 @@ const InputEasingList = props => {
   const { className = '', onChange = noop } = props;
 
   return (
-    <div className={classNames('flex flex-col border-r border-gray-300', className)}>
+    <div className={clsx('flex flex-col border-r border-gray-300', className)}>
       <div className="flex flex-col">
         <div className="bg-blue-400 p-1 text-xs text-white">Default</div>
         <div className="flex flex-wrap">

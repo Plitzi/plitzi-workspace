@@ -1,5 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import type { MouseEvent } from 'react';
 
@@ -10,9 +10,7 @@ export type VariableActionsProps = {
 };
 
 const VariableActions = ({ onUpdate, onRemove, selected = false }: VariableActionsProps) => (
-  <div
-    className={classNames('flex items-center gap-2 text-xs', { flex: selected, 'hidden group-hover:flex': !selected })}
-  >
+  <div className={clsx('flex items-center gap-2 text-xs', { flex: selected, 'hidden group-hover:flex': !selected })}>
     <Button intent="custom" size="custom" border="none" onClick={onUpdate} title="Update">
       <Button.Icon intent="primary" icon="fas fa-pen" />
     </Button>

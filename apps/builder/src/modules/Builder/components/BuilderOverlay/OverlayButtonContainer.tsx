@@ -1,7 +1,7 @@
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -212,7 +212,7 @@ const OverlayButtonContainer = ({
 
   return (
     <div
-      className={classNames('overlay__button-container', {
+      className={clsx('overlay__button-container', {
         'button-container--bottom-inside': actionsPosition === 'bottom-inside',
         'button-container--top': actionsPosition === 'top',
         'button-container--top-right': actionsPosition === 'top-right',

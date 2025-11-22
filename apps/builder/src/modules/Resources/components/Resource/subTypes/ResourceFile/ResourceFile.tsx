@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use, useCallback, useState } from 'react';
 
 import { ResourcesListContext } from '@pmodules/Resources/components/ResourcesList/ResourcesListProvider';
@@ -51,7 +51,7 @@ const ResourceFile = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       draggable={!isLoading}
-      className={classNames(
+      className={clsx(
         'group relative flex w-full cursor-pointer flex-col justify-center overflow-hidden rounded-md border border-gray-300 select-none',
         className
       )}

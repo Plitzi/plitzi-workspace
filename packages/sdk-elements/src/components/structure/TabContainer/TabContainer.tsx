@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useState, cloneElement, Children, useMemo, isValidElement } from 'react';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -38,11 +38,7 @@ const TabContainer = ({ ref, className = '', internalProps, children }: TabConta
   }, [children, tabSelected]);
 
   return (
-    <RootElement
-      ref={ref}
-      internalProps={internalProps}
-      className={classNames('plitzi-component__tab-container', className)}
-    >
+    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__tab-container', className)}>
       {childrenParsed}
     </RootElement>
   );

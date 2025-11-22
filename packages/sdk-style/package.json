@@ -658,10 +658,10 @@
     "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.6",
+    "@plitzi/plitzi-ui": "^1.1.7",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "classnames": "^2.5.1",
+    "clsx": "^2.1.1",
     "immer": "^10.2.0",
     "lodash-es": "^4.17.21",
     "prop-types": "^15.8.1",

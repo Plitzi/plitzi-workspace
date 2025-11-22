@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useMemo } from 'react';
 
@@ -62,7 +62,7 @@ const ListControlled = ({ ref, className = '', internalProps, children, items = 
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__controlled-list', className, {
+      className={clsx('plitzi-component__controlled-list', className, {
         'controlled-list--build-mode': !previewMode
       })}
     >

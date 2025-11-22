@@ -91,7 +91,7 @@ const CollectionRecordForm = ({
 
   // return (
   //   <form
-  //     className={classNames('flex flex-col justify-between overflow-auto p-3', { 'pointer-events-none': previewMode })}
+  //     className={clsx('flex flex-col justify-between overflow-auto p-3', { 'pointer-events-none': previewMode })}
   //     onSubmit={handleSubmit(handleSubmitInternal)}
   //   >
   //     {fields &&
@@ -117,7 +117,7 @@ const CollectionRecordForm = ({
   //                   }
   //                   placeholder={fieldName}
   //                   className="mb-4 w-full"
-  //                   className={classNames({ 'bg-blue-200': fieldHovered === i })}
+  //                   className={clsx({ 'bg-blue-200': fieldHovered === i })}
   //                   onChange={e => onChange(e.target.value)}
   //                   value={value}
   //                   error={error}

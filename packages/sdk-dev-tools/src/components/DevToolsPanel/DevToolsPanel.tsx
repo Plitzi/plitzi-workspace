@@ -1,5 +1,5 @@
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -42,7 +42,7 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
 
   return (
     <ContainerResizable
-      className={classNames('component__container-resizable-sidebar text-sm', className)}
+      className={clsx('component__container-resizable-sidebar text-sm', className)}
       minConstraintsX={orientation === 'vertical' ? 500 : Infinity}
       maxConstraintsX={orientation === 'vertical' ? 1000 : Infinity}
       minConstraintsY={orientation === 'vertical' ? Infinity : 34}

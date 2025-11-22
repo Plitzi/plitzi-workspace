@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { produce } from 'immer';
 import capitalize from 'lodash-es/capitalize.js';
 import get from 'lodash-es/get.js';
@@ -302,7 +302,7 @@ const Form = ({
       ref={ref}
       internalProps={internalProps}
       method={method}
-      className={classNames('plitzi-component__form', className)}
+      className={clsx('plitzi-component__form', className)}
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
       onSubmit={handleSubmit}

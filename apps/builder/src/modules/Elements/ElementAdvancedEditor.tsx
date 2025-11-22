@@ -1,7 +1,7 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import capitalize from 'lodash-es/capitalize';
 import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
@@ -53,7 +53,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
   );
 
   return (
-    <div className={classNames('relative flex h-full flex-col', className)}>
+    <div className={clsx('relative flex h-full flex-col', className)}>
       <CodeMirror value={value} theme="dark" className="h-full" lineWrapping onChange={handleChange} mode={mode} />
       <div className="absolute top-3 right-3 flex">
         <Button

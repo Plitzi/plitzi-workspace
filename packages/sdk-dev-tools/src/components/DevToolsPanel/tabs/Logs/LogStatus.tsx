@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import type { LogType } from '../../../../DevToolsContext';
 import type { ReactNode } from 'react';
@@ -13,7 +13,7 @@ export type LogStatusProps = {
 const LogStatus = ({ className, logType = 'info', iconClassName, children }: LogStatusProps) => {
   return (
     <div
-      className={classNames('flex items-center gap-1 rounded-lg px-2 text-sm', className, {
+      className={clsx('flex items-center gap-1 rounded-lg px-2 text-sm', className, {
         'bg-red-500 text-white': logType === 'danger',
         'bg-orange-500 text-white': logType === 'warning',
         'bg-blue-500 text-white': logType === 'info',
@@ -21,7 +21,7 @@ const LogStatus = ({ className, logType = 'info', iconClassName, children }: Log
       })}
     >
       <i
-        className={classNames(iconClassName, {
+        className={clsx(iconClassName, {
           'fa-regular fa-circle-xmark': logType === 'danger',
           'fa-solid fa-triangle-exclamation': logType === 'warning',
           'fa-solid fa-circle-info': logType === 'info',

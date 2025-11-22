@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
@@ -201,27 +201,27 @@ const DialogContainer = ({
     <RootElement
       ref={ref}
       internalProps={internalProps}
-      className={classNames('plitzi-component__dialog-container', className)}
+      className={clsx('plitzi-component__dialog-container', className)}
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
       <div
-        className={classNames('dialog-container__background', styleSelectors.backgroundContainer)}
+        className={clsx('dialog-container__background', styleSelectors.backgroundContainer)}
         onClick={handleClickBackground}
       />
-      <div className={classNames('dialog-container__root', styleSelectors.rootContainer)}>
-        <div className={classNames('dialog-container__header', styleSelectors.headerContainer)}>
-          <div className={classNames('modal-container__header__title', styleSelectors.headerTitle)}>
+      <div className={clsx('dialog-container__root', styleSelectors.rootContainer)}>
+        <div className={clsx('dialog-container__header', styleSelectors.headerContainer)}>
+          <div className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
             {headerLabel ? headerLabel : 'Dialog Header'}
           </div>
           <i className="fa-solid fa-xmark" title="Close" onClick={void handleClickCancel} />
         </div>
-        <div className={classNames('dialog-container__body', styleSelectors.body)}>
+        <div className={clsx('dialog-container__body', styleSelectors.body)}>
           <DialogContianerContext value={internalMetadata}>{children}</DialogContianerContext>
         </div>
-        <div className={classNames('dialog-container__footer', styleSelectors.footerContainer)}>
+        <div className={clsx('dialog-container__footer', styleSelectors.footerContainer)}>
           <button
-            className={classNames('footer__button button--accept', styleSelectors.acceptButton)}
+            className={clsx('footer__button button--accept', styleSelectors.acceptButton)}
             onClick={void handleClickAccept}
             disabled={processing}
           >
@@ -234,7 +234,7 @@ const DialogContainer = ({
             {!processing && acceptButtonLabel}
           </button>
           <button
-            className={classNames('footer__button button--cancel', styleSelectors.cancelButton)}
+            className={clsx('footer__button button--cancel', styleSelectors.cancelButton)}
             onClick={void handleClickCancel}
             disabled={processing}
           >

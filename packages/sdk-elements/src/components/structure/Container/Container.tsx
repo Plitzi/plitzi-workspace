@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -35,7 +35,7 @@ const Container = ({ ref, className = '', subType = 'div', internalProps, childr
       ref={ref}
       tag={subType}
       internalProps={internalProps}
-      className={classNames(`plitzi-component__container plitzi-component__container-${subType}`, className)}
+      className={clsx(`plitzi-component__container plitzi-component__container-${subType}`, className)}
       style={style}
     >
       {children}

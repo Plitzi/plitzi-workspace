@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import type { InteractionNodeStatus } from '@plitzi/sdk-shared';
@@ -28,7 +28,7 @@ const ExecutionTreeNode = ({
 
   return (
     <div
-      className={classNames('flex cursor-pointer items-center gap-1 px-2', {
+      className={clsx('flex cursor-pointer items-center gap-1 px-2', {
         'pl-4': level === 1,
         'bg-gray-300': isSelected,
         'hover:bg-gray-200': !isSelected
@@ -36,7 +36,7 @@ const ExecutionTreeNode = ({
       onClick={handleClick}
     >
       <div
-        className={classNames('h-2.5 w-2.5 rounded-full', {
+        className={clsx('h-2.5 w-2.5 rounded-full', {
           'bg-green-500': status === 'success',
           'bg-orange-500': status === 'skipped',
           'bg-gray-500': status === 'disabled'

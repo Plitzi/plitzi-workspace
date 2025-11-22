@@ -2,7 +2,7 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
@@ -130,7 +130,7 @@ const ResourceDirectory = ({
 
   return (
     <ContainerCollapsable
-      className={classNames(
+      className={clsx(
         'w-full gap-2 rounded p-2',
         {
           'border border-dashed border-orange-500 bg-orange-100': items.length === 0 && !isDefault,
@@ -146,7 +146,7 @@ const ResourceDirectory = ({
     >
       <ContainerCollapsable.Header
         className={{
-          header: classNames('group w-full', { 'pointer-events-none': isDragging }),
+          header: clsx('group w-full', { 'pointer-events-none': isDragging }),
           headerSlot: 'flex items-center gap-2',
           headerContainer: 'grow basis-0 overflow-hidden',
           headerTitle: 'w-full grow basis-0'
@@ -173,7 +173,7 @@ const ResourceDirectory = ({
         )}
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={classNames('max-h-[350px] overflow-y-auto', { 'pointer-events-none': isDragging })}
+        className={clsx('max-h-[350px] overflow-y-auto', { 'pointer-events-none': isDragging })}
       >
         {items.length > 0 && (
           <div className="mt-2 block columns-3 gap-2">

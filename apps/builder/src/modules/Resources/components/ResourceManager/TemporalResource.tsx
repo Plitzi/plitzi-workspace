@@ -1,5 +1,5 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useState, useEffect, useRef, useCallback, use, useMemo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -152,10 +152,7 @@ const TemporalResource = ({
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={classNames(
-        'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none',
-        className
-      )}
+      className={clsx('relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none', className)}
     >
       <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file?.size} />
       {file?.name && <ResourceName name={file.name} />}

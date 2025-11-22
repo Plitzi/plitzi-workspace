@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -19,7 +19,7 @@ const Loading = ({ ref, className = '', internalProps }: LoadingProps) => {
   } = internalProps;
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={classNames('plitzi-component__loading', className)}>
+    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__loading', className)}>
       <span>
         <b>{label}</b> Loading...
       </span>

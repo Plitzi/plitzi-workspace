@@ -1,5 +1,5 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
@@ -103,12 +103,12 @@ const BuilderAreaPreview = ({
   }, [components, element, id]);
 
   return (
-    <ContainerFrame className={classNames('builder-area flex', className)} css={css}>
+    <ContainerFrame className={clsx('builder-area flex', className)} css={css}>
       <PlitziServiceProvider value={plitziContextValue}>
         <DataSourceContextProvider>
           <InteractionsBuilderContextProvider>
             <div
-              className={classNames('builder-iframe', {
+              className={clsx('builder-iframe', {
                 'builder--display-component-border display-component-border--black':
                   displayBorderComponents === 'black',
                 'builder--display-component-border display-component-border--white': displayBorderComponents === 'white'

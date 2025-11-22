@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
@@ -19,7 +19,7 @@ const OverlayButton = ({
   return (
     <button
       type="button"
-      className={classNames('overlay__button', { 'button--blue': !isRemoving, 'button--red': isRemoving }, className)}
+      className={clsx('overlay__button', { 'button--blue': !isRemoving, 'button--red': isRemoving }, className)}
       title={title}
       {...otherProps}
     >

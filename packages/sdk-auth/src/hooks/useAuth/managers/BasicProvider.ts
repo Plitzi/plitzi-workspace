@@ -55,17 +55,18 @@ class BasicProvider {
     this.network = { loginUrl, refreshUrl };
     this.paths = { detailsPath, tokenPath, expirationTimePath };
 
-    if (this.isAuthenticated) {
-      this.refreshDetails()
-        .then(data => {
-          if (data.errors) {
-            this.logout();
-          } else {
-            this.setExpiration();
-          }
-        })
-        .catch(() => this.logout());
-    }
+    // this is updating the state before rendering
+    // if (this.isAuthenticated) {
+    //   this.refreshDetails()
+    //     .then(data => {
+    //       if (data.errors) {
+    //         this.logout();
+    //       } else {
+    //         this.setExpiration();
+    //       }
+    //     })
+    //     .catch(() => this.logout());
+    // }
   }
 
   #loginAsToken = async (token: string) => {

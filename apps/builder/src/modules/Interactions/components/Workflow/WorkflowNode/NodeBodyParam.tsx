@@ -4,7 +4,7 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -99,7 +99,7 @@ const NodeBodyParam = ({
   );
 
   return (
-    <div className={classNames('flex w-full flex-col [&:not(:first-child)]:mt-2', className)}>
+    <div className={clsx('flex w-full flex-col [&:not(:first-child)]:mt-2', className)}>
       <label htmlFor={id} className="text-sm">
         {finalLabel}
       </label>

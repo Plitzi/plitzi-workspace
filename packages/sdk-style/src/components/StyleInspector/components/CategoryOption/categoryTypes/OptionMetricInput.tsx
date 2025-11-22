@@ -1,5 +1,5 @@
 import MetricInput from '@plitzi/plitzi-ui/MetricInput';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -52,7 +52,7 @@ const OptionMetricInput = ({
         units={units}
         allowedWords={allowedWords}
         onChange={handleChange}
-        className={classNames('w-full min-w-0', className)}
+        className={clsx('w-full min-w-0', className)}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback } from 'react';
 
 import type { HTMLAttributes, MouseEvent, ReactNode } from 'react';
@@ -25,7 +25,7 @@ const BuilderContextMenuItem = ({
 
   return (
     <div
-      className={classNames(
+      className={clsx(
         'flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none last:border-b-0 hover:bg-blue-100',
         className
       )}

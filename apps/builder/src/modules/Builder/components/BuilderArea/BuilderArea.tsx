@@ -1,6 +1,6 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import debounce from 'lodash-es/debounce';
 import get from 'lodash-es/get';
 import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
@@ -201,7 +201,7 @@ const BuilderArea = ({
 
   return (
     <div
-      className={classNames(
+      className={clsx(
         'builder-area flex flex-col p-2 select-none',
         {
           'min-w-[600px] overflow-hidden': multiPagesMode,
@@ -214,7 +214,7 @@ const BuilderArea = ({
       )}
     >
       <div
-        className={classNames('mx-auto mb-2 flex w-full grow basis-0 flex-col shadow', {
+        className={clsx('mx-auto mb-2 flex w-full grow basis-0 flex-col shadow', {
           'max-w-[1440px]': displayMode === 'desktop',
           'max-w-3xl': displayMode === 'tablet',
           'max-w-[425px]': displayMode === 'mobile'

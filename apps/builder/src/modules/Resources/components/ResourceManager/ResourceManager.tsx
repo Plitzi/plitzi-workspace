@@ -1,6 +1,6 @@
 import FileUpload from '@plitzi/plitzi-ui/FileUpload';
 import Heading from '@plitzi/plitzi-ui/Heading';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
 import getPluginManifest from './helpers/getPluginManifest';
@@ -98,7 +98,7 @@ const ResourceManager = ({
   );
 
   return (
-    <div className={classNames('flex w-full flex-col overflow-y-auto', className)}>
+    <div className={clsx('flex w-full flex-col overflow-y-auto', className)}>
       <FileUpload
         multiple
         canDragAndDrop

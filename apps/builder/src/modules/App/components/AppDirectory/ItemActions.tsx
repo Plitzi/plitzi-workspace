@@ -3,7 +3,7 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -123,11 +123,7 @@ const ItemActions = ({
   );
 
   return (
-    <Flex
-      gap={2}
-      items="center"
-      className={classNames({ 'hidden group-hover:flex': !active && !zoom && !defaultPage })}
-    >
+    <Flex gap={2} items="center" className={clsx({ 'hidden group-hover:flex': !active && !zoom && !defaultPage })}>
       {!defaultPage && type === 'page' && (
         <Icon
           size="xs"
@@ -138,7 +134,7 @@ const ItemActions = ({
           onClick={handleClickSetHome}
         />
       )}
-      <Flex gap={2} items="center" className={classNames({ 'hidden group-hover:flex': !active && !zoom })}>
+      <Flex gap={2} items="center" className={clsx({ 'hidden group-hover:flex': !active && !zoom })}>
         {zoom && (
           <Icon
             size="xs"
