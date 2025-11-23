@@ -1,7 +1,8 @@
 import clsx from 'clsx';
 import isEmpty from 'lodash-es/isEmpty';
-import moment from 'moment';
 import { useMemo } from 'react';
+
+import { formatDate } from '@plitzi/sdk-shared';
 
 import type { CollectionField, CollectionRecord as TCollectionRecord } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -30,7 +31,7 @@ const CollectionRecord = ({
       return 'Not Set';
     }
 
-    return moment.utc(publishedAt * 1000).format('MMMM DD, YYYY');
+    return formatDate(publishedAt, 'MMMM dd, yyyy');
   }, [publishedAt]);
 
   return (

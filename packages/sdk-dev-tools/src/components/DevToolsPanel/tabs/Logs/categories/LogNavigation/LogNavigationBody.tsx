@@ -2,14 +2,14 @@ import get from 'lodash-es/get.js';
 import { use, useMemo } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import { formatDate } from '@plitzi/sdk-shared';
 
 import type { Element } from '@plitzi/sdk-shared';
-import type { Moment } from 'moment';
 
 export type LogNavigationBodyProps = {
   className?: string;
-  startTime?: string | Moment;
-  endTime?: string | Moment;
+  startTime?: string | Date;
+  endTime?: string | Date;
   duration?: string;
   elementId?: string;
 };
@@ -28,11 +28,11 @@ const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavig
         <div className="flex flex-col">
           <div className="flex gap-1">
             <span>Started:</span>
-            {typeof startTime === 'string' ? startTime : startTime?.format()}
+            {typeof startTime === 'string' ? startTime : formatDate(startTime)}
           </div>
           <div className="flex gap-1">
             <span>End:</span>
-            {typeof endTime === 'string' ? endTime : endTime?.format()}
+            {typeof endTime === 'string' ? endTime : formatDate(endTime)}
           </div>
           <div className="flex gap-1">
             <span>Duration:</span>

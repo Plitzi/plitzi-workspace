@@ -1,7 +1,8 @@
 import clsx from 'clsx';
 import get from 'lodash-es/get.js';
-import moment from 'moment';
 import { useCallback, useMemo } from 'react';
+
+import { getDurationMs } from '@plitzi/sdk-shared';
 
 import ExecutionTreeNode from './ExecutionTreeNode';
 
@@ -23,7 +24,7 @@ const ExecutionTree = ({ className, nodeId, nodes, selected, onSelect }: Executi
     const tree = [];
     while (auxNode) {
       const { node, startTime, endTime } = auxNode;
-      const duration = `${moment.duration(moment(endTime).diff(startTime)).asMilliseconds()}ms`;
+      const duration = `${getDurationMs(endTime, startTime)}ms`;
       const level = node.id === nodeId ? 0 : 1;
       tree.push({ id: node.id, action: node.action, title: node.title, status: auxNode.status, level, duration });
       auxNode = get(nodes, node.afterNode) as Nodes[keyof Nodes] | undefined;

@@ -1,8 +1,8 @@
 import get from 'lodash-es/get.js';
-import moment from 'moment';
 import { use, useCallback, useMemo } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import { formatDate } from '@plitzi/sdk-shared';
 
 import type { Element } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -19,8 +19,8 @@ export type BodyHeaderProps = {
 const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: BodyHeaderProps) => {
   const { schema } = use(SchemaContext);
   const element = useMemo(() => get(schema, `flat.${elementId}`), [schema, elementId]);
-  const startTimeParsed = useMemo(() => moment(startTime).format('HH:mm:ss.SSS'), [startTime]);
-  const endTimeParsed = useMemo(() => moment(endTime).format('HH:mm:ss.SSS'), [endTime]);
+  const startTimeParsed = useMemo(() => formatDate(startTime, 'HH:mm:ss.SSS'), [startTime]);
+  const endTimeParsed = useMemo(() => formatDate(endTime, 'HH:mm:ss.SSS'), [endTime]);
   const elementDOM = useMemo(() => {
     if (typeof document === 'undefined') {
       return undefined;

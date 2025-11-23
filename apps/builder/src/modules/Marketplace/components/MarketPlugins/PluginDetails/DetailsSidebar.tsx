@@ -1,8 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import Select from '@plitzi/plitzi-ui/Select';
-import moment from 'moment';
 import { useCallback, useMemo, useState } from 'react';
+
+import { formatDate } from '@plitzi/sdk-shared';
 
 export type DetailsSidebarProps = {
   name?: string;
@@ -35,7 +36,7 @@ const DetailsSidebar = ({
   onUpdate,
   onRemove
 }: DetailsSidebarProps) => {
-  const createdAtParsed = useMemo(() => moment(createdAt).format('DD MMMM, YYYY'), [createdAt]);
+  const createdAtParsed = useMemo(() => formatDate(createdAt, 'MMMM dd, yyyy'), [createdAt]);
   const [versionSelected, setVersionSelected] = useState(() => {
     let versionSelected = versionInstalled;
     if (!versionInstalled) {

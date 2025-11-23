@@ -1,40 +1,38 @@
-import moment from 'moment';
+import { parseDate, formatDate, formatDateUTC, formatFromNow } from '@plitzi/sdk-shared';
 
-import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
-import type { Moment } from 'moment';
+import type { DataSourceUtility, DataSourceUtilityParamsValue, SupportedLocale } from '@plitzi/sdk-shared';
 
 const callback = (
   source: string | number,
-  { format = 'DD/MM/YYYY', asAge = false, isUnix = true, isUtc = false }: DataSourceUtilityParamsValue
+  { format = 'dd/MM/yyyy', asAge = false, isUnix = true, isUtc = false, locale = 'en' }: DataSourceUtilityParamsValue
 ) => {
   if (typeof source !== 'string' && typeof source !== 'number') {
     return source;
   }
 
-  let value: number | string | Moment = source;
   try {
-    if (isUtc) {
-      value = moment.utc(source);
-    } else if (isUnix) {
-      value = moment.unix(source as number);
-    } else {
-      value = moment(source);
-    }
+    // Normalize date input using your helper
+    const date = parseDate(isUnix ? Number(source) : source);
 
-    if (!value.isValid()) {
+    if (isNaN(date.getTime())) {
       return source;
     }
 
+    // ---- AGE MODE (e.g. “5 minutes ago”) ----
     if (asAge) {
-      value = value.fromNow();
-    } else {
-      value = value.format(format as string);
+      return formatFromNow(date, locale as SupportedLocale, { addSuffix: true });
     }
-  } catch {
-    value = source;
-  }
 
-  return value;
+    // ---- UTC FORMATTING MODE ----
+    if (isUtc) {
+      return formatDateUTC(date, format as string, locale as SupportedLocale);
+    }
+
+    // ---- LOCAL FORMATTING MODE ----
+    return formatDate(date, format as string, locale as SupportedLocale);
+  } catch {
+    return source;
+  }
 };
 
 const dateConverter: DataSourceUtility = {
@@ -42,12 +40,21 @@ const dateConverter: DataSourceUtility = {
   title: 'Date Converter',
   type: 'utility',
   params: {
-    format: { defaultValue: 'DD/MM/YYYY', type: 'text' },
+    format: { defaultValue: 'dd/MM/yyyy', type: 'text' },
     asAge: { defaultValue: false, type: 'checkbox' },
     isUnix: { defaultValue: true, type: 'checkbox' },
-    isUtc: { defaultValue: false, type: 'checkbox' }
+    isUtc: { defaultValue: false, type: 'checkbox' },
+    locale: {
+      defaultValue: 'en',
+      type: 'select',
+      options: [
+        { label: 'en', value: 'en' },
+        { label: 'es', value: 'es' },
+        { label: 'pt', value: 'pt' }
+      ]
+    }
   },
-  preview: { format: '', asAge: '', isUnix: '', isUtc: '' },
+  preview: { format: '', asAge: '', isUnix: '', isUtc: '', locale: '' },
   callback
 };
 

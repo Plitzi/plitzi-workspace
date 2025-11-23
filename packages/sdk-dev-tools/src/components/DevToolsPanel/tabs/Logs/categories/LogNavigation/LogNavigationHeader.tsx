@@ -1,17 +1,18 @@
 import { useMemo } from 'react';
 
+import { formatDate } from '@plitzi/sdk-shared';
+
 import LogStatus from '../../LogStatus';
 
 import type { LogType } from '../../../../../../DevToolsContext';
 import type { NavigationStatus } from '@plitzi/sdk-navigation';
-import type { Moment } from 'moment';
 import type { ReactNode } from 'react';
 
 export type LogNavigationHeaderProps = {
   className?: string;
   status?: NavigationStatus;
   message?: ReactNode;
-  time?: string | Moment;
+  time?: string | Date;
 };
 
 const LogNavigationHeader = ({ status, message, time }: LogNavigationHeaderProps) => {
@@ -38,7 +39,7 @@ const LogNavigationHeader = ({ status, message, time }: LogNavigationHeaderProps
   return (
     <div className="flex w-full justify-between text-sm">
       <div className="flex min-w-0 grow basis-0 items-center gap-3">
-        <span className="font-bold">{typeof time === 'string' ? time : time?.format()}</span>
+        <span className="font-bold">{typeof time === 'string' ? time : formatDate(time)}</span>
         <div className="flex">
           <LogStatus logType={logType}>{statusMessage}</LogStatus>
         </div>

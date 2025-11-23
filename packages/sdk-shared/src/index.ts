@@ -24,6 +24,7 @@ export * from './dataSource';
 export * from './network';
 export * from './segments';
 export * from './collections';
+export * from './helpers/formatDate';
 
 export {
   usePlitziServiceContext,

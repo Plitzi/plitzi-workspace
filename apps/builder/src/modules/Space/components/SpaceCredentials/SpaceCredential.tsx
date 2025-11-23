@@ -1,7 +1,8 @@
 import { Heading, Icon } from '@plitzi/plitzi-ui/components';
 import clsx from 'clsx';
-import moment from 'moment';
 import { useCallback, useMemo } from 'react';
+
+import { formatDate } from '@plitzi/sdk-shared';
 
 import type { MouseEvent } from 'react';
 
@@ -29,7 +30,7 @@ const SpaceCredential = ({
   onSelect,
   onRemove
 }: SpaceCredentialProps) => {
-  const createdAtParsed = useMemo(() => moment(createdAt * 1000).format('DD MMMM, YYYY'), [createdAt]);
+  const createdAtParsed = useMemo(() => formatDate(createdAt, 'MMMM dd, yyyy'), [createdAt]);
 
   const handleClick = useCallback(
     (e: MouseEvent) => {

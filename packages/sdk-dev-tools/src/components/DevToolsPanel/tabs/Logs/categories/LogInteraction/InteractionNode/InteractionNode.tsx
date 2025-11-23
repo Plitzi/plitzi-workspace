@@ -1,6 +1,7 @@
 import Heading from '@plitzi/plitzi-ui/Heading';
-import moment from 'moment';
 import { useMemo } from 'react';
+
+import { getDurationMs } from '@plitzi/sdk-shared';
 
 import NodeHeader from './NodeHeader';
 import NodeMetadata from './NodeMetadata';
@@ -30,10 +31,7 @@ const InteractionNode = ({
   type,
   action
 }: InteractionNodeProps) => {
-  const duration = useMemo(
-    () => `${moment.duration(moment(endTime).diff(startTime)).asMilliseconds()}ms`,
-    [startTime, endTime]
-  );
+  const duration = useMemo(() => `${getDurationMs(endTime, startTime)}ms`, [startTime, endTime]);
 
   return (
     <div className="flex w-full flex-col">

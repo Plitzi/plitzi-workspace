@@ -1,5 +1,4 @@
 import get from 'lodash-es/get.js';
-import moment from 'moment';
 
 import type { UseCacheReturn } from '@plitzi/plitzi-ui/Cache';
 
@@ -187,7 +186,7 @@ class BasicProvider {
       return false;
     }
 
-    const remainingTime = (this.expireAt ?? 0) - Math.floor(moment.utc().valueOf() / 1000);
+    const remainingTime = (this.expireAt ?? 0) - Math.floor(Date.now() / 1000);
     if (remainingTime <= 0) {
       return false;
     }

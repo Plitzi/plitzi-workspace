@@ -1,7 +1,6 @@
-import moment from 'moment';
+import { formatDate } from '@plitzi/sdk-shared';
 
 import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../DevToolsContext';
-import type { Moment } from 'moment';
 
 export const LOG_TYPE_INFO = 'info';
 export const LOG_TYPE_WARNING = 'warning';
@@ -80,13 +79,14 @@ class PlitziConsole {
   // Methods
 
   getTime(asString: true): string;
-  getTime(asString?: false): Moment;
-  getTime(asString = false): string | Moment {
+  getTime(asString?: false): Date;
+  getTime(asString = false): string | Date {
+    const now = new Date();
     if (!asString) {
-      return moment();
+      return now;
     }
 
-    return moment().format('HH:mm:ss.SSS');
+    return formatDate(now, 'HH:mm:ss.SSS');
   }
 
   info(category: Log['category'], message: Log['message'], params: Log['params']) {

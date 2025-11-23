@@ -4,7 +4,6 @@ import LogNavigationBody from './LogNavigationBody';
 import LogNavigationHeader from './LogNavigationHeader';
 
 import type { LogNavigation as TLogNavigation } from '../../../../../../DevToolsContext';
-import type { Moment } from 'moment';
 import type { ReactNode } from 'react';
 
 const iconCollapsed = <i className="fa-solid fa-angle-right" />;
@@ -14,7 +13,7 @@ export type LogNavigationProps = {
   className?: string;
   message?: ReactNode;
   params?: TLogNavigation['params'];
-  time?: string | Moment;
+  time?: string | Date;
 };
 
 const LogNavigation = ({ time, message, params }: LogNavigationProps) => (
