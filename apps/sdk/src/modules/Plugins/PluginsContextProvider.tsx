@@ -160,7 +160,7 @@ const PluginsContextProvider = ({
 
   return (
     <>
-      <Helmet>{(renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') && helmetAssets}</Helmet>
+      <Helmet>{(renderMode === 'raw' || renderMode === 'widget') && helmetAssets}</Helmet>
       <PluginsContext value={pluginsContextValue}>{children}</PluginsContext>
     </>
   );

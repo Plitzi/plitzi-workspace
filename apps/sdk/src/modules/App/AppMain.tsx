@@ -80,7 +80,6 @@ const AppMain = ({
         environment={environment}
         revision={revision}
         debugMode={debugMode}
-        renderMode={renderMode}
       >
         <SchemaContextProvider>
           <CollectionContextProvider>

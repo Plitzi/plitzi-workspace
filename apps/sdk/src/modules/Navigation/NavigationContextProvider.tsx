@@ -128,17 +128,6 @@ const NavigationContextProvider = ({
   }, [paths, pathMatch, currentPageId]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const navigationValue = useMemo<NavigationContextValue>(() => {
-    if (renderMode === 'ssr') {
-      return {
-        navigate: handleNavigate,
-        urlSearchParams,
-        routeParams,
-        queryParams,
-        hostname,
-        currentPageId
-      };
-    }
-
     if (renderMode === 'widget') {
       return { urlSearchParams, routeParams, queryParams, currentPageId } as NavigationContextValue;
     }
@@ -166,7 +155,7 @@ const NavigationContextProvider = ({
     return 'Access Denied';
   }
 
-  if (action.type === 'redirect' && renderMode !== 'ssr') {
+  if (action.type === 'redirect') {
     return <Navigate to={action.path ?? ''} replace />;
   }
 

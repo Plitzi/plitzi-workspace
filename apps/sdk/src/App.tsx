@@ -45,6 +45,7 @@ export type AppProps = {
   offlineDataType?: 'json' | 'yaml';
   renderMode?: RenderMode;
   debugMode?: boolean;
+  isHydrating?: boolean;
   previewMode?: boolean;
   externalStyle?: string;
   state?: Record<string, unknown>;
@@ -63,6 +64,7 @@ const App = ({
   sdkEnvironment = 'production',
   renderMode = 'iframe',
   debugMode: debugModeProp = false,
+  isHydrating = false,
   ...sdkProps
 }: AppProps) => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
@@ -122,7 +124,7 @@ const App = ({
         <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
           <HelmetProvider>
             <ApolloProvider client={client}>
-              <ComponentProvider localCustomComponents={localCustomComponents}>
+              <ComponentProvider isHydrating={isHydrating} localCustomComponents={localCustomComponents}>
                 <AppMain
                   server={finalServer}
                   webKey={webKey}
@@ -139,10 +141,10 @@ const App = ({
     );
   }
 
-  const ReactRouter = renderMode === 'ssr' || typeof window === 'undefined' ? StaticRouter : BrowserRouter;
+  const ReactRouter = typeof window === 'undefined' ? StaticRouter : BrowserRouter;
 
   const routerParams = {} as { location: Location | string };
-  if (renderMode === 'ssr' && typeof window === 'undefined') {
+  if (typeof window === 'undefined') {
     routerParams.location = finalServer.requestUrl ?? '';
   }
 
@@ -152,7 +154,11 @@ const App = ({
         <HelmetProvider>
           <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
             <ApolloProvider client={client}>
-              <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+              <ComponentProvider
+                isHydrating={isHydrating}
+                localCustomComponents={localCustomComponents}
+                localComponents={sdkComponents}
+              >
                 <AppMain
                   server={finalServer}
                   webKey={webKey}

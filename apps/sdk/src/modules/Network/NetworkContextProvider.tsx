@@ -33,7 +33,6 @@ export type NetworkContextProviderProps = {
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
   debugMode?: boolean;
-  renderMode?: 'ssr' | 'iframe' | 'widget' | 'raw' | 'shadow';
 };
 
 const NetworkContextProvider = ({
@@ -48,12 +47,11 @@ const NetworkContextProvider = ({
   offlineMode = false,
   offlineData,
   offlineDataType = 'json',
-  debugMode = false,
-  renderMode = 'iframe'
+  debugMode = false
 }: NetworkContextProviderProps) => {
   const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const client = renderMode === 'ssr' && offlineDataAvailable ? undefined : useApolloClient();
+  const client = typeof window === 'undefined' && offlineDataAvailable ? undefined : useApolloClient();
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState<ReactNode | undefined>(undefined);
   const [internalData, setInternalData] = useState<OfflineData>(() => {

@@ -126,8 +126,10 @@ const UserBaseContextProvider = ({
       logout,
       refreshDetails,
       can,
-      authenticated: isAuthenticated || !previewMode || (renderMode === 'ssr' && !!server.isAuthenticated),
-      user: (renderMode !== 'ssr' ? { details: userDetails, accessToken } : server.user) as UserContextValue['user']
+      authenticated: isAuthenticated || !previewMode || (typeof window === 'undefined' && !!server.isAuthenticated),
+      user: (typeof window !== 'undefined'
+        ? { details: userDetails, accessToken }
+        : server.user) as UserContextValue['user']
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manager, manager?.isAuthenticated, previewMode, renderMode, server.isAuthenticated]);

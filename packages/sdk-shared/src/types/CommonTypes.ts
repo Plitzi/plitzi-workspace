@@ -17,4 +17,4 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
   isAuthenticated?: boolean;
 } & T;
 
-export type RenderMode = 'raw' | 'iframe' | 'shadow' | 'ssr' | 'widget';
+export type RenderMode = 'raw' | 'iframe' | 'shadow' | 'widget';

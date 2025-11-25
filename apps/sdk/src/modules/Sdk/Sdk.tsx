@@ -116,7 +116,7 @@ const Sdk = ({
     [previewMode, debugMode, currentPageId, renderMode, environment, schemaSettings, getWindow, rootDOM]
   );
 
-  if (renderMode === 'raw' || renderMode === 'ssr' || renderMode === 'widget') {
+  if (renderMode === 'raw' || renderMode === 'widget') {
     return (
       <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
     );

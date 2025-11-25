@@ -45,7 +45,7 @@ export function render(
   debugMode = false,
   ssrMode = false
 ) {
-  const Widget = () => {
+  const Widget = ({ isHydrating = false }: { isHydrating?: boolean }) => {
     const pluginKeys = Object.keys(plugins);
     if (process.env.NODE_ENV === 'production' && !debugMode) {
       disableReactDevTools();
@@ -63,6 +63,7 @@ export function render(
       <App
         {...params}
         debugMode={debugMode}
+        isHydrating={isHydrating}
         onInitStateManager={handleInitStateManager}
         onInitEventBridge={handleInitEventBridge}
       >
@@ -81,7 +82,7 @@ export function render(
   if (!ssrMode) {
     createRoot(rootDOM).render(<Widget />);
   } else {
-    hydrateRoot(rootDOM, <Widget />);
+    hydrateRoot(rootDOM, <Widget isHydrating />);
   }
 }
 
@@ -105,6 +106,7 @@ export type PlitziSdkProps = {
   offlineDataType?: 'json' | 'yaml';
   renderMode?: RenderMode;
   debugMode?: boolean;
+  isHydrating?: boolean;
   previewMode?: boolean;
   externalStyle?: string;
   state?: Record<string, unknown>;
@@ -112,6 +114,7 @@ export type PlitziSdkProps = {
 
 const PlitziSdk = ({
   debugMode = false,
+  isHydrating = false,
   // App
   children = undefined,
   // Space
@@ -122,7 +125,14 @@ const PlitziSdk = ({
   ...otherProps
 }: PlitziSdkProps) => {
   return (
-    <App {...otherProps} renderMode={renderMode} debugMode={debugMode} webKey={webKey} environment={environment}>
+    <App
+      {...otherProps}
+      isHydrating={isHydrating}
+      renderMode={renderMode}
+      debugMode={debugMode}
+      webKey={webKey}
+      environment={environment}
+    >
       {children}
     </App>
   );
