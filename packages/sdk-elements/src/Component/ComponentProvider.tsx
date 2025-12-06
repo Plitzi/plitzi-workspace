@@ -14,14 +14,14 @@ export type ComponentProviderProps = {
   localComponents?: Record<string, ComponentPlugin>;
   localCustomComponents?: Record<string, ComponentPlugin>;
   children?: ReactNode;
-  isHydrating: boolean;
+  isHydrating?: boolean;
 };
 
 const ComponentProvider = ({
   localComponents,
   localCustomComponents,
   children,
-  isHydrating
+  isHydrating = false
 }: ComponentProviderProps) => {
   const localComponentsParsed = useMemo<Record<string, ComponentPlugin>>(
     () => ({
