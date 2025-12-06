@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-auth",
-  "version": "0.26.4",
+  "version": "0.26.5",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -55,7 +55,7 @@
     "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.8",
+    "@plitzi/plitzi-ui": "^1.1.9",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
@@ -64,6 +64,6 @@
   "devDependencies": {
     "eslint": "^9.39.1",
     "typescript": "^5.9.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.6"
   }
 }

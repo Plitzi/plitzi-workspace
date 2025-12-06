@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-elements",
-  "version": "0.26.4",
+  "version": "0.26.5",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -564,14 +564,14 @@
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "immer": "^11.0.0",
+    "immer": "^11.0.1",
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "eslint": "^9.39.1",
-    "react": "^19.2.0",
+    "react": "^19.2.1",
     "typescript": "^5.9.3",
-    "vite": "^7.2.4",
-    "vitest": "^4.0.13"
+    "vite": "^7.2.6",
+    "vitest": "^4.0.15"
   }
 }

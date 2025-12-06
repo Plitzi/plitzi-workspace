@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-state",
-  "version": "0.26.4",
+  "version": "0.26.5",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -37,12 +37,12 @@
   "dependencies": {
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "immer": "^11.0.0",
+    "immer": "^11.0.1",
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "eslint": "^9.39.1",
     "typescript": "^5.9.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.6"
   }
 }
