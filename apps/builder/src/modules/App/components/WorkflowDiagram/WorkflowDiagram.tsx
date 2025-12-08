@@ -1,28 +1,20 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Card from '@plitzi/plitzi-ui/Card';
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  type Node,
-  // type Edge,
-  Panel
-} from '@xyflow/react';
-import { useCallback, useMemo, useState } from 'react';
+import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
+import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, Panel } from '@xyflow/react';
+import { useCallback, useMemo } from 'react';
 
-import { CustomNode } from './components/CustomNode';
+import CustomEdge from './components/CustomEdge';
+import CustomNode from './components/CustomNode';
 import schemaToSitemap from './helpers/schemaToSitemap';
 import sitemapToFlow from './helpers/sitemapToFlow';
 
 import type { ElementPage } from './helpers/schemaToSitemap';
+import type { FlowNode } from './helpers/sitemapToFlow';
 import type { Element, PageFolder } from '@plitzi/sdk-shared';
+import type { Node, Connection, Edge, EdgeChange, NodeChange } from '@xyflow/react';
 
-const nodeTypes = {
-  custom: CustomNode
-};
+export type { Connection, Edge, Node, FlowNode };
 
 export type AccessLevel = 'none' | 'public' | 'authenticated';
 
@@ -55,21 +47,33 @@ export type WorkflowDiagramProps = {
   pages: Element[];
   pageFolders: PageFolder[];
   onAddNode?: (nodeType: 'page' | 'folder' | 'custom') => void;
-  onRemoveNode?: (node: WorkflowNode[]) => void;
+  onAddEdge?: (edge: Connection) => void;
+  onRemoveEdge?: (edge: Connection | Edge) => void;
+  onRemoveNode?: (node: Node) => void;
 };
 
-const WorkflowDiagram = ({ pages, pageFolders, onAddNode, onRemoveNode }: WorkflowDiagramProps) => {
+const nodeTypes = { custom: CustomNode };
+
+const edgeTypes = { customEdge: CustomEdge };
+
+const WorkflowDiagram = ({
+  pages,
+  pageFolders,
+  onAddNode,
+  onAddEdge,
+  onRemoveNode,
+  onRemoveEdge
+}: WorkflowDiagramProps) => {
   const sitemapNodes = useMemo(() => schemaToSitemap(pages as ElementPage[], pageFolders), [pages, pageFolders]);
   const { nodes: flowNodes, edges: flowEdges } = useMemo(() => sitemapToFlow(sitemapNodes), [sitemapNodes]);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
 
-  const handleSelectionChange = useCallback(
-    ({ nodes }: { nodes: Node[] }) => setSelectedNodes(nodes.map(n => n.id)),
-    []
-  );
+  useDidUpdateEffect(() => {
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  }, [setNodes, flowNodes]);
 
   const handleAutoLayout = useCallback(() => {
     const { nodes: layoutNodes, edges: layoutEdges } = sitemapToFlow(sitemapNodes);
@@ -80,13 +84,6 @@ const WorkflowDiagram = ({ pages, pageFolders, onAddNode, onRemoveNode }: Workfl
   const handleAddPage = useCallback(() => onAddNode?.('page'), [onAddNode]);
 
   const handleAddFolder = useCallback(() => onAddNode?.('folder'), [onAddNode]);
-
-  const handleRemoveNode = useCallback(() => {
-    const nodesFiltered = selectedNodes
-      .map(selectedNode => nodes.find(node => node.id === selectedNode)?.data)
-      .filter(Boolean) as WorkflowNode[];
-    onRemoveNode?.(nodesFiltered);
-  }, [selectedNodes, nodes, onRemoveNode]);
 
   const getColor = useCallback((node: Node) => {
     const { accessLevel } = node.data;
@@ -100,14 +97,66 @@ const WorkflowDiagram = ({ pages, pageFolders, onAddNode, onRemoveNode }: Workfl
     }
   }, []);
 
+  const handleIsValidConnection = useCallback(
+    (connection: Connection | Edge) => {
+      if (edges.some(e => e.target === connection.target && e.source === connection.source)) {
+        return false;
+      }
+
+      if (edges.some(e => e.target === connection.target)) {
+        // target has an edge already
+        return false;
+      }
+
+      return true;
+    },
+    [edges]
+  );
+
+  const handleConnect = useCallback((connection: Connection) => onAddEdge?.(connection), [onAddEdge]);
+
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      changes.forEach(change => {
+        if (change.type === 'remove') {
+          const edge = edges.find(edge => edge.id === change.id);
+          if (edge) {
+            onRemoveEdge?.(edge);
+          }
+        }
+      });
+
+      onEdgesChange(changes);
+    },
+    [edges, onEdgesChange, onRemoveEdge]
+  );
+
+  const handleNodesChange = useCallback(
+    (changes: NodeChange<FlowNode>[]) => {
+      changes.forEach(change => {
+        if (change.type === 'remove') {
+          const node = nodes.find(node => node.id === change.id);
+          if (node) {
+            onRemoveNode?.(node);
+          }
+        }
+      });
+
+      onNodesChange(changes);
+    },
+    [nodes, onNodesChange, onRemoveNode]
+  );
+
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onSelectionChange={handleSelectionChange}
+      onNodesChange={handleNodesChange}
+      onEdgesChange={handleEdgesChange}
+      onConnect={handleConnect}
+      isValidConnection={handleIsValidConnection}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       fitView
       minZoom={0.1}
       maxZoom={2}
@@ -127,16 +176,6 @@ const WorkflowDiagram = ({ pages, pageFolders, onAddNode, onRemoveNode }: Workfl
             <Button size="sm" intent="secondary" onClick={handleAddFolder} iconPlacement="before">
               <Button.Icon icon="fa-solid fa-plus" />
               Folder
-            </Button>
-            <Button
-              size="sm"
-              intent="danger"
-              onClick={handleRemoveNode}
-              iconPlacement="before"
-              disabled={selectedNodes.length === 0}
-            >
-              <Button.Icon icon="fa-solid fa-trash-can" />
-              {`Remove ${selectedNodes.length > 0 ? `(${selectedNodes.length})` : ''}`}
             </Button>
             <Button size="sm" intent="custom" onClick={handleAutoLayout} iconPlacement="before">
               <Button.Icon icon="fa-solid fa-border-all" />

@@ -57,6 +57,21 @@ export const getPopups = ({
         allowClose: false,
         resizeHandles: ['se']
       }
+    },
+    {
+      id: 'sitemap',
+      component: undefined,
+      active: false,
+      settings: {
+        icon: 'fa-solid fa-sitemap',
+        title: 'Sitemap',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
     }
   ];
 
@@ -195,24 +210,6 @@ export const getPopups = ({
       }
     }
   );
-
-  if (featureFlag.sitemap) {
-    left.push({
-      id: 'sitemap',
-      component: undefined,
-      active: false,
-      settings: {
-        icon: 'fa-solid fa-sitemap',
-        title: 'Sitemap',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    });
-  }
 
   return { left, right: [], floating: [] };
 };

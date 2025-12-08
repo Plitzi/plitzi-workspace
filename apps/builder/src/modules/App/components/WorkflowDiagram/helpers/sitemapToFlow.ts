@@ -45,7 +45,7 @@ const sitemapToFlow = (
         id: `${parentId}-${id}`,
         source: parentId,
         target: id,
-        type: 'smoothstep',
+        type: 'customEdge',
         animated: true,
         style: { strokeWidth: 2 }
       });

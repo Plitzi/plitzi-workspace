@@ -1,9 +1,12 @@
+/* eslint-disable quotes */
 import Badge from '@plitzi/plitzi-ui/Badge';
 import Card from '@plitzi/plitzi-ui/Card';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import { Handle, Position } from '@xyflow/react';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
+import { Handle, Position, useReactFlow } from '@xyflow/react';
 import clsx from 'clsx';
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 
 import type { WorkflowNode } from '../WorkflowDiagram';
 import type { Node, NodeProps } from '@xyflow/react';
@@ -26,37 +29,81 @@ const accessLevelConfig = {
   }
 };
 
-export const CustomNode = memo(({ data, selected }: NodeProps<Node<WorkflowNode>>) => {
+const CustomNode = memo(({ id, data, selected = false }: NodeProps<Node<WorkflowNode>>) => {
+  const { getEdges, setNodes } = useReactFlow();
+  const { addToast } = useToast();
+  const { showDialog } = useModal();
   const config = accessLevelConfig[data.accessLevel as keyof typeof accessLevelConfig];
+
+  const handleClickRemove = useCallback(async () => {
+    const edges = getEdges();
+    if (edges.find(edge => edge.source === id)) {
+      addToast("You can't remove this folder with elements or folders", {
+        appeareance: 'warning',
+        autoDismiss: true,
+        placement: 'top-right'
+      });
+
+      return;
+    }
+
+    const response = await showDialog(
+      <Modal.Header>
+        <h4>Remove {data.type === 'folder' ? 'Folder' : 'Page'}</h4>
+      </Modal.Header>,
+      <Modal.Body>
+        <h4>Do you want to remove this item ?</h4>
+      </Modal.Body>,
+      undefined,
+      { size: 'sm' },
+      id
+    );
+
+    if (response) {
+      setNodes(node => node.filter(e => e.id !== id));
+    }
+  }, [addToast, data.type, getEdges, id, setNodes, showDialog]);
 
   return (
     <>
       <Handle
         type="target"
         position={Position.Top}
-        className="h-4! w-4! border-4! border-white! bg-blue-500! shadow-lg transition-all duration-200 hover:scale-110 hover:bg-blue-600!"
+        className="bg-primary-500! hover:bg-primary-600! h-5! w-5! border-4! border-white! shadow-lg transition-all duration-200 hover:scale-110"
       />
-
       <Card
         className={clsx('h-[150px] w-[200px] p-2 shadow-md transition-shadow hover:shadow-lg', {
           'ring-2 ring-blue-500 ring-offset-2': selected
         })}
       >
         <Card.Header>
-          <div className="flex w-full items-start gap-1">
-            <Icon
-              icon={data.type === 'folder' ? 'fa-regular fa-folder' : 'fa-regular fa-file'}
-              className={clsx('mt-0.5 h-5 shrink-0 text-slate-600', {
-                'text-yellow-600': data.type === 'folder',
-                'text-slate-600': data.type !== 'folder'
-              })}
-            />
-            <div className="min-w-0 flex-1">
-              <h3 className="text-foreground truncate text-sm font-semibold">{data.title}</h3>
-              {data.path && (
-                <p className="text-muted-foreground truncate rounded-sm text-xs text-gray-500">{data.path}</p>
-              )}
+          <div className="flex w-full items-start">
+            <div className="flex w-full items-center justify-between gap-1">
+              <Icon
+                icon={data.type === 'folder' ? 'fa-regular fa-folder' : 'fa-regular fa-file'}
+                className={clsx('mt-0.5 h-5 shrink-0 text-slate-600', {
+                  'text-yellow-600': data.type === 'folder',
+                  'text-slate-600': data.type !== 'folder'
+                })}
+              />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-foreground truncate text-sm font-semibold">{data.title}</h3>
+                {data.path && (
+                  <p className="text-muted-foreground truncate rounded-sm text-xs text-gray-500">{data.path}</p>
+                )}
+              </div>
             </div>
+            {selected && (
+              <div className="flex items-center justify-center rounded p-1 hover:bg-red-100" title="Remove">
+                <Icon
+                  icon="fas fa-trash-alt"
+                  intent="danger"
+                  size="sm"
+                  onClick={handleClickRemove}
+                  className="cursor-pointer"
+                />
+              </div>
+            )}
           </div>
         </Card.Header>
         <Card.Body>
@@ -72,14 +119,15 @@ export const CustomNode = memo(({ data, selected }: NodeProps<Node<WorkflowNode>
           </div>
         </Card.Body>
       </Card>
-
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="h-4! w-4! border-4! border-white! bg-blue-500! shadow-lg transition-all duration-200 hover:scale-110 hover:bg-blue-600!"
-      />
+      {data.type === 'folder' && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="bg-primary-500! hover:bg-primary-600! h-5! w-5! border-4! border-white! shadow-lg transition-all duration-200 hover:scale-110"
+        />
+      )}
     </>
   );
 });
 
-CustomNode.displayName = 'CustomNode';
+export default CustomNode;

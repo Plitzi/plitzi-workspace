@@ -8,7 +8,8 @@ import WorkflowDiagram from '@pmodules/App/components/WorkflowDiagram';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
 
-import type { WorkflowNode } from '@pmodules/App/components/WorkflowDiagram';
+import type { Element, PageFolder } from '@plitzi/sdk-shared';
+import type { Connection, Edge, Node } from '@pmodules/App/components/WorkflowDiagram';
 
 const ContainerSitemap = () => {
   const { showModal } = useModal();
@@ -53,9 +54,66 @@ const ContainerSitemap = () => {
     [eventBridge, pageFolders, showModal]
   );
 
-  const handleRemoveNode = useCallback((nodes: WorkflowNode[]) => {
-    console.log('Remove nodes:', nodes);
-  }, []);
+  const handleAddEdge = useCallback(
+    (connection: Connection) => {
+      const { source, target } = connection;
+      const nodeSource: PageFolder | undefined = pageFolders.find(pageFolder => pageFolder.id === source);
+      const nodeTarget = (pageDefinitions[target] as Element | undefined) ?? pageFolders.find(f => f.id === target);
+      if (!nodeSource || !nodeTarget) {
+        return;
+      }
+
+      if ('attributes' in nodeTarget && 'definition' in nodeTarget) {
+        // Its an element
+        void eventBridge.emit('main', 'schemaUpdateElement', {
+          ...nodeTarget,
+          attributes: { ...nodeTarget.attributes, folder: source }
+        });
+      } else {
+        // Its a folder
+        void eventBridge.emit('main', 'schemaUpdatePageFolder', { ...nodeTarget, parentId: source });
+      }
+    },
+    [eventBridge, pageDefinitions, pageFolders]
+  );
+
+  const handleRemoveNode = useCallback(
+    (node: Node) => {
+      const nodeTarget = node.data.type === 'page' ? pageDefinitions[node.id] : pageFolders.find(f => f.id === node.id);
+      if (!nodeTarget) {
+        return;
+      }
+
+      if (node.data.type === 'page') {
+        void eventBridge.emit('main', 'schemaRemovePage', node.id);
+      } else {
+        void eventBridge.emit('main', 'schemaRemovePageFolder', node.id);
+      }
+    },
+    [eventBridge, pageDefinitions, pageFolders]
+  );
+
+  const handleRemoveEdge = useCallback(
+    (connection: Connection | Edge) => {
+      const { target } = connection;
+      const nodeTarget = (pageDefinitions[target] as Element | undefined) ?? pageFolders.find(f => f.id === target);
+      if (!nodeTarget) {
+        return;
+      }
+
+      if ('attributes' in nodeTarget && 'definition' in nodeTarget) {
+        // Its an element
+        void eventBridge.emit('main', 'schemaUpdateElement', {
+          ...nodeTarget,
+          attributes: { ...nodeTarget.attributes, folder: '' }
+        });
+      } else {
+        // Its a folder
+        void eventBridge.emit('main', 'schemaUpdatePageFolder', { ...nodeTarget, parentId: '' });
+      }
+    },
+    [eventBridge, pageDefinitions, pageFolders]
+  );
 
   return (
     <Card className="relative flex grow flex-col">
@@ -64,7 +122,9 @@ const ContainerSitemap = () => {
           pages={pages}
           pageFolders={pageFolders}
           onAddNode={handleAddNode}
+          onAddEdge={handleAddEdge}
           onRemoveNode={handleRemoveNode}
+          onRemoveEdge={handleRemoveEdge}
         />
       </Card.Body>
     </Card>
