@@ -100,7 +100,7 @@ const Settings = ({
           value
             .replaceAll(' ', '-')
             .toLowerCase()
-            .replaceAll(/([^a-z0-9]+)/gi, '')
+            .replaceAll(/([^a-z0-9-]+)/gi, '')
         );
       }
     },

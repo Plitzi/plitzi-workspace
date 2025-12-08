@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import type { EdgeProps } from '@xyflow/react';
 
-const CustomEdge = ({ id, sourceX, sourceY, targetX, targetY, selected = false, ...props }: EdgeProps) => {
+const CustomEdge = ({ id, sourceX, sourceY, targetX, targetY, selected = false, style }: EdgeProps) => {
   const { setEdges } = useReactFlow();
   const [edgePath, labelX, labelY] = getSmoothStepPath({ sourceX, sourceY, targetX, targetY });
 
@@ -12,7 +12,7 @@ const CustomEdge = ({ id, sourceX, sourceY, targetX, targetY, selected = false, 
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} {...props} />
+      <BaseEdge id={id} path={edgePath} style={style} />
       {selected && (
         <EdgeLabelRenderer>
           <button
