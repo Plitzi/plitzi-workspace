@@ -1,7 +1,6 @@
 {
   "extends": "../../packages/sdk-shared/tsconfig.json",
   "compilerOptions": {
-    "noImplicitAny": false, // @todo: remove this later after merge everything to typescript
     "outDir": "./dist",
     "rootDir": "./",
     "paths": {

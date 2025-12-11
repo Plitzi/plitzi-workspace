@@ -23,11 +23,11 @@ import { disableReactDevTools } from './helpers/security';
 // SDK Style
 import './assets/index.scss';
 
-import type { OfflineDataRaw } from './types';
 import type {
   ComponentPlugin,
   Environment,
   EventBridgeContextValue,
+  OfflineDataRaw,
   RenderMode,
   Server,
   ServerEnvironment,

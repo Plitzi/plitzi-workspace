@@ -104,7 +104,7 @@ const PluginsContextProvider = ({
   );
 
   const assetsState = useMemo<Record<string, Asset>>(() => {
-    const extraAssets = {};
+    const extraAssets: Record<string, Asset> = {};
     if (renderMode === 'iframe' || renderMode === 'shadow') {
       extraAssets['static-99'] = {
         type: 'link',

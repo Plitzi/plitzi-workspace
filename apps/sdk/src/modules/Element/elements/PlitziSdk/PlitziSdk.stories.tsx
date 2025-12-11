@@ -1,12 +1,24 @@
-import { PlitziSdk } from './PlitziSdk';
+import PlitziSdk from './PlitziSdk';
 
-export default {
+import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Meta, StoryObj } from '@storybook/react';
+
+const meta = {
   title: 'Components/PlitziSdk',
-  decorators: [],
   component: PlitziSdk,
-  argTypes: {}
+  // parameters: {
+  //   layout: 'centered'
+  // }
+  tags: ['autodocs'],
+  argTypes: {},
+  args: {}
+} satisfies Meta<typeof PlitziSdk>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = {
+  args: { internalProps: { id: '' } as InternalPropsSTG2 },
+  render: args => <PlitziSdk {...args} />
 };
-
-export const BasicUsage = args => <PlitziSdk {...args} />;
-
-BasicUsage.args = {};

@@ -17,13 +17,13 @@ import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 import { getEnvironmentServer } from './config';
 
-import type { OfflineDataRaw } from './types';
 import type { ApolloClient } from '@apollo/client/core';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type {
   ComponentPlugin,
   Environment,
   EventBridgeContextValue,
+  OfflineDataRaw,
   RenderMode,
   Server,
   ServerEnvironment,
@@ -94,7 +94,7 @@ const App = ({
   }, [handleKeyDown, debugModeProp]);
 
   const localCustomComponents = useMemo(() => {
-    const components = {};
+    const components: Record<string, ComponentPlugin> = {};
     Children.forEach(children, child => {
       if (!isValidElement(child)) {
         return;

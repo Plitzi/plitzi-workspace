@@ -15,13 +15,13 @@ import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 
-import type { OfflineDataRaw } from '../../types';
 import type {
   Environment,
   Server,
   RenderMode,
   StateManagerContextValue,
-  EventBridgeContextValue
+  EventBridgeContextValue,
+  OfflineDataRaw
 } from '@plitzi/sdk-shared';
 
 export type AppMainProps = {

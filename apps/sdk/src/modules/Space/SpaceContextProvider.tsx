@@ -8,7 +8,7 @@ export type SpaceContextProviderProps = {
   children: ReactNode;
 };
 
-const SpaceContextProvider = ({ children }) => {
+const SpaceContextProvider = ({ children }: SpaceContextProviderProps) => {
   const valueMemo = useMemo(() => ({}), []);
 
   return <SpaceContext value={valueMemo}>{children}</SpaceContext>;
