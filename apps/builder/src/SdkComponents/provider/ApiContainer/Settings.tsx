@@ -53,7 +53,10 @@ const Settings = ({
     []
   );
 
-  const handleChangeHeaders = useCallback((_value, valueObj: object) => onUpdate?.('headers', valueObj), [onUpdate]);
+  const handleChangeHeaders = useCallback(
+    (_value: unknown, valueObj: object) => onUpdate?.('headers', valueObj),
+    [onUpdate]
+  );
 
   const urlParams = useMemo(() => {
     const slug: string = get(pageDefinitions, `${currentPageId}.attributes.slug`, '') as string;
@@ -121,7 +124,7 @@ const Settings = ({
             <option value="address">Address</option>
             <option value="figure">Figure</option>
           </Select>
-          <div className="my-2 h-[1px] w-full border border-gray-300 bg-gray-300" />
+          <div className="my-2 h-px w-full border border-gray-300 bg-gray-300" />
           <div className="flex min-h-[200px] grow flex-col">
             <label>Mock Data (Build Mode)</label>
             <CodeMirror value={mockData} theme="light" mode="json" lineWrapping onChange={handleChangeMockData} />

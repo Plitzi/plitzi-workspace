@@ -17,7 +17,8 @@ import type {
   Style,
   StyleItem,
   TagType,
-  DropPosition
+  DropPosition,
+  StylePlatform
 } from '@plitzi/sdk-shared';
 
 export const SegmentsActions = {
@@ -238,8 +239,8 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
       const { selector } = action;
 
       return produce(state, draft => {
-        const platform = omit(get(draft, `${identifier}.style.platform`, {}));
-        Object.keys(platform).forEach(pkey => {
+        const platform = omit(get(draft, `${identifier}.style.platform`, {})) as StylePlatform;
+        (Object.keys(platform) as DisplayMode[]).forEach(pkey => {
           platform[pkey] = omit(platform[pkey], [selector]);
         });
         set(draft, `${identifier}.style.platform`, platform);

@@ -401,7 +401,7 @@ const useQueueManager = ({
         | QueueItem<Record<string, Segment>, SegmentsReducerActions>
     ) => {
       switch (item.action.type) {
-        case SchemaActions[item.action.type]: {
+        case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
           item = item as QueueItem<Schema, SchemaReducerActions>;
           item.dispatch({
             type: SchemaActions.SCHEMA_UPDATE,
@@ -412,7 +412,7 @@ const useQueueManager = ({
           return;
         }
 
-        case StyleActions[item.action.type]: {
+        case StyleActions[item.action.type as keyof typeof StyleActions]: {
           item = item as QueueItem<Style, StyleReducerActions>;
           item.dispatch({
             type: StyleActions.STYLE_UPDATE,
@@ -423,7 +423,7 @@ const useQueueManager = ({
           return;
         }
 
-        case SegmentsActions[item.action.type]: {
+        case SegmentsActions[item.action.type as keyof typeof SegmentsActions]: {
           item = item as QueueItem<Record<string, Segment>, SegmentsReducerActions>;
           const segmentId = (item.prevState as unknown as SegmentsReducerActions).segmentId;
           item.dispatch({

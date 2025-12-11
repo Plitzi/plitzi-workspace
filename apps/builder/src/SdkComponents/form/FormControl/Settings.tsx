@@ -6,8 +6,6 @@ import { useCallback, useMemo } from 'react';
 
 import type { ChangeEvent } from 'react';
 
-const optionsDefault = [];
-
 type SettingsProps = {
   subType?:
     | 'text'
@@ -40,7 +38,7 @@ const Settings = ({
   defaultValue = '',
   placeholder = '',
   autoComplete = true,
-  options = optionsDefault,
+  options,
   required = true,
   readOnly = false,
   disabled = false,

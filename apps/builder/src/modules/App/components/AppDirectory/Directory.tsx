@@ -17,8 +17,6 @@ import DirectoryItem from './DirectoryItem';
 import type { PageFolder } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-const pageFoldersDefault = [];
-
 export type DirectoryProps = {
   id?: string;
   name?: string;
@@ -38,7 +36,7 @@ const Directory = ({
   isRootFolder = false,
   currentPageId,
   nestedLevel = 0,
-  pageFolders = pageFoldersDefault
+  pageFolders
 }: DirectoryProps) => {
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
@@ -84,7 +82,7 @@ const Directory = ({
   );
   const directories = useMemo(
     () =>
-      pageFolders
+      (pageFolders ?? [])
         .filter(folder => folder.parentId === id || (!folder.parentId && !id))
         .sort((folderA, folderB) => (folderA.name > folderB.name ? 1 : -1)),
     [id, pageFolders]
@@ -139,7 +137,7 @@ const Directory = ({
     async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      if (!pageFolders.find(pageFolder => pageFolder.id === id)) {
+      if (!pageFolders?.find(pageFolder => pageFolder.id === id)) {
         return;
       }
 

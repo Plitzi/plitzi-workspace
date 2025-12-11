@@ -117,8 +117,8 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
 
       return produce(state, draft => {
         const platform = omit(get(draft, 'platform', {})) as Style['platform'];
-        Object.keys(newPlatform).forEach(mode => {
-          platform[mode] = { ...get(platform, mode, {}), ...newPlatform[mode] } as Style['platform'];
+        (Object.keys(newPlatform) as DisplayMode[]).forEach(mode => {
+          platform[mode] = { ...get(platform, mode, {} as Record<string, StyleItem>), ...newPlatform[mode] };
         });
         draft.platform = platform;
         draft.cache = generateCache({ platform } as Style);

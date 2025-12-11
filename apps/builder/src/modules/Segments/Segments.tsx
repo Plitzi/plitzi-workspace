@@ -27,7 +27,7 @@ const Segments = () => {
   const fetch = useCallback(
     async (name: string, more = false) => {
       setLoading(true);
-      const query = {};
+      const query: Record<string, string> = {};
       if (name) {
         query['definition.name'] = `/.*${name}.*/`;
       }

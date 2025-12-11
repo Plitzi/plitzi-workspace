@@ -167,7 +167,7 @@ const App = (props: AppProps) => {
   );
 
   const localComponents = useMemo(() => {
-    const localComponents = {};
+    const localComponents: Record<string, ComponentPlugin> = {};
     if (!children) {
       return localComponents;
     }

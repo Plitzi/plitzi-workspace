@@ -56,8 +56,9 @@ export const uploadFetch = (url: URL | RequestInfo, options?: UploadOptions) =>
 
     if (options?.headers) {
       Object.keys(options.headers).forEach(key => {
-        if (options.headers?.[key]) {
-          xhr.setRequestHeader(key, options.headers[key] as string);
+        const headersRecord = options.headers as Record<string, string>;
+        if (headersRecord[key]) {
+          xhr.setRequestHeader(key, headersRecord[key]);
         }
       });
     }

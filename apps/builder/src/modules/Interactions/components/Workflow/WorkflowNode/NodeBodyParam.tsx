@@ -18,8 +18,6 @@ import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
-const optionsDefault = [];
-
 export type NodeBodyParamProps = {
   className?: string;
   nodeId?: string;
@@ -41,7 +39,7 @@ const NodeBodyParam = ({
   label = '',
   value = '',
   type = 'text',
-  options = optionsDefault,
+  options,
   canBind = true,
   params = emptyObject,
   fields,
@@ -68,7 +66,7 @@ const NodeBodyParam = ({
   }, [id, onChange]);
 
   const processOptions = useCallback(
-    (options: Option[] | ((params: Record<string, unknown>) => Option[]), params: Record<string, unknown>) => {
+    (options: Option[] | ((params: Record<string, unknown>) => Option[]) = [], params: Record<string, unknown>) => {
       const optionsAux: Option[] = [];
       if (typeof options === 'function') {
         const opts = options(params);
@@ -99,7 +97,7 @@ const NodeBodyParam = ({
   );
 
   return (
-    <div className={clsx('flex w-full flex-col [&:not(:first-child)]:mt-2', className)}>
+    <div className={clsx('flex w-full flex-col not-first:mt-2', className)}>
       <label htmlFor={id} className="text-sm">
         {finalLabel}
       </label>
@@ -125,7 +123,7 @@ const NodeBodyParam = ({
         )}
         {!isBinding && type === 'codemirror-json' && (
           <CodeMirror
-            className="min-h-[80px]"
+            className="min-h-20"
             value={value as string}
             theme="light"
             mode="json"
@@ -136,7 +134,7 @@ const NodeBodyParam = ({
         )}
         {!isBinding && type === 'codemirror-text' && (
           <CodeMirror
-            className="min-h-[80px]"
+            className="min-h-20"
             value={value as string}
             theme="light"
             mode="text"

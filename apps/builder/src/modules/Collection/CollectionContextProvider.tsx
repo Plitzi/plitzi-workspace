@@ -44,7 +44,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
 
   const collectionsAddMany = useCallback(
     (collectionsToAdd: Collection[]) => {
-      const collectionsToAddAux = {};
+      const collectionsToAddAux: Record<string, Collection> = {};
       collectionsToAdd.forEach(collection => {
         collectionsToAddAux[collection.id] = collection;
       });

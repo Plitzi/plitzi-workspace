@@ -32,21 +32,21 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
       isUndo = true
     ) => {
       switch (item.action.type) {
-        case SchemaActions[item.action.type]: {
+        case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
           item = item as UndoableItem<Schema, SchemaReducerActions>;
           item.dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: isUndo ? item.prevState : item.nextState });
 
           return;
         }
 
-        case StyleActions[item.action.type]: {
+        case StyleActions[item.action.type as keyof typeof StyleActions]: {
           item = item as UndoableItem<Style, StyleReducerActions>;
           item.dispatch({ type: StyleActions.STYLE_UPDATE, style: isUndo ? item.prevState : item.nextState });
 
           return;
         }
 
-        case SegmentsActions[item.action.type]: {
+        case SegmentsActions[item.action.type as keyof typeof SegmentsActions]: {
           item = item as UndoableItem<Record<string, Segment>, SegmentsReducerActions>;
           const segmentId = (item.prevState as unknown as SegmentsReducerActions).segmentId;
           item.dispatch({

@@ -1,7 +1,6 @@
 {
   "extends": "../../packages/sdk-shared/tsconfig.json",
   "compilerOptions": {
-    "noImplicitAny": false, // @todo: remove this later after merge everything to typescript
     "outDir": "./dist",
     "rootDir": "./",
     "paths": {
@@ -17,7 +16,6 @@
     "src/*.tsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.js", // @todo: remove this later after merge everything to typescript
     "vite.config.ts",
     "setupTests.ts"
   ]

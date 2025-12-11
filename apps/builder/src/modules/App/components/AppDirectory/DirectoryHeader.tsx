@@ -12,13 +12,11 @@ import PageForm from '@pmodules/App/models/PageForm';
 
 import type { PageFolder } from '@plitzi/sdk-shared';
 
-const pageFoldersDefault = [];
-
 export type DirectoryHeaderProps = {
   pageFolders: PageFolder[];
 };
 
-const DirectoryHeader = ({ pageFolders = pageFoldersDefault }: DirectoryHeaderProps) => {
+const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
   const { componentDefinitions } = use(ComponentContext);

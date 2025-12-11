@@ -17,7 +17,7 @@ export const ResourcesListContext = createContext<ResourcesListContextValue>({} 
 
 export type ResourcesListProviderProps = { children: ReactNode };
 
-const ResourcesListProvider = ({ children }) => {
+const ResourcesListProvider = ({ children }: ResourcesListProviderProps) => {
   const [draggingFile, setDraggingFile] = useState<ResourceDragging | undefined>();
   const [isFileMoving, setIsFileMoving] = useState<boolean>(false);
   const contextValue = useMemo(

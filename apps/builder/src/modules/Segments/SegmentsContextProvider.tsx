@@ -106,8 +106,8 @@ const SegmentsContextProvider = ({
 
   const segmentGet = useCallback(
     async (identifier: string) => {
-      if (segmentsRef.current[identifier] as Segment | undefined) {
-        return segmentsRef.current[identifier] as Segment;
+      if (segmentsRef.current[identifier as keyof typeof segmentsRef.current] as Segment | undefined) {
+        return segmentsRef.current[identifier as keyof typeof segmentsRef.current] as Segment;
       }
 
       try {
