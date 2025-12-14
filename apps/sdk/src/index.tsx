@@ -151,7 +151,8 @@ export {
   JsxManager,
   PluginManager,
   PluginRemote,
-  ReplicaProvider
+  ReplicaProvider,
+  sdkComponents
 };
 
 export const Components = { ...defaultElements, ...sdkComponents };

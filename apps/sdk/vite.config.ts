@@ -97,14 +97,10 @@ export default defineConfig(({ mode, command }) => {
         description: '',
         jsPath: devMode ? '/src/index.tsx' : '/plitzi-sdk.js',
         cssPath: '/plitzi-sdk.css',
-        react: devMode ? `https://esm.sh/react@${reactVersion}?dev` : `https://esm.sh/react@${reactVersion}`,
-        reactJsx: devMode
-          ? `https://esm.sh/react@${reactVersion}/jsx-runtime?dev`
-          : `https://esm.sh/react@${reactVersion}/jsx-runtime`,
-        reactDom: devMode ? `https://esm.sh/react-dom@${reactVersion}?dev` : `https://esm.sh/react-dom@${reactVersion}`,
-        reactDomClient: devMode
-          ? `https://esm.sh/react-dom@${reactVersion}/client?dev`
-          : `https://esm.sh/react-dom@${reactVersion}/client`,
+        react: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react@${reactVersion}`, // ?dev (esm.sh)
+        reactJsx: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react@${reactVersion}/jsx-runtime`, // ?dev (esm.sh)
+        reactDom: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react-dom@${reactVersion}`, // ?dev (esm.sh)
+        reactDomClient: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react-dom@${reactVersion}/client`, // ?dev (esm.sh)
         version: PACKAGE.version
       }),
       command === 'build' && ejsPlugin(devMode),
