@@ -109,8 +109,6 @@ const BlockJsx = ({
 
   const utilities = useMemo(() => ({ lodash: { get, set } }), []);
 
-  console.log(atob(contentCache));
-
   return (
     <RootElement
       ref={ref}
