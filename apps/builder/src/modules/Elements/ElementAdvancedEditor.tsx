@@ -54,11 +54,19 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
 
   return (
     <div className={clsx('relative flex h-full flex-col', className)}>
-      <CodeMirror value={value} theme="dark" className="h-full" lineWrapping onChange={handleChange} mode={mode} />
+      <CodeMirror
+        value={value}
+        theme="dark"
+        size="sm"
+        className="h-full"
+        lineWrapping
+        onChange={handleChange}
+        mode={mode}
+      />
       <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"
-          size="custom"
+          size="sm"
           className="mr-2 rounded-sm bg-white p-2"
           onClick={handleFormat}
           title="Auto format"
@@ -68,16 +76,16 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
         </Button>
         <ContainerFloating containerTopOffset={8}>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="custom" className="mr-2 rounded-sm bg-white p-2" title="Plugins">
+            <Button intent="custom" size="sm" className="mr-2 rounded-sm bg-white p-2" title="Plugins">
               <Button.Icon icon="fa-solid fa-puzzle-piece" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>
-            <ul className="max-h-[300px] overflow-y-auto">
+            <ul className="max-h-75 overflow-y-auto">
               {pluginsAvailables.map(type => (
                 <li
                   key={type}
-                  className="border-gray-300 px-4 py-2 not-first:border-t"
+                  className="border-gray-300 px-4 py-1 text-sm not-first:border-t"
                   onClick={handlePluginInsert(type)}
                 >
                   {type}
@@ -88,12 +96,12 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
         </ContainerFloating>
         <ContainerFloating containerTopOffset={8}>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="custom" className="rounded-sm bg-white p-2">
+            <Button intent="custom" size="sm" className="rounded-sm bg-white p-2">
               <Button.Icon icon="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>
-            <div className="flex w-60 flex-col items-center justify-center p-4 text-center">
+            <div className="flex w-60 flex-col items-center justify-center gap-2 p-2 text-center text-sm">
               <p>
                 Add your own <span className="font-bold">{mode === 'js' ? 'JSX' : 'HTML'}</span> code here to customize
                 the appearance and layout of your site.

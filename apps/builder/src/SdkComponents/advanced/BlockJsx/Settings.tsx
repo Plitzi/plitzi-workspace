@@ -2,6 +2,7 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import Heading from '@plitzi/plitzi-ui/Heading';
 import get from 'lodash-es/get';
 import { useCallback, use, useState } from 'react';
 
@@ -72,7 +73,12 @@ const Settings = ({
 
   return (
     <div className="flex h-full flex-col">
-      <ElementAdvancedEditor className="grow" value={content} mode="js" onChange={handleChangeContent} />
+      <ElementAdvancedEditor
+        className="min-h-0 grow basis-0"
+        value={content}
+        mode="js"
+        onChange={handleChangeContent}
+      />
       <div className="flex flex-col py-2">
         {error && (
           <Alert className="mb-4 text-white" intent="error">
@@ -84,9 +90,9 @@ const Settings = ({
             </div>
           </Alert>
         )}
-        <div className="flex items-center justify-between px-2">
-          <Checkbox checked={allowEmptyRender} onChange={handleChangeAllowEmpty} label="Allow Empty Render" />
-          <Button onClick={handleClick} disabled={networkLoading}>
+        <div className="flex items-center justify-between">
+          <Checkbox size="sm" checked={allowEmptyRender} onChange={handleChangeAllowEmpty} label="Allow Empty Render" />
+          <Button size="sm" onClick={handleClick} disabled={networkLoading}>
             {!networkLoading && 'Compile'}
             {networkLoading && (
               <div className="flex items-center justify-center">
@@ -96,10 +102,11 @@ const Settings = ({
             )}
           </Button>
         </div>
-        <div className="mt-4 flex flex-col">
-          <label className="px-2">Properties</label>
+        <div className="flex flex-col">
+          <Heading as="h5">Properties</Heading>
           <CodeMirror
-            className="min-h-[200px] p-0"
+            size="sm"
+            className="min-h-40 p-0"
             value={componentProps}
             theme="dark"
             mode="json"
