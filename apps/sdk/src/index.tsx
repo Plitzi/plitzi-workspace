@@ -8,6 +8,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
+import { defaultElements } from '@plitzi/sdk-elements';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
@@ -150,9 +151,10 @@ export {
   JsxManager,
   PluginManager,
   PluginRemote,
-  ReplicaProvider,
-  sdkComponents
+  ReplicaProvider
 };
+
+export const Components = { ...defaultElements, ...sdkComponents };
 
 export const version = typeof VERSION !== 'undefined' ? VERSION : '';
 
