@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 import get from 'lodash-es/get.js';
+import omit from 'lodash-es/omit.js';
 import set from 'lodash-es/set.js';
 import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
 import { jsx as _jsx } from 'react/jsx-runtime';
@@ -40,10 +41,11 @@ const BlockJsx = ({
   className = '',
   props: componentProps = '{}',
   contentCache = '',
-  allowEmptyRender = false
+  allowEmptyRender = false,
+  ...otherProps
 }: BlockJsxProps) => {
-  const [JsxModule, setJsxModule] = useState<{ default: ComponentPluginJsx } | undefined>(undefined);
-  const [renderError, setRenderError] = useState<string | undefined>(undefined);
+  const [JsxModule, setJsxModule] = useState<{ default: ComponentPluginJsx }>();
+  const [renderError, setRenderError] = useState<string>();
   const { components } = use(ComponentContext);
   const internalPropsTruncated = useMemo<InternalPropsSTG1>(() => {
     const { id, rootId, plitziElementLayout } = internalProps;
@@ -51,22 +53,28 @@ const BlockJsx = ({
     return { id, rootId, plitziElementLayout };
   }, [internalProps]);
   const componentPropsParsed = useMemo(() => {
+    const otherPropsFiltered = omit(otherProps, ['content']);
     if (!componentProps) {
-      return {};
+      return otherPropsFiltered;
+    }
+
+    if (typeof componentProps === 'object') {
+      return { ...(componentProps as object), ...otherPropsFiltered };
     }
 
     if (typeof componentProps !== 'string') {
-      return componentProps;
+      return otherPropsFiltered;
     }
 
     try {
-      return JSON.parse(componentProps) as Record<string, unknown>;
+      const propsParsed = JSON.parse(componentProps) as Record<string, unknown>;
+      return { ...propsParsed, ...otherPropsFiltered };
     } catch (err) {
       console.log(err);
     }
 
-    return {};
-  }, [componentProps]);
+    return undefined;
+  }, [componentProps, otherProps]);
 
   const generateJSX = useCallback(
     async (data: string) => {
@@ -101,6 +109,8 @@ const BlockJsx = ({
 
   const utilities = useMemo(() => ({ lodash: { get, set } }), []);
 
+  console.log(atob(contentCache));
+
   return (
     <RootElement
       ref={ref}
@@ -109,7 +119,7 @@ const BlockJsx = ({
         'block-jsx--empty': contentCache === '' || !contentCache || !JsxModule
       })}
     >
-      {!renderError && JsxModule && (
+      {!renderError && componentPropsParsed && JsxModule && (
         <JsxModule.default
           _jsx={_jsx}
           React={React}
@@ -122,6 +132,7 @@ const BlockJsx = ({
         />
       )}
       {renderError && <div>JSX Malformed {renderError}</div>}
+      {!renderError && !componentPropsParsed && <div>Settings Malformed</div>}
     </RootElement>
   );
 };
