@@ -36,12 +36,12 @@ const ContainerDefault = ({ previewMode = false, externalStyle = '' }: Container
       <Builder externalStyle={externalStyle} customCss={customCss} pages={pages} />
       {!previewMode && (
         <PopupSidePanel
-          className="max-h-[calc(_100vh_-_48px)] overflow-y-auto"
+          className="max-h-[calc(100vh-48px)] overflow-y-auto"
           size="md"
           placementTabs="right"
           placement="right"
           minWidth={335}
-          maxWidth={540}
+          maxWidth={800}
           canHide
           multi
           value={popupsActiveRight}

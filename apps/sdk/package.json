@@ -75,7 +75,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "babel-loader": "^10.0.0",
     "css-loader": "^7.1.2",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "file-loader": "^6.2.0",
     "flow-bin": "^0.294.0",
     "mini-css-extract-plugin": "^2.9.4",
