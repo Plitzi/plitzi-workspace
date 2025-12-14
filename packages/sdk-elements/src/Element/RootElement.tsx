@@ -82,7 +82,11 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }
 
   if (internalProps.plitziJsxSkipHOC) {
-    return children;
+    return (
+      <Tag ref={ref} style={styleParsed} className={className} {...otherProps}>
+        {children}
+      </Tag>
+    );
   }
 
   const plitziContextData = usePlitziServiceContext();
