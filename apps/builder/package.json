@@ -19,7 +19,7 @@
   "dependencies": {
     "@apollo/client": "^4.0.10",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.1.10",
+    "@plitzi/plitzi-ui": "^1.1.11",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
