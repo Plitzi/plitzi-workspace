@@ -1,9 +1,6 @@
-/* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 import omit from 'lodash-es/omit.js';
-import { useEffect, useState, use, useCallback, useMemo } from 'react';
-
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -29,7 +26,6 @@ const BlockJsx = ({
 }: BlockJsxProps) => {
   const [JsxModule, setJsxModule] = useState<{ default: ComponentPlugin<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
-  const { components } = use(ComponentContext);
   const internalPropsTruncated = useMemo<InternalPropsSTG1>(() => {
     const { id, rootId, plitziElementLayout } = internalProps;
 
@@ -85,8 +81,7 @@ const BlockJsx = ({
 
   useEffect(() => {
     void generateJSX(contentCache);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentCache, components]);
+  }, [contentCache, generateJSX]);
 
   return (
     <RootElement
@@ -105,6 +100,7 @@ const BlockJsx = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default withElement(BlockJsx);
 
 export { BlockJsx };
