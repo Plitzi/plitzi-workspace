@@ -1,4 +1,5 @@
 import * as components from './components';
+import JsxManager from './Element/JsxManager';
 
 export * from './components';
 
@@ -33,4 +34,4 @@ export const defaultElements = {
   collectionContainer: components.CollectionContainer
 };
 
-export { components };
+export { components, JsxManager };
