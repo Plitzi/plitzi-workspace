@@ -1,6 +1,5 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
-import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import get from 'lodash-es/get';
@@ -10,24 +9,16 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
 import useNetwork from '@pmodules/Network/hooks/useNetwork';
 
-import type { ChangeEvent } from 'react';
-
 // content is done in builder side and injected here as child
 
 type SettingsProps = {
   content?: string;
   contentCache?: string;
   props?: string;
-  allowEmptyRender?: boolean;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({
-  content = '',
-  props: componentProps = '{}',
-  allowEmptyRender = false,
-  onUpdate
-}: SettingsProps) => {
+const Settings = ({ content = '', props: componentProps = '{}', onUpdate }: SettingsProps) => {
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
@@ -62,11 +53,6 @@ const Settings = ({
 
   const handleClick = useCallback(() => void generateJSX(content), [generateJSX, content]);
 
-  const handleChangeAllowEmpty = useCallback(
-    (e: ChangeEvent) => onUpdate?.('allowEmptyRender', (e.target as HTMLInputElement).checked),
-    [onUpdate]
-  );
-
   const handleChangeContent = useCallback((value: string) => onUpdate?.('content', value), [onUpdate]);
 
   const handleChangeProps = useCallback((value: string) => onUpdate?.('props', value), [onUpdate]);
@@ -90,8 +76,7 @@ const Settings = ({
             </div>
           </Alert>
         )}
-        <div className="flex items-center justify-between">
-          <Checkbox size="sm" checked={allowEmptyRender} onChange={handleChangeAllowEmpty} label="Allow Empty Render" />
+        <div className="flex items-center justify-end">
           <Button size="sm" onClick={handleClick} disabled={networkLoading}>
             {!networkLoading && 'Compile'}
             {networkLoading && (

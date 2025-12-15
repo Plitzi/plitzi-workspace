@@ -1,16 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import omit from 'lodash-es/omit.js';
-import set from 'lodash-es/set.js';
-import React, { useEffect, useState, use, useCallback, useMemo } from 'react';
-import { jsx as _jsx } from 'react/jsx-runtime';
+import { useEffect, useState, use, useCallback, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
-import JsxManager from '../../../Element/JsxManager';
 import RootElement from '../../../Element/RootElement';
 
 import type { ComponentPlugin, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
@@ -22,18 +17,7 @@ export type BlockJsxProps = {
   className?: string;
   props?: string;
   contentCache?: string;
-  allowEmptyRender?: boolean;
 };
-
-type ComponentPluginJsx = ComponentPlugin<{
-  _jsx?: typeof _jsx;
-  React?: unknown;
-  getManager?: () => void;
-  allowEmptyRender?: boolean;
-  props?: Record<string, unknown>;
-  utilities?: Record<string, unknown>;
-  usePlitziServiceContext?: typeof usePlitziServiceContext;
-}>;
 
 const BlockJsx = ({
   ref,
@@ -41,10 +25,9 @@ const BlockJsx = ({
   className = '',
   props: componentProps = '{}',
   contentCache = '',
-  allowEmptyRender = false,
   ...otherProps
 }: BlockJsxProps) => {
-  const [JsxModule, setJsxModule] = useState<{ default: ComponentPluginJsx }>();
+  const [JsxModule, setJsxModule] = useState<{ default: ComponentPlugin<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
   const { components } = use(ComponentContext);
   const internalPropsTruncated = useMemo<InternalPropsSTG1>(() => {
@@ -53,7 +36,7 @@ const BlockJsx = ({
     return { id, rootId, plitziElementLayout };
   }, [internalProps]);
   const componentPropsParsed = useMemo(() => {
-    const otherPropsFiltered = omit(otherProps, ['content']);
+    const otherPropsFiltered = omit(otherProps, ['content', 'children']);
     if (!componentProps) {
       return otherPropsFiltered;
     }
@@ -90,7 +73,7 @@ const BlockJsx = ({
       } finally {
         setRenderError(error);
         if (jsxModule && jsxModule.default) {
-          setJsxModule(jsxModule as { default: ComponentPluginJsx });
+          setJsxModule(jsxModule as { default: ComponentPlugin<typeof otherProps> });
         } else if (JsxModule) {
           setJsxModule(undefined);
           setRenderError('Component not found');
@@ -105,10 +88,6 @@ const BlockJsx = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentCache, components]);
 
-  const getManager = useCallback((/* componentType */) => JsxManager, []);
-
-  const utilities = useMemo(() => ({ lodash: { get, set } }), []);
-
   return (
     <RootElement
       ref={ref}
@@ -118,16 +97,7 @@ const BlockJsx = ({
       })}
     >
       {!renderError && componentPropsParsed && JsxModule && (
-        <JsxModule.default
-          _jsx={_jsx}
-          React={React}
-          internalProps={internalPropsTruncated}
-          getManager={getManager}
-          allowEmptyRender={allowEmptyRender}
-          props={componentPropsParsed}
-          utilities={utilities}
-          usePlitziServiceContext={usePlitziServiceContext}
-        />
+        <JsxModule.default internalProps={internalPropsTruncated} {...componentPropsParsed} />
       )}
       {renderError && <div>JSX Malformed {renderError}</div>}
       {!renderError && !componentPropsParsed && <div>Settings Malformed</div>}

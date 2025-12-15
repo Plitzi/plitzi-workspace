@@ -33,7 +33,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
     return (
       <div className="relative flex min-w-0 grow basis-0 flex-col items-center overflow-auto">
         <div
-          className="absolute top-[50%] h-[400px] w-[400px] translate-y-[-50%] bg-contain bg-no-repeat opacity-20"
+          className="absolute top-[50%] h-100 w-100 translate-y-[-50%] bg-contain bg-no-repeat opacity-20"
           style={{ backgroundImage: 'url(https://cdn.plitzi.com/resources/img/favicon.svg)' }}
         />
         <div>Please add your first page</div>
@@ -81,7 +81,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
       )}
       {mobilePreview && mode === 'normal' && displayMode !== 'mobile' && !previewMode && (
         <BuilderArea
-          className="mb-11 basis-[425px]"
+          className="mb-11 basis-106.25"
           externalStyle={externalStyle}
           customCss={customCss}
           mobilePreview

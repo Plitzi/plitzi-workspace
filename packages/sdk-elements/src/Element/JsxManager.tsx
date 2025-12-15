@@ -12,23 +12,23 @@ import type { ReactNode } from 'react';
 
 export type JsxManagerProps = {
   plitziJsxSkipHOC?: boolean;
-  plitziJsxType: string;
+  as: string;
   plitziJsxProps: Record<string, unknown>;
   internalProps: InternalPropsSTG1;
   children: ReactNode;
 };
 
 const JsxManager = ({
-  plitziJsxSkipHOC = false,
-  plitziJsxType = '',
-  plitziJsxProps,
+  plitziJsxSkipHOC = true,
+  as = '',
   internalProps,
-  children
+  children,
+  ...plitziJsxProps
 }: JsxManagerProps) => {
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
-  const type = camelCase(plitziJsxType);
+  const type = camelCase(as);
   const { components } = use(ComponentContext);
   const { plugins } = use(PluginsContext);
 

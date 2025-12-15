@@ -62,8 +62,6 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
 
   const sourceName = useMemo(() => upperFirst(get(sources, `${source}.name`, source) as string), [source, sources]);
 
-  console.log(when);
-
   return (
     <div className="flex flex-col">
       <Heading as="h5" className="mb-4">
