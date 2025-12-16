@@ -4,11 +4,12 @@ import { useCallback } from 'react';
 
 type SettingsProps = {
   src?: string;
+  fetchPriority?: 'high' | 'low' | 'auto';
   loadMode?: 'auto' | 'lazy' | 'eager';
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ src = '', loadMode = 'auto', onUpdate }: SettingsProps) => {
+const Settings = ({ src = '', fetchPriority = 'auto', loadMode = 'auto', onUpdate }: SettingsProps) => {
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 
   return (
@@ -24,6 +25,11 @@ const Settings = ({ src = '', loadMode = 'auto', onUpdate }: SettingsProps) => {
           </div>
         )}
       </div>
+      <Select value={fetchPriority} label="Fetch Priority" onChange={handleChange('fetchPriority')}>
+        <option value="auto">Auto</option>
+        <option value="high">Hight</option>
+        <option value="low">Low</option>
+      </Select>
       <Select value={loadMode} label="Load Mode" onChange={handleChange('loadMode')}>
         <option value="auto">Auto</option>
         <option value="lazy">Lazy</option>

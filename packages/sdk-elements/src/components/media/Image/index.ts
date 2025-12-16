@@ -6,6 +6,7 @@ const Image = Object.assign(BaseImage, {
     attributes: {
       src: 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
       alt: '',
+      fetchPriority: 'auto',
       loadMode: 'auto'
     },
     definition: {

@@ -17,6 +17,7 @@ export type ImageProps = {
   className?: string;
   src?: string;
   alt?: string;
+  fetchPriority?: 'high' | 'low' | 'auto';
   loadMode?: 'eager' | 'lazy';
 };
 
@@ -28,6 +29,7 @@ const Image = ({
   className = '',
   src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
   alt = '',
+  fetchPriority = 'auto',
   loadMode
 }: ImageProps) => {
   const {
@@ -46,7 +48,14 @@ const Image = ({
         internalProps={internalProps}
         className={clsx('plitzi-component__image image--edit-mode', className)}
       >
-        <img draggable={false} src={src} alt={alt} loading={loadMode} onError={handleError} />
+        <img
+          draggable={false}
+          src={src}
+          alt={alt}
+          loading={loadMode}
+          fetchPriority={fetchPriority}
+          onError={handleError}
+        />
       </RootElement>
     );
   }
