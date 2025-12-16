@@ -98,7 +98,7 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
     [handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId]
   );
 
-  if (action.type === 'notFound' || !currentPageId) {
+  if (action.type === 'notFound') {
     // @todo: In the future this should navigate to page 404
     // return <Navigate to="/not-found" replace />;
     return 'Not Found';
