@@ -88,7 +88,7 @@ function getPageFullPath(
 }
 
 const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boolean, previewMode: boolean = true) => {
-  if (!accessLevel || !previewMode) {
+  if (!accessLevel || !previewMode || typeof authenticated === 'undefined') {
     return true;
   }
 
@@ -111,7 +111,7 @@ const getPaths = (
   pages: string[],
   flat: Schema['flat'],
   pageFolders: PageFolder[],
-  authenticated: boolean,
+  authenticated?: boolean,
   basePath: string = '',
   previewMode: boolean = true,
   strictMode: boolean = true

@@ -1,21 +1,17 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import { use, useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { QueriesMap } from '@pmodules/Network/Queries';
-import type { Domain } from '@pmodules/Network/Queries/Space/SpaceDeploymentsQuery';
 import type { MouseEvent } from 'react';
 
 const deployFormSchema = z.object({
   environment: z.enum(['main', 'production', 'staging', 'development']),
   domain: z.string().min(3, 'Domain must have at least 3 characters'),
-  revision: z.number().optional()
+  revision: z.coerce.number().optional()
 });
 
 export type DeployFormProps = {
@@ -27,40 +23,21 @@ export type DeployFormProps = {
 };
 
 const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, onSubmit }: DeployFormProps) => {
-  const [loading, setLoading] = useState(false);
-  const [domains, setDomains] = useState<Domain[]>([]);
-  const [latestRevision, setLatestRevision] = useState<number>(0);
-  const { query } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap>;
-  const { addToast } = useToast();
+  const { data: domains = [], isLoading: isLoadingDomains } = useGraphQL(
+    'SpaceDeployments',
+    data => data?.SpaceDeployments.edges
+  );
 
   const form = useForm({ defaultValues: { environment, domain, revision }, config: { schema: deployFormSchema } });
   const watchEnvironment = useFormWatch(form.formMethods, 'environment');
   const watchDomain = useFormWatch(form.formMethods, 'domain');
+  const { data: latestRevision = 0, isLoading: isLoadingLatestRevision } = useGraphQL(
+    'SpaceLatestRevision',
+    data => data?.SpaceLatestRevision?.snapshot?.revision,
+    { environment: watchEnvironment }
+  );
   const domainSelected = useMemo(() => domains.find(domain => domain.domain === watchDomain), [domains, watchDomain]);
-
-  useEffect(() => {
-    const getLatestRevision = async () => {
-      setLoading(true);
-      try {
-        const response = await query('SpaceLatestRevision', { environment: watchEnvironment }, 'network-only');
-        if (response.result && response.result.SpaceLatestRevision) {
-          setLatestRevision(response.result.SpaceLatestRevision.snapshot.revision);
-        } else {
-          setLatestRevision(0);
-        }
-      } catch (e: unknown) {
-        addToast((e as Error).message, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    form.formMethods.setValue('domain', '');
-    if ((watchEnvironment as string) && watchEnvironment !== 'main') {
-      void getLatestRevision();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchEnvironment]);
+  const loading = isLoadingDomains || isLoadingLatestRevision;
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof deployFormSchema>) => {
@@ -73,36 +50,16 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
     [onSubmit]
   );
 
-  const fetch = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await query('SpaceDeployments', { pageSize: 30 }, 'network-only');
-      if (response.result) {
-        const { /* pageInfo, */ edges } = response.result.SpaceDeployments;
-        setDomains(edges);
-        // setHasNextPage(pageInfo.hasNextPage);
-      }
-    } catch {
-      // Nothing
-    } finally {
-      setLoading(false);
-    }
-  }, [query]);
-
-  useEffect(() => {
-    void fetch();
-  }, [fetch]);
-
-  if (loading) {
-    return (
-      <div className="flex grow flex-col items-center justify-center p-20">
-        <i className="fa-solid fa-sync fa-spin fa-4x" title="Loading" />
-      </div>
-    );
-  }
+  const handleChangeDomain = useCallback(
+    (currentDomain: string) => {
+      const domainSelected = domains.find(domain => domain.domain === currentDomain);
+      form.formMethods.setValue('revision', domainSelected?.revision ?? 0);
+    },
+    [domains, form.formMethods]
+  );
 
   return (
-    <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
+    <Form form={form} onSubmit={handleSubmitInternal} className="w-125 gap-4">
       <Form.Body>
         <Form.Select name="environment" label="Environment" size="sm">
           <option value="main">Main</option>
@@ -110,38 +67,51 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
           <option value="staging">Staging</option>
           <option value="live">Live</option>
         </Form.Select>
-        {watchEnvironment !== 'main' && !latestRevision && (
-          <Alert className="mt-4 text-white" intent="warning">
+        {!loading && watchEnvironment !== 'main' && !latestRevision && (
+          <Alert className="text-white" intent="warning" size="sm">
             This environment don&apos;t have any snapshot, please make a snapshot first
           </Alert>
         )}
-        {watchEnvironment === 'main' && (
-          <Alert className="mt-4 text-white" intent="info">
+        {!loading && watchEnvironment === 'main' && (
+          <Alert className="text-white" intent="info" size="sm">
             <span className="font-bold">Note:</span> Selecting <span className="inline font-bold">Main</span> will
             render all changes, Use this only for testing purposes
           </Alert>
         )}
         {(latestRevision > 0 || watchEnvironment === 'main') && (
-          <Form.Select name="domain" label="Domain" placeholder="Domain...">
+          <Form.Select
+            name="domain"
+            label="Domain"
+            placeholder="Domain..."
+            size="sm"
+            disabled={loading}
+            onChange={handleChangeDomain}
+          >
             {domains.map(domain => (
               <option key={domain.domain} value={domain.domain} disabled={!domain.isVerified}>
-                {`https://${domain.domain}${!domain.isVerified ? '' : ' (Unverified)'}`}
+                {`${domain.domain}${domain.isVerified ? '' : ' [Unverified]'}`}
               </option>
             ))}
           </Form.Select>
         )}
         {latestRevision > 0 && watchDomain && (
-          <Form.Select name="revision" label="Revision" placeholder="Revision Not Selected">
+          <Form.Select
+            name="revision"
+            label="Revision"
+            placeholder="Revision Not Selected"
+            size="sm"
+            disabled={loading}
+          >
             {Array(latestRevision)
               .fill(undefined)
               .map((_item, i) => (
                 <option key={latestRevision - i} value={latestRevision - i}>
                   Revision {latestRevision - i}
-                  {i === 0 && ' (Latest)'}
+                  {i === 0 && ' [Latest]'}
                   {domainSelected &&
                     domainSelected.revision === i + 1 &&
                     domainSelected.environment === watchEnvironment &&
-                    ' (Published)'}
+                    ' [Published]'}
                 </option>
               ))}
           </Form.Select>
@@ -151,7 +121,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
         <Button onClick={onClose} size="sm">
           Cancel
         </Button>
-        <Button type="submit" size="sm">
+        <Button type="submit" size="sm" disabled={loading}>
           Publish
         </Button>
       </Form.Footer>

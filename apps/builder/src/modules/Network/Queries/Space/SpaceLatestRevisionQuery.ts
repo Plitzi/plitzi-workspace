@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client/core';
 
 export type TSpaceLatestRevisionQuery = {
-  SpaceLatestRevision: { snapshot: { revision: number } } | null;
+  SpaceLatestRevision: { snapshot: { revision: number } | null } | null;
 };
 
 const SpaceLatestRevisionQuery = gql`

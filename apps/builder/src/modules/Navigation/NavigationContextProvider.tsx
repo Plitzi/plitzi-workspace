@@ -28,7 +28,15 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
   pageDefinitionsRef.current = pageDefinitions;
 
   const paths = useMemo(
-    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
+    () =>
+      getPaths(
+        pages,
+        pageDefinitions,
+        pageFolders,
+        previewMode ? undefined : authenticated,
+        server.basePath,
+        previewMode
+      ),
     [pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 

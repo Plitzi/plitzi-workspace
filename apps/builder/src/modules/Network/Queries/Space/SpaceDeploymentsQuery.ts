@@ -16,7 +16,7 @@ export type TSpaceDeploymentsQuery = {
 };
 
 const SpaceDeploymentsQuery = gql`
-  query SpaceDeploymentsQuery($filter: PluginInput, $page: Int, $pageSize: Int, $offset: Int) {
+  query SpaceDeploymentsQuery($filter: DeploymentInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceDeployments(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {
         id

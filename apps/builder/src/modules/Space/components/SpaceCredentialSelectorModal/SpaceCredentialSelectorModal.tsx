@@ -110,7 +110,7 @@ const SpaceCredentialSelectorModal = ({
       <div className={className} onClick={onOpen}>
         {children}
       </div>
-      <Modal onClick={handleClick} onClose={onClose} id={id} open={open} size="sm" className={{ card: 'w-[500px]' }}>
+      <Modal onClick={handleClick} onClose={onClose} id={id} open={open} size="sm" className={{ card: 'w-125' }}>
         <Modal.Header>
           <Modal.HeaderIcon icon="fa-solid fa-key" />
           Space Credentials

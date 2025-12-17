@@ -11,7 +11,7 @@ export type SpaceCredentialsProps = {
 
 const SpaceCredentials = ({ credentials = [], selected = '', onSelect, onRemove }: SpaceCredentialsProps) => {
   return (
-    <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
+    <div className="flex max-h-75 flex-col gap-2 overflow-y-auto">
       {credentials.map(
         ({ name, identifier, provider, inUse, usedIn, createdAt, updatedAt }) => (
           <SpaceCredential
