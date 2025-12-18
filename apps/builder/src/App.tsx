@@ -19,11 +19,20 @@ import { createClient } from 'graphql-ws';
 import get from 'lodash-es/get';
 import omit from 'lodash-es/omit';
 import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
+import * as React from 'react';
+import * as JSXRuntime from 'react/jsx-runtime';
+import * as ReactDOM from 'react-dom';
+import * as ReactDOMClient from 'react-dom/client';
 import { BrowserRouter, useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
+import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import { generateFacade } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
+import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 
@@ -57,6 +66,24 @@ const App = (props: AppProps) => {
     className = 'min-h-screen',
     builderEnvironment = 'production'
   } = props;
+  useMemo(
+    () =>
+      generateFacade({
+        react: React,
+        'react/jsx-runtime': JSXRuntime,
+        'react-dom': ReactDOM,
+        'react-dom/client': ReactDOMClient,
+        '@plitzi/plitzi-sdk': {
+          RootElement,
+          usePlitziServiceContext,
+          PlitziServiceProvider,
+          ComponentProvider,
+          withElement,
+          JsxManager
+        }
+      }),
+    []
+  );
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [instanceId, setInstanceId] = useStorage<string>(`web_${webId}_state.instanceId`, '', 'sessionStorage');
   const server = useMemo(() => getEnvironmentServer(builderEnvironment, serverProp), [builderEnvironment, serverProp]);

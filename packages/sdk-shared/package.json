@@ -111,6 +111,10 @@
       "types": "./dist/src/helpers/formatDate.d.ts",
       "import": "./dist/src/helpers/formatDate.mjs"
     },
+    "./helpers/generateFacade": {
+      "types": "./dist/src/helpers/generateFacade.d.ts",
+      "import": "./dist/src/helpers/generateFacade.mjs"
+    },
     "./helpers/syntaxHighlight": {
       "types": "./dist/src/helpers/syntaxHighlight.d.ts",
       "import": "./dist/src/helpers/syntaxHighlight.mjs"

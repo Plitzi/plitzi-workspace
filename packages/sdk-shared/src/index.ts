@@ -1,6 +1,7 @@
 import * as collections from './collections';
 import * as dataSource from './dataSource';
 import fetchManifest from './helpers/fetchManifest';
+import generateFacade from './helpers/generateFacade';
 import syntaxHighlight from './helpers/syntaxHighlight';
 import * as utils from './helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from './hooks/usePlitziServiceContext';
@@ -30,6 +31,7 @@ export {
   usePlitziServiceContext,
   PlitziServiceProvider,
   syntaxHighlight,
+  generateFacade,
   fetchManifest,
   utils,
   style,

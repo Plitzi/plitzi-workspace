@@ -5,6 +5,10 @@ import Provider from '@plitzi/plitzi-ui/Provider';
 import clsx from 'clsx';
 import get from 'lodash-es/get';
 import { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
+import * as React from 'react';
+import * as JSXRuntime from 'react/jsx-runtime';
+import * as ReactDOM from 'react-dom';
+import * as ReactDOMClient from 'react-dom/client';
 import { StaticRouter } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -13,9 +17,11 @@ import AppMain from '@modules/App/AppMain';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import { generateFacade } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 import { getEnvironmentServer } from './config';
+import * as PlitziSDK from './index';
 
 import type { ApolloClient } from '@apollo/client/core';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
@@ -67,6 +73,17 @@ const App = ({
   isHydrating = false,
   ...sdkProps
 }: AppProps) => {
+  useMemo(
+    () =>
+      generateFacade({
+        react: React,
+        'react/jsx-runtime': JSXRuntime,
+        'react-dom': ReactDOM,
+        'react-dom/client': ReactDOMClient,
+        '@plitzi/plitzi-sdk': PlitziSDK
+      }),
+    []
+  );
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [debugMode, setDebugMode] = useState(false);
   const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);

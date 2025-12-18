@@ -2,12 +2,6 @@
 import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 
-// This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
-import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
-import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
-import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import Builder from '@pmodules/Builder';
 
 import App from './App';
@@ -84,7 +78,5 @@ const PlitziBuilder = (props: PlitziBuilderProps) => {
 PlitziBuilder.Plugin = Builder.Plugin;
 
 export const { version } = packageSettings;
-
-export { RootElement, usePlitziServiceContext, PlitziServiceProvider, ComponentProvider, withElement, JsxManager };
 
 export default PlitziBuilder;
