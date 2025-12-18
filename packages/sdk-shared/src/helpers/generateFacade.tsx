@@ -76,6 +76,9 @@ const generateFacade = (modules: Record<string, unknown>, windowKey = 'PlitziFac
 
   const currentModules = getAllImportMaps();
   const modulesFiltered = omit(modules, Object.keys(currentModules));
+  if (Object.keys(modulesFiltered).length === 0) {
+    return;
+  }
 
   (window as any)[windowKey] = Object.fromEntries(
     Object.entries(modulesFiltered).map(([key, module]) => [toPascalCase(key), module])
