@@ -37,7 +37,7 @@
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
     "eslint": "^9.39.2",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "^4.17.22"
   },
   "devDependencies": {
     "eslint": "^9.39.2",

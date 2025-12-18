@@ -48,7 +48,7 @@
     "react-dom": "^19.2.3",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   },
   "peerDependencies": {
     "react": "^19.1.1",
@@ -56,8 +56,8 @@
   },
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
-    "lodash-es": "^4.17.21",
-    "react-router": "^7.10.1",
-    "react-router-dom": "^7.10.1"
+    "lodash-es": "^4.17.22",
+    "react-router": "^7.11.0",
+    "react-router-dom": "^7.11.0"
   }
 }

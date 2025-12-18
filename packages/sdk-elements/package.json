@@ -565,13 +565,13 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "immer": "^11.0.1",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "^4.17.22"
   },
   "devDependencies": {
     "eslint": "^9.39.2",
     "react": "^19.2.3",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   }
 }
