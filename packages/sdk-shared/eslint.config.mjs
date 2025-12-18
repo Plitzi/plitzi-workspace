@@ -38,6 +38,7 @@ export default tsEslint.config({
     // Turned off for eslint@9.39.0
     // @see https://github.com/eslint/eslint/issues/20272
     '@typescript-eslint/unified-signatures': 'off',
+    '@typescript-eslint/no-useless-default-assignment': 'off',
     '@typescript-eslint/consistent-type-imports': [
       'warn',
       {
