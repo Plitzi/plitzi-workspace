@@ -1874,7 +1874,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/commands@npm:^6.10.0":
+"@codemirror/commands@npm:^6.10.1":
   version: 6.10.1
   resolution: "@codemirror/commands@npm:6.10.1"
   dependencies:
@@ -3368,7 +3368,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.28.5"
     "@babel/preset-react": "npm:^7.28.5"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.1.11"
+    "@plitzi/plitzi-ui": "npm:^1.1.13"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
@@ -3389,7 +3389,7 @@ __metadata:
     cypress: "npm:15.8.1"
     eslint: "npm:^9.39.2"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.294.0"
+    flow-bin: "npm:^0.295.0"
     graphql: "npm:^16.12.0"
     graphql-ws: "npm:^6.0.6"
     immer: "npm:^11.0.1"
@@ -3476,7 +3476,7 @@ __metadata:
     css-loader: "npm:^7.1.2"
     eslint: "npm:^9.39.2"
     file-loader: "npm:^6.2.0"
-    flow-bin: "npm:^0.294.0"
+    flow-bin: "npm:^0.295.0"
     graphql: "npm:^16.12.0"
     handlebars: "npm:^4.7.8"
     immer: "npm:^11.0.1"
@@ -3514,12 +3514,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.1.11":
-  version: 1.1.11
-  resolution: "@plitzi/plitzi-ui@npm:1.1.11::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.1.11%2Fa8221b08ab5f5570f47319467cf705ee75fecb25"
+"@plitzi/plitzi-ui@npm:^1.1.13":
+  version: 1.1.13
+  resolution: "@plitzi/plitzi-ui@npm:1.1.13::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.1.13%2F4e6a95d1502c4963216e04b86bf355f0f4aa6b4e"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.0"
-    "@codemirror/commands": "npm:^6.10.0"
+    "@codemirror/commands": "npm:^6.10.1"
     "@codemirror/lang-css": "npm:^6.3.1"
     "@codemirror/lang-html": "npm:^6.4.11"
     "@codemirror/lang-javascript": "npm:^6.2.4"
@@ -3535,7 +3535,7 @@ __metadata:
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     immer: "npm:^11.0.1"
-    lodash-es: "npm:^4.17.21"
+    lodash-es: "npm:^4.17.22"
     react: "npm:^19.2.3"
     react-dom: "npm:^19.2.3"
     react-hook-form: "npm:^7.68.0"
@@ -3547,8 +3547,8 @@ __metadata:
     tailwind-merge: "npm:^3.4.0"
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^13.0.0"
-    zod: "npm:^4.2.0"
-  checksum: 10c0/a7c5947f0ba2002d976f1abe5a2aa14455e32f01dcc7653b4eef1f57812862f40841abd62635c714fa79b89f248d4b06049b798bb0662e6d51f244b75389efe3
+    zod: "npm:^4.2.1"
+  checksum: 10c0/a251af0704107dd9f4e751aa6a83fc14eb90f52c5c4d7c3a8c93aa6716fd45e02b12fb734473d62bf2f6ed8736462278fae28c14392b2d2c433a403cbe4d77e2
   languageName: node
   linkType: hard
 
@@ -3557,7 +3557,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.29.8"
-    "@plitzi/plitzi-ui": "npm:^1.1.11"
+    "@plitzi/plitzi-ui": "npm:^1.1.13"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.7"
     eslint: "npm:^9.39.2"
@@ -3572,7 +3572,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.1.11"
+    "@plitzi/plitzi-ui": "npm:^1.1.13"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3659,7 +3659,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.1.11"
+    "@plitzi/plitzi-ui": "npm:^1.1.13"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3730,7 +3730,7 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.27.1"
     "@babel/preset-env": "npm:^7.28.5"
     "@eslint/js": "npm:^9.39.2"
-    "@plitzi/plitzi-ui": "npm:^1.1.11"
+    "@plitzi/plitzi-ui": "npm:^1.1.13"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.1"
@@ -3804,7 +3804,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.1.11"
+    "@plitzi/plitzi-ui": "npm:^1.1.13"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/lodash-es": "npm:^4.17.12"
@@ -10075,12 +10075,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flow-bin@npm:^0.294.0":
-  version: 0.294.0
-  resolution: "flow-bin@npm:0.294.0"
+"flow-bin@npm:^0.295.0":
+  version: 0.295.0
+  resolution: "flow-bin@npm:0.295.0"
   bin:
     flow: cli.js
-  checksum: 10c0/153e805d0c860b03a11d1ea998dbfd5be576dbe28ebbe7ff8ca0f6f8446d2f5cb3f6073647a8eb7f0181ca5c81cf9d873efaf54e3476933dbad379f955ebb3df
+  checksum: 10c0/99c85e4fdbd50dd361a8dd9974561747fd6cc3f20ca8c0d7a0af3615385e85a3efa5148aa43f9692d0a24f12a5d5ccb4598116b6cbb44fff0b2d0b6e202d302a
   languageName: node
   linkType: hard
 
@@ -12716,7 +12716,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash-es@npm:^4.17.21, lodash-es@npm:^4.17.22":
+"lodash-es@npm:^4.17.22":
   version: 4.17.22
   resolution: "lodash-es@npm:4.17.22"
   checksum: 10c0/5f28a262183cca43e08c580622557f393cb889386df2d8adf7c852bfdff7a84c5e629df5aa6c5c6274e83b38172f239d3e4e72e1ad27352d9ae9766627338089
@@ -18570,7 +18570,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.2.0, zod@npm:^4.2.1":
+"zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.2.1":
   version: 4.2.1
   resolution: "zod@npm:4.2.1"
   checksum: 10c0/ecb5219bddf76a42d092a843fb98ad4cb78f1e1077082772b03ef032ee5cbc80790a4051836b962d26fb4af854323bc784d628bd1b8d9898149eba7af21c5560
