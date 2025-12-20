@@ -81,12 +81,6 @@ const DeployForm = ({
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="w-125 gap-4">
       <Form.Body>
-        <Form.Select name="environment" label="Environment" size="sm">
-          <option value="main">Main</option>
-          <option value="development">Development</option>
-          <option value="staging">Staging</option>
-          <option value="live">Live</option>
-        </Form.Select>
         {!loading && watchEnvironment !== 'main' && !latestRevision && (
           <Alert className="text-white" intent="warning" size="sm">
             This environment don&apos;t have any snapshot, please make a snapshot first
@@ -98,6 +92,12 @@ const DeployForm = ({
             render all changes, Use this only for testing purposes
           </Alert>
         )}
+        <Form.Select name="environment" label="Environment" size="sm">
+          <option value="main">Main</option>
+          <option value="development">Development</option>
+          <option value="staging">Staging</option>
+          <option value="live">Live</option>
+        </Form.Select>
         {(latestRevision > 0 || watchEnvironment === 'main') && (
           <Form.Select
             name="domain"
