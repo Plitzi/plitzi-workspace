@@ -29,19 +29,6 @@ export type ResourceFile = File & {
   metadata?: PluginManifest;
 };
 
-export type Credential = {
-  identifier: string;
-  name: string;
-  provider: 's3' | 'r2';
-  inUse: boolean;
-  usedIn: {
-    usedFrom: string;
-    name: string;
-  }[];
-  createdAt: number;
-  updatedAt: number;
-};
-
 export type Cdn = {
   identifier: string;
   name: string;

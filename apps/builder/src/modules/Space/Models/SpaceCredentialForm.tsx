@@ -1,11 +1,14 @@
+/* eslint-disable react-refresh/only-export-components */
+
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { SpaceCredentialProvider } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
+export const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
   z.object({
     provider: z.literal('s3'),
     name: z.string().min(2),
@@ -38,7 +41,7 @@ const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
 export type SpaceCredentialFormProps = {
   className?: string;
   name?: string;
-  provider?: 's3' | 'r2' | 'ssr';
+  provider?: SpaceCredentialProvider;
   accessKeyId?: string;
   secretAccessKey?: string;
   authType?: 'basic' | 'token';

@@ -5,10 +5,11 @@ import Text from '@plitzi/plitzi-ui/Text';
 import SpaceCredentialsEmpty from './SpaceCredentialsEmpty';
 import SpaceCredentials from '../SpaceCredentials';
 
-import type { Credential } from '@plitzi/sdk-shared';
+import type { SpaceCredential, SpaceCredentialProvider } from '@plitzi/sdk-shared';
 
 export type ModalBodyProps = {
-  credentials?: Credential[];
+  providersSupported?: SpaceCredentialProvider[];
+  credentials?: SpaceCredential[];
   credentialSelected?: string;
   onClickAddCredential?: () => void;
   onSelectCredential?: (identifier: string) => void;
@@ -16,7 +17,8 @@ export type ModalBodyProps = {
 };
 
 const ModalBody = ({
-  credentials = [],
+  providersSupported,
+  credentials,
   credentialSelected,
   onClickAddCredential,
   onSelectCredential,
@@ -30,7 +32,7 @@ const ModalBody = ({
           Manage your authentication credentials and API keys
         </Text>
       </div>
-      {credentials.length > 0 && (
+      {credentials && credentials.length > 0 && (
         <div className="flex items-center justify-between">
           <span>
             {credentials.length === 1
@@ -42,15 +44,16 @@ const ModalBody = ({
           </Button>
         </div>
       )}
-      {credentials.length > 0 && (
+      {credentials && credentials.length > 0 && (
         <SpaceCredentials
+          providersSupported={providersSupported}
           credentials={credentials}
           selected={credentialSelected}
           onSelect={onSelectCredential}
           onRemove={onRemoveCredential}
         />
       )}
-      {credentials.length === 0 && (
+      {(!credentials || credentials.length === 0) && (
         <SpaceCredentialsEmpty>
           <Button size="xs" onClick={onClickAddCredential}>
             Add Credential

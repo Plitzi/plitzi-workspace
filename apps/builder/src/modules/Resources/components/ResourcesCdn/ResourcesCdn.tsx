@@ -189,7 +189,11 @@ const ResourcesCdn = ({
           title="Update"
           onClick={handleClickUpdate}
         /> */}
-        <SpaceCredentialSelectorModal selected={credentialIdentifier} onSelect={handleSelectCredential}>
+        <SpaceCredentialSelectorModal
+          providersSupported={['r2', 's3']}
+          selected={credentialIdentifier}
+          onSelect={handleSelectCredential}
+        >
           <Icon
             // intent="primary"
             icon="fa-solid fa-key"

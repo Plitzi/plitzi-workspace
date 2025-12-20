@@ -10,19 +10,23 @@ import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
 
 import ModalBody from './ModalBody';
 
-import type { BuilderNetworkContextValue, Credential } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, SpaceCredential, SpaceCredentialProvider } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
+import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent, ReactNode } from 'react';
+import type z from 'zod';
 
 export type SpaceCredentialSelectorModalProps = {
   className?: string;
   children?: ReactNode;
   selected?: string;
+  providersSupported?: SpaceCredentialProvider[];
   onSelect?: (identifier: string) => void;
 };
 
 const SpaceCredentialSelectorModal = ({
+  providersSupported,
   children,
   className,
   selected: selectedProp,
@@ -31,7 +35,7 @@ const SpaceCredentialSelectorModal = ({
   const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const [selected, setSelected] = useState(selectedProp);
   const [newCredential, setNewCredential] = useState<
-    Omit<Credential, 'identifier' | 'createdAt' | 'updatedAt'> | undefined
+    Omit<SpaceCredential, 'identifier' | 'createdAt' | 'updatedAt'> | undefined
   >(undefined);
   const handleClick = useCallback((e: MouseEvent) => {
     e.stopPropagation();
@@ -53,24 +57,14 @@ const SpaceCredentialSelectorModal = ({
   }, [selectedProp, open]);
 
   const handleSubmitForm = useCallback(
-    async (
-      _e: MouseEvent | undefined,
-      {
-        name,
-        provider,
-        accessKeyId,
-        secretAccessKey
-      }: {
-        name?: string;
-        provider: 's3' | 'r2';
-        accessKeyId?: string;
-        secretAccessKey?: string;
-      }
-    ) => {
+    async (_e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => {
       const response = await mutateNetwork('SpaceAddCredential', {
-        name,
-        provider,
-        data: { accessKeyId, secretAccessKey }
+        name: values.name,
+        provider: values.provider,
+        data:
+          values.provider === 'r2' || values.provider === 's3'
+            ? { accessKeyId: values.accessKeyId, secretAccessKey: values.secretAccessKey }
+            : values.fields
       });
       if (!response.success) {
         return;
@@ -119,6 +113,7 @@ const SpaceCredentialSelectorModal = ({
           {newCredential && <SpaceCredentialForm onSubmit={handleSubmitForm} onClose={handleCloseForm} />}
           {!newCredential && (
             <ModalBody
+              providersSupported={providersSupported}
               credentials={data}
               credentialSelected={selected}
               onClickAddCredential={handleClickNewCredential}

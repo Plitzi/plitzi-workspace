@@ -15,3 +15,4 @@ export type * from './CommonTypes';
 export type * from './AuthTypes';
 export type * from './ResourceTypes';
 export type * from './SdkTypes';
+export type * from './SpaceTypes';

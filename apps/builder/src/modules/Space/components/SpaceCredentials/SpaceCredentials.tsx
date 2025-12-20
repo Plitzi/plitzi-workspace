@@ -1,21 +1,29 @@
 import SpaceCredential from './SpaceCredential';
 
-import type { Credential } from '@plitzi/sdk-shared';
+import type { SpaceCredentialProvider, SpaceCredential as TSpaceCredential } from '@plitzi/sdk-shared';
 
 export type SpaceCredentialsProps = {
-  credentials?: Credential[];
+  providersSupported?: SpaceCredentialProvider[];
+  credentials?: TSpaceCredential[];
   selected?: string;
   onSelect?: (identifier: string) => void;
   onRemove?: (identifier: string) => void;
 };
 
-const SpaceCredentials = ({ credentials = [], selected = '', onSelect, onRemove }: SpaceCredentialsProps) => {
+const SpaceCredentials = ({
+  providersSupported,
+  credentials,
+  selected = '',
+  onSelect,
+  onRemove
+}: SpaceCredentialsProps) => {
   return (
     <div className="flex max-h-75 flex-col gap-2 overflow-y-auto">
-      {credentials.map(
+      {credentials?.map(
         ({ name, identifier, provider, inUse, usedIn, createdAt, updatedAt }) => (
           <SpaceCredential
             key={identifier}
+            providersSupported={providersSupported}
             identifier={identifier}
             name={name}
             selected={identifier === selected}
