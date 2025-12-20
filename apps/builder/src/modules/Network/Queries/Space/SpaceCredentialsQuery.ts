@@ -1,9 +1,9 @@
 import { gql } from '@apollo/client/core';
 
-import type { Credential, PageInfo } from '@plitzi/sdk-shared';
+import type { SpaceCredential, PageInfo } from '@plitzi/sdk-shared';
 
 export type TSpaceCredentialsQuery = {
-  SpaceCredentials: { edges: Credential[]; pageInfo: PageInfo };
+  SpaceCredentials: { edges: SpaceCredential[]; pageInfo: PageInfo };
 };
 
 const SpaceCredentialsQuery = gql`

@@ -1,4 +1,5 @@
 import type { PluginManifest } from './PluginTypes';
+import type { SpaceCredential } from './SpaceTypes';
 
 export type ResourceType = 'image' | 'video' | 'document' | 'application' | 'plugin' | 'template';
 
@@ -38,7 +39,7 @@ export type Cdn = {
   endpoint?: string;
   bucketName: string;
   prefix: string;
-  credential?: Credential;
+  credential?: SpaceCredential;
   createdAt: number;
   updatedAt: number;
 };
