@@ -117,29 +117,27 @@ const SpaceCredential = ({
       </div>
       <div className="text-xs text-gray-500">Created {createdAtParsed}</div>
 
-      {isSupported && (
-        <div className="absolute right-2 bottom-2">
-          {!inUse && (
-            <Icon
-              intent="danger"
-              icon="fas fa-trash-alt"
-              title="Remove"
-              size="lg"
-              className="hidden cursor-pointer rounded p-4 group-hover:flex hover:bg-red-200"
-              onClick={handleClickRemove}
-            />
-          )}
-          {inUse && (
-            <Icon
-              intent="tertiary"
-              icon="fa-solid fa-circle-exclamation"
-              size="lg"
-              title="This credential is currently in use and cannot be removed."
-              className="cursor-default p-4 hover:bg-transparent"
-            />
-          )}
-        </div>
-      )}
+      <div className="absolute right-2 bottom-2">
+        {!inUse && (
+          <Icon
+            intent="danger"
+            icon="fas fa-trash-alt"
+            title="Remove"
+            size="lg"
+            className="hidden cursor-pointer rounded p-4 group-hover:flex hover:bg-red-200"
+            onClick={handleClickRemove}
+          />
+        )}
+        {inUse && (
+          <Icon
+            intent="tertiary"
+            icon="fa-solid fa-circle-exclamation"
+            size="lg"
+            title="This credential is currently in use and cannot be removed."
+            className="cursor-default p-4 hover:bg-transparent"
+          />
+        )}
+      </div>
     </div>
   );
 };
