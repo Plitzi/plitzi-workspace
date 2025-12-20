@@ -3368,7 +3368,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.28.5"
     "@babel/preset-react": "npm:^7.28.5"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.1.13"
+    "@plitzi/plitzi-ui": "npm:^1.1.14"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
@@ -3392,7 +3392,7 @@ __metadata:
     flow-bin: "npm:^0.295.0"
     graphql: "npm:^16.12.0"
     graphql-ws: "npm:^6.0.6"
-    immer: "npm:^11.0.1"
+    immer: "npm:^11.1.0"
     jest: "npm:^30.2.0"
     jszip: "npm:^3.10.1"
     lodash-es: "npm:^4.17.22"
@@ -3404,12 +3404,12 @@ __metadata:
     prop-types: "npm:^15.8.1"
     react: "npm:19.2.3"
     react-dom: "npm:19.2.3"
-    react-hook-form: "npm:^7.68.0"
+    react-hook-form: "npm:^7.69.0"
     react-refresh: "npm:^0.18.0"
     react-router-dom: "npm:^7.11.0"
     react-test-renderer: "npm:^19.2.3"
-    sass: "npm:^1.97.0"
-    sass-embedded: "npm:^1.97.0"
+    sass: "npm:^1.97.1"
+    sass-embedded: "npm:^1.97.1"
     sass-loader: "npm:^16.0.6"
     stylelint: "npm:^16.26.1"
     stylelint-order: "npm:^7.0.0"
@@ -3479,7 +3479,7 @@ __metadata:
     flow-bin: "npm:^0.295.0"
     graphql: "npm:^16.12.0"
     handlebars: "npm:^4.7.8"
-    immer: "npm:^11.0.1"
+    immer: "npm:^11.1.0"
     lodash-es: "npm:^4.17.22"
     mini-css-extract-plugin: "npm:^2.9.4"
     postcss: "npm:^8.5.6"
@@ -3492,8 +3492,8 @@ __metadata:
     react-router-dom: "npm:^7.11.0"
     react-test-renderer: "npm:^19.2.3"
     rollup-plugin-visualizer: "npm:^6.0.5"
-    sass: "npm:^1.97.0"
-    sass-embedded: "npm:^1.97.0"
+    sass: "npm:^1.97.1"
+    sass-embedded: "npm:^1.97.1"
     storybook: "npm:^10.1.10"
     stylelint: "npm:^16.26.1"
     stylelint-order: "npm:^7.0.0"
@@ -3514,9 +3514,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.1.13":
-  version: 1.1.13
-  resolution: "@plitzi/plitzi-ui@npm:1.1.13::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.1.13%2F4e6a95d1502c4963216e04b86bf355f0f4aa6b4e"
+"@plitzi/plitzi-ui@npm:^1.1.14":
+  version: 1.1.14
+  resolution: "@plitzi/plitzi-ui@npm:1.1.14::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.1.14%2F35f52c68f48ca98387f71bb69a152383816bdde6"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.0"
     "@codemirror/commands": "npm:^6.10.1"
@@ -3534,11 +3534,11 @@ __metadata:
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
-    immer: "npm:^11.0.1"
+    immer: "npm:^11.1.0"
     lodash-es: "npm:^4.17.22"
     react: "npm:^19.2.3"
     react-dom: "npm:^19.2.3"
-    react-hook-form: "npm:^7.68.0"
+    react-hook-form: "npm:^7.69.0"
     react-markdown: "npm:^10.1.0"
     react-syntax-highlighter: "npm:^16.1.0"
     react-toastify: "npm:^11.0.5"
@@ -3548,7 +3548,7 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^13.0.0"
     zod: "npm:^4.2.1"
-  checksum: 10c0/a251af0704107dd9f4e751aa6a83fc14eb90f52c5c4d7c3a8c93aa6716fd45e02b12fb734473d62bf2f6ed8736462278fae28c14392b2d2c433a403cbe4d77e2
+  checksum: 10c0/deeaea85f08380fc755afa28e972c65f2211c05e75d325a3ebd1b1b5833d10b5a63f9970124a8ce6efee209e77da72a7ae767b3fac2a4529c7a7e770558bf6a9
   languageName: node
   linkType: hard
 
@@ -3557,14 +3557,14 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.29.8"
-    "@plitzi/plitzi-ui": "npm:^1.1.13"
+    "@plitzi/plitzi-ui": "npm:^1.1.14"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.7"
     eslint: "npm:^9.39.2"
     jest: "npm:^30.2.0"
     prettier-plugin-tailwindcss: "npm:^0.7.2"
     react-router: "npm:^7.11.0"
-    turbo: "npm:^2.6.3"
+    turbo: "npm:^2.7.0"
   languageName: unknown
   linkType: soft
 
@@ -3572,7 +3572,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.1.13"
+    "@plitzi/plitzi-ui": "npm:^1.1.14"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3633,7 +3633,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.2"
-    immer: "npm:^11.0.1"
+    immer: "npm:^11.1.0"
     lodash-es: "npm:^4.17.22"
     react: "npm:^19.2.3"
     typescript: "npm:^5.9.3"
@@ -3659,7 +3659,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.1.13"
+    "@plitzi/plitzi-ui": "npm:^1.1.14"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3730,7 +3730,7 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.27.1"
     "@babel/preset-env": "npm:^7.28.5"
     "@eslint/js": "npm:^9.39.2"
-    "@plitzi/plitzi-ui": "npm:^1.1.13"
+    "@plitzi/plitzi-ui": "npm:^1.1.14"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.1"
@@ -3750,7 +3750,7 @@ __metadata:
     eslint: "npm:^9.39.2"
     eslint-config-airbnb: "npm:^19.0.4"
     eslint-config-prettier: "npm:^10.1.8"
-    eslint-config-turbo: "npm:^2.6.3"
+    eslint-config-turbo: "npm:^2.7.0"
     eslint-import-resolver-alias: "npm:^1.1.2"
     eslint-plugin-cypress: "npm:^5.2.0"
     eslint-plugin-flowtype: "npm:8.0.3"
@@ -3793,7 +3793,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.2"
-    immer: "npm:^11.0.1"
+    immer: "npm:^11.1.0"
     lodash-es: "npm:^4.17.22"
     typescript: "npm:^5.9.3"
     vite: "npm:^7.3.0"
@@ -3804,13 +3804,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.1.13"
+    "@plitzi/plitzi-ui": "npm:^1.1.14"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/lodash-es": "npm:^4.17.12"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.2"
-    immer: "npm:^11.0.1"
+    immer: "npm:^11.1.0"
     lodash-es: "npm:^4.17.22"
     prop-types: "npm:^15.8.1"
     typescript: "npm:^5.9.3"
@@ -9251,15 +9251,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-turbo@npm:^2.6.3":
-  version: 2.6.3
-  resolution: "eslint-config-turbo@npm:2.6.3"
+"eslint-config-turbo@npm:^2.7.0":
+  version: 2.7.0
+  resolution: "eslint-config-turbo@npm:2.7.0"
   dependencies:
-    eslint-plugin-turbo: "npm:2.6.3"
+    eslint-plugin-turbo: "npm:2.7.0"
   peerDependencies:
     eslint: ">6.6.0"
     turbo: ">2.0.0"
-  checksum: 10c0/54a487b61923dc84538afe4b50e8d0f525da26ec70d16cf18ef31814fe1ad56553d64e8d60d1b55ec6044e19452326907eeac162ad928d6cd42fa8863553b6e8
+  checksum: 10c0/12e21618c00c0f2e84a883eadd7868841b2dc09fb437099cd8c5c6487b81a23e09ff27671f195559ea17e6e4cf47638a00ebbfabc47fd191a33c33e6570d7c5d
   languageName: node
   linkType: hard
 
@@ -9500,15 +9500,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-turbo@npm:2.6.3":
-  version: 2.6.3
-  resolution: "eslint-plugin-turbo@npm:2.6.3"
+"eslint-plugin-turbo@npm:2.7.0":
+  version: 2.7.0
+  resolution: "eslint-plugin-turbo@npm:2.7.0"
   dependencies:
     dotenv: "npm:16.0.3"
   peerDependencies:
     eslint: ">6.6.0"
     turbo: ">2.0.0"
-  checksum: 10c0/b3c7f70f84baf6d8e729a2b45d15a57fc860699cab5e774012211bb55d9a078b05c92e403f72dce53d47685c3068e12257ce85c2b8895dcca2e56c07a28f3e4c
+  checksum: 10c0/971c1713c6e6009d9a4182b93ded0a313ea4610154036221aee370295517333749965f1ce01acfe6633dc0083337aef8bba159d6b663666c5030a288d64fd8f2
   languageName: node
   linkType: hard
 
@@ -11038,10 +11038,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:^11.0.1":
-  version: 11.0.1
-  resolution: "immer@npm:11.0.1"
-  checksum: 10c0/d505c1aa6d5d7ff03196e0a508af2853839eb1a3d5af51d55ca5815c46981b74765faf357fbd276b151109b07dd6b564077be92b0247b0a4effa78130166030d
+"immer@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "immer@npm:11.1.0"
+  checksum: 10c0/cc1f14037534802a662f0113d80b4695685d789b84ab4a56a241a384df32f57f12332d1643fa3b3cc7a2504b076efb07aead08732796c8e019569d95b8b7f1cd
   languageName: node
   linkType: hard
 
@@ -15010,12 +15010,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-hook-form@npm:^7.68.0":
-  version: 7.68.0
-  resolution: "react-hook-form@npm:7.68.0"
+"react-hook-form@npm:^7.69.0":
+  version: 7.69.0
+  resolution: "react-hook-form@npm:7.69.0"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10c0/5fb500fe60077185ab6de32a2371d05bf75ae335ef62993f0359dbb42bb0c95e0c28d4f7d70c4382995486c82715295c87fc44f2ced5de1ae353aa1f23398f47
+  checksum: 10c0/99440aac1edbbda1f1704e31bea72dd75130d09593f5fce037596d381fb3dbf5a9864b28f49ecd52bd6dfabceb437905578fe2efc20c69411500fbdbc8647df6
   languageName: node
   linkType: hard
 
@@ -15739,163 +15739,163 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-embedded-all-unknown@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-all-unknown@npm:1.97.0"
+"sass-embedded-all-unknown@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-all-unknown@npm:1.97.1"
   dependencies:
-    sass: "npm:1.97.0"
+    sass: "npm:1.97.1"
   conditions: (!cpu=arm | !cpu=arm64 | !cpu=riscv64 | !cpu=x64)
   languageName: node
   linkType: hard
 
-"sass-embedded-android-arm64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-android-arm64@npm:1.97.0"
+"sass-embedded-android-arm64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-android-arm64@npm:1.97.1"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"sass-embedded-android-arm@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-android-arm@npm:1.97.0"
+"sass-embedded-android-arm@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-android-arm@npm:1.97.1"
   conditions: os=android & cpu=arm
   languageName: node
   linkType: hard
 
-"sass-embedded-android-riscv64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-android-riscv64@npm:1.97.0"
+"sass-embedded-android-riscv64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-android-riscv64@npm:1.97.1"
   conditions: os=android & cpu=riscv64
   languageName: node
   linkType: hard
 
-"sass-embedded-android-x64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-android-x64@npm:1.97.0"
+"sass-embedded-android-x64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-android-x64@npm:1.97.1"
   conditions: os=android & cpu=x64
   languageName: node
   linkType: hard
 
-"sass-embedded-darwin-arm64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-darwin-arm64@npm:1.97.0"
+"sass-embedded-darwin-arm64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-darwin-arm64@npm:1.97.1"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"sass-embedded-darwin-x64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-darwin-x64@npm:1.97.0"
+"sass-embedded-darwin-x64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-darwin-x64@npm:1.97.1"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-arm64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-arm64@npm:1.97.0"
+"sass-embedded-linux-arm64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-arm64@npm:1.97.1"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-arm@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-arm@npm:1.97.0"
+"sass-embedded-linux-arm@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-arm@npm:1.97.1"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-musl-arm64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-musl-arm64@npm:1.97.0"
+"sass-embedded-linux-musl-arm64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-musl-arm64@npm:1.97.1"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-musl-arm@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-musl-arm@npm:1.97.0"
+"sass-embedded-linux-musl-arm@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-musl-arm@npm:1.97.1"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-musl-riscv64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-musl-riscv64@npm:1.97.0"
+"sass-embedded-linux-musl-riscv64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-musl-riscv64@npm:1.97.1"
   conditions: os=linux & cpu=riscv64
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-musl-x64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-musl-x64@npm:1.97.0"
+"sass-embedded-linux-musl-x64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-musl-x64@npm:1.97.1"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-riscv64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-riscv64@npm:1.97.0"
+"sass-embedded-linux-riscv64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-riscv64@npm:1.97.1"
   conditions: os=linux & cpu=riscv64
   languageName: node
   linkType: hard
 
-"sass-embedded-linux-x64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-linux-x64@npm:1.97.0"
+"sass-embedded-linux-x64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-linux-x64@npm:1.97.1"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"sass-embedded-unknown-all@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-unknown-all@npm:1.97.0"
+"sass-embedded-unknown-all@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-unknown-all@npm:1.97.1"
   dependencies:
-    sass: "npm:1.97.0"
+    sass: "npm:1.97.1"
   conditions: (!os=android | !os=darwin | !os=linux | !os=win32)
   languageName: node
   linkType: hard
 
-"sass-embedded-win32-arm64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-win32-arm64@npm:1.97.0"
+"sass-embedded-win32-arm64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-win32-arm64@npm:1.97.1"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"sass-embedded-win32-x64@npm:1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded-win32-x64@npm:1.97.0"
+"sass-embedded-win32-x64@npm:1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded-win32-x64@npm:1.97.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"sass-embedded@npm:^1.97.0":
-  version: 1.97.0
-  resolution: "sass-embedded@npm:1.97.0"
+"sass-embedded@npm:^1.97.1":
+  version: 1.97.1
+  resolution: "sass-embedded@npm:1.97.1"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.5.0"
     buffer-builder: "npm:^0.2.0"
     colorjs.io: "npm:^0.5.0"
     immutable: "npm:^5.0.2"
     rxjs: "npm:^7.4.0"
-    sass-embedded-all-unknown: "npm:1.97.0"
-    sass-embedded-android-arm: "npm:1.97.0"
-    sass-embedded-android-arm64: "npm:1.97.0"
-    sass-embedded-android-riscv64: "npm:1.97.0"
-    sass-embedded-android-x64: "npm:1.97.0"
-    sass-embedded-darwin-arm64: "npm:1.97.0"
-    sass-embedded-darwin-x64: "npm:1.97.0"
-    sass-embedded-linux-arm: "npm:1.97.0"
-    sass-embedded-linux-arm64: "npm:1.97.0"
-    sass-embedded-linux-musl-arm: "npm:1.97.0"
-    sass-embedded-linux-musl-arm64: "npm:1.97.0"
-    sass-embedded-linux-musl-riscv64: "npm:1.97.0"
-    sass-embedded-linux-musl-x64: "npm:1.97.0"
-    sass-embedded-linux-riscv64: "npm:1.97.0"
-    sass-embedded-linux-x64: "npm:1.97.0"
-    sass-embedded-unknown-all: "npm:1.97.0"
-    sass-embedded-win32-arm64: "npm:1.97.0"
-    sass-embedded-win32-x64: "npm:1.97.0"
+    sass-embedded-all-unknown: "npm:1.97.1"
+    sass-embedded-android-arm: "npm:1.97.1"
+    sass-embedded-android-arm64: "npm:1.97.1"
+    sass-embedded-android-riscv64: "npm:1.97.1"
+    sass-embedded-android-x64: "npm:1.97.1"
+    sass-embedded-darwin-arm64: "npm:1.97.1"
+    sass-embedded-darwin-x64: "npm:1.97.1"
+    sass-embedded-linux-arm: "npm:1.97.1"
+    sass-embedded-linux-arm64: "npm:1.97.1"
+    sass-embedded-linux-musl-arm: "npm:1.97.1"
+    sass-embedded-linux-musl-arm64: "npm:1.97.1"
+    sass-embedded-linux-musl-riscv64: "npm:1.97.1"
+    sass-embedded-linux-musl-x64: "npm:1.97.1"
+    sass-embedded-linux-riscv64: "npm:1.97.1"
+    sass-embedded-linux-x64: "npm:1.97.1"
+    sass-embedded-unknown-all: "npm:1.97.1"
+    sass-embedded-win32-arm64: "npm:1.97.1"
+    sass-embedded-win32-x64: "npm:1.97.1"
     supports-color: "npm:^8.1.1"
     sync-child-process: "npm:^1.0.2"
     varint: "npm:^6.0.0"
@@ -15938,7 +15938,7 @@ __metadata:
       optional: true
   bin:
     sass: dist/bin/sass.js
-  checksum: 10c0/dda7e0ac8195c0f0a8f49467770ebaf0f4837650a921f32c519ff0cccf86fdcd904be8e41e083e7c859abfcd7df89ba96fc982a266a166070d6315e66c9b0f06
+  checksum: 10c0/1d6e90d1a98a379dcae764c93cf8840eba23b526829bc8e6d54bd4e3c4cca8eba55aad15c78bb3723fead54a73dec199b73cde7715f7e9b2aede31fd1825770a
   languageName: node
   linkType: hard
 
@@ -15968,9 +15968,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.97.0, sass@npm:^1.97.0":
-  version: 1.97.0
-  resolution: "sass@npm:1.97.0"
+"sass@npm:1.97.1, sass@npm:^1.97.1":
+  version: 1.97.1
+  resolution: "sass@npm:1.97.1"
   dependencies:
     "@parcel/watcher": "npm:^2.4.1"
     chokidar: "npm:^4.0.0"
@@ -15981,7 +15981,7 @@ __metadata:
       optional: true
   bin:
     sass: sass.js
-  checksum: 10c0/4c0e2596131054089beeeb6e98f7318beb909c4775187690656cbb85a45153d04eecd970e6a4431fe47dc94f9749cf8d58c9c5e59055d2cae39f4887a4bb6104
+  checksum: 10c0/c389d5d6405869b49fa2291e8328500fe7936f3b72136bc2c338bee6e7fec936bb9a48d77a1310dea66aa4669ba74ae6b82a112eb32521b9b36d740138a39ea0
   languageName: node
   linkType: hard
 
@@ -17271,58 +17271,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo-darwin-64@npm:2.6.3":
-  version: 2.6.3
-  resolution: "turbo-darwin-64@npm:2.6.3"
+"turbo-darwin-64@npm:2.7.0":
+  version: 2.7.0
+  resolution: "turbo-darwin-64@npm:2.7.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-darwin-arm64@npm:2.6.3":
-  version: 2.6.3
-  resolution: "turbo-darwin-arm64@npm:2.6.3"
+"turbo-darwin-arm64@npm:2.7.0":
+  version: 2.7.0
+  resolution: "turbo-darwin-arm64@npm:2.7.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-linux-64@npm:2.6.3":
-  version: 2.6.3
-  resolution: "turbo-linux-64@npm:2.6.3"
+"turbo-linux-64@npm:2.7.0":
+  version: 2.7.0
+  resolution: "turbo-linux-64@npm:2.7.0"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-linux-arm64@npm:2.6.3":
-  version: 2.6.3
-  resolution: "turbo-linux-arm64@npm:2.6.3"
+"turbo-linux-arm64@npm:2.7.0":
+  version: 2.7.0
+  resolution: "turbo-linux-arm64@npm:2.7.0"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-windows-64@npm:2.6.3":
-  version: 2.6.3
-  resolution: "turbo-windows-64@npm:2.6.3"
+"turbo-windows-64@npm:2.7.0":
+  version: 2.7.0
+  resolution: "turbo-windows-64@npm:2.7.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-windows-arm64@npm:2.6.3":
-  version: 2.6.3
-  resolution: "turbo-windows-arm64@npm:2.6.3"
+"turbo-windows-arm64@npm:2.7.0":
+  version: 2.7.0
+  resolution: "turbo-windows-arm64@npm:2.7.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo@npm:^2.6.3":
-  version: 2.6.3
-  resolution: "turbo@npm:2.6.3"
+"turbo@npm:^2.7.0":
+  version: 2.7.0
+  resolution: "turbo@npm:2.7.0"
   dependencies:
-    turbo-darwin-64: "npm:2.6.3"
-    turbo-darwin-arm64: "npm:2.6.3"
-    turbo-linux-64: "npm:2.6.3"
-    turbo-linux-arm64: "npm:2.6.3"
-    turbo-windows-64: "npm:2.6.3"
-    turbo-windows-arm64: "npm:2.6.3"
+    turbo-darwin-64: "npm:2.7.0"
+    turbo-darwin-arm64: "npm:2.7.0"
+    turbo-linux-64: "npm:2.7.0"
+    turbo-linux-arm64: "npm:2.7.0"
+    turbo-windows-64: "npm:2.7.0"
+    turbo-windows-arm64: "npm:2.7.0"
   dependenciesMeta:
     turbo-darwin-64:
       optional: true
@@ -17338,7 +17338,7 @@ __metadata:
       optional: true
   bin:
     turbo: bin/turbo
-  checksum: 10c0/3dab627a4e0f855c2ea2cc5e7d3d7abed01a7abace1197983c55e0563c413dfe45c80c121e5fa25d2cca013d895bde457d5cdf3a3d47000dc7d432a4cb68e78f
+  checksum: 10c0/59e21ec0f91c3a727223bd9af3f9dd44915316a946b52b883e2c0d772735f292365014532983ac22754e53233dfffd418e974827c586e248b07bfa51b5d2bec4
   languageName: node
   linkType: hard
 

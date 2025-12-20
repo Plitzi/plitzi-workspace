@@ -564,7 +564,7 @@
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "immer": "^11.0.1",
+    "immer": "^11.1.0",
     "lodash-es": "^4.17.22"
   },
   "devDependencies": {

@@ -24,14 +24,14 @@ export const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
   z.object({
     provider: z.literal('ssr'),
     name: z.string().min(2),
-    fields: z.discriminatedUnion('authType', [
+    fields: z.discriminatedUnion('type', [
       z.object({
-        authType: z.literal('basic'),
+        type: z.literal('basic'),
         user: z.string().min(2).max(20),
         pass: z.string().min(2).max(50)
       }),
       z.object({
-        authType: z.literal('token'),
+        type: z.literal('token'),
         token: z.string().min(10).max(100)
       })
     ])
@@ -44,7 +44,7 @@ export type SpaceCredentialFormProps = {
   provider?: SpaceCredentialProvider;
   accessKeyId?: string;
   secretAccessKey?: string;
-  authType?: 'basic' | 'token';
+  type?: 'basic' | 'token';
   user?: string;
   pass?: string;
   token?: string;
@@ -57,7 +57,7 @@ const SpaceCredentialForm = ({
   provider = 's3',
   accessKeyId = '',
   secretAccessKey = '',
-  authType = 'basic',
+  type = 'basic',
   user = '',
   pass = '',
   token = '',
@@ -67,14 +67,7 @@ const SpaceCredentialForm = ({
   const form = useForm({
     defaultValues:
       provider === 'ssr'
-        ? {
-            name,
-            provider,
-            fields: {
-              authType,
-              ...(authType === 'basic' ? { user, pass } : { token })
-            }
-          }
+        ? { name, provider, fields: { type, ...(type === 'basic' ? { user, pass } : { token }) } }
         : { name, provider, accessKeyId, secretAccessKey },
     config: { schema: spaceCredentialFormSchema }
   });
@@ -90,7 +83,7 @@ const SpaceCredentialForm = ({
       form.formMethods.resetField('accessKeyId');
       form.formMethods.resetField('secretAccessKey');
       if (value === 'ssr') {
-        form.formMethods.setValue('fields', { authType: 'basic', user: '', pass: '' });
+        form.formMethods.setValue('fields', { type: 'basic', user: '', pass: '' });
       }
     },
     [form.formMethods]
@@ -110,17 +103,17 @@ const SpaceCredentialForm = ({
           <Form.Input name="secretAccessKey" label="Secret Access Key" size="xs" />
         </Form.Conditional>
         <Form.Conditional when="provider" is="ssr">
-          <Form.Select name="fields.authType" label="Auth Type" size="xs">
+          <Form.Select name="fields.type" label="Auth Type" size="xs">
             <option value="basic">Basic</option>
             <option value="token">Token</option>
           </Form.Select>
 
-          <Form.Conditional when="fields.authType" is="basic">
+          <Form.Conditional when="fields.type" is="basic">
             <Form.Input name="fields.user" label="User" size="xs" />
             <Form.Input name="fields.pass" label="Password" size="xs" type="password" />
           </Form.Conditional>
 
-          <Form.Conditional when="fields.authType" is="token">
+          <Form.Conditional when="fields.type" is="token">
             <Form.Input name="fields.token" label="Token" size="xs" />
           </Form.Conditional>
         </Form.Conditional>

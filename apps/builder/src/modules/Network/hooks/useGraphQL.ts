@@ -54,7 +54,7 @@ function useGraphQL<K extends keyof QueriesMap, TK>(
     swrFetcher,
     config
   );
-  const dataParsed = useMemo(() => transformMemo?.(data) ?? data, [data, transformMemo]);
+  const dataParsed = useMemo(() => (transformMemo ? transformMemo(data) : data), [data, transformMemo]);
 
   return { data: dataParsed, error, isLoading, mutate };
 }

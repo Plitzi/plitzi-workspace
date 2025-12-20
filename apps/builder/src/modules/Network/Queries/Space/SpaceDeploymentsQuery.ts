@@ -1,18 +1,9 @@
 import { gql } from '@apollo/client/core';
 
-import type { PageInfo } from '@plitzi/sdk-shared';
-
-export type Domain = {
-  default: boolean;
-  domain: string;
-  environment: 'main' | 'production' | 'staging' | 'development';
-  id: string;
-  isVerified: boolean;
-  revision: number | null;
-};
+import type { PageInfo, SpaceDeployment } from '@plitzi/sdk-shared';
 
 export type TSpaceDeploymentsQuery = {
-  SpaceDeployments: { edges: Domain[]; pageInfo: PageInfo };
+  SpaceDeployments: { edges: SpaceDeployment[]; pageInfo: PageInfo };
 };
 
 const SpaceDeploymentsQuery = gql`
@@ -25,6 +16,9 @@ const SpaceDeploymentsQuery = gql`
         domain
         isVerified
         default
+        credential {
+          identifier
+        }
         createdAt
         updatedAt
       }

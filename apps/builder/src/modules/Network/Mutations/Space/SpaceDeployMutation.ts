@@ -1,19 +1,26 @@
 import { gql } from '@apollo/client/core';
 
-export type TSpaceDeployMutation = {
-  domain: string;
-  revision: number;
-  environment: string;
-  createdAt: number;
-  updatedAt: number;
-};
+import type { SpaceDeployment } from '@plitzi/sdk-shared';
+
+export type TSpaceDeployMutation = SpaceDeployment;
 
 const SpaceDeployMutation = gql`
-  mutation SpaceDeploy($environment: String!, $domain: String!, $revision: Int) {
-    SpaceDeploy(environment: $environment, domain: $domain, revision: $revision) {
+  mutation SpaceDeploy($environment: String!, $domain: String!, $revision: Int, $credentialIdentifier: String) {
+    SpaceDeploy(
+      environment: $environment
+      domain: $domain
+      revision: $revision
+      credentialIdentifier: $credentialIdentifier
+    ) {
+      id
       environment
       domain
       revision
+      isVerified
+      default
+      credential {
+        identifier
+      }
       createdAt
       updatedAt
     }

@@ -11,24 +11,43 @@ import type { MouseEvent } from 'react';
 const deployFormSchema = z.object({
   environment: z.enum(['main', 'production', 'staging', 'development']),
   domain: z.string().min(3, 'Domain must have at least 3 characters'),
-  revision: z.coerce.number().optional()
+  revision: z.coerce.number().optional(),
+  credentialIdentifier: z.string().optional()
 });
 
 export type DeployFormProps = {
   environment?: 'main' | 'production' | 'staging' | 'development';
   domain?: string;
   revision?: number;
+  credentialIdentifier?: string;
   onClose?: (e?: MouseEvent) => void;
   onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof deployFormSchema>) => void;
 };
 
-const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, onSubmit }: DeployFormProps) => {
+const DeployForm = ({
+  environment = 'main',
+  domain = '',
+  revision = 0,
+  credentialIdentifier = '',
+  onClose,
+  onSubmit
+}: DeployFormProps) => {
   const { data: domains = [], isLoading: isLoadingDomains } = useGraphQL(
     'SpaceDeployments',
-    data => data?.SpaceDeployments.edges
+    data => data?.SpaceDeployments.edges,
+    undefined,
+    { revalidateOnMount: true }
+  );
+  const { data: credentials = [], isLoading: isLoadingCredentials } = useGraphQL(
+    'SpaceCredentials',
+    data => data?.SpaceCredentials.edges,
+    { filter: { provider: { eq: 'ssr' } } }
   );
 
-  const form = useForm({ defaultValues: { environment, domain, revision }, config: { schema: deployFormSchema } });
+  const form = useForm({
+    defaultValues: { environment, domain, revision, credentialIdentifier },
+    config: { schema: deployFormSchema }
+  });
   const watchEnvironment = useFormWatch(form.formMethods, 'environment');
   const watchDomain = useFormWatch(form.formMethods, 'domain');
   const { data: latestRevision = 0, isLoading: isLoadingLatestRevision } = useGraphQL(
@@ -37,7 +56,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
     { environment: watchEnvironment }
   );
   const domainSelected = useMemo(() => domains.find(domain => domain.domain === watchDomain), [domains, watchDomain]);
-  const loading = isLoadingDomains || isLoadingLatestRevision;
+  const loading = isLoadingDomains || isLoadingLatestRevision || isLoadingCredentials;
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof deployFormSchema>) => {
@@ -54,6 +73,7 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
     (currentDomain: string) => {
       const domainSelected = domains.find(domain => domain.domain === currentDomain);
       form.formMethods.setValue('revision', domainSelected?.revision ?? 0);
+      form.formMethods.setValue('credentialIdentifier', domainSelected?.credential?.identifier ?? '');
     },
     [domains, form.formMethods]
   );
@@ -90,6 +110,21 @@ const DeployForm = ({ environment = 'main', domain = '', revision = 0, onClose, 
             {domains.map(domain => (
               <option key={domain.domain} value={domain.domain} disabled={!domain.isVerified}>
                 {`${domain.domain}${domain.isVerified ? '' : ' [Unverified]'}`}
+              </option>
+            ))}
+          </Form.Select>
+        )}
+        {(latestRevision > 0 || watchEnvironment === 'main') && watchDomain && (
+          <Form.Select
+            name="credentialIdentifier"
+            label="Credential"
+            placeholder="Credential..."
+            size="sm"
+            disabled={loading}
+          >
+            {credentials.map(credential => (
+              <option key={credential.identifier} value={credential.identifier}>
+                {credential.name}
               </option>
             ))}
           </Form.Select>

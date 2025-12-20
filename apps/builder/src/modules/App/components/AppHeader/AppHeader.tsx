@@ -82,7 +82,12 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
   }, [addToast, mutate, showModal]);
 
   const handleClickDeploy = useCallback(async () => {
-    const response = await showModal<{ environment: string; domain: string; revision?: number }>(
+    const response = await showModal<{
+      environment: string;
+      domain: string;
+      revision?: number;
+      cdnIdentifier?: string;
+    }>(
       <Modal.Header>
         <h4>Publish Snapshot</h4>
       </Modal.Header>,
@@ -105,11 +110,7 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
         <div>
           Your snapshot have being published to <b>{responseMutation.result.domain}</b> Successfully
         </div>,
-        {
-          appeareance: 'success',
-          autoDismiss: true,
-          placement: 'top-right'
-        }
+        { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
       );
     } else if (responseMutation.error) {
       addToast(responseMutation.error instanceof Error ? responseMutation.error.message : responseMutation.error, {
