@@ -23,7 +23,7 @@ const StepSource = ({ sources }: StepSourceProps) => {
               return (
                 <div
                   key={i}
-                  className="group flex w-full cursor-pointer items-center overflow-hidden rounded-sm border px-2 py-1 select-none hover:bg-blue-400 [&:not(:first-child)]:mt-2"
+                  className="group flex w-full cursor-pointer items-center overflow-hidden rounded-sm border px-2 py-1 select-none not-first:mt-2 hover:bg-blue-400"
                   title={name}
                   onClick={() => onChange(srcKey)}
                 >

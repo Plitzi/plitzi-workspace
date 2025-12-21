@@ -1,14 +1,20 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
+import Icon from '@plitzi/plitzi-ui/Icon';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
+import { formatFromNow } from '@plitzi/sdk-shared';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
+import InputEnvironment from './InputEnvironment';
+
+import type { Environment } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-const deployFormSchema = z.object({
+// eslint-disable-next-line react-refresh/only-export-components
+export const deployFormSchema = z.object({
   environment: z.enum(['main', 'production', 'staging', 'development']),
   domain: z.string().min(3, 'Domain must have at least 3 characters'),
   revision: z.coerce.number().optional(),
@@ -16,7 +22,7 @@ const deployFormSchema = z.object({
 });
 
 export type DeployFormProps = {
-  environment?: 'main' | 'production' | 'staging' | 'development';
+  environment?: Environment;
   domain?: string;
   revision?: number;
   credentialIdentifier?: string;
@@ -50,9 +56,9 @@ const DeployForm = ({
   });
   const watchEnvironment = useFormWatch(form.formMethods, 'environment');
   const watchDomain = useFormWatch(form.formMethods, 'domain');
-  const { data: latestRevision = 0, isLoading: isLoadingLatestRevision } = useGraphQL(
+  const { data: latestRevision, isLoading: isLoadingLatestRevision } = useGraphQL(
     'SpaceLatestRevision',
-    data => data?.SpaceLatestRevision?.snapshot?.revision,
+    data => data?.SpaceLatestRevision?.snapshot,
     { environment: watchEnvironment }
   );
   const domainSelected = useMemo(() => domains.find(domain => domain.domain === watchDomain), [domains, watchDomain]);
@@ -81,27 +87,21 @@ const DeployForm = ({
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="w-125 gap-4">
       <Form.Body>
+        <InputEnvironment />
         {!loading && watchEnvironment !== 'main' && !latestRevision && (
-          <Alert className="text-white" intent="warning" size="sm">
+          <Alert intent="warning" size="sm" solid={false}>
             This environment don&apos;t have any snapshot, please make a snapshot first
           </Alert>
         )}
-        {!loading && watchEnvironment === 'main' && (
-          <Alert className="text-white" intent="info" size="sm">
-            <span className="font-bold">Note:</span> Selecting <span className="inline font-bold">Main</span> will
-            render all changes, Use this only for testing purposes
-          </Alert>
-        )}
-        <Form.Select name="environment" label="Environment" size="sm">
-          <option value="main">Main</option>
-          <option value="development">Development</option>
-          <option value="staging">Staging</option>
-          <option value="live">Live</option>
-        </Form.Select>
-        {(latestRevision > 0 || watchEnvironment === 'main') && (
+        {(latestRevision || watchEnvironment === 'main') && (
           <Form.Select
             name="domain"
-            label="Domain"
+            label={
+              <div className="flex items-center gap-1">
+                <Icon icon="fa-solid fa-globe" />
+                Domain
+              </div>
+            }
             placeholder="Domain..."
             size="sm"
             disabled={loading}
@@ -114,11 +114,15 @@ const DeployForm = ({
             ))}
           </Form.Select>
         )}
-        {(latestRevision > 0 || watchEnvironment === 'main') && watchDomain && (
+        {(latestRevision || watchEnvironment === 'main') && watchDomain && (
           <Form.Select
             name="credentialIdentifier"
-            label="Credential"
-            placeholder="Credential..."
+            label={
+              <div className="flex items-center gap-1">
+                <Icon icon="fa-solid fa-shield-halved" /> Credential
+              </div>
+            }
+            placeholder="No Authentication"
             size="sm"
             disabled={loading}
           >
@@ -129,34 +133,45 @@ const DeployForm = ({
             ))}
           </Form.Select>
         )}
-        {latestRevision > 0 && watchDomain && (
-          <Form.Select
-            name="revision"
-            label="Revision"
-            placeholder="Revision Not Selected"
-            size="sm"
-            disabled={loading}
-          >
-            {Array(latestRevision)
-              .fill(undefined)
-              .map((_item, i) => (
-                <option key={latestRevision - i} value={latestRevision - i}>
-                  Revision {latestRevision - i}
-                  {i === 0 && ' [Latest]'}
-                  {domainSelected &&
-                    domainSelected.revision === i + 1 &&
-                    domainSelected.environment === watchEnvironment &&
-                    ' [Published]'}
-                </option>
-              ))}
-          </Form.Select>
+        {latestRevision && watchDomain && (
+          <div className="flex flex-col gap-0.5">
+            <Form.Select
+              name="revision"
+              label={
+                <div className="flex items-center gap-1">
+                  <Icon icon="fa-solid fa-code-branch" /> Revision
+                </div>
+              }
+              placeholder="Revision Not Selected"
+              size="sm"
+              disabled={loading}
+            >
+              {Array(latestRevision.revision)
+                .fill(undefined)
+                .map((_item, i) => (
+                  <option key={latestRevision.revision - i} value={latestRevision.revision - i}>
+                    Revision {latestRevision.revision - i}
+                    {i === 0 && ' [Latest]'}
+                    {domainSelected &&
+                      domainSelected.revision === i + 1 &&
+                      domainSelected.environment === watchEnvironment &&
+                      ' [Published]'}
+                  </option>
+                ))}
+            </Form.Select>
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="h-1 w-1 rounded-full bg-gray-500" />
+              {`Last Revision Published ${formatFromNow(latestRevision.publishedAt, undefined, { addSuffix: true })}`}
+            </div>
+          </div>
         )}
       </Form.Body>
       <Form.Footer justify="end">
         <Button onClick={onClose} size="sm">
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={loading}>
+        <Button type="submit" size="sm" disabled={loading} iconPlacement="before">
+          <Button.Icon icon="fa-brands fa-space-awesome" />
           Publish
         </Button>
       </Form.Footer>
