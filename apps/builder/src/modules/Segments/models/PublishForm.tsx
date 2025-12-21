@@ -4,6 +4,7 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { Environment } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 const publishFormSchema = z.object({
@@ -12,7 +13,7 @@ const publishFormSchema = z.object({
 });
 
 export type PublishFormProps = {
-  environment?: 'production' | 'staging' | 'development';
+  environment?: Exclude<Environment, 'main'>;
   description?: string;
   onClose?: (e?: MouseEvent) => void;
   onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof publishFormSchema>) => void;
@@ -35,7 +36,7 @@ const PublishForm = ({ environment = 'development', description = '', onClose, o
         <Form.Select name="environment" label="Environment" size="xs">
           <option value="development">Development</option>
           <option value="staging">Staging</option>
-          <option value="live">Live</option>
+          <option value="production">Production</option>
         </Form.Select>
         <Form.TextArea name="description" label="Description" placeholder="Brief description changes..." size="xs" />
       </Form.Body>

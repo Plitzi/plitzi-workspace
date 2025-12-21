@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client/core';
 
 export type TSegmentPublishMutation = {
-  environment: 'live' | 'staging' | 'development';
+  environment: 'production' | 'staging' | 'development';
   revision: string;
   description: string;
 };

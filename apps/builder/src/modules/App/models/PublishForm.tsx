@@ -4,16 +4,17 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import type { Environment } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 const publishFormSchema = z.object({
-  environment: z.enum(['development', 'staging', 'live']),
+  environment: z.enum(['development', 'staging', 'production']),
   description: z.string().max(200, { message: 'Description must be less than 200 characters' })
 });
 
 export type PublishFormProps = {
   className?: string;
-  environment?: 'development' | 'staging' | 'live';
+  environment?: Exclude<Environment, 'main'>;
   description?: string;
   onClose?: (e?: MouseEvent) => void;
   onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof publishFormSchema>) => void;
@@ -36,7 +37,7 @@ const PublishForm = ({ environment = 'development', description = '', onClose, o
         <Form.Select name="environment" label="Environment" size="sm">
           <option value="development">Development</option>
           <option value="staging">Staging</option>
-          <option value="live">Live</option>
+          <option value="production">Production</option>
         </Form.Select>
         <Form.TextArea name="description" label="Description" placeholder="Brief description changes..." size="sm" />
       </Form.Body>

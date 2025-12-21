@@ -2,9 +2,11 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback } from 'react';
 
+import type { Environment } from '@plitzi/sdk-shared';
+
 type SettingsProps = {
   spaceKey?: string;
-  environment?: string;
+  environment?: Environment;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -18,7 +20,7 @@ const Settings = ({ spaceKey = '', environment = 'main', onUpdate }: SettingsPro
         <option value="main">Main</option>
         <option value="development">Development</option>
         <option value="staging">Staging</option>
-        <option value="live">Live</option>
+        <option value="production">Production</option>
       </Select>
     </div>
   );

@@ -29,7 +29,7 @@ const UserBaseContextProvider = ({
   children,
   webId,
   server,
-  environment = 'live',
+  environment = 'production',
   renderMode = 'iframe'
 }: UserBaseContextProviderProps) => {
   const {

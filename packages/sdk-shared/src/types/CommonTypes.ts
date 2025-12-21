@@ -1,6 +1,6 @@
 export type ServerEnvironment = 'production' | 'staging' | 'development' | 'local';
 
-export type Environment = 'live' | 'staging' | 'development' | 'main';
+export type Environment = 'production' | 'staging' | 'development' | 'main';
 
 export type Server<T extends Record<string, unknown> = Record<string, unknown>> = {
   apiServer: string;
