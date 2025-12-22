@@ -190,7 +190,8 @@ const NetworkContextProvider = ({
           schema: {
             ...EMPTY_SCHEMA.schema,
             ...Space.schema,
-            flat: Space.schema.flat.reduce<Schema['flat']>((obj, item) => ({ ...obj, [item.id]: item }), {})
+            flat: Space.schema.flat.reduce<Schema['flat']>((obj, item) => ({ ...obj, [item.id]: item }), {}),
+            definition: Space.definition
           },
           plugins,
           style: Space.style,

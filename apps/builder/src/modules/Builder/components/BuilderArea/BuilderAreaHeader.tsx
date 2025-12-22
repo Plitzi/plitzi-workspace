@@ -38,10 +38,10 @@ const BuilderAreaHeader = ({
   const { multiPagesMode, setMultiPagesMode, hasMultiPages, builderSetBaseContext, baseElementIdOriginal, mode } =
     use(BuilderContext);
   const {
-    schema: { flat, pageFolders }
+    schema: { flat, pageFolders, definition }
   } = use(BuilderSchemaContext);
   const {
-    server: { domain, basePath }
+    server: { basePath }
   } = use(NetworkContext);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
 
@@ -82,14 +82,16 @@ const BuilderAreaHeader = ({
   const title = get(element, 'attributes.name', 'Page') as string;
   const defaultPage = get(element, 'attributes.default', false);
 
-  const domainName = useMemo(() => {
-    let name: string = domain || 'https://subdomain.plitzi.app';
-    if (name && !defaultPage) {
-      name = `${name}${fullpath.replaceAll('//', '/')}`;
+  const domain = useMemo(() => {
+    let url = definition.permanentUrl
+      ? `https://${definition.permanentUrl}.plitzi.app`
+      : 'https://subdomain.plitzi.app';
+    if (!defaultPage) {
+      url = `${url}${fullpath.replaceAll('//', '/')}`;
     }
 
-    return name;
-  }, [domain, defaultPage, fullpath]);
+    return url;
+  }, [definition, defaultPage, fullpath]);
 
   const pageTitle = useMemo(() => {
     if (headerTitle) {
@@ -100,13 +102,8 @@ const BuilderAreaHeader = ({
       return title;
     }
 
-    let name: string = domain || 'https://subdomain.plitzi.app';
-    if (name && !defaultPage) {
-      name = `${name}${fullpath.replaceAll('//', '/')}`;
-    }
-
-    return name;
-  }, [headerTitle, multiPagesMode, domain, defaultPage, title, fullpath]);
+    return domain;
+  }, [headerTitle, multiPagesMode, domain, title]);
 
   return (
     <Flex
@@ -166,7 +163,7 @@ const BuilderAreaHeader = ({
           )}
           <Icon icon="fas fa-cog" className="cursor-pointer" title="Domain Settings" onClick={handleClickSettings} />
           {mode === 'normal' && (
-            <a href={domainName} target="__blank" className="" title="Go to your space">
+            <a href={domain} target="__blank" className="" title="Go to your space">
               <Icon icon="fa-solid fa-arrow-up-right-from-square" />
             </a>
           )}

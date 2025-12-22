@@ -70,6 +70,7 @@ export type PageFolder = { id: string; name: string; slug: string; parentId?: Pa
 
 export type Schema = {
   flat: Record<string, Element>;
+  definition: { name: string; permanentUrl: string };
   variables: SchemaVariable[];
   settings: {
     keepState?: boolean;
@@ -139,6 +140,7 @@ export type SchemaContextValue = {
 // Raw
 
 export type SchemaRaw = {
+  definition: Schema['definition'];
   flat: Element[];
   variables: SchemaVariable[];
   settings: Schema['settings'];

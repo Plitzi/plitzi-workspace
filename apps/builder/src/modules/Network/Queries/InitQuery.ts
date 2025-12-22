@@ -4,6 +4,7 @@ import type { CollectionRaw, PluginRaw, SchemaRaw, SegmentRaw, Style } from '@pl
 
 export type TInitQuery = {
   Space?: {
+    definition: SchemaRaw['definition'];
     plugins: PluginRaw[];
     schema: SchemaRaw;
     style: Style;
@@ -15,6 +16,10 @@ export type TInitQuery = {
 const InitQuery = gql`
   query InitQuery($environment: String!, $cursor: String, $limit: Int!) {
     Space(environment: $environment) {
+      definition {
+        name
+        permanentUrl
+      }
       schema {
         settings
         flat {
