@@ -147,10 +147,7 @@ export default defineConfig(({ mode, command }) => {
     ],
     optimizeDeps: {
       include: [
-        'reactcss',
         'prop-types',
-        '@icons/material/UnfoldMoreHorizontalIcon',
-        '@icons/material/CheckIcon',
         'style-to-js',
         'debug',
         'extend',
