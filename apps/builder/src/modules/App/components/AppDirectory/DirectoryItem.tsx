@@ -92,7 +92,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
         </Flex>
         {zoom && (
           <div className="relative my-2 rounded-sm border border-gray-300">
-            <ContainerAutoScale className="flex h-[150px] w-full items-center justify-center overflow-hidden rounded-sm">
+            <ContainerAutoScale className="flex h-37.5 w-full items-center justify-center overflow-hidden rounded-sm">
               <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="h-full w-full" previewMode />
             </ContainerAutoScale>
           </div>
