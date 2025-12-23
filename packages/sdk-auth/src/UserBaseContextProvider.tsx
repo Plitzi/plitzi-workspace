@@ -12,7 +12,7 @@ import withUserProvider from './hocs/withUserProvider';
 import useAuth from './hooks/useAuth';
 import UserContext from './UserContext';
 
-import type { Environment, RenderMode, Server, UserContextValue } from '@plitzi/sdk-shared';
+import type { Environment, Server, UserContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type UserBaseContextProviderProps = {
@@ -21,7 +21,6 @@ export type UserBaseContextProviderProps = {
   webId: number;
   server: Server;
   environment?: Environment;
-  renderMode?: RenderMode;
 };
 
 const UserBaseContextProvider = ({
@@ -29,8 +28,7 @@ const UserBaseContextProvider = ({
   children,
   webId,
   server,
-  environment = 'production',
-  renderMode = 'iframe'
+  environment = 'production'
 }: UserBaseContextProviderProps) => {
   const {
     userProvider,
@@ -132,7 +130,7 @@ const UserBaseContextProvider = ({
         : server.user) as UserContextValue['user']
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manager, manager?.isAuthenticated, previewMode, renderMode, server.isAuthenticated]);
+  }, [manager, manager?.isAuthenticated, previewMode, server.isAuthenticated]);
 
   return <UserContext value={valueMemo}>{!loading && children}</UserContext>;
 };

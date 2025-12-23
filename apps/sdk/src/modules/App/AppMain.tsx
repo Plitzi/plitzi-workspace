@@ -92,7 +92,6 @@ const AppMain = ({
                       webId={webId}
                       environment={environment}
                       server={server}
-                      renderMode={renderMode}
                     >
                       <NavigationContextProvider
                         renderMode={renderMode}
