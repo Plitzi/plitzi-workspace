@@ -103,6 +103,12 @@ const StyleInspectorProvider = ({
       const customClass = makeSelector(type, styleSelector);
 
       if (styleKey as string) {
+        if (typeof value === 'object' && Array.isArray(styleKey)) {
+          value = Object.fromEntries(
+            Object.entries(value).filter(entry => (entry[1] as StyleValue | undefined) !== undefined)
+          );
+        }
+
         builderHandler(
           'styleAddSelector',
           displayMode,

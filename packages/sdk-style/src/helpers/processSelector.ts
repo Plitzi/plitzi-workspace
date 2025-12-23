@@ -5,7 +5,7 @@ type CssResult = { variables: Record<string, string>; value: string };
 const getValue = (attribute: string, cssValue: string, nested: boolean = false) =>
   nested ? cssValue : `${attribute}:${cssValue};`;
 
-export const processCssString = (attribute: string, value: string) => {
+export const processCssString = (attribute: string, value?: string) => {
   const result: CssResult = { variables: {}, value: '' };
 
   const processCssFunction = (
@@ -79,7 +79,7 @@ export const processCssString = (attribute: string, value: string) => {
     return processCssFunction(attribute, functionName, functionContent, nested || skipAttribute);
   };
 
-  const layers = value.split(/,(?![^(]*\))/).map(layer => layer.trim());
+  const layers = value?.split(/,(?![^(]*\))/).map(layer => layer.trim()) ?? [];
 
   layers.forEach(layer => {
     const layerResult = processLayer(attribute, layer, false, true);
