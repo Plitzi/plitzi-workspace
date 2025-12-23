@@ -4,6 +4,7 @@ import type { SchemaContextValue } from '@plitzi/sdk-shared';
 
 const schemaContextDefaultValue: SchemaContextValue = {
   schema: {
+    definition: { name: '', permanentUrl: '' },
     flat: {},
     variables: [],
     settings: { customCss: '' },

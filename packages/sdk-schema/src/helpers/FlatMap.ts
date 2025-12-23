@@ -10,7 +10,14 @@ import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
 
 export const EMPTY_SCHEMA = {
-  schema: { flat: {}, variables: [], settings: { customCss: '' }, pages: [], pageFolders: [] } as Schema,
+  schema: {
+    definition: { name: '', permanentUrl: '' },
+    flat: {},
+    variables: [],
+    settings: { customCss: '' },
+    pages: [],
+    pageFolders: []
+  } as Schema,
   style: {
     platform: { desktop: {}, tablet: {}, mobile: {} },
     variables: {},
