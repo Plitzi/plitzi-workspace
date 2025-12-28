@@ -71,9 +71,8 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   abstract login(...args: unknown[]): Promise<TokenResult | undefined>;
   abstract getUser(): Promise<U | undefined>;
   abstract refresh(): Promise<TokenResult | undefined>;
-  abstract logout(): Promise<void>;
-  abstract isAvailable(): boolean;
   abstract can(permission: string): boolean;
+  abstract logout(): Promise<void>;
 
   // Methods
 

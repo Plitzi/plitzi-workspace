@@ -1,3 +1,4 @@
+import Auth0Provider from './providers/Auth0Provider';
 import BasicAuthProvider from './providers/BasicAuthProvider';
 
 import type AuthProvider from './AuthProvider';
@@ -7,8 +8,9 @@ import type { TokenResult } from '@plitzi/sdk-shared';
 const providers = {
   // '': BasicAuthProvider,
   // custom: BasicAuthProvider,
-  // auth0: BasicAuthProvider,
+  auth0: Auth0Provider,
   basic: BasicAuthProvider
+  // ssr: SsrProvider
 };
 
 export type Providers = keyof typeof providers;

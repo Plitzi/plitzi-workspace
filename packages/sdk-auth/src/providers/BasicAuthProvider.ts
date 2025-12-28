@@ -18,7 +18,7 @@ export type BasicAuthProviderProps = AuthProviderProps & {
 
 class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
   readonly name = 'basic';
-  authenticated = false;
+
   protected baseUrl?: string;
   protected options: {
     tokenStorage: Exclude<Schema['settings']['tokenStorage'], undefined>;
@@ -60,31 +60,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     await this.getUser();
   }
 
-  isAvailable(): boolean {
-    return true;
-  }
-
-  can(permission: string): boolean {
-    if (!this.cache?.user) {
-      return false;
-    }
-
-    return get(this.cache.user, 'permissions', [] as string[]).includes(permission);
-  }
-
-  private getTokenFromResponse(res: { data?: unknown; status: number }) {
-    if (res.status >= 400) {
-      return undefined;
-    }
-
-    const tokenResult = {
-      accessToken: get(res.data, this.options.tokenPath) as string,
-      refreshToken: get(res.data, this.options.refreshUrl, null),
-      expiresAt: get(res.data, this.options.expirationTimePath, 0)
-    };
-
-    return tokenResult;
-  }
+  // Methods
 
   async login(authParams: Record<string, string>): Promise<TokenResult | undefined> {
     const { username = '', password = '' } = authParams;
@@ -132,6 +108,14 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     return tokenResult;
   }
 
+  can(permission: string): boolean {
+    if (!this.cache?.user) {
+      return false;
+    }
+
+    return get(this.cache.user, 'permissions', [] as string[]).includes(permission);
+  }
+
   async logout(): Promise<void> {
     await this.request(this.options.logoutUrl, {
       method: 'POST',
@@ -139,6 +123,22 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       headers: { 'Content-Type': 'application/json' }
     });
     super.internalLogout();
+  }
+
+  // Helpers
+
+  private getTokenFromResponse(res: { data?: unknown; status: number }) {
+    if (res.status >= 400) {
+      return undefined;
+    }
+
+    const tokenResult = {
+      accessToken: get(res.data, this.options.tokenPath) as string,
+      refreshToken: get(res.data, this.options.refreshUrl, null),
+      expiresAt: get(res.data, this.options.expirationTimePath, 0)
+    };
+
+    return tokenResult;
   }
 }
 

@@ -39,7 +39,7 @@ const useAuth = ({
 
   const manager = useMemo(() => {
     const manager = new AuthManager<Exclude<Exclude<AuthContextValue['user'], undefined>['details'], undefined>>(
-      provider as 'basic',
+      provider as 'basic' | 'auth0',
       handleState,
       { tokenStorage, loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath }
     );
