@@ -43,8 +43,8 @@ export class AuthManager<U = Record<string, unknown>, T extends Providers = 'bas
 
   // Methods Actions
 
-  init() {
-    return this.provider?.init();
+  init(user?: U) {
+    return this.provider?.init(user);
   }
 
   login(...args: Parameters<AuthProvider['login']>) {

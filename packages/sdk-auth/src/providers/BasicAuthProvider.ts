@@ -14,6 +14,7 @@ export type BasicAuthProviderProps = AuthProviderProps & {
   detailsPath?: string;
   tokenPath?: string;
   expirationTimePath?: string;
+  isSSR?: boolean;
 };
 
 class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
@@ -29,6 +30,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     detailsPath: string;
     tokenPath: string;
     expirationTimePath: string;
+    isSSR: boolean;
   };
 
   constructor({
@@ -40,7 +42,8 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     logoutUrl = '',
     detailsPath = '',
     tokenPath = '',
-    expirationTimePath = ''
+    expirationTimePath = '',
+    isSSR = false
   }: BasicAuthProviderProps = {}) {
     super({ enableRefresh, tokenStorage });
     this.options = {
@@ -51,13 +54,22 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       logoutUrl,
       detailsPath,
       tokenPath,
-      expirationTimePath
+      expirationTimePath,
+      isSSR
     };
   }
 
-  async init() {
+  async init(user?: T) {
     this.setState('initLoading');
-    await this.getUser();
+    if (!this.options.isSSR) {
+      await this.getUser();
+
+      return;
+    }
+
+    if (user) {
+      super.internalGetUser(user);
+    }
   }
 
   // Methods

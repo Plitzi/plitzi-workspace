@@ -3,9 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthManager } from '../../AuthManager';
 
 import type { AuthEvent } from '../../AuthProvider';
-import type { AuthContextValue, Schema } from '@plitzi/sdk-shared';
+import type { AuthContextValue, Schema, Server } from '@plitzi/sdk-shared';
 
 export type UseAuthProps = {
+  server?: Server;
   tokenStorage?: Schema['settings']['tokenStorage'];
   provider?: Schema['settings']['userProvider'];
   loginUrl?: Schema['settings']['loginUrl'];
@@ -17,7 +18,10 @@ export type UseAuthProps = {
   expirationTimePath?: Schema['settings']['expirationTimePath'];
 };
 
+type User = Exclude<Exclude<AuthContextValue['user'], undefined>['details'], undefined>;
+
 const useAuth = ({
+  server,
   tokenStorage = 'localStorage',
   provider = '',
   loginUrl = '',
@@ -28,8 +32,10 @@ const useAuth = ({
   tokenPath = 'access_token',
   expirationTimePath = 'expire_at'
 }: UseAuthProps) => {
-  const [loading, setLoading] = useState(!!userUrl);
+  const isSSR = typeof window === 'undefined' || (!!server?.user && server.authenticated);
+  const [loading, setLoading] = useState(!!userUrl && !isSSR);
   const [authenticated, setAuthenticated] = useState(false);
+
   const handleState = useCallback((event: AuthEvent) => {
     if (event.type === 'state') {
       setLoading(event.state === 'initLoading');
@@ -38,26 +44,39 @@ const useAuth = ({
   }, []);
 
   const manager = useMemo(() => {
-    const manager = new AuthManager<Exclude<Exclude<AuthContextValue['user'], undefined>['details'], undefined>>(
-      provider as 'basic' | 'auth0',
-      handleState,
-      { tokenStorage, loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath }
-    );
+    let props = {};
+    if (provider === 'basic') {
+      props = {
+        tokenStorage,
+        loginUrl,
+        userUrl,
+        refreshUrl,
+        logoutUrl,
+        detailsPath,
+        tokenPath,
+        expirationTimePath,
+        isSSR
+      };
+    }
 
-    void manager.init();
+    const manager = new AuthManager<User>(provider as 'basic' | 'auth0', handleState, props);
+    void manager.init(server?.authenticated ? server.user?.details : undefined);
 
     return manager;
   }, [
-    tokenStorage,
-    detailsPath,
-    expirationTimePath,
-    handleState,
-    loginUrl,
-    logoutUrl,
     provider,
+    handleState,
+    tokenStorage,
+    loginUrl,
+    userUrl,
     refreshUrl,
+    logoutUrl,
+    detailsPath,
     tokenPath,
-    userUrl
+    expirationTimePath,
+    server?.authenticated,
+    server?.user?.details,
+    isSSR
   ]);
 
   useEffect(() => {
@@ -79,7 +98,7 @@ const useAuth = ({
     }
   }, [manager, authenticated]);
 
-  const hookValue = useMemo(() => ({ manager, loading, authenticated }), [loading, manager, authenticated]);
+  const hookValue = useMemo(() => ({ manager, loading, authenticated }), [manager, loading, authenticated]);
 
   return hookValue;
 };

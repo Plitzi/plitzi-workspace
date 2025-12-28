@@ -67,7 +67,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     });
   }
 
-  abstract init(): Promise<void>;
+  abstract init(user?: U): Promise<void>;
   abstract login(...args: unknown[]): Promise<TokenResult | undefined>;
   abstract getUser(): Promise<U | undefined>;
   abstract refresh(): Promise<TokenResult | undefined>;

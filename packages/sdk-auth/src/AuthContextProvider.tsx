@@ -87,11 +87,8 @@ const AuthContextProvider = ({
     [loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath, variablesParsed]
   );
 
-  const {
-    manager: authManager,
-    loading,
-    authenticated
-  } = useAuth({
+  const { manager, loading, authenticated } = useAuth({
+    server,
     tokenStorage,
     provider: userProvider,
     loginUrl: authData.loginUrl,
@@ -105,20 +102,20 @@ const AuthContextProvider = ({
 
   const valueMemo: AuthContextValue = useMemo(
     () => ({
-      manager: authManager,
-      login: authManager.login.bind(authManager),
-      refresh: authManager.refresh.bind(authManager),
-      can: authManager.can.bind(authManager),
-      logout: authManager.logout.bind(authManager),
-      authenticated: authenticated || !previewMode || (typeof window === 'undefined' && !!server.isAuthenticated),
-      user: authManager.getProvider()
+      manager,
+      login: manager.login.bind(manager),
+      refresh: manager.refresh.bind(manager),
+      can: manager.can.bind(manager),
+      logout: manager.logout.bind(manager),
+      authenticated: authenticated || !previewMode,
+      user: manager.getProvider()
         ? {
-            details: authManager.getProvider()?.user,
-            accessToken: authManager.getProvider()?.token?.accessToken
+            details: manager.getProvider()?.user,
+            accessToken: manager.getProvider()?.token?.accessToken
           }
         : undefined
     }),
-    [authManager, authenticated, previewMode, server.isAuthenticated]
+    [manager, authenticated, previewMode]
   );
 
   return <AuthContext value={valueMemo}>{!loading && children}</AuthContext>;

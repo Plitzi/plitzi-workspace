@@ -102,7 +102,9 @@ export const pluginParseDefinition = async (pluginsRaw: PluginRaw | PluginRaw[] 
   }
 
   const pluginManifests = await fetchPluginsManifests(
-    pluginsRaw.reduce<string[]>((acum, plugin) => [...acum, `${plugin.resource}/plugin-manifest.json`], [])
+    pluginsRaw
+      .filter(plugin => plugin.resource)
+      .reduce<string[]>((acum, plugin) => [...acum, `${plugin.resource}/plugin-manifest.json`], [])
   );
 
   pluginsRaw.forEach(pluginRaw => {

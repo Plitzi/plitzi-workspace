@@ -1,3 +1,12 @@
+export type User = {
+  id: number;
+  username: string;
+  email: string;
+  verified: boolean;
+  permissions: string[];
+  roles: string[];
+};
+
 export type UserContextValue = {
   login?: unknown;
   logout?: unknown;
@@ -5,14 +14,7 @@ export type UserContextValue = {
   can?: (permission: string) => boolean;
   authenticated: boolean;
   user?: {
-    details?: {
-      id: number;
-      username: string;
-      email: string;
-      verified: boolean;
-      permissions: string[];
-      roles: string[];
-    };
+    details?: User;
     accessToken?: string | Promise<string>;
   };
 };
