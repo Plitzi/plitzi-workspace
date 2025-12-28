@@ -310,7 +310,7 @@
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@uiw/react-json-view": "^2.0.0-alpha.39",
+    "@uiw/react-json-view": "^2.0.0-alpha.40",
     "clsx": "^2.1.1",
     "lodash-es": "^4.17.22"
   }

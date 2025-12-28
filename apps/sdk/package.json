@@ -90,7 +90,7 @@
     "storybook": "^10.1.10",
     "stylelint": "^16.26.1",
     "stylelint-order": "^7.0.0",
-    "stylelint-scss": "^6.13.0",
+    "stylelint-scss": "^6.14.0",
     "thread-loader": "^4.0.4",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",

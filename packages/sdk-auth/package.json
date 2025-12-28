@@ -45,6 +45,10 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
+    "./providers/Auth0Provider": {
+      "types": "./dist/src/providers/Auth0Provider.d.ts",
+      "import": "./dist/src/providers/Auth0Provider.mjs"
+    },
     "./providers/BasicAuthProvider": {
       "types": "./dist/src/providers/BasicAuthProvider.d.ts",
       "import": "./dist/src/providers/BasicAuthProvider.mjs"
