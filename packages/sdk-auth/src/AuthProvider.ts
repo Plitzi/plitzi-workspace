@@ -124,9 +124,9 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   protected setCache<T extends keyof AuthProviderCache>(cacheKey: T | undefined, cache: AuthProviderCache<U>[T]): void {
     if (!cacheKey) {
       this.cache = cache as AuthProviderCache<U>;
-      if (this.tokenStorage === 'localStorage' && this.cache.token) {
+      if (typeof localStorage !== 'undefined' && this.tokenStorage === 'localStorage' && this.cache.token) {
         localStorage.setItem('user_state', JSON.stringify(this.cache.token));
-      } else if (this.tokenStorage === 'sessionStorage' && this.cache.token) {
+      } else if (typeof sessionStorage !== 'undefined' && this.tokenStorage === 'sessionStorage' && this.cache.token) {
         sessionStorage.setItem('user_state', JSON.stringify(this.cache.token));
       }
 
@@ -143,9 +143,9 @@ abstract class AuthProvider<U = Record<string, unknown>> {
       return;
     }
 
-    if (this.tokenStorage === 'localStorage') {
+    if (typeof localStorage !== 'undefined' && this.tokenStorage === 'localStorage') {
       localStorage.setItem('user_state', JSON.stringify(this.cache.token));
-    } else if (this.tokenStorage === 'sessionStorage') {
+    } else if (typeof sessionStorage !== 'undefined' && this.tokenStorage === 'sessionStorage') {
       sessionStorage.setItem('user_state', JSON.stringify(this.cache.token));
     }
   }
@@ -154,9 +154,9 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     if (cacheKey && this.cache) {
       delete this.cache[cacheKey];
       if (cacheKey === 'token') {
-        if (this.tokenStorage === 'localStorage') {
+        if (typeof localStorage !== 'undefined' && this.tokenStorage === 'localStorage') {
           localStorage.removeItem('user_state');
-        } else if (this.tokenStorage === 'sessionStorage') {
+        } else if (typeof sessionStorage !== 'undefined' && this.tokenStorage === 'sessionStorage') {
           sessionStorage.removeItem('user_state');
         }
       }
@@ -164,9 +164,9 @@ abstract class AuthProvider<U = Record<string, unknown>> {
       return;
     }
 
-    if (this.tokenStorage === 'localStorage') {
+    if (typeof localStorage !== 'undefined' && this.tokenStorage === 'localStorage') {
       localStorage.removeItem('user_state');
-    } else if (this.tokenStorage === 'sessionStorage') {
+    } else if (typeof sessionStorage !== 'undefined' && this.tokenStorage === 'sessionStorage') {
       sessionStorage.removeItem('user_state');
     }
 
