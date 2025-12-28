@@ -59,15 +59,15 @@ const getConfig = (env: ServerEnvironment, server?: Partial<Server>) => {
     default:
       return {
         // Dashboard
-        apiServer: 'http://localhost',
-        ssrServer: 'http://localhost:4000',
+        apiServer: 'https://api.plitzi.local',
+        ssrServer: 'https://ssr.plitzi.local:4000',
         // SDK
         basePath: '',
-        host: 'http://localhost',
-        nodeServer: 'http://localhost:8888',
-        graphqlServer: 'http://localhost:8888/graphql',
-        websocketServer: 'ws://localhost:8888',
-        subscriptionServer: 'ws://localhost:8888/subscriptions',
+        host: 'https://app.plitzi.local',
+        nodeServer: 'https://server.plitzi.local:8888',
+        graphqlServer: 'https://server.plitzi.local:8888/graphql',
+        websocketServer: 'wss://server.plitzi.local:8888',
+        subscriptionServer: 'wss://server.plitzi.local:8888/subscriptions',
         // Others
         location: undefined,
         ...server

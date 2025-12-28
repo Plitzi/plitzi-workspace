@@ -5,6 +5,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 const getApiRequest = async ({
   url = '',
   method = 'get',
+  credentials = 'same-origin',
   params = emptyObject,
   customHeaders = emptyObject,
   mock = emptyObject
@@ -46,7 +47,7 @@ const getApiRequest = async ({
     formData.append(key, value);
   });
 
-  const fetchOptions = { method, headers, body: formData as FormData | undefined | string };
+  const fetchOptions: RequestInit = { method, credentials, headers, body: formData };
   if (headers.get('Content-Type') === 'application/json') {
     fetchOptions.body = JSON.stringify(params);
   }
@@ -71,6 +72,7 @@ export type UseApiProps = {
   params?: Record<string, string | Blob>;
   customHeaders?: Record<string, string>;
   enabled?: boolean;
+  credentials?: RequestCredentials;
 };
 
 const useApi = ({
@@ -79,7 +81,8 @@ const useApi = ({
   mock = emptyObject,
   params = emptyObject,
   customHeaders = emptyObject,
-  enabled = true
+  enabled = true,
+  credentials = 'same-origin'
 }: UseApiProps) => {
   const [isLoading, setIsLoading] = useState(enabled);
   const [data, setData] = useState<{ status: number; data: unknown }>();
@@ -90,11 +93,11 @@ const useApi = ({
     }
 
     setIsLoading(true);
-    getApiRequest({ url, method, mock, customHeaders, params })
+    getApiRequest({ url, method, credentials, mock, customHeaders, params })
       .then(response => setData(response))
       .catch((e: unknown) => setData({ status: 500, data: (e as Error).message }))
       .finally(() => setIsLoading(false));
-  }, [enabled, params, url, method, mock, customHeaders]);
+  }, [enabled, url, method, credentials, mock, customHeaders, params]);
 
   useEffect(() => {
     handleFetch();

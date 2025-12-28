@@ -23,6 +23,7 @@ type SettingsProps = {
   headers?: object;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
   mockData?: string;
+  credentials?: RequestCredentials;
   onUpdate?: (key: string, value: string | boolean | number | object) => void;
 };
 
@@ -34,6 +35,7 @@ const Settings = ({
   headers = emptyObject,
   subType = 'div',
   mockData = '{}',
+  credentials = 'same-origin',
   onUpdate
 }: SettingsProps) => {
   const { pageDefinitions } = use(SchemaMainContext);
@@ -78,7 +80,7 @@ const Settings = ({
       <div className="flex flex-col">
         <label>Query</label>
         <CodeMirror
-          className="font-rubik min-h-[26px] basis-auto rounded-sm border border-gray-300 px-1 text-xs"
+          className="font-rubik min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
           value={query}
           theme="light"
           mode="text"
@@ -93,11 +95,12 @@ const Settings = ({
         <option value="post">Post</option>
       </Select>
       <Input value={accessToken} label="Access Token" onChange={handleChange('accessToken')} size="xs" />
-      <div className="flex gap-1">
-        <Switch checked={advancedSettings} size="sm" onChange={handleChangeEnabled}>
-          Advanced Settings
-        </Switch>
-      </div>
+      <Select value={credentials} label="Include Credentials" onChange={handleChange('credentials')} size="xs">
+        <option value="include">Include</option>
+        <option value="omit">Omit</option>
+        <option value="same-origin">Same Origin</option>
+      </Select>
+      <Switch checked={advancedSettings} size="sm" label="Advanced Settings" onChange={handleChangeEnabled} />
       {advancedSettings && (
         <>
           <KVInput value={Object.entries(headers)} label="Headers" onChange={handleChangeHeaders} size="xs" />
@@ -125,7 +128,7 @@ const Settings = ({
             <option value="figure">Figure</option>
           </Select>
           <div className="my-2 h-px w-full border border-gray-300 bg-gray-300" />
-          <div className="flex min-h-[200px] grow flex-col">
+          <div className="flex min-h-50 grow flex-col">
             <label>Mock Data (Build Mode)</label>
             <CodeMirror value={mockData} theme="light" mode="json" lineWrapping onChange={handleChangeMockData} />
           </div>

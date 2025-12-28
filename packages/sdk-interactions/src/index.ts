@@ -3,7 +3,7 @@ import InteractionsContext from './InteractionsContext';
 import InteractionsContextProvider from './InteractionsContextProvider';
 import InteractionsHelper from './InteractionsHelper';
 import InteractionsManager from './InteractionsManager';
-import { UserInteractions } from './sources';
+import { AuthInteractions } from './sources';
 import utility from './utility';
 
 export * from './utility';
@@ -21,5 +21,5 @@ export {
   InteractionsContextProvider,
   InteractionsHelper,
   useInteractions,
-  UserInteractions
+  AuthInteractions
 };

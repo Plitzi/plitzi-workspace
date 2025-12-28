@@ -13,6 +13,7 @@ import { defineConfig } from 'vite';
 import viteCompression from 'vite-plugin-compression';
 // import dts from 'vite-plugin-dts';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
+import mkcert from 'vite-plugin-mkcert';
 
 import type { Plugin } from 'vite';
 
@@ -90,6 +91,7 @@ export default defineConfig(({ mode, command }) => {
 
   return {
     plugins: [
+      mkcert(),
       nodeResolve({ extensions: ['.js', '.mjs', '.ts', '.tsx'] }),
       react(),
       ViteEjsPlugin({
@@ -165,6 +167,7 @@ export default defineConfig(({ mode, command }) => {
       }
     },
     server: {
+      host: 'app.plitzi.local',
       port: 3000,
       open: false
     },

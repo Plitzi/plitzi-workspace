@@ -25,18 +25,11 @@ const bindingCategories: BindingCategory[] = ['attributes', 'style', 'initialSta
 export type DataSourceBindingProps = {
   id?: string;
   bindings?: Record<string, ElementBinding[]>;
-  allowCustomBindings?: boolean;
   element: Element;
   onChange?: (bindings: Record<string, ElementBinding[]>) => void;
 };
 
-const DataSourceBinding = ({
-  id = '',
-  bindings,
-  allowCustomBindings = false,
-  element,
-  onChange
-}: DataSourceBindingProps) => {
+const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceBindingProps) => {
   const { getSourcesByElementId } = use(DataSourceContext);
   const { schema } = use(BuilderSchemaContext);
   const { attributes, definition } = element;
@@ -237,7 +230,6 @@ const DataSourceBinding = ({
                       onClose={handleClickCloseForm(fkey)}
                       attributes={bindingsAvailables[fkey]}
                       sources={sources}
-                      allowCustomBindings={fkey === 'attributes' && allowCustomBindings}
                     />
                   </div>
                 )}

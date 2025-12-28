@@ -2,7 +2,7 @@ import get from 'lodash-es/get';
 import { useMemo, use, useCallback, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import UserContext from '@plitzi/sdk-auth/UserContext';
+import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
@@ -21,7 +21,7 @@ export type NavigationContextProviderProps = {
 const NavigationContextProvider = ({ previewMode = false, children }: NavigationContextProviderProps) => {
   const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
   const { server } = use(NetworkContext);
-  const { authenticated } = use(UserContext);
+  const { authenticated } = use(AuthContext);
   const { queryParams, hostname, location } = useNavigation({ server });
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);

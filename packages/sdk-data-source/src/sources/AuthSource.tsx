@@ -1,6 +1,6 @@
 import { useCallback, use, useMemo } from 'react';
 
-import UserContext from '@plitzi/sdk-auth/UserContext';
+import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
@@ -8,13 +8,13 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-export type UserSourceProps = {
+export type AuthSourceProps = {
   children?: ReactNode;
 };
 
-const UserSource = ({ children }: UserSourceProps) => {
+const AuthSource = ({ children }: AuthSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
-  const { user, authenticated } = use(UserContext);
+  const { user, authenticated } = use(AuthContext);
   const { userProvider = 'basic' } = use(SchemaSettingsContext);
   const userContextMemo = useMemo(() => {
     switch (userProvider) {
@@ -60,6 +60,7 @@ const UserSource = ({ children }: UserSourceProps) => {
     switch (userProvider) {
       case 'auth0':
       case 'basic':
+      case 'custom':
       case '':
       default:
         return getPathsFromObeject(userContextMemo).reduce<SourceField[]>(
@@ -71,13 +72,13 @@ const UserSource = ({ children }: UserSourceProps) => {
 
   const [UserSourceContext] = useDataSource({
     id: 'global',
-    source: 'user',
+    source: 'auth',
     mode: 'write',
-    name: 'User State',
+    name: 'Auth State',
     fields: sourceFields
   });
 
   return <UserSourceContext value={userContextMemo}>{children}</UserSourceContext>;
 };
 
-export default UserSource;
+export default AuthSource;

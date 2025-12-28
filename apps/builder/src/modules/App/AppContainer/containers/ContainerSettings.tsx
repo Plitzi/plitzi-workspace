@@ -30,8 +30,11 @@ const ContainerSettings = () => {
     auth0Domain,
     auth0ClientId,
     // Provider - Basic
+    tokenStorage = 'localStorage',
     loginUrl,
+    userUrl,
     refreshUrl,
+    logoutUrl,
     detailsPath = 'details',
     tokenPath = 'access_token',
     expirationTimePath = 'expire_at'
@@ -52,6 +55,8 @@ const ContainerSettings = () => {
         void eventBridge.emit('main', 'schemaUpdateSettings', '', 'auth0Domain');
         void eventBridge.emit('main', 'schemaUpdateSettings', '', 'auth0ClientId');
         void eventBridge.emit('main', 'schemaUpdateSettings', '', 'loginUrl');
+        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'userUrl');
+        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'logoutUrl');
         void eventBridge.emit('main', 'schemaUpdateSettings', '', 'refreshUrl');
         void eventBridge.emit('main', 'schemaUpdateSettings', '', 'detailsPath');
         void eventBridge.emit('main', 'schemaUpdateSettings', '', 'tokenPath');
@@ -62,7 +67,9 @@ const ContainerSettings = () => {
           auth0Domain: '',
           auth0ClientId: '',
           loginUrl: '',
+          userUrl: '',
           refreshUrl: '',
+          logoutUrl: '',
           detailsPath: '',
           tokenPath: '',
           expirationTimePath: ''
@@ -102,6 +109,17 @@ const ContainerSettings = () => {
             <option value="basic">Basic</option>
             <option value="auth0">Auth0</option>
           </Select>
+          <Select
+            size="sm"
+            name="tokenStorage"
+            value={tokenStorage as string}
+            onChange={handleChange('tokenStorage')}
+            label="Token Storage"
+            placeholder="None"
+          >
+            <option value="localStorage">Local Storage</option>
+            <option value="sessionStorage">Session Storage</option>
+          </Select>
           {userProvider === 'auth0' && (
             <>
               <Input
@@ -131,10 +149,24 @@ const ContainerSettings = () => {
               />
               <Input
                 size="sm"
+                name="userUrl"
+                value={userUrl}
+                onChange={handleChange('userUrl')}
+                label="API User Profile Url"
+              />
+              <Input
+                size="sm"
                 name="refreshUrl"
                 value={refreshUrl}
                 onChange={handleChange('refreshUrl')}
                 label="API Refresh Url (Optional)"
+              />
+              <Input
+                size="sm"
+                name="logoutUrl"
+                value={logoutUrl}
+                onChange={handleChange('logoutUrl')}
+                label="API Logout Url"
               />
               <Input
                 size="sm"
@@ -162,7 +194,7 @@ const ContainerSettings = () => {
         </div>
         <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
           <Heading as="h4">Style Settings</Heading>
-          <Alert intent="info" size="xs">
+          <Alert intent="info" size="xs" solid={false}>
             Keep on mind that changing this can impact your style
           </Alert>
           <Select
@@ -193,7 +225,7 @@ const ContainerSettings = () => {
               name="stateStorage"
               value={stateStorage}
               onChange={handleChange('stateStorage')}
-              label="User Provider"
+              label="State Storage"
               placeholder="None"
             >
               <option value="local">Local Storage</option>

@@ -91,6 +91,7 @@
     "vite": "^7.3.0",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-ejs": "^1.7.0",
+    "vite-plugin-mkcert": "^1.17.9",
     "vite-plugin-react": "^4.0.1"
   },
   "scripts": {

@@ -15,7 +15,7 @@ import ParamBinding from './ParamBinding';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionParamType } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type NodeBodyParamProps = {
@@ -24,7 +24,7 @@ export type NodeBodyParamProps = {
   id: keyof ElementInteraction;
   label?: string;
   value?: string | boolean | number;
-  type?: 'text' | 'select' | 'textarea' | 'boolean' | 'codemirror-text' | 'codemirror-json';
+  type?: InteractionParamType | ((params: Record<string, unknown>) => InteractionParamType);
   options?: Option[] | ((params: Record<string, unknown>) => Option[]);
   canBind?: boolean;
   params?: Record<string, unknown>;
@@ -38,13 +38,18 @@ const NodeBodyParam = ({
   id,
   label = '',
   value = '',
-  type = 'text',
-  options,
+  type: typeProp = 'text',
+  options: optionsProp,
   canBind = true,
   params = emptyObject,
   fields,
   onChange
 }: NodeBodyParamProps) => {
+  const type = useMemo(() => (typeof typeProp === 'function' ? typeProp(params) : typeProp), [params, typeProp]);
+  const options = useMemo(
+    () => (type === 'select' && typeof optionsProp === 'function' ? optionsProp(params) : optionsProp),
+    [optionsProp, params, type]
+  );
   const [isBinding, setIsBinding] = useState(() => canBind && typeof value === 'string' && isValidToken(value));
   const [internalOptions, setInternalOptions] = useState<Option[]>([]);
 
@@ -98,16 +103,26 @@ const NodeBodyParam = ({
 
   return (
     <div className={clsx('flex w-full flex-col not-first:mt-2', className)}>
-      <label htmlFor={id} className="text-sm">
-        {finalLabel}
-      </label>
+      {isBinding && (
+        <label htmlFor={id} className="text-xs">
+          {finalLabel}
+        </label>
+      )}
       <div className="flex grow basis-0">
         {!isBinding && type === 'text' && (
-          <Input className="w-full" size="xs" id={id} value={value as string} onChange={handleChangeInput} />
+          <Input
+            className="w-full"
+            size="xs"
+            label={finalLabel}
+            id={id}
+            value={value as string}
+            onChange={handleChangeInput}
+          />
         )}
         {!isBinding && type === 'select' && (
           <Select2
             size="xs"
+            label={finalLabel}
             placeholder={`Select a ${finalLabel}`}
             value={value as string}
             onChange={handleChangeSelect}
@@ -116,13 +131,22 @@ const NodeBodyParam = ({
           />
         )}
         {!isBinding && type === 'boolean' && (
-          <Switch className="w-full" size="xs" checked={value as boolean} onChange={handleChangeSwitch} />
+          <div className="flex w-full items-center">
+            <Switch size="xs" label={finalLabel} checked={value as boolean} onChange={handleChangeSwitch} />
+          </div>
         )}
         {!isBinding && type === 'textarea' && (
-          <TextArea className="w-full" size="xs" value={value as string} onChange={handleChangeInput} />
+          <TextArea
+            label={finalLabel}
+            className="w-full"
+            size="xs"
+            value={value as string}
+            onChange={handleChangeInput}
+          />
         )}
         {!isBinding && type === 'codemirror-json' && (
           <CodeMirror
+            label={finalLabel}
             className="min-h-20"
             value={value as string}
             theme="light"
@@ -134,6 +158,7 @@ const NodeBodyParam = ({
         )}
         {!isBinding && type === 'codemirror-text' && (
           <CodeMirror
+            label={finalLabel}
             className="min-h-20"
             value={value as string}
             theme="light"

@@ -1,4 +1,8 @@
-import type { InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
+import type {
+  InteractionBaseCallback,
+  InteractionCallbackParamValues,
+  InteractionCallbackType
+} from './InteractionTypes';
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -21,12 +25,14 @@ export type ElementBinding = {
   toPath: string;
 };
 
-export type ElementInteraction = {
+export type ElementInteraction<
+  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+> = {
   id: string;
   title: string;
   type: InteractionCallbackType;
   action: string;
-  params: InteractionCallbackParamValues;
+  params: InteractionCallbackParamValues<T>;
   preview: Record<string, unknown>;
   elementId: Element['id'];
   beforeNode: string;
@@ -74,13 +80,16 @@ export type Schema = {
   variables: SchemaVariable[];
   settings: {
     keepState?: boolean;
-    stateStorage?: 'sessionStorage' | 'localStorage';
+    stateStorage?: 'localStorage' | 'sessionStorage';
     customCss: string;
     userProvider?: 'auth0' | 'basic' | 'custom' | '';
     auth0Domain?: string;
     auth0ClientId?: string;
+    tokenStorage?: 'localStorage' | 'sessionStorage' | '';
     loginUrl?: string;
+    userUrl?: string;
     refreshUrl?: string;
+    logoutUrl?: string;
     detailsPath?: string;
     tokenPath?: string;
     expirationTimePath?: string;

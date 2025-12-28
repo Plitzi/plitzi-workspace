@@ -7,9 +7,9 @@ import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 
+import AuthSource from './sources/AuthSource';
 import NavigationSource from './sources/NavigationSource';
 import PageStateSource from './sources/PageStateSource';
-import UserSource from './sources/UserSource';
 import VariablesSource from './sources/VariablesSource';
 
 import type { DataSourceContextValue, Environment, Schema, Source, SourceMeta } from '@plitzi/sdk-shared';
@@ -103,13 +103,13 @@ const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourc
 
   return (
     <DataSourceContext value={valueMemo}>
-      <UserSource>
+      <AuthSource>
         <VariablesSource environment={environment}>
           <NavigationSource>
             <PageStateSource>{children}</PageStateSource>
           </NavigationSource>
         </VariablesSource>
-      </UserSource>
+      </AuthSource>
     </DataSourceContext>
   );
 };

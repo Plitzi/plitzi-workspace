@@ -1,5 +1,5 @@
-import { UserInteractions } from './UserSource';
+import { AuthInteractions } from './AuthSource';
 
-export * from './UserSource';
+export * from './AuthSource';
 
-export { UserInteractions };
+export { AuthInteractions };

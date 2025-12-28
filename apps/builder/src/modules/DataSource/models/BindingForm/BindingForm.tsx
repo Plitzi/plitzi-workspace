@@ -36,20 +36,12 @@ export type BindingFormProps = {
   attributes?: { label: string; path: string }[];
   sources: Record<string, SourceMeta>;
   value?: ElementBinding;
-  allowCustomBindings?: boolean;
   onClose?: (success: boolean, data?: ElementBinding) => void;
 };
 
 const totalSteps = 4;
 
-const BindingForm = ({
-  category = '',
-  attributes,
-  sources,
-  value,
-  allowCustomBindings = false,
-  onClose
-}: BindingFormProps) => {
+const BindingForm = ({ category = '', attributes, sources, value, onClose }: BindingFormProps) => {
   const form = useForm({
     defaultValues: { id: '', source: '', fromPath: '', toPath: '', when: {}, transformers: [], ...value },
     config: { schema: bindingForm }
@@ -109,9 +101,7 @@ const BindingForm = ({
         {step === 0 && <StepSource sources={sources} />}
         {!loading && (
           <>
-            {step === 1 && (
-              <StepSettings fields={fields} attributes={attributes} allowCustomBindings={allowCustomBindings} />
-            )}
+            {step === 1 && <StepSettings fields={fields} attributes={attributes} />}
             {step === 2 && <StepWhen dataSourceFields={dataSourceFields} />}
             {step === 3 && <StepTransformers dataSourceFields={dataSourceFields} />}
             {step === 4 && <StepPreview sources={sources} fields={fields} category={category} />}

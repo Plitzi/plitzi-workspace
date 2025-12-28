@@ -125,7 +125,6 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
             onChange={handleChangeBinding}
             id={elementSelected}
             bindings={bindings}
-            allowCustomBindings={type === 'custom' || type === 'blockJsx' || type === 'blockHtml'}
             element={element}
           />
         )}

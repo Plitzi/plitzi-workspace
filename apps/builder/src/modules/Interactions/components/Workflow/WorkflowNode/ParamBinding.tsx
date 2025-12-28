@@ -22,7 +22,7 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
   const { previewData, getNode, dataSource } = use(WorkflowContext);
   const nodeFullPath = useMemo(() => get(value.match(/(?<token>[a-zA-Z0-9-._]+)/gim), '0', ''), [value]);
   const [node, setNode] = useState<{ value: string; label: string } | undefined>(() => {
-    const nodeValue = get(value.match(/(?<token>[a-zA-Z0-9-]+)/gim), '0', '');
+    const nodeValue = get(value.match(/(?<token>[a-zA-Z0-9-_]+)/gim), '0', '');
     if (!nodeValue) {
       return undefined;
     }

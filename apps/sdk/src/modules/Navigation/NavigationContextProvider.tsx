@@ -4,7 +4,7 @@ import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
-import UserContext from '@plitzi/sdk-auth/UserContext';
+import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -38,7 +38,7 @@ const NavigationContextProvider = ({
   const { queryParams, hostname, location } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
-  const { authenticated } = use(UserContext);
+  const { authenticated } = use(AuthContext);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const navigate = renderMode !== 'widget' ? useNavigate() : undefined;
 

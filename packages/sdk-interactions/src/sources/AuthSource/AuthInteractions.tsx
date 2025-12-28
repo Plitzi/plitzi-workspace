@@ -1,23 +1,19 @@
 import { use, useCallback, useMemo } from 'react';
 
-import UserContext from '@plitzi/sdk-auth/UserContext';
+import { AuthContext } from '@plitzi/sdk-auth';
 
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-export type UserInteractionsProps = {
+export type AuthInteractionsProps = {
   children?: ReactNode;
-  userProvider?: '' | 'auth0' | 'basic' | 'custom';
+  authProvider?: '' | 'auth0' | 'basic' | 'custom';
 };
 
-const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractionsProps) => {
-  const { login, refreshDetails, logout } = use(UserContext) as {
-    login: (params: unknown) => unknown;
-    refreshDetails: (params: unknown) => unknown;
-    logout: () => boolean;
-  };
+const AuthInteractions = ({ children, authProvider = 'basic' }: AuthInteractionsProps) => {
+  const { login, refresh, logout } = use(AuthContext);
   const { useInteractions } = use(InteractionsContext);
 
   const handleLogin = useCallback(
@@ -25,37 +21,37 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
     [login]
   );
 
-  const handleRefreshDetails = useCallback(
-    (params: Parameters<NonNullable<InteractionBaseCallback['callback']>>[0]) => refreshDetails(params),
-    [refreshDetails]
+  const handleRefresh = useCallback(
+    (params: Parameters<NonNullable<InteractionBaseCallback['callback']>>[0]) => refresh(params),
+    [refresh]
   );
 
   const handleLogout = useCallback(() => logout(), [logout]);
 
   const interactionCallbacks = useMemo(() => {
-    let userCallbacks: Record<string, InteractionBaseCallback> = {};
-    if (userProvider === 'auth0') {
-      userCallbacks = {
+    let authCallbacks: Record<string, InteractionBaseCallback> = {};
+    if (authProvider === 'auth0') {
+      authCallbacks = {
         login: {
-          action: 'userLogin',
-          title: 'User Login',
+          action: 'authLogin',
+          title: 'Auth Login',
           type: 'globalCallback',
           callback: handleLogin,
           params: {}
         },
         logout: {
-          action: 'userLogout',
-          title: 'User Logout',
+          action: 'authLogout',
+          title: 'Auth Logout',
           type: 'globalCallback',
           callback: handleLogout,
           params: {}
         }
       };
-    } else if (userProvider === 'basic') {
-      userCallbacks = {
+    } else if (authProvider === 'basic') {
+      authCallbacks = {
         login: {
-          action: 'userLogin',
-          title: 'User Login',
+          action: 'authLogin',
+          title: 'Auth Login',
           type: 'globalCallback',
           callback: handleLogin,
           params: {
@@ -100,10 +96,10 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
           }
         },
         refreshDetails: {
-          action: 'userRefreshDetails',
-          title: 'User Refresh Details',
+          action: 'authRefreshDetails',
+          title: 'Auth Refresh Details',
           type: 'globalCallback',
-          callback: handleRefreshDetails,
+          callback: handleRefresh,
           params: {},
           preview: {
             errors: '',
@@ -121,8 +117,8 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
           }
         },
         logout: {
-          action: 'userLogout',
-          title: 'User Logout',
+          action: 'authLogout',
+          title: 'Auth Logout',
           type: 'globalCallback',
           callback: handleLogout,
           preview: {},
@@ -131,12 +127,12 @@ const UserInteractions = ({ children, userProvider = 'basic' }: UserInteractions
       };
     }
 
-    return userCallbacks;
-  }, [handleLogin, handleLogout, handleRefreshDetails, userProvider]);
+    return authCallbacks;
+  }, [handleLogin, handleLogout, handleRefresh, authProvider]);
 
-  useInteractions({ id: 'user', callbacks: interactionCallbacks });
+  useInteractions({ id: 'auth', callbacks: interactionCallbacks });
 
   return children;
 };
 
-export default UserInteractions;
+export default AuthInteractions;

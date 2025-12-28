@@ -1,14 +1,9 @@
 import get from 'lodash-es/get';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import NodeBodyParam from './NodeBodyParam';
 
-import type {
-  ElementInteraction,
-  InteractionCallbackParam,
-  InteractionCallbackParamOption,
-  InteractionCallbackParamValues
-} from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionCallbackParam, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 
 export type NodeBodyProps = {
   id?: string;
@@ -25,56 +20,52 @@ const NodeBody = ({ id = '', params, paramDefinitions, fields, onChange }: NodeB
     [params, onChange]
   );
 
+  const definitionsParsed = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(paramDefinitions).filter(([, paramDefinition]) => {
+          if (
+            !(paramDefinition as typeof paramDefinition | undefined) ||
+            (typeof paramDefinition !== 'object' && typeof paramDefinition !== 'string')
+          ) {
+            return false;
+          }
+
+          return typeof paramDefinition.when === 'function' ? paramDefinition.when(params ?? {}) : true;
+        })
+      ),
+    [paramDefinitions, params]
+  );
+
   return (
     <div className="flex w-full items-center p-2">
       <div className="flex w-full flex-col">
-        {Object.keys(paramDefinitions).map(param => {
-          const paramDefinition = paramDefinitions[param];
+        {(Object.keys(definitionsParsed) as (keyof ElementInteraction)[]).map(param => {
+          const paramDefinition = definitionsParsed[param];
           if (typeof paramDefinition === 'string') {
-            const value = get(params, param, '');
-
             return (
               <NodeBodyParam
                 key={param}
                 nodeId={id}
-                type="text"
-                id={param as keyof ElementInteraction}
-                value={value as string | number | boolean}
+                id={param}
+                value={get(params, param, '') as string | number | boolean}
                 fields={fields}
                 onChange={handleChange}
               />
             );
           }
 
-          if (typeof paramDefinition !== 'object') {
-            return undefined;
-          }
-
-          const { defaultValue, canBind, label } = paramDefinition;
-          const value = get(params, param, defaultValue);
-          let { type } = paramDefinition;
-          if (typeof type === 'function') {
-            type = type(params ?? {});
-          }
-
-          let options: InteractionCallbackParamOption[] = [];
-          if (paramDefinition.type === 'select' && typeof paramDefinition.options === 'function') {
-            options = paramDefinition.options(params ?? {});
-          } else if (paramDefinition.type === 'select' && typeof paramDefinition.options !== 'function') {
-            options = paramDefinition.options;
-          }
-
           return (
             <NodeBodyParam
               key={param}
-              id={param as keyof ElementInteraction}
+              id={param}
               nodeId={id}
-              label={label}
-              value={value as boolean | number | string}
-              type={type}
-              canBind={canBind}
+              label={paramDefinition.label}
+              value={get(params, param, paramDefinition.defaultValue) as string | number | boolean}
+              type={paramDefinition.type}
+              canBind={paramDefinition.canBind}
               onChange={handleChange}
-              options={options}
+              options={'options' in paramDefinition ? paramDefinition.options : undefined}
               params={params}
               fields={fields}
             />

@@ -6,10 +6,9 @@ import type { SourceField } from '@plitzi/sdk-shared';
 export type StepSettingsProps = {
   fields: SourceField[];
   attributes?: { label: string; path: string }[];
-  allowCustomBindings?: boolean;
 };
 
-const StepSettings = ({ fields, attributes, allowCustomBindings = false }: StepSettingsProps) => {
+const StepSettings = ({ fields, attributes }: StepSettingsProps) => {
   const fromPathOptions = useMemo(
     () =>
       fields.reduce<{ label: string; value: string }[]>(
@@ -33,7 +32,7 @@ const StepSettings = ({ fields, attributes, allowCustomBindings = false }: StepS
       <Form.Select2
         name="toPath"
         placeholder="Attribute"
-        allowCreateOptions={allowCustomBindings}
+        allowCreateOptions
         options={toPathOptions}
         size="xs"
         valueAsString

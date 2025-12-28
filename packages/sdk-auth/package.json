@@ -13,6 +13,22 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
+    "./AuthContext": {
+      "types": "./dist/src/AuthContext.d.ts",
+      "import": "./dist/src/AuthContext.mjs"
+    },
+    "./AuthContextProvider": {
+      "types": "./dist/src/AuthContextProvider.d.ts",
+      "import": "./dist/src/AuthContextProvider.mjs"
+    },
+    "./AuthManager": {
+      "types": "./dist/src/AuthManager.d.ts",
+      "import": "./dist/src/AuthManager.mjs"
+    },
+    "./AuthProvider": {
+      "types": "./dist/src/AuthProvider.d.ts",
+      "import": "./dist/src/AuthProvider.mjs"
+    },
     "./UserBaseContextProvider": {
       "types": "./dist/src/UserBaseContextProvider.d.ts",
       "import": "./dist/src/UserBaseContextProvider.mjs"
@@ -41,15 +57,34 @@
       "types": "./dist/src/hooks/useAuth/useAuth.d.ts",
       "import": "./dist/src/hooks/useAuth/useAuth.mjs"
     },
+    "./hooks/useAuth2": {
+      "types": "./dist/src/hooks/useAuth2/index.d.ts",
+      "import": "./dist/src/hooks/useAuth2/index.mjs"
+    },
+    "./hooks/useAuth2/index": {
+      "types": "./dist/src/hooks/useAuth2/index.d.ts",
+      "import": "./dist/src/hooks/useAuth2/index.mjs"
+    },
+    "./hooks/useAuth2/useAuth": {
+      "types": "./dist/src/hooks/useAuth2/useAuth.d.ts",
+      "import": "./dist/src/hooks/useAuth2/useAuth.mjs"
+    },
     "./index": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
+    },
+    "./providers/BasicAuthProvider": {
+      "types": "./dist/src/providers/BasicAuthProvider.d.ts",
+      "import": "./dist/src/providers/BasicAuthProvider.mjs"
     }
   },
   "type": "module",
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "build-assets:dev": "tsc && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",
     "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
@@ -64,6 +99,7 @@
   "devDependencies": {
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "vite": "^7.3.0"
+    "vite": "^7.3.0",
+    "vitest": "^4.0.16"
   }
 }

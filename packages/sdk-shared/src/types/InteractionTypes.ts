@@ -26,7 +26,7 @@ export type InteractionNode = {
   whenParams?: Record<string, RuleValue>;
 };
 
-export type InteractionParamType = 'boolean' | 'select' | 'text' | 'codemirror-text' | 'codemirror-json';
+export type InteractionParamType = 'boolean' | 'select' | 'text' | 'textarea' | 'codemirror-text' | 'codemirror-json';
 
 export type InteractionCallbackParamValues<
   T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
@@ -55,7 +55,7 @@ export type InteractionCallbackParam<
     }
   | {
       type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
-      defaultValue?: unknown;
+      defaultValue?: string | number | boolean;
       options?:
         | { label: string; value: string }[]
         | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);

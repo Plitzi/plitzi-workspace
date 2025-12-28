@@ -25,6 +25,10 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
+    "./sources/AuthSource": {
+      "types": "./dist/src/sources/AuthSource.d.ts",
+      "import": "./dist/src/sources/AuthSource.mjs"
+    },
     "./sources/NavigationSource": {
       "types": "./dist/src/sources/NavigationSource.d.ts",
       "import": "./dist/src/sources/NavigationSource.mjs"

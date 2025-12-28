@@ -1,7 +1,7 @@
 import { use } from 'react';
 
 import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
-import UserInteractions from '@plitzi/sdk-interactions/sources/UserSource/UserInteractions';
+import AuthInteractions from '@plitzi/sdk-interactions/sources/AuthSource/AuthInteractions';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 
@@ -24,11 +24,11 @@ const InteractionsBuilderContextProvider = ({
 
   return (
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>
-      <UserInteractions userProvider={userProvider}>
+      <AuthInteractions authProvider={userProvider}>
         <CollectionInteractions>
           <PageInteractions previewMode={previewMode}>{children}</PageInteractions>
         </CollectionInteractions>
-      </UserInteractions>
+      </AuthInteractions>
     </InteractionsContextProvider>
   );
 };

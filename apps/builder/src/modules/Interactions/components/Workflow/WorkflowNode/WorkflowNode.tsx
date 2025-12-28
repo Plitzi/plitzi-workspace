@@ -4,9 +4,9 @@ import { useCallback, use, useEffect, useMemo, memo } from 'react';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
 import NodeBody from './NodeBody';
+import NodeFooter from './NodeFooter';
 import NodeHeader from './NodeHeader';
 import WorkflowContext from '../WorkflowContext';
-import NodeFooter from './NodeFooter';
 import NodePreview from './NodePreview';
 import NodeWhen from './NodeWhen';
 

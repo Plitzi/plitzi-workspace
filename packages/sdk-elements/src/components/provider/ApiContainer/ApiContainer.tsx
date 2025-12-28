@@ -29,6 +29,7 @@ export type ApiContainerProps = {
   headers?: Record<string, string>;
   mockData?: Record<string, unknown> | string;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+  credentials?: RequestCredentials;
 };
 
 const ApiContainer = ({
@@ -42,7 +43,8 @@ const ApiContainer = ({
   when = emptyObject as RuleGroup,
   headers = emptyObject,
   mockData = '{}',
-  subType = 'div'
+  subType = 'div',
+  credentials = 'same-origin'
 }: ApiContainerProps) => {
   const { id } = internalProps;
   const {
@@ -106,6 +108,7 @@ const ApiContainer = ({
   const { isLoading, data, refetch, isSuccess, isError } = useApi({
     url: queryCompiled,
     method,
+    credentials,
     mock: !previewMode ? mockData : undefined,
     customHeaders,
     enabled: apiEnabled

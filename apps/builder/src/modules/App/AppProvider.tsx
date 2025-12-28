@@ -1,6 +1,6 @@
 import { ModalProvider } from '@plitzi/plitzi-ui/Modal';
 
-import UserBaseContextProvider from '@plitzi/sdk-auth/UserBaseContextProvider';
+import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import CollectionContextProvider from '@pmodules/Collection/CollectionContextProvider';
 import NavigationContextProvider from '@pmodules/Navigation/NavigationContextProvider';
@@ -63,14 +63,9 @@ const AppProvider = ({
                     <ModalProvider>
                       <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
                         <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                          <UserBaseContextProvider
-                            server={server}
-                            previewMode={previewMode}
-                            webId={webId}
-                            environment={environment}
-                          >
+                          <AuthContextProvider previewMode={previewMode} environment={environment} server={server}>
                             <NavigationContextProvider previewMode={previewMode}>{children}</NavigationContextProvider>
-                          </UserBaseContextProvider>
+                          </AuthContextProvider>
                         </StyleContextProvider>
                       </SchemaContextProvider>
                     </ModalProvider>

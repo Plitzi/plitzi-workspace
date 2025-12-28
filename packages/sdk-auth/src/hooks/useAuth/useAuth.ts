@@ -1,97 +1,87 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useCache } from '@plitzi/plitzi-ui/Cache';
-import { useMemo, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import BasicProvider from './managers/BasicProvider';
+import { AuthManager } from '../../AuthManager';
 
-import type { Schema } from '@plitzi/sdk-shared';
+import type { AuthEvent } from '../../AuthProvider';
+import type { AuthContextValue, Schema } from '@plitzi/sdk-shared';
 
 export type UseAuthProps = {
-  provider: Schema['settings']['userProvider'];
-  loginUrl: Schema['settings']['loginUrl'];
-  refreshUrl: Schema['settings']['refreshUrl'];
-  detailsPath: Schema['settings']['detailsPath'];
-  tokenPath: Schema['settings']['tokenPath'];
-  expirationTimePath: Schema['settings']['expirationTimePath'];
-  webId: string | number;
+  tokenStorage?: Schema['settings']['tokenStorage'];
+  provider?: Schema['settings']['userProvider'];
+  loginUrl?: Schema['settings']['loginUrl'];
+  userUrl?: Schema['settings']['userUrl'];
+  refreshUrl?: Schema['settings']['refreshUrl'];
+  logoutUrl?: Schema['settings']['logoutUrl'];
+  detailsPath?: Schema['settings']['detailsPath'];
+  tokenPath?: Schema['settings']['tokenPath'];
+  expirationTimePath?: Schema['settings']['expirationTimePath'];
 };
 
 const useAuth = ({
-  provider,
-  loginUrl,
-  refreshUrl,
+  tokenStorage = 'localStorage',
+  provider = '',
+  loginUrl = '',
+  userUrl = '',
+  refreshUrl = '',
+  logoutUrl = '',
   detailsPath = 'details',
   tokenPath = 'access_token',
-  expirationTimePath = 'expire_at',
-  webId = 0
+  expirationTimePath = 'expire_at'
 }: UseAuthProps) => {
-  const [cache, setCache, , clearCache] = useCache({ cacheId: `user_${webId}_state`, skipContext: true });
+  const [loading, setLoading] = useState(!!userUrl);
+  const [authenticated, setAuthenticated] = useState(false);
+  const handleState = useCallback((event: AuthEvent) => {
+    if (event.type === 'state') {
+      setLoading(event.state === 'initLoading');
+      setAuthenticated(event.state === 'authenticated');
+    }
+  }, []);
+
   const manager = useMemo(() => {
-    switch (provider) {
-      case 'auth0': {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const authData = useAuth0();
+    const manager = new AuthManager<Exclude<Exclude<AuthContextValue['user'], undefined>['details'], undefined>>(
+      provider as 'basic',
+      handleState,
+      { tokenStorage, loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath }
+    );
 
-        return {
-          login: authData.loginWithRedirect,
-          logout: authData.logout,
-          refreshDetails: authData.getAccessTokenSilently,
-          // can: authData.isAuthenticated,
-          isAuthenticated: authData.isAuthenticated,
-          can: () => true,
-          userDetails: authData.user,
-          // accessToken: authData.accessToken
-          accessToken: authData.getAccessTokenSilently(),
-          setCache: undefined,
-          clearCache: undefined
-        };
-      }
+    void manager.init();
 
-      case 'basic':
-        return new BasicProvider({
-          cache: cache as Record<string, unknown>,
-          setCache,
-          clearCache,
-          loginUrl,
-          refreshUrl,
-          detailsPath,
-          tokenPath,
-          expirationTimePath
-        });
-
-      case '':
-      default:
-        return undefined;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider, loginUrl, refreshUrl, detailsPath, tokenPath, expirationTimePath]); // cache, setCache, clearCache
-
-  const handleWindowFocus = useCallback(async (): Promise<void> => {
-    if (manager && manager.isAuthenticated) {
-      const data = await manager.refreshDetails().catch(() => void manager.logout());
-      if (!data || (typeof data === 'object' && data.errors)) {
-        void manager.logout();
-      } else {
-        // manager.setExpiration();
-      }
-    }
-  }, [manager]);
+    return manager;
+  }, [
+    tokenStorage,
+    detailsPath,
+    expirationTimePath,
+    handleState,
+    loginUrl,
+    logoutUrl,
+    provider,
+    refreshUrl,
+    tokenPath,
+    userUrl
+  ]);
 
   useEffect(() => {
-    const method = () => void handleWindowFocus();
-    window.addEventListener('focus', method);
+    const providerInstance = manager.getProvider();
+    if (!providerInstance.token?.expiresAt) {
+      return;
+    }
 
-    return () => {
-      window.removeEventListener('focus', method);
-    };
-  }, [handleWindowFocus]);
+    const currentTime = Math.floor(Date.now() / 1000);
+    if (providerInstance.token.expiresAt) {
+      const handler = setTimeout(
+        () => {
+          void manager.logout();
+        },
+        Math.abs(currentTime - providerInstance.token.expiresAt) * 1000
+      );
 
-  if (manager) {
-    manager.setCache = setCache;
-    manager.clearCache = clearCache;
-  }
+      return () => clearTimeout(handler);
+    }
+  }, [manager, authenticated]);
 
-  return { manager };
+  const hookValue = useMemo(() => ({ manager, loading, authenticated }), [loading, manager, authenticated]);
+
+  return hookValue;
 };
 
 export default useAuth;
