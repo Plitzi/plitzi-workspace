@@ -53,18 +53,6 @@
       "types": "./dist/src/sources/AuthSource/index.d.ts",
       "import": "./dist/src/sources/AuthSource/index.mjs"
     },
-    "./sources/UserSource": {
-      "types": "./dist/src/sources/UserSource/index.d.ts",
-      "import": "./dist/src/sources/UserSource/index.mjs"
-    },
-    "./sources/UserSource/UserInteractions": {
-      "types": "./dist/src/sources/UserSource/UserInteractions.d.ts",
-      "import": "./dist/src/sources/UserSource/UserInteractions.mjs"
-    },
-    "./sources/UserSource/index": {
-      "types": "./dist/src/sources/UserSource/index.d.ts",
-      "import": "./dist/src/sources/UserSource/index.mjs"
-    },
     "./sources/index": {
       "types": "./dist/src/sources/index.d.ts",
       "import": "./dist/src/sources/index.mjs"

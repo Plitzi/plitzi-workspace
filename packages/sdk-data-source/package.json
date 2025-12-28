@@ -37,10 +37,6 @@
       "types": "./dist/src/sources/PageStateSource.d.ts",
       "import": "./dist/src/sources/PageStateSource.mjs"
     },
-    "./sources/UserSource": {
-      "types": "./dist/src/sources/UserSource.d.ts",
-      "import": "./dist/src/sources/UserSource.mjs"
-    },
     "./sources/VariablesSource": {
       "types": "./dist/src/sources/VariablesSource.d.ts",
       "import": "./dist/src/sources/VariablesSource.mjs"

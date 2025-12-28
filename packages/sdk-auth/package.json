@@ -29,18 +29,6 @@
       "types": "./dist/src/AuthProvider.d.ts",
       "import": "./dist/src/AuthProvider.mjs"
     },
-    "./UserBaseContextProvider": {
-      "types": "./dist/src/UserBaseContextProvider.d.ts",
-      "import": "./dist/src/UserBaseContextProvider.mjs"
-    },
-    "./UserContext": {
-      "types": "./dist/src/UserContext.d.ts",
-      "import": "./dist/src/UserContext.mjs"
-    },
-    "./hocs/withUserProvider": {
-      "types": "./dist/src/hocs/withUserProvider.d.ts",
-      "import": "./dist/src/hocs/withUserProvider.mjs"
-    },
     "./hooks/useAuth": {
       "types": "./dist/src/hooks/useAuth/index.d.ts",
       "import": "./dist/src/hooks/useAuth/index.mjs"
@@ -49,25 +37,9 @@
       "types": "./dist/src/hooks/useAuth/index.d.ts",
       "import": "./dist/src/hooks/useAuth/index.mjs"
     },
-    "./hooks/useAuth/managers/BasicProvider": {
-      "types": "./dist/src/hooks/useAuth/managers/BasicProvider.d.ts",
-      "import": "./dist/src/hooks/useAuth/managers/BasicProvider.mjs"
-    },
     "./hooks/useAuth/useAuth": {
       "types": "./dist/src/hooks/useAuth/useAuth.d.ts",
       "import": "./dist/src/hooks/useAuth/useAuth.mjs"
-    },
-    "./hooks/useAuth2": {
-      "types": "./dist/src/hooks/useAuth2/index.d.ts",
-      "import": "./dist/src/hooks/useAuth2/index.mjs"
-    },
-    "./hooks/useAuth2/index": {
-      "types": "./dist/src/hooks/useAuth2/index.d.ts",
-      "import": "./dist/src/hooks/useAuth2/index.mjs"
-    },
-    "./hooks/useAuth2/useAuth": {
-      "types": "./dist/src/hooks/useAuth2/useAuth.d.ts",
-      "import": "./dist/src/hooks/useAuth2/useAuth.mjs"
     },
     "./index": {
       "types": "./dist/src/index.d.ts",
