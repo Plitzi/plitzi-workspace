@@ -7,18 +7,6 @@ export type User = {
   roles: string[];
 };
 
-export type UserContextValue = {
-  login?: unknown;
-  logout?: unknown;
-  refreshDetails?: unknown;
-  can?: (permission: string) => boolean;
-  authenticated: boolean;
-  user?: {
-    details?: User;
-    accessToken?: string | Promise<string>;
-  };
-};
-
 export type TokenResult = {
   accessToken: string;
   expiresAt: number | null;

@@ -16,7 +16,7 @@ const AuthSource = ({ children }: AuthSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { user, authenticated } = use(AuthContext);
   const { userProvider = 'basic' } = use(SchemaSettingsContext);
-  const userContextMemo = useMemo(() => {
+  const authContextMemo = useMemo(() => {
     switch (userProvider) {
       case 'auth0':
         return {
@@ -63,14 +63,14 @@ const AuthSource = ({ children }: AuthSourceProps) => {
       case 'custom':
       case '':
       default:
-        return getPathsFromObeject(userContextMemo).reduce<SourceField[]>(
+        return getPathsFromObeject(authContextMemo).reduce<SourceField[]>(
           (acum, path) => [...acum, { path, name: `user.${path}` }],
           []
         );
     }
-  }, [userContextMemo, userProvider]);
+  }, [authContextMemo, userProvider]);
 
-  const [UserSourceContext] = useDataSource({
+  const [AuthSourceContext] = useDataSource({
     id: 'global',
     source: 'auth',
     mode: 'write',
@@ -78,7 +78,7 @@ const AuthSource = ({ children }: AuthSourceProps) => {
     fields: sourceFields
   });
 
-  return <UserSourceContext value={userContextMemo}>{children}</UserSourceContext>;
+  return <AuthSourceContext value={authContextMemo}>{children}</AuthSourceContext>;
 };
 
 export default AuthSource;
