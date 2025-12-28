@@ -62,7 +62,7 @@ const useAuth = ({
 
   useEffect(() => {
     const providerInstance = manager.getProvider();
-    if (!providerInstance.token?.expiresAt) {
+    if (!providerInstance || !providerInstance.token?.expiresAt) {
       return;
     }
 

@@ -111,10 +111,12 @@ const AuthContextProvider = ({
       can: authManager.can.bind(authManager),
       logout: authManager.logout.bind(authManager),
       authenticated: authenticated || !previewMode || (typeof window === 'undefined' && !!server.isAuthenticated),
-      user: {
-        details: authManager.getProvider().user,
-        accessToken: authManager.getProvider().token?.accessToken
-      }
+      user: authManager.getProvider()
+        ? {
+            details: authManager.getProvider()?.user,
+            accessToken: authManager.getProvider()?.token?.accessToken
+          }
+        : undefined
     }),
     [authManager, authenticated, previewMode, server.isAuthenticated]
   );

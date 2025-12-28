@@ -17,7 +17,7 @@ export type Providers = keyof typeof providers;
 
 export class AuthManager<U = Record<string, unknown>, T extends Providers = 'basic'> {
   private providerType: Providers = 'basic';
-  private provider: AuthProvider<U>;
+  private provider?: AuthProvider<U> = undefined;
 
   constructor(
     providerType: Providers = 'basic',
@@ -25,8 +25,10 @@ export class AuthManager<U = Record<string, unknown>, T extends Providers = 'bas
     ...args: ConstructorParameters<(typeof providers)[T]>
   ) {
     this.providerType = providerType;
-    this.provider = new providers[providerType](...args);
-    this.provider.on(listeners);
+    if (providers[providerType] as typeof AuthProvider | undefined) {
+      this.provider = new providers[providerType](...args);
+      this.provider.on(listeners);
+    }
   }
 
   // Methods Getters
@@ -35,38 +37,38 @@ export class AuthManager<U = Record<string, unknown>, T extends Providers = 'bas
     return this.providerType;
   }
 
-  getProvider(): AuthProviderWithCache<U> {
+  getProvider(): AuthProviderWithCache<U> | undefined {
     return this.provider;
   }
 
   // Methods Actions
 
   init() {
-    return this.provider.init();
+    return this.provider?.init();
   }
 
   login(...args: Parameters<AuthProvider['login']>) {
-    return this.provider.login(...args);
+    return this.provider?.login(...args) ?? Promise.resolve(undefined);
   }
 
   refresh(): Promise<TokenResult | undefined> {
-    return this.provider.refresh();
+    return this.provider?.refresh() ?? Promise.resolve(undefined);
   }
 
   getUser() {
-    return this.provider.getUser();
+    return this.provider?.getUser();
   }
 
   can(permission: string): boolean {
-    return this.provider.can(permission);
+    return this.provider?.can(permission) ?? false;
   }
 
   logout(): Promise<void> {
-    return this.provider.logout();
+    return this.provider?.logout() ?? Promise.resolve();
   }
 
-  on(listener: AuthEventListener): () => void {
-    return this.provider.on(listener);
+  on(listener: AuthEventListener): (() => void) | undefined {
+    return this.provider?.on(listener);
   }
 
   // Other methods can be added here as needed
