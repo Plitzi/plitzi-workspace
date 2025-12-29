@@ -59,7 +59,13 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     };
   }
 
-  async init(user?: T) {
+  async init(user?: T, skipAuth?: boolean) {
+    if (skipAuth) {
+      this.setState('guest');
+
+      return;
+    }
+
     this.setState('initLoading');
     if (!this.options.isSSR) {
       await this.getUser();

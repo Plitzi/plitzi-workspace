@@ -43,8 +43,8 @@ export class AuthManager<U = Record<string, unknown>, T extends Providers = 'bas
 
   // Methods Actions
 
-  init(user?: U) {
-    return this.provider?.init(user);
+  init(user?: U, skipAuth?: boolean) {
+    return this.provider?.init(user, skipAuth);
   }
 
   login(...args: Parameters<AuthProvider['login']>) {

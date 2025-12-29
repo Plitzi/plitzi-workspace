@@ -17,6 +17,7 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
   subscriptionServer: string;
   location?: Location;
   authenticated?: boolean;
+  skipAuth?: boolean;
   user?: {
     details?: User;
     accessToken?: string | Promise<string>;

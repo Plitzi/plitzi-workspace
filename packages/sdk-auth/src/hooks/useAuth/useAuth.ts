@@ -60,12 +60,15 @@ const useAuth = ({
     }
 
     const manager = new AuthManager<User>(provider as 'basic' | 'auth0', handleState, props);
-    void manager.init(server?.authenticated ? server.user?.details : undefined);
+    void manager.init(server?.authenticated ? server.user?.details : undefined, server?.skipAuth);
 
     return manager;
   }, [
     provider,
     handleState,
+    server?.authenticated,
+    server?.user?.details,
+    server?.skipAuth,
     tokenStorage,
     loginUrl,
     userUrl,
@@ -74,8 +77,6 @@ const useAuth = ({
     detailsPath,
     tokenPath,
     expirationTimePath,
-    server?.authenticated,
-    server?.user?.details,
     isSSR
   ]);
 
