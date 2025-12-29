@@ -3380,7 +3380,7 @@ __metadata:
     flow-bin: "npm:^0.295.0"
     graphql: "npm:^16.12.0"
     graphql-ws: "npm:^6.0.6"
-    immer: "npm:^11.1.0"
+    immer: "npm:^11.1.3"
     jest: "npm:^30.2.0"
     jszip: "npm:^3.10.1"
     lodash-es: "npm:^4.17.22"
@@ -3400,7 +3400,7 @@ __metadata:
     sass-embedded: "npm:^1.97.1"
     sass-loader: "npm:^16.0.6"
     stylelint: "npm:^16.26.1"
-    stylelint-order: "npm:^7.0.0"
+    stylelint-order: "npm:^7.0.1"
     stylelint-scss: "npm:^6.14.0"
     swr: "npm:^2.3.8"
     thread-loader: "npm:^4.0.4"
@@ -3465,7 +3465,7 @@ __metadata:
     flow-bin: "npm:^0.295.0"
     graphql: "npm:^16.12.0"
     handlebars: "npm:^4.7.8"
-    immer: "npm:^11.1.0"
+    immer: "npm:^11.1.3"
     lodash-es: "npm:^4.17.22"
     mini-css-extract-plugin: "npm:^2.9.4"
     postcss: "npm:^8.5.6"
@@ -3482,7 +3482,7 @@ __metadata:
     sass-embedded: "npm:^1.97.1"
     storybook: "npm:^10.1.10"
     stylelint: "npm:^16.26.1"
-    stylelint-order: "npm:^7.0.0"
+    stylelint-order: "npm:^7.0.1"
     stylelint-scss: "npm:^6.14.0"
     thread-loader: "npm:^4.0.4"
     ts-loader: "npm:^9.5.4"
@@ -3621,7 +3621,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.2"
-    immer: "npm:^11.1.0"
+    immer: "npm:^11.1.3"
     lodash-es: "npm:^4.17.22"
     react: "npm:^19.2.3"
     typescript: "npm:^5.9.3"
@@ -3743,7 +3743,7 @@ __metadata:
     eslint-plugin-cypress: "npm:^5.2.0"
     eslint-plugin-flowtype: "npm:8.0.3"
     eslint-plugin-import: "npm:^2.32.0"
-    eslint-plugin-jest: "npm:^29.11.0"
+    eslint-plugin-jest: "npm:^29.11.1"
     eslint-plugin-jsdoc: "npm:^61.5.0"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
     eslint-plugin-prettier: "npm:^5.5.4"
@@ -3781,7 +3781,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.2"
-    immer: "npm:^11.1.0"
+    immer: "npm:^11.1.3"
     lodash-es: "npm:^4.17.22"
     typescript: "npm:^5.9.3"
     vite: "npm:^7.3.0"
@@ -3798,7 +3798,7 @@ __metadata:
     "@types/lodash-es": "npm:^4.17.12"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.2"
-    immer: "npm:^11.1.0"
+    immer: "npm:^11.1.3"
     lodash-es: "npm:^4.17.22"
     prop-types: "npm:^15.8.1"
     typescript: "npm:^5.9.3"
@@ -9077,9 +9077,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jest@npm:^29.11.0":
-  version: 29.11.0
-  resolution: "eslint-plugin-jest@npm:29.11.0"
+"eslint-plugin-jest@npm:^29.11.1":
+  version: 29.11.1
+  resolution: "eslint-plugin-jest@npm:29.11.1"
   dependencies:
     "@typescript-eslint/utils": "npm:^8.0.0"
   peerDependencies:
@@ -9091,7 +9091,7 @@ __metadata:
       optional: true
     jest:
       optional: true
-  checksum: 10c0/5e147ade48fb957adcccafd7c9be39013b64949d01d63fe7a2b99b332511eca6f40eeadccfc8fb9ef73bc924aafeb466b86b7b2af461016d7805978ed05bb323
+  checksum: 10c0/690f75a70f3bc68896c952150c9f1a9425fd18a0bd234fcfdd93d40db54283ba0d9a95473ae2bdc01fcc327f20aff46f1e4c1896d97a09ed5cc8a6d4d4c38f3c
   languageName: node
   linkType: hard
 
@@ -10780,6 +10780,13 @@ __metadata:
   version: 11.1.0
   resolution: "immer@npm:11.1.0"
   checksum: 10c0/cc1f14037534802a662f0113d80b4695685d789b84ab4a56a241a384df32f57f12332d1643fa3b3cc7a2504b076efb07aead08732796c8e019569d95b8b7f1cd
+  languageName: node
+  linkType: hard
+
+"immer@npm:^11.1.3":
+  version: 11.1.3
+  resolution: "immer@npm:11.1.3"
+  checksum: 10c0/2d0bcb7946274bb99254b8129026da9579591569afdd4f29e5ef3ebf231375c7ab97c344ffbfc9eeabea27a2145623fca1287c17e3ebd007c8cdcfd82954eeb7
   languageName: node
   linkType: hard
 
@@ -14379,7 +14386,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.33, postcss@npm:^8.4.41, postcss@npm:^8.5.3, postcss@npm:^8.5.6":
+"postcss@npm:^8.4.33, postcss@npm:^8.4.41, postcss@npm:^8.5.6":
   version: 8.5.6
   resolution: "postcss@npm:8.5.6"
   dependencies:
@@ -16411,15 +16418,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-order@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "stylelint-order@npm:7.0.0"
+"stylelint-order@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "stylelint-order@npm:7.0.1"
   dependencies:
-    postcss: "npm:^8.5.3"
+    postcss: "npm:^8.5.6"
     postcss-sorting: "npm:^9.1.0"
   peerDependencies:
-    stylelint: ^16.18.0
-  checksum: 10c0/202ea7f0ce44b272f0ee8745383e347520663ef3defb9478c2dae8f33378950e32138815d038228db49383cab7b111148b9b9521e409311a91047cfc4740d507
+    stylelint: ^16.18.0 || ^17.0.0
+  checksum: 10c0/dfe3ab8f18725c9c2fead65f2940a6590208591ca267da6d25ee191c6e5f1df04813a6f6a76791bfe5f6fda33fbf6d81369c17c71831bfbd6802dfed26559845
   languageName: node
   linkType: hard
 
