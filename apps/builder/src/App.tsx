@@ -16,7 +16,6 @@ import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import clsx from 'clsx';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
-import get from 'lodash-es/get';
 import omit from 'lodash-es/omit';
 import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
 import * as React from 'react';
@@ -260,7 +259,7 @@ const App = (props: AppProps) => {
   return (
     <Provider>
       <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
-        {!hasBrowserRouter && <BrowserRouter basename={get(server, 'basePath', '')}>{childrenParsed}</BrowserRouter>}
+        {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
         {hasBrowserRouter && childrenParsed}
       </ContainerRoot>
     </Provider>
