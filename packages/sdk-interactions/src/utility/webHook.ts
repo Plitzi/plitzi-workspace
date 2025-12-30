@@ -39,7 +39,7 @@ const delayTime: InteractionBaseCallback<{
       label: 'Credentials'
     }
   },
-  preview: { url: '', credentials: '', method: '', response: { status: '', data: '' } },
+  preview: { response: { status: '', data: '' } },
   callback: async params => {
     const { url, authorizationToken, body, credentials } = params;
     let { method } = params;

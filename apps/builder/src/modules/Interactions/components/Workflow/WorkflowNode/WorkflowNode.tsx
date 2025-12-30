@@ -112,7 +112,7 @@ const WorkflowNode = ({
             ...acum2,
             [`${source}_${path.replaceAll('.', '_')}`]: {
               name: `${source}.${path}`,
-              label: `${source}.${path}`,
+              label: `${source} [${path}]`,
               placeholder: `Enter ${label}`,
               group: `Data Sources - ${source}`
             }
@@ -133,7 +133,7 @@ const WorkflowNode = ({
             ...acum2,
             [`${nodeId}_${path}`]: {
               name: `${nodeId}.${path}`,
-              label: path,
+              label: `${title} [${path}]`,
               placeholder: `Enter ${path}`,
               group: `${title} - Param`
             }
@@ -143,9 +143,9 @@ const WorkflowNode = ({
         ...getPathsFromObeject(previewData[nodeId]).reduce(
           (acum2, path) => ({
             ...acum2,
-            [`${nodeId}_${path}`]: {
+            [`${nodeId}_${path.replaceAll('.', '_')}`]: {
               name: `${nodeId}.${path}`,
-              label: path,
+              label: `${title} [${path}]`,
               placeholder: `Enter ${path}`,
               group: `${title} - Response`
             }
