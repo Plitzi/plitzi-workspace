@@ -50,7 +50,7 @@ const NodeBodyParam = ({
     () => (type === 'select' && typeof optionsProp === 'function' ? optionsProp(params) : optionsProp),
     [optionsProp, params, type]
   );
-  const [isBinding, setIsBinding] = useState(() => canBind && typeof value === 'string' && isValidToken(value));
+  const [isBinding, setIsBinding] = useState(() => canBind && typeof value === 'string' && isValidToken(value, true));
   const [internalOptions, setInternalOptions] = useState<Option[]>([]);
 
   const handleChangeInput = useCallback((value?: string) => onChange?.(id, value ?? ''), [id, onChange]);

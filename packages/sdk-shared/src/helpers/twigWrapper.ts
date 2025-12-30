@@ -3,8 +3,10 @@ import Twig from 'twig';
 Twig.extendFilter('object_as_json', (value: string) => (typeof value === 'object' ? JSON.stringify(value) : value));
 
 const tokenRegex = /{{([ ]+|)(?<token>[a-zA-Z][a-zA-Z0-9._-]+)([ ]+|)}}/gim;
+const strictTokenRegex = /^{{([ ]+|)(?<token>[a-zA-Z][a-zA-Z0-9._-]+)([ ]+|)}}$/gim;
 
-const isValidToken = (token: string) => !!token.match(tokenRegex);
+const isValidToken = (token: string, strict: boolean = false) =>
+  strict ? !!token.trim().match(strictTokenRegex) : !!token.trim().match(tokenRegex);
 
 const hasTokens = (template: string) => !!template.replaceAll(' ', '').match(/{{.*}}/gim);
 
@@ -34,6 +36,11 @@ const processTwig = (
           templateParsed = templateParsed.replace(token[0], `{{ ${token.groups.token} | object_as_json }}`);
         }
       });
+    }
+
+    if ('variables' in variables) {
+      // Due that interactions have a variables context, these needs to be at root level
+      variables = { ...variables, ...(variables.variables as Record<string, string>) };
     }
 
     const twigTemplate = Twig.twig({ data: templateParsed });
