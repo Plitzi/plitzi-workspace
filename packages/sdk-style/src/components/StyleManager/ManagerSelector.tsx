@@ -150,7 +150,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           );
         })}
       </div>
-      <Modal id={idAddSelector} open={openAddSelector} onClose={onCloseAddSelector}>
+      <Modal id={idAddSelector} open={openAddSelector} onClose={onCloseAddSelector} size="sm">
         <Modal.Header>
           <h4>Add Selector</h4>
         </Modal.Header>
@@ -165,7 +165,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
         <Modal.Body>
           <h4>Do you want to remove this item ?</h4>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer justify="end">
           <Button onClick={handleCloseModal} size="sm">
             Cancel
           </Button>

@@ -66,7 +66,7 @@ const ItemActions = ({
           </div>
         </Modal.Body>,
         undefined,
-        undefined,
+        { size: 'sm' },
         id
       );
 
@@ -103,7 +103,7 @@ const ItemActions = ({
           <h4>Do you want to remove this item ?</h4>
         </Modal.Body>,
         undefined,
-        undefined,
+        { size: 'sm' },
         id
       );
 

@@ -72,7 +72,9 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
         <Modal.Body>
           <PageFolderForm pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
         </Modal.Body>
-      )
+      ),
+      undefined,
+      { size: 'sm' }
     );
 
     if (response) {
@@ -90,7 +92,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
         onClick={handleClickAddPage}
       >
         <Button.Icon icon="fa-solid fa-file-circle-plus" size="md" className="text-base" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-[100px] group-hover:opacity-100">
+        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-25 group-hover:opacity-100">
           New Page
         </span>
       </Button>
@@ -102,7 +104,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
         onClick={handleClickAddLayout}
       >
         <Button.Icon icon="fa-solid fa-border-all" size="md" className="text-base" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-[100px] group-hover:opacity-100">
+        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-25 group-hover:opacity-100">
           New Layout
         </span>
       </Button>
@@ -114,7 +116,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
         onClick={handleClickAddPageFolder}
       >
         <Button.Icon icon="fa-solid fa-folder-plus" size="md" className="text-base" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-[100px] group-hover:opacity-100">
+        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-25 group-hover:opacity-100">
           New Folder
         </span>
       </Button>

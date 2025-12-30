@@ -28,13 +28,26 @@ export type PageFolderFormProps = {
 
 const PageFolderForm = ({
   name = 'New Folder',
-  slug = '',
+  slug = 'new-folder',
   parentId = '',
   pageFolders,
   onClose,
   onSubmit
 }: PageFolderFormProps) => {
   const form = useForm({ defaultValues: { name, slug, parentId }, config: { schema: pageFolderFormSchema } });
+
+  const handleChangeName = useCallback(
+    (value: string) => {
+      form.formMethods.setValue(
+        'slug',
+        value
+          .replaceAll(' ', '-')
+          .toLowerCase()
+          .replaceAll(/([^a-z0-9-]+)/gi, '')
+      );
+    },
+    [form.formMethods]
+  );
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof pageFolderFormSchema>) => onSubmit?.(undefined, values),
@@ -44,7 +57,7 @@ const PageFolderForm = ({
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
-        <Form.Input name="name" label="Folder Name" size="sm" />
+        <Form.Input name="name" label="Folder Name" onChange={handleChangeName} size="sm" />
         <Form.Input name="slug" label="Folder Slug / Path" placeholder="Page Slug / Path" size="sm" />
         <Form.Select name="parentId" label="Parent Folder" placeholder="None" size="sm">
           {pageFolders &&
