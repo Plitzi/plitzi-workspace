@@ -88,7 +88,7 @@ const DeployForm = ({
     <Form form={form} onSubmit={handleSubmitInternal} className="w-125 gap-4">
       <Form.Body>
         <InputEnvironment />
-        {!loading && watchEnvironment !== 'main' && !latestRevision && (
+        {watchEnvironment !== 'main' && !latestRevision && (
           <Alert intent="warning" size="sm" solid={false}>
             This environment don&apos;t have any snapshot, please make a snapshot first
           </Alert>
