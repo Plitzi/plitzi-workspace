@@ -175,6 +175,10 @@ export default defineConfig(({ mode, command }) => {
       alias: {
         '@pmodules': path.resolve('./src/modules'),
         '@pcomponents': path.resolve('./src/components'),
+        'decode-named-character-reference': path.resolve(
+          __dirname,
+          '../../node_modules/decode-named-character-reference/index.js'
+        ),
         ...(devMode ? packages : {})
       },
       extensions: ['.js', '.mjs', '.ts', '.tsx']
