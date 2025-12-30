@@ -5,6 +5,7 @@ const delayTime: InteractionBaseCallback<{
   method: string;
   body: Record<string, string | Blob>;
   authorizationToken: string;
+  credentials: RequestCredentials;
 }> = {
   action: 'webHook',
   title: 'Webhook',
@@ -25,11 +26,22 @@ const delayTime: InteractionBaseCallback<{
       ]
     },
     body: { canBind: true, defaultValue: '', type: 'textarea', label: 'Body' },
-    authorizationToken: { canBind: true, defaultValue: '', type: 'text', label: 'Authorization Token' }
+    authorizationToken: { canBind: true, defaultValue: '', type: 'text', label: 'Authorization Token' },
+    credentials: {
+      canBind: true,
+      defaultValue: 'same-origin',
+      type: 'select',
+      options: [
+        { label: 'Include', value: 'include' },
+        { label: 'Omit', value: 'omit' },
+        { label: 'Same Origin', value: 'same-origin' }
+      ],
+      label: 'Credentials'
+    }
   },
-  preview: { url: '', method: '', response: { status: '', data: '' } },
+  preview: { url: '', credentials: '', method: '', response: { status: '', data: '' } },
   callback: async params => {
-    const { url, authorizationToken, body } = params;
+    const { url, authorizationToken, body, credentials } = params;
     let { method } = params;
     let response: { status?: number; data?: string } = {};
 
@@ -53,7 +65,7 @@ const delayTime: InteractionBaseCallback<{
         formData?.append(key, value);
       });
 
-      const fetchOptions = { method, headers, body: formData };
+      const fetchOptions: RequestInit = { method, headers, body: formData, credentials };
       if (method === 'get') {
         delete fetchOptions.body;
       }
