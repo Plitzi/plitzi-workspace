@@ -116,7 +116,7 @@ const StyleInspector = ({
 
   return (
     <div className="flex w-full grow flex-col">
-      <div className="flex w-full flex-col gap-1 border-b border-gray-300 py-2">
+      <div className="flex w-full flex-col gap-1 border-b border-gray-300">
         <div className="flex items-center justify-between">
           <label>Style Selector</label>
           <div className="flex items-center gap-2 py-1 text-xs">

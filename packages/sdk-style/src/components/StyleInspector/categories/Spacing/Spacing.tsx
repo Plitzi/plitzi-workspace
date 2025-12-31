@@ -77,7 +77,7 @@ const Spacing = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Spac
 
   return (
     <CategoryContainer title="Spacing" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <div className="flex flex-col p-2">
+      <div className="flex flex-col">
         <SpacingMargin
           values={values}
           fragmentSelected={fragmentSelected}
