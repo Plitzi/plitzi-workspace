@@ -3,11 +3,11 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 
 import Variable from './Variable';
 
-import type { StyleVariable } from '@plitzi/sdk-shared';
+import type { VariableGroup } from '@plitzi/sdk-shared';
 
 export type VariableGroupProps = {
   title?: string;
-  variables?: StyleVariable;
+  variables?: VariableGroup;
 };
 
 const VariableGroup = ({ title, variables }: VariableGroupProps) => {

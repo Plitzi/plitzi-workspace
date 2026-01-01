@@ -3,7 +3,7 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
-import type { StyleVariableCategory, StyleVariableValues } from '@plitzi/sdk-shared';
+import type { ThemeValue, VariableCategory } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 const variableFormSchema = z.object({
@@ -22,8 +22,8 @@ const variableFormSchema = z.object({
 
 export type VariableFormProps = {
   name?: string;
-  category?: StyleVariableCategory;
-  values?: StyleVariableValues;
+  category?: VariableCategory;
+  values?: ThemeValue;
   onClose?: (e: MouseEvent) => void;
   onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof variableFormSchema>) => void;
 };
