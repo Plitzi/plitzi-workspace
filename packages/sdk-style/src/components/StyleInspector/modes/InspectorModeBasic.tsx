@@ -14,6 +14,7 @@ import Position from '../categories/Position';
 import Size from '../categories/Size';
 import Spacing from '../categories/Spacing';
 import Typography from '../categories/Typography';
+import Variables from '../categories/Variables';
 import useStyleInherit from '../hooks/useStyleInherit';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 
@@ -88,7 +89,7 @@ const InspectorModeBasic = ({
       inheritData={inheritData}
     >
       <div className="flex grow flex-col justify-between">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           {isList && (
             <List
               replaceTokens={replaceTokens}
@@ -151,6 +152,7 @@ const InspectorModeBasic = ({
             isCollapsed={collapsedCache.effects ?? true}
             onCollapse={handleChangeCollapse}
           />
+          <Variables isCollapsed={collapsedCache.variables ?? true} onCollapse={handleChangeCollapse} />
         </div>
         <div className="flex items-center justify-end gap-4 px-2 py-1">
           <Switch size="xs" label="Replace Tokens" checked={replaceTokens} onChange={handleChangeReplaceTokens} />

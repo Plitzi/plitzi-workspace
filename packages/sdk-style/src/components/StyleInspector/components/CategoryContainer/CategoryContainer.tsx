@@ -1,5 +1,6 @@
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Icon from '@plitzi/plitzi-ui/Icon';
+import clsx from 'clsx';
 
 import InspectorDots from '../InspectorDots';
 
@@ -9,7 +10,7 @@ import type { ReactNode } from 'react';
 export type CategoryContainerProps = {
   children?: ReactNode;
   title?: string;
-  dotKeys: StyleCategory[];
+  dotKeys?: StyleCategory[];
   isCollapsed?: boolean;
   onCollapse: (collapsed: boolean) => void;
 };
@@ -24,7 +25,10 @@ const CategoryContainer = ({
   return (
     <ContainerCollapsable collapsed={isCollapsed} onChange={onCollapse}>
       <ContainerCollapsable.Header
-        className="h-7"
+        className={clsx('h-8', {
+          'border-b border-gray-300 hover:bg-slate-100': isCollapsed,
+          'bg-slate-100': !isCollapsed
+        })}
         title={title}
         placement="right"
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
@@ -32,7 +36,11 @@ const CategoryContainer = ({
       >
         <InspectorDots styleKeys={dotKeys} />
       </ContainerCollapsable.Header>
-      <ContainerCollapsable.Content className="flex flex-col gap-3 py-2">{children}</ContainerCollapsable.Content>
+      <ContainerCollapsable.Content
+        className={clsx('flex flex-col gap-3 py-2', { 'border-b border-gray-300': !isCollapsed })}
+      >
+        {children}
+      </ContainerCollapsable.Content>
     </ContainerCollapsable>
   );
 };

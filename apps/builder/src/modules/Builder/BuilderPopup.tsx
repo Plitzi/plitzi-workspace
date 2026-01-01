@@ -55,7 +55,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
 
           {!previewMode && (
             <PopupSidePanel
-              className="max-h-[calc(_100vh_-_48px)] overflow-y-auto"
+              className="max-h-[calc(100vh-48px)] overflow-y-auto"
               placementTabs="right"
               minWidth={320}
               maxWidth={540}

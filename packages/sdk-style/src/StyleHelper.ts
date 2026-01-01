@@ -15,9 +15,13 @@ export type StyleHelperMetaData = {
 };
 
 export const EMPTY_STYLE_SCHEMA: Style = {
-  variables: {},
   platform: { desktop: {}, tablet: {}, mobile: {} },
   mode: 'desktop-first',
+  theme: {
+    default: 'system',
+    schemes: ['default', 'light', 'dark']
+  },
+  variables: {},
   cache: ''
 };
 

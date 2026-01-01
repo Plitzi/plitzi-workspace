@@ -110,9 +110,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
       <ToolsList onSelect={handleClickListItems} selected={selected} />
       <div className="flex grow basis-0 flex-col overflow-y-auto">
         {selected === 'style' && (
-          <div className="flex grow flex-col gap-2">
-            <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
-          </div>
+          <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
         )}
         {selected === 'settings' && (
           <>
