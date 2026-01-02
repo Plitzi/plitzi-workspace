@@ -27,7 +27,7 @@ export const EMPTY_STYLE_SCHEMA: Style = {
 
 export type StyleMapProps = {
   platform: Style['platform'];
-  variables: Style['variables'];
+  variables?: Style['variables'];
 };
 
 class StyleMap {
@@ -36,12 +36,12 @@ class StyleMap {
 
   constructor(props: StyleMapProps) {
     const { platform, variables } = props;
-    if (!(platform as typeof platform | undefined) || !(variables as typeof variables | undefined)) {
+    if (!(platform as typeof platform | undefined)) {
       throw new Error('Platform and Variables required');
     }
 
     this.platform = platform;
-    this.variables = variables;
+    this.variables = variables ?? {};
   }
 
   private static getStyleItem = (platform: Style['platform'], displayMode: DisplayMode, selector: string) => {

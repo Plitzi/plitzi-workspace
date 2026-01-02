@@ -194,9 +194,9 @@ const useQueueManager = ({
         }
 
         case StyleActions.STYLE_REMOVE_SELECTOR: {
-          const { selector } = item.action;
+          const { displayMode, selector } = item.action;
 
-          return mutate('StyleRemoveSelector', { selector });
+          return mutate('StyleRemoveSelector', { displayMode, selector });
         }
 
         case StyleActions.STYLE_ADD_SELECTOR_VARIABLE: {
