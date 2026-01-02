@@ -1,7 +1,7 @@
-import type { StyleVariableValues } from '@plitzi/sdk-shared';
+import type { StyleVariableValue } from '@plitzi/sdk-shared';
 
 export type VariableProps = {
-  values: StyleVariableValues;
+  values: StyleVariableValue;
 };
 
 const Variable = ({ values }: VariableProps) => {

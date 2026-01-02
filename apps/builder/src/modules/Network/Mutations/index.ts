@@ -54,14 +54,17 @@ import SpaceUpdateSettingsMutation from './Space/SpaceUpdateSettingsMutation';
 import SpaceAddVariableMutation from './Space/variables/SpaceAddVariableMutation';
 import SpaceRemoveVariableMutation from './Space/variables/SpaceRemoveVariableMutation';
 import SpaceUpdateVariableMutation from './Space/variables/SpaceUpdateVariableMutation';
+import StyleAddSelectorVariableMutation from './Style/selectorVariables/StyleAddSelectorVariableMutation';
+import StyleRemoveSelectorVariableMutation from './Style/selectorVariables/StyleRemoveSelectorVariableMutation';
+import StyleUpdateSelectorVariableMutation from './Style/selectorVariables/StyleUpdateSelectorVariableMutation';
 import StyleAddSelectorMutation from './Style/StyleAddSelectorMutation';
-import StyleAddVariableMutation from './Style/StyleAddVariableMutation';
 import StyleRemoveSelectorMutation from './Style/StyleRemoveSelectorMutation';
-import StyleRemoveVariableMutation from './Style/StyleRemoveVariableMutation';
 import StyleUpdateMutation from './Style/StyleUpdateMutation';
 import StyleUpdateSelectorMutation from './Style/StyleUpdateSelectorMutation';
 import StyleUpdateSettingsMutation from './Style/StyleUpdateSettingsMutation';
-import StyleUpdateVariableMutation from './Style/StyleUpdateVariableMutation';
+import StyleAddVariableMutation from './Style/variables/StyleAddVariableMutation';
+import StyleRemoveVariableMutation from './Style/variables/StyleRemoveVariableMutation';
+import StyleUpdateVariableMutation from './Style/variables/StyleUpdateVariableMutation';
 
 import type { TCollectionAddMutation } from './Collection/CollectionAddMutation';
 import type { TCollectionAddRecordMutation } from './Collection/CollectionAddRecordMutation';
@@ -130,6 +133,9 @@ export type MutationsMap = {
   StyleAddSelector: unknown;
   StyleUpdateSelector: unknown;
   StyleRemoveSelector: unknown;
+  StyleAddSelectorVariable: unknown;
+  StyleUpdateSelectorVariable: unknown;
+  StyleRemoveSelectorVariable: unknown;
   StyleAddVariable: unknown;
   StyleUpdateVariable: unknown;
   StyleRemoveVariable: unknown;
@@ -200,6 +206,9 @@ const Mutations = {
   StyleAddSelector: StyleAddSelectorMutation,
   StyleUpdateSelector: StyleUpdateSelectorMutation,
   StyleRemoveSelector: StyleRemoveSelectorMutation,
+  StyleAddSelectorVariable: StyleAddSelectorVariableMutation,
+  StyleUpdateSelectorVariable: StyleUpdateSelectorVariableMutation,
+  StyleRemoveSelectorVariable: StyleRemoveSelectorVariableMutation,
   StyleAddVariable: StyleAddVariableMutation,
   StyleUpdateVariable: StyleUpdateVariableMutation,
   StyleRemoveVariable: StyleRemoveVariableMutation,

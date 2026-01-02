@@ -19,6 +19,9 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'schemaRemoveElement',
     'schemaMoveElement',
     'schemaCloneElement',
+    'schemaAddVariable',
+    'schemaUpdateVariable',
+    'schemaRemoveVariable',
     'schemaAddTemplate',
 
     // Styles
@@ -26,6 +29,9 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'styleAddSelector',
     'styleUpdateSelector',
     'styleRemoveSelector',
+    'styleAddSelectorVariable',
+    'styleUpdateSelectorVariable',
+    'styleRemoveSelectorVariable',
     'styleAddVariable',
     'styleUpdateVariable',
     'styleRemoveVariable',

@@ -247,7 +247,12 @@ export const processPaste = async (
   } = {
     elements: {},
     baseElement: undefined,
-    style: { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' },
+    style: {
+      platform: { desktop: {}, tablet: {}, mobile: {} },
+      variables: {},
+      theme: { default: 'system', schemes: ['light', 'dark'] },
+      cache: ''
+    },
     variables: []
   };
   if (dataType === 'resource') {

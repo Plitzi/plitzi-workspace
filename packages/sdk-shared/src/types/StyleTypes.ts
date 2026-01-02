@@ -12,24 +12,19 @@ export type StyleCategory = (typeof StyleConstants)[keyof typeof StyleConstants]
 
 // Themes/Variables
 
-export type ThemeMode = 'system' | 'light' | 'dark';
-export type VariableCategory = 'color' | 'spacing' | 'shadow';
-// | 'radius'
-// | 'typography'
-// | 'border'
-// | 'motion'
-// | 'z-index';
-export type ThemeValue = Partial<Record<Exclude<ThemeMode, 'system'> | 'default', string>>;
-export type VariableValue = string | number | ThemeValue;
-export type VariableGroup = Record<string, VariableValue>;
-export type StyleVariables = Record<VariableCategory, VariableGroup>;
+export type StyleThemeMode = 'system' | 'light' | 'dark';
+export type StyleVariableCategory = 'color' | 'spacing' | 'shadow'; // | 'radius' | 'typography' | 'border' | 'motion' | 'z-index';
+export type StyleThemeValue = Partial<Record<Exclude<StyleThemeMode, 'system'> | 'default', string>>;
+export type StyleVariableValue = string | number | StyleThemeValue;
+export type StyleVariableGroup = Record<string, StyleVariableValue>;
+export type StyleVariables = Record<StyleVariableCategory, StyleVariableGroup>;
 
 // End Themes/Variables
 
 export type StyleBaseItem = {
   name: string;
-  attributes?: Partial<Record<StyleCategory, StyleValue>>;
-  variables: Partial<StyleVariables>;
+  attributes: Partial<Record<StyleCategory, StyleValue>>;
+  variables?: Partial<StyleVariables>;
   cache: string;
 };
 
@@ -40,7 +35,7 @@ export type StylePlatform = Record<DisplayMode, Record<string, StyleItem>>;
 export type Style = {
   platform: StylePlatform;
   mode?: StyleMode;
-  theme: { default: ThemeMode; schemes: ThemeMode[] };
+  theme: { default: StyleThemeMode; schemes: StyleThemeMode[] };
   variables: Partial<StyleVariables>;
   cache: string;
 };

@@ -1,5 +1,11 @@
 import { gql } from '@apollo/client/core';
 
+import type { Element } from '@plitzi/sdk-shared';
+
+export type TSpaceUpdatePageSubscription = {
+  page: Element;
+};
+
 const SpaceUpdatePageSubscription = gql`
   subscription ($environment: String!) {
     SpaceUpdatePage(environment: $environment) {

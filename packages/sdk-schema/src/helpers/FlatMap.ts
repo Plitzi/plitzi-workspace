@@ -6,10 +6,11 @@ import set from 'lodash-es/set.js';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-style/StyleMap';
 
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
 
-export const EMPTY_SCHEMA = {
+export const EMPTY_SCHEMA: { schema: Schema; style: Style; definition: { rootId: string } } = {
   schema: {
     definition: { name: '', permanentUrl: '' },
     flat: {},
@@ -17,13 +18,8 @@ export const EMPTY_SCHEMA = {
     settings: { customCss: '' },
     pages: [],
     pageFolders: []
-  } as Schema,
-  style: {
-    platform: { desktop: {}, tablet: {}, mobile: {} },
-    variables: {},
-    mode: 'desktop-first',
-    cache: ''
-  } as Style,
+  },
+  style: EMPTY_STYLE_SCHEMA,
   definition: { rootId: '' } // for segments and templates
 };
 
@@ -448,7 +444,7 @@ class FlatMap {
   };
 
   flatAsTemplate = (style: Style, elementId: Element['id'], excludeRoot = false) => {
-    const elementsStyle: Style = { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, cache: '' };
+    const elementsStyle: Style = EMPTY_STYLE_SCHEMA;
     let variables: SchemaVariable[] = [];
     if (!elementId) {
       return { elements: { acum: {}, item: undefined }, elementsStyle, variables };

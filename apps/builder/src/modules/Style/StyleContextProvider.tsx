@@ -6,6 +6,7 @@ import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-style/StyleMap';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
@@ -14,7 +15,18 @@ import StyleReducer, { StyleActions } from './StyleReducer';
 
 import type { StyleReducerActions } from './StyleReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import type { BuilderNetworkContextValue, DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type {
+  BuilderNetworkContextValue,
+  DisplayMode,
+  Style,
+  StyleItem,
+  StyleVariableCategory,
+  StyleVariableValue,
+  TagType
+} from '@plitzi/sdk-shared';
+import type { MutationsMap } from '@pmodules/Network/Mutations';
+import type { QueriesMap } from '@pmodules/Network/Queries';
+import type { SubscriptionsMap } from '@pmodules/Network/Subscriptions';
 
 export type StyleContextProviderProps = {
   children: React.ReactNode;
@@ -29,9 +41,13 @@ const StyleContextProvider = ({
   includeSubscriptions = true,
   type = 'normal'
 }: StyleContextProviderProps) => {
-  const { subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue;
+  const { subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
+    QueriesMap,
+    MutationsMap,
+    SubscriptionsMap
+  >;
   const internalData = use(NetworkInternalContext);
-  const stylePropMemo = useMemo(() => {
+  const stylePropMemo = useMemo<Style>(() => {
     if (styleProp) {
       return styleProp;
     }
@@ -40,12 +56,7 @@ const StyleContextProvider = ({
       case 'normal':
         return internalData.style;
       default:
-        return {
-          variables: {},
-          platform: { desktop: {}, tablet: {}, mobile: {} },
-          cache: '',
-          mode: 'desktop-first' as const
-        };
+        return EMPTY_STYLE_SCHEMA;
     }
   }, [internalData.style, styleProp, type]);
   const { enqueueMiddleware } = use(QueueContext);
@@ -117,26 +128,90 @@ const StyleContextProvider = ({
   );
 
   const styleRemoveSelector = useCallback(
-    (selector: string, fromSubscriptions = false) =>
-      dispatchStyle({ type: StyleActions.STYLE_REMOVE_SELECTOR, selector, fromSubscriptions }),
+    (displayMode: DisplayMode | undefined, selector: string, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_REMOVE_SELECTOR, displayMode, selector, fromSubscriptions }),
+    [dispatchStyle]
+  );
+
+  const styleAddSelectorVariable = useCallback(
+    (
+      displayMode: DisplayMode,
+      selector: string,
+      category: StyleVariableCategory,
+      name: string,
+      value: StyleVariableValue,
+      fromSubscriptions = false
+    ) => {
+      dispatchStyle({
+        type: StyleActions.STYLE_ADD_SELECTOR_VARIABLE,
+        displayMode,
+        selector,
+        category,
+        name,
+        value,
+        fromSubscriptions
+      });
+    },
+    [dispatchStyle]
+  );
+
+  const styleUpdateSelectorVariable = useCallback(
+    (
+      displayMode: DisplayMode,
+      selector: string,
+      category: StyleVariableCategory,
+      name: string,
+      value: StyleVariableValue,
+      fromSubscriptions = false
+    ) => {
+      dispatchStyle({
+        type: StyleActions.STYLE_UPDATE_SELECTOR_VARIABLE,
+        displayMode,
+        selector,
+        category,
+        name,
+        value,
+        fromSubscriptions
+      });
+    },
+    [dispatchStyle]
+  );
+
+  const styleRemoveSelectorVariable = useCallback(
+    (
+      displayMode: DisplayMode,
+      selector: string,
+      category: StyleVariableCategory,
+      name: string,
+      fromSubscriptions = false
+    ) => {
+      dispatchStyle({
+        type: StyleActions.STYLE_REMOVE_SELECTOR_VARIABLE,
+        displayMode,
+        selector,
+        category,
+        name,
+        fromSubscriptions
+      });
+    },
     [dispatchStyle]
   );
 
   const styleAddVariable = useCallback(
-    (variable: string, value: string, fromSubscriptions = false) =>
-      dispatchStyle({ type: StyleActions.STYLE_ADD_VARIABLE, variable, value, fromSubscriptions }),
+    (category: StyleVariableCategory, name: string, value: StyleVariableValue, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_ADD_VARIABLE, category, name, value, fromSubscriptions }),
     [dispatchStyle]
   );
 
   const styleUpdateVariable = useCallback(
-    (variable: string, value: string, fromSubscriptions = false) =>
-      dispatchStyle({ type: StyleActions.STYLE_UPDATE_VARIABLE, variable, value, fromSubscriptions }),
+    (category: StyleVariableCategory, name: string, value: StyleVariableValue, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_UPDATE_VARIABLE, category, name, value, fromSubscriptions }),
     [dispatchStyle]
   );
 
   const styleRemoveVariable = useCallback(
-    (variable: string, fromSubscriptions = false) =>
-      dispatchStyle({ type: StyleActions.STYLE_REMOVE_VARIABLE, variable, fromSubscriptions }),
+    (category: StyleVariableCategory, name: string, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_REMOVE_VARIABLE, category, name, fromSubscriptions }),
     [dispatchStyle]
   );
 
@@ -156,56 +231,89 @@ const StyleContextProvider = ({
   useEffect(() => {
     if (includeSubscriptions) {
       subscriptionManager.subscribe('StyleUpdated', {}, data => {
-        const style = get(data, 'data.StyleUpdated', {}) as Style;
+        const style = get(data, 'data.StyleUpdated', {}) as SubscriptionsMap['StyleUpdated'];
         styleUpdate(style, true);
       });
 
       subscriptionManager.subscribe('StyleAddSelector', {}, data => {
-        const { displayMode, selector, type, path, style } = get(data, 'data.StyleAddSelector', {}) as {
-          displayMode: DisplayMode;
-          selector: string;
-          path: string;
-          type: TagType;
-          style: StyleItem['attributes'];
-          fromSubscriptions?: boolean;
-        };
+        const { displayMode, selector, type, path, style } = get(
+          data,
+          'data.StyleAddSelector',
+          {}
+        ) as SubscriptionsMap['StyleAddSelector'];
         styleAddSelector(displayMode, selector, type, path, style, true);
       });
 
       subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
-        const { displayMode, selector, type, path, style } = get(data, 'data.StyleUpdateSelector', {}) as {
-          displayMode: DisplayMode;
-          selector: string;
-          path: string;
-          type: TagType;
-          style: StyleItem['attributes'];
-          fromSubscriptions?: boolean;
-        };
+        const { displayMode, selector, type, path, style } = get(
+          data,
+          'data.StyleUpdateSelector',
+          {}
+        ) as SubscriptionsMap['StyleUpdateSelector'];
         styleUpdateSelector(displayMode, selector, type, path, style, true);
       });
 
       subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {
-        const { selector } = get(data, 'data.StyleRemoveSelector', {}) as { selector: string };
-        styleRemoveSelector(selector, true);
+        const { displayMode, selector } = get(
+          data,
+          'data.StyleRemoveSelector',
+          {}
+        ) as SubscriptionsMap['StyleRemoveSelector'];
+        styleRemoveSelector(displayMode, selector, true);
+      });
+
+      subscriptionManager.subscribe('StyleAddSelectorVariable', {}, data => {
+        const { displayMode, selector, category, name, value } = get(
+          data,
+          'data.StyleAddSelectorVariable',
+          {}
+        ) as SubscriptionsMap['StyleAddSelectorVariable'];
+        styleAddSelectorVariable(displayMode, selector, category, name, value, true);
+      });
+
+      subscriptionManager.subscribe('StyleUpdateSelectorVariable', {}, data => {
+        const { displayMode, selector, category, name, value } = get(
+          data,
+          'data.StyleUpdateSelectorVariable',
+          {}
+        ) as SubscriptionsMap['StyleUpdateSelectorVariable'];
+        styleUpdateSelectorVariable(displayMode, selector, category, name, value, true);
+      });
+
+      subscriptionManager.subscribe('StyleRemoveSelectorVariable', {}, data => {
+        const { displayMode, selector, category, name } = get(
+          data,
+          'data.StyleRemoveSelectorVariable',
+          {}
+        ) as SubscriptionsMap['StyleRemoveSelectorVariable'];
+        styleRemoveSelectorVariable(displayMode, selector, category, name, true);
       });
 
       subscriptionManager.subscribe('StyleAddVariable', {}, data => {
-        const { variable, value } = get(data, 'data.StyleAddVariable', {}) as { variable: string; value: string };
-        styleAddVariable(variable, value, true);
+        const { category, name, value } = get(
+          data,
+          'data.StyleAddVariable',
+          {}
+        ) as SubscriptionsMap['StyleAddVariable'];
+        styleAddVariable(category, name, value, true);
       });
 
       subscriptionManager.subscribe('StyleUpdateVariable', {}, data => {
-        const { variable, value } = get(data, 'data.StyleUpdateVariable', {}) as { variable: string; value: string };
-        styleUpdateVariable(variable, value, true);
+        const { category, name, value } = get(
+          data,
+          'data.StyleUpdateVariable',
+          {}
+        ) as SubscriptionsMap['StyleUpdateVariable'];
+        styleUpdateVariable(category, name, value, true);
       });
 
       subscriptionManager.subscribe('StyleRemoveVariable', {}, data => {
-        const { variable } = get(data, 'data.StyleRemoveVariable', {}) as { variable: string };
-        styleRemoveVariable(variable, true);
+        const { category, name } = get(data, 'data.StyleRemoveVariable', {}) as SubscriptionsMap['StyleRemoveVariable'];
+        styleRemoveVariable(category, name, true);
       });
 
       subscriptionManager.subscribe('StyleUpdateSettings', {}, data => {
-        const { path, value } = get(data, 'data.StyleUpdateSettings', {}) as { path: string; value: string };
+        const { path, value } = get(data, 'data.StyleUpdateSettings', {}) as SubscriptionsMap['StyleUpdateSettings'];
         styleUpdateSettings(path, value, true);
       });
     }
@@ -217,10 +325,13 @@ const StyleContextProvider = ({
           'StyleAddSelector',
           'StyleUpdateSelector',
           'StyleRemoveSelector',
+          'StyleAddSelectorVariable',
+          'StyleUpdateSelectorVariable',
+          'StyleRemoveSelectorVariable',
           'StyleAddVariable',
           'StyleUpdateVariable',
           'StyleRemoveVariable',
-          'styleUpdateSettings'
+          'StyleUpdateSettings'
         ]);
       }
     };
@@ -231,6 +342,9 @@ const StyleContextProvider = ({
     styleAddSelector,
     styleUpdateSelector,
     styleRemoveSelector,
+    styleAddSelectorVariable,
+    styleUpdateSelectorVariable,
+    styleRemoveSelectorVariable,
     styleAddVariable,
     styleUpdateVariable,
     styleRemoveVariable,
@@ -245,6 +359,9 @@ const StyleContextProvider = ({
       styleAddSelector,
       styleUpdateSelector,
       styleRemoveSelector,
+      styleAddSelectorVariable,
+      styleUpdateSelectorVariable,
+      styleRemoveSelectorVariable,
       styleAddVariable,
       styleUpdateVariable,
       styleRemoveVariable,
@@ -256,6 +373,9 @@ const StyleContextProvider = ({
       styleAddSelector,
       styleUpdateSelector,
       styleRemoveSelector,
+      styleAddSelectorVariable,
+      styleUpdateSelectorVariable,
+      styleRemoveSelectorVariable,
       styleAddVariable,
       styleUpdateVariable,
       styleRemoveVariable,

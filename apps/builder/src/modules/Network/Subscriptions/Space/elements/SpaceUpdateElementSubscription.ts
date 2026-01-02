@@ -1,8 +1,14 @@
 import { gql } from '@apollo/client/core';
 
-const SpaceAddElementSubscription = gql`
+import type { Element } from '@plitzi/sdk-shared';
+
+export type TSpaceUpdateElementSubscription = {
+  element: Element;
+};
+
+const SpaceUpdateElementSubscription = gql`
   subscription ($environment: String!) {
-    SpaceAddElement(environment: $environment) {
+    SpaceUpdateElement(environment: $environment) {
       element {
         id
         definition {
@@ -18,21 +24,8 @@ const SpaceAddElementSubscription = gql`
         }
         attributes
       }
-      dropPosition
-      to
-      initialItems
-      variables {
-        name
-        category
-        type
-        value
-        subValues {
-          value
-          when
-        }
-      }
     }
   }
 `;
 
-export default SpaceAddElementSubscription;
+export default SpaceUpdateElementSubscription;

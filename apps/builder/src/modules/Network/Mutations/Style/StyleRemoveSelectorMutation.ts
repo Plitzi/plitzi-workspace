@@ -1,8 +1,8 @@
 import { gql } from '@apollo/client/core';
 
 const StyleRemoveSelectorMutation = gql`
-  mutation StyleRemoveSelectorMutation($environment: String!, $selector: String!) {
-    StyleRemoveSelector(environment: $environment, selector: $selector) {
+  mutation StyleRemoveSelectorMutation($environment: String!, $displayMode: String, $selector: String!) {
+    StyleRemoveSelector(environment: $environment, displayMode: $displayMode, selector: $selector) {
       id
       variables
       platform

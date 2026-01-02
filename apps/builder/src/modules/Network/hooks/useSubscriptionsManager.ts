@@ -35,7 +35,7 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
         return null;
       }
 
-      const subscriptionObserver = client.subscribe({
+      const subscriptionObserver = client.subscribe<SubscriptionsMap[T]>({
         query: Subscriptions[subscriptionKey],
         variables: { ...variables, environment }
       });

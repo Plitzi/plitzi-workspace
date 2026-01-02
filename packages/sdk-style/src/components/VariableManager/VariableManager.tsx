@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import VariableForm from './VariableForm';
 import VariableList from './VariableList';
 
-import type { VariableCategory, StyleVariables, ThemeValue } from '@plitzi/sdk-shared';
+import type { StyleVariableCategory, StyleVariables, StyleThemeValue } from '@plitzi/sdk-shared';
 
 export type VariableManagerProps = {
   variables?: StyleVariables;
@@ -14,8 +14,8 @@ export type VariableManagerProps = {
 const VariableManager = ({ variables = { color: {}, spacing: {}, shadow: {} } }: VariableManagerProps) => {
   const [newVariable, setNewVariable] = useState<{
     name: string;
-    category: VariableCategory;
-    values: ThemeValue;
+    category: StyleVariableCategory;
+    values: StyleThemeValue;
   }>();
 
   const handleClickAddVariable = useCallback(() => {

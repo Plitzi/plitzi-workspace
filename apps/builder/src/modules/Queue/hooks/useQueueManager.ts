@@ -199,22 +199,40 @@ const useQueueManager = ({
           return mutate('StyleRemoveSelector', { selector });
         }
 
-        case StyleActions.STYLE_ADD_VARIABLE: {
-          const { variable, value } = item.action;
+        case StyleActions.STYLE_ADD_SELECTOR_VARIABLE: {
+          const { displayMode, selector, category, name, value } = item.action;
 
-          return mutate('StyleAddVariable', { variable, value });
+          return mutate('StyleAddSelectorVariable', { displayMode, selector, category, name, value });
+        }
+
+        case StyleActions.STYLE_UPDATE_SELECTOR_VARIABLE: {
+          const { displayMode, selector, category, name, value } = item.action;
+
+          return mutate('StyleUpdateSelectorVariable', { displayMode, selector, category, name, value });
+        }
+
+        case StyleActions.STYLE_REMOVE_SELECTOR_VARIABLE: {
+          const { displayMode, selector, category, name } = item.action;
+
+          return mutate('StyleRemoveSelectorVariable', { displayMode, selector, category, name });
+        }
+
+        case StyleActions.STYLE_ADD_VARIABLE: {
+          const { category, name, value } = item.action;
+
+          return mutate('StyleAddVariable', { category, name, value });
         }
 
         case StyleActions.STYLE_UPDATE_VARIABLE: {
-          const { variable, value } = item.action;
+          const { category, name, value } = item.action;
 
-          return mutate('StyleUpdateVariable', { variable, value });
+          return mutate('StyleUpdateVariable', { category, name, value });
         }
 
         case StyleActions.STYLE_REMOVE_VARIABLE: {
-          const { variable } = item.action;
+          const { category, name } = item.action;
 
-          return mutate('StyleRemoveVariable', { variable });
+          return mutate('StyleRemoveVariable', { category, name });
         }
 
         case StyleActions.STYLE_UPDATE: {

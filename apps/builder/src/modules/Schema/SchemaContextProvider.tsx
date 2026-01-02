@@ -32,6 +32,7 @@ import type {
 } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
+import type { SubscriptionsMap } from '@pmodules/Network/Subscriptions';
 import type { ReactNode } from 'react';
 
 export type SchemaContextProviderProps = {
@@ -49,7 +50,7 @@ const SchemaContextProvider = ({
 }: SchemaContextProviderProps) => {
   const internalData = use(NetworkInternalContext);
   const { eventBridge } = use(EventBridgeContext);
-  const schemaPropMemo = useMemo(() => {
+  const schemaPropMemo = useMemo<Schema>(() => {
     if (schemaProp) {
       return { ...EMPTY_SCHEMA.schema, ...schemaProp };
     }
@@ -77,7 +78,11 @@ const SchemaContextProvider = ({
     }
   ]);
   const schemaRef = useRef(schema);
-  const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
+    QueriesMap,
+    MutationsMap,
+    SubscriptionsMap
+  >;
   schemaRef.current = schema;
 
   const schemaUpdate = useCallback(
@@ -270,66 +275,67 @@ const SchemaContextProvider = ({
       // Pages
 
       subscriptionManager.subscribe('SpaceAddPage', {}, data => {
-        const { page } = get(data, 'data.SpaceAddPage', {}) as { page: Element };
+        const { page } = get(data, 'data.SpaceAddPage', {}) as SubscriptionsMap['SpaceAddPage'];
         void schemaAddPage(page, true);
       });
 
       subscriptionManager.subscribe('SpaceHomePage', {}, data => {
-        const { page } = get(data, 'data.SpaceHomePage', {}) as { page: Element };
+        const { page } = get(data, 'data.SpaceHomePage', {}) as SubscriptionsMap['SpaceHomePage'];
         schemaHomePage(page.id, true);
       });
 
       subscriptionManager.subscribe('SpaceUpdatePage', {}, data => {
-        const { page } = get(data, 'data.SpaceUpdatePage', {}) as { page: Element };
+        const { page } = get(data, 'data.SpaceUpdatePage', {}) as SubscriptionsMap['SpaceUpdatePage'];
         schemaUpdatePage(page, true);
       });
 
       subscriptionManager.subscribe('SpaceRemovePage', {}, data => {
-        const { pageId } = get(data, 'data.SpaceRemovePage', {}) as { pageId: string };
+        const { pageId } = get(data, 'data.SpaceRemovePage', {}) as SubscriptionsMap['SpaceRemovePage'];
         schemaRemovePage(pageId, true);
       });
 
       // Page Folders
 
       subscriptionManager.subscribe('SpaceAddPageFolder', {}, data => {
-        const { pageFolder } = get(data, 'data.SpaceAddPageFolder', {}) as { pageFolder: PageFolder };
+        const { pageFolder } = get(data, 'data.SpaceAddPageFolder', {}) as SubscriptionsMap['SpaceAddPageFolder'];
         void schemaAddPageFolder(pageFolder, true);
       });
 
       subscriptionManager.subscribe('SpaceUpdatePageFolder', {}, data => {
-        const { pageFolder } = get(data, 'data.SpaceUpdatePageFolder', {}) as { pageFolder: PageFolder };
+        const { pageFolder } = get(data, 'data.SpaceUpdatePageFolder', {}) as SubscriptionsMap['SpaceUpdatePageFolder'];
         schemaUpdatePageFolder(pageFolder, true);
       });
 
       subscriptionManager.subscribe('SpaceRemovePageFolder', {}, data => {
-        const { pageFolderId } = get(data, 'data.SpaceRemovePageFolder', {}) as { pageFolderId: string };
+        const { pageFolderId } = get(
+          data,
+          'data.SpaceRemovePageFolder',
+          {}
+        ) as SubscriptionsMap['SpaceRemovePageFolder'];
         schemaRemovePageFolder(pageFolderId, true);
       });
 
       // Variables
 
       subscriptionManager.subscribe('SpaceAddVariable', {}, data => {
-        const { variable } = get(data, 'data.SpaceAddVariable', {}) as { variable: SchemaVariable };
+        const { variable } = get(data, 'data.SpaceAddVariable', {}) as SubscriptionsMap['SpaceAddVariable'];
         schemaAddVariable(variable, true);
       });
 
       subscriptionManager.subscribe('SpaceUpdateVariable', {}, data => {
-        const { variable } = get(data, 'data.SpaceUpdateVariable', {}) as { variable: SchemaVariable };
+        const { variable } = get(data, 'data.SpaceUpdateVariable', {}) as SubscriptionsMap['SpaceUpdateVariable'];
         schemaUpdateVariable(variable, true);
       });
 
       subscriptionManager.subscribe('SpaceRemoveVariable', {}, data => {
-        const { name } = get(data, 'data.SpaceRemoveVariable', {}) as { name: string };
+        const { name } = get(data, 'data.SpaceRemoveVariable', {}) as SubscriptionsMap['SpaceRemoveVariable'];
         schemaRemoveVariable(name, true);
       });
 
       // Others
 
       subscriptionManager.subscribe('SpaceUpdateSettings', {}, data => {
-        const { value, path } = get(data, 'data.SpaceUpdateSettings', {}) as {
-          path?: string;
-          value: number | string | boolean;
-        };
+        const { value, path } = get(data, 'data.SpaceUpdateSettings', {}) as SubscriptionsMap['SpaceUpdateSettings'];
         schemaUpdateSettings(value, path, true);
       });
 
@@ -342,13 +348,7 @@ const SchemaContextProvider = ({
           dropPosition,
           initialItems = [],
           variables = []
-        } = get(data, 'data.SpaceAddElement', {}) as {
-          to: string;
-          element: Element;
-          dropPosition: DropPosition;
-          initialItems?: Element[];
-          variables?: SchemaVariable[];
-        };
+        } = get(data, 'data.SpaceAddElement', {}) as SubscriptionsMap['SpaceAddElement'];
         schemaAddElement(
           to,
           element,
@@ -360,22 +360,21 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceUpdateElement', {}, data => {
-        const { element } = get(data, 'data.SpaceUpdateElement', {}) as { element: Element };
+        const { element } = get(data, 'data.SpaceUpdateElement', {}) as SubscriptionsMap['SpaceUpdateElement'];
         schemaUpdateElement(element, true);
       });
 
       subscriptionManager.subscribe('SpaceRemoveElement', {}, data => {
-        const { elementId } = get(data, 'data.SpaceRemoveElement', {}) as { elementId: string };
+        const { elementId } = get(data, 'data.SpaceRemoveElement', {}) as SubscriptionsMap['SpaceRemoveElement'];
         schemaRemoveElement(elementId, true);
       });
 
       subscriptionManager.subscribe('SpaceMoveElement', {}, data => {
-        const { from, to, elementId, dropPosition } = get(data, 'data.SpaceMoveElement', {}) as {
-          from: string;
-          to: string;
-          elementId: string;
-          dropPosition: DropPosition;
-        };
+        const { from, to, elementId, dropPosition } = get(
+          data,
+          'data.SpaceMoveElement',
+          {}
+        ) as SubscriptionsMap['SpaceMoveElement'];
         schemaMoveElement(from, to, elementId, dropPosition, true);
       });
 
@@ -385,12 +384,7 @@ const SchemaContextProvider = ({
           to,
           dropPosition,
           initialItems = []
-        } = get(data, 'data.SpaceCloneElement', {}) as {
-          to: string;
-          element: Element;
-          dropPosition: DropPosition;
-          initialItems: Element[];
-        };
+        } = get(data, 'data.SpaceCloneElement', {}) as SubscriptionsMap['SpaceCloneElement'];
         schemaAddElement(
           to,
           element,
@@ -404,7 +398,7 @@ const SchemaContextProvider = ({
       // Others
 
       subscriptionManager.subscribe('SpaceUpdated', {}, data => {
-        const { schema } = get(data, 'data.SpaceUpdated', {}) as { schema: SchemaRaw };
+        const { schema } = get(data, 'data.SpaceUpdated', {}) as SubscriptionsMap['SpaceUpdated'];
         schemaUpdate(schema, true);
       });
 
@@ -416,14 +410,7 @@ const SchemaContextProvider = ({
           dropPosition,
           initialItems = [],
           variables = []
-        } = get(data, 'data.SpaceAddTemplate', {}) as {
-          element: Element;
-          style: Style;
-          to: string;
-          dropPosition: DropPosition;
-          initialItems?: Element[];
-          variables?: SchemaVariable[];
-        };
+        } = get(data, 'data.SpaceAddTemplate', {}) as SubscriptionsMap['SpaceAddTemplate'];
         schemaAddTemplate(
           to,
           element,

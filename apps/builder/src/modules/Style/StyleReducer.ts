@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { produce } from 'immer';
 import get from 'lodash-es/get';
 import omit from 'lodash-es/omit';
@@ -7,13 +6,23 @@ import set from 'lodash-es/set';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import StyleMap from '@plitzi/sdk-style/StyleMap';
 
-import type { DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type {
+  DisplayMode,
+  Style,
+  StyleItem,
+  StyleVariableCategory,
+  StyleVariableValue,
+  TagType
+} from '@plitzi/sdk-shared';
 
 export const StyleActions = {
   STYLE_UPDATE: 'STYLE_UPDATE',
   STYLE_ADD_SELECTOR: 'STYLE_ADD_SELECTOR',
   STYLE_UPDATE_SELECTOR: 'STYLE_UPDATE_SELECTOR',
   STYLE_REMOVE_SELECTOR: 'STYLE_REMOVE_SELECTOR',
+  STYLE_ADD_SELECTOR_VARIABLE: 'STYLE_ADD_SELECTOR_VARIABLE',
+  STYLE_UPDATE_SELECTOR_VARIABLE: 'STYLE_UPDATE_SELECTOR_VARIABLE',
+  STYLE_REMOVE_SELECTOR_VARIABLE: 'STYLE_REMOVE_SELECTOR_VARIABLE',
   STYLE_ADD_VARIABLE: 'STYLE_ADD_VARIABLE',
   STYLE_UPDATE_VARIABLE: 'STYLE_UPDATE_VARIABLE',
   STYLE_REMOVE_VARIABLE: 'STYLE_REMOVE_VARIABLE',
@@ -42,13 +51,29 @@ export type StyleReducerActions = StyleReducerActionsBase &
         selectorType: TagType;
         value: StyleItem['attributes'];
       }
-    | { type: 'STYLE_REMOVE_SELECTOR'; selector: string }
+    | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }
+    | {
+        type: 'STYLE_ADD_SELECTOR_VARIABLE' | 'STYLE_UPDATE_SELECTOR_VARIABLE';
+        displayMode: DisplayMode;
+        selector: string;
+        category: StyleVariableCategory;
+        name: string;
+        value: StyleVariableValue;
+      }
+    | {
+        type: 'STYLE_REMOVE_SELECTOR_VARIABLE';
+        displayMode: DisplayMode;
+        selector: string;
+        category: StyleVariableCategory;
+        name: string;
+      }
     | {
         type: 'STYLE_ADD_VARIABLE' | 'STYLE_UPDATE_VARIABLE';
-        variable: string;
-        value: string;
+        category: StyleVariableCategory;
+        name: string;
+        value: StyleVariableValue;
       }
-    | { type: 'STYLE_REMOVE_VARIABLE'; variable: string }
+    | { type: 'STYLE_REMOVE_VARIABLE'; category: StyleVariableCategory; name: string }
     | { type: 'STYLE_ADD_TEMPLATE'; platform: Style['platform'] }
     | { type: 'STYLE_UPDATE_SETTINGS'; path: string; value: string }
   );
@@ -59,12 +84,14 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
       return { ...state, ...action.style };
     }
 
+    // Selector
+
     case StyleActions.STYLE_ADD_SELECTOR: {
       const { displayMode, selector, path, selectorType = 'class', value } = action;
 
       return produce(state, draft => {
-        if (StyleMap.addSelector(draft.platform, displayMode, selector, selectorType, path, value)) {
-          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));
+        if (StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value)) {
+          set(draft, 'cache', generateCache(draft));
         }
       });
     }
@@ -73,44 +100,87 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
       const { displayMode, selector, path, selectorType = 'class', value } = action;
 
       return produce(state, draft => {
-        if (StyleMap.updateSelector(draft.platform, displayMode, selector, selectorType, path, value)) {
-          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));
+        if (StyleMap.updateSelector(draft, displayMode, selector, selectorType, path, value)) {
+          set(draft, 'cache', generateCache(draft));
         }
       });
     }
 
     case StyleActions.STYLE_REMOVE_SELECTOR: {
-      const { selector } = action;
+      const { displayMode, selector } = action;
 
       return produce(state, draft => {
-        if (StyleMap.removeSelector(draft.platform, selector)) {
-          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));
+        if (StyleMap.removeSelector(draft, displayMode, selector)) {
+          set(draft, 'cache', generateCache(draft));
         }
       });
     }
 
-    case StyleActions.STYLE_ADD_VARIABLE:
-    case StyleActions.STYLE_UPDATE_VARIABLE: {
-      const { variable, value } = action;
+    // Selector Variables
+
+    case StyleActions.STYLE_ADD_SELECTOR_VARIABLE: {
+      const { displayMode, selector, category, name, value } = action;
 
       return produce(state, draft => {
-        if (!variable) {
-          return;
+        if (StyleMap.addSelectorVariable(draft, displayMode, selector, category, name, value)) {
+          set(draft, 'cache', generateCache(draft));
         }
+      });
+    }
 
-        set(draft, `variables.${variable}`, value);
+    case StyleActions.STYLE_UPDATE_SELECTOR_VARIABLE: {
+      const { displayMode, selector, category, name, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.updateSelectorVariable(draft, displayMode, selector, category, name, value)) {
+          set(draft, 'cache', generateCache(draft));
+        }
+      });
+    }
+
+    case StyleActions.STYLE_REMOVE_SELECTOR_VARIABLE: {
+      const { displayMode, selector, category, name } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.removeSelectorVariable(draft, displayMode, selector, category, name)) {
+          set(draft, 'cache', generateCache(draft));
+        }
+      });
+    }
+
+    // Variables
+
+    case StyleActions.STYLE_ADD_VARIABLE: {
+      const { category, name, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.addVariable(draft, category, name, value)) {
+          set(draft, 'cache', generateCache(draft));
+        }
+      });
+    }
+
+    case StyleActions.STYLE_UPDATE_VARIABLE: {
+      const { category, name, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.updateVariable(draft, category, name, value)) {
+          set(draft, 'cache', generateCache(draft));
+        }
       });
     }
 
     case StyleActions.STYLE_REMOVE_VARIABLE: {
-      const { variable } = action;
+      const { category, name } = action;
 
       return produce(state, draft => {
-        if (draft.variables[variable]) {
-          delete draft.variables[variable];
+        if (StyleMap.removeVariable(draft, category, name)) {
+          set(draft, 'cache', generateCache(draft));
         }
       });
     }
+
+    // Others
 
     case StyleActions.STYLE_ADD_TEMPLATE: {
       const { platform: newPlatform } = action;

@@ -15,6 +15,11 @@ import SegmentStyleUpdateSelectorSubscription from './Segment/SegmentStyleUpdate
 import SegmentStyleUpdateVariableSubscription from './Segment/SegmentStyleUpdateVariableSubscription';
 import SegmentUpdateElementSubscription from './Segment/SegmentUpdateElementSubscription';
 // Space subscriptions
+import SpaceAddElementSubscription from './Space/elements/SpaceAddElementSubscription';
+import SpaceCloneElementSubscription from './Space/elements/SpaceCloneElementSubscription';
+import SpaceMoveElementSubscription from './Space/elements/SpaceMoveElementSubscription';
+import SpaceRemoveElementSubscription from './Space/elements/SpaceRemoveElementSubscription';
+import SpaceUpdateElementSubscription from './Space/elements/SpaceUpdateElementSubscription';
 import SpaceAddPageFolderSubscription from './Space/folders/SpaceAddPageFolderSubscription';
 import SpaceRemovePageFolderSubscription from './Space/folders/SpaceRemovePageFolderSubscription';
 import SpaceUpdatePageFolderSubscription from './Space/folders/SpaceUpdatePageFolderSubscription';
@@ -22,58 +27,91 @@ import SpaceAddPageSubscription from './Space/pages/SpaceAddPageSubscription';
 import SpaceHomePageSubscription from './Space/pages/SpaceHomePageSubscription';
 import SpaceRemovePageSubscription from './Space/pages/SpaceRemovePageSubscription';
 import SpaceUpdatePageSubscription from './Space/pages/SpaceUpdatePageSubscription';
-import SpaceAddElementSubscription from './Space/SpaceAddElementSubscription';
 import SpaceAddTemplateSubscription from './Space/SpaceAddTemplateSubscription';
-import SpaceCloneElementSubscription from './Space/SpaceCloneElementSubscription';
-import SpaceMoveElementSubscription from './Space/SpaceMoveElementSubscription';
-import SpaceRemoveElementSubscription from './Space/SpaceRemoveElementSubscription';
 import SpaceUpdatedSubscription from './Space/SpaceUpdatedSubscription'; // Other Space Subscriptions
-import SpaceUpdateElementSubscription from './Space/SpaceUpdateElementSubscription';
 import SpaceUpdateSettingsSubscription from './Space/SpaceUpdateSettingsSubscription';
 import SpaceAddVariableSubscription from './Space/variables/SpaceAddVariableSubscription';
 import SpaceRemoveVariableSubscription from './Space/variables/SpaceRemoveVariableSubscription';
 import SpaceUpdateVariableSubscription from './Space/variables/SpaceUpdateVariableSubscription';
 // Style subscriptions
-import StyleAddSelectorSubscription from './Style/StyleAddSelectorSubscription';
-import StyleAddVariableSubscription from './Style/StyleAddVariableSubscription';
-import StyleRemoveSelectorSubscription from './Style/StyleRemoveSelectorSubscription';
-import StyleRemoveVariableSubscription from './Style/StyleRemoveVariableSubscription';
+import StyleAddSelectorSubscription from './Style/selector/StyleAddSelectorSubscription';
+import StyleRemoveSelectorSubscription from './Style/selector/StyleRemoveSelectorSubscription';
+import StyleUpdateSelectorSubscription from './Style/selector/StyleUpdateSelectorSubscription';
+import StyleAddSelectorVariableSubscription from './Style/selectorVariables/StyleAddSelectorVariableSubscription';
+import StyleRemoveSelectorVariableSubscription from './Style/selectorVariables/StyleRemoveSelectorVariableSubscription';
+import StyleUpdateSelectorVariableSubscription from './Style/selectorVariables/StyleUpdateSelectorVariableSubscription';
 import StyleUpdatedSubscription from './Style/StyleUpdatedSubscription'; // Other Style Subscriptions
-import StyleUpdateSelectorSubscription from './Style/StyleUpdateSelectorSubscription';
 import StyleUpdateSettingsSubscription from './Style/StyleUpdateSettingsSubscription';
-import StyleUpdateVariableSubscription from './Style/StyleUpdateVariableSubscription';
+import StyleAddVariableSubscription from './Style/variables/StyleAddVariableSubscription';
+import StyleRemoveVariableSubscription from './Style/variables/StyleRemoveVariableSubscription';
+import StyleUpdateVariableSubscription from './Style/variables/StyleUpdateVariableSubscription';
+
+import type { TCollaboratorConnectedSubscription } from './Collaborator/CollaboratorConnectedSubscription';
+import type { TCollaboratorDisconnectedSubscription } from './Collaborator/CollaboratorDisconnectedSubscription';
+import type { TSpaceAddElementSubscription } from './Space/elements/SpaceAddElementSubscription';
+import type { TSpaceCloneElementSubscription } from './Space/elements/SpaceCloneElementSubscription';
+import type { TSpaceMoveElementSubscription } from './Space/elements/SpaceMoveElementSubscription';
+import type { TSpaceRemoveElementSubscription } from './Space/elements/SpaceRemoveElementSubscription';
+import type { TSpaceUpdateElementSubscription } from './Space/elements/SpaceUpdateElementSubscription';
+import type { TSpaceAddPageFolderSubscription } from './Space/folders/SpaceAddPageFolderSubscription';
+import type { TSpaceRemovePageFolderSubscription } from './Space/folders/SpaceRemovePageFolderSubscription';
+import type { TSpaceUpdatePageFolderSubscription } from './Space/folders/SpaceUpdatePageFolderSubscription';
+import type { TSpaceAddPageSubscription } from './Space/pages/SpaceAddPageSubscription';
+import type { TSpaceHomePageSubscription } from './Space/pages/SpaceHomePageSubscription';
+import type { TSpaceRemovePageSubscription } from './Space/pages/SpaceRemovePageSubscription';
+import type { TSpaceUpdatePageSubscription } from './Space/pages/SpaceUpdatePageSubscription';
+import type { TSpaceAddTemplateSubscription } from './Space/SpaceAddTemplateSubscription';
+import type { TSpaceUpdatedSubscription } from './Space/SpaceUpdatedSubscription'; // Other Space Subscriptions
+import type { TSpaceUpdateSettingsSubscription } from './Space/SpaceUpdateSettingsSubscription';
+import type { TSpaceAddVariableSubscription } from './Space/variables/SpaceAddVariableSubscription';
+import type { TSpaceRemoveVariableSubscription } from './Space/variables/SpaceRemoveVariableSubscription';
+import type { TSpaceUpdateVariableSubscription } from './Space/variables/SpaceUpdateVariableSubscription';
+import type { TStyleAddSelectorSubscription } from './Style/selector/StyleAddSelectorSubscription';
+import type { TStyleRemoveSelectorSubscription } from './Style/selector/StyleRemoveSelectorSubscription';
+import type { TStyleUpdateSelectorSubscription } from './Style/selector/StyleUpdateSelectorSubscription';
+import type { TStyleAddSelectorVariableSubscription } from './Style/selectorVariables/StyleAddSelectorVariableSubscription';
+import type { TStyleRemoveSelectorVariableSubscription } from './Style/selectorVariables/StyleRemoveSelectorVariableSubscription';
+import type { TStyleUpdateSelectorVariableSubscription } from './Style/selectorVariables/StyleUpdateSelectorVariableSubscription';
+import type { TStyleUpdatedSubscription } from './Style/StyleUpdatedSubscription'; // Other Style Subscriptions
+import type { TStyleUpdateSettingsSubscription } from './Style/StyleUpdateSettingsSubscription';
+import type { TStyleAddVariableSubscription } from './Style/variables/StyleAddVariableSubscription';
+import type { TStyleRemoveVariableSubscription } from './Style/variables/StyleRemoveVariableSubscription';
+import type { TStyleUpdateVariableSubscription } from './Style/variables/StyleUpdateVariableSubscription';
 
 export type SubscriptionsMap = {
-  CollaboratorConnected: unknown;
-  CollaboratorDisconnected: unknown;
-  SpaceUpdated: unknown;
-  StyleUpdated: unknown;
+  CollaboratorConnected: TCollaboratorConnectedSubscription;
+  CollaboratorDisconnected: TCollaboratorDisconnectedSubscription;
+  SpaceUpdated: TSpaceUpdatedSubscription;
+  StyleUpdated: TStyleUpdatedSubscription;
 
-  SpaceAddPage: unknown;
-  SpaceHomePage: unknown;
-  SpaceUpdatePage: unknown;
-  SpaceRemovePage: unknown;
-  SpaceAddPageFolder: unknown;
-  SpaceUpdatePageFolder: unknown;
-  SpaceRemovePageFolder: unknown;
-  SpaceAddVariable: unknown;
-  SpaceUpdateVariable: unknown;
-  SpaceRemoveVariable: unknown;
-  SpaceAddElement: unknown;
-  SpaceUpdateElement: unknown;
-  SpaceRemoveElement: unknown;
-  SpaceMoveElement: unknown;
-  SpaceCloneElement: unknown;
-  SpaceAddTemplate: unknown;
-  SpaceUpdateSettings: unknown;
+  SpaceAddPage: TSpaceAddPageSubscription;
+  SpaceHomePage: TSpaceHomePageSubscription;
+  SpaceUpdatePage: TSpaceUpdatePageSubscription;
+  SpaceRemovePage: TSpaceRemovePageSubscription;
+  SpaceAddPageFolder: TSpaceAddPageFolderSubscription;
+  SpaceUpdatePageFolder: TSpaceUpdatePageFolderSubscription;
+  SpaceRemovePageFolder: TSpaceRemovePageFolderSubscription;
+  SpaceAddVariable: TSpaceAddVariableSubscription;
+  SpaceUpdateVariable: TSpaceUpdateVariableSubscription;
+  SpaceRemoveVariable: TSpaceRemoveVariableSubscription;
+  SpaceAddElement: TSpaceAddElementSubscription;
+  SpaceUpdateElement: TSpaceUpdateElementSubscription;
+  SpaceRemoveElement: TSpaceRemoveElementSubscription;
+  SpaceMoveElement: TSpaceMoveElementSubscription;
+  SpaceCloneElement: TSpaceCloneElementSubscription;
+  SpaceAddTemplate: TSpaceAddTemplateSubscription;
+  SpaceUpdateSettings: TSpaceUpdateSettingsSubscription;
 
-  StyleAddSelector: unknown;
-  StyleUpdateSelector: unknown;
-  StyleRemoveSelector: unknown;
-  StyleAddVariable: unknown;
-  StyleUpdateVariable: unknown;
-  StyleRemoveVariable: unknown;
-  StyleUpdateSettings: unknown;
+  StyleAddSelector: TStyleAddSelectorSubscription;
+  StyleUpdateSelector: TStyleUpdateSelectorSubscription;
+  StyleRemoveSelector: TStyleRemoveSelectorSubscription;
+  StyleAddSelectorVariable: TStyleAddSelectorVariableSubscription;
+  StyleUpdateSelectorVariable: TStyleUpdateSelectorVariableSubscription;
+  StyleRemoveSelectorVariable: TStyleRemoveSelectorVariableSubscription;
+  StyleAddVariable: TStyleAddVariableSubscription;
+  StyleUpdateVariable: TStyleUpdateVariableSubscription;
+  StyleRemoveVariable: TStyleRemoveVariableSubscription;
+  StyleUpdateSettings: TStyleUpdateSettingsSubscription;
 
   SegmentAddElement: unknown;
   SegmentUpdateElement: unknown;
@@ -116,6 +154,9 @@ const Subscriptions = {
   StyleAddSelector: StyleAddSelectorSubscription,
   StyleUpdateSelector: StyleUpdateSelectorSubscription,
   StyleRemoveSelector: StyleRemoveSelectorSubscription,
+  StyleAddSelectorVariable: StyleAddSelectorVariableSubscription,
+  StyleUpdateSelectorVariable: StyleUpdateSelectorVariableSubscription,
+  StyleRemoveSelectorVariable: StyleRemoveSelectorVariableSubscription,
   StyleAddVariable: StyleAddVariableSubscription,
   StyleUpdateVariable: StyleUpdateVariableSubscription,
   StyleRemoveVariable: StyleRemoveVariableSubscription,

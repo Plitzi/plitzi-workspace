@@ -14,7 +14,7 @@ export function cssToSelectors(css = ''): Record<string, StyleBaseItem> {
   const match = [...css.replaceAll('\n', '').matchAll(cssRegex)];
   const selectors = match.reduce<Record<string, StyleBaseItem>>((acum, match) => {
     const { selectorName, selectorData } = match.groups as Record<string, string>;
-    const selectorResult: StyleBaseItem = { name: selectorName.trim(), attributes: {}, cache: match[0] };
+    const selectorResult: StyleBaseItem = { name: selectorName.trim(), variables: {}, attributes: {}, cache: match[0] };
     if (selectorData) {
       const propsMatch = [...selectorData.replaceAll(cssIsCommentRegex, '').trim().matchAll(cssPropsRegex)];
       propsMatch

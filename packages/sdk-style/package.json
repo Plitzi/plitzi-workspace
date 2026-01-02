@@ -481,6 +481,18 @@
       "types": "./dist/src/components/StyleInspector/categories/Typography/index.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Typography/index.mjs"
     },
+    "./components/StyleInspector/categories/Variables": {
+      "types": "./dist/src/components/StyleInspector/categories/Variables/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Variables/index.mjs"
+    },
+    "./components/StyleInspector/categories/Variables/Variables": {
+      "types": "./dist/src/components/StyleInspector/categories/Variables/Variables.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Variables/Variables.mjs"
+    },
+    "./components/StyleInspector/categories/Variables/index": {
+      "types": "./dist/src/components/StyleInspector/categories/Variables/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Variables/index.mjs"
+    },
     "./components/StyleInspector/components/CategoryContainer": {
       "types": "./dist/src/components/StyleInspector/components/CategoryContainer/index.d.ts",
       "import": "./dist/src/components/StyleInspector/components/CategoryContainer/index.mjs"
@@ -604,6 +616,34 @@
     "./components/StyleManager/index": {
       "types": "./dist/src/components/StyleManager/index.d.ts",
       "import": "./dist/src/components/StyleManager/index.mjs"
+    },
+    "./components/VariableManager": {
+      "types": "./dist/src/components/VariableManager/index.d.ts",
+      "import": "./dist/src/components/VariableManager/index.mjs"
+    },
+    "./components/VariableManager/Variable": {
+      "types": "./dist/src/components/VariableManager/Variable.d.ts",
+      "import": "./dist/src/components/VariableManager/Variable.mjs"
+    },
+    "./components/VariableManager/VariableForm": {
+      "types": "./dist/src/components/VariableManager/VariableForm.d.ts",
+      "import": "./dist/src/components/VariableManager/VariableForm.mjs"
+    },
+    "./components/VariableManager/VariableGroup": {
+      "types": "./dist/src/components/VariableManager/VariableGroup.d.ts",
+      "import": "./dist/src/components/VariableManager/VariableGroup.mjs"
+    },
+    "./components/VariableManager/VariableList": {
+      "types": "./dist/src/components/VariableManager/VariableList.d.ts",
+      "import": "./dist/src/components/VariableManager/VariableList.mjs"
+    },
+    "./components/VariableManager/VariableManager": {
+      "types": "./dist/src/components/VariableManager/VariableManager.d.ts",
+      "import": "./dist/src/components/VariableManager/VariableManager.mjs"
+    },
+    "./components/VariableManager/index": {
+      "types": "./dist/src/components/VariableManager/index.d.ts",
+      "import": "./dist/src/components/VariableManager/index.mjs"
     },
     "./components/index": {
       "types": "./dist/src/components/index.d.ts",

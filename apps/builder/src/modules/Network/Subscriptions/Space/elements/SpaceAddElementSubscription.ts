@@ -1,19 +1,18 @@
 import { gql } from '@apollo/client/core';
 
-import type { DropPosition, Element, SchemaVariable, Style } from '@plitzi/sdk-shared';
+import type { SchemaVariable, DropPosition, Element } from '@plitzi/sdk-shared';
 
-export type TSpaceAddTemplateSubscription = {
+export type TSpaceAddElementSubscription = {
   element: Element;
-  style: Style;
-  to: string;
   dropPosition: DropPosition;
+  to: string;
   initialItems?: Element[];
   variables?: SchemaVariable[];
 };
 
-const SpaceAddTemplateSubscription = gql`
+const SpaceAddElementSubscription = gql`
   subscription ($environment: String!) {
-    SpaceAddTemplate(environment: $environment) {
+    SpaceAddElement(environment: $environment) {
       element {
         id
         definition {
@@ -29,7 +28,6 @@ const SpaceAddTemplateSubscription = gql`
         }
         attributes
       }
-      styles
       dropPosition
       to
       initialItems
@@ -47,4 +45,4 @@ const SpaceAddTemplateSubscription = gql`
   }
 `;
 
-export default SpaceAddTemplateSubscription;
+export default SpaceAddElementSubscription;

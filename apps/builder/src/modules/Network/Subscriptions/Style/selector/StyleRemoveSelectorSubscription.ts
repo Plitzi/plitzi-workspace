@@ -1,8 +1,16 @@
 import { gql } from '@apollo/client/core';
 
+import type { DisplayMode } from '@plitzi/sdk-shared';
+
+export type TStyleRemoveSelectorSubscription = {
+  displayMode: DisplayMode;
+  selector: string;
+};
+
 const StyleRemoveSelectorSubscription = gql`
   subscription ($environment: String!) {
     StyleRemoveSelector(environment: $environment) {
+      displayMode
       selector
     }
   }

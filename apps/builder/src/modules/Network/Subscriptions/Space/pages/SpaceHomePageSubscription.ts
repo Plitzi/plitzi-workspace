@@ -1,5 +1,11 @@
 import { gql } from '@apollo/client/core';
 
+import type { Element } from '@plitzi/sdk-shared';
+
+export type TSpaceHomePageSubscription = {
+  page: Element;
+};
+
 const SpaceHomePageSubscription = gql`
   subscription ($environment: String!) {
     SpaceHomePage(environment: $environment) {

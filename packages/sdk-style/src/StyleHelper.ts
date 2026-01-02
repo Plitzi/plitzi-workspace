@@ -14,17 +14,6 @@ export type StyleHelperMetaData = {
   parentStyle: { [key: string]: string };
 };
 
-export const EMPTY_STYLE_SCHEMA: Style = {
-  platform: { desktop: {}, tablet: {}, mobile: {} },
-  mode: 'desktop-first',
-  theme: {
-    default: 'system',
-    schemes: ['default', 'light', 'dark']
-  },
-  variables: {},
-  cache: ''
-};
-
 export const selectorToString = (
   tags?: { type: TagType; value: string }[],
   filters: string[] = [],

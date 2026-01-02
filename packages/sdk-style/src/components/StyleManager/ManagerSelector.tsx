@@ -93,10 +93,10 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           })
         );
       });
-      builderHandler('styleRemoveSelector', selector);
+      builderHandler('styleRemoveSelector', displayMode, selector);
       onSelect?.(undefined);
     },
-    [builderHandler, elementHasSelector, flatList, onSelect]
+    [builderHandler, displayMode, elementHasSelector, flatList, onSelect]
   );
 
   const [idDeleteSelector, openDeleteSelector, onOpenDeleteSelector, onCloseDeleteSelector] = useDisclosure<

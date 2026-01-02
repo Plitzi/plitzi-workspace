@@ -1,9 +1,18 @@
 import { gql } from '@apollo/client/core';
 
+import type { StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
+
+export type TStyleUpdateVariableSubscription = {
+  category: StyleVariableCategory;
+  name: string;
+  value: StyleVariableValue;
+};
+
 const StyleUpdateVariableSubscription = gql`
   subscription ($environment: String!) {
     StyleUpdateVariable(environment: $environment) {
-      variable
+      category
+      name
       value
     }
   }
