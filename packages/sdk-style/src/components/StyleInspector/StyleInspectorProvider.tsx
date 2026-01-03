@@ -12,7 +12,6 @@ import { baseDefaultValue } from '@plitzi/sdk-shared';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
@@ -24,16 +23,16 @@ import type { ReactNode } from 'react';
 
 export type StyleInspectorProviderProps = {
   children: ReactNode;
-  selector: string;
+  selectorName: string;
   styleSelector: string;
   element?: Element;
   inheritData: StyleHelperMetaData;
-  displayMode?: DisplayMode;
+  displayMode: DisplayMode;
 };
 
 const StyleInspectorProvider = ({
   children,
-  selector = '',
+  selectorName = '',
   styleSelector = 'base',
   element,
   inheritData,
@@ -42,10 +41,12 @@ const StyleInspectorProvider = ({
   const { builderHandler } = use(BuilderContext);
   const { style, setSelectorSelected } = use(BuilderStyleContext);
   const bindingData = useStyleBinding({ element });
-  const selectorType = get(style, `platform.${displayMode}.${selector}.type`);
-  const values = get(style, `platform.${displayMode}.${selector}.attributes`, {}) as Record<StyleCategory, StyleValue>;
+  const selector = useMemo(
+    () => get(style, `platform.${displayMode}.${selectorName}`, undefined),
+    [displayMode, selectorName, style]
+  );
   const { useDataSource } = use(DataSourceContext);
-  const { variables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
+  const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
   const setValue: StyleInspectorContextValue['setValue'] = useCallback(
     (styleKey: StyleCategory | StyleCategory[], value?: StyleValue | Partial<Record<StyleCategory, StyleValue>>) => {
@@ -62,29 +63,36 @@ const StyleInspectorProvider = ({
         return;
       }
 
-      if (selector !== '' && (!isEmpty(value) || typeof value === 'number') && selectorType) {
+      if (selector && (!isEmpty(value) || typeof value === 'number')) {
         if (typeof styleKey === 'string') {
-          builderHandler('styleUpdateSelector', displayMode, selector, selectorType, styleKey, value);
+          builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, value);
         } else if (Array.isArray(styleKey) && typeof value === 'object') {
-          const newValues = { ...values, ...value } as Partial<Record<StyleCategory, StyleValue>>;
+          const newValues = { ...selector.attributes, ...value };
           (Object.keys(newValues) as StyleCategory[]).forEach(k => {
             if (newValues[k] === undefined) {
               delete newValues[k];
             }
           });
 
-          builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', newValues);
+          builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, '', newValues);
         }
 
         return;
       }
 
       // // Value empty, remove it
-      if (selector !== '' && selectorType) {
+      if (selector && selector.name) {
         if ((styleKey as string) && typeof styleKey === 'string') {
-          builderHandler('styleUpdateSelector', displayMode, selector, selectorType, styleKey, value);
+          builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, value);
         } else if ((styleKey as string) && Array.isArray(styleKey)) {
-          builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', omit(values, styleKey));
+          builderHandler(
+            'styleUpdateSelector',
+            displayMode,
+            selector.name,
+            selector.type,
+            '',
+            omit(selector.attributes, styleKey)
+          );
         }
 
         return;
@@ -132,17 +140,7 @@ const StyleInspectorProvider = ({
 
       setSelectorSelected?.({ name: customClass, type: 'class' });
     },
-    [
-      bindingData,
-      selector,
-      selectorType,
-      element,
-      styleSelector,
-      setSelectorSelected,
-      builderHandler,
-      displayMode,
-      values
-    ]
+    [bindingData, selector, element, styleSelector, setSelectorSelected, builderHandler, displayMode]
   );
 
   const getDefaultValue = useCallback(
@@ -178,17 +176,16 @@ const StyleInspectorProvider = ({
 
   const inspectorContextValue = useMemo(
     () => ({
-      values,
-      variables,
-      displayMode,
       selector,
+      displayMode,
+      variables: schemaVariables, // @todo: styleVariables (at global level) and selector?.variables (needs to be parsed in key:value)
       setValue,
       resetValue,
-      inheritData: get(inheritData, 'style', emptyObject) as StyleHelperMetaData,
-      bindingData: get(bindingData, 'style', emptyObject) as Record<StyleCategory, StyleValue>,
+      inheritData: inheritData.style,
+      bindingData: bindingData.style,
       getDefaultValue
     }),
-    [displayMode, selector, setValue, resetValue, inheritData, bindingData, getDefaultValue, values, variables]
+    [schemaVariables, displayMode, selector, setValue, resetValue, inheritData, bindingData, getDefaultValue]
   );
 
   return <StyleInspectorContext value={inspectorContextValue}>{children}</StyleInspectorContext>;

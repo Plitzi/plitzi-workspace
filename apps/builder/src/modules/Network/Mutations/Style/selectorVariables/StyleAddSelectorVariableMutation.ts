@@ -7,7 +7,7 @@ const StyleAddSelectorVariableMutation = gql`
     $selector: String!
     $category: String!
     $name: String!
-    $value: String!
+    $value: Json!
   ) {
     StyleAddSelectorVariable(
       environment: $environment
@@ -17,11 +17,11 @@ const StyleAddSelectorVariableMutation = gql`
       name: $name
       value: $value
     ) {
-      id
-      variables
-      platform
-      mode
-      cache
+      displayMode
+      selector
+      category
+      name
+      value
     }
   }
 `;

@@ -1,7 +1,8 @@
-import { useCallback } from 'react';
+import { use, useCallback } from 'react';
 
 import VariableManager from '../../../VariableManager';
 import CategoryContainer from '../../components/CategoryContainer';
+import StyleInspectorContext from '../../StyleInspectorContext';
 
 export type VariablesProps = {
   replaceTokens?: boolean;
@@ -10,11 +11,13 @@ export type VariablesProps = {
 };
 
 const Variables = ({ isCollapsed, onCollapse }: VariablesProps) => {
+  const { displayMode, selector } = use(StyleInspectorContext);
+
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('variables', isCollapsed), [onCollapse]);
 
   return (
     <CategoryContainer title="Variables" isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <VariableManager />
+      <VariableManager variables={selector?.variables} displayMode={displayMode} selector={selector?.name} />
     </CategoryContainer>
   );
 };

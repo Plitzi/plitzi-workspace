@@ -8,7 +8,7 @@ import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import StyleInspectorContext from '../StyleInspectorContext';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
-import type { DisplayMode, Style, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseInspectorValuesProps<TAsValue extends boolean> = {
   keys?: StyleCategory[];
@@ -40,12 +40,14 @@ const useInspectorValues = <TAsValue extends boolean>({
   strictMode = false,
   replaceTokens = false
 }: UseInspectorValuesProps<TAsValue>): UseInspectorValuesReturn<TAsValue> => {
-  let { inheritData, bindingData, values, variables } = {} as StyleInspectorContextValue;
+  let { inheritData, bindingData, selector, variables } = {} as StyleInspectorContextValue;
   if (skipContext) {
-    ({ inheritData, bindingData, values, variables } = context);
+    ({ inheritData, bindingData, selector, variables } = context);
   } else {
-    ({ inheritData, bindingData, values, variables } = use(StyleInspectorContext));
+    ({ inheritData, bindingData, selector, variables } = use(StyleInspectorContext));
   }
+
+  const { attributes } = useMemo(() => selector ?? ({ attributes: {} } as StyleItem), [selector]);
 
   const hasInherit = useMemo(
     () =>
@@ -67,10 +69,10 @@ const useInspectorValues = <TAsValue extends boolean>({
     () =>
       !!keys &&
       !asValue &&
-      (Object.keys(pick(values, keys)) as StyleCategory[]).filter(
-        key => typeof values[key] === 'string' && VARIABLE_REGEX.test(values[key])
+      (Object.keys(pick(attributes, keys)) as StyleCategory[]).filter(
+        key => typeof attributes[key] === 'string' && VARIABLE_REGEX.test(attributes[key])
       ).length > 0,
-    [keys, values, asValue]
+    [keys, attributes, asValue]
   );
 
   const hasValues = useMemo(() => {
@@ -79,11 +81,11 @@ const useInspectorValues = <TAsValue extends boolean>({
     }
 
     if (keys.length > 0) {
-      return !asValue && Object.keys(pick(values, keys)).length > 0;
+      return !asValue && Object.keys(pick(attributes, keys)).length > 0;
     }
 
-    return !asValue && Object.keys(values).length > 0;
-  }, [keys, values, asValue]);
+    return !asValue && Object.keys(attributes).length > 0;
+  }, [keys, asValue, attributes]);
 
   const valuesParsed = useMemo(() => {
     const valuesParsedAux: Style['platform'][DisplayMode][number]['attributes'] = {};
@@ -95,10 +97,10 @@ const useInspectorValues = <TAsValue extends boolean>({
     keys.forEach(key => {
       let value: StyleValue | undefined;
       if (strictMode) {
-        value = get(values, key, get(defaultValues ?? ({} as Record<StyleCategory, StyleValue>), key));
+        value = get(attributes, key, get(defaultValues ?? ({} as Record<StyleCategory, StyleValue>), key));
       } else {
         value = get(
-          values,
+          attributes,
           key,
           get(
             inheritData,
@@ -125,7 +127,7 @@ const useInspectorValues = <TAsValue extends boolean>({
     });
 
     return valuesParsedAux;
-  }, [keys, strictMode, values, defaultValues, inheritData, bindingData, variables, replaceTokens]);
+  }, [keys, strictMode, replaceTokens, attributes, defaultValues, inheritData, bindingData, variables]);
 
   if (asValue) {
     return valuesParsed as UseInspectorValuesReturn<TAsValue>;

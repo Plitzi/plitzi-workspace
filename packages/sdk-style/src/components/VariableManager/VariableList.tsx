@@ -1,8 +1,8 @@
 import VariableGroup from './VariableGroup';
 
-import type { StyleVariables } from '@plitzi/sdk-shared';
+import type { StyleVariableCategory, StyleVariables } from '@plitzi/sdk-shared';
 
-export type VariableListProps = { variables?: StyleVariables };
+export type VariableListProps = { variables?: Partial<StyleVariables> };
 
 const VariableList = ({ variables }: VariableListProps) => {
   if (!variables) {
@@ -11,8 +11,8 @@ const VariableList = ({ variables }: VariableListProps) => {
 
   return (
     <div className="flex flex-col gap-1">
-      {Object.keys(variables).map(category => (
-        <VariableGroup key={category} title={category} variables={variables[category as keyof typeof variables]} />
+      {(['color', 'spacing', 'shadow'] as StyleVariableCategory[]).map(category => (
+        <VariableGroup key={category} title={category} variables={variables[category]} />
       ))}
     </div>
   );

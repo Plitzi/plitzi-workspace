@@ -15,11 +15,10 @@ const StyleRemoveSelectorVariableMutation = gql`
       category: $category
       name: $name
     ) {
-      id
-      variables
-      platform
-      mode
-      cache
+      displayMode
+      selector
+      category
+      name
     }
   }
 `;

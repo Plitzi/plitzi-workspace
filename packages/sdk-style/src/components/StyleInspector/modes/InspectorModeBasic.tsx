@@ -84,7 +84,7 @@ const InspectorModeBasic = ({
     <StyleInspectorProvider
       displayMode={displayMode}
       styleSelector={styleSelector}
-      selector={selector}
+      selectorName={selector}
       element={element}
       inheritData={inheritData}
     >

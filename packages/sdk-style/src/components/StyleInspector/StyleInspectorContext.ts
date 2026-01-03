@@ -1,19 +1,20 @@
 import { createContext } from 'react';
 
 import type { StyleHelperMetaData } from '../../StyleHelper';
-import type { DisplayMode, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleCategory, StyleItem, StyleValue, StyleVariables } from '@plitzi/sdk-shared';
 
 export type StyleInspectorContextValue = {
-  values: Record<StyleCategory, StyleValue>;
+  selector?: StyleItem;
+  displayMode: DisplayMode;
+  // values: Record<StyleCategory, StyleValue>;
   variables: Record<string, unknown>;
-  displayMode?: DisplayMode;
-  selector: string;
+  selectorVariables?: StyleVariables;
   setValue: {
     (styleKey: StyleCategory, value?: StyleValue): void;
     (styleKey: StyleCategory[], value?: Partial<Record<StyleCategory, StyleValue>>): void;
   };
   resetValue: (keys: StyleCategory | StyleCategory[]) => void;
-  inheritData: StyleHelperMetaData;
+  inheritData: StyleHelperMetaData['style'];
   bindingData: Record<StyleCategory, StyleValue>;
   getDefaultValue: (key?: StyleCategory[] | StyleCategory) => StyleValue | Record<StyleCategory, StyleValue>;
 };

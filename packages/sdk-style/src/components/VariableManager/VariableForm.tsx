@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
@@ -6,7 +7,7 @@ import { z } from 'zod';
 import type { StyleThemeValue, StyleVariableCategory } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-const variableFormSchema = z.object({
+export const variableFormSchema = z.object({
   name: z
     .string()
     .min(3, { message: 'Too Short' })
@@ -25,14 +26,14 @@ export type VariableFormProps = {
   category?: StyleVariableCategory;
   values?: StyleThemeValue;
   onClose?: (e: MouseEvent) => void;
-  onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof variableFormSchema>) => void;
+  onSubmit?: (values: z.infer<typeof variableFormSchema>) => void;
 };
 
 const VariableForm = ({ name = 'New Page', category = 'color', values, onClose, onSubmit }: VariableFormProps) => {
   const form = useForm({ defaultValues: { name, category, values }, config: { schema: variableFormSchema } });
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof variableFormSchema>) => onSubmit?.(undefined, values),
+    (values: z.infer<typeof variableFormSchema>) => onSubmit?.(values),
     [onSubmit]
   );
 

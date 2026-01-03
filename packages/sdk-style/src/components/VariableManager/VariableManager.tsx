@@ -1,17 +1,31 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { useCallback, useState } from 'react';
+import { use, useCallback, useState } from 'react';
+
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+// import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import VariableForm from './VariableForm';
 import VariableList from './VariableList';
 
-import type { StyleVariableCategory, StyleVariables, StyleThemeValue } from '@plitzi/sdk-shared';
+import type { variableFormSchema } from './VariableForm';
+import type { StyleVariableCategory, StyleVariables, StyleThemeValue, DisplayMode } from '@plitzi/sdk-shared';
+import type { z } from 'zod';
 
 export type VariableManagerProps = {
-  variables?: StyleVariables;
+  displayMode: DisplayMode;
+  selector?: string;
+  variables?: Partial<StyleVariables>;
   onChange?: () => void;
+  onAdd?: () => void;
+  onRemove?: (category: StyleVariableCategory, name: string) => void;
 };
 
-const VariableManager = ({ variables = { color: {}, spacing: {}, shadow: {} } }: VariableManagerProps) => {
+const VariableManager = ({
+  displayMode,
+  selector,
+  variables = { color: {}, spacing: {}, shadow: {} }
+}: VariableManagerProps) => {
+  const { builderHandler } = use(BuilderContext);
   const [newVariable, setNewVariable] = useState<{
     name: string;
     category: StyleVariableCategory;
@@ -21,6 +35,19 @@ const VariableManager = ({ variables = { color: {}, spacing: {}, shadow: {} } }:
   const handleClickAddVariable = useCallback(() => {
     setNewVariable({ name: '', category: 'color', values: { light: '', dark: '', default: '' } });
   }, []);
+
+  const handleClickSubmit = useCallback(
+    (formValues: z.infer<typeof variableFormSchema>) => {
+      if (!selector) {
+        return;
+      }
+
+      const { name, category, values } = formValues;
+      builderHandler('styleAddSelectorVariable', displayMode, selector, category, name, values);
+      setNewVariable(undefined);
+    },
+    [builderHandler, displayMode, selector]
+  );
 
   const handleClickCancel = useCallback(() => setNewVariable(undefined), []);
 
@@ -33,7 +60,7 @@ const VariableManager = ({ variables = { color: {}, spacing: {}, shadow: {} } }:
           Add Variable
         </Button>
       )}
-      {newVariable && <VariableForm {...newVariable} onClose={handleClickCancel} />}
+      {newVariable && <VariableForm {...newVariable} onSubmit={handleClickSubmit} onClose={handleClickCancel} />}
     </div>
   );
 };
