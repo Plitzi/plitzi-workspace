@@ -159,6 +159,7 @@ class StyleMap {
     }
 
     set(styleItem, `variables.${category}.${name}`, value);
+    set(this.platform, `${displayMode}.${selector}.cache`, processSelector(styleItem));
 
     return true;
   };
@@ -176,6 +177,7 @@ class StyleMap {
     }
 
     set(styleItem, `variables.${category}.${name}`, value);
+    set(this.platform, `${displayMode}.${selector}.cache`, processSelector(styleItem));
 
     return true;
   };
@@ -199,6 +201,8 @@ class StyleMap {
     if (Object.keys(styleItem.variables).length === 0) {
       delete styleItem.variables;
     }
+
+    set(this.platform, `${displayMode}.${selector}.cache`, processSelector(styleItem));
 
     return true;
   };

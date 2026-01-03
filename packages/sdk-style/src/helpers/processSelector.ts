@@ -1,4 +1,4 @@
-import type { StyleCategory, StyleItem } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleItem, StyleThemeValue, StyleVariableCategory } from '@plitzi/sdk-shared';
 
 type CssResult = { variables: Record<string, string>; value: string };
 
@@ -103,7 +103,7 @@ export const processCssString = (attribute: string, value?: string) => {
 };
 
 const processSelector = (selector: Omit<StyleItem, 'cache'>) => {
-  const { name, type, attributes } = selector; // variables
+  const { name, type, attributes, variables } = selector;
   const result: string[] = [];
   (Object.keys(attributes) as StyleCategory[]).forEach(key => {
     const partialResult = processCssString(key, attributes[key] as string);
@@ -126,7 +126,55 @@ const processSelector = (selector: Omit<StyleItem, 'cache'>) => {
     default:
   }
 
-  return `${finalSelector}{${result.join('')}}`;
+  if (!variables || Object.keys(variables).length === 0) {
+    return `${finalSelector}{${result.join('')}}`;
+  }
+
+  const extraCss: string[] = [];
+  (Object.keys(variables) as StyleVariableCategory[]).forEach(category => {
+    const variablesGroup = variables[category];
+    if (!variablesGroup) {
+      return;
+    }
+
+    switch (category) {
+      case 'color': {
+        const variablesLight: string[] = [];
+        const variablesDark: string[] = [];
+        Object.keys(variablesGroup).forEach(variable => {
+          const variableValue = variablesGroup[variable] as StyleThemeValue;
+          result.push(`--${variable}:${variableValue.default};`);
+          if (variableValue.light) {
+            variablesLight.push(`--${variable}:${variableValue.light};`);
+          }
+
+          if (variableValue.dark) {
+            variablesDark.push(`--${variable}:${variableValue.dark};`);
+          }
+        });
+
+        if (variablesLight.length > 0) {
+          extraCss.push(`@media(prefers-color-scheme:light){${finalSelector}{${variablesLight.join('')}}}`);
+        }
+
+        if (variablesDark.length > 0) {
+          extraCss.push(`@media(prefers-color-scheme:dark){${finalSelector}{${variablesDark.join('')}}}`);
+        }
+
+        break;
+      }
+
+      case 'spacing':
+      case 'shadow':
+      default:
+    }
+  });
+
+  if (extraCss.length === 0) {
+    return `${finalSelector}{${result.join('')}}`;
+  }
+
+  return `${finalSelector}{${result.join('')}}${extraCss.join('')}`;
 };
 
 export default processSelector;
