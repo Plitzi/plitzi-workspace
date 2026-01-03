@@ -179,10 +179,10 @@ const StyleInspectorProvider = ({
       selector,
       displayMode,
       variables: schemaVariables, // @todo: styleVariables (at global level) and selector?.variables (needs to be parsed in key:value)
-      setValue,
-      resetValue,
       inheritData: inheritData.style,
       bindingData: bindingData.style,
+      setValue,
+      resetValue,
       getDefaultValue
     }),
     [schemaVariables, displayMode, selector, setValue, resetValue, inheritData, bindingData, getDefaultValue]
