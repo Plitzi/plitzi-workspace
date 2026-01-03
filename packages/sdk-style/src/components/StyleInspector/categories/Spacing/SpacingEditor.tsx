@@ -49,7 +49,24 @@ const SpacingEditor = ({ fragmentSelected, value, onChange }: SpacingEditorProps
           <Icon className="mr-1">{iconsMap[fragmentSelected as keyof typeof iconsMap]}</Icon>
           <div className="truncate text-xs">{fragmentSelected.split('-').join(' ')}</div>
         </div>
-        <MetricInput value={value as string | undefined} size="sm" onChange={handleChange} className="rounded-sm" />
+        <MetricInput
+          value={value as string | undefined}
+          size="xs"
+          onChange={handleChange}
+          units={[
+            { label: 'PX', value: 'px' },
+            { label: 'VW', value: 'vw' },
+            { label: 'VH', value: 'vh' },
+            { label: '%', value: '%' },
+            { label: 'EM', value: 'em' },
+            { label: 'REM', value: 'rem' },
+            { label: 'DVH', value: 'dvh' },
+            { label: 'DVW', value: 'dvw' },
+            { label: 'LVH', value: 'lvh' },
+            { label: 'LVW', value: 'lvw' }
+          ]}
+          className="rounded-sm"
+        />
       </div>
       <div className="flex">
         {segment === 'margin' && (
