@@ -180,7 +180,7 @@ const StyleInspectorProvider = ({
       displayMode,
       variables: schemaVariables, // @todo: styleVariables (at global level) and selector?.variables (needs to be parsed in key:value)
       inheritData: inheritData.style,
-      bindingData: bindingData.style,
+      bindingData: bindingData,
       setValue,
       resetValue,
       getDefaultValue

@@ -15,7 +15,7 @@ const generateStyleSelector = (
     name: selector,
     type: selectorType,
     attributes: values,
-    cache: processSelector(selector, selectorType, values)
+    cache: processSelector({ name: selector, type: selectorType, attributes: values })
   };
 };
 

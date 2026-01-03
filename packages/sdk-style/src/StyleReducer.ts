@@ -54,7 +54,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
 
           set(draft, `platform.${displayMode}.${btoa(selector)}`, {
             ...selectorInstance,
-            cache: processSelector(selector, 'class', selectorInstance.attributes)
+            cache: processSelector({ name: selector, type: 'class', attributes: selectorInstance.attributes })
           });
 
           set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));
@@ -79,7 +79,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
 
         set(draft, `platform.${displayMode}.${btoa(selector)}`, {
           ...selectorInstance,
-          cache: processSelector(selector, 'class', selectorInstance.attributes)
+          cache: processSelector({ name: selector, type: 'class', attributes: selectorInstance.attributes })
         });
 
         set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));

@@ -1,4 +1,4 @@
-import type { StyleCategory, StyleValue, TagType } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleItem } from '@plitzi/sdk-shared';
 
 type CssResult = { variables: Record<string, string>; value: string };
 
@@ -102,26 +102,23 @@ export const processCssString = (attribute: string, value?: string) => {
   };
 };
 
-const processSelector = (
-  selector: string,
-  type?: TagType,
-  attributes: Partial<Record<StyleCategory, StyleValue>> = {}
-) => {
+const processSelector = (selector: Omit<StyleItem, 'cache'>) => {
+  const { name, type, attributes } = selector; // variables
   const result: string[] = [];
   (Object.keys(attributes) as StyleCategory[]).forEach(key => {
     const partialResult = processCssString(key, attributes[key] as string);
     result.push(...partialResult.variables, partialResult.value);
   });
 
-  let finalSelector = selector;
+  let finalSelector = name;
   switch (type) {
     case 'class':
     case 'state':
-      finalSelector = `.${selector}`;
+      finalSelector = `.${name}`;
       break;
 
     case 'id':
-      finalSelector = `#${selector}`;
+      finalSelector = `#${name}`;
       break;
 
     case 'element':

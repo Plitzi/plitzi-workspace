@@ -8,7 +8,7 @@ export type StyleInspectorContextValue = {
   displayMode: DisplayMode;
   variables: Record<string, unknown>;
   inheritData: StyleHelperMetaData['style'];
-  bindingData: Record<StyleCategory, StyleValue>;
+  bindingData: Partial<Record<StyleCategory, StyleValue>>;
   setValue: {
     (styleKey: StyleCategory, value?: StyleValue): void;
     (styleKey: StyleCategory[], value?: Partial<Record<StyleCategory, StyleValue>>): void;

@@ -55,7 +55,7 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: string,
-    style: StyleItem['attributes'] = {}
+    value: StyleItem['attributes'] = {}
   ) => {
     const styleItem = StyleMap.getStyleItem(this.platform, displayMode, selector);
     if (styleItem) {
@@ -64,16 +64,16 @@ class StyleMap {
 
     let attributes = {};
     if (path) {
-      set(attributes, path, style);
+      set(attributes, path, value);
     } else if (!path) {
-      attributes = style;
+      attributes = value;
     }
 
     set(this.platform, `${displayMode}.${selector}`, {
       name: selector,
       type,
       attributes,
-      cache: processSelector(selector, type, attributes)
+      cache: processSelector({ name: selector, type, attributes })
     });
 
     return true;
@@ -84,27 +84,36 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: string,
-    style?: StyleItem['attributes']
+    value?: StyleItem['attributes']
   ) => {
     const styleItem = StyleMap.getStyleItem(this.platform, displayMode, selector);
     if (!styleItem) {
-      return this.addSelector(displayMode, selector, type, path, style);
+      return this.addSelector(displayMode, selector, type, path, value);
     }
 
-    if (path && style) {
-      set(this.platform, `${displayMode}.${selector}.attributes.${path}`, style);
+    if (path && value) {
+      set(this.platform, `${displayMode}.${selector}.attributes.${path}`, value);
     } else if (path) {
       set(
         this.platform,
         `${displayMode}.${selector}.attributes`,
         omit(get(this.platform, `${displayMode}.${selector}.attributes`), [path])
       );
-    } else if (!path && style) {
-      set(this.platform, `${displayMode}.${selector}.attributes`, style);
+    } else if (!path && value) {
+      set(this.platform, `${displayMode}.${selector}.attributes`, value);
     }
 
-    const newStyle = get(this.platform, `${displayMode}.${selector}.attributes`);
-    set(this.platform, `${displayMode}.${selector}.cache`, processSelector(selector, type, newStyle));
+    const selectorUpdated = get(this.platform, `${displayMode}.${selector}`);
+    set(
+      this.platform,
+      `${displayMode}.${selector}.cache`,
+      processSelector({
+        name: selector,
+        type,
+        attributes: selectorUpdated.attributes,
+        variables: selectorUpdated.variables
+      })
+    );
 
     return true;
   };

@@ -103,15 +103,15 @@ const useInspectorValues = <TAsValue extends boolean>({
           attributes,
           key,
           get(
-            inheritData,
-            `${key}.0.value`,
+            bindingData,
+            key,
             get(
-              bindingData,
+              inheritData,
               `${key}.0.value`,
               get(defaultValues ?? ({} as Record<StyleCategory, StyleValue>), key, baseDefaultValue[key])
             )
           )
-        );
+        ) as StyleValue | undefined;
       }
 
       if (replaceTokens && typeof value === 'string' && VARIABLE_REGEX.test(value)) {
