@@ -44,6 +44,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
         return produce(state, draft => {
           const selectorInstance = get(draft, `platform.${displayMode}.${btoa(selector)}`, {
             name: selector,
+            type: 'class' as const,
             attributes: {} as StyleItem['attributes'],
             cache: ''
           });
@@ -54,7 +55,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
 
           set(draft, `platform.${displayMode}.${btoa(selector)}`, {
             ...selectorInstance,
-            cache: processSelector({ name: selector, type: 'class', attributes: selectorInstance.attributes })
+            cache: processSelector(selectorInstance)
           });
 
           set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));
@@ -64,6 +65,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
       return produce(state, draft => {
         const selectorInstance = get(draft, `platform.${displayMode}.${btoa(selector)}`, {
           name: selector,
+          type: 'class' as const,
           attributes: {},
           cache: ''
         });
@@ -79,7 +81,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
 
         set(draft, `platform.${displayMode}.${btoa(selector)}`, {
           ...selectorInstance,
-          cache: processSelector({ name: selector, type: 'class', attributes: selectorInstance.attributes })
+          cache: processSelector(selectorInstance)
         });
 
         set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));

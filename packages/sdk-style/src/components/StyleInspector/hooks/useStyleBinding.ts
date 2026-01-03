@@ -26,7 +26,7 @@ const useStyleBinding = ({ element }: UseStyleBindingProps) => {
 
     bindings.style.forEach(binding => {
       const value = get(dataSource, `${binding.source}.${binding.fromPath}`, undefined);
-      if (value === undefined) {
+      if (value === undefined || !binding.enabled) {
         return;
       }
 
