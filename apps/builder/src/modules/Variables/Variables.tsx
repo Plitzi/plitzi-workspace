@@ -13,7 +13,7 @@ import StyleContext from '@plitzi/sdk-style/StyleContext';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
-import type { SchemaVariable, StyleThemeValue, StyleVariableCategory } from '@plitzi/sdk-shared';
+import type { SchemaVariable, StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
 
 const Variables = () => {
   const { showDialog } = useModal();
@@ -88,10 +88,10 @@ const Variables = () => {
   // Style Variables
 
   const handleAddStyleVariable = useCallback(
-    (variable: { name: string; category: StyleVariableCategory; values: StyleThemeValue }) => {
-      const { name, category, values } = variable;
+    (variable: { name: string; category: StyleVariableCategory; value: StyleVariableValue }) => {
+      const { name, category, value } = variable;
       if (!styleVariables[category]?.[name]) {
-        builderHandler('styleAddVariable', category, name, values);
+        builderHandler('styleAddVariable', category, name, value);
       } else {
         addToast(
           <span>
@@ -105,8 +105,8 @@ const Variables = () => {
   );
 
   const handleUpdateStyleVariable = useCallback(
-    (variable: { name: string; category: StyleVariableCategory; values: StyleThemeValue }) =>
-      builderHandler('styleUpdateVariable', variable.category, variable.name, variable.values),
+    (variable: { name: string; category: StyleVariableCategory; value: StyleVariableValue }) =>
+      builderHandler('styleUpdateVariable', variable.category, variable.name, variable.value),
     [builderHandler]
   );
 
@@ -114,7 +114,7 @@ const Variables = () => {
     async (category: StyleVariableCategory, name: string) => {
       const response = await showDialog(
         <Modal.Header>
-          <h4>Remove Space Variable</h4>
+          <h4>Remove Style Variable</h4>
         </Modal.Header>,
         <Modal.Body>
           <h4>Do you want to remove this item ?</h4>

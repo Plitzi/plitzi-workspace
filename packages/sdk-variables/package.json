@@ -57,6 +57,10 @@
       "types": "./dist/src/components/StyleVariables/index.d.ts",
       "import": "./dist/src/components/StyleVariables/index.mjs"
     },
+    "./components/StyleVariables/StyleVariable": {
+      "types": "./dist/src/components/StyleVariables/StyleVariable.d.ts",
+      "import": "./dist/src/components/StyleVariables/StyleVariable.mjs"
+    },
     "./components/StyleVariables/StyleVariables": {
       "types": "./dist/src/components/StyleVariables/StyleVariables.d.ts",
       "import": "./dist/src/components/StyleVariables/StyleVariables.mjs"
@@ -65,6 +69,14 @@
       "types": "./dist/src/components/StyleVariables/Variable.d.ts",
       "import": "./dist/src/components/StyleVariables/Variable.mjs"
     },
+    "./components/StyleVariables/VariableActions": {
+      "types": "./dist/src/components/StyleVariables/VariableActions.d.ts",
+      "import": "./dist/src/components/StyleVariables/VariableActions.mjs"
+    },
+    "./components/StyleVariables/VariableDetails": {
+      "types": "./dist/src/components/StyleVariables/VariableDetails.d.ts",
+      "import": "./dist/src/components/StyleVariables/VariableDetails.mjs"
+    },
     "./components/StyleVariables/VariableGroup": {
       "types": "./dist/src/components/StyleVariables/VariableGroup.d.ts",
       "import": "./dist/src/components/StyleVariables/VariableGroup.mjs"
@@ -72,6 +84,10 @@
     "./components/StyleVariables/VariableList": {
       "types": "./dist/src/components/StyleVariables/VariableList.d.ts",
       "import": "./dist/src/components/StyleVariables/VariableList.mjs"
+    },
+    "./components/StyleVariables/VariableValue": {
+      "types": "./dist/src/components/StyleVariables/VariableValue.d.ts",
+      "import": "./dist/src/components/StyleVariables/VariableValue.mjs"
     },
     "./components/StyleVariables/index": {
       "types": "./dist/src/components/StyleVariables/index.d.ts",
