@@ -58,7 +58,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
             cache: processSelector(selectorInstance)
           });
 
-          set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));
+          set(draft, 'cache', generateCache(draft));
         });
       }
 
@@ -84,7 +84,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
           cache: processSelector(selectorInstance)
         });
 
-        set(draft, 'cache', generateCache({ platform: get(draft, 'platform') } as Style));
+        set(draft, 'cache', generateCache(draft));
       });
     }
 
@@ -100,7 +100,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
           platform[pkey as DisplayMode] = omit(platform[pkey as DisplayMode], [selector]);
         });
         draft.platform = platform;
-        draft.cache = generateCache({ platform } as Style);
+        draft.cache = generateCache(draft);
       });
     }
 

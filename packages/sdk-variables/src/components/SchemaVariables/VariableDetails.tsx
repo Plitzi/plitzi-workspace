@@ -44,7 +44,7 @@ const VariableDetails = ({ name, subValues = [], type = 'text' }: VariableDetail
       )}
       <div className="flex items-center justify-between gap-2">
         <div className="flex gap-1">
-          As Token:
+          Token:
           <div className="truncate font-bold" title={name}>
             {`{{${name}}}`}
           </div>
@@ -57,6 +57,6 @@ const VariableDetails = ({ name, subValues = [], type = 'text' }: VariableDetail
 
 export default VariableDetails;
 
-// reducir el tamano de las variables
+// @todo: reducir el tamano de las variables
 // pensaba usar el icono q use en devTools de branch para simular las variantes del valor
 // tomar en cuenta q debe soportar facil 100 variables o mas

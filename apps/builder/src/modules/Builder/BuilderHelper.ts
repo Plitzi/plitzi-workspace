@@ -15,6 +15,7 @@ import type {
   ComponentDefinition,
   Element,
   Schema,
+  SchemaVariable,
   Style
 } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
@@ -243,7 +244,7 @@ export const processPaste = async (
     elements: Record<string, Element>;
     baseElement?: Element;
     style: Style;
-    variables: Schema['variables'];
+    variables: SchemaVariable[];
   } = {
     elements: {},
     baseElement: undefined,
@@ -278,9 +279,9 @@ export const processPaste = async (
       set(
         templateData,
         `style.platform.desktop.${selector}`,
-        generateStyleSelector(selector, 'class', { height: `${size.height}px`, width: `${size.width}px` })
+        generateStyleSelector(selector, 'class', { height: `${size.height}px`, width: `${size.width}px` }, {})
       );
-      set(templateData, 'style.cache', generateCache({ platform: get(templateData, 'style.platform') } as Style));
+      set(templateData, 'style.cache', generateCache(templateData.style));
     }
 
     set(templateData, 'baseElement', elementDefinition);

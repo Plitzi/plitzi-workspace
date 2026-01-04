@@ -191,7 +191,7 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
           platform[mode] = { ...get(platform, mode, {} as Record<string, StyleItem>), ...newPlatform[mode] };
         });
         draft.platform = platform;
-        draft.cache = generateCache({ platform } as Style);
+        draft.cache = generateCache(draft);
       });
     }
 

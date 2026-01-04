@@ -55,10 +55,12 @@ const VariableManager = ({
     <div className="flex flex-col gap-2">
       <VariableList variables={variables} />
       {!newVariable && (
-        <Button className="w-full" size="xs" onClick={handleClickAddVariable} iconPlacement="before">
-          <Button.Icon icon="fa-solid fa-plus" />
-          Add Variable
-        </Button>
+        <div className="flex w-full px-1">
+          <Button className="w-full" size="xs" onClick={handleClickAddVariable} iconPlacement="before">
+            <Button.Icon icon="fa-solid fa-plus" />
+            Add Variable
+          </Button>
+        </div>
       )}
       {newVariable && <VariableForm {...newVariable} onSubmit={handleClickSubmit} onClose={handleClickCancel} />}
     </div>

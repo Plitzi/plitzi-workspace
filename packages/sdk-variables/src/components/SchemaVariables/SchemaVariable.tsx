@@ -1,32 +1,32 @@
 import omit from 'lodash-es/omit';
 import { useCallback, useState } from 'react';
 
-import VariableForm from './models/VariableForm';
 import VariableActions from './VariableActions';
 import VariableDetails from './VariableDetails';
 import VariableValue from './VariableValue';
+import SchemaVariableForm from '../../models/SchemaVariableForm';
 
-import type { Environment, QueryParams, RouteParams, SchemaVariable } from '@plitzi/sdk-shared';
+import type { Environment, QueryParams, RouteParams, SchemaVariable as TSchemaVariable } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-export type VariableProps = {
+export type SchemaVariableProps = {
   name?: string;
   category?: string;
   value?: string;
-  type?: SchemaVariable['type'];
-  subValues?: SchemaVariable['subValues'];
+  type?: TSchemaVariable['type'];
+  subValues?: TSchemaVariable['subValues'];
   whenData?: {
     routeParams: RouteParams;
     queryParams: QueryParams;
     hostname?: string;
     environment: Environment;
   };
-  onChange?: (name: string, value: Omit<SchemaVariable, 'name'>) => void;
+  onChange?: (name: string, value: Omit<TSchemaVariable, 'name'>) => void;
   onRemove: (name: string) => void;
   onParentRefresh?: (identifier: string, segment: object) => void;
 };
 
-const Variable = ({
+const SchemaVariable = ({
   name = 'variable',
   value = '',
   type = 'text',
@@ -35,7 +35,7 @@ const Variable = ({
   whenData,
   onChange,
   onRemove
-}: VariableProps) => {
+}: SchemaVariableProps) => {
   const [editMode, setEditMode] = useState(false);
   const [selected, setSelected] = useState(false);
 
@@ -55,7 +55,7 @@ const Variable = ({
   const handleClickCancel = useCallback(() => setEditMode(false), [setEditMode]);
 
   const handleClickSubmit = useCallback(
-    (_e: MouseEvent | undefined, values: SchemaVariable) => {
+    (values: TSchemaVariable) => {
       onChange?.(name, omit(values, ['name']));
       setEditMode(false);
     },
@@ -67,7 +67,7 @@ const Variable = ({
   if (editMode) {
     return (
       <div className="rounded-sm border border-gray-300 p-2">
-        <VariableForm
+        <SchemaVariableForm
           name={name}
           category={category}
           type={type}
@@ -102,4 +102,4 @@ const Variable = ({
   );
 };
 
-export default Variable;
+export default SchemaVariable;

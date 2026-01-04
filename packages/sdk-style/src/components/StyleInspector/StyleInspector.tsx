@@ -117,7 +117,7 @@ const StyleInspector = ({
   return (
     <div className="flex w-full grow flex-col">
       <div className="flex w-full flex-col gap-1 border-b border-gray-300">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-1">
           <label>Style Selector</label>
           <div className="flex items-center gap-2 py-1 text-xs">
             Dev Mode
@@ -130,18 +130,19 @@ const StyleInspector = ({
             />
           </div>
         </div>
-        <Selector
-          className="min-h-0 w-full"
-          style={style}
-          disabled={mode === 'manager'}
-          value={selector}
-          selectorSelected={selectorSelected}
-          displayMode={displayMode}
-          onAdd={handleAddSelector}
-          onChange={handleChangeSelector}
-          onRemove={handleRemoveSelector}
-          onSelectorSelected={setSelectorSelected}
-        />
+        {mode !== 'manager' && (
+          <Selector
+            className="min-h-0 w-full"
+            style={style}
+            value={selector}
+            selectorSelected={selectorSelected}
+            displayMode={displayMode}
+            onAdd={handleAddSelector}
+            onChange={handleChangeSelector}
+            onRemove={handleRemoveSelector}
+            onSelectorSelected={setSelectorSelected}
+          />
+        )}
         {allowStyleSelector && Object.keys(styleSelectorsAvailables).length > 1 && (
           <div className="flex flex-col text-xs">
             <Select className="rounded-sm" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>

@@ -1,54 +1,97 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import Heading from '@plitzi/plitzi-ui/Heading';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import { useCallback, use, useMemo, useState } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import StyleContext from '@plitzi/sdk-style/StyleContext';
+import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
+import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
-import VariableForm from './models/VariableForm';
-import Variable from './Variable';
-
-import type { SchemaVariable } from '@plitzi/sdk-shared';
+import type { SchemaVariable, StyleThemeValue, StyleVariableCategory } from '@plitzi/sdk-shared';
 
 const Variables = () => {
-  const { showModal } = useModal();
+  const { showDialog } = useModal();
   const { addToast } = useToast();
-  const {
-    schemaAddVariable,
-    schemaUpdateVariable,
-    schemaRemoveVariable,
-    schema: { variables }
-  } = use(SchemaContext);
   const { environment } = use(NetworkContext);
   const { routeParams, queryParams, hostname } = use(NavigationContext);
+  const { builderHandler } = use(BuilderContext);
   const [filter, setFilter] = useState('');
   const whenData = useMemo(
     () => ({ routeParams, queryParams, hostname, environment }),
     [routeParams, queryParams, hostname, environment]
   );
+  const {
+    schema: { variables: schemaVariables }
+  } = use(SchemaContext);
+  const {
+    style: { variables: styleVariables }
+  } = use(StyleContext);
 
-  const handleChangeFilter = useCallback((value: string) => setFilter(value), [setFilter]);
+  const variablesFiltered = useMemo(
+    () =>
+      ((schemaVariables as SchemaVariable[] | undefined) ?? []).filter(variable =>
+        variable.name.toLowerCase().includes(filter.toLowerCase())
+      ),
+    [schemaVariables, filter]
+  );
 
-  const handleClickAddVariable = useCallback(async () => {
-    const response = await showModal<SchemaVariable>(
-      <Modal.Header>
-        <h4>Add Variable</h4>
-      </Modal.Header>,
-      ({ onSubmit, onClose }) => (
-        <Modal.Body className="max-h-[500px] overflow-y-auto">
-          <VariableForm onSubmit={onSubmit} onClose={onClose} whenData={whenData} isNewRecord />
-        </Modal.Body>
-      )
-    );
+  // Schema Variables
 
-    if (response) {
-      const { name, category, value, type, subValues } = response;
-      if (!(variables as SchemaVariable[] | undefined) || !variables.find(variable => variable.name === name)) {
-        schemaAddVariable?.({ name, category, value, type, subValues });
+  const handleAddSchemaVariable = useCallback(
+    (variable: SchemaVariable) => {
+      if (!schemaVariables.find(variableItem => variableItem.name === variable.name)) {
+        builderHandler('schemaAddVariable', variable);
+      } else {
+        addToast(
+          <span>
+            Variable with the name <b>{variable.name}</b> already exists
+          </span>,
+          { appeareance: 'warning', autoDismiss: true, placement: 'top-right' }
+        );
+      }
+    },
+    [addToast, builderHandler, schemaVariables]
+  );
+
+  const handleUpdateSchemaVariable = useCallback(
+    (variable: SchemaVariable) => builderHandler('schemaUpdateVariable', variable),
+    [builderHandler]
+  );
+
+  const handleRemoveSchemaVariable = useCallback(
+    async (name: string) => {
+      const response = await showDialog(
+        <Modal.Header>
+          <h4>Remove Space Variable</h4>
+        </Modal.Header>,
+        <Modal.Body>
+          <h4>Do you want to remove this item ?</h4>
+        </Modal.Body>,
+        undefined,
+        { size: 'sm' },
+        name
+      );
+
+      if (response) {
+        builderHandler('schemaRemoveVariable', name);
+      }
+    },
+    [builderHandler, showDialog]
+  );
+
+  // Style Variables
+
+  const handleAddStyleVariable = useCallback(
+    (variable: { name: string; category: StyleVariableCategory; values: StyleThemeValue }) => {
+      const { name, category, values } = variable;
+      if (!styleVariables[category]?.[name]) {
+        builderHandler('styleAddVariable', category, name, values);
       } else {
         addToast(
           <span>
@@ -57,54 +100,62 @@ const Variables = () => {
           { appeareance: 'warning', autoDismiss: true, placement: 'top-right' }
         );
       }
-    }
-  }, [showModal, whenData, variables, schemaAddVariable, addToast]);
-
-  const handleClickRemove = useCallback((name: string) => schemaRemoveVariable?.(name), [schemaRemoveVariable]);
-
-  const handleChange = useCallback(
-    (name: string, values: Omit<SchemaVariable, 'name'>) => schemaUpdateVariable?.({ ...values, name }),
-    [schemaUpdateVariable]
+    },
+    [addToast, builderHandler, styleVariables]
   );
 
-  const variablesFiltered = useMemo(
-    () =>
-      Object.values((variables as SchemaVariable[] | undefined) ?? []).filter(variable =>
-        variable.name.toLowerCase().includes(filter.toLowerCase())
-      ),
-    [variables, filter]
+  const handleUpdateStyleVariable = useCallback(
+    (variable: { name: string; category: StyleVariableCategory; values: StyleThemeValue }) =>
+      builderHandler('styleUpdateVariable', variable.category, variable.name, variable.values),
+    [builderHandler]
+  );
+
+  const handleRemoveStyleVariable = useCallback(
+    async (category: StyleVariableCategory, name: string) => {
+      const response = await showDialog(
+        <Modal.Header>
+          <h4>Remove Space Variable</h4>
+        </Modal.Header>,
+        <Modal.Body>
+          <h4>Do you want to remove this item ?</h4>
+        </Modal.Body>,
+        undefined,
+        { size: 'sm' },
+        name
+      );
+
+      if (response) {
+        builderHandler('styleRemoveVariable', category, name);
+      }
+    },
+    [builderHandler, showDialog]
   );
 
   return (
-    <div className="segments flex w-full flex-col gap-3">
+    <div className="flex w-full flex-col gap-2">
       <Flex gap={2} direction="column">
-        <Button size="sm" onClick={handleClickAddVariable} iconPlacement="before">
-          <Button.Icon icon="fa-solid fa-plus" />
-          New Variable
-        </Button>
-        <Input placeholder="Search Variables" size="sm" value={filter} onChange={handleChangeFilter}>
+        <Input placeholder="Search Variables" size="sm" value={filter} onChange={setFilter}>
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="h-px bg-gray-200" />
-      <div className="flex flex-col gap-1">
-        {variablesFiltered.map(segment => {
-          const { name, type, value, category, subValues } = segment;
-
-          return (
-            <Variable
-              key={name}
-              name={name}
-              category={category}
-              type={type}
-              value={value}
-              subValues={subValues}
-              whenData={whenData}
-              onChange={handleChange}
-              onRemove={handleClickRemove}
-            />
-          );
-        })}
+      <div className="min-h-px w-full bg-gray-300" />
+      <SchemaVariables
+        className="min-h-0 grow basis-0"
+        variables={variablesFiltered}
+        whenData={whenData}
+        onAdd={handleAddSchemaVariable}
+        onUpdate={handleUpdateSchemaVariable}
+        onRemove={handleRemoveSchemaVariable}
+      />
+      <div className="min-h-px w-full bg-gray-300" />
+      <div className="flex grow basis-0 flex-col pb-2">
+        <Heading as="h6">Style Variables</Heading>
+        <StyleVariables
+          variables={styleVariables}
+          onAdd={handleAddStyleVariable}
+          onUpdate={handleUpdateStyleVariable}
+          onRemove={handleRemoveStyleVariable}
+        />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch, useFieldArray } from '@plitzi/plitzi-ui/Form';
@@ -10,7 +11,7 @@ import VariableValue from './VariableValue';
 import type { Environment, QueryParams, RouteParams, SchemaVariable } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-const variableFormSchema = z.object({
+export const schemaVariableFormSchema = z.object({
   name: z
     .string()
     .min(4)
@@ -23,7 +24,7 @@ const variableFormSchema = z.object({
   subValues: z.array(z.record(z.string(), z.any())).optional()
 });
 
-export type VariableFormProps = {
+export type SchemaVariableFormProps = {
   name?: SchemaVariable['name'];
   category?: SchemaVariable['category'];
   value?: SchemaVariable['value'];
@@ -37,10 +38,10 @@ export type VariableFormProps = {
   };
   isNewRecord?: boolean;
   onClose?: (e?: MouseEvent) => void;
-  onSubmit?: (e: MouseEvent | undefined, values: SchemaVariable) => void;
+  onSubmit?: (values: SchemaVariable) => void;
 };
 
-const VariableForm = ({
+const SchemaVariableForm = ({
   name = 'variable',
   category = '',
   value = '',
@@ -50,10 +51,10 @@ const VariableForm = ({
   isNewRecord = false,
   onSubmit,
   onClose
-}: VariableFormProps) => {
+}: SchemaVariableFormProps) => {
   const form = useForm({
     defaultValues: { name, value, category, type, subValues },
-    config: { schema: variableFormSchema }
+    config: { schema: schemaVariableFormSchema }
   });
 
   const { fields, append, remove, move } = useFieldArray({
@@ -65,7 +66,7 @@ const VariableForm = ({
   const watchSubValues = useFormWatch(form.formMethods, 'subValues');
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof variableFormSchema>) => onSubmit?.(undefined, values as SchemaVariable),
+    (values: z.infer<typeof schemaVariableFormSchema>) => onSubmit?.(values as SchemaVariable),
     [onSubmit]
   );
 
@@ -98,7 +99,7 @@ const VariableForm = ({
   }, [form]);
 
   return (
-    <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
+    <Form form={form} onSubmit={handleSubmitInternal} className="gap-4 rounded border border-gray-300 bg-slate-100 p-2">
       <Form.Body gap={2}>
         <div className="flex gap-4">
           <Form.Input name="name" label="Name" size="xs" disabled={!isNewRecord} className="w-full grow basis-0" />
@@ -155,4 +156,4 @@ const VariableForm = ({
   );
 };
 
-export default VariableForm;
+export default SchemaVariableForm;

@@ -1,6 +1,6 @@
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 
-import type { DisplayMode, StyleItem, Style, TagType, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleItem, Style, TagType, StyleValue, StyleVariables } from '@plitzi/sdk-shared';
 
 export type StyleHelperMetaData = {
   tree: {
@@ -76,7 +76,7 @@ const toPx = (key: string): number => {
 };
 
 export const generateCache = (style: Style) => {
-  const { platform, mode = 'desktop-first' } = style;
+  const { platform, mode = 'desktop-first', variables } = style;
   const cache: string[] = [];
 
   const orderedKeys = Object.keys(platform).sort((a, b) =>
@@ -112,6 +112,11 @@ export const generateCache = (style: Style) => {
       }
     }
   });
+
+  console.log('hey 1', variables);
+  if ((variables as StyleVariables | undefined) && Object.keys(variables).length) {
+    console.log('hey 2');
+  }
 
   return cache.join('\n');
 };

@@ -21,9 +21,113 @@
       "types": "./dist/src/VariablesHelper.d.ts",
       "import": "./dist/src/VariablesHelper.mjs"
     },
+    "./components": {
+      "types": "./dist/src/components/index.d.ts",
+      "import": "./dist/src/components/index.mjs"
+    },
+    "./components/SchemaVariables": {
+      "types": "./dist/src/components/SchemaVariables/index.d.ts",
+      "import": "./dist/src/components/SchemaVariables/index.mjs"
+    },
+    "./components/SchemaVariables/SchemaVariable": {
+      "types": "./dist/src/components/SchemaVariables/SchemaVariable.d.ts",
+      "import": "./dist/src/components/SchemaVariables/SchemaVariable.mjs"
+    },
+    "./components/SchemaVariables/SchemaVariables": {
+      "types": "./dist/src/components/SchemaVariables/SchemaVariables.d.ts",
+      "import": "./dist/src/components/SchemaVariables/SchemaVariables.mjs"
+    },
+    "./components/SchemaVariables/VariableActions": {
+      "types": "./dist/src/components/SchemaVariables/VariableActions.d.ts",
+      "import": "./dist/src/components/SchemaVariables/VariableActions.mjs"
+    },
+    "./components/SchemaVariables/VariableDetails": {
+      "types": "./dist/src/components/SchemaVariables/VariableDetails.d.ts",
+      "import": "./dist/src/components/SchemaVariables/VariableDetails.mjs"
+    },
+    "./components/SchemaVariables/VariableValue": {
+      "types": "./dist/src/components/SchemaVariables/VariableValue.d.ts",
+      "import": "./dist/src/components/SchemaVariables/VariableValue.mjs"
+    },
+    "./components/SchemaVariables/index": {
+      "types": "./dist/src/components/SchemaVariables/index.d.ts",
+      "import": "./dist/src/components/SchemaVariables/index.mjs"
+    },
+    "./components/StyleVariables": {
+      "types": "./dist/src/components/StyleVariables/index.d.ts",
+      "import": "./dist/src/components/StyleVariables/index.mjs"
+    },
+    "./components/StyleVariables/StyleVariables": {
+      "types": "./dist/src/components/StyleVariables/StyleVariables.d.ts",
+      "import": "./dist/src/components/StyleVariables/StyleVariables.mjs"
+    },
+    "./components/StyleVariables/Variable": {
+      "types": "./dist/src/components/StyleVariables/Variable.d.ts",
+      "import": "./dist/src/components/StyleVariables/Variable.mjs"
+    },
+    "./components/StyleVariables/VariableGroup": {
+      "types": "./dist/src/components/StyleVariables/VariableGroup.d.ts",
+      "import": "./dist/src/components/StyleVariables/VariableGroup.mjs"
+    },
+    "./components/StyleVariables/VariableList": {
+      "types": "./dist/src/components/StyleVariables/VariableList.d.ts",
+      "import": "./dist/src/components/StyleVariables/VariableList.mjs"
+    },
+    "./components/StyleVariables/index": {
+      "types": "./dist/src/components/StyleVariables/index.d.ts",
+      "import": "./dist/src/components/StyleVariables/index.mjs"
+    },
+    "./components/index": {
+      "types": "./dist/src/components/index.d.ts",
+      "import": "./dist/src/components/index.mjs"
+    },
     "./index": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
+    },
+    "./models": {
+      "types": "./dist/src/models/index.d.ts",
+      "import": "./dist/src/models/index.mjs"
+    },
+    "./models/SchemaVariableForm": {
+      "types": "./dist/src/models/SchemaVariableForm/index.d.ts",
+      "import": "./dist/src/models/SchemaVariableForm/index.mjs"
+    },
+    "./models/SchemaVariableForm/SchemaVariableForm": {
+      "types": "./dist/src/models/SchemaVariableForm/SchemaVariableForm.d.ts",
+      "import": "./dist/src/models/SchemaVariableForm/SchemaVariableForm.mjs"
+    },
+    "./models/SchemaVariableForm/VariableSubValue": {
+      "types": "./dist/src/models/SchemaVariableForm/VariableSubValue.d.ts",
+      "import": "./dist/src/models/SchemaVariableForm/VariableSubValue.mjs"
+    },
+    "./models/SchemaVariableForm/VariableSubValueActions": {
+      "types": "./dist/src/models/SchemaVariableForm/VariableSubValueActions.d.ts",
+      "import": "./dist/src/models/SchemaVariableForm/VariableSubValueActions.mjs"
+    },
+    "./models/SchemaVariableForm/VariableValue": {
+      "types": "./dist/src/models/SchemaVariableForm/VariableValue.d.ts",
+      "import": "./dist/src/models/SchemaVariableForm/VariableValue.mjs"
+    },
+    "./models/SchemaVariableForm/index": {
+      "types": "./dist/src/models/SchemaVariableForm/index.d.ts",
+      "import": "./dist/src/models/SchemaVariableForm/index.mjs"
+    },
+    "./models/StyleVariableForm": {
+      "types": "./dist/src/models/StyleVariableForm/index.d.ts",
+      "import": "./dist/src/models/StyleVariableForm/index.mjs"
+    },
+    "./models/StyleVariableForm/StyleVariableForm": {
+      "types": "./dist/src/models/StyleVariableForm/StyleVariableForm.d.ts",
+      "import": "./dist/src/models/StyleVariableForm/StyleVariableForm.mjs"
+    },
+    "./models/StyleVariableForm/index": {
+      "types": "./dist/src/models/StyleVariableForm/index.d.ts",
+      "import": "./dist/src/models/StyleVariableForm/index.mjs"
+    },
+    "./models/index": {
+      "types": "./dist/src/models/index.d.ts",
+      "import": "./dist/src/models/index.mjs"
     }
   },
   "type": "module",
@@ -36,8 +140,10 @@
   },
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
+    "clsx": "^2.1.1",
     "eslint": "^9.39.2",
-    "lodash-es": "^4.17.22"
+    "lodash-es": "^4.17.22",
+    "zod": "^4.3.4"
   },
   "devDependencies": {
     "eslint": "^9.39.2",

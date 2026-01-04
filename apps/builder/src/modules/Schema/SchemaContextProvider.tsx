@@ -526,6 +526,7 @@ const SchemaContextProvider = ({
 
   useEventBridge('main', events);
 
+  // @todo: move everything to builderHandler
   const valueMemo = useMemo(() => {
     if (type === 'main') {
       return {

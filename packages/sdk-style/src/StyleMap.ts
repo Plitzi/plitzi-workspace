@@ -214,6 +214,10 @@ class StyleMap {
       this.variables[category] = {};
     }
 
+    if (this.variables[category][name]) {
+      return false;
+    }
+
     this.variables[category][name] = value;
 
     return true;
