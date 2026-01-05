@@ -149,7 +149,7 @@ const SchemaVariableForm = ({
           Cancel
         </Button>
         <Button type="submit" size="xs">
-          Submit
+          {isNewRecord ? 'Add' : 'Update'}
         </Button>
       </Form.Footer>
     </Form>

@@ -102,7 +102,7 @@ const StyleVariableForm = ({
           Cancel
         </Button>
         <Button type="submit" size="xs" className="grow basis-0">
-          Add
+          {isNewRecord ? 'Add' : 'Update'}
         </Button>
       </Form.Footer>
     </Form>
