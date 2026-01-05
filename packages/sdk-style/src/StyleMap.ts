@@ -92,28 +92,15 @@ class StyleMap {
     }
 
     if (path && value) {
-      set(this.platform, `${displayMode}.${selector}.attributes.${path}`, value);
+      set(styleItem, `attributes.${path}`, value);
     } else if (path) {
-      set(
-        this.platform,
-        `${displayMode}.${selector}.attributes`,
-        omit(get(this.platform, `${displayMode}.${selector}.attributes`), [path])
-      );
+      set(styleItem, 'attributes', omit(styleItem.attributes, [path]));
     } else if (!path && value) {
-      set(this.platform, `${displayMode}.${selector}.attributes`, value);
+      set(styleItem, 'attributes', value);
     }
 
-    const selectorUpdated = get(this.platform, `${displayMode}.${selector}`);
-    set(
-      this.platform,
-      `${displayMode}.${selector}.cache`,
-      processSelector({
-        name: selector,
-        type,
-        attributes: selectorUpdated.attributes,
-        variables: selectorUpdated.variables
-      })
-    );
+    set(styleItem, 'cache', processSelector(styleItem));
+    set(this.platform, `${displayMode}.${selector}`, styleItem);
 
     return true;
   };

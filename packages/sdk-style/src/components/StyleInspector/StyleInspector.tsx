@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import get from 'lodash-es/get.js';
 import pick from 'lodash-es/pick.js';
 import set from 'lodash-es/set.js';
-import { use, useCallback, useMemo } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
@@ -38,18 +38,20 @@ const StyleInspector = ({
   const {
     style,
     displayMode,
-    style: { platform, variables },
-    selectorSelected,
-    setSelectorSelected,
-    styleSelector,
-    setStyleSelector
+    style: { platform, variables }
   } = use(BuilderStyleContext);
+  const [selectorSelected, setSelectorSelected] = useState<string | undefined>(get(styleSelectors, 'base', undefined));
+  const [styleSelector, setStyleSelector] = useState<string>('base');
+  const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectors = useMemo(
     () => Object.values(pick(get(style.platform, displayMode), selectorName.split(' '))),
     [style, displayMode, selectorName]
   );
-  const { builderHandler } = use(BuilderContext);
+  const selector = useMemo<StyleItem | undefined>(
+    () => get(style, `platform.${displayMode}.${selectorSelected}`),
+    [style, displayMode, selectorSelected]
+  );
   const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
     () =>
       get(
@@ -59,6 +61,11 @@ const StyleInspector = ({
       ) as Element['definition']['styleSelectors'],
     [componentDefinitions, element]
   );
+
+  useEffect(() => {
+    setStyleSelector('base');
+    setSelectorSelected(get(styleSelectors, 'base', '').split(' ')[0]);
+  }, [styleSelectors]);
 
   const handleAddSelector = useCallback(
     (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => {
@@ -91,15 +98,15 @@ const StyleInspector = ({
 
   const handleSelectSelector = useCallback(
     (selector?: Pick<StyleItem, 'name' | 'type'>) => {
-      setSelectorSelected?.(state => {
-        if (!selector || (state && state.name === selector.name)) {
+      setSelectorSelected(state => {
+        if (!selector || (state && state === selector.name)) {
           return undefined;
         }
 
-        return selectors.find(selectorItem => selectorItem.name === selector.name);
+        return selectors.find(selectorItem => selectorItem.name === selector.name)?.name;
       });
     },
-    [setSelectorSelected, selectors]
+    [selectors]
   );
 
   const handleChangeSelector = useCallback(
@@ -125,7 +132,7 @@ const StyleInspector = ({
     [setCache]
   );
 
-  const handleChangeStyleSelector = useCallback((value: string) => setStyleSelector?.(value), [setStyleSelector]);
+  const handleChangeStyleSelector = useCallback((value: string) => setStyleSelector(value), [setStyleSelector]);
 
   return (
     <div className="flex w-full grow flex-col">
@@ -139,16 +146,16 @@ const StyleInspector = ({
               intent="secondary"
               checked={cache.viewMode === 'advanced'}
               onChange={handleClicViewMode}
-              disabled={selectorSelected?.name.includes(':')}
+              disabled={selector?.name.includes(':')}
             />
           </div>
         </div>
-        {mode !== 'manager' && (
+        {mode === 'element' && (
           <Selector
             className="min-h-0 w-full"
             style={style}
             value={selectorName}
-            selectorSelected={selectorSelected}
+            selectorSelected={selector}
             displayMode={displayMode}
             onAdd={handleAddSelector}
             onChange={handleChangeSelector}
@@ -172,7 +179,7 @@ const StyleInspector = ({
         {cache.viewMode === 'advanced' && (
           <InspectorModeAdvanced
             selectors={selectors}
-            selector={selectorSelected}
+            selector={selector}
             displayMode={displayMode}
             styleVariables={variables}
           />
@@ -180,7 +187,7 @@ const StyleInspector = ({
         {cache.viewMode === 'basic' && (
           <InspectorModeBasic
             styleSelector={styleSelector}
-            selector={selectorSelected}
+            selector={selector}
             element={element}
             displayMode={displayMode}
           />

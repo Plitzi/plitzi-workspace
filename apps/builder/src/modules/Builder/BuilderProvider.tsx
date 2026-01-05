@@ -33,8 +33,7 @@ import type {
   Schema,
   Style,
   DropPosition,
-  BuilderNetworkContextValue,
-  StyleItem
+  BuilderNetworkContextValue
 } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
@@ -69,8 +68,6 @@ const BuilderProvider = ({
   const elementSelectedRef = useRef(elementSelected);
   elementSelectedRef.current = elementSelected;
   const [elementHovered, setElementHovered] = useState<string | undefined>(undefined);
-  const [selectorSelected, setSelectorSelected] = useState<StyleItem>();
-  const [styleSelector, setStyleSelector] = useState('base');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const pages = useMemo(() => get(schema, 'pages', []), [schema]);
@@ -137,9 +134,6 @@ const BuilderProvider = ({
     (elementId?: string, iframeDOM?: HTMLIFrameElement | null, force = false) => {
       setElementSelected(state => {
         if (force) {
-          setSelectorSelected(undefined);
-          setStyleSelector('base');
-
           return elementId;
         }
 
@@ -180,20 +174,10 @@ const BuilderProvider = ({
           }
         }
 
-        const selector = get(element, 'definition.styleSelectors.base', '');
-        const name = get(selector.split(' '), '0');
-        setStyleSelector('base');
-        if (name) {
-          const selectorInstance = get(styleRef.current, `platform.${displayMode}.${name}`, undefined);
-          setSelectorSelected(selectorInstance);
-        } else {
-          setSelectorSelected(undefined);
-        }
-
         return elementId;
       });
     },
-    [supportRealTime, displayMode, builderElementPermissions, subscriptionsPush, baseElementId]
+    [supportRealTime, builderElementPermissions, subscriptionsPush, baseElementId]
   );
 
   const setHovered = useCallback(
@@ -238,8 +222,6 @@ const BuilderProvider = ({
       onBaseElementChange?.(id);
       setBaseContext(state => {
         setHovered(undefined);
-        setSelectorSelected(undefined);
-        setStyleSelector('base');
         if (state.baseElementId === id) {
           return state;
         }
@@ -505,8 +487,6 @@ const BuilderProvider = ({
   useEffect(() => {
     if (baseElementId) {
       setHovered(undefined);
-      setSelectorSelected(undefined);
-      setStyleSelector('base');
       setSelected(undefined);
       if (baseContext.baseElementId !== baseElementId && mode !== 'normal') {
         builderSetBaseContext(baseElementId);
@@ -514,28 +494,6 @@ const BuilderProvider = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseElementId, mode]);
-
-  useEffect(() => {
-    setStyleSelector('base');
-    if (!elementSelected) {
-      return;
-    }
-
-    const element = get(schemaRef.current, `flat.${elementSelected}`, undefined);
-    if (!element) {
-      return;
-    }
-
-    const selector = get(element, 'definition.styleSelectors.base', '');
-    const name = get(selector.split(' '), '0');
-    if (name) {
-      const selectorInstance = get(styleRef.current, `platform.${displayMode}.${name}`, undefined);
-      setSelectorSelected(selectorInstance);
-    } else {
-      setSelectorSelected(undefined);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayMode]);
 
   const selectedValueMemo = useMemo(() => ({ elementSelected, setSelected }), [elementSelected, setSelected]);
 
@@ -551,10 +509,7 @@ const BuilderProvider = ({
     [getBaseElement, drop, setVisibility, schema]
   );
 
-  const builderStyleValueMemo = useMemo(
-    () => ({ style, selectorSelected, displayMode, setSelectorSelected, styleSelector, setStyleSelector }),
-    [style, selectorSelected, displayMode, setSelectorSelected, styleSelector, setStyleSelector]
-  );
+  const builderStyleValueMemo = useMemo(() => ({ style, displayMode }), [style, displayMode]);
 
   const events = useMemo<Record<string, EventBridgeCallback>>(
     () => ({ builderSetBaseContext, builderSetSelected: setSelected, builderSetHovered: setHovered }),
