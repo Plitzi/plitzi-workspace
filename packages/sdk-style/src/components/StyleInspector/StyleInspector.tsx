@@ -38,7 +38,7 @@ const StyleInspector = ({
   const {
     style,
     displayMode,
-    style: { platform },
+    style: { platform, variables },
     selectorSelected,
     setSelectorSelected,
     styleSelector,
@@ -170,7 +170,12 @@ const StyleInspector = ({
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto">
         {cache.viewMode === 'advanced' && (
-          <InspectorModeAdvanced selectors={selectors} selector={selectorSelected} displayMode={displayMode} />
+          <InspectorModeAdvanced
+            selectors={selectors}
+            selector={selectorSelected}
+            displayMode={displayMode}
+            styleVariables={variables}
+          />
         )}
         {cache.viewMode === 'basic' && (
           <InspectorModeBasic

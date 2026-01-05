@@ -17,33 +17,41 @@ import formatCssFromSelector, {
 } from '../../../helpers/formatCssFromSelector';
 
 import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
-import type { DisplayMode, StyleBaseItem, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleBaseItem, StyleItem, StyleVariableCategory, StyleVariables } from '@plitzi/sdk-shared';
 
 export type InspectorModeAdvancedProps = {
   selectors: StyleItem[];
   selector?: StyleItem;
   displayMode: DisplayMode;
+  styleVariables?: Partial<StyleVariables>;
 };
 
-const InspectorModeAdvanced = ({ selectors, selector, displayMode }: InspectorModeAdvancedProps) => {
+const InspectorModeAdvanced = ({ selectors, selector, displayMode, styleVariables }: InspectorModeAdvancedProps) => {
   const selectorsRef = useRef(selectors);
   selectorsRef.current = selectors;
   const [reRender, setReRender] = useState(false);
   const { builderHandler } = use(BuilderContext);
   const { useDataSource } = use(DataSourceContext);
-  const { variables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
+  const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
   const CMValue = useMemo(
     () => formatCssFromSelector(selectors.map(selector => selector.cache).join('\n'), false, 2, false).join('\n\n'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectors, reRender]
   );
   const variablesNames = useMemo<AutoComplete[]>(
-    () =>
-      Object.keys(variables).reduce<AutoComplete[]>(
+    () => [
+      ...Object.keys(schemaVariables).reduce<AutoComplete[]>(
         (acum, variableKey) => [...acum, { type: 'css-token' as const, value: variableKey }],
         []
       ),
-    [variables]
+      ...(Object.keys(styleVariables ?? {}) as StyleVariableCategory[]).flatMap(variableCategory =>
+        Object.keys(styleVariables?.[variableCategory] ?? {}).reduce<AutoComplete[]>(
+          (acum, variableKey) => [...acum, { type: 'css-token' as const, value: variableKey }],
+          []
+        )
+      )
+    ],
+    [schemaVariables, styleVariables]
   );
 
   const sync = useCallback(
