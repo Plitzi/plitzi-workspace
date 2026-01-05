@@ -15,7 +15,7 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
-import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
 import IframeMode from './renderModes/IframeMode';
 import RawMode from './renderModes/RawMode';
@@ -56,7 +56,7 @@ const Sdk = ({
   } = use(StyleContext);
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
-    const cssVariables = variablesToCss(variables);
+    const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssVariables(cache, variables);
 
     if (renderMode === 'iframe' || renderMode === 'shadow') {

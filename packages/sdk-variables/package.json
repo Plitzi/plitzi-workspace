@@ -159,7 +159,7 @@
     "clsx": "^2.1.1",
     "eslint": "^9.39.2",
     "lodash-es": "^4.17.22",
-    "zod": "^4.3.4"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "eslint": "^9.39.2",

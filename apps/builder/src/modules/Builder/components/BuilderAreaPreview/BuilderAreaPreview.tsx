@@ -18,7 +18,7 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
-import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
@@ -80,7 +80,7 @@ const BuilderAreaPreview = ({
   );
 
   const css = useMemo(() => {
-    const cssVariables = variablesToCss(variables);
+    const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssVariables(styleCache, variables);
 
     return `:root{${cssVariables}}\n${styleFrame}\n${cacheParsed}\n${settings?.customCss ?? ''}`;

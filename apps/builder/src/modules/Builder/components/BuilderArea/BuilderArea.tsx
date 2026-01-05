@@ -22,7 +22,7 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
-import { variablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -77,7 +77,7 @@ const BuilderArea = ({
   // @todo: variables should be only related to styles
   const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
   const css = useMemo(() => {
-    const cssVariables = variablesToCss(variables);
+    const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssVariables(cache, variables);
 
     return `:root{${cssVariables}}\n${styleFrame}\n${cacheParsed}\n${customCss}\n${externalStyle}`;
@@ -204,7 +204,7 @@ const BuilderArea = ({
       className={clsx(
         'builder-area flex flex-col p-2 select-none',
         {
-          'min-w-[600px] overflow-hidden': multiPagesMode,
+          'min-w-150 overflow-hidden': multiPagesMode,
           'basis-0 overflow-auto': !multiPagesMode,
           grow: !mobilePreview && !mobilePreview,
           'px-4 pt-4 pb-2': mode === 'normal',
@@ -215,9 +215,9 @@ const BuilderArea = ({
     >
       <div
         className={clsx('mx-auto mb-2 flex w-full grow basis-0 flex-col shadow', {
-          'max-w-[1440px]': displayMode === 'desktop',
-          'max-w-3xl': displayMode === 'tablet',
-          'max-w-[425px]': displayMode === 'mobile'
+          'max-w-360': displayMode === 'desktop',
+          'max-w-48': displayMode === 'tablet',
+          'max-w-106.25': displayMode === 'mobile'
         })}
       >
         {mode === 'normal' && showHeader && (

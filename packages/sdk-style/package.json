@@ -698,7 +698,7 @@
     "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.15",
+    "@plitzi/plitzi-ui": "^1.1.16",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
@@ -706,7 +706,7 @@
     "immer": "^11.1.3",
     "lodash-es": "^4.17.22",
     "prop-types": "^15.8.1",
-    "zod": "^4.2.1"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",

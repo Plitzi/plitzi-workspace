@@ -1,4 +1,5 @@
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
+import { styleVariablesToCss } from '@plitzi/sdk-variables';
 
 import type { DisplayMode, StyleItem, Style, TagType, StyleValue, StyleVariables } from '@plitzi/sdk-shared';
 
@@ -113,9 +114,8 @@ export const generateCache = (style: Style) => {
     }
   });
 
-  console.log('hey 1', variables);
   if ((variables as StyleVariables | undefined) && Object.keys(variables).length) {
-    console.log('hey 2');
+    cache.push(styleVariablesToCss(variables));
   }
 
   return cache.join('\n');
