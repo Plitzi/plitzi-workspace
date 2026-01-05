@@ -10,7 +10,6 @@ import { useCallback, use, useMemo } from 'react';
 
 import { baseDefaultValue } from '@plitzi/sdk-shared';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 
 import useStyleBinding from './hooks/useStyleBinding';
@@ -39,7 +38,6 @@ const StyleInspectorProvider = ({
   displayMode
 }: StyleInspectorProviderProps) => {
   const { builderHandler } = use(BuilderContext);
-  const { setSelectorSelected } = use(BuilderStyleContext);
   const bindingData = useStyleBinding({ element });
   const { useDataSource } = use(DataSourceContext);
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
@@ -133,10 +131,8 @@ const StyleInspectorProvider = ({
           })
         );
       }
-
-      setSelectorSelected?.({ name: customClass, type: 'class', attributes: {}, cache: '' });
     },
-    [bindingData, selector, element, styleSelector, setSelectorSelected, builderHandler, displayMode]
+    [bindingData, selector, element, styleSelector, builderHandler, displayMode]
   );
 
   const getDefaultValue = useCallback(
