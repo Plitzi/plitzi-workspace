@@ -1,5 +1,5 @@
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
-import { styleVariablesToCss } from '@plitzi/sdk-variables';
+import { styleVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
 import type { DisplayMode, StyleItem, Style, TagType, StyleValue, StyleVariables } from '@plitzi/sdk-shared';
 
