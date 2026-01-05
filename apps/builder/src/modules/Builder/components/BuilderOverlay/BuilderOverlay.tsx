@@ -10,7 +10,7 @@ import OverlayNormal from './OverlayNormal';
 import useBuilderElement from '../../hooks/useBuilderElement';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { DisplayMode, Element } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BuilderOverlayProps = {
@@ -166,14 +166,15 @@ const BuilderOverlay = ({
     throttledHandleProcessContainer
   ]);
 
-  const { style, selectorSelected } = use(BuilderStyleContext);
-  const elementStyle = useMemo(() => {
-    if (!selectorSelected?.name) {
+  const { style, selector } = use(BuilderStyleContext);
+  const selectorState = useMemo(() => (mode === 'hover' ? '' : selector), [mode, selector]);
+  const elementStyle = useMemo<StyleItem['attributes']>(() => {
+    if (!selectorState) {
       return {};
     }
 
-    return get(style, `platform.${displayMode}.${selectorSelected.name}.attributes`, {});
-  }, [style, displayMode, selectorSelected?.name]);
+    return get(style, `platform.${displayMode}.${selectorState}.attributes`, {});
+  }, [style, displayMode, selector]);
 
   useEffect(() => {
     if (mode !== 'select') {
@@ -226,14 +227,6 @@ const BuilderOverlay = ({
     };
   }, [id, overlayProps.element, overlayProps.elementDOM, getElementDOM, mode, element, handleProcessContainer]);
 
-  const selector = useMemo(() => {
-    if (mode === 'hover') {
-      return '';
-    }
-
-    return selectorSelected?.name;
-  }, [mode, selectorSelected?.name]);
-
   if (!overlayProps.element || !overlayProps.elementDOM) {
     return undefined;
   }
@@ -252,7 +245,7 @@ const BuilderOverlay = ({
           color={color}
           collaboratorName={collaboratorName}
           mode={mode}
-          selector={selector}
+          selector={selectorState}
           {...overlayProps}
         />
       )}

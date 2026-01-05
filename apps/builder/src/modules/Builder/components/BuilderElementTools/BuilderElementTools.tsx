@@ -6,6 +6,7 @@ import { use, useMemo, useCallback, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
@@ -25,6 +26,7 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage<string>('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
+  const { setSelector, setStyleSelector } = use(BuilderStyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
@@ -110,7 +112,13 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
       <ToolsList onSelect={handleClickListItems} selected={selected} />
       <div className="flex grow basis-0 flex-col overflow-y-auto">
         {selected === 'style' && (
-          <StyleInspector mode="element" element={element} styleSelectors={tempDefinition.styleSelectors} />
+          <StyleInspector
+            mode="element"
+            element={element}
+            styleSelectors={tempDefinition.styleSelectors}
+            onSelect={setSelector}
+            onStyleSelect={setStyleSelector}
+          />
         )}
         {selected === 'settings' && (
           <>

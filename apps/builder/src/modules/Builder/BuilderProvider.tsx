@@ -68,6 +68,8 @@ const BuilderProvider = ({
   const elementSelectedRef = useRef(elementSelected);
   elementSelectedRef.current = elementSelected;
   const [elementHovered, setElementHovered] = useState<string | undefined>(undefined);
+  const [selector, setSelector] = useState<string | undefined>();
+  const [styleSelector, setStyleSelector] = useState<string | undefined>('base');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const pages = useMemo(() => get(schema, 'pages', []), [schema]);
@@ -509,7 +511,10 @@ const BuilderProvider = ({
     [getBaseElement, drop, setVisibility, schema]
   );
 
-  const builderStyleValueMemo = useMemo(() => ({ style, displayMode }), [style, displayMode]);
+  const builderStyleValueMemo = useMemo(
+    () => ({ style, displayMode, selector, setSelector, styleSelector, setStyleSelector }),
+    [style, displayMode, selector, styleSelector]
+  );
 
   const events = useMemo<Record<string, EventBridgeCallback>>(
     () => ({ builderSetBaseContext, builderSetSelected: setSelected, builderSetHovered: setHovered }),

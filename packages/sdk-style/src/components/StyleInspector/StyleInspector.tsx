@@ -23,13 +23,17 @@ export type StyleInspectorProps = {
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
   allowStyleSelector?: boolean;
+  onSelect?: (selector?: string) => void;
+  onStyleSelect?: (styleSelector?: string) => void;
 };
 
 const StyleInspector = ({
   element,
   mode = 'element',
   styleSelectors,
-  allowStyleSelector = true
+  allowStyleSelector = true,
+  onSelect,
+  onStyleSelect
 }: StyleInspectorProps) => {
   const [cache, setCache] = useStorage<{ viewMode: 'basic' | 'advanced' }>('builder-state.styleInspector', {
     viewMode: 'basic'
@@ -64,8 +68,10 @@ const StyleInspector = ({
 
   useEffect(() => {
     setStyleSelector('base');
-    setSelectorSelected(get(styleSelectors, 'base', '').split(' ')[0]);
-  }, [styleSelectors]);
+    const selector = get(styleSelectors, 'base', '').split(' ')[0];
+    setSelectorSelected(selector);
+    onSelect?.(selector);
+  }, [onSelect, styleSelectors]);
 
   const handleAddSelector = useCallback(
     (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => {
@@ -100,13 +106,18 @@ const StyleInspector = ({
     (selector?: Pick<StyleItem, 'name' | 'type'>) => {
       setSelectorSelected(state => {
         if (!selector || (state && state === selector.name)) {
+          onSelect?.(undefined);
+
           return undefined;
         }
 
-        return selectors.find(selectorItem => selectorItem.name === selector.name)?.name;
+        const name = selectors.find(selectorItem => selectorItem.name === selector.name)?.name;
+        onSelect?.(name);
+
+        return name;
       });
     },
-    [selectors]
+    [onSelect, selectors]
   );
 
   const handleChangeSelector = useCallback(
@@ -132,7 +143,13 @@ const StyleInspector = ({
     [setCache]
   );
 
-  const handleChangeStyleSelector = useCallback((value: string) => setStyleSelector(value), [setStyleSelector]);
+  const handleChangeStyleSelector = useCallback(
+    (value: string) => {
+      setStyleSelector(value);
+      onStyleSelect?.(value);
+    },
+    [onStyleSelect]
+  );
 
   return (
     <div className="flex w-full grow flex-col">
