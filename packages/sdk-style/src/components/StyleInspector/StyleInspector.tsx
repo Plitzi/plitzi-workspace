@@ -44,10 +44,10 @@ const StyleInspector = ({
     styleSelector,
     setStyleSelector
   } = use(BuilderStyleContext);
-  const selector = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
+  const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectors = useMemo(
-    () => Object.values(pick(get(style.platform, displayMode), selector.split(' '))),
-    [style, displayMode, selector]
+    () => Object.values(pick(get(style.platform, displayMode), selectorName.split(' '))),
+    [style, displayMode, selectorName]
   );
   const { builderHandler } = use(BuilderContext);
   const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
@@ -87,6 +87,19 @@ const StyleInspector = ({
       }
     },
     [builderHandler, displayMode, platform]
+  );
+
+  const handleSelectSelector = useCallback(
+    (selector?: Pick<StyleItem, 'name' | 'type'>) => {
+      setSelectorSelected?.(state => {
+        if (!selector || (state && state.name === selector.name)) {
+          return undefined;
+        }
+
+        return selectors.find(selectorItem => selectorItem.name === selector.name);
+      });
+    },
+    [setSelectorSelected, selectors]
   );
 
   const handleChangeSelector = useCallback(
@@ -134,13 +147,13 @@ const StyleInspector = ({
           <Selector
             className="min-h-0 w-full"
             style={style}
-            value={selector}
+            value={selectorName}
             selectorSelected={selectorSelected}
             displayMode={displayMode}
             onAdd={handleAddSelector}
             onChange={handleChangeSelector}
             onRemove={handleRemoveSelector}
-            onSelectorSelected={setSelectorSelected}
+            onSelectorSelected={handleSelectSelector}
           />
         )}
         {allowStyleSelector && Object.keys(styleSelectorsAvailables).length > 1 && (
@@ -157,12 +170,12 @@ const StyleInspector = ({
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto">
         {cache.viewMode === 'advanced' && (
-          <InspectorModeAdvanced selectors={selectors} selector={selectorSelected?.name} displayMode={displayMode} />
+          <InspectorModeAdvanced selectors={selectors} selector={selectorSelected} displayMode={displayMode} />
         )}
         {cache.viewMode === 'basic' && (
           <InspectorModeBasic
             styleSelector={styleSelector}
-            selector={selectorSelected?.name}
+            selector={selectorSelected}
             element={element}
             displayMode={displayMode}
           />

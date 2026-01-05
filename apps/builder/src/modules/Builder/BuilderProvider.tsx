@@ -27,14 +27,14 @@ import { isInViewport } from '../../helpers/utils';
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
   BuilderContextValue,
-  BuilderStyleContextValue,
   Element,
   EventBridgeEvent,
   PluginBuilder,
   Schema,
   Style,
   DropPosition,
-  BuilderNetworkContextValue
+  BuilderNetworkContextValue,
+  StyleItem
 } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
@@ -69,7 +69,7 @@ const BuilderProvider = ({
   const elementSelectedRef = useRef(elementSelected);
   elementSelectedRef.current = elementSelected;
   const [elementHovered, setElementHovered] = useState<string | undefined>(undefined);
-  const [selectorSelected, setSelectorSelected] = useState<BuilderStyleContextValue['selectorSelected']>();
+  const [selectorSelected, setSelectorSelected] = useState<StyleItem>();
   const [styleSelector, setStyleSelector] = useState('base');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
@@ -184,7 +184,8 @@ const BuilderProvider = ({
         const name = get(selector.split(' '), '0');
         setStyleSelector('base');
         if (name) {
-          setSelectorSelected({ name, type: 'class' });
+          const selectorInstance = get(styleRef.current, `platform.${displayMode}.${name}`, undefined);
+          setSelectorSelected(selectorInstance);
         } else {
           setSelectorSelected(undefined);
         }
@@ -192,7 +193,7 @@ const BuilderProvider = ({
         return elementId;
       });
     },
-    [supportRealTime, builderElementPermissions, subscriptionsPush, baseElementId]
+    [supportRealTime, displayMode, builderElementPermissions, subscriptionsPush, baseElementId]
   );
 
   const setHovered = useCallback(
@@ -513,6 +514,28 @@ const BuilderProvider = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseElementId, mode]);
+
+  useEffect(() => {
+    setStyleSelector('base');
+    if (!elementSelected) {
+      return;
+    }
+
+    const element = get(schemaRef.current, `flat.${elementSelected}`, undefined);
+    if (!element) {
+      return;
+    }
+
+    const selector = get(element, 'definition.styleSelectors.base', '');
+    const name = get(selector.split(' '), '0');
+    if (name) {
+      const selectorInstance = get(styleRef.current, `platform.${displayMode}.${name}`, undefined);
+      setSelectorSelected(selectorInstance);
+    } else {
+      setSelectorSelected(undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayMode]);
 
   const selectedValueMemo = useMemo(() => ({ elementSelected, setSelected }), [elementSelected, setSelected]);
 

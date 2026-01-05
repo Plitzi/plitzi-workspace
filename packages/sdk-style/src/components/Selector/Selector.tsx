@@ -14,7 +14,7 @@ import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
 
 import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
-import type { ChangeEvent, CSSProperties, Dispatch, KeyboardEvent, MouseEvent, RefObject, SetStateAction } from 'react';
+import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent, RefObject } from 'react';
 
 export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
 
@@ -25,7 +25,7 @@ export type SelectorProps = {
   displayMode: DisplayMode;
   disabled?: boolean;
   style: Style;
-  onSelectorSelected?: Dispatch<SetStateAction<SelectorValue | undefined>>;
+  onSelectorSelected?: (selector?: SelectorValue) => void;
   onAdd?: (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => void;
   onChange?: (value: string) => void;
   onRemove?: (selector: string) => void;
@@ -74,15 +74,7 @@ const Selector = ({
   }, [inputRef, inputValue, setOpen]);
 
   const handleClickSelector = useCallback(
-    (selector: SelectorValue) => {
-      onSelectorSelected?.(state => {
-        if (state && state.name === selector.name) {
-          return undefined;
-        }
-
-        return selector;
-      });
-    },
+    (selector: SelectorValue) => onSelectorSelected?.(selector),
     [onSelectorSelected]
   );
 

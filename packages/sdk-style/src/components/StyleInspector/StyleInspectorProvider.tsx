@@ -18,12 +18,12 @@ import StyleInspectorContext from './StyleInspectorContext';
 import { makeSelector, type StyleHelperMetaData } from '../../StyleHelper';
 
 import type { StyleInspectorContextValue } from './StyleInspectorContext';
-import type { DisplayMode, Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type StyleInspectorProviderProps = {
   children: ReactNode;
-  selectorName: string;
+  selector?: StyleItem;
   styleSelector: string;
   element?: Element;
   inheritData: StyleHelperMetaData;
@@ -32,19 +32,15 @@ export type StyleInspectorProviderProps = {
 
 const StyleInspectorProvider = ({
   children,
-  selectorName = '',
+  selector,
   styleSelector = 'base',
   element,
   inheritData,
   displayMode
 }: StyleInspectorProviderProps) => {
   const { builderHandler } = use(BuilderContext);
-  const { style, setSelectorSelected } = use(BuilderStyleContext);
+  const { setSelectorSelected } = use(BuilderStyleContext);
   const bindingData = useStyleBinding({ element });
-  const selector = useMemo(
-    () => get(style, `platform.${displayMode}.${selectorName}`, undefined),
-    [displayMode, selectorName, style]
-  );
   const { useDataSource } = use(DataSourceContext);
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
@@ -138,7 +134,7 @@ const StyleInspectorProvider = ({
         );
       }
 
-      setSelectorSelected?.({ name: customClass, type: 'class' });
+      setSelectorSelected?.({ name: customClass, type: 'class', attributes: {}, cache: '' });
     },
     [bindingData, selector, element, styleSelector, setSelectorSelected, builderHandler, displayMode]
   );

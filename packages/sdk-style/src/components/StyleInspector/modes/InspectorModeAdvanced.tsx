@@ -21,7 +21,7 @@ import type { DisplayMode, StyleBaseItem, StyleItem } from '@plitzi/sdk-shared';
 
 export type InspectorModeAdvancedProps = {
   selectors: StyleItem[];
-  selector?: string;
+  selector?: StyleItem;
   displayMode: DisplayMode;
 };
 
@@ -32,10 +32,6 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode }: InspectorMo
   const { builderHandler } = use(BuilderContext);
   const { useDataSource } = use(DataSourceContext);
   const { variables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
-  const selectorInstance = useMemo(
-    () => selectors.find(selectorAux => selectorAux.name === selector),
-    [selector, selectors]
-  );
   const CMValue = useMemo(
     () => formatCssFromSelector(selectors.map(selector => selector.cache).join('\n'), false, 2, false).join('\n\n'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,14 +60,14 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode }: InspectorMo
             'styleUpdateSelector',
             displayMode,
             newSelector.name,
-            selectorInstance?.type,
+            selector?.type,
             undefined,
             newSelector.attributes
           );
         }
       });
     },
-    [builderHandler, displayMode, selectorInstance?.type]
+    [builderHandler, displayMode, selector?.type]
   );
 
   const syncDebounced = useMemo(() => debounce(sync, 500), [sync]);

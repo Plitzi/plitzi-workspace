@@ -65,6 +65,10 @@ const Variables = ({ isCollapsed, onCollapse }: VariablesProps) => {
 
   const handleRemoveStyleVariable = useCallback(
     async (category: StyleVariableCategory, name: string) => {
+      if (!selector) {
+        return;
+      }
+
       const response = await showDialog(
         <Modal.Header>
           <h4>Remove Style Variable</h4>
@@ -78,7 +82,7 @@ const Variables = ({ isCollapsed, onCollapse }: VariablesProps) => {
       );
 
       if (response) {
-        builderHandler('styleRemoveSelectorVariable', displayMode, selector, category, name);
+        builderHandler('styleRemoveSelectorVariable', displayMode, selector.name, category, name);
       }
     },
     [builderHandler, displayMode, selector, showDialog]

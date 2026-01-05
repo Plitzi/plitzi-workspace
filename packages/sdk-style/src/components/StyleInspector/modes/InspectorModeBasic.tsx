@@ -18,29 +18,24 @@ import Variables from '../categories/Variables';
 import useStyleInherit from '../hooks/useStyleInherit';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 
-import type { DisplayMode, Element } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type InspectorModeBasicProps = {
-  selector?: string;
+  selector?: StyleItem;
   styleSelector?: string;
   element?: Element;
   displayMode: DisplayMode;
 };
 
-const InspectorModeBasic = ({
-  selector = '',
-  styleSelector = 'base',
-  element,
-  displayMode
-}: InspectorModeBasicProps) => {
+const InspectorModeBasic = ({ selector, styleSelector = 'base', element, displayMode }: InspectorModeBasicProps) => {
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
     'builder-state.styleInspector.collapsedCache',
     {}
   );
   const [showAllOptions, setShowAllOptions] = useStorage<boolean>('builder-state.styleInspector.showAllOptions', false);
   const [replaceTokens, setReplaceTokens] = useStorage<boolean>('builder-state.styleInspector.replaceTokens', false);
-  const inheritData = useStyleInherit({ element, selector, styleSelector });
+  const inheritData = useStyleInherit({ element, selector: selector?.name, styleSelector });
 
   const handleChangeCollapse = useCallback(
     (id: string, isCollapsed: boolean) => setCollapsedCache(state => ({ ...state, [id]: isCollapsed })),
@@ -84,7 +79,7 @@ const InspectorModeBasic = ({
     <StyleInspectorProvider
       displayMode={displayMode}
       styleSelector={styleSelector}
-      selectorName={selector}
+      selector={selector}
       element={element}
       inheritData={inheritData}
     >
