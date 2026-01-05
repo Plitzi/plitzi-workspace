@@ -68,10 +68,11 @@ const StyleInspector = ({
 
   useEffect(() => {
     setStyleSelector('base');
+    onStyleSelect?.('base');
     const selector = get(styleSelectors, 'base', '').split(' ')[0];
     setSelectorSelected(selector);
     onSelect?.(selector);
-  }, [onSelect, styleSelectors]);
+  }, [onSelect, onStyleSelect, styleSelectors]);
 
   const handleAddSelector = useCallback(
     (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => {
