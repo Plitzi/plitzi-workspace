@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client/core';
 
-const SegmentSchemaUpdateVariableMutation = gql`
-  mutation SegmentSchemaUpdateVariableMutation(
+const SegmentSpaceAddVariableMutation = gql`
+  mutation SegmentSpaceAddVariableMutation(
     $environment: String!
     $contextId: String!
     $name: String!
@@ -10,7 +10,7 @@ const SegmentSchemaUpdateVariableMutation = gql`
     $value: String
     $subValues: [SpaceVariableSubValueInput]
   ) {
-    SegmentSchemaUpdateVariable(
+    SegmentSpaceAddVariable(
       environment: $environment
       contextId: $contextId
       name: $name
@@ -31,4 +31,4 @@ const SegmentSchemaUpdateVariableMutation = gql`
   }
 `;
 
-export default SegmentSchemaUpdateVariableMutation;
+export default SegmentSpaceAddVariableMutation;

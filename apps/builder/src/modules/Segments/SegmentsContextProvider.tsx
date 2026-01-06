@@ -274,16 +274,16 @@ const SegmentsContextProvider = ({
     [dispatchSegments]
   );
 
-  const segmentSchemaAddVariable = useCallback(
+  const segmentSpaceAddVariable = useCallback(
     (segmentId: string, variable: SchemaVariable, fromSubscriptions = false) =>
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_SCHEMA_ADD_VARIABLE, segmentId, variable, fromSubscriptions }),
+      dispatchSegments({ type: SegmentsActions.SEGMENTS_SPACE_ADD_VARIABLE, segmentId, variable, fromSubscriptions }),
     [dispatchSegments]
   );
 
-  const segmentSchemaUpdateVariable = useCallback(
+  const segmentSpaceUpdateVariable = useCallback(
     (segmentId: string, variable: SchemaVariable, fromSubscriptions = false) =>
       dispatchSegments({
-        type: SegmentsActions.SEGMENTS_SCHEMA_UPDATE_VARIABLE,
+        type: SegmentsActions.SEGMENTS_SPACE_UPDATE_VARIABLE,
         segmentId,
         variable,
         fromSubscriptions
@@ -291,9 +291,9 @@ const SegmentsContextProvider = ({
     [dispatchSegments]
   );
 
-  const segmentSchemaRemoveVariable = useCallback(
+  const segmentSpaceRemoveVariable = useCallback(
     (segmentId: string, name: string, fromSubscriptions = false) =>
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_SCHEMA_REMOVE_VARIABLE, segmentId, name, fromSubscriptions }),
+      dispatchSegments({ type: SegmentsActions.SEGMENTS_SPACE_REMOVE_VARIABLE, segmentId, name, fromSubscriptions }),
     [dispatchSegments]
   );
 
@@ -609,31 +609,31 @@ const SegmentsContextProvider = ({
         );
       });
 
-      subscriptionManager.subscribe('SegmentSchemaAddVariable', {}, data => {
+      subscriptionManager.subscribe('SegmentSpaceAddVariable', {}, data => {
         const { contextId, variable } = get(
           data,
-          'data.SegmentSchemaAddVariable',
+          'data.SegmentSpaceAddVariable',
           {}
-        ) as SubscriptionsMap['SegmentSchemaAddVariable'];
-        segmentSchemaAddVariable(contextId, variable, true);
+        ) as SubscriptionsMap['SegmentSpaceAddVariable'];
+        segmentSpaceAddVariable(contextId, variable, true);
       });
 
-      subscriptionManager.subscribe('SegmentSchemaUpdateVariable', {}, data => {
+      subscriptionManager.subscribe('SegmentSpaceUpdateVariable', {}, data => {
         const { contextId, variable } = get(
           data,
-          'data.SegmentSchemaUpdateVariable',
+          'data.SegmentSpaceUpdateVariable',
           {}
-        ) as SubscriptionsMap['SegmentSchemaUpdateVariable'];
-        segmentSchemaUpdateVariable(contextId, variable, true);
+        ) as SubscriptionsMap['SegmentSpaceUpdateVariable'];
+        segmentSpaceUpdateVariable(contextId, variable, true);
       });
 
-      subscriptionManager.subscribe('SegmentSchemaRemoveVariable', {}, data => {
+      subscriptionManager.subscribe('SegmentSpaceRemoveVariable', {}, data => {
         const { contextId, variable } = get(
           data,
-          'data.SegmentSchemaRemoveVariable',
+          'data.SegmentSpaceRemoveVariable',
           {}
-        ) as SubscriptionsMap['SegmentSchemaRemoveVariable'];
-        segmentSchemaRemoveVariable(contextId, variable.name, true);
+        ) as SubscriptionsMap['SegmentSpaceRemoveVariable'];
+        segmentSpaceRemoveVariable(contextId, variable.name, true);
       });
 
       subscriptionManager.subscribe('SegmentStyleAddSelector', {}, data => {
@@ -726,9 +726,9 @@ const SegmentsContextProvider = ({
         'SegmentMoveElement',
         'SegmentCloneElement',
         'SegmentAddTemplate',
-        'SegmentSchemaAddVariable',
-        'SegmentSchemaUpdateVariable',
-        'SegmentSchemaRemoveVariable',
+        'SegmentSpaceAddVariable',
+        'SegmentSpaceUpdateVariable',
+        'SegmentSpaceRemoveVariable',
         'SegmentStyleAddSelector',
         'SegmentStyleUpdateSelector',
         'SegmentStyleRemoveSelector',
@@ -748,9 +748,9 @@ const SegmentsContextProvider = ({
     segmentRemoveElement,
     segmentMoveElement,
     segmentAddTemplate,
-    segmentSchemaAddVariable,
-    segmentSchemaUpdateVariable,
-    segmentSchemaRemoveVariable,
+    segmentSpaceAddVariable,
+    segmentSpaceUpdateVariable,
+    segmentSpaceRemoveVariable,
     segmentStyleAddSelector,
     segmentStyleUpdateSelector,
     segmentStyleRemoveSelector,
@@ -792,9 +792,9 @@ const SegmentsContextProvider = ({
       // schemaCloneElement: segmentsCloneElement,
       schemaAddTemplate: segmentAddTemplate,
       styleUpdate: segmentsUpdate,
-      schemaAddVariable: segmentSchemaAddVariable,
-      schemaUpdateVariable: segmentSchemaUpdateVariable,
-      schemaRemoveVariable: segmentSchemaRemoveVariable,
+      spaceAddVariable: segmentSpaceAddVariable,
+      spaceUpdateVariable: segmentSpaceUpdateVariable,
+      spaceRemoveVariable: segmentSpaceRemoveVariable,
       styleAddSelector: segmentStyleAddSelector,
       styleUpdateSelector: segmentStyleUpdateSelector,
       styleRemoveSelector: segmentStyleRemoveSelector,
@@ -813,9 +813,9 @@ const SegmentsContextProvider = ({
       segmentRemoveElement,
       segmentMoveElement,
       segmentAddTemplate,
-      segmentSchemaAddVariable,
-      segmentSchemaUpdateVariable,
-      segmentSchemaRemoveVariable,
+      segmentSpaceAddVariable,
+      segmentSpaceUpdateVariable,
+      segmentSpaceRemoveVariable,
       segmentStyleAddSelector,
       segmentStyleUpdateSelector,
       segmentStyleRemoveSelector,
@@ -843,9 +843,9 @@ const SegmentsContextProvider = ({
       segmentUpdateElement,
       segmentMoveElement,
       segmentRemoveElement,
-      segmentSchemaAddVariable,
-      segmentSchemaUpdateVariable,
-      segmentSchemaRemoveVariable,
+      segmentSpaceAddVariable,
+      segmentSpaceUpdateVariable,
+      segmentSpaceRemoveVariable,
       segmentStyleAddSelector,
       segmentStyleUpdateSelector,
       segmentStyleRemoveSelector,
@@ -871,9 +871,9 @@ const SegmentsContextProvider = ({
       segmentUpdateElement,
       segmentMoveElement,
       segmentRemoveElement,
-      segmentSchemaAddVariable,
-      segmentSchemaUpdateVariable,
-      segmentSchemaRemoveVariable,
+      segmentSpaceAddVariable,
+      segmentSpaceUpdateVariable,
+      segmentSpaceRemoveVariable,
       segmentStyleAddSelector,
       segmentStyleUpdateSelector,
       segmentStyleRemoveSelector,

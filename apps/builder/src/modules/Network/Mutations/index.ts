@@ -14,9 +14,9 @@ import SegmentCloneElementMutation from './Segment/space/elements/SegmentCloneEl
 import SegmentMoveElementMutation from './Segment/space/elements/SegmentMoveElementMutation';
 import SegmentRemoveElementMutation from './Segment/space/elements/SegmentRemoveElementMutation';
 import SegmentUpdateElementMutation from './Segment/space/elements/SegmentUpdateElementMutation';
-import SegmentSchemaAddVariableMutation from './Segment/space/variables/SegmentSchemaAddVariableMutation';
-import SegmentSchemaRemoveVariableMutation from './Segment/space/variables/SegmentSchemaRemoveVariableMutation';
-import SegmentSchemaUpdateVariableMutation from './Segment/space/variables/SegmentSchemaUpdateVariableMutation';
+import SegmentSpaceAddVariableMutation from './Segment/space/variables/SegmentSpaceAddVariableMutation';
+import SegmentSpaceRemoveVariableMutation from './Segment/space/variables/SegmentSpaceRemoveVariableMutation';
+import SegmentSpaceUpdateVariableMutation from './Segment/space/variables/SegmentSpaceUpdateVariableMutation';
 import SegmentStyleAddSelectorMutation from './Segment/style/selectors/SegmentStyleAddSelectorMutation';
 import SegmentStyleRemoveSelectorMutation from './Segment/style/selectors/SegmentStyleRemoveSelectorMutation';
 import SegmentStyleUpdateSelectorMutation from './Segment/style/selectors/SegmentStyleUpdateSelectorMutation';
@@ -157,9 +157,9 @@ export type MutationsMap = {
   SegmentMoveElement: unknown;
   SegmentCloneElement: unknown;
   SegmentAddTemplate: unknown;
-  SegmentSchemaAddVariable: unknown;
-  SegmentSchemaUpdateVariable: unknown;
-  SegmentSchemaRemoveVariable: unknown;
+  SegmentSpaceAddVariable: unknown;
+  SegmentSpaceUpdateVariable: unknown;
+  SegmentSpaceRemoveVariable: unknown;
   SegmentStyleAddSelector: unknown;
   SegmentStyleUpdateSelector: unknown;
   SegmentStyleRemoveSelector: unknown;
@@ -236,9 +236,9 @@ const Mutations = {
   SegmentMoveElement: SegmentMoveElementMutation,
   SegmentCloneElement: SegmentCloneElementMutation,
   SegmentAddTemplate: SegmentAddTemplateMutation,
-  SegmentSchemaAddVariable: SegmentSchemaAddVariableMutation,
-  SegmentSchemaRemoveVariable: SegmentSchemaRemoveVariableMutation,
-  SegmentSchemaUpdateVariable: SegmentSchemaUpdateVariableMutation,
+  SegmentSpaceAddVariable: SegmentSpaceAddVariableMutation,
+  SegmentSpaceRemoveVariable: SegmentSpaceRemoveVariableMutation,
+  SegmentSpaceUpdateVariable: SegmentSpaceUpdateVariableMutation,
   SegmentStyleAddSelector: SegmentStyleAddSelectorMutation,
   SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorMutation,
   SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorMutation,

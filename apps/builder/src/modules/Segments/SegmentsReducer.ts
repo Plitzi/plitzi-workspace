@@ -31,9 +31,9 @@ export const SegmentsActions = {
   SEGMENTS_MOVE_ELEMENT: 'SEGMENTS_MOVE_ELEMENT',
   SEGMENTS_CLONE_ELEMENT: 'SEGMENTS_CLONE_ELEMENT',
   SEGMENTS_UPDATE_ELEMENT: 'SEGMENTS_UPDATE_ELEMENT',
-  SEGMENTS_SCHEMA_ADD_VARIABLE: 'SEGMENTS_SCHEMA_ADD_VARIABLE',
-  SEGMENTS_SCHEMA_UPDATE_VARIABLE: 'SEGMENTS_SCHEMA_UPDATE_VARIABLE',
-  SEGMENTS_SCHEMA_REMOVE_VARIABLE: 'SEGMENTS_SCHEMA_REMOVE_VARIABLE',
+  SEGMENTS_SPACE_ADD_VARIABLE: 'SEGMENTS_SPACE_ADD_VARIABLE',
+  SEGMENTS_SPACE_UPDATE_VARIABLE: 'SEGMENTS_SPACE_UPDATE_VARIABLE',
+  SEGMENTS_SPACE_REMOVE_VARIABLE: 'SEGMENTS_SPACE_REMOVE_VARIABLE',
   SEGMENTS_STYLE_ADD_SELECTOR: 'SEGMENTS_STYLE_ADD_SELECTOR',
   SEGMENTS_STYLE_UPDATE_SELECTOR: 'SEGMENTS_STYLE_UPDATE_SELECTOR',
   SEGMENTS_STYLE_REMOVE_SELECTOR: 'SEGMENTS_STYLE_REMOVE_SELECTOR',
@@ -76,10 +76,10 @@ export type SegmentsReducerActions =
     } & SegmentsReducerActionsBase)
   | ({ type: 'SEGMENTS_UPDATE_ELEMENT'; element: Element } & SegmentsReducerActionsBase)
   | ({
-      type: 'SEGMENTS_SCHEMA_ADD_VARIABLE' | 'SEGMENTS_SCHEMA_UPDATE_VARIABLE';
+      type: 'SEGMENTS_SPACE_ADD_VARIABLE' | 'SEGMENTS_SPACE_UPDATE_VARIABLE';
       variable: SchemaVariable;
     } & SegmentsReducerActionsBase)
-  | ({ type: 'SEGMENTS_SCHEMA_REMOVE_VARIABLE'; name: string } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_SPACE_REMOVE_VARIABLE'; name: string } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_STYLE_ADD_SELECTOR' | 'SEGMENTS_STYLE_UPDATE_SELECTOR';
       displayMode: DisplayMode;
@@ -218,7 +218,7 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
       });
     }
 
-    case SegmentsActions.SEGMENTS_SCHEMA_ADD_VARIABLE: {
+    case SegmentsActions.SEGMENTS_SPACE_ADD_VARIABLE: {
       const { variable } = action;
 
       return produce(state, draft => {
@@ -230,7 +230,7 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
       });
     }
 
-    case SegmentsActions.SEGMENTS_SCHEMA_UPDATE_VARIABLE: {
+    case SegmentsActions.SEGMENTS_SPACE_UPDATE_VARIABLE: {
       const { variable } = action;
 
       return produce(state, draft => {
@@ -242,7 +242,7 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
       });
     }
 
-    case SegmentsActions.SEGMENTS_SCHEMA_REMOVE_VARIABLE: {
+    case SegmentsActions.SEGMENTS_SPACE_REMOVE_VARIABLE: {
       const { name } = action;
 
       return produce(state, draft => {

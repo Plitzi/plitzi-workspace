@@ -2,14 +2,14 @@ import { gql } from '@apollo/client/core';
 
 import type { SchemaVariable } from '@plitzi/sdk-shared';
 
-export type TSegmentSchemaUpdateVariableSubscription = {
+export type TSegmentSpaceAddVariableSubscription = {
   contextId: string;
   variable: SchemaVariable;
 };
 
-const SegmentSchemaUpdateVariableSubscription = gql`
+const SegmentSpaceAddVariableSubscription = gql`
   subscription ($environment: String!) {
-    SegmentSchemaUpdateVariable(environment: $environment) {
+    SegmentSpaceAddVariable(environment: $environment) {
       contextId
       variable {
         name
@@ -25,4 +25,4 @@ const SegmentSchemaUpdateVariableSubscription = gql`
   }
 `;
 
-export default SegmentSchemaUpdateVariableSubscription;
+export default SegmentSpaceAddVariableSubscription;
