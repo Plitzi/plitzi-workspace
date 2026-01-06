@@ -346,8 +346,14 @@ const SegmentsContextProvider = ({
   );
 
   const segmentStyleRemoveSelector = useCallback(
-    (segmentId: string, selector: string, fromSubscriptions = false) =>
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE_SELECTOR, segmentId, selector, fromSubscriptions }),
+    (segmentId: string, displayMode: DisplayMode, selector: string, fromSubscriptions = false) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR,
+        segmentId,
+        displayMode,
+        selector,
+        fromSubscriptions
+      }),
     [dispatchSegments]
   );
 
@@ -660,11 +666,12 @@ const SegmentsContextProvider = ({
         segmentStyleUpdateSelector(contextId, displayMode, selector, type, path, style, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
-        const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {
+        const { displayMode, selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {
+          displayMode: DisplayMode;
           selector: string;
           contextId: string;
         };
-        segmentStyleRemoveSelector(contextId, selector, true);
+        segmentStyleRemoveSelector(contextId, displayMode, selector, true);
       });
 
       subscriptionManager.subscribe('SegmentStyleAddSelectorVariable', {}, data => {
@@ -839,23 +846,6 @@ const SegmentsContextProvider = ({
       segmentsAdd,
       segmentsUpdate,
       segmentsRemove,
-      segmentAddElement,
-      segmentUpdateElement,
-      segmentMoveElement,
-      segmentRemoveElement,
-      segmentSpaceAddVariable,
-      segmentSpaceUpdateVariable,
-      segmentSpaceRemoveVariable,
-      segmentStyleAddSelector,
-      segmentStyleUpdateSelector,
-      segmentStyleRemoveSelector,
-      segmentStyleAddSelectorVariable,
-      segmentStyleUpdateSelectorVariable,
-      segmentStyleRemoveSelectorVariable,
-      segmentStyleAddVariable,
-      segmentStyleUpdateVariable,
-      segmentStyleRemoveVariable,
-      segmentAddTemplate,
       elementAsSegment,
       segmentAddMutation
     }),
@@ -867,23 +857,6 @@ const SegmentsContextProvider = ({
       segmentsAdd,
       segmentsUpdate,
       segmentsRemove,
-      segmentAddElement,
-      segmentUpdateElement,
-      segmentMoveElement,
-      segmentRemoveElement,
-      segmentSpaceAddVariable,
-      segmentSpaceUpdateVariable,
-      segmentSpaceRemoveVariable,
-      segmentStyleAddSelector,
-      segmentStyleUpdateSelector,
-      segmentStyleRemoveSelector,
-      segmentStyleAddSelectorVariable,
-      segmentStyleUpdateSelectorVariable,
-      segmentStyleRemoveSelectorVariable,
-      segmentStyleAddVariable,
-      segmentStyleUpdateVariable,
-      segmentStyleRemoveVariable,
-      segmentAddTemplate,
       elementAsSegment,
       segmentAddMutation
     ]
