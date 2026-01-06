@@ -2,18 +2,21 @@
 import CollaboratorConnectedSubscription from './Collaborator/CollaboratorConnectedSubscription';
 import CollaboratorDisconnectedSubscription from './Collaborator/CollaboratorDisconnectedSubscription';
 // Segment subscriptions
-import SegmentAddElementSubscription from './Segment/SegmentAddElementSubscription';
 import SegmentAddTemplateSubscription from './Segment/SegmentAddTemplateSubscription';
-import SegmentCloneElementSubscription from './Segment/SegmentCloneElementSubscription';
-import SegmentMoveElementSubscription from './Segment/SegmentMoveElementSubscription';
-import SegmentRemoveElementSubscription from './Segment/SegmentRemoveElementSubscription';
-import SegmentStyleAddSelectorSubscription from './Segment/SegmentStyleAddSelectorSubscription';
-import SegmentStyleAddVariableSubscription from './Segment/SegmentStyleAddVariableSubscription';
-import SegmentStyleRemoveSelectorSubscription from './Segment/SegmentStyleRemoveSelectorSubscription';
-import SegmentStyleRemoveVariableSubscription from './Segment/SegmentStyleRemoveVariableSubscription';
-import SegmentStyleUpdateSelectorSubscription from './Segment/SegmentStyleUpdateSelectorSubscription';
-import SegmentStyleUpdateVariableSubscription from './Segment/SegmentStyleUpdateVariableSubscription';
-import SegmentUpdateElementSubscription from './Segment/SegmentUpdateElementSubscription';
+import SegmentAddElementSubscription from './Segment/space/elements/SegmentAddElementSubscription';
+import SegmentCloneElementSubscription from './Segment/space/elements/SegmentCloneElementSubscription';
+import SegmentMoveElementSubscription from './Segment/space/elements/SegmentMoveElementSubscription';
+import SegmentRemoveElementSubscription from './Segment/space/elements/SegmentRemoveElementSubscription';
+import SegmentUpdateElementSubscription from './Segment/space/elements/SegmentUpdateElementSubscription';
+import SegmentStyleAddSelectorSubscription from './Segment/style/selectors/SegmentStyleAddSelectorSubscription';
+import SegmentStyleRemoveSelectorSubscription from './Segment/style/selectors/SegmentStyleRemoveSelectorSubscription';
+import SegmentStyleUpdateSelectorSubscription from './Segment/style/selectors/SegmentStyleUpdateSelectorSubscription';
+import SegmentStyleAddSelectorVariableSubscription from './Segment/style/selectorVariables/SegmentStyleAddSelectorVariableSubscription';
+import SegmentStyleRemoveSelectorVariableSubscription from './Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableSubscription';
+import SegmentStyleUpdateSelectorVariableSubscription from './Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableSubscription';
+import SegmentStyleAddVariableSubscription from './Segment/style/variables/SegmentStyleAddVariableSubscription';
+import SegmentStyleRemoveVariableSubscription from './Segment/style/variables/SegmentStyleRemoveVariableSubscription';
+import SegmentStyleUpdateVariableSubscription from './Segment/style/variables/SegmentStyleUpdateVariableSubscription';
 // Space subscriptions
 import SpaceAddElementSubscription from './Space/elements/SpaceAddElementSubscription';
 import SpaceCloneElementSubscription from './Space/elements/SpaceCloneElementSubscription';
@@ -122,6 +125,9 @@ export type SubscriptionsMap = {
   SegmentStyleAddSelector: unknown;
   SegmentStyleUpdateSelector: unknown;
   SegmentStyleRemoveSelector: unknown;
+  SegmentStyleAddSelectorVariable: unknown;
+  SegmentStyleUpdateSelectorVariable: unknown;
+  SegmentStyleRemoveSelectorVariable: unknown;
   SegmentStyleAddVariable: unknown;
   SegmentStyleUpdateVariable: unknown;
   SegmentStyleRemoveVariable: unknown;
@@ -171,6 +177,9 @@ const Subscriptions = {
   SegmentStyleAddSelector: SegmentStyleAddSelectorSubscription,
   SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorSubscription,
   SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorSubscription,
+  SegmentStyleAddSelectorVariable: SegmentStyleAddSelectorVariableSubscription,
+  SegmentStyleUpdateSelectorVariable: SegmentStyleUpdateSelectorVariableSubscription,
+  SegmentStyleRemoveSelectorVariable: SegmentStyleRemoveSelectorVariableSubscription,
   SegmentStyleAddVariable: SegmentStyleAddVariableSubscription,
   SegmentStyleUpdateVariable: SegmentStyleUpdateVariableSubscription,
   SegmentStyleRemoveVariable: SegmentStyleRemoveVariableSubscription

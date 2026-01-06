@@ -1,10 +1,19 @@
 import { gql } from '@apollo/client/core';
 
+import type { StyleVariableCategory } from '@plitzi/sdk-shared';
+
+export type TSegmentStyleRemoveVariableSubscription = {
+  contextId: string;
+  category: StyleVariableCategory;
+  name: string;
+};
+
 const SegmentStyleRemoveVariableSubscription = gql`
   subscription ($environment: String!) {
     SegmentStyleRemoveVariable(environment: $environment) {
-      variable
       contextId
+      category
+      name
     }
   }
 `;
