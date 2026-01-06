@@ -571,37 +571,32 @@ class FlatMap {
 
   static addVariables = (schemaVariables: Schema['variables'], variables: Schema['variables']) => {
     const instance = this.getInstance({ variables: schemaVariables });
-    instance.addVariables(variables);
 
-    return instance.variables;
+    return instance.addVariables(variables);
   };
 
   static addVariable = (schemaVariables: Schema['variables'], variable: SchemaVariable) => {
     const instance = this.getInstance({ variables: schemaVariables });
-    instance.addVariable(variable);
 
-    return instance.variables;
+    return instance.addVariable(variable);
   };
 
   static updateVariable = (schemaVariables: Schema['variables'], variable: SchemaVariable) => {
     const instance = this.getInstance({ variables: schemaVariables });
-    instance.updateVariable(variable);
 
-    return instance.variables;
+    return instance.updateVariable(variable);
   };
 
   static removeVariables = (schemaVariables: Schema['variables'], variables: string[]) => {
     const instance = this.getInstance({ variables: schemaVariables });
-    instance.removeVariables(variables);
 
-    return instance.variables;
+    return instance.removeVariables(variables);
   };
 
   static removeVariable = (schemaVariables: Schema['variables'], variable: string) => {
     const instance = this.getInstance({ variables: schemaVariables });
-    instance.removeVariable(variable);
 
-    return instance.variables;
+    return instance.removeVariable(variable);
   };
 
   // Extra Methods - Static

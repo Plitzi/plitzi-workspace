@@ -4,22 +4,28 @@ import CollectionRemoveMutation from './Collection/CollectionRemoveMutation';
 import CollectionRemoveRecordMutation from './Collection/CollectionRemoveRecordMutation';
 import CollectionUpdateMutation from './Collection/CollectionUpdateMutation';
 import CollectionUpdateRecordMutation from './Collection/CollectionUpdateRecordMutation';
-import SegmentAddElementMutation from './Segment/SegmentAddElementMutation';
 import SegmentAddMutation from './Segment/SegmentAddMutation';
 import SegmentAddTemplateMutation from './Segment/SegmentAddTemplateMutation';
-import SegmentCloneElementMutation from './Segment/SegmentCloneElementMutation';
-import SegmentMoveElementMutation from './Segment/SegmentMoveElementMutation';
 import SegmentPublishMutation from './Segment/SegmentPublishMutation';
-import SegmentRemoveElementMutation from './Segment/SegmentRemoveElementMutation';
 import SegmentRemoveMutation from './Segment/SegmentRemoveMutation';
-import SegmentStyleAddSelectorMutation from './Segment/SegmentStyleAddSelectorMutation';
-import SegmentStyleAddVariableMutation from './Segment/SegmentStyleAddVariableMutation';
-import SegmentStyleRemoveSelectorMutation from './Segment/SegmentStyleRemoveSelectorMutation';
-import SegmentStyleRemoveVariableMutation from './Segment/SegmentStyleRemoveVariableMutation';
-import SegmentStyleUpdateSelectorMutation from './Segment/SegmentStyleUpdateSelectorMutation';
-import SegmentStyleUpdateVariableMutation from './Segment/SegmentStyleUpdateVariableMutation';
-import SegmentUpdateElementMutation from './Segment/SegmentUpdateElementMutation';
 import SegmentUpdateMutation from './Segment/SegmentUpdateMutation';
+import SegmentAddElementMutation from './Segment/space/elements/SegmentAddElementMutation';
+import SegmentCloneElementMutation from './Segment/space/elements/SegmentCloneElementMutation';
+import SegmentMoveElementMutation from './Segment/space/elements/SegmentMoveElementMutation';
+import SegmentRemoveElementMutation from './Segment/space/elements/SegmentRemoveElementMutation';
+import SegmentUpdateElementMutation from './Segment/space/elements/SegmentUpdateElementMutation';
+import SegmentSchemaAddVariableMutation from './Segment/space/variables/SegmentSchemaAddVariableMutation';
+import SegmentSchemaRemoveVariableMutation from './Segment/space/variables/SegmentSchemaRemoveVariableMutation';
+import SegmentSchemaUpdateVariableMutation from './Segment/space/variables/SegmentSchemaUpdateVariableMutation';
+import SegmentStyleAddSelectorMutation from './Segment/style/selectors/SegmentStyleAddSelectorMutation';
+import SegmentStyleRemoveSelectorMutation from './Segment/style/selectors/SegmentStyleRemoveSelectorMutation';
+import SegmentStyleUpdateSelectorMutation from './Segment/style/selectors/SegmentStyleUpdateSelectorMutation';
+import SegmentStyleAddSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleAddSelectorVariableMutation';
+import SegmentStyleRemoveSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableMutation';
+import SegmentStyleUpdateSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableMutation';
+import SegmentStyleAddVariableMutation from './Segment/style/variables/SegmentStyleAddVariableMutation';
+import SegmentStyleRemoveVariableMutation from './Segment/style/variables/SegmentStyleRemoveVariableMutation';
+import SegmentStyleUpdateVariableMutation from './Segment/style/variables/SegmentStyleUpdateVariableMutation';
 import SpaceAddCdnMutation from './Space/cdns/SpaceAddCdnMutation';
 import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
 import SpaceSetCdnCredentialMutation from './Space/cdns/SpaceSetCdnCredentialMutation';
@@ -151,9 +157,15 @@ export type MutationsMap = {
   SegmentMoveElement: unknown;
   SegmentCloneElement: unknown;
   SegmentAddTemplate: unknown;
+  SegmentSchemaAddVariable: unknown;
+  SegmentSchemaUpdateVariable: unknown;
+  SegmentSchemaRemoveVariable: unknown;
   SegmentStyleAddSelector: unknown;
   SegmentStyleUpdateSelector: unknown;
   SegmentStyleRemoveSelector: unknown;
+  SegmentStyleAddSelectorVariable: unknown;
+  SegmentStyleRemoveSelectorVariable: unknown;
+  SegmentStyleUpdateSelectorVariable: unknown;
   SegmentStyleAddVariable: unknown;
   SegmentStyleUpdateVariable: unknown;
   SegmentStyleRemoveVariable: unknown;
@@ -224,9 +236,15 @@ const Mutations = {
   SegmentMoveElement: SegmentMoveElementMutation,
   SegmentCloneElement: SegmentCloneElementMutation,
   SegmentAddTemplate: SegmentAddTemplateMutation,
+  SegmentSchemaAddVariable: SegmentSchemaAddVariableMutation,
+  SegmentSchemaRemoveVariable: SegmentSchemaRemoveVariableMutation,
+  SegmentSchemaUpdateVariable: SegmentSchemaUpdateVariableMutation,
   SegmentStyleAddSelector: SegmentStyleAddSelectorMutation,
   SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorMutation,
   SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorMutation,
+  SegmentStyleAddSelectorVariable: SegmentStyleAddSelectorVariableMutation,
+  SegmentStyleRemoveSelectorVariable: SegmentStyleRemoveSelectorVariableMutation,
+  SegmentStyleUpdateSelectorVariable: SegmentStyleUpdateSelectorVariableMutation,
   SegmentStyleAddVariable: SegmentStyleAddVariableMutation,
   SegmentStyleUpdateVariable: SegmentStyleUpdateVariableMutation,
   SegmentStyleRemoveVariable: SegmentStyleRemoveVariableMutation,

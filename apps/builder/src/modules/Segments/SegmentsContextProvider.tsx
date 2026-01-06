@@ -26,11 +26,14 @@ import type {
   DisplayMode,
   TagType,
   StyleItem,
-  SegmentsContextValue
+  SegmentsContextValue,
+  StyleVariableCategory,
+  StyleVariableValue
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
+import type { SubscriptionsMap } from '@pmodules/Network/Subscriptions';
 import type { ReactNode } from 'react';
 
 export type SegmentsContextProviderProps = {
@@ -46,7 +49,8 @@ const SegmentsContextProvider = ({
 }: SegmentsContextProviderProps) => {
   const { query, mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
     QueriesMap,
-    MutationsMap
+    MutationsMap,
+    SubscriptionsMap
   >;
   const internalData = use(NetworkInternalContext);
   const { enqueueMiddleware } = use(QueueContext);
@@ -270,9 +274,32 @@ const SegmentsContextProvider = ({
     [dispatchSegments]
   );
 
+  const segmentSchemaAddVariable = useCallback(
+    (segmentId: string, variable: SchemaVariable, fromSubscriptions = false) =>
+      dispatchSegments({ type: SegmentsActions.SEGMENTS_SCHEMA_ADD_VARIABLE, segmentId, variable, fromSubscriptions }),
+    [dispatchSegments]
+  );
+
+  const segmentSchemaUpdateVariable = useCallback(
+    (segmentId: string, variable: SchemaVariable, fromSubscriptions = false) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_SCHEMA_UPDATE_VARIABLE,
+        segmentId,
+        variable,
+        fromSubscriptions
+      }),
+    [dispatchSegments]
+  );
+
+  const segmentSchemaRemoveVariable = useCallback(
+    (segmentId: string, name: string, fromSubscriptions = false) =>
+      dispatchSegments({ type: SegmentsActions.SEGMENTS_SCHEMA_REMOVE_VARIABLE, segmentId, name, fromSubscriptions }),
+    [dispatchSegments]
+  );
+
   // Style Actions
 
-  const segmentAddSelector = useCallback(
+  const segmentStyleAddSelector = useCallback(
     (
       segmentId: string,
       displayMode: DisplayMode,
@@ -283,7 +310,7 @@ const SegmentsContextProvider = ({
       fromSubscriptions = false
     ) =>
       dispatchSegments({
-        type: SegmentsActions.SEGMENTS_ADD_SELECTOR,
+        type: SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR,
         segmentId,
         displayMode,
         selector,
@@ -295,7 +322,7 @@ const SegmentsContextProvider = ({
     [dispatchSegments]
   );
 
-  const segmentUpdateSelector = useCallback(
+  const segmentStyleUpdateSelector = useCallback(
     (
       segmentId: string,
       displayMode: DisplayMode,
@@ -306,7 +333,7 @@ const SegmentsContextProvider = ({
       fromSubscriptions = false
     ) =>
       dispatchSegments({
-        type: SegmentsActions.SEGMENTS_UPDATE_SELECTOR,
+        type: SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR,
         segmentId,
         displayMode,
         selector,
@@ -318,33 +345,126 @@ const SegmentsContextProvider = ({
     [dispatchSegments]
   );
 
-  const segmentRemoveSelector = useCallback(
+  const segmentStyleRemoveSelector = useCallback(
     (segmentId: string, selector: string, fromSubscriptions = false) =>
       dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE_SELECTOR, segmentId, selector, fromSubscriptions }),
     [dispatchSegments]
   );
 
-  const segmentAddVariable = useCallback(
-    (segmentId: string, variable: string, value: string, fromSubscriptions = false) =>
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_ADD_VARIABLE, segmentId, variable, value, fromSubscriptions }),
-    [dispatchSegments]
-  );
-
-  const segmentUpdateVariable = useCallback(
-    (segmentId: string, variable: string, value: string, fromSubscriptions = false) =>
+  const segmentStyleAddSelectorVariable = useCallback(
+    (
+      segmentId: string,
+      displayMode: DisplayMode,
+      selector: string,
+      category: StyleVariableCategory,
+      name: string,
+      value: StyleVariableValue,
+      fromSubscriptions = false
+    ) =>
       dispatchSegments({
-        type: SegmentsActions.SEGMENTS_UPDATE_VARIABLE,
+        type: SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE,
         segmentId,
-        variable,
+        displayMode,
+        selector,
+        category,
+        name,
         value,
         fromSubscriptions
       }),
     [dispatchSegments]
   );
 
-  const segmentRemoveVariable = useCallback(
-    (segmentId: string, variable: string, fromSubscriptions = false) =>
-      dispatchSegments({ type: SegmentsActions.SEGMENTS_REMOVE_VARIABLE, segmentId, variable, fromSubscriptions }),
+  const segmentStyleUpdateSelectorVariable = useCallback(
+    (
+      segmentId: string,
+      displayMode: DisplayMode,
+      selector: string,
+      category: StyleVariableCategory,
+      name: string,
+      value: StyleVariableValue,
+      fromSubscriptions = false
+    ) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE,
+        segmentId,
+        displayMode,
+        selector,
+        category,
+        name,
+        value,
+        fromSubscriptions
+      }),
+    [dispatchSegments]
+  );
+
+  const segmentStyleRemoveSelectorVariable = useCallback(
+    (
+      segmentId: string,
+      displayMode: DisplayMode,
+      selector: string,
+      category: StyleVariableCategory,
+      name: string,
+      fromSubscriptions = false
+    ) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE,
+        segmentId,
+        displayMode,
+        selector,
+        category,
+        name,
+        fromSubscriptions
+      }),
+    [dispatchSegments]
+  );
+
+  const segmentStyleAddVariable = useCallback(
+    (
+      segmentId: string,
+      category: StyleVariableCategory,
+      name: string,
+      value: StyleVariableValue,
+      fromSubscriptions = false
+    ) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_STYLE_ADD_VARIABLE,
+        segmentId,
+        category,
+        name,
+        value,
+        fromSubscriptions
+      }),
+    [dispatchSegments]
+  );
+
+  const segmentStyleUpdateVariable = useCallback(
+    (
+      segmentId: string,
+      category: StyleVariableCategory,
+      name: string,
+      value: StyleVariableValue,
+      fromSubscriptions = false
+    ) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_STYLE_UPDATE_VARIABLE,
+        segmentId,
+        category,
+        name,
+        value,
+        fromSubscriptions
+      }),
+    [dispatchSegments]
+  );
+
+  const segmentStyleRemoveVariable = useCallback(
+    (segmentId: string, category: StyleVariableCategory, name: string, fromSubscriptions = false) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_STYLE_REMOVE_VARIABLE,
+        segmentId,
+        category,
+        name,
+        fromSubscriptions
+      }),
     [dispatchSegments]
   );
 
@@ -488,20 +608,41 @@ const SegmentsContextProvider = ({
           true
         );
       });
+
+      subscriptionManager.subscribe('SegmentSchemaAddVariable', {}, data => {
+        const { contextId, variable } = get(
+          data,
+          'data.SegmentSchemaAddVariable',
+          {}
+        ) as SubscriptionsMap['SegmentSchemaAddVariable'];
+        segmentSchemaAddVariable(contextId, variable, true);
+      });
+
+      subscriptionManager.subscribe('SegmentSchemaUpdateVariable', {}, data => {
+        const { contextId, variable } = get(
+          data,
+          'data.SegmentSchemaUpdateVariable',
+          {}
+        ) as SubscriptionsMap['SegmentSchemaUpdateVariable'];
+        segmentSchemaUpdateVariable(contextId, variable, true);
+      });
+
+      subscriptionManager.subscribe('SegmentSchemaRemoveVariable', {}, data => {
+        const { contextId, variable } = get(
+          data,
+          'data.SegmentSchemaRemoveVariable',
+          {}
+        ) as SubscriptionsMap['SegmentSchemaRemoveVariable'];
+        segmentSchemaRemoveVariable(contextId, variable.name, true);
+      });
+
       subscriptionManager.subscribe('SegmentStyleAddSelector', {}, data => {
         const { displayMode, selector, type, path, style, contextId } = get(
           data,
           'data.SegmentStyleAddSelector',
           {}
-        ) as {
-          displayMode: DisplayMode;
-          selector: string;
-          path: string;
-          type: TagType;
-          style: StyleItem['attributes'];
-          contextId: string;
-        };
-        segmentAddSelector(contextId, displayMode, selector, type, path, style, true);
+        ) as SubscriptionsMap['SegmentStyleAddSelector'];
+        segmentStyleAddSelector(contextId, displayMode, selector, type, path, style, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
         const { displayMode, selector, type, path, style, contextId } = get(
@@ -516,38 +657,64 @@ const SegmentsContextProvider = ({
           style: StyleItem['attributes'];
           contextId: string;
         };
-        segmentUpdateSelector(contextId, displayMode, selector, type, path, style, true);
+        segmentStyleUpdateSelector(contextId, displayMode, selector, type, path, style, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
         const { selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {
           selector: string;
           contextId: string;
         };
-        segmentRemoveSelector(contextId, selector, true);
+        segmentStyleRemoveSelector(contextId, selector, true);
+      });
+
+      subscriptionManager.subscribe('SegmentStyleAddSelectorVariable', {}, data => {
+        const { contextId, displayMode, selector, category, name, value } = get(
+          data,
+          'data.SegmentStyleAddSelectorVariable',
+          {}
+        ) as SubscriptionsMap['SegmentStyleAddSelectorVariable'];
+        segmentStyleAddSelectorVariable(contextId, displayMode, selector, category, name, value, true);
+      });
+      subscriptionManager.subscribe('SegmentStyleUpdateSelectorVariable', {}, data => {
+        const { contextId, displayMode, selector, category, name, value } = get(
+          data,
+          'data.SegmentStyleUpdateSelectorVariable',
+          {}
+        ) as SubscriptionsMap['SegmentStyleUpdateSelectorVariable'];
+        segmentStyleUpdateSelectorVariable(contextId, displayMode, selector, category, name, value, true);
+      });
+      subscriptionManager.subscribe('SegmentStyleRemoveSelectorVariable', {}, data => {
+        const { contextId, displayMode, selector, category, name } = get(
+          data,
+          'data.SegmentStyleRemoveSelectorVariable',
+          {}
+        ) as SubscriptionsMap['SegmentStyleRemoveSelectorVariable'];
+        segmentStyleRemoveSelectorVariable(contextId, displayMode, selector, category, name, true);
       });
 
       subscriptionManager.subscribe('SegmentStyleAddVariable', {}, data => {
-        const { variable, value, contextId } = get(data, 'data.SegmentStyleAddVariable', {}) as {
-          variable: string;
-          value: string;
-          contextId: string;
-        };
-        segmentAddVariable(contextId, variable, value, true);
+        const { category, name, value, contextId } = get(
+          data,
+          'data.SegmentStyleAddVariable',
+          {}
+        ) as SubscriptionsMap['SegmentStyleAddVariable'];
+        segmentStyleAddVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateVariable', {}, data => {
-        const { variable, value, contextId } = get(data, 'data.SegmentStyleUpdateVariable', {}) as {
-          variable: string;
-          value: string;
-          contextId: string;
-        };
-        segmentUpdateVariable(contextId, variable, value, true);
+        const { category, name, value, contextId } = get(
+          data,
+          'data.SegmentStyleUpdateVariable',
+          {}
+        ) as SubscriptionsMap['SegmentStyleUpdateVariable'];
+        segmentStyleUpdateVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveVariable', {}, data => {
-        const { variable, contextId } = get(data, 'data.SegmentStyleRemoveVariable', {}) as {
-          variable: string;
-          contextId: string;
-        };
-        segmentRemoveVariable(contextId, variable, true);
+        const { category, name, contextId } = get(
+          data,
+          'data.SegmentStyleRemoveVariable',
+          {}
+        ) as SubscriptionsMap['SegmentStyleRemoveVariable'];
+        segmentStyleRemoveVariable(contextId, category, name, true);
       });
     }
 
@@ -559,9 +726,15 @@ const SegmentsContextProvider = ({
         'SegmentMoveElement',
         'SegmentCloneElement',
         'SegmentAddTemplate',
+        'SegmentSchemaAddVariable',
+        'SegmentSchemaUpdateVariable',
+        'SegmentSchemaRemoveVariable',
         'SegmentStyleAddSelector',
         'SegmentStyleUpdateSelector',
         'SegmentStyleRemoveSelector',
+        'SegmentStyleAddSelectorVariable',
+        'SegmentStyleUpdateSelectorVariable',
+        'SegmentStyleRemoveSelectorVariable',
         'SegmentStyleAddVariable',
         'SegmentStyleUpdateVariable',
         'SegmentStyleRemoveVariable'
@@ -575,12 +748,18 @@ const SegmentsContextProvider = ({
     segmentRemoveElement,
     segmentMoveElement,
     segmentAddTemplate,
-    segmentAddSelector,
-    segmentUpdateSelector,
-    segmentRemoveSelector,
-    segmentAddVariable,
-    segmentUpdateVariable,
-    segmentRemoveVariable
+    segmentSchemaAddVariable,
+    segmentSchemaUpdateVariable,
+    segmentSchemaRemoveVariable,
+    segmentStyleAddSelector,
+    segmentStyleUpdateSelector,
+    segmentStyleRemoveSelector,
+    segmentStyleAddSelectorVariable,
+    segmentStyleUpdateSelectorVariable,
+    segmentStyleRemoveSelectorVariable,
+    segmentStyleAddVariable,
+    segmentStyleUpdateVariable,
+    segmentStyleRemoveVariable
   ]);
 
   // Mutations
@@ -613,12 +792,18 @@ const SegmentsContextProvider = ({
       // schemaCloneElement: segmentsCloneElement,
       schemaAddTemplate: segmentAddTemplate,
       styleUpdate: segmentsUpdate,
-      styleAddSelector: segmentAddSelector,
-      styleUpdateSelector: segmentUpdateSelector,
-      styleRemoveSelector: segmentRemoveSelector,
-      styleAddVariable: segmentAddVariable,
-      styleUpdateVariable: segmentUpdateVariable,
-      styleRemoveVariable: segmentRemoveVariable,
+      schemaAddVariable: segmentSchemaAddVariable,
+      schemaUpdateVariable: segmentSchemaUpdateVariable,
+      schemaRemoveVariable: segmentSchemaRemoveVariable,
+      styleAddSelector: segmentStyleAddSelector,
+      styleUpdateSelector: segmentStyleUpdateSelector,
+      styleRemoveSelector: segmentStyleRemoveSelector,
+      styleAddSelectorVariable: segmentStyleAddSelectorVariable,
+      styleUpdateSelectorVariable: segmentStyleUpdateSelectorVariable,
+      styleRemoveSelectorVariable: segmentStyleRemoveSelectorVariable,
+      styleAddVariable: segmentStyleAddVariable,
+      styleUpdateVariable: segmentStyleUpdateVariable,
+      styleRemoveVariable: segmentStyleRemoveVariable,
       styleAddTemplate: segmentAddTemplate
     }),
     [
@@ -628,12 +813,18 @@ const SegmentsContextProvider = ({
       segmentRemoveElement,
       segmentMoveElement,
       segmentAddTemplate,
-      segmentAddSelector,
-      segmentUpdateSelector,
-      segmentRemoveSelector,
-      segmentAddVariable,
-      segmentUpdateVariable,
-      segmentRemoveVariable
+      segmentSchemaAddVariable,
+      segmentSchemaUpdateVariable,
+      segmentSchemaRemoveVariable,
+      segmentStyleAddSelector,
+      segmentStyleUpdateSelector,
+      segmentStyleRemoveSelector,
+      segmentStyleAddSelectorVariable,
+      segmentStyleUpdateSelectorVariable,
+      segmentStyleRemoveSelectorVariable,
+      segmentStyleAddVariable,
+      segmentStyleUpdateVariable,
+      segmentStyleRemoveVariable
     ]
   );
 
@@ -652,12 +843,18 @@ const SegmentsContextProvider = ({
       segmentUpdateElement,
       segmentMoveElement,
       segmentRemoveElement,
-      segmentAddSelector,
-      segmentUpdateSelector,
-      segmentRemoveSelector,
-      segmentAddVariable,
-      segmentUpdateVariable,
-      segmentRemoveVariable,
+      segmentSchemaAddVariable,
+      segmentSchemaUpdateVariable,
+      segmentSchemaRemoveVariable,
+      segmentStyleAddSelector,
+      segmentStyleUpdateSelector,
+      segmentStyleRemoveSelector,
+      segmentStyleAddSelectorVariable,
+      segmentStyleUpdateSelectorVariable,
+      segmentStyleRemoveSelectorVariable,
+      segmentStyleAddVariable,
+      segmentStyleUpdateVariable,
+      segmentStyleRemoveVariable,
       segmentAddTemplate,
       elementAsSegment,
       segmentAddMutation
@@ -674,12 +871,18 @@ const SegmentsContextProvider = ({
       segmentUpdateElement,
       segmentMoveElement,
       segmentRemoveElement,
-      segmentAddSelector,
-      segmentUpdateSelector,
-      segmentRemoveSelector,
-      segmentAddVariable,
-      segmentUpdateVariable,
-      segmentRemoveVariable,
+      segmentSchemaAddVariable,
+      segmentSchemaUpdateVariable,
+      segmentSchemaRemoveVariable,
+      segmentStyleAddSelector,
+      segmentStyleUpdateSelector,
+      segmentStyleRemoveSelector,
+      segmentStyleAddSelectorVariable,
+      segmentStyleUpdateSelectorVariable,
+      segmentStyleRemoveSelectorVariable,
+      segmentStyleAddVariable,
+      segmentStyleUpdateVariable,
+      segmentStyleRemoveVariable,
       segmentAddTemplate,
       elementAsSegment,
       segmentAddMutation

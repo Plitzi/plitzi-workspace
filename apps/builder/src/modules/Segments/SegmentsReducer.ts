@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { produce } from 'immer';
 import get from 'lodash-es/get';
 import omit from 'lodash-es/omit';
 import set from 'lodash-es/set';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import StyleMap from '@plitzi/sdk-style/StyleMap';
 
 import type {
   DisplayMode,
@@ -18,7 +17,8 @@ import type {
   StyleItem,
   TagType,
   DropPosition,
-  StylePlatform
+  StyleVariableCategory,
+  StyleVariableValue
 } from '@plitzi/sdk-shared';
 
 export const SegmentsActions = {
@@ -31,12 +31,18 @@ export const SegmentsActions = {
   SEGMENTS_MOVE_ELEMENT: 'SEGMENTS_MOVE_ELEMENT',
   SEGMENTS_CLONE_ELEMENT: 'SEGMENTS_CLONE_ELEMENT',
   SEGMENTS_UPDATE_ELEMENT: 'SEGMENTS_UPDATE_ELEMENT',
-  SEGMENTS_ADD_SELECTOR: 'SEGMENTS_ADD_SELECTOR',
-  SEGMENTS_UPDATE_SELECTOR: 'SEGMENTS_UPDATE_SELECTOR',
-  SEGMENTS_REMOVE_SELECTOR: 'SEGMENTS_REMOVE_SELECTOR',
-  SEGMENTS_ADD_VARIABLE: 'SEGMENTS_ADD_VARIABLE',
-  SEGMENTS_UPDATE_VARIABLE: 'SEGMENTS_UPDATE_VARIABLE',
-  SEGMENTS_REMOVE_VARIABLE: 'SEGMENTS_REMOVE_VARIABLE'
+  SEGMENTS_SCHEMA_ADD_VARIABLE: 'SEGMENTS_SCHEMA_ADD_VARIABLE',
+  SEGMENTS_SCHEMA_UPDATE_VARIABLE: 'SEGMENTS_SCHEMA_UPDATE_VARIABLE',
+  SEGMENTS_SCHEMA_REMOVE_VARIABLE: 'SEGMENTS_SCHEMA_REMOVE_VARIABLE',
+  SEGMENTS_STYLE_ADD_SELECTOR: 'SEGMENTS_STYLE_ADD_SELECTOR',
+  SEGMENTS_STYLE_UPDATE_SELECTOR: 'SEGMENTS_STYLE_UPDATE_SELECTOR',
+  SEGMENTS_STYLE_REMOVE_SELECTOR: 'SEGMENTS_STYLE_REMOVE_SELECTOR',
+  SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE: 'SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE',
+  SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE: 'SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE',
+  SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE: 'SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE',
+  SEGMENTS_STYLE_ADD_VARIABLE: 'SEGMENTS_STYLE_ADD_VARIABLE',
+  SEGMENTS_STYLE_UPDATE_VARIABLE: 'SEGMENTS_STYLE_UPDATE_VARIABLE',
+  SEGMENTS_STYLE_REMOVE_VARIABLE: 'SEGMENTS_STYLE_REMOVE_VARIABLE'
 } as const;
 
 type SegmentsReducerActionsBase = { segmentId: string; segment?: Segment; fromSubscriptions?: boolean };
@@ -70,20 +76,49 @@ export type SegmentsReducerActions =
     } & SegmentsReducerActionsBase)
   | ({ type: 'SEGMENTS_UPDATE_ELEMENT'; element: Element } & SegmentsReducerActionsBase)
   | ({
-      type: 'SEGMENTS_ADD_SELECTOR' | 'SEGMENTS_UPDATE_SELECTOR';
+      type: 'SEGMENTS_SCHEMA_ADD_VARIABLE' | 'SEGMENTS_SCHEMA_UPDATE_VARIABLE';
+      variable: SchemaVariable;
+    } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_SCHEMA_REMOVE_VARIABLE'; name: string } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_STYLE_ADD_SELECTOR' | 'SEGMENTS_STYLE_UPDATE_SELECTOR';
       displayMode: DisplayMode;
       selector: string;
       selectorType: TagType;
       path: string;
       value?: StyleItem['attributes'];
     } & SegmentsReducerActionsBase)
-  | ({ type: 'SEGMENTS_REMOVE_SELECTOR'; selector: string } & SegmentsReducerActionsBase)
   | ({
-      type: 'SEGMENTS_ADD_VARIABLE' | 'SEGMENTS_UPDATE_VARIABLE';
-      variable: string;
-      value: string;
+      type: 'SEGMENTS_STYLE_REMOVE_SELECTOR';
+      displayMode: DisplayMode;
+      selector: string;
     } & SegmentsReducerActionsBase)
-  | ({ type: 'SEGMENTS_REMOVE_VARIABLE'; variable: string } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE' | 'SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE';
+      displayMode: DisplayMode;
+      selector: string;
+      category: StyleVariableCategory;
+      name: string;
+      value: StyleVariableValue;
+    } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE';
+      displayMode: DisplayMode;
+      selector: string;
+      category: StyleVariableCategory;
+      name: string;
+    } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_STYLE_ADD_VARIABLE' | 'SEGMENTS_STYLE_UPDATE_VARIABLE';
+      category: StyleVariableCategory;
+      name: string;
+      value: StyleVariableValue;
+    } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_STYLE_REMOVE_VARIABLE';
+      category: StyleVariableCategory;
+      name: string;
+    } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_ADD_TEMPLATE';
       to: string;
@@ -183,90 +218,128 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
       });
     }
 
-    case SegmentsActions.SEGMENTS_ADD_SELECTOR:
-    case SegmentsActions.SEGMENTS_UPDATE_SELECTOR: {
-      const { displayMode, selector, selectorType = 'class', path, value } = action;
-
-      if (!path) {
-        return produce(state, draft => {
-          const segment = get(draft, identifier) as Segment;
-          const selectorInstance = get(segment, `style.platform.${displayMode}.${selector}`, {
-            name: selector,
-            type: selectorType,
-            attributes: {},
-            cache: ''
-          }) as StyleItem;
-
-          if (value) {
-            set(selectorInstance, 'attributes', value);
-          }
-
-          set(segment, `style.platform.${displayMode}.${selector}`, {
-            ...selectorInstance,
-            cache: processSelector(selector, selectorType, selectorInstance.attributes)
-          });
-
-          set(segment, 'style.cache', generateCache({ platform: get(segment, 'style.platform') } as Style));
-        });
-      }
-
-      return produce(state, draft => {
-        const selectorInstance = get(draft, `${identifier}.style.platform.${displayMode}.${selector}`, {
-          name: selector,
-          type: selectorType,
-          attributes: {},
-          cache: ''
-        }) as StyleItem;
-        const segment = get(draft, identifier) as Segment;
-        if (!value) {
-          const newPath = ['attributes', ...path.split('.')];
-          const pathToRemove = newPath.pop() as string;
-          set(selectorInstance, newPath, omit(get(selectorInstance, newPath.join('.'), {}), [pathToRemove]));
-        } else {
-          set(selectorInstance, `attributes.${path}`, value);
-        }
-
-        set(segment, `style.platform.${displayMode}.${selector}`, {
-          ...selectorInstance,
-          cache: processSelector(selector, selectorType, selectorInstance.attributes)
-        });
-
-        set(segment, 'style.cache', generateCache({ platform: get(segment, 'style.platform') } as Style));
-      });
-    }
-
-    case SegmentsActions.SEGMENTS_REMOVE_SELECTOR: {
-      const { selector } = action;
-
-      return produce(state, draft => {
-        const platform = omit(get(draft, `${identifier}.style.platform`, {})) as StylePlatform;
-        (Object.keys(platform) as DisplayMode[]).forEach(pkey => {
-          platform[pkey] = omit(platform[pkey], [selector]);
-        });
-        set(draft, `${identifier}.style.platform`, platform);
-        set(draft, `${identifier}.style.cache`, generateCache({ platform } as Style));
-      });
-    }
-
-    case SegmentsActions.SEGMENTS_ADD_VARIABLE:
-    case SegmentsActions.SEGMENTS_UPDATE_VARIABLE: {
-      const { variable, value } = action;
-
-      return produce(state, draft => {
-        if (!variable) {
-          return;
-        }
-
-        set(draft, `${identifier}.style.variables.${variable}`, value);
-      });
-    }
-
-    case SegmentsActions.SEGMENTS_REMOVE_VARIABLE: {
+    case SegmentsActions.SEGMENTS_SCHEMA_ADD_VARIABLE: {
       const { variable } = action;
 
       return produce(state, draft => {
-        if (draft[identifier].style.variables[variable]) {
-          delete draft[identifier].style.variables[variable];
+        if (!(segment.schema.variables as SchemaVariable[] | undefined)) {
+          set(draft, `${identifier}.schema.variables`, []);
+        }
+
+        FlatMap.addVariable(get(draft, `${identifier}.schema.variables`, []) as SchemaVariable[], variable);
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_SCHEMA_UPDATE_VARIABLE: {
+      const { variable } = action;
+
+      return produce(state, draft => {
+        if (!(segment.schema.variables as SchemaVariable[] | undefined)) {
+          set(draft, `${identifier}.schema.variables`, []);
+        }
+
+        FlatMap.updateVariable(get(draft, `${identifier}.schema.variables`, []) as SchemaVariable[], variable);
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_SCHEMA_REMOVE_VARIABLE: {
+      const { name } = action;
+
+      return produce(state, draft => {
+        if (!(segment.schema.variables as SchemaVariable[] | undefined)) {
+          return;
+        }
+
+        FlatMap.removeVariable(get(draft, `${identifier}.schema.variables`, []) as SchemaVariable[], name);
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR: {
+      const { displayMode, selector, selectorType = 'class', path, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.addSelector(draft[identifier].style, displayMode, selector, selectorType, path, value)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR: {
+      const { displayMode, selector, selectorType = 'class', path, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.updateSelector(draft[identifier].style, displayMode, selector, selectorType, path, value)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR: {
+      const { displayMode, selector } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.removeSelector(draft[identifier].style, displayMode, selector)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE: {
+      const { displayMode, selector, category, name, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.addSelectorVariable(draft[identifier].style, displayMode, selector, category, name, value)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE: {
+      const { displayMode, selector, category, name, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.updateSelectorVariable(draft[identifier].style, displayMode, selector, category, name, value)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE: {
+      const { displayMode, selector, category, name } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.removeSelectorVariable(draft[identifier].style, displayMode, selector, category, name)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_ADD_VARIABLE: {
+      const { category, name, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.addVariable(draft[identifier].style, category, name, value)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_UPDATE_VARIABLE: {
+      const { category, name, value } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.updateVariable(draft[identifier].style, category, name, value)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_REMOVE_VARIABLE: {
+      const { category, name } = action;
+
+      return produce(state, draft => {
+        if (StyleMap.removeVariable(draft[identifier].style, category, name)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
         }
       });
     }

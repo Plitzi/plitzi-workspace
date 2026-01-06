@@ -55,7 +55,7 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: string,
-    value: StyleItem['attributes'] = {}
+    value?: StyleItem['attributes']
   ) => {
     const styleItem = StyleMap.getStyleItem(this.platform, displayMode, selector);
     if (styleItem) {
@@ -65,7 +65,7 @@ class StyleMap {
     let attributes = {};
     if (path) {
       set(attributes, path, value);
-    } else if (!path) {
+    } else if (!path && value) {
       attributes = value;
     }
 
@@ -243,7 +243,7 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: string,
-    value: StyleItem['attributes']
+    value?: StyleItem['attributes']
   ) => this.getInstance(style).addSelector(displayMode, selector, type, path, value);
 
   static updateSelector = (
