@@ -3,17 +3,18 @@ import { gql } from '@apollo/client/core';
 import type { DropPosition, Element, SchemaVariable } from '@plitzi/sdk-shared';
 
 export type TSegmentAddElementSubscription = {
+  contextId: string;
   element: Element;
   dropPosition: DropPosition;
   to: string;
-  initialItems: string[];
+  initialItems: Record<string, Element>;
   variables: SchemaVariable[];
-  contextId: string;
 };
 
 const SegmentAddElementSubscription = gql`
   subscription ($environment: String!) {
     SegmentAddElement(environment: $environment) {
+      contextId
       element {
         id
         definition {
@@ -42,7 +43,6 @@ const SegmentAddElementSubscription = gql`
           when
         }
       }
-      contextId
     }
   }
 `;

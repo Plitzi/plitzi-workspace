@@ -3,9 +3,9 @@ import { gql } from '@apollo/client/core';
 import type { DisplayMode, StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
 
 export type TSegmentStyleAddSelectorVariableSubscription = {
+  contextId: string;
   displayMode: DisplayMode;
   selector: string;
-  contextId: string;
   category: StyleVariableCategory;
   name: string;
   value: StyleVariableValue;

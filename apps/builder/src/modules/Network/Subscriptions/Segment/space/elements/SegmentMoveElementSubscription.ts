@@ -1,13 +1,23 @@
 import { gql } from '@apollo/client/core';
 
+import type { DropPosition } from '@plitzi/sdk-shared';
+
+export type TSegmentMoveElementSubscription = {
+  contextId: string;
+  elementId: string;
+  from: string;
+  to: string;
+  dropPosition: DropPosition;
+};
+
 const SegmentMoveElementSubscription = gql`
   subscription ($environment: String!) {
     SegmentMoveElement(environment: $environment) {
+      contextId
       elementId
       from
       to
       dropPosition
-      contextId
     }
   }
 `;

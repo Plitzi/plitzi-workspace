@@ -51,6 +51,20 @@ import StyleUpdateVariableSubscription from './Style/variables/StyleUpdateVariab
 
 import type { TCollaboratorConnectedSubscription } from './Collaborator/CollaboratorConnectedSubscription';
 import type { TCollaboratorDisconnectedSubscription } from './Collaborator/CollaboratorDisconnectedSubscription';
+import type { TSegmentAddElementSubscription } from './Segment/space/elements/SegmentAddElementSubscription';
+import type { TSegmentCloneElementSubscription } from './Segment/space/elements/SegmentCloneElementSubscription';
+import type { TSegmentMoveElementSubscription } from './Segment/space/elements/SegmentMoveElementSubscription';
+import type { TSegmentRemoveElementSubscription } from './Segment/space/elements/SegmentRemoveElementSubscription';
+import type { TSegmentUpdateElementSubscription } from './Segment/space/elements/SegmentUpdateElementSubscription';
+import type { TSegmentStyleAddSelectorSubscription } from './Segment/style/selectors/SegmentStyleAddSelectorSubscription';
+import type { TSegmentStyleRemoveSelectorSubscription } from './Segment/style/selectors/SegmentStyleRemoveSelectorSubscription';
+import type { TSegmentStyleUpdateSelectorSubscription } from './Segment/style/selectors/SegmentStyleUpdateSelectorSubscription';
+import type { TSegmentStyleAddSelectorVariableSubscription } from './Segment/style/selectorVariables/SegmentStyleAddSelectorVariableSubscription';
+import type { TSegmentStyleRemoveSelectorVariableSubscription } from './Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableSubscription';
+import type { TSegmentStyleUpdateSelectorVariableSubscription } from './Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableSubscription';
+import type { TSegmentStyleAddVariableSubscription } from './Segment/style/variables/SegmentStyleAddVariableSubscription';
+import type { TSegmentStyleRemoveVariableSubscription } from './Segment/style/variables/SegmentStyleRemoveVariableSubscription';
+import type { TSegmentStyleUpdateVariableSubscription } from './Segment/style/variables/SegmentStyleUpdateVariableSubscription';
 import type { TSpaceAddElementSubscription } from './Space/elements/SpaceAddElementSubscription';
 import type { TSpaceCloneElementSubscription } from './Space/elements/SpaceCloneElementSubscription';
 import type { TSpaceMoveElementSubscription } from './Space/elements/SpaceMoveElementSubscription';
@@ -116,21 +130,21 @@ export type SubscriptionsMap = {
   StyleRemoveVariable: TStyleRemoveVariableSubscription;
   StyleUpdateSettings: TStyleUpdateSettingsSubscription;
 
-  SegmentAddElement: unknown;
-  SegmentUpdateElement: unknown;
-  SegmentRemoveElement: unknown;
-  SegmentMoveElement: unknown;
-  SegmentCloneElement: unknown;
-  SegmentAddTemplate: unknown;
-  SegmentStyleAddSelector: unknown;
-  SegmentStyleUpdateSelector: unknown;
-  SegmentStyleRemoveSelector: unknown;
-  SegmentStyleAddSelectorVariable: unknown;
-  SegmentStyleUpdateSelectorVariable: unknown;
-  SegmentStyleRemoveSelectorVariable: unknown;
-  SegmentStyleAddVariable: unknown;
-  SegmentStyleUpdateVariable: unknown;
-  SegmentStyleRemoveVariable: unknown;
+  SegmentAddElement: TSegmentAddElementSubscription;
+  SegmentUpdateElement: TSegmentUpdateElementSubscription;
+  SegmentRemoveElement: TSegmentRemoveElementSubscription;
+  SegmentMoveElement: TSegmentMoveElementSubscription;
+  SegmentCloneElement: TSegmentCloneElementSubscription;
+  SegmentAddTemplate: TSegmentAddElementSubscription;
+  SegmentStyleAddSelector: TSegmentStyleAddSelectorSubscription;
+  SegmentStyleUpdateSelector: TSegmentStyleUpdateSelectorSubscription;
+  SegmentStyleRemoveSelector: TSegmentStyleRemoveSelectorSubscription;
+  SegmentStyleAddSelectorVariable: TSegmentStyleAddSelectorVariableSubscription;
+  SegmentStyleUpdateSelectorVariable: TSegmentStyleUpdateSelectorVariableSubscription;
+  SegmentStyleRemoveSelectorVariable: TSegmentStyleRemoveSelectorVariableSubscription;
+  SegmentStyleAddVariable: TSegmentStyleAddVariableSubscription;
+  SegmentStyleUpdateVariable: TSegmentStyleUpdateVariableSubscription;
+  SegmentStyleRemoveVariable: TSegmentStyleRemoveVariableSubscription;
 };
 
 const Subscriptions = {
