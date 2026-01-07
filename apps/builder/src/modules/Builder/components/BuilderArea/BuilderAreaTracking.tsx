@@ -12,6 +12,7 @@ import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderS
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
@@ -64,7 +65,7 @@ const BuilderAreaTracking = ({
 
   const handleMouseEnter = () => {
     if (supportRealTime) {
-      subscriptionsPush({ type: 'MOUSE', payload: { action: 'mouseEnter', rootId: baseElementId } });
+      subscriptionsPush({ type: RTEvent.MOUSE, payload: { action: 'mouseEnter', rootId: baseElementId } });
     }
   };
 
@@ -74,7 +75,7 @@ const BuilderAreaTracking = ({
     }
 
     if (supportRealTime) {
-      subscriptionsPush({ type: 'MOUSE', payload: { action: 'mouseLeave', rootId: baseElementId } });
+      subscriptionsPush({ type: RTEvent.MOUSE, payload: { action: 'mouseLeave', rootId: baseElementId } });
     }
   }, [baseElementId, elementHovered, setHovered, subscriptionsPush, supportRealTime]);
 
@@ -82,7 +83,7 @@ const BuilderAreaTracking = ({
     (x: number, y: number) => {
       if (isActive && supportRealTime) {
         subscriptionsPush({
-          type: 'MOUSE',
+          type: RTEvent.MOUSE,
           payload: { action: 'mouseMove', x, y, rootId: baseElementId }
         });
       }

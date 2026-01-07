@@ -1,5 +1,6 @@
 import { memo, use, useCallback, useEffect, useRef, useState } from 'react';
 
+import { RTEvent } from '@plitzi/sdk-shared';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
 import BuilderCollaboratorCursor from './BuilderCollaboratorCursor';
@@ -44,7 +45,7 @@ const BuilderCollaboratorArea = ({
       instanceId: string;
     }) => {
       const { action, x, y } = payload;
-      if (baseElementId !== payload.rootId || !refCursor.current || payload.instanceId !== instanceId) {
+      if (baseElementId !== payload.rootId || !refCursor.current || payload.instanceId === instanceId) {
         return;
       }
 
@@ -77,7 +78,7 @@ const BuilderCollaboratorArea = ({
   const realtimeCallbackElement = useCallback(
     (payload: { action: 'hovered' | 'selected'; id: string; rootId: string; instanceId: string }) => {
       const { action, id, rootId } = payload;
-      if (baseElementId !== rootId || payload.instanceId !== instanceId) {
+      if (baseElementId !== rootId || payload.instanceId === instanceId) {
         return;
       }
 
@@ -102,14 +103,14 @@ const BuilderCollaboratorArea = ({
 
   useEffect(() => {
     if (supportRealTime) {
-      subscriptionsRegisterCallback(instanceId, 'MOUSE', realtimeCallbackMouse);
-      subscriptionsRegisterCallback(instanceId, 'ELEMENT', realtimeCallbackElement);
+      subscriptionsRegisterCallback(instanceId, RTEvent.MOUSE, realtimeCallbackMouse);
+      subscriptionsRegisterCallback(instanceId, RTEvent.ELEMENT, realtimeCallbackElement);
     }
 
     return () => {
       if (supportRealTime) {
-        subscriptionsUnregisterCallback(instanceId, 'MOUSE');
-        subscriptionsUnregisterCallback(instanceId, 'ELEMENT');
+        subscriptionsUnregisterCallback(instanceId, RTEvent.MOUSE);
+        subscriptionsUnregisterCallback(instanceId, RTEvent.ELEMENT);
       }
     };
   }, [

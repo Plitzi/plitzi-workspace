@@ -1,36 +1,57 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { RealTimeEvent } from '../types';
+import RTCodec, { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 
-export type UseWebsocketProps = {
+import type { RTMessageManagedClient } from '@plitzi/sdk-shared/websockets/RTCodec';
+
+export type UseWebsocketProps<T> = {
+  isBinary?: boolean;
   url: string;
   protocols?: string[];
-  processMessage: ((ev: MessageEvent) => unknown) | null;
-  initMessage?: { type: 'init'; payload: { message: string } };
+  processMessage: ((data: T) => void) | null;
+  initMessage?: { type: RTEvent.INIT; payload: undefined };
   retryReconnect?: number;
   connectMode?: 'auto' | 'manual';
 };
 
-const useWebsocket = ({
+const useWebsocket = <T = unknown>({
+  isBinary = false,
   url = '',
   protocols = [],
   processMessage = null,
-  initMessage = { type: 'init', payload: { message: 'hi' } },
+  initMessage = { type: RTEvent.INIT, payload: undefined },
   retryReconnect = Infinity,
   connectMode = 'auto'
-}: UseWebsocketProps) => {
+}: UseWebsocketProps<T>) => {
   const [ws, setWs] = useState<WebSocket | undefined>(undefined);
+  const rtCodec = useMemo(() => (isBinary ? new RTCodec() : undefined), [isBinary]);
   const [currentRetry, setCurrentRetry] = useState(0);
 
   const push = useCallback(
-    (data: { type: RealTimeEvent; payload: unknown }) => {
+    (data: RTMessageManagedClient) => {
       if (!ws || ws.readyState !== ws.OPEN) {
         return;
       }
 
-      ws.send(JSON.stringify(data));
+      if (isBinary && rtCodec) {
+        ws.send(rtCodec.encode(data.type, data.payload));
+      } else if (!isBinary) {
+        ws.send(JSON.stringify(data));
+      }
     },
-    [ws]
+    [rtCodec, isBinary, ws]
+  );
+
+  const handleProcess = useCallback(
+    (ev: MessageEvent<T>) => {
+      let data = ev.data;
+      if (isBinary) {
+        data = rtCodec?.decode(data as ArrayBuffer) as T;
+      }
+
+      processMessage?.(data);
+    },
+    [isBinary, processMessage, rtCodec]
   );
 
   const close = useCallback(
@@ -54,8 +75,12 @@ const useWebsocket = ({
     }
 
     const ws = new WebSocket(url, protocols);
+    if (isBinary) {
+      ws.binaryType = 'arraybuffer';
+    }
+
     if (processMessage) {
-      ws.onmessage = processMessage;
+      ws.onmessage = handleProcess;
     }
 
     ws.onopen = () => {
@@ -63,7 +88,7 @@ const useWebsocket = ({
         setCurrentRetry(0);
       }
 
-      ws.send(JSON.stringify(initMessage));
+      push(initMessage);
     };
 
     ws.onerror = () => ws.close();
@@ -107,9 +132,9 @@ const useWebsocket = ({
 
   useEffect(() => {
     if (ws) {
-      ws.onmessage = processMessage;
+      ws.onmessage = handleProcess;
     }
-  }, [ws, processMessage]);
+  }, [ws, handleProcess]);
 
   return { ws, push, close, connect };
 };

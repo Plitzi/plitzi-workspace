@@ -17,6 +17,7 @@ import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderS
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import AppContext from '@pmodules/App/AppContext';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
@@ -155,17 +156,6 @@ const BuilderProvider = ({
           }
         }
 
-        if (supportRealTime) {
-          subscriptionsPush({
-            type: 'ELEMENT',
-            payload: {
-              action: 'selected',
-              rootId: baseElementId,
-              id: elementId
-            }
-          });
-        }
-
         if (elementId && iframeDOM) {
           const elementDOM: HTMLElement | undefined | null = iframeDOM.contentWindow?.document.querySelector(
             `[data-id="${elementId}"]`
@@ -179,36 +169,22 @@ const BuilderProvider = ({
         return elementId;
       });
     },
-    [supportRealTime, builderElementPermissions, subscriptionsPush, baseElementId]
+    [builderElementPermissions]
   );
 
-  const setHovered = useCallback(
-    (elementId?: string) => {
-      setElementHovered(state => {
-        if (
-          (!state && !elementId) ||
-          (elementId && state === elementId) ||
-          (elementId && !(get(schemaRef.current, `flat.${elementId}`) as Element | undefined))
-        ) {
-          return state;
-        }
+  const setHovered = useCallback((elementId?: string) => {
+    setElementHovered(state => {
+      if (
+        (!state && !elementId) ||
+        (elementId && state === elementId) ||
+        (elementId && !(get(schemaRef.current, `flat.${elementId}`) as Element | undefined))
+      ) {
+        return state;
+      }
 
-        if (supportRealTime) {
-          subscriptionsPush({
-            type: 'ELEMENT',
-            payload: {
-              action: 'hovered',
-              rootId: baseElementId,
-              id: elementId
-            }
-          });
-        }
-
-        return elementId;
-      });
-    },
-    [supportRealTime, subscriptionsPush, baseElementId]
-  );
+      return elementId;
+    });
+  }, []);
 
   const builderSetBaseContext = useCallback(
     (id?: string) => {
@@ -485,6 +461,30 @@ const BuilderProvider = ({
     },
     [builderHandler, getElement]
   );
+
+  useEffect(() => {
+    if (!supportRealTime) {
+      return;
+    }
+
+    subscriptionsPush({
+      type: RTEvent.ELEMENT,
+      payload: { action: 'selected', rootId: baseElementId, id: elementSelected }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elementSelected, subscriptionsPush, supportRealTime]);
+
+  useEffect(() => {
+    if (!supportRealTime) {
+      return;
+    }
+
+    subscriptionsPush({
+      type: RTEvent.ELEMENT,
+      payload: { action: 'hovered', rootId: baseElementId, id: elementHovered }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elementHovered, subscriptionsPush, supportRealTime]);
 
   useEffect(() => {
     if (baseElementId) {

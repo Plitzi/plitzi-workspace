@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext } from 'react';
 
-import type { RealTimeEvent, SubscriptionCollaborator } from '../types';
+import type { RTCallback, RTEvent, RTMessageManagedClient, SubscriptionCollaborator } from '@plitzi/sdk-shared';
 
 export type BuilderSubscriptionsContextValue = {
   includeSubscriptions: boolean;
   supportRealTime: boolean;
-  subscriptionsPush: (data: { type: RealTimeEvent; payload: unknown }) => void;
-  subscriptionsRegisterCallback: (key: string, type: RealTimeEvent, callback: (...args: any[]) => void) => void;
-  subscriptionsUnregisterCallback: (key: string, type: RealTimeEvent) => void;
+  subscriptionsPush: (data: RTMessageManagedClient) => void;
+  subscriptionsRegisterCallback: (key: string, type: RTEvent, callback: RTCallback) => void;
+  subscriptionsUnregisterCallback: (key: string, type: RTEvent) => void;
   subscriptionsCollaborators: SubscriptionCollaborator[];
 };
 

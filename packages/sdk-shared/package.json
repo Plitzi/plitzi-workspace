@@ -182,11 +182,24 @@
     "./style/styleConstants": {
       "types": "./dist/src/style/styleConstants.d.ts",
       "import": "./dist/src/style/styleConstants.mjs"
+    },
+    "./websockets": {
+      "types": "./dist/src/websockets/index.d.ts",
+      "import": "./dist/src/websockets/index.mjs"
+    },
+    "./websockets/RTCodec": {
+      "types": "./dist/src/websockets/RTCodec.d.ts",
+      "import": "./dist/src/websockets/RTCodec.mjs"
+    },
+    "./websockets/index": {
+      "types": "./dist/src/websockets/index.d.ts",
+      "import": "./dist/src/websockets/index.mjs"
     }
   },
   "type": "module",
   "scripts": {
     "lint": "eslint ./src",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build-assets:dev": "tsc && vite build --mode development --minify false && node ./scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc && vite build --mode development --watch --minify false",

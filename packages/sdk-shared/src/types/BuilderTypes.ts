@@ -11,3 +11,9 @@ export type Template = {
   schema: Schema;
   style: Style;
 };
+
+export type SubscriptionCollaborator = {
+  color: string;
+  user: { firstName: string; surName: string };
+  instanceId: string;
+};

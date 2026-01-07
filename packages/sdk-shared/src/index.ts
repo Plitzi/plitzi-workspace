@@ -9,6 +9,7 @@ import * as network from './network';
 import * as schema from './schema';
 import * as segments from './segments';
 import * as style from './style';
+import * as websockets from './websockets';
 
 export type * from './types';
 
@@ -26,6 +27,7 @@ export * from './network';
 export * from './segments';
 export * from './collections';
 export * from './helpers/formatDate';
+export * from './websockets';
 
 export {
   usePlitziServiceContext,
@@ -39,5 +41,6 @@ export {
   dataSource,
   network,
   segments,
-  collections
+  collections,
+  websockets
 };
