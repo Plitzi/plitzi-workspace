@@ -312,7 +312,25 @@ const useQueueManager = ({
           return mutate('SegmentMoveElement', { elementId, from, to, dropPosition, contextId: segmentId });
         }
 
-        case SegmentsActions.SEGMENTS_ADD_SELECTOR: {
+        case SegmentsActions.SEGMENTS_SPACE_ADD_VARIABLE: {
+          const { segmentId, variable } = item.action;
+
+          return mutate('SegmentSpaceAddVariable', { contextId: segmentId, variable });
+        }
+
+        case SegmentsActions.SEGMENTS_SPACE_UPDATE_VARIABLE: {
+          const { segmentId, variable } = item.action;
+
+          return mutate('SegmentSpaceUpdateVariable', { contextId: segmentId, variable });
+        }
+
+        case SegmentsActions.SEGMENTS_SPACE_REMOVE_VARIABLE: {
+          const { segmentId, name } = item.action;
+
+          return mutate('SegmentSpaceRemoveVariable', { contextId: segmentId, name });
+        }
+
+        case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR: {
           const { displayMode, selector, selectorType, path, value, segmentId } = item.action;
 
           return mutate('SegmentStyleAddSelector', {
@@ -325,7 +343,7 @@ const useQueueManager = ({
           });
         }
 
-        case SegmentsActions.SEGMENTS_UPDATE_SELECTOR: {
+        case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR: {
           const { displayMode, selector, selectorType, path, value, segmentId } = item.action;
 
           return mutate('SegmentStyleUpdateSelector', {
@@ -338,28 +356,66 @@ const useQueueManager = ({
           });
         }
 
-        case SegmentsActions.SEGMENTS_REMOVE_SELECTOR: {
+        case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR: {
           const { selector, segmentId } = item.action;
 
           return mutate('SegmentStyleRemoveSelector', { selector, contextId: segmentId });
         }
 
-        case SegmentsActions.SEGMENTS_ADD_VARIABLE: {
-          const { variable, value, segmentId } = item.action;
+        case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE: {
+          const { segmentId, displayMode, selector, category, name, value } = item.action;
 
-          return mutate('SegmentStyleAddVariable', { variable, value, contextId: segmentId });
+          return mutate('SegmentStyleAddSelectorVariable', {
+            contextId: segmentId,
+            displayMode,
+            selector,
+            category,
+            name,
+            value
+          });
         }
 
-        case SegmentsActions.SEGMENTS_UPDATE_VARIABLE: {
-          const { variable, value, segmentId } = item.action;
+        case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE: {
+          const { segmentId, displayMode, selector, category, name, value } = item.action;
 
-          return mutate('SegmentStyleUpdateVariable', { variable, value, contextId: segmentId });
+          return mutate('SegmentStyleUpdateSelectorVariable', {
+            contextId: segmentId,
+            displayMode,
+            selector,
+            category,
+            name,
+            value
+          });
         }
 
-        case SegmentsActions.SEGMENTS_REMOVE_VARIABLE: {
-          const { variable, segmentId } = item.action;
+        case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE: {
+          const { segmentId, displayMode, selector, category, name } = item.action;
 
-          return mutate('SegmentStyleRemoveVariable', { variable, contextId: segmentId });
+          return mutate('SegmentStyleRemoveSelectorVariable', {
+            contextId: segmentId,
+            displayMode,
+            selector,
+            category,
+            name
+          });
+        }
+
+        case SegmentsActions.SEGMENTS_STYLE_ADD_VARIABLE: {
+          const { category, name, value, segmentId } = item.action;
+
+          return mutate('SegmentStyleAddVariable', { category, name, value, contextId: segmentId });
+        }
+
+        case SegmentsActions.SEGMENTS_STYLE_UPDATE_VARIABLE: {
+          const { category, name, value, segmentId } = item.action;
+
+          return mutate('SegmentStyleUpdateVariable', { category, name, value, contextId: segmentId });
+        }
+
+        case SegmentsActions.SEGMENTS_STYLE_REMOVE_VARIABLE: {
+          const { category, name, segmentId } = item.action;
+
+          return mutate('SegmentStyleRemoveVariable', { category, name, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {
