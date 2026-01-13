@@ -548,7 +548,6 @@ body {
   flex-direction: column;
 
   .cursor-username {
-    text-transform: capitalize;
     margin-left: 12px;
     padding: 4px 8px;
     border-radius: 4px;
@@ -557,5 +556,6 @@ body {
     line-height: 12px;
     font-size: 12px;
     white-space: nowrap;
+    text-transform: capitalize;
   }
 }
