@@ -543,17 +543,19 @@ body {
   left: 0;
   top: 0;
   position: fixed;
-  z-index: $overlayZIndex - 5;
+  z-index: $overlayZIndex + 50;
   display: none;
+  flex-direction: column;
 
   .cursor-username {
+    text-transform: capitalize;
     margin-left: 12px;
     padding: 4px 8px;
     border-radius: 4px;
     color: white;
     font-weight: bold;
     line-height: 12px;
-    font-size: 9px;
+    font-size: 12px;
     white-space: nowrap;
   }
 }

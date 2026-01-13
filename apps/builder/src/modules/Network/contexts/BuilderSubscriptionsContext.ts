@@ -6,8 +6,8 @@ export type BuilderSubscriptionsContextValue = {
   includeSubscriptions: boolean;
   supportRealTime: boolean;
   subscriptionsPush: (data: RTMessageManagedClient) => void;
-  subscriptionsRegisterCallback: (key: string, type: RTEvent, callback: RTCallback) => void;
-  subscriptionsUnregisterCallback: (key: string, type: RTEvent) => void;
+  subscriptionsRegisterCallback: (type: RTEvent, callback: RTCallback) => void;
+  subscriptionsUnregisterCallback: (type: RTEvent) => void;
   subscriptionsCollaborators: SubscriptionCollaborator[];
 };
 

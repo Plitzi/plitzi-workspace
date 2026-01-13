@@ -1,32 +1,31 @@
 import { memo, use, useCallback, useEffect, useRef, useState } from 'react';
 
 import { RTEvent } from '@plitzi/sdk-shared';
+import useNormalizedCursor from '@pmodules/Builder/hooks/useNormalizedCursor';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
 import BuilderCollaboratorCursor from './BuilderCollaboratorCursor';
 import BuilderOverlay from '../BuilderOverlay';
 
-import type { DisplayMode } from '@plitzi/sdk-shared';
+import type { DisplayMode, RTMessageManagedServer } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BuilderCollaboratorAreaProps = {
   baseElementId?: string;
-  instanceId?: string;
   color?: string;
   title?: string;
   refIframe: RefObject<HTMLIFrameElement | null>;
-  scale?: number;
+  trackingContainerRef: RefObject<HTMLDivElement | null>;
   zoom?: number;
   displayMode?: DisplayMode;
 };
 
 const BuilderCollaboratorArea = ({
   baseElementId = '',
-  instanceId = '',
   color = '#000',
   title = '',
   refIframe,
-  scale = 1,
+  trackingContainerRef,
   zoom = 1,
   displayMode = 'desktop'
 }: BuilderCollaboratorAreaProps) => {
@@ -36,29 +35,29 @@ const BuilderCollaboratorArea = ({
   const { supportRealTime, subscriptionsRegisterCallback, subscriptionsUnregisterCallback } =
     use(BuilderSubscriptionsContext);
 
+  const { mapToPixels } = useNormalizedCursor(trackingContainerRef);
+
   const realtimeCallbackMouse = useCallback(
-    (payload: {
-      action: 'mouseEnter' | 'mouseMove' | 'mouseLeave';
-      x: number;
-      y: number;
-      rootId: string;
-      instanceId: string;
-    }) => {
-      const { action, x, y } = payload;
-      if (baseElementId !== payload.rootId || !refCursor.current || payload.instanceId === instanceId) {
+    (payload: Extract<RTMessageManagedServer, { type: RTEvent.MOUSE }>['payload']) => {
+      if (baseElementId !== payload.rootId || !refCursor.current) {
         return;
       }
 
-      switch (action) {
+      switch (payload.action) {
         case 'mouseEnter': {
-          refCursor.current.style.display = 'block';
+          refCursor.current.style.display = 'flex';
 
           break;
         }
 
         case 'mouseMove': {
-          refCursor.current.style.left = `${x * (1 / scale)}px`;
-          refCursor.current.style.top = `${y * (1 / scale)}px`;
+          const { x, y, zoom } = payload;
+          const w = mapToPixels({ x, y });
+          refCursor.current.style.transform = `translate3d(${w?.x}px, ${w?.y}px, 0)`;
+          const usernameDOM = refCursor.current.querySelector('.cursor-username');
+          if (usernameDOM) {
+            usernameDOM.textContent = `${title}${zoom !== 1 ? `(${zoom * 100}%)` : ''}`;
+          }
 
           break;
         }
@@ -72,25 +71,24 @@ const BuilderCollaboratorArea = ({
         default:
       }
     },
-    [baseElementId, instanceId, refCursor, scale]
+    [baseElementId, mapToPixels, title]
   );
 
   const realtimeCallbackElement = useCallback(
-    (payload: { action: 'hovered' | 'selected'; id: string; rootId: string; instanceId: string }) => {
-      const { action, id, rootId } = payload;
-      if (baseElementId !== rootId || payload.instanceId === instanceId) {
+    (payload: Extract<RTMessageManagedServer, { type: RTEvent.ELEMENT }>['payload']) => {
+      if (baseElementId !== payload.rootId) {
         return;
       }
 
-      switch (action) {
+      switch (payload.action) {
         case 'hovered': {
-          setElementHovered(id);
+          setElementHovered(payload.id);
 
           break;
         }
 
         case 'selected': {
-          setElementSelected(id);
+          setElementSelected(payload.id);
 
           break;
         }
@@ -98,23 +96,22 @@ const BuilderCollaboratorArea = ({
         default:
       }
     },
-    [baseElementId, instanceId]
+    [baseElementId]
   );
 
   useEffect(() => {
     if (supportRealTime) {
-      subscriptionsRegisterCallback(instanceId, RTEvent.MOUSE, realtimeCallbackMouse);
-      subscriptionsRegisterCallback(instanceId, RTEvent.ELEMENT, realtimeCallbackElement);
+      subscriptionsRegisterCallback(RTEvent.MOUSE, realtimeCallbackMouse);
+      subscriptionsRegisterCallback(RTEvent.ELEMENT, realtimeCallbackElement);
     }
 
     return () => {
       if (supportRealTime) {
-        subscriptionsUnregisterCallback(instanceId, RTEvent.MOUSE);
-        subscriptionsUnregisterCallback(instanceId, RTEvent.ELEMENT);
+        subscriptionsUnregisterCallback(RTEvent.MOUSE);
+        subscriptionsUnregisterCallback(RTEvent.ELEMENT);
       }
     };
   }, [
-    instanceId,
     realtimeCallbackElement,
     realtimeCallbackMouse,
     subscriptionsRegisterCallback,
@@ -151,7 +148,7 @@ const BuilderCollaboratorArea = ({
           collaboratorName={title}
         />
       )}
-      <BuilderCollaboratorCursor ref={refCursor} color={color} title={title} scale={scale} />
+      <BuilderCollaboratorCursor ref={refCursor} color={color} title={title} zoom={zoom} />
     </div>
   );
 };

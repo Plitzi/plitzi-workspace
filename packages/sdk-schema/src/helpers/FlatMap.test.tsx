@@ -327,6 +327,8 @@ describe('Testing FlatMap', () => {
     });
   });
 
+  // it('FlatMap AddElement With Variables', )
+
   it('FlatMap Add Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);

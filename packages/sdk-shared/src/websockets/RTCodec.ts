@@ -3,6 +3,13 @@
 
 import type { SubscriptionCollaborator } from '../types';
 
+export enum RTEventCloseCode {
+  UNKNOWN = 4000,
+  NOT_AUTHORISED = 4001,
+  INSTANCE_ID_NOT_FOUND = 4002,
+  USER_TOKEN_NOT_FOUND = 4003
+}
+
 export enum RTEvent {
   INIT = 0,
   KA = 1,
@@ -19,18 +26,38 @@ export const isRTEvent = (value: unknown): value is RTEvent => {
 export type RTMessageManagedClient =
   | { type: RTEvent.INIT; payload: undefined }
   | { type: RTEvent.KA; payload: undefined }
-  | { type: RTEvent.MOUSE; payload: Record<string, unknown> }
-  | { type: RTEvent.ELEMENT; payload: Record<string, unknown> }
-  | { type: RTEvent.COLLABORATOR_CONNECTED; payload: Record<string, unknown> }
-  | { type: RTEvent.COLLABORATOR_DISCONNECTED; payload: Record<string, unknown> };
+  | {
+      type: RTEvent.MOUSE;
+      payload:
+        | { action: 'mouseEnter'; rootId: string }
+        | { action: 'mouseLeave'; rootId: string }
+        | { action: 'mouseMove'; x: number; y: number; zoom: number; rootId: string };
+    }
+  | {
+      type: RTEvent.ELEMENT;
+      payload: { action: 'hovered'; rootId: string; id?: string } | { action: 'selected'; rootId: string; id?: string };
+    }
+  | { type: RTEvent.COLLABORATOR_CONNECTED; payload: SubscriptionCollaborator }
+  | { type: RTEvent.COLLABORATOR_DISCONNECTED; payload: SubscriptionCollaborator };
 
 export type RTMessageManagedServer =
   | { type: RTEvent.INIT; payload: { collaborators: SubscriptionCollaborator[] } & { instanceId: string } }
   | { type: RTEvent.KA; payload: undefined }
-  | { type: RTEvent.MOUSE; payload: Record<string, unknown> & { instanceId: string } }
-  | { type: RTEvent.ELEMENT; payload: Record<string, unknown> & { instanceId: string } }
-  | { type: RTEvent.COLLABORATOR_CONNECTED; payload: Record<string, unknown> & { instanceId: string } }
-  | { type: RTEvent.COLLABORATOR_DISCONNECTED; payload: Record<string, unknown> & { instanceId: string } };
+  | {
+      type: RTEvent.MOUSE;
+      payload:
+        | { action: 'mouseEnter'; rootId: string; instanceId: string }
+        | { action: 'mouseLeave'; rootId: string; instanceId: string }
+        | { action: 'mouseMove'; x: number; y: number; zoom: number; rootId: string; instanceId: string };
+    }
+  | {
+      type: RTEvent.ELEMENT;
+      payload:
+        | { action: 'hovered'; rootId: string; id?: string; instanceId: string }
+        | { action: 'selected'; rootId: string; id?: string; instanceId: string };
+    }
+  | { type: RTEvent.COLLABORATOR_CONNECTED; payload: SubscriptionCollaborator }
+  | { type: RTEvent.COLLABORATOR_DISCONNECTED; payload: SubscriptionCollaborator };
 
 export type RTCallback = (...args: any[]) => void;
 

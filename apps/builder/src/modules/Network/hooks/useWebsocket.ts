@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import RTCodec, { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
+import RTCodec, { RTEvent, RTEventCloseCode } from '@plitzi/sdk-shared/websockets/RTCodec';
 
 import type { RTMessageManagedClient } from '@plitzi/sdk-shared/websockets/RTCodec';
 
@@ -94,12 +94,17 @@ const useWebsocket = <T = unknown>({
     ws.onerror = () => ws.close();
 
     ws.onclose = e => {
-      const { reason, code } = e;
-      if (code === 1000) {
+      const { reason, code } = e as { reason: string; code: RTEventCloseCode };
+      if ((code as number) === 1000) {
         return;
       }
 
-      if (reason === 'Access Not Authorized') {
+      if (
+        reason === 'Access Not Authorized' ||
+        code === RTEventCloseCode.NOT_AUTHORISED ||
+        code === RTEventCloseCode.INSTANCE_ID_NOT_FOUND ||
+        code === RTEventCloseCode.USER_TOKEN_NOT_FOUND
+      ) {
         ws.close();
       } else {
         setTimeout(() => {

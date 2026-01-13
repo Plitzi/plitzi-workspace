@@ -1,9 +1,8 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import clsx from 'clsx';
-import debounce from 'lodash-es/debounce';
 import get from 'lodash-es/get';
-import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -62,6 +61,7 @@ const BuilderArea = ({
   previewMode = false,
   debugMode = false
 }: BuilderAreaProps) => {
+  const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {
     multiPagesMode,
@@ -86,53 +86,10 @@ const BuilderArea = ({
   const [dragTree, setDragTreeState] = useState(false);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
-  const [iframeScaleX, setIframeScaleX] = useState(1);
-  const [desiredWidth] = useState(1440);
   const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
   const { currentPageId } = use(NavigationContext);
   const { schema, builderGetBaseElement } = use(BuilderSchemaContext);
   const { rootDOM } = use(ContainerRootContext);
-
-  const callbackRefresh = useCallback(() => {
-    if (!refContainer.current || !ref.current) {
-      return;
-    }
-
-    let newDesiredWidth = desiredWidth;
-    switch (displayMode) {
-      case 'desktop':
-        newDesiredWidth = 1440;
-
-        break;
-
-      case 'tablet':
-        newDesiredWidth = 768;
-
-        break;
-
-      case 'mobile':
-        newDesiredWidth = 425;
-
-        break;
-
-      default:
-        break;
-    }
-
-    const elementDOM = refContainer.current;
-    const widthArea = elementDOM.offsetWidth;
-    let iframeScaleX = widthArea / newDesiredWidth > 1 || widthArea === 0 ? 1 : widthArea / newDesiredWidth;
-    if (!multiPagesMode) {
-      iframeScaleX = 1;
-    }
-
-    ref.current.style.width = `${(1 / iframeScaleX) * 100}%`;
-    ref.current.style.height = `${(1 / iframeScaleX) * 100}%`;
-    ref.current.style.transform = `scale(${iframeScaleX})`;
-    setIframeScaleX(iframeScaleX);
-  }, [displayMode, desiredWidth, multiPagesMode]);
-
-  const callbackRefreshDebounced = useMemo(() => debounce(callbackRefresh, 50), [callbackRefresh]);
 
   const getWindow = useCallback(() => {
     if (ref.current) {
@@ -146,22 +103,6 @@ const BuilderArea = ({
     // @todo: Hmm what to put here
     return { innerWidth: 1440, innerHeight: 900 } as Window;
   }, []);
-
-  useEffect(() => {
-    let observer: ResizeObserver | undefined;
-    if (refContainer.current) {
-      observer = new window.ResizeObserver(callbackRefreshDebounced);
-      observer.observe(refContainer.current);
-    }
-
-    return () => {
-      if (observer) {
-        observer.disconnect();
-      }
-
-      callbackRefreshDebounced.cancel();
-    };
-  }, [callbackRefreshDebounced]);
 
   const setDragTree = useCallback((newDragTree: boolean) => setDragTreeState(newDragTree), []);
 
@@ -243,7 +184,7 @@ const BuilderArea = ({
           <ContainerFrame
             ref={ref}
             id={`i-builder-${baseElementId}`}
-            zoom={zoom}
+            // zoom={zoom}
             css={css}
             assets={assets}
             className="absolute h-full w-full origin-top-left"
@@ -251,8 +192,9 @@ const BuilderArea = ({
             {Plugin && (
               <>
                 <BuilderAreaTracking
-                  iframeScaleX={iframeScaleX}
                   className="builder-iframe"
+                  ref={trackingContainerRef}
+                  zoom={zoom}
                   isActive={iframeActive}
                   iframeDOM={ref.current}
                   previewMode={previewMode}
@@ -282,10 +224,9 @@ const BuilderArea = ({
                     subscriptionsCollaborators.map((subscriptionsCollaborator, i) => (
                       <BuilderCollaboratorArea
                         key={i}
-                        scale={iframeScaleX}
+                        trackingContainerRef={trackingContainerRef}
                         refIframe={ref}
                         baseElementId={baseElementId}
-                        instanceId={subscriptionsCollaborator.instanceId}
                         color={subscriptionsCollaborator.color}
                         title={`${subscriptionsCollaborator.user.firstName} ${subscriptionsCollaborator.user.surName}`}
                         displayMode={displayMode}

@@ -2,7 +2,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import get from 'lodash-es/get';
 import throttle from 'lodash-es/throttle';
-import { use, useRef, useCallback, useMemo, useEffect } from 'react';
+import { use, useRef, useCallback, useMemo, useEffect, useImperativeHandle } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -14,32 +14,37 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import AppContext from '@pmodules/App/AppContext';
+import useNormalizedCursor from '@pmodules/Builder/hooks/useNormalizedCursor';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
 
 import type { Schema, Style } from '@plitzi/sdk-shared';
-import type { MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type BuilderAreaTrackingProps = {
+  ref?: RefObject<HTMLDivElement | null>;
   children?: ReactNode;
   className?: string;
   iframeDOM?: HTMLIFrameElement | null;
   isActive?: boolean;
-  iframeScaleX?: number;
+  zoom?: number;
   previewMode?: boolean;
 };
 
 const BuilderAreaTracking = ({
+  ref,
   children,
   className,
   iframeDOM,
   isActive = false,
-  iframeScaleX = 1,
   previewMode = false,
+  zoom = 1,
   ...otherProps
 }: BuilderAreaTrackingProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => containerRef.current, []);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
   const { elementHovered, setHovered } = use(BuilderHoveredContext);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
@@ -79,29 +84,8 @@ const BuilderAreaTracking = ({
     }
   }, [baseElementId, elementHovered, setHovered, subscriptionsPush, supportRealTime]);
 
-  const callbackPosition = useCallback(
-    (x: number, y: number) => {
-      if (isActive && supportRealTime) {
-        subscriptionsPush({
-          type: RTEvent.MOUSE,
-          payload: { action: 'mouseMove', x, y, rootId: baseElementId }
-        });
-      }
-    },
-    [baseElementId, isActive, subscriptionsPush, supportRealTime]
-  );
-
-  const callbackPositionDebounced = useMemo(() => {
-    if (!supportRealTime) {
-      return undefined;
-    }
-
-    return throttle(callbackPosition, 50);
-  }, [callbackPosition, supportRealTime]);
-
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      callbackPositionDebounced?.(e.clientX * iframeScaleX, e.clientY * iframeScaleX);
       if (previewMode) {
         return;
       }
@@ -123,7 +107,7 @@ const BuilderAreaTracking = ({
 
       setHovered(id);
     },
-    [callbackPositionDebounced, elementHovered, iframeScaleX, previewMode, setHovered]
+    [elementHovered, previewMode, setHovered]
   );
 
   const handleClickElements = useCallback(
@@ -359,6 +343,19 @@ const BuilderAreaTracking = ({
     };
   }, [previewMode, handleKeyDown, iframeDOM, multiPagesMode]);
 
+  const throttledSend = useMemo(
+    () =>
+      throttle((pos: { x: number; y: number }) => {
+        subscriptionsPush({
+          type: RTEvent.MOUSE,
+          payload: { ...pos, zoom, action: 'mouseMove', rootId: baseElementId }
+        });
+      }, 50),
+    [baseElementId, subscriptionsPush, zoom]
+  );
+
+  const { bind } = useNormalizedCursor(containerRef, { onMove: throttledSend, enabled: isActive && supportRealTime });
+
   return (
     <div
       className={clsx(className, {
@@ -367,10 +364,13 @@ const BuilderAreaTracking = ({
         'builder--display-component-border display-component-border--white':
           displayBorderComponents === 'white' && !previewMode
       })}
+      style={{ zoom }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
       onClick={handleClickElements}
+      ref={containerRef}
+      {...bind()}
       {...otherProps}
     >
       {children}
