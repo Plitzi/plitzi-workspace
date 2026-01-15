@@ -13,7 +13,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
+import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
@@ -57,7 +57,7 @@ const Sdk = ({
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
     const cssVariables = schemaVariablesToCss(variables);
-    const cacheParsed = processCssVariables(cache, variables);
+    const cacheParsed = processCssTokens(cache, variables);
 
     if (renderMode === 'iframe' || renderMode === 'shadow') {
       return `${style}.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;

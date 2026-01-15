@@ -4,7 +4,7 @@ interface TokenMap {
   [key: string]: TokenMapValue | TokenMap; // primitive or nested values
 }
 
-const processCssVariables = <T extends TokenMap>(
+const processCssTokens = <T extends TokenMap>(
   cache: string,
   variables: T = {} as T,
   opts: { missing?: string } = { missing: '' }
@@ -37,4 +37,4 @@ const processCssVariables = <T extends TokenMap>(
   });
 };
 
-export default processCssVariables;
+export default processCssTokens;

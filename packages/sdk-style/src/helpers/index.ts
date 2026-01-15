@@ -1,13 +1,12 @@
 import calculateInheriting from './calculateInheriting';
-import formatCssFromSelector from './formatCssFromSelector';
 import generateStyleSelector from './generateStyleSelector';
-import processCssVariables from './processCssVariables';
+import processCssTokens from './processCssTokens';
 import processSelector from './processSelector';
 
 export * from './calculateInheriting';
 export * from './formatCssFromSelector';
 export * from './generateStyleSelector';
-export * from './processCssVariables';
+export * from './processCssTokens';
 export * from './processSelector';
 
-export { calculateInheriting, processCssVariables, formatCssFromSelector, generateStyleSelector, processSelector };
+export { calculateInheriting, processCssTokens, generateStyleSelector, processSelector };

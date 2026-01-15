@@ -35,9 +35,7 @@ const StyleInspector = ({
   onSelect,
   onStyleSelect
 }: StyleInspectorProps) => {
-  const [cache, setCache] = useStorage<{ viewMode: 'basic' | 'advanced' }>('builder-state.styleInspector', {
-    viewMode: 'basic'
-  });
+  const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
   const { componentDefinitions } = use(ComponentContext);
   const {
     style,
@@ -140,8 +138,8 @@ const StyleInspector = ({
   const handleRemoveSelector = useCallback(() => {}, []);
 
   const handleClicViewMode = useCallback(
-    () => setCache(state => ({ viewMode: state.viewMode === 'basic' ? 'advanced' : 'basic' })),
-    [setCache]
+    () => setViewMode(state => (state === 'basic' ? 'advanced' : 'basic')),
+    [setViewMode]
   );
 
   const handleChangeStyleSelector = useCallback(
@@ -162,13 +160,13 @@ const StyleInspector = ({
             <Switch
               size="sm"
               intent="secondary"
-              checked={cache.viewMode === 'advanced'}
+              checked={viewMode === 'advanced'}
               onChange={handleClicViewMode}
               disabled={selector?.name.includes(':')}
             />
           </div>
         </div>
-        {mode === 'element' && (
+        {mode === 'element' && viewMode === 'basic' && (
           <Selector
             className="min-h-0 w-full"
             style={style}
@@ -194,15 +192,10 @@ const StyleInspector = ({
         )}
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto">
-        {cache.viewMode === 'advanced' && (
-          <InspectorModeAdvanced
-            selectors={selectors}
-            selector={selector}
-            displayMode={displayMode}
-            styleVariables={variables}
-          />
+        {viewMode === 'advanced' && (
+          <InspectorModeAdvanced selectors={selectors} displayMode={displayMode} styleVariables={variables} />
         )}
-        {cache.viewMode === 'basic' && (
+        {viewMode === 'basic' && (
           <InspectorModeBasic
             styleSelector={styleSelector}
             selector={selector}

@@ -19,7 +19,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import processCssVariables from '@plitzi/sdk-style/helpers/processCssVariables';
+import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -78,7 +78,7 @@ const BuilderArea = ({
   const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables);
-    const cacheParsed = processCssVariables(cache, variables);
+    const cacheParsed = processCssTokens(cache, variables);
 
     return `:root{${cssVariables}}\n${styleFrame}\n${cacheParsed}\n${customCss}\n${externalStyle}`;
   }, [customCss, cache, externalStyle, variables]);

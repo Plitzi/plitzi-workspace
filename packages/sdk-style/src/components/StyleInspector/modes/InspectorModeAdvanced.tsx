@@ -9,24 +9,19 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { StyleConstants } from '@plitzi/sdk-shared/style/styleConstants';
 
-// import { cssToSelectors, getReadOnlyRangesFromContent, formatCssFromSelector } from '../../../StyleHelper';
-
-import formatCssFromSelector, {
-  cssToSelectors,
-  getReadOnlyRangesFromContent
-} from '../../../helpers/formatCssFromSelector';
+import { processSelectorsMultiLine } from '../../../helpers';
+import { cssToSelectors, getReadOnlyRangesFromContent } from '../../../helpers/formatCssFromSelector';
 
 import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { DisplayMode, StyleBaseItem, StyleItem, StyleVariableCategory, StyleVariables } from '@plitzi/sdk-shared';
 
 export type InspectorModeAdvancedProps = {
   selectors: StyleItem[];
-  selector?: StyleItem;
   displayMode: DisplayMode;
   styleVariables?: Partial<StyleVariables>;
 };
 
-const InspectorModeAdvanced = ({ selectors, selector, displayMode, styleVariables }: InspectorModeAdvancedProps) => {
+const InspectorModeAdvanced = ({ selectors, displayMode, styleVariables }: InspectorModeAdvancedProps) => {
   const selectorsRef = useRef(selectors);
   selectorsRef.current = selectors;
   const [reRender, setReRender] = useState(false);
@@ -34,7 +29,7 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode, styleVariable
   const { useDataSource } = use(DataSourceContext);
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
   const CMValue = useMemo(
-    () => formatCssFromSelector(selectors.map(selector => selector.cache).join('\n'), false, 2, false).join('\n\n'),
+    () => processSelectorsMultiLine(selectors, 2).join('\n\n'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectors, reRender]
   );
@@ -68,14 +63,14 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode, styleVariable
             'styleUpdateSelector',
             displayMode,
             newSelector.name,
-            selector?.type,
+            selectorItem.type,
             undefined,
             newSelector.attributes
           );
         }
       });
     },
-    [builderHandler, displayMode, selector?.type]
+    [builderHandler, displayMode]
   );
 
   const syncDebounced = useMemo(() => debounce(sync, 500), [sync]);
@@ -102,6 +97,7 @@ const InspectorModeAdvanced = ({ selectors, selector, displayMode, styleVariable
         className="h-full"
         theme="dark"
         lineWrapping
+        // readOnly
         onChange={handleChange}
         onBlur={handleBlur}
         autoComplete={variablesNames}

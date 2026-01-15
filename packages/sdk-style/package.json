@@ -673,6 +673,10 @@
       "types": "./dist/src/helpers/index.d.ts",
       "import": "./dist/src/helpers/index.mjs"
     },
+    "./helpers/processCssTokens": {
+      "types": "./dist/src/helpers/processCssTokens.d.ts",
+      "import": "./dist/src/helpers/processCssTokens.mjs"
+    },
     "./helpers/processCssVariables": {
       "types": "./dist/src/helpers/processCssVariables.d.ts",
       "import": "./dist/src/helpers/processCssVariables.mjs"
@@ -680,6 +684,14 @@
     "./helpers/processSelector": {
       "types": "./dist/src/helpers/processSelector.d.ts",
       "import": "./dist/src/helpers/processSelector.mjs"
+    },
+    "./helpers/processSelectorAttributes": {
+      "types": "./dist/src/helpers/processSelectorAttributes.d.ts",
+      "import": "./dist/src/helpers/processSelectorAttributes.mjs"
+    },
+    "./helpers/processSelectorName": {
+      "types": "./dist/src/helpers/processSelectorName.d.ts",
+      "import": "./dist/src/helpers/processSelectorName.mjs"
     },
     "./index": {
       "types": "./dist/src/index.d.ts",

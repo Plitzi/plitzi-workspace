@@ -17,11 +17,11 @@ const StyleAddSelectorMutation = gql`
       path: $path
       style: $style
     ) {
-      id
-      variables
-      platform
-      mode
-      cache
+      displayMode
+      selector
+      type
+      path
+      style
     }
   }
 `;
