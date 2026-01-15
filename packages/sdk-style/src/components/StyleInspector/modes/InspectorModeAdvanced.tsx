@@ -97,7 +97,6 @@ const InspectorModeAdvanced = ({ selectors, displayMode, styleVariables }: Inspe
         className="h-full"
         theme="dark"
         lineWrapping
-        // readOnly
         onChange={handleChange}
         onBlur={handleBlur}
         autoComplete={variablesNames}
