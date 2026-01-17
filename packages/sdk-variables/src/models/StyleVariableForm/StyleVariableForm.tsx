@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import Button from '@plitzi/plitzi-ui/Button';
-import Form, { useForm } from '@plitzi/plitzi-ui/Form';
+import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
@@ -72,6 +72,14 @@ const StyleVariableForm = ({
     defaultValues: normalizeValue(category, name, value),
     config: { schema: styleVariableFormSchema }
   });
+  const watchCategory = useFormWatch(form.formMethods, 'category');
+
+  const handleChangeValue = useCallback(
+    (value: string) => {
+      form.formMethods.setValue('value', value === 'color' ? { default: '', light: '', dark: '' } : '');
+    },
+    [form.formMethods]
+  );
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof styleVariableFormSchema>) => onSubmit?.(values),
@@ -86,16 +94,21 @@ const StyleVariableForm = ({
     >
       <Form.Body gap={2}>
         <Form.Input name="name" placeholder="Name" size="xs" disabled={!isNewRecord} />
-        <Form.Select name="category" size="xs">
+        <Form.Select name="category" size="xs" onChange={handleChangeValue}>
           <option value="color">Colors</option>
           <option value="spacing">Spacing</option>
           <option value="shadow">Shadow</option>
         </Form.Select>
-        <div className="flex w-full gap-2">
-          <Form.Input name="value.default" placeholder="Default Value" size="xs" className="grow basis-0" />
-          <Form.Input name="value.light" placeholder="Light Value" size="xs" className="grow basis-0" />
-          <Form.Input name="value.dark" placeholder="Dark Value" size="xs" className="grow basis-0" />
-        </div>
+        {watchCategory === 'color' && (
+          <div className="flex w-full gap-2">
+            <Form.Color name="value.default" placeholder="Default Value" size="xs" className="min-w-0 grow basis-0" />
+            <Form.Color name="value.light" placeholder="Light Value" size="xs" className="min-w-0 grow basis-0" />
+            <Form.Color name="value.dark" placeholder="Dark Value" size="xs" className="min-w-0 grow basis-0" />
+          </div>
+        )}
+        {watchCategory !== 'color' && (
+          <Form.Input name="value" placeholder="Value" size="xs" className="grow basis-0" />
+        )}
       </Form.Body>
       <Form.Footer>
         <Button onClick={onClose} size="xs" className="grow basis-0">
