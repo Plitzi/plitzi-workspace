@@ -181,7 +181,7 @@ const OpenAIChat = () => {
           )}
           {recording && (
             <VoiceVisualizer
-              className="h-[38px] pr-2"
+              className="h-9.5 pr-2"
               backgroundColor="transparent"
               mainBarColor="#7290e7"
               barWidth={2}
@@ -193,18 +193,18 @@ const OpenAIChat = () => {
         </div>
         {recording && (
           <div className="flex overflow-hidden rounded-sm">
-            <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
+            <Button className="w-9.5" size="sm" intent="danger" onClick={handleClickPauseTranscript}>
               {!paused && <Button.Icon icon="fa-solid fa-pause" />}
               {paused && <Button.Icon icon="fa-solid fa-play" />}
             </Button>
-            <Button className="w-[38px]" size="sm" intent="danger" onClick={handleClickTranscript}>
+            <Button className="w-9.5" size="sm" intent="danger" onClick={handleClickTranscript}>
               <Button.Icon icon="fa-solid fa-stop" />
             </Button>
           </div>
         )}
         {!recording && (
           <Button
-            className="w-[38px] rounded-sm"
+            className="w-9.5 rounded-sm"
             size="sm"
             intent="primary"
             disabled={loading}
@@ -214,7 +214,7 @@ const OpenAIChat = () => {
           </Button>
         )}
         {!recording && (
-          <Button size="sm" className="w-[38px] rounded-sm" disabled={loading} onClick={handleClickAsk} title="Ask">
+          <Button size="sm" className="w-9.5 rounded-sm" disabled={loading} onClick={handleClickAsk} title="Ask">
             {!loading && <Button.Icon icon="fa-solid fa-star" />}
             {loading && <Button.Icon icon="fa-solid fa-sync fa-spin" />}
           </Button>
@@ -222,7 +222,7 @@ const OpenAIChat = () => {
         <Button
           size="sm"
           intent="danger"
-          className="w-[38px] rounded-sm"
+          className="w-9.5 rounded-sm"
           disabled={loading}
           onClick={handleClickClearConversation}
           title="Clear the conversation"
