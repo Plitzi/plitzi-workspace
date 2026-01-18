@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -69,7 +70,11 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
   );
 
   return (
-    <div className="flex min-w-0 grow basis-0 overflow-auto">
+    <div
+      className={clsx('builder-container flex min-w-0 grow basis-0 overflow-auto', {
+        'justify-center': !multiPagesMode
+      })}
+    >
       {(!multiPagesMode || mode !== 'normal') && (
         <BuilderArea
           externalStyle={externalStyle}
@@ -81,7 +86,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
       )}
       {mobilePreview && mode === 'normal' && displayMode !== 'mobile' && !previewMode && (
         <BuilderArea
-          className="mb-11 basis-106.25"
+          className="basis-106.25"
           externalStyle={externalStyle}
           customCss={customCss}
           mobilePreview

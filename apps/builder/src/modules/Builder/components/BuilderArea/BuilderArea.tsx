@@ -146,21 +146,18 @@ const BuilderArea = ({
         'builder-area flex flex-col p-2 select-none',
         {
           'min-w-150 overflow-hidden': multiPagesMode,
-          'basis-0 overflow-auto': !multiPagesMode,
+          'basis-0 overflow-auto': !multiPagesMode && !mobilePreview,
           grow: !mobilePreview && !mobilePreview,
           'px-4 pt-4 pb-2': mode === 'normal',
-          'p-2': mode !== 'normal'
+          'p-2': mode !== 'normal',
+          'max-w-360': displayMode === 'desktop',
+          'max-w-48': displayMode === 'tablet',
+          'max-w-106.25': displayMode === 'mobile'
         },
         className
       )}
     >
-      <div
-        className={clsx('mx-auto mb-2 flex w-full grow basis-0 flex-col shadow', {
-          'max-w-360': displayMode === 'desktop',
-          'max-w-48': displayMode === 'tablet',
-          'max-w-106.25': displayMode === 'mobile'
-        })}
-      >
+      <div className="mx-auto mb-2 flex w-full grow basis-0 flex-col shadow">
         {mode === 'normal' && showHeader && (
           <BuilderAreaHeader
             baseElementId={baseElementId}

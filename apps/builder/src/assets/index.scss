@@ -21,6 +21,12 @@ body,
       pointer-events: none;
     }
   }
+
+  .builder-container {
+    background-size: 24px 24px;
+    background-image:
+      linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+  }
 }
 
 @keyframes dashdraw {
