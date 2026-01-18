@@ -14,6 +14,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
 
@@ -46,6 +47,21 @@ const BuilderAreaHeader = ({
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
+
+  const handleClickTransform = useCallback(() => {
+    if (!existsPopup('transform')) {
+      addPopup('transform', <Transform />, {
+        icon: <i className="fa-brands fa-nfc-symbol text-base" />,
+        title: 'Transform And Import',
+        height: 400,
+        width: 800,
+        allowLeftSide: true,
+        allowRightSide: true,
+        placement: 'floating',
+        resizeHandles: ['se']
+      });
+    }
+  }, [addPopup, existsPopup]);
 
   const handleClickMultipage = useCallback(() => {
     if (elementSelected) {
@@ -143,6 +159,12 @@ const BuilderAreaHeader = ({
       <Flex items="center" grow className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none">
         <div className="mr-4 w-full truncate">{pageTitle}</div>
       </Flex>
+      <Icon
+        icon="fa-brands fa-nfc-symbol"
+        className="cursor-pointer"
+        title="Transform And Import"
+        onClick={handleClickTransform}
+      />
       {!previewMode && (
         <Flex items="center" gap={3}>
           {hasMultiPages && (

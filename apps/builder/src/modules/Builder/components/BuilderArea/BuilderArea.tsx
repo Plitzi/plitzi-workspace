@@ -27,7 +27,6 @@ import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu'
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 
-import BuilderAreaFooter from './BuilderAreaFooter';
 import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
 import BuilderAreaTracking from './BuilderAreaTracking';
@@ -43,7 +42,6 @@ export type BuilderAreaProps = {
   displayMode?: DisplayMode;
   showHeader?: boolean;
   headerTitle?: string;
-  showFooter?: boolean;
   mobilePreview?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
@@ -56,7 +54,6 @@ const BuilderArea = ({
   displayMode = 'desktop',
   showHeader = true,
   headerTitle = '',
-  showFooter = true,
   mobilePreview = false,
   previewMode = false,
   debugMode = false
@@ -83,7 +80,6 @@ const BuilderArea = ({
     return `:root{${cssVariables}}\n${styleFrame}\n${cacheParsed}\n${customCss}\n${externalStyle}`;
   }, [customCss, cache, externalStyle, variables]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
-  const [dragTree, setDragTreeState] = useState(false);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
   const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
@@ -103,8 +99,6 @@ const BuilderArea = ({
     // @todo: Hmm what to put here
     return { innerWidth: 1440, innerHeight: 900 } as Window;
   }, []);
-
-  const setDragTree = useCallback((newDragTree: boolean) => setDragTreeState(newDragTree), []);
 
   const baseElement = builderGetBaseElement(baseElementId);
   const baseElementData = get(baseElement, 'data');
@@ -210,7 +204,6 @@ const BuilderArea = ({
                     <BuilderAreaOverlay
                       baseElementId={baseElementId}
                       refIframe={ref}
-                      dragTree={dragTree}
                       displayMode={displayMode}
                       zoom={zoom}
                       previewMode={previewMode}
@@ -239,7 +232,6 @@ const BuilderArea = ({
           )}
         </div>
       </div>
-      {!multiPagesMode && mode === 'normal' && showFooter && <BuilderAreaFooter setDragTree={setDragTree} />}
     </div>
   );
 };

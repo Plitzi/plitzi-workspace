@@ -13,7 +13,6 @@ import type { RefObject } from 'react';
 export type BuilderAreaOverlayProps = {
   refIframe: RefObject<HTMLIFrameElement | null>;
   baseElementId?: string;
-  dragTree?: boolean;
   zoom?: number;
   displayMode?: DisplayMode;
   previewMode?: boolean;
@@ -23,7 +22,6 @@ const BuilderAreaOverlay = ({
   refIframe,
   baseElementId = '',
   previewMode = false,
-  dragTree = false,
   zoom = 1,
   displayMode = 'desktop'
 }: BuilderAreaOverlayProps) => {
@@ -104,7 +102,7 @@ const BuilderAreaOverlay = ({
         />
       )}
       {!showDistance && elementSelected && overlaySelectMemo}
-      {!dragTree && <BuilderOverlayDrag refIframe={refIframe} zoom={zoom} />}
+      <BuilderOverlayDrag refIframe={refIframe} zoom={zoom} />
       {showDistance && elementSelected && elementHovered && elementHovered !== elementSelected && (
         <BuilderOverlayDistance
           baseElementId={baseElementId}

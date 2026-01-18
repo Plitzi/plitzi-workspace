@@ -15,6 +15,7 @@ const OptionColor = ({ className, value, onChange }: OptionColorProps) => {
       className={{ root: 'w-full min-w-0', input: className }}
       value={value as string}
       onChange={onChange}
+      allowVariables
     />
   );
 };

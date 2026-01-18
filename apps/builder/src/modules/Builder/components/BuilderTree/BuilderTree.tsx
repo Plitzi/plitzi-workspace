@@ -15,11 +15,9 @@ import { recursiveMap } from './utils';
 import type { DropPosition, TreeChangeState } from '@plitzi/plitzi-ui/Tree';
 import type { Element } from '@plitzi/sdk-shared';
 
-export type BuilderTreeProps = {
-  setDragTree?: (dragTree: boolean) => void;
-};
+// export type BuilderTreeProps = {};
 
-const BuilderTree = ({ setDragTree }: BuilderTreeProps) => {
+const BuilderTree = () => {
   const { componentDefinitions } = use(ComponentContext);
   const { elementHovered, setHovered: setHoverElement } = use(BuilderHoveredContext);
   const { elementSelected, setSelected: setSelectElement } = use(BuilderSelectedContext);
@@ -139,14 +137,13 @@ const BuilderTree = ({ setDragTree }: BuilderTreeProps) => {
         }
 
         case 'isDragging': {
-          setDragTree?.(state.data);
           break;
         }
 
         default:
       }
     },
-    [setOpenedCache, builderHandler, builderDropElement, baseElementId, setHoverElement, setSelectElement, setDragTree]
+    [setOpenedCache, builderHandler, builderDropElement, baseElementId, setHoverElement, setSelectElement]
   );
 
   const nodes = useMemo(() => {

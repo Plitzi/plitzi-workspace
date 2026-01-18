@@ -5,6 +5,7 @@ import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Collections from '@pmodules/Collection/Collections';
 import Elements from '@pmodules/Elements';
+import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
 import StateManager from '@pmodules/StateManager/StateManager';
@@ -91,6 +92,25 @@ export const getPopups = ({
         allowLeftSide: true,
         allowRightSide: false,
         allowFloatingSide: false,
+        allowClose: false,
+        placement: 'right',
+        resizeHandles: ['se']
+      }
+    });
+  }
+
+  if (featureFlag.assistanceAI) {
+    left.push({
+      id: 'assistant',
+      component: <OpenAIChat />,
+      active: false,
+      settings: {
+        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" intent="tertiary" title="Variables" />,
+        title: 'Assistant',
+        width: 400,
+        allowLeftSide: true,
+        allowRightSide: true,
+        allowFloatingSide: true,
         allowClose: false,
         resizeHandles: ['se']
       }

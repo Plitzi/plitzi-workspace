@@ -23,7 +23,7 @@ const PageHeader = ({ setTabSelected }: PageHeaderProps) => {
 
   return (
     <div
-      className="flex w-[126px] min-w-0 grow basis-0 cursor-pointer items-center gap-1 text-xs select-none"
+      className="flex w-31.5 min-w-0 grow basis-0 cursor-pointer items-center gap-1 text-xs select-none"
       title={pageLabel}
       onClick={handleClick}
     >
