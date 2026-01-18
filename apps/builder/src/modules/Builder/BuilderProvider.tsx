@@ -34,7 +34,8 @@ import type {
   Schema,
   Style,
   DropPosition,
-  BuilderNetworkContextValue
+  BuilderNetworkContextValue,
+  StyleThemeMode
 } from '@plitzi/sdk-shared';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
@@ -71,6 +72,17 @@ const BuilderProvider = ({
   const [elementHovered, setElementHovered] = useState<string | undefined>(undefined);
   const [selector, setSelector] = useState<string | undefined>();
   const [styleSelector, setStyleSelector] = useState<string | undefined>('base');
+  const [theme, setTheme] = useState<StyleThemeMode>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
+
+    return 'system';
+  });
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const pages = useMemo(() => get(schema, 'pages', []), [schema]);
@@ -524,6 +536,8 @@ const BuilderProvider = ({
 
   const builderValue = useMemo(
     () => ({
+      theme,
+      setTheme,
       mode,
       schemaName,
       setMultiPagesMode,
@@ -538,6 +552,8 @@ const BuilderProvider = ({
       elementAsTemplate
     }),
     [
+      theme,
+      setTheme,
       mode,
       schemaName,
       setMultiPagesMode,

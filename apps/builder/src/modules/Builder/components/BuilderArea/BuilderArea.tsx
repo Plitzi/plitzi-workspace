@@ -61,6 +61,7 @@ const BuilderArea = ({
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {
+    theme,
     multiPagesMode,
     mode,
     baseContext: { baseElementId }
@@ -179,6 +180,7 @@ const BuilderArea = ({
             css={css}
             assets={assets}
             className="absolute h-full w-full origin-top-left"
+            style={{ colorScheme: theme === 'system' ? 'normal' : theme }}
           >
             {Plugin && (
               <>

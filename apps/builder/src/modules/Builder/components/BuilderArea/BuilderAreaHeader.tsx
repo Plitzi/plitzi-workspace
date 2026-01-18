@@ -36,8 +36,16 @@ const BuilderAreaHeader = ({
   previewMode = false
 }: BuilderAreaHeaderProps) => {
   const { existsPopup, addPopup } = usePopup();
-  const { multiPagesMode, setMultiPagesMode, hasMultiPages, builderSetBaseContext, baseElementIdOriginal, mode } =
-    use(BuilderContext);
+  const {
+    theme,
+    setTheme,
+    multiPagesMode,
+    setMultiPagesMode,
+    hasMultiPages,
+    builderSetBaseContext,
+    baseElementIdOriginal,
+    mode
+  } = use(BuilderContext);
   const {
     schema: { flat, pageFolders, definition }
   } = use(BuilderSchemaContext);
@@ -47,6 +55,16 @@ const BuilderAreaHeader = ({
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
+
+  const handleClickTheme = useCallback(() => {
+    setTheme(state => {
+      if (state === 'light') {
+        return 'dark';
+      }
+
+      return 'light';
+    });
+  }, [setTheme]);
 
   const handleClickTransform = useCallback(() => {
     if (!existsPopup('transform')) {
@@ -165,6 +183,11 @@ const BuilderAreaHeader = ({
         title="Transform And Import"
         onClick={handleClickTransform}
       />
+      <div title="Theme" className="flex cursor-pointer" onClick={handleClickTheme}>
+        {theme === 'system' && <Icon icon="fa-solid fa-desktop" />}
+        {theme === 'light' && <Icon icon="fa-solid fa-sun" />}
+        {theme === 'dark' && <Icon icon="fa-solid fa-moon" />}
+      </div>
       {!previewMode && (
         <Flex items="center" gap={3}>
           {hasMultiPages && (

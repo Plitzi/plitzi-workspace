@@ -91,7 +91,6 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
           customCss={customCss}
           mobilePreview
           displayMode="mobile"
-          showFooter={false}
           headerTitle="Mobile Preview"
           previewMode
         />
