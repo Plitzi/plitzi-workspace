@@ -73,7 +73,7 @@ const SelectorItem = ({
         {
           'bg-secondary-400': active,
           'bg-gray-500': !active,
-          'max-w-[126px]': editable,
+          'max-w-[162px]': editable,
           'max-w-full min-w-0': !editable
         }
       )}
@@ -91,7 +91,7 @@ const SelectorItem = ({
             />
           )}
           {!editable && selector}
-          {state && <span>:{state}</span>}
+          {state && type === 'class' && <span>:{state}</span>}
         </div>
       </div>
       {editable && (

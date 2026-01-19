@@ -103,20 +103,17 @@ const StyleInspector = ({
 
   const handleSelectSelector = useCallback(
     (selector?: Pick<StyleItem, 'name' | 'type'>) => {
-      setSelectorSelected(state => {
-        if (!selector || (state && state === selector.name)) {
-          onSelect?.(undefined);
+      if (!selector || (selectorSelected && selectorSelected === selector.name)) {
+        onSelect?.(undefined);
+        setSelectorSelected(undefined);
 
-          return undefined;
-        }
+        return;
+      }
 
-        const name = selectors.find(selectorItem => selectorItem.name === selector.name)?.name;
-        onSelect?.(name);
-
-        return name;
-      });
+      onSelect?.(selector.name);
+      setSelectorSelected(selector.name);
     },
-    [onSelect, selectors]
+    [onSelect, selectorSelected]
   );
 
   const handleChangeSelector = useCallback(
