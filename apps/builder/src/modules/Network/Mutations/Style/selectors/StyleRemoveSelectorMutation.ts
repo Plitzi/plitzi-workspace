@@ -5,9 +5,6 @@ const StyleRemoveSelectorMutation = gql`
     StyleRemoveSelector(environment: $environment, displayMode: $displayMode, selector: $selector) {
       displayMode
       selector
-      type
-      path
-      style
     }
   }
 `;
