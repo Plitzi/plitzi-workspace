@@ -33,6 +33,7 @@ export type CategoryOptionProps =
       step?: number;
       min?: number;
       max?: number;
+      allowVariables?: boolean;
     })
   | (CategoryOptionPropsBase & { type: 'color'; value?: StyleValue })
   | (CategoryOptionPropsBase & { type?: 'input' | 'select'; value?: StyleValue });

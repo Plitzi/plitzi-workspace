@@ -13,6 +13,7 @@ export type OptionMetricInputProps = {
   step?: number;
   units?: { label: string; value: string }[];
   allowedWords?: string[];
+  allowVariables?: boolean;
   onChange?: (value: StyleValue | Record<StyleCategory, StyleValue>) => void;
 };
 
@@ -36,6 +37,7 @@ const OptionMetricInput = ({
     { label: 'LVW', value: 'lvw' }
   ],
   allowedWords = ['auto', 'none'],
+  allowVariables = true,
   onChange
 }: OptionMetricInputProps) => {
   const handleChange = useCallback((value: StyleValue) => onChange?.(value), [onChange]);
@@ -51,6 +53,7 @@ const OptionMetricInput = ({
         step={step}
         units={units}
         allowedWords={allowedWords}
+        allowVariables={allowVariables}
         onChange={handleChange}
         className={clsx('w-full min-w-0', className)}
       />

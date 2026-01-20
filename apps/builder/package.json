@@ -17,9 +17,9 @@
   "type": "module",
   "main": "dist/plitzi-builder.js",
   "dependencies": {
-    "@apollo/client": "^4.1.0",
+    "@apollo/client": "^4.1.1",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.1.20",
+    "@plitzi/plitzi-ui": "^1.1.21",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
