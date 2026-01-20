@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
 import type { StyleThemeValue, StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
@@ -11,7 +11,7 @@ const nameSchema = z
   .string()
   .min(3, 'Too Short')
   .max(20, 'Too Long')
-  .regex(/^(?:\w+\s+|)([a-zA-Z_][a-zA-Z0-9_]+)$/i);
+  .regex(/^(?:\w+\s+|)([a-zA-Z_][a-zA-Z0-9_-]+)$/i, 'Invalid Name');
 
 export const styleVariableFormSchema = z.discriminatedUnion('category', [
   z.object({
@@ -31,7 +31,26 @@ export const styleVariableFormSchema = z.discriminatedUnion('category', [
   z.object({
     name: nameSchema,
     category: z.literal('spacing'),
-    value: z.number().min(0)
+    value: z
+      .string()
+      .trim()
+      .refine(value => {
+        if (value === '0' || value === 'auto') {
+          return true;
+        }
+
+        // CSS Units
+        if (/^-?\d*\.?\d+(px|rem|em|%|vh|vw|vmin|vmax|dvh|svh|lvh|ch|ex|cm|mm|in|pt|pc)$/i.test(value)) {
+          return true;
+        }
+
+        // CSS Functions
+        if (/^(calc|min|max|clamp)\(.+\)$/i.test(value)) {
+          return true;
+        }
+
+        return false;
+      }, 'Invalid CSS value')
   })
 ]);
 
@@ -43,7 +62,7 @@ const normalizeValue = (category: StyleVariableCategory, name: string, value?: S
     }
 
     case 'spacing':
-      return { name, category, value: typeof value === 'number' ? value : Number(value) || 0 };
+      return { name, category, value: typeof value === 'string' ? value : '' };
 
     case 'shadow':
     default:
@@ -68,17 +87,16 @@ const StyleVariableForm = ({
   onClose,
   onSubmit
 }: StyleVariableFormProps) => {
-  const form = useForm({
-    defaultValues: normalizeValue(category, name, value),
-    config: { schema: styleVariableFormSchema }
-  });
+  const [defaultValues, setDefaultValues] = useState(normalizeValue(category, name, value));
+  const form = useForm({ defaultValues, config: { schema: styleVariableFormSchema } });
   const watchCategory = useFormWatch(form.formMethods, 'category');
 
   const handleChangeValue = useCallback(
     (value: string) => {
       form.formMethods.setValue('value', value === 'color' ? { default: '', light: '', dark: '' } : '');
+      setDefaultValues(normalizeValue(value as StyleVariableCategory, name, value));
     },
-    [form.formMethods]
+    [form.formMethods, name]
   );
 
   const handleSubmitInternal = useCallback(
