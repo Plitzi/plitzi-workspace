@@ -22,7 +22,9 @@ const SelectorSuggestions = ({ onSelect, onCreate, selector = '', selectors = []
   const finalSelectors = useMemo(() => {
     let finalSelectors = selectors;
     if (selector) {
-      finalSelectors = finalSelectors.filter(token => token.name.toLowerCase().includes(selector.toLowerCase()));
+      finalSelectors = finalSelectors.filter(
+        token => !token.name.includes(':') && token.name.toLowerCase().includes(selector.toLowerCase())
+      );
     }
 
     return finalSelectors;

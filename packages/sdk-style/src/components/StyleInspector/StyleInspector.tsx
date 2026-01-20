@@ -132,7 +132,9 @@ const StyleInspector = ({
     [element, builderHandler, styleSelector]
   );
 
-  const handleRemoveSelector = useCallback(() => {}, []);
+  const handleRemoveSelector = useCallback(() => {
+    builderHandler('styleRemoveSelector', displayMode, selectorSelected);
+  }, [builderHandler, displayMode, selectorSelected]);
 
   const handleClicViewMode = useCallback(
     () => setViewMode(state => (state === 'basic' ? 'advanced' : 'basic')),

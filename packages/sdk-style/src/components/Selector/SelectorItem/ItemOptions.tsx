@@ -33,10 +33,7 @@ const ItemOptions = ({
 
   const handleClickRemove = useCallback(() => onAction?.('remove'), [onAction]);
 
-  const handleClickDelete = useCallback(() => {
-    console.log('delete', onAction);
-    // onAction?.('delete');
-  }, [onAction]);
+  const handleClickDelete = useCallback(() => onAction?.('delete'), [onAction]);
 
   const handleClickState = useCallback(
     (state: string) => () => {

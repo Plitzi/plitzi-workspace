@@ -28,7 +28,7 @@ export type SelectorProps = {
   onSelectorSelected?: (selector?: SelectorValue) => void;
   onAdd?: (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => void;
   onChange?: (value: string) => void;
-  onRemove?: (selector: string) => void;
+  onRemove?: (selector: SelectorValue) => void;
 };
 
 const Selector = ({
@@ -40,8 +40,8 @@ const Selector = ({
   style,
   onChange,
   onSelectorSelected,
-  onAdd
-  // onRemove
+  onAdd,
+  onRemove
 }: SelectorProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState('');
@@ -113,7 +113,8 @@ const Selector = ({
   const handleClickAction = useCallback(
     (position: number) => (action: 'duplicate' | 'remove' | 'delete', value?: SelectorValue) => {
       switch (action) {
-        case 'remove': {
+        case 'remove':
+        case 'delete': {
           const finalTags = tags.filter((_tag, i) => i !== position);
           const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
           if (selectorSelected && tags[position].name === selectorSelected.name) {
@@ -121,6 +122,10 @@ const Selector = ({
           }
 
           onChange?.(finalValue);
+          if (action === 'delete') {
+            onRemove?.(tags[position]);
+          }
+
           break;
         }
 
@@ -139,16 +144,11 @@ const Selector = ({
           break;
         }
 
-        case 'delete': {
-          // onRemove(value.name);
-          break;
-        }
-
         default:
           break;
       }
     },
-    [tags, selectorSelected, onChange, onSelectorSelected, onAdd]
+    [tags, selectorSelected, onChange, onSelectorSelected, onAdd, onRemove]
   );
 
   const handleKeyDown = useCallback(
