@@ -1,4 +1,4 @@
-import type { WorkflowNode } from '../WorkflowDiagram';
+import type { WorkflowNode, WorkflowNodePage } from '../WorkflowDiagram';
 import type { Node, Edge } from '@xyflow/react';
 
 export type AccessLevel = 'none' | 'public' | 'authenticated';
@@ -12,7 +12,7 @@ export interface FlowNode extends Node {
     path?: string;
     description?: string;
     icon?: string;
-    isExpanded?: boolean;
+    isDefault?: boolean;
   };
 }
 
@@ -33,12 +33,12 @@ const sitemapToFlow = (
     const { id, title, accessLevel, type, path, description, icon } = node;
     const y = level * ySpacing;
 
-    flowNodes.push({
-      id,
-      type: 'custom',
-      position: { x: currentX, y },
-      data: { id, title, accessLevel, type, path, description, icon, isExpanded: true }
-    });
+    const data = { id, title, accessLevel, type, path, description, icon } as WorkflowNode;
+    if (node.type === 'page') {
+      (data as WorkflowNodePage).isDefault = node.isDefault;
+    }
+
+    flowNodes.push({ id, type: 'custom', data, position: { x: currentX, y } });
 
     if (parentId) {
       flowEdges.push({

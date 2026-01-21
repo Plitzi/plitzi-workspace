@@ -72,7 +72,7 @@ const CustomNode = memo(({ id, data, selected = false }: NodeProps<Node<Workflow
         className="bg-primary-500! hover:bg-primary-600! h-5! w-5! border-4! border-white! shadow-lg transition-all duration-200 hover:scale-110"
       />
       <Card
-        className={clsx('h-[150px] w-[200px] p-2 shadow-md transition-shadow hover:shadow-lg', {
+        className={clsx('h-37.5 w-50 p-2 shadow-md transition-shadow hover:shadow-lg', {
           'ring-2 ring-blue-500 ring-offset-2': selected
         })}
       >
@@ -113,6 +113,17 @@ const CustomNode = memo(({ id, data, selected = false }: NodeProps<Node<Workflow
               <Badge solid={false} intent="custom" size="xs" icon={config.icon} className={config.color}>
                 {config.label}
               </Badge>
+              {data.type === 'page' && data.isDefault && (
+                <Badge
+                  solid={false}
+                  intent="custom"
+                  size="xs"
+                  icon="fas fa-home"
+                  className="bg-primary-100 text-primary-700 border-primary-300"
+                >
+                  Home Page
+                </Badge>
+              )}
             </div>
 
             {data.description && <p className="text-muted-foreground line-clamp-3 text-xs">{data.description}</p>}

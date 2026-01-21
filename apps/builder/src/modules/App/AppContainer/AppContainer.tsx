@@ -1,3 +1,4 @@
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { use, useState, useMemo, useCallback } from 'react';
 
@@ -30,7 +31,13 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const styleContext = use(StyleContext);
   const { eventBridge } = use(EventBridgeContext);
   const { currentPageId } = use(NavigationContext);
-  const [tabSelected, setTabSelected] = useState<string>('');
+  const [tabSelectedInitial] = useStorage<string>(
+    'builder-state.popupSidePanel.popupsActive.left.0',
+    '',
+    'localStorage',
+    false
+  );
+  const [tabSelected, setTabSelected] = useState<string>(tabSelectedInitial);
   const [sourceState, setSourceState] = useState<{ sourceId?: string }>({ sourceId: '' });
   const { sourceId } = sourceState;
 

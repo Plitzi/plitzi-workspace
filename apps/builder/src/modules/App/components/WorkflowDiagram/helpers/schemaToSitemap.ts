@@ -7,6 +7,7 @@ export type ElementPage = Element<{
   slug: string;
   accessLevel?: 'none' | 'authenticated' | 'public';
   seoPageDescription: string;
+  default?: boolean;
 }>;
 
 const schemaToSitemap = (pages: ElementPage[], folders: PageFolder[]) => {
@@ -48,10 +49,18 @@ const schemaToSitemap = (pages: ElementPage[], folders: PageFolder[]) => {
 
     for (const item of items) {
       if (item.type === 'page') {
-        const { id, attributes: { name = 'Page', slug = '', accessLevel = 'public', seoPageDescription = '' } = {} } =
-          item.data;
+        const {
+          id,
+          attributes: {
+            name = 'Page',
+            slug = '',
+            accessLevel = 'public',
+            seoPageDescription = '',
+            default: isDefault = false
+          } = {}
+        } = item.data;
         const path = `${folderPath}/${slug.replace(/^\//, '')}`;
-        result.push({ id, type: 'page', title: name, path, accessLevel, description: seoPageDescription });
+        result.push({ id, type: 'page', title: name, path, accessLevel, description: seoPageDescription, isDefault });
       }
 
       if (item.type === 'folder') {

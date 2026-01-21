@@ -21,6 +21,7 @@ export type AccessLevel = 'none' | 'public' | 'authenticated';
 export type WorkflowNodePage = {
   type: 'page';
   path: string;
+  isDefault: boolean;
 };
 
 export type WorkflowNodeFolder = {
