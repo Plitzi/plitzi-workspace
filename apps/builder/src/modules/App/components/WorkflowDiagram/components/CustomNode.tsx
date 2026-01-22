@@ -29,7 +29,9 @@ const accessLevelConfig = {
   }
 };
 
-const CustomNode = memo(({ id, data, selected = false }: NodeProps<Node<WorkflowNode>>) => {
+export type CustomNodeProps = NodeProps<Node<WorkflowNode>>;
+
+const CustomNode = memo(({ id, data, selected = false }: CustomNodeProps) => {
   const { getEdges, setNodes } = useReactFlow();
   const { addToast } = useToast();
   const { showDialog } = useModal();
