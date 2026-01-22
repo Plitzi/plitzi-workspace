@@ -183,6 +183,86 @@
       "types": "./dist/src/style/styleConstants.d.ts",
       "import": "./dist/src/style/styleConstants.mjs"
     },
+    "./types": {
+      "types": "./dist/src/types/index.d.ts",
+      "import": "./dist/src/types/index.mjs"
+    },
+    "./types/AuthTypes": {
+      "types": "./dist/src/types/AuthTypes.d.ts",
+      "import": "./dist/src/types/AuthTypes.mjs"
+    },
+    "./types/BuilderTypes": {
+      "types": "./dist/src/types/BuilderTypes.d.ts",
+      "import": "./dist/src/types/BuilderTypes.mjs"
+    },
+    "./types/CollectionTypes": {
+      "types": "./dist/src/types/CollectionTypes.d.ts",
+      "import": "./dist/src/types/CollectionTypes.mjs"
+    },
+    "./types/CommonTypes": {
+      "types": "./dist/src/types/CommonTypes.d.ts",
+      "import": "./dist/src/types/CommonTypes.mjs"
+    },
+    "./types/ComponentTypes": {
+      "types": "./dist/src/types/ComponentTypes.d.ts",
+      "import": "./dist/src/types/ComponentTypes.mjs"
+    },
+    "./types/DataSourceTypes": {
+      "types": "./dist/src/types/DataSourceTypes.d.ts",
+      "import": "./dist/src/types/DataSourceTypes.mjs"
+    },
+    "./types/ElementTypes": {
+      "types": "./dist/src/types/ElementTypes.d.ts",
+      "import": "./dist/src/types/ElementTypes.mjs"
+    },
+    "./types/EventBridgeTypes": {
+      "types": "./dist/src/types/EventBridgeTypes.d.ts",
+      "import": "./dist/src/types/EventBridgeTypes.mjs"
+    },
+    "./types/InteractionTypes": {
+      "types": "./dist/src/types/InteractionTypes.d.ts",
+      "import": "./dist/src/types/InteractionTypes.mjs"
+    },
+    "./types/NavigationTypes": {
+      "types": "./dist/src/types/NavigationTypes.d.ts",
+      "import": "./dist/src/types/NavigationTypes.mjs"
+    },
+    "./types/PluginTypes": {
+      "types": "./dist/src/types/PluginTypes.d.ts",
+      "import": "./dist/src/types/PluginTypes.mjs"
+    },
+    "./types/ResourceTypes": {
+      "types": "./dist/src/types/ResourceTypes.d.ts",
+      "import": "./dist/src/types/ResourceTypes.mjs"
+    },
+    "./types/SchemaTypes": {
+      "types": "./dist/src/types/SchemaTypes.d.ts",
+      "import": "./dist/src/types/SchemaTypes.mjs"
+    },
+    "./types/SdkTypes": {
+      "types": "./dist/src/types/SdkTypes.d.ts",
+      "import": "./dist/src/types/SdkTypes.mjs"
+    },
+    "./types/SegmentTypes": {
+      "types": "./dist/src/types/SegmentTypes.d.ts",
+      "import": "./dist/src/types/SegmentTypes.mjs"
+    },
+    "./types/SpaceTypes": {
+      "types": "./dist/src/types/SpaceTypes.d.ts",
+      "import": "./dist/src/types/SpaceTypes.mjs"
+    },
+    "./types/StateTypes": {
+      "types": "./dist/src/types/StateTypes.d.ts",
+      "import": "./dist/src/types/StateTypes.mjs"
+    },
+    "./types/StyleTypes": {
+      "types": "./dist/src/types/StyleTypes.d.ts",
+      "import": "./dist/src/types/StyleTypes.mjs"
+    },
+    "./types/index": {
+      "types": "./dist/src/types/index.d.ts",
+      "import": "./dist/src/types/index.mjs"
+    },
     "./websockets": {
       "types": "./dist/src/websockets/index.d.ts",
       "import": "./dist/src/websockets/index.mjs"
@@ -206,10 +286,10 @@
     "build-assets:prod": "tsc && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.22",
+    "@plitzi/plitzi-ui": "^1.1.23",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "lodash-es": "^4.17.22",
+    "lodash-es": "^4.17.23",
     "twig": "^1.17.1"
   },
   "peerDependencies": {
@@ -253,11 +333,11 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
-    "eslint-plugin-storybook": "^10.1.11",
+    "eslint-plugin-storybook": "^10.2.0",
     "globals": "^17.0.0",
     "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.5.6",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwindcss": "^4.1.18",

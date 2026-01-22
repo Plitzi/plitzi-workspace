@@ -92,11 +92,11 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.22",
+    "@plitzi/plitzi-ui": "^1.1.23",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "lodash-es": "^4.17.22"
+    "lodash-es": "^4.17.23"
   }
 }

@@ -11,8 +11,7 @@ import * as segments from './segments';
 import * as style from './style';
 import * as websockets from './websockets';
 
-export type * from './types';
-
+export * from './types';
 export * from './helpers/utils';
 export * from './helpers/syntaxHighlight';
 export * from './helpers/twigWrapper';

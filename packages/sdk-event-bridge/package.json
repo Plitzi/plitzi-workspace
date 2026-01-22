@@ -48,7 +48,7 @@
   "type": "module",
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
-    "lodash-es": "^4.17.22",
+    "lodash-es": "^4.17.23",
     "prop-types": "^15.8.1"
   },
   "devDependencies": {

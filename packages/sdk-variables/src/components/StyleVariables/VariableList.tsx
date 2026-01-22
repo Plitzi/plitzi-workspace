@@ -1,7 +1,9 @@
+import { StyleVariableCategory } from '@plitzi/sdk-shared';
+
 import VariableGroup from './VariableGroup';
 
 import type { TStyleVariable } from './StyleVariables';
-import type { StyleVariableCategory, StyleVariables } from '@plitzi/sdk-shared';
+import type { StyleVariables } from '@plitzi/sdk-shared';
 
 export type VariableListProps = {
   variables?: Partial<StyleVariables>;
@@ -16,7 +18,7 @@ const VariableList = ({ variables, onUpdate, onRemove }: VariableListProps) => {
 
   return (
     <div className="flex flex-col gap-1">
-      {(['color', 'spacing', 'shadow'] as StyleVariableCategory[]).map(category => (
+      {Object.values(StyleVariableCategory).map(category => (
         <VariableGroup
           key={category}
           category={category}

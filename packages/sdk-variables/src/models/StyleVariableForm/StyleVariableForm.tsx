@@ -4,7 +4,9 @@ import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
-import type { StyleThemeValue, StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
+import { StyleVariableCategory } from '@plitzi/sdk-shared';
+
+import type { StyleThemeValue, StyleVariableValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 const nameSchema = z
@@ -16,7 +18,7 @@ const nameSchema = z
 export const styleVariableFormSchema = z.discriminatedUnion('category', [
   z.object({
     name: nameSchema,
-    category: z.literal('color'),
+    category: z.literal(StyleVariableCategory.COLOR),
     value: z.object({
       light: z.string().min(1),
       dark: z.string().min(1),
@@ -25,12 +27,12 @@ export const styleVariableFormSchema = z.discriminatedUnion('category', [
   }),
   z.object({
     name: nameSchema,
-    category: z.literal('shadow'),
+    category: z.literal(StyleVariableCategory.SHADOW),
     value: z.string().min(1)
   }),
   z.object({
     name: nameSchema,
-    category: z.literal('spacing'),
+    category: z.literal(StyleVariableCategory.SPACING),
     value: z
       .string()
       .trim()
@@ -51,20 +53,24 @@ export const styleVariableFormSchema = z.discriminatedUnion('category', [
 
         return false;
       }, 'Invalid CSS value')
+  }),
+  z.object({
+    name: nameSchema,
+    category: z.literal(StyleVariableCategory.CUSTOM),
+    value: z.string().min(1)
   })
 ]);
 
 const normalizeValue = (category: StyleVariableCategory, name: string, value?: StyleVariableValue) => {
   switch (category) {
-    case 'color': {
+    case StyleVariableCategory.COLOR: {
       const { default: defaultValue = '', light = '', dark = '' } = value as StyleThemeValue;
       return { name, category, value: { light, dark, default: defaultValue } };
     }
 
-    case 'spacing':
-      return { name, category, value: typeof value === 'string' ? value : '' };
-
-    case 'shadow':
+    case StyleVariableCategory.SPACING:
+    case StyleVariableCategory.SHADOW:
+    case StyleVariableCategory.CUSTOM:
     default:
       return { name, category, value: typeof value === 'string' ? value : '' };
   }
@@ -81,7 +87,7 @@ export type StyleVariableFormProps = {
 
 const StyleVariableForm = ({
   name = 'New Page',
-  category = 'color',
+  category = StyleVariableCategory.COLOR,
   value,
   isNewRecord = false,
   onClose,
@@ -93,7 +99,10 @@ const StyleVariableForm = ({
 
   const handleChangeValue = useCallback(
     (value: string) => {
-      form.formMethods.setValue('value', value === 'color' ? { default: '', light: '', dark: '' } : '');
+      form.formMethods.setValue(
+        'value',
+        (value as StyleVariableCategory) === StyleVariableCategory.COLOR ? { default: '', light: '', dark: '' } : ''
+      );
       setDefaultValues(normalizeValue(value as StyleVariableCategory, name, value));
     },
     [form.formMethods, name]
@@ -113,18 +122,19 @@ const StyleVariableForm = ({
       <Form.Body gap={2}>
         <Form.Input name="name" placeholder="Name" size="xs" disabled={!isNewRecord} />
         <Form.Select name="category" size="xs" onChange={handleChangeValue}>
-          <option value="color">Colors</option>
-          <option value="spacing">Spacing</option>
-          <option value="shadow">Shadow</option>
+          <option value={StyleVariableCategory.COLOR}>Colors</option>
+          <option value={StyleVariableCategory.SPACING}>Spacing</option>
+          <option value={StyleVariableCategory.SHADOW}>Shadow</option>
+          <option value={StyleVariableCategory.CUSTOM}>Custom</option>
         </Form.Select>
-        {watchCategory === 'color' && (
+        {watchCategory === StyleVariableCategory.COLOR && (
           <div className="flex w-full gap-2">
             <Form.Color name="value.default" placeholder="Default Value" size="xs" className="min-w-0 grow basis-0" />
             <Form.Color name="value.light" placeholder="Light Value" size="xs" className="min-w-0 grow basis-0" />
             <Form.Color name="value.dark" placeholder="Dark Value" size="xs" className="min-w-0 grow basis-0" />
           </div>
         )}
-        {watchCategory !== 'color' && (
+        {watchCategory !== StyleVariableCategory.COLOR && (
           <Form.Input name="value" placeholder="Value" size="xs" className="grow basis-0" />
         )}
       </Form.Body>

@@ -2,11 +2,13 @@ import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
+import { StyleVariableCategory } from '@plitzi/sdk-shared';
+
 import VariableList from './VariableList';
 import StyleVariableForm from '../../models/StyleVariableForm';
 
 import type { styleVariableFormSchema } from '../../models/StyleVariableForm';
-import type { StyleVariableCategory, StyleVariables as TStyleVariables, StyleVariableValue } from '@plitzi/sdk-shared';
+import type { StyleVariables as TStyleVariables, StyleVariableValue } from '@plitzi/sdk-shared';
 import type { z } from 'zod';
 
 export type TStyleVariable = { name: string; category: StyleVariableCategory; value: StyleVariableValue };
@@ -47,7 +49,7 @@ const StyleVariables = ({
   );
 
   const handleClickAddNewVariable = useCallback(() => {
-    setNewVariable({ name: '', category: 'color', value: { light: '', dark: '', default: '' } });
+    setNewVariable({ name: '', category: StyleVariableCategory.COLOR, value: { light: '', dark: '', default: '' } });
   }, []);
 
   const handleClickCancel = useCallback(() => setNewVariable(undefined), []);

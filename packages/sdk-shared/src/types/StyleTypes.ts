@@ -13,7 +13,17 @@ export type StyleCategory = (typeof StyleConstants)[keyof typeof StyleConstants]
 // Themes/Variables
 
 export type StyleThemeMode = 'system' | 'light' | 'dark';
-export type StyleVariableCategory = 'color' | 'spacing' | 'shadow'; // | 'radius' | 'typography' | 'border' | 'motion' | 'z-index';
+export enum StyleVariableCategory {
+  COLOR = 'color',
+  SPACING = 'spacing',
+  SHADOW = 'shadow',
+  CUSTOM = 'custom'
+  // RADIUS = 'radius',
+  // TYPOGRAPHY = 'typography',
+  // BORDER = 'border',
+  // ZINDEX = 'z-index',
+}
+
 export type StyleThemeValue = Partial<Record<Exclude<StyleThemeMode, 'system'> | 'default', string>>;
 export type StyleVariableValue = string | number | StyleThemeValue;
 export type StyleVariableGroup = Record<string, StyleVariableValue>;

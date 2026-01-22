@@ -1,4 +1,6 @@
-import type { StyleItem, StyleThemeValue, StyleVariableCategory } from '@plitzi/sdk-shared';
+import { StyleVariableCategory } from '@plitzi/sdk-shared';
+
+import type { StyleItem, StyleThemeValue } from '@plitzi/sdk-shared';
 
 const processSelectorVariables = (selector: Omit<StyleItem, 'cache'>) => {
   const { variables } = selector;
@@ -19,7 +21,7 @@ const processSelectorVariables = (selector: Omit<StyleItem, 'cache'>) => {
     }
 
     switch (category) {
-      case 'color': {
+      case StyleVariableCategory.COLOR: {
         Object.keys(variablesGroup).forEach(variable => {
           const variableValue = variablesGroup[variable] as StyleThemeValue;
           selectorVariables.default.push(`--${variable}:${variableValue.default};`);
@@ -35,8 +37,9 @@ const processSelectorVariables = (selector: Omit<StyleItem, 'cache'>) => {
         break;
       }
 
-      case 'spacing':
-      case 'shadow':
+      case StyleVariableCategory.SPACING:
+      case StyleVariableCategory.SHADOW:
+      case StyleVariableCategory.CUSTOM:
       default:
         Object.keys(variablesGroup).forEach(variable => {
           selectorVariables.default.push(`--${variable}:${variablesGroup[variable] as string};`);
