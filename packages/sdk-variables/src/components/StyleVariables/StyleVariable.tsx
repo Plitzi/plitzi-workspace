@@ -1,13 +1,15 @@
 import omit from 'lodash-es/omit';
 import { useCallback, useState } from 'react';
 
+import { StyleVariableCategory } from '@plitzi/sdk-shared';
+
 import VariableActions from './VariableActions';
 import VariableDetails from './VariableDetails';
 import VariableValue from './VariableValue';
 import { StyleVariableForm } from '../../models';
 
 import type { TStyleVariable } from './StyleVariables';
-import type { StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
+import type { StyleVariableValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type StyleVariableProps = {
@@ -69,7 +71,11 @@ const StyleVariable = ({ category, name, value, onUpdate, onRemove }: StyleVaria
             <div className="font-bold" title={name}>
               {name}
             </div>
-            <VariableValue className="truncate text-xs" type={category === 'color' ? 'color' : 'text'} value={value} />
+            <VariableValue
+              className="truncate text-xs"
+              type={category === StyleVariableCategory.COLOR ? 'color' : 'text'}
+              value={value}
+            />
           </div>
         </div>
         <VariableActions selected={selected} onUpdate={handleClickUpdate} onRemove={handleClickRemove} />
