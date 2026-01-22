@@ -141,7 +141,7 @@ class StyleMap {
       return false;
     }
 
-    if (get(styleItem, `variables.${category}.${name}`)) {
+    if (get(styleItem, `variables.${category}.${name}`, '') as StyleVariableValue | undefined) {
       return false;
     }
 
