@@ -129,9 +129,27 @@ const StyleVariableForm = ({
         </Form.Select>
         {watchCategory === StyleVariableCategory.COLOR && (
           <div className="flex w-full gap-2">
-            <Form.Color name="value.default" placeholder="Default Value" size="xs" className="min-w-0 grow basis-0" />
-            <Form.Color name="value.light" placeholder="Light Value" size="xs" className="min-w-0 grow basis-0" />
-            <Form.Color name="value.dark" placeholder="Dark Value" size="xs" className="min-w-0 grow basis-0" />
+            <Form.Color
+              name="value.default"
+              placeholder="Default Value"
+              size="xs"
+              allowVariables
+              className="min-w-0 grow basis-0"
+            />
+            <Form.Color
+              name="value.light"
+              placeholder="Light Value"
+              size="xs"
+              allowVariables
+              className="min-w-0 grow basis-0"
+            />
+            <Form.Color
+              name="value.dark"
+              placeholder="Dark Value"
+              size="xs"
+              allowVariables
+              className="min-w-0 grow basis-0"
+            />
           </div>
         )}
         {watchCategory !== StyleVariableCategory.COLOR && (
