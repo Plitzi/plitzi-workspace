@@ -58,34 +58,20 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
   return (
     <CategoryContainer title="Size" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <CategorySection label="Size" keys={keyValueSize}>
-        <CategoryOption
-          keys={['width']}
-          label="Width"
-          preffix="W"
-          value={width}
-          onChange={handleChange('width')}
-          type="metric"
-        />
-        <CategoryOption
-          keys={['height']}
-          label="Height"
-          preffix="H"
-          value={height}
-          onChange={handleChange('height')}
-          type="metric"
-        />
+        <CategoryOption keys={['width']} preffix="W" value={width} onChange={handleChange('width')} type="metric" />
+        <CategoryOption keys={['height']} preffix="H" value={height} onChange={handleChange('height')} type="metric" />
       </CategorySection>
       <CategorySection label="Min Size" keys={keyValueSizeMin}>
         <CategoryOption
           keys={['min-width']}
-          label="Width"
+          preffix="W"
           value={minWidth}
           onChange={handleChange('min-width')}
           type="metric"
         />
         <CategoryOption
           keys={['min-height']}
-          label="Height"
+          preffix="H"
           value={minHeight}
           onChange={handleChange('min-height')}
           type="metric"
@@ -94,14 +80,14 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
       <CategorySection label="Max Size" keys={keyValueSizeMax}>
         <CategoryOption
           keys={['max-width']}
-          label="Width"
+          preffix="W"
           value={maxWidth}
           onChange={handleChange('max-width')}
           type="metric"
         />
         <CategoryOption
           keys={['max-height']}
-          label="Height"
+          preffix="H"
           value={maxHeight}
           onChange={handleChange('max-height')}
           type="metric"
