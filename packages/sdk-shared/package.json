@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.27.14",
+  "version": "0.27.15",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
