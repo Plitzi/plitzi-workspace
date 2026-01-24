@@ -1,10 +1,11 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import clsx from 'clsx';
 import get from 'lodash-es/get';
-import { useEffect, Children, isValidElement, useMemo, useCallback, useState } from 'react';
+import { useEffect, Children, isValidElement, useMemo, useCallback } from 'react';
 import * as React from 'react';
 import * as JSXRuntime from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';
@@ -85,7 +86,7 @@ const App = ({
     []
   );
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useStorage<boolean>(`web_${webId}_state.debugMode`, false, 'localStorage', false);
   const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
 
@@ -96,11 +97,14 @@ const App = ({
     );
   }, []);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.shiftKey && e.key === 'F12') {
-      setDebugMode(state => !state);
-    }
-  }, []);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key === 'F12') {
+        setDebugMode(state => !state);
+      }
+    },
+    [setDebugMode]
+  );
 
   useEffect(() => {
     if (!debugModeProp) {

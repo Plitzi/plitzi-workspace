@@ -1,6 +1,6 @@
 import JsonView from '@uiw/react-json-view';
 import * as vscode from '@uiw/react-json-view/vscode';
-import { useMemo, use } from 'react';
+import { use } from 'react';
 
 import DevToolsContext from '../../../../DevToolsContext';
 
@@ -19,17 +19,18 @@ export type DataSourceViewerProps = {
 
 const DataSourceViewer = ({ elementSelected }: DataSourceViewerProps) => {
   const { getData } = use(DevToolsContext);
-  const dataSource = useMemo(() => {
-    if (!elementSelected || !getData) {
-      return {};
-    }
-
-    return getData(`getElementDataSource-${elementSelected}`);
-  }, [getData, elementSelected]);
 
   return (
     <div className="flex h-full w-full flex-col">
-      <JsonView value={dataSource} style={jsonViewStyle} enableClipboard={false} indentWidth={2} collapsed={2} />
+      <JsonView
+        value={elementSelected ? getData?.(`getElementDataSource-${elementSelected}`) : {}}
+        style={jsonViewStyle}
+        enableClipboard={false}
+        indentWidth={15}
+        collapsed={2}
+        displayObjectSize={false}
+        displayDataTypes={false}
+      />
     </div>
   );
 };
