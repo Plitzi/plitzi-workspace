@@ -1,14 +1,23 @@
+import clsx from 'clsx';
+
 export type VariableValueProps = {
-  value?: string;
+  className?: string;
   type?: string;
+  preffix?: string;
+  value?: string;
 };
 
-const VariableValue = ({ type, value }: VariableValueProps) => (
-  <div className="flex items-center gap-1">
+const VariableValue = ({ className, type, preffix, value }: VariableValueProps) => (
+  <div className={clsx('flex items-center gap-1', className)}>
+    {preffix}
     {type === 'color' && (
-      <div className="min-h-2.5 min-w-2.5 rounded-sm" title={value} style={{ backgroundColor: value }} />
+      <div
+        className="min-h-4 min-w-4 rounded-sm border border-gray-300"
+        title={value}
+        style={{ backgroundColor: value }}
+      />
     )}
-    <div className="truncate" title={value}>
+    <div className={clsx('truncate', { uppercase: type === 'color' && value?.includes('#') })} title={value}>
       {value}
     </div>
   </div>

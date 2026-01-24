@@ -90,6 +90,7 @@ const InitQuery = gql`
         settings
       }
       style {
+        variables
         cache
       }
     }

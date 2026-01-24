@@ -3604,6 +3604,7 @@ __metadata:
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-style": "workspace:*"
     "@uiw/react-json-view": "npm:^2.0.0-alpha.41"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.2"

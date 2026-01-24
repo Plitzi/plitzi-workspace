@@ -110,9 +110,16 @@ const BindingForm = ({ category = '', attributes, sources, value, onClose }: Bin
         {loading && 'Loading all sources...'}
       </Form.Body>
       <Form.Footer justify="between">
-        <Button onClick={step === 0 ? handleCancel : handleClickBack} size="xs">
-          {step === 0 ? 'Cancel' : 'Back'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleCancel} size="xs">
+            Cancel
+          </Button>
+          {step > 0 && (
+            <Button onClick={handleClickBack} size="xs">
+              Back
+            </Button>
+          )}
+        </div>
         <Button type="submit" size="xs">
           {step < totalSteps && (isSkipped ? 'Skip' : 'Next')}
           {step >= totalSteps && 'Save'}

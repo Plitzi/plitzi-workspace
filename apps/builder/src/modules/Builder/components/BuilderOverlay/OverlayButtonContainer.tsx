@@ -234,7 +234,7 @@ const OverlayButtonContainer = ({
       )}
       {!!items && canTemplate && (
         <OverlayButton title="Save as segment" isRemoving={hoverRemove} onClick={handleClickAsSegment}>
-          <i className="fa-solid fa-puzzle-piece" />
+          <i className="fa-solid fa-diamond" />
         </OverlayButton>
       )}
       {canDelete && (
