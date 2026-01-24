@@ -42,8 +42,8 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: Bo
   }, [elementDOM]);
 
   return (
-    <div className="flex justify-around gap-4">
-      <div className="flex min-w-0 grow basis-0 flex-col gap-2">
+    <div className="flex justify-around gap-2">
+      <div className="flex min-w-0 grow basis-0 flex-col gap-1">
         <div className="flex items-center gap-1 font-bold">
           <i className="fa-regular fa-clock" />
           Times
@@ -64,7 +64,7 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: Bo
         </div>
       </div>
       <div className="border-r border-gray-200" />
-      <div className="flex min-w-0 grow basis-0 flex-col gap-2">
+      <div className="flex min-w-0 grow basis-0 flex-col gap-1">
         <div className="flex items-center gap-1">
           <i className="fa-solid fa-circle-info" />
           Details
