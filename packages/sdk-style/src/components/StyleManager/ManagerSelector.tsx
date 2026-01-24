@@ -131,7 +131,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
         <Button.Icon icon="fas fa-tint" size="md" className="text-base" />
         New Selector
       </Button>
-      <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} />
+      <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} size="xs" />
       <div className="flex grow basis-0 flex-col overflow-y-auto">
         {finalSelectors.map(selector => {
           const { name, type } = selector;

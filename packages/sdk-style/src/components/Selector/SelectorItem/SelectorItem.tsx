@@ -68,7 +68,7 @@ const SelectorItem = ({
   return (
     <div
       className={clsx(
-        'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1.5 text-white select-none',
+        'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1 text-white select-none',
         className,
         {
           'bg-secondary-400': active,

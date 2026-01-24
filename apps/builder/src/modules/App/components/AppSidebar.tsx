@@ -32,7 +32,7 @@ const AppSidebar = ({ onSelect }: AppSidebarProps) => {
       placement="left"
       separatorsBefore={separatorsBefore}
       minWidth={335}
-      maxWidth={540}
+      maxWidth={800}
       canHide
       value={popupsActiveLeft}
       onChange={handleChangeLeft}
