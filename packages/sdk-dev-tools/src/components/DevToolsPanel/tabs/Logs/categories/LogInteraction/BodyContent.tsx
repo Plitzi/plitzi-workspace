@@ -28,7 +28,7 @@ const BodyContent = ({ className, node, nodes }: BodyContentProps) => {
         selected={nodeSelectedId}
         onSelect={handleSelect}
       />
-      <div className="border-r border-gray-300" />
+      <div className="border-r border-gray-200" />
       {nodeSelectedId && (
         <div className="flex min-w-0 grow basis-0">
           <InteractionNode
