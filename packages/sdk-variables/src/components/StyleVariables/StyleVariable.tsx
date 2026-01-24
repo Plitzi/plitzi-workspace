@@ -64,11 +64,11 @@ const StyleVariable = ({ category, name, value, onUpdate, onRemove }: StyleVaria
   }
 
   return (
-    <div className="group flex flex-col gap-1 rounded-sm border border-gray-300 px-2 py-0.5 text-sm">
+    <div className="group flex flex-col gap-1 rounded-sm border border-gray-300 px-1 py-0.5 text-sm hover:bg-slate-100">
       <div className="flex w-full cursor-pointer items-center gap-2" onClick={handleClick}>
         <div className="flex w-full overflow-hidden">
           <div className="flex min-w-0 grow basis-0 justify-between gap-2">
-            <div className="font-bold" title={name}>
+            <div className="truncate font-bold" title={name}>
               {name}
             </div>
             <VariableValue

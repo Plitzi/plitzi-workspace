@@ -1,23 +1,16 @@
-import { LOG_TYPE_CUSTOM, LOG_TYPE_SUCCESS, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole';
+import { LOG_TYPE_CUSTOM, LOG_TYPE_SUCCESS } from '../../../../../../utils/PlitziConsole';
 import LogStatus from '../../LogStatus';
-import LogStatusIcon from '../../LogStatusIcon';
 
-import type { LogInteraction } from '../../../../../../DevToolsContext';
 import type { ReactNode } from 'react';
 
 export type LogInteractionHeaderProps = {
   className?: string;
   status: string;
   message?: ReactNode;
-  nodes?: LogInteraction['params']['nodes'];
   time?: string;
-  duration: string;
 };
 
-const LogInteractionHeader = ({ status, message, nodes, time, duration }: LogInteractionHeaderProps) => {
-  const nodesSkipped = Object.values(nodes ?? {}).filter(node => node.status === 'skipped').length;
-  const nodesDisabled = Object.values(nodes ?? {}).filter(node => node.status === 'disabled').length;
-
+const LogInteractionHeader = ({ status, message, time }: LogInteractionHeaderProps) => {
   return (
     <div className="flex w-full justify-between text-sm">
       <div className="flex min-w-0 grow basis-0 items-center gap-3">
@@ -35,19 +28,6 @@ const LogInteractionHeader = ({ status, message, nodes, time, duration }: LogInt
           )}
         </div>
         <div className="grow basis-0 truncate">{message}</div>
-      </div>
-      <div className="flex gap-3">
-        {status === 'completed' && !!nodesSkipped && (
-          <LogStatusIcon logType={LOG_TYPE_WARNING} title="Skipped">
-            {nodesSkipped}
-          </LogStatusIcon>
-        )}
-        {status === 'completed' && !!nodesDisabled && (
-          <LogStatusIcon logType={LOG_TYPE_CUSTOM} iconClassName="fa-solid fa-ban" title="Disabled">
-            {nodesDisabled}
-          </LogStatusIcon>
-        )}
-        {duration}
       </div>
     </div>
   );

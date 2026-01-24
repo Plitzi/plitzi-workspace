@@ -31,7 +31,7 @@ const VariableGroup = ({ category, variables = {}, onUpdate, onRemove }: Variabl
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       />
       {variablesCount > 0 && (
-        <ContainerCollapsable.Content className="flex flex-col gap-3 py-2">
+        <ContainerCollapsable.Content className="flex flex-col gap-1 py-1">
           {Object.keys(variables).map((variable, i) => (
             <StyleVariable
               key={`${category}-${i}`}

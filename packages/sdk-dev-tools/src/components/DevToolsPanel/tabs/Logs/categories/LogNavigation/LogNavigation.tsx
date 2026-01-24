@@ -24,7 +24,9 @@ const LogNavigation = ({ time, message, params }: LogNavigationProps) => (
       className={{ headerTitle: 'overflow-hidden' }}
       iconCollapsed={iconCollapsed}
       iconExpanded={iconExpanded}
-    />
+    >
+      0ms
+    </ContainerCollapsable.Header>
     <ContainerCollapsable.Content>
       <LogNavigationBody elementId={params?.elementId} startTime={time} endTime={time} duration="0ms" />
     </ContainerCollapsable.Content>

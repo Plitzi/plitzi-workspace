@@ -17,7 +17,7 @@ const VariableList = ({ variables, onUpdate, onRemove }: VariableListProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col">
       {Object.values(StyleVariableCategory).map(category => (
         <VariableGroup
           key={category}

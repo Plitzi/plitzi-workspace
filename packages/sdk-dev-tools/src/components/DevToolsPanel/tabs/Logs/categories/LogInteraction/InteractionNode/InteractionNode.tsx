@@ -31,7 +31,7 @@ const InteractionNode = ({
   type,
   action
 }: InteractionNodeProps) => {
-  const duration = useMemo(() => `${getDurationMs(endTime, startTime)}ms`, [startTime, endTime]);
+  const duration = useMemo(() => `${getDurationMs(startTime, endTime)}ms`, [startTime, endTime]);
 
   return (
     <div className="flex w-full flex-col">

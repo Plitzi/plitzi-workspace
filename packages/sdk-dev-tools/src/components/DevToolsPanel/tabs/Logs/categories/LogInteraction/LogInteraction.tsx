@@ -5,6 +5,8 @@ import { getDurationMs } from '@plitzi/sdk-shared';
 
 import LogInteractionBody from './LogInteractionBody';
 import LogInteractionHeader from './LogInteractionHeader';
+import { LOG_TYPE_CUSTOM, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole';
+import LogStatusIcon from '../../LogStatusIcon';
 
 import type { LogInteraction as TLogInteraction } from '../../../../../../DevToolsContext';
 import type { ReactNode } from 'react';
@@ -24,20 +26,34 @@ const LogInteraction = ({
   message,
   params: { elementId, status, node, nodes, startTime = 0, endTime = 0 }
 }: LogInteractionProps) => {
-  const duration = useMemo(() => `${getDurationMs(endTime, startTime)}ms`, [startTime, endTime]);
+  const duration = useMemo(() => `${getDurationMs(startTime, endTime)}ms`, [startTime, endTime]);
+  const nodesSkipped = Object.values(nodes).filter(node => node.status === 'skipped').length;
+  const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
 
   return (
     <ContainerCollapsable className="last:border-b-none w-full border-b border-gray-300 px-2 py-1" collapsed>
       <ContainerCollapsable.Header
-        title="Test"
+        title={<LogInteractionHeader status={status} message={message} time={time} />}
         placement="left"
-        className={{ header: 'mr-1 flex h-4 w-4 items-center justify-center', headerTitle: 'overflow-hidden' }}
+        className={{ headerTitle: 'overflow-hidden' }}
         iconCollapsed={iconCollapsed}
         iconExpanded={iconExpanded}
       >
-        <LogInteractionHeader status={status} message={message} nodes={nodes} time={time} duration={duration} />
+        <div className="flex gap-3">
+          {status === 'completed' && !!nodesSkipped && (
+            <LogStatusIcon logType={LOG_TYPE_WARNING} title="Skipped">
+              {nodesSkipped}
+            </LogStatusIcon>
+          )}
+          {status === 'completed' && !!nodesDisabled && (
+            <LogStatusIcon logType={LOG_TYPE_CUSTOM} iconClassName="fa-solid fa-ban" title="Disabled">
+              {nodesDisabled}
+            </LogStatusIcon>
+          )}
+          {duration}
+        </div>
       </ContainerCollapsable.Header>
-      <ContainerCollapsable.Content className="bg-gray-500">
+      <ContainerCollapsable.Content>
         <LogInteractionBody
           elementId={elementId}
           node={node}
