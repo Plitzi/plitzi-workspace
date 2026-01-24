@@ -37,6 +37,7 @@ export const BACKGROUND_IMAGE = 'background-image';
 export const BACKGROUND_POSITION = 'background-position';
 export const BACKGROUND_SIZE = 'background-size';
 export const BACKGROUND_REPEAT = 'background-repeat';
+export const BACKGROUND_CLIP = 'background-clip';
 export const BACKGROUND_ATTACHMENT = 'background-attachment';
 
 // Border
@@ -251,6 +252,7 @@ export const StyleConstants = {
   BACKGROUND_COLOR,
   BACKGROUND_IMAGE,
   BACKGROUND_POSITION,
+  BACKGROUND_CLIP,
   BACKGROUND_SIZE,
   BACKGROUND_REPEAT,
   BACKGROUND_ATTACHMENT,
@@ -360,6 +362,7 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   'background-image': 'url("https://cdn.plitzi.com/resources/img/background-image.svg")',
   'background-position': '0px 0px',
   'background-size': 'auto',
+  'background-clip': 'border-box',
   'background-repeat': 'repeat',
   'background-attachment': 'scroll',
   // Border

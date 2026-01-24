@@ -18,7 +18,8 @@ const dotKeys = [
   'background-position',
   'background-size',
   'background-repeat',
-  'background-attachment'
+  'background-attachment',
+  'background-clip'
 ] as StyleCategory[];
 
 export type BackgroundProps = {
@@ -29,8 +30,15 @@ export type BackgroundProps = {
 
 const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BackgroundProps) => {
   const { setValue } = use(StyleInspectorContext);
-  const { 'background-color': bgColor } = useInspectorValues({
-    keys: ['background-color', 'background-size', 'background-attachment', 'background-position', 'background-repeat'],
+  const { 'background-color': bgColor, 'background-clip': bgClip } = useInspectorValues({
+    keys: [
+      'background-color',
+      'background-size',
+      'background-attachment',
+      'background-position',
+      'background-repeat',
+      'background-clip'
+    ],
     asValue: true,
     replaceTokens
   });
@@ -112,14 +120,16 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
               'background-position',
               'background-size',
               'background-repeat',
-              'background-attachment'
+              'background-attachment',
+              'background-clip'
             ],
             {
               'background-image': undefined,
               'background-position': undefined,
               'background-size': undefined,
               'background-repeat': undefined,
-              'background-attachment': undefined
+              'background-attachment': undefined,
+              'background-clip': undefined
             } as Record<StyleCategory, StyleValue | undefined>
           );
 
@@ -170,6 +180,15 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
             <option value="image">Image</option>
             <option value="linear-gradient">Linear Gradient</option>
             <option value="radial-gradient">Radial Gradient</option>
+          </CategoryOption>
+        </CategorySection>
+        <CategorySection label="Clip" keys={['background-clip']}>
+          <CategoryOption value={bgClip} onChange={handleChange('background-clip')} type="select">
+            <option value="border-box">Border Box</option>
+            <option value="padding-box">Padding Box</option>
+            <option value="content-box">Content Box</option>
+            <option value="text">Text</option>
+            <option value="border-area">Border Area</option>
           </CategoryOption>
         </CategorySection>
         {imgType === 'image' && <ImageMode replaceTokens={replaceTokens} onChange={handleChange} />}
