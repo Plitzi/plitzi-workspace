@@ -13,7 +13,7 @@ import SegmentsContextProvider from '@pmodules/Segments/SegmentsContextProvider'
 import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
-import type { Environment, Server } from '@plitzi/sdk-shared';
+import type { Environment, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppProviderProps = {
@@ -22,6 +22,7 @@ export type AppProviderProps = {
   webKey: string;
   webId: number;
   environment: Environment;
+  builderEnvironment?: ServerEnvironment;
   userKey: string;
   server: Server;
   includeSubscriptions: boolean;
@@ -34,7 +35,8 @@ const AppProvider = ({
   instanceId,
   webKey = '',
   webId,
-  environment = 'development',
+  environment = 'main',
+  builderEnvironment = 'production',
   userKey = '',
   server,
   includeSubscriptions = true,
@@ -47,6 +49,7 @@ const AppProvider = ({
       webKey={webKey}
       webId={webId}
       environment={environment}
+      builderEnvironment={builderEnvironment}
       userKey={userKey}
       server={server}
     >

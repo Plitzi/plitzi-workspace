@@ -15,7 +15,7 @@ import Queries from './Queries';
 import type { MutationsMap } from './Mutations';
 import type { QueriesMap } from './Queries';
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
-import type { Environment, OfflineData, OfflineDataRaw, Server } from '@plitzi/sdk-shared';
+import type { Environment, OfflineData, OfflineDataRaw, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
@@ -28,6 +28,7 @@ export type NetworkContextProviderProps = {
   userKey?: string;
   instanceId?: string;
   environment?: Environment;
+  sdkEnvironment?: ServerEnvironment;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
@@ -43,6 +44,7 @@ const NetworkContextProvider = ({
   userKey = '',
   instanceId,
   environment = 'development',
+  sdkEnvironment = 'production',
   offlineMode = false,
   offlineData,
   offlineDataType = 'json',
@@ -236,8 +238,8 @@ const NetworkContextProvider = ({
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
   const networkValue = useMemo<NetworkContextValue<QueriesMap, MutationsMap>>(
-    () => ({ query, mutate, webKey, webId, server, environment, instanceId, userKey }),
-    [query, mutate, webKey, webId, server, environment, instanceId, userKey]
+    () => ({ query, mutate, webKey, webId, server, environment, instanceId, userKey, sdkEnvironment }),
+    [query, mutate, webKey, webId, server, environment, instanceId, userKey, sdkEnvironment]
   );
 
   if (error) {

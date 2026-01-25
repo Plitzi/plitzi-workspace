@@ -26,7 +26,8 @@ import type {
   ComponentDefinition,
   Schema,
   BuilderNetworkContextValue,
-  Environment
+  Environment,
+  ServerEnvironment
 } from '@plitzi/sdk-shared';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
@@ -39,6 +40,7 @@ export type NetworkContextProviderProps = {
   instanceId: string;
   server: Server;
   environment?: Environment;
+  builderEnvironment?: ServerEnvironment;
 };
 
 const NetworkContextProvider = ({
@@ -48,7 +50,8 @@ const NetworkContextProvider = ({
   userKey = '',
   instanceId,
   server,
-  environment = 'development'
+  environment = 'main',
+  builderEnvironment = 'production'
 }: NetworkContextProviderProps) => {
   const client = useApolloClient();
   const { addToast } = useToast();
@@ -252,8 +255,20 @@ const NetworkContextProvider = ({
   const subscriptionManager = useSubscriptionsManager({ client, environment, onMessage: handleMessage });
 
   const networkValue = useMemo<BuilderNetworkContextValue<QueriesMap, MutationsMap, SubscriptionsMap>>(
-    () => ({ mutate, query, subscriptionManager, webKey, instanceId, server, userKey, webId, environment }),
-    [mutate, query, subscriptionManager, webKey, instanceId, server, userKey, webId, environment]
+    () => ({
+      mutate,
+      query,
+      subscriptionManager,
+      sdkEnvironment: builderEnvironment,
+      builderEnvironment,
+      webKey,
+      instanceId,
+      server,
+      userKey,
+      webId,
+      environment
+    }),
+    [mutate, query, subscriptionManager, builderEnvironment, webKey, instanceId, server, userKey, webId, environment]
   );
 
   if (error) {

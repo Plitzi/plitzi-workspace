@@ -243,12 +243,7 @@ const App = (props: AppProps) => {
             localComponents={sdkComponents as unknown as Record<string, ComponentPlugin>}
           >
             <ToastProvider>
-              <AppMain
-                {...omit(props, ['children', 'server', 'builderEnvironment'])}
-                server={server}
-                instanceId={instanceId}
-                webId={webId}
-              />
+              <AppMain {...omit(props, ['children', 'server'])} server={server} instanceId={instanceId} webId={webId} />
             </ToastProvider>
           </ComponentProvider>
         </ApolloProvider>

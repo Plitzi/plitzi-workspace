@@ -33,7 +33,7 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
-import type { ComponentPlugin, DisplayMode } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, ComponentPlugin, DisplayMode } from '@plitzi/sdk-shared';
 
 export type BuilderAreaProps = {
   className?: string;
@@ -87,6 +87,7 @@ const BuilderArea = ({
   const { currentPageId } = use(NavigationContext);
   const { schema, builderGetBaseElement } = use(BuilderSchemaContext);
   const { rootDOM } = use(ContainerRootContext);
+  const { sdkEnvironment, builderEnvironment } = use(NetworkContext) as BuilderNetworkContextValue;
 
   const getWindow = useCallback(() => {
     if (ref.current) {
@@ -107,7 +108,14 @@ const BuilderArea = ({
 
   const plitziContextValue = useMemo(
     () => ({
-      settings: { previewMode, debugMode, currentPageId, environment: 'main' },
+      settings: {
+        previewMode,
+        debugMode,
+        currentPageId,
+        environment: 'main',
+        sdkEnvironment,
+        builderEnvironment
+      },
       root: { baseElementId },
       utils: { displayBorderComponents, getWindow, rootDOM },
       customContexts: {},
@@ -128,7 +136,17 @@ const BuilderArea = ({
         BuilderContext
       }
     }),
-    [previewMode, debugMode, currentPageId, baseElementId, displayBorderComponents, getWindow, rootDOM]
+    [
+      previewMode,
+      debugMode,
+      currentPageId,
+      baseElementId,
+      displayBorderComponents,
+      getWindow,
+      rootDOM,
+      sdkEnvironment,
+      builderEnvironment
+    ]
   );
 
   const schemaValueMemo = useMemo(() => ({ schema }), [schema]);

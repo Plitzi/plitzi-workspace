@@ -10,7 +10,7 @@ import AppContext from './AppContext';
 import AppProvider from './AppProvider';
 
 import type { AppContextValue } from './AppContext';
-import type { DisplayMode, Environment, Server } from '@plitzi/sdk-shared';
+import type { DisplayMode, Environment, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppMainProps = {
@@ -20,6 +20,7 @@ export type AppMainProps = {
   instanceId?: string;
   server: Server;
   environment?: Environment;
+  builderEnvironment?: ServerEnvironment;
   includeSubscriptions?: boolean;
   includeRealTime?: boolean;
   externalStyle?: string;
@@ -34,7 +35,8 @@ const AppMain = ({
   userKey = '',
   instanceId = '',
   server,
-  environment = 'development',
+  environment = 'main',
+  builderEnvironment = 'production',
   includeSubscriptions = true,
   includeRealTime = true,
   externalStyle = '',
@@ -84,6 +86,7 @@ const AppMain = ({
         webKey={webKey}
         webId={webId}
         environment={environment}
+        builderEnvironment={builderEnvironment}
         userKey={userKey}
         server={server}
         includeSubscriptions={includeSubscriptions}
@@ -103,6 +106,7 @@ const AppMain = ({
     ),
     [
       environment,
+      builderEnvironment,
       externalStyle,
       includeRealTime,
       includeSubscriptions,

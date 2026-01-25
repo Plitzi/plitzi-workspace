@@ -1,7 +1,9 @@
 import { gql } from '@apollo/client/core';
 
+import type { Environment } from '@plitzi/sdk-shared';
+
 export type TSegmentPublishMutation = {
-  environment: 'production' | 'staging' | 'development';
+  environment: Omit<Environment, 'main'>;
   revision: string;
   description: string;
 };

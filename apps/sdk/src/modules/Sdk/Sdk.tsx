@@ -25,12 +25,13 @@ import SdkPlugin from './SdkPlugin';
 // @ts-ignore
 import style from '../../assets/index.scss?inline';
 
-import type { Environment, RenderMode } from '@plitzi/sdk-shared';
+import type { Environment, RenderMode, ServerEnvironment } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   renderMode?: RenderMode;
   externalStyle?: string;
   environment?: Environment;
+  sdkEnvironment?: ServerEnvironment;
   previewMode?: boolean;
   debugMode?: boolean;
 };
@@ -39,6 +40,7 @@ const Sdk = ({
   renderMode = 'iframe',
   externalStyle = '',
   environment = 'main',
+  sdkEnvironment = 'production',
   previewMode = true,
   debugMode = false
 }: SdkProps) => {
@@ -87,6 +89,7 @@ const Sdk = ({
         currentPageId,
         renderMode,
         environment,
+        sdkEnvironment,
         ...schemaSettings
       },
       root: {
@@ -113,7 +116,7 @@ const Sdk = ({
         InteractionsContext
       }
     }),
-    [previewMode, debugMode, currentPageId, renderMode, environment, schemaSettings, getWindow, rootDOM]
+    [previewMode, debugMode, currentPageId, renderMode, environment, sdkEnvironment, schemaSettings, getWindow, rootDOM]
   );
 
   if (renderMode === 'raw' || renderMode === 'widget') {
