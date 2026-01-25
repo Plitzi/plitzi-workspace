@@ -99,10 +99,10 @@ const Settings = ({
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
-      <Input value={name} label="Input Name" onChange={handleChangeName} />
-      <Input value={label} label="Label" onChange={handleChangeLabel} />
-      <Input value={placeholder} label="Placeholder" onChange={handleChangePlaceholder} />
-      <Select value={subType} onChange={handleChangeType} label="Input Type">
+      <Input value={name} label="Input Name" onChange={handleChangeName} size="xs" />
+      <Input value={label} label="Label" onChange={handleChangeLabel} size="xs" />
+      <Input value={placeholder} label="Placeholder" onChange={handleChangePlaceholder} size="xs" />
+      <Select value={subType} onChange={handleChangeType} label="Input Type" size="xs">
         <option value="text">Text</option>
         <option value="number">Number</option>
         <option value="time">Time</option>
@@ -115,22 +115,26 @@ const Settings = ({
         {/* <option value="color">Color</option> */}
         {/* <option value="switch">Switch</option> */}
       </Select>
-      <TextArea value={defaultValue} label="Default Value" onChange={handleChangeDefaultValue} />
+      <TextArea value={defaultValue} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
       {/* <div className="flex flex-col mt-4">
           <label>Value</label>
           <Input value={value} onChange={handleChangeValue} />
         </div> */}
       {subType === 'text' && (
-        <Checkbox checked={autoComplete} label="Auto Complete" onChange={handleChangeAutoComplete} />
+        <Checkbox checked={autoComplete} label="Auto Complete" onChange={handleChangeAutoComplete} size="xs" />
       )}
       {(subType === 'text' ||
         subType === 'textarea' ||
         subType === 'number' ||
         subType === 'email' ||
-        subType === 'password') && <Checkbox checked={readOnly} label="Read Only" onChange={handleChangeReadOnly} />}
-      {subType === 'select' && <TextArea value={optionsString} label="Options" onChange={handleChangeOptions} />}
-      <Checkbox checked={required} label="Required" onChange={handleChangeRequired} />
-      <Checkbox checked={disabled} label="Disabled" onChange={handleChangeDisabled} />
+        subType === 'password') && (
+        <Checkbox checked={readOnly} label="Read Only" onChange={handleChangeReadOnly} size="xs" />
+      )}
+      {subType === 'select' && (
+        <TextArea value={optionsString} label="Options" onChange={handleChangeOptions} size="xs" />
+      )}
+      <Checkbox checked={required} label="Required" onChange={handleChangeRequired} size="xs" />
+      <Checkbox checked={disabled} label="Disabled" onChange={handleChangeDisabled} size="xs" />
     </div>
   );
 };

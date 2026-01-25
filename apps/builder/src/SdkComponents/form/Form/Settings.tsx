@@ -24,15 +24,16 @@ const Settings = ({ method = 'get', managedByInteractions = false, actionUrl = '
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
-      <Select value={method} label="Form Method" onChange={handleChangeMethod}>
+      <Select value={method} label="Form Method" onChange={handleChangeMethod} size="xs">
         <option value="get">GET</option>
         <option value="post">POST</option>
       </Select>
-      <Input value={actionUrl} onChange={handleChangeActionUrl} label="Action URL" />
+      <Input value={actionUrl} onChange={handleChangeActionUrl} label="Action URL" size="xs" />
       <Checkbox
         checked={managedByInteractions}
         onChange={handleChangeManageByInteractions}
         label="Managed By Interactions"
+        size="xs"
       />
     </div>
   );
