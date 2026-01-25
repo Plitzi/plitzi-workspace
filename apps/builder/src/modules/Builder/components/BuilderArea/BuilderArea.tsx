@@ -164,7 +164,7 @@ const BuilderArea = ({
           'px-4 pt-4 pb-2': mode === 'normal',
           'p-2': mode !== 'normal',
           'max-w-360': displayMode === 'desktop',
-          'max-w-48': displayMode === 'tablet',
+          'max-w-3xl': displayMode === 'tablet',
           'max-w-106.25': displayMode === 'mobile'
         },
         className
