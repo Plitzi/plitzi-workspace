@@ -129,7 +129,7 @@ const useDropdown = ({
   );
 
   useEffect(() => {
-    if (!open) {
+    if (!open || disabled) {
       return;
     }
 
@@ -138,7 +138,7 @@ const useDropdown = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, handleKeyDown]);
+  }, [open, handleKeyDown, disabled]);
 
   const calculatePosition = useCallback(
     (popupRect: DOMRect): FloatingPosition | undefined => {
