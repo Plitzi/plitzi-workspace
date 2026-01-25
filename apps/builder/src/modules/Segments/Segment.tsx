@@ -149,8 +149,8 @@ const Segment = ({
       if (responseMutation.result) {
         addToast(
           <span>
-            Snapshot <b>{`${responseMutation.result.environment}:${responseMutation.result.revision}`}</b> Created
-            Successfully
+            Snapshot <b>{`${responseMutation.result.environment as string}:${responseMutation.result.revision}`}</b>{' '}
+            Created Successfully
           </span>,
           {
             appeareance: 'success',
