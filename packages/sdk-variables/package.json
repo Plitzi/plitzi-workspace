@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-variables",
-  "version": "0.27.16",
+  "version": "0.27.17",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -155,7 +155,7 @@
     "build-assets:prod": "tsc && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.24",
+    "@plitzi/plitzi-ui": "^1.1.25",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
     "eslint": "^9.39.2",

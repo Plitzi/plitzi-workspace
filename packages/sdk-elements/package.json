@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-elements",
-  "version": "0.27.16",
+  "version": "0.27.17",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"

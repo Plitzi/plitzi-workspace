@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.27.16",
+  "version": "0.27.17",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
@@ -92,7 +92,7 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.24",
+    "@plitzi/plitzi-ui": "^1.1.25",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
