@@ -67,13 +67,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   style: styleProp,
   ...otherProps
 }: RootElementProps<T>) => {
-  const styleParsed = useMemo(() => {
-    if (!styleProp || typeof styleProp !== 'string') {
-      return undefined;
-    }
-
-    return parseStyle(styleProp);
-  }, [styleProp]);
+  const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
   if (!Tag || !internalProps) {
     console.error('One of these parameters [tag, internalProps] are missing:', Tag, internalProps);

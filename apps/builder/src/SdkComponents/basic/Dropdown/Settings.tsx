@@ -67,28 +67,46 @@ const Settings = ({
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
-      <Select value={popupPlacement} label="opup Placement" onChange={handleChangePopupPlacement}>
+      <Select value={popupPlacement} label="Popup Placement" onChange={handleChangePopupPlacement} size="xs">
         <option value="top">Top</option>
         <option value="bottom">Bottom</option>
         <option value="left">Left</option>
         <option value="right">Right</option>
       </Select>
-      <Input type="number" label="Container Top Offset" value={containerTopOffset} onChange={handleChangeTopOffset} />
+      <Input
+        type="number"
+        label="Container Top Offset"
+        value={containerTopOffset}
+        onChange={handleChangeTopOffset}
+        size="xs"
+      />
       <Input
         type="number"
         label="Container Left Offset"
         value={containerLeftOffset}
         onChange={handleChangeLeftOffset}
+        size="xs"
       />
-      <Checkbox label="Open Popup" checked={openPopup} onChange={handleChangeOpenPopup} />
-      <Checkbox checked={backgroundDisabled} onChange={handleChangeBackgroundDisabled} label=" Disable Background" />
+      <Checkbox label="Open Popup" checked={openPopup} onChange={handleChangeOpenPopup} size="xs" />
+      <Checkbox
+        checked={backgroundDisabled}
+        onChange={handleChangeBackgroundDisabled}
+        label=" Disable Background"
+        size="xs"
+      />
       <Checkbox
         checked={closeOnClickBackground}
         onChange={handleChangeCloseOnClickBackground}
         label="Close on click background"
+        size="xs"
       />
-      <Checkbox checked={closeOnClickPopup} onChange={handleChangeCloseOnClickPopup} label="Close on click popup" />
-      <Checkbox checked={disabled} label="Disabled" onChange={handleChangeDisabled} />
+      <Checkbox
+        checked={closeOnClickPopup}
+        onChange={handleChangeCloseOnClickPopup}
+        label="Close on click popup"
+        size="xs"
+      />
+      <Checkbox checked={disabled} label="Disabled" onChange={handleChangeDisabled} size="xs" />
     </div>
   );
 };

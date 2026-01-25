@@ -20,10 +20,14 @@ const VariableValue = ({ type, value }: VariableValueProps) => {
         type === 'color' &&
         typeof value === 'object' &&
         values.map(valueKey => (
-          <div key={valueKey} className="flex items-center gap-1 capitalize" title={valueKey}>
+          <div
+            key={valueKey}
+            className="flex items-center gap-1 capitalize"
+            title={`${valueKey}: ${value[valueKey as keyof StyleThemeValue]}`}
+          >
             {valueKey[0]}:
             <div
-              className="min-h-3 min-w-3 rounded-xs border border-gray-300"
+              className="min-h-4 min-w-4 rounded border border-gray-300"
               style={{ backgroundColor: value[valueKey as keyof StyleThemeValue] }}
             />
           </div>
