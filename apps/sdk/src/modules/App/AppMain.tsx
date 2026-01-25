@@ -106,7 +106,6 @@ const AppMain = ({
                                   previewMode={previewMode}
                                   debugMode={debugMode}
                                   environment={environment}
-                                  sdkEnvironment={sdkEnvironment}
                                   {...sdkProps}
                                 />
                               </DevToolsContainer>

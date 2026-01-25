@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-schema",
-  "version": "0.27.18",
+  "version": "0.27.19",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"

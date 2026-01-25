@@ -187,6 +187,7 @@ const App = ({
                   renderMode={renderMode}
                   debugMode={debugMode}
                   webId={webId}
+                  sdkEnvironment={sdkEnvironment}
                   {...sdkProps}
                 />
               </ComponentProvider>
