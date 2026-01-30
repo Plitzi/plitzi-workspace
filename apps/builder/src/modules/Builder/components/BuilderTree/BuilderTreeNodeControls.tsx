@@ -1,4 +1,5 @@
 import Icon from '@plitzi/plitzi-ui/Icon';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import get from 'lodash-es/get';
@@ -23,6 +24,7 @@ export type BuilderTreeNodeControlsProps = {
 const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeControlsProps) => {
   const { builderSetElementVisibility } = use(BuilderSchemaContext);
   const { existsPopup, addPopup } = usePopup();
+  const { showDialog } = useModal();
   const { builderHandler, builderElementPermissions } = use(BuilderContext);
 
   const dataSource = useDataSource({ id, mode: 'read' });
@@ -83,11 +85,25 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
   }, [builderSetElementVisibility, id, isVisible]); // setHovered
 
   const handleClickDelete = useCallback(
-    (e: MouseEvent) => {
+    async (e: MouseEvent) => {
       e.stopPropagation();
-      builderHandler('schemaRemoveElement', id);
+      const response = await showDialog(
+        <Modal.Header>
+          <h4>Remove Element</h4>
+        </Modal.Header>,
+        <Modal.Body>
+          <h4>Do you want to remove this item ?</h4>
+        </Modal.Body>,
+        undefined,
+        { size: 'sm' },
+        id
+      );
+
+      if (response) {
+        builderHandler('schemaRemoveElement', id);
+      }
     },
-    [builderHandler, id]
+    [builderHandler, id, showDialog]
   );
 
   return (

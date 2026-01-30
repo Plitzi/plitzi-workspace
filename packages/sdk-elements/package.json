@@ -177,6 +177,10 @@
       "types": "./dist/src/components/basic/Dropdown/index.d.ts",
       "import": "./dist/src/components/basic/Dropdown/index.mjs"
     },
+    "./components/basic/Dropdown/useDropdown": {
+      "types": "./dist/src/components/basic/Dropdown/useDropdown.d.ts",
+      "import": "./dist/src/components/basic/Dropdown/useDropdown.mjs"
+    },
     "./components/basic/Heading": {
       "types": "./dist/src/components/basic/Heading/index.d.ts",
       "import": "./dist/src/components/basic/Heading/index.mjs"
@@ -558,7 +562,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.25",
+    "@plitzi/plitzi-ui": "^1.2.2",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
@@ -574,7 +578,7 @@
   },
   "devDependencies": {
     "eslint": "^9.39.2",
-    "react": "^19.2.3",
+    "react": "^19.2.4",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"

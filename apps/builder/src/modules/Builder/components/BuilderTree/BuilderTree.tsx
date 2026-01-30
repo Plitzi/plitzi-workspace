@@ -159,7 +159,7 @@ const BuilderTree = () => {
 
   return (
     <Tree
-      className="w-full"
+      className="w-full py-2"
       size="sm"
       intent="secondary"
       items={nodes}

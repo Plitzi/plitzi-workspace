@@ -19,7 +19,7 @@ import type {
   InteractionBaseCallback,
   InteractionCallbackParamValues
 } from '@plitzi/sdk-shared';
-import type { FormEvent, ReactNode, RefObject } from 'react';
+import type { ReactNode, RefObject, SyntheticEvent } from 'react';
 
 export type FormProps = {
   ref: RefObject<HTMLElement>;
@@ -198,7 +198,7 @@ const Form = ({
   // Interactions Callbacks
 
   const handleSubmit = useCallback(
-    (e: FormEvent) => {
+    (e: SyntheticEvent<HTMLFormElement>) => {
       setElementState(state => ({ ...state, errors: {} }));
       if (!managedByInteractions) {
         return;
@@ -217,7 +217,7 @@ const Form = ({
   );
 
   const handleReset = useCallback(
-    (params: InteractionCallbackParamValues | FormEvent) => {
+    (params: InteractionCallbackParamValues | SyntheticEvent<HTMLFormElement>) => {
       if (!managedByInteractions) {
         return;
       }

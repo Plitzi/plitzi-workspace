@@ -105,7 +105,7 @@ const Segments = () => {
   const { segments } = data;
 
   return (
-    <Flex direction="column" gap={2} className="segments w-full">
+    <Flex direction="column" gap={2} className="segments w-full p-2">
       <Flex gap={2} direction="column">
         <Button size="sm" onClick={handleClickAddSegment} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />

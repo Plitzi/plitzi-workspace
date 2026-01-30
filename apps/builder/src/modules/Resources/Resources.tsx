@@ -68,7 +68,7 @@ const Resources = () => {
   const handleRemove = useCallback(() => void mutateCdns(), [mutateCdns]);
 
   return (
-    <div className="flex w-full grow basis-0 flex-col gap-4 overflow-y-auto">
+    <div className="flex w-full grow basis-0 flex-col gap-4 overflow-y-auto p-2">
       <Flex gap={2} direction="column">
         <Button size="sm" onClick={handleClickAddCdn} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />

@@ -253,6 +253,10 @@
       "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesListItem.d.ts",
       "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesListItem.mjs"
     },
+    "./components/DevToolsPanel/tabs/VariablesViewer/VariablesStyleList": {
+      "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesStyleList.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesStyleList.mjs"
+    },
     "./components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer": {
       "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer.d.ts",
       "import": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/VariablesViewer.mjs"
@@ -296,8 +300,8 @@
   "type": "module",
   "devDependencies": {
     "eslint": "^9.39.2",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   },
@@ -306,7 +310,7 @@
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.1.25",
+    "@plitzi/plitzi-ui": "^1.2.2",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",

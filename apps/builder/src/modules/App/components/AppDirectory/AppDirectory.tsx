@@ -12,7 +12,7 @@ const AppDirectory = () => {
   const { currentPageId } = use(NavigationContext);
 
   return (
-    <Flex direction="column" gap={3} className="w-full">
+    <Flex direction="column" gap={3} className="w-full p-2">
       <DirectoryHeader pageFolders={pageFolders} />
       <Directory
         id=""

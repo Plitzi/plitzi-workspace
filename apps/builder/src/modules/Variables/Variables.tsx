@@ -132,7 +132,7 @@ const Variables = () => {
   );
 
   return (
-    <div className="flex w-full flex-col gap-2">
+    <div className="flex w-full flex-col gap-2 p-2">
       <Flex gap={2} direction="column">
         <Input placeholder="Search Variables" size="sm" value={filter} onChange={setFilter}>
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
@@ -151,6 +151,7 @@ const Variables = () => {
       <div className="flex grow basis-0 flex-col pb-2">
         <Heading as="h6">Style Variables</Heading>
         <StyleVariables
+          className="min-h-0 grow basis-0"
           variables={styleVariables}
           onAdd={handleAddStyleVariable}
           onUpdate={handleUpdateStyleVariable}

@@ -17,7 +17,7 @@ const VariableList = ({ variables, onUpdate, onRemove }: VariableListProps) => {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex grow flex-col overflow-y-auto">
       {Object.values(StyleVariableCategory).map(category => (
         <VariableGroup
           key={category}

@@ -33,6 +33,7 @@ export const getPopups = ({
       id: 'elements',
       component: <Elements />,
       active: false,
+      position: 0,
       settings: {
         icon: 'fa-solid fa-plus',
         title: 'Add Element',
@@ -48,6 +49,7 @@ export const getPopups = ({
       id: 'pages',
       component: <AppDirectory />,
       active: false,
+      position: 1,
       settings: {
         icon: 'fas fa-file',
         title: 'Pages',
@@ -63,6 +65,7 @@ export const getPopups = ({
       id: 'sitemap',
       component: undefined,
       active: false,
+      position: 3,
       settings: {
         icon: 'fa-solid fa-sitemap',
         title: 'Sitemap',
@@ -73,11 +76,8 @@ export const getPopups = ({
         allowClose: false,
         resizeHandles: ['se']
       }
-    }
-  ];
-
-  if (featureFlag.variables) {
-    left.push({
+    },
+    {
       id: 'variables',
       component: <Variables />,
       active: false,
@@ -96,8 +96,8 @@ export const getPopups = ({
         placement: 'right',
         resizeHandles: ['se']
       }
-    });
-  }
+    }
+  ];
 
   if (featureFlag.assistanceAI) {
     left.push({

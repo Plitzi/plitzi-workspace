@@ -34,6 +34,7 @@ const AppSidebar = ({ onSelect }: AppSidebarProps) => {
       minWidth={335}
       maxWidth={800}
       canHide
+      multi
       value={popupsActiveLeft}
       onChange={handleChangeLeft}
     />

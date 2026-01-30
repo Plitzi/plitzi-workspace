@@ -49,7 +49,7 @@ const Collections = ({ collectionId, onSourceChange }: CollectionsProps) => {
   const handleClick = useCallback((collectionId: string) => () => onSourceChange?.(collectionId), [onSourceChange]);
 
   return (
-    <Flex direction="column" gap={4} className="w-full">
+    <Flex direction="column" gap={4} className="w-full p-2">
       <Button iconPlacement="before" size="sm" onClick={handleClickAddCollection}>
         <Button.Icon icon="fa-solid fa-plus" />
         New Collection
