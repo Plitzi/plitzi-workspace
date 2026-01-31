@@ -1,4 +1,3 @@
-import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use } from 'react';
 
@@ -18,12 +17,6 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
   const { eventBridge } = use(EventBridgeContext);
   const { segments } = use(SegmentsContext);
   const segment = segments[segmentIdentifier] as Segment | undefined;
-  const [popupsActiveRught, setPopupsActiveRight] = useStorage<string[]>(
-    'builder-state.popupSidePanel.popupsActive.right',
-    []
-  );
-
-  const handleChange = useCallback((popups: string[]) => setPopupsActiveRight(popups), [setPopupsActiveRight]);
 
   const builderHandler = useCallback(
     (event: EventBridgeEvent, data: unknown[]): void => void eventBridge.emit('segment', event, segment?.id, ...data),
@@ -60,9 +53,6 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
               minWidth={320}
               maxWidth={540}
               canHide
-              multi
-              value={popupsActiveRught}
-              onChange={handleChange}
             />
           )}
         </PopupProvider>

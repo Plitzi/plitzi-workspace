@@ -34,7 +34,6 @@ const ContainerDefault = ({ previewMode = false, externalStyle = '' }: Container
           minWidth={335}
           maxWidth={800}
           canHide
-          multi
         />
       )}
     </div>
