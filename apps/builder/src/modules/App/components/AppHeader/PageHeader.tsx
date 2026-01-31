@@ -1,22 +1,18 @@
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import get from 'lodash-es/get';
 import { useCallback, use } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 
-import type { Dispatch, SetStateAction } from 'react';
-
-export type PageHeaderProps = {
-  setTabSelected?: Dispatch<SetStateAction<string>>;
-};
-
-const PageHeader = ({ setTabSelected }: PageHeaderProps) => {
+const PageHeader = () => {
   const { pageDefinitions } = use(SchemaMainContext);
   const { currentPageId } = use(NavigationContext);
+  const [, setPopupsActiveLeft] = useStorage<string[]>('builder-state.popupSidePanel.popupsActive.left', []);
 
   const handleClick = useCallback(() => {
-    setTabSelected?.((state: string) => (state === 'pages' ? '' : 'pages'));
-  }, [setTabSelected]);
+    setPopupsActiveLeft(state => (!state.includes('pages') ? [...state, 'pages'] : state.filter(p => p !== 'pages')));
+  }, [setPopupsActiveLeft]);
 
   const pageLabel = get(pageDefinitions, `${currentPageId}.attributes.name`, '') as string;
   const isHome = get(pageDefinitions, `${currentPageId}.attributes.default`, false) as boolean;

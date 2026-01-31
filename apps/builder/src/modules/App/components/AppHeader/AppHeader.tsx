@@ -24,13 +24,8 @@ import PublishForm from '../../models/PublishForm';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
-import type { Dispatch, SetStateAction } from 'react';
 
-export type AppHeaderProps = {
-  setTabSelected?: Dispatch<SetStateAction<string>>;
-};
-
-const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
+const AppHeader = () => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
@@ -138,7 +133,7 @@ const AppHeader = ({ setTabSelected }: AppHeaderProps) => {
           </a>
           <i className="fa-solid fa-chevron-down" />
         </div>
-        <PageHeader setTabSelected={setTabSelected} />
+        <PageHeader />
         <HistoryButtons />
         <BorderButton />
       </div>

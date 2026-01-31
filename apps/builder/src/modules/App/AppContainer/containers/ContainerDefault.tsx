@@ -1,6 +1,5 @@
-import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
-import { useCallback, use, useMemo } from 'react';
+import { use, useMemo } from 'react';
 
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
@@ -13,15 +12,7 @@ export type ContainerDefaultProps = {
 
 const ContainerDefault = ({ previewMode = false, externalStyle = '' }: ContainerDefaultProps) => {
   const { pages, settings } = use(SchemaMainContext);
-  const [popupsActiveRight, setPopupsActiveRight] = useStorage<string[]>(
-    'builder-state.popupSidePanel.popupsActive.right',
-    []
-  );
-
-  const handleChangeRight = useCallback((popups: string[]) => setPopupsActiveRight(popups), [setPopupsActiveRight]);
-
   const { segments } = use(SegmentsContext);
-
   const customCss = useMemo(() => {
     let css = settings.customCss;
     if (typeof css !== 'string') {
@@ -44,8 +35,6 @@ const ContainerDefault = ({ previewMode = false, externalStyle = '' }: Container
           maxWidth={800}
           canHide
           multi
-          value={popupsActiveRight}
-          onChange={handleChangeRight}
         />
       )}
     </div>

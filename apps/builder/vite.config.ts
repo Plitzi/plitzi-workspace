@@ -43,7 +43,9 @@ const packages = {
   '@plitzi/sdk-shared': path.resolve(baseUrl.pathname, '../../packages/sdk-shared/src'),
   '@plitzi/sdk-state': path.resolve(baseUrl.pathname, '../../packages/sdk-state/src'),
   '@plitzi/sdk-style': path.resolve(baseUrl.pathname, '../../packages/sdk-style/src'),
-  '@plitzi/sdk-variables': path.resolve(baseUrl.pathname, '../../packages/sdk-variables/src')
+  '@plitzi/sdk-variables': path.resolve(baseUrl.pathname, '../../packages/sdk-variables/src'),
+  react: path.resolve(baseUrl.pathname, '../../node_modules/react'),
+  'react-dom': path.resolve(baseUrl.pathname, '../../node_modules/react-dom')
 };
 
 // const importedPackages = new Set();

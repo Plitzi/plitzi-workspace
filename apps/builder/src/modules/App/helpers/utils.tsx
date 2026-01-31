@@ -19,9 +19,11 @@ import type { PopupInstance } from '@plitzi/plitzi-ui/components';
 
 export const getPopups = ({
   sourceId,
+  activeIds = [],
   handleSourceChange
 }: {
   sourceId?: string;
+  activeIds?: string[];
   handleSourceChange: (id?: string) => void;
 }): {
   left: PopupInstance[];
@@ -32,7 +34,7 @@ export const getPopups = ({
     {
       id: 'elements',
       component: <Elements />,
-      active: false,
+      active: activeIds.includes('elements'),
       position: 0,
       settings: {
         icon: 'fa-solid fa-plus',
@@ -48,7 +50,7 @@ export const getPopups = ({
     {
       id: 'pages',
       component: <AppDirectory />,
-      active: false,
+      active: activeIds.includes('pages'),
       position: 1,
       settings: {
         icon: 'fas fa-file',
@@ -64,8 +66,9 @@ export const getPopups = ({
     {
       id: 'sitemap',
       component: undefined,
-      active: false,
+      active: activeIds.includes('sitemap'),
       position: 3,
+      multi: false,
       settings: {
         icon: 'fa-solid fa-sitemap',
         title: 'Sitemap',
@@ -80,7 +83,8 @@ export const getPopups = ({
     {
       id: 'variables',
       component: <Variables />,
-      active: false,
+      active: activeIds.includes('variables'),
+      position: 4,
       settings: {
         icon: (
           <Sidebar.Icon className="p-1" intent="tertiary" title="Variables">
@@ -91,44 +95,24 @@ export const getPopups = ({
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        allowFloatingSide: false,
+        allowFloatingSide: true,
         allowClose: false,
         placement: 'right',
         resizeHandles: ['se']
       }
-    }
-  ];
-
-  if (featureFlag.assistanceAI) {
-    left.push({
-      id: 'assistant',
-      component: <OpenAIChat />,
-      active: false,
-      settings: {
-        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" intent="tertiary" title="Variables" />,
-        title: 'Assistant',
-        width: 400,
-        allowLeftSide: true,
-        allowRightSide: true,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    });
-  }
-
-  left.push(
+    },
     {
       id: 'assets',
       component: <Resources />,
-      active: false,
+      active: activeIds.includes('assets'),
+      position: 5,
       settings: {
         icon: 'fa-solid fa-image',
         title: 'Resources',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        allowFloatingSide: false,
+        allowFloatingSide: true,
         allowClose: false,
         resizeHandles: ['se']
       }
@@ -136,7 +120,9 @@ export const getPopups = ({
     {
       id: 'collections',
       component: <Collections collectionId={sourceId} onSourceChange={handleSourceChange} />,
-      active: false,
+      active: activeIds.includes('collections'),
+      position: 6,
+      multi: false,
       settings: {
         icon: 'fas fa-database',
         title: 'Collections',
@@ -151,14 +137,15 @@ export const getPopups = ({
     {
       id: 'segments',
       component: <Segments />,
-      active: false,
+      active: activeIds.includes('segments'),
+      position: 7,
       settings: {
         icon: 'fa-solid fa-diamond',
         title: 'Segments',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        allowFloatingSide: false,
+        allowFloatingSide: true,
         allowClose: false,
         resizeHandles: ['se']
       }
@@ -166,14 +153,15 @@ export const getPopups = ({
     {
       id: 'layerManager',
       component: <BuilderTree />,
-      active: false,
+      active: activeIds.includes('layerManager'),
+      position: 8,
       settings: {
         icon: 'fa-solid fa-layer-group',
         title: 'Layers',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        allowFloatingSide: false,
+        allowFloatingSide: true,
         allowClose: false,
         resizeHandles: ['se']
       }
@@ -182,14 +170,15 @@ export const getPopups = ({
       id: 'advanceStyle',
       component: <StyleAdvanceEditor />,
       size: 'custom',
-      active: false,
+      active: activeIds.includes('advanceStyle'),
+      position: 9,
       settings: {
         icon: 'fa-solid fa-file-code text-base',
         title: 'Advance Style',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        allowFloatingSide: false,
+        allowFloatingSide: true,
         allowClose: false,
         resizeHandles: ['se']
       }
@@ -198,7 +187,8 @@ export const getPopups = ({
       id: 'stateManager',
       size: 'custom',
       component: <StateManager />,
-      active: false,
+      active: activeIds.includes('stateManager'),
+      position: 10,
       settings: {
         icon: (
           <Sidebar.Icon className="p-2" intent="tertiary" title="State Manager">
@@ -209,7 +199,7 @@ export const getPopups = ({
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
-        allowFloatingSide: false,
+        allowFloatingSide: true,
         allowClose: false,
         resizeHandles: ['se']
       }
@@ -217,7 +207,9 @@ export const getPopups = ({
     {
       id: 'settings',
       component: undefined,
-      active: false,
+      active: activeIds.includes('settings'),
+      position: 11,
+      multi: false,
       settings: {
         icon: 'fas fa-cog',
         title: 'Settings',
@@ -229,7 +221,25 @@ export const getPopups = ({
         resizeHandles: ['se']
       }
     }
-  );
+  ];
+
+  if (featureFlag.assistanceAI) {
+    left.push({
+      id: 'assistant',
+      component: <OpenAIChat />,
+      active: activeIds.includes('assistant'),
+      settings: {
+        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" intent="tertiary" title="Variables" />,
+        title: 'Assistant',
+        width: 400,
+        allowLeftSide: true,
+        allowRightSide: true,
+        allowFloatingSide: true,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    });
+  }
 
   return { left, right: [], floating: [] };
 };

@@ -1,5 +1,5 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
+import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { use, useState, useMemo, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -10,7 +10,6 @@ import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
-import AppSidebar from '../components/AppSidebar';
 import ContainerCollections from './containers/ContainerCollections';
 import ContainerDefault from './containers/ContainerDefault';
 import ContainerIntegrations from './containers/ContainerIntegrations';
@@ -19,11 +18,14 @@ import ContainerSettings from './containers/ContainerSettings';
 import ContainerSitemap from './containers/ContainerSitemap';
 import { getPopups } from '../helpers/utils';
 
+import type { PopupInstance, PopupPlacement } from '@plitzi/plitzi-ui/Popup';
 import type { EventBridgeEvent } from '@plitzi/sdk-shared';
 
 export type AppContainerProps = {
   externalStyle?: string;
 };
+
+const separatorsBefore = ['layerManager', 'settings'];
 
 const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { previewMode } = use(AppContext);
@@ -31,28 +33,41 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const styleContext = use(StyleContext);
   const { eventBridge } = use(EventBridgeContext);
   const { currentPageId } = use(NavigationContext);
-  const [tabSelectedInitial] = useStorage<string>(
-    'builder-state.popupSidePanel.popupsActive.left.0',
-    '',
-    'localStorage',
-    false
+  const [popupsActiveLeft, setPopupsActiveLeft] = useStorage<string[]>(
+    'builder-state.popupSidePanel.popupsActive.left',
+    []
   );
-  const [tabSelected, setTabSelected] = useState<string>(tabSelectedInitial);
+  const [, setPopupsActiveRight] = useStorage<string[]>('builder-state.popupSidePanel.popupsActive.right', []);
   const [sourceState, setSourceState] = useState<{ sourceId?: string }>({ sourceId: '' });
   const { sourceId } = sourceState;
 
   const handleSourceChange = useCallback((newSourceId?: string) => setSourceState({ sourceId: newSourceId }), []);
+
+  const handleChangePopups = useCallback(
+    (placement: PopupPlacement, value: PopupInstance[]) => {
+      const valueParsed = value.filter(p => p.active).map(p => p.id);
+      if (placement === 'left') {
+        setPopupsActiveLeft(valueParsed);
+      } else if (placement === 'right') {
+        setPopupsActiveRight(valueParsed);
+      }
+    },
+    [setPopupsActiveLeft, setPopupsActiveRight]
+  );
 
   const builderHandler = useCallback(
     (event: EventBridgeEvent, data: unknown[]) => void eventBridge.emit('main', event, ...data),
     [eventBridge]
   );
 
-  const popups = useMemo(() => getPopups({ sourceId, handleSourceChange }), [sourceId, handleSourceChange]);
+  const popups = useMemo(
+    () => getPopups({ sourceId, activeIds: popupsActiveLeft, handleSourceChange }),
+    [sourceId, popupsActiveLeft, handleSourceChange]
+  );
 
   return (
     <div className="flex grow flex-col overflow-auto">
-      <AppHeader setTabSelected={setTabSelected} />
+      <AppHeader />
       <BuilderProvider
         schema={schemaContext.schema}
         style={styleContext.style}
@@ -61,23 +76,37 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
       >
         <PopupProvider
           popups={popups}
+          multi
+          multiExpanded
+          onChange={handleChangePopups}
           renderLeftPopup={false}
           renderRightPopup={false}
           renderFloatingPopup={!previewMode}
         >
           <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
-            {!previewMode && <AppSidebar onSelect={setTabSelected} />}
+            {!previewMode && (
+              <PopupSidePanel
+                size="md"
+                className="max-h-[calc(100vh-48px)] overflow-y-auto"
+                placementTabs="left"
+                placement="left"
+                separatorsBefore={separatorsBefore}
+                minWidth={335}
+                maxWidth={800}
+                canHide
+              />
+            )}
             <div className="flex grow basis-0 flex-col overflow-hidden">
-              {!['collections', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(tabSelected) && (
+              {!['collections', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(popupsActiveLeft[0]) && (
                 <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
               )}
-              {tabSelected === 'collections' && (
+              {popupsActiveLeft[0] === 'collections' && (
                 <ContainerCollections key={sourceId} onSourceChange={handleSourceChange} collectionId={sourceId} />
               )}
-              {tabSelected === 'marketplace' && <ContainerMarketplace />}
-              {tabSelected === 'integrations' && <ContainerIntegrations />}
-              {tabSelected === 'sitemap' && <ContainerSitemap />}
-              {tabSelected === 'settings' && <ContainerSettings />}
+              {popupsActiveLeft[0] === 'marketplace' && <ContainerMarketplace />}
+              {popupsActiveLeft[0] === 'integrations' && <ContainerIntegrations />}
+              {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}
+              {popupsActiveLeft[0] === 'settings' && <ContainerSettings />}
             </div>
           </div>
         </PopupProvider>
