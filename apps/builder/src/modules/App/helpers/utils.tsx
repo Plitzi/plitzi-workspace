@@ -35,7 +35,7 @@ export const getPopups = ({
       id: 'elements',
       component: <Elements />,
       active: activeIds.includes('elements'),
-      position: 0,
+      placementSettings: { left: { position: 0 } },
       settings: {
         icon: 'fa-solid fa-plus',
         title: 'Add Element',
@@ -51,7 +51,7 @@ export const getPopups = ({
       id: 'pages',
       component: <AppDirectory />,
       active: activeIds.includes('pages'),
-      position: 1,
+      placementSettings: { left: { position: 1 } },
       settings: {
         icon: 'fas fa-file',
         title: 'Pages',
@@ -67,8 +67,7 @@ export const getPopups = ({
       id: 'sitemap',
       component: undefined,
       active: activeIds.includes('sitemap'),
-      position: 3,
-      multi: false,
+      placementSettings: { left: { position: 3, multi: false } },
       settings: {
         icon: 'fa-solid fa-sitemap',
         title: 'Sitemap',
@@ -84,7 +83,7 @@ export const getPopups = ({
       id: 'variables',
       component: <Variables />,
       active: activeIds.includes('variables'),
-      position: 4,
+      placementSettings: { left: { position: 4 } },
       settings: {
         icon: (
           <Sidebar.Icon className="p-1" intent="tertiary" title="Variables">
@@ -105,7 +104,7 @@ export const getPopups = ({
       id: 'assets',
       component: <Resources />,
       active: activeIds.includes('assets'),
-      position: 5,
+      placementSettings: { left: { position: 5 } },
       settings: {
         icon: 'fa-solid fa-image',
         title: 'Resources',
@@ -121,8 +120,7 @@ export const getPopups = ({
       id: 'collections',
       component: <Collections collectionId={sourceId} onSourceChange={handleSourceChange} />,
       active: activeIds.includes('collections'),
-      position: 6,
-      multi: false,
+      placementSettings: { left: { position: 6, multi: false } },
       settings: {
         icon: 'fas fa-database',
         title: 'Collections',
@@ -138,7 +136,7 @@ export const getPopups = ({
       id: 'segments',
       component: <Segments />,
       active: activeIds.includes('segments'),
-      position: 7,
+      placementSettings: { left: { position: 7 } },
       settings: {
         icon: 'fa-solid fa-diamond',
         title: 'Segments',
@@ -154,7 +152,7 @@ export const getPopups = ({
       id: 'layerManager',
       component: <BuilderTree />,
       active: activeIds.includes('layerManager'),
-      position: 8,
+      placementSettings: { left: { position: 8 } },
       settings: {
         icon: 'fa-solid fa-layer-group',
         title: 'Layers',
@@ -171,7 +169,7 @@ export const getPopups = ({
       component: <StyleAdvanceEditor />,
       size: 'custom',
       active: activeIds.includes('advanceStyle'),
-      position: 9,
+      placementSettings: { left: { position: 9 } },
       settings: {
         icon: 'fa-solid fa-file-code text-base',
         title: 'Advance Style',
@@ -188,7 +186,7 @@ export const getPopups = ({
       size: 'custom',
       component: <StateManager />,
       active: activeIds.includes('stateManager'),
-      position: 10,
+      placementSettings: { left: { position: 10 } },
       settings: {
         icon: (
           <Sidebar.Icon className="p-2" intent="tertiary" title="State Manager">
@@ -208,8 +206,7 @@ export const getPopups = ({
       id: 'settings',
       component: undefined,
       active: activeIds.includes('settings'),
-      position: 11,
-      multi: false,
+      placementSettings: { left: { position: 11, multi: false } },
       settings: {
         icon: 'fas fa-cog',
         title: 'Settings',
