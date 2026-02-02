@@ -38,7 +38,7 @@ export const getPopups = ({
       placementSettings: { left: { position: 0, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-plus',
-        title: 'Add Element',
+        title: 'Elements',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
