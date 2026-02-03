@@ -62,12 +62,13 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', onUpdate }: S
             <div
               key={iconClass}
               className={clsx(
-                'flex h-8 w-8 cursor-pointer items-center justify-center rounded-md p-2 hover:bg-blue-200 hover:text-white',
+                'flex h-6 w-6 cursor-pointer items-center justify-center rounded-md p-1 hover:bg-blue-200 hover:text-white',
                 { 'bg-[#339af0] text-white': iconClass === icon }
               )}
               onClick={handleClick(iconClass)}
+              title={`${label} - [${ic}]`}
             >
-              <i key={`${ic}_${iconStyle}`} className={iconClass} title={`${label} - [${ic}]`} />
+              <i key={`${ic}_${iconStyle}`} className={iconClass} />
             </div>
           );
         });
@@ -96,12 +97,18 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', onUpdate }: S
 
   return (
     <div className="flex grow basis-0 flex-col gap-4 py-2">
-      <Select value={type} placeholder="All" label="Icon Type" onChange={handleChangeType}>
+      <Select value={type} placeholder="All" label="Icon Type" onChange={handleChangeType} size="xs">
         <option value="regular">Regular</option>
         <option value="solid">Solid</option>
         <option value="brands">Brands</option>
       </Select>
-      <Select label="Icon Animation" value={iconAnimation} placeholder="None" onChange={handleChange('iconAnimation')}>
+      <Select
+        label="Icon Animation"
+        value={iconAnimation}
+        placeholder="None"
+        onChange={handleChange('iconAnimation')}
+        size="xs"
+      >
         <option value="fa-beat">Beat</option>
         <option value="fa-fade">Fade</option>
         <option value="fa-beat-fade">Beat-Fade</option>
@@ -110,15 +117,15 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', onUpdate }: S
         <option value="fa-shake">Shake</option>
         <option value="fa-spin">Spin</option>
       </Select>
-      <Select value={size} label="Icon Size" onChange={handleChange('size')}>
+      <Select value={size} label="Icon Size" onChange={handleChange('size')} size="xs">
         <option value="fa-1x">1X</option>
         <option value="fa-2x">2X</option>
         <option value="fa-3x">3X</option>
         <option value="fa-4x">4X</option>
       </Select>
-      <Input value={filter} placeholder="Search Icon..." onChange={handleChangeFilter} />
-      <div className="flex grow basis-0 flex-col overflow-auto px-2 py-2">
-        <div className="flex flex-wrap items-center justify-center gap-2">
+      <Input value={filter} placeholder="Search Icon..." onChange={handleChangeFilter} size="xs" />
+      <div className="flex grow basis-0 flex-col overflow-auto py-2">
+        <div className="flex flex-wrap items-center justify-center gap-1">
           {loading && <i className="fa-solid fa-sync fa-spin fa-3x" />}
           {!loading && iconsToRender}
         </div>

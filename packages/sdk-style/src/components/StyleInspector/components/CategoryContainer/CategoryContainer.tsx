@@ -37,7 +37,7 @@ const CategoryContainer = ({
         <InspectorDots styleKeys={dotKeys} />
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={clsx('flex flex-col gap-3 py-2', { 'border-b border-gray-300': !isCollapsed })}
+        className={clsx('flex flex-col gap-3 p-2', { 'border-b border-gray-300': !isCollapsed })}
       >
         {children}
       </ContainerCollapsable.Content>

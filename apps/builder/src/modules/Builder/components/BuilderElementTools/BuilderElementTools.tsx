@@ -121,10 +121,10 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
           />
         )}
         {selected === 'settings' && (
-          <>
+          <div className="flex grow basis-0 flex-col px-2">
             <ElementDefinitionSettings definition={tempDefinition} onUpdate={handleChange} />
             <ElementSettings attributes={tempAttributes} id={elementSelected} type={type} handleChange={handleChange} />
-          </>
+          </div>
         )}
         {selected === 'bindings' && (
           <DataSourceBinding

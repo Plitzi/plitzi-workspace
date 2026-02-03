@@ -72,8 +72,8 @@ const OverlayNormal = ({
 
     const { width, height } = container.rounded;
 
-    return width >= 50 && height >= 30;
-  }, [container, hideActions]);
+    return width / zoom >= 50 && height / zoom >= 30;
+  }, [container, hideActions, zoom]);
   const componentConfig = useMemo(
     () => (element ? builderElementPermissions(element) : {}),
     [element, builderElementPermissions]
@@ -198,7 +198,7 @@ const OverlayNormal = ({
         <div
           className="overlay__size"
           style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'bottom right' }}
-        >{`${container.rounded.width}x${container.rounded.height}`}</div>
+        >{`${container.rounded.width / zoom}x${container.rounded.height / zoom}`}</div>
       )}
       {showLabels && (
         <div
