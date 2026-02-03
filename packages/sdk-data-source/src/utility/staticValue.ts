@@ -35,6 +35,6 @@ const staticValue: DataSourceUtility = {
   },
   preview: { valueType: '', value: '' },
   callback
-} as const;
+};
 
 export default staticValue;

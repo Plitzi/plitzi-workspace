@@ -65,6 +65,10 @@
       "types": "./dist/src/utility/staticValue.d.ts",
       "import": "./dist/src/utility/staticValue.mjs"
     },
+    "./utility/styleSelector": {
+      "types": "./dist/src/utility/styleSelector.d.ts",
+      "import": "./dist/src/utility/styleSelector.mjs"
+    },
     "./utility/twigTemplate": {
       "types": "./dist/src/utility/twigTemplate.d.ts",
       "import": "./dist/src/utility/twigTemplate.mjs"

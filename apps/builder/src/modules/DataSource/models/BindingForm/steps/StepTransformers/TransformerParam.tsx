@@ -77,6 +77,8 @@ const TransformerParam = ({
           size="xs"
           id={id}
           placeholder={`Select a ${label}`}
+          allowCreateOptions
+          clearable
           label={label}
           value={value as string}
           onChange={handleChangeSelect}

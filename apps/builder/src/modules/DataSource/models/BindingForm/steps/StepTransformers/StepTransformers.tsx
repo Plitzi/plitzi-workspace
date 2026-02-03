@@ -5,15 +5,16 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
 import get from 'lodash-es/get';
 import set from 'lodash-es/set';
-import { useCallback, useMemo, useRef } from 'react';
+import { use, useCallback, useMemo, useRef } from 'react';
 
-import utility from '@plitzi/sdk-data-source/utility/index';
+import utility, { utilityOptions } from '@plitzi/sdk-data-source/utility';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import TransformerParam from './TransformerParam';
 
 import type { BindingSchema } from '../../BindingForm';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { DataSourceUtilityParams, SourceField } from '@plitzi/sdk-shared';
+import type { DataSourceUtilityParams, DisplayMode, SourceField } from '@plitzi/sdk-shared';
 
 export type StepTransformersProps = {
   dataSourceFields?: Record<string, SourceField[]>;
@@ -25,10 +26,15 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
   const watchTransformers = useFormWatch(form, 'transformers');
   const watchTransformersRef = useRef(watchTransformers);
   watchTransformersRef.current = watchTransformers;
-  const utilityOptions = useMemo(
-    () => Object.values(utility).map(({ title, action }) => ({ label: title, value: action })),
-    []
-  );
+  const { style } = use(BuilderStyleContext);
+  const styleSelectors = useMemo(() => {
+    return (Object.keys(style.platform) as DisplayMode[]).map(displayMode => ({
+      label: displayMode,
+      options: Object.values(style.platform[displayMode])
+        .filter(selector => selector.type === 'class')
+        .map(selector => ({ label: selector.name, value: selector.name }))
+    }));
+  }, [style]);
 
   const handleClickAdd = useCallback(
     () => setValue('transformers', [...watchTransformers, { type: 'utility', action: '', params: {} }]),
@@ -121,7 +127,7 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
                         index={i}
                         type={typeof type === 'function' ? type(params) : type}
                         onChange={handleChangeParam}
-                        options={options}
+                        options={action === 'styleSelector' ? styleSelectors : options}
                         dataSourceFields={dataSourceFields}
                       />
                     );
@@ -137,70 +143,6 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
       )}
     />
   );
-
-  // return (
-  //   <div className="flex flex-col">
-  //     <Heading as="h5" className="mb-4">
-  //       Transformers
-  //     </Heading>
-  //     <div className="flex flex-col">
-  //       {transformers &&
-  //         transformers.map((transformer, i) => {
-  //           const { action, params } = transformer;
-  //           const paramDefinitions = get(utility, `${action}.params`, {});
-
-  //           return (
-  //             <div key={i} className="flex flex-col rounded-sm border border-gray-300 p-4 [&:not(:first-child)]:mt-4">
-  //               <div className="flex items-center">
-  //                 <Select2
-  //                   className="w-full rounded-sm"
-  //                   size="sm"
-  //                   placeholder="Select a Transformer"
-  //                   value={action}
-  //                   onChange={handleChangeTransformerAction(i)}
-  //                   options={utilityOptions}
-  //                 />
-  //                 <Button
-  //                   intent="custom"
-  //                   size="custom"
-  //                   className="ml-4 flex h-6 w-6 items-center text-red-400 hover:text-red-500"
-  //                   onClick={handleClickRemove(i)}
-  //                   title="Remove"
-  //                 >
-  //                   <i className="fas fa-trash-alt" />
-  //                 </Button>
-  //               </div>
-  //               {paramDefinitions &&
-  //                 Object.keys(paramDefinitions).map(paramKey => {
-  //                   const { label, defaultValue, options } = paramDefinitions[paramKey];
-  //                   let { type } = paramDefinitions[paramKey];
-  //                   const value = get(params, paramKey, defaultValue);
-  //                   if (typeof type === 'function') {
-  //                     type = type(params);
-  //                   }
-
-  //                   return (
-  //                     <TransformerParam
-  //                       key={paramKey}
-  //                       id={paramKey}
-  //                       value={value}
-  //                       label={label}
-  //                       type={type}
-  //                       onChange={handleChangeParam(i)}
-  //                       options={options}
-  //                       dataSourceFields={dataSourceFields}
-  //                     />
-  //                   );
-  //                 })}
-  //             </div>
-  //           );
-  //         })}
-  //       <Button className="rounded-sm [&:not(:first-child)]:mt-4" onClick={handleClickAdd}>
-  //         Add Transformer
-  //       </Button>
-  //     </div>
-  //   </div>
-  // );
 };
 
 export default StepTransformers;
