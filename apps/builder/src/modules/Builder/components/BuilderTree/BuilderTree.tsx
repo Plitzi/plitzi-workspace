@@ -1,32 +1,34 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
 import get from 'lodash-es/get';
-import { useCallback, use, useMemo, useRef } from 'react';
+import { useCallback, use, useMemo } from 'react';
 
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { processPaste } from '@pmodules/Builder/BuilderHelper';
 
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
 import { recursiveMap } from './utils';
 
 import type { DropPosition, TreeChangeState } from '@plitzi/plitzi-ui/Tree';
 import type { Element } from '@plitzi/sdk-shared';
-
-// export type BuilderTreeProps = {};
+import type { ClipboardEvent } from 'react';
 
 const BuilderTree = () => {
   const { componentDefinitions } = use(ComponentContext);
   const { elementHovered, setHovered: setHoverElement } = use(BuilderHoveredContext);
   const { elementSelected, setSelected: setSelectElement } = use(BuilderSelectedContext);
-  const {
-    builderDropElement,
-    schema: { flat }
-  } = use(BuilderSchemaContext);
-  const flatRef = useRef(flat);
-  flatRef.current = flat;
+  const { builderDropElement, schema } = use(BuilderSchemaContext);
+  const { addToast } = useToast();
+  const { style } = use(BuilderStyleContext);
+  const { mutate } = use(NetworkContext);
   const {
     builderHandler,
     builderElementPermissions,
@@ -39,8 +41,8 @@ const BuilderTree = () => {
 
   const isDragAllowed = useCallback(
     (id: string, dropPosition: DropPosition, parentId?: string) => {
-      const element = get(flatRef.current, id, undefined);
-      const parentElement = parentId ? get(flatRef.current, parentId, undefined) : undefined;
+      const element = get(schema.flat, id, undefined);
+      const parentElement = parentId ? get(schema.flat, parentId, undefined) : undefined;
       if (!element || (dropPosition !== 'inside' && !parentElement)) {
         return true;
       }
@@ -64,7 +66,7 @@ const BuilderTree = () => {
 
       return true;
     },
-    [builderElementPermissions]
+    [builderElementPermissions, schema.flat]
   );
 
   const handleChange = useCallback(
@@ -77,7 +79,7 @@ const BuilderTree = () => {
 
         case 'itemChanged': {
           const { item } = state.data;
-          const element = get(flatRef.current, item.id) as Element | undefined;
+          const element = get(schema.flat, item.id) as Element | undefined;
           if (!element) {
             break;
           }
@@ -91,7 +93,7 @@ const BuilderTree = () => {
 
         case 'itemDragged': {
           const { id, toId, dropPosition } = state.data;
-          const element = get(flatRef.current, id) as Element | undefined;
+          const element = get(schema.flat, id) as Element | undefined;
           if (!element) {
             break;
           }
@@ -143,17 +145,64 @@ const BuilderTree = () => {
         default:
       }
     },
-    [setOpenedCache, builderHandler, builderDropElement, baseElementId, setHoverElement, setSelectElement]
+    [setOpenedCache, schema.flat, builderHandler, builderDropElement, baseElementId, setHoverElement, setSelectElement]
   );
 
   const nodes = useMemo(() => {
-    const nodesMapped = recursiveMap(flat, componentDefinitions, baseElementId, undefined, flat);
+    const nodesMapped = recursiveMap(schema.flat, componentDefinitions, baseElementId, undefined, schema.flat);
     if (!baseElementId || !nodesMapped) {
       return [];
     }
 
     return [nodesMapped];
-  }, [baseElementId, flat, componentDefinitions]);
+  }, [baseElementId, schema.flat, componentDefinitions]);
+
+  const handleCopy = useCallback(
+    (e: ClipboardEvent) => {
+      if (!elementSelected) {
+        return;
+      }
+
+      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, elementSelected);
+      e.clipboardData.setData(
+        'application/json',
+        JSON.stringify({
+          type: 'add##plitzi-template',
+          payload: { elements, style: elementsStyle, assets: [], variables }
+        })
+      );
+
+      addToast('Element copied into the clipboard', { appeareance: 'info', autoDismiss: true, placement: 'top-right' });
+      e.preventDefault();
+    },
+    [addToast, elementSelected, schema, style]
+  );
+
+  const handlePaste = useCallback(
+    async (e: ClipboardEvent) => {
+      if (!elementSelected) {
+        return;
+      }
+
+      const result = await processPaste(e.clipboardData, {
+        mutate,
+        builderDropElement,
+        elementSelected,
+        componentDefinitions,
+        baseElementId,
+        builderHandler
+      });
+
+      if (!result) {
+        addToast('Cant drop it here. Try another spot!', {
+          appeareance: 'error',
+          autoDismiss: true,
+          placement: 'top-right'
+        });
+      }
+    },
+    [addToast, baseElementId, builderDropElement, builderHandler, componentDefinitions, elementSelected, mutate]
+  );
 
   const itemControls = useMemo(() => <BuilderTreeNodeControls />, []);
 
@@ -169,6 +218,8 @@ const BuilderTree = () => {
       itemControls={itemControls}
       onChange={handleChange}
       isDragAllowed={isDragAllowed}
+      onCopy={handleCopy}
+      onPaste={handlePaste}
     />
   );
 };

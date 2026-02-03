@@ -19,7 +19,7 @@
   "dependencies": {
     "@apollo/client": "^4.1.3",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.2.11",
+    "@plitzi/plitzi-ui": "^1.2.12",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
@@ -79,7 +79,7 @@
     "sass": "^1.97.3",
     "sass-embedded": "^1.97.3",
     "sass-loader": "^16.0.6",
-    "stylelint": "^17.1.0",
+    "stylelint": "^17.1.1",
     "stylelint-order": "^7.0.1",
     "stylelint-scss": "^7.0.0",
     "typescript": "^5.9.3",
