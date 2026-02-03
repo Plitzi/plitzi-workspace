@@ -1,3 +1,4 @@
+import Alert from '@plitzi/plitzi-ui/Alert';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Input from '@plitzi/plitzi-ui/Input';
@@ -13,23 +14,27 @@ import type { ChangeEvent } from 'react';
 
 export type TransformerParamProps = {
   id?: string;
-  value?: string | number | boolean;
-  label?: string;
   type?: DataSourceUtilityParamType;
+  label?: string;
+  description?: string;
+  value?: string | number | boolean;
   index: number;
   options?: Option[] | Promise<Option[]>;
   dataSourceFields?: Record<string, SourceField[]>;
+  disabled?: boolean;
   onChange?: (index: number, id: string, value: string | number | boolean) => void;
 };
 
 const TransformerParam = ({
-  label: labelProp = '',
   id = '',
-  value = '',
   type = 'text',
+  label: labelProp = '',
+  description,
+  value = '',
   index,
   options,
   dataSourceFields,
+  disabled = false,
   onChange
 }: TransformerParamProps) => {
   const handleChangeText = useCallback((value: string) => onChange?.(index, id, value), [onChange, index, id]);
@@ -68,14 +73,28 @@ const TransformerParam = ({
   }, [dataSourceFields]);
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full flex-col gap-2">
+      {description && (
+        <Alert intent="info" size="xs" solid={false}>
+          {description}
+        </Alert>
+      )}
       {type === 'text' && (
-        <Input className="w-full" size="xs" label={label} id={id} value={value as string} onChange={handleChangeText} />
+        <Input
+          className="w-full"
+          size="xs"
+          disabled={disabled}
+          label={label}
+          id={id}
+          value={value as string}
+          onChange={handleChangeText}
+        />
       )}
       {type === 'select' && (
         <Select2
           size="xs"
           id={id}
+          disabled={disabled}
           placeholder={`Select a ${label}`}
           allowCreateOptions
           clearable
@@ -89,6 +108,7 @@ const TransformerParam = ({
         <TextArea
           className="w-full"
           size="xs"
+          disabled={disabled}
           id={id}
           label={label}
           value={value as string}
@@ -99,6 +119,7 @@ const TransformerParam = ({
         <Checkbox
           size="xs"
           id={id}
+          disabled={disabled}
           label={label ? label : (value as string)}
           onChange={handleChangeCheck}
           checked={value as boolean}
@@ -108,6 +129,7 @@ const TransformerParam = ({
         <CodeMirror
           size="xs"
           id={id}
+          disabled={disabled}
           value={value as string}
           label={label}
           theme="light"

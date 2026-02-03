@@ -1,10 +1,11 @@
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
-import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
+import type { DataSourceUtility, DataSourceUtilityParamsValue, Element } from '@plitzi/sdk-shared';
 
 const callback = (
   source: string,
   params: DataSourceUtilityParamsValue<string>,
+  _element: Partial<Element>,
   dataSources = {} as Record<string, string>
 ) => {
   const { template } = params;

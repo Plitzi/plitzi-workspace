@@ -111,7 +111,7 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
                     </Button>
                   </div>
                   {Object.keys(paramDefinitions).map(paramKey => {
-                    const { label, type, defaultValue, options } = paramDefinitions[paramKey];
+                    const { label, description, type, defaultValue, options, disabled } = paramDefinitions[paramKey];
                     const paramValue = get(
                       params as Record<string, string | number | boolean | undefined>,
                       paramKey,
@@ -122,13 +122,15 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
                       <TransformerParam
                         key={paramKey}
                         id={paramKey}
-                        value={paramValue}
-                        label={label}
-                        index={i}
                         type={typeof type === 'function' ? type(params) : type}
-                        onChange={handleChangeParam}
+                        label={label}
+                        description={description}
+                        value={paramValue}
+                        index={i}
                         options={action === 'styleSelector' ? styleSelectors : options}
                         dataSourceFields={dataSourceFields}
+                        disabled={typeof disabled === 'function' ? disabled(params) : disabled}
+                        onChange={handleChangeParam}
                       />
                     );
                   })}

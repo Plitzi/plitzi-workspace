@@ -16,7 +16,13 @@ const SelectorForm = ({ className = '', onClose, onSubmit }: SelectorFormProps) 
   const schema = useMemo(
     () =>
       z.object({
-        name: z.string().min(3, { message: 'Too Short' }).max(20, { message: 'Too Long' })
+        name: z
+          .string()
+          .min(3, { message: 'Too Short' })
+          .max(20, { message: 'Too Long' })
+          .regex(/^([a-zA-Z.#]{1}([a-zA-Z0-9\-_.#: ]+)?)$/i, {
+            message: 'Slug only can be letters, numbers and _ -'
+          })
       }),
     []
   );
@@ -29,21 +35,10 @@ const SelectorForm = ({ className = '', onClose, onSubmit }: SelectorFormProps) 
     [onSubmit]
   );
 
-  // const validateName = (value: string) => {
-  //   const regex = /^([a-zA-Z.#]{1}([a-zA-Z0-9\-_.#: ]+)?)$/i;
-  //   if (value.match(regex)) {
-  //     return true;
-  //   }
-
-  //   return 'Invalid Selector';
-  // };
-
-  // rules={{ required: true, validate: { validateName } }}
-
   return (
     <Form className={className} form={form} onSubmit={handleSubmitInternal}>
       <Form.Body>
-        <Form.Input name="name" label="Name" placeholder="Name" />
+        <Form.Input name="name" label="Name" placeholder="Name" size="xs" />
         <Flex gap={3} justify="end">
           <Button onClick={handleClickCancel} size="sm">
             Cancel

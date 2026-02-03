@@ -1,4 +1,4 @@
-import type { Schema } from './SchemaTypes';
+import type { Element, Schema } from './SchemaTypes';
 import type useDataSource from '../dataSource/hooks/useDataSource';
 import type { Field, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Context } from 'react';
@@ -8,7 +8,9 @@ export type DataSourceUtilityParams<TParams = string | boolean | number> = Recor
   {
     type?: DataSourceUtilityParamType | ((params: DataSourceUtilityParamsValue<TParams>) => DataSourceUtilityParamType);
     label?: string;
+    description?: string;
     defaultValue?: string | boolean | number;
+    disabled?: boolean | ((params: DataSourceUtilityParamsValue<TParams>) => boolean);
     options?: { label: string; value: string }[];
   }
 >;
@@ -33,6 +35,7 @@ export type DataSourceUtility<
   callback: (
     source: TSource,
     params: DataSourceUtilityParamsValue<TParams>,
+    element: Partial<Element>,
     dataSources?: Record<string, string>
   ) => TSourceReturn;
 };

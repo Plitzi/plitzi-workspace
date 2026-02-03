@@ -1,16 +1,36 @@
-import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
+import get from 'lodash-es/get';
+
+import type { DataSourceUtility, DataSourceUtilityParamsValue, Element } from '@plitzi/sdk-shared';
 
 const callback = (
   _source: string,
   params: DataSourceUtilityParamsValue,
+  _element: Partial<Element>,
   dataSources = {} as Record<string, string>
 ) => {
-  const { append, selector } = params;
+  const { originalSelector, append, selector } = params;
+
+  const finalSelector: string[] = [];
   if (append && dataSources.sourceTo) {
-    return `${dataSources.sourceTo} ${selector}`;
+    finalSelector.push(...[dataSources.sourceTo, selector as string]);
+  } else if (originalSelector && append) {
+    const originalSelector = get(_element, 'definition.styleSelectors.base', '');
+    if (originalSelector) {
+      finalSelector.push(...[originalSelector, selector as string]);
+    } else {
+      finalSelector.push(selector as string);
+    }
   }
 
-  return selector;
+  if (!finalSelector.length) {
+    return '';
+  }
+
+  if (finalSelector.length === 1) {
+    return finalSelector[0];
+  }
+
+  return finalSelector.join(' ');
 };
 
 const styleSelector: DataSourceUtility = {
@@ -18,6 +38,13 @@ const styleSelector: DataSourceUtility = {
   title: 'Style Selector',
   type: 'utility',
   params: {
+    originalSelector: {
+      label: 'Original Selector',
+      description: 'This will use original selector if there nothing to append',
+      defaultValue: false,
+      disabled: ({ append }) => !append,
+      type: 'checkbox'
+    },
     append: {
       label: 'Append Selector',
       defaultValue: false,
@@ -30,7 +57,7 @@ const styleSelector: DataSourceUtility = {
       options: []
     }
   },
-  preview: { append: '', selector: '' },
+  preview: { append: '', originalSelector: '', selector: '' },
   callback
 };
 
