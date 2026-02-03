@@ -10,7 +10,7 @@ import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { DataSourceUtility, Element, ElementBinding } from '@plitzi/sdk-shared';
 
 const getValues = (
-  dataSource: Record<string, RuleValue>,
+  dataSource: Record<string, unknown>,
   source: string,
   path: string,
   result: Record<string, unknown>,
@@ -27,7 +27,7 @@ const getValues = (
 };
 
 const getBindingsDetails = (
-  dataSource: Record<string, RuleValue>,
+  dataSource: Record<string, unknown>,
   attributes: Element['attributes'],
   definition: Element['definition'],
   style: Record<string, string> = {}
@@ -50,7 +50,7 @@ const getBindingsDetails = (
           !source ||
           !fromPath ||
           !toPath ||
-          (when && !QueryBuilderEvaluator(when, dataSource, false, true)) ||
+          (when && !QueryBuilderEvaluator(when, dataSource as Record<string, RuleValue>, false, true)) ||
           !enabled
         ) {
           return;
