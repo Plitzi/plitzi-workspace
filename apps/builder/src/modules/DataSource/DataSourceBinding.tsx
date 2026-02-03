@@ -189,7 +189,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                 iconCollapsed={<i className="fa-solid fa-chevron-up" />}
                 iconExpanded={<i className="fa-solid fa-chevron-down" />}
               />
-              <ContainerCollapsable.Content gap={4} className="py-2">
+              <ContainerCollapsable.Content gap={4} className="p-2">
                 {binding && (
                   <div className="flex flex-col gap-2 overflow-auto">
                     {bindings[fkey]
@@ -219,7 +219,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                 )}
                 {bindingFormValues[fkey] && (
                   <div
-                    className={clsx('border-t border-gray-300 px-4 py-4', {
+                    className={clsx('border-t border-gray-300 py-4', {
                       'mt-4': binding && Object.keys(bindings[fkey]).length > 0,
                       'border-b': i !== bindingCategories.length - 1
                     })}

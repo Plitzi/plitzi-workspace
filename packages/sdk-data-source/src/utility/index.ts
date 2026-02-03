@@ -4,4 +4,11 @@ import dateConverter from './dateConverter';
 import staticValue from './staticValue';
 import twigTemplate from './twigTemplate';
 
-export default { twigTemplate, dateConverter, staticValue, capitalize, arrayMap };
+import type { DataSourceUtility } from '@plitzi/sdk-shared';
+
+const utilities = { twigTemplate, dateConverter, staticValue, capitalize, arrayMap } as Record<
+  string,
+  DataSourceUtility
+>;
+
+export default utilities;

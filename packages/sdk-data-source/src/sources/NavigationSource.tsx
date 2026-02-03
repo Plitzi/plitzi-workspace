@@ -13,23 +13,18 @@ export type NavigationSourceProps = {
 const NavigationSource = ({ children }: NavigationSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { routeParams, queryParams } = use(NavigationContext);
-  const { currentPageId } = use(NavigationContext);
 
   const sourceFields = useCallback(
     () => [
-      ...getPathsFromObeject({ routeParams, queryParams, currentPageId }).reduce<{ path: string; name: string }[]>(
+      ...getPathsFromObeject({ routeParams, queryParams }).reduce<{ path: string; name: string }[]>(
         (acum, path) => [...acum, { path, name: `navigation.${path}` }],
         []
-      ),
-      { path: 'currentPageId', name: 'Current Page' }
+      )
     ],
-    [routeParams, queryParams, currentPageId]
+    [routeParams, queryParams]
   );
 
-  const sourceValue = useMemo(
-    () => ({ routeParams, queryParams, currentPageId }),
-    [routeParams, queryParams, currentPageId]
-  );
+  const sourceValue = useMemo(() => ({ routeParams, queryParams }), [routeParams, queryParams]);
 
   const [NavigationSourceContext] = useDataSource({
     id: 'global',

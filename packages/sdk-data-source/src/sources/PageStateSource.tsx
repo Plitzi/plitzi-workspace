@@ -2,7 +2,7 @@ import get from 'lodash-es/get.js';
 import { useCallback, use, useMemo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
@@ -17,19 +17,15 @@ export type PageStateSourceProps = {
 const PageStateSource = ({ children }: PageStateSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { currentPageId } = use(NavigationContext);
-  const { schema } = use(SchemaContext);
+  const { pageDefinitions } = use(SchemaMainContext);
   const { state } = use(StateManagerContext);
   const pages = useMemo(
     () =>
-      get(schema, 'pages', []).reduce<{ value: string; label: string }[]>(
-        (acum, pageId) => [
-          ...acum,
-          { value: pageId, label: get(schema, `flat.${pageId}.attributes.name`, pageId) as string }
-        ],
+      Object.values(pageDefinitions).reduce<{ value: string; label: string }[]>(
+        (acum, page) => [...acum, { value: page.id, label: get(page, 'attributes.name', page.id) as string }],
         []
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [schema.pages, schema.flat]
+    [pageDefinitions]
   );
 
   const sourceFields = useCallback(() => {
@@ -57,7 +53,7 @@ const PageStateSource = ({ children }: PageStateSourceProps) => {
   const [PageStateContext] = useDataSource({
     id: 'global',
     source: 'page',
-    name: 'Page State',
+    name: 'Page',
     mode: 'write',
     fields: sourceFields
   });
