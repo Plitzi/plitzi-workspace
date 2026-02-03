@@ -86,7 +86,7 @@ export const getPopups = ({
       placementSettings: { left: { position: 4, minSize: 200 } },
       settings: {
         icon: (
-          <Sidebar.Icon className="p-1" intent="tertiary" title="Variables">
+          <Sidebar.Icon className="p-1" title="Variables">
             <Variable />
           </Sidebar.Icon>
         ),
@@ -189,7 +189,7 @@ export const getPopups = ({
       placementSettings: { left: { position: 10, minSize: 200 } },
       settings: {
         icon: (
-          <Sidebar.Icon className="p-2" intent="tertiary" title="State Manager">
+          <Sidebar.Icon className="p-2" title="State Manager">
             <StateManagerIcon />
           </Sidebar.Icon>
         ),
@@ -226,7 +226,7 @@ export const getPopups = ({
       component: <OpenAIChat />,
       active: activeIds.includes('assistant'),
       settings: {
-        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" intent="tertiary" title="Variables" />,
+        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" title="Variables" />,
         title: 'Assistant',
         width: 400,
         allowLeftSide: true,
