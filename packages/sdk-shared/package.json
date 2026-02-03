@@ -286,7 +286,7 @@
     "build-assets:prod": "tsc && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.2.10",
+    "@plitzi/plitzi-ui": "^1.2.11",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "lodash-es": "^4.17.23",
@@ -315,7 +315,7 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "@types/twig": "^1.12.17",
-    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react": "^5.1.3",
     "@vitest/coverage-v8": "^4.0.18",
     "babel-minify": "^0.5.2",
     "eslint": "^9.39.2",
@@ -333,7 +333,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.0",
-    "eslint-plugin-storybook": "^10.2.3",
+    "eslint-plugin-storybook": "^10.2.4",
     "globals": "^17.3.0",
     "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.5.6",
