@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
 import camelCase from 'lodash-es/camelCase.js';
@@ -14,7 +13,7 @@ const getValues = (
   dataSource: Record<string, RuleValue>,
   source: string,
   path: string,
-  result: Record<string, any>,
+  result: Record<string, unknown>,
   bkey: string,
   attrKey: string
 ) => {
@@ -73,7 +72,7 @@ const getBindingsDetails = (
                   break;
                 }
 
-                resultValue = callback(resultValue as string, params, { ...dataSource, sourceTo: toValue });
+                resultValue = callback(resultValue as string, params, { ...dataSource, sourceTo: toValue as string });
                 break;
               }
 
