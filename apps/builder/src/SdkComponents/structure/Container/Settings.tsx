@@ -24,7 +24,7 @@ const Settings = ({ subType = 'div', onUpdate }: SettingsProps) => {
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Select label="ContainerTag" value={subType} onChange={handleChange('subType')}>
+      <Select label="ContainerTag" value={subType} onChange={handleChange('subType')} size="xs">
         <option value="div">Div</option>
         <option value="header">Header</option>
         <option value="footer">Footer</option>

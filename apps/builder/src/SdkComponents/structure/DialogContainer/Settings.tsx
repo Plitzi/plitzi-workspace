@@ -30,15 +30,31 @@ const Settings = ({
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input label="Header Label" value={headerLabel} onChange={handleChange('headerLabel')} />
-      <Input label="Accept Label Button" value={acceptButtonLabel} onChange={handleChange('acceptButtonLabel')} />
-      <Input label="Reject Label Button" value={rejectButtonLabel} onChange={handleChange('rejectButtonLabel')} />
+      <Input label="Header Label" value={headerLabel} onChange={handleChange('headerLabel')} size="xs" />
+      <Input
+        label="Accept Label Button"
+        value={acceptButtonLabel}
+        onChange={handleChange('acceptButtonLabel')}
+        size="xs"
+      />
+      <Input
+        label="Reject Label Button"
+        value={rejectButtonLabel}
+        onChange={handleChange('rejectButtonLabel')}
+        size="xs"
+      />
       <Input
         label="Accept Label Button Loading"
         value={acceptButtonLabelLoading}
         onChange={handleChange('acceptButtonLabelLoading')}
+        size="xs"
       />
-      <Checkbox label="Hide after click background" checked={autoHideAfterClick} onChange={handleChangeAutoHide} />
+      <Checkbox
+        label="Hide after click background"
+        checked={autoHideAfterClick}
+        onChange={handleChangeAutoHide}
+        size="xs"
+      />
     </div>
   );
 };

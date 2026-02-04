@@ -22,9 +22,9 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
   );
 
   return (
-    <div className="flex gap-4 py-2">
-      <Input className="grow" size="sm" value={label} onChange={handleChangeLabel} />
-      <Button size="sm" className="rounded-sm" onClick={handleClickVisibility}>
+    <div className="flex gap-2 py-2">
+      <Input className="grow" size="xs" value={label} onChange={handleChangeLabel} />
+      <Button size="xs" className="rounded-sm" onClick={handleClickVisibility}>
         {visibility && <i className="fa-solid fa-eye" />}
         {!visibility && <i className="fa-solid fa-eye-slash" />}
       </Button>

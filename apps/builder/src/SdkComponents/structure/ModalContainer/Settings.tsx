@@ -20,8 +20,13 @@ const Settings = ({ title = 'Modal Header', autoHideAfterClick = true, onUpdate 
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input label="Title" value={title} onChange={handleChange('title')} />
-      <Checkbox label="Hide after click background" checked={autoHideAfterClick} onChange={handleChangeAutoHide} />
+      <Input label="Title" value={title} onChange={handleChange('title')} size="xs" />
+      <Checkbox
+        label="Hide after click background"
+        checked={autoHideAfterClick}
+        onChange={handleChangeAutoHide}
+        size="xs"
+      />
     </div>
   );
 };

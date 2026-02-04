@@ -28,6 +28,7 @@ type SettingsProps = {
   required?: boolean;
   readOnly?: boolean;
   disabled?: boolean;
+  previewError?: boolean;
   onUpdate?: (key: string, value: string | boolean | number | string[]) => void;
 };
 
@@ -42,6 +43,7 @@ const Settings = ({
   required = true,
   readOnly = false,
   disabled = false,
+  previewError = false,
   onUpdate
 }: SettingsProps) => {
   const handleChangeName = useCallback((value: string) => onUpdate?.('name', value), [onUpdate]);
@@ -77,6 +79,11 @@ const Settings = ({
 
   const handleChangeDisabled = useCallback(
     (e: ChangeEvent) => onUpdate?.('disabled', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
+
+  const handleChangePreviewError = useCallback(
+    (e: ChangeEvent) => onUpdate?.('previewError', (e.target as HTMLInputElement).checked),
     [onUpdate]
   );
 
@@ -135,6 +142,7 @@ const Settings = ({
       )}
       <Checkbox checked={required} label="Required" onChange={handleChangeRequired} size="xs" />
       <Checkbox checked={disabled} label="Disabled" onChange={handleChangeDisabled} size="xs" />
+      <Checkbox checked={previewError} label="Preview Error Message" onChange={handleChangePreviewError} size="xs" />
     </div>
   );
 };

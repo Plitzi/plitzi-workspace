@@ -26,11 +26,20 @@ export type WithFieldValueProps<T> = {
     | 'color'
     | 'switch';
   required: boolean;
+  previewError?: boolean;
 } & T;
 
 const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
   const WithFieldValueComponent = (props: WithFieldValueProps<T>) => {
-    const { ref, internalProps, name = '', subType = 'text', defaultValue = '', required = true } = props;
+    const {
+      ref,
+      internalProps,
+      name = '',
+      subType = 'text',
+      defaultValue = '',
+      required = true,
+      previewError = false
+    } = props;
     const { id } = internalProps;
     const {
       settings: { previewMode },
@@ -53,12 +62,12 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
     const { setFieldValue, setFieldError, errors, values } = form;
     const value = useMemo(() => get(values, name, defaultValue), [values, name, defaultValue]);
     const error = useMemo(() => {
-      if (!previewMode) {
+      if (!previewMode && previewError) {
         return 'This is an error message';
       }
 
       return errors[name];
-    }, [previewMode, errors, name]);
+    }, [previewMode, previewError, errors, name]);
 
     useEffect(() => {
       if (defaultValue && value && name) {

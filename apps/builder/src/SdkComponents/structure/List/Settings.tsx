@@ -12,12 +12,12 @@ const Settings = ({ subType = 'ul', source = 'none', onUpdate }: SettingsProps) 
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Select label="Source" value={source} onChange={handleChange('source')}>
+      <Select label="Source" value={source} onChange={handleChange('source')} size="xs">
         <option value="none">None</option>
         <option value="controlled">Controlled</option>
       </Select>
       {source === 'none' && (
-        <Select label="List Type" value={subType} onChange={handleChange('subType')}>
+        <Select label="List Type" value={subType} onChange={handleChange('subType')} size="xs">
           <option value="ul">Unordered</option>
           <option value="ol">Ordered</option>
         </Select>
