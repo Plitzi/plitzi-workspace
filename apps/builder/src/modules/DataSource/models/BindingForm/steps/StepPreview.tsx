@@ -1,11 +1,12 @@
 import { useFormContext, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
-import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import get from 'lodash-es/get';
 import upperFirst from 'lodash-es/upperFirst';
 import { useMemo } from 'react';
 
-import utility from '@plitzi/sdk-data-source/utility/index';
+import whenString from '@pmodules/DataSource/helpers/whenString';
+
+import transformerString from '../../../helpers/transformerString';
 
 import type { BindingSchema } from '../BindingForm';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -28,38 +29,8 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
     'transformers'
   ]);
   const name = useMemo(() => fields?.find(f => f.path === fromPath)?.name ?? 'Unknown', [fields, fromPath]);
-
-  const transformerString = useMemo(() => {
-    const str = transformers.reduce((acum, transformer) => {
-      const { action, params } = transformer;
-      switch (action) {
-        case 'staticValue':
-          return `${acum}${acum === '' ? '' : ', '}${get(utility, `${action}.title`, action)} = ${params.value}`;
-
-        default:
-          return `${acum}${acum === '' ? '' : ', '}${get(utility, `${action}.title`, action)}`;
-      }
-    }, '');
-    if (str) {
-      return str;
-    }
-
-    return 'None';
-  }, [transformers]);
-
-  const whenString = useMemo(() => {
-    if (!when) {
-      return 'None';
-    }
-
-    const str = QueryBuilderFormatter(when as RuleGroup);
-    if (str) {
-      return str;
-    }
-
-    return 'None';
-  }, [when]);
-
+  const transformerName = useMemo(() => transformerString(transformers), [transformers]);
+  const whenStr = useMemo(() => whenString(when as RuleGroup), [when]);
   const sourceName = useMemo(() => upperFirst(get(sources, `${source}.name`, source) as string), [source, sources]);
 
   return (
@@ -80,13 +51,13 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
           <div className="font-bold">To:</div>
           <div className="ml-1 truncate">{`${upperFirst(category)} ${upperFirst(toPath)}`}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={transformerString}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={transformerName}>
           <div className="font-bold">Transformers:</div>
-          <div className="ml-1 truncate">{transformerString}</div>
+          <div className="ml-1 truncate">{transformerName}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={whenString}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={whenStr}>
           <div className="font-bold">When:</div>
-          <div className="ml-1 truncate">{whenString}</div>
+          <div className="ml-1 truncate">{whenStr}</div>
         </div>
       </div>
     </div>

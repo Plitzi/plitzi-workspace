@@ -1,11 +1,11 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import get from 'lodash-es/get';
 import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import utility from '@plitzi/sdk-data-source/utility/index';
+import transformerString from './helpers/transformerString';
+import whenString from './helpers/whenString';
 
 import type { BindingCategory } from './DataSourceBinding';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -84,46 +84,14 @@ const BindingSelected = ({
     [onRemove, category, id]
   );
 
-  const transformerString = useMemo(() => {
-    const str = transformers?.reduce((acum, transformer) => {
-      switch (transformer.action) {
-        case 'staticValue':
-          return `${acum}${acum === '' ? '' : ', '}${get(
-            utility,
-            `${transformer.action}.title`,
-            transformer.action
-          )} = ${transformer.params.value}`;
-
-        default:
-          return `${acum}${acum === '' ? '' : ', '}${get(utility, `${transformer.action}.title`, transformer.action)}`;
-      }
-    }, '');
-    if (str) {
-      return str;
-    }
-
-    return 'None';
-  }, [transformers]);
-
-  const whenString = useMemo(() => {
-    if (!when) {
-      return 'None';
-    }
-
-    const str = QueryBuilderFormatter(when);
-    if (str) {
-      return str;
-    }
-
-    return 'None';
-  }, [when]);
+  const transformerName = useMemo(() => transformerString(transformers), [transformers]);
+  const whenStr = useMemo(() => whenString(when), [when]);
+  const sourceName = useMemo(() => upperFirst(get(sources, `${source}.name`, source) as string), [source, sources]);
 
   const handleChangeEnabled = useCallback(
     () => onEnable?.(category as BindingCategory, id, !enabled),
     [enabled, category, id, onEnable]
   );
-
-  const sourceName = useMemo(() => upperFirst(get(sources, `${source}.name`, source) as string), [source, sources]);
 
   return (
     <div className="flex rounded-sm border border-gray-300">
@@ -151,13 +119,13 @@ const BindingSelected = ({
           <div className="font-bold">To:</div>
           <div className="ml-1 truncate">{`${upperFirst(category)} ${upperFirst(toPath)}`}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={transformerString}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={transformerName}>
           <div className="font-bold">Transformers:</div>
-          <div className="ml-1 truncate">{transformerString}</div>
+          <div className="ml-1 truncate">{transformerName}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={whenString}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={whenStr}>
           <div className="font-bold">When:</div>
-          <div className="ml-1 truncate">{whenString}</div>
+          <div className="ml-1 truncate">{whenStr}</div>
         </div>
       </div>
     </div>
