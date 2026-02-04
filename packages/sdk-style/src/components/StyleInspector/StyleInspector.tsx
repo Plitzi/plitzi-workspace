@@ -150,8 +150,8 @@ const StyleInspector = ({
   );
 
   return (
-    <div className="flex w-full grow flex-col">
-      <div className="flex w-full flex-col gap-1 border-b border-gray-300">
+    <div className="flex w-full grow flex-col gap-2">
+      <div className="flex w-full flex-col gap-2 px-1">
         <div className="flex items-center justify-between px-1">
           <label>Style Selector</label>
           <div className="flex items-center gap-2 py-1 text-xs">
@@ -190,7 +190,7 @@ const StyleInspector = ({
           </div>
         )}
       </div>
-      <div className="flex grow basis-0 flex-col overflow-auto">
+      <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300">
         {viewMode === 'advanced' && (
           <InspectorModeAdvanced selectors={selectors} displayMode={displayMode} styleVariables={variables} />
         )}
