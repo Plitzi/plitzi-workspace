@@ -163,13 +163,13 @@ const Settings = ({
   return (
     <div className="flex flex-col gap-4 py-2">
       {!enabled && (
-        <Alert intent="info" className="text-white">
+        <Alert intent="info" size="xs" solid={false}>
           <span className="text-xs">When this option is disable, this page wont be accesible</span>
         </Alert>
       )}
-      <Checkbox label=" Page Enabled" checked={enabled} onChange={handleChangeEnabled} />
-      <Input value={name} label="Page Name" onChange={handleChangeName} />
-      <Alert intent="info" className="text-white">
+      <Checkbox label=" Page Enabled" checked={enabled} onChange={handleChangeEnabled} size="xs" />
+      <Input value={name} label="Page Name" onChange={handleChangeName} size="xs" />
+      <Alert intent="info" size="xs" solid={false}>
         <span className="text-xs">Slug is a combination of letters, numbers and _ - : / *</span>
       </Alert>
       <div className="flex flex-col">
@@ -178,6 +178,7 @@ const Settings = ({
           onChange={handleChangeSlug}
           label="Slug / Path"
           className={{ inputContainer: 'rounded-none rounded-tl rounded-tr' }}
+          size="xs"
         />
         <div className="truncate rounded-b border-x border-b border-gray-200 px-1 py-0.5 text-xs" title={fullpath}>
           Full Path: <span className="font-bold">{fullpath}</span>
@@ -189,8 +190,9 @@ const Settings = ({
         options={pageFolderOptions}
         placeholder="None"
         onChange={handleChangeFolder}
+        size="xs"
       />
-      <Select value={layout} placeholder="None" label="Layout" onChange={handleChangeLayout}>
+      <Select value={layout} placeholder="None" label="Layout" onChange={handleChangeLayout} size="xs">
         {layouts.map(({ id, definition: { label } }) => (
           <option key={id} value={id}>
             {label}
@@ -203,6 +205,7 @@ const Settings = ({
           placeholder="None"
           label="Layout Container Body"
           onChange={handleChange('layoutContainer')}
+          size="xs"
         >
           {layoutContainers.map(({ id, definition: { label } }) => (
             <option key={id} value={id}>
@@ -211,17 +214,23 @@ const Settings = ({
           ))}
         </Select>
       )}
-      <Select value={accessLevel} label="Restrict Access" onChange={handleChangeAccessLevel} placeholder="None">
+      <Select
+        value={accessLevel}
+        label="Restrict Access"
+        onChange={handleChangeAccessLevel}
+        placeholder="None"
+        size="xs"
+      >
         <option value="public">Public</option>
         <option value="authenticated">Authenticated</option>
       </Select>
       {accessLevel === '' && (
-        <Alert intent="info" className="text-white">
+        <Alert intent="info" solid={false} size="xs">
           <span className="text-xs">Anyone on the internet can access this page</span>
         </Alert>
       )}
       {accessLevel === 'public' && (
-        <Alert intent="info" className="text-white">
+        <Alert intent="info" solid={false} size="xs">
           <span className="text-xs">Only Guest can access this page</span>
         </Alert>
       )}
@@ -231,6 +240,7 @@ const Settings = ({
           value={unauthorizedBehaviour}
           onChange={handleChange('unauthorizedBehaviour')}
           placeholder="None"
+          size="xs"
         >
           <option value="redirect">Redirect</option>
         </Select>
@@ -241,6 +251,7 @@ const Settings = ({
           label="Redirect Page"
           onChange={handleChange('unauthorizedPageRedirect')}
           placeholder="None"
+          size="xs"
         >
           {pagesParsed.map(page => (
             <option key={page.id} value={page.id}>
@@ -249,15 +260,16 @@ const Settings = ({
           ))}
         </Select>
       )}
-      <Checkbox label=" SEO Enabled" checked={seoEnabled} onChange={handleChangeSeoEnabled} />
+      <Checkbox label=" SEO Enabled" checked={seoEnabled} onChange={handleChangeSeoEnabled} size="xs" />
       {seoEnabled && (
         <>
-          <Input value={seoPageTitle} label="SEO Title" onChange={handleChange('seoPageTitle')} />
+          <Input value={seoPageTitle} label="SEO Title" onChange={handleChange('seoPageTitle')} size="xs" />
           <TextArea
             label="SEO Description"
             value={seoPageDescription}
             onChange={handleChange('seoPageDescription')}
             rows={3}
+            size="xs"
           />
           <div className="flex flex-col">
             <p className="mb-4 text-xs">
@@ -265,7 +277,7 @@ const Settings = ({
               pages (SERPs) in the preview below.
             </p>
             <label>Search Result Preview</label>
-            <div className="rounded-xs border border-gray-300 px-2 py-1">
+            <div className="rounded border border-gray-300 px-2 py-1">
               <div className="mb-1 pt-1 text-xl text-[#1a0dab]">
                 <label>{seoPageTitle}</label>
               </div>

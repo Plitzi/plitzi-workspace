@@ -11,7 +11,7 @@ const callback = (
   const { originalSelector, append, selector } = params;
 
   const finalSelector: string[] = [];
-  if (append && dataSources.sourceTo) {
+  if (append && !originalSelector && dataSources.sourceTo) {
     finalSelector.push(...[dataSources.sourceTo, selector as string]);
   } else if (originalSelector && append) {
     const originalSelector = get(_element, 'definition.styleSelectors.base', '');
@@ -40,7 +40,7 @@ const styleSelector: DataSourceUtility = {
   params: {
     originalSelector: {
       label: 'Original Selector',
-      description: 'This will use original selector if there nothing to append',
+      description: 'This will append the original selector (require append option enabled)',
       defaultValue: false,
       disabled: ({ append }) => !append,
       type: 'checkbox'
