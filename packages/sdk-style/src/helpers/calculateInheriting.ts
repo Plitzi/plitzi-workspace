@@ -116,7 +116,12 @@ const calculateInheriting = (
       metadata.tree.push(...styleData.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isSubParent)));
     }
 
-    element = get(flat, get(element, 'definition.parentId', ''));
+    if (element.id === id && styleSelector !== 'base') {
+      // After get the styles from the styleSelector we back to base to continue
+      styleSelector = 'base';
+    } else {
+      element = get(flat, get(element, 'definition.parentId', ''));
+    }
   }
 
   const finalMeta: StyleHelperMetaData['style'] = {};
