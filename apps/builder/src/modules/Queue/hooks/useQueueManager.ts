@@ -607,7 +607,6 @@ const useQueueManager = ({
     (e: BeforeUnloadEvent) => {
       if (queues.queueNormal.length > 0) {
         e.preventDefault();
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         e.returnValue = 'Some changes still being saved.';
 
         return e;

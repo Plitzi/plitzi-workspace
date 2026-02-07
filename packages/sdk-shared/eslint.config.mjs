@@ -35,9 +35,8 @@ export default tsEslint.config({
   },
   rules: {
     ...reactHooks.configs.recommended.rules,
-    // Turned off for eslint@9.39.0
-    // @see https://github.com/eslint/eslint/issues/20272
-    '@typescript-eslint/unified-signatures': 'off',
+    'no-useless-assignment': 'off',
+    '@typescript-eslint/no-deprecated': 'off',
     '@typescript-eslint/no-useless-default-assignment': 'off',
     '@typescript-eslint/consistent-type-imports': [
       'warn',

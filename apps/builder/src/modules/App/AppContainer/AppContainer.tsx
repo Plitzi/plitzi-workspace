@@ -62,7 +62,8 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
 
   const popups = useMemo(
     () => getPopups({ sourceId, activeIds: popupsActiveLeft, handleSourceChange }),
-    [sourceId, popupsActiveLeft, handleSourceChange]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sourceId, handleSourceChange]
   );
 
   return (

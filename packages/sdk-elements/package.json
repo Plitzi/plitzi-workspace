@@ -563,7 +563,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.2.12",
+    "@plitzi/plitzi-ui": "^1.2.14",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

@@ -96,7 +96,6 @@ export const getPopups = ({
         allowRightSide: false,
         allowFloatingSide: true,
         allowClose: false,
-        placement: 'right',
         resizeHandles: ['se']
       }
     },

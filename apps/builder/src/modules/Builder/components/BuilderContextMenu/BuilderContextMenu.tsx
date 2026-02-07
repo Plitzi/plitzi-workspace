@@ -209,7 +209,6 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   };
 
   const handleClickCopy = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     iframeDOM?.contentWindow?.document.execCommand('copy');
   }, [iframeDOM]);
 
