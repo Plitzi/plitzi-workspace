@@ -18,7 +18,7 @@ import ContainerSettings from './containers/ContainerSettings';
 import ContainerSitemap from './containers/ContainerSitemap';
 import { getPopups } from '../helpers/utils';
 
-import type { PopupInstance, PopupPlacement } from '@plitzi/plitzi-ui/Popup';
+import type { PopupInstance, PopupPlacement, PopupUpdateState } from '@plitzi/plitzi-ui/Popup';
 import type { EventBridgeEvent } from '@plitzi/sdk-shared';
 
 export type AppContainerProps = {
@@ -44,8 +44,8 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const handleSourceChange = useCallback((newSourceId?: string) => setSourceState({ sourceId: newSourceId }), []);
 
   const handleChangePopups = useCallback(
-    (placement: PopupPlacement, value: PopupInstance[]) => {
-      const valueParsed = value.filter(p => p.active).map(p => p.id);
+    (placement: PopupPlacement, _state: PopupUpdateState, popups: Record<PopupPlacement, PopupInstance[]>) => {
+      const valueParsed = popups[placement].filter(p => p.active).map(p => p.id);
       if (placement === 'left') {
         setPopupsActiveLeft(valueParsed);
       } else if (placement === 'right') {
