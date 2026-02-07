@@ -85,7 +85,7 @@ body {
   .plitzi-component--overlay-distance-node,
   .plitzi-component--overlay-distance-node-projection {
     position: absolute;
-    z-index: $overlayZIndex;
+    z-index: $overlayZIndex + 999999;
     pointer-events: none;
   }
 
