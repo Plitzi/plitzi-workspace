@@ -132,9 +132,9 @@ const Variables = () => {
   );
 
   return (
-    <div className="flex w-full flex-col gap-2 p-2">
+    <div className="flex h-full w-full flex-col gap-2 p-2">
       <Flex gap={2} direction="column">
-        <Input placeholder="Search Variables" size="sm" value={filter} onChange={setFilter}>
+        <Input placeholder="Search Variables" size="xs" value={filter} onChange={setFilter}>
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
