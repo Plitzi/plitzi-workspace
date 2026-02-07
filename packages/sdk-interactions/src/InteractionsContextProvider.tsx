@@ -21,10 +21,8 @@ const InteractionsContextProvider = ({
   routeParams,
   queryParams
 }: InteractionsContextProviderProps) => {
-  const interactionsManager = useMemo(
-    () => new InteractionsManager(currentPageId, routeParams, queryParams),
-    [currentPageId, queryParams, routeParams]
-  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const interactionsManager = useMemo(() => new InteractionsManager(currentPageId, routeParams, queryParams), []);
   const interactionsData = useMemo(
     () => ({ currentPageId, ...routeParams, ...queryParams }),
     [currentPageId, routeParams, queryParams]

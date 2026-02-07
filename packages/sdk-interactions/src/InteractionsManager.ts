@@ -18,6 +18,8 @@ import type {
   Subscriptor
 } from '@plitzi/sdk-shared';
 
+type InteractionUpdateListener = (timestamp: number) => void;
+
 class InteractionsManager {
   eventBridge: InstanceType<typeof EventBridge>;
   parentManager?: InteractionsManager;
@@ -26,6 +28,8 @@ class InteractionsManager {
   subscriptors: Record<string, Subscriptor>;
   callbacksAvailables: Record<string, Record<string, InteractionCallback>>;
   interactionsRunning: Record<string, boolean>;
+  lastUpdate: number;
+  private listeners = new Set<InteractionUpdateListener>();
 
   constructor(currentPageId = '', routeParams: RouteParams = {}, queryParams: QueryParams = {}) {
     this.eventBridge = new EventBridge();
@@ -37,6 +41,7 @@ class InteractionsManager {
     this.interactionsRunning = {};
 
     this.interactionsData = { currentPageId, ...routeParams, ...queryParams };
+    this.lastUpdate = Date.now();
   }
 
   eventBridgeCallback =
@@ -93,8 +98,11 @@ class InteractionsManager {
     callbacks: Record<string, InteractionBaseCallback> = {},
     getAdditionalParams: Subscriptor['getAdditionalParams']
   ) {
-    set(this.subscriptors, id, { id, triggers, getAdditionalParams });
+    if (this.subscriptors[id] as Subscriptor | undefined) {
+      return false;
+    }
 
+    set(this.subscriptors, id, { id, triggers, getAdditionalParams });
     const callbackKeys = Object.keys(callbacks);
     if (callbackKeys.length > 0) {
       this.callbacksAvailables[id] = callbackKeys.reduce((acum, callbackKey) => {
@@ -118,14 +126,26 @@ class InteractionsManager {
         { override: true }
       );
     }
+
+    this.touch();
+
+    return true;
   }
 
   unsubscribe(id: string) {
+    if (!(this.subscriptors[id] as Subscriptor | undefined)) {
+      return false;
+    }
+
     this.eventBridge.off('interaction', id as EventBridgeEvent);
     delete this.subscriptors[id];
     if (this.callbacksAvailables[id] as Record<string, InteractionCallback> | undefined) {
       delete this.callbacksAvailables[id];
     }
+
+    this.touch();
+
+    return true;
   }
 
   getRootManager(): this | undefined {
@@ -185,7 +205,7 @@ class InteractionsManager {
     return this.eventBridge.emit('interaction', subscriptorId as EventBridgeEvent, subscriptorId, eventName, params);
   }
 
-  // child managers
+  // Child managers
 
   createChildManager = (routeParams: Record<string, string> = {}, queryParams: Record<string, string> = {}) => {
     const childManager = new InteractionsManager(
@@ -202,6 +222,24 @@ class InteractionsManager {
   removeChildManager = (childManager: InteractionsManager) => {
     this.childManagers = this.childManagers.filter(manager => manager !== childManager);
   };
+
+  // Others
+
+  onUpdate(listener: InteractionUpdateListener): () => void {
+    this.listeners.add(listener);
+
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private touch(): void {
+    const ts = Date.now();
+    this.lastUpdate = ts;
+    for (const listener of this.listeners) {
+      listener(ts);
+    }
+  }
 }
 
 export default InteractionsManager;

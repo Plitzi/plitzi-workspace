@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import get from 'lodash-es/get';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import utility from '@plitzi/sdk-interactions/utility/index';
@@ -19,7 +19,9 @@ export type InteractionsProps = {
 
 const Interactions = ({ className = '', id = '', interactions = emptyObject, onChange }: InteractionsProps) => {
   const { interactionsManager } = use(InteractionsContext);
-  const subscriptor = useMemo(() => interactionsManager.getSubscriptor(id), [id, interactionsManager]);
+  const [reRender, setRerender] = useState(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const subscriptor = useMemo(() => interactionsManager.getSubscriptor(id), [id, interactionsManager, reRender]);
 
   const handleWorkflowChange = useCallback(
     (workflow: Element['definition']['interactions']) => onChange?.(workflow),
@@ -56,6 +58,12 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
 
     return definitions;
   }, [id, subscriptor, interactionsManager]);
+
+  useEffect(() => {
+    return interactionsManager.onUpdate((timestamp: number) => {
+      setRerender(timestamp);
+    });
+  }, [interactionsManager]);
 
   return (
     <div className={clsx('flex grow flex-col', className)}>
