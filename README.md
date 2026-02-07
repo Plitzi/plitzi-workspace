@@ -16,13 +16,25 @@ Plitzi is a **web-app builder** with an open-source SDK and Core under the **Bus
 ## 📂 Monorepo Structure
 
 /
+├─ apps/
+│ ├─ sdk/ # SDK, BSL License
+│ ├─ builder/ # Builder, BSL License
 ├─ packages/
-│ ├─ sdk/ # Open-source SDK, BSL license
-│ ├─ core/ # Builder and core, BSL license
-│ └─ templates/ # Example templates
+│ ├─ sdk-auth/ # SDK Auth, BSL License
+│ ├─ sdk-data-source/ # SDK Data Source, BSL License
+│ ├─ sdk-dev-tools/ # SDK Dev Tools, BSL License
+│ ├─ sdk-elements/ # SDK Elements, BSL License
+│ ├─ sdk-event-bridge/ # SDK Event Bridge, BSL License
+│ ├─ sdk-interactions/ # SDK Interactions, BSL License
+│ ├─ sdk-navigation/ # SDK Navigation, BSL License
+│ ├─ sdk-plugins/ # SDK Plugins, BSL License
+│ ├─ sdk-shared/ # SDK Shared, BSL License
+│ ├─ sdk-state/ # SDK State, BSL License
+│ ├─ sdk-style/ # SDK Style, BSL License
+│ └─ sdk-variables/ # SDK Variables, BSL License
 ├─ LICENSE.md # Main Business Source License
-├─ LICENSING.md # Developer-friendly license overview
-├─ COMMERCIAL_LICENSE.md # Guide for companies / commercial license
+├─ LICENSING.md # Developer-friendly License overview
+├─ COMMERCIAL_LICENSE.md # Guide for companies / commercial License
 ├─ CONTRIBUTOR_TOS.md # Contributor Terms of Service
 ├─ README.md # This file
 

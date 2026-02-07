@@ -1,4 +1,4 @@
-import Text from '@plitzi/plitzi-ui/Text';
+import Heading from '@plitzi/plitzi-ui/Heading';
 import get from 'lodash-es/get';
 import { useMemo } from 'react';
 
@@ -24,9 +24,9 @@ const ElementCategory = ({ components, category = '' }: ElementCategoryProps) =>
   return (
     <div className="flex flex-col gap-2">
       <div className="border-t border-gray-200" />
-      <Text size="sm" weight={500} className="capitalize">
+      <Heading as="h6" className="capitalize">
         {category}
-      </Text>
+      </Heading>
       <div className="flex flex-wrap gap-2">
         {componentsToRender?.map((component, key) => (
           <Element key={key} component={component} />
