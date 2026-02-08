@@ -10,7 +10,6 @@ import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import type {
   Element,
-  ElementBinding,
   InteractionBaseCallback,
   InteractionCallback,
   InteractionCallbackParamValues,
@@ -21,29 +20,25 @@ import type {
 
 // Helpers
 
-const getCache = (definition?: Element['definition']) => {
-  if (!definition) {
+const getCache = (bindings?: Partial<Element['definition']['bindings']>) => {
+  if (!bindings) {
     return { stateBinded: [], attributesBinded: [] };
   }
 
-  const bindingsState = get(definition, 'bindings.initialState', []) as ElementBinding[];
-  let stateBinded: string[] = [];
-  if (Array.isArray(bindingsState)) {
-    stateBinded = bindingsState.map(binding => get(binding, 'toPath', ''));
-  }
-
-  const bindingsAttributes = get(definition, 'bindings.attributes', []) as ElementBinding[];
-  let attributesBinded: string[] = [];
-  if (Array.isArray(bindingsAttributes)) {
-    attributesBinded = bindingsAttributes.map(binding => get(binding, 'toPath', ''));
-  }
-
-  return { stateBinded, attributesBinded };
+  return {
+    stateBinded: bindings.initialState?.map(binding => get(binding, 'toPath', '')) ?? [],
+    attributesBinded: bindings.attributes?.map(binding => get(binding, 'toPath', '')) ?? []
+  };
 };
 
 const sanityValue = (value: string | boolean | number) => {
-  if (value === 'true' || value === 'false' || value === 'yes' || value === 'no') {
-    value = value === 'true' || value === 'yes';
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const valueParsed = value.toLowerCase();
+  if (valueParsed === 'true' || valueParsed === 'false' || valueParsed === 'yes' || valueParsed === 'no') {
+    return valueParsed === 'true' || valueParsed === 'yes';
   }
 
   return value;
@@ -196,7 +191,7 @@ const useInternalProps = ({
 }: UseInternalProps) => {
   const prevStateRef = useRef<Record<string, unknown>>({});
   const [state, setState] = useState<Record<string, unknown>>({});
-  const cache = useMemo(() => getCache(element.definition), [element.definition]);
+  const cache = useMemo(() => getCache(element.definition.bindings), [element.definition.bindings]);
 
   const setElementState = useCallback(
     <T extends Record<string, unknown> = Record<string, unknown>>(value?: T | ((prev: T) => T)) => {
