@@ -1,5 +1,6 @@
 {
   "name": "@plitzi/plitzi-workspace",
+  "license": "BSL-1.0",
   "private": true,
   "scripts": {
     "start": "turbo start --parallel",
