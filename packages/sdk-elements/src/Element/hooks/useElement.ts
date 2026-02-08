@@ -16,7 +16,7 @@ import type { Context, ReactNode } from 'react';
 const useElement = (
   internalProps: InternalPropsSTG1,
   {
-    plitziCustomComponent,
+    plitziCustomComponent = false,
     children,
     className
   }: { className?: string; children?: ReactNode; plitziCustomComponent?: boolean }

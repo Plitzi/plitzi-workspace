@@ -1,5 +1,4 @@
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useMemo } from 'react';
 
 import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
@@ -14,7 +13,7 @@ export type UseInternalClassNameProps = {
 const useInternalClassName = ({ className, internalProps, previewMode, baseElementId }: UseInternalClassNameProps) => {
   const { id, plitziElementLayout, definition, elementState } = internalProps;
   const { items } = definition;
-  const visibility = useMemo(() => get(elementState, 'visibility'), [elementState]);
+  const visibility = elementState.visibility;
 
   return useMemo(
     () =>
