@@ -79,29 +79,30 @@ const Settings = ({
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input value={renderType} label="Render Type" onChange={handleChange('renderType')} />
+      <Input value={renderType} label="Render Type" onChange={handleChange('renderType')} size="xs" />
       <div className="flex flex-col">
         <label>Settings</label>
         <CodeMirror
-          className="min-h-[250px]"
+          className="min-h-62.5"
           value={settings}
           theme="dark"
           mode="json"
+          size="xs"
           lineWrapping
           onChange={handleChangeSettings}
         />
       </div>
       {!jsonValid && (
-        <Alert className="mt-1 text-white" intent="warning">
+        <Alert className="mt-1" solid={false} intent="warning" size="xs">
           <div className="flex h-full w-full items-center">This json is invalid</div>
         </Alert>
       )}
-      <Checkbox checked={isPlugin} onChange={handleChangeIsPlugin} label="Is Plugin" />
+      <Checkbox checked={isPlugin} onChange={handleChangeIsPlugin} label="Is Plugin" size="xs" />
       {isPlugin && (
         <>
-          <Input value={pluginScope} label="Plugin Scope" onChange={handleChange('pluginScope')} />
-          <Input value={scriptUrl} label="Plugin Script Url" onChange={handleChange('scriptUrl')} />
-          <TextArea value={assets} label="Plugin Assets (Styles)" onChange={handleChange('assets')} />
+          <Input value={pluginScope} label="Plugin Scope" onChange={handleChange('pluginScope')} size="xs" />
+          <Input value={scriptUrl} label="Plugin Script Url" onChange={handleChange('scriptUrl')} size="xs" />
+          <TextArea value={assets} label="Plugin Assets (Styles)" onChange={handleChange('assets')} size="xs" />
         </>
       )}
     </div>

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 
-const useDynamicScript = ({
-  url = '',
-  type = 'text/javascript'
-}: { url?: string; type?: 'text/javascript' | 'module' } = {}) => {
+export type UseDynamicScriptProps = { url?: string; type?: 'text/javascript' | 'module' };
+
+const useDynamicScript = ({ url = '', type = 'text/javascript' }: UseDynamicScriptProps = {}) => {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
