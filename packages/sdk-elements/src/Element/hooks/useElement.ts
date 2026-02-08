@@ -1,4 +1,3 @@
-import get from 'lodash-es/get.js';
 import { use, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -32,21 +31,16 @@ const useElement = (
   const element = useElementProps(id, schema);
 
   const sourceFilter = useMemo(() => {
-    const bindings = get(element, 'definition.bindings');
-    if (!bindings) {
-      return ['variables'];
-    }
-
+    const bindings = element.definition.bindings ?? {};
     const filter = Object.values(bindings)
       .flat()
       .reduce<string[]>((acc, binding) => (binding.source ? [...acc, binding.source] : acc), []);
-    if (!filter.includes('variables')) {
+    if (filter.length === 0 || !filter.includes('variables')) {
       filter.push('variables');
     }
 
     return filter;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [element.definition]);
+  }, [element.definition.bindings]);
 
   const dataSource = useDataSource({ id, mode: 'read', sourceFilter });
 
