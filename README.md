@@ -67,7 +67,7 @@ Contributions are welcome, but must comply with the following:
 
 If you want to use Plitzi for monetization, SaaS, or integration into commercial products, you must obtain a commercial license:
 
-📧 contact@plitzi.com  
+📧 crodriguez@plitzi.com  
 🌐 <YOUR_WEBSITE_HERE>
 
 ---
@@ -84,5 +84,5 @@ If you want to use Plitzi for monetization, SaaS, or integration into commercial
 
 For legal, commercial, or support inquiries:
 
-📧 contact@plitzi.com  
+📧 crodriguez@plitzi.com  
 🌐 <YOUR_WEBSITE_HERE>

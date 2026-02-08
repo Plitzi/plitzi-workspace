@@ -29,7 +29,7 @@ A commercial license is required if you:
 
 Contact Plitzi at:
 
-📧 Email: contact@plitzi.com  
+📧 Email: crodriguez@plitzi.com  
 🌐 Website: <YOUR_WEBSITE_HERE>
 
 We typically respond within 1–2 business days.

@@ -51,4 +51,4 @@ If you do not agree, do **not submit contributions**.
 
 ---
 
-**Contact:** contact@plitzi.com
+**Contact:** crodriguez@plitzi.com

@@ -1,63 +1,77 @@
 # Business Source License 1.1
 
-**Project:** Plitzi  
-**Licensor:** Plitzi  
-**Change Date:** NOT AVAILABLE
-**Change License:** NOT AVAILABLE
+License text copyright (c) 2017 MariaDB Corporation Ab.
+
+“Business Source License” is a trademark of MariaDB Corporation Ab.
 
 ---
 
-## 1. Grant of Rights
+## Parameters
 
-You are granted the right to **view, copy, modify, and use** the source code in this repository for **non-commercial purposes**, including:
+**Licensor:**  
+Plitzi  
+crodriguez@plitzi.com
 
-- Learning
-- Experimentation
-- Internal evaluation
-- Development
-- Testing
+**Licensed Work:**  
+Plitzi (including all source code, packages, and modules contained in this repository)
 
----
+**Additional Use Grant:**  
+You may use, modify, and distribute the Licensed Work for **non-commercial purposes**, including:
 
-## 2. Commercial Use Restriction
+- Personal use
+- Educational use
+- Research
+- Evaluation and testing
+- Open-source projects that are not operated for commercial gain
 
-You may **NOT use the source code for Commercial Purposes** without obtaining a **Commercial License** from the Licensor.
+**Change Date:**  
+None
 
-**Commercial Purpose** includes, but is not limited to:
-
-- Offering the software as a hosted service or SaaS  
-- Using the software as part of a product or service that is sold, licensed, or monetized  
-- Providing paid hosting, consulting, or managed services based on the software  
-- Generating direct or indirect revenue using the software  
-
----
-
-## 3. Commercial License
-
-To use this repository for Commercial Purposes, you must obtain a **Commercial License**.
-
-Contact: contact@plitzi.com
+**Change License:**  
+None
 
 ---
 
-## 4. Disclaimer
+## Terms
 
-THE LICENSED WORK IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.  
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+The Licensor hereby grants you the right to copy, modify, create derivative works, and redistribute the Licensed Work, subject to the limitations set forth below.
+
+### Limitations
+
+You may **NOT**, without an explicit commercial license from the Licensor:
+
+- Use the Licensed Work for **commercial purposes**
+- Use the Licensed Work in **production environments**
+- Offer the Licensed Work as part of a **paid product or service**
+- Use the Licensed Work to provide a **Software-as-a-Service (SaaS)** or hosted service
+- Integrate the Licensed Work into proprietary or closed-source commercial software
+- Monetize the Licensed Work directly or indirectly
+
+Any use of the Licensed Work that generates **direct or indirect revenue**, or supports a commercial activity, is considered **commercial use** and is **not permitted** under this license.
+
+### Commercial Licensing
+
+Commercial licenses are available directly from the Licensor.
+
+To obtain a commercial license, please contact:  
+📧 crodriguez@plitzi.com
 
 ---
 
-## 5. Notes for Monorepo Users
+## No Open Source License Grant
 
-This license applies to **all packages and projects** within this monorepo unless otherwise noted.  
+This project is **source-available**, but **not open-source** as defined by the Open Source Initiative (OSI).
 
-- Developers may fork, experiment, and contribute freely for **non-commercial use**.  
-- Commercial use requires a license.  
-- You are encouraged to contribute back improvements, but contributions **do not grant commercial rights** automatically.  
+The Licensed Work **will not transition** to an open-source license in the future.
 
 ---
 
-## 6. Recommended Additional Files
+## Disclaimer of Warranty
 
-- `LICENSING.md` → high-level overview for developers  
-- `COMMERCIAL_LICENSE.md` → clear instructions for obtaining a commercial license
+THE LICENSED WORK IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE LICENSED WORK OR THE USE OR OTHER DEALINGS IN THE LICENSED WORK.
+
+---
+
+## End of Terms
