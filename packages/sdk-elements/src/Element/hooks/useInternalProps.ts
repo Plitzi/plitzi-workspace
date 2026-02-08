@@ -199,56 +199,23 @@ const useInternalProps = ({
   const cache = useMemo(() => getCache(element.definition), [element.definition]);
 
   const setElementState = useCallback(
-    <T extends Record<string, unknown> = Record<string, unknown>>(
-      params?: ((state: T) => T) | { key: string; value?: string | boolean | number } | T
-    ) => {
-      if (!previewMode || !params || (typeof params !== 'object' && typeof params !== 'function')) {
+    <T extends Record<string, unknown> = Record<string, unknown>>(value?: T | ((prev: T) => T)) => {
+      if (!previewMode) {
         return false;
       }
 
-      // Scenario 1 when is a function
-      if (typeof params === 'function') {
-        setState(prevState =>
-          produce(prevState, draft => {
-            const result = params(draft as T);
-            if (!(result as T | undefined) || typeof result !== 'object') {
-              return;
-            }
+      setState(prev => {
+        if (!value) {
+          return {};
+        }
 
-            omit(result, cache.attributesBinded);
+        let next = typeof value === 'function' ? value(prev as T) : value;
+        if (cache.attributesBinded.length) {
+          next = omit(next, cache.attributesBinded) as T;
+        }
 
-            return { ...draft, ...result };
-          })
-        );
-
-        return true;
-      }
-
-      // Scenario 2 when is an object (key / value)
-      if (params.key && params.value !== undefined) {
-        const { key } = params;
-        let { value } = params;
-        value = sanityValue(value as string | boolean | number);
-        setState(prevState =>
-          produce(prevState, draft => {
-            if (typeof value === 'undefined') {
-              draft = omit(prevState, [key as string]);
-            } else {
-              set(draft, key as string, value);
-            }
-          })
-        );
-
-        return true;
-      }
-
-      // Scenario 3, its an object
-      const auxState = {};
-      Object.keys(params).forEach(key => {
-        set(auxState, key, (params as Record<string, unknown>)[key]);
+        return next;
       });
-
-      setState(omit(auxState, cache.attributesBinded));
 
       return true;
     },

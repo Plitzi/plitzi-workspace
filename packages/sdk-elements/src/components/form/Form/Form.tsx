@@ -227,8 +227,7 @@ const Form = ({
         params.preventDefault();
       }
 
-      setElementState({ key: 'values', value: {} });
-      setElementState({ key: 'errors', value: {} });
+      setElementState(state => ({ ...state, values: {}, errors: {} }));
     },
     [setElementState, managedByInteractions]
   );

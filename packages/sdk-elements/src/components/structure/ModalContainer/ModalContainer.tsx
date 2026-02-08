@@ -65,7 +65,7 @@ const ModalContainer = ({
         setInternalMetadata({});
       }
 
-      setElementState({ key: 'visibility', value: true });
+      setElementState(state => ({ ...state, visibility: true }));
     },
     [setElementState, setInternalMetadata]
   );
@@ -73,7 +73,7 @@ const ModalContainer = ({
   const handleClickClose = useCallback(() => {
     void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
-    setElementState({ key: 'visibility', value: false });
+    setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const handleClickBackground = useCallback(() => {
@@ -83,7 +83,7 @@ const ModalContainer = ({
 
     void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
-    setElementState({ key: 'visibility', value: false });
+    setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(

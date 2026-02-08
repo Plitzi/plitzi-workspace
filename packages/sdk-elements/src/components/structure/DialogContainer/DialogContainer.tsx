@@ -69,7 +69,7 @@ const DialogContainer = ({
         setInternalMetadata({});
       }
 
-      setElementState({ key: 'visibility', value: true });
+      setElementState(state => ({ ...state, visibility: true }));
     },
     [setElementState, setInternalMetadata]
   );
@@ -77,7 +77,7 @@ const DialogContainer = ({
   const handleClickClose = useCallback(() => {
     void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
-    setElementState({ key: 'visibility', value: false });
+    setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const handleClickBackground = useCallback(() => {
@@ -87,7 +87,7 @@ const DialogContainer = ({
 
     void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
-    setElementState({ key: 'visibility', value: false });
+    setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
   // Dialog Methods
@@ -96,14 +96,14 @@ const DialogContainer = ({
     setProcessing(true);
     await interactionsManager.interactionTrigger(id, 'onDialogAccept', { metadata: internalMetadata });
     setProcessing(false);
-    setElementState({ key: 'visibility', value: false });
+    setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, id, internalMetadata, setElementState]);
 
   const handleClickCancel = useCallback(async () => {
     setProcessing(true);
     await interactionsManager.interactionTrigger(id, 'onDialogReject', { metadata: internalMetadata });
     setProcessing(false);
-    setElementState({ key: 'visibility', value: false });
+    setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, id, internalMetadata, setElementState]);
 
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(

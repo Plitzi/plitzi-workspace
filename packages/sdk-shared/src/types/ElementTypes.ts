@@ -38,8 +38,8 @@ export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsEx
   elementState: Record<string, unknown>;
   interactionsBasicCallbacks?: Record<string, InteractionBaseCallback>;
   setElementState: <T2 extends Record<string, unknown> = Record<string, unknown>>(
-    params?: ((state: T2) => T2) | { key: string; value?: string | boolean | number } | T2
-  ) => void;
+    value?: T2 | ((prev: T2) => T2)
+  ) => boolean;
   interactions?: Element['definition']['interactions'];
   style?: CSSProperties;
   styleSelectors: Element['definition']['styleSelectors'];

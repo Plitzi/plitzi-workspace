@@ -14,8 +14,8 @@ const parseStyle = (style: string | CSSProperties = ''): CSSProperties | undefin
       .split(';')
       .map(s => s.trim())
       .filter(Boolean)
-      .map(s => {
-        const [key, value] = s.split(':').map(x => x.trim());
+      .map(styleItem => {
+        const [key, value] = styleItem.split(':').map(x => x.trim());
         const camelKey = key.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 
         return [camelKey, value];

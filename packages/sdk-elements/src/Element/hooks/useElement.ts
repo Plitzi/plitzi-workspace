@@ -9,9 +9,9 @@ import useInternalClassName from './useInternalClassName';
 import useInternalItems from './useInternalItems';
 import useInternalProps from './useInternalProps';
 
-import type { EventBridgeCallback, EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
+import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type { Schema, InternalPropsSTG1 } from '@plitzi/sdk-shared';
-import type { Context, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 const useElement = (
   internalProps: InternalPropsSTG1,
@@ -58,13 +58,11 @@ const useElement = (
     previewMode
   });
   const eventCallbacks = useMemo<Record<string, EventBridgeCallback>>(
-    () => ({
-      [`${id}_setState`]: internalPropsParsed.setElementState as EventBridgeCallback
-    }),
+    () => ({ [`${id}_setState`]: internalPropsParsed.setElementState }),
     [id, internalPropsParsed.setElementState]
   );
 
-  useEventBridge('element', eventCallbacks, {}, EventBridgeContext as Context<EventBridgeContextValue>);
+  useEventBridge('element', eventCallbacks, {}, EventBridgeContext);
 
   return {
     internalProps: internalPropsParsed,
