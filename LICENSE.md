@@ -2,7 +2,7 @@
 
 **Project:** Plitzi  
 **Licensor:** Plitzi  
-**Change Date:** NOT AVAILABLE 
+**Change Date:** NOT AVAILABLE
 **Change License:** NOT AVAILABLE
 
 ---
