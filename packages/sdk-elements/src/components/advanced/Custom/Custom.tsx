@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import pick from 'lodash-es/pick';
 import { use, useEffect, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -55,12 +54,10 @@ const Custom = ({
     return false;
   }, [settings]);
   const settingsMalformed = settingsParsed === false;
+  const { id, rootId } = internalProps;
   const internalPropsMemo = useMemo<InternalPropsSTG1>(
-    () => ({
-      ...(pick(internalProps, ['id', 'rootId']) as { id: string; rootId: string }),
-      attributes: settingsMalformed ? {} : settingsParsed
-    }),
-    [internalProps, settingsMalformed, settingsParsed]
+    () => ({ id, rootId, attributes: settingsMalformed ? {} : settingsParsed }),
+    [id, rootId, settingsMalformed, settingsParsed]
   );
   const assetsParsed = useMemo<Asset[]>(() => {
     if (!assets) {
@@ -94,20 +91,12 @@ const Custom = ({
   }, [assetsParsed, registerCustomAssets, unregisterCustomAssets]);
 
   if (isPlugin && scriptUrl && pluginScope && !settingsMalformed) {
-    return (
-      <PluginRemote
-        url={scriptUrl}
-        scope={pluginScope}
-        internalProps={internalPropsMemo}
-        autoRegister={false}
-        plitziCustomComponent
-      />
-    );
+    return <PluginRemote url={scriptUrl} scope={pluginScope} internalProps={internalPropsMemo} autoRegister={false} />;
   }
 
   const Plugin = components[renderType] as ComponentPlugin | undefined;
   if (Plugin && !settingsMalformed) {
-    return <Plugin internalProps={internalPropsMemo} plitziCustomComponent extraProps={Plugin.extraProps} />;
+    return <Plugin internalProps={internalPropsMemo} extraProps={Plugin.extraProps} />;
   }
 
   return (

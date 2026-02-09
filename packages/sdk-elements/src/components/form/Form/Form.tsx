@@ -97,8 +97,11 @@ const Form = ({
       );
 
       if (name) {
-        setElementState(state => omit(state, `values.${name}`));
-        setElementState(state => omit(state, `errors.${name}`));
+        setElementState(state => ({
+          ...state,
+          values: omit(state, `values.${name}`),
+          errors: omit(state, `errors.${name}`)
+        }));
       }
     },
     [setElementState]

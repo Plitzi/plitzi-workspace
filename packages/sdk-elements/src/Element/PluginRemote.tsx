@@ -59,7 +59,6 @@ export type PluginRemoteProps = {
   internalProps: InternalPropsSTG1;
   autoRegister?: boolean;
   plitziJsxSkipHOC?: boolean;
-  plitziCustomComponent?: boolean;
   plitziJsxProps?: Record<string, unknown>;
 };
 
@@ -70,7 +69,6 @@ const PluginRemote = ({
   autoRegister = true,
   // Props from JSX
   plitziJsxSkipHOC = false,
-  plitziCustomComponent = false,
   plitziJsxProps = emptyObject
 }: PluginRemoteProps) => {
   const { register, components } = use(ComponentContext);
@@ -94,19 +92,14 @@ const PluginRemote = ({
   if (plitziJsxSkipHOC) {
     return (
       <Suspense>
-        <Component
-          internalProps={internalProps}
-          plitziJsxSkipHOC={plitziJsxSkipHOC}
-          {...plitziJsxProps}
-          plitziCustomComponent={plitziCustomComponent}
-        />
+        <Component internalProps={internalProps} plitziJsxSkipHOC={plitziJsxSkipHOC} {...plitziJsxProps} />
       </Suspense>
     );
   }
 
   return (
     <Suspense>
-      <Component internalProps={internalProps} plitziCustomComponent={plitziCustomComponent} />
+      <Component internalProps={internalProps} />
     </Suspense>
   );
 };

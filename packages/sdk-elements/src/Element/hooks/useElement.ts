@@ -14,11 +14,7 @@ import type { ReactNode } from 'react';
 
 const useElement = (
   internalProps: InternalPropsSTG1,
-  {
-    plitziCustomComponent = false,
-    children,
-    className
-  }: { className?: string; children?: ReactNode; plitziCustomComponent?: boolean }
+  { children, className }: { className?: string; children?: ReactNode }
 ) => {
   const {
     settings: { previewMode },
@@ -28,14 +24,13 @@ const useElement = (
   const { useDataSource } = use(DataSourceContext);
   const { prevSchema, schema } = use(SchemaContext);
   const { id } = internalProps;
-  const element = useValueMemo<Element | undefined>(schema.flat[id]);
+  const element = useValueMemo<Element | undefined>(id ? schema.flat[id] : undefined);
   if (!element) {
     throw new Error(`Element ${id} not found, Page ${baseElementId}`);
   }
 
   const sourceFilter = useMemo(() => {
-    const bindings = element.definition.bindings ?? {};
-    const filter = Object.values(bindings)
+    const filter = Object.values(element.definition.bindings ?? {})
       .flat()
       .reduce<string[]>((acc, binding) => (binding.source ? [...acc, binding.source] : acc), []);
     if (filter.length === 0 || !filter.includes('variables')) {
@@ -46,14 +41,7 @@ const useElement = (
   }, [element.definition.bindings]);
 
   const dataSource = useDataSource({ id, mode: 'read', sourceFilter });
-
-  const { internalProps: internalPropsParsed } = useInternalProps({
-    element,
-    internalProps,
-    plitziCustomComponent,
-    dataSource,
-    previewMode
-  });
+  const { internalProps: internalPropsParsed } = useInternalProps({ element, internalProps, dataSource, previewMode });
   const eventCallbacks = useMemo<Record<string, EventBridgeCallback>>(
     () => ({ [`${id}_setState`]: internalPropsParsed.setElementState }),
     [id, internalPropsParsed.setElementState]

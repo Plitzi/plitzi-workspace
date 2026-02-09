@@ -83,17 +83,17 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
   async login(authParams: Record<string, string>): Promise<TokenResult | undefined> {
     const { username = '', password = '' } = authParams;
     super.setState('authenticating');
-    const res = await this.request(this.options.loginUrl, {
+    const res = await this.request<Record<string, unknown>>(this.options.loginUrl, {
       credentials: 'include',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
 
-    const tokenResult = this.getTokenFromResponse(res);
-    super.internalLogin(get(res.data, this.options.detailsPath) as T, tokenResult);
+    const result = this.getTokenFromResponse(res);
+    super.internalLogin(get(res.data, this.options.detailsPath) as T, result);
 
-    return tokenResult;
+    return result;
   }
 
   async getUser(): Promise<T | undefined> {
@@ -145,18 +145,23 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
 
   // Helpers
 
-  private getTokenFromResponse(res: { data?: unknown; status: number }) {
+  private getTokenFromResponse(res: { data?: Record<string, unknown>; status: number }) {
     if (res.status >= 400) {
       return undefined;
     }
 
-    const tokenResult = {
-      accessToken: get(res.data, this.options.tokenPath) as string,
+    const result = {
+      errors: get(res.data, 'errors', {}),
+      accessToken: get(res.data, this.options.tokenPath, ''),
       refreshToken: get(res.data, this.options.refreshUrl, null),
       expiresAt: get(res.data, this.options.expirationTimePath, 0)
     };
 
-    return tokenResult;
+    if (res.data && !('errors' in res.data)) {
+      delete result.errors;
+    }
+
+    return result as TokenResult;
   }
 }
 

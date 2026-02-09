@@ -6,44 +6,12 @@ import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
 import parseStyle from './helpers/parseStyle';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionBaseCallback, InternalPropsSTG2, DataSourceContextValue } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
-
-const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
-  onClick: {
-    action: 'onClick',
-    title: 'On Click',
-    type: 'trigger',
-    preview: { propagateEvent: '' },
-    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
-  },
-  onMouseEnter: {
-    action: 'onMouseEnter',
-    title: 'On Mouse Enter',
-    type: 'trigger',
-    preview: { propagateEvent: '' },
-    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
-  },
-  onMouseLeave: {
-    action: 'onMouseLeave',
-    title: 'On Mouse Leave',
-    type: 'trigger',
-    preview: { propagateEvent: '' },
-    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
-  },
-  onHover: {
-    action: 'onHover',
-    title: 'On Hover',
-    type: 'trigger',
-    preview: { propagateEvent: '' },
-    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
-  }
-};
-
-const nativeEventsList = ['onClick', 'onFocus', 'onBlur', 'onMouseEnter', 'onMouseLeave'];
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   ref?: RefObject<HTMLElement | null>;
@@ -70,9 +38,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
   if (!Tag || !internalProps) {
-    console.error('One of these parameters [tag, internalProps] are missing:', Tag, internalProps);
-
-    return undefined;
+    throw new Error(`One of these parameters [tag, internalProps] is missing in elementId: ${internalProps?.id}`);
   }
 
   if (internalProps.plitziJsxSkipHOC) {
@@ -86,14 +52,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const plitziContextData = usePlitziServiceContext();
   const previewMode = get(plitziContextData, 'settings.previewMode', true);
   const debugMode = get(plitziContextData, 'settings.debugMode', false);
-  const InteractionsContext = get(plitziContextData, 'contexts.InteractionsContext') as
-    | Context<InteractionsContextValue>
-    | undefined;
-  const DataSourceContext = get(plitziContextData, 'contexts.DataSourceContext') as
-    | Context<DataSourceContextValue>
-    | undefined;
   const baseElementId = get(plitziContextData, 'root.baseElementId');
-
   const { id, rootId, style, definition, interactions, interactionsBasicCallbacks } = internalProps;
   const params = useMemo<Record<string, string | undefined | boolean>>(() => {
     if (!debugMode && (previewMode || !definition.type || rootId !== baseElementId)) {
@@ -109,6 +68,8 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     };
   }, [id, debugMode, previewMode, definition.type, definition.label, rootId, baseElementId]);
 
+  const InteractionsContext = get(plitziContextData, 'contexts.InteractionsContext');
+  const DataSourceContext = get(plitziContextData, 'contexts.DataSourceContext');
   if (!InteractionsContext || !DataSourceContext) {
     return (
       <Tag ref={ref} style={{ ...style, ...styleParsed }} className={className} {...otherProps} {...params}>
@@ -117,7 +78,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     );
   }
 
-  const { interactionsManager, useInteractions } = use(InteractionsContext);
+  const { interactionsManager, useInteractions } = use(InteractionsContext as Context<InteractionsContextValue>);
   const processEvent = useCallback(
     (
       e: MouseEvent,
@@ -169,7 +130,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
-  const { useDataSource } = use(DataSourceContext);
+  const { useDataSource } = use(DataSourceContext as Context<DataSourceContextValue>);
   const filterMode = useMemo(() => {
     if (!debugMode && (!definition.interactions || !Object.keys(definition.interactions).length)) {
       return 'hard';

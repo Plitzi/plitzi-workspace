@@ -7,7 +7,6 @@ export type ComponentPlugin<T = unknown> = FC<
   T & {
     internalProps: InternalPropsSTG1;
     className?: string;
-    plitziCustomComponent?: boolean;
     plitziJsxSkipHOC?: boolean;
     children?: ReactNode;
     extraProps?: Record<string, unknown>;

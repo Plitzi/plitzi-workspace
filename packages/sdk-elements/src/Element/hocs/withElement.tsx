@@ -12,7 +12,6 @@ import type { FC, ReactNode } from 'react';
 
 export type WithElementProps<T> = {
   plitziJsxSkipHOC?: boolean;
-  plitziCustomComponent?: boolean;
   internalProps: InternalPropsSTG1;
   className?: string;
   children?: ReactNode;
@@ -31,7 +30,6 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     }
 
     const { internalProps, children, className } = useElement(internalPropsProp, {
-      plitziCustomComponent: props.plitziCustomComponent,
       children: props.children,
       className: props.className
     });
@@ -48,9 +46,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
             // Plitzi
             ref={ref}
             internalProps={internalProps}
-          >
-            {children}
-          </WrappedComponent>
+            children={children}
+          />
         </ErrorBoundary>
       ),
       [internalProps, className, definition.styleSelectors.base, children, props.extraProps]

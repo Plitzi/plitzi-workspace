@@ -8,6 +8,7 @@ export type User = {
 };
 
 export type TokenResult = {
+  errors?: Record<string, unknown>;
   accessToken: string;
   expiresAt: number | null;
   refreshToken: string | null;
