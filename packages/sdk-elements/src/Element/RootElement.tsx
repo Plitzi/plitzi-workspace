@@ -10,12 +10,13 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import { ElementContext } from './ElementProvider';
 import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
 import parseStyle from './helpers/parseStyle';
+import useElementDataSource from './hooks/useElementDataSource';
 import useElementInteractions from './hooks/useElementInteractions';
 import useInternalClassName from './hooks/useInternalClassName';
 
 import type { ElementContextValue } from './ElementProvider';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback, DataSourceContextValue } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
@@ -87,8 +88,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }, [debugMode, previewMode, rootId, baseElementId, id, label, type]);
 
   const InteractionsContext = get(plitziContextData, 'contexts.InteractionsContext');
-  const DataSourceContext = get(plitziContextData, 'contexts.DataSourceContext');
-  if (!InteractionsContext || !DataSourceContext) {
+  if (!InteractionsContext) {
     return (
       <Tag ref={ref} style={{ ...style, ...styleParsed }} className={className} {...otherProps} {...params}>
         {children}
@@ -148,15 +148,11 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
-  const { useDataSource } = use(DataSourceContext as Context<DataSourceContextValue>);
-  const filterMode = useMemo(() => {
-    if (!debugMode && (!interactions || !Object.keys(interactions).length)) {
-      return 'hard';
-    }
-
-    return 'soft';
-  }, [debugMode, interactions]);
-  const dataSource = useDataSource({ id, mode: 'read', filterMode });
+  const filterMode = useMemo(
+    () => (!debugMode && (!interactions || !Object.keys(interactions).length) ? 'hard' : 'soft'),
+    [debugMode, interactions]
+  );
+  const dataSource = useElementDataSource({ id, bindings: definition.bindings, filterMode });
   const dataSourceContextRef = useRef({});
   dataSourceContextRef.current = dataSource;
 

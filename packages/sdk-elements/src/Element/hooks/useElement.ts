@@ -1,10 +1,10 @@
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import { use, useMemo } from 'react';
+import { use } from 'react';
 
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import useElementDataSource from './useElementDataSource';
 import useInternalItems from './useInternalItems';
 import useInternalProps from './useInternalProps';
 
@@ -23,22 +23,7 @@ const useElement = (internalProps: InternalPropsSTG1, { children }: { children?:
     throw new Error(`Element ${id} not found, Page ${baseElementId}`);
   }
 
-  const sourceFilter = useMemo(() => {
-    const sources = new Set<string>();
-    for (const bindings of Object.values(element.definition.bindings ?? {})) {
-      for (const { source } of bindings) {
-        if (source) {
-          sources.add(source);
-        }
-      }
-    }
-
-    sources.add('variables');
-
-    return [...sources];
-  }, [element.definition.bindings]);
-
-  const dataSource = useDataSource({ id, mode: 'read', sourceFilter });
+  const dataSource = useElementDataSource({ id, bindings: element.definition.bindings });
   const { internalProps: internalPropsParsed } = useInternalProps({ element, internalProps, dataSource, previewMode });
 
   return {

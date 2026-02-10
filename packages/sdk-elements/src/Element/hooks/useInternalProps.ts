@@ -83,7 +83,7 @@ const useInternalProps = ({ element, internalProps, dataSource, previewMode = fa
     return { ...internalPropsAux, setElementState };
   }, [element, internalProps, dataSource, state, setElementState]);
 
-  return { internalProps: internalPropsParsed, children: undefined, className: '' };
+  return { internalProps: internalPropsParsed, children: undefined };
 };
 
 export default useInternalProps;
