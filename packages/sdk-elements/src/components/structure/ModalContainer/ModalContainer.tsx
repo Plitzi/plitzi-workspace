@@ -40,7 +40,11 @@ const ModalContainer = ({
   title = 'Modal Header',
   autoHideAfterClick = true
 }: ModalContainerProps) => {
-  const { id, setElementState, styleSelectors } = internalProps;
+  const {
+    id,
+    definition: { styleSelectors },
+    setElementState
+  } = internalProps;
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();

@@ -18,7 +18,6 @@ export type InternalPropsSTG0<T extends InternalPropsExtension = InternalPropsEx
 } & T;
 
 export type InternalPropsSTG1<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG0<T> & {
-  className?: string;
   plitziElementLayout?: {
     bodyChildren: ReactNode;
     containerId: string;

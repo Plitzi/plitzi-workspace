@@ -24,14 +24,18 @@ const useElement = (internalProps: InternalPropsSTG1, { children }: { children?:
   }
 
   const sourceFilter = useMemo(() => {
-    const filter = Object.values(element.definition.bindings ?? {})
-      .flat()
-      .reduce<string[]>((acc, binding) => (binding.source ? [...acc, binding.source] : acc), []);
-    if (filter.length === 0 || !filter.includes('variables')) {
-      filter.push('variables');
+    const sources = new Set<string>();
+    for (const bindings of Object.values(element.definition.bindings ?? {})) {
+      for (const { source } of bindings) {
+        if (source) {
+          sources.add(source);
+        }
+      }
     }
 
-    return filter;
+    sources.add('variables');
+
+    return [...sources];
   }, [element.definition.bindings]);
 
   const dataSource = useDataSource({ id, mode: 'read', sourceFilter });
