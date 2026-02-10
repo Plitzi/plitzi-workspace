@@ -64,10 +64,12 @@ const useInternalItems = ({
     }
 
     // Process Children
-    if (Array.isArray(children)) {
-      itemsParsed.push(...children);
-    } else if (children && isValidElement(children)) {
-      itemsParsed.push(children);
+    if (children && isValidElement(children)) {
+      if (Array.isArray(children)) {
+        itemsParsed.push(...children);
+      } else {
+        itemsParsed.push(children);
+      }
     }
 
     if (
@@ -82,6 +84,10 @@ const useInternalItems = ({
           {itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed}
         </SchemaContext>
       );
+    }
+
+    if (!items) {
+      return undefined;
     }
 
     return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;

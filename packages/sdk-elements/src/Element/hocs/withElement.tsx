@@ -7,7 +7,6 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import ElementProvider from '../ElementProvider';
 import useElementInternal from '../hooks/useElementInternal';
-// import useElementState from '../hooks/useElementState';
 
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
@@ -46,10 +45,14 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       previewMode,
       baseElementId
     });
-    // const { state, setElementState } = useElementState({ bindings: internalProps.definition.bindings, previewMode });
 
-    return useMemo(
-      () => (
+    return useMemo(() => {
+      let wrappedProps = { ...internalProps.attributes, ...props.extraProps, ...customProps } as T;
+      if (children) {
+        wrappedProps = { ...wrappedProps, children };
+      }
+
+      return (
         <ErrorBoundary>
           <ElementProvider
             id={id}
@@ -60,29 +63,22 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
             elementState={internalProps.elementState}
             setElementState={internalProps.setElementState}
           >
-            <WrappedComponent
-              {...(internalProps.attributes as T)}
-              {...(props.extraProps as T)}
-              {...customProps}
-              children={children}
-              ref={ref}
-            />
+            <WrappedComponent {...wrappedProps} ref={ref} />
           </ElementProvider>
         </ErrorBoundary>
-      ),
-      [
-        id,
-        rootId,
-        props.className,
-        props.extraProps,
-        internalProps.attributes,
-        internalProps.definition,
-        internalProps.elementState,
-        internalProps.setElementState,
-        customProps,
-        children
-      ]
-    );
+      );
+    }, [
+      id,
+      rootId,
+      props.className,
+      props.extraProps,
+      internalProps.attributes,
+      internalProps.definition,
+      internalProps.elementState,
+      internalProps.setElementState,
+      customProps,
+      children
+    ]);
   };
 
   WithElementComponent.displayName = WrappedComponent.displayName || WrappedComponent.name;
