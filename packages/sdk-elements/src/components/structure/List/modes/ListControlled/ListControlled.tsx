@@ -6,20 +6,21 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ListControlledItem from './ListControlledItem';
+import useElement from '../../../../../Element/hooks/useElement';
 import RootElement from '../../../../../Element/RootElement';
 
-import type { SourceField, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListControlledProps<T = unknown> = {
   ref?: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalPropsSTG2;
   children: ReactNode;
   items: T[];
 };
 
-const ListControlled = ({ ref, className = '', internalProps, children, items = [] }: ListControlledProps) => {
+const ListControlled = ({ ref, className = '', children, items = [] }: ListControlledProps) => {
+  const internalProps = useElement();
   const { id } = internalProps;
   const {
     settings: { previewMode },
@@ -45,10 +46,7 @@ const ListControlled = ({ ref, className = '', internalProps, children, items = 
 
   const listContextValue = useMemo(() => ({ items: finalItems }), [finalItems]);
 
-  const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `List - ${id}`) as string,
-    [id, internalProps]
-  );
+  const sourceName = useMemo(() => get(internalProps, 'definition.label', `List - ${id}`), [id, internalProps]);
 
   const [ListContext, listContextId] = useDataSource({
     id,

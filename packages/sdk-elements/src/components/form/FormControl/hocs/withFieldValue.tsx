@@ -5,13 +5,13 @@ import { useCallback, use, useMemo, useEffect } from 'react';
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import useElement from '../../../../Element/hooks/useElement';
+
 import type { FieldValue } from '../../Form/Form';
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ChangeEvent, FC, RefObject } from 'react';
 
 export type WithFieldValueProps<T> = {
   ref: RefObject<HTMLElement>;
-  internalProps: InternalPropsSTG2;
   name: string;
   defaultValue?: string;
   subType:
@@ -31,16 +31,8 @@ export type WithFieldValueProps<T> = {
 
 const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
   const WithFieldValueComponent = (props: WithFieldValueProps<T>) => {
-    const {
-      ref,
-      internalProps,
-      name = '',
-      subType = 'text',
-      defaultValue = '',
-      required = true,
-      previewError = false
-    } = props;
-    const { id } = internalProps;
+    const { id } = useElement();
+    const { ref, name = '', subType = 'text', defaultValue = '', required = true, previewError = false } = props;
     const {
       settings: { previewMode },
       contexts: { DataSourceContext }

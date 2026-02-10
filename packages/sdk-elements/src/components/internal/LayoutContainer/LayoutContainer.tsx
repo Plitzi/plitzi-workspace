@@ -6,20 +6,20 @@ import { useCallback, useEffect } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type LayoutContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
 };
 
-const LayoutContainer = ({ ref, className = '', internalProps, children, subType = 'div' }: LayoutContainerProps) => {
+const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
+  const internalProps = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

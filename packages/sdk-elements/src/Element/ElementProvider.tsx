@@ -1,27 +1,41 @@
 import { createContext, useMemo } from 'react';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, ElementLayoutType } from '@plitzi/sdk-shared';
 import type { CSSProperties, ReactNode } from 'react';
 
-export type ElementContextValue = { id: string; rootId?: string } & (
-  | { plitziJsxSkipHOC: true }
-  | {
-      plitziJsxSkipHOC?: false;
-      className?: string;
-      attributes: Element['attributes'];
-      definition: Element['definition'];
-      elementState: Record<string, unknown>;
-      style?: CSSProperties;
-      setElementState: <T extends Record<string, unknown> = Record<string, unknown>>(
-        value?: T | ((prev: T) => T)
-      ) => boolean;
-    }
-);
+export type ElementContextValue = {
+  id: string;
+  rootId?: string;
+  plitziElementLayout?: {
+    bodyChildren: ReactNode;
+    containerId: string;
+    referenceId: string;
+    rootId: string;
+    type: ElementLayoutType;
+  };
+  attributes: Element['attributes'];
+  definition: Element['definition'];
+  elementState: Record<string, unknown>;
+  style?: CSSProperties;
+  setElementState: <T extends Record<string, unknown> = Record<string, unknown>>(
+    value?: T | ((prev: T) => T)
+  ) => boolean;
+};
 
 const elementContextDefaultValue = {} as ElementContextValue;
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const ElementContext = createContext<ElementContextValue>(elementContextDefaultValue);
+
+export type ElementInternalContextValue = { id: string; rootId?: string } & (
+  | { plitziJsxSkipHOC: true }
+  | { plitziJsxSkipHOC?: false; className?: string }
+);
+
+const elementInternalContextDefaultValue = {} as ElementInternalContextValue;
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const ElementInternalContext = createContext<ElementInternalContextValue>(elementInternalContextDefaultValue);
 
 export type ElementProviderProps = {
   children: ReactNode;
@@ -36,7 +50,7 @@ export type ElementProviderProps = {
   setElementState?: <T extends Record<string, unknown> = Record<string, unknown>>(
     value?: T | ((prev: T) => T)
   ) => boolean;
-} & ElementContextValue;
+};
 
 const ElementProvider = ({
   children,
@@ -52,23 +66,32 @@ const ElementProvider = ({
 }: ElementProviderProps) => {
   const value = useMemo<ElementContextValue>(() => {
     if (plitziJsxSkipHOC) {
-      return { id, rootId, plitziJsxSkipHOC } as ElementContextValue;
+      return {} as ElementContextValue;
     }
 
     return {
-      className,
       id,
       rootId,
-      plitziJsxSkipHOC,
-      attributes,
-      definition,
+      attributes: attributes as Element['attributes'],
+      definition: definition as Element['definition'],
       style,
       elementState,
-      setElementState
-    } as ElementContextValue;
-  }, [plitziJsxSkipHOC, className, id, rootId, attributes, definition, style, elementState, setElementState]);
+      setElementState: setElementState as Exclude<typeof setElementState, undefined>
+    };
+  }, [attributes, definition, elementState, id, plitziJsxSkipHOC, rootId, setElementState, style]);
+  const valueInternal = useMemo<ElementInternalContextValue>(() => {
+    if (plitziJsxSkipHOC) {
+      return { id, rootId, plitziJsxSkipHOC };
+    }
 
-  return <ElementContext value={value}>{children}</ElementContext>;
+    return { id, rootId, className, plitziJsxSkipHOC };
+  }, [plitziJsxSkipHOC, id, rootId, className]);
+
+  return (
+    <ElementInternalContext value={valueInternal}>
+      <ElementContext value={value}>{children}</ElementContext>
+    </ElementInternalContext>
+  );
 };
 
 export default ElementProvider;

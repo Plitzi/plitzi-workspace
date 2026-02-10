@@ -7,14 +7,14 @@ import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import { ElementContext } from './ElementProvider';
+import { ElementContext, ElementInternalContext } from './ElementProvider';
 import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
 import parseStyle from './helpers/parseStyle';
 import useElementDataSource from './hooks/useElementDataSource';
 import useElementInteractions from './hooks/useElementInteractions';
 import useInternalClassName from './hooks/useInternalClassName';
 
-import type { ElementContextValue } from './ElementProvider';
+import type { ElementInternalContextValue } from './ElementProvider';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
@@ -41,17 +41,17 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 }: RootElementProps<T>) => {
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
-  const elementContext = use(ElementContext);
-  const { id, rootId } = elementContext;
+  const elementInternalContext = use(ElementInternalContext);
+  const { id, rootId } = elementInternalContext;
   if (!Tag) {
     throw new Error(`One of these parameters [tag] is missing in elementId: ${id}`);
   }
 
-  if (!(elementContext as ElementContextValue | undefined)) {
+  if (!(elementInternalContext as ElementInternalContextValue | undefined)) {
     throw new Error('This element can be rendered only under withElement HOC');
   }
 
-  if (elementContext.plitziJsxSkipHOC) {
+  if (elementInternalContext.plitziJsxSkipHOC) {
     return (
       <Tag ref={ref} style={styleParsed} className={className} {...otherProps}>
         {children}
@@ -65,14 +65,14 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const baseElementId = get(plitziContextData, 'root.baseElementId') as string;
 
   const {
-    className: classNameInternalProp,
     attributes,
     definition,
     definition: { interactions, type, label },
     elementState,
     setElementState,
     style
-  } = elementContext;
+  } = use(ElementContext);
+  const { className: classNameInternalProp } = elementInternalContext;
   const params = useMemo<Record<string, string | undefined | boolean>>(() => {
     if (!debugMode && (previewMode || !type || rootId !== baseElementId)) {
       return {} as Record<string, string>;

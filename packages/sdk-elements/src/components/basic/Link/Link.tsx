@@ -7,14 +7,13 @@ import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   className?: string;
   href?: string;
@@ -22,15 +21,8 @@ export type LinkProps = {
   mode?: 'page' | 'internal' | 'external';
 };
 
-const Link = ({
-  ref,
-  internalProps,
-  children,
-  className = '',
-  href = '#',
-  target = 'self',
-  mode = 'page'
-}: LinkProps) => {
+const Link = ({ ref, children, className = '', href = '#', target = 'self', mode = 'page' }: LinkProps) => {
+  const { style } = useElement();
   const {
     settings: { previewMode },
     contexts: { NavigationContext, SchemaContext }
@@ -39,7 +31,6 @@ const Link = ({
   const {
     schema: { flat, pageFolders }
   } = use(SchemaContext);
-  const { style } = internalProps;
 
   const url = useMemo(() => {
     if (mode === 'external') {

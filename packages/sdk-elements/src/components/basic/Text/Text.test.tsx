@@ -3,12 +3,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-import Text from './Text';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Text } from './Text';
 
 describe('Text Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<Text internalProps={defaultInternalProps} />);
+    const { baseElement } = render(<Text />);
 
     expect(baseElement).toBeTruthy();
   });

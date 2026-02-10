@@ -3,12 +3,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-import Video from './Video';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Video } from './Video';
 
 describe('Video Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<Video internalProps={defaultInternalProps} />);
+    const { baseElement } = render(<Video />);
 
     expect(baseElement).toBeTruthy();
   });

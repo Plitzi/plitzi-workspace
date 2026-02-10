@@ -1,13 +1,13 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ElementProvider from '../ElementProvider';
-import useElement from '../hooks/useElement';
+import useElementInternal from '../hooks/useElementInternal';
 
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
@@ -22,21 +22,30 @@ export type WithElementProps<T> = {
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const WithElementComponent = (props: WithElementProps<T>) => {
-    const internalPropsProp = useValueMemo(props.internalProps);
     const ref = useRef<HTMLElement>(undefined);
-    const { id, rootId } = internalPropsProp;
+    const { id, rootId } = props.internalProps;
     if (props.plitziJsxSkipHOC) {
       return useMemo(
         () => (
           <ElementProvider id={id} rootId={rootId} plitziJsxSkipHOC>
-            <WrappedComponent {...props} internalProps={internalPropsProp} />
+            <WrappedComponent {...props} internalProps={props.internalProps} />
           </ElementProvider>
         ),
-        [id, internalPropsProp, props, rootId]
+        [id, props, rootId]
       );
     }
 
-    const { internalProps, children } = useElement(internalPropsProp, { children: props.children });
+    const {
+      settings: { previewMode },
+      root: { baseElementId }
+    } = usePlitziServiceContext();
+    const { internalProps, customProps, children } = useElementInternal({
+      internalProps: props.internalProps,
+      children: props.children,
+      previewMode,
+      baseElementId
+    });
+
     const eventCallbacks = useMemo(
       () => ({ [`${internalProps.id}_setState`]: internalProps.setElementState }),
       [internalProps.id, internalProps.setElementState]
@@ -47,8 +56,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       () => (
         <ErrorBoundary>
           <ElementProvider
-            id={internalPropsProp.id}
-            rootId={internalPropsProp.rootId}
+            id={id}
+            rootId={rootId}
             className={props.className}
             attributes={internalProps.attributes}
             definition={internalProps.definition}
@@ -58,15 +67,25 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
             <WrappedComponent
               {...(internalProps.attributes as T)}
               {...(props.extraProps as T)}
+              {...customProps}
               children={children}
-              // Plitzi
               ref={ref}
-              internalProps={internalProps}
             />
           </ElementProvider>
         </ErrorBoundary>
       ),
-      [internalPropsProp.id, internalPropsProp.rootId, props.className, props.extraProps, internalProps, children]
+      [
+        id,
+        rootId,
+        props.className,
+        props.extraProps,
+        internalProps.attributes,
+        internalProps.definition,
+        internalProps.elementState,
+        internalProps.setElementState,
+        customProps,
+        children
+      ]
     );
   };
 

@@ -1,5 +1,4 @@
-import Loading from './Loading';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Loading } from './Loading';
 
 import type { Meta, StoryObj } from '@storybook/react';
 
@@ -19,8 +18,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-  args: {
-    internalProps: defaultInternalProps
-  },
+  args: {},
   render: args => <Loading {...args} />
 };

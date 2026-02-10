@@ -13,16 +13,15 @@ import Input from './inputs/Input';
 import Select from './inputs/Select';
 import Textarea from './inputs/Textarea';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { FormContextValue } from '../Form';
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ChangeEvent, RefObject } from 'react';
 
 export type FormControlProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalPropsSTG2;
   subType: 'text' | 'number' | 'email' | 'password' | 'time' | 'checkbox' | 'switch' | 'select' | 'textarea' | 'hidden';
   name: string;
   label: string;
@@ -43,7 +42,6 @@ export type FormControlProps = {
 const FormControl = ({
   ref,
   className = '',
-  internalProps,
   subType = 'text',
   name = '',
   label = 'Label',
@@ -59,6 +57,7 @@ const FormControl = ({
   handleChange,
   handleValidate
 }: FormControlProps) => {
+  const internalProps = useElement();
   const {
     id,
     rootId,

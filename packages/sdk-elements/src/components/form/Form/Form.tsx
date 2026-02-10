@@ -10,21 +10,16 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type {
-  SourceField,
-  InternalPropsSTG2,
-  InteractionBaseCallback,
-  InteractionCallbackParamValues
-} from '@plitzi/sdk-shared';
+import type { SourceField, InteractionBaseCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject, SyntheticEvent } from 'react';
 
 export type FormProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalPropsSTG2;
   children: ReactNode;
   method: 'get' | 'post';
   actionUrl: string;
@@ -50,7 +45,6 @@ export type FormContextValue = {
 const Form = ({
   ref,
   className = '',
-  internalProps,
   children,
   method = 'get',
   actionUrl = '',
@@ -58,6 +52,7 @@ const Form = ({
   errors = emptyObject,
   values = emptyObject
 }: FormProps) => {
+  const internalProps = useElement();
   const [fields, setFields] = useState<Record<string, SourceField>>({});
   const { id, setElementState } = internalProps;
   const {
@@ -170,14 +165,7 @@ const Form = ({
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );
   const sourceName = useMemo(() => get(internalProps, 'definition.label', `Form - ${id}`), [id, internalProps]);
-
-  const [FormContext] = useDataSource({
-    id,
-    source: 'form',
-    mode: 'write',
-    name: sourceName as string,
-    fields: sourceFields
-  });
+  const [FormContext] = useDataSource({ id, source: 'form', mode: 'write', name: sourceName, fields: sourceFields });
 
   // Interactions Triggers
 
@@ -253,7 +241,7 @@ const Form = ({
   );
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Form') as string;
+    const label = get(internalProps, 'definition.label', 'Form');
 
     return {
       performReset: {

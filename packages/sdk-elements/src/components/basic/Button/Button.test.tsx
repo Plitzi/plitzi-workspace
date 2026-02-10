@@ -3,12 +3,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-import Button from './Button';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Button } from './Button';
 
 describe('Button Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<Button internalProps={defaultInternalProps} />);
+    const { baseElement } = render(<Button />);
 
     expect(baseElement).toBeTruthy();
   });

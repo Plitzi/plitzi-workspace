@@ -1,4 +1,4 @@
-// import CollectionContainer from './CollectionContainer';
+// import {CollectionContainer} from './CollectionContainer';
 
 // import type { Meta, StoryObj } from '@storybook/react';
 

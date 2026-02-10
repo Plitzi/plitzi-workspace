@@ -4,32 +4,22 @@ import ListBasic from './modes/ListBasic';
 import ListControlled from './modes/ListControlled';
 import withElement from '../../../Element/hocs/withElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListProps<T = unknown> = {
   ref?: RefObject<HTMLElement>;
   className?: string;
   subType?: 'ul' | 'ol';
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   items?: T[];
   source?: 'none' | 'controlled';
 };
 
-const List = ({
-  ref,
-  className = '',
-  subType = 'ul',
-  internalProps,
-  children,
-  items = [],
-  source = 'none'
-}: ListProps) => {
+const List = ({ ref, className = '', subType = 'ul', children, items = [], source = 'none' }: ListProps) => {
   switch (source) {
     case 'controlled':
       return (
-        <ListControlled ref={ref} className={className} internalProps={internalProps} items={items}>
+        <ListControlled ref={ref} className={className} items={items}>
           {children}
         </ListControlled>
       );

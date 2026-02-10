@@ -7,21 +7,16 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type {
-  SourceField,
-  InternalPropsSTG2,
-  InteractionBaseCallback,
-  InteractionCallbackParamValues
-} from '@plitzi/sdk-shared';
+import type { SourceField, InteractionBaseCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type DialogContainerProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalPropsSTG2;
   children: ReactNode;
   headerLabel: string;
   acceptButtonLabel: string;
@@ -33,7 +28,6 @@ export type DialogContainerProps = {
 const DialogContainer = ({
   ref,
   className = '',
-  internalProps,
   children,
   headerLabel = 'Dialog Header',
   acceptButtonLabel = 'Accept',
@@ -41,6 +35,7 @@ const DialogContainer = ({
   rejectButtonLabel = 'Cancel',
   autoHideAfterClick = true
 }: DialogContainerProps) => {
+  const internalProps = useElement();
   const {
     id,
     setElementState,
@@ -145,7 +140,7 @@ const DialogContainer = ({
   );
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Modal') as string;
+    const label = get(internalProps, 'definition.label', 'Modal');
 
     return {
       openDialog: {
@@ -188,10 +183,7 @@ const DialogContainer = ({
     }, []);
   }, [internalMetadata]);
 
-  const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Dialog - ${id}`) as string,
-    [id, internalProps]
-  );
+  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Dialog - ${id}`), [id, internalProps]);
 
   const [DialogContianerContext] = useDataSource({
     id,

@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
-import Custom from './Custom';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Custom } from './Custom';
 
 import type { ComponentContextValue } from '@plitzi/sdk-shared';
 import type { Meta, StoryObj } from '@storybook/react';
@@ -24,9 +23,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-  args: {
-    internalProps: defaultInternalProps
-  },
+  args: {},
   render: function Render(args) {
     const value = useMemo(() => ({}), []);
 

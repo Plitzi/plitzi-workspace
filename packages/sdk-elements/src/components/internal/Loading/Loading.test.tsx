@@ -3,12 +3,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-import Loading from './Loading';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Loading } from './Loading';
 
 describe('Loading Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<Loading internalProps={defaultInternalProps} />);
+    const { baseElement } = render(<Loading />);
 
     expect(baseElement).toBeTruthy();
   });

@@ -3,14 +3,14 @@ import omit from 'lodash-es/omit.js';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { ComponentPlugin, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps: InternalPropsSTG2;
   className?: string;
   props?: string;
   contentCache?: string;
@@ -18,12 +18,12 @@ export type BlockJsxProps = {
 
 const BlockJsx = ({
   ref,
-  internalProps,
   className = '',
   props: componentProps = '{}',
   contentCache = '',
   ...otherProps
 }: BlockJsxProps) => {
+  const internalProps = useElement();
   const [JsxModule, setJsxModule] = useState<{ default: ComponentPlugin<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
   const internalPropsTruncated = useMemo<InternalPropsSTG1>(() => {

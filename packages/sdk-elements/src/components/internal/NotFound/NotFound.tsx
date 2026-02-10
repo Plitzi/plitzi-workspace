@@ -1,24 +1,24 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { use } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type NotFoundProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
 };
 
-const NotFound = ({ ref, className = '', internalProps }: NotFoundProps) => {
-  const label = get(internalProps, 'definition.label') as string;
+const NotFound = ({ ref, className = '' }: NotFoundProps) => {
+  const {
+    definition: { label }
+  } = useElement();
   const {
     settings: { previewMode },
     contexts: { ComponentContext }

@@ -8,16 +8,16 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import useCollectionContext from './hooks/useCollectionContext';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { InteractionBaseCallback, InternalPropsSTG2, SourceField } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type CollectionContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
   source?: string;
   children?: ReactNode;
   limit?: string;
@@ -28,13 +28,13 @@ export type CollectionContainerProps = {
 const CollectionContainer = ({
   ref,
   className = '',
-  internalProps,
   source = '',
   children,
   limit = '10',
   query,
   singleRecord = false
 }: CollectionContainerProps) => {
+  const internalProps = useElement();
   const { id } = internalProps;
   const {
     settings: { previewMode },
@@ -64,7 +64,7 @@ const CollectionContainer = ({
   }, [collection, singleRecord]);
 
   const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Collection - ${collection?.name || id}`) as string,
+    () => get(internalProps, 'definition.label', `Collection - ${collection?.name || id}`),
     [internalProps, collection?.name, id]
   );
 
@@ -77,7 +77,7 @@ const CollectionContainer = ({
   });
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Collection Container') as string;
+    const label = get(internalProps, 'definition.label', 'Collection Container');
 
     return {
       performQuery: {

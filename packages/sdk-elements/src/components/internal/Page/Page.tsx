@@ -6,10 +6,11 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
@@ -20,7 +21,6 @@ export type PageProps = {
   className?: string;
   layout?: string;
   layoutContainer?: string;
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
 };
 
@@ -32,10 +32,9 @@ const Page = ({
   className = '',
   layout = '',
   layoutContainer = '',
-  internalProps,
   children
 }: PageProps) => {
-  const { id } = internalProps;
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }

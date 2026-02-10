@@ -6,15 +6,14 @@ import { useMemo } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ButtonProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   contentPlacement?: 'before' | 'after';
   content?: string;
@@ -25,13 +24,13 @@ export type ButtonProps = {
 const Button = ({
   ref,
   className = '',
-  internalProps,
   children,
   contentPlacement = 'after',
   content = 'Button',
   subType = 'button',
   disabled = false
 }: ButtonProps) => {
+  const internalProps = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -40,7 +39,7 @@ const Button = ({
       return content;
     }
 
-    return get(internalProps, 'definition.label', '') as string;
+    return get(internalProps, 'definition.label', '');
   }, [content, internalProps]);
 
   return (

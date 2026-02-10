@@ -10,17 +10,17 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import useApi from './hooks/useApi';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InternalPropsSTG2, InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { SourceField, InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ApiContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   query?: string;
   method?: 'get' | 'post' | 'put' | 'delete' | 'patch';
@@ -35,7 +35,6 @@ export type ApiContainerProps = {
 const ApiContainer = ({
   ref,
   className = '',
-  internalProps,
   children,
   query = '',
   method = 'get',
@@ -46,6 +45,7 @@ const ApiContainer = ({
   subType = 'div',
   credentials = 'same-origin'
 }: ApiContainerProps) => {
+  const internalProps = useElement();
   const { id } = internalProps;
   const {
     settings: { previewMode, debugMode },
@@ -141,10 +141,7 @@ const ApiContainer = ({
     [data]
   );
 
-  const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Api - ${id}`) as string,
-    [id, internalProps]
-  );
+  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Api - ${id}`), [id, internalProps]);
 
   const [ApiContainerContext] = useDataSource({
     id,
@@ -155,7 +152,7 @@ const ApiContainer = ({
   });
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Api Container') as string;
+    const label = get(internalProps, 'definition.label', 'Api Container');
 
     return {
       performQuery: {

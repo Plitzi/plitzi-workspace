@@ -1,5 +1,4 @@
-import Page from './Page';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Page } from './Page';
 
 import type { Meta, StoryObj } from '@storybook/react';
 
@@ -19,8 +18,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-  args: {
-    internalProps: defaultInternalProps
-  },
+  args: {},
   render: args => <Page {...args} />
 };

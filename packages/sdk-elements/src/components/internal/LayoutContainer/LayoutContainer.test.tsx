@@ -3,12 +3,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-import LayoutContainer from './LayoutContainer';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { LayoutContainer } from './LayoutContainer';
 
 describe('LayoutContainer Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<LayoutContainer internalProps={defaultInternalProps} />);
+    const { baseElement } = render(<LayoutContainer />);
 
     expect(baseElement).toBeTruthy();
   });

@@ -1,12 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
 
 import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
-import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type { Dispatch, RefObject, SetStateAction, ReactNode } from 'react';
 
 type InternalPropsSubProps = {
   tabSelected?: number;
@@ -19,7 +19,7 @@ export type TabContainerItemProps = {
   ref: RefObject<HTMLElement>;
   className: string;
   internalProps: InternalPropsSTG2<InternalPropsSubProps>;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 const TabContainerItem = ({ className = '', internalProps, children, ref }: TabContainerItemProps) => {

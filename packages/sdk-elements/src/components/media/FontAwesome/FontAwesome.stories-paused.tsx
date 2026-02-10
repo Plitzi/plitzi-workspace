@@ -1,4 +1,4 @@
-// import FontAwesome from './FontAwesome';
+// import {FontAwesome} from './FontAwesome';
 
 // import type { Meta, StoryObj } from '@storybook/react';
 

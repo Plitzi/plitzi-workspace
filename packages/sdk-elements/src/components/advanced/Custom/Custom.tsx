@@ -6,16 +6,16 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
-import type { Asset, ComponentPlugin, Element, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Asset, ComponentPlugin, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
   renderType?: string;
   settings?: string;
   isPlugin?: boolean;
@@ -27,7 +27,6 @@ export type CustomProps = {
 const Custom = ({
   ref,
   className = '',
-  internalProps,
   renderType = '',
   settings = '{}',
   isPlugin = false,
@@ -35,6 +34,7 @@ const Custom = ({
   assets = '',
   scriptUrl = ''
 }: CustomProps) => {
+  const internalProps = useElement();
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();

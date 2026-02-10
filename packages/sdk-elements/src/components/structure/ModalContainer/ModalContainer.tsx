@@ -7,26 +7,16 @@ import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type {
-  SourceField,
-  InternalPropsSTG2,
-  InteractionCallbackParamValues,
-  InteractionBaseCallback
-} from '@plitzi/sdk-shared';
+import type { SourceField, InteractionCallbackParamValues, InteractionBaseCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
-
-type InternalPropsSubProps = {
-  setElementState: (params: { key: string; value: boolean }) => void;
-  styleSelectors: Record<string, string>;
-};
 
 export type ModalContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   children?: ReactNode;
   title?: string;
   autoHideAfterClick?: boolean;
@@ -35,11 +25,11 @@ export type ModalContainerProps = {
 const ModalContainer = ({
   ref,
   className = '',
-  internalProps,
   children,
   title = 'Modal Header',
   autoHideAfterClick = true
 }: ModalContainerProps) => {
+  const internalProps = useElement();
   const {
     id,
     definition: { styleSelectors },

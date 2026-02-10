@@ -6,20 +6,20 @@ import { useMemo, use, useCallback } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type HeadingProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps: InternalPropsSTG2;
   className?: string;
   content?: string;
   subType?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 };
 
-const Heading = ({ ref, internalProps, className = '', content = 'Heading', subType = 'h1' }: HeadingProps) => {
+const Heading = ({ ref, className = '', content = 'Heading', subType = 'h1' }: HeadingProps) => {
+  const internalProps = useElement();
   const {
     settings: { previewMode },
     contexts: { BuilderContext }

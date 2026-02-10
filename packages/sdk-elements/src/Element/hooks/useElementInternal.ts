@@ -1,13 +1,18 @@
+import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import get from 'lodash-es/get';
 import omit from 'lodash-es/omit';
-import { useMemo } from 'react';
+import { use, useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
+import useInternalItems from './useInternalItems';
 
-import type { Element, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Element, InternalPropsSTG1, InternalPropsSTG2, Schema } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 // Methods
 
@@ -68,22 +73,56 @@ const getProps = (
   };
 };
 
-export type UseInternalProps = {
-  element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] };
+export type UseElementInternalProps = {
+  children?: ReactNode;
   internalProps: InternalPropsSTG1;
-  dataSource: Record<string, unknown>;
   previewMode?: boolean;
+  baseElementId?: string;
 };
 
-const useInternalProps = ({ element, internalProps, dataSource, previewMode = false }: UseInternalProps) => {
+const useElementInternal = ({
+  children,
+  internalProps,
+  previewMode = false,
+  baseElementId
+}: UseElementInternalProps) => {
+  const { prevSchema, schema } = use(SchemaContext);
+  const { id } = internalProps;
+  const element = useValueMemo<Element | undefined>(id ? schema.flat[id] : undefined);
+  if (!element) {
+    throw new Error(`Element ${id} not found, Page ${baseElementId}`);
+  }
+
   const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
-  const internalPropsParsed = useMemo<InternalPropsSTG2>(() => {
-    const internalPropsAux = getProps(element, internalProps, dataSource, state);
+  const dataSource = useElementDataSource({ id, bindings: element.definition.bindings });
 
-    return { ...internalPropsAux, setElementState };
-  }, [element, internalProps, dataSource, state, setElementState]);
+  const internalPropsParsed = useMemo<InternalPropsSTG2>(
+    () => ({ ...getProps(element, internalProps, dataSource, state), setElementState }),
+    [element, internalProps, dataSource, state, setElementState]
+  );
 
-  return { internalProps: internalPropsParsed, children: undefined };
+  return {
+    internalProps: internalPropsParsed,
+    customProps: omit(internalPropsParsed, [
+      'id',
+      'rootId',
+      'plitziElementLayout',
+      'attributes',
+      'definition',
+      'style',
+      'elementState',
+      'setElementState'
+    ]),
+    children: useInternalItems({
+      internalProps: internalPropsParsed,
+      schema,
+      children,
+      SchemaContext,
+      prevSchema,
+      newSchema: prevSchema as Schema,
+      previewMode
+    })
+  };
 };
 
-export default useInternalProps;
+export default useElementInternal;

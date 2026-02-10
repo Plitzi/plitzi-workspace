@@ -3,12 +3,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-import Paragraph from './Paragraph';
-import defaultInternalProps from '../../../Element/helpers/defaultInternalProps';
+import { Paragraph } from './Paragraph';
 
 describe('Paragraph Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<Paragraph internalProps={defaultInternalProps} />);
+    const { baseElement } = render(<Paragraph />);
 
     expect(baseElement).toBeTruthy();
   });

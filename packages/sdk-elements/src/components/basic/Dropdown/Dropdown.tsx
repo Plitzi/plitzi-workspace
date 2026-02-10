@@ -6,14 +6,14 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import useDropdown from './useDropdown';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG0, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG0 } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactElement, ReactNode, RefObject } from 'react';
 
 export type DropdownProps = {
   ref?: RefObject<HTMLDivElement | null>;
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   className?: string;
   popupPlacement?: 'left' | 'right' | 'top' | 'bottom';
@@ -28,7 +28,6 @@ export type DropdownProps = {
 
 const Dropdown = ({
   ref,
-  internalProps,
   children,
   className = '',
   popupPlacement = 'bottom',
@@ -40,6 +39,7 @@ const Dropdown = ({
   containerLeftOffset = 5,
   disabled = false
 }: DropdownProps) => {
+  const internalProps = useElement();
   const {
     setElementState,
     definition: { styleSelectors }

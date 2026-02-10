@@ -2,21 +2,20 @@
 import clsx from 'clsx';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type LoadingProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
 };
 
-const Loading = ({ ref, className = '', internalProps }: LoadingProps) => {
+const Loading = ({ ref, className = '' }: LoadingProps) => {
   const {
     definition: { label }
-  } = internalProps;
+  } = useElement();
 
   return (
     <RootElement ref={ref} className={clsx('plitzi-component__loading', className)}>
