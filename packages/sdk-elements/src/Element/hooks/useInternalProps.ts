@@ -53,7 +53,6 @@ const getProps = (
       ...definition,
       styleSelectors: { ...definition.styleSelectors, ...definition.initialState?.styleSelectors }
     },
-    interactions: get(definition, 'interactions', {}),
     styleSelectors: get(definition, 'styleSelectors', {}),
     style
   };

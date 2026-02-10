@@ -7,18 +7,17 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import App from '../../../../App';
 
-import type { Environment, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Environment } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type PlitziSdkProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps?: InternalPropsSTG2;
   className?: string;
   spaceKey?: string;
   environment?: Environment;
 };
 
-const PlitziSdk = ({ ref, internalProps, className, spaceKey, environment = 'main' }: PlitziSdkProps) => {
+const PlitziSdk = ({ ref, className, spaceKey, environment = 'main' }: PlitziSdkProps) => {
   const {
     settings: { previewMode },
     contexts: { NetworkContext }
@@ -28,7 +27,6 @@ const PlitziSdk = ({ ref, internalProps, className, spaceKey, environment = 'mai
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__plitzi-sdk', className, { 'with__plitzi-sdk': !previewMode })}
     >
       {spaceKey && (

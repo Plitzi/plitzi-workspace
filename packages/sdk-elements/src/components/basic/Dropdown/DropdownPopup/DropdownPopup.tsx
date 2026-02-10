@@ -29,7 +29,6 @@ const DropdownPopup = ({ ref, className = '', internalProps, children }: Dropdow
   return (
     <RootElement
       ref={popupRef}
-      internalProps={internalProps}
       className={clsx('plitzi-component__dropdown-popup', className, {
         'popup-container--no-visible': !openPopup || !parameters
       })}

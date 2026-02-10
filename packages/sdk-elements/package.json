@@ -22,6 +22,10 @@
       "types": "./dist/src/Component/ComponentProvider.d.ts",
       "import": "./dist/src/Component/ComponentProvider.mjs"
     },
+    "./Element/ElementProvider": {
+      "types": "./dist/src/Element/ElementProvider.d.ts",
+      "import": "./dist/src/Element/ElementProvider.mjs"
+    },
     "./Element/JsxManager": {
       "types": "./dist/src/Element/JsxManager.d.ts",
       "import": "./dist/src/Element/JsxManager.mjs"
@@ -42,9 +46,17 @@
       "types": "./dist/src/Element/RootElement.d.ts",
       "import": "./dist/src/Element/RootElement.mjs"
     },
+    "./Element/helpers/elementConstants": {
+      "types": "./dist/src/Element/helpers/elementConstants.d.ts",
+      "import": "./dist/src/Element/helpers/elementConstants.mjs"
+    },
     "./Element/helpers/elementUtils": {
       "types": "./dist/src/Element/helpers/elementUtils.d.ts",
       "import": "./dist/src/Element/helpers/elementUtils.mjs"
+    },
+    "./Element/helpers/getInteractions": {
+      "types": "./dist/src/Element/helpers/getInteractions.d.ts",
+      "import": "./dist/src/Element/helpers/getInteractions.mjs"
     },
     "./Element/helpers/parseStyle": {
       "types": "./dist/src/Element/helpers/parseStyle.d.ts",
@@ -62,9 +74,17 @@
       "types": "./dist/src/Element/hooks/useElement.d.ts",
       "import": "./dist/src/Element/hooks/useElement.mjs"
     },
+    "./Element/hooks/useElementInteractions": {
+      "types": "./dist/src/Element/hooks/useElementInteractions.d.ts",
+      "import": "./dist/src/Element/hooks/useElementInteractions.mjs"
+    },
     "./Element/hooks/useElementProps": {
       "types": "./dist/src/Element/hooks/useElementProps.d.ts",
       "import": "./dist/src/Element/hooks/useElementProps.mjs"
+    },
+    "./Element/hooks/useElementState": {
+      "types": "./dist/src/Element/hooks/useElementState.d.ts",
+      "import": "./dist/src/Element/hooks/useElementState.mjs"
     },
     "./Element/hooks/useInternalClassName": {
       "types": "./dist/src/Element/hooks/useInternalClassName.d.ts",
