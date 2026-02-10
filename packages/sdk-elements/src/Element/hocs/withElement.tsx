@@ -2,7 +2,6 @@
 
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import clsx from 'clsx';
 import { useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -37,11 +36,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       );
     }
 
-    const { internalProps, children, className } = useElement(internalPropsProp, {
-      children: props.children,
-      className: props.className
-    });
-
+    const { internalProps, children } = useElement(internalPropsProp, { children: props.children });
     const eventCallbacks = useMemo(
       () => ({ [`${internalProps.id}_setState`]: internalProps.setElementState }),
       [internalProps.id, internalProps.setElementState]
@@ -54,14 +49,15 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
           <ElementProvider
             id={internalPropsProp.id}
             rootId={internalPropsProp.rootId}
+            className={props.className}
             attributes={internalProps.attributes}
             definition={internalProps.definition}
+            elementState={internalProps.elementState}
             setElementState={internalProps.setElementState}
           >
             <WrappedComponent
               {...(internalProps.attributes as T)}
               {...(props.extraProps as T)}
-              className={clsx(className, internalProps.definition.styleSelectors.base)}
               children={children}
               // Plitzi
               ref={ref}
@@ -70,7 +66,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
           </ElementProvider>
         </ErrorBoundary>
       ),
-      [internalPropsProp.id, internalPropsProp.rootId, internalProps, props.extraProps, className, children]
+      [internalPropsProp.id, internalPropsProp.rootId, props.className, props.extraProps, internalProps, children]
     );
   };
 

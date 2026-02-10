@@ -1,19 +1,29 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 export type UseInternalClassNameProps = {
   className?: string;
-  internalProps: InternalPropsSTG2;
   previewMode?: boolean;
   baseElementId?: string;
+  id: string;
+  elementState: Record<string, unknown>;
+  definition: Element['definition'];
+  plitziElementLayout?: InternalPropsSTG1['plitziElementLayout'];
 };
 
-const useInternalClassName = ({ className, internalProps, previewMode, baseElementId }: UseInternalClassNameProps) => {
-  const { id, plitziElementLayout, definition, elementState } = internalProps;
+const useInternalClassName = ({
+  id,
+  className,
+  previewMode,
+  baseElementId,
+  plitziElementLayout,
+  definition,
+  elementState
+}: UseInternalClassNameProps) => {
   const { items } = definition;
-  const visibility = elementState.visibility;
+  const visibility = elementState.visibility as boolean | string;
 
   return useMemo(
     () =>

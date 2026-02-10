@@ -5,17 +5,13 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import useInternalClassName from './useInternalClassName';
 import useInternalItems from './useInternalItems';
 import useInternalProps from './useInternalProps';
 
 import type { Schema, InternalPropsSTG1, Element } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-const useElement = (
-  internalProps: InternalPropsSTG1,
-  { children, className }: { className?: string; children?: ReactNode }
-) => {
+const useElement = (internalProps: InternalPropsSTG1, { children }: { children?: ReactNode }) => {
   const {
     settings: { previewMode },
     root: { baseElementId }
@@ -51,8 +47,7 @@ const useElement = (
       prevSchema,
       newSchema: prevSchema as Schema,
       previewMode
-    }),
-    className: useInternalClassName({ className, internalProps: internalPropsParsed, previewMode, baseElementId })
+    })
   };
 };
 

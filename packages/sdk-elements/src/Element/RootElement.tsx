@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import get from 'lodash-es/get.js';
+import clsx from 'clsx';
+import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
@@ -10,6 +11,7 @@ import { ElementContext } from './ElementProvider';
 import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
 import parseStyle from './helpers/parseStyle';
 import useElementInteractions from './hooks/useElementInteractions';
+import useInternalClassName from './hooks/useInternalClassName';
 
 import type { ElementContextValue } from './ElementProvider';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
@@ -57,14 +59,16 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }
 
   const plitziContextData = usePlitziServiceContext();
-  const previewMode = get(plitziContextData, 'settings.previewMode', true);
+  const previewMode = get(plitziContextData, 'settings.previewMode', true) as boolean;
   const debugMode = get(plitziContextData, 'settings.debugMode', false);
-  const baseElementId = get(plitziContextData, 'root.baseElementId');
+  const baseElementId = get(plitziContextData, 'root.baseElementId') as string;
 
   const {
+    className: classNameInternalProp,
     attributes,
     definition,
     definition: { interactions, type, label },
+    elementState,
     setElementState,
     style
   } = elementContext;
@@ -179,11 +183,20 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     };
   }, [debugMode, dataSourceContextRef, id]);
 
+  const classNameInternal = useInternalClassName({
+    id,
+    className,
+    previewMode,
+    baseElementId,
+    definition,
+    elementState
+  });
+
   return (
     <Tag
       ref={ref}
       style={{ ...style, ...styleParsed }}
-      className={className}
+      className={clsx(classNameInternalProp, classNameInternal, definition.styleSelectors.base)}
       {...otherProps}
       {...params}
       {...eventsAttached}
