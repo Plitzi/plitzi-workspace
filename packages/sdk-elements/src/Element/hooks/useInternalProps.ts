@@ -14,9 +14,9 @@ import type { Element, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-
 const getProps = (
   element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] },
   internalProps: InternalPropsSTG1,
-  style: Record<string, string> = {} as Record<string, string>,
   dataSource = {} as Record<string, unknown>
 ) => {
+  let style = {} as Record<string, string>;
   let { attributes, definition } = element;
   const { rootId, plitziElementLayout } = internalProps;
   if (internalProps.attributes) {
@@ -53,7 +53,6 @@ const getProps = (
       ...definition,
       styleSelectors: { ...definition.styleSelectors, ...definition.initialState?.styleSelectors }
     },
-    styleSelectors: get(definition, 'styleSelectors', {}),
     style
   };
 };
@@ -63,14 +62,13 @@ export type UseInternalProps = {
   internalProps: InternalPropsSTG1;
   dataSource: Record<string, unknown>;
   previewMode?: boolean;
-  style?: Record<string, string>;
 };
 
-const useInternalProps = ({ element, internalProps, dataSource, previewMode = false, style }: UseInternalProps) => {
+const useInternalProps = ({ element, internalProps, dataSource, previewMode = false }: UseInternalProps) => {
   const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
 
   const internalPropsParsed = useMemo<InternalPropsSTG2>(() => {
-    const internalPropsAux = getProps(element, internalProps, style, dataSource);
+    const internalPropsAux = getProps(element, internalProps, dataSource);
     const { attributes, definition } = internalPropsAux;
 
     return {
@@ -80,7 +78,7 @@ const useInternalProps = ({ element, internalProps, dataSource, previewMode = fa
       elementState: { ...definition.initialState, ...state },
       setElementState
     };
-  }, [element, style, internalProps, dataSource, state, setElementState]);
+  }, [element, internalProps, dataSource, state, setElementState]);
 
   return { internalProps: internalPropsParsed, children: undefined, className: '' };
 };

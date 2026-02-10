@@ -41,7 +41,11 @@ const DialogContainer = ({
   rejectButtonLabel = 'Cancel',
   autoHideAfterClick = true
 }: DialogContainerProps) => {
-  const { id, setElementState, styleSelectors } = internalProps;
+  const {
+    id,
+    setElementState,
+    definition: { styleSelectors }
+  } = internalProps;
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();

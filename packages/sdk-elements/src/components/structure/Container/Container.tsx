@@ -24,16 +24,14 @@ export type ContainerProps = {
     | 'dt'
     | 'dd';
   children?: ReactNode;
-  style?: string;
 };
 
-const Container = ({ ref, className = '', subType = 'div', children, style }: ContainerProps) => {
+const Container = ({ ref, className = '', subType = 'div', children }: ContainerProps) => {
   return (
     <RootElement
       ref={ref}
       tag={subType}
       className={clsx(`plitzi-component__container plitzi-component__container-${subType}`, className)}
-      style={style}
     >
       {children}
     </RootElement>

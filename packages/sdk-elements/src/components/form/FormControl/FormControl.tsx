@@ -59,7 +59,11 @@ const FormControl = ({
   handleChange,
   handleValidate
 }: FormControlProps) => {
-  const { id, rootId, styleSelectors } = internalProps;
+  const {
+    id,
+    rootId,
+    definition: { styleSelectors }
+  } = internalProps;
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }

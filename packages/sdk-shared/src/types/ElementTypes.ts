@@ -1,4 +1,3 @@
-import type { InteractionBaseCallback } from './InteractionTypes';
 import type { Asset, PluginManifest, PluginSchema } from './PluginTypes';
 import type { Element } from './SchemaTypes';
 import type { CSSProperties, ReactNode } from 'react';
@@ -35,13 +34,10 @@ export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsEx
   definition: Element['definition'];
   attributes: Element['attributes'];
   elementState: Record<string, unknown>;
-  interactionsBasicCallbacks?: Record<string, InteractionBaseCallback>;
   setElementState: <T2 extends Record<string, unknown> = Record<string, unknown>>(
     value?: T2 | ((prev: T2) => T2)
   ) => boolean;
-  interactions?: Element['definition']['interactions'];
   style?: CSSProperties;
-  styleSelectors: Element['definition']['styleSelectors'];
 };
 
 export type ComponentDefinition = Pick<
