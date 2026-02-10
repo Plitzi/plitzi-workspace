@@ -3,11 +3,11 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { useMemo, useRef } from 'react';
 
-import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ElementProvider from '../ElementProvider';
 import useElementInternal from '../hooks/useElementInternal';
+// import useElementState from '../hooks/useElementState';
 
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
@@ -39,18 +39,14 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       settings: { previewMode },
       root: { baseElementId }
     } = usePlitziServiceContext();
+
     const { internalProps, customProps, children } = useElementInternal({
       internalProps: props.internalProps,
       children: props.children,
       previewMode,
       baseElementId
     });
-
-    const eventCallbacks = useMemo(
-      () => ({ [`${internalProps.id}_setState`]: internalProps.setElementState }),
-      [internalProps.id, internalProps.setElementState]
-    );
-    useEventBridge('element', eventCallbacks, {});
+    // const { state, setElementState } = useElementState({ bindings: internalProps.definition.bindings, previewMode });
 
     return useMemo(
       () => (

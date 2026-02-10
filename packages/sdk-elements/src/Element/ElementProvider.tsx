@@ -1,5 +1,7 @@
 import { createContext, useMemo } from 'react';
 
+import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+
 import type { Element, ElementLayoutType } from '@plitzi/sdk-shared';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -64,6 +66,9 @@ const ElementProvider = ({
   style,
   setElementState
 }: ElementProviderProps) => {
+  const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
+  useEventBridge('element', eventCallbacks, {});
+
   const value = useMemo<ElementContextValue>(() => {
     if (plitziJsxSkipHOC) {
       return {} as ElementContextValue;

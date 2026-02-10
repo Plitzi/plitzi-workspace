@@ -16,26 +16,23 @@ const useEventBridge = (
   const { eventBridge } = use(context);
 
   useEffect(() => {
-    if (disabled) {
+    if (disabled || !(eventBridge as EventBridge | undefined) || !(module as string)) {
       return;
     }
 
-    if (!(eventBridge as EventBridge | undefined) || !(module as string)) {
-      return undefined;
+    const entries = Object.entries(callbacks) as [EventBridgeEvent, EventBridgeCallback][];
+    for (const [event, handler] of entries) {
+      if (typeof handler === 'function') {
+        eventBridge.on(module, event, handler, params);
+      }
     }
 
-    (Object.keys(callbacks) as EventBridgeEvent[]).forEach(key => {
-      if (typeof callbacks[key] === 'function') {
-        eventBridge.on(module, key, callbacks[key], params);
-      }
-    });
-
     return () => {
-      (Object.keys(callbacks) as EventBridgeEvent[]).forEach(key => {
-        if (typeof callbacks[key] === 'function') {
-          eventBridge.off(module, key, callbacks[key]);
+      for (const [event, handler] of entries) {
+        if (typeof handler === 'function') {
+          eventBridge.off(module, event, handler);
         }
-      });
+      }
     };
   }, [module, callbacks, eventBridge, params, disabled]);
 
