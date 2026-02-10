@@ -90,7 +90,7 @@ const Link = ({
   }, [ref, style, target, className, previewMode, url]);
 
   return (
-    <RootElement tag="a" {...propsMemo} internalProps={internalProps} onClick={handleClick}>
+    <RootElement tag="a" {...propsMemo} onClick={handleClick}>
       {children}
     </RootElement>
   );

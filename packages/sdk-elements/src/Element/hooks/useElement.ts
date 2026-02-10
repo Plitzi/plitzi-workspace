@@ -1,14 +1,14 @@
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { use, useMemo } from 'react';
 
-import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import useInternalClassName from './useInternalClassName';
 import useInternalItems from './useInternalItems';
 import useInternalProps from './useInternalProps';
 
-import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type { Schema, InternalPropsSTG1, Element } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -18,10 +18,8 @@ const useElement = (
 ) => {
   const {
     settings: { previewMode },
-    root: { baseElementId },
-    contexts: { SchemaContext, DataSourceContext, EventBridgeContext }
+    root: { baseElementId }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext);
   const { prevSchema, schema } = use(SchemaContext);
   const { id } = internalProps;
   const element = useValueMemo<Element | undefined>(id ? schema.flat[id] : undefined);
@@ -42,12 +40,6 @@ const useElement = (
 
   const dataSource = useDataSource({ id, mode: 'read', sourceFilter });
   const { internalProps: internalPropsParsed } = useInternalProps({ element, internalProps, dataSource, previewMode });
-  const eventCallbacks = useMemo<Record<string, EventBridgeCallback>>(
-    () => ({ [`${id}_setState`]: internalPropsParsed.setElementState }),
-    [id, internalPropsParsed.setElementState]
-  );
-
-  useEventBridge('element', eventCallbacks, {}, EventBridgeContext);
 
   return {
     internalProps: internalPropsParsed,

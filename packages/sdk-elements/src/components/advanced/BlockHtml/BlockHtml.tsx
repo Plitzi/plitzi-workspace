@@ -7,17 +7,15 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockHtmlProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
   content?: string;
-  internalProps: InternalPropsSTG2;
 };
 
-const BlockHtml = ({ ref, content = '', className = '', internalProps }: BlockHtmlProps) => {
+const BlockHtml = ({ ref, content = '', className = '' }: BlockHtmlProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -97,7 +95,6 @@ const BlockHtml = ({ ref, content = '', className = '', internalProps }: BlockHt
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__block-html', className, {
         'block-html--empty': content === '' || !content
       })}

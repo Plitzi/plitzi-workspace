@@ -86,7 +86,6 @@ const BlockJsx = ({
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__block-jsx', className, {
         'block-jsx--empty': contentCache === '' || !contentCache || !JsxModule
       })}

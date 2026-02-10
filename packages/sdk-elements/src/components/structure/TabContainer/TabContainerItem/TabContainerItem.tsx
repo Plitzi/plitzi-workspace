@@ -36,7 +36,6 @@ const TabContainerItem = ({ className = '', internalProps, children, ref }: TabC
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       onClick={handleClick}
       className={clsx('plitzi-component__tab-container-item', className, {
         active: tabSelected === tabIndex

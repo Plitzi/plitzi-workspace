@@ -48,7 +48,6 @@ const Button = ({
       ref={ref}
       tag="button"
       type={previewMode ? subType : 'button'}
-      internalProps={internalProps}
       className={clsx('plitzi-component__button', className, {
         'container--empty--skip': !previewMode && !children && content
       })}

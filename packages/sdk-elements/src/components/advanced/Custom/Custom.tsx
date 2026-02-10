@@ -100,7 +100,7 @@ const Custom = ({
   }
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__custom', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__custom', className)}>
       {renderType && !settingsMalformed && (
         <span>
           Custom Component <b>{renderType}</b> Not Found

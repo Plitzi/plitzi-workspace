@@ -70,7 +70,6 @@ const FormControl = ({
     return (
       <RootElement
         ref={ref}
-        internalProps={internalProps}
         className={clsx('plitzi-component__form-input', { 'form-input--out-of-context': !previewMode }, className)}
       >
         <div>Form Input Only Works inside Form element</div>
@@ -100,7 +99,6 @@ const FormControl = ({
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx(
         'plitzi-component__form-control',
         { 'form-control--invalid': error && previewMode, [`plitzi-component__form-control-${subType}`]: subType },

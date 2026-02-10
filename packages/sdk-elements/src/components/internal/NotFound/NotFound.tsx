@@ -29,7 +29,7 @@ const NotFound = ({ ref, className = '', internalProps }: NotFoundProps) => {
   }
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__not-found', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__not-found', className)}>
       <span>
         {label && (
           <>

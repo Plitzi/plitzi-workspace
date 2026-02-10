@@ -46,7 +46,7 @@ const Text = ({ ref, content = 'Text', className = '', internalProps }: TextProp
   );
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__text', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__text', className)}>
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable

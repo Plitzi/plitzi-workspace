@@ -37,7 +37,7 @@ const List = ({
     case 'none':
     default:
       return (
-        <ListBasic ref={ref} className={className} internalProps={internalProps} subType={subType}>
+        <ListBasic ref={ref} className={className} subType={subType}>
           {children}
         </ListBasic>
       );

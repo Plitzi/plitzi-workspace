@@ -61,7 +61,6 @@ const ListControlled = ({ ref, className = '', internalProps, children, items = 
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__controlled-list', className, {
         'controlled-list--build-mode': !previewMode
       })}

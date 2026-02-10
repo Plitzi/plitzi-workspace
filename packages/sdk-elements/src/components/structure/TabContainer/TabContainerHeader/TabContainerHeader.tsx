@@ -43,11 +43,7 @@ const TabContainerHeader = ({ ref, className = '', internalProps, children }: Ta
   }, [children, onSelect, tabSelected]);
 
   return (
-    <RootElement
-      ref={ref}
-      internalProps={internalProps}
-      className={clsx('plitzi-component__tab-container-header', className)}
-    >
+    <RootElement ref={ref} className={clsx('plitzi-component__tab-container-header', className)}>
       {childrenParsed}
     </RootElement>
   );

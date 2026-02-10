@@ -19,7 +19,7 @@ const Loading = ({ ref, className = '', internalProps }: LoadingProps) => {
   } = internalProps;
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__loading', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__loading', className)}>
       <span>
         <b>{label}</b> Loading...
       </span>

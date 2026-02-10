@@ -5,17 +5,15 @@ import { useState, cloneElement, Children, useMemo, isValidElement } from 'react
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactElement, ReactNode, RefObject } from 'react';
 
 export type TabContainerProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
 };
 
-const TabContainer = ({ ref, className = '', internalProps, children }: TabContainerProps) => {
+const TabContainer = ({ ref, className = '', children }: TabContainerProps) => {
   const [tabSelected, setTabSelected] = useState(0);
 
   const { childrenParsed } = useMemo(() => {
@@ -29,7 +27,7 @@ const TabContainer = ({ ref, className = '', internalProps, children }: TabConta
       components.childrenParsed.push(
         cloneElement<Record<string, unknown>>(child as ReactElement<Record<string, unknown>>, {
           ...childProps,
-          internalProps: { ...(childProps.internalProps as InternalPropsSTG2), onSelect: setTabSelected, tabSelected }
+          internalProps: { onSelect: setTabSelected, tabSelected }
         })
       );
     });
@@ -38,7 +36,7 @@ const TabContainer = ({ ref, className = '', internalProps, children }: TabConta
   }, [children, tabSelected]);
 
   return (
-    <RootElement ref={ref} internalProps={internalProps} className={clsx('plitzi-component__tab-container', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__tab-container', className)}>
       {childrenParsed}
     </RootElement>
   );

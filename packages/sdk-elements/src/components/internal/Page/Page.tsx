@@ -84,7 +84,6 @@ const Page = ({
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__page', className)}
       interactionTriggers={interactionTriggers}
     >

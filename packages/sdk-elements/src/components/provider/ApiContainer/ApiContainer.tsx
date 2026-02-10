@@ -193,7 +193,6 @@ const ApiContainer = ({
     <RootElement
       ref={ref}
       tag={subType}
-      internalProps={internalProps}
       className={clsx('plitzi-component__api-container', className)}
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}

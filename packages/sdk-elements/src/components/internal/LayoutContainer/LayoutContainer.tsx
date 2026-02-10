@@ -70,12 +70,7 @@ const LayoutContainer = ({ ref, className = '', internalProps, children, subType
   }, [internalProps.plitziElementLayout, previewMode, ref, updateMask]);
 
   return (
-    <RootElement
-      ref={ref}
-      tag={subType}
-      internalProps={internalProps}
-      className={clsx('plitzi-component__layout-container', className)}
-    >
+    <RootElement ref={ref} tag={subType} className={clsx('plitzi-component__layout-container', className)}>
       {children}
     </RootElement>
   );

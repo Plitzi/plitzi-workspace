@@ -6,7 +6,6 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type VideoProps = {
@@ -17,7 +16,6 @@ export type VideoProps = {
   loop?: boolean;
   muted?: boolean;
   className?: string;
-  internalProps: InternalPropsSTG2;
 };
 
 const Video = ({
@@ -27,8 +25,7 @@ const Video = ({
   playsInline = false,
   loop = false,
   muted = true,
-  className = '',
-  internalProps
+  className = ''
 }: VideoProps) => {
   const {
     settings: { previewMode }
@@ -36,11 +33,7 @@ const Video = ({
 
   if (!previewMode) {
     return (
-      <RootElement
-        ref={ref}
-        internalProps={internalProps}
-        className={clsx('plitzi-component__video video--edit-mode', className)}
-      >
+      <RootElement ref={ref} className={clsx('plitzi-component__video video--edit-mode', className)}>
         <video src={src} autoPlay={autoPlay} playsInline={playsInline} loop={loop} muted={muted}>
           <track kind="captions" />
         </video>
@@ -53,7 +46,6 @@ const Video = ({
       tag="video"
       draggable={false}
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__video', className)}
       src={src}
       autoPlay={autoPlay}

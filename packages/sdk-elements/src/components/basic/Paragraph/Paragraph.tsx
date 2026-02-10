@@ -46,12 +46,7 @@ const Paragraph = ({ ref, content = 'Paragraph', className = '', internalProps }
   );
 
   return (
-    <RootElement
-      ref={ref}
-      tag={!previewMode ? 'div' : 'p'}
-      internalProps={internalProps}
-      className={clsx('plitzi-component__paragraph', className)}
-    >
+    <RootElement ref={ref} tag={!previewMode ? 'div' : 'p'} className={clsx('plitzi-component__paragraph', className)}>
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable className="" value={finalContent} onChange={handleChange} openMode="doubleClick" />

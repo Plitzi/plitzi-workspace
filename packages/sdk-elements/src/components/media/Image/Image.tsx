@@ -8,12 +8,10 @@ import { getFallbackSVGBase64 } from './ImageHelper';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject, SyntheticEvent } from 'react';
 
 export type ImageProps = {
   ref?: RefObject<HTMLElement>;
-  internalProps: InternalPropsSTG2;
   className?: string;
   src?: string;
   alt?: string;
@@ -25,7 +23,6 @@ const fallback = getFallbackSVGBase64();
 
 const Image = ({
   ref,
-  internalProps,
   className = '',
   src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
   alt = '',
@@ -43,11 +40,7 @@ const Image = ({
 
   if (!previewMode) {
     return (
-      <RootElement
-        ref={ref}
-        internalProps={internalProps}
-        className={clsx('plitzi-component__image image--edit-mode', className)}
-      >
+      <RootElement ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
         <img
           draggable={false}
           src={src}
@@ -65,7 +58,6 @@ const Image = ({
       tag="img"
       draggable={false}
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__image', className)}
       src={src}
       alt={alt}

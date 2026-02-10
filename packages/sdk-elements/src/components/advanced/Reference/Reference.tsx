@@ -175,7 +175,6 @@ const Reference = ({
     return (
       <RootElement
         ref={ref}
-        internalProps={internalProps}
         className={clsx('plitzi-component__reference', className, {
           'reference--build-mode': !previewMode
         })}
@@ -206,7 +205,6 @@ const Reference = ({
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__reference', className, {
         'reference--build-mode': !previewMode
       })}

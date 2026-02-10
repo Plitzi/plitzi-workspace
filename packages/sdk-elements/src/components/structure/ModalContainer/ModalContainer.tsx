@@ -155,7 +155,6 @@ const ModalContainer = ({
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__modal-container', className)}
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}

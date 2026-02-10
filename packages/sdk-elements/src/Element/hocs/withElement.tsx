@@ -5,6 +5,9 @@ import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import clsx from 'clsx';
 import { useMemo, useRef } from 'react';
 
+import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+
+import ElementProvider from '../ElementProvider';
 import useElement from '../hooks/useElement';
 
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
@@ -22,10 +25,15 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const WithElementComponent = (props: WithElementProps<T>) => {
     const internalPropsProp = useValueMemo(props.internalProps);
     const ref = useRef<HTMLElement>(undefined);
+    const { id, rootId } = internalPropsProp;
     if (props.plitziJsxSkipHOC) {
       return useMemo(
-        () => <WrappedComponent {...props} internalProps={{ plitziJsxSkipHOC: true, ...internalPropsProp }} />,
-        [internalPropsProp, props]
+        () => (
+          <ElementProvider id={id} rootId={rootId} plitziJsxSkipHOC>
+            <WrappedComponent {...props} internalProps={internalPropsProp} />
+          </ElementProvider>
+        ),
+        [id, internalPropsProp, props, rootId]
       );
     }
 
@@ -34,23 +42,35 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       className: props.className
     });
 
-    const { definition } = internalProps;
+    const eventCallbacks = useMemo(
+      () => ({ [`${internalProps.id}_setState`]: internalProps.setElementState }),
+      [internalProps.id, internalProps.setElementState]
+    );
+    useEventBridge('element', eventCallbacks, {});
 
     return useMemo(
       () => (
         <ErrorBoundary>
-          <WrappedComponent
-            {...(internalProps.attributes as T)}
-            {...(props.extraProps as T)}
-            className={clsx(className, definition.styleSelectors.base)}
-            // Plitzi
-            ref={ref}
-            internalProps={internalProps}
-            children={children}
-          />
+          <ElementProvider
+            id={internalPropsProp.id}
+            rootId={internalPropsProp.rootId}
+            attributes={internalProps.attributes}
+            definition={internalProps.definition}
+            setElementState={internalProps.setElementState}
+          >
+            <WrappedComponent
+              {...(internalProps.attributes as T)}
+              {...(props.extraProps as T)}
+              className={clsx(className, internalProps.definition.styleSelectors.base)}
+              children={children}
+              // Plitzi
+              ref={ref}
+              internalProps={internalProps}
+            />
+          </ElementProvider>
         </ErrorBoundary>
       ),
-      [internalProps, className, definition.styleSelectors.base, children, props.extraProps]
+      [internalPropsProp.id, internalPropsProp.rootId, internalProps, props.extraProps, className, children]
     );
   };
 

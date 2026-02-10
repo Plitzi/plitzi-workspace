@@ -4,7 +4,6 @@ import clsx from 'clsx';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ContainerProps = {
@@ -24,17 +23,15 @@ export type ContainerProps = {
     | 'dl'
     | 'dt'
     | 'dd';
-  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   style?: string;
 };
 
-const Container = ({ ref, className = '', subType = 'div', internalProps, children, style }: ContainerProps) => {
+const Container = ({ ref, className = '', subType = 'div', children, style }: ContainerProps) => {
   return (
     <RootElement
       ref={ref}
       tag={subType}
-      internalProps={internalProps}
       className={clsx(`plitzi-component__container plitzi-component__container-${subType}`, className)}
       style={style}
     >

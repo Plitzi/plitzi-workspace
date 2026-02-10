@@ -302,7 +302,6 @@ const Form = ({
     <RootElement
       tag="form"
       ref={ref}
-      internalProps={internalProps}
       method={method}
       className={clsx('plitzi-component__form', className)}
       interactionTriggers={interactionTriggers}

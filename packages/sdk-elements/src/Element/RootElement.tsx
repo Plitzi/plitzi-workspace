@@ -6,11 +6,14 @@ import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { ElementContext } from './ElementProvider';
 import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
 import parseStyle from './helpers/parseStyle';
+import useElementInteractions from './hooks/useElementInteractions';
 
+import type { ElementContextValue } from './ElementProvider';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback, InternalPropsSTG2, DataSourceContextValue } from '@plitzi/sdk-shared';
+import type { InteractionBaseCallback, DataSourceContextValue } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
@@ -20,7 +23,6 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   className?: string;
   interactionTriggers?: Record<string, InteractionBaseCallback>;
   interactionCallbacks?: Record<string, InteractionBaseCallback>;
-  internalProps?: InternalPropsSTG2;
   style?: string | CSSProperties;
 } & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref' | 'style'>;
 
@@ -31,17 +33,22 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   className = '',
   interactionTriggers,
   interactionCallbacks,
-  internalProps,
   style: styleProp,
   ...otherProps
 }: RootElementProps<T>) => {
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
-  if (!Tag || !internalProps) {
-    throw new Error(`One of these parameters [tag, internalProps] is missing in elementId: ${internalProps?.id}`);
+  const elementContext = use(ElementContext);
+  const { id, rootId } = elementContext;
+  if (!Tag) {
+    throw new Error(`One of these parameters [tag] is missing in elementId: ${id}`);
   }
 
-  if (internalProps.plitziJsxSkipHOC) {
+  if (!(elementContext as ElementContextValue | undefined)) {
+    throw new Error('This element can be rendered only under withElement HOC');
+  }
+
+  if (elementContext.plitziJsxSkipHOC) {
     return (
       <Tag ref={ref} style={styleParsed} className={className} {...otherProps}>
         {children}
@@ -53,20 +60,27 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const previewMode = get(plitziContextData, 'settings.previewMode', true);
   const debugMode = get(plitziContextData, 'settings.debugMode', false);
   const baseElementId = get(plitziContextData, 'root.baseElementId');
-  const { id, rootId, style, definition, interactions, interactionsBasicCallbacks } = internalProps;
+
+  const {
+    attributes,
+    definition,
+    definition: { interactions, type, label },
+    setElementState,
+    style
+  } = elementContext;
   const params = useMemo<Record<string, string | undefined | boolean>>(() => {
-    if (!debugMode && (previewMode || !definition.type || rootId !== baseElementId)) {
+    if (!debugMode && (previewMode || !type || rootId !== baseElementId)) {
       return {} as Record<string, string>;
     }
 
     return {
       'data-id': id,
-      'data-name': definition.label ? definition.label : definition.type ? definition.type : 'unknown',
+      'data-name': label ? label : type ? type : 'unknown',
       'data-root-id': rootId,
-      'data-type': definition.type ? definition.type : 'unknown',
+      'data-type': type ? type : 'unknown',
       'data-root-render-element': true
     };
-  }, [id, debugMode, previewMode, definition.type, definition.label, rootId, baseElementId]);
+  }, [debugMode, previewMode, rootId, baseElementId, id, label, type]);
 
   const InteractionsContext = get(plitziContextData, 'contexts.InteractionsContext');
   const DataSourceContext = get(plitziContextData, 'contexts.DataSourceContext');
@@ -132,39 +146,30 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 
   const { useDataSource } = use(DataSourceContext as Context<DataSourceContextValue>);
   const filterMode = useMemo(() => {
-    if (!debugMode && (!definition.interactions || !Object.keys(definition.interactions).length)) {
+    if (!debugMode && (!interactions || !Object.keys(interactions).length)) {
       return 'hard';
     }
 
     return 'soft';
-  }, [debugMode, definition.interactions]);
+  }, [debugMode, interactions]);
   const dataSource = useDataSource({ id, mode: 'read', filterMode });
   const dataSourceContextRef = useRef({});
   dataSourceContextRef.current = dataSource;
 
   const getAdditionalParams = useCallback(() => ({ dataSource: dataSourceContextRef.current }), [dataSourceContextRef]);
 
-  const interactionTriggersMemo = useMemo(
-    () => ({ ...interactionBasicTriggers, ...interactionTriggers }),
-    [interactionTriggers]
+  const triggers = useMemo(() => ({ ...interactionBasicTriggers, ...interactionTriggers }), [interactionTriggers]);
+  const basicCallbacks = useElementInteractions({ attributes, definition, setElementState });
+  const callbacks = useMemo(
+    () => ({ ...interactionCallbacks, ...basicCallbacks }),
+    [interactionCallbacks, basicCallbacks]
   );
 
-  const interactionCallbacksMemo = useMemo(
-    () => ({ ...interactionCallbacks, ...interactionsBasicCallbacks }),
-    [interactionCallbacks, interactionsBasicCallbacks]
-  );
-
-  useInteractions({
-    id,
-    interactions: internalProps.interactions,
-    triggers: interactionTriggersMemo,
-    callbacks: interactionCallbacksMemo,
-    getAdditionalParams
-  });
+  useInteractions({ id, interactions, triggers, callbacks, getAdditionalParams });
 
   useEffect(() => {
     if (!debugMode) {
-      return () => {};
+      return;
     }
 
     pConsole.addProviderMethod(`getElementDataSource-${id}`, () => dataSourceContextRef.current);

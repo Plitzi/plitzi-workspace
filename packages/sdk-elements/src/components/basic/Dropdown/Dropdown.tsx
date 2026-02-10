@@ -121,7 +121,6 @@ const Dropdown = ({
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       className={clsx('plitzi-component__dropdown', className, {
         'container--empty--skip': !previewMode && !children
       })}

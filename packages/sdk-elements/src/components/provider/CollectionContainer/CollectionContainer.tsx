@@ -98,7 +98,6 @@ const CollectionContainer = ({
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       interactionCallbacks={interactionCallbacks}
       className={clsx('plitzi-component__collection-container', className, {
         'collection-container--context-empty': !collection

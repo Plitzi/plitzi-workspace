@@ -43,11 +43,7 @@ const TabContainerBody = ({ ref, className = '', internalProps, children }: TabC
   }, [children, onSelect, tabSelected]);
 
   return (
-    <RootElement
-      ref={ref}
-      internalProps={internalProps}
-      className={clsx('plitzi-component__tab-container-body', className)}
-    >
+    <RootElement ref={ref} className={clsx('plitzi-component__tab-container-body', className)}>
       {childrenParsed}
     </RootElement>
   );

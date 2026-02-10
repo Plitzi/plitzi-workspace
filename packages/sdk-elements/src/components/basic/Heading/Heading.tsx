@@ -46,7 +46,6 @@ const Heading = ({ ref, internalProps, className = '', content = 'Heading', subT
   return (
     <RootElement
       ref={ref}
-      internalProps={internalProps}
       tag={!previewMode ? 'div' : subType}
       className={clsx('plitzi-component__heading', { [`plitzi-component__heading-${subType}`]: subType }, className)}
     >

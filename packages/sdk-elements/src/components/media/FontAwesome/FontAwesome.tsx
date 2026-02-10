@@ -6,13 +6,11 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type FontAwesomeProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  internalProps: InternalPropsSTG2;
   icon?: string;
   size?: string;
   iconAnimation?: string;
@@ -21,7 +19,6 @@ export type FontAwesomeProps = {
 const FontAwesome = ({
   ref,
   className = '',
-  internalProps,
   icon = 'fas fa-flag',
   size = 'fa-1x',
   iconAnimation = ''
@@ -32,11 +29,7 @@ const FontAwesome = ({
 
   if (!previewMode) {
     return (
-      <RootElement
-        ref={ref}
-        internalProps={internalProps}
-        className={clsx('plitzi-component__fontawesome fontawesome--edit-mode', className)}
-      >
+      <RootElement ref={ref} className={clsx('plitzi-component__fontawesome fontawesome--edit-mode', className)}>
         <i className={clsx(icon, size, iconAnimation)} />
       </RootElement>
     );
@@ -46,7 +39,6 @@ const FontAwesome = ({
     <RootElement
       ref={ref}
       tag="i"
-      internalProps={internalProps}
       className={clsx('plitzi-component__fontawesome', className, icon, size, iconAnimation)}
     />
   );
