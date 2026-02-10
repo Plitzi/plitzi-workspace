@@ -18,7 +18,7 @@ export type ParagraphProps = {
 };
 
 const Paragraph = ({ ref, content = 'Paragraph', className = '' }: ParagraphProps) => {
-  const internalProps = useElement();
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { BuilderContext }
@@ -41,8 +41,8 @@ const Paragraph = ({ ref, content = 'Paragraph', className = '' }: ParagraphProp
   }, [content, previewMode]);
 
   const handleChange = useCallback(
-    (value: string) => builderContext?.updateElement(internalProps.id, 'content', value),
-    [builderContext, internalProps.id]
+    (value: string) => builderContext?.updateElement(id, 'content', value),
+    [builderContext, id]
   );
 
   return (

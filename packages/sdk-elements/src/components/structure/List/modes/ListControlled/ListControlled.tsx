@@ -20,8 +20,10 @@ export type ListControlledProps<T = unknown> = {
 };
 
 const ListControlled = ({ ref, className = '', children, items = [] }: ListControlledProps) => {
-  const internalProps = useElement();
-  const { id } = internalProps;
+  const {
+    id,
+    definition: { label }
+  } = useElement();
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }
@@ -46,13 +48,11 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
 
   const listContextValue = useMemo(() => ({ items: finalItems }), [finalItems]);
 
-  const sourceName = useMemo(() => get(internalProps, 'definition.label', `List - ${id}`), [id, internalProps]);
-
   const [ListContext, listContextId] = useDataSource({
     id,
     source: `list_${id}`,
     mode: 'write',
-    name: sourceName,
+    name: label ? label : `List - ${id}`,
     fields: sourceFields
   });
 

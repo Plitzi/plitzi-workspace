@@ -39,11 +39,11 @@ const Dropdown = ({
   containerLeftOffset = 5,
   disabled = false
 }: DropdownProps) => {
-  const internalProps = useElement();
   const {
+    id,
     setElementState,
     definition: { styleSelectors }
-  } = internalProps;
+  } = useElement();
   const {
     settings: { previewMode },
     utils: { getWindow }
@@ -98,24 +98,21 @@ const Dropdown = ({
       const childProps = child.props as { type: string; [key: string]: unknown; internalProps: InternalPropsSTG0 };
       if (childProps.type === 'dropdownPopup') {
         components.options.push(
-          cloneElement<InternalPropsSTG0>(child as ReactElement<InternalPropsSTG0>, {
+          cloneElement(child as ReactElement<InternalPropsSTG0>, {
             ...childProps,
             internalProps: { ...childProps.internalProps, onClick: handleClickPopup, openPopup, parameters, popupRef },
-            key: `${internalProps.id}-${i}`
+            key: `${id}-${i}`
           })
         );
       } else {
         components.childrenParsed.push(
-          cloneElement<InternalPropsSTG0>(child as ReactElement<InternalPropsSTG0>, {
-            ...childProps,
-            key: `${internalProps.id}-${i}`
-          })
+          cloneElement(child as ReactElement<InternalPropsSTG0>, { ...childProps, key: `${id}-${i}` })
         );
       }
     });
 
     return components;
-  }, [children, handleClickPopup, internalProps.id, openPopup, parameters]);
+  }, [children, handleClickPopup, id, openPopup, parameters]);
 
   return (
     <RootElement

@@ -23,14 +23,13 @@ const BlockJsx = ({
   contentCache = '',
   ...otherProps
 }: BlockJsxProps) => {
-  const internalProps = useElement();
+  const { id, rootId, plitziElementLayout } = useElement();
   const [JsxModule, setJsxModule] = useState<{ default: ComponentPlugin<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
-  const internalPropsTruncated = useMemo<InternalPropsSTG1>(() => {
-    const { id, rootId, plitziElementLayout } = internalProps;
-
-    return { id, rootId, plitziElementLayout };
-  }, [internalProps]);
+  const internalPropsTruncated = useMemo<InternalPropsSTG1>(
+    () => ({ id, rootId, plitziElementLayout }),
+    [id, plitziElementLayout, rootId]
+  );
   const componentPropsParsed = useMemo(() => {
     const otherPropsFiltered = omit(otherProps, ['content', 'children']);
     if (!componentProps) {

@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
@@ -29,12 +28,12 @@ const ModalContainer = ({
   title = 'Modal Header',
   autoHideAfterClick = true
 }: ModalContainerProps) => {
-  const internalProps = useElement();
   const {
     id,
-    definition: { styleSelectors },
+    definition: { styleSelectors, label = 'Modal' },
+    elementState,
     setElementState
-  } = internalProps;
+  } = useElement();
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
@@ -95,8 +94,6 @@ const ModalContainer = ({
   );
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Modal');
-
     return {
       openModal: {
         action: 'openModal',
@@ -115,13 +112,13 @@ const ModalContainer = ({
         preview: {}
       }
     };
-  }, [handleClickClose, handleOpenModal, internalProps]);
+  }, [handleClickClose, handleOpenModal, label]);
 
   useEffect(() => {
-    if (internalProps.elementState.visibility !== false) {
+    if (elementState.visibility !== false) {
       void interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
     }
-  }, [id, interactionsManager, internalMetadata, internalProps.elementState.visibility]);
+  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
 
   const sourceFields = useCallback(
     () =>
@@ -136,13 +133,11 @@ const ModalContainer = ({
     [internalMetadata]
   );
 
-  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Modal - ${id}`), [id, internalProps]);
-
   const [ModalContext] = useDataSource({
     id,
     source: `modalContainer_${id}`,
     mode: 'write',
-    name: sourceName,
+    name: label ? label : `Modal - ${id}`,
     fields: sourceFields
   });
 

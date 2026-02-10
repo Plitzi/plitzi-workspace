@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
@@ -35,12 +34,12 @@ const DialogContainer = ({
   rejectButtonLabel = 'Cancel',
   autoHideAfterClick = true
 }: DialogContainerProps) => {
-  const internalProps = useElement();
   const {
     id,
     setElementState,
-    definition: { styleSelectors }
-  } = internalProps;
+    definition: { styleSelectors, label = 'Modal' },
+    elementState
+  } = useElement();
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
@@ -140,8 +139,6 @@ const DialogContainer = ({
   );
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Modal');
-
     return {
       openDialog: {
         action: 'openDialog',
@@ -160,13 +157,13 @@ const DialogContainer = ({
         params: {}
       }
     };
-  }, [handleClickClose, handleOpeDialog, internalProps]);
+  }, [handleClickClose, handleOpeDialog, label]);
 
   useEffect(() => {
-    if (internalProps.elementState.visibility !== false) {
+    if (elementState.visibility !== false) {
       void interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
     }
-  }, [id, interactionsManager, internalMetadata, internalProps.elementState.visibility]);
+  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
 
   const sourceFields = useCallback(() => {
     if (typeof internalMetadata !== 'object') {
@@ -183,13 +180,11 @@ const DialogContainer = ({
     }, []);
   }, [internalMetadata]);
 
-  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Dialog - ${id}`), [id, internalProps]);
-
   const [DialogContianerContext] = useDataSource({
     id,
     source: `dialogContainer_${id}`,
     mode: 'write',
-    name: sourceName,
+    name: label ? label : `Dialog - ${id}`,
     fields: sourceFields
   });
 

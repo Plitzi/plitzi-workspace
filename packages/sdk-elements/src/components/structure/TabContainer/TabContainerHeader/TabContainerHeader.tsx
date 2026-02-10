@@ -5,24 +5,18 @@ import { Children, cloneElement, isValidElement, useMemo } from 'react';
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { Dispatch, ReactElement, ReactNode, RefObject, SetStateAction } from 'react';
-
-type InternalPropsSubProps = {
-  tabSelected?: number;
-  onSelect?: Dispatch<SetStateAction<number>>;
-};
 
 export type TabContainerHeaderProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
   children: ReactNode;
+  // Custom Props
+  tabSelected?: number;
+  onSelect?: Dispatch<SetStateAction<number>>;
 };
 
-const TabContainerHeader = ({ ref, className = '', internalProps, children }: TabContainerHeaderProps) => {
-  const { onSelect, tabSelected } = internalProps;
-
+const TabContainerHeader = ({ ref, className = '', tabSelected, children, onSelect }: TabContainerHeaderProps) => {
   const { childrenParsed } = useMemo(() => {
     const components: { childrenParsed: ReactNode[] } = { childrenParsed: [] };
     Children.forEach(children, (child, i: number) => {

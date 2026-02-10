@@ -19,7 +19,7 @@ export type LayoutContainerProps = {
 };
 
 const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
-  const internalProps = useElement();
+  const { plitziElementLayout } = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -49,7 +49,6 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
   }, []);
 
   useEffect(() => {
-    const plitziElementLayout = internalProps.plitziElementLayout;
     if (!plitziElementLayout || !ref?.current || previewMode) {
       return;
     }
@@ -67,7 +66,7 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
       handleResize.cancel();
       observer.disconnect();
     };
-  }, [internalProps.plitziElementLayout, previewMode, ref, updateMask]);
+  }, [plitziElementLayout, previewMode, ref, updateMask]);
 
   return (
     <RootElement ref={ref} tag={subType} className={clsx('plitzi-component__layout-container', className)}>

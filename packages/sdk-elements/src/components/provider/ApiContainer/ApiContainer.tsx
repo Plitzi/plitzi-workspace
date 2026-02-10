@@ -45,8 +45,10 @@ const ApiContainer = ({
   subType = 'div',
   credentials = 'same-origin'
 }: ApiContainerProps) => {
-  const internalProps = useElement();
-  const { id } = internalProps;
+  const {
+    id,
+    definition: { label = 'Api Container' }
+  } = useElement();
   const {
     settings: { previewMode, debugMode },
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
@@ -141,19 +143,15 @@ const ApiContainer = ({
     [data]
   );
 
-  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Api - ${id}`), [id, internalProps]);
-
   const [ApiContainerContext] = useDataSource({
     id,
     source: `apiContainer_${id}`,
     mode: 'write',
-    name: sourceName,
+    name: label ? label : `API - ${id}`,
     fields: sourceFields
   });
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Api Container');
-
     return {
       performQuery: {
         action: 'performQuery',
@@ -164,7 +162,7 @@ const ApiContainer = ({
         params: {}
       }
     };
-  }, [internalProps, refetch]);
+  }, [label, refetch]);
 
   const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
     () => ({

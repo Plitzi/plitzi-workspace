@@ -10,7 +10,7 @@ import useElement from '../../../Element/hooks/useElement';
 import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
-import type { Asset, ComponentPlugin, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { Asset, ComponentPlugin, Element } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
@@ -34,7 +34,7 @@ const Custom = ({
   assets = '',
   scriptUrl = ''
 }: CustomProps) => {
-  const internalProps = useElement();
+  const { id, rootId } = useElement();
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
@@ -54,9 +54,8 @@ const Custom = ({
     return false;
   }, [settings]);
   const settingsMalformed = settingsParsed === false;
-  const { id, rootId } = internalProps;
-  const internalPropsMemo = useMemo<InternalPropsSTG1>(
-    () => ({ id, rootId, attributes: settingsMalformed ? {} : settingsParsed }),
+  const internalPropsMemo = useMemo(
+    () => ({ id, rootId, ...(settingsMalformed ? {} : settingsParsed) }),
     [id, rootId, settingsMalformed, settingsParsed]
   );
   const assetsParsed = useMemo<Asset[]>(() => {

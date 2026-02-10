@@ -5,26 +5,28 @@ import { useCallback } from 'react';
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { Dispatch, RefObject, SetStateAction, ReactNode } from 'react';
 
-type InternalPropsSubProps = {
+export type TabContainerItemProps = {
+  ref: RefObject<HTMLElement>;
+  className: string;
+  children: ReactNode;
+  // Custom Props
   tabSelected?: number;
   tabIndex?: number;
   isHeader?: boolean;
   onSelect?: Dispatch<SetStateAction<number>>;
 };
 
-export type TabContainerItemProps = {
-  ref: RefObject<HTMLElement>;
-  className: string;
-  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
-  children: ReactNode;
-};
-
-const TabContainerItem = ({ className = '', internalProps, children, ref }: TabContainerItemProps) => {
-  const { tabSelected, tabIndex = 0, isHeader, onSelect } = internalProps;
-
+const TabContainerItem = ({
+  className = '',
+  children,
+  ref,
+  tabSelected,
+  tabIndex = 0,
+  isHeader,
+  onSelect
+}: TabContainerItemProps) => {
   const handleClick = useCallback(() => {
     if (!isHeader || tabSelected === tabIndex) {
       return;

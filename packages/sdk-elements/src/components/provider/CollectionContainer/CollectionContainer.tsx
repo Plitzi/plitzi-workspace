@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import capitalize from 'lodash-es/capitalize.js';
-import get from 'lodash-es/get.js';
+import capitalize from 'lodash-es/capitalize';
 import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -34,8 +33,10 @@ const CollectionContainer = ({
   query,
   singleRecord = false
 }: CollectionContainerProps) => {
-  const internalProps = useElement();
-  const { id } = internalProps;
+  const {
+    id,
+    definition: { label = 'Collection Container' }
+  } = useElement();
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }
@@ -63,22 +64,15 @@ const CollectionContainer = ({
     return fields;
   }, [collection, singleRecord]);
 
-  const sourceName = useMemo(
-    () => get(internalProps, 'definition.label', `Collection - ${collection?.name || id}`),
-    [internalProps, collection?.name, id]
-  );
-
   const [CollectionContext] = useDataSource({
     id,
     source: `collectionContainer_${id}`,
     mode: 'write',
-    name: sourceName,
+    name: label ? label : `Collection - ${collection?.name || id}`,
     fields: sourceFields
   });
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Collection Container');
-
     return {
       performQuery: {
         action: 'performQuery',
@@ -89,7 +83,7 @@ const CollectionContainer = ({
         params: {}
       }
     };
-  }, [fetch, internalProps]);
+  }, [fetch, label]);
 
   if (!collection && previewMode) {
     return undefined;

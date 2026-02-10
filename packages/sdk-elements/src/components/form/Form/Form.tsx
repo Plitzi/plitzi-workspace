@@ -52,9 +52,12 @@ const Form = ({
   errors = emptyObject,
   values = emptyObject
 }: FormProps) => {
-  const internalProps = useElement();
   const [fields, setFields] = useState<Record<string, SourceField>>({});
-  const { id, setElementState } = internalProps;
+  const {
+    id,
+    definition: { label = 'Form' },
+    setElementState
+  } = useElement();
   const {
     settings: { previewMode },
     contexts: { DataSourceContext, InteractionsContext }
@@ -164,8 +167,13 @@ const Form = ({
     () => ({ fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError }),
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );
-  const sourceName = useMemo(() => get(internalProps, 'definition.label', `Form - ${id}`), [id, internalProps]);
-  const [FormContext] = useDataSource({ id, source: 'form', mode: 'write', name: sourceName, fields: sourceFields });
+  const [FormContext] = useDataSource({
+    id,
+    source: 'form',
+    mode: 'write',
+    name: label ? label : `Form - ${id}`,
+    fields: sourceFields
+  });
 
   // Interactions Triggers
 
@@ -241,8 +249,6 @@ const Form = ({
   );
 
   const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
-    const label = get(internalProps, 'definition.label', 'Form');
-
     return {
       performReset: {
         action: 'performReset',
@@ -284,7 +290,7 @@ const Form = ({
         }
       }
     };
-  }, [internalProps, handleReset, handleSetFieldValue, fields, handleSetFieldError]);
+  }, [label, handleReset, handleSetFieldValue, fields, handleSetFieldError]);
 
   return (
     <RootElement

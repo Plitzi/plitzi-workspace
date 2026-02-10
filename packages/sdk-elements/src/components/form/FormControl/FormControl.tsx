@@ -57,12 +57,11 @@ const FormControl = ({
   handleChange,
   handleValidate
 }: FormControlProps) => {
-  const internalProps = useElement();
   const {
     id,
     rootId,
     definition: { styleSelectors }
-  } = internalProps;
+  } = useElement();
   const {
     settings: { previewMode },
     contexts: { DataSourceContext }

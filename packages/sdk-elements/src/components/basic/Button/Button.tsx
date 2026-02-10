@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -30,17 +29,13 @@ const Button = ({
   subType = 'button',
   disabled = false
 }: ButtonProps) => {
-  const internalProps = useElement();
+  const {
+    definition: { label }
+  } = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
-  const buttonName = useMemo(() => {
-    if (typeof content === 'string') {
-      return content;
-    }
-
-    return get(internalProps, 'definition.label', '');
-  }, [content, internalProps]);
+  const buttonName = useMemo(() => (typeof content === 'string' ? content : label), [content, label]);
 
   return (
     <RootElement

@@ -19,7 +19,7 @@ export type HeadingProps = {
 };
 
 const Heading = ({ ref, className = '', content = 'Heading', subType = 'h1' }: HeadingProps) => {
-  const internalProps = useElement();
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { BuilderContext }
@@ -38,9 +38,9 @@ const Heading = ({ ref, className = '', content = 'Heading', subType = 'h1' }: H
   }, [content, previewMode]);
 
   const handleChange = useCallback(
-    (value: string) => !previewMode && builderContext?.updateElement(internalProps.id, 'content', value),
+    (value: string) => !previewMode && builderContext?.updateElement(id, 'content', value),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [builderContext?.updateElement, internalProps]
+    [builderContext?.updateElement, id]
   );
 
   return (

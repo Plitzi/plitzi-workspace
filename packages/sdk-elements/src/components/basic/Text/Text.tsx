@@ -18,7 +18,7 @@ export type TextProps = {
 };
 
 const Text = ({ ref, content = 'Text', className = '' }: TextProps) => {
-  const internalProps = useElement();
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { BuilderContext }
@@ -41,8 +41,8 @@ const Text = ({ ref, content = 'Text', className = '' }: TextProps) => {
   }, [content, previewMode]);
 
   const handleChange = useCallback(
-    (value: string) => builderContext?.updateElement(internalProps.id, 'content', value),
-    [builderContext, internalProps.id]
+    (value: string) => builderContext?.updateElement(id, 'content', value),
+    [builderContext, id]
   );
 
   return (
