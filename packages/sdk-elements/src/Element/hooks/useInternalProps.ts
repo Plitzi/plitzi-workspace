@@ -14,13 +14,14 @@ import type { Element, InternalPropsSTG1, InternalPropsSTG2 } from '@plitzi/sdk-
 const getProps = (
   element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] },
   internalProps: InternalPropsSTG1,
-  dataSource = {} as Record<string, unknown>
+  dataSource = {} as Record<string, unknown>,
+  state = {} as Record<string, unknown>
 ) => {
-  let style = {} as Record<string, string>;
+  let style: Record<string, string> | undefined = undefined;
   let { attributes, definition } = element;
   const { rootId, plitziElementLayout } = internalProps;
+  // Attribute injection, for example custom element (concat custom props + settings)
   if (internalProps.attributes) {
-    // Attribute injection, for example custom element (concat custom props + settings)
     attributes = { ...attributes, ...internalProps.attributes };
   }
 
@@ -42,6 +43,18 @@ const getProps = (
     }, {});
   }
 
+  // State
+  attributes = { ...attributes, ...omit(state, ['visibility', 'styleSelectors']) };
+  definition = {
+    ...definition,
+    styleSelectors: {
+      ...definition.styleSelectors,
+      ...definition.initialState?.styleSelectors,
+      ...(state.styleSelectors ?? {})
+    }
+  };
+  const elementState = { ...definition.initialState, ...state };
+
   return {
     ...internalProps,
     rootId: get(plitziElementLayout, 'rootId', rootId),
@@ -49,10 +62,8 @@ const getProps = (
       ...attributes,
       ...omit(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
     },
-    definition: {
-      ...definition,
-      styleSelectors: { ...definition.styleSelectors, ...definition.initialState?.styleSelectors }
-    },
+    definition,
+    elementState,
     style
   };
 };
@@ -66,18 +77,10 @@ export type UseInternalProps = {
 
 const useInternalProps = ({ element, internalProps, dataSource, previewMode = false }: UseInternalProps) => {
   const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
-
   const internalPropsParsed = useMemo<InternalPropsSTG2>(() => {
-    const internalPropsAux = getProps(element, internalProps, dataSource);
-    const { attributes, definition } = internalPropsAux;
+    const internalPropsAux = getProps(element, internalProps, dataSource, state);
 
-    return {
-      ...internalPropsAux,
-      attributes: { ...attributes, ...omit(state, ['visibility', 'styleSelectors']) },
-      definition: { ...definition, styleSelectors: { ...definition.styleSelectors, ...(state.styleSelectors ?? {}) } },
-      elementState: { ...definition.initialState, ...state },
-      setElementState
-    };
+    return { ...internalPropsAux, setElementState };
   }, [element, internalProps, dataSource, state, setElementState]);
 
   return { internalProps: internalPropsParsed, children: undefined, className: '' };
