@@ -8,7 +8,6 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import SpaceContainer from '../../Space/SpaceContainer';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 export type ShadowModeProps = {
@@ -31,7 +30,7 @@ const ShadowMode = ({ pageId = '', style = '', plitziContextValue, assets }: Sha
         <SpaceContainer>
           <style dangerouslySetInnerHTML={{ __html: style }} />
           <PlitziServiceProvider value={plitziContextValue}>
-            {pageId && <Page key={pageId} internalProps={pageValueMemo as InternalPropsSTG2} />}
+            {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
           </PlitziServiceProvider>
           <MadeInPlitzi pageId={pageId} />
         </SpaceContainer>

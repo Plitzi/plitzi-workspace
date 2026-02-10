@@ -1,6 +1,5 @@
-import PlitziSdk from './PlitziSdk';
+import { PlitziSdk } from './PlitziSdk';
 
-import type { InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { Meta, StoryObj } from '@storybook/react';
 
 const meta = {
@@ -19,6 +18,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-  args: { internalProps: { id: '' } as InternalPropsSTG2 },
+  args: {},
   render: args => <PlitziSdk {...args} />
 };

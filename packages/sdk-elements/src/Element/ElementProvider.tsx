@@ -2,19 +2,13 @@ import { createContext, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 
-import type { Element, ElementLayoutType } from '@plitzi/sdk-shared';
+import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { CSSProperties, ReactNode } from 'react';
 
 export type ElementContextValue = {
   id: string;
   rootId?: string;
-  plitziElementLayout?: {
-    bodyChildren: ReactNode;
-    containerId: string;
-    referenceId: string;
-    rootId: string;
-    type: ElementLayoutType;
-  };
+  plitziElementLayout?: ElementLayout;
   attributes: Element['attributes'];
   definition: Element['definition'];
   elementState: Record<string, unknown>;

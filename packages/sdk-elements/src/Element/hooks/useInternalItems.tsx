@@ -3,11 +3,13 @@ import { isValidElement, useMemo } from 'react';
 
 import PluginManager from '../PluginManager';
 
-import type { Element, Schema, SchemaContextValue, InternalPropsSTG2 } from '@plitzi/sdk-shared';
+import type { Element, Schema, SchemaContextValue, ElementLayout } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
 
 const useInternalItems = ({
-  internalProps,
+  id,
+  definition,
+  plitziElementLayout,
   schema,
   children,
   SchemaContext,
@@ -15,7 +17,9 @@ const useInternalItems = ({
   newSchema,
   previewMode
 }: {
-  internalProps: InternalPropsSTG2;
+  id: string;
+  definition: Element['definition'];
+  plitziElementLayout?: ElementLayout;
   schema: Schema;
   children: ReactNode | ReactNode[];
   SchemaContext: Context<SchemaContextValue>;
@@ -23,7 +27,6 @@ const useInternalItems = ({
   newSchema: Schema; // SchemaContextValue;
   previewMode?: boolean;
 }) => {
-  const { id, definition, plitziElementLayout } = internalProps;
   const { items } = definition;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const layoutKeyIdentifier = useMemo(() => Math.round(Math.random() * 100), [plitziElementLayout]);

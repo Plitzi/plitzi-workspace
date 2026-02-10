@@ -6,10 +6,10 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import PluginRemote from './PluginRemote';
 
-import type { InternalPropsSTG0, InternalPropsSTG1, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG0, InternalPropsSTG1, ComponentPlugin, ElementLayout } from '@plitzi/sdk-shared';
 
 export type PluginManagerProps = {
-  plitziElementLayout?: InternalPropsSTG1['plitziElementLayout'];
+  plitziElementLayout?: ElementLayout;
   type: string;
   internalProps: InternalPropsSTG0;
 };

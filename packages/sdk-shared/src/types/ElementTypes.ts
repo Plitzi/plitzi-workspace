@@ -1,8 +1,16 @@
 import type { Asset, PluginManifest, PluginSchema } from './PluginTypes';
 import type { Element } from './SchemaTypes';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export type ElementLayoutType = 'layout' | 'segment' | 'element' | 'reference';
+
+export type ElementLayout = {
+  bodyChildren: ReactNode;
+  containerId: string;
+  referenceId: string;
+  rootId: string;
+  type: ElementLayoutType;
+};
 
 // InternalProps have a lifecycle that needs to follow and in each step will add more props
 // PluginManager ->                 -> ComponentPlugin -> withElement -> (preload all hooks) -> RootElement -> render
@@ -18,25 +26,9 @@ export type InternalPropsSTG0<T extends InternalPropsExtension = InternalPropsEx
 } & T;
 
 export type InternalPropsSTG1<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG0<T> & {
-  plitziElementLayout?: {
-    bodyChildren: ReactNode;
-    containerId: string;
-    referenceId: string;
-    rootId: string;
-    type: ElementLayoutType;
-  };
+  plitziElementLayout?: ElementLayout;
   // Related to inject properties, for example Custom Element
   attributes?: Element['attributes'];
-};
-
-export type InternalPropsSTG2<T extends InternalPropsExtension = InternalPropsExtension> = InternalPropsSTG1<T> & {
-  definition: Element['definition'];
-  attributes: Element['attributes'];
-  elementState: Record<string, unknown>;
-  setElementState: <T2 extends Record<string, unknown> = Record<string, unknown>>(
-    value?: T2 | ((prev: T2) => T2)
-  ) => boolean;
-  style?: CSSProperties;
 };
 
 export type ComponentDefinition = Pick<

@@ -9,7 +9,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 
 import SpaceContainer from '../../Space/SpaceContainer';
 
-import type { InternalPropsSTG2, RenderMode, Schema } from '@plitzi/sdk-shared';
+import type { RenderMode, Schema } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 export type RawModeProps = {
@@ -40,7 +40,7 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
         {style}
       </style>
       <PlitziServiceProvider value={plitziContextValue}>
-        {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo as InternalPropsSTG2} />}
+        {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo} />}
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
       </PlitziServiceProvider>
       <MadeInPlitzi pageId={pageId} />

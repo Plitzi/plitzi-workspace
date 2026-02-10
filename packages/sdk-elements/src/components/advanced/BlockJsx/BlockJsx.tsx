@@ -6,7 +6,7 @@ import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { ComponentPlugin, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {
@@ -26,7 +26,7 @@ const BlockJsx = ({
   const { id, rootId, plitziElementLayout } = useElement();
   const [JsxModule, setJsxModule] = useState<{ default: ComponentPlugin<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
-  const internalPropsTruncated = useMemo<InternalPropsSTG1>(
+  const internalPropsTruncated = useMemo(
     () => ({ id, rootId, plitziElementLayout }),
     [id, plitziElementLayout, rootId]
   );

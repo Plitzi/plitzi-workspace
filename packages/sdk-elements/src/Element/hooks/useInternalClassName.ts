@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 
 export type UseInternalClassNameProps = {
   className?: string;
@@ -10,7 +10,7 @@ export type UseInternalClassNameProps = {
   id: string;
   elementState: Record<string, unknown>;
   definition: Element['definition'];
-  plitziElementLayout?: InternalPropsSTG1['plitziElementLayout'];
+  plitziElementLayout?: ElementLayout;
 };
 
 const useInternalClassName = ({

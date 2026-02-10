@@ -11,7 +11,7 @@ import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
 
-import type { Element, InternalPropsSTG1, InternalPropsSTG2, Schema } from '@plitzi/sdk-shared';
+import type { Element, InternalPropsSTG1, Schema } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 // Methods
@@ -96,7 +96,7 @@ const useElementInternal = ({
   const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
   const dataSource = useElementDataSource({ id, bindings: element.definition.bindings });
 
-  const internalPropsParsed = useMemo<InternalPropsSTG2>(
+  const internalPropsParsed = useMemo(
     () => ({ ...getProps(element, internalProps, dataSource, state), setElementState }),
     [element, internalProps, dataSource, state, setElementState]
   );
@@ -114,7 +114,9 @@ const useElementInternal = ({
       'setElementState'
     ]),
     children: useInternalItems({
-      internalProps: internalPropsParsed,
+      id,
+      definition: internalPropsParsed.definition,
+      plitziElementLayout: internalPropsParsed.plitziElementLayout,
       schema,
       children,
       SchemaContext,
