@@ -152,11 +152,10 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     () => (!debugMode && (!interactions || !Object.keys(interactions).length) ? 'hard' : 'soft'),
     [debugMode, interactions]
   );
-  const dataSource = useElementDataSource({ id, bindings: definition.bindings, filterMode });
-  const dataSourceContextRef = useRef({});
-  dataSourceContextRef.current = dataSource;
+  const dataSourceRef = useRef({});
+  dataSourceRef.current = useElementDataSource({ id, bindings: definition.bindings, filterMode });
 
-  const getAdditionalParams = useCallback(() => ({ dataSource: dataSourceContextRef.current }), [dataSourceContextRef]);
+  const getAdditionalParams = useCallback(() => ({ dataSource: dataSourceRef.current }), [dataSourceRef]);
 
   const triggers = useMemo(() => ({ ...interactionBasicTriggers, ...interactionTriggers }), [interactionTriggers]);
   const basicCallbacks = useElementInteractions({ attributes, definition, setElementState });
@@ -172,12 +171,12 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       return;
     }
 
-    pConsole.addProviderMethod(`getElementDataSource-${id}`, () => dataSourceContextRef.current);
+    pConsole.addProviderMethod(`getElementDataSource-${id}`, () => dataSourceRef.current);
 
     return () => {
       pConsole.removeProviderMethod(`getElementDataSource-${id}`);
     };
-  }, [debugMode, dataSourceContextRef, id]);
+  }, [debugMode, dataSourceRef, id]);
 
   const classNameInternal = useInternalClassName({
     id,
