@@ -11,13 +11,9 @@ import RootElement from '../../../Element/RootElement';
 import type { InternalPropsSTG0, InternalPropsSTG2 } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactElement, ReactNode, RefObject } from 'react';
 
-type InternalPropsSubProps = {
-  styleSelectors: Record<string, string>;
-};
-
 export type DropdownProps = {
   ref?: RefObject<HTMLDivElement | null>;
-  internalProps: InternalPropsSTG2<InternalPropsSubProps>;
+  internalProps: InternalPropsSTG2;
   children?: ReactNode;
   className?: string;
   popupPlacement?: 'left' | 'right' | 'top' | 'bottom';
@@ -44,7 +40,10 @@ const Dropdown = ({
   containerLeftOffset = 5,
   disabled = false
 }: DropdownProps) => {
-  const { setElementState, styleSelectors } = internalProps;
+  const {
+    setElementState,
+    definition: { styleSelectors }
+  } = internalProps;
   const {
     settings: { previewMode },
     utils: { getWindow }

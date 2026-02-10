@@ -6,7 +6,6 @@ const defaultInternalProps: InternalPropsSTG2 = {
   attributes: {},
   definition: { rootId: '', label: '', type: '', styleSelectors: {} },
   elementState: {},
-  styleSelectors: {},
   setElementState: () => false
 };
 
