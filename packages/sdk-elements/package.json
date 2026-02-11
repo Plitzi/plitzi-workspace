@@ -22,6 +22,10 @@
       "types": "./dist/src/Component/ComponentProvider.d.ts",
       "import": "./dist/src/Component/ComponentProvider.mjs"
     },
+    "./Element/ElementContext": {
+      "types": "./dist/src/Element/ElementContext.d.ts",
+      "import": "./dist/src/Element/ElementContext.mjs"
+    },
     "./Element/ElementProvider": {
       "types": "./dist/src/Element/ElementProvider.d.ts",
       "import": "./dist/src/Element/ElementProvider.mjs"

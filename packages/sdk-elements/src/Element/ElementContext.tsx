@@ -3,28 +3,27 @@ import { createContext } from 'react';
 import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { CSSProperties, ReactNode } from 'react';
 
-export type ElementContextValue = {
+export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
   id: string;
   rootId?: string;
-} & (
-  | { plitziJsxSkipHOC: true }
-  | {
-      plitziJsxSkipHOC?: false;
+} & (T extends 'skipHOC'
+  ? { plitziJsxSkipHOC: true }
+  : {
+      plitziJsxSkipHOC?: boolean;
       className?: string;
       plitziElementLayout?: ElementLayout;
       attributes: Element['attributes'];
       definition: Element['definition'];
       elementState: Record<string, unknown>;
       style?: CSSProperties;
-      setElementState: <T extends Record<string, unknown> = Record<string, unknown>>(
-        value?: T | ((prev: T) => T)
+      setElementState: <S extends Record<string, unknown> = Record<string, unknown>>(
+        value?: S | ((prev: S) => S)
       ) => boolean;
-    }
-);
+    });
 
 const elementContextDefaultValue = {} as ElementContextValue;
 
-const ElementContext = createContext<ElementContextValue>(elementContextDefaultValue);
+const ElementContext = createContext<ElementContextValue | ElementContextValue<'skipHOC'>>(elementContextDefaultValue);
 
 export type ElementProviderProps = {
   children: ReactNode;
