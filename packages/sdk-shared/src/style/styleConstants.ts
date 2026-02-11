@@ -108,7 +108,7 @@ const styleConstants = {
   TEXT_SHADOW: 'text-shadow'
 } as const;
 
-export const inheritableAttributesBase = [
+export const inheritableAttributesBase: StyleCategory[] = [
   styleConstants.TEXT_DECORATION,
   styleConstants.LINE_HEIGHT,
   styleConstants.LETTER_SPACING,
