@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { createContext, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -20,7 +22,6 @@ export type ElementContextValue = {
 
 const elementContextDefaultValue = {} as ElementContextValue;
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const ElementContext = createContext<ElementContextValue>(elementContextDefaultValue);
 
 export type ElementInternalContextValue = { id: string; rootId?: string } & (
@@ -30,7 +31,6 @@ export type ElementInternalContextValue = { id: string; rootId?: string } & (
 
 const elementInternalContextDefaultValue = {} as ElementInternalContextValue;
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const ElementInternalContext = createContext<ElementInternalContextValue>(elementInternalContextDefaultValue);
 
 export type ElementProviderProps = {
@@ -60,8 +60,10 @@ const ElementProvider = ({
   style,
   setElementState
 }: ElementProviderProps) => {
-  const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
-  useEventBridge('element', eventCallbacks, {});
+  if (!plitziJsxSkipHOC) {
+    const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
+    useEventBridge('element', eventCallbacks, {});
+  }
 
   const value = useMemo<ElementContextValue>(() => {
     if (plitziJsxSkipHOC) {
