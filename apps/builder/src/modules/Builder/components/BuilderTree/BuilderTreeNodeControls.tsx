@@ -75,14 +75,19 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
     [existsPopup, addPopup]
   );
 
-  const handleClickVisibility = useCallback(() => {
-    if (!id) {
-      return;
-    }
+  const handleClickVisibility = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!id) {
+        return;
+      }
 
-    builderSetElementVisibility(id, !isVisible);
-    // setHovered(null);
-  }, [builderSetElementVisibility, id, isVisible]); // setHovered
+      builderSetElementVisibility(id, !isVisible);
+      // setHovered(null);
+    },
+    [builderSetElementVisibility, id, isVisible]
+  ); // setHovered
 
   const handleClickDelete = useCallback(
     async (e: MouseEvent) => {
