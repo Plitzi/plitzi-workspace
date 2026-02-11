@@ -190,7 +190,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
             <option value="radial-gradient">Radial Gradient</option>
           </CategoryOption>
         </CategorySection>
-        <CategorySection label="Mask Image" keys={[styleConstants.MASK_IMAGE]}>
+        <CategorySection label="Mask Img" keys={[styleConstants.MASK_IMAGE]}>
           <CategoryOption value={maskImage} onChange={handleChange(styleConstants.MASK_IMAGE)} />
         </CategorySection>
         <CategorySection label="Clip" keys={[styleConstants.BACKGROUND_CLIP]}>
