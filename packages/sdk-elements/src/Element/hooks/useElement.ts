@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 import { use } from 'react';
 
-import { ElementContext } from '../ElementProvider';
+import ElementContext from '../ElementContext';
 
-import type { ElementContextValue } from '../ElementProvider';
+import type { ElementContextValue } from '../ElementContext';
 
 const useElement = <T extends ElementContextValue>() => {
   const context = use(ElementContext) as T | undefined;

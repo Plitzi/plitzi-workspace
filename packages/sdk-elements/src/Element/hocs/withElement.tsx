@@ -3,11 +3,13 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { useMemo, useRef } from 'react';
 
+import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import ElementProvider from '../ElementProvider';
+import ElementContext from '../ElementContext';
 import useElementInternal from '../hooks/useElementInternal';
 
+import type { ElementContextValue } from '../ElementContext';
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
@@ -23,14 +25,18 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const WithElementComponent = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
+    const contextValueSkipHOC = useMemo<ElementContextValue>(
+      () => ({ id, rootId, plitziJsxSkipHOC: true }),
+      [id, rootId]
+    );
     if (props.plitziJsxSkipHOC) {
       return useMemo(
         () => (
-          <ElementProvider id={id} rootId={rootId} plitziJsxSkipHOC>
+          <ElementContext value={contextValueSkipHOC}>
             <WrappedComponent {...props} internalProps={props.internalProps} />
-          </ElementProvider>
+          </ElementContext>
         ),
-        [id, props, rootId]
+        [contextValueSkipHOC, props]
       );
     }
 
@@ -46,6 +52,15 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       baseElementId
     });
 
+    const { attributes, definition, style, elementState, setElementState } = internalProps;
+    const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
+    useEventBridge('element', eventCallbacks, {});
+
+    const contextValue = useMemo(
+      () => ({ id, rootId, attributes, definition, style, elementState, setElementState }),
+      [attributes, definition, elementState, id, rootId, setElementState, style]
+    );
+
     return useMemo(() => {
       let wrappedProps = { ...internalProps.attributes, ...props.extraProps, ...customProps } as T;
       if (children) {
@@ -54,31 +69,12 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
 
       return (
         <ErrorBoundary>
-          <ElementProvider
-            id={id}
-            rootId={rootId}
-            className={props.className}
-            attributes={internalProps.attributes}
-            definition={internalProps.definition}
-            elementState={internalProps.elementState}
-            setElementState={internalProps.setElementState}
-          >
+          <ElementContext value={contextValue}>
             <WrappedComponent {...wrappedProps} ref={ref} />
-          </ElementProvider>
+          </ElementContext>
         </ErrorBoundary>
       );
-    }, [
-      id,
-      rootId,
-      props.className,
-      props.extraProps,
-      internalProps.attributes,
-      internalProps.definition,
-      internalProps.elementState,
-      internalProps.setElementState,
-      customProps,
-      children
-    ]);
+    }, [internalProps.attributes, props.extraProps, customProps, children, contextValue]);
   };
 
   WithElementComponent.displayName = WrappedComponent.displayName || WrappedComponent.name;
