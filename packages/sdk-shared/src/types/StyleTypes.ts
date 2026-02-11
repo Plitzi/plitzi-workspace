@@ -1,4 +1,4 @@
-import type { StyleConstants } from '../style/styleConstants';
+import type { StyleCategory } from '../style/styleConstants';
 
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
 
@@ -7,8 +7,6 @@ export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
 export type StyleMode = 'mobile-first' | 'desktop-first';
 
 export type StyleValue = number | string;
-
-export type StyleCategory = (typeof StyleConstants)[keyof typeof StyleConstants];
 
 // Themes/Variables
 
@@ -21,7 +19,7 @@ export enum StyleVariableCategory {
   // RADIUS = 'radius',
   // TYPOGRAPHY = 'typography',
   // BORDER = 'border',
-  // ZINDEX = 'z-index',
+  // Z_INDEX = 'z-index',
 }
 
 export type StyleThemeValue = Partial<Record<Exclude<StyleThemeMode, 'system'> | 'default', string>>;

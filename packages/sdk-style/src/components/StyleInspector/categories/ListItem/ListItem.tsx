@@ -7,7 +7,7 @@ import ListSquares from '@plitzi/plitzi-ui/icons/ListSquares';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, useMemo, use } from 'react';
 
-import { LIST_ITEM_TYPE } from '@plitzi/sdk-shared';
+import { StyleCategory } from '@plitzi/sdk-shared';
 
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -15,7 +15,7 @@ import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
-import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleValue } from '@plitzi/sdk-shared';
 
 const LIST_ITEM_NONE = 'none';
 const LIST_ITEM_DISC = 'disc';
@@ -25,7 +25,7 @@ const LIST_ITEM_DECIMAL = 'decimal';
 const LIST_ITEM_LETTERS = 'lower-alpha';
 const LIST_ITEM_ROMAN = 'lower-roman';
 
-const dotKeys = [LIST_ITEM_TYPE] as StyleCategory[];
+const dotKeys = [StyleCategory.LIST_STYLE_TYPE] as StyleCategory[];
 
 export type ListItemProps = {
   replaceTokens?: boolean;
@@ -35,12 +35,17 @@ export type ListItemProps = {
 
 const ListItem = ({ replaceTokens = false, isCollapsed = true, onCollapse }: ListItemProps) => {
   const { setValue } = use(StyleInspectorContext);
-  const { [LIST_ITEM_TYPE]: listItemStyle } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  const { [StyleCategory.LIST_STYLE_TYPE]: listItemStyle } = useInspectorValues({
+    keys: dotKeys,
+    asValue: true,
+    replaceTokens
+  });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('listItem', isCollapsed), [onCollapse]);
 
   const handleChange = useCallback(
-    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => setValue(LIST_ITEM_TYPE, value as StyleValue),
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      setValue(StyleCategory.LIST_STYLE_TYPE, value as StyleValue),
     [setValue]
   );
 

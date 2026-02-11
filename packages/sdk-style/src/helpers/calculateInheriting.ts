@@ -4,7 +4,15 @@ import pick from 'lodash-es/pick.js';
 import { inheritableAttributesBase } from '@plitzi/sdk-shared';
 
 import type { StyleHelperMetaData } from '../StyleHelper';
-import type { ComponentDefinition, DisplayMode, Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
+import type {
+  ComponentDefinition,
+  DisplayMode,
+  Element,
+  Schema,
+  Style,
+  StyleItem,
+  StyleCategory
+} from '@plitzi/sdk-shared';
 
 const getDataStyle = (
   element: Element | undefined,
@@ -135,7 +143,7 @@ const calculateInheriting = (
       styleData = pick(styleData, inheritableAttributesBase);
     }
 
-    Object.keys(styleData)
+    (Object.keys(styleData) as StyleCategory[])
       .filter(key => (inheritableAttributesBase.includes(key) && node.isSubParent) || !node.isSubParent)
       .forEach(key => {
         if (!(finalMeta[key] as StyleHelperMetaData['style'][string] | undefined)) {
