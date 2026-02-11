@@ -7,7 +7,7 @@ import ListSquares from '@plitzi/plitzi-ui/icons/ListSquares';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, useMemo, use } from 'react';
 
-import { StyleCategory } from '@plitzi/sdk-shared';
+import { styleConstants } from '@plitzi/sdk-shared';
 
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -15,7 +15,7 @@ import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
-import type { StyleValue } from '@plitzi/sdk-shared';
+import type { StyleValue, StyleCategory } from '@plitzi/sdk-shared';
 
 const LIST_NONE = 'none';
 const LIST_CIRCLE = 'circle';
@@ -25,7 +25,7 @@ const LIST_SQUARES = 'square';
 const LIST_LETTERS = 'lower-alpha';
 const LIST_ROMAN = 'lower-roman';
 
-const dotKeys = [StyleCategory.LIST_STYLE] as StyleCategory[];
+const dotKeys = [styleConstants.LIST_STYLE] as StyleCategory[];
 
 export type ListProps = {
   replaceTokens?: boolean;
@@ -35,13 +35,17 @@ export type ListProps = {
 
 const List = ({ replaceTokens = false, isCollapsed = true, onCollapse }: ListProps) => {
   const { setValue } = use(StyleInspectorContext);
-  const { [StyleCategory.LIST_STYLE]: listStyle } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  const { [styleConstants.LIST_STYLE]: listStyle } = useInspectorValues({
+    keys: dotKeys,
+    asValue: true,
+    replaceTokens
+  });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('list', isCollapsed), [onCollapse]);
 
   const handleChange = useCallback(
     (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      setValue(StyleCategory.LIST_STYLE, value as StyleValue),
+      setValue(styleConstants.LIST_STYLE, value as StyleValue),
     [setValue]
   );
 

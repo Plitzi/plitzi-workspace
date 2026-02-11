@@ -1,15 +1,15 @@
 import set from 'lodash-es/set.js';
 
-import { StyleCategory } from '@plitzi/sdk-shared';
+import { styleConstants } from '@plitzi/sdk-shared';
 
-import type { StyleItem } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleItem } from '@plitzi/sdk-shared';
 
 const mediaRegex = /@media[^{]*\{(?:[^{}]*|\{[^{}]*\})*\}/gim;
 const cssRegex =
   /(?<selector>\.|#|)(?<selectorName>[a-z0-9_-]+)([ ]+|){(?<selectorData>[a-z0-9:; (),.%\n*/#+"'_-]+|)}/gim;
 const cssPropsRegex = /(?<propName>[a-z-]+):([ ]+|)(?<propValue>([a-z-]+\([^;]\)|".*"|[a-z0-9 (),.%\n*/#+"':_-]+));/gim;
 const cssIsCommentRegex = /(\/\*.*\*\/)/gim;
-const StyleConstantsList = Object.values(StyleCategory);
+const StyleConstantsList = Object.values(styleConstants);
 
 type StyleBasicItem = Omit<StyleItem, 'type' | 'cache'>;
 

@@ -7,7 +7,7 @@ import { useCallback, use, useMemo, useState, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
-import { StyleCategory } from '@plitzi/sdk-shared/style/styleConstants';
+import styleConstants from '@plitzi/sdk-shared/style/styleConstants';
 
 import { processSelectorsMultiLine } from '../../../helpers';
 import { cssToSelectors, getReadOnlyRangesFromContent } from '../../../helpers/formatCssFromSelector';
@@ -114,7 +114,7 @@ const InspectorModeAdvanced = ({ selectors, displayMode, styleVariables }: Inspe
               <p className="text-xs">Add your own CSS code here to customize the appearance and layout of your site.</p>
               <span className="font-bold">Properties Allowed</span>
               <ul className="flex h-[100px] flex-col overflow-auto rounded-sm border border-gray-300 text-xs">
-                {Object.values(StyleCategory).map((property, i: number) => (
+                {Object.values(styleConstants).map((property, i: number) => (
                   <li key={i} className="w-full border-gray-300 px-1.5 py-1 [&:not(:last-child)]:border-b">
                     {property as string}
                   </li>

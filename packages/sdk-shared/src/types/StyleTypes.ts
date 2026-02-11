@@ -1,4 +1,4 @@
-import type { StyleCategory } from '../style/styleConstants';
+import type styleConstants from '../style/styleConstants';
 
 export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
 
@@ -11,6 +11,7 @@ export type StyleValue = number | string;
 // Themes/Variables
 
 export type StyleThemeMode = 'system' | 'light' | 'dark';
+export type StyleCategory = (typeof styleConstants)[keyof typeof styleConstants];
 export enum StyleVariableCategory {
   COLOR = 'color',
   SPACING = 'spacing',
