@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import type { Server } from '@plitzi/sdk-shared';
+import type { Server } from '../types';
 
 export type UseNetworkProps = {
   initLoading?: boolean;

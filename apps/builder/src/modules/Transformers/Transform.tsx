@@ -13,9 +13,9 @@ import { useCallback, use, useMemo, useRef, useState } from 'react';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
-import useNetwork from '@pmodules/Network/hooks/useNetwork';
 
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';

@@ -22,9 +22,13 @@ import ApiContainer from './provider/ApiContainer/Settings';
 import CollectionContainer from './provider/CollectionContainer/Settings';
 import Container from './structure/Container/Settings';
 import DialogContainer from './structure/DialogContainer/Settings';
+import ListItem from './structure/List/ListItem/Settings';
 import List from './structure/List/Settings';
 import ModalContainer from './structure/ModalContainer/Settings';
 import TabContainer from './structure/TabContainer/Settings';
+import TabContainerBody from './structure/TabContainer/TabContainerBody/Settings';
+import TabContainerheader from './structure/TabContainer/TabContainerHeader/Settings';
+import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings';
 
 import type { FC } from 'react';
 
@@ -44,6 +48,9 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   dialogContainer: DialogContainer,
   modalContainer: ModalContainer,
   tabContainer: TabContainer,
+  tabContainerBody: TabContainerBody,
+  tabContainerheader: TabContainerheader,
+  tabContainerItem: TabContainerItem,
   heading: Heading,
   image: Image,
   video: Video,
@@ -54,6 +61,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   markdown: Markdown,
   nodeHtml: NodeHtml,
   list: List,
+  listItem: ListItem,
   link: Link,
   form: Form,
   formControl: FormControl,

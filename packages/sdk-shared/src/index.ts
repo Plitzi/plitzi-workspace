@@ -4,7 +4,6 @@ import fetchManifest from './helpers/fetchManifest';
 import generateFacade from './helpers/generateFacade';
 import syntaxHighlight from './helpers/syntaxHighlight';
 import * as utils from './helpers/utils';
-import usePlitziServiceContext, { PlitziServiceProvider } from './hooks/usePlitziServiceContext';
 import * as network from './network';
 import * as schema from './schema';
 import * as segments from './segments';
@@ -16,7 +15,7 @@ export * from './helpers/utils';
 export * from './helpers/syntaxHighlight';
 export * from './helpers/twigWrapper';
 export * from './helpers/fetchManifest';
-export * from './hooks/usePlitziServiceContext';
+export * from './hooks';
 export * from './builder';
 export * from './style';
 export * from './schema';
@@ -29,8 +28,6 @@ export * from './helpers/formatDate';
 export * from './websockets';
 
 export {
-  usePlitziServiceContext,
-  PlitziServiceProvider,
   syntaxHighlight,
   generateFacade,
   fetchManifest,

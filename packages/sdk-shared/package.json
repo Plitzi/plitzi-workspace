@@ -128,6 +128,18 @@
       "types": "./dist/src/helpers/utils.d.ts",
       "import": "./dist/src/helpers/utils.mjs"
     },
+    "./hooks": {
+      "types": "./dist/src/hooks/index.d.ts",
+      "import": "./dist/src/hooks/index.mjs"
+    },
+    "./hooks/index": {
+      "types": "./dist/src/hooks/index.d.ts",
+      "import": "./dist/src/hooks/index.mjs"
+    },
+    "./hooks/useNetwork": {
+      "types": "./dist/src/hooks/useNetwork.d.ts",
+      "import": "./dist/src/hooks/useNetwork.mjs"
+    },
     "./hooks/usePlitziServiceContext": {
       "types": "./dist/src/hooks/usePlitziServiceContext.d.ts",
       "import": "./dist/src/hooks/usePlitziServiceContext.mjs"

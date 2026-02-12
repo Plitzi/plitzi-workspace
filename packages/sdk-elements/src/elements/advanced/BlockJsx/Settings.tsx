@@ -5,9 +5,10 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import get from 'lodash-es/get';
 import { useCallback, use, useState } from 'react';
 
+import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
-import useNetwork from '@pmodules/Network/hooks/useNetwork';
+
+import ElementAdvancedEditor from '../../../components/ElementAdvancedEditor';
 
 // content is done in builder side and injected here as child
 

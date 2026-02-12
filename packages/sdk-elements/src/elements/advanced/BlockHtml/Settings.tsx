@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import ElementAdvancedEditor from '@pmodules/Elements/ElementAdvancedEditor';
+import ElementAdvancedEditor from '../../../components/ElementAdvancedEditor';
 
 type SettingsProps = {
   content?: string;

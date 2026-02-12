@@ -15,6 +15,7 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useMemo } from 'react';
 
+import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -33,8 +34,6 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import AppContext from '@pmodules/App/AppContext';
-
-import { defaultElementsSettings } from '../../../../SdkComponents';
 
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

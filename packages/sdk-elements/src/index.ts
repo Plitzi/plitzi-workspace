@@ -1,7 +1,9 @@
 import JsxManager from './Element/JsxManager';
 import * as elements from './elements';
+import * as elementSettings from './elements/settings';
 
 export * from './elements';
+export * from './elements/settings';
 
 export const defaultElements = {
   dropdown: elements.Dropdown,
@@ -34,4 +36,4 @@ export const defaultElements = {
   collectionContainer: elements.CollectionContainer
 };
 
-export { elements, JsxManager };
+export { elements, elementSettings, JsxManager };
