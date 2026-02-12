@@ -1199,7 +1199,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.2.16",
+    "@plitzi/plitzi-ui": "^1.2.17",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
@@ -1207,7 +1207,7 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
-    "immer": "^11.1.3",
+    "immer": "^11.1.4",
     "lodash-es": "^4.17.23"
   },
   "peerDependencies": {
