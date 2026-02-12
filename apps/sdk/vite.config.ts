@@ -189,7 +189,7 @@ export default defineConfig(({ mode, command }) => {
         entry: ['./src/index.tsx']
       },
       rollupOptions: {
-        treeshake: true, // probar bien esto
+        treeshake: true,
         external: [
           'react',
           'react-dom',
@@ -218,8 +218,12 @@ export default defineConfig(({ mode, command }) => {
       minify: devMode ? false : 'terser', // usar terser para máxima compresión
       terserOptions: {
         compress: {
-          drop_console: true, // elimina console.log
-          drop_debugger: true // elimina debugger
+          drop_console: true, // elimina todos los console.log, console.warn, etc.
+          drop_debugger: true, // elimina todos los debugger;
+          passes: 2 // hace múltiples pasadas de optimización para limpiar más código muerto
+        },
+        mangle: {
+          safari10: true // corrige bugs de Safari 10 en mangle
         },
         format: {
           comments: /(webpackIgnore:true|webpackIgnore: true|@vite-ignore)/, // elimina todos los comentarios
