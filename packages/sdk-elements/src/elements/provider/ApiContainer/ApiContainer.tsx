@@ -1,10 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
-import Handlebars from 'handlebars';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -62,20 +62,23 @@ const ApiContainer = ({
     }
 
     try {
-      const handleBarsParams = { ...queryParams, ...routeParams };
+      const params = { ...queryParams, ...routeParams };
       // Check if Tokens required are defined first, if not skip fetch
       if (debugMode) {
         [...query.matchAll(/{{([ ]+|)(?<token>[a-zA-Z0-9-_:*/]+)([ ]+|)}}/gim)].forEach(({ groups }) => {
           const token = groups?.token.trim();
-          if (!token || !get(handleBarsParams, token)) {
+          if (!token || !get(params, token)) {
             console.log(`Token ${token} is required`);
           }
         });
       }
 
-      const template = Handlebars.compile(query);
+      const result = processTwig(query, params, true);
+      if (typeof result !== 'string') {
+        return query;
+      }
 
-      return template(handleBarsParams);
+      return result;
     } catch (e) {
       console.error((e as Error).message);
     }

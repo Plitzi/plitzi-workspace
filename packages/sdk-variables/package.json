@@ -66,10 +66,6 @@
       "types": "./dist/src/components/StyleVariables/StyleVariables.d.ts",
       "import": "./dist/src/components/StyleVariables/StyleVariables.mjs"
     },
-    "./components/StyleVariables/Variable": {
-      "types": "./dist/src/components/StyleVariables/Variable.d.ts",
-      "import": "./dist/src/components/StyleVariables/Variable.mjs"
-    },
     "./components/StyleVariables/VariableActions": {
       "types": "./dist/src/components/StyleVariables/VariableActions.d.ts",
       "import": "./dist/src/components/StyleVariables/VariableActions.mjs"

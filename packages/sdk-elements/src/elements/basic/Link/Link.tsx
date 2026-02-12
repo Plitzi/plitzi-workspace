@@ -1,9 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import Handlebars from 'handlebars';
 import { useMemo, use } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -40,10 +40,12 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
     const urlAux = `/${href}`.replaceAll(/[/]+/gim, '/');
     if (mode === 'internal') {
       try {
-        const template = Handlebars.compile(urlAux);
-        const handleBarsParams = { ...queryParams, ...routeParams } as Record<string, string>;
+        const result = processTwig(urlAux, { ...queryParams, ...routeParams }, true);
+        if (typeof result !== 'string') {
+          return urlAux;
+        }
 
-        return template(handleBarsParams);
+        return result;
       } catch {
         // nothing to do
       }

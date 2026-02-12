@@ -618,34 +618,6 @@
       "types": "./dist/src/components/StyleManager/index.d.ts",
       "import": "./dist/src/components/StyleManager/index.mjs"
     },
-    "./components/VariableManager": {
-      "types": "./dist/src/components/VariableManager/index.d.ts",
-      "import": "./dist/src/components/VariableManager/index.mjs"
-    },
-    "./components/VariableManager/Variable": {
-      "types": "./dist/src/components/VariableManager/Variable.d.ts",
-      "import": "./dist/src/components/VariableManager/Variable.mjs"
-    },
-    "./components/VariableManager/VariableForm": {
-      "types": "./dist/src/components/VariableManager/VariableForm.d.ts",
-      "import": "./dist/src/components/VariableManager/VariableForm.mjs"
-    },
-    "./components/VariableManager/VariableGroup": {
-      "types": "./dist/src/components/VariableManager/VariableGroup.d.ts",
-      "import": "./dist/src/components/VariableManager/VariableGroup.mjs"
-    },
-    "./components/VariableManager/VariableList": {
-      "types": "./dist/src/components/VariableManager/VariableList.d.ts",
-      "import": "./dist/src/components/VariableManager/VariableList.mjs"
-    },
-    "./components/VariableManager/VariableManager": {
-      "types": "./dist/src/components/VariableManager/VariableManager.d.ts",
-      "import": "./dist/src/components/VariableManager/VariableManager.mjs"
-    },
-    "./components/VariableManager/index": {
-      "types": "./dist/src/components/VariableManager/index.d.ts",
-      "import": "./dist/src/components/VariableManager/index.mjs"
-    },
     "./components/index": {
       "types": "./dist/src/components/index.d.ts",
       "import": "./dist/src/components/index.mjs"
@@ -653,10 +625,6 @@
     "./helpers": {
       "types": "./dist/src/helpers/index.d.ts",
       "import": "./dist/src/helpers/index.mjs"
-    },
-    "./helpers/calculateBindings": {
-      "types": "./dist/src/helpers/calculateBindings.d.ts",
-      "import": "./dist/src/helpers/calculateBindings.mjs"
     },
     "./helpers/calculateInheriting": {
       "types": "./dist/src/helpers/calculateInheriting.d.ts",
@@ -677,10 +645,6 @@
     "./helpers/processCssTokens": {
       "types": "./dist/src/helpers/processCssTokens.d.ts",
       "import": "./dist/src/helpers/processCssTokens.mjs"
-    },
-    "./helpers/processCssVariables": {
-      "types": "./dist/src/helpers/processCssVariables.d.ts",
-      "import": "./dist/src/helpers/processCssVariables.mjs"
     },
     "./helpers/processSelector": {
       "types": "./dist/src/helpers/processSelector.d.ts",
