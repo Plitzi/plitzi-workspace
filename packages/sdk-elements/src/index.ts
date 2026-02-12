@@ -1,37 +1,37 @@
-import * as components from './components';
 import JsxManager from './Element/JsxManager';
+import * as elements from './elements';
 
-export * from './components';
+export * from './elements';
 
 export const defaultElements = {
-  dropdown: components.Dropdown,
-  notFound: components.NotFound,
-  loading: components.Loading,
-  custom: components.Custom,
-  reference: components.Reference,
-  blockHtml: components.BlockHtml,
-  nodeHtml: components.NodeHtml,
-  blockJsx: components.BlockJsx,
-  page: components.Page,
-  container: components.Container,
-  layoutContainer: components.LayoutContainer,
-  dialogContainer: components.DialogContainer,
-  modalContainer: components.ModalContainer,
-  tabContainer: components.TabContainer,
-  heading: components.Heading,
-  image: components.Image,
-  video: components.Video,
-  fontAwesome: components.FontAwesome,
-  button: components.Button,
-  paragraph: components.Paragraph,
-  text: components.Text,
-  list: components.List,
-  link: components.Link,
-  markdown: components.Markdown,
-  form: components.Form,
-  formControl: components.FormControl,
-  apiContainer: components.ApiContainer,
-  collectionContainer: components.CollectionContainer
+  dropdown: elements.Dropdown,
+  notFound: elements.NotFound,
+  loading: elements.Loading,
+  custom: elements.Custom,
+  reference: elements.Reference,
+  blockHtml: elements.BlockHtml,
+  nodeHtml: elements.NodeHtml,
+  blockJsx: elements.BlockJsx,
+  page: elements.Page,
+  container: elements.Container,
+  layoutContainer: elements.LayoutContainer,
+  dialogContainer: elements.DialogContainer,
+  modalContainer: elements.ModalContainer,
+  tabContainer: elements.TabContainer,
+  heading: elements.Heading,
+  image: elements.Image,
+  video: elements.Video,
+  fontAwesome: elements.FontAwesome,
+  button: elements.Button,
+  paragraph: elements.Paragraph,
+  text: elements.Text,
+  list: elements.List,
+  link: elements.Link,
+  markdown: elements.Markdown,
+  form: elements.Form,
+  formControl: elements.FormControl,
+  apiContainer: elements.ApiContainer,
+  collectionContainer: elements.CollectionContainer
 };
 
-export { components, JsxManager };
+export { elements, JsxManager };
