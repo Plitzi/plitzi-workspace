@@ -1,7 +1,8 @@
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
-import { memo, useCallback, use, useState } from 'react';
+import { memo, useCallback, use, useState, useMemo } from 'react';
 
 import { styleConstants } from '@plitzi/sdk-shared';
+import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import ImageMode from './modes/ImageMode';
 // import LinearGradientMode from './modes/LinearGradientMode';
@@ -32,7 +33,7 @@ export type BackgroundProps = {
 };
 
 const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BackgroundProps) => {
-  const { setValue } = use(StyleInspectorContext);
+  const { setValue, variables } = use(StyleInspectorContext);
   const {
     [styleConstants.BACKGROUND_COLOR]: bgColor,
     [styleConstants.BACKGROUND_CLIP]: bgClip,
@@ -56,6 +57,10 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
     strictMode: true,
     replaceTokens
   });
+  const bgImagePreview = useMemo(
+    () => (hasTokens(bgImage as string) ? (processTwig(bgImage as string, variables, true) as string) : bgImage),
+    [bgImage, variables]
+  );
   const [imgType, setImgType] = useState(() => {
     if (bgImage && (bgImage as string).includes('url')) {
       return 'image';
@@ -179,7 +184,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
         <div className="mx-auto h-16 w-16 rounded-sm border border-gray-300 bg-white p-1">
           <div
             className="h-full w-full bg-contain bg-center bg-no-repeat"
-            style={{ backgroundImage: bgImage as string }}
+            style={{ backgroundImage: bgImagePreview as string }}
           />
         </div>
         <CategorySection label="Fill" keys={dotKeys}>

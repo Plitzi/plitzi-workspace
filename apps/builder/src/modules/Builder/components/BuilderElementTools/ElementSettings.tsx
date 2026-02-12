@@ -1,18 +1,8 @@
-import Button from '@plitzi/plitzi-ui/Button';
-import Checkbox from '@plitzi/plitzi-ui/Checkbox';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Heading from '@plitzi/plitzi-ui/components/Heading';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import Input from '@plitzi/plitzi-ui/Input';
-import KVInput from '@plitzi/plitzi-ui/KVInput';
-import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
-import Select from '@plitzi/plitzi-ui/Select';
-import Select2 from '@plitzi/plitzi-ui/Select2';
 import uiStyle from '@plitzi/plitzi-ui/style.css?inline';
-import Switch from '@plitzi/plitzi-ui/Switch';
-import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useMemo } from 'react';
 
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
@@ -26,6 +16,7 @@ import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSch
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -38,8 +29,6 @@ import AppContext from '@pmodules/App/AppContext';
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
-
-const uiComponents = { Input, Select, Checkbox, CodeMirror, TextArea, Button, Select2, Switch, QueryBuilder, KVInput };
 
 export type ElementSettingsProps = {
   id?: string;
@@ -107,6 +96,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
   const styleValueMemo = useMemo(() => ({ style }), [style]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
+  const { variables } = useDataSource<Record<string, string>>({ id, sourceFilter: ['variables'], mode: 'read' });
 
   const children = useMemo(
     () => (
@@ -117,7 +107,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
               {Settings && (
                 <div className="flex h-full flex-col">
                   <Heading as="h5">Settings</Heading>
-                  <Settings {...attributes} id={id} onUpdate={handleChange} uiComponents={uiComponents} />
+                  <Settings {...attributes} id={id} variables={variables} onUpdate={handleChange} />
                 </div>
               )}
               {!Settings && <div className="element-tools--empty">Settings not available.</div>}
@@ -126,7 +116,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         </SchemaContext>
       </PlitziServiceProvider>
     ),
-    [Settings, attributes, handleChange, id, plitziContextValue, schemaValueMemo, styleValueMemo]
+    [Settings, attributes, variables, handleChange, id, plitziContextValue, schemaValueMemo, styleValueMemo]
   );
 
   if (Plugin && pluginStyles?.[type] && pluginStyles[type].length > 0) {

@@ -8,7 +8,8 @@ const strictTokenRegex = /^{{([ ]+|)(?<token>[a-zA-Z][a-zA-Z0-9._-]+)([ ]+|)}}$/
 const isValidToken = (token: string, strict: boolean = false) =>
   strict ? !!token.trim().match(strictTokenRegex) : !!token.trim().match(tokenRegex);
 
-const hasTokens = (template: string) => !!template.replaceAll(' ', '').match(/{{.*}}/gim);
+const hasTokens = (template?: string) =>
+  typeof template === 'string' && !!template.replaceAll(' ', '').match(/{{.*}}/gim);
 
 const processTwig = (
   template: string,

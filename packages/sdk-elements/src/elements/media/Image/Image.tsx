@@ -62,6 +62,7 @@ const Image = ({
       src={src}
       alt={alt}
       loading={loadMode}
+      fetchPriority={fetchPriority}
       onError={handleError}
     />
   );
