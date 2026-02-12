@@ -1,7 +1,6 @@
 import { useApolloClient } from '@apollo/client/react';
 import cloneDeep from 'lodash-es/cloneDeep';
 import get from 'lodash-es/get';
-import noop from 'lodash-es/noop';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
@@ -119,11 +118,11 @@ const NetworkContextProvider = ({
               // onProgress: ev => {
               //   setProgress(ev.loaded / ev.total);
               // },
-              onProgress: noop,
+              // onProgress: undefined,
               // onAbortPossible: abortHandlerInternal => {
               //   abortHandler = abortHandlerInternal;
               // },
-              onAbortPossible: noop,
+              // onAbortPossible: undefined,
               ...uploadOptions
             }
           }

@@ -1,6 +1,5 @@
 // Packages
 import React from 'react';
-import noop from 'lodash-es/noop';
 import clsx from 'clsx';
 
 /**
@@ -13,7 +12,7 @@ import clsx from 'clsx';
  * @returns {React.ReactElement}
  */
 const InputEasingButton = props => {
-  const { children, title = '', className = '', onClick = noop } = props;
+  const { children, title = '', className = '', onClick } = props;
 
   return (
     <button

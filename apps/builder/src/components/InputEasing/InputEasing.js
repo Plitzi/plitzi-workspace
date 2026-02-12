@@ -1,6 +1,5 @@
 import React, { Component, createRef } from 'react';
 import clsx from 'clsx';
-import noop from 'lodash-es/noop';
 
 import Grid from './Grid';
 import Progress from './Progress';
@@ -82,7 +81,7 @@ class InputEasing extends Component {
   };
 
   handleMouseMove = e => {
-    const { onChange = noop } = this.props;
+    const { onChange } = this.props;
     let { value = valueDefault } = this.props;
     const { handle } = this.state;
     e.preventDefault();
@@ -96,7 +95,7 @@ class InputEasing extends Component {
     const [x, y] = this.positionForEvent(e);
     value[i] = this.inversex(x).toFixed(2);
     value[i + 1] = this.inversey(y).toFixed(2);
-    onChange(value);
+    onChange?.(value);
   };
 
   handleMouseUp = () => {
@@ -142,12 +141,7 @@ class InputEasing extends Component {
     const cys2 = cy2 - handleRadius * Math.sin(a2);
 
     return (
-      <svg
-        className={clsx('overflow-visible select-none', className)}
-        ref={inputRef}
-        width={width}
-        height={height}
-      >
+      <svg className={clsx('overflow-visible select-none', className)} ref={inputRef} width={width} height={height}>
         <Grid {...sharedProps} />
         <Progress {...sharedProps} value={value} progress={progress} />
         <Curve {...sharedProps} value={value} />
