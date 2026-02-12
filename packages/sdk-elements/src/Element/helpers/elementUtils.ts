@@ -1,50 +1,3 @@
-import {
-  Breadcrumb,
-  FileUpload,
-  ContainerAutoScale,
-  ContainerShadow,
-  KVInput,
-  ColorPicker,
-  Modal,
-  MenuList,
-  Markdown,
-  ErrorBoundary,
-  ContainerTabs,
-  Form,
-  Heading,
-  Tree,
-  Contenteditable,
-  ContainerFrame,
-  Checkbox,
-  ContainerFloating,
-  Switch,
-  QueryBuilder,
-  Select,
-  Select2,
-  CodeMirror,
-  Text,
-  Sidebar,
-  Accordion,
-  Dummy,
-  Alert,
-  Button,
-  Input,
-  MetricInput,
-  Provider,
-  TextArea,
-  Label,
-  ErrorMessage,
-  Icon,
-  IconGroup,
-  Flex,
-  ContainerCollapsable,
-  Card,
-  ContainerDraggable,
-  ContainerResizable,
-  ContainerRoot,
-  ContainerWindow,
-  Popup
-} from '@plitzi/plitzi-ui/components';
 import get from 'lodash-es/get';
 import * as React from 'react';
 import * as ReactJSX from 'react/jsx-runtime';
@@ -77,54 +30,6 @@ type PlitziModule = {
   plugins?: Record<string, ComponentPlugin>;
 };
 
-const components = {
-  Breadcrumb,
-  FileUpload,
-  ContainerAutoScale,
-  ContainerShadow,
-  KVInput,
-  ColorPicker,
-  Modal,
-  MenuList,
-  Markdown,
-  ErrorBoundary,
-  ContainerTabs,
-  Form,
-  Heading,
-  Tree,
-  Contenteditable,
-  ContainerFrame,
-  Checkbox,
-  ContainerFloating,
-  Switch,
-  QueryBuilder,
-  Select,
-  Select2,
-  CodeMirror,
-  Text,
-  Sidebar,
-  Accordion,
-  Dummy,
-  Alert,
-  Button,
-  Input,
-  MetricInput,
-  Provider,
-  TextArea,
-  Label,
-  ErrorMessage,
-  Icon,
-  IconGroup,
-  Flex,
-  ContainerCollapsable,
-  Card,
-  ContainerDraggable,
-  ContainerResizable,
-  ContainerRoot,
-  ContainerWindow,
-  Popup
-};
-
 export const generatePluginModule = async (url: string, asESM = true, pluginScope = '') => {
   let Module: PlitziModule;
   try {
@@ -147,14 +52,7 @@ export const generatePluginModule = async (url: string, asESM = true, pluginScop
         __WEBPACK_EXTERNAL_MODULE_react__: React,
         __WEBPACK_EXTERNAL_MODULE_react_dom__: ReactDOM,
         __WEBPACK_EXTERNAL_MODULE_react_jsx_runtime__: ReactJSX,
-        __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules,
-        ...Object.keys(components).reduce((acum, componentName) => {
-          return {
-            ...acum,
-            [`__WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_ui_${componentName}__`]:
-              components[componentName as keyof typeof components]
-          };
-        }, {})
+        __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules
       };
 
       // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
