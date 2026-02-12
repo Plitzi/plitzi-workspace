@@ -128,11 +128,11 @@ const NetworkContextProvider = ({
               // onProgress: ev => {
               //   setProgress(ev.loaded / ev.total);
               // },
-              // onProgress: noop,
+              // onProgress: undefined,
               // onAbortPossible: abortHandlerInternal => {
               //   abortHandler = abortHandlerInternal;
               // },
-              // onAbortPossible: noop,
+              // onAbortPossible: undefined,
               ...uploadOptions
             }
           }
