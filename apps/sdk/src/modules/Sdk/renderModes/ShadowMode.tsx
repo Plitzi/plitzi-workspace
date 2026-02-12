@@ -2,7 +2,7 @@ import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import { useMemo } from 'react';
 
 import MadeInPlitzi from '@components/MadeInPlitzi';
-import { Page } from '@plitzi/sdk-elements/components';
+import { Page } from '@plitzi/sdk-elements/elements';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import SpaceContainer from '../../Space/SpaceContainer';

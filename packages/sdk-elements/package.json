@@ -650,6 +650,10 @@
       "types": "./dist/src/elements/advanced/NodeHtml/index.d.ts",
       "import": "./dist/src/elements/advanced/NodeHtml/index.mjs"
     },
+    "./elements/advanced/PlitziSdk/Settings": {
+      "types": "./dist/src/elements/advanced/PlitziSdk/Settings.d.ts",
+      "import": "./dist/src/elements/advanced/PlitziSdk/Settings.mjs"
+    },
     "./elements/advanced/Reference": {
       "types": "./dist/src/elements/advanced/Reference/index.d.ts",
       "import": "./dist/src/elements/advanced/Reference/index.mjs"

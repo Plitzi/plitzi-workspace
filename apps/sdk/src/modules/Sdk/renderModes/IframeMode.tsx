@@ -2,7 +2,7 @@ import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { useMemo } from 'react';
 
 import MadeInPlitzi from '@components/MadeInPlitzi';
-import { Page } from '@plitzi/sdk-elements/components';
+import { Page } from '@plitzi/sdk-elements/elements';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 

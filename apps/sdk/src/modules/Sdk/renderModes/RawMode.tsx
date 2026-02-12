@@ -2,8 +2,8 @@ import get from 'lodash-es/get';
 import { useMemo, use } from 'react';
 
 import MadeInPlitzi from '@components/MadeInPlitzi';
-import { Page } from '@plitzi/sdk-elements/components';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
+import { Page } from '@plitzi/sdk-elements/elements';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
