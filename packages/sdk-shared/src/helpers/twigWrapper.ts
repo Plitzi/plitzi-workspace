@@ -2,29 +2,36 @@ import Twig from 'twig';
 
 Twig.extendFilter('object_as_json', (value: string) => (typeof value === 'object' ? JSON.stringify(value) : value));
 
-const tokenRegex = /{{([ ]+|)(?<token>[a-zA-Z][a-zA-Z0-9._-]+)([ ]+|)}}/gim;
-const strictTokenRegex = /^{{([ ]+|)(?<token>[a-zA-Z][a-zA-Z0-9._-]+)([ ]+|)}}$/gim;
+const TOKEN_BASE = '{{\\s*(?<token>[a-zA-Z_][a-zA-Z0-9_]*(?:\\??\\.[a-zA-Z_][a-zA-Z0-9_]*)*)[^}]*}}';
+const TOKEN_REGEX = new RegExp(TOKEN_BASE, 'g');
+const TOKEN_STRICT_REGEX = new RegExp(`^${TOKEN_BASE}$`);
 
-const isValidToken = (token: string, strict: boolean = false) =>
-  strict ? !!token.trim().match(strictTokenRegex) : !!token.trim().match(tokenRegex);
+export const hasValidToken = (value?: string, strict = false): boolean => {
+  if (typeof value !== 'string') {
+    return false;
+  }
 
-const hasTokens = (template?: string) =>
-  typeof template === 'string' && !!template.replaceAll(' ', '').match(/{{.*}}/gim);
+  const source = strict ? TOKEN_STRICT_REGEX : TOKEN_REGEX;
+  source.lastIndex = 0;
 
-const processTwig = (
+  return source.test(value.trim());
+};
+
+export const processTwig = (
   template: string,
   variables: { [key: string]: unknown } = {},
   keepEmptyTokens = false,
   asRaw = false
 ) => {
-  if (typeof template !== 'string') {
+  if (typeof template !== 'string' || !hasValidToken(template)) {
     return template;
   }
 
   try {
+    TOKEN_REGEX.lastIndex = 0;
     let templateParsed = template;
     if (keepEmptyTokens) {
-      [...templateParsed.matchAll(tokenRegex)].forEach(token => {
+      [...templateParsed.matchAll(TOKEN_REGEX)].forEach(token => {
         if (token.groups) {
           templateParsed = templateParsed.replace(token[0], `{{ ${token.groups.token} | default('${token[0]}') }}`);
         }
@@ -32,7 +39,7 @@ const processTwig = (
     }
 
     if (asRaw) {
-      [...templateParsed.matchAll(tokenRegex)].forEach(token => {
+      [...templateParsed.matchAll(TOKEN_REGEX)].forEach(token => {
         if (token.groups) {
           templateParsed = templateParsed.replace(token[0], `{{ ${token.groups.token} | object_as_json }}`);
         }
@@ -51,8 +58,9 @@ const processTwig = (
     }
 
     try {
-      if (JSON.parse(result)) {
-        return JSON.parse(result) as string | object;
+      const parsed = JSON.parse(result) as string | object;
+      if (parsed) {
+        return parsed;
       }
 
       return result;
@@ -63,5 +71,3 @@ const processTwig = (
     return template;
   }
 };
-
-export { processTwig, isValidToken, hasTokens };

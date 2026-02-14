@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import ParamBinding from './ParamBinding';
@@ -50,7 +50,7 @@ const NodeBodyParam = ({
     () => (type === 'select' && typeof optionsProp === 'function' ? optionsProp(params) : optionsProp),
     [optionsProp, params, type]
   );
-  const [isBinding, setIsBinding] = useState(() => canBind && typeof value === 'string' && isValidToken(value, true));
+  const [isBinding, setIsBinding] = useState(() => canBind && typeof value === 'string' && hasValidToken(value, true));
   const [internalOptions, setInternalOptions] = useState<Option[]>([]);
 
   const handleChangeInput = useCallback((value?: string) => onChange?.(id, value ?? ''), [id, onChange]);

@@ -5,7 +5,7 @@ import { use, useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
@@ -40,7 +40,7 @@ const getProps = (
   const { variables } = dataSource;
   if (variables && Object.keys(variables).length > 0) {
     attributes = Object.keys(attributes).reduce((acum, key) => {
-      if (typeof attributes[key] === 'string' && hasTokens(attributes[key])) {
+      if (typeof attributes[key] === 'string' && hasValidToken(attributes[key])) {
         return { ...acum, [key]: processTwig(attributes[key], variables as Record<string, unknown>, true) };
       }
 

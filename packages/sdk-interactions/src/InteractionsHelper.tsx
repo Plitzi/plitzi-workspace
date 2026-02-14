@@ -3,7 +3,7 @@ import get from 'lodash-es/get.js';
 import omit from 'lodash-es/omit.js';
 
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
-import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import utility from './utility';
 
@@ -33,7 +33,7 @@ const processParams = (
     let value = params[param];
     if (type !== 'trigger') {
       let timeout = 5;
-      while (typeof value === 'string' && hasTokens(value) && timeout > 0) {
+      while (typeof value === 'string' && hasValidToken(value) && timeout > 0) {
         value = processTwig(value, { ...flowValues, ...globalValues }, false, true);
         timeout--;
       }

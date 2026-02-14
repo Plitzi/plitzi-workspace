@@ -2,7 +2,7 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useMemo } from 'react';
 
-import { processTwig, hasTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 type SettingsProps = {
   src?: string;
@@ -13,10 +13,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ src = '', variables, fetchPriority = 'auto', loadMode = 'auto', onUpdate }: SettingsProps) => {
-  const urlPreview = useMemo(
-    () => (hasTokens(src) ? (processTwig(src, variables, true) as string) : src),
-    [variables, src]
-  );
+  const urlPreview = useMemo(() => processTwig(src, variables, true) as string, [variables, src]);
 
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 
