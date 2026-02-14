@@ -7,7 +7,7 @@ import set from 'lodash-es/set.js';
 import utility from '../utility';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { DataSourceUtility, Element, ElementBinding } from '@plitzi/sdk-shared';
+import type { BindingCategory, DataSourceUtility, Element, ElementBinding } from '@plitzi/sdk-shared';
 
 const getValues = (
   dataSource: Record<string, unknown>,
@@ -33,13 +33,13 @@ const getBindingsDetails = (
   style: Record<string, string> = {}
 ) => {
   const { bindings } = definition;
-  if (!bindings || (typeof bindings === 'object' && Object.keys(bindings).length === 0)) {
+  if (!bindings || (typeof bindings === 'object' && !Object.keys(bindings).length)) {
     return { attributes, style: {}, definition };
   }
 
   return produce({ attributes, style, definition }, draft => {
-    Object.keys(bindings).forEach(bkey => {
-      if (!Array.isArray(bindings[bkey]) || bindings[bkey].length === 0) {
+    (Object.keys(bindings) as BindingCategory[]).forEach(bkey => {
+      if (!bindings[bkey] || !Array.isArray(bindings[bkey]) || !bindings[bkey].length) {
         return;
       }
 

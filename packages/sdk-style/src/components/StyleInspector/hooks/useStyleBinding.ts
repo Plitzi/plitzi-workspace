@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 
-import type { Element, ElementBinding, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseStyleBindingProps = { element?: Element };
 
@@ -20,7 +20,7 @@ const useStyleBinding = ({ element }: UseStyleBindingProps) => {
       definition: { bindings }
     } = element;
 
-    if (!bindings || !(bindings as Partial<Record<string, ElementBinding[]>>).style) {
+    if (!bindings?.style) {
       return metadata;
     }
 

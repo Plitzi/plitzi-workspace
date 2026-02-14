@@ -67,7 +67,11 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
   const handleClickUpdateBinding = useCallback(
     (category: BindingCategory, id: string) => {
-      const binding = bindings?.[category].find(bin => bin.id === id);
+      if (!bindings?.[category]) {
+        return;
+      }
+
+      const binding = bindings[category].find(bin => bin.id === id);
       if (!binding) {
         return;
       }
@@ -79,12 +83,16 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
   const handleClickEnableBinding = useCallback(
     (category: BindingCategory, id: string, isEnabled: boolean) => {
-      if (!bindings) {
+      if (!bindings || !bindings[category]) {
         return;
       }
 
       onChange?.(
         produce(bindings, draft => {
+          if (!draft[category]) {
+            return;
+          }
+
           const binding = draft[category].find(bin => bin.id === id);
           if (!binding) {
             return;
@@ -99,12 +107,16 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
   const handleClickRemoveBinding = useCallback(
     (category: BindingCategory, id: string) => {
-      if (!bindings) {
+      if (!bindings || !bindings[category]) {
         return;
       }
 
       onChange?.(
         produce(bindings, draft => {
+          if (!draft[category]) {
+            return;
+          }
+
           const pos = draft[category].findIndex(binding => binding.id === id);
           if (pos > -1) {
             draft[category].splice(pos, 1);

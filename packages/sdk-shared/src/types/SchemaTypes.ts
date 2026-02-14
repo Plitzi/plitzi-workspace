@@ -51,7 +51,7 @@ export type ElementDefinition = {
   parentId?: Element['id'];
   items?: Element['id'][];
   styleSelectors: Record<string, string>;
-  bindings?: Record<BindingCategory, ElementBinding[]>;
+  bindings?: Partial<Record<BindingCategory, ElementBinding[]>>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
     styleSelectors?: ElementDefinition['styleSelectors'];

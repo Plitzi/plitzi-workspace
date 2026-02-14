@@ -7,9 +7,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import transformerString from './helpers/transformerString';
 import whenString from './helpers/whenString';
 
-import type { BindingCategory } from './DataSourceBinding';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { BindingTransformer, SourceField, SourceMeta } from '@plitzi/sdk-shared';
+import type { BindingTransformer, SourceField, SourceMeta, BindingCategory } from '@plitzi/sdk-shared';
 
 export type BindingSelected = {
   id?: string;
