@@ -16,17 +16,15 @@ import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';
 import { generateID } from '../../helpers/utils';
 
-import type { Element, ElementBinding } from '@plitzi/sdk-shared';
-
-export type BindingCategory = 'attributes' | 'style' | 'initialState';
+import type { Element, ElementBinding, BindingCategory } from '@plitzi/sdk-shared';
 
 const bindingCategories: BindingCategory[] = ['attributes', 'style', 'initialState'];
 
 export type DataSourceBindingProps = {
   id?: string;
-  bindings?: Record<string, ElementBinding[]>;
+  bindings?: Element['definition']['bindings'];
   element: Element;
-  onChange?: (bindings: Record<string, ElementBinding[]>) => void;
+  onChange?: (bindings: Element['definition']['bindings']) => void;
 };
 
 const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceBindingProps) => {
@@ -176,12 +174,15 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
   return (
     <div className="flex flex-col gap-4">
       {bindingCategories.map((fkey, i) => {
-        const binding = bindings && (bindings[fkey] as ElementBinding[] | undefined);
+        let binding = bindings?.[fkey];
+        if (!binding || !Array.isArray(binding)) {
+          binding = [];
+        }
 
         return (
           <Fragment key={`${id}_${i}`}>
             {i !== 0 && <div className="h-0.5 w-full bg-gray-300" />}
-            <ContainerCollapsable collapsed={!(binding && bindings[fkey].length > 0)}>
+            <ContainerCollapsable collapsed={!binding.length}>
               <ContainerCollapsable.Header
                 title={upperFirst(fkey)}
                 className="w-full"
@@ -190,37 +191,35 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                 iconExpanded={<i className="fa-solid fa-chevron-down" />}
               />
               <ContainerCollapsable.Content gap={4} className="p-2">
-                {binding && (
-                  <div className="flex flex-col gap-2 overflow-auto">
-                    {bindings[fkey]
-                      .filter(binding => binding.id && binding.id !== get(bindingFormValues, `${fkey}.id`, ''))
-                      .map((binding, j) => {
-                        const { id, source, fromPath, toPath, transformers, when, enabled } = binding;
+                <div className="flex flex-col gap-2 overflow-auto">
+                  {binding
+                    .filter(binding => binding.id && binding.id !== get(bindingFormValues, `${fkey}.id`, ''))
+                    .map((binding, j) => {
+                      const { id, source, fromPath, toPath, transformers, when, enabled } = binding;
 
-                        return (
-                          <BindingSelected
-                            key={`${i}_${j}`}
-                            id={id}
-                            sources={sources}
-                            category={fkey}
-                            source={source}
-                            fromPath={fromPath}
-                            toPath={toPath}
-                            transformers={transformers}
-                            when={when}
-                            enabled={enabled}
-                            onEnable={handleClickEnableBinding}
-                            onUpdate={handleClickUpdateBinding}
-                            onRemove={handleClickRemoveBinding}
-                          />
-                        );
-                      })}
-                  </div>
-                )}
+                      return (
+                        <BindingSelected
+                          key={`${i}_${j}`}
+                          id={id}
+                          sources={sources}
+                          category={fkey}
+                          source={source}
+                          fromPath={fromPath}
+                          toPath={toPath}
+                          transformers={transformers}
+                          when={when}
+                          enabled={enabled}
+                          onEnable={handleClickEnableBinding}
+                          onUpdate={handleClickUpdateBinding}
+                          onRemove={handleClickRemoveBinding}
+                        />
+                      );
+                    })}
+                </div>
                 {bindingFormValues[fkey] && (
                   <div
                     className={clsx('border-t border-gray-300 py-4', {
-                      'mt-4': binding && Object.keys(bindings[fkey]).length > 0,
+                      'mt-4': !!binding.length,
                       'border-b': i !== bindingCategories.length - 1
                     })}
                   >

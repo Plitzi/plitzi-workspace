@@ -9,9 +9,12 @@ export type UseElementStateProps = { bindings?: Partial<Element['definition']['b
 const useElementState = ({ bindings, previewMode }: UseElementStateProps) => {
   const [state, setState] = useState<Record<string, unknown>>({});
   const cache = useMemo(() => {
+    const initialState = bindings?.initialState && Array.isArray(bindings.initialState) ? bindings.initialState : [];
+    const attributes = bindings?.attributes && Array.isArray(bindings.attributes) ? bindings.attributes : [];
+
     return {
-      stateBinded: (bindings?.initialState ?? []).map(binding => get(binding, 'toPath', '')),
-      attributesBinded: (bindings?.attributes ?? []).map(binding => get(binding, 'toPath', ''))
+      stateBinded: initialState.map(binding => get(binding, 'toPath', '')),
+      attributesBinded: attributes.map(binding => get(binding, 'toPath', ''))
     };
   }, [bindings]);
 

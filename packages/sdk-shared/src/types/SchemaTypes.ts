@@ -9,6 +9,8 @@ import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 // FlatMap
 export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside' | 'custom';
 
+export type BindingCategory = 'attributes' | 'style' | 'initialState';
+
 export type BindingTransformer = {
   type: 'utility' | 'unknown';
   action: string;
@@ -49,7 +51,7 @@ export type ElementDefinition = {
   parentId?: Element['id'];
   items?: Element['id'][];
   styleSelectors: Record<string, string>;
-  bindings?: Record<string, ElementBinding[]>;
+  bindings?: Record<BindingCategory, ElementBinding[]>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
     styleSelectors?: ElementDefinition['styleSelectors'];
