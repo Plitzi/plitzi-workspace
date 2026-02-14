@@ -184,7 +184,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
       {bindingCategories.map((fkey, i) => {
         let binding = bindings?.[fkey];
         if (!binding || !Array.isArray(binding)) {
@@ -197,9 +197,9 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
             <ContainerCollapsable collapsed={!binding.length}>
               <ContainerCollapsable.Header
                 title={upperFirst(fkey)}
-                className="w-full"
+                className="w-full px-2"
                 placement="right"
-                iconCollapsed={<i className="fa-solid fa-chevron-up" />}
+                iconCollapsed={<i className="fa-solid fa-chevron-right" />}
                 iconExpanded={<i className="fa-solid fa-chevron-down" />}
               />
               <ContainerCollapsable.Content gap={4} className="p-2">

@@ -14,6 +14,10 @@ const useElementDataSource = ({ id, bindings, filterMode }: UseElementDataSource
   const sourceFilter = useMemo(() => {
     const sources = new Set<string>();
     for (const bindingsGroup of Object.values(bindings ?? {})) {
+      if (!Array.isArray(bindingsGroup)) {
+        continue;
+      }
+
       for (const { source } of bindingsGroup) {
         if (source) {
           sources.add(source);
