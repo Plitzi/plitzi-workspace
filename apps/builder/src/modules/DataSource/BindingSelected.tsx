@@ -96,7 +96,7 @@ const BindingSelected = ({
     <div className="flex rounded-sm border border-gray-300">
       <div className="flex flex-col items-center gap-2 p-1">
         <Switch checked={enabled} size="xs" onChange={handleChangeEnabled} />
-        <div className="flex grow flex-col items-center justify-center gap-1">
+        <div className="flex grow flex-col items-center justify-end gap-1">
           <Button size="xs" title="Update" onClick={handleClickUpdateBinding}>
             <Button.Icon icon="fas fa-pencil" />
           </Button>
