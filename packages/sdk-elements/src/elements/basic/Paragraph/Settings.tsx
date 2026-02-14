@@ -11,7 +11,7 @@ const Settings = ({ content = 'Paragraph', onUpdate }: SettingsProps) => {
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
-      <TextArea value={content} label="Content" className="h-full" onChange={handleChangeContent} />
+      <TextArea value={content} label="Content" className="h-full" rows={4} onChange={handleChangeContent} size="xs" />
     </div>
   );
 };

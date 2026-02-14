@@ -36,18 +36,18 @@ const Settings = ({
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
-      <Input value={content} label="Content" onChange={handleChangeContent} />
-      <Select value={contentPlacement} label="Mode" onChange={handleChangeContentPlacement}>
+      <Input value={content} label="Content" onChange={handleChangeContent} size="xs" />
+      <Select value={contentPlacement} label="Mode" onChange={handleChangeContentPlacement} size="xs">
         <option value="before">Before Elements</option>
         <option value="after">After Elements</option>
         <option value="elements">Only Elements</option>
       </Select>
-      <Select value={subType} label="Button Type" onChange={handleChangeSubType}>
+      <Select value={subType} label="Button Type" onChange={handleChangeSubType} size="xs">
         <option value="button">Button</option>
         <option value="submit">Submit</option>
         <option value="reset">Reset</option>
       </Select>
-      <Checkbox checked={disabled} label="Is Disabled" onChange={handleChangeDisabled} />
+      <Checkbox checked={disabled} label="Is Disabled" onChange={handleChangeDisabled} size="xs" />
     </div>
   );
 };

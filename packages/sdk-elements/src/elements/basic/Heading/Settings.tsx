@@ -13,7 +13,7 @@ const Settings = ({ subType = 'h1', content = '', onUpdate }: SettingsProps) => 
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
-      <Select value={subType} label="Heading Tag" onChange={handleChange('subType')}>
+      <Select value={subType} label="Heading Tag" onChange={handleChange('subType')} size="xs">
         <option value="h1">H1</option>
         <option value="h2">H2</option>
         <option value="h3">H3</option>
@@ -21,7 +21,7 @@ const Settings = ({ subType = 'h1', content = '', onUpdate }: SettingsProps) => 
         <option value="h5">H5</option>
         <option value="h6">H6</option>
       </Select>
-      <TextArea value={content} label="Content" onChange={handleChange('content')} />
+      <TextArea value={content} label="Content" onChange={handleChange('content')} size="xs" />
     </div>
   );
 };
