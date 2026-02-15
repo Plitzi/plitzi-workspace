@@ -42,6 +42,10 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const Tag = tag as unknown as FC<{ [key: string]: unknown }> | undefined;
   const elementContext = use(ElementContext);
+  if (!(elementContext as ElementContextValue | undefined)) {
+    throw new Error('This element can be rendered only under withElement HOC or inside ElementContext');
+  }
+
   const { id, rootId } = elementContext;
   if (!Tag) {
     throw new Error(`One of these parameters [tag] is missing in elementId: ${id}`);

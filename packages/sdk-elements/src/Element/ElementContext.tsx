@@ -21,9 +21,9 @@ export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
       ) => boolean;
     });
 
-const elementContextDefaultValue = {} as ElementContextValue;
-
-const ElementContext = createContext<ElementContextValue | ElementContextValue<'skipHOC'>>(elementContextDefaultValue);
+const ElementContext = createContext<ElementContextValue | ElementContextValue<'skipHOC'>>(
+  undefined as unknown as ElementContextValue
+);
 
 export type ElementProviderProps = {
   children: ReactNode;

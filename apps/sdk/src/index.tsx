@@ -9,7 +9,9 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
 import { defaultElements } from '@plitzi/sdk-elements';
+import ElementContext from '@plitzi/sdk-elements/Element/ElementContext';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
@@ -152,7 +154,9 @@ export {
   PluginManager,
   PluginRemote,
   ReplicaProvider,
-  sdkComponents
+  sdkComponents,
+  useElement,
+  ElementContext
 };
 
 export const Components = { ...defaultElements, ...sdkComponents };
