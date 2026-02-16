@@ -4,7 +4,7 @@ import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
-import type { DisplayMode } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type OverlaySpacingProps = {
@@ -30,7 +30,7 @@ const OverlaySpacing = ({
 }: OverlaySpacingProps) => {
   const [rawStyle, setRawStyle] = useState<Partial<CSSStyleDeclaration> | undefined>({});
   const { style } = use(BuilderStyleContext);
-  const elementStyle = useMemo<Record<string, string>>(() => {
+  const elementStyle = useMemo<Partial<Record<StyleCategory, StyleValue>>>(() => {
     if (!selector) {
       return {};
     }
