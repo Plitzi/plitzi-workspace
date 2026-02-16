@@ -97,14 +97,14 @@
     "lint-style": "stylelint \"**/*.scss\" --custom-syntax postcss-scss",
     "lint-style:fix": "stylelint \"**/*.scss\" --custom-syntax postcss-scss --fix",
     "typecheck": "tsc --noEmit",
-    "build-assets:dev": "tsc --noEmit && vite build --mode development",
-    "build-assets:dev-watch": "tsc --noEmit && vite build --mode development --watch",
-    "build-assets:dev-gzip": "tsc --noEmit && ONLY_GZIP=1 vite build --mode development",
-    "build-assets:dev-analyze": "tsc --noEmit && ONLY_ANALYZE=1 vite build --mode development",
-    "build-assets:prod": "tsc --noEmit && vite build",
-    "build-assets:prod-watch": "tsc --noEmit && vite build --watch",
-    "build-assets:prod-gzip": "tsc --noEmit && ONLY_GZIP=1 vite build",
-    "build-assets:prod-analyze": "tsc --noEmit && ONLY_ANALYZE=1 vite build"
+    "build-assets:dev": "tsc -p tsconfig.app.json --noEmit && vite build --mode development",
+    "build-assets:dev-watch": "tsc -p tsconfig.app.json --noEmit && vite build --mode development --watch",
+    "build-assets:dev-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build --mode development",
+    "build-assets:dev-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build --mode development",
+    "build-assets:prod": "tsc -p tsconfig.app.json --noEmit && vite build",
+    "build-assets:prod-watch": "tsc -p tsconfig.app.json --noEmit && vite build --watch",
+    "build-assets:prod-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build",
+    "build-assets:prod-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build"
   },
   "eslintConfig": {
     "extends": "react-app"

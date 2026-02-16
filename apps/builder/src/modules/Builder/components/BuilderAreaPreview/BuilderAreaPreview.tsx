@@ -22,6 +22,8 @@ import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
+// eslint-disable-next-line
+// @ts-ignore
 import styleFrame from '../../../Builder/Assets/index-iframe.scss?inline';
 
 import type { Schema } from '@plitzi/sdk-shared';

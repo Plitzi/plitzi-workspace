@@ -1,22 +1,6 @@
 {
   "extends": "../../packages/sdk-shared/tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./",
-    "paths": {
-      "@pmodules/*": ["./src/modules/*"],
-      "@pcomponents/*": ["./src/components/*"]
-    }
-  },
-  "include": [
-    "../sdk-shared/vite.config.ts",
-    "../sdk-shared/package.json",
-    "**/*.json",
-    "src/*.ts",
-    "src/*.tsx",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "vite.config.ts",
-    "setupTests.ts"
-  ]
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "files": [],
+  "exclude": ["dist", "node_modules", "**/dist"]
 }

@@ -16,11 +16,11 @@ export default defineConfig(({ mode, command }) => {
       nodeResolve({ extensions: ['.ts', '.tsx'] }),
       react(),
       dts({
-        // entryRoot: 'src',
+        // entryRoot: '.',
         outDir: 'dist',
         rollupTypes: false,
         exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
-        tsconfigPath: './tsconfig.json'
+        tsconfigPath: './tsconfig.app.json'
       }),
       {
         name: 'debug-resolve',

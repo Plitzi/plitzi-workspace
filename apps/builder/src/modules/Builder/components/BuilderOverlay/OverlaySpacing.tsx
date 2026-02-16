@@ -30,7 +30,7 @@ const OverlaySpacing = ({
 }: OverlaySpacingProps) => {
   const [rawStyle, setRawStyle] = useState<Partial<CSSStyleDeclaration> | undefined>({});
   const { style } = use(BuilderStyleContext);
-  const elementStyle = useMemo(() => {
+  const elementStyle = useMemo<Record<string, string>>(() => {
     if (!selector) {
       return {};
     }

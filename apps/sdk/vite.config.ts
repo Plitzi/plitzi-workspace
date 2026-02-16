@@ -76,7 +76,7 @@ function ejsPlugin(devMode: boolean): Plugin {
           },
           { async: false }
         );
-        this.emitFile({ type: 'asset', fileName: 'index.html', source: html as string });
+        this.emitFile({ type: 'asset', fileName: 'index.html', source: html });
       }
     }
   };

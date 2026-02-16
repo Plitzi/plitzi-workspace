@@ -1,0 +1,13 @@
+{
+  "extends": "../../packages/sdk-shared/tsconfig.app.json",
+  "references": [{ "path": "../../packages/sdk-shared" }],
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist",
+    "paths": {
+      "@pmodules/*": ["./src/modules/*"],
+      "@pcomponents/*": ["./src/components/*"]
+    }
+  },
+  "include": ["src", "**/*.json"]
+}

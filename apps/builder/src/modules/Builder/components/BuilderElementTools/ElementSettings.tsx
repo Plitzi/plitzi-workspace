@@ -2,7 +2,6 @@ import Heading from '@plitzi/plitzi-ui/components/Heading';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import uiStyle from '@plitzi/plitzi-ui/style.css?inline';
 import { useCallback, use, useMemo } from 'react';
 
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
@@ -139,10 +138,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         {pluginStyles[type].map((style, i) => (
           <ContainerShadow.Link key={i} href={style} />
         ))}
-        <ContainerShadow.Content>
-          <style>{uiStyle}</style>
-          {children}
-        </ContainerShadow.Content>
+        <ContainerShadow.Content>{children}</ContainerShadow.Content>
       </ContainerShadow>
     );
   }
