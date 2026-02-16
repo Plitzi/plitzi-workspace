@@ -27,11 +27,12 @@ import { disableReactDevTools } from './helpers/security';
 import './assets/index.scss';
 
 import type {
+  Schema,
+  Style,
   ComponentPluginFC,
   ComponentPlugin,
   Environment,
   EventBridgeContextValue,
-  OfflineData,
   OfflineDataRaw,
   RenderMode,
   Server,
@@ -162,7 +163,7 @@ export {
   ElementContext
 };
 
-export type { ComponentPlugin, ComponentPluginFC, PlitziServiceContextValue, OfflineDataRaw, OfflineData };
+export type { Schema, Style, ComponentPlugin, ComponentPluginFC, PlitziServiceContextValue, OfflineDataRaw };
 
 export const Components = { ...defaultElements, ...sdkComponents };
 
