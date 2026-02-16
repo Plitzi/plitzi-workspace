@@ -3,7 +3,6 @@
 
 import path from 'path';
 
-import { nodeResolve } from '@rollup/plugin-node-resolve';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
@@ -13,7 +12,6 @@ const importedPackages = new Set();
 export default defineConfig(({ mode, command }) => {
   return {
     plugins: [
-      nodeResolve({ extensions: ['.ts', '.tsx'] }),
       react(),
       dts({
         // entryRoot: '.',
