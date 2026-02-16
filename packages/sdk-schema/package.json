@@ -38,7 +38,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint ./src",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

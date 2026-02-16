@@ -9,14 +9,19 @@ import { generatePluginModule } from './helpers/elementUtils';
 import withElement from './hocs/withElement';
 import useDynamicScript from './hooks/useDynamicScript';
 
-import type { ComponentContextValue, ComponentPlugin, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type {
+  ComponentContextValue,
+  ComponentPlugin,
+  ComponentPluginWithHOC,
+  InternalPropsSTG1
+} from '@plitzi/sdk-shared';
 
 function loadComponent(
   url: string,
   isESM: boolean,
   pluginScope: string,
   registerCallback: ComponentContextValue['register'],
-  NotFoundNode: ComponentPlugin,
+  NotFoundNode: ComponentPluginWithHOC,
   autoRegister = true,
   plitziJsxSkipHOC = false
 ) {
@@ -34,9 +39,9 @@ function loadComponent(
       return { default: NotFoundNode };
     }
 
-    let plitziComponent = Module.default;
+    let plitziComponent: ComponentPlugin | ComponentPluginWithHOC = Module.default;
     if (!plitziJsxSkipHOC) {
-      plitziComponent = withElement(Module.default) as ComponentPlugin;
+      plitziComponent = withElement(Module.default) as ComponentPluginWithHOC;
     }
 
     plitziComponent.version = version;

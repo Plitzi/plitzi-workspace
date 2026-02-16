@@ -28,6 +28,7 @@ import type { ApolloClient } from '@apollo/client/core';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type {
   ComponentPlugin,
+  ComponentPluginFC,
   Environment,
   EventBridgeContextValue,
   OfflineDataRaw,
@@ -125,11 +126,12 @@ const App = ({
         return;
       }
 
-      const { renderType, component, assets = [], ...extraProps } = child.props as SdkPluginProps;
-      if (!renderType || !(component as ComponentPlugin | undefined)) {
+      const { renderType, component: componentFC, assets = [], ...extraProps } = child.props as SdkPluginProps;
+      if (!renderType || !(componentFC as ComponentPluginFC | undefined)) {
         return;
       }
 
+      const component = componentFC as ComponentPlugin;
       component.type = renderType;
       component.assets = assets;
       component.extraProps = extraProps;

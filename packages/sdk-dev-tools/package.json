@@ -293,7 +293,7 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "build-assets:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build-assets:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"

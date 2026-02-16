@@ -1,11 +1,11 @@
 import withElement from '../Element/hocs/withElement';
 
-import type { ComponentOrigin, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentOrigin, ComponentPluginWithHOC } from '@plitzi/sdk-shared';
 
 // Generic methods
 
-export const getPlugins = (component: ComponentPlugin | undefined) => {
-  let result: Record<string, ComponentPlugin> = {};
+export const getPlugins = (component: ComponentPluginWithHOC | undefined) => {
+  let result: Record<string, ComponentPluginWithHOC> = {};
   if (!component) {
     return result;
   }
@@ -23,7 +23,7 @@ export const getPlugins = (component: ComponentPlugin | undefined) => {
 
 // Local
 
-export const processLocalPlugins = (plugins?: Record<string, ComponentPlugin>) => {
+export const processLocalPlugins = (plugins?: Record<string, ComponentPluginWithHOC>) => {
   let pluginsProcessed = {};
   if (!plugins) {
     return pluginsProcessed;
@@ -40,16 +40,16 @@ export const processLocalPlugins = (plugins?: Record<string, ComponentPlugin>) =
 
 // Local Custom Components
 
-export const nestedInject = (plugins: Record<string, ComponentPlugin> | undefined, origin: ComponentOrigin) => {
+export const nestedInject = (plugins: Record<string, ComponentPluginWithHOC> | undefined, origin: ComponentOrigin) => {
   if (!plugins) {
     return {};
   }
 
-  const pluginsProcessed: Record<string, ComponentPlugin> = {};
+  const pluginsProcessed: Record<string, ComponentPluginWithHOC> = {};
   Object.keys(plugins).forEach(pluginType => {
     const plugin = plugins[pluginType];
     const { version, pluginSettings, initialItems, plugins: subPlugins, extraProps } = plugin;
-    pluginsProcessed[pluginType] = withElement(plugin) as ComponentPlugin;
+    pluginsProcessed[pluginType] = withElement(plugin) as ComponentPluginWithHOC;
     pluginsProcessed[pluginType].origin = origin;
     pluginsProcessed[pluginType].version = version;
     pluginsProcessed[pluginType].type = pluginType;
@@ -62,7 +62,7 @@ export const nestedInject = (plugins: Record<string, ComponentPlugin> | undefine
   return pluginsProcessed;
 };
 
-export const processLocalCustomPlugins = (localComponents?: Record<string, ComponentPlugin>) => {
+export const processLocalCustomPlugins = (localComponents?: Record<string, ComponentPluginWithHOC>) => {
   let pluginsProcessed = {};
   if (!localComponents) {
     return pluginsProcessed;
@@ -74,7 +74,7 @@ export const processLocalCustomPlugins = (localComponents?: Record<string, Compo
     }
 
     const { type, pluginSettings, version, initialItems, plugins, assets, content, extraProps } = comp;
-    const plitziComponent = withElement(comp) as ComponentPlugin;
+    const plitziComponent = withElement(comp) as ComponentPluginWithHOC;
     plitziComponent.version = version;
     plitziComponent.type = type;
     plitziComponent.assets = assets;

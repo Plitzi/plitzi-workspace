@@ -35,7 +35,7 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
-import type { BuilderNetworkContextValue, ComponentPlugin, DisplayMode } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue, ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
 
 export type BuilderAreaProps = {
   className?: string;
@@ -106,7 +106,7 @@ const BuilderArea = ({
 
   const baseElement = builderGetBaseElement(baseElementId);
   const baseElementData = get(baseElement, 'data');
-  const Plugin = get(baseElement, 'Plugin') as ComponentPlugin | undefined;
+  const Plugin = get(baseElement, 'Plugin') as ComponentPluginWithHOC | undefined;
 
   const plitziContextValue = useMemo(
     () => ({

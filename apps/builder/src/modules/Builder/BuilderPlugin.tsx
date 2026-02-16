@@ -2,7 +2,7 @@
 import type { Asset, ComponentDefinition, ComponentPluginFC } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
-export type SdkPluginProps = {
+export type BuilderPluginProps = {
   renderType: string;
   component: ComponentPluginFC;
   settings?: FC<any>;
@@ -10,6 +10,6 @@ export type SdkPluginProps = {
   assets?: Asset[];
 };
 
-const SdkPlugin = (_props: SdkPluginProps) => undefined; // eslint-disable-line
+const BuilderPlugin = (_props: BuilderPluginProps) => undefined; // eslint-disable-line
 
-export default SdkPlugin;
+export default BuilderPlugin;

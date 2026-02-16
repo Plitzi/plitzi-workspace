@@ -6,7 +6,7 @@ import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentPluginWithHOC } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {
@@ -24,7 +24,7 @@ const BlockJsx = ({
   ...otherProps
 }: BlockJsxProps) => {
   const { id, rootId, plitziElementLayout } = useElement();
-  const [JsxModule, setJsxModule] = useState<{ default: ComponentPlugin<typeof otherProps> }>();
+  const [JsxModule, setJsxModule] = useState<{ default: ComponentPluginWithHOC<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
   const internalPropsTruncated = useMemo(
     () => ({ id, rootId, plitziElementLayout }),
@@ -60,7 +60,9 @@ const BlockJsx = ({
       let error: string | undefined = undefined;
       try {
         data = `data:text/javascript;base64,${data}`;
-        jsxModule = (await import(/* @vite-ignore */ /* webpackIgnore: true */ data)) as { default?: ComponentPlugin };
+        jsxModule = (await import(/* @vite-ignore */ /* webpackIgnore: true */ data)) as {
+          default?: ComponentPluginWithHOC;
+        };
       } catch (e: unknown) {
         if (e instanceof Error) {
           error = e.message;
@@ -68,7 +70,7 @@ const BlockJsx = ({
       } finally {
         setRenderError(error);
         if (jsxModule && jsxModule.default) {
-          setJsxModule(jsxModule as { default: ComponentPlugin<typeof otherProps> });
+          setJsxModule(jsxModule as { default: ComponentPluginWithHOC<typeof otherProps> });
         } else if (JsxModule) {
           setJsxModule(undefined);
           setRenderError('Component not found');

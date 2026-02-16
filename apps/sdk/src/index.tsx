@@ -27,14 +27,17 @@ import { disableReactDevTools } from './helpers/security';
 import './assets/index.scss';
 
 import type {
+  ComponentPluginFC,
   ComponentPlugin,
   Environment,
   EventBridgeContextValue,
+  OfflineData,
   OfflineDataRaw,
   RenderMode,
   Server,
   ServerEnvironment,
-  StateManagerContextValue
+  StateManagerContextValue,
+  PlitziServiceContextValue
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -158,6 +161,8 @@ export {
   useElement,
   ElementContext
 };
+
+export type { ComponentPlugin, ComponentPluginFC, PlitziServiceContextValue, OfflineDataRaw, OfflineData };
 
 export const Components = { ...defaultElements, ...sdkComponents };
 

@@ -38,8 +38,8 @@ import packageSettings from '../package.json';
 
 import './assets/index.scss';
 
-import type { ComponentPlugin, Server, ServerEnvironment } from '@plitzi/sdk-shared';
-import type { BuilderPluginProps } from '@pmodules/Builder';
+import type { ComponentPlugin, ComponentPluginFC, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { BuilderPluginProps } from '@pmodules/Builder/BuilderPlugin';
 import type { Client } from 'graphql-ws';
 import type { ReactNode } from 'react';
 
@@ -201,11 +201,18 @@ const App = (props: AppProps) => {
         return;
       }
 
-      const { renderType, component, settings, definition, ...extraProps } = child.props as BuilderPluginProps;
-      if (!renderType || !(component as ComponentPlugin | undefined)) {
+      const {
+        renderType,
+        component: componentFC,
+        settings,
+        definition,
+        ...extraProps
+      } = child.props as BuilderPluginProps;
+      if (!renderType || !(componentFC as ComponentPluginFC | undefined)) {
         return;
       }
 
+      const component = componentFC as ComponentPlugin;
       component.type = renderType;
       component.pluginSettings = settings;
       component.extraProps = extraProps;

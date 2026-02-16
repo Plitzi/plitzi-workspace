@@ -7,12 +7,12 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { defaultElements } from '..';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';
 
-import type { ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, ComponentPluginWithHOC } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type ComponentProviderProps = {
-  localComponents?: Record<string, ComponentPlugin>;
-  localCustomComponents?: Record<string, ComponentPlugin>;
+  localComponents?: Record<string, ComponentPluginWithHOC>;
+  localCustomComponents?: Record<string, ComponentPluginWithHOC>;
   children?: ReactNode;
   isHydrating?: boolean;
 };
@@ -23,15 +23,15 @@ const ComponentProvider = ({
   children,
   isHydrating = false
 }: ComponentProviderProps) => {
-  const localComponentsParsed = useMemo<Record<string, ComponentPlugin>>(
+  const localComponentsParsed = useMemo<Record<string, ComponentPluginWithHOC>>(
     () => ({
-      ...processLocalPlugins(defaultElements as unknown as Record<string, ComponentPlugin>),
+      ...processLocalPlugins(defaultElements as unknown as Record<string, ComponentPluginWithHOC>),
       ...processLocalPlugins(localComponents),
       ...processLocalCustomPlugins(localCustomComponents)
     }),
     [localComponents, localCustomComponents]
   );
-  const [remoteComponents, setRemoteComponents] = useState<Record<string, ComponentPlugin>>({});
+  const [remoteComponents, setRemoteComponents] = useState<Record<string, ComponentPluginWithHOC>>({});
   const totalComponents = useRef({ ...remoteComponents, ...localComponentsParsed });
 
   const getComponent = useCallback((componentTypes: string | string[] = [], withPlugins = false) => {
@@ -40,7 +40,7 @@ const ComponentProvider = ({
     }
 
     if (typeof componentTypes === 'string' && withPlugins) {
-      const component = totalComponents.current[componentTypes] as ComponentPlugin | undefined;
+      const component = totalComponents.current[componentTypes] as ComponentPluginWithHOC | undefined;
       if (!component) {
         return {};
       }
@@ -48,9 +48,9 @@ const ComponentProvider = ({
       return { [componentTypes]: component, ...omit(getPlugins(component), [componentTypes]) };
     }
 
-    let componentsToReturn: Record<string, ComponentPlugin> = {};
+    let componentsToReturn: Record<string, ComponentPluginWithHOC> = {};
     (componentTypes as string[]).forEach(componentType => {
-      const component = totalComponents.current[componentType] as ComponentPlugin | undefined;
+      const component = totalComponents.current[componentType] as ComponentPluginWithHOC | undefined;
       if (!component) {
         return;
       }
@@ -66,14 +66,14 @@ const ComponentProvider = ({
   }, []);
 
   const register = useCallback(
-    (components: ComponentPlugin[] | ComponentPlugin = []) => {
-      let componentsToAppend: Record<string, ComponentPlugin> = {};
+    (components: ComponentPluginWithHOC[] | ComponentPluginWithHOC = []) => {
+      let componentsToAppend: Record<string, ComponentPluginWithHOC> = {};
       if (!Array.isArray(components)) {
         components = [components];
       }
 
       components.forEach(comp => {
-        if (comp.type && !(totalComponents.current[comp.type] as ComponentPlugin | undefined)) {
+        if (comp.type && !(totalComponents.current[comp.type] as ComponentPluginWithHOC | undefined)) {
           componentsToAppend = { ...componentsToAppend, [comp.type]: comp, ...getPlugins(comp) };
         }
       });
@@ -126,7 +126,7 @@ const ComponentProvider = ({
 
   const [componentDefinitions, setComponentDefinitions] = useState<Record<string, ComponentDefinition>>(() =>
     Object.keys(totalComponents.current).reduce((acum, elementType) => {
-      const component = get(totalComponents.current, elementType) as ComponentPlugin | undefined;
+      const component = get(totalComponents.current, elementType) as ComponentPluginWithHOC | undefined;
       if (!component || !(component.content as ComponentDefinition | undefined)) {
         return acum;
       }

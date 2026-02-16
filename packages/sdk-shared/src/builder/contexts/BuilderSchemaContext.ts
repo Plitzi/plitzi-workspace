@@ -1,13 +1,13 @@
 import { createContext } from 'react';
 
 import type { DropPosition, Element, Schema, Style } from '../../types';
-import type { ComponentPlugin } from '../../types/ComponentTypes';
+import type { ComponentPluginWithHOC } from '../../types/ComponentTypes';
 
 export type BuilderSchemaContextValue = {
   schema: Schema;
   builderGetBaseElement: (
     otherBaseElementId?: string
-  ) => undefined | { data: Element; Plugin: ComponentPlugin | Record<string, ComponentPlugin> };
+  ) => undefined | { data: Element; Plugin: ComponentPluginWithHOC | Record<string, ComponentPluginWithHOC> };
   builderDropElement: {
     (
       type: 'add##plitzi-template',

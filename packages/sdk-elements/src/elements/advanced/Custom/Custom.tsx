@@ -10,7 +10,7 @@ import useElement from '../../../Element/hooks/useElement';
 import PluginRemote from '../../../Element/PluginRemote';
 import RootElement from '../../../Element/RootElement';
 
-import type { Asset, ComponentPlugin, Element } from '@plitzi/sdk-shared';
+import type { Asset, ComponentPluginWithHOC, Element } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CustomProps = {
@@ -93,7 +93,7 @@ const Custom = ({
     return <PluginRemote url={scriptUrl} scope={pluginScope} internalProps={internalPropsMemo} autoRegister={false} />;
   }
 
-  const Plugin = components[renderType] as ComponentPlugin | undefined;
+  const Plugin = components[renderType] as ComponentPluginWithHOC | undefined;
   if (Plugin && !settingsMalformed) {
     return <Plugin internalProps={internalPropsMemo} extraProps={Plugin.extraProps} />;
   }

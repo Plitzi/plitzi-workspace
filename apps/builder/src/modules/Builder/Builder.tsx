@@ -6,23 +6,16 @@ import { use, useEffect, useMemo } from 'react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import AppContext from '@pmodules/App/AppContext';
 
+import BuilderPlugin from './BuilderPlugin';
 import BuilderArea from './components/BuilderArea';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 
-import type { ComponentPlugin, BuilderContextValue, ComponentDefinition } from '@plitzi/sdk-shared';
-import type { FC } from 'react';
+import type { BuilderContextValue } from '@plitzi/sdk-shared';
 
 export type BuilderProps = {
   pages?: string[];
   customCss?: string;
   externalStyle?: string;
-};
-
-export type BuilderPluginProps = {
-  renderType: string;
-  component: ComponentPlugin;
-  settings?: FC<unknown>;
-  definition?: ComponentDefinition;
 };
 
 const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProps) => {
@@ -112,6 +105,6 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
   );
 };
 
-Builder.Plugin = (() => null) as (props: BuilderPluginProps) => null;
+Builder.Plugin = BuilderPlugin;
 
 export default Builder;
