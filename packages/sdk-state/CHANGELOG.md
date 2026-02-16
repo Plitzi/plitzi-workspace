@@ -1,5 +1,14 @@
 # @plitzi/sdk-state
 
+## 0.28.1
+
+### Patch Changes
+
+- v0.28.1
+- Updated dependencies
+  - @plitzi/sdk-schema@0.28.1
+  - @plitzi/sdk-shared@0.28.1
+
 ## 0.28.0
 
 ### Minor Changes

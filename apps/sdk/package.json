@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.28.0",
+  "version": "0.28.1",
   "homepage": "./",
   "license": "BSL-1.0",
   "files": [
@@ -10,7 +10,11 @@
   "module": "dist/plitzi-sdk.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/plitzi-sdk.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/plitzi-sdk.js",
+      "default": "./dist/plitzi-sdk.js"
+    },
     "./plitzi-sdk.css": "./dist/plitzi-sdk.css"
   },
   "repository": {
