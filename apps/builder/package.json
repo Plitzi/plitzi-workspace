@@ -16,6 +16,8 @@
   },
   "type": "module",
   "main": "dist/plitzi-builder.js",
+  "module": "dist/plitzi-builder.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
     "@apollo/client": "^4.1.4",
     "@plitzi/plitzi-sdk": "workspace:*",

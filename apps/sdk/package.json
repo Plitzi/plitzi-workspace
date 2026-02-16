@@ -8,7 +8,7 @@
   ],
   "main": "dist/plitzi-sdk.js",
   "module": "dist/plitzi-sdk.js",
-  "types": "dist/plitzi-sdk.d.ts",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist/plitzi-sdk.js",
     "./plitzi-sdk.css": "./dist/plitzi-sdk.css"

@@ -11,7 +11,7 @@ import ejs from 'ejs';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from 'vite';
 import viteCompression from 'vite-plugin-compression';
-// import dts from 'vite-plugin-dts';
+import dts from 'vite-plugin-dts';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import mkcert from 'vite-plugin-mkcert';
 
@@ -107,13 +107,20 @@ export default defineConfig(({ mode, command }) => {
       }),
       command === 'build' && ejsPlugin(devMode),
       !isWatch && viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-sdk.(js|css)$/ }),
-      // dts({
-      //   entryRoot: 'src',
-      //   outDir: 'dist',
-      //   rollupTypes: false,
-      //   exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
-      //   tsconfigPath: './tsconfig.json'
-      // }),
+      dts({
+        entryRoot: 'src',
+        outDir: 'dist',
+        rollupTypes: false,
+        exclude: [
+          '**/*.test.tsx',
+          '**/*.stories.ts',
+          '**/*.stories.tsx',
+          'vite.config.ts',
+          'setupTests.ts',
+          'index-dev-hmr.ts'
+        ],
+        tsconfigPath: './tsconfig.app.json'
+      }),
       // {
       //   name: 'debug-resolve',
       //   resolveId(/* source, importer */) {

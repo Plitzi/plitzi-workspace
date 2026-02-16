@@ -11,7 +11,7 @@ import ejs from 'ejs';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from 'vite';
 import viteCompression from 'vite-plugin-compression';
-// import dts from 'vite-plugin-dts';
+import dts from 'vite-plugin-dts';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import mkcert from 'vite-plugin-mkcert';
 
@@ -78,7 +78,7 @@ function ejsPlugin(devMode: boolean): Plugin {
           },
           { async: false }
         );
-        this.emitFile({ type: 'asset', fileName: 'index.html', source: html as string });
+        this.emitFile({ type: 'asset', fileName: 'index.html', source: html });
       }
     }
   };
@@ -110,13 +110,13 @@ export default defineConfig(({ mode, command }) => {
       command === 'build' && ejsPlugin(devMode),
       !isWatch &&
         viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-builder.(js|css)$/ }),
-      // dts({
-      //   entryRoot: 'src',
-      //   outDir: 'dist',
-      //   rollupTypes: false,
-      //   exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
-      //   tsconfigPath: './tsconfig.json'
-      // }),
+      dts({
+        entryRoot: 'src',
+        outDir: 'dist',
+        rollupTypes: false,
+        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
+        tsconfigPath: './tsconfig.app.json'
+      }),
       // {
       //   name: 'debug-resolve',
       //   resolveId(/* source, importer */) {
@@ -192,7 +192,7 @@ export default defineConfig(({ mode, command }) => {
         entry: ['./src/index.tsx']
       },
       rollupOptions: {
-        treeshake: true, // probar bien esto
+        treeshake: true,
         external: [
           'react',
           'react-dom',
@@ -222,8 +222,12 @@ export default defineConfig(({ mode, command }) => {
       minify: devMode ? false : 'terser', // usar terser para máxima compresión
       terserOptions: {
         compress: {
-          drop_console: true, // elimina console.log
-          drop_debugger: true // elimina debugger
+          drop_console: true, // elimina todos los console.log, console.warn, etc.
+          drop_debugger: true, // elimina todos los debugger;
+          passes: 2 // hace múltiples pasadas de optimización para limpiar más código muerto
+        },
+        mangle: {
+          safari10: true // corrige bugs de Safari 10 en mangle
         },
         format: {
           comments: /(webpackIgnore:true|webpackIgnore: true|@vite-ignore)/, // elimina todos los comentarios
