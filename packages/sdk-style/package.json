@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-style",
-  "version": "0.28.5",
+  "version": "0.28.6",
   "license": "BSL-1.0",
   "publishConfig": {
     "access": "restricted",
