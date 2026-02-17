@@ -104,7 +104,7 @@ class InteractionsManager {
     set(this.subscriptors, id, { id, triggers, getAdditionalParams });
     const callbackKeys = Object.keys(callbacks);
     if (callbackKeys.length > 0) {
-      this.callbacksAvailables[id] = callbackKeys.reduce((acum, callbackKey) => {
+      this.callbacksAvailables[id] = callbackKeys.reduce<Record<string, InteractionCallback>>((acum, callbackKey) => {
         const { title, callback, postCallback, params, preview, type } = callbacks[callbackKey];
         if (typeof callback !== 'function') {
           return acum;
@@ -112,7 +112,16 @@ class InteractionsManager {
 
         return {
           ...acum,
-          [callbackKey]: { title, callback, postCallback, action: callbackKey, elementId: id, params, preview, type }
+          [callbackKey]: {
+            elementId: id,
+            title,
+            action: callbackKey,
+            type,
+            callback,
+            postCallback,
+            params,
+            preview
+          } satisfies InteractionCallback
         };
       }, {});
     }

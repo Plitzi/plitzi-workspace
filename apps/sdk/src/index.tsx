@@ -30,6 +30,7 @@ import type {
   Style,
   ComponentPluginFC,
   ComponentPlugin,
+  InteractionCallback,
   Environment,
   EventBridgeContextValue,
   OfflineDataRaw,
@@ -162,7 +163,15 @@ export {
   ElementContext
 };
 
-export type { Schema, Style, ComponentPlugin, ComponentPluginFC, PlitziServiceContextValue, OfflineDataRaw };
+export type {
+  Schema,
+  Style,
+  ComponentPlugin,
+  ComponentPluginFC,
+  PlitziServiceContextValue,
+  OfflineDataRaw,
+  InteractionCallback
+};
 
 export const version = typeof VERSION !== 'undefined' ? VERSION : '';
 
