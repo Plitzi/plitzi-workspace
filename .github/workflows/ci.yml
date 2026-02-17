@@ -126,6 +126,9 @@ jobs:
       - name: Yarn Scss Lint
         run: yarn lint-style
 
+      - name: Yarn Typecheck
+        run: yarn typecheck
+
   # tests:
   #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
   #   needs: lint
