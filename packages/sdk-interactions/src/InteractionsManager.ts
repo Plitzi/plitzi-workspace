@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
 import get from 'lodash-es/get.js';
@@ -25,7 +26,7 @@ class InteractionsManager {
   childManagers: InteractionsManager[];
   interactionsData: Record<string, string | number | boolean>;
   subscriptors: Record<string, Subscriptor>;
-  callbacksAvailables: Record<string, Record<string, InteractionCallback>>;
+  callbacksAvailables: Record<string, Record<string, InteractionCallback<any>>>;
   interactionsRunning: Record<string, boolean>;
   lastUpdate: number;
   private listeners = new Set<InteractionUpdateListener>();
@@ -90,40 +91,47 @@ class InteractionsManager {
       set(this.interactionsRunning, `${subscriptorId}.${eventName}`, false);
     };
 
-  subscribe(
+  subscribe<TParams extends Record<string, unknown> = Record<string, unknown>>(
     id: string,
     interactions: Record<string, ElementInteraction> = {},
-    triggers: Record<string, InteractionCallback> = {},
-    callbacks: Record<string, InteractionCallback> = {},
-    getAdditionalParams: Subscriptor['getAdditionalParams']
+    triggers: Record<string, InteractionCallback<TParams>> = {},
+    callbacks: Record<string, InteractionCallback<TParams>> = {},
+    getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams']
   ) {
     if (this.subscriptors[id] as Subscriptor | undefined) {
       return false;
     }
 
-    set(this.subscriptors, id, { id, triggers, getAdditionalParams });
+    set(this.subscriptors, id, {
+      id,
+      triggers,
+      getAdditionalParams
+    } as Subscriptor<TParams>);
     const callbackKeys = Object.keys(callbacks);
     if (callbackKeys.length > 0) {
-      this.callbacksAvailables[id] = callbackKeys.reduce<Record<string, InteractionCallback>>((acum, callbackKey) => {
-        const { title, callback, postCallback, params, preview, type } = callbacks[callbackKey];
-        if (typeof callback !== 'function') {
-          return acum;
-        }
+      this.callbacksAvailables[id] = callbackKeys.reduce<Record<string, InteractionCallback<TParams>>>(
+        (acum, callbackKey) => {
+          const { title, callback, postCallback, params, preview, type } = callbacks[callbackKey];
+          if (typeof callback !== 'function') {
+            return acum;
+          }
 
-        return {
-          ...acum,
-          [callbackKey]: {
-            elementId: id,
-            title,
-            action: callbackKey,
-            type,
-            callback,
-            postCallback,
-            params,
-            preview
-          } satisfies InteractionCallback
-        };
-      }, {});
+          return {
+            ...acum,
+            [callbackKey]: {
+              elementId: id,
+              title,
+              action: callbackKey,
+              type,
+              callback,
+              postCallback,
+              params,
+              preview
+            } satisfies InteractionCallback<TParams>
+          };
+        },
+        {}
+      );
     }
 
     if (Object.keys(triggers).length > 0) {

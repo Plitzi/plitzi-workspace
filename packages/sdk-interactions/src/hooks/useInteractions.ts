@@ -4,19 +4,25 @@ import InteractionsContext from '../InteractionsContext';
 
 import type { ElementInteraction, InteractionCallback, Subscriptor } from '@plitzi/sdk-shared';
 
-export type UseInteractionsProps = {
+export type UseInteractionsProps<TParams extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;
   interactions?: Record<string, ElementInteraction>;
-  triggers?: Record<string, InteractionCallback>;
-  callbacks?: Record<string, InteractionCallback>;
-  getAdditionalParams?: Subscriptor['getAdditionalParams'];
+  triggers?: Record<string, InteractionCallback<TParams>>;
+  callbacks?: Record<string, InteractionCallback<TParams>>;
+  getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams'];
 };
 
-const useInteractions = ({ id, interactions, triggers, callbacks, getAdditionalParams }: UseInteractionsProps) => {
+const useInteractions = <TParams extends Record<string, unknown> = Record<string, unknown>>({
+  id,
+  interactions,
+  triggers,
+  callbacks,
+  getAdditionalParams
+}: UseInteractionsProps<TParams>) => {
   const { interactionsManager } = use(InteractionsContext);
 
   useEffect(() => {
-    interactionsManager.subscribe(id, interactions, triggers, callbacks, getAdditionalParams);
+    interactionsManager.subscribe<TParams>(id, interactions, triggers, callbacks, getAdditionalParams);
 
     return () => {
       interactionsManager.unsubscribe(id);
