@@ -25,7 +25,8 @@ class InteractionsManager {
   childManagers: InteractionsManager[];
   interactionsData: Record<string, string | number | boolean>;
   subscriptors: Record<string, Subscriptor>;
-  callbacksAvailables: Record<string, Record<string, InteractionCallback>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  callbacksAvailables: Record<string, Record<string, InteractionCallback<any>>>;
   interactionsRunning: Record<string, boolean>;
   lastUpdate: number;
   private listeners = new Set<InteractionUpdateListener>();
