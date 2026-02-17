@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
 import get from 'lodash-es/get.js';
@@ -26,7 +25,7 @@ class InteractionsManager {
   childManagers: InteractionsManager[];
   interactionsData: Record<string, string | number | boolean>;
   subscriptors: Record<string, Subscriptor>;
-  callbacksAvailables: Record<string, Record<string, InteractionCallback<any>>>;
+  callbacksAvailables: Record<string, Record<string, InteractionCallback>>;
   interactionsRunning: Record<string, boolean>;
   lastUpdate: number;
   private listeners = new Set<InteractionUpdateListener>();
