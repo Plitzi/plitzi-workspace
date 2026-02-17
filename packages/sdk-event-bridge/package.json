@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-event-bridge",
-  "version": "0.28.6",
+  "version": "0.28.7",
   "license": "BSL-1.0",
   "publishConfig": {
     "access": "restricted",
