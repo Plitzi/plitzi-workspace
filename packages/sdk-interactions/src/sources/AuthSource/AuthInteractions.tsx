@@ -28,8 +28,8 @@ const AuthInteractions = ({ children, authProvider = 'basic' }: AuthInteractions
 
   const handleLogout = useCallback(() => logout(), [logout]);
 
-  const interactionCallbacks = useMemo(() => {
-    let authCallbacks: Record<string, InteractionCallback<Record<string, unknown>>> = {};
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
+    let authCallbacks: Record<string, InteractionCallback> = {};
     if (authProvider === 'auth0') {
       authCallbacks = {
         login: {

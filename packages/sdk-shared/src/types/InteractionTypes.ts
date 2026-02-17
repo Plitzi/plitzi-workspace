@@ -30,17 +30,15 @@ export type InteractionNode = {
 
 export type InteractionParamType = 'boolean' | 'select' | 'text' | 'textarea' | 'codemirror-text' | 'codemirror-json';
 
-export type InteractionCallbackParamValues<TParams extends Record<string, any> = Record<string, any>> = TParams;
+export type InteractionCallbackParamValues<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
-export type InteractionCallbackParamOption = { label: string; value: string };
-
-export type InteractionCallbackParam<TParams extends Record<string, unknown> = Record<string, unknown>> = {
+export type InteractionCallbackParam<T extends Record<string, unknown> = Record<string, unknown>> = {
   canBind?: boolean;
   label?: string;
-  when?: boolean | ((params: InteractionCallbackParamValues<TParams>) => boolean);
+  when?: boolean | ((params: InteractionCallbackParamValues<T>) => boolean);
 } & (
   | { type: 'text'; defaultValue?: string | number }
-  | { type: 'textarea'; defaultValue?: string }
+  | { type: 'textarea'; defaultValue?: string | number }
   | { type: 'codemirror-text'; defaultValue?: string }
   | { type: 'codemirror-json'; defaultValue?: string }
   | { type: 'boolean'; defaultValue?: boolean }
@@ -48,15 +46,15 @@ export type InteractionCallbackParam<TParams extends Record<string, unknown> = R
       type: 'select';
       defaultValue?: string;
       options:
-        | InteractionCallbackParamOption[]
-        | ((params: InteractionCallbackParamValues<TParams>) => InteractionCallbackParamOption[]);
+        | { label: string; value: string }[]
+        | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
     }
   | {
-      type: (params: InteractionCallbackParamValues<TParams>) => InteractionParamType;
+      type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
       defaultValue?: string | number | boolean;
       options?:
         | { label: string; value: string }[]
-        | ((params: InteractionCallbackParamValues<TParams>) => { label: string; value: string }[]);
+        | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
     }
 );
 
@@ -64,45 +62,41 @@ export type InteractionCallbackPreview = string | Record<string, unknown>;
 
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
-export type InteractionCallback<TParams extends Record<string, unknown> = any> = {
+export type InteractionCallback<T extends Record<string, unknown> = Record<string, unknown>> = {
   elementId?: string; // When is globalCallback or utility, we just put the source as elementId
   action: string;
   title: string;
   type: InteractionCallbackType;
   enabled?: boolean;
   params:
-    | { [K in keyof TParams]: InteractionCallbackParam<TParams> }
-    | ((params: InteractionCallbackParamValues<TParams>) => {
-        [K in keyof TParams]: InteractionCallbackParam<TParams>;
-      });
-  callback?: (params: InteractionCallbackParamValues<TParams>) => unknown;
-  postCallback?: InteractionPostCallback<TParams>;
-  preview?:
-    | InteractionCallbackPreviews
-    | ((params: InteractionCallbackParamValues<TParams>) => InteractionCallbackPreviews);
+    | Record<keyof T, InteractionCallbackParam<T>>
+    | ((params: InteractionCallbackParamValues<T>) => Record<keyof T, InteractionCallbackParam<T>>);
+  callback?: (params: InteractionCallbackParamValues<T>) => unknown;
+  postCallback?: InteractionPostCallback<T>;
+  preview?: InteractionCallbackPreviews | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackPreviews);
 };
 
-export type Trigger<TParams extends Record<string, unknown> = Record<string, unknown>> = {
+export type Trigger<T extends Record<string, unknown> = Record<string, unknown>> = {
   title: string;
-  preview?: InteractionCallbackPreviews | ((params: TParams) => InteractionCallbackPreviews);
+  preview?: InteractionCallbackPreviews | ((params: T) => InteractionCallbackPreviews);
   params:
-    | { [K in keyof TParams]: InteractionCallbackParam<TParams> }
-    | ((params: TParams) => { [K in keyof TParams]: InteractionCallbackParam<TParams> });
+    | { [K in keyof T]: InteractionCallbackParam<T> }
+    | ((params: T) => { [K in keyof T]: InteractionCallbackParam<T> });
 };
 
-export type Subscriptor<TParams extends Record<string, unknown> = Record<string, unknown>> = {
-  getAdditionalParams?: (params?: TParams) => { dataSource?: Record<string, unknown> };
+export type Subscriptor<T extends Record<string, unknown> = Record<string, unknown>> = {
+  getAdditionalParams?: (params?: T) => { dataSource?: Record<string, unknown> };
   id: string;
-  triggers: Record<string, Trigger<TParams>>;
+  triggers: Record<string, Trigger<T>>;
 };
 
 export type InteractionsContextValue<TManager = any> = {
   interactionsManager: TManager;
-  useInteractions: <TParams extends Record<string, unknown> = Record<string, unknown>>(props: {
+  useInteractions: <T extends Record<string, unknown> = Record<string, unknown>>(props: {
     id: string;
     interactions?: Record<string, ElementInteraction>;
-    triggers?: Record<string, InteractionCallback<TParams>>;
-    callbacks?: Record<string, InteractionCallback<TParams>>;
-    getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams'];
+    triggers?: Record<string, InteractionCallback<T>>;
+    callbacks?: Record<string, InteractionCallback<T>>;
+    getAdditionalParams?: Subscriptor<T>['getAdditionalParams'];
   }) => void;
 };
