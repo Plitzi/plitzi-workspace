@@ -10,7 +10,7 @@ import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InteractionBaseCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type { SourceField, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type DialogContainerProps = {
@@ -104,7 +104,7 @@ const DialogContainer = ({
     setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, id, internalMetadata, setElementState]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
+  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
       onDialogAccept: {
         action: 'onDialogAccept',
@@ -138,7 +138,7 @@ const DialogContainer = ({
     []
   );
 
-  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
       openDialog: {
         action: 'openDialog',

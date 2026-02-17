@@ -1,6 +1,6 @@
-import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 
-export const interactionBasicTriggers: Record<string, InteractionBaseCallback> = {
+export const interactionBasicTriggers: Record<string, InteractionCallback> = {
   onClick: {
     action: 'onClick',
     title: 'On Click',

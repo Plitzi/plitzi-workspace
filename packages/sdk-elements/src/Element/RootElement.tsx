@@ -16,7 +16,7 @@ import useInternalClassName from './hooks/useInternalClassName';
 
 import type { ElementContextValue } from './ElementContext';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
@@ -24,8 +24,8 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   children?: ReactNode;
   tag?: T;
   className?: string;
-  interactionTriggers?: Record<string, InteractionBaseCallback>;
-  interactionCallbacks?: Record<string, InteractionBaseCallback>;
+  interactionTriggers?: Record<string, InteractionCallback>;
+  interactionCallbacks?: Record<string, InteractionCallback>;
   style?: string | CSSProperties;
 } & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref' | 'style'>;
 

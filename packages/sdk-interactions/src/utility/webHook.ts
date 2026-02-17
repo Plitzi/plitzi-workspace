@@ -1,6 +1,6 @@
-import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 
-const delayTime: InteractionBaseCallback<{
+const delayTime: InteractionCallback<{
   url: string;
   method: string;
   body: Record<string, string | Blob>;

@@ -4,7 +4,7 @@ import { useCallback, use, useMemo } from 'react';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 import type { ToastTypeOptions, ToastPosition } from '@plitzi/plitzi-ui/Toast';
-import type { InteractionBaseCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type SpaceContainerInternalProps = {
@@ -95,7 +95,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
             when: params => params.autoDismiss
           }
         }
-      } as InteractionBaseCallback<{
+      } as InteractionCallback<{
         content: string;
         placement: string;
         appeareance: string;
@@ -108,7 +108,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
 
   useInteractions({
     id: 'space',
-    callbacks: interactionCallbacks as unknown as Record<string, InteractionBaseCallback>
+    callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
   });
 
   // @todo: we need to render space headers here

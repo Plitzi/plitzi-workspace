@@ -8,7 +8,7 @@ import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
-import type { InteractionBaseCallback, InteractionCallbackParamValues, Schema } from '@plitzi/sdk-shared';
+import type { InteractionCallback, InteractionCallbackParamValues, Schema } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type PageInteractionsProps = {
@@ -106,7 +106,7 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
             options: pageUrls.map(page => ({ value: page.key, label: page.label }))
           }
         }
-      } as InteractionBaseCallback<{ urlType: string; url: string }>,
+      } as InteractionCallback<{ urlType: string; url: string }>,
       setPageState: {
         action: 'setPageState',
         title: 'Set Page State',
@@ -134,7 +134,7 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
             ]
           }
         }
-      } as InteractionBaseCallback<{ key: string; type: string; value: string }>,
+      } as InteractionCallback<{ key: string; type: string; value: string }>,
       clearState: {
         action: 'clearState',
         title: 'Clear Page State',
@@ -142,14 +142,14 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
         callback: handleClearStatePage,
         preview: {},
         params: {}
-      } as InteractionBaseCallback
+      } as InteractionCallback
     }),
     [handleSetPageState, handleClearStatePage, handleNavigate, pageUrls]
   );
 
   useInteractions({
     id: 'page',
-    callbacks: interactionCallbacks as unknown as Record<string, InteractionBaseCallback>
+    callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
   });
 
   return children;

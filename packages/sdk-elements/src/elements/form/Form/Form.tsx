@@ -14,7 +14,7 @@ import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InteractionBaseCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type { SourceField, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject, SyntheticEvent } from 'react';
 
 export type FormProps = {
@@ -177,7 +177,7 @@ const Form = ({
 
   // Interactions Triggers
 
-  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
+  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
       onSubmit: {
         action: 'onSubmit',
@@ -248,7 +248,7 @@ const Form = ({
     [setFieldError]
   );
 
-  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
       performReset: {
         action: 'performReset',

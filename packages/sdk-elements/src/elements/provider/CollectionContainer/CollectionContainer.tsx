@@ -11,7 +11,7 @@ import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { InteractionBaseCallback, SourceField } from '@plitzi/sdk-shared';
+import type { InteractionCallback, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type CollectionContainerProps = {
@@ -72,7 +72,7 @@ const CollectionContainer = ({
     fields: sourceFields
   });
 
-  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
       performQuery: {
         action: 'performQuery',

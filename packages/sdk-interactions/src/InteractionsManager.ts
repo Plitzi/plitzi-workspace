@@ -11,7 +11,6 @@ import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
   ElementInteraction,
   EventBridgeEvent,
-  InteractionBaseCallback,
   InteractionCallback,
   QueryParams,
   RouteParams,
@@ -94,8 +93,8 @@ class InteractionsManager {
   subscribe(
     id: string,
     interactions: Record<string, ElementInteraction> = {},
-    triggers: Record<string, InteractionBaseCallback> = {},
-    callbacks: Record<string, InteractionBaseCallback> = {},
+    triggers: Record<string, InteractionCallback> = {},
+    callbacks: Record<string, InteractionCallback> = {},
     getAdditionalParams: Subscriptor['getAdditionalParams']
   ) {
     if (this.subscriptors[id] as Subscriptor | undefined) {

@@ -4,7 +4,7 @@ import { AuthContext } from '@plitzi/sdk-auth';
 
 import InteractionsContext from '../../InteractionsContext';
 
-import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AuthInteractionsProps = {
@@ -17,19 +17,19 @@ const AuthInteractions = ({ children, authProvider = 'basic' }: AuthInteractions
   const { useInteractions } = use(InteractionsContext);
 
   const handleLogin = useCallback(
-    (params: Parameters<NonNullable<InteractionBaseCallback['callback']>>[0]) => login(params),
+    (params: Parameters<NonNullable<InteractionCallback['callback']>>[0]) => login(params),
     [login]
   );
 
   const handleRefresh = useCallback(
-    (params: Parameters<NonNullable<InteractionBaseCallback['callback']>>[0]) => refresh(params),
+    (params: Parameters<NonNullable<InteractionCallback['callback']>>[0]) => refresh(params),
     [refresh]
   );
 
   const handleLogout = useCallback(() => logout(), [logout]);
 
   const interactionCallbacks = useMemo(() => {
-    let authCallbacks: Record<string, InteractionBaseCallback> = {};
+    let authCallbacks: Record<string, InteractionCallback> = {};
     if (authProvider === 'auth0') {
       authCallbacks = {
         login: {

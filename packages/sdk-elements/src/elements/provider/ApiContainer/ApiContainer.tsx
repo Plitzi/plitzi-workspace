@@ -15,7 +15,7 @@ import RootElement from '../../../Element/RootElement';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { SourceField, InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ApiContainerProps = {
@@ -154,7 +154,7 @@ const ApiContainer = ({
     fields: sourceFields
   });
 
-  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
       performQuery: {
         action: 'performQuery',
@@ -167,7 +167,7 @@ const ApiContainer = ({
     };
   }, [label, refetch]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
+  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
       onApiError: {
         action: 'onApiError',

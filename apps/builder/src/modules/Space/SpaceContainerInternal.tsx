@@ -3,7 +3,7 @@ import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
-import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type SpaceContainerInternalProps = {
@@ -38,7 +38,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
     [addToast]
   );
 
-  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(
     () => ({
       addNotification: {
         action: 'addNotification',

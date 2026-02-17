@@ -1,6 +1,6 @@
-import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 
-const delayTime: InteractionBaseCallback<{ time: number }> = {
+const delayTime: InteractionCallback<{ time: number }> = {
   action: 'delayTime',
   title: 'Delay Time',
   type: 'utility',

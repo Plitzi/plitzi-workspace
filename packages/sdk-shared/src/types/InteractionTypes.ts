@@ -29,13 +29,13 @@ export type InteractionNode = {
 export type InteractionParamType = 'boolean' | 'select' | 'text' | 'textarea' | 'codemirror-text' | 'codemirror-json';
 
 export type InteractionCallbackParamValues<
-  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+  T extends Record<keyof InteractionCallback['params'], unknown> = Record<string, unknown>
 > = T;
 
 export type InteractionCallbackParamOption = { label: string; value: string };
 
 export type InteractionCallbackParam<
-  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+  T extends Record<keyof InteractionCallback['params'], unknown> = Record<string, unknown>
 > = {
   canBind?: boolean;
   label?: string;
@@ -66,9 +66,10 @@ export type InteractionCallbackPreview = string | Record<string, unknown>;
 
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
-export type InteractionBaseCallback<
-  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+export type InteractionCallback<
+  T extends Record<keyof InteractionCallback['params'], unknown> = Record<string, unknown>
 > = {
+  elementId?: string; // When is globalCallback or utility, we just put the source as elementId
   action: string;
   title: string;
   type: InteractionCallbackType;
@@ -79,12 +80,6 @@ export type InteractionBaseCallback<
   postCallback?: InteractionPostCallback;
   preview?: InteractionCallbackPreviews | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackPreviews);
   enabled?: boolean;
-};
-
-export type InteractionCallback<
-  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
-> = InteractionBaseCallback<T> & {
-  elementId: string; // When is globalCallback or utility, we just put the source as elementId
 };
 
 export type Trigger = {
@@ -105,8 +100,8 @@ export type InteractionsContextValue<T = any> = {
   useInteractions: (props: {
     id: string;
     interactions?: Record<string, ElementInteraction>;
-    triggers?: Record<string, InteractionBaseCallback>;
-    callbacks?: Record<string, InteractionBaseCallback>;
+    triggers?: Record<string, InteractionCallback>;
+    callbacks?: Record<string, InteractionCallback>;
     getAdditionalParams?: Subscriptor['getAdditionalParams'];
   }) => void;
 };

@@ -1,8 +1,4 @@
-import type {
-  InteractionBaseCallback,
-  InteractionCallbackParamValues,
-  InteractionCallbackType
-} from './InteractionTypes';
+import type { InteractionCallback, InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -28,7 +24,7 @@ export type ElementBinding = {
 };
 
 export type ElementInteraction<
-  T extends Record<keyof InteractionBaseCallback['params'], unknown> = Record<string, unknown>
+  T extends Record<keyof InteractionCallback['params'], unknown> = Record<string, unknown>
 > = {
   id: string;
   title: string;

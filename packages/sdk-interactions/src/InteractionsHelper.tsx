@@ -11,7 +11,6 @@ import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type {
   ElementInteraction,
   InteractionCallback,
-  InteractionBaseCallback,
   InteractionNode,
   InteractionNodeStatus,
   InteractionStatus,
@@ -19,7 +18,7 @@ import type {
 } from '@plitzi/sdk-shared';
 
 const processParams = (
-  type: InteractionBaseCallback['type'],
+  type: InteractionCallback['type'],
   params: Record<string, unknown>,
   flowValues: Record<string, unknown>,
   globalValues: Record<string, unknown>,
@@ -45,7 +44,7 @@ const processParams = (
 
 const processNode = async (
   node: ElementInteraction,
-  callbacksAvailables: Record<string, InteractionBaseCallback> = {},
+  callbacksAvailables: Record<string, InteractionCallback> = {},
   flowParams = {},
   globalParams = {}
 ): Promise<{

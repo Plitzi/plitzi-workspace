@@ -1,9 +1,9 @@
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
-import type { InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 
-const delayTime: InteractionBaseCallback<{ returnMode: 'jsonObject' | 'json' | 'text'; template: string }> = {
+const delayTime: InteractionCallback<{ returnMode: 'jsonObject' | 'json' | 'text'; template: string }> = {
   action: 'twigTemplate',
   title: 'Twig Template',
   type: 'utility',

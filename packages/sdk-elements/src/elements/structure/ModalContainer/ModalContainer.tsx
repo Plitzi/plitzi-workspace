@@ -10,7 +10,7 @@ import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InteractionCallbackParamValues, InteractionBaseCallback } from '@plitzi/sdk-shared';
+import type { SourceField, InteractionCallbackParamValues, InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ModalContainerProps = {
@@ -79,7 +79,7 @@ const ModalContainer = ({
     setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionBaseCallback>>(
+  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
       onModalOpen: {
         action: 'onModalOpen',
@@ -93,7 +93,7 @@ const ModalContainer = ({
     []
   );
 
-  const interactionCallbacks = useMemo<Record<string, InteractionBaseCallback>>(() => {
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
       openModal: {
         action: 'openModal',

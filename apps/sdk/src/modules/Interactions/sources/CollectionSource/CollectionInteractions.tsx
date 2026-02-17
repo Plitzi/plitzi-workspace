@@ -9,7 +9,7 @@ import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext'
 import type {
   Collection,
   CollectionRecord,
-  InteractionBaseCallback,
+  InteractionCallback,
   InteractionCallbackParamValues
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -178,7 +178,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
             }, {})
           };
         }
-      } as InteractionBaseCallback<{ collectionId: string; recordStatus: string; [key: string]: unknown }>,
+      } as InteractionCallback<{ collectionId: string; recordStatus: string; [key: string]: unknown }>,
       updateCollectionRecord: {
         action: 'updateCollectionRecord',
         title: 'Update Collection Record',
@@ -255,7 +255,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
             }, {})
           };
         }
-      } as InteractionBaseCallback<{
+      } as InteractionCallback<{
         collectionId: string;
         recordStatus: string;
         recordId: string;
@@ -301,7 +301,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
             }
           }
         }
-      } as InteractionBaseCallback<{ collectionId: string; recordId: string }>
+      } as InteractionCallback<{ collectionId: string; recordId: string }>
     }),
     [
       collections,
@@ -314,7 +314,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
 
   useInteractions({
     id: 'collection',
-    callbacks: interactionCallbacks as unknown as Record<string, InteractionBaseCallback>
+    callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
   });
 
   return children;

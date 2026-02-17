@@ -1,18 +1,13 @@
 import capitalize from 'lodash-es/capitalize';
 
-import type {
-  Element,
-  InteractionBaseCallback,
-  InteractionCallback,
-  InteractionPostCallback
-} from '@plitzi/sdk-shared';
+import type { Element, InteractionCallback, InteractionPostCallback } from '@plitzi/sdk-shared';
 
 const getInteractions = (
   attributes: Element['attributes'],
   definition: Element['definition'],
   callback: InteractionCallback['callback'],
   postCallback: InteractionPostCallback
-): Record<string, InteractionBaseCallback> => ({
+): Record<string, InteractionCallback> => ({
   setState: {
     action: 'setState',
     title: `Update ${definition.label}`,
