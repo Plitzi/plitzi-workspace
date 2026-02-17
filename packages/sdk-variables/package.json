@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-variables",
-  "version": "0.28.4",
+  "version": "0.28.5",
   "license": "BSL-1.0",
   "publishConfig": {
     "access": "restricted",
