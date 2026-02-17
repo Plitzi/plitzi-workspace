@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import type { ElementInteraction } from './SchemaTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -29,7 +31,7 @@ export type InteractionNode = {
 export type InteractionParamType = 'boolean' | 'select' | 'text' | 'textarea' | 'codemirror-text' | 'codemirror-json';
 
 export type InteractionCallbackParamValues<
-  T extends Record<keyof InteractionCallback['params'], unknown> = Record<string, unknown>
+  T extends Record<keyof InteractionCallback['params'], any> = Record<string, any>
 > = T;
 
 export type InteractionCallbackParamOption = { label: string; value: string };
@@ -94,7 +96,6 @@ export type Subscriptor<T = unknown> = {
   triggers: Record<string, Trigger>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type InteractionsContextValue<T = any> = {
   interactionsManager: T;
   useInteractions: (props: {

@@ -31,6 +31,7 @@ import type {
   ComponentPluginFC,
   ComponentPlugin,
   InteractionCallback,
+  InteractionCallbackParamValues,
   Environment,
   EventBridgeContextValue,
   OfflineDataRaw,
@@ -170,7 +171,8 @@ export type {
   ComponentPluginFC,
   PlitziServiceContextValue,
   OfflineDataRaw,
-  InteractionCallback
+  InteractionCallback,
+  InteractionCallbackParamValues
 };
 
 export const version = typeof VERSION !== 'undefined' ? VERSION : '';

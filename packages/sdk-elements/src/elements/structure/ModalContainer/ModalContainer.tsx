@@ -42,10 +42,10 @@ const ModalContainer = ({
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
 
   const handleOpenModal = useCallback(
-    (params: InteractionCallbackParamValues) => {
+    (params: InteractionCallbackParamValues<{ metadata?: Record<string, unknown> }>) => {
       const { metadata } = params;
       if (metadata && typeof metadata === 'object') {
-        setInternalMetadata(metadata as Record<string, unknown>);
+        setInternalMetadata(metadata);
       } else if (typeof metadata === 'string') {
         try {
           setInternalMetadata(JSON.parse(metadata) as Record<string, unknown>);
