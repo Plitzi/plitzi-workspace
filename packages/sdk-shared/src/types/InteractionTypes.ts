@@ -64,7 +64,7 @@ export type InteractionCallbackPreview = string | Record<string, unknown>;
 
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
-export type InteractionCallback<TParams extends Record<string, unknown> = Record<string, unknown>> = {
+export type InteractionCallback<TParams extends Record<string, unknown> = any> = {
   elementId?: string; // When is globalCallback or utility, we just put the source as elementId
   action: string;
   title: string;
