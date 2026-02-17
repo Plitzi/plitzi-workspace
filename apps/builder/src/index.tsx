@@ -1,7 +1,19 @@
 /* eslint-disable react-refresh/only-export-components */
+
 import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import ElementContext from '@plitzi/sdk-elements/Element/ElementContext';
+import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
+import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
+import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
+import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
+import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
+import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import Builder from '@pmodules/Builder';
 
 import App from './App';
@@ -78,5 +90,22 @@ const PlitziBuilder = (props: PlitziBuilderProps) => {
 PlitziBuilder.Plugin = Builder.Plugin;
 
 export const { version } = packageSettings;
+
+// SDK Exports
+
+export {
+  ComponentProvider,
+  ComponentContext,
+  usePlitziServiceContext,
+  PlitziServiceProvider,
+  RootElement,
+  withElement,
+  JsxManager,
+  PluginManager,
+  PluginRemote,
+  ReplicaProvider,
+  useElement,
+  ElementContext
+};
 
 export default PlitziBuilder;
