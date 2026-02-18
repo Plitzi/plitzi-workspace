@@ -1,9 +1,7 @@
 /* eslint-disable quotes */
-import { expect, describe, vi, it } from 'vitest';
+import { expect, describe, it } from 'vitest';
 
 import { processTwig, hasValidToken } from './twigWrapper';
-
-vi.mock('plitziSdkFederation/usePlitziServiceContext');
 
 describe('twigWrapper', () => {
   it('processTwig should work successfully', () => {
