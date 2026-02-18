@@ -172,11 +172,11 @@ class InteractionsManager {
     return this;
   }
 
-  _getSubscriptorInternal(subscriptorId: string): Subscriptor | undefined {
+  private getSubscriptorInternal(subscriptorId: string): Subscriptor | undefined {
     let subscriptor = get(this.subscriptors, subscriptorId) as Subscriptor | undefined;
     if (!subscriptor && this.childManagers.length > 0) {
       for (const childManager of this.childManagers) {
-        subscriptor = childManager._getSubscriptorInternal(subscriptorId);
+        subscriptor = childManager.getSubscriptorInternal(subscriptorId);
         if (subscriptor) {
           break;
         }
@@ -188,12 +188,12 @@ class InteractionsManager {
 
   getSubscriptor(subscriptorId: string) {
     if (!this.parentManager) {
-      return this._getSubscriptorInternal(subscriptorId);
+      return this.getSubscriptorInternal(subscriptorId);
     }
 
     const rootManager = this.getRootManager();
 
-    return rootManager?._getSubscriptorInternal(subscriptorId);
+    return rootManager?.getSubscriptorInternal(subscriptorId);
   }
 
   private getCallbacksAvailablesInternal() {
