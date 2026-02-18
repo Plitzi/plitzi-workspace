@@ -26,6 +26,7 @@ import { disableReactDevTools } from './helpers/security';
 import './assets/index.scss';
 
 import type {
+  Element,
   Schema,
   Style,
   ComponentPluginFC,
@@ -165,6 +166,7 @@ export {
 };
 
 export type {
+  Element,
   Schema,
   Style,
   ComponentPlugin,
