@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import get from 'lodash-es/get.js';
-import set from 'lodash-es/set.js';
+import get from 'lodash-es/get';
+import set from 'lodash-es/set';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
 
