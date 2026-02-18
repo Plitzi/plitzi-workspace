@@ -196,11 +196,11 @@ class InteractionsManager {
     return rootManager?._getSubscriptorInternal(subscriptorId);
   }
 
-  _getCallbacksAvailablesInternal() {
+  private getCallbacksAvailablesInternal() {
     let callbacks: Record<string, Record<string, InteractionCallback>> = {};
     if (this.childManagers.length > 0) {
       for (const childManager of this.childManagers) {
-        callbacks = { ...callbacks, ...childManager._getCallbacksAvailablesInternal() };
+        callbacks = { ...callbacks, ...childManager.getCallbacksAvailablesInternal() };
       }
     }
 
@@ -209,12 +209,12 @@ class InteractionsManager {
 
   getCallbacksAvailables() {
     if (!this.parentManager) {
-      return this._getCallbacksAvailablesInternal();
+      return this.getCallbacksAvailablesInternal();
     }
 
     const rootManager = this.getRootManager();
 
-    return rootManager?._getCallbacksAvailablesInternal() ?? {};
+    return rootManager?.getCallbacksAvailablesInternal() ?? {};
   }
 
   interactionTrigger(subscriptorId: string, eventName: string, params: Record<string, unknown> = {}) {
