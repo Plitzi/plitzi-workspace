@@ -1,88 +1,168 @@
 # Plitzi
 
-Plitzi is a **web-app builder** with an open-source SDK and Core under the **Business Source License (BSL)**, designed to let developers build, modify, and learn, while protecting commercial usage for monetization and cloud services.
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/plitzi/plitzi-workspace/ci.yml?branch=main)](https://github.com/plitzi/plitzi-workspace/actions)
+[![Coverage Status](https://img.shields.io/coveralls/github/plitzi/plitzi-workspace/main.svg?style=flat)](https://coveralls.io/github/plitzi/plitzi-workspace?branch=main)
+[![npm version](https://img.shields.io/npm/v/@plitzi/sdk.svg)](https://www.npmjs.com/package/@plitzi/sdk)
+[![Community Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/plitzi)
 
 ---
 
-## 🚀 Key Features
+## About Plitzi
 
-- **Open SDK**: flexible and extensible for developers
-- **Builder & Core**: visible and editable source code with commercial usage control
-- **Cloud / Private Hosting**: official SaaS platform for deploying applications
-- **Developer-friendly**: experiment, learn, and contribute without non-commercial restrictions
+Plitzi is an open-source **web application builder** designed to empower developers and communities to create, modify, and share modern web apps with ease. Built with extensibility and transparency in mind, Plitzi fosters collaboration and innovation under the [GNU Affero General Public License v3.0 (AGPL-3.0)](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
 ---
 
-## 📂 Monorepo Structure
+## Features ![Features Badge](https://img.shields.io/badge/-Features-4caf50?style=flat-square&logo=awesome-lists&logoColor=white)
 
+- 🔧 **Modular SDK & Builder:** Fully open and extensible toolkit to design and customize web apps.
+- 🌐 **Cloud & Self-Hosting:** Deploy on official Plitzi cloud or your own infrastructure.
+- 🤝 **Community-Driven:** Contributions and improvements are encouraged and welcomed.
+- 📚 **Comprehensive Documentation:** Clear guides and examples to get started quickly.
+- 🛠 **Developer Tools:** Built-in debugging and dev utilities for rapid iteration.
+
+---
+
+## Repository Structure
+
+```
 /
 ├─ apps/
-│ ├─ sdk/ # SDK, BSL License
-│ ├─ builder/ # Builder, BSL License
+│  ├─ sdk/              # Core SDK modules
+│  ├─ builder/          # Web app builder UI and logic
 ├─ packages/
-│ ├─ sdk-auth/ # SDK Auth, BSL License
-│ ├─ sdk-data-source/ # SDK Data Source, BSL License
-│ ├─ sdk-dev-tools/ # SDK Dev Tools, BSL License
-│ ├─ sdk-elements/ # SDK Elements, BSL License
-│ ├─ sdk-event-bridge/ # SDK Event Bridge, BSL License
-│ ├─ sdk-interactions/ # SDK Interactions, BSL License
-│ ├─ sdk-navigation/ # SDK Navigation, BSL License
-│ ├─ sdk-plugins/ # SDK Plugins, BSL License
-│ ├─ sdk-shared/ # SDK Shared, BSL License
-│ ├─ sdk-state/ # SDK State, BSL License
-│ ├─ sdk-style/ # SDK Style, BSL License
-│ └─ sdk-variables/ # SDK Variables, BSL License
-├─ LICENSE.md # Main Business Source License
-├─ LICENSING.md # Developer-friendly License overview
-├─ COMMERCIAL_LICENSE.md # Guide for companies / commercial License
-├─ CONTRIBUTOR_TOS.md # Contributor Terms of Service
-├─ README.md # This file
+│  ├─ sdk-auth/         # Authentication SDK components
+│  ├─ sdk-data-source/  # Data source integrations
+│  ├─ sdk-dev-tools/    # Developer utilities
+│  ├─ sdk-elements/     # UI elements and components
+│  ├─ sdk-event-bridge/ # Event handling bridge
+│  ├─ sdk-interactions/ # User interaction handlers
+│  ├─ sdk-navigation/   # Navigation components
+│  ├─ sdk-plugins/      # Plugin system
+│  ├─ sdk-shared/       # Shared utilities and types
+│  ├─ sdk-state/        # State management
+│  ├─ sdk-style/        # Styling system
+│  └─ sdk-variables/    # Variable management
+├─ LICENSE              # AGPL-3.0 License
+├─ README.md            # This file
+```
 
 ---
 
-## 📜 Licenses
+## Getting Started
+1. **Clone the repository**
 
-- **SDK**: BSL License → free for non-commercial use; commercial use requires a license
-- **Core / Builder**: BSL → free for non-commercial use; commercial use requires a license
-- **Cloud / Hosting**: proprietary → only available through official Plitzi services
+```bash
+git clone https://github.com/plitzi/plitzi-workspace.git
+cd plitzi-workspace
+```
 
-See `LICENSE.md`, `LICENSING.md`, and `COMMERCIAL_LICENSE.md` for full details.
+2. **Install dependencies**
 
----
+```bash
+npm install
+```
 
-## 🛠 How to Contribute
+3. **Run the builder locally**
 
-Contributions are welcome, but must comply with the following:
+```bash
+npm run dev
+```
 
-1. All submitted code is subject to the [Contributor TOS](CONTRIBUTOR_TOS.md).
-2. Contributions can improve features, fix bugs, or add functionality for **non-commercial purposes**.
-3. Follow the monorepo folder structure and coding style.
-4. Open clear and reviewable Pull Requests.
+4. **Explore the SDK and contribute**
 
-> By contributing, you agree that your code becomes the property of Plitzi and may be used under the BSL, including eventual commercial use by the company.
-
----
-
-## ⚖️ Commercial Use
-
-If you want to use Plitzi for monetization, SaaS, or integration into commercial products, you must obtain a commercial license:
-
-📧 crodriguez@plitzi.com  
-🌐 <YOUR_WEBSITE_HERE>
+Check the `apps/sdk` and `apps/builder` folders for source code and examples.
 
 ---
 
-## 💡 Best Practices
+## Quick Start Example ![Quick Start](https://img.shields.io/badge/-Quick%20Start-2196f3?style=flat-square&logo=thunder&logoColor=white) WIP
 
-- Forks for learning, internal development, and experimentation are welcome
-- Do **not** use the **Plitzi** name or branding in public commercial forks
-- Keep contributions within the applicable license terms
+Here's a minimal example of using the Plitzi SDK in your project:
+
+<!-- ```js
+import { PlitziApp } from '@plitzi/sdk';
+
+const app = new PlitziApp({
+  target: document.getElementById('app'),
+  config: {
+    title: 'My First Plitzi App',
+    // ...other config options
+  }
+});
+
+app.start();
+``` -->
+
+For more details, see the [documentation](https://github.com/plitzi/plitzi-workspace/wiki) and the `apps/sdk` or `apps/builder` folder.
 
 ---
 
-## 📌 Contact
+## Contribution Guidelines ![Contribute](https://img.shields.io/badge/-Contribute-fbc02d?style=flat-square&logo=github&logoColor=black)
 
-For legal, commercial, or support inquiries:
+We welcome contributions from everyone! To keep the project healthy and collaborative, please follow these guidelines:
 
-📧 crodriguez@plitzi.com  
-🌐 <YOUR_WEBSITE_HERE>
+- Read the [Code of Conduct](https://github.com/plitzi/plitzi-workspace/blob/main/CODE_OF_CONDUCT.md).
+- Open issues for bugs, features, or questions before submitting PRs.
+- Fork the repository and create feature branches.
+- Write clear, descriptive commit messages.
+- Include tests and documentation for new features or fixes.
+- Submit pull requests against the `main` branch.
+- All contributions are licensed under AGPL-3.0.
+
+- **Security:** Please review our [Security Policy](https://github.com/plitzi/plitzi-workspace/security/policy) for reporting vulnerabilities.
+
+---
+
+## Community & Support ![Community](https://img.shields.io/badge/-Community%20%26%20Support-8e24aa?style=flat-square&logo=discord&logoColor=white)
+
+Join our community to discuss ideas, get help, or contribute:
+
+- **Discord:** [https://discord.gg/plitzi](https://discord.gg/plitzi)
+- **GitHub Discussions:** [https://github.com/plitzi/plitzi-workspace/discussions](https://github.com/plitzi/plitzi-workspace/discussions)
+- **Email:** contact@plitzi.org
+
+### Getting Help
+
+- **Browse the [Wiki](https://github.com/plitzi/plitzi-workspace/wiki)** for guides and FAQs.
+- **Open a [GitHub Issue](https://github.com/plitzi/plitzi-workspace/issues)** for bugs or feature requests.
+- **Ask questions in [Discussions](https://github.com/plitzi/plitzi-workspace/discussions)** or on [Discord](https://discord.gg/plitzi).
+
+---
+
+## License
+
+This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](https://www.gnu.org/licenses/agpl-3.0.en.html). See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+Thanks to the open-source community and all contributors who help make Plitzi a collaborative and empowering platform.
+
+---
+
+*Build and grow your web apps with Plitzi — freedom to create, freedom to share.*
+
+---
+
+## Contributors ![Contributors](https://img.shields.io/badge/-Contributors-00bcd4?style=flat-square&logo=github&logoColor=white)
+
+We sincerely thank all the contributors who have helped make Plitzi better. Your efforts and dedication drive this project forward.
+
+![GitHub contributors](https://contrib.rocks/image?repo=plitzi/plitzi-workspace)
+
+---
+
+## Roadmap ![Roadmap](https://img.shields.io/badge/-Roadmap-ff7043?style=flat-square&logo=roadmap&logoColor=white) WIP
+
+- [ ] **v1.0 Release:** Stable builder and SDK core
+<!-- - [ ] **Plugin Marketplace:** Community-driven extensions
+- [ ] **Cloud Deployment:** One-click deploy to Plitzi Cloud
+- [ ] **Improved Documentation:** More guides and API docs
+- [ ] **Mobile Support:** Responsive and PWA enhancements
+- [ ] **Internationalization:** Multilanguage support
+- [ ] **Accessibility Improvements**
+- [ ] **Performance Optimizations** -->
+
+See the [GitHub Projects](https://github.com/plitzi/plitzi-workspace/projects) for more details and ongoing issues.
