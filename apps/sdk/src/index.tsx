@@ -151,7 +151,10 @@ const PlitziSdk = ({
 
 PlitziSdk.Plugin = Sdk.Plugin;
 
-type PlitziServiceContextValue = BasePlitziServiceContextValue<typeof EventBridge, typeof InteractionsManager>;
+type PlitziServiceContextValue = BasePlitziServiceContextValue<
+  InstanceType<typeof EventBridge>,
+  InstanceType<typeof InteractionsManager>
+>;
 
 const usePlitziServiceContext = baseUsePlitziServiceContext as () => PlitziServiceContextValue;
 
