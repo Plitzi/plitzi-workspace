@@ -64,9 +64,9 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }
 
   const plitziContextData = usePlitziServiceContext();
-  const previewMode = get(plitziContextData, 'settings.previewMode', true) as boolean;
+  const previewMode = get(plitziContextData, 'settings.previewMode', true);
   const debugMode = get(plitziContextData, 'settings.debugMode', false);
-  const baseElementId = get(plitziContextData, 'root.baseElementId') as string;
+  const baseElementId = get(plitziContextData, 'root.baseElementId');
 
   const {
     className: classNameInternalProp,
@@ -91,7 +91,9 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     };
   }, [debugMode, previewMode, rootId, baseElementId, id, label, type]);
 
-  const InteractionsContext = get(plitziContextData, 'contexts.InteractionsContext');
+  const InteractionsContext = get(plitziContextData, 'contexts.InteractionsContext') as
+    | Context<InteractionsContextValue>
+    | undefined;
   if (!InteractionsContext) {
     return (
       <Tag ref={ref} style={{ ...style, ...styleParsed }} className={className} {...otherProps} {...params}>
@@ -100,7 +102,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     );
   }
 
-  const { interactionsManager, useInteractions } = use(InteractionsContext as Context<InteractionsContextValue>);
+  const { interactionsManager, useInteractions } = use(InteractionsContext);
   const processEvent = useCallback(
     (
       e: MouseEvent,
