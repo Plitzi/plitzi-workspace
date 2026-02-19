@@ -1,5 +1,18 @@
 # @plitzi/sdk-elements
 
+## 0.28.10
+
+### Patch Changes
+
+- v0.28.10
+- Updated dependencies
+  - @plitzi/sdk-data-source@0.28.10
+  - @plitzi/sdk-dev-tools@0.28.10
+  - @plitzi/sdk-event-bridge@0.28.10
+  - @plitzi/sdk-interactions@0.28.10
+  - @plitzi/sdk-schema@0.28.10
+  - @plitzi/sdk-shared@0.28.10
+
 ## 0.28.9
 
 ### Patch Changes
