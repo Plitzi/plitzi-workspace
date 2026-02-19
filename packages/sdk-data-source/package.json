@@ -14,10 +14,6 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
-    "./DataSourceContext": {
-      "types": "./dist/src/DataSourceContext.d.ts",
-      "import": "./dist/src/DataSourceContext.mjs"
-    },
     "./DataSourceContextProvider": {
       "types": "./dist/src/DataSourceContextProvider.d.ts",
       "import": "./dist/src/DataSourceContextProvider.mjs"
@@ -25,18 +21,6 @@
     "./helpers/getBindingsDetails": {
       "types": "./dist/src/helpers/getBindingsDetails.d.ts",
       "import": "./dist/src/helpers/getBindingsDetails.mjs"
-    },
-    "./hooks": {
-      "types": "./dist/src/hooks/index.d.ts",
-      "import": "./dist/src/hooks/index.mjs"
-    },
-    "./hooks/index": {
-      "types": "./dist/src/hooks/index.d.ts",
-      "import": "./dist/src/hooks/index.mjs"
-    },
-    "./hooks/useDataSource": {
-      "types": "./dist/src/hooks/useDataSource.d.ts",
-      "import": "./dist/src/hooks/useDataSource.mjs"
     },
     "./index": {
       "types": "./dist/src/index.d.ts",

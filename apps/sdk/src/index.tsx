@@ -25,6 +25,7 @@ import { disableReactDevTools } from './helpers/security';
 // SDK Style
 import './assets/index.scss';
 
+import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
@@ -175,6 +176,7 @@ export {
 };
 
 export type {
+  ElementContextValue,
   Element,
   Schema,
   Style,
