@@ -19,7 +19,7 @@ import type {
 } from '../types';
 import type { Context, ReactNode } from 'react';
 
-export type PlitziServiceContextValue = {
+export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> = {
   settings: { previewMode?: boolean; environment?: string; [key: string]: unknown };
   root: { baseElementId: string };
   utils: {
@@ -36,13 +36,13 @@ export type PlitziServiceContextValue = {
     CollectionContext: Context<CollectionContextValue>;
     ComponentContext: Context<ComponentContextValue>;
     StateManagerContext: Context<StateManagerContextValue>;
-    EventBridgeContext: Context<EventBridgeContextValue>;
+    EventBridgeContext: Context<EventBridgeContextValue<TEventBridge>>;
     PluginsContext: Context<PluginsContextValue>;
-    InteractionsContext: Context<InteractionsContextValue>;
+    InteractionsContext: Context<InteractionsContextValue<TInteractions>>;
     NetworkContext: Context<NetworkContextValue>;
     BuilderContext?: Context<BuilderContextValue>;
   };
-} & Record<string, unknown>;
+};
 
 const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;
 

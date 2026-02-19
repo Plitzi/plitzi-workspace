@@ -25,6 +25,8 @@ import { disableReactDevTools } from './helpers/security';
 // SDK Style
 import './assets/index.scss';
 
+import type EventBridge from '@plitzi/sdk-event-bridge';
+import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
   Element,
   Schema,
@@ -40,7 +42,7 @@ import type {
   Server,
   ServerEnvironment,
   StateManagerContextValue,
-  PlitziServiceContextValue
+  PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -164,6 +166,8 @@ export {
   useElement,
   ElementContext
 };
+
+type PlitziServiceContextValue = BasePlitziServiceContextValue<typeof EventBridge, typeof InteractionsManager>;
 
 export type {
   Element,
