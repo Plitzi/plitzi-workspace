@@ -48,8 +48,8 @@ const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;
 
 export const PlitziServiceContext = createContext<PlitziServiceContextValue>(plitziServiceContextDefaultValue);
 
-const usePlitziServiceContext = () => {
-  const context = use(PlitziServiceContext) as PlitziServiceContextValue | undefined;
+const usePlitziServiceContext = <TEventBridge = any, TInteractions = any>() => {
+  const context = use(PlitziServiceContext) as PlitziServiceContextValue<TEventBridge, TInteractions> | undefined;
   if (context === undefined) {
     throw new Error(
       'ServiceContext value is undefined. Make sure you use the PlitziServiceProvider before using the hook.'

@@ -17,7 +17,7 @@ import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import App from './App';
 import { disableReactDevTools } from './helpers/security';
@@ -151,6 +151,10 @@ const PlitziSdk = ({
 
 PlitziSdk.Plugin = Sdk.Plugin;
 
+type PlitziServiceContextValue = BasePlitziServiceContextValue<typeof EventBridge, typeof InteractionsManager>;
+
+const usePlitziServiceContext = baseUsePlitziServiceContext as () => PlitziServiceContextValue;
+
 export {
   ComponentProvider,
   ComponentContext,
@@ -166,8 +170,6 @@ export {
   useElement,
   ElementContext
 };
-
-type PlitziServiceContextValue = BasePlitziServiceContextValue<typeof EventBridge, typeof InteractionsManager>;
 
 export type {
   Element,
