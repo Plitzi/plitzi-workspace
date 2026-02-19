@@ -47,7 +47,7 @@ export type AppProps = {
   environment?: Environment;
   currentPageId?: string;
   sdkEnvironment?: ServerEnvironment;
-  server?: Server;
+  server?: Partial<Server>;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';

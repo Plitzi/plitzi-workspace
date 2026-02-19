@@ -65,7 +65,7 @@ export type PlitziBuilderProps = {
   environment?: string;
   currentPageId?: string;
   userKey?: string;
-  server?: Server;
+  server?: Partial<Server>;
   includeSubscriptions?: boolean;
   includeRealTime?: boolean;
   builderEnvironment?: ServerEnvironment;

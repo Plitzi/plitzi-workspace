@@ -1,6 +1,6 @@
 import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
 
-export const getEnvironmentServer = (env: ServerEnvironment, server?: Server): Server => {
+export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Server>): Server => {
   switch (env) {
     case 'production': {
       return {

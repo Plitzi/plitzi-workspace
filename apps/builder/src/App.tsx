@@ -45,7 +45,7 @@ import type { ReactNode } from 'react';
 
 export type AppProps = {
   className?: string;
-  server?: Server;
+  server?: Partial<Server>;
   webKey: string;
   includeSubscriptions?: boolean;
   userKey?: string;
