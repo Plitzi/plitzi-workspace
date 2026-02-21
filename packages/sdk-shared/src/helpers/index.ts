@@ -6,7 +6,6 @@ export * from './fetchManifest';
 export * from './formatDate';
 export * from './generateFacade';
 export * from './syntaxHighlight';
-export * from './stripTypename';
 export * from './twigWrapper';
 export * from './utils';
 
