@@ -1,7 +1,6 @@
 import { InMemoryCache } from '@apollo/client/cache';
 import { ApolloClient, ApolloLink } from '@apollo/client/core';
 import { SetContextLink } from '@apollo/client/link/context';
-import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { ApolloProvider } from '@apollo/client/react';
 import { getMainDefinition } from '@apollo/client/utilities';
@@ -27,7 +26,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import { generateFacade } from '@plitzi/sdk-shared';
+import { createStripTypenameLink, generateFacade } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import AppMain from '@pmodules/App/AppMain';
@@ -118,7 +117,6 @@ const App = (props: AppProps) => {
       }
 
       const cache = new InMemoryCache();
-      const noTypenameFromVariablesLink = new RemoveTypenameFromVariablesLink();
       const httpWithUploadLink = new UploadHttpLink({ uri: server.graphqlServer, fetch: customFetch });
       const authLink = new SetContextLink(prev => {
         const base = (prev.headers ?? {}) as Record<string, string>;
@@ -137,7 +135,7 @@ const App = (props: AppProps) => {
         return { headers };
       });
 
-      const mainLink = ApolloLink.from([authLink, noTypenameFromVariablesLink, httpWithUploadLink]);
+      const mainLink = ApolloLink.from([createStripTypenameLink(), authLink, httpWithUploadLink]);
       if (!includeSubscriptions || !server.subscriptionServer) {
         return new ApolloClient({ link: mainLink, cache });
       }
@@ -173,7 +171,7 @@ const App = (props: AppProps) => {
             definition.kind === Kind.OPERATION_DEFINITION && definition.operation === OperationTypeNode.SUBSCRIPTION
           );
         },
-        wsLink.concat(noTypenameFromVariablesLink),
+        ApolloLink.from([createStripTypenameLink(), wsLink]),
         mainLink
       );
 

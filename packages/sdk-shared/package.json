@@ -104,6 +104,10 @@
       "types": "./dist/src/elements/index.d.ts",
       "import": "./dist/src/elements/index.mjs"
     },
+    "./helpers": {
+      "types": "./dist/src/helpers/index.d.ts",
+      "import": "./dist/src/helpers/index.mjs"
+    },
     "./helpers/fetchManifest": {
       "types": "./dist/src/helpers/fetchManifest.d.ts",
       "import": "./dist/src/helpers/fetchManifest.mjs"
@@ -115,6 +119,14 @@
     "./helpers/generateFacade": {
       "types": "./dist/src/helpers/generateFacade.d.ts",
       "import": "./dist/src/helpers/generateFacade.mjs"
+    },
+    "./helpers/index": {
+      "types": "./dist/src/helpers/index.d.ts",
+      "import": "./dist/src/helpers/index.mjs"
+    },
+    "./helpers/stripTypename": {
+      "types": "./dist/src/helpers/stripTypename.d.ts",
+      "import": "./dist/src/helpers/stripTypename.mjs"
     },
     "./helpers/syntaxHighlight": {
       "types": "./dist/src/helpers/syntaxHighlight.d.ts",
@@ -299,6 +311,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
+    "@apollo/client": "^4.1.5",
     "@plitzi/plitzi-ui": "^1.2.18",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
