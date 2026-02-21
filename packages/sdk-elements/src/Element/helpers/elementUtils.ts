@@ -23,7 +23,7 @@ type PlitziModuleLegacy = {
   RootElement: typeof RootElement;
 };
 
-type PlitziModule = {
+export type PlitziModule = {
   default: ComponentPlugin;
   version?: string;
   initialItems?: string[];

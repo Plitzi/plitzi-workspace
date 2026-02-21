@@ -1,62 +1,11 @@
-import get from 'lodash-es/get.js';
 import { lazy, Suspense, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
-import { nestedInject } from '../Component/ComponentHelper';
-import { generatePluginModule } from './helpers/elementUtils';
-import withElement from './hocs/withElement';
-import useDynamicScript from './hooks/useDynamicScript';
+import loadComponent from './helpers/loadComponent';
 
-import type {
-  ComponentContextValue,
-  ComponentPlugin,
-  ComponentPluginWithHOC,
-  InternalPropsSTG1
-} from '@plitzi/sdk-shared';
-
-function loadComponent(
-  url: string,
-  isESM: boolean,
-  pluginScope: string,
-  registerCallback: ComponentContextValue['register'],
-  NotFoundNode: ComponentPluginWithHOC,
-  autoRegister = true,
-  plitziJsxSkipHOC = false
-) {
-  return async () => {
-    // Based on ES6 Module
-    const Module = await generatePluginModule(url, isESM, pluginScope);
-    if (!Module) {
-      return { default: NotFoundNode };
-    }
-
-    // Register module into Components context cache
-    const { type, pluginSettings } = get(Module, 'default', {} as ComponentPlugin);
-    const { version, initialItems, plugins } = Module;
-    if (!type) {
-      return { default: NotFoundNode };
-    }
-
-    let plitziComponent: ComponentPlugin | ComponentPluginWithHOC = Module.default;
-    if (!plitziJsxSkipHOC) {
-      plitziComponent = withElement(Module.default) as ComponentPluginWithHOC;
-    }
-
-    plitziComponent.version = version;
-    plitziComponent.origin = 'remote';
-    plitziComponent.type = type;
-    plitziComponent.initialItems = initialItems;
-    plitziComponent.pluginSettings = pluginSettings;
-    plitziComponent.plugins = nestedInject(plugins, 'remote');
-    if (autoRegister) {
-      registerCallback(plitziComponent);
-    }
-
-    return { default: plitziComponent };
-  };
-}
+import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 export type PluginRemoteProps = {
   url: string;
@@ -78,21 +27,11 @@ const PluginRemote = ({
 }: PluginRemoteProps) => {
   const { register, components } = use(ComponentContext);
   const NotFoundNode = useMemo(() => components.notFound, [components]);
-  const isESM = url.endsWith('.mjs') || url.includes('.esm.') || url.includes('.module.');
-  const { ready, failed } = useDynamicScript({ url, type: isESM ? 'module' : 'text/javascript' });
   const Component = useMemo(
-    () => lazy(loadComponent(url, isESM, scope, register, NotFoundNode, autoRegister, plitziJsxSkipHOC)),
+    () => lazy(loadComponent(url, scope, register, NotFoundNode, autoRegister, plitziJsxSkipHOC)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [url, scope, isESM]
+    [url, scope]
   );
-
-  if (!ready) {
-    return null;
-  }
-
-  if (failed) {
-    return <NotFoundNode internalProps={internalProps} />;
-  }
 
   if (plitziJsxSkipHOC) {
     return (
