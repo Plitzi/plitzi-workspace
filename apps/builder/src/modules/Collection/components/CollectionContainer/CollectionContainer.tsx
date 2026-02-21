@@ -6,7 +6,7 @@ import { useCallback, use, useEffect, useState } from 'react';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 
 import CollectionRecords from './CollectionRecords';
-import CollectionRecordForm from '../Models/CollectionRecordForm';
+import CollectionRecordForm from '../../Models/CollectionRecordForm';
 
 import type { Collection as TCollection, CollectionRecord, BuilderCollectionContextValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -19,7 +19,7 @@ export type CollectionProps = {
   onUpdateMode?: (mode: boolean) => void;
 };
 
-const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps) => {
+const CollectionContainer = ({ id, records, fields, name, onUpdateMode }: CollectionProps) => {
   const { showModal, showDialog } = useModal();
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -163,4 +163,4 @@ const Collection = ({ id, records, fields, name, onUpdateMode }: CollectionProps
   );
 };
 
-export default Collection;
+export default CollectionContainer;

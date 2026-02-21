@@ -1,6 +1,6 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
-import { use, useState, useMemo, useCallback } from 'react';
+import { use, useMemo, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -38,10 +38,6 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
     []
   );
   const [, setPopupsActiveRight] = useStorage<string[]>('builder-state.popupSidePanel.popupsActive.right', []);
-  const [sourceState, setSourceState] = useState<{ sourceId?: string }>({ sourceId: '' });
-  const { sourceId } = sourceState;
-
-  const handleSourceChange = useCallback((newSourceId?: string) => setSourceState({ sourceId: newSourceId }), []);
 
   const handleChangePopups = useCallback(
     (placement: PopupPlacement, _state: PopupUpdateState, popups: Record<PopupPlacement, PopupInstance[]>) => {
@@ -61,9 +57,9 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   );
 
   const popups = useMemo(
-    () => getPopups({ sourceId, activeIds: popupsActiveLeft, handleSourceChange }),
+    () => getPopups({ activeIds: popupsActiveLeft }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sourceId, handleSourceChange]
+    []
   );
 
   return (
@@ -101,9 +97,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
               {!['collections', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(popupsActiveLeft[0]) && (
                 <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
               )}
-              {popupsActiveLeft[0] === 'collections' && (
-                <ContainerCollections key={sourceId} onSourceChange={handleSourceChange} collectionId={sourceId} />
-              )}
+              {popupsActiveLeft[0] === 'collections' && <ContainerCollections />}
               {popupsActiveLeft[0] === 'marketplace' && <ContainerMarketplace />}
               {popupsActiveLeft[0] === 'integrations' && <ContainerIntegrations />}
               {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}

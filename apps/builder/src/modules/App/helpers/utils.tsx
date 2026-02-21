@@ -18,13 +18,9 @@ import AppDirectory from '../components/AppDirectory';
 import type { PopupInstance } from '@plitzi/plitzi-ui/components';
 
 export const getPopups = ({
-  sourceId,
-  activeIds = [],
-  handleSourceChange
+  activeIds = []
 }: {
-  sourceId?: string;
   activeIds?: string[];
-  handleSourceChange: (id?: string) => void;
 }): {
   left: PopupInstance[];
   right: PopupInstance[];
@@ -117,7 +113,7 @@ export const getPopups = ({
     },
     {
       id: 'collections',
-      component: <Collections collectionId={sourceId} onSourceChange={handleSourceChange} />,
+      component: <Collections />,
       active: activeIds.includes('collections'),
       placementSettings: { left: { position: 6, multi: false } },
       settings: {
