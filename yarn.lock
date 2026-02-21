@@ -3459,6 +3459,7 @@ __metadata:
     stylelint-order: "npm:^7.0.1"
     stylelint-scss: "npm:^7.0.0"
     swr: "npm:^2.4.0"
+    terser: "npm:^5.46.0"
     twig: "npm:^1.17.1"
     typescript: "npm:^5.9.3"
     uuid: "npm:^13.0.0"
@@ -3536,6 +3537,7 @@ __metadata:
     stylelint: "npm:^17.3.0"
     stylelint-order: "npm:^7.0.1"
     stylelint-scss: "npm:^7.0.0"
+    terser: "npm:^5.46.0"
     twig: "npm:^1.17.1"
     typescript: "npm:^5.9.3"
     vite: "npm:^7.3.1"
@@ -3814,6 +3816,7 @@ __metadata:
     react: "npm:^19.2.4"
     react-dom: "npm:^19.2.4"
     tailwindcss: "npm:^4.1.18"
+    terser: "npm:^5.46.0"
     ts-jest: "npm:^29.4.6"
     twig: "npm:^1.17.1"
     typescript: "npm:^5.9.3"
@@ -16678,7 +16681,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"terser@npm:^5.10.0, terser@npm:^5.31.1":
+"terser@npm:^5.10.0, terser@npm:^5.31.1, terser@npm:^5.46.0":
   version: 5.46.0
   resolution: "terser@npm:5.46.0"
   dependencies:
