@@ -1,3 +1,4 @@
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { useState, useMemo } from 'react';
 
@@ -44,8 +45,10 @@ const AppMain = ({
   debugMode = false
 }: AppMainProps) => {
   const [previewMode, setPreviewMode] = useState(false);
-  const [displayBorderComponents, setDisplayBorderComponents] =
-    useState<AppContextValue['displayBorderComponents']>('black');
+  const [displayBorderComponents, setDisplayBorderComponents] = useStorage<AppContextValue['displayBorderComponents']>(
+    'builder-state.app.displayBorderComponents',
+    'black'
+  );
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
