@@ -73,9 +73,10 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     attributes,
     definition,
     definition: { interactions, type, label },
+    plitziElementLayout,
+    style,
     elementState,
-    setElementState,
-    style
+    setElementState
   } = elementContext;
   const params = useMemo<Record<string, string | undefined | boolean>>(() => {
     if (!debugMode && (previewMode || !type || rootId !== baseElementId)) {
@@ -190,7 +191,8 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     previewMode,
     baseElementId,
     definition,
-    elementState
+    elementState,
+    plitziElementLayout
   });
 
   return (

@@ -52,13 +52,22 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       baseElementId
     });
 
-    const { attributes, definition, style, elementState, setElementState } = internalProps;
+    const { attributes, definition, style, plitziElementLayout, elementState, setElementState } = internalProps;
     const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
     useEventBridge('element', eventCallbacks, {});
 
     const contextValue = useMemo(
-      () => ({ id, rootId, attributes, definition, style, elementState, setElementState }),
-      [attributes, definition, elementState, id, rootId, setElementState, style]
+      () => ({
+        id,
+        rootId,
+        attributes,
+        definition,
+        plitziElementLayout,
+        style,
+        elementState,
+        setElementState
+      }),
+      [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState]
     );
 
     return useMemo(() => {
