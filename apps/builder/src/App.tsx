@@ -5,6 +5,47 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { ApolloProvider } from '@apollo/client/react';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { sdkComponents } from '@plitzi/plitzi-sdk';
+import {
+  accordionTheme,
+  alertTheme,
+  badgeTheme,
+  breadcrumbTheme,
+  buttonTheme,
+  cardTheme,
+  checkboxTheme,
+  codeMirrorTheme,
+  colorPickerTheme,
+  containerCollapsableTheme,
+  containerDraggableTheme,
+  containerFloatingTheme,
+  containerFrameTheme,
+  containerResizableTheme,
+  containerTabsTheme,
+  contentEditableTheme,
+  errorMessageTheme,
+  fileUploadTheme,
+  flexTheme,
+  formTheme,
+  headingTheme,
+  iconGroupTheme,
+  iconTheme,
+  inputTheme,
+  kvInputTheme,
+  labelTheme,
+  markdownTheme,
+  menuListTheme,
+  metricInputTheme,
+  modalTheme,
+  popupTheme,
+  queriBuilderTheme,
+  select2Theme,
+  selectTheme,
+  sidebarTheme,
+  switchTheme,
+  textAreaTheme,
+  textTheme,
+  treeTheme
+} from '@plitzi/plitzi-ui';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Provider from '@plitzi/plitzi-ui/Provider';
@@ -51,6 +92,48 @@ export type AppProps = {
   userKey?: string;
   children: ReactNode;
   builderEnvironment?: ServerEnvironment;
+};
+
+const components = {
+  Button: buttonTheme,
+  FileUpload: fileUploadTheme,
+  ContentEditable: contentEditableTheme,
+  Card: cardTheme,
+  Form: formTheme,
+  Input: inputTheme,
+  Switch: switchTheme,
+  Checkbox: checkboxTheme,
+  Select: selectTheme,
+  Select2: select2Theme,
+  Heading: headingTheme,
+  Flex: flexTheme,
+  ContainerResizable: containerResizableTheme,
+  ContainerCollapsable: containerCollapsableTheme,
+  Icon: iconTheme,
+  IconGroup: iconGroupTheme,
+  Popup: popupTheme,
+  Sidebar: sidebarTheme,
+  Tree: treeTheme,
+  Accordion: accordionTheme,
+  QueryBuilder: queriBuilderTheme,
+  Alert: alertTheme,
+  Modal: modalTheme,
+  Text: textTheme,
+  Label: labelTheme,
+  TextArea: textAreaTheme,
+  ContainerFrame: containerFrameTheme,
+  KVInput: kvInputTheme,
+  Markdown: markdownTheme,
+  MenuList: menuListTheme,
+  ContainerDraggable: containerDraggableTheme,
+  Breadcrumb: breadcrumbTheme,
+  CodeMirror: codeMirrorTheme,
+  ErrorMessage: errorMessageTheme,
+  ColorPicker: colorPickerTheme,
+  MetricInput: metricInputTheme,
+  ContainerTabs: containerTabsTheme,
+  ContainerFloating: containerFloatingTheme,
+  Badge: badgeTheme
 };
 
 const App = (props: AppProps) => {
@@ -256,7 +339,7 @@ const App = (props: AppProps) => {
   );
 
   return (
-    <Provider>
+    <Provider components={components}>
       <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
         {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
         {hasBrowserRouter && childrenParsed}

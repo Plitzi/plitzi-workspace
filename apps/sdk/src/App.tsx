@@ -1,5 +1,16 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
+import {
+  buttonTheme,
+  containerCollapsableTheme,
+  containerResizableTheme,
+  containerTabsTheme,
+  contentEditableTheme,
+  headingTheme,
+  inputTheme,
+  markdownTheme,
+  textTheme
+} from '@plitzi/plitzi-ui';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Provider from '@plitzi/plitzi-ui/Provider';
@@ -59,6 +70,18 @@ export type AppProps = {
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: StateManagerContextValue) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
+};
+
+const components = {
+  Button: buttonTheme,
+  ContentEditable: contentEditableTheme,
+  Input: inputTheme,
+  Heading: headingTheme,
+  ContainerResizable: containerResizableTheme,
+  ContainerCollapsable: containerCollapsableTheme,
+  Text: textTheme,
+  Markdown: markdownTheme,
+  ContainerTabs: containerTabsTheme
 };
 
 const App = ({
@@ -143,7 +166,7 @@ const App = ({
 
   if (renderMode === 'widget') {
     return (
-      <Provider>
+      <Provider components={components}>
         <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
           <HelmetProvider>
             <ApolloProvider client={client}>
@@ -173,7 +196,7 @@ const App = ({
   }
 
   return (
-    <Provider>
+    <Provider components={components}>
       <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
         <HelmetProvider>
           <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>

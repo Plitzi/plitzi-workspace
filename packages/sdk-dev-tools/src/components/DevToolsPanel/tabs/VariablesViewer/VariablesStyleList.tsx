@@ -7,8 +7,6 @@ import type { StyleVariables, StyleVariableValue } from '@plitzi/sdk-shared';
 export type VariablesListProps = { variables?: Partial<StyleVariables> };
 
 const VariablesStyleList = ({ variables }: VariablesListProps) => {
-  console.log(variables);
-
   const variablesParsed = useMemo(
     () =>
       Object.keys(variables ?? {}).reduce<{ name: string; type: string; value: string | StyleVariableValue }[]>(

@@ -1,11 +1,11 @@
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
-import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename';
+
+import { createStripTypenameLink } from '../../helpers/stripTypename';
 
 import type { Server } from '@plitzi/sdk-shared';
 
 export const initClient = (finalServer: Server, webKey: string) => {
-  const noTypenameFromVariablesLink = new RemoveTypenameFromVariablesLink();
   const httpLink = new HttpLink({ uri: finalServer.graphqlServer });
   const cache = new InMemoryCache();
 
@@ -19,5 +19,5 @@ export const initClient = (finalServer: Server, webKey: string) => {
   }));
 
   // Init Client
-  return new ApolloClient({ link: authLink.concat(noTypenameFromVariablesLink, httpLink), cache });
+  return new ApolloClient({ link: authLink.concat(createStripTypenameLink(), httpLink), cache });
 };
