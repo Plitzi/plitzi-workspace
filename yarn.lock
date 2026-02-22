@@ -19,7 +19,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^4.0.0, @apollo/client@npm:^4.1.5":
+"@apollo/client@npm:^4.1.5":
   version: 4.1.5
   resolution: "@apollo/client@npm:4.1.5"
   dependencies:
@@ -3403,7 +3403,6 @@ __metadata:
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.2.0"
-    "@types/apollo-upload-client": "npm:^19.0.0"
     "@types/lodash-es": "npm:^4.17.12"
     "@xyflow/react": "npm:^12.10.1"
     apollo-upload-client: "npm:^19.0.0"
@@ -4680,17 +4679,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/apollo-upload-client@npm:^19.0.0":
-  version: 19.0.0
-  resolution: "@types/apollo-upload-client@npm:19.0.0"
-  dependencies:
-    "@apollo/client": "npm:^4.0.0"
-    "@types/extract-files": "npm:*"
-    graphql: "npm:14 - 16"
-  checksum: 10c0/0886f26f50677a41ee0080253712c91cabdb01680e784d3647e91a834ea73d10132a13f7c19688ab6875c493d0baa1ef9d99efa025ab84ca1f79c73a75d5b9ee
-  languageName: node
-  linkType: hard
-
 "@types/argparse@npm:1.0.38":
   version: 1.0.38
   resolution: "@types/argparse@npm:1.0.38"
@@ -4870,13 +4858,6 @@ __metadata:
   version: 1.0.8
   resolution: "@types/estree@npm:1.0.8"
   checksum: 10c0/39d34d1afaa338ab9763f37ad6066e3f349444f9052b9676a7cc0252ef9485a41c6d81c9c4e0d26e9077993354edf25efc853f3224dd4b447175ef62bdcc86a5
-  languageName: node
-  linkType: hard
-
-"@types/extract-files@npm:*":
-  version: 13.0.2
-  resolution: "@types/extract-files@npm:13.0.2"
-  checksum: 10c0/f05a296095684c15c4b7710b87c1280c4cef59eb4822b595c460150b672d37a073183ece4d51c2f612c870ca07c5b1ddd681f1f88348915970547af644705340
   languageName: node
   linkType: hard
 
@@ -10325,7 +10306,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:14 - 16, graphql@npm:^16.12.0":
+"graphql@npm:^16.12.0":
   version: 16.12.0
   resolution: "graphql@npm:16.12.0"
   checksum: 10c0/b6fffa4e8a4e4a9933ebe85e7470b346dbf49050c1a482fac5e03e4a1a7bed2ecd3a4c97e29f04457af929464bc5e4f2aac991090c2f320111eef26e902a5c75
