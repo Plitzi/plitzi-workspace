@@ -1,5 +1,4 @@
 import clsx from 'clsx';
-import capitalize from 'lodash-es/capitalize.js';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
@@ -20,15 +19,14 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
     () =>
       Object.keys(plugins).map(pluginKey => {
         const plugin = plugins[pluginKey];
-        const label = capitalize(pluginKey);
 
         return {
           ...plugin,
           id: pluginKey,
-          name: label,
+          name: pluginKey,
           label: (
-            <div className="flex flex-col">
-              {label}
+            <div className="flex flex-col capitalize">
+              {pluginKey}
               <span className="text-xs text-gray-500">{plugin.manifest.version}</span>
             </div>
           )

@@ -2,7 +2,6 @@ import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import clsx from 'clsx';
-import capitalize from 'lodash-es/capitalize';
 import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
@@ -23,9 +22,9 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const pluginsAvailables = useMemo(
     () =>
-      Object.keys(componentDefinitions)
-        .filter(type => !['page', 'notFound', 'loading', 'custom', 'blockJsx', 'blockHtml'].includes(type))
-        .map(type => capitalize(type)),
+      Object.keys(componentDefinitions).filter(
+        type => !['page', 'notFound', 'loading', 'custom', 'blockJsx', 'blockHtml'].includes(type)
+      ),
     [componentDefinitions]
   );
 
@@ -85,7 +84,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
               {pluginsAvailables.map(type => (
                 <li
                   key={type}
-                  className="border-gray-300 px-4 py-1 text-sm not-first:border-t"
+                  className="border-gray-300 px-4 py-1 text-sm capitalize not-first:border-t"
                   onClick={handlePluginInsert(type)}
                 >
                   {type}

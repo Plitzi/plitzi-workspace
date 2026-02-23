@@ -1,4 +1,3 @@
-import camelCase from 'lodash-es/camelCase.js';
 import get from 'lodash-es/get.js';
 import { memo, useCallback, use, useMemo } from 'react';
 
@@ -20,7 +19,7 @@ export type JsxManagerProps = {
 
 const JsxManager = ({
   plitziJsxSkipHOC = true,
-  as = '',
+  as: type = '',
   internalProps,
   children,
   ...plitziJsxProps
@@ -28,7 +27,6 @@ const JsxManager = ({
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
-  const type = camelCase(as);
   const { components } = use(ComponentContext);
   const { plugins } = use(PluginsContext);
 

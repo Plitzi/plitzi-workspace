@@ -1,5 +1,3 @@
-import capitalize from 'lodash-es/capitalize';
-
 import type { Element, InteractionCallback, InteractionPostCallback } from '@plitzi/sdk-shared';
 
 const getInteractions = (
@@ -41,7 +39,7 @@ const getInteractions = (
               { value: 'visibility', label: 'Visibility' },
               ...Object.keys(definition.styleSelectors).map(styleSelector => ({
                 value: `styleSelectors.${styleSelector}`,
-                label: `Selector - ${capitalize(styleSelector)}`
+                label: `Selector - ${styleSelector}`
               }))
             ];
           }

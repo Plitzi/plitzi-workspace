@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import capitalize from 'lodash-es/capitalize.js';
 import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo, useState, useRef } from 'react';
 
@@ -169,7 +168,7 @@ const Reference = ({
       >
         {!previewMode && (
           <div className="reference__label">
-            Element Reference <b>{capitalize(referenceType)}</b>
+            Element Reference <b className="capitalize">{referenceType}</b>
           </div>
         )}
       </RootElement>
@@ -207,9 +206,7 @@ const Reference = ({
           />
         )}
       </SchemaContext>
-      {!previewMode && !element && (
-        <div className="reference__label">Element Reference {capitalize(referenceType)}</div>
-      )}
+      {!previewMode && !element && <div className="reference__label">Element Reference {referenceType}</div>}
       {previewMode && !element && referenceType === 'segment' && (
         <div>
           Segment <b>{referenceId}</b> not found, publish to <b>{environment}</b> environment
