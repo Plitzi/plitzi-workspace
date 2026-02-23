@@ -1,6 +1,5 @@
 import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
 import { produce } from 'immer';
-import camelCase from 'lodash-es/camelCase';
 import get from 'lodash-es/get';
 import pick from 'lodash-es/pick';
 import set from 'lodash-es/set';
@@ -332,7 +331,7 @@ const BuilderProvider = ({
         };
 
         if (
-          !isDragAllowed(toElement, toParentElement, camelCase(typeArr[1]), dropPosition) ||
+          !isDragAllowed(toElement, toParentElement, typeArr[1], dropPosition) ||
           (dataParsed.id === toElement.id && dropPosition === 'inside')
         ) {
           return false;

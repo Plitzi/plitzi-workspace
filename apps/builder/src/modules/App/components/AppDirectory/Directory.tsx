@@ -5,7 +5,6 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Text from '@plitzi/plitzi-ui/Text';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -124,8 +123,8 @@ const Directory = ({
         <Flex items="center" gap={2}>
           {collapsed && <Icon size="xs" intent="custom" icon="fa-solid fa-folder" />}
           {!collapsed && <Icon size="xs" intent="custom" icon="fa-regular fa-folder-open" />}
-          <Text size="sm" weight="bold">
-            {upperFirst(name)}
+          <Text size="sm" weight="bold" className="capitalize">
+            {name}
           </Text>
         </Flex>
       </Flex>

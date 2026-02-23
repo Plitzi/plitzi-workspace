@@ -1,5 +1,4 @@
 import clsx from 'clsx';
-import camelCase from 'lodash-es/camelCase';
 import debounce from 'lodash-es/debounce';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -105,7 +104,7 @@ const BuilderOverlayDrag = ({ refIframe, sizeOffset = 2, zoom = 1 }: BuilderOver
       }
 
       const { id } = target.dataset;
-      const dataType = camelCase(typeArr[1]);
+      const dataType = typeArr[1];
       let { clientX: x, clientY: y } = e;
       if (!dragMetadata.current.element || dragMetadata.current.element.id !== id) {
         const element = flat[id];

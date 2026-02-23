@@ -3,7 +3,6 @@ import get from 'lodash-es/get';
 import omit from 'lodash-es/omit';
 import pick from 'lodash-es/pick';
 import set from 'lodash-es/set';
-import sneakCase from 'lodash-es/snakeCase';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -65,7 +64,7 @@ const useDragElement = ({ attributes, type, variables, manifest }: UseDragElemen
       }
 
       e.dataTransfer.setData(
-        `add##${sneakCase(element.definition.type)}`,
+        `add##${element.definition.type}`,
         JSON.stringify({ id: generateID(), element, variables })
       );
     },
