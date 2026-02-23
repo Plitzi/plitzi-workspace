@@ -109,13 +109,13 @@ const CollectionFieldForm = ({
         <div className="flex grow basis-0 items-start">
           <Form.Select2 name="type" size="xs" className="w-auto" options={fieldTypesOptions} />
         </div>
-        <div className="flex w-[100px] items-center justify-center text-xl">
+        <div className="flex w-25 items-center justify-center text-xl">
           <Form.Checkbox name="params.required" size="xs" />
         </div>
-        <div className="flex w-[100px] items-center justify-center text-xl">
+        <div className="flex w-25 items-center justify-center text-xl">
           <Form.Checkbox name="params.primary" size="xs" />
         </div>
-        <div className="flex w-[150px] items-center justify-center gap-4">
+        <div className="flex w-37.5 items-center justify-center gap-4">
           <Button type="reset" size="xs">
             <Button.Icon icon="fas fa-trash" intent="danger" className="cursor-pointer p-1" />
           </Button>
