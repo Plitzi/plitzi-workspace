@@ -3,7 +3,6 @@ import { produce } from 'immer';
 import get from 'lodash-es/get';
 import omit from 'lodash-es/omit';
 import set from 'lodash-es/set';
-import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
@@ -49,7 +48,7 @@ const WorkflowContextProvider = ({
 
           const newNode = {
             id,
-            title: `New ${upperFirst(nodeType)}`,
+            title: `New ${nodeType}`,
             type: nodeType,
             action: '',
             params: {},

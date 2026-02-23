@@ -1,7 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import get from 'lodash-es/get';
-import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import transformerString from './helpers/transformerString';
@@ -85,7 +84,7 @@ const BindingSelected = ({
 
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when), [when]);
-  const sourceName = useMemo(() => upperFirst(get(sources, `${source}.name`, source) as string), [source, sources]);
+  const sourceName = useMemo(() => get(sources, `${source}.name`, source) as string, [source, sources]);
 
   const handleChangeEnabled = useCallback(
     () => onEnable?.(category as BindingCategory, id, !enabled),
@@ -108,15 +107,15 @@ const BindingSelected = ({
       <div className="flex w-full flex-col truncate border-l border-gray-300">
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
-          <div className="ml-1 truncate">{!loading && `${sourceName} [${name}]`}</div>
+          <div className="ml-1 truncate capitalize">{!loading && `${sourceName} [${name}]`}</div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={fromPath}>
           <div className="font-bold">Path:</div>
           <div className="ml-1 truncate">{`${source}.${fromPath}`}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={upperFirst(toPath)}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={toPath}>
           <div className="font-bold">To:</div>
-          <div className="ml-1 truncate">{`${upperFirst(category)} ${upperFirst(toPath)}`}</div>
+          <div className="ml-1 truncate capitalize">{`${category} ${toPath}`}</div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={transformerName}>
           <div className="font-bold">Transformers:</div>

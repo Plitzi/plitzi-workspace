@@ -1,7 +1,6 @@
 import { useFormContext, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import get from 'lodash-es/get';
-import upperFirst from 'lodash-es/upperFirst';
 import { useMemo } from 'react';
 
 import whenString from '@pmodules/DataSource/helpers/whenString';
@@ -31,7 +30,7 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
   const name = useMemo(() => fields?.find(f => f.path === fromPath)?.name ?? 'Unknown', [fields, fromPath]);
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when as RuleGroup), [when]);
-  const sourceName = useMemo(() => upperFirst(get(sources, `${source}.name`, source) as string), [source, sources]);
+  const sourceName = useMemo(() => get(sources, `${source}.name`, source) as string, [source, sources]);
 
   return (
     <div className="flex flex-col">
@@ -41,15 +40,15 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
       <div className="flex w-full flex-col truncate rounded-sm border border-gray-300">
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
-          <div className="ml-1 truncate">{`${sourceName} [${name}]`}</div>
+          <div className="ml-1 truncate capitalize">{`${sourceName} [${name}]`}</div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={fromPath}>
           <div className="font-bold">Path:</div>
           <div className="ml-1 truncate">{`${source}.${fromPath}`}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={upperFirst(toPath)}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={toPath}>
           <div className="font-bold">To:</div>
-          <div className="ml-1 truncate">{`${upperFirst(category)} ${upperFirst(toPath)}`}</div>
+          <div className="ml-1 truncate capitalize">{`${category} ${toPath}`}</div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={transformerName}>
           <div className="font-bold">Transformers:</div>

@@ -4,8 +4,6 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import clsx from 'clsx';
 import get from 'lodash-es/get';
-import startCase from 'lodash-es/startCase';
-import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useMemo, use } from 'react';
 
 import WorkflowContext from '../WorkflowContext';
@@ -135,7 +133,7 @@ const NodeHeader = ({
           ...acum,
           {
             type,
-            label: startCase(type),
+            label: type,
             options: [{ value: `${elementId}_${action}`, label: title, type, elementId }]
           }
         ];
@@ -213,7 +211,7 @@ const NodeHeader = ({
         </div>
         <Select2
           className="truncate rounded-sm"
-          placeholder={`Select a ${upperFirst(type)}`}
+          placeholder={`Select a ${type}`}
           value={optionValue}
           onChange={handleChangeAction}
           options={optionsMemo}

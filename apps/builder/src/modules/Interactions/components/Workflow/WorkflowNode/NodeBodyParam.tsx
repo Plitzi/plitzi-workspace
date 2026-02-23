@@ -5,7 +5,6 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import clsx from 'clsx';
-import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
@@ -91,7 +90,7 @@ const NodeBodyParam = ({
     processOptions(options, params);
   }, [options, params, processOptions]);
 
-  const finalLabel = useMemo(() => (!label ? upperFirst(id) : label), [label, id]);
+  const finalLabel = useMemo(() => (!label ? id : label), [label, id]);
   const fieldsKeys = useMemo<AutoComplete[]>(
     () =>
       Object.values(fields).reduce<AutoComplete[]>(

@@ -3,7 +3,6 @@ import Button from '@plitzi/plitzi-ui/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import clsx from 'clsx';
 import { produce } from 'immer';
-import capitalize from 'lodash-es/capitalize';
 import get from 'lodash-es/get';
 import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react';
@@ -168,7 +167,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
         { path: 'visibility', label: 'Visibility' },
         ...Object.keys(definition.styleSelectors).map(styleSelector => ({
           path: `styleSelectors.${styleSelector}`,
-          label: `Selector - ${capitalize(styleSelector)}`
+          label: `Selector - ${styleSelector}`
         }))
       ]
     }),

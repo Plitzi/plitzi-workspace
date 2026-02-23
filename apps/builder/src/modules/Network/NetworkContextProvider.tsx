@@ -1,7 +1,6 @@
 import { CombinedGraphQLErrors } from '@apollo/client/core';
 import { useApolloClient } from '@apollo/client/react';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import cloneDeep from 'lodash-es/cloneDeep';
 import get from 'lodash-es/get';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
@@ -174,8 +173,7 @@ const NetworkContextProvider = ({
     try {
       const response = await query('Init', { environment, limit: 99 }, 'network-only', true);
       if (response.success && response.result) {
-        const data = cloneDeep(response.result);
-        const { Space, Collections } = data;
+        const { Space, Collections } = response.result;
         if (!Space) {
           setError('Space Not Found');
           setLoading(false);
