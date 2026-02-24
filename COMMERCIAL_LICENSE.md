@@ -1,6 +1,6 @@
 # Commercial License - Plitzi
 
-The source code of **Plitzi** is open for non-commercial use under the BSL.
+The source code of **Plitzi** is open for non-commercial use under the GPLv3.
 
 If you want to use Plitzi for commercial purposes, you must obtain a **Commercial License**.
 
