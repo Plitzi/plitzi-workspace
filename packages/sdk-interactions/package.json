@@ -97,7 +97,6 @@
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
-    "@plitzi/sdk-shared": "workspace:*",
-    "lodash-es": "^4.17.23"
+    "@plitzi/sdk-shared": "workspace:*"
   }
 }

@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash-es/cloneDeep.js';
+import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect } from 'vitest';
 
 import FlatMap from './FlatMap';

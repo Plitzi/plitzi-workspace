@@ -94,7 +94,6 @@
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-state": "workspace:*",
-    "lodash-es": "^4.17.23"
+    "@plitzi/sdk-state": "workspace:*"
   }
 }

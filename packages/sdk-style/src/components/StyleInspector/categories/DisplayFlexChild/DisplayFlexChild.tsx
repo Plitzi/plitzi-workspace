@@ -2,7 +2,6 @@
 import FlexGrowRow from '@plitzi/plitzi-ui/icons/FlexGrowRow';
 import FlexNoneRow from '@plitzi/plitzi-ui/icons/FlexNoneRow';
 import FlexShrinkRow from '@plitzi/plitzi-ui/icons/FlexShrinkRow';
-import isEqual from 'lodash-es/isEqual.js';
 import { memo, useCallback, use, useMemo } from 'react';
 
 import DisplayAlignSelf from './DisplayAlignSelf';
@@ -76,28 +75,28 @@ const DisplayFlexChild = ({
 
   const sizingItems = useMemo(() => {
     const customSizing =
-      !(flexGrow === '0' && flexShrink === '1' && isEqual(flexBasis, 'auto')) &&
-      !(flexGrow === '1' && flexShrink === '1' && isEqual(flexBasis, '0%')) &&
-      !(flexGrow === '0' && flexShrink === '0' && isEqual(flexBasis, 'auto'));
+      !(flexGrow === '0' && flexShrink === '1' && flexBasis === 'auto') &&
+      !(flexGrow === '1' && flexShrink === '1' && flexBasis === '0%') &&
+      !(flexGrow === '0' && flexShrink === '0' && flexBasis === 'auto');
 
     return [
       {
         value: { 'flex-grow': '0', 'flex-shrink': '1', 'flex-basis': 'auto' } as Record<StyleCategory, StyleValue>,
         icon: <FlexShrinkRow />,
         description: 'Shrink if needed',
-        active: !customSizing && flexGrow === '0' && flexShrink === '1' && isEqual(flexBasis, 'auto')
+        active: !customSizing && flexGrow === '0' && flexShrink === '1' && flexBasis === 'auto'
       },
       {
         value: { 'flex-grow': '1', 'flex-shrink': '1', 'flex-basis': '0%' } as Record<StyleCategory, StyleValue>,
         icon: <FlexGrowRow />,
         description: 'Grow if possible',
-        active: !customSizing && flexGrow === '1' && flexShrink === '1' && isEqual(flexBasis, '0%')
+        active: !customSizing && flexGrow === '1' && flexShrink === '1' && flexBasis === '0%'
       },
       {
         value: { 'flex-grow': '0', 'flex-shrink': '0', 'flex-basis': 'auto' } as Record<StyleCategory, StyleValue>,
         icon: <FlexNoneRow />,
         description: "Don't shrink or grow",
-        active: !customSizing && flexGrow === '0' && flexShrink === '0' && isEqual(flexBasis, 'auto')
+        active: !customSizing && flexGrow === '0' && flexShrink === '0' && flexBasis === 'auto'
       }
     ];
   }, [flexGrow, flexShrink, flexBasis]);

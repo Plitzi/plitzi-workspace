@@ -1,5 +1,4 @@
-import { set, pick } from '@plitzi/plitzi-ui/helpers';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { set, pick, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 
 import { generateID } from '../../helpers/utils';
 

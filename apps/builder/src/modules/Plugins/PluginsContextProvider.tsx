@@ -1,5 +1,4 @@
-import { get, set, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { get, set, omit, isEmpty, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useState, useReducer } from 'react';
 
 import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';

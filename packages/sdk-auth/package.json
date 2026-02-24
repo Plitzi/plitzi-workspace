@@ -70,8 +70,7 @@
     "@plitzi/plitzi-ui": "^1.3.0",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
-    "@plitzi/sdk-shared": "workspace:*",
-    "lodash-es": "^4.17.23"
+    "@plitzi/sdk-shared": "workspace:*"
   },
   "devDependencies": {
     "eslint": "^9.39.3",

@@ -57,7 +57,6 @@
   },
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
-    "lodash-es": "^4.17.23",
     "react-router": "^7.13.0",
     "react-router-dom": "^7.13.0"
   }

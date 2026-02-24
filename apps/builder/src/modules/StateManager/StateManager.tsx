@@ -1,9 +1,9 @@
+import { useDidUpdateEffect } from '@plitzi/plitzi-ui';
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import isEqual from 'lodash-es/isEqual';
-import { useCallback, use, useEffect, useState } from 'react';
+import { useCallback, use, useState } from 'react';
 
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
@@ -31,11 +31,8 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
     }
   }, [setState, value, addToast]);
 
-  useEffect(() => {
-    if (!isEqual(value, state)) {
-      setValue(JSON.stringify(state, null, 2));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  useDidUpdateEffect(() => {
+    setValue(JSON.stringify(state, null, 2));
   }, [state]);
 
   return (
