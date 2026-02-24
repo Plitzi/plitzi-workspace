@@ -1,6 +1,5 @@
-import { get, set } from '@plitzi/plitzi-ui/helpers';
+import { get, set, has } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import has from 'lodash-es/has.js';
 
 import FlatMap from './helpers/FlatMap';
 
