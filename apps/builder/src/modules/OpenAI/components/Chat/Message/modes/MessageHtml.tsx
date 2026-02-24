@@ -1,10 +1,8 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
-import set from 'lodash-es/set';
 import { useCallback, useEffect, use, useState } from 'react';
 
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -38,7 +36,7 @@ const MessageHtml = ({ content = '' }: MessageHtmlProps) => {
       const response = await networkQuery<{
         data: { schema: Schema; style: Style; definition: { rootId: string } };
       }>('/utils/transform-to-schema', { body: content, mode: 'html-tailwind' }, 'post');
-      const data = get(response, 'data');
+      const data = get(response, 'data', undefined);
       if (!data) {
         setPreview(EMPTY_SCHEMA);
       } else {

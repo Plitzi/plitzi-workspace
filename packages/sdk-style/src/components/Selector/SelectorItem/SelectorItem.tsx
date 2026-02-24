@@ -1,6 +1,6 @@
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useCallback, useEffect, useState } from 'react';
 
 import { selectorFormatter } from '../SelectorHelper';

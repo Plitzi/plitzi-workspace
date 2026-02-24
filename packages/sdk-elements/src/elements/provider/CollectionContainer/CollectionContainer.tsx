@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import capitalize from 'lodash-es/capitalize';
 import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -58,7 +57,7 @@ const CollectionContainer = ({
     fields.push({ path: 'record.status', name: 'Record Status' });
 
     Object.values(collection.fields).forEach(field => {
-      fields.push({ path: `record.values.${field.machineName}`, name: `Record Field - ${capitalize(field.name)}` });
+      fields.push({ path: `record.values.${field.machineName}`, name: `Record Field - ${field.name}` });
     });
 
     return fields;

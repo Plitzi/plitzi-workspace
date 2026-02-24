@@ -1,4 +1,4 @@
-import get from 'lodash-es/get.js';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { isValidElement, useMemo } from 'react';
 
 import PluginManager from '../PluginManager';

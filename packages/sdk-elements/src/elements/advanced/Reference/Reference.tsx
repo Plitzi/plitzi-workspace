@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
+
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo, useState, useRef } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

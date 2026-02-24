@@ -1,4 +1,4 @@
-import get from 'lodash-es/get.js';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 const isAuthenticated = (authData: { isAuthenticated: boolean }, userProvider = '', previewMode = true) => {
   let authenticated = false;

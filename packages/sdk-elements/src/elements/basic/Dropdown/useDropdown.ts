@@ -1,4 +1,4 @@
-import { useDidUpdateEffect } from '@plitzi/plitzi-ui';
+import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';

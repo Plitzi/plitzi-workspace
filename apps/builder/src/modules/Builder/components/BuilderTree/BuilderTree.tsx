@@ -1,7 +1,7 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';

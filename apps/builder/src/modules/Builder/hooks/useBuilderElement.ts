@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { use, useMemo } from 'react';
 
 import { BuilderSchemaContext } from '@plitzi/sdk-shared';

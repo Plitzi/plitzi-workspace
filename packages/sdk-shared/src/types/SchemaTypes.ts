@@ -46,7 +46,7 @@ export type ElementDefinition = {
   type: string;
   parentId?: Element['id'];
   items?: Element['id'][];
-  styleSelectors: Record<string, string>;
+  styleSelectors: { base: string } & Omit<{ [key: string]: string }, 'base'>;
   bindings?: Partial<Record<BindingCategory, ElementBinding[]>>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
@@ -59,7 +59,7 @@ export type ElementDefinition = {
 export type Element<TAttributes extends Record<string, unknown> = Omit<{ [key: string]: unknown }, 'subType'>> = {
   id: string;
   attributes: TAttributes & { subType?: string };
-  definition: Omit<{ [key: string]: unknown }, keyof ElementDefinition> & ElementDefinition;
+  definition: ElementDefinition;
 };
 
 export type SchemaVariable = {

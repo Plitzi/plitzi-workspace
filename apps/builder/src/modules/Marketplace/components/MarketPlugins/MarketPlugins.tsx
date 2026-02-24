@@ -1,6 +1,5 @@
+import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import debounce from 'lodash-es/debounce';
-import get from 'lodash-es/get';
 import { useCallback, use, useEffect, useRef, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';

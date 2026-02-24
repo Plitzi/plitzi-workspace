@@ -1,5 +1,5 @@
 import { Helmet } from '@dr.pogodin/react-helmet';
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
@@ -67,15 +67,7 @@ const NavigationContextProvider = ({
       'navigation',
       <span>
         Navigated to page{' '}
-        <b>
-          {
-            get(
-              pageDefinitions,
-              `${currentPageId}.attributes.name`,
-              currentPageId ? currentPageId : 'Unknown'
-            ) as string
-          }
-        </b>
+        <b>{get(pageDefinitions, `${currentPageId}.attributes.name`, currentPageId ? currentPageId : 'Unknown')}</b>
       </span>,
       { status: action.type, elementId: currentPageId }
     );

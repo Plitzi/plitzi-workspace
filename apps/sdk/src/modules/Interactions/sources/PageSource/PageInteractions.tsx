@@ -1,5 +1,4 @@
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
@@ -59,7 +58,7 @@ const PageInteractions = ({ children, previewMode = true }: PageInteractionsProp
 
     return Object.keys(pages).reduce<{ key: string; label: string; defaultPage: boolean }[]>((acum, pageId) => {
       const page = pages[pageId];
-      const pageName = get(page, 'attributes.name', pageId) as string;
+      const pageName = get(page, 'attributes.name', pageId);
       const defaultPage = get(page, 'attributes.default', false) as boolean;
 
       return [...acum, { key: pageId, label: pageName, defaultPage }];

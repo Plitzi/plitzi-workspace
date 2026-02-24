@@ -1,7 +1,6 @@
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
 import { useMemo, use, useCallback, useEffect } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
@@ -28,7 +27,7 @@ const Settings = ({ mode = 'page', href = '#', target = 'self', onUpdate }: Sett
 
     return Object.keys(pages).reduce<{ key: string; label: string; defaultPage: boolean }[]>((acum, pageId) => {
       const page = pages[pageId];
-      const pageName = get(page, 'attributes.name', pageId) as string;
+      const pageName = get(page, 'attributes.name', pageId);
       const defaultPage = get(page, 'attributes.default', false) as boolean;
 
       return [...acum, { key: pageId, label: pageName, defaultPage }];

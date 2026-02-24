@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 import type { ComponentDefinition, Element } from '@plitzi/sdk-shared';
 
@@ -20,7 +20,7 @@ export const recursiveMap = (
     definition: { items, label, type }
   } = element;
 
-  const icon = get(componentDefinitions, `${type}.market.icon`, '') as string;
+  const icon = get(componentDefinitions, `${type}.market.icon`, '');
   if (!items) {
     return { id, label, icon, parentId };
   }

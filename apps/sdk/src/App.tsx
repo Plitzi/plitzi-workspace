@@ -1,21 +1,19 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
-import {
-  buttonTheme,
-  containerCollapsableTheme,
-  containerResizableTheme,
-  containerTabsTheme,
-  contentEditableTheme,
-  headingTheme,
-  inputTheme,
-  markdownTheme,
-  textTheme
-} from '@plitzi/plitzi-ui';
+import { buttonTheme } from '@plitzi/plitzi-ui/Button';
+import { containerCollapsableTheme } from '@plitzi/plitzi-ui/ContainerCollapsable';
+import { containerResizableTheme } from '@plitzi/plitzi-ui/ContainerResizable';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
+import { containerTabsTheme } from '@plitzi/plitzi-ui/ContainerTabs';
+import { contentEditableTheme } from '@plitzi/plitzi-ui/ContentEditable';
+import { headingTheme } from '@plitzi/plitzi-ui/Heading';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import { inputTheme } from '@plitzi/plitzi-ui/Input';
+import { markdownTheme } from '@plitzi/plitzi-ui/Markdown';
 import Provider from '@plitzi/plitzi-ui/Provider';
+import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { useEffect, Children, isValidElement, useMemo, useCallback } from 'react';
 import * as React from 'react';
 import * as JSXRuntime from 'react/jsx-runtime';

@@ -4,7 +4,6 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, useMemo } from 'react';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
@@ -49,7 +48,7 @@ const TransformerParam = ({
     [onChange, index, id]
   );
 
-  const label = useMemo(() => (!labelProp ? upperFirst(id) : labelProp), [labelProp, id]);
+  const label = useMemo(() => (!labelProp ? id : labelProp), [labelProp, id]);
 
   const fieldsDataSource = useMemo<AutoComplete[]>(() => {
     if (!dataSourceFields) {

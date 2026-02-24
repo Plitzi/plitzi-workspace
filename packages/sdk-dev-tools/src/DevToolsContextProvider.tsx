@@ -1,4 +1,4 @@
-import omit from 'lodash-es/omit.js';
+import { omit } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
 import DevToolsContext from './DevToolsContext';
@@ -35,7 +35,7 @@ const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => 
   );
 
   const handleRemoveProvider = useCallback(
-    (methodName: string) => setProviders(state => omit(state, [methodName])),
+    (methodName: string) => setProviders(state => omit(state, [methodName]) as Record<string, ProviderCallback>),
     []
   );
 

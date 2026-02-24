@@ -1,6 +1,7 @@
 /* eslint-disable no-async-promise-executor */
+
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
@@ -76,7 +77,7 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
     return Object.keys(previewData)
       .filter((nodeId, index) => nodeId !== nodeIdProp && (nodePosition === -1 || index < nodePosition))
       .reduce<Exclude<Option, OptionGroup>[]>(
-        (acum, nodeId) => [...acum, { value: nodeId, label: get(nodes, `${nodeId}.title`, nodeId) as string }],
+        (acum, nodeId) => [...acum, { value: nodeId, label: get(nodes, `${nodeId}.title`, nodeId) }],
         []
       );
   }, [previewData, nodeIdProp, nodes]);

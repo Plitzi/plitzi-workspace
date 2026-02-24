@@ -1,5 +1,4 @@
-import debounce from 'lodash-es/debounce';
-import get from 'lodash-es/get';
+import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
@@ -63,7 +62,7 @@ const useQueueManager = ({
             return null;
           }
 
-          const defaultPage = get(page, 'attributes.default', false);
+          const defaultPage = get(page, 'attributes.default', false) as boolean;
           if (defaultPage) {
             return null;
           }

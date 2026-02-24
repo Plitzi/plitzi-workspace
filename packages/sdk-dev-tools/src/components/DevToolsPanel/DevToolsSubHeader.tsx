@@ -1,5 +1,5 @@
+import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import throttle from 'lodash-es/throttle.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import DevToolsButton from './DevToolsButton';

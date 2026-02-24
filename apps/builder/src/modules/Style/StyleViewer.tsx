@@ -1,6 +1,5 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
-import get from 'lodash-es/get';
-import isEmpty from 'lodash-es/isEmpty';
+import { get, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';

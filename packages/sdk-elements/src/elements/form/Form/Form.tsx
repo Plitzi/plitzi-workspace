@@ -1,9 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
+import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { produce } from 'immer';
-import capitalize from 'lodash-es/capitalize.js';
-import get from 'lodash-es/get.js';
-import omit from 'lodash-es/omit.js';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
@@ -154,9 +152,9 @@ const Form = ({
         .reduce<SourceField[]>(
           (acum, field) => [
             ...acum,
-            { path: `fields.${field.name}.id`, name: `${capitalize(field.name)} ID` },
-            { path: `values.${field.name}`, name: `${capitalize(field.name)} Value` },
-            { path: `errors.${field.name}`, name: `${capitalize(field.name)} Error Message` }
+            { path: `fields.${field.name}.id`, name: `${field.name} ID` },
+            { path: `values.${field.name}`, name: `${field.name} Value` },
+            { path: `errors.${field.name}`, name: `${field.name} Error Message` }
           ],
           []
         ),

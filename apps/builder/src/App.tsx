@@ -36,6 +36,7 @@ import {
   menuListTheme,
   metricInputTheme,
   modalTheme,
+  omit,
   popupTheme,
   queriBuilderTheme,
   select2Theme,
@@ -54,7 +55,6 @@ import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import clsx from 'clsx';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
-import omit from 'lodash-es/omit';
 import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
 import * as React from 'react';
 import * as JSXRuntime from 'react/jsx-runtime';

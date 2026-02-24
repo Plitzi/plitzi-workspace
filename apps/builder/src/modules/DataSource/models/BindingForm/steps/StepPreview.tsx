@@ -1,6 +1,6 @@
 import { useFormContext, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import whenString from '@pmodules/DataSource/helpers/whenString';
@@ -30,7 +30,7 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
   const name = useMemo(() => fields?.find(f => f.path === fromPath)?.name ?? 'Unknown', [fields, fromPath]);
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when as RuleGroup), [when]);
-  const sourceName = useMemo(() => get(sources, `${source}.name`, source) as string, [source, sources]);
+  const sourceName = useMemo(() => get(sources, `${source}.name`, source), [source, sources]);
 
   return (
     <div className="flex flex-col">

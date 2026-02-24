@@ -1,6 +1,5 @@
+import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import get from 'lodash-es/get';
-import omit from 'lodash-es/omit';
 import { use, useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';

@@ -1,5 +1,5 @@
 import Heading from '@plitzi/plitzi-ui/Heading';
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import Element from './Element';

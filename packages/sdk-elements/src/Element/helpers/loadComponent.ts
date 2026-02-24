@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 import { generatePluginModule } from './elementUtils';
 import { nestedInject } from '../../Component';

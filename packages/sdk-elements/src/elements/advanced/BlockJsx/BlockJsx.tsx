@@ -1,5 +1,5 @@
+import { omit } from '@plitzi/plitzi-ui';
 import clsx from 'clsx';
-import omit from 'lodash-es/omit.js';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
 import withElement from '../../../Element/hocs/withElement';

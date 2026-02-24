@@ -1,6 +1,5 @@
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import capitalize from 'lodash-es/capitalize.js';
 import { useCallback } from 'react';
 
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
@@ -79,7 +78,7 @@ const ItemOptions = ({
                 {(state === stateItem || (state === '' && stateItem === 'none')) && (
                   <i className="fa-solid fa-check text-green-500" />
                 )}
-                {capitalize(stateItem)}
+                {stateItem}
               </li>
             ))}
           </ul>

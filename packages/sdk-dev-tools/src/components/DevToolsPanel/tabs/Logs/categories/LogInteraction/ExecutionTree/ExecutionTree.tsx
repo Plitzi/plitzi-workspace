@@ -1,5 +1,5 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useCallback, useMemo } from 'react';
 
 import { getDurationMs } from '@plitzi/sdk-shared';

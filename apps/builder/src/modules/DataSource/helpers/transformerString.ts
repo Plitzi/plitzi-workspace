@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 import utility from '@plitzi/sdk-data-source/utility';
 
@@ -13,7 +13,7 @@ const transformerString = (
 ) => {
   const str = transformers.reduce<string[]>((acum, transformer) => {
     const { action, params } = transformer;
-    const actionName = get(utility, `${action}.title`, action) as string;
+    const actionName = get(utility, `${action}.title`, action);
     switch (action) {
       case 'staticValue':
         return [...acum, `${actionName} = ${params.value}`];

@@ -1,7 +1,7 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

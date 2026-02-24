@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
+
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';

@@ -1,6 +1,5 @@
+import { set, omit } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import omit from 'lodash-es/omit';
-import set from 'lodash-es/set';
 import { useCallback, useMemo, useRef } from 'react';
 
 import getInteractions from '../helpers/getInteractions';

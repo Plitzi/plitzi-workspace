@@ -1,5 +1,5 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';

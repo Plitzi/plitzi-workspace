@@ -1,9 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { useCallback, useMemo, use } from 'react';
 
 import WorkflowContext from '../WorkflowContext';

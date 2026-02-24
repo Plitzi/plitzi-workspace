@@ -1,5 +1,5 @@
+import { isEmpty } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import isEmpty from 'lodash-es/isEmpty';
 import { useMemo } from 'react';
 
 import { formatDate } from '@plitzi/sdk-shared';

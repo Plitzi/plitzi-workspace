@@ -1,6 +1,6 @@
 import ContentEditable from '@plitzi/plitzi-ui/ContentEditable';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { memo, use, useCallback, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -41,10 +41,7 @@ const BuilderBreadcrumbItem = ({
     [updateElement, id]
   );
 
-  const icon = useMemo(
-    () => get(componentDefinitions, `${type}.market.icon`, '') as string,
-    [type, componentDefinitions]
-  );
+  const icon = useMemo(() => get(componentDefinitions, `${type}.market.icon`, ''), [type, componentDefinitions]);
 
   return (
     <li
@@ -61,7 +58,7 @@ const BuilderBreadcrumbItem = ({
         <div className="flex cursor-pointer items-center gap-0.5 truncate">
           <ItemIcon icon={icon} />
           <ContentEditable
-            className="focus-visible:m-[1px] focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
+            className="focus-visible:m-px focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
             value={label}
             onChange={handleChange}
             openMode="doubleClick"

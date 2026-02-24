@@ -1,5 +1,5 @@
+import { debounce } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import debounce from 'lodash-es/debounce';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import type { RefObject } from 'react';

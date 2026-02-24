@@ -1,4 +1,4 @@
-import omit from 'lodash-es/omit';
+import { omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
@@ -71,7 +71,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
     (collectionId: string) => {
       dispatchCollection({
         type: CollectionsActions.COLLECTIONS_REMOVE,
-        collections: omit(collectionsRef.current, [collectionId])
+        collections: omit(collectionsRef.current, [collectionId]) as Record<string, Collection>
       });
     },
     [dispatchCollection]

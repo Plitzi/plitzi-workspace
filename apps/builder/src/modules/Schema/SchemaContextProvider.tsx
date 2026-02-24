@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
+
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
 import { useMemo, useRef, useCallback, use, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

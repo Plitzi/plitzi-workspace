@@ -1,7 +1,7 @@
 import Card from '@plitzi/plitzi-ui/Card';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import get from 'lodash-es/get';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

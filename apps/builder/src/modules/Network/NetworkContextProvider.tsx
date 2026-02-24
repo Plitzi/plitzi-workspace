@@ -1,7 +1,7 @@
 import { CombinedGraphQLErrors } from '@apollo/client/core';
 import { useApolloClient } from '@apollo/client/react';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import get from 'lodash-es/get';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';

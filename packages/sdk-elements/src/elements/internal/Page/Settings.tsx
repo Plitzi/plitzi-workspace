@@ -1,11 +1,10 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
 import { useCallback, use, useMemo } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';

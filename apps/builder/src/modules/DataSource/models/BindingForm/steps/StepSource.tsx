@@ -1,7 +1,7 @@
 import ErrorMessage from '@plitzi/plitzi-ui/ErrorMessage';
 import Form from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 import type { SourceMeta } from '@plitzi/sdk-shared';
 

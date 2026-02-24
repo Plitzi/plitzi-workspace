@@ -1,8 +1,6 @@
+import { get, pick, set } from '@plitzi/plitzi-ui/helpers';
 import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
-import set from 'lodash-es/set';
 import { useCallback, use, useMemo, useState, useRef, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
@@ -161,7 +159,7 @@ const BuilderProvider = ({
         }
 
         if (elementId) {
-          const canSelect = builderElementPermissions(element, 'canSelect');
+          const canSelect = builderElementPermissions(element as Element, 'canSelect');
           if (!canSelect) {
             return state;
           }
@@ -348,9 +346,7 @@ const BuilderProvider = ({
             definition: { ...dataParsed.element.definition, rootId }
           };
 
-          const initialItems = get(componentDefinitions, `${typeArr[1]}.initialItems`, undefined) as
-            | string[]
-            | undefined;
+          const initialItems = get(componentDefinitions, `${typeArr[1]}.initialItems`, undefined);
           let itemsToAdd: ReturnType<typeof getInitialItems> = { directItems: {}, items: {} };
           if (initialItems && initialItems.length > 0) {
             itemsToAdd = getInitialItems(element.id, initialItems, componentDefinitions, baseElementId);

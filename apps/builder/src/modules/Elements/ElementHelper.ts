@@ -1,6 +1,5 @@
+import { set, pick } from '@plitzi/plitzi-ui/helpers';
 import cloneDeep from 'lodash-es/cloneDeep';
-import pick from 'lodash-es/pick';
-import set from 'lodash-es/set';
 
 import { generateID } from '../../helpers/utils';
 
@@ -41,8 +40,8 @@ export const getInitialItems = (
       result = { ...result, ...subItems.items };
     }
 
-    directItems[element.id] = pick(element, ['id', 'attributes', 'definition']);
-    result[element.id] = pick(element, ['id', 'attributes', 'definition']);
+    directItems[element.id] = pick(element, ['id', 'attributes', 'definition']) as Element;
+    result[element.id] = directItems[element.id];
   });
 
   return { directItems, items: result };

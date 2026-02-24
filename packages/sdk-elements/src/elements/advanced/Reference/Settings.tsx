@@ -1,5 +1,5 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -62,7 +62,7 @@ const Settings = ({
   const referenceSchema = useMemo(() => {
     switch (referenceType) {
       case 'segment': {
-        return get(segments, `${referenceId}.schema`, undefined) as Schema | undefined;
+        return get(segments, `${referenceId}.schema`, undefined);
       }
 
       case 'element':

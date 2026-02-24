@@ -1,11 +1,9 @@
 // Packages
 import Button from '@plitzi/plitzi-ui/Button';
 import ContainerFloating, { useFloating } from '@plitzi/plitzi-ui/ContainerFloating';
+import { get, pick, omit } from '@plitzi/plitzi-ui/helpers';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
-import get from 'lodash-es/get.js';
-import omit from 'lodash-es/omit.js';
-import pick from 'lodash-es/pick.js';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
 import { selectorFormatter } from './SelectorHelper';

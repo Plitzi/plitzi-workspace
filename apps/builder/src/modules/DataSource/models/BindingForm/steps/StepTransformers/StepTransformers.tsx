@@ -1,10 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useFormContext, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import set from 'lodash-es/set';
 import { use, useCallback, useMemo, useRef } from 'react';
 
 import utility, { utilityOptions } from '@plitzi/sdk-data-source/utility';

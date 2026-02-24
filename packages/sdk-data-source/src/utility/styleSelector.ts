@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 import type { DataSourceUtility, DataSourceUtilityParamsValue, Element } from '@plitzi/sdk-shared';
 
@@ -14,7 +14,7 @@ const callback = (
   if (append && !originalSelector && dataSources.sourceTo) {
     finalSelector.push(...[dataSources.sourceTo, selector as string]);
   } else if (originalSelector && append) {
-    const originalSelector = get(_element, 'definition.styleSelectors.base', '');
+    const originalSelector = get(_element as Element, 'definition.styleSelectors.base', '');
     if (originalSelector) {
       finalSelector.push(...[originalSelector, selector as string]);
     } else {

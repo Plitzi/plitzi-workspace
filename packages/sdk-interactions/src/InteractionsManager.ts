@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import get from 'lodash-es/get';
-import set from 'lodash-es/set';
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
 
@@ -58,11 +57,7 @@ class InteractionsManager {
 
       set(this.interactionsRunning, `${subscriptorId}.${eventName}`, true);
 
-      const getAdditionalParams = get(
-        this.subscriptors,
-        `${subscriptorId}.getAdditionalParams`,
-        undefined
-      ) as Subscriptor['getAdditionalParams'];
+      const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
       let dataSource: unknown;
       if (typeof getAdditionalParams === 'function') {
         ({ dataSource } = getAdditionalParams());

@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
+
+import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import throttle from 'lodash-es/throttle';
 import { useCallback, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

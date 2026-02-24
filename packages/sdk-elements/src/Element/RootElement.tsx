@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
 import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
@@ -65,7 +65,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 
   const plitziContextData = usePlitziServiceContext();
   const previewMode = get(plitziContextData, 'settings.previewMode', true);
-  const debugMode = get(plitziContextData, 'settings.debugMode', false);
+  const debugMode = get(plitziContextData, 'settings.debugMode', false) as boolean;
   const baseElementId = get(plitziContextData, 'root.baseElementId');
 
   const {

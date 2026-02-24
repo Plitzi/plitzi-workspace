@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Switch from '@plitzi/plitzi-ui/Switch';
-import get from 'lodash-es/get';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import transformerString from './helpers/transformerString';
@@ -84,7 +84,7 @@ const BindingSelected = ({
 
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when), [when]);
-  const sourceName = useMemo(() => get(sources, `${source}.name`, source) as string, [source, sources]);
+  const sourceName = useMemo(() => get(sources, `${source}.name`, source), [source, sources]);
 
   const handleChangeEnabled = useCallback(
     () => onEnable?.(category as BindingCategory, id, !enabled),

@@ -1,6 +1,6 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
@@ -89,13 +89,13 @@ const BuilderAreaPreview = ({
   }, [settings?.customCss, styleCache, variables]);
 
   const { components } = use(ComponentContext);
-  const element = useMemo(() => get(flat, id), [id, flat]);
+  const element = useMemo(() => get(flat, id, undefined), [id, flat]);
   const Plugin = useMemo(() => {
     if (!element) {
       return undefined;
     }
 
-    const PluginNode = get(components, get(element, 'definition.type'), undefined);
+    const PluginNode = get(components, get(element, 'definition.type', ''), undefined);
     if (!PluginNode) {
       return undefined;
     }

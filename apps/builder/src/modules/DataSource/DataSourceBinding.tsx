@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
+
 import Button from '@plitzi/plitzi-ui/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
+import { get, upperFirst } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import upperFirst from 'lodash-es/upperFirst';
 import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react';
 
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';

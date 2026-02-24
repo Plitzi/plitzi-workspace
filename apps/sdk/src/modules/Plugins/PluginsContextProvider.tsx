@@ -1,7 +1,5 @@
 import { Helmet } from '@dr.pogodin/react-helmet';
-import get from 'lodash-es/get';
-import isEmpty from 'lodash-es/isEmpty';
-import omit from 'lodash-es/omit';
+import { get, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';

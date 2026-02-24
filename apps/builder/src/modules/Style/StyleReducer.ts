@@ -1,7 +1,5 @@
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import omit from 'lodash-es/omit';
-import set from 'lodash-es/set';
 
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import StyleMap from '@plitzi/sdk-style/StyleMap';
@@ -186,7 +184,7 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
       const { platform: newPlatform } = action;
 
       return produce(state, draft => {
-        const platform = omit(get(draft, 'platform', {})) as Style['platform'];
+        const platform = get(draft, 'platform', {}) as Style['platform'];
         (Object.keys(newPlatform) as DisplayMode[]).forEach(mode => {
           platform[mode] = { ...get(platform, mode, {} as Record<string, StyleItem>), ...newPlatform[mode] };
         });

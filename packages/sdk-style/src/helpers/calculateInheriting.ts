@@ -1,5 +1,4 @@
-import get from 'lodash-es/get.js';
-import pick from 'lodash-es/pick.js';
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 
 import { inheritableAttributesBase } from '@plitzi/sdk-shared';
 

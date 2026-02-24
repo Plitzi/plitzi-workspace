@@ -1,5 +1,4 @@
-import get from 'lodash-es/get.js';
-import set from 'lodash-es/set.js';
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
 

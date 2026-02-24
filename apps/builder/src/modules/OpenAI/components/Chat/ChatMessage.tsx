@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import Message from './Message';
@@ -15,7 +15,7 @@ const ChatMessage = ({ id = '', role = 'assistant', content = [] }: ChatMessageP
   const roleLabel = role === 'assistant' ? 'Assistant' : 'You';
 
   const message = useMemo(
-    () => content.map(item => ({ type: item.type, content: get(item, 'text.value') })),
+    () => content.map(item => ({ type: item.type, content: get(item, 'text.value', '') })),
     // .reduce((acum, item) => [...acum, item], [])
     [content]
   );

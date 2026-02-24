@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 
-import omit from 'lodash-es/omit';
+import { omit } from '@plitzi/plitzi-ui/helpers';
 
 const toPascalCase = (pkgName: string) => {
   return (

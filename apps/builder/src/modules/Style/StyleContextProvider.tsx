@@ -1,5 +1,5 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import get from 'lodash-es/get';
 import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';

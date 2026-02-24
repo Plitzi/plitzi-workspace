@@ -2,7 +2,7 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Heading from '@plitzi/plitzi-ui/Heading';
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useState } from 'react';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';

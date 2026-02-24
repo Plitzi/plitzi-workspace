@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
+import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
-import set from 'lodash-es/set';
 
 import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
 import { generateCache, makeSelector } from '@plitzi/sdk-style/StyleHelper';
@@ -299,13 +297,13 @@ export const processPaste = async (
         componentDefinitions,
         'paragraph',
         { content: paragraph },
-        {},
+        { base: '' },
         elementContainerDefinition?.id
       );
       if (elementDefinition && elementContainerDefinition) {
         templateData.elements[elementDefinition.id] = elementDefinition;
         set(elementContainerDefinition, 'definition.items', [
-          ...get(elementContainerDefinition, 'definition.items', []),
+          ...(get(elementContainerDefinition, 'definition.items', []) as string[]),
           elementDefinition.id
         ]);
       }

@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
+
+import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import omit from 'lodash-es/omit';
-import set from 'lodash-es/set';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
@@ -198,7 +197,7 @@ const WorkflowContextProvider = ({
             case 'down': {
               // Relationships
               set(draft, `${beforeNode.id}.afterNode`, afterNode.id);
-              if (get(draft, `${afterNode.id}.afterNode`) as ElementInteraction | undefined) {
+              if (get(draft, `${afterNode.id}.afterNode`)) {
                 set(draft, `${afterNode.afterNode}.beforeNode`, node.id);
               }
 
@@ -225,7 +224,7 @@ const WorkflowContextProvider = ({
 
   const setPreviewNode = useCallback((id: string, data?: ElementInteraction['preview']) => {
     if (!data) {
-      setPreviewData(state => omit(state, [id]));
+      setPreviewData(state => omit(state, [id]) as Record<string, ElementInteraction['preview']>);
     } else {
       setPreviewData(state => ({ ...state, [id]: data }));
     }

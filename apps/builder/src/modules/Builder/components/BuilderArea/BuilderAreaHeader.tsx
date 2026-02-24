@@ -1,11 +1,11 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import PageOverview from '@plitzi/plitzi-ui/icons/PageOverview';
 import PageOverviewZoom from '@plitzi/plitzi-ui/icons/PageOverviewZoom';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -114,7 +114,7 @@ const BuilderAreaHeader = ({
   }, [flat, pageFolders, baseElementId]);
 
   const title = get(element, 'attributes.name', 'Page') as string;
-  const defaultPage = get(element, 'attributes.default', false);
+  const defaultPage = get(element, 'attributes.default', false) as boolean;
 
   const domain = useMemo(() => {
     let url = definition.permanentUrl

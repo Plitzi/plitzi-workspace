@@ -1,5 +1,5 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Icon from '@plitzi/plitzi-ui/Icon';
-import get from 'lodash-es/get';
 
 import { fieldTypes } from '../CollectionsConstants';
 

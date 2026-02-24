@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import * as React from 'react';
 import * as ReactJSX from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';
@@ -55,7 +55,6 @@ export const generatePluginModule = async (url: string, asESM = true, pluginScop
         __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
       const ModuleWrapper = get(window, `plitziPlugins.${pluginScope}`) as PlitziModuleLegacy['default'] | undefined;
       if (!ModuleWrapper || typeof ModuleWrapper !== 'function') {
         return undefined;

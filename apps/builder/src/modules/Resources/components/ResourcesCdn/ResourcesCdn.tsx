@@ -1,9 +1,9 @@
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Heading from '@plitzi/plitzi-ui/Heading';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import get from 'lodash-es/get';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
@@ -99,7 +99,7 @@ const ResourcesCdn = ({
       if (plugins[pluginType] as ComponentDefinition | undefined) {
         addToast(
           <div>
-            Plugin <b>{get(resource, 'metadata.definition.name')}</b> already installed
+            Plugin <b>{get(resource, 'metadata.definition.name', '')}</b> already installed
           </div>,
           { appeareance: 'info', autoDismiss: true, placement: 'top-right' }
         );

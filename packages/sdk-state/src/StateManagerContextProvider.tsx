@@ -1,6 +1,5 @@
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get.js';
-import set from 'lodash-es/set.js';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
@@ -61,10 +60,7 @@ const StateManagerContextProvider = ({
     const keepState: boolean = get(settings, 'keepState', false);
     const storeMode: string = get(settings, 'stateStorage', '');
     if (keepState && storeMode) {
-      return {
-        ...(stateProp ?? {}),
-        ...(getCache('', {}, storeMode) as Record<string, unknown>)
-      };
+      return { ...(stateProp ?? {}), ...getCache('', {}, storeMode) };
     }
 
     return stateProp ?? {};
@@ -81,7 +77,7 @@ const StateManagerContextProvider = ({
 
   const setCache = useCallback(
     (value: Record<string, unknown>, path = '', storeMode = '') => {
-      const currentState = getCache() as Record<string, unknown>;
+      const currentState = getCache();
       let newState = currentState;
       if (path) {
         newState = produce(currentState, draft => {

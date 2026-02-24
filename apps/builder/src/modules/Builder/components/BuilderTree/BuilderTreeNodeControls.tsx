@@ -1,8 +1,8 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { use, useCallback, useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';

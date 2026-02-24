@@ -1,7 +1,5 @@
+import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import omit from 'lodash-es/omit';
-import set from 'lodash-es/set';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';

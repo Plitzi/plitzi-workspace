@@ -3,11 +3,9 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
+import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
-import set from 'lodash-es/set';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -53,7 +51,7 @@ const Transform = () => {
       const response = await networkQuery<{
         data: { definition: { rootId: string }; schema: Schema; style: Style };
       }>('/utils/transform-to-schema', { body: content, mode, 'custom-css': customCss }, 'post');
-      const data = get(response, 'data');
+      const data = get(response, 'data', undefined);
       if (!data) {
         return EMPTY_SCHEMA;
       }

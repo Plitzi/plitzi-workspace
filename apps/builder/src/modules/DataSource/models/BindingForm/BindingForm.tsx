@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 

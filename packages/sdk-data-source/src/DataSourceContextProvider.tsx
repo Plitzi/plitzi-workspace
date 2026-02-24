@@ -1,6 +1,4 @@
-import get from 'lodash-es/get.js';
-import omit from 'lodash-es/omit.js';
-import set from 'lodash-es/set.js';
+import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -55,7 +53,7 @@ const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourc
   const handleGetSources = useCallback(
     (id?: string) => {
       if (id) {
-        return get(sourcesRef.current, id) as Source | undefined;
+        return get(sourcesRef.current, id);
       }
 
       return sourcesRef.current;
@@ -84,7 +82,7 @@ const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourc
 
   const handleRemoveSource = useCallback(
     (id: string) => {
-      sourcesRef.current = omit(sourcesRef.current, id);
+      sourcesRef.current = omit(sourcesRef.current, id) as Record<string, Source>;
     },
     [sourcesRef]
   );

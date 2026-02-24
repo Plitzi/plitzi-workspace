@@ -1,4 +1,4 @@
-import omit from 'lodash-es/omit';
+import { omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useState } from 'react';
 
 import VariableActions from './VariableActions';

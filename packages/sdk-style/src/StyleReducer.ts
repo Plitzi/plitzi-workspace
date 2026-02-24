@@ -1,7 +1,5 @@
+import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get.js';
-import omit from 'lodash-es/omit.js';
-import set from 'lodash-es/set.js';
 
 import processSelector from './helpers/processSelector';
 import { generateCache } from './StyleHelper';
@@ -95,7 +93,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
       }
 
       return produce(state, draft => {
-        const platform = omit(get(draft, 'platform', {})) as Style['platform'];
+        const platform = get(draft, 'platform', {}) as Style['platform'];
         Object.keys(platform).forEach(pkey => {
           platform[pkey as DisplayMode] = omit(platform[pkey as DisplayMode], [selector]);
         });
@@ -106,7 +104,7 @@ const StyleReducer = (state: Style, action: Partial<Action> = {}) => {
 
     case StyleActions.STYLE_ADD_TEMPLATE: {
       return produce(state, draft => {
-        const platform = omit(get(draft, 'platform', {})) as Style['platform'];
+        const platform = get(draft, 'platform', {}) as Style['platform'];
         if (!action.platform) {
           return;
         }

@@ -1,5 +1,4 @@
-import get from 'lodash-es/get';
-import set from 'lodash-es/set';
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
@@ -25,7 +24,7 @@ const useStyleBinding = ({ element }: UseStyleBindingProps) => {
     }
 
     bindings.style.forEach(binding => {
-      const value = get(dataSource, `${binding.source}.${binding.fromPath}`, undefined);
+      const value = get(dataSource, `${binding.source}.${binding.fromPath}`);
       if (value === undefined || !binding.enabled) {
         return;
       }

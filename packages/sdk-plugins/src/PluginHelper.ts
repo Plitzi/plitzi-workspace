@@ -1,5 +1,4 @@
-import get from 'lodash-es/get.js';
-import omit from 'lodash-es/omit.js';
+import { get, omit } from '@plitzi/plitzi-ui/helpers';
 
 import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
 

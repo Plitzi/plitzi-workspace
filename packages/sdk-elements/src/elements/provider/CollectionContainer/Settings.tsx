@@ -1,15 +1,15 @@
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Input from '@plitzi/plitzi-ui/Input';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Select from '@plitzi/plitzi-ui/Select';
-import get from 'lodash-es/get';
 import { use, useCallback, useMemo } from 'react';
 
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { Collection, CollectionRecord } from '@plitzi/sdk-shared';
+import type { Collection } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -41,7 +41,7 @@ const Settings = ({ source = '', query, limit = '10', singleRecord = false, onUp
       return {};
     }
 
-    const record = get(collections, `${source}.records.0`, undefined) as CollectionRecord | undefined;
+    const record = get(collections, `${source}.records.0`, undefined);
     if (!record) {
       return {};
     }

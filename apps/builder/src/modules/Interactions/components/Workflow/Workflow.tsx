@@ -1,7 +1,6 @@
+import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import clsx from 'clsx';
-import debounce from 'lodash-es/debounce';
-import get from 'lodash-es/get';
 import { useCallback, useMemo, useState } from 'react';
 
 import WorkflowContextProvider from './WorkflowContextProvider';

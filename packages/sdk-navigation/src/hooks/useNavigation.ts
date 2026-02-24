@@ -1,4 +1,4 @@
-import get from 'lodash-es/get.js';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import { ParamsFromURL } from '@plitzi/sdk-shared/helpers/utils';

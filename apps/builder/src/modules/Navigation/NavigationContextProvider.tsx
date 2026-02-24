@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use, useCallback, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
@@ -75,14 +75,14 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
         return;
       }
 
-      const slug = get(page, 'attributes.slug', '');
+      const slug = get(page, 'attributes.slug', '') as string;
       if (slug || slug === '') {
         void navigate(slug);
 
         return;
       }
 
-      const isHome = get(page, 'attributes.default', false);
+      const isHome = get(page, 'attributes.default', false) as boolean;
       if (isHome) {
         void navigate('/');
 

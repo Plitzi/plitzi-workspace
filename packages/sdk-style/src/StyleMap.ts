@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
-import get from 'lodash-es/get.js';
-import omit from 'lodash-es/omit.js';
-import set from 'lodash-es/set.js';
+import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from './helpers/processSelector';
 

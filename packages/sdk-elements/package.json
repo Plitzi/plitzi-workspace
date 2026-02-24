@@ -14,6 +14,10 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
+    "./Component": {
+      "types": "./dist/src/Component/index.d.ts",
+      "import": "./dist/src/Component/index.mjs"
+    },
     "./Component/ComponentHelper": {
       "types": "./dist/src/Component/ComponentHelper.d.ts",
       "import": "./dist/src/Component/ComponentHelper.mjs"
@@ -21,6 +25,10 @@
     "./Component/ComponentProvider": {
       "types": "./dist/src/Component/ComponentProvider.d.ts",
       "import": "./dist/src/Component/ComponentProvider.mjs"
+    },
+    "./Component/index": {
+      "types": "./dist/src/Component/index.d.ts",
+      "import": "./dist/src/Component/index.mjs"
     },
     "./Element/ElementContext": {
       "types": "./dist/src/Element/ElementContext.d.ts",
@@ -58,6 +66,10 @@
       "types": "./dist/src/Element/helpers/getInteractions.d.ts",
       "import": "./dist/src/Element/helpers/getInteractions.mjs"
     },
+    "./Element/helpers/loadComponent": {
+      "types": "./dist/src/Element/helpers/loadComponent.d.ts",
+      "import": "./dist/src/Element/helpers/loadComponent.mjs"
+    },
     "./Element/helpers/parseStyle": {
       "types": "./dist/src/Element/helpers/parseStyle.d.ts",
       "import": "./dist/src/Element/helpers/parseStyle.mjs"
@@ -65,10 +77,6 @@
     "./Element/hocs/withElement": {
       "types": "./dist/src/Element/hocs/withElement.d.ts",
       "import": "./dist/src/Element/hocs/withElement.mjs"
-    },
-    "./Element/hooks/useDynamicScript": {
-      "types": "./dist/src/Element/hooks/useDynamicScript.d.ts",
-      "import": "./dist/src/Element/hooks/useDynamicScript.mjs"
     },
     "./Element/hooks/useElement": {
       "types": "./dist/src/Element/hooks/useElement.d.ts",

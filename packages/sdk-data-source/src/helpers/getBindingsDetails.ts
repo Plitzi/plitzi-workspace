@@ -1,13 +1,11 @@
+import { get, set, camelCase } from '@plitzi/plitzi-ui';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
-import camelCase from 'lodash-es/camelCase.js';
-import get from 'lodash-es/get.js';
-import set from 'lodash-es/set.js';
 
 import utility from '../utility';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { BindingCategory, DataSourceUtility, Element, ElementBinding } from '@plitzi/sdk-shared';
+import type { BindingCategory, Element, ElementBinding } from '@plitzi/sdk-shared';
 
 const getValues = (
   dataSource: Record<string, unknown>,
@@ -67,7 +65,7 @@ const getBindingsDetails = (
             const { type, action, params } = transformer;
             switch (type) {
               case 'utility': {
-                const callback = get(utility, `${action}.callback`) as unknown as DataSourceUtility['callback'];
+                const callback = get(utility, `${action}.callback`);
                 if (typeof callback !== 'function') {
                   break;
                 }

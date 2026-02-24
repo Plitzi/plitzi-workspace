@@ -1,4 +1,4 @@
-import get from 'lodash-es/get.js';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -22,7 +22,7 @@ const PageStateSource = ({ children }: PageStateSourceProps) => {
   const pages = useMemo(
     () =>
       Object.values(pageDefinitions).reduce<{ value: string; label: string }[]>(
-        (acum, page) => [...acum, { value: page.id, label: get(page, 'attributes.name', page.id) as string }],
+        (acum, page) => [...acum, { value: page.id, label: get(page, 'attributes.name', page.id) }],
         []
       ),
     [pageDefinitions]

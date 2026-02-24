@@ -1,5 +1,4 @@
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import { collectionFieldTypeToInteractions } from '@modules/Collection/CollectionsConstants';

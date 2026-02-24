@@ -1,8 +1,8 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';

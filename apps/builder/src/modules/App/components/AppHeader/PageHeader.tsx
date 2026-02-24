@@ -1,5 +1,5 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import get from 'lodash-es/get';
 import { useCallback, use } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';

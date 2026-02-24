@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Input from '@plitzi/plitzi-ui/Input';
-import get from 'lodash-es/get';
 import { useCallback, useMemo } from 'react';
 
 import type { Element } from '@plitzi/sdk-shared';

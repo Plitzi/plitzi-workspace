@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 /* eslint-disable @typescript-eslint/no-array-delete */
-// Packages
+
+import { get, set, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get.js';
-import isEmpty from 'lodash-es/isEmpty.js';
-import omit from 'lodash-es/omit.js';
-import set from 'lodash-es/set.js';
 import { useCallback, use, useMemo } from 'react';
 
 import { baseDefaultValue } from '@plitzi/sdk-shared';

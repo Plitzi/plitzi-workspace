@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use } from 'react';
 
 import MadeInPlitzi from '@components/MadeInPlitzi';

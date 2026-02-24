@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 import AuthProvider from '../AuthProvider';
 
@@ -131,7 +131,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       return false;
     }
 
-    return get(this.cache.user, 'permissions', [] as string[]).includes(permission);
+    return get(this.cache.user as { permissions?: string[] }, 'permissions', [] as string[]).includes(permission);
   }
 
   async logout(): Promise<void> {
@@ -155,6 +155,11 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       accessToken: get(res.data, this.options.tokenPath, ''),
       refreshToken: get(res.data, this.options.refreshUrl, null),
       expiresAt: get(res.data, this.options.expirationTimePath, 0)
+    } as {
+      errors?: Record<string, unknown>;
+      accessToken: string | null;
+      refreshToken: string | null;
+      expiresAt: number | null;
     };
 
     if (res.data && !('errors' in res.data)) {

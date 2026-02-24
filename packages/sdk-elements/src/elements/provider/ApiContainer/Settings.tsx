@@ -1,10 +1,10 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import Input from '@plitzi/plitzi-ui/Input';
 import KVInput from '@plitzi/plitzi-ui/KVInput';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
-import get from 'lodash-es/get';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';

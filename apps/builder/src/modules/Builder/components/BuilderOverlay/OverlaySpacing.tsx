@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import get from 'lodash-es/get';
+
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';

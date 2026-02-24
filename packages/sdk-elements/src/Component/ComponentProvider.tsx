@@ -1,5 +1,4 @@
-import get from 'lodash-es/get.js';
-import omit from 'lodash-es/omit.js';
+import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -56,7 +55,10 @@ const ComponentProvider = ({
       }
 
       if (withPlugins) {
-        componentsToReturn = { ...componentsToReturn, ...omit(getPlugins(component), [componentType]) };
+        componentsToReturn = {
+          ...componentsToReturn,
+          ...omit(getPlugins(component), [componentType])
+        };
       } else {
         componentsToReturn[componentType] = component;
       }
@@ -107,14 +109,20 @@ const ComponentProvider = ({
       componentTypes.forEach(compType => {
         const plugins = getComponent([compType], true);
         if (Object.keys(plugins).length > 0) {
-          componentsToRemove = [...componentsToRemove, ...Object.keys(omit(plugins, compType))];
+          componentsToRemove = [
+            ...componentsToRemove,
+            ...Object.keys(omit(plugins as Record<string, ComponentPluginWithHOC>, compType))
+          ];
         }
       });
 
       setRemoteComponents(state => {
-        totalComponents.current = { ...omit(state, componentsToRemove), ...localComponentsParsed };
+        totalComponents.current = {
+          ...(omit(state, componentsToRemove) as Record<string, ComponentPluginWithHOC>),
+          ...localComponentsParsed
+        };
 
-        return omit(state, componentsToRemove);
+        return omit(state, componentsToRemove) as Record<string, ComponentPluginWithHOC>;
       });
 
       return componentsToRemove;
@@ -126,7 +134,7 @@ const ComponentProvider = ({
 
   const [componentDefinitions, setComponentDefinitions] = useState<Record<string, ComponentDefinition>>(() =>
     Object.keys(totalComponents.current).reduce((acum, elementType) => {
-      const component = get(totalComponents.current, elementType) as ComponentPluginWithHOC | undefined;
+      const component = get(totalComponents.current, elementType, undefined);
       if (!component || !(component.content as ComponentDefinition | undefined)) {
         return acum;
       }
@@ -142,8 +150,12 @@ const ComponentProvider = ({
 
   const unregisterDefinition = useCallback(
     (pluginType: string) =>
-      setComponentDefinitions(state =>
-        omit(state, [pluginType, ...(get(state, `${pluginType}.builder.pluginChildren`, []) as string[])])
+      setComponentDefinitions(
+        state =>
+          omit(state, [pluginType, ...get(state, `${pluginType}.builder.pluginChildren`, [] as string[])]) as Record<
+            string,
+            ComponentDefinition
+          >
       ),
     []
   );

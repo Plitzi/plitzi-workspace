@@ -1,9 +1,8 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
+import { omit, debounce } from '@plitzi/plitzi-ui/helpers';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import debounce from 'lodash-es/debounce';
-import omit from 'lodash-es/omit';
 import { useCallback, use, useEffect, useState, useMemo } from 'react';
 
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';

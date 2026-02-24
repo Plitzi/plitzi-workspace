@@ -1,7 +1,7 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
 import useStateDebounce from '@plitzi/plitzi-ui/hooks/useStateDebounce';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import get from 'lodash-es/get';
 import { use, useMemo, useCallback, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

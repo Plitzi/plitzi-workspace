@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import get from 'lodash-es/get';
-import throttle from 'lodash-es/throttle';
+
+import { get, throttle } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';

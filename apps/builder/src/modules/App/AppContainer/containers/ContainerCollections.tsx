@@ -1,7 +1,7 @@
 import Card from '@plitzi/plitzi-ui/Card';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import get from 'lodash-es/get';
 import { useCallback, use, useState } from 'react';
 
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';

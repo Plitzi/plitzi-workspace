@@ -1,5 +1,4 @@
-import get from 'lodash-es/get.js';
-import pick from 'lodash-es/pick.js';
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { use, useMemo } from 'react';
 
 import { baseDefaultValue } from '@plitzi/sdk-shared';
@@ -116,10 +115,7 @@ const useInspectorValues = <TAsValue extends boolean>({
 
       if (replaceTokens && typeof value === 'string' && VARIABLE_REGEX.test(value)) {
         [...value.matchAll(VARIABLE_REGEX_GLOBAL)].forEach(match => {
-          value = (value as string).replace(
-            match[0],
-            get(variables, match[1] ? match[1] : match[2], match[0]) as string
-          );
+          value = (value as string).replace(match[0], get(variables, match[1] ? match[1] : match[2], match[0]));
         });
       }
 

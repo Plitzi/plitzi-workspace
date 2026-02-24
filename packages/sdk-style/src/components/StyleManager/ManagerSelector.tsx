@@ -1,11 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
 import { produce } from 'immer';
-import get from 'lodash-es/get.js';
-import isEmpty from 'lodash-es/isEmpty.js';
-import set from 'lodash-es/set.js';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';

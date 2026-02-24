@@ -1,8 +1,5 @@
+import { get, set, omit, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
-import omit from 'lodash-es/omit';
-import pick from 'lodash-es/pick';
-import set from 'lodash-es/set';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';

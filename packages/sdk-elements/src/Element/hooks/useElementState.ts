@@ -1,5 +1,4 @@
-import get from 'lodash-es/get';
-import omit from 'lodash-es/omit';
+import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState } from 'react';
 
 import type { Element } from '@plitzi/sdk-shared';

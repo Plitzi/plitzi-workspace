@@ -1,5 +1,4 @@
-import get from 'lodash-es/get';
-import pick from 'lodash-es/pick';
+import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';

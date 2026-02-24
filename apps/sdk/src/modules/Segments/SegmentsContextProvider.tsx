@@ -1,4 +1,4 @@
-import get from 'lodash-es/get';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use, useRef, useCallback, useState, useEffect } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';

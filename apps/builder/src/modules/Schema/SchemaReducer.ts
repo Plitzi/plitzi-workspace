@@ -1,7 +1,6 @@
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import get from 'lodash-es/get';
 import has from 'lodash-es/has';
-import set from 'lodash-es/set';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
@@ -100,7 +99,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
         }
 
         const auxPage = flat[pageId];
-        const defaultPage = get(auxPage, 'attributes.default', false);
+        const defaultPage = get(auxPage, 'attributes.default', false) as boolean;
         if (defaultPage) {
           oldPage = auxPage;
         }
