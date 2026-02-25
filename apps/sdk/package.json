@@ -31,7 +31,7 @@
     "@apollo/client": "^4.1.6",
     "@auth0/auth0-react": "^2.15.0",
     "@dr.pogodin/react-helmet": "^3.0.6",
-    "@plitzi/plitzi-ui": "^1.4.0",
+    "@plitzi/plitzi-ui": "^1.4.1",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-elements": "workspace:*",

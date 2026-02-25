@@ -175,6 +175,10 @@ export default defineConfig(({ mode, command }) => {
     },
     resolve: {
       alias: {
+        // react: path.resolve(__dirname, '../../node_modules/react'),
+        // 'react/jsx-runtime': path.resolve(__dirname, '../../node_modules/react'),
+        // 'react-dom': path.resolve(__dirname, '../../node_modules/react-dom'),
+        // 'react-dom/client': path.resolve(__dirname, '../../node_modules/react-dom'),
         '@pmodules': path.resolve('./src/modules'),
         '@pcomponents': path.resolve('./src/components'),
         'decode-named-character-reference': path.resolve(
