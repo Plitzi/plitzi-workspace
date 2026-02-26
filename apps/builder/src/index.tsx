@@ -60,7 +60,7 @@ export function render(
 
 export type PlitziBuilderProps = {
   className?: string;
-  children: ReactNode;
+  children?: ReactNode;
   webKey: string;
   environment?: string;
   currentPageId?: string;
