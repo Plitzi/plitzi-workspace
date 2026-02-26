@@ -31,7 +31,7 @@
     "@apollo/client": "^4.1.6",
     "@auth0/auth0-react": "^2.15.0",
     "@dr.pogodin/react-helmet": "^3.0.6",
-    "@plitzi/plitzi-ui": "^1.4.1",
+    "@plitzi/plitzi-ui": "^1.4.2",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-elements": "workspace:*",
@@ -92,14 +92,14 @@
     "sass": "^1.97.3",
     "sass-embedded": "^1.97.3",
     "storybook": "^10.2.12",
-    "stylelint": "^17.3.0",
+    "stylelint": "^17.4.0",
     "stylelint-order": "^7.0.1",
     "stylelint-scss": "^7.0.0",
     "terser": "^5.46.0",
     "typescript": "^5.9.3",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-ejs": "^1.7.0",
-    "vite-plugin-mkcert": "^1.17.9"
+    "vite-plugin-mkcert": "^1.17.10"
   },
   "scripts": {
     "start": "vite dev --mode development",

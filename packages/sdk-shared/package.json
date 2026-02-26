@@ -307,7 +307,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.1",
+    "@plitzi/plitzi-ui": "^1.4.2",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "twig": "^1.17.1"
@@ -340,7 +340,7 @@
     "eslint": "^9.39.3",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-config-turbo": "^2.8.10",
+    "eslint-config-turbo": "^2.8.11",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-cypress": "^6.1.0",
     "eslint-plugin-flowtype": "8.0.3",
