@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-dev-tools",
-  "version": "0.28.11",
+  "version": "0.28.12",
   "license": "BSL-1.0",
   "publishConfig": {
     "access": "restricted",
