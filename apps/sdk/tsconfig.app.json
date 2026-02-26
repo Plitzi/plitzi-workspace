@@ -9,5 +9,5 @@
       "@components/*": ["./src/components/*"]
     }
   },
-  "include": ["src", "**/*.json"]
+  "include": ["src", "**/*.json", "stories", ".stories"]
 }
