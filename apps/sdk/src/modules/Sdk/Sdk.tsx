@@ -31,6 +31,7 @@ export type SdkProps = {
   renderMode?: RenderMode;
   externalStyle?: string;
   environment?: Environment;
+  isHydrating?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
 };
@@ -40,6 +41,7 @@ const Sdk = ({
   externalStyle = '',
   environment = 'main',
   previewMode = true,
+  isHydrating = false,
   debugMode = false
 }: SdkProps) => {
   const { currentPageId } = use(NavigationContext);
@@ -83,6 +85,7 @@ const Sdk = ({
   const plitziContextValue = useMemo(
     () => ({
       settings: {
+        isHydrating,
         previewMode,
         debugMode,
         currentPageId,
@@ -115,7 +118,18 @@ const Sdk = ({
         InteractionsContext
       }
     }),
-    [previewMode, debugMode, currentPageId, renderMode, environment, sdkEnvironment, schemaSettings, getWindow, rootDOM]
+    [
+      isHydrating,
+      previewMode,
+      debugMode,
+      currentPageId,
+      renderMode,
+      environment,
+      sdkEnvironment,
+      schemaSettings,
+      getWindow,
+      rootDOM
+    ]
   );
 
   if (renderMode === 'raw' || renderMode === 'widget') {

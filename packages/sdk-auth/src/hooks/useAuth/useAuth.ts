@@ -7,6 +7,7 @@ import type { AuthContextValue, Schema, Server } from '@plitzi/sdk-shared';
 
 export type UseAuthProps = {
   server?: Server;
+  isHydrating?: boolean;
   tokenStorage?: Schema['settings']['tokenStorage'];
   provider?: Schema['settings']['userProvider'];
   loginUrl?: Schema['settings']['loginUrl'];
@@ -22,6 +23,7 @@ type User = Exclude<Exclude<AuthContextValue['user'], undefined>['details'], und
 
 const useAuth = ({
   server,
+  isHydrating = false,
   tokenStorage = 'localStorage',
   provider = '',
   loginUrl = '',
@@ -32,7 +34,7 @@ const useAuth = ({
   tokenPath = 'access_token',
   expirationTimePath = 'expire_at'
 }: UseAuthProps) => {
-  const isSSR = typeof window === 'undefined' || (!!server?.user && server.authenticated);
+  const isSSR = typeof window === 'undefined' || isHydrating || (!!server?.user && server.authenticated);
   const [loading, setLoading] = useState(!!userUrl && !isSSR);
   const [authenticated, setAuthenticated] = useState(false);
 

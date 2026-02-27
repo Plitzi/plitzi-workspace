@@ -93,7 +93,6 @@ const App = ({
   sdkEnvironment = 'production',
   renderMode = 'iframe',
   debugMode: debugModeProp = false,
-  isHydrating = false,
   ...sdkProps
 }: AppProps) => {
   useMemo(
@@ -168,7 +167,7 @@ const App = ({
         <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
           <HelmetProvider>
             <ApolloProvider client={client}>
-              <ComponentProvider isHydrating={isHydrating} localCustomComponents={localCustomComponents}>
+              <ComponentProvider localCustomComponents={localCustomComponents}>
                 <AppMain
                   server={finalServer}
                   webKey={webKey}
@@ -199,11 +198,7 @@ const App = ({
         <HelmetProvider>
           <ReactRouter basename={get(finalServer, 'basePath', '/')} {...routerParams}>
             <ApolloProvider client={client}>
-              <ComponentProvider
-                isHydrating={isHydrating}
-                localCustomComponents={localCustomComponents}
-                localComponents={sdkComponents}
-              >
+              <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
                 <AppMain
                   server={finalServer}
                   webKey={webKey}

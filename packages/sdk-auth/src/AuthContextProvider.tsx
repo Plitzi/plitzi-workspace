@@ -13,17 +13,18 @@ import type { AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AuthContextProviderProps = {
-  previewMode?: boolean;
   children?: ReactNode;
-  // webId: number;
+  isHydrating?: boolean;
+  previewMode?: boolean;
+  offlineMode?: boolean;
   server: Server;
   environment?: Environment;
 };
 
 const AuthContextProvider = ({
   previewMode = true,
+  isHydrating = false,
   children,
-  // webId,
   server,
   environment = 'production'
 }: AuthContextProviderProps) => {
@@ -42,7 +43,6 @@ const AuthContextProvider = ({
     schema: { variables }
   } = use(SchemaContext);
   const { queryParams, hostname } = useNavigation({ server });
-  // const loading = false;
 
   const variablesWhenData = useMemo(
     () => ({ queryParams, hostname, environment }),
@@ -89,6 +89,7 @@ const AuthContextProvider = ({
 
   const { manager, loading, authenticated } = useAuth({
     server,
+    isHydrating,
     tokenStorage,
     provider: userProvider,
     loginUrl: authData.loginUrl,

@@ -33,6 +33,7 @@ export type AppMainProps = {
   sdkEnvironment?: ServerEnvironment;
   currentPageId?: string;
   server: Server;
+  isHydrating?: boolean;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
@@ -55,6 +56,7 @@ const AppMain = ({
   currentPageId,
   // Server
   server,
+  isHydrating = false,
   sdkEnvironment = 'production',
   offlineMode = false,
   offlineData,
@@ -91,7 +93,12 @@ const AppMain = ({
               <StyleContextProvider>
                 <EventBridgeContextProvider onInit={onInitEventBridge}>
                   <SegmentsContextProvider>
-                    <AuthContextProvider previewMode={previewMode} environment={environment} server={server}>
+                    <AuthContextProvider
+                      previewMode={previewMode}
+                      environment={environment}
+                      server={server}
+                      isHydrating={isHydrating}
+                    >
                       <NavigationContextProvider
                         renderMode={renderMode}
                         currentPageId={currentPageId}
@@ -106,6 +113,7 @@ const AppMain = ({
                                   previewMode={previewMode}
                                   debugMode={debugMode}
                                   environment={environment}
+                                  isHydrating={isHydrating}
                                   {...sdkProps}
                                 />
                               </DevToolsContainer>
@@ -123,25 +131,26 @@ const AppMain = ({
       </NetworkContextProvider>
     ),
     [
-      currentPageId,
-      debugMode,
-      environment,
-      sdkEnvironment,
+      webKey,
+      webId,
       instanceId,
+      server,
+      offlineMode,
       offlineData,
       offlineDataType,
-      offlineMode,
-      onInitEventBridge,
-      onInitStateManager,
-      previewMode,
-      renderMode,
+      environment,
+      sdkEnvironment,
       revision,
-      sdkProps,
+      debugMode,
+      renderMode,
       sdkStylePath,
-      server,
+      onInitEventBridge,
+      previewMode,
+      isHydrating,
+      currentPageId,
       state,
-      webId,
-      webKey
+      onInitStateManager,
+      sdkProps
     ]
   );
 

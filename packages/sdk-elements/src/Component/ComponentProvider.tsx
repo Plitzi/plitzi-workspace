@@ -13,15 +13,9 @@ export type ComponentProviderProps = {
   localComponents?: Record<string, ComponentPluginWithHOC>;
   localCustomComponents?: Record<string, ComponentPluginWithHOC>;
   children?: ReactNode;
-  isHydrating?: boolean;
 };
 
-const ComponentProvider = ({
-  localComponents,
-  localCustomComponents,
-  children,
-  isHydrating = false
-}: ComponentProviderProps) => {
+const ComponentProvider = ({ localComponents, localCustomComponents, children }: ComponentProviderProps) => {
   const localComponentsParsed = useMemo<Record<string, ComponentPluginWithHOC>>(
     () => ({
       ...processLocalPlugins(defaultElements as unknown as Record<string, ComponentPluginWithHOC>),
@@ -170,8 +164,7 @@ const ComponentProvider = ({
       unregisterDefinition,
       registerDefinition,
       components: totalComponents.current,
-      componentDefinitions,
-      isHydrating
+      componentDefinitions
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -181,8 +174,7 @@ const ComponentProvider = ({
       unregisterDefinition,
       getComponent,
       componentDefinitions,
-      totalComponents.current,
-      isHydrating
+      totalComponents.current
     ]
   );
 

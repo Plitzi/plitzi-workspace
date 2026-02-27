@@ -75,6 +75,8 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
 
     if (user) {
       super.internalGetUser(user);
+    } else {
+      this.setState('guest');
     }
   }
 

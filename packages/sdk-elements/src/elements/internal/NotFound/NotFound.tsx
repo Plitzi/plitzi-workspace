@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { use } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -20,10 +19,8 @@ const NotFound = ({ ref, className = '' }: NotFoundProps) => {
     definition: { label }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { ComponentContext }
+    settings: { isHydrating, previewMode }
   } = usePlitziServiceContext();
-  const { isHydrating } = use(ComponentContext);
   if ((typeof window === 'undefined' && previewMode) || isHydrating) {
     return undefined;
   }

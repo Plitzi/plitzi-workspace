@@ -47,5 +47,4 @@ export type ComponentContextValue = {
   registerDefinition: (plugins: Record<string, ComponentDefinition>) => void;
   components: Record<string, ComponentPluginWithHOC>;
   componentDefinitions: Record<string, ComponentDefinition>;
-  isHydrating: boolean;
 };
