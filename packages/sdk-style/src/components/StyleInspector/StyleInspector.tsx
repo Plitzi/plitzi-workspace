@@ -15,6 +15,7 @@ import InspectorModeBasic from './modes/InspectorModeBasic';
 
 import type { SelectorValue } from '../Selector';
 import type { Element, StyleItem } from '@plitzi/sdk-shared';
+import { useDidUpdateEffect } from '@plitzi/plitzi-ui';
 
 export type StyleInspectorProps = {
   element?: Element;
@@ -68,6 +69,14 @@ const StyleInspector = ({
     onSelect?.(selector);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSelect, element?.id]);
+
+  useDidUpdateEffect(() => {
+    const selector = get(styleSelectors, styleSelector, '').split(' ')[0];
+    if (selector) {
+      setSelectorSelected(selector);
+      onSelect?.(selector);
+    }
+  }, [styleSelector]);
 
   const handleAddSelector = useCallback(
     (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => {
