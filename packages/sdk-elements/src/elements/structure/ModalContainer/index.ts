@@ -19,6 +19,7 @@ const ModalContainer = Object.assign(BaseModalContainer, {
         rootContainer: '',
         headerContainer: '',
         headerTitle: '',
+        headerCloseButton: '',
         bodyContainer: ''
       },
       initialState: {
@@ -95,6 +96,15 @@ const ModalContainer = Object.assign(BaseModalContainer, {
           'font-weight': '500',
           'line-height': '1.2',
           color: '#333'
+        },
+        headerCloseButton: {
+          height: '20px',
+          width: '20px',
+          padding: '4px',
+          display: 'flex',
+          'justify-content': 'center',
+          'align-items': 'center',
+          cursor: 'pointer'
         },
         bodyContainer: {
           display: 'flex',

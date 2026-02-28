@@ -157,7 +157,11 @@ const ModalContainer = ({
           <div className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
             {title ? title : 'Modal Header'}
           </div>
-          <i className="fa-solid fa-xmark" title="Close" onClick={handleClickClose} />
+          <i
+            className={clsx('fa-solid fa-xmark', styleSelectors.headerCloseButton)}
+            title="Close"
+            onClick={handleClickClose}
+          />
         </div>
         <div className={clsx('modal-container__body', styleSelectors.bodyContainer)}>
           <ModalContext value={internalMetadata}>{children}</ModalContext>
