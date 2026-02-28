@@ -30,8 +30,7 @@ const StyleInspector = ({
   mode = 'element',
   styleSelectors,
   allowStyleSelector = true,
-  onSelect,
-  onStyleSelect
+  onSelect
 }: StyleInspectorProps) => {
   const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
   const { componentDefinitions } = use(ComponentContext);
@@ -64,11 +63,11 @@ const StyleInspector = ({
 
   useEffect(() => {
     setStyleSelector('base');
-    onStyleSelect?.('base');
     const selector = get(styleSelectors, 'base', '').split(' ')[0];
     setSelectorSelected(selector);
     onSelect?.(selector);
-  }, [onSelect, onStyleSelect, styleSelectors]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSelect, element?.id]);
 
   const handleAddSelector = useCallback(
     (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => {
@@ -139,13 +138,9 @@ const StyleInspector = ({
     [setViewMode]
   );
 
-  const handleChangeStyleSelector = useCallback(
-    (value: string) => {
-      setStyleSelector(value);
-      onStyleSelect?.(value);
-    },
-    [onStyleSelect]
-  );
+  const handleChangeStyleSelector = useCallback((value: string) => {
+    setStyleSelector(value);
+  }, []);
 
   return (
     <div className="flex w-full grow flex-col gap-2">

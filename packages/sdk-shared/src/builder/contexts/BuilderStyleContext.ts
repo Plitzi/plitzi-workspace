@@ -8,8 +8,6 @@ export type BuilderStyleContextValue = {
   displayMode: DisplayMode;
   selector?: string;
   setSelector?: Dispatch<SetStateAction<string | undefined>>;
-  styleSelector?: string;
-  setStyleSelector?: Dispatch<SetStateAction<string | undefined>>;
 };
 
 const builderStyleContextDefaultValue: BuilderStyleContextValue = {} as BuilderStyleContextValue;

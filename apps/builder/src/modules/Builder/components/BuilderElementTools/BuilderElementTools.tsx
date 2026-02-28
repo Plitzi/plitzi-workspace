@@ -26,7 +26,7 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage<string>('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
-  const { setSelector, setStyleSelector } = use(BuilderStyleContext);
+  const { setSelector } = use(BuilderStyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
@@ -117,7 +117,6 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
             element={element}
             styleSelectors={tempDefinition.styleSelectors}
             onSelect={setSelector}
-            onStyleSelect={setStyleSelector}
           />
         )}
         {selected === 'settings' && (

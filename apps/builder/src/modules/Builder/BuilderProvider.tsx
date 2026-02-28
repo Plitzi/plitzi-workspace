@@ -68,7 +68,6 @@ const BuilderProvider = ({
   elementSelectedRef.current = elementSelected;
   const [elementHovered, setElementHovered] = useState<string | undefined>(undefined);
   const [selector, setSelector] = useState<string | undefined>();
-  const [styleSelector, setStyleSelector] = useState<string | undefined>('base');
   const [theme, setTheme] = useState<StyleThemeMode>(() => {
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
@@ -519,8 +518,8 @@ const BuilderProvider = ({
   );
 
   const builderStyleValueMemo = useMemo(
-    () => ({ style, displayMode, selector, setSelector, styleSelector, setStyleSelector }),
-    [style, displayMode, selector, styleSelector]
+    () => ({ style, displayMode, selector, setSelector }),
+    [style, displayMode, selector]
   );
 
   const events = useMemo<Record<string, EventBridgeCallback>>(
