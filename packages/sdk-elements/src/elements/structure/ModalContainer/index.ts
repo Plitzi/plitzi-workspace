@@ -94,8 +94,7 @@ const ModalContainer = Object.assign(BaseModalContainer, {
         headerTitle: {
           'font-size': '20px',
           'font-weight': '500',
-          'line-height': '1.2',
-          color: '#333'
+          'line-height': '1.2'
         },
         headerCloseButton: {
           height: '20px',

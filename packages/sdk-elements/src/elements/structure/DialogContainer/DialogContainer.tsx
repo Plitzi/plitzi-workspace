@@ -37,7 +37,7 @@ const DialogContainer = ({
   const {
     id,
     setElementState,
-    definition: { styleSelectors, label = 'Modal' },
+    definition: { styleSelectors, label = 'Dialog' },
     elementState
   } = useElement();
   const {
@@ -48,7 +48,7 @@ const DialogContainer = ({
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
   const [processing, setProcessing] = useState(false);
 
-  // Modal methods
+  // Dialog methods
 
   const handleOpeDialog = useCallback(
     (params: InteractionCallbackParamValues) => {
@@ -201,7 +201,7 @@ const DialogContainer = ({
       />
       <div className={clsx('dialog-container__root', styleSelectors.rootContainer)}>
         <div className={clsx('dialog-container__header', styleSelectors.headerContainer)}>
-          <div className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
+          <div className={clsx('dialog-container__header__title', styleSelectors.headerTitle)}>
             {headerLabel ? headerLabel : 'Dialog Header'}
           </div>
           <i className="fa-solid fa-xmark" title="Close" onClick={void handleClickCancel} />
