@@ -73,7 +73,6 @@ const SelectorItem = ({
         {
           'bg-secondary-400': active,
           'bg-gray-500': !active,
-          'max-w-[162px]': editable,
           'max-w-full min-w-0': !editable
         }
       )}
@@ -81,18 +80,16 @@ const SelectorItem = ({
       title={`${type}: ${selector}`}
     >
       <div className="flex min-w-0 grow basis-0 text-xs">
-        <div className="truncate">
-          {editable && (
-            <Contenteditable
-              className="inline focus-visible:m-[1px] focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
-              value={selector}
-              onChange={handleChange}
-              openMode="doubleClick"
-            />
-          )}
-          {!editable && selector}
-          {state && type === 'class' && <span>:{state}</span>}
-        </div>
+        {editable && (
+          <Contenteditable
+            className="inline text-nowrap focus-visible:m-[1px] focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
+            value={selector}
+            openMode="doubleClick"
+            onChange={handleChange}
+          />
+        )}
+        {!editable && selector}
+        {state && type === 'class' && <span>:{state}</span>}
       </div>
       {editable && (
         <ItemOptions
