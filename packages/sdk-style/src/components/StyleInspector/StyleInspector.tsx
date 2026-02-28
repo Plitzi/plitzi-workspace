@@ -1,4 +1,5 @@
 import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
+import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
@@ -15,7 +16,6 @@ import InspectorModeBasic from './modes/InspectorModeBasic';
 
 import type { SelectorValue } from '../Selector';
 import type { Element, StyleItem } from '@plitzi/sdk-shared';
-import { useDidUpdateEffect } from '@plitzi/plitzi-ui';
 
 export type StyleInspectorProps = {
   element?: Element;
