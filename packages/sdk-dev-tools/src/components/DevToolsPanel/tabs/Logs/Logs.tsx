@@ -5,7 +5,7 @@ import Log from './Log';
 import LogsSummary from './LogsSummary';
 
 import type { Orientation } from '../../../../DevToolsContainer';
-import type { LogType, Log as TLog } from '../../../../DevToolsContext';
+import type { LogType, Log as TLog } from '@plitzi/sdk-shared';
 
 export type LogsProps = {
   items: TLog[];

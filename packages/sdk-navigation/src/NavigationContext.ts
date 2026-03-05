@@ -2,8 +2,6 @@ import { createContext } from 'react';
 
 import type { NavigationContextValue } from '@plitzi/sdk-shared';
 
-export type NavigationStatus = 'authenticated' | 'normal' | 'redirect' | 'notFound' | 'accessDenied';
-
 const navigationContextDefaultValue = {} as NavigationContextValue;
 
 const NavigationContext = createContext<NavigationContextValue>(navigationContextDefaultValue);

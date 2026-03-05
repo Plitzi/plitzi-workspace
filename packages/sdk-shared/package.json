@@ -92,6 +92,22 @@
       "types": "./dist/src/dataSource/index.d.ts",
       "import": "./dist/src/dataSource/index.mjs"
     },
+    "./devTools": {
+      "types": "./dist/src/devTools/index.d.ts",
+      "import": "./dist/src/devTools/index.mjs"
+    },
+    "./devTools/DevToolsContext": {
+      "types": "./dist/src/devTools/DevToolsContext.d.ts",
+      "import": "./dist/src/devTools/DevToolsContext.mjs"
+    },
+    "./devTools/index": {
+      "types": "./dist/src/devTools/index.d.ts",
+      "import": "./dist/src/devTools/index.mjs"
+    },
+    "./devTools/utils/PlitziConsole": {
+      "types": "./dist/src/devTools/utils/PlitziConsole.d.ts",
+      "import": "./dist/src/devTools/utils/PlitziConsole.mjs"
+    },
     "./elements": {
       "types": "./dist/src/elements/index.d.ts",
       "import": "./dist/src/elements/index.mjs"
@@ -231,6 +247,10 @@
     "./types/DataSourceTypes": {
       "types": "./dist/src/types/DataSourceTypes.d.ts",
       "import": "./dist/src/types/DataSourceTypes.mjs"
+    },
+    "./types/DevToolsTypes": {
+      "types": "./dist/src/types/DevToolsTypes.d.ts",
+      "import": "./dist/src/types/DevToolsTypes.mjs"
     },
     "./types/ElementTypes": {
       "types": "./dist/src/types/ElementTypes.d.ts",

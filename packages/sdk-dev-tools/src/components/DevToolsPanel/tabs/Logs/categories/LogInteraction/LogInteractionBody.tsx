@@ -1,7 +1,7 @@
 import BodyContent from './BodyContent';
 import BodyHeader from './BodyHeader';
 
-import type { LogInteraction } from '../../../../../../DevToolsContext';
+import type { LogInteraction } from '@plitzi/sdk-shared';
 
 export type LogInteractionBodyProps = {
   className?: string;

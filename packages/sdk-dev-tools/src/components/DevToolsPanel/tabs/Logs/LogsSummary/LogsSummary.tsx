@@ -4,7 +4,7 @@ import { useMemo, useCallback } from 'react';
 import LogsSummaryItem from './LogsSummaryItem';
 
 import type { Orientation } from '../../../../../DevToolsContainer';
-import type { LogType, Log } from '../../../../../DevToolsContext';
+import type { Log, LogType } from '@plitzi/sdk-shared';
 
 export type LogsSummaryProps = {
   className?: string;

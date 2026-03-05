@@ -1,12 +1,6 @@
 import { formatDate } from '@plitzi/sdk-shared';
 
-import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../DevToolsContext';
-
-export const LOG_TYPE_INFO = 'info';
-export const LOG_TYPE_WARNING = 'warning';
-export const LOG_TYPE_DANGER = 'danger';
-export const LOG_TYPE_SUCCESS = 'success';
-export const LOG_TYPE_CUSTOM = 'custom';
+import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
 
 type CallbackInternal = (
   logType: Log['logType'],

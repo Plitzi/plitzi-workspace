@@ -2,7 +2,7 @@ import JsonView from '@uiw/react-json-view';
 import * as vscode from '@uiw/react-json-view/vscode';
 import { use } from 'react';
 
-import DevToolsContext from '../../../../DevToolsContext';
+import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 
 const jsonViewStyle = {
   ...vscode.vscodeTheme,

@@ -3,7 +3,7 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import LogNavigationBody from './LogNavigationBody';
 import LogNavigationHeader from './LogNavigationHeader';
 
-import type { LogNavigation as TLogNavigation } from '../../../../../../DevToolsContext';
+import type { LogNavigation as TLogNavigation } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const iconCollapsed = <i className="fa-solid fa-angle-right" />;

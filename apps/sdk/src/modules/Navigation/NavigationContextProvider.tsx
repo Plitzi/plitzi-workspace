@@ -5,15 +5,14 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
-import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { NavigationStatus } from '@plitzi/sdk-navigation/NavigationContext';
-import type { NavigationContextValue, RenderMode, RouteParams } from '@plitzi/sdk-shared';
+import type { NavigationContextValue, NavigationStatus, RenderMode, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 

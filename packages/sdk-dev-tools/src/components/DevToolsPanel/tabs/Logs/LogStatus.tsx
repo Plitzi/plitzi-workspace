@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-import type { LogType } from '../../../../DevToolsContext';
+import type { LogType } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type LogStatusProps = {

@@ -6,7 +6,7 @@ import { getDurationMs } from '@plitzi/sdk-shared';
 
 import ExecutionTreeNode from './ExecutionTreeNode';
 
-import type { LogInteraction } from '../../../../../../../DevToolsContext';
+import type { LogInteraction } from '@plitzi/sdk-shared';
 
 type Nodes = LogInteraction['params']['nodes'];
 

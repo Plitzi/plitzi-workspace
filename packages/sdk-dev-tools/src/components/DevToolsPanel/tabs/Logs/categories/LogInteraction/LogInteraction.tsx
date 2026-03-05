@@ -5,10 +5,9 @@ import { getDurationMs } from '@plitzi/sdk-shared';
 
 import LogInteractionBody from './LogInteractionBody';
 import LogInteractionHeader from './LogInteractionHeader';
-import { LOG_TYPE_CUSTOM, LOG_TYPE_WARNING } from '../../../../../../utils/PlitziConsole';
 import LogStatusIcon from '../../LogStatusIcon';
 
-import type { LogInteraction as TLogInteraction } from '../../../../../../DevToolsContext';
+import type { LogInteraction as TLogInteraction } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const iconCollapsed = <i className="fa-solid fa-angle-right" />;
@@ -41,12 +40,12 @@ const LogInteraction = ({
       >
         <div className="flex gap-3">
           {status === 'completed' && !!nodesSkipped && (
-            <LogStatusIcon logType={LOG_TYPE_WARNING} title="Skipped">
+            <LogStatusIcon logType="warning" title="Skipped">
               {nodesSkipped}
             </LogStatusIcon>
           )}
           {status === 'completed' && !!nodesDisabled && (
-            <LogStatusIcon logType={LOG_TYPE_CUSTOM} iconClassName="fa-solid fa-ban" title="Disabled">
+            <LogStatusIcon logType="custom" iconClassName="fa-solid fa-ban" title="Disabled">
               {nodesDisabled}
             </LogStatusIcon>
           )}

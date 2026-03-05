@@ -4,7 +4,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
-import { pConsole } from '@plitzi/sdk-dev-tools/utils/PlitziConsole';
+import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ElementContext from './ElementContext';

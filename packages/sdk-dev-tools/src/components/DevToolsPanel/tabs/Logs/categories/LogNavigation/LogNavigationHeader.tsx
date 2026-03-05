@@ -4,8 +4,7 @@ import { formatDate } from '@plitzi/sdk-shared';
 
 import LogStatus from '../../LogStatus';
 
-import type { LogType } from '../../../../../../DevToolsContext';
-import type { NavigationStatus } from '@plitzi/sdk-navigation';
+import type { LogType, NavigationStatus } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type LogNavigationHeaderProps = {

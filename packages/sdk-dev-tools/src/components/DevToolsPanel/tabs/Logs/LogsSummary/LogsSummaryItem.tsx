@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
-import type { LogType } from '../../../../../DevToolsContext';
+import type { LogType } from '@plitzi/sdk-shared';
 
 export type LogsSummaryItemProps = {
   className?: string;

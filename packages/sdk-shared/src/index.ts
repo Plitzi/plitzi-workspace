@@ -19,5 +19,6 @@ export * from './network';
 export * from './segments';
 export * from './collections';
 export * from './websockets';
+export * from './devTools';
 
 export { utils, style, schema, dataSource, network, segments, collections, websockets };

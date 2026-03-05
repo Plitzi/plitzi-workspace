@@ -1,7 +1,8 @@
 import clsx from 'clsx';
 import { use } from 'react';
 
-import DevToolsContext from '../../DevToolsContext';
+import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
+
 import DataSourceViewer from './tabs/DataSourceViewer';
 import ElementsViewer from './tabs/ElementsViewer';
 import Logs from './tabs/Logs';

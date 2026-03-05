@@ -1,4 +1,3 @@
-import { LOG_TYPE_CUSTOM, LOG_TYPE_SUCCESS } from '../../../../../../utils/PlitziConsole';
 import LogStatus from '../../LogStatus';
 
 import type { ReactNode } from 'react';
@@ -16,13 +15,9 @@ const LogInteractionHeader = ({ status, message, time }: LogInteractionHeaderPro
       <div className="flex min-w-0 grow basis-0 items-center gap-3">
         <span className="font-bold">{time}</span>
         <div className="flex">
-          {status === 'completed' && <LogStatus logType={LOG_TYPE_SUCCESS}>Completed</LogStatus>}
+          {status === 'completed' && <LogStatus logType="success">Completed</LogStatus>}
           {status === 'skipped' && (
-            <LogStatus
-              logType={LOG_TYPE_CUSTOM}
-              className="bg-gray-500 text-white"
-              iconClassName="fa-solid fa-forward-step"
-            >
+            <LogStatus logType="custom" className="bg-gray-500 text-white" iconClassName="fa-solid fa-forward-step">
               Skipped
             </LogStatus>
           )}

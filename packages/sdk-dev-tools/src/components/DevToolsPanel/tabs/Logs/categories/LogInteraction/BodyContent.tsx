@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import ExecutionTree from './ExecutionTree';
 import InteractionNode from './InteractionNode';
 
-import type { LogInteraction } from '../../../../../../DevToolsContext';
+import type { LogInteraction } from '@plitzi/sdk-shared';
 
 export type BodyContentProps = {
   className?: string;
