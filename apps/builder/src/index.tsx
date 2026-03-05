@@ -36,7 +36,7 @@ export function render(
     }
 
     return (
-      <App {...params}>
+      <App {...params} debugMode={debugMode}>
         {Object.keys(plugins).map(pluginType => (
           <Builder.Plugin
             key={pluginType}

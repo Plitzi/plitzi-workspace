@@ -11,13 +11,16 @@ export type Event<T = unknown> = { callback: EventBridgeCallback<T>; filter?: Ev
 
 export type EventBridgeProps<T = unknown> = {
   events?: Record<EventBridgeModule, Record<EventBridgeEvent, Event<T>[]>>;
+  debugMode?: boolean;
 };
 
 class EventBridge<T = unknown> {
+  debugMode: boolean = false;
   events: Partial<Record<EventBridgeModule, Partial<Record<EventBridgeEvent, Event<T>[]>>>>;
 
-  constructor({ events }: EventBridgeProps<T> | undefined = {}) {
+  constructor({ events, debugMode = false }: EventBridgeProps<T> | undefined = {}) {
     this.events = events ?? {};
+    this.debugMode = debugMode;
   }
 
   has(module: EventBridgeModule, event: EventBridgeEvent) {
@@ -83,6 +86,10 @@ class EventBridge<T = unknown> {
   }
 
   emit(module: EventBridgeModule, events: EventBridgeEvent[] | EventBridgeEvent = [], ...data: T[]) {
+    if (this.debugMode) {
+      console.log(module, events, data);
+    }
+
     if (!Array.isArray(events) && (events as string)) {
       events = [events];
     }

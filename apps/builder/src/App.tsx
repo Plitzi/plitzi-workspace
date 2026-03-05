@@ -85,13 +85,14 @@ import type { Client } from 'graphql-ws';
 import type { ReactNode } from 'react';
 
 export type AppProps = {
+  children?: ReactNode;
   className?: string;
   server?: Partial<Server>;
   webKey: string;
   includeSubscriptions?: boolean;
   userKey?: string;
-  children: ReactNode;
   builderEnvironment?: ServerEnvironment;
+  debugMode?: boolean;
 };
 
 const components = {

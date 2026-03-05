@@ -91,7 +91,7 @@ const AppMain = ({
           <CollectionContextProvider>
             <PluginsContextProvider renderMode={renderMode} sdkStylePath={sdkStylePath}>
               <StyleContextProvider>
-                <EventBridgeContextProvider onInit={onInitEventBridge}>
+                <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
                   <SegmentsContextProvider>
                     <AuthContextProvider
                       previewMode={previewMode}

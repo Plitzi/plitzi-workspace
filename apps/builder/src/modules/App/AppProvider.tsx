@@ -28,6 +28,7 @@ export type AppProviderProps = {
   includeSubscriptions: boolean;
   includeRealTime: boolean;
   previewMode: boolean;
+  debugMode?: boolean;
 };
 
 const AppProvider = ({
@@ -41,7 +42,8 @@ const AppProvider = ({
   server,
   includeSubscriptions = true,
   includeRealTime = true,
-  previewMode = false
+  previewMode = false,
+  debugMode = false
 }: AppProviderProps) => {
   return (
     <NetworkContextProvider
@@ -59,7 +61,7 @@ const AppProvider = ({
       >
         <QueueContextProvider includeSubscriptions={includeSubscriptions}>
           <UndoableContextProducer>
-            <EventBridgeContextProvider>
+            <EventBridgeContextProvider debugMode={debugMode}>
               <SegmentsContextProvider>
                 <CollectionContextProvider>
                   <PluginsContextProvider>

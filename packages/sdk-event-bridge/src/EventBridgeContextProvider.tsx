@@ -8,11 +8,12 @@ import type { ReactNode } from 'react';
 
 export type EventBridgeContextProviderProps = {
   children?: ReactNode;
+  debugMode: boolean;
   onInit?: (instance: EventBridgeContextValue) => void;
 };
 
-const EventBridgeContextProvider = ({ children, onInit }: EventBridgeContextProviderProps) => {
-  const eventBridge = useMemo(() => new EventBridge(), []);
+const EventBridgeContextProvider = ({ children, debugMode, onInit }: EventBridgeContextProviderProps) => {
+  const eventBridge = useMemo(() => new EventBridge({ debugMode }), [debugMode]);
 
   useEffect(() => {
     return () => {

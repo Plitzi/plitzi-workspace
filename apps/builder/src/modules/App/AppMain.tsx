@@ -95,6 +95,7 @@ const AppMain = ({
         includeSubscriptions={includeSubscriptions}
         includeRealTime={includeRealTime}
         previewMode={previewMode}
+        debugMode={debugMode}
       >
         <StateManagerContextProvider webId={webId} state={state}>
           <DataSourceContextProvider environment={environment}>
@@ -108,18 +109,19 @@ const AppMain = ({
       </AppProvider>
     ),
     [
+      instanceId,
+      webKey,
+      webId,
       environment,
       builderEnvironment,
-      externalStyle,
-      includeRealTime,
-      includeSubscriptions,
-      instanceId,
-      previewMode,
-      server,
-      state,
       userKey,
-      webId,
-      webKey
+      server,
+      includeSubscriptions,
+      includeRealTime,
+      previewMode,
+      debugMode,
+      state,
+      externalStyle
     ]
   );
 
