@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useState, use, useMemo } from 'react';
+import { useState, use, useMemo, useCallback } from 'react';
 
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
@@ -14,6 +14,7 @@ const StyleManager = () => {
   } = use(BuilderSchemaContext);
   const flatList = useMemo(() => Object.values(flat), [flat]);
   const { style, displayMode } = use(BuilderStyleContext);
+  const [selector, setSelector] = useState<string | undefined>();
   const selectors = useMemo(() => Object.values(get(style, `platform.${displayMode}`, {})), [displayMode, style]);
   const styleSelectorsMemo = useMemo(() => {
     if (!selected) {
@@ -34,6 +35,8 @@ const StyleManager = () => {
     [style, displayMode, selected]
   );
 
+  const handleChange = useCallback((value?: string) => setSelector(value), []);
+
   return (
     <div className="flex h-full grow flex-col overflow-auto">
       <div className="flex grow overflow-auto">
@@ -41,7 +44,13 @@ const StyleManager = () => {
         <div className="flex grow basis-0 flex-col overflow-auto">
           {selected && (
             <BuilderStyleContext value={builderStyleValueMemo}>
-              <StyleInspector mode="manager" styleSelectors={styleSelectorsMemo} allowStyleSelector={false} />
+              <StyleInspector
+                mode="manager"
+                styleSelectors={styleSelectorsMemo}
+                allowStyleSelector={false}
+                value={selector}
+                onChange={handleChange}
+              />
             </BuilderStyleContext>
           )}
           {!selected && (

@@ -18,20 +18,21 @@ import type { SelectorValue } from '../Selector';
 import type { Element, StyleItem } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
+  value?: string;
   element?: Element;
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
   allowStyleSelector?: boolean;
-  onSelect?: (selector?: string) => void;
-  onStyleSelect?: (styleSelector?: string) => void;
+  onChange?: (selector?: string) => void;
 };
 
 const StyleInspector = ({
+  value,
   element,
   mode = 'element',
   styleSelectors,
   allowStyleSelector = true,
-  onSelect
+  onChange
 }: StyleInspectorProps) => {
   const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
   const { componentDefinitions } = use(ComponentContext);
@@ -40,7 +41,6 @@ const StyleInspector = ({
     displayMode,
     style: { platform, variables }
   } = use(BuilderStyleContext);
-  const [selectorSelected, setSelectorSelected] = useState<string | undefined>(get(styleSelectors, 'base', undefined));
   const [styleSelector, setStyleSelector] = useState<string>('base');
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
@@ -49,8 +49,8 @@ const StyleInspector = ({
     [style, displayMode, selectorName]
   );
   const selector = useMemo<StyleItem | undefined>(
-    () => get(style, `platform.${displayMode}.${selectorSelected}`),
-    [style, displayMode, selectorSelected]
+    () => get(style, `platform.${displayMode}.${value}`),
+    [style, displayMode, value]
   );
   const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
     () =>
@@ -65,16 +65,14 @@ const StyleInspector = ({
   useEffect(() => {
     setStyleSelector('base');
     const selector = get(styleSelectors, 'base', '').split(' ')[0];
-    setSelectorSelected(selector);
-    onSelect?.(selector);
+    onChange?.(selector);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSelect, element?.id]);
+  }, [onChange, element?.id]);
 
   useDidUpdateEffect(() => {
     const selector = get(styleSelectors, styleSelector, '').split(' ')[0];
     if (selector) {
-      setSelectorSelected(selector);
-      onSelect?.(selector);
+      onChange?.(selector);
     }
   }, [styleSelector]);
 
@@ -109,17 +107,15 @@ const StyleInspector = ({
 
   const handleSelectSelector = useCallback(
     (selector?: Pick<StyleItem, 'name' | 'type'>) => {
-      if (!selector || (selectorSelected && selectorSelected === selector.name)) {
-        onSelect?.(undefined);
-        setSelectorSelected(undefined);
+      if (!selector || (value && value === selector.name)) {
+        onChange?.(undefined);
 
         return;
       }
 
-      onSelect?.(selector.name);
-      setSelectorSelected(selector.name);
+      onChange?.(selector.name);
     },
-    [onSelect, selectorSelected]
+    [onChange, value]
   );
 
   const handleChangeSelector = useCallback(
@@ -139,8 +135,8 @@ const StyleInspector = ({
   );
 
   const handleRemoveSelector = useCallback(() => {
-    builderHandler('styleRemoveSelector', displayMode, selectorSelected);
-  }, [builderHandler, displayMode, selectorSelected]);
+    builderHandler('styleRemoveSelector', displayMode, value);
+  }, [builderHandler, displayMode, value]);
 
   const handleClicViewMode = useCallback(
     () => setViewMode(state => (state === 'basic' ? 'advanced' : 'basic')),

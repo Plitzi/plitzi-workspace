@@ -26,7 +26,7 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage<string>('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
-  const { setSelector } = use(BuilderStyleContext);
+  const { selector, setSelector } = use(BuilderStyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
@@ -113,10 +113,11 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
       <div className="flex grow basis-0 flex-col overflow-y-auto">
         {selected === 'style' && (
           <StyleInspector
+            value={selector}
             mode="element"
             element={element}
             styleSelectors={tempDefinition.styleSelectors}
-            onSelect={setSelector}
+            onChange={setSelector}
           />
         )}
         {selected === 'settings' && (
