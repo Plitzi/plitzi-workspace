@@ -7,6 +7,7 @@ export type LogType = 'info' | 'warning' | 'danger' | 'success' | 'custom';
 export type LogCategory = 'navigation' | 'interactions';
 
 export type LogNavigation = { category: 'navigation'; params: { status: NavigationStatus; elementId: string } };
+export type LogEventBridge = { category: 'eventBridge'; params: Record<string, unknown> };
 export type LogInteraction = {
   category: 'interactions';
   params: {
@@ -19,7 +20,11 @@ export type LogInteraction = {
   };
 };
 
-export type LogParams = LogNavigation['params'] | LogInteraction['params'];
-export type Log = { logType: string; message: ReactNode; time?: string } & (LogInteraction | LogNavigation);
+export type LogParams = LogNavigation['params'] | LogInteraction['params'] | LogEventBridge['params'];
+export type Log = { logType: string; message: ReactNode; time?: string } & (
+  | LogInteraction
+  | LogNavigation
+  | LogEventBridge
+);
 
 export type ProviderCallback = (...args: unknown[]) => Record<string, unknown>;

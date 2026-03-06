@@ -1,43 +1,31 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
-import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 
-import type { DisplayMode, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { EventBridgeEvent } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type OverlaySpacingProps = {
   id?: string;
   hoverRemove?: boolean;
-  selector?: string;
   hasItems?: boolean;
   refIframe?: RefObject<HTMLIFrameElement | null>;
   elementDOM?: HTMLElement | null;
-  displayMode?: DisplayMode;
   zoom?: number;
 };
 
 const OverlaySpacing = ({
   id = '',
   hoverRemove = false,
-  selector,
   hasItems = false,
   refIframe,
   elementDOM,
-  displayMode = 'desktop',
   zoom = 1
 }: OverlaySpacingProps) => {
+  const { eventBridge } = use(EventBridgeContext);
   const [rawStyle, setRawStyle] = useState<Partial<CSSStyleDeclaration> | undefined>({});
-  const { style } = use(BuilderStyleContext);
-  const elementStyle = useMemo<Partial<Record<StyleCategory, StyleValue>>>(() => {
-    if (!selector) {
-      return {};
-    }
-
-    return get(style, `platform.${displayMode}.${selector}.attributes`, {});
-  }, [style, displayMode, selector]);
 
   const getStyle = useCallback(() => {
     if (!elementDOM) {
@@ -52,19 +40,20 @@ const OverlaySpacing = ({
   }, [elementDOM, refIframe]);
 
   useEffect(() => {
+    const handler = (events: Record<EventBridgeEvent, unknown>) => {
+      const attribute = (events['styleUpdateSelector'] as string[])[3] ?? '';
+      if (attribute.includes('padding') || attribute.includes('margin') || !attribute) {
+        const value = getStyle();
+        setRawStyle(value);
+      }
+    };
+
+    return eventBridge.listen(['styleUpdateSelector'], handler);
+  }, [getStyle, id]);
+
+  useEffect(() => {
     setRawStyle(getStyle());
-  }, [
-    getStyle,
-    id,
-    elementStyle['margin-top'],
-    elementStyle['margin-bottom'],
-    elementStyle['margin-left'],
-    elementStyle['margin-right'],
-    elementStyle['padding-top'],
-    elementStyle['padding-bottom'],
-    elementStyle['padding-left'],
-    elementStyle['padding-right']
-  ]);
+  }, [getStyle, id]);
 
   const calculateWidth = useCallback((distance?: string, mode = 'rest', correction = '0px') => {
     if (distance === '0px') {
@@ -133,10 +122,7 @@ const OverlaySpacing = ({
       <div className="padding--right" style={calculateSpacingMemo.padding.right} />
 
       {hoverRemove && hasItems && (
-        <div
-          className="overlay__delete-message-container"
-          style={{ transform: `scale(${1 / zoom})`, transformOrigin: 'bottom left' }}
-        >
+        <div className="overlay__delete-message-container" style={{ transform: `scale(${1 / zoom})` }}>
           <div className="overlay__delete-message">This element will be removed</div>
         </div>
       )}

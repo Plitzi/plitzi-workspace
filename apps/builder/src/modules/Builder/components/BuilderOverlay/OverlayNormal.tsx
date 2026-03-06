@@ -176,11 +176,9 @@ const OverlayNormal = ({
       <OverlaySpacing
         id={id}
         hoverRemove={hoverRemove}
-        selector={selector}
         hasItems={!!items}
         elementDOM={elementDOM}
         refIframe={refIframe}
-        displayMode={displayMode}
         zoom={zoom}
       />
       {!hideActions && (

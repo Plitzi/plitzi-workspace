@@ -85,7 +85,7 @@ body {
   .plitzi-component--overlay-distance-node,
   .plitzi-component--overlay-distance-node-projection {
     position: absolute;
-    z-index: $overlayZIndex + 999999;
+    z-index: $overlayZIndex + 90000;
     pointer-events: none;
   }
 
@@ -147,7 +147,7 @@ body {
     height: auto;
     width: auto;
     position: fixed;
-    z-index: $overlayZIndex + 50;
+    z-index: $overlayZIndex + 90000;
 
     .overlay__drop-message-container {
       height: 100%;
@@ -333,6 +333,7 @@ body {
     position: absolute;
     display: flex;
     overflow: hidden;
+    transform-origin: bottom left;
   }
 
   .overlay__delete-message {
@@ -350,7 +351,7 @@ body {
   .overlay__button-container {
     padding: 4px;
     position: absolute;
-    z-index: $overlayZIndex + 5;
+    z-index: $overlayZIndex + 90000;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -492,9 +493,9 @@ body {
 
   .overlay__collaborator-name {
     max-width: 100px;
-    padding: 4px 8px;
+    padding: 2px 4px;
     left: -2px;
-    top: -22px;
+    top: -20px;
     position: absolute;
     border-top-right-radius: 4px;
     background-color: #4ade8040;
@@ -543,7 +544,7 @@ body {
   left: 0;
   top: 0;
   position: fixed;
-  z-index: $overlayZIndex + 50;
+  z-index: $overlayZIndex + 90001;
   display: none;
   flex-direction: column;
 

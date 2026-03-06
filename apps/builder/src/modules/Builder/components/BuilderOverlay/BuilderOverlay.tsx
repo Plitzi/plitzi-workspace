@@ -1,8 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
-import { get, throttle } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
+import { throttle } from '@plitzi/plitzi-ui/helpers';
+import { useCallback, use, useEffect, useRef, useState } from 'react';
 
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import { processContainer } from './BuilderOverlayHelper';
@@ -10,7 +11,7 @@ import OverlayNormal from './OverlayNormal';
 import useBuilderElement from '../../hooks/useBuilderElement';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, EventBridgeEvent } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BuilderOverlayProps = {
@@ -52,6 +53,7 @@ const BuilderOverlay = ({
     innerWidth: 0,
     rounded: { width: 0, height: 0 }
   });
+  const { eventBridge } = use(EventBridgeContext);
   const [overlayProps, setOverlayProps] = useState<{ id: string; element?: Element; elementDOM?: HTMLElement | null }>({
     id: '',
     element: undefined,
@@ -166,38 +168,22 @@ const BuilderOverlay = ({
     throttledHandleProcessContainer
   ]);
 
-  const { style, selector } = use(BuilderStyleContext);
-  const selectorState = useMemo(() => (mode === 'hover' ? '' : selector), [mode, selector]);
-  const elementStyle = useMemo<StyleItem['attributes']>(() => {
-    if (!selectorState) {
-      return {};
-    }
-
-    return get(style, `platform.${displayMode}.${selectorState}.attributes`, {});
-  }, [style, displayMode, selector]);
+  const { selector } = use(BuilderStyleContext);
 
   useEffect(() => {
     if (mode !== 'select') {
       return;
     }
 
-    handleProcessContainer(overlayProps.elementDOM);
-  }, [
-    mode,
-    handleProcessContainer,
-    elementStyle['margin-top'],
-    elementStyle['margin-bottom'],
-    elementStyle['margin-left'],
-    elementStyle['margin-right'],
-    elementStyle['padding-top'],
-    elementStyle['padding-bottom'],
-    elementStyle['padding-left'],
-    elementStyle['padding-right'],
-    elementStyle['border-top-width'],
-    elementStyle['border-bottom-width'],
-    elementStyle['border-left-width'],
-    elementStyle['border-right-width']
-  ]);
+    const handler = (events: Record<EventBridgeEvent, unknown>) => {
+      const attribute = (events['styleUpdateSelector'] as string[])[3] ?? '';
+      if (attribute.includes('padding') || attribute.includes('margin') || attribute.includes('border') || !attribute) {
+        handleProcessContainer(overlayProps.elementDOM);
+      }
+    };
+
+    return eventBridge.listen(['styleUpdateSelector'], handler);
+  }, [handleProcessContainer, overlayProps]);
 
   useEffect(() => {
     if (!overlayProps.element || overlayProps.elementDOM || mode !== 'select') {
@@ -245,7 +231,7 @@ const BuilderOverlay = ({
           color={color}
           collaboratorName={collaboratorName}
           mode={mode}
-          selector={selectorState}
+          selector={mode === 'hover' ? '' : selector}
           {...overlayProps}
         />
       )}

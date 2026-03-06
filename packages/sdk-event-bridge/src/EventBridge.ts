@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
+import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+
 import type { EventBridgeEvent, EventBridgeModule } from '@plitzi/sdk-shared';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,9 +16,12 @@ export type EventBridgeProps<T = unknown> = {
   debugMode?: boolean;
 };
 
+type EventBridgeUpdateListener = (events: Record<EventBridgeEvent, unknown>) => void;
+
 class EventBridge<T = unknown> {
   debugMode: boolean = false;
   events: Partial<Record<EventBridgeModule, Partial<Record<EventBridgeEvent, Event<T>[]>>>>;
+  private listeners = new Map<EventBridgeEvent, Set<EventBridgeUpdateListener>>();
 
   constructor({ events, debugMode = false }: EventBridgeProps<T> | undefined = {}) {
     this.events = events ?? {};
@@ -85,17 +90,20 @@ class EventBridge<T = unknown> {
     }
   }
 
-  emit(module: EventBridgeModule, events: EventBridgeEvent[] | EventBridgeEvent = [], ...data: T[]) {
+  async emit(module: EventBridgeModule, events: EventBridgeEvent[] | EventBridgeEvent = [], ...data: T[]) {
     if (this.debugMode) {
-      console.log(module, events, data);
+      pConsole.info('eventBridge', 'Event Triggered', { module, events, data });
     }
 
-    if (!Array.isArray(events) && (events as string)) {
-      events = [events];
+    let eventsParsed: EventBridgeEvent[];
+    if (!Array.isArray(events)) {
+      eventsParsed = [events];
+    } else {
+      eventsParsed = events;
     }
 
     const promises: Promise<T>[] = [];
-    (events as EventBridgeEvent[]).forEach(event => {
+    eventsParsed.forEach(event => {
       if (!this.has(module, event)) {
         return;
       }
@@ -113,7 +121,10 @@ class EventBridge<T = unknown> {
       });
     });
 
-    return Promise.all(promises);
+    const results = await Promise.all(promises);
+    this.touch(eventsParsed.reduce((acc, event) => ({ ...acc, [event]: data }), {} as Record<EventBridgeEvent, T[]>));
+
+    return results;
   }
 
   async emitWithResponse(module: EventBridgeModule, event: EventBridgeEvent, ...data: T[]) {
@@ -193,6 +204,47 @@ class EventBridge<T = unknown> {
 
   getModuleEventsCount(module: EventBridgeModule) {
     return this.getModuleEventsNames(module).length;
+  }
+
+  // Others
+
+  listen(events: EventBridgeEvent[] | EventBridgeEvent, listener: EventBridgeUpdateListener): () => void {
+    const eventList = Array.isArray(events) ? events : [events];
+
+    eventList.forEach(event => {
+      if (!this.listeners.has(event)) {
+        this.listeners.set(event, new Set());
+      }
+
+      this.listeners.get(event)?.add(listener);
+    });
+
+    return () => {
+      eventList.forEach(event => {
+        const set = this.listeners.get(event);
+        if (!set) {
+          return;
+        }
+
+        set.delete(listener);
+        if (set.size === 0) {
+          this.listeners.delete(event);
+        }
+      });
+    };
+  }
+
+  private touch(events: Record<EventBridgeEvent, unknown>): void {
+    for (const event in events) {
+      const listeners = this.listeners.get(event as EventBridgeEvent);
+      if (!listeners) {
+        continue;
+      }
+
+      for (const listener of listeners) {
+        listener(events);
+      }
+    }
   }
 }
 
