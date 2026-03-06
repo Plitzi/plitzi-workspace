@@ -4,7 +4,6 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import { processContainer } from './BuilderOverlayHelper';
 import OverlayNormal from './OverlayNormal';
@@ -168,8 +167,6 @@ const BuilderOverlay = ({
     throttledHandleProcessContainer
   ]);
 
-  const { selector } = use(BuilderStyleContext);
-
   useEffect(() => {
     if (mode !== 'select') {
       return;
@@ -231,7 +228,6 @@ const BuilderOverlay = ({
           color={color}
           collaboratorName={collaboratorName}
           mode={mode}
-          selector={mode === 'hover' ? '' : selector}
           {...overlayProps}
         />
       )}

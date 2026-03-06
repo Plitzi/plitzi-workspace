@@ -25,7 +25,6 @@ export type OverlayNormalProps = {
   hideActions?: boolean;
   displayMode?: DisplayMode;
   container?: OverlayRect;
-  selector?: string;
   zoom?: number;
   mode?: 'hover' | 'select';
   isCollaborator?: boolean;
@@ -42,7 +41,6 @@ const OverlayNormal = ({
   hideActions = false,
   displayMode = 'desktop',
   container,
-  selector = '',
   zoom = 1,
   mode = 'hover',
   isCollaborator = false,
@@ -51,7 +49,7 @@ const OverlayNormal = ({
 }: OverlayNormalProps) => {
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = use(BuilderContext);
-  const { style } = use(BuilderStyleContext);
+  const { style, selector } = use(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
 
@@ -100,7 +98,7 @@ const OverlayNormal = ({
 
   const handleOnChangeSize = useCallback(
     (width: number, height: number, finalUpdate = false) => {
-      if (!finalUpdate || !element) {
+      if (!finalUpdate || !element || mode !== 'select') {
         return;
       }
 
@@ -126,7 +124,7 @@ const OverlayNormal = ({
         });
       }
     },
-    [element, selector, builderHandler, displayMode]
+    [element, mode, selector, builderHandler, displayMode]
   );
 
   const handleChange = useCallback(
