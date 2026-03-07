@@ -87,6 +87,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
+  "sideEffects": false,
   "devDependencies": {
     "eslint": "^9.39.3",
     "typescript": "^5.9.3",

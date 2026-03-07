@@ -23,6 +23,7 @@
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/plitzi-ui": "^1.4.2",
     "@plitzi/sdk-auth": "workspace:*",
+    "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",

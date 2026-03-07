@@ -5,7 +5,7 @@ import { snakeCase } from '@plitzi/plitzi-ui/helpers';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
-import { fieldTypesOptions } from '../CollectionsConstants';
+import { fieldTypesOptions } from '@plitzi/sdk-collections/CollectionsHelper';
 
 import type { CollectionField } from '@plitzi/sdk-shared';
 

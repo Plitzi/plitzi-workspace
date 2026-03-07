@@ -36,6 +36,7 @@
     }
   },
   "type": "module",
+  "sideEffects": false,
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",

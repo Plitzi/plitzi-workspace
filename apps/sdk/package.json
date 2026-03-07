@@ -33,6 +33,7 @@
     "@dr.pogodin/react-helmet": "^3.0.6",
     "@plitzi/plitzi-ui": "^1.4.2",
     "@plitzi/sdk-auth": "workspace:*",
+    "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-elements": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

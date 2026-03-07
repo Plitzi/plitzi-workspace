@@ -1,7 +1,7 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
-import { collectionFieldTypeToInteractions } from '@modules/Collection/CollectionsConstants';
+import { collectionFieldTypeToInteractions } from '@plitzi/sdk-collections/CollectionsHelper';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 

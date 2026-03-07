@@ -47,6 +47,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
+  "sideEffects": false,
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
     "prop-types": "^15.8.1"

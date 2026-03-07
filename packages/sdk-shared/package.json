@@ -326,6 +326,7 @@
     }
   },
   "type": "module",
+  "sideEffects": false,
   "scripts": {
     "lint": "eslint ./src",
     "test": "vitest run",

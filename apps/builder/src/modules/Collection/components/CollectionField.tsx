@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import Icon from '@plitzi/plitzi-ui/Icon';
 
-import { fieldTypes } from '../CollectionsConstants';
+import { fieldTypes } from '@plitzi/sdk-collections/CollectionsHelper';
 
 export type CollectionFieldProps = {
   isNewField?: boolean;

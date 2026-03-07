@@ -3409,6 +3409,7 @@ __metadata:
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.4.2"
     "@plitzi/sdk-auth": "workspace:*"
+    "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
@@ -3486,6 +3487,7 @@ __metadata:
     "@dr.pogodin/react-helmet": "npm:^3.0.6"
     "@plitzi/plitzi-ui": "npm:^1.4.2"
     "@plitzi/sdk-auth": "workspace:*"
+    "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3610,11 +3612,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-collections@workspace:packages/sdk-collections":
+"@plitzi/sdk-collections@workspace:*, @plitzi/sdk-collections@workspace:packages/sdk-collections":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-collections@workspace:packages/sdk-collections"
   dependencies:
-    "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/plitzi-ui": "npm:^1.4.2"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.3"
     immer: "npm:^11.1.4"

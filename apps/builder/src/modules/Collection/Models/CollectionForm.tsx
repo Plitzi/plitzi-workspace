@@ -187,9 +187,9 @@ const CollectionForm = ({
             <div className="flex grow basis-0">Name</div>
             <div className="flex grow basis-0">Identifier</div>
             <div className="flex grow basis-0">Type</div>
-            <div className="flex w-[100px] items-center justify-center">Required</div>
-            <div className="flex w-[100px] items-center justify-center">Primary</div>
-            <div className="flex w-[150px] items-center justify-center">Actions</div>
+            <div className="flex w-25 items-center justify-center">Required</div>
+            <div className="flex w-25 items-center justify-center">Primary</div>
+            <div className="flex w-37.5 items-center justify-center">Actions</div>
           </div>
           {fields.map((field, i) => (
             <CollectionField key={i} {...field} onRemove={handleClickRemoveField(i)} />
