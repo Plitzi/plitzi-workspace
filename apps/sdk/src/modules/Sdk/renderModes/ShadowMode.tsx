@@ -1,11 +1,11 @@
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import { useMemo } from 'react';
 
-import MadeInPlitzi from '@components/MadeInPlitzi';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import SpaceContainer from '../../Space/SpaceContainer';
+import MadeInPlitzi from '../components/MadeInPlitzi';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';

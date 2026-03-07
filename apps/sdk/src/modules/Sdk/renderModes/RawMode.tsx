@@ -1,13 +1,13 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use } from 'react';
 
-import MadeInPlitzi from '@components/MadeInPlitzi';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
 import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import SpaceContainer from '../../Space/SpaceContainer';
+import MadeInPlitzi from '../components/MadeInPlitzi';
 
 import type { RenderMode, Schema } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
