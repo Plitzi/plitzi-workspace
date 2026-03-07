@@ -2,10 +2,9 @@
 import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
+import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
 import { generateCache, makeSelector } from '@plitzi/sdk-style/StyleHelper';
-
-import { generateID } from '../../helpers/utils';
 
 import type {
   BuilderContextValue,

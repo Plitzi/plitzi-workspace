@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
-import { hexToRGB } from '../../../../helpers/utils';
+import { hexToRGB } from '@plitzi/sdk-shared/helpers/utils';
 
 export type PluginItemProps = {
   className?: string;

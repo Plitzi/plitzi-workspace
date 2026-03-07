@@ -5,8 +5,7 @@ import { useCallback, use } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-
-import { generateID } from '../../../helpers/utils';
+import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { ComponentDefinition, Template } from '@plitzi/sdk-shared';
 import type { DragEvent } from 'react';

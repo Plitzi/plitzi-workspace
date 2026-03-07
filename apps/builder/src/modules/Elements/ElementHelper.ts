@@ -1,6 +1,6 @@
 import { set, pick, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 
-import { generateID } from '../../helpers/utils';
+import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { ComponentDefinition, Element } from '@plitzi/sdk-shared';
 

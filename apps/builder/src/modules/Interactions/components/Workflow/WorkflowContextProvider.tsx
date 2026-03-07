@@ -5,9 +5,9 @@ import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 
 import WorkflowContext from './WorkflowContext';
-import { generateID } from '../../../../helpers/utils';
 
 import type { WorkflowContextValue } from './WorkflowContext';
 import type { ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';

@@ -9,11 +9,11 @@ import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react'
 
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';
-import { generateID } from '../../helpers/utils';
 
 import type { Element, ElementBinding, BindingCategory } from '@plitzi/sdk-shared';
 

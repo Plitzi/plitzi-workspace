@@ -13,14 +13,13 @@ import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSch
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import AppContext from '@pmodules/App/AppContext';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-
-import { isInViewport } from '../../helpers/utils';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
