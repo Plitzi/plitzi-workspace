@@ -2,7 +2,7 @@ import { InMemoryCache } from '@apollo/client/cache';
 import { ApolloClient, HttpLink } from '@apollo/client/core';
 import { SetContextLink } from '@apollo/client/link/context';
 
-import { createStripTypenameLink } from '../../helpers/stripTypename';
+import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 
 import type { Server } from '@plitzi/sdk-shared';
 

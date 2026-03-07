@@ -140,6 +140,14 @@
       "types": "./dist/src/helpers/index.d.ts",
       "import": "./dist/src/helpers/index.mjs"
     },
+    "./helpers/security": {
+      "types": "./dist/src/helpers/security.d.ts",
+      "import": "./dist/src/helpers/security.mjs"
+    },
+    "./helpers/stripTypename": {
+      "types": "./dist/src/helpers/stripTypename.d.ts",
+      "import": "./dist/src/helpers/stripTypename.mjs"
+    },
     "./helpers/syntaxHighlight": {
       "types": "./dist/src/helpers/syntaxHighlight.d.ts",
       "import": "./dist/src/helpers/syntaxHighlight.mjs"

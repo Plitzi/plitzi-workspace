@@ -8,5 +8,7 @@ export * from './generateFacade';
 export * from './syntaxHighlight';
 export * from './twigWrapper';
 export * from './utils';
+export * from './security';
+export * from './stripTypename';
 
 export { fetchManifest, generateFacade, syntaxHighlight };

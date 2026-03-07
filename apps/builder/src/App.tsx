@@ -68,6 +68,7 @@ import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import { generateFacade } from '@plitzi/sdk-shared';
+import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import AppMain from '@pmodules/App/AppMain';
@@ -75,7 +76,6 @@ import customFetch from '@pmodules/Network/helpers/customFetch';
 
 import { getEnvironmentServer } from './config';
 import packageSettings from '../package.json';
-import { createStripTypenameLink } from './helpers/stripTypename';
 
 import './assets/index.scss';
 

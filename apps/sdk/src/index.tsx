@@ -17,10 +17,10 @@ import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import App from './App';
-import { disableReactDevTools } from './helpers/security';
 
 // SDK Style
 import './assets/index.scss';

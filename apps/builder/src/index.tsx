@@ -13,12 +13,12 @@ import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import Builder from '@pmodules/Builder';
 
 import App from './App';
 import packageSettings from '../package.json';
-import { disableReactDevTools } from './helpers/security';
 
 import type { AppProps } from './App';
 import type { ComponentPlugin, RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
