@@ -1,10 +1,9 @@
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
+import CollectionReducer, { CollectionsActions } from '@plitzi/sdk-collections/CollectionReducer';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-
-import CollectionReducer, { CollectionsActions } from './CollectionReducer';
 
 import type { MutationsMap } from '@modules/Network/Mutations';
 import type { QueriesMap } from '@modules/Network/Queries';
