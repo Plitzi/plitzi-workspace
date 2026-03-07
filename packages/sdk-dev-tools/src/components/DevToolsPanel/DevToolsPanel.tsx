@@ -1,6 +1,6 @@
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import clsx from 'clsx';
-import { useCallback, useMemo, useState, use } from 'react';
+import { useCallback, useMemo, useState, use, useRef } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
@@ -10,15 +10,12 @@ import DevToolsSubHeader from './DevToolsSubHeader';
 
 import type { Orientation } from '../../DevToolsContainer';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
-import type { ReactNode } from 'react';
 
 export const ORIENTATION_VERTICAL = 'vertical';
 export const ORIENTATION_HORIZONTAL = 'horizontal';
 
 export type DevToolsPanelProps = {
   className?: string;
-  children?: ReactNode;
-  rootDOM?: object;
   orientation?: Orientation;
   onChangeOrientation?: (orientation: Orientation) => void;
 };
@@ -28,13 +25,9 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
   const { currentPageId } = use(NavigationContext);
   const [elementSelected, setElementSelected] = useState<string | undefined>();
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
-  const parentElement = useMemo<HTMLElement | undefined>(() => {
-    if (typeof document === 'undefined') {
-      return undefined;
-    }
-
-    return document.getElementsByClassName('plitzi-sdk')[0] as HTMLElement | undefined;
-  }, []);
+  const parentRef = useRef<HTMLElement | null>(
+    typeof document !== 'undefined' ? document.querySelector('.plitzi-sdk') : null
+  );
 
   const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), []);
 
@@ -50,7 +43,7 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
       width={orientation === 'vertical' ? 500 : Infinity}
       height={orientation === 'vertical' ? Infinity : 200}
       resizeHandles={resizeHandles}
-      parentElement={parentElement}
+      parentRef={parentRef}
       autoGrow={false}
     >
       <DevToolsHeader

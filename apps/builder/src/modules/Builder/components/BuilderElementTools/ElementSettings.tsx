@@ -45,7 +45,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
   const {
     baseContext: { baseElementId }
   } = use(BuilderContext);
-  const { rootDOM } = use(ContainerRootContext);
+  const { rootRef } = use(ContainerRootContext);
 
   const { schema } = use(BuilderSchemaContext);
   const { style } = use(BuilderStyleContext);
@@ -70,7 +70,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
       utils: {
         displayBorderComponents,
         getWindow,
-        rootDOM
+        rootRef
       },
       customContexts: { ContainerRootContext },
       contexts: {
@@ -88,7 +88,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         InteractionsContext
       }
     }),
-    [previewMode, currentPageId, baseElementId, displayBorderComponents, getWindow, rootDOM]
+    [previewMode, currentPageId, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
   const schemaValueMemo = useMemo(() => ({ schema }), [schema]);

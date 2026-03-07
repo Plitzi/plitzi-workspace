@@ -88,7 +88,7 @@ const BuilderArea = ({
   const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
   const { currentPageId } = use(NavigationContext);
   const { schema, builderGetBaseElement } = use(BuilderSchemaContext);
-  const { rootDOM } = use(ContainerRootContext);
+  const { rootRef } = use(ContainerRootContext);
   const { sdkEnvironment, builderEnvironment } = use(NetworkContext) as BuilderNetworkContextValue;
 
   const getWindow = useCallback(() => {
@@ -119,7 +119,7 @@ const BuilderArea = ({
         builderEnvironment
       },
       root: { baseElementId },
-      utils: { displayBorderComponents, getWindow, rootDOM },
+      utils: { displayBorderComponents, getWindow, rootRef },
       customContexts: {},
       contexts: {
         ComponentContext,
@@ -145,7 +145,7 @@ const BuilderArea = ({
       baseElementId,
       displayBorderComponents,
       getWindow,
-      rootDOM,
+      rootRef,
       sdkEnvironment,
       builderEnvironment
     ]

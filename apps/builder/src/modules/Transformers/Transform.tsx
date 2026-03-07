@@ -36,7 +36,7 @@ const Transform = () => {
     style: { mode: styleMode }
   } = use(StyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
-  const { rootDOM } = use(ContainerRootContext);
+  const { rootRef } = use(ContainerRootContext);
   const [mode, setMode] = useState<'html-tailwind' | 'webflow' | 'html'>('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);
   const [layoutMode, setLayoutMode] = useState<'horizontal' | 'vertical'>('horizontal');
@@ -221,7 +221,7 @@ const Transform = () => {
               width={layoutMode === 'horizontal' ? 200 : Infinity}
               height={layoutMode === 'horizontal' ? Infinity : 200}
               resizeHandles={resizeHandles}
-              parentElement={rootDOM}
+              parentRef={rootRef}
               axis={layoutMode === 'horizontal' ? 'x' : 'y'}
             >
               <div

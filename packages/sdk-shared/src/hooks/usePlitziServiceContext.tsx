@@ -17,14 +17,14 @@ import type {
   StateManagerContextValue,
   StyleContextValue
 } from '../types';
-import type { Context, ReactNode } from 'react';
+import type { Context, ReactNode, RefObject } from 'react';
 
 export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> = {
   settings: { previewMode?: boolean; environment?: string; [key: string]: unknown };
   root: { baseElementId: string };
   utils: {
     getWindow: () => Window | null;
-    rootDOM?: HTMLElement | null;
+    rootRef: RefObject<HTMLElement | null>;
   };
   customContexts: Record<string, Context<any>>;
   contexts: {

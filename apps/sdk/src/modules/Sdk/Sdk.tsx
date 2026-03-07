@@ -47,7 +47,7 @@ const Sdk = ({
   const { currentPageId } = use(NavigationContext);
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const { rootDOM } = use(ContainerRootContext);
+  const { rootRef } = use(ContainerRootContext);
   const schemaSettings = use(SchemaSettingsContext);
   const { segments } = use(SegmentsContext);
   const { useDataSource } = use(DataSourceContext);
@@ -100,7 +100,7 @@ const Sdk = ({
       utils: {
         displayBorderComponents: false,
         getWindow,
-        rootDOM
+        rootRef
       },
       customContexts: {},
       contexts: {
@@ -128,7 +128,7 @@ const Sdk = ({
       sdkEnvironment,
       schemaSettings,
       getWindow,
-      rootDOM
+      rootRef
     ]
   );
 
