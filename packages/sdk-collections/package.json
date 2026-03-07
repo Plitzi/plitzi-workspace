@@ -1,0 +1,36 @@
+{
+  "name": "@plitzi/sdk-collections",
+  "version": "0.28.13",
+  "license": "GPLv3",
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
+    }
+  },
+  "scripts": {
+    "lint": "eslint ./src",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "build-assets:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build-assets:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
+    "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+  },
+  "type": "module",
+  "dependencies": {
+    "@plitzi/sdk-schema": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
+    "immer": "^11.1.4"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}
