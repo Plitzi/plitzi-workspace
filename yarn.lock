@@ -3610,6 +3610,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-collections@workspace:packages/sdk-collections":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-collections@workspace:packages/sdk-collections"
+  dependencies:
+    "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    eslint: "npm:^9.39.3"
+    immer: "npm:^11.1.4"
+    typescript: "npm:^5.9.3"
+    vite: "npm:^7.3.1"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/sdk-data-source@workspace:*, @plitzi/sdk-data-source@workspace:packages/sdk-data-source":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-data-source@workspace:packages/sdk-data-source"
