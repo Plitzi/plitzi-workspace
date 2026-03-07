@@ -1,5 +1,5 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { Page } from '@plitzi/sdk-elements/elements';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
@@ -35,4 +35,4 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
   );
 };
 
-export default IframeMode;
+export default memo(IframeMode);

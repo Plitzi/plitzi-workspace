@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useMemo, use } from 'react';
+import { useMemo, use, memo } from 'react';
 
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
@@ -48,4 +48,4 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
   );
 };
 
-export default RawMode;
+export default memo(RawMode);

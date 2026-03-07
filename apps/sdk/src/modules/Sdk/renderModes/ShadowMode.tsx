@@ -1,5 +1,5 @@
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { Page } from '@plitzi/sdk-elements/elements';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -39,4 +39,4 @@ const ShadowMode = ({ pageId = '', style = '', plitziContextValue, assets }: Sha
   );
 };
 
-export default ShadowMode;
+export default memo(ShadowMode);
