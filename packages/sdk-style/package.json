@@ -1,7 +1,7 @@
 {
   "name": "@plitzi/sdk-style",
   "version": "0.28.13",
-  "license": "BSL-1.0",
+  "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
