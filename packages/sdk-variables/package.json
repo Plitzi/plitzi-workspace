@@ -153,14 +153,14 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.2",
+    "@plitzi/plitzi-ui": "^1.4.3",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
-    "eslint": "^9.39.3",
+    "eslint": "^9.39.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "eslint": "^9.39.3",
+    "eslint": "^9.39.4",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }
