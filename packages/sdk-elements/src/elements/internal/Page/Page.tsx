@@ -2,12 +2,12 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
+import LayoutContainer from '../LayoutContainer';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
@@ -41,8 +41,6 @@ const Page = ({
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
   const { Helmet, routeParams, queryParams } = use(NavigationContext);
-  const { components } = use(ComponentContext);
-  const LayoutContainerPlugin = components.layoutContainer;
 
   const layoutInternalProps = useMemo(
     () => ({
@@ -92,7 +90,7 @@ const Page = ({
           {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}
         </Helmet>
       )}
-      {layout && <LayoutContainerPlugin internalProps={layoutInternalProps} />}
+      {layout && <LayoutContainer internalProps={layoutInternalProps} />}
       {!layout && children}
     </RootElement>
   );

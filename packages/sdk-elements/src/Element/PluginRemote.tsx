@@ -4,8 +4,9 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import loadComponent from './helpers/loadComponent';
+import NotFound from '../elements/internal/NotFound/NotFound';
 
-import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { ComponentPluginWithHOC, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 export type PluginRemoteProps = {
   url: string;
@@ -25,10 +26,9 @@ const PluginRemote = ({
   plitziJsxSkipHOC = false,
   plitziJsxProps = emptyObject
 }: PluginRemoteProps) => {
-  const { register, components } = use(ComponentContext);
-  const NotFoundNode = useMemo(() => components.notFound, [components]);
+  const { register } = use(ComponentContext);
   const Component = useMemo(
-    () => lazy(loadComponent(url, scope, register, NotFoundNode, autoRegister, plitziJsxSkipHOC)),
+    () => lazy(loadComponent(url, scope, register, NotFound as ComponentPluginWithHOC, autoRegister, plitziJsxSkipHOC)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [url, scope]
   );
