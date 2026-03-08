@@ -20,7 +20,7 @@ import type {
 import type { Context, ReactNode, RefObject } from 'react';
 
 export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> = {
-  settings: { previewMode?: boolean; environment?: string; [key: string]: unknown };
+  settings: { isHydrating?: boolean; previewMode?: boolean; environment?: string; [key: string]: unknown };
   root: { baseElementId: string };
   utils: {
     getWindow: () => Window | null;

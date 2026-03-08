@@ -5,8 +5,9 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import PluginRemote from './PluginRemote';
+import NotFound from '../elements/internal/NotFound/NotFound';
 
-import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { ComponentPluginWithHOC, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type JsxManagerProps = {
@@ -35,7 +36,7 @@ const JsxManager = ({
     [plugins]
   );
 
-  let Plugin = type ? components[type] : undefined;
+  let Plugin = type ? components.current[type] : undefined;
   const remoteSettings = useMemo(() => {
     const pluginDefinition = (type ? plugins[type] : undefined) ?? getParentPlugin(type);
     if (Plugin || !pluginDefinition) {
@@ -68,7 +69,7 @@ const JsxManager = ({
   }
 
   if (!Plugin) {
-    Plugin = components.notFound;
+    Plugin = NotFound as ComponentPluginWithHOC;
   }
 
   return (

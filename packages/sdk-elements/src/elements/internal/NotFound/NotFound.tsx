@@ -10,7 +10,7 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type NotFoundProps = {
-  ref?: RefObject<HTMLElement>;
+  ref?: RefObject<HTMLElement | null>;
   className?: string;
 };
 
@@ -21,7 +21,7 @@ const NotFound = ({ ref, className = '' }: NotFoundProps) => {
   const {
     settings: { isHydrating, previewMode }
   } = usePlitziServiceContext();
-  if ((typeof window === 'undefined' && previewMode) || isHydrating) {
+  if (typeof window === 'undefined' || previewMode || isHydrating) {
     return undefined;
   }
 

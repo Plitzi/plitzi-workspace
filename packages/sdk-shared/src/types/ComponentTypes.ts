@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ComponentDefinition, InternalPropsSTG1 } from './ElementTypes';
 import type { Asset } from './PluginTypes';
-import type { FC, ReactNode } from 'react';
+import type { FC, ReactNode, RefObject } from 'react';
 
 export type ComponentOrigin = 'local' | 'local-custom' | 'remote';
 export type ComponentPluginFC<T = unknown> = FC<
@@ -45,6 +45,6 @@ export type ComponentContextValue = {
   unregister: (componentTypes: string[] | string) => string[];
   unregisterDefinition: (pluginType: string) => void;
   registerDefinition: (plugins: Record<string, ComponentDefinition>) => void;
-  components: Record<string, ComponentPluginWithHOC>;
+  components: RefObject<Record<string, ComponentPluginWithHOC>>;
   componentDefinitions: Record<string, ComponentDefinition>;
 };

@@ -93,7 +93,7 @@ const Custom = ({
     return <PluginRemote url={scriptUrl} scope={pluginScope} internalProps={internalPropsMemo} autoRegister={false} />;
   }
 
-  const Plugin = components[renderType] as ComponentPluginWithHOC | undefined;
+  const Plugin = components.current[renderType] as ComponentPluginWithHOC | undefined;
   if (Plugin && !settingsMalformed) {
     return <Plugin internalProps={internalPropsMemo} extraProps={Plugin.extraProps} />;
   }

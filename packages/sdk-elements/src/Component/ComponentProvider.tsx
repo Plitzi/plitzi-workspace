@@ -25,15 +25,15 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
     [localComponents, localCustomComponents]
   );
   const [remoteComponents, setRemoteComponents] = useState<Record<string, ComponentPluginWithHOC>>({});
-  const totalComponents = useRef({ ...remoteComponents, ...localComponentsParsed });
+  const components = useRef({ ...remoteComponents, ...localComponentsParsed });
 
   const getComponent = useCallback((componentTypes: string | string[] = [], withPlugins = false) => {
     if (typeof componentTypes === 'string' && !withPlugins) {
-      return totalComponents.current[componentTypes];
+      return components.current[componentTypes];
     }
 
     if (typeof componentTypes === 'string' && withPlugins) {
-      const component = totalComponents.current[componentTypes] as ComponentPluginWithHOC | undefined;
+      const component = components.current[componentTypes] as ComponentPluginWithHOC | undefined;
       if (!component) {
         return {};
       }
@@ -43,7 +43,7 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
 
     let componentsToReturn: Record<string, ComponentPluginWithHOC> = {};
     (componentTypes as string[]).forEach(componentType => {
-      const component = totalComponents.current[componentType] as ComponentPluginWithHOC | undefined;
+      const component = components.current[componentType] as ComponentPluginWithHOC | undefined;
       if (!component) {
         return;
       }
@@ -62,14 +62,14 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
   }, []);
 
   const register = useCallback(
-    (components: ComponentPluginWithHOC[] | ComponentPluginWithHOC = []) => {
+    (newComponents: ComponentPluginWithHOC[] | ComponentPluginWithHOC = []) => {
       let componentsToAppend: Record<string, ComponentPluginWithHOC> = {};
-      if (!Array.isArray(components)) {
-        components = [components];
+      if (!Array.isArray(newComponents)) {
+        newComponents = [newComponents];
       }
 
-      components.forEach(comp => {
-        if (comp.type && !(totalComponents.current[comp.type] as ComponentPluginWithHOC | undefined)) {
+      newComponents.forEach(comp => {
+        if (comp.type && !(components.current[comp.type] as ComponentPluginWithHOC | undefined)) {
           componentsToAppend = { ...componentsToAppend, [comp.type]: comp, ...getPlugins(comp) };
         }
       });
@@ -79,7 +79,7 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
       }
 
       setRemoteComponents(state => {
-        totalComponents.current = { ...state, ...componentsToAppend, ...localComponentsParsed };
+        components.current = { ...state, ...componentsToAppend, ...localComponentsParsed };
 
         return { ...state, ...componentsToAppend };
       });
@@ -111,7 +111,7 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
       });
 
       setRemoteComponents(state => {
-        totalComponents.current = {
+        components.current = {
           ...(omit(state, componentsToRemove) as Record<string, ComponentPluginWithHOC>),
           ...localComponentsParsed
         };
@@ -127,8 +127,8 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
   // Required by builder
 
   const [componentDefinitions, setComponentDefinitions] = useState<Record<string, ComponentDefinition>>(() =>
-    Object.keys(totalComponents.current).reduce((acum, elementType) => {
-      const component = get(totalComponents.current, elementType, undefined);
+    Object.keys(components.current).reduce((acum, elementType) => {
+      const component = get(components.current, elementType, undefined);
       if (!component || !(component.content as ComponentDefinition | undefined)) {
         return acum;
       }
@@ -163,19 +163,10 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
       unregister,
       unregisterDefinition,
       registerDefinition,
-      components: totalComponents.current,
+      components,
       componentDefinitions
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      register,
-      unregister,
-      registerDefinition,
-      unregisterDefinition,
-      getComponent,
-      componentDefinitions,
-      totalComponents.current
-    ]
+    [register, unregister, registerDefinition, unregisterDefinition, getComponent, componentDefinitions]
   );
 
   return <ComponentContext value={componentsContextValue}>{children}</ComponentContext>;

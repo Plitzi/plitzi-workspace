@@ -1,4 +1,5 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
+import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
@@ -46,6 +47,7 @@ const BuilderAreaPreview = ({
   variables
 }: BuilderAreaPreviewProps) => {
   const { settings, flat } = schema ?? {};
+  const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
 
   const getWindow = useCallback(() => {
@@ -61,7 +63,7 @@ const BuilderAreaPreview = ({
     () => ({
       settings: { previewMode, ...settings },
       root: { baseElementId: id },
-      utils: { getWindow },
+      utils: { getWindow, rootRef },
       customContexts: {},
       contexts: {
         CollectionContext,
@@ -78,7 +80,7 @@ const BuilderAreaPreview = ({
         EventBridgeContext
       }
     }),
-    [previewMode, settings, id, getWindow]
+    [previewMode, settings, id, getWindow, rootRef]
   );
 
   const css = useMemo(() => {
@@ -95,7 +97,7 @@ const BuilderAreaPreview = ({
       return undefined;
     }
 
-    const PluginNode = get(components, get(element, 'definition.type', ''), undefined);
+    const PluginNode = get(components.current, get(element, 'definition.type', ''), undefined);
     if (!PluginNode) {
       return undefined;
     }

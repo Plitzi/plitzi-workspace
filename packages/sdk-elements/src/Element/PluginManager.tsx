@@ -25,10 +25,10 @@ const PluginManager = ({ plitziElementLayout = undefined, type = '', internalPro
   } = usePlitziServiceContext();
   const { plugins } = use(PluginsContext);
   const PluginNotFound = useMemo(() => {
-    const PluginInternal = components.notFound;
+    const PluginInternal = components.current.notFound;
 
     return <PluginInternal internalProps={internalPropsMemo} />;
-  }, [components.notFound, internalPropsMemo]);
+  }, [components, internalPropsMemo]);
 
   const getParentPlugin = useCallback(
     (subPlugin: string) => Object.values(plugins).find(plugin => plugin.subPlugins.find(type => type === subPlugin)),
@@ -40,7 +40,7 @@ const PluginManager = ({ plitziElementLayout = undefined, type = '', internalPro
       return undefined;
     }
 
-    const PluginInternal = components[type] as ComponentPluginWithHOC | undefined;
+    const PluginInternal = components.current[type] as ComponentPluginWithHOC | undefined;
     if (!PluginInternal) {
       return undefined;
     }

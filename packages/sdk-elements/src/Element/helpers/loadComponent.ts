@@ -2,6 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 
 import { generatePluginModule } from './elementUtils';
 import { nestedInject } from '../../Component';
+import NotFound from '../../elements/internal/NotFound/NotFound';
 import withElement from '../hocs/withElement';
 
 import type { PlitziModule } from './elementUtils';
@@ -20,7 +21,6 @@ const loadComponent = (
   url: string,
   pluginScope: string,
   registerCallback: ComponentContextValue['register'],
-  NotFoundNode: ComponentPluginWithHOC,
   autoRegister = true,
   plitziJsxSkipHOC = false
 ) => {
@@ -41,14 +41,14 @@ const loadComponent = (
     const entry = remoteModuleCache.get(cacheKey);
     const Module = await entry?.promise;
     if (!Module) {
-      return { default: NotFoundNode };
+      return { default: NotFound as ComponentPluginWithHOC };
     }
 
     const { type, pluginSettings } = get(Module, 'default', {} as ComponentPlugin);
     const { version, initialItems, plugins } = Module;
 
     if (!type) {
-      return { default: NotFoundNode };
+      return { default: NotFound as ComponentPluginWithHOC };
     }
 
     let plitziComponent: ComponentPlugin | ComponentPluginWithHOC = Module.default;

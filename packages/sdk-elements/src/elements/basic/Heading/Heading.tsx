@@ -50,9 +50,7 @@ const Heading = ({ ref, className = '', content = 'Heading', subType = 'h1' }: H
       className={clsx('plitzi-component__heading', { [`plitzi-component__heading-${subType}`]: subType }, className)}
     >
       {previewMode && finalContent}
-      {!previewMode && (
-        <Contenteditable className="" value={finalContent} onChange={handleChange} openMode="doubleClick" />
-      )}
+      {!previewMode && <Contenteditable value={finalContent} onChange={handleChange} openMode="doubleClick" />}
     </RootElement>
   );
 };

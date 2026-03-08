@@ -82,8 +82,8 @@ const PluginsContextProvider = ({
 
   const pluginCustomStyleAssets = useMemo<Record<string, Asset>>(
     () =>
-      Object.keys(components)
-        .filter(compKey => components[compKey].origin === 'local-custom')
+      Object.keys(components.current)
+        .filter(compKey => components.current[compKey].origin === 'local-custom')
         .reduce((acum, compKey) => {
           const assets = get(components, `${compKey}.assets`, []) as ComponentPlugin['assets'];
 
@@ -98,7 +98,8 @@ const PluginsContextProvider = ({
             )
           };
         }, {}),
-    [components]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [components.current]
   );
 
   const assetsState = useMemo<Record<string, Asset>>(() => {

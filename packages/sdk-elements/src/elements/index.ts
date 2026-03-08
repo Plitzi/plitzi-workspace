@@ -50,7 +50,6 @@ export * from './form/Form';
 export * from './form/FormControl';
 export * from './internal/LayoutContainer';
 export * from './internal/Loading';
-export * from './internal/NotFound';
 export * from './internal/Page';
 export * from './media/FontAwesome';
 export * from './media/Image';
