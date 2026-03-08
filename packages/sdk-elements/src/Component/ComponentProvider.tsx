@@ -1,5 +1,5 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
@@ -24,8 +24,8 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
     }),
     [localComponents, localCustomComponents]
   );
-  const [remoteComponents, setRemoteComponents] = useState<Record<string, ComponentPluginWithHOC>>({});
-  const components = useRef({ ...remoteComponents, ...localComponentsParsed });
+  const remoteComponents = useRef<Record<string, ComponentPluginWithHOC>>({});
+  const components = useRef({ ...remoteComponents.current, ...localComponentsParsed });
 
   const getComponent = useCallback((componentTypes: string | string[] = [], withPlugins = false) => {
     if (typeof componentTypes === 'string' && !withPlugins) {
@@ -78,11 +78,8 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
         return componentsToAppend;
       }
 
-      setRemoteComponents(state => {
-        components.current = { ...state, ...componentsToAppend, ...localComponentsParsed };
-
-        return { ...state, ...componentsToAppend };
-      });
+      components.current = { ...remoteComponents.current, ...componentsToAppend, ...localComponentsParsed };
+      remoteComponents.current = { ...remoteComponents.current, ...componentsToAppend };
 
       return componentsToAppend;
     },
@@ -110,14 +107,8 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
         }
       });
 
-      setRemoteComponents(state => {
-        components.current = {
-          ...(omit(state, componentsToRemove) as Record<string, ComponentPluginWithHOC>),
-          ...localComponentsParsed
-        };
-
-        return omit(state, componentsToRemove) as Record<string, ComponentPluginWithHOC>;
-      });
+      components.current = { ...omit(remoteComponents.current, componentsToRemove), ...localComponentsParsed };
+      remoteComponents.current = omit(remoteComponents.current, componentsToRemove);
 
       return componentsToRemove;
     },
