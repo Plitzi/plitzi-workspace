@@ -86,7 +86,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     }, [internalProps.attributes, props.extraProps, customProps, children, contextValue]);
   };
 
-  WithElementComponent.displayName = WrappedComponent.displayName || WrappedComponent.name;
+  WithElementComponent.displayName = `withElement(${WrappedComponent.displayName || WrappedComponent.name})`;
 
   return WithElementComponent;
 };
