@@ -29,7 +29,7 @@ const useStyleInherit = ({ element, selector, styleSelector }: UseStyleInheritPr
       selectorsToSkip.push(selector);
     }
 
-    return calculateInheriting(element, flat, platform, styleSelector, componentDefinitions, selectorsToSkip);
+    return calculateInheriting(element, flat, platform, styleSelector, componentDefinitions.current, selectorsToSkip);
   }, [selector, element, flat, platform, styleSelector, componentDefinitions]);
 
   return inheritData;

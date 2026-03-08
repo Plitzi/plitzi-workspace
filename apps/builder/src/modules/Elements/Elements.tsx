@@ -15,7 +15,7 @@ const Elements = () => {
 
   const componentsFiltered = useMemo(() => {
     const result: ComponentDefinition[] = [];
-    Object.values(componentDefinitions).forEach(componentDefinition => {
+    Object.values(componentDefinitions.current).forEach(componentDefinition => {
       if (componentDefinition.definition.label.toLowerCase().includes(filter.toLowerCase())) {
         result.push(componentDefinition);
       }

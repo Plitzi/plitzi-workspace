@@ -277,7 +277,7 @@ const BuilderAreaTracking = ({
         mutate,
         builderDropElement,
         elementSelected,
-        componentDefinitions,
+        componentDefinitions: componentDefinitions.current,
         baseElementId,
         builderHandler
       });

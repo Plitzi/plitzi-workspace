@@ -149,7 +149,7 @@ const BuilderTree = () => {
   );
 
   const nodes = useMemo(() => {
-    const nodesMapped = recursiveMap(schema.flat, componentDefinitions, baseElementId, undefined, schema.flat);
+    const nodesMapped = recursiveMap(schema.flat, componentDefinitions.current, baseElementId, undefined, schema.flat);
     if (!baseElementId || !nodesMapped) {
       return [];
     }
@@ -188,7 +188,7 @@ const BuilderTree = () => {
         mutate,
         builderDropElement,
         elementSelected,
-        componentDefinitions,
+        componentDefinitions: componentDefinitions.current,
         baseElementId,
         builderHandler
       });

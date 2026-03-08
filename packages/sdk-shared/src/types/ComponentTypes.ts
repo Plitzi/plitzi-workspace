@@ -37,6 +37,8 @@ export type ComponentPluginWithHOC<T = unknown> = ComponentPluginFC<T & { intern
 };
 
 export type ComponentContextValue = {
+  components: RefObject<Record<string, ComponentPluginWithHOC>>;
+  componentDefinitions: RefObject<Record<string, ComponentDefinition>>;
   getComponent: (
     componentTypes: string | string[],
     withPlugins?: boolean
@@ -45,6 +47,4 @@ export type ComponentContextValue = {
   unregister: (componentTypes: string[] | string) => string[];
   unregisterDefinition: (pluginType: string) => void;
   registerDefinition: (plugins: Record<string, ComponentDefinition>) => void;
-  components: RefObject<Record<string, ComponentPluginWithHOC>>;
-  componentDefinitions: Record<string, ComponentDefinition>;
 };

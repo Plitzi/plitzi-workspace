@@ -24,7 +24,7 @@ const useDragElement = ({ attributes, type, variables, manifest }: UseDragElemen
 
   const onDragElement = useCallback(
     (e: DragEvent) => {
-      let element = pick(componentDefinitions[type], ['definition', 'attributes']);
+      let element = pick(componentDefinitions.current[type], ['definition', 'attributes']);
       if (!(element as ComponentDefinition | undefined)) {
         return;
       }

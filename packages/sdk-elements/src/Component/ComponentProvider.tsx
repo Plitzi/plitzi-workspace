@@ -126,7 +126,7 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
 
   // Required by builder
 
-  const [componentDefinitions, setComponentDefinitions] = useState<Record<string, ComponentDefinition>>(() =>
+  const componentDefinitions = useRef<Record<string, ComponentDefinition>>(
     Object.keys(components.current).reduce((acum, elementType) => {
       const component = get(components.current, elementType, undefined);
       if (!component || !(component.content as ComponentDefinition | undefined)) {
@@ -137,36 +137,28 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
     }, {})
   );
 
-  const registerDefinition = useCallback(
-    (plugins: Record<string, ComponentDefinition>) => setComponentDefinitions(state => ({ ...state, ...plugins })),
-    []
-  );
+  const registerDefinition = useCallback((plugins: Record<string, ComponentDefinition>) => {
+    componentDefinitions.current = { ...componentDefinitions.current, ...plugins };
+  }, []);
 
-  const unregisterDefinition = useCallback(
-    (pluginType: string) =>
-      setComponentDefinitions(
-        state =>
-          omit(state, [pluginType, ...get(state, `${pluginType}.builder.pluginChildren`, [] as string[])]) as Record<
-            string,
-            ComponentDefinition
-          >
-      ),
-    []
-  );
+  const unregisterDefinition = useCallback((pluginType: string) => {
+    const pluginChildren = get(componentDefinitions.current, `${pluginType}.builder.pluginChildren`, [] as string[]);
+    componentDefinitions.current = omit(componentDefinitions.current, [pluginType, ...pluginChildren]);
+  }, []);
 
   // End Required by builder
 
   const componentsContextValue = useMemo(
     () => ({
+      components,
+      componentDefinitions,
       getComponent,
       register,
       unregister,
       unregisterDefinition,
-      registerDefinition,
-      components,
-      componentDefinitions
+      registerDefinition
     }),
-    [register, unregister, registerDefinition, unregisterDefinition, getComponent, componentDefinitions]
+    [register, unregister, registerDefinition, unregisterDefinition, getComponent]
   );
 
   return <ComponentContext value={componentsContextValue}>{children}</ComponentContext>;

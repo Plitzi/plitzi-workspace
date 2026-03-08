@@ -344,10 +344,10 @@ const BuilderProvider = ({
             definition: { ...dataParsed.element.definition, rootId }
           };
 
-          const initialItems = get(componentDefinitions, `${typeArr[1]}.initialItems`, undefined);
+          const initialItems = get(componentDefinitions.current, `${typeArr[1]}.initialItems`, undefined);
           let itemsToAdd: ReturnType<typeof getInitialItems> = { directItems: {}, items: {} };
           if (initialItems && initialItems.length > 0) {
-            itemsToAdd = getInitialItems(element.id, initialItems, componentDefinitions, baseElementId);
+            itemsToAdd = getInitialItems(element.id, initialItems, componentDefinitions.current, baseElementId);
             set(element, 'definition.items', Object.keys(itemsToAdd.directItems));
           }
 

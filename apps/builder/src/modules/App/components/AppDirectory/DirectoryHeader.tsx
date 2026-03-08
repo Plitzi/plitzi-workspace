@@ -52,7 +52,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
 
     if (response) {
       const { name, pageFolder } = response;
-      const { definition, attributes } = componentDefinitions.layoutContainer;
+      const { definition, attributes } = componentDefinitions.current.layoutContainer;
       const id = generateID();
       const element = {
         id,
@@ -61,7 +61,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
       };
       void eventBridge.emit('main', 'schemaAddElement', '', element, 'custom');
     }
-  }, [showModal, componentDefinitions.layoutContainer, eventBridge]);
+  }, [showModal, componentDefinitions, eventBridge]);
 
   const handleClickAddPageFolder = useCallback(async () => {
     const response = await showModal(
