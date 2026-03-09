@@ -97,7 +97,7 @@ const useDropdown = ({
 
   useEffect(() => {
     const el = ref?.current;
-    if (!el || typeof window === 'undefined') {
+    if (!el || typeof window === 'undefined' || !open) {
       return;
     }
 
