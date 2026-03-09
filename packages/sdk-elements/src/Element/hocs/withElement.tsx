@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
+import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 import { useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -71,7 +72,13 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     );
 
     return useMemo(() => {
-      let wrappedProps = { ...internalProps.attributes, ...props.extraProps, ...customProps } as T;
+      let wrappedProps = {
+        ...internalProps.attributes,
+        ...props.extraProps,
+        ...customProps,
+        // Props injected via other elements
+        ...omit(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
+      } as T;
       if (children) {
         wrappedProps = { ...wrappedProps, children };
       }
@@ -83,7 +90,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
           </ElementContext>
         </ErrorBoundary>
       );
-    }, [internalProps.attributes, props.extraProps, customProps, children, contextValue]);
+    }, [internalProps.attributes, props, customProps, children, contextValue]);
   };
 
   WithElementComponent.displayName = `withElement(${WrappedComponent.displayName || WrappedComponent.name})`;
