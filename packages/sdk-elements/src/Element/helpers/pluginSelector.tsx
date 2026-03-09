@@ -9,7 +9,6 @@ import type {
   InternalPropsSTG0,
   InternalPropsSTG1
 } from '@plitzi/sdk-shared';
-import type { JSX } from 'react';
 
 export type pluginSelectorProps = {
   // Component Props
@@ -53,7 +52,7 @@ const pluginSelector = ({
     <components.notFound key={key} internalProps={internalProps} />
   ) : undefined;
   if (!type) {
-    return PluginNotFound as JSX.Element;
+    return PluginNotFound;
   }
 
   const PluginInternal = components[type];
@@ -68,7 +67,7 @@ const pluginSelector = ({
     );
   }
 
-  return PluginNotFound as JSX.Element;
+  return PluginNotFound;
 };
 
 export default pluginSelector;
