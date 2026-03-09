@@ -1,7 +1,11 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { isValidElement, useMemo } from 'react';
+import { isValidElement, use, useMemo } from 'react';
 
-import PluginManager from '../PluginManager';
+import { usePlitziServiceContext } from '@plitzi/sdk-shared';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+
+import pluginSelector from '../helpers/pluginSelector';
+// import PluginManager from '../PluginManager';
 
 import type { Element, Schema, SchemaContextValue, ElementLayout } from '@plitzi/sdk-shared';
 import type { Context, ReactNode } from 'react';
@@ -27,6 +31,12 @@ const useInternalItems = ({
   newSchema: Schema; // SchemaContextValue;
   previewMode?: boolean;
 }) => {
+  const { components } = use(ComponentContext);
+  const {
+    contexts: { PluginsContext }
+  } = usePlitziServiceContext();
+  const { plugins } = use(PluginsContext);
+
   const { items } = definition;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const layoutKeyIdentifier = useMemo(() => Math.round(Math.random() * 100), [plitziElementLayout]);
@@ -45,14 +55,14 @@ const useInternalItems = ({
         const { rootId, type } = get(flat, `${itemId}.definition`, {}) as Element['definition'];
         const finalRootId = get(plitziElementLayout, 'rootId', rootId);
 
-        return (
-          <PluginManager
-            key={!previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId}
-            internalProps={{ id: itemId, rootId: finalRootId }}
-            plitziElementLayout={plitziElementLayout}
-            type={type}
-          />
-        );
+        return pluginSelector({
+          key: !previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId,
+          plitziElementLayout,
+          type,
+          internalProps: { id: itemId, rootId: finalRootId },
+          components: components.current,
+          plugins
+        });
       });
 
     // Process Layout
@@ -100,6 +110,8 @@ const useInternalItems = ({
     prevSchema,
     previewMode,
     layoutKeyIdentifier,
+    components,
+    plugins,
     SchemaContext,
     newSchemaContext
   ]);
