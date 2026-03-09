@@ -22,7 +22,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const pluginsAvailables = useMemo(
     () =>
-      Object.keys(componentDefinitions).filter(
+      Object.keys(componentDefinitions.current).filter(
         type => !['page', 'notFound', 'loading', 'custom', 'blockJsx', 'blockHtml'].includes(type)
       ),
     [componentDefinitions]

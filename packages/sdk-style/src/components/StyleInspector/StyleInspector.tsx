@@ -55,7 +55,7 @@ const StyleInspector = ({
   const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
     () =>
       get(
-        componentDefinitions,
+        componentDefinitions.current,
         `${get(element, 'definition.type', '')}.definition.styleSelectors`,
         {}
       ) as Element['definition']['styleSelectors'],

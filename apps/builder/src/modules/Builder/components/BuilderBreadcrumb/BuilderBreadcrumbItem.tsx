@@ -41,7 +41,10 @@ const BuilderBreadcrumbItem = ({
     [updateElement, id]
   );
 
-  const icon = useMemo(() => get(componentDefinitions, `${type}.market.icon`, ''), [type, componentDefinitions]);
+  const icon = useMemo(
+    () => get(componentDefinitions.current, `${type}.market.icon`, ''),
+    [type, componentDefinitions]
+  );
 
   return (
     <li

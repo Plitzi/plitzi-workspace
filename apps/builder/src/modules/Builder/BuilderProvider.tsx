@@ -120,7 +120,7 @@ const BuilderProvider = ({
         return defaultValue;
       }
 
-      let permissions = get(componentDefinitions, `${type}.content.builder`, {}) as PluginBuilder;
+      let permissions = get(componentDefinitions.current, `${type}.content.builder`, {}) as PluginBuilder;
       if (!path && element.id === baseElementId) {
         permissions = { ...permissions, canDelete: false, canTemplate: false, canMove: false };
       }

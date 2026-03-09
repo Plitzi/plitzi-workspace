@@ -19,7 +19,7 @@ const getDataStyle = (
   styleSelector = 'base',
   isParent = false,
   isSubParent = false,
-  componentDefinitions: { [key: string]: ComponentDefinition } = {}
+  componentDefinitions: Record<string, ComponentDefinition> = {}
 ) => {
   const metadata: { tree: StyleHelperMetaData['tree'] } = { tree: [] };
   if (!element) {
@@ -100,7 +100,7 @@ const calculateInheriting = (
   flat: Schema['flat'],
   platform: Style['platform'],
   styleSelector?: string,
-  componentDefinitions: { [key: string]: ComponentDefinition } = {},
+  componentDefinitions: Record<string, ComponentDefinition> = {},
   skipSelectors: string[] = []
 ) => {
   const metadata: StyleHelperMetaData = { tree: [], style: {}, parentStyle: {} };
