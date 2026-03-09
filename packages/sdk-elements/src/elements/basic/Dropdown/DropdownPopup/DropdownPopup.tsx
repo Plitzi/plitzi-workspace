@@ -1,33 +1,22 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useImperativeHandle } from 'react';
+import { use, useImperativeHandle } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
+import DropdownContext from '../DropdownContext';
 
-import type { RefObject, ReactNode, CSSProperties, MouseEvent } from 'react';
+import type { RefObject, ReactNode } from 'react';
 
 export type DropdownPopupProps = {
-  ref?: RefObject<HTMLElement | null>;
+  ref?: RefObject<HTMLDivElement | null>;
   className?: string;
   children?: ReactNode;
-  // Custom Props
-  onClick: (e: MouseEvent) => void;
-  openPopup?: boolean;
-  parameters?: CSSProperties;
-  popupRef?: RefObject<HTMLElement | null>;
 };
 
-const DropdownPopup = ({
-  ref,
-  className = '',
-  children,
-  onClick,
-  openPopup,
-  parameters,
-  popupRef
-}: DropdownPopupProps) => {
-  useImperativeHandle<HTMLElement, HTMLElement>(ref, () => (popupRef as RefObject<HTMLElement>).current, [popupRef]);
+const DropdownPopup = ({ ref, className = '', children }: DropdownPopupProps) => {
+  const { popupRef, openPopup, parameters, onClick } = use(DropdownContext);
+  useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => popupRef.current ?? null, [popupRef]);
 
   return (
     <RootElement

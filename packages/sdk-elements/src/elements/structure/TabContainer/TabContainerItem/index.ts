@@ -38,7 +38,12 @@ const TabContainerItem = Object.assign(BaseTabContainerItem, {
     defaultStyle: {
       name: 'Tab Container Item',
       displayMode: 'desktop',
-      style: {},
+      style: {
+        base: {
+          'min-width': '50px',
+          'min-height': '50px'
+        }
+      },
       subTypes: {}
     },
     settings: {}

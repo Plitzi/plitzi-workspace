@@ -1,25 +1,24 @@
 .plitzi-component__tab-container {
-  .plitzi-component__tab-container-header {
-    display: flex;
-  }
-
-  .plitzi-component__tab-container-body {
-    .plitzi-component__tab-container-item {
-      display: none;
-
-      &.active {
-        display: block;
-      }
-    }
-  }
+  min-height: 50px;
+  min-width: 50px;
 }
 
-.builder-iframe.builder--display-component-border {
-  .plitzi-component__tab-container {
-    .plitzi-component__tab-container-body {
-      .plitzi-component__tab-container-item {
-        display: block;
-      }
-    }
+.plitzi-component__tab-container-header {
+  min-height: 50px;
+  min-width: 50px;
+}
+
+.plitzi-component__tab-container-body {
+  min-height: 50px;
+  min-width: 50px;
+}
+
+.plitzi-component__tab-container-item {
+  min-height: 50px;
+  min-width: 50px;
+  display: none;
+
+  &.active {
+    display: block;
   }
 }

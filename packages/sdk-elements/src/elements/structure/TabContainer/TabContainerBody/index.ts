@@ -23,7 +23,7 @@ const TabContainerBody = Object.assign(BaseTabContainerBody, {
       canDragDrop: false,
       canMove: false,
       canTemplate: false,
-      itemsAllowed: ['tabContainerHeader', 'tabContainerBody'],
+      itemsAllowed: ['tabContainerItem'],
       itemsNotAllowed: []
     },
     market: {
@@ -33,12 +33,17 @@ const TabContainerBody = Object.assign(BaseTabContainerBody, {
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: ''
+      icon: 'fa-solid fa-table-columns'
     },
     defaultStyle: {
       name: 'Tab Container Body',
       displayMode: 'desktop',
-      style: {},
+      style: {
+        base: {
+          'min-width': '50px',
+          'min-height': '50px'
+        }
+      },
       subTypes: {}
     },
     settings: {}

@@ -319,53 +319,62 @@ const BuilderProvider = ({
         return true;
       }
 
-      try {
-        const dataParsed = data as {
-          id: string;
-          element: Element;
-          variables?: string[];
-        };
-
-        if (
-          !isDragAllowed(toElement, toParentElement, typeArr[1], dropPosition) ||
-          (dataParsed.id === toElement.id && dropPosition === 'inside')
-        ) {
-          return false;
-        }
-
-        if (typeArr[0] === 'move') {
-          const fromParentId = get(dataParsed.element, 'definition.parentId');
-          builderHandler('schemaMoveElement', fromParentId, toElementId, dataParsed.id, dropPosition);
-          setHovered(undefined);
-        } else if ((typeArr[0] as string) === 'add') {
-          const element = {
-            ...pick(dataParsed.element, ['attributes', 'definition']),
-            id: dataParsed.id,
-            definition: { ...dataParsed.element.definition, rootId }
+      if (typeArr[1] === 'plitzi-element') {
+        try {
+          const dataParsed = data as {
+            id: string;
+            element: Element;
+            variables?: string[];
           };
 
-          const initialItems = get(componentDefinitions.current, `${typeArr[1]}.initialItems`, undefined);
-          let itemsToAdd: ReturnType<typeof getInitialItems> = { directItems: {}, items: {} };
-          if (initialItems && initialItems.length > 0) {
-            itemsToAdd = getInitialItems(element.id, initialItems, componentDefinitions.current, baseElementId);
-            set(element, 'definition.items', Object.keys(itemsToAdd.directItems));
+          const type = get(dataParsed, 'element.definition.type', '');
+          if (!type) {
+            return false;
           }
 
-          builderHandler(
-            'schemaAddElement',
-            toElementId,
-            pick(element, ['id', 'attributes', 'definition']),
-            dropPosition,
-            itemsToAdd.items,
-            get(dataParsed, 'variables', [])
-          );
-          setSelected(dataParsed.id, undefined, true);
+          if (
+            !isDragAllowed(toElement, toParentElement, type, dropPosition) ||
+            (dataParsed.id === toElement.id && dropPosition === 'inside')
+          ) {
+            return false;
+          }
+
+          if (typeArr[0] === 'move') {
+            const fromParentId = get(dataParsed.element, 'definition.parentId');
+            builderHandler('schemaMoveElement', fromParentId, toElementId, dataParsed.id, dropPosition);
+            setHovered(undefined);
+          } else if ((typeArr[0] as string) === 'add') {
+            const element = {
+              ...pick(dataParsed.element, ['attributes', 'definition']),
+              id: dataParsed.id,
+              definition: { ...dataParsed.element.definition, rootId }
+            };
+
+            const initialItems = get(componentDefinitions.current, `${type}.initialItems`, undefined);
+            let itemsToAdd: ReturnType<typeof getInitialItems> = { directItems: {}, items: {} };
+            if (initialItems && initialItems.length > 0) {
+              itemsToAdd = getInitialItems(element.id, initialItems, componentDefinitions.current, baseElementId);
+              set(element, 'definition.items', Object.keys(itemsToAdd.directItems));
+            }
+
+            builderHandler(
+              'schemaAddElement',
+              toElementId,
+              pick(element, ['id', 'attributes', 'definition']),
+              dropPosition,
+              itemsToAdd.items,
+              get(dataParsed, 'variables', [])
+            );
+            setSelected(dataParsed.id, undefined, true);
+          }
+
+          return true;
+        } catch {
+          return false;
         }
-      } catch {
-        return false;
       }
 
-      return true;
+      return false;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [getElement, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]

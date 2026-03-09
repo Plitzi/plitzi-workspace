@@ -1,22 +1,22 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { Children, cloneElement, isValidElement, useMemo } from 'react';
+import { Children, cloneElement, isValidElement, use, useMemo } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
+import TabContainerContext from '../TabContainerContext';
 
-import type { Dispatch, ReactElement, ReactNode, RefObject, SetStateAction } from 'react';
+import type { ReactElement, ReactNode, RefObject } from 'react';
 
 export type TabContainerHeaderProps = {
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
-  // Custom Props
-  tabSelected?: number;
-  onSelect?: Dispatch<SetStateAction<number>>;
 };
 
-const TabContainerHeader = ({ ref, className = '', tabSelected, children, onSelect }: TabContainerHeaderProps) => {
+const TabContainerHeader = ({ ref, className = '', children }: TabContainerHeaderProps) => {
+  const { tabSelected, onSelect } = use(TabContainerContext);
+
   const { childrenParsed } = useMemo(() => {
     const components: { childrenParsed: ReactNode[] } = { childrenParsed: [] };
     Children.forEach(children, (child, i: number) => {
@@ -28,7 +28,13 @@ const TabContainerHeader = ({ ref, className = '', tabSelected, children, onSele
       components.childrenParsed.push(
         cloneElement<Record<string, unknown>>(child as ReactElement<Record<string, unknown>>, {
           ...childProps,
-          internalProps: { isHeader: true, onSelect, tabSelected, tabIndex: i }
+          internalProps: {
+            ...(childProps.internalProps as Record<string, unknown>),
+            isHeader: true,
+            onSelect,
+            tabSelected,
+            tabIndex: i
+          }
         })
       );
     });

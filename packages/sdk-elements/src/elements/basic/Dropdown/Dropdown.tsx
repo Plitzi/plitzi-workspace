@@ -1,16 +1,16 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { Children, cloneElement, isValidElement, useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import DropdownContext from './DropdownContext';
 import useDropdown from './useDropdown';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { InternalPropsSTG0 } from '@plitzi/sdk-shared';
-import type { MouseEvent, ReactElement, ReactNode, RefObject } from 'react';
+import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type DropdownProps = {
   ref?: RefObject<HTMLDivElement | null>;
@@ -40,7 +40,6 @@ const Dropdown = ({
   disabled = false
 }: DropdownProps) => {
   const {
-    id,
     setElementState,
     definition: { styleSelectors }
   } = useElement();
@@ -85,45 +84,18 @@ const Dropdown = ({
     onChange: handleOpenChange
   });
 
-  const { options, childrenParsed } = useMemo(() => {
-    const components: { options: ReactNode[]; childrenParsed: ReactNode[] } = {
-      options: [],
-      childrenParsed: []
-    };
-    Children.forEach(children, (child, i) => {
-      if (!isValidElement(child)) {
-        return;
-      }
-
-      const childProps = child.props as { type: string; [key: string]: unknown; internalProps: InternalPropsSTG0 };
-      if (childProps.type === 'dropdownPopup') {
-        components.options.push(
-          cloneElement(child as ReactElement<InternalPropsSTG0>, {
-            ...childProps,
-            internalProps: { ...childProps.internalProps, onClick: handleClickPopup, openPopup, parameters, popupRef },
-            key: `${id}-${i}`
-          })
-        );
-      } else {
-        components.childrenParsed.push(
-          cloneElement(child as ReactElement<InternalPropsSTG0>, { ...childProps, key: `${id}-${i}` })
-        );
-      }
-    });
-
-    return components;
-  }, [children, handleClickPopup, id, openPopup, parameters]);
+  const dropdownContext = useMemo(
+    () => ({ popupRef, openPopup, parameters, onClick: handleClickPopup }),
+    [handleClickPopup, openPopup, parameters]
+  );
 
   return (
     <RootElement
       ref={ref}
-      className={clsx('plitzi-component__dropdown', className, {
-        'container--empty--skip': !previewMode && !children
-      })}
+      className={clsx('plitzi-component__dropdown', className, { 'container--empty--skip': !previewMode && !children })}
       onClick={handleClick}
     >
-      {childrenParsed}
-      {options}
+      <DropdownContext value={dropdownContext}>{children}</DropdownContext>
       {openPopup && backgroundDisabled && previewMode && (
         <div
           ref={backgroundContainerRef}
