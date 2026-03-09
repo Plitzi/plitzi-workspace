@@ -6,7 +6,6 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useState, useCallback, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -31,16 +30,14 @@ const AppHeader = () => {
   const { eventBridge } = use(EventBridgeContext);
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
   const queueProcessing = use(QueueStatusContext);
-  const { currentPageId } = use(NavigationContext);
   const { previewMode, setPreviewMode } = use(AppContext);
   const [loadingDeployment, setLoadingDeployment] = useState(false);
   const { subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
 
   const handleClickPreviewMode = useCallback(() => {
-    void eventBridge.emit('builder', 'builderSetBaseContext', currentPageId);
     void eventBridge.emit('builder', 'builderSetSelected', null);
     setPreviewMode(state => !state);
-  }, [currentPageId, eventBridge, setPreviewMode]);
+  }, [eventBridge, setPreviewMode]);
 
   const handleClickPublish = useCallback(async () => {
     const response = await showModal<{ environment: string; description: string }>(
