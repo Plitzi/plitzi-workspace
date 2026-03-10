@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-elements",
-  "version": "0.28.13",
+  "version": "0.28.14",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
@@ -73,6 +73,10 @@
     "./Element/helpers/parseStyle": {
       "types": "./dist/src/Element/helpers/parseStyle.d.ts",
       "import": "./dist/src/Element/helpers/parseStyle.mjs"
+    },
+    "./Element/helpers/pluginSelector": {
+      "types": "./dist/src/Element/helpers/pluginSelector.d.ts",
+      "import": "./dist/src/Element/helpers/pluginSelector.mjs"
     },
     "./Element/hocs/withElement": {
       "types": "./dist/src/Element/hocs/withElement.d.ts",
@@ -221,6 +225,10 @@
     "./elements/basic/Dropdown/Dropdown": {
       "types": "./dist/src/elements/basic/Dropdown/Dropdown.d.ts",
       "import": "./dist/src/elements/basic/Dropdown/Dropdown.mjs"
+    },
+    "./elements/basic/Dropdown/DropdownContext": {
+      "types": "./dist/src/elements/basic/Dropdown/DropdownContext.d.ts",
+      "import": "./dist/src/elements/basic/Dropdown/DropdownContext.mjs"
     },
     "./elements/basic/Dropdown/DropdownPopup": {
       "types": "./dist/src/elements/basic/Dropdown/DropdownPopup/index.d.ts",
@@ -669,6 +677,10 @@
     "./elements/structure/TabContainer/TabContainerBody/index": {
       "types": "./dist/src/elements/structure/TabContainer/TabContainerBody/index.d.ts",
       "import": "./dist/src/elements/structure/TabContainer/TabContainerBody/index.mjs"
+    },
+    "./elements/structure/TabContainer/TabContainerContext": {
+      "types": "./dist/src/elements/structure/TabContainer/TabContainerContext.d.ts",
+      "import": "./dist/src/elements/structure/TabContainer/TabContainerContext.mjs"
     },
     "./elements/structure/TabContainer/TabContainerHeader": {
       "types": "./dist/src/elements/structure/TabContainer/TabContainerHeader/index.d.ts",
