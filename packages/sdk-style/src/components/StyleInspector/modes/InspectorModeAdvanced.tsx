@@ -13,7 +13,7 @@ import { processSelectorsMultiLine } from '../../../helpers';
 import { cssToSelectors, getReadOnlyRangesFromContent } from '../../../helpers/formatCssFromSelector';
 
 import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
-import type { DisplayMode, StyleBaseItem, StyleItem, StyleVariableCategory, StyleVariables } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleItem, StyleVariableCategory, StyleVariables } from '@plitzi/sdk-shared';
 
 export type InspectorModeAdvancedProps = {
   selectors: StyleItem[];
@@ -57,7 +57,7 @@ const InspectorModeAdvanced = ({ selectors, displayMode, styleVariables }: Inspe
 
       const newSelectors = cssToSelectors(currentState);
       selectorsRef.current.forEach(selectorItem => {
-        const newSelector = newSelectors[selectorItem.name] as StyleBaseItem | undefined;
+        const newSelector = newSelectors[selectorItem.name] as StyleItem | undefined;
         if (newSelector && !deepEqual(selectorItem.attributes, newSelector.attributes)) {
           builderHandler(
             'styleUpdateSelector',

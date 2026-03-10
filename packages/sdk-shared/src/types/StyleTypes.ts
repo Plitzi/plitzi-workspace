@@ -30,14 +30,13 @@ export type StyleVariables = Record<StyleVariableCategory, StyleVariableGroup>;
 
 // End Themes/Variables
 
-export type StyleBaseItem = {
+export type StyleItem = {
   name: string;
+  type: TagType;
   attributes: Partial<Record<StyleCategory, StyleValue>>;
   variables?: Partial<StyleVariables>;
   cache: string;
 };
-
-export type StyleItem = StyleBaseItem & { type: TagType };
 
 export type StylePlatform = Record<DisplayMode, Record<string, StyleItem>>;
 
