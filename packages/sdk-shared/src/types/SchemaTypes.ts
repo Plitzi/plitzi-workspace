@@ -46,7 +46,7 @@ export type ElementDefinition = {
   type: string;
   parentId?: Element['id'];
   items?: Element['id'][];
-  styleSelectors: { base: string } & Omit<{ [key: string]: string }, 'base'>;
+  styleSelectors: { base: string } & Omit<Record<string, string>, 'base'>;
   bindings?: Partial<Record<BindingCategory, ElementBinding[]>>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
