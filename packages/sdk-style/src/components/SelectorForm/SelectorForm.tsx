@@ -1,53 +1,97 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Flex from '@plitzi/plitzi-ui/Flex';
-import Form, { useForm } from '@plitzi/plitzi-ui/Form';
+import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
+import { capitalize } from '@plitzi/plitzi-ui/helpers/lodash';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
-import type { MouseEvent } from 'react';
+import type { ComponentPluginWithHOC } from '@plitzi/sdk-shared';
+
+const selectorFormSchema = z.discriminatedUnion('mode', [
+  z.object({
+    name: z
+      .string()
+      .min(3)
+      .regex(/^([a-zA-Z.#]{1}([a-zA-Z0-9\-_.#: ]+)?)$/i, {
+        message: 'Name only can be letters, numbers and _ -'
+      }),
+    mode: z.literal('default')
+  }),
+  z.object({
+    mode: z.literal('component'),
+    componentType: z.string()
+  })
+]);
+
+export type SelectorFormValues = z.infer<typeof selectorFormSchema>;
 
 export type SelectorFormProps = {
-  className?: string;
-  onClose?: (e?: MouseEvent) => void | Promise<void>;
-  onSubmit?: (e: MouseEvent | undefined, values: { name: string }) => void | Promise<void>;
+  name?: string;
+  mode?: 'default' | 'component';
+  componentType?: string;
+  components: Record<string, ComponentPluginWithHOC>;
+  onClose?: () => void | Promise<void>;
+  onSubmit?: (e: MouseEvent | undefined, values: SelectorFormValues) => void | Promise<void>;
 };
 
-const SelectorForm = ({ className = '', onClose, onSubmit }: SelectorFormProps) => {
-  const schema = useMemo(
+const SelectorForm = ({
+  name = '',
+  mode = 'default',
+  componentType = '',
+  components,
+  onClose,
+  onSubmit
+}: SelectorFormProps) => {
+  const form = useForm({
+    defaultValues: { name, mode, componentType },
+    config: { schema: selectorFormSchema }
+  });
+  const watchMode = useFormWatch(form.formMethods, 'mode');
+  const componentOptions = useMemo(
     () =>
-      z.object({
-        name: z
-          .string()
-          .min(3, { message: 'Too Short' })
-          .max(20, { message: 'Too Long' })
-          .regex(/^([a-zA-Z.#]{1}([a-zA-Z0-9\-_.#: ]+)?)$/i, {
-            message: 'Slug only can be letters, numbers and _ -'
-          })
-      }),
-    []
+      Object.keys(components).map(componentType => (
+        <option key={componentType} value={componentType}>
+          {capitalize(componentType.replace(/([a-z0-9])([A-Z])/g, '$1 $2'))}
+        </option>
+      )),
+    [components]
   );
-  const form = useForm({ defaultValues: { name: '' }, config: { schema } });
 
-  const handleClickCancel = useCallback((e: MouseEvent) => void onClose?.(e), [onClose]);
+  const handleChangeMode = useCallback(
+    (mode: string) => {
+      if (mode !== 'component') {
+        form.formMethods.setValue('componentType', '');
+      }
+    },
+    [form.formMethods]
+  );
 
   const handleSubmitInternal = useCallback(
-    (values: z.infer<typeof schema>) => onSubmit?.(undefined, values),
+    (values: z.infer<typeof selectorFormSchema>) => onSubmit?.(undefined, values),
     [onSubmit]
   );
 
   return (
-    <Form className={className} form={form} onSubmit={handleSubmitInternal}>
+    <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
-        <Form.Input name="name" label="Name" placeholder="Name" size="xs" />
-        <Flex gap={3} justify="end">
-          <Button onClick={handleClickCancel} size="sm">
-            Cancel
-          </Button>
-          <Button type="submit" size="sm">
-            Submit
-          </Button>
-        </Flex>
+        <Form.Select name="mode" label="Mode" onChange={handleChangeMode} size="xs">
+          <option value="default">Default</option>
+          <option value="component">Component</option>
+        </Form.Select>
+        {watchMode === 'default' && <Form.Input name="name" label="Name" size="xs" />}
+        {watchMode === 'component' && (
+          <Form.Select name="componentType" label="Component Type" size="xs">
+            {componentOptions}
+          </Form.Select>
+        )}
       </Form.Body>
+      <Form.Footer justify="end">
+        <Button onClick={onClose} size="sm">
+          Cancel
+        </Button>
+        <Button type="submit" size="sm">
+          Submit
+        </Button>
+      </Form.Footer>
     </Form>
   );
 };

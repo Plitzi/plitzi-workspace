@@ -71,7 +71,8 @@ const SelectorItem = ({
         'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1 text-white select-none',
         className,
         {
-          'bg-secondary-400': active,
+          'bg-primary-400': type === 'class-component' && active,
+          'bg-secondary-400': type !== 'class-component' && active,
           'bg-gray-500': !active,
           'max-w-full min-w-0': !editable
         }

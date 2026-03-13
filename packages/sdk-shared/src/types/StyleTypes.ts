@@ -1,6 +1,6 @@
 import type styleConstants from '../style/styleConstants';
 
-export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
+export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent' | 'class-component';
 
 export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -33,10 +33,12 @@ export type StyleVariables = Record<StyleVariableCategory, StyleVariableGroup>;
 export type StyleItem = {
   name: string;
   type: TagType;
-  attributes: Partial<Record<StyleCategory, StyleValue>>;
   variables?: Partial<StyleVariables>;
   cache: string;
-};
+} & (
+  | { type: Exclude<TagType, 'class-component'>; attributes: Partial<Record<StyleCategory, StyleValue>> }
+  | { type: 'class-component'; attributes: Record<string, Record<StyleCategory, StyleValue>>; componentType: string }
+);
 
 export type StylePlatform = Record<DisplayMode, Record<string, StyleItem>>;
 

@@ -8,10 +8,12 @@ import { useCallback, use, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import StyleSelectorTag from './StyleSelectorTag';
 import SelectorForm from '../SelectorForm';
 
+import type { SelectorFormValues } from '../SelectorForm';
 import type { Element, StyleItem } from '@plitzi/sdk-shared';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -26,6 +28,8 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const [searchInput, setSearchInput] = useState('');
   const { builderHandler } = use(BuilderContext);
   const { displayMode } = use(BuilderStyleContext);
+  const { components } = use(ComponentContext);
+
   const finalSelectors = useMemo(() => {
     if (!isEmpty(searchInput)) {
       return selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
@@ -37,16 +41,23 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
 
   const handleCloseAddSelector = useCallback(
-    (_e: MouseEvent | React.MouseEvent | undefined, values?: { name: string }) => {
-      if (values) {
+    (_e: MouseEvent | React.MouseEvent | undefined, values?: SelectorFormValues) => {
+      if (!values) {
+        return;
+      }
+
+      if (values.mode === 'default') {
         const { name } = values;
         builderHandler('styleAddSelector', displayMode, name, 'class');
+      } else {
+        console.log('PENDING');
+        // builderHandler('styleAddSelector', displayMode, name, 'class-component');
       }
     },
     [builderHandler, displayMode]
   );
 
-  const [idAddSelector, openAddSelector, onOpenAddSelector, onCloseAddSelector] = useDisclosure<{ name: string }>({
+  const [idAddSelector, openAddSelector, onOpenAddSelector, onCloseAddSelector] = useDisclosure<SelectorFormValues>({
     id: 'add-selector',
     onClose: handleCloseAddSelector
   });
@@ -153,7 +164,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           <h4>Add Selector</h4>
         </Modal.Header>
         <Modal.Body>
-          <SelectorForm onSubmit={onCloseAddSelector} onClose={onCloseAddSelector} />
+          <SelectorForm components={components.current} onSubmit={onCloseAddSelector} onClose={onCloseAddSelector} />
         </Modal.Body>
       </Modal>
       <Modal id={idDeleteSelector} open={openDeleteSelector} onClose={onCloseDeleteSelector}>

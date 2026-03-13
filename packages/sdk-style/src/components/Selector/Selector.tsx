@@ -19,7 +19,7 @@ export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
 export type SelectorProps = {
   className?: string;
   value?: string;
-  selectorSelected?: Pick<StyleItem, 'name' | 'type'>;
+  selector?: Pick<StyleItem, 'name' | 'type'>;
   displayMode: DisplayMode;
   disabled?: boolean;
   style: Style;
@@ -32,7 +32,7 @@ export type SelectorProps = {
 const Selector = ({
   className = '',
   value = '',
-  selectorSelected,
+  selector: selectorProp,
   displayMode,
   disabled = false,
   style,
@@ -43,7 +43,6 @@ const Selector = ({
 }: SelectorProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState('');
-  // const [popupOpened, setPopupOpened] = useState(false);
   const [open, setOpen, , triggerRef, triggerRect] = useFloating({ disabled });
   const { existsPopup, addPopup } = usePopup('floating');
   const tags = useMemo<SelectorValue[]>(
@@ -115,7 +114,7 @@ const Selector = ({
         case 'delete': {
           const finalTags = tags.filter((_tag, i) => i !== position);
           const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
-          if (selectorSelected && tags[position].name === selectorSelected.name) {
+          if (selectorProp && tags[position].name === selectorProp.name) {
             onSelectorSelected?.(get(finalTags, '0'));
           }
 
@@ -146,7 +145,7 @@ const Selector = ({
           break;
       }
     },
-    [tags, selectorSelected, onChange, onSelectorSelected, onAdd, onRemove]
+    [tags, selectorProp, onChange, onSelectorSelected, onAdd, onRemove]
   );
 
   const handleKeyDown = useCallback(
@@ -272,7 +271,7 @@ const Selector = ({
               key={`${i}_${tag.name}`}
               selector={tag.name}
               type={tag.type}
-              active={tag.name === selectorSelected?.name.replace(/:.*/, '')}
+              active={tag.name === selectorProp?.name.replace(/:.*/, '')}
               onAction={handleClickAction(i)}
               onClick={handleClickSelector}
               onChange={handleChangeItem(i)}
