@@ -18,6 +18,10 @@
       "types": "./dist/src/StyleContext.d.ts",
       "import": "./dist/src/StyleContext.mjs"
     },
+    "./StyleContextProvider": {
+      "types": "./dist/src/StyleContextProvider.d.ts",
+      "import": "./dist/src/StyleContextProvider.mjs"
+    },
     "./StyleHelper": {
       "types": "./dist/src/StyleHelper.d.ts",
       "import": "./dist/src/StyleHelper.mjs"

@@ -7,7 +7,7 @@ import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import StyleInspectorContext from '../StyleInspectorContext';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
-import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseInspectorValuesProps<TAsValue extends boolean> = {
   keys?: StyleCategory[];
@@ -46,7 +46,12 @@ const useInspectorValues = <TAsValue extends boolean>({
     ({ inheritData, bindingData, selector, variables } = use(StyleInspectorContext));
   }
 
-  const { attributes } = useMemo(() => selector ?? ({ attributes: {} } as StyleItem), [selector]);
+  let attributes: Partial<Record<StyleCategory, StyleValue>>;
+  if (selector?.type === 'class-component') {
+    attributes = selector.attributes['base'];
+  } else {
+    attributes = selector?.attributes ?? {};
+  }
 
   const hasInherit = useMemo(
     () =>

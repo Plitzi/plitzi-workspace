@@ -1,19 +1,20 @@
-import { useMemo } from 'react';
+import { use, useMemo } from 'react';
 
 import CollectionContextProvider from '@modules/Collection/CollectionContextProvider';
 import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
 import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
+import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import Sdk from '@modules/Sdk';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
-import StyleContextProvider from '@modules/Style/StyleContextProvider';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
+import StyleContextProvider from '@plitzi/sdk-style/StyleContextProvider';
 
 import type {
   Environment,
@@ -72,6 +73,7 @@ const AppMain = ({
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
+  const { style } = use(NetworkInternalContext);
   const childrenMemo = useMemo(
     () => (
       <NetworkContextProvider
@@ -90,7 +92,7 @@ const AppMain = ({
         <SchemaContextProvider>
           <CollectionContextProvider>
             <PluginsContextProvider renderMode={renderMode} sdkStylePath={sdkStylePath}>
-              <StyleContextProvider>
+              <StyleContextProvider style={style}>
                 <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
                   <SegmentsContextProvider>
                     <AuthContextProvider
@@ -144,6 +146,7 @@ const AppMain = ({
       debugMode,
       renderMode,
       sdkStylePath,
+      style,
       onInitEventBridge,
       previewMode,
       isHydrating,
