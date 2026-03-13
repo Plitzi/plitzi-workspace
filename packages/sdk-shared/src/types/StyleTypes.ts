@@ -37,7 +37,11 @@ export type StyleItem = {
   cache: string;
 } & (
   | { type: Exclude<TagType, 'class-component'>; attributes: Partial<Record<StyleCategory, StyleValue>> }
-  | { type: 'class-component'; attributes: Record<string, Record<StyleCategory, StyleValue>>; componentType: string }
+  | {
+      type: 'class-component';
+      attributes: Record<string, Partial<Record<StyleCategory, StyleValue>>>;
+      componentType: string;
+    }
 );
 
 export type StylePlatform = Record<DisplayMode, Record<string, StyleItem>>;
