@@ -14,7 +14,7 @@ import type { TInitQuery } from './InitQuery';
 import type { TSegmentQuery } from './Segment/SegmentQuery';
 import type { TSegmentsQuery } from './Segment/SegmentsQuery';
 
-export type QueriesMap = {
+export type SdkQueriesMap = {
   Init: TInitQuery;
   Collection: TCollectionQuery;
   Collections: TCollectionsQuery;
@@ -24,7 +24,7 @@ export type QueriesMap = {
   Segments: TSegmentsQuery;
 };
 
-const Queries = {
+const SdkQueries = {
   Init: InitQuery,
   Collection: CollectionQuery,
   Collections: CollectionsQuery,
@@ -34,4 +34,4 @@ const Queries = {
   Segments: SegmentsQuery
 };
 
-export default Queries;
+export default SdkQueries;

@@ -1,7 +1,7 @@
-import Mutations from './Mutations';
-import Queries from './Queries';
+import SdkMutations from './Mutations';
+import SdkQueries from './Queries';
 
 export * from './Queries';
 export * from './Mutations';
 
-export { Queries, Mutations };
+export { SdkQueries, SdkMutations };

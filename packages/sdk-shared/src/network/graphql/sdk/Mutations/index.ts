@@ -6,16 +6,16 @@ import type { TCollectionAddRecordMutation } from './Collection/CollectionAddRec
 import type { TCollectionRemoveRecordMutation } from './Collection/CollectionRemoveRecordMutation';
 import type { TCollectionUpdateRecordMutation } from './Collection/CollectionUpdateRecordMutation';
 
-export type MutationsMap = {
+export type SdkMutationsMap = {
   CollectionAddRecord: TCollectionAddRecordMutation;
   CollectionUpdateRecord: TCollectionUpdateRecordMutation;
   CollectionRemoveRecord: TCollectionRemoveRecordMutation;
 };
 
-const Mutations = {
+const SdkMutations = {
   CollectionAddRecord: CollectionAddRecordMutation,
   CollectionUpdateRecord: CollectionUpdateRecordMutation,
   CollectionRemoveRecord: CollectionRemoveRecordMutation
 };
 
-export default Mutations;
+export default SdkMutations;

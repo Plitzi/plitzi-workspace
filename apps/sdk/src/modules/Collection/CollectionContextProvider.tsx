@@ -5,7 +5,13 @@ import CollectionReducer, { CollectionsActions } from '@plitzi/sdk-collections/C
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { Collection, CollectionRecord, NetworkContextValue, QueriesMap, MutationsMap } from '@plitzi/sdk-shared';
+import type {
+  Collection,
+  CollectionRecord,
+  NetworkContextValue,
+  SdkQueriesMap,
+  SdkMutationsMap
+} from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type CollectionContextProviderProps = {
@@ -14,7 +20,7 @@ export type CollectionContextProviderProps = {
 };
 
 const CollectionContextProvider = ({ children, collections: collectionsProp }: CollectionContextProviderProps) => {
-  const { query, mutate } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { query, mutate } = use(NetworkContext) as NetworkContextValue<SdkQueriesMap, SdkMutationsMap>;
   const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
     if (collectionsProp) {
