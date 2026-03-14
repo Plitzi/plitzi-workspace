@@ -5,8 +5,7 @@ import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalCon
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 
-import type { QueriesMap } from '@modules/Network/Queries';
-import type { NetworkContextValue, Segment } from '@plitzi/sdk-shared';
+import type { QueriesMap, NetworkContextValue, Segment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type SegmentsContextProviderProps = {

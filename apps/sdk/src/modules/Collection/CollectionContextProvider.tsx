@@ -5,9 +5,7 @@ import CollectionReducer, { CollectionsActions } from '@plitzi/sdk-collections/C
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { MutationsMap } from '@modules/Network/Mutations';
-import type { QueriesMap } from '@modules/Network/Queries';
-import type { Collection, CollectionRecord, NetworkContextValue } from '@plitzi/sdk-shared';
+import type { Collection, CollectionRecord, NetworkContextValue, QueriesMap, MutationsMap } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type CollectionContextProviderProps = {

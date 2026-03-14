@@ -3,9 +3,9 @@ import { createContext } from 'react';
 
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { StyleReducerActions } from '@plitzi/sdk-Style/StyleReducer';
 import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
-import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
 import type { ActionDispatch } from 'react';
 
 export type QueueItem<TState = any, TDispatchAction = any> = {

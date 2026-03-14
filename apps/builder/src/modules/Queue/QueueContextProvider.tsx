@@ -7,9 +7,9 @@ import QueueContext from './QueueContext';
 import QueueStatusContext from './QueueStatusContext';
 
 import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { StyleReducerActions } from '@plitzi/sdk-Style/StyleReducer';
 import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
-import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
 import type { ActionDispatch, ReactNode } from 'react';
 
 export type QueueContextProviderProps = {

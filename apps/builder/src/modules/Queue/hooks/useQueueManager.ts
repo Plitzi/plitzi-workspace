@@ -2,18 +2,18 @@ import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
+import { StyleActions } from '@plitzi/sdk-Style/StyleReducer';
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
-import { StyleActions } from '@pmodules/Style/StyleReducer';
 
 import type { QueueItem, QueuePriority } from '../QueueContext';
 import type { Element, Schema, SchemaVariable, Segment, Style } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { StyleReducerActions } from '@plitzi/sdk-Style/StyleReducer';
 import type { MutationsMap } from '@pmodules/Network/Mutations';
 import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
-import type { StyleReducerActions } from '@pmodules/Style/StyleReducer';
 
 export type UseQueueManagerProps = {
   delay?: number;

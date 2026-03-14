@@ -4,16 +4,21 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
+import { Queries, Mutations } from '@plitzi/sdk-shared/network/graphql/sdk';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import NetworkInternalContext from './contexts/NetworkInternalContext';
-import Mutations from './Mutations';
-import Queries from './Queries';
 
-import type { MutationsMap } from './Mutations';
-import type { QueriesMap } from './Queries';
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
-import type { Environment, OfflineData, OfflineDataRaw, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  OfflineData,
+  OfflineDataRaw,
+  Server,
+  ServerEnvironment,
+  QueriesMap,
+  MutationsMap
+} from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 

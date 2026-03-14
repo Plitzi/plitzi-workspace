@@ -3810,6 +3810,7 @@ __metadata:
     eslint-plugin-react-refresh: "npm:^0.5.2"
     eslint-plugin-storybook: "npm:^10.2.16"
     globals: "npm:^17.4.0"
+    graphql-tag: "npm:^2.12.6"
     jest-environment-jsdom: "npm:^30.2.0"
     postcss: "npm:^8.5.8"
     prettier: "npm:^3.8.1"

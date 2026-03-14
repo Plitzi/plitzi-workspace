@@ -2,6 +2,7 @@ import StateManagerIcon from '@plitzi/plitzi-ui/icons/StateManager';
 import Variable from '@plitzi/plitzi-ui/icons/Variable';
 import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 
+import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Collections from '@pmodules/Collection/Collections';
 import Elements from '@pmodules/Elements';
@@ -9,7 +10,6 @@ import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
 import StateManager from '@pmodules/StateManager/StateManager';
-import StyleAdvanceEditor from '@pmodules/Style/StyleAdvanceEditor';
 import Variables from '@pmodules/Variables';
 
 import { featureFlag } from '../../../config';
