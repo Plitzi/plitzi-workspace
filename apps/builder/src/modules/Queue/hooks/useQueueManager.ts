@@ -7,17 +7,23 @@ import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
 import type { QueueItem, QueuePriority } from '../QueueContext';
-import type { Element, Schema, SchemaVariable, Segment, Style } from '@plitzi/sdk-shared';
+import type {
+  BuilderMutationsMap,
+  BuilderQueriesMap,
+  Element,
+  Schema,
+  SchemaVariable,
+  Segment,
+  Style
+} from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { StyleReducerActions } from '@plitzi/sdk-Style/StyleReducer';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 
 export type UseQueueManagerProps = {
   delay?: number;
-  mutate: NetworkContextValue<QueriesMap, MutationsMap>['mutate'];
+  mutate: NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>['mutate'];
   maxRetries?: number;
   retryTimeout?: number;
   disabled?: boolean;
@@ -182,8 +188,24 @@ const useQueueManager = ({
 
         case StyleActions.STYLE_ADD_SELECTOR: {
           const { displayMode, selector, selectorType, path, value } = item.action;
+          if (item.action.selectorType === 'class-component') {
+            return mutate('StyleAddSelector', {
+              displayMode,
+              selector,
+              type: selectorType,
+              path,
+              style: value,
+              params: item.action.params
+            });
+          }
 
-          return mutate('StyleAddSelector', { displayMode, selector, type: selectorType, path, style: value });
+          return mutate('StyleAddSelector', {
+            displayMode,
+            selector,
+            type: selectorType,
+            path,
+            style: value
+          });
         }
 
         case StyleActions.STYLE_UPDATE_SELECTOR: {

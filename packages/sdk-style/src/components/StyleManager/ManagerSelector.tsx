@@ -1,5 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers';
+import { get, set, isEmpty, capitalize } from '@plitzi/plitzi-ui/helpers/lodash';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
@@ -11,9 +11,9 @@ import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyl
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import StyleSelectorTag from './StyleSelectorTag';
-import SelectorForm from '../SelectorForm';
+import SelectorForm from '../../models/SelectorForm';
 
-import type { SelectorFormValues } from '../SelectorForm';
+import type { SelectorFormValues } from '../../models/SelectorForm';
 import type { Element, StyleItem } from '@plitzi/sdk-shared';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -50,8 +50,16 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
         const { name } = values;
         builderHandler('styleAddSelector', displayMode, name, 'class');
       } else {
-        console.log('PENDING');
-        // builderHandler('styleAddSelector', displayMode, name, 'class-component');
+        const { componentType } = values;
+        builderHandler(
+          'styleAddSelector',
+          displayMode,
+          capitalize(componentType),
+          'class-component',
+          undefined,
+          undefined,
+          { componentType }
+        );
       }
     },
     [builderHandler, displayMode]

@@ -14,13 +14,13 @@ import PublishForm from './models/PublishForm';
 import SegmentForm from './models/SegmentForm';
 
 import type {
+  BuilderMutationsMap,
   BuilderNetworkContextValue,
+  BuilderQueriesMap,
   SchemaVariable,
   SegmentsContextValue,
   Segment as TSegment
 } from '@plitzi/sdk-shared';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { MouseEvent } from 'react';
 
 export type SegmentProps = {
@@ -44,7 +44,7 @@ const Segment = ({
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
   const { segmentGet, segmentsRemove, segmentsUpdate } = use(SegmentsContext) as SegmentsContextValue<'builder'>;
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const { onDragStart } = useDragElement({
     type: 'reference',
     attributes: { referenceType: 'segment', referenceId: identifier },

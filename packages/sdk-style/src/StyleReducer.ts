@@ -2,7 +2,8 @@ import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
-import StyleMap from '@plitzi/sdk-style/StyleMap';
+
+import StyleMap from './StyleMap';
 
 import type {
   DisplayMode,
@@ -33,14 +34,25 @@ export type StyleReducerActionsBase = { fromSubscriptions?: boolean };
 export type StyleReducerActions = StyleReducerActionsBase &
   (
     | { type: 'STYLE_UPDATE'; style: Style }
-    | {
-        type: 'STYLE_ADD_SELECTOR';
-        displayMode: DisplayMode;
-        selector: string;
-        path: string;
-        selectorType: TagType;
-        value: StyleItem['attributes'];
-      }
+    | (
+        | {
+            type: 'STYLE_ADD_SELECTOR';
+            displayMode: DisplayMode;
+            selector: string;
+            path: string;
+            selectorType: Exclude<TagType, 'class-component'>;
+            value: StyleItem['attributes'];
+          }
+        | {
+            type: 'STYLE_ADD_SELECTOR';
+            displayMode: DisplayMode;
+            selector: string;
+            path: string;
+            selectorType: 'class-component';
+            value: StyleItem['attributes'];
+            params: { componentType: string };
+          }
+      )
     | {
         type: 'STYLE_UPDATE_SELECTOR';
         displayMode: DisplayMode;
@@ -88,7 +100,15 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
       const { displayMode, selector, path, selectorType = 'class', value } = action;
 
       return produce(state, draft => {
-        if (StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value)) {
+        if (
+          action.selectorType === 'class-component' &&
+          StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value, action.params)
+        ) {
+          set(draft, 'cache', generateCache(draft));
+        } else if (
+          action.selectorType !== 'class-component' &&
+          StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value)
+        ) {
           set(draft, 'cache', generateCache(draft));
         }
       });

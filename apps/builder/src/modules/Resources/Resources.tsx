@@ -11,12 +11,11 @@ import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import ResourcesCdn from './components/ResourcesCdn';
 import ResourceCdnForm from './Models/ResourceCdnForm';
 
+import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 
 const Resources = () => {
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const { showModal } = useModal();
   const { data, isLoading, mutate: mutateCdns } = useGraphQL('SpaceCdns');
 

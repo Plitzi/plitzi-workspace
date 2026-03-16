@@ -9,10 +9,14 @@ import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalCo
 
 import PluginsReducer from './PluginsReducer';
 
-import type { ComponentDefinition, Asset, ComponentPlugin } from '@plitzi/sdk-shared';
+import type {
+  ComponentDefinition,
+  Asset,
+  ComponentPlugin,
+  BuilderQueriesMap,
+  BuilderMutationsMap
+} from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
 
 export type PluginsContextProviderProps = {
@@ -31,7 +35,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   }, [internalData.plugins, pluginsProp]);
   const [plugins, dispatchPlugins] = useReducer(PluginsReducer, pluginsPropMemo);
   const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
-  const { mutate, query } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate, query } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const { components, registerDefinition, unregisterDefinition, unregister } = use(ComponentContext);
 
   const pluginsAdd = useCallback(

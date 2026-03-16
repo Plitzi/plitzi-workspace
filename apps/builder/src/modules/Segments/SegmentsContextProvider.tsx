@@ -28,12 +28,12 @@ import type {
   StyleItem,
   SegmentsContextValue,
   StyleVariableCategory,
-  StyleVariableValue
+  StyleVariableValue,
+  BuilderQueriesMap,
+  BuilderMutationsMap,
+  BuilderSubscriptionsMap
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
-import type { SubscriptionsMap } from '@pmodules/Network/Subscriptions';
 import type { ReactNode } from 'react';
 
 export type SegmentsContextProviderProps = {
@@ -48,9 +48,9 @@ const SegmentsContextProvider = ({
   includeSubscriptions = true
 }: SegmentsContextProviderProps) => {
   const { query, mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
-    QueriesMap,
-    MutationsMap,
-    SubscriptionsMap
+    BuilderQueriesMap,
+    BuilderMutationsMap,
+    BuilderSubscriptionsMap
   >;
   const internalData = use(NetworkInternalContext);
   const { enqueueMiddleware } = use(QueueContext);
@@ -620,7 +620,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentSpaceAddVariable',
           {}
-        ) as SubscriptionsMap['SegmentSpaceAddVariable'];
+        ) as BuilderSubscriptionsMap['SegmentSpaceAddVariable'];
         segmentSpaceAddVariable(contextId, variable, true);
       });
 
@@ -629,7 +629,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentSpaceUpdateVariable',
           {}
-        ) as SubscriptionsMap['SegmentSpaceUpdateVariable'];
+        ) as BuilderSubscriptionsMap['SegmentSpaceUpdateVariable'];
         segmentSpaceUpdateVariable(contextId, variable, true);
       });
 
@@ -638,7 +638,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentSpaceRemoveVariable',
           {}
-        ) as SubscriptionsMap['SegmentSpaceRemoveVariable'];
+        ) as BuilderSubscriptionsMap['SegmentSpaceRemoveVariable'];
         segmentSpaceRemoveVariable(contextId, variable.name, true);
       });
 
@@ -647,7 +647,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentStyleAddSelector',
           {}
-        ) as SubscriptionsMap['SegmentStyleAddSelector'];
+        ) as BuilderSubscriptionsMap['SegmentStyleAddSelector'];
         segmentStyleAddSelector(contextId, displayMode, selector, type, path, style, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
@@ -679,7 +679,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentStyleAddSelectorVariable',
           {}
-        ) as SubscriptionsMap['SegmentStyleAddSelectorVariable'];
+        ) as BuilderSubscriptionsMap['SegmentStyleAddSelectorVariable'];
         segmentStyleAddSelectorVariable(contextId, displayMode, selector, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelectorVariable', {}, data => {
@@ -687,7 +687,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentStyleUpdateSelectorVariable',
           {}
-        ) as SubscriptionsMap['SegmentStyleUpdateSelectorVariable'];
+        ) as BuilderSubscriptionsMap['SegmentStyleUpdateSelectorVariable'];
         segmentStyleUpdateSelectorVariable(contextId, displayMode, selector, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelectorVariable', {}, data => {
@@ -695,7 +695,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentStyleRemoveSelectorVariable',
           {}
-        ) as SubscriptionsMap['SegmentStyleRemoveSelectorVariable'];
+        ) as BuilderSubscriptionsMap['SegmentStyleRemoveSelectorVariable'];
         segmentStyleRemoveSelectorVariable(contextId, displayMode, selector, category, name, true);
       });
 
@@ -704,7 +704,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentStyleAddVariable',
           {}
-        ) as SubscriptionsMap['SegmentStyleAddVariable'];
+        ) as BuilderSubscriptionsMap['SegmentStyleAddVariable'];
         segmentStyleAddVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateVariable', {}, data => {
@@ -712,7 +712,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentStyleUpdateVariable',
           {}
-        ) as SubscriptionsMap['SegmentStyleUpdateVariable'];
+        ) as BuilderSubscriptionsMap['SegmentStyleUpdateVariable'];
         segmentStyleUpdateVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveVariable', {}, data => {
@@ -720,7 +720,7 @@ const SegmentsContextProvider = ({
           data,
           'data.SegmentStyleRemoveVariable',
           {}
-        ) as SubscriptionsMap['SegmentStyleRemoveVariable'];
+        ) as BuilderSubscriptionsMap['SegmentStyleRemoveVariable'];
         segmentStyleRemoveVariable(contextId, category, name, true);
       });
     }

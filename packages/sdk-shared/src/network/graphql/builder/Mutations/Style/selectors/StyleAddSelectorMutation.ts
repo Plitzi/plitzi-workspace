@@ -8,6 +8,7 @@ const StyleAddSelectorMutation = gql`
     $type: String!
     $path: String
     $style: Json
+    $params: Json
   ) {
     StyleAddSelector(
       environment: $environment
@@ -16,12 +17,14 @@ const StyleAddSelectorMutation = gql`
       type: $type
       path: $path
       style: $style
+      params: $params
     ) {
       displayMode
       selector
       type
       path
       style
+      params
     }
   }
 `;

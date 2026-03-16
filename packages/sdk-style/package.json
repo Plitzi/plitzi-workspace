@@ -42,6 +42,34 @@
       "types": "./dist/src/StyleMap.d.ts",
       "import": "./dist/src/StyleMap.mjs"
     },
+    "./StyleMap/StyleMap": {
+      "types": "./dist/src/StyleMap/StyleMap.d.ts",
+      "import": "./dist/src/StyleMap/StyleMap.mjs"
+    },
+    "./StyleMap/helpers/getStyleItem": {
+      "types": "./dist/src/StyleMap/helpers/getStyleItem.d.ts",
+      "import": "./dist/src/StyleMap/helpers/getStyleItem.mjs"
+    },
+    "./StyleMap/index": {
+      "types": "./dist/src/StyleMap/index.d.ts",
+      "import": "./dist/src/StyleMap/index.mjs"
+    },
+    "./StyleMap/methods/add/addSelectorClassComponent": {
+      "types": "./dist/src/StyleMap/methods/add/addSelectorClassComponent.d.ts",
+      "import": "./dist/src/StyleMap/methods/add/addSelectorClassComponent.mjs"
+    },
+    "./StyleMap/methods/add/addSelectorDefault": {
+      "types": "./dist/src/StyleMap/methods/add/addSelectorDefault.d.ts",
+      "import": "./dist/src/StyleMap/methods/add/addSelectorDefault.mjs"
+    },
+    "./StyleMap/methods/update/updateSelectorClassComponent": {
+      "types": "./dist/src/StyleMap/methods/update/updateSelectorClassComponent.d.ts",
+      "import": "./dist/src/StyleMap/methods/update/updateSelectorClassComponent.mjs"
+    },
+    "./StyleMap/methods/update/updateSelectorDefault": {
+      "types": "./dist/src/StyleMap/methods/update/updateSelectorDefault.d.ts",
+      "import": "./dist/src/StyleMap/methods/update/updateSelectorDefault.mjs"
+    },
     "./StyleReducer": {
       "types": "./dist/src/StyleReducer.d.ts",
       "import": "./dist/src/StyleReducer.mjs"
@@ -685,6 +713,18 @@
     "./index": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
+    },
+    "./models/SelectorForm": {
+      "types": "./dist/src/models/SelectorForm/index.d.ts",
+      "import": "./dist/src/models/SelectorForm/index.mjs"
+    },
+    "./models/SelectorForm/SelectorForm": {
+      "types": "./dist/src/models/SelectorForm/SelectorForm.d.ts",
+      "import": "./dist/src/models/SelectorForm/SelectorForm.mjs"
+    },
+    "./models/SelectorForm/index": {
+      "types": "./dist/src/models/SelectorForm/index.d.ts",
+      "import": "./dist/src/models/SelectorForm/index.mjs"
     }
   },
   "type": "module",

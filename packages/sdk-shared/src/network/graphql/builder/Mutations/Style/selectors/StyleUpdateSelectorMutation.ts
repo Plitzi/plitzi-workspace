@@ -22,6 +22,7 @@ const StyleUpdateSelectorMutation = gql`
       type
       path
       style
+      params
     }
   }
 `;
