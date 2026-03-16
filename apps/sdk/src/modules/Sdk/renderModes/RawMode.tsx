@@ -3,8 +3,8 @@ import { useMemo, use, memo } from 'react';
 
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import MadeInPlitzi from '../components/MadeInPlitzi';

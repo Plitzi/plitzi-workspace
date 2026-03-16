@@ -18,10 +18,6 @@
       "types": "./dist/src/DevToolsContainer.d.ts",
       "import": "./dist/src/DevToolsContainer.mjs"
     },
-    "./DevToolsContext": {
-      "types": "./dist/src/DevToolsContext.d.ts",
-      "import": "./dist/src/DevToolsContext.mjs"
-    },
     "./DevToolsContextProvider": {
       "types": "./dist/src/DevToolsContextProvider.d.ts",
       "import": "./dist/src/DevToolsContextProvider.mjs"
@@ -285,10 +281,6 @@
     "./index": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
-    },
-    "./utils/PlitziConsole": {
-      "types": "./dist/src/utils/PlitziConsole.d.ts",
-      "import": "./dist/src/utils/PlitziConsole.mjs"
     }
   },
   "scripts": {
@@ -305,7 +297,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^8.0.0"
   },
   "peerDependencies": {
     "react": "^19",

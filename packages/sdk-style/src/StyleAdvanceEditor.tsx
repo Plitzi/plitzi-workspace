@@ -4,9 +4,9 @@ import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState, use } from 'react';
 
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 const StyleAdvanceEditor = () => {
   const {

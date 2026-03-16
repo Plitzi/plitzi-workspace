@@ -1,4 +1,4 @@
-import { set } from '@plitzi/plitzi-ui/helpers/lodash';
+import { set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';

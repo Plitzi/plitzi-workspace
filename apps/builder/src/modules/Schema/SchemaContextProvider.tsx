@@ -7,11 +7,12 @@ import { useMemo, useRef, useCallback, use, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import FlatMap, { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';

@@ -1,4 +1,15 @@
-import type { StyleCategory, StyleValue } from '../types';
+import type { Style, StyleCategory, StyleValue } from '../types';
+
+export const EMPTY_STYLE_SCHEMA: Style = {
+  platform: { desktop: {}, tablet: {}, mobile: {} },
+  mode: 'desktop-first',
+  theme: {
+    default: 'system',
+    schemes: ['light', 'dark']
+  },
+  variables: {},
+  cache: ''
+};
 
 const styleConstants = {
   // Display

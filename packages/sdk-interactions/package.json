@@ -91,7 +91,7 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^8.0.0"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.4.4",

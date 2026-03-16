@@ -3,9 +3,9 @@ import { get, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import NetworkInternalContext from './contexts/NetworkInternalContext';
 

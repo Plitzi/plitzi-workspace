@@ -1,4 +1,4 @@
-import { get } from '@plitzi/plitzi-ui/helpers/lodash';
+import { get } from '@plitzi/plitzi-ui/helpers';
 
 import type { DisplayMode, Style } from '@plitzi/sdk-shared';
 

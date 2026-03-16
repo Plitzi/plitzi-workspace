@@ -3,8 +3,8 @@ import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 import type { InteractionCallback, InteractionCallbackParamValues, Schema } from '@plitzi/sdk-shared';

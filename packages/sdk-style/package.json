@@ -30,17 +30,13 @@
       "types": "./dist/src/StyleContext.d.ts",
       "import": "./dist/src/StyleContext.mjs"
     },
-    "./StyleContextProvider": {
-      "types": "./dist/src/StyleContextProvider.d.ts",
-      "import": "./dist/src/StyleContextProvider.mjs"
-    },
     "./StyleHelper": {
       "types": "./dist/src/StyleHelper.d.ts",
       "import": "./dist/src/StyleHelper.mjs"
     },
     "./StyleMap": {
-      "types": "./dist/src/StyleMap.d.ts",
-      "import": "./dist/src/StyleMap.mjs"
+      "types": "./dist/src/StyleMap/index.d.ts",
+      "import": "./dist/src/StyleMap/index.mjs"
     },
     "./StyleMap/StyleMap": {
       "types": "./dist/src/StyleMap/StyleMap.d.ts",
@@ -73,10 +69,6 @@
     "./StyleReducer": {
       "types": "./dist/src/StyleReducer.d.ts",
       "import": "./dist/src/StyleReducer.mjs"
-    },
-    "./StyleViewer": {
-      "types": "./dist/src/StyleViewer.d.ts",
-      "import": "./dist/src/StyleViewer.mjs"
     },
     "./components": {
       "types": "./dist/src/components/index.d.ts",
@@ -173,18 +165,6 @@
     "./components/Selector/index": {
       "types": "./dist/src/components/Selector/index.d.ts",
       "import": "./dist/src/components/Selector/index.mjs"
-    },
-    "./components/SelectorForm": {
-      "types": "./dist/src/components/SelectorForm/index.d.ts",
-      "import": "./dist/src/components/SelectorForm/index.mjs"
-    },
-    "./components/SelectorForm/SelectorForm": {
-      "types": "./dist/src/components/SelectorForm/SelectorForm.d.ts",
-      "import": "./dist/src/components/SelectorForm/SelectorForm.mjs"
-    },
-    "./components/SelectorForm/index": {
-      "types": "./dist/src/components/SelectorForm/index.d.ts",
-      "import": "./dist/src/components/SelectorForm/index.mjs"
     },
     "./components/StyleInspector": {
       "types": "./dist/src/components/StyleInspector/index.d.ts",
@@ -752,7 +732,7 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "vite": "^8.0.0",
+    "vitest": "^4.1.0"
   }
 }

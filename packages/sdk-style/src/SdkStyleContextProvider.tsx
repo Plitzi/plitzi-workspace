@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+
 import StyleContext from './StyleContext';
-import { EMPTY_STYLE_SCHEMA } from './StyleMap';
 
 import type { Style } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

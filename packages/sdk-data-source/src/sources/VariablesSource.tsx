@@ -2,9 +2,9 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useCallback, use, useMemo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import type { SchemaVariable } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

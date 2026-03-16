@@ -8,9 +8,9 @@ import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import type { NavigationContextValue, NavigationStatus, RenderMode, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

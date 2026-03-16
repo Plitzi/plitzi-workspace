@@ -17,17 +17,6 @@ import type {
   TagType
 } from '@plitzi/sdk-shared';
 
-export const EMPTY_STYLE_SCHEMA: Style = {
-  platform: { desktop: {}, tablet: {}, mobile: {} },
-  mode: 'desktop-first',
-  theme: {
-    default: 'system',
-    schemes: ['light', 'dark']
-  },
-  variables: {},
-  cache: ''
-};
-
 export type StyleMapProps = {
   platform: Style['platform'];
   variables?: Style['variables'];

@@ -3,8 +3,8 @@ import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { use, useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';

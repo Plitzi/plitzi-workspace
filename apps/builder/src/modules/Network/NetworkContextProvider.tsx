@@ -5,10 +5,10 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import NetworkInternalContext from './contexts/NetworkInternalContext';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';

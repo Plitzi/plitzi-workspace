@@ -1,8 +1,7 @@
 import { createContext } from 'react';
 
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-style/StyleMap';
-
-import { EMPTY_SCHEMA } from './helpers/FlatMap';
+import { EMPTY_SCHEMA } from './schemaConstants';
+import { EMPTY_STYLE_SCHEMA } from '../style/styleConstants';
 
 import type { SchemaContextValue } from '@plitzi/sdk-shared';
 

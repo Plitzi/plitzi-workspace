@@ -14,10 +14,6 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
-    "./SchemaContext": {
-      "types": "./dist/src/SchemaContext.d.ts",
-      "import": "./dist/src/SchemaContext.mjs"
-    },
     "./SchemaMainContext": {
       "types": "./dist/src/SchemaMainContext.d.ts",
       "import": "./dist/src/SchemaMainContext.mjs"
@@ -55,7 +51,7 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "vite": "^8.0.0",
+    "vitest": "^4.1.0"
   }
 }

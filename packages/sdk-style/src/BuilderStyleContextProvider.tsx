@@ -4,10 +4,10 @@ import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
-import { EMPTY_STYLE_SCHEMA } from './StyleMap';
 import StyleReducer, { StyleActions } from './StyleReducer';
 
 import type { StyleReducerActions } from './StyleReducer';
