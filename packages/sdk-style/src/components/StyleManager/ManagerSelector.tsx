@@ -1,5 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { get, set, isEmpty, capitalize } from '@plitzi/plitzi-ui/helpers/lodash';
+import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers/lodash';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
@@ -51,15 +51,9 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
         builderHandler('styleAddSelector', displayMode, name, 'class');
       } else {
         const { componentType } = values;
-        builderHandler(
-          'styleAddSelector',
-          displayMode,
-          capitalize(componentType),
-          'class-component',
-          undefined,
-          undefined,
-          { componentType }
-        );
+        builderHandler('styleAddSelector', displayMode, componentType, 'class-component', undefined, undefined, {
+          componentType
+        });
       }
     },
     [builderHandler, displayMode]
