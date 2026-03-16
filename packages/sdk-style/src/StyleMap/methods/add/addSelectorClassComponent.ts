@@ -30,6 +30,7 @@ const addSelectorClassComponent = (
     name: selector,
     type,
     attributes,
+    componentType,
     cache: processSelector({ name: selector, type, attributes })
   });
 

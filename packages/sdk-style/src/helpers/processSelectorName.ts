@@ -5,6 +5,7 @@ const processSelectorName = (selector: Omit<StyleItem, 'cache'>) => {
   let finalSelector = name;
   switch (type) {
     case 'class':
+    case 'class-component':
     case 'state':
       finalSelector = `.${name}`;
       break;
