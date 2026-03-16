@@ -29,7 +29,7 @@ const InspectorModeAdvanced = ({ selectors, displayMode, styleVariables }: Inspe
   const { useDataSource } = use(DataSourceContext);
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
   const CMValue = useMemo(
-    () => processSelectorsMultiLine(selectors, 2).join('\n\n'),
+    () => processSelectorsMultiLine(selectors, false, 2).join('\n\n'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectors, reRender]
   );

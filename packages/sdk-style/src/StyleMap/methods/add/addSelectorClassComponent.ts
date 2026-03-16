@@ -19,7 +19,7 @@ const addSelectorClassComponent = (
     return false;
   }
 
-  let attributes = {} as Extract<StyleItem, { type: 'class-component' }>['attributes'];
+  let attributes = {} satisfies Extract<StyleItem, { type: 'class-component' }>['attributes'];
   if (path) {
     set(attributes, path, value);
   } else if (!path && value) {
@@ -31,7 +31,10 @@ const addSelectorClassComponent = (
     type,
     attributes,
     componentType,
-    cache: processSelector({ name: selector, type, attributes })
+    cache: processSelector({ name: selector, type, attributes, componentType, cache: '' } as Extract<
+      StyleItem,
+      { type: 'class-component' }
+    >)
   });
 
   return true;
