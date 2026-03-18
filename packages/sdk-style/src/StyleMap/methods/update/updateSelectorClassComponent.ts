@@ -3,14 +3,14 @@ import { omit, set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
 
-import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 
 const updateSelectorClassComponent = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
-  path: string,
-  value: Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined
+  path?: string,
+  value?: Extract<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
   if (!styleItem) {

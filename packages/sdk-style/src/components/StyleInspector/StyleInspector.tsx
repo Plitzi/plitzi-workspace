@@ -65,7 +65,7 @@ const StyleInspector = ({
   useEffect(() => {
     setStyleSelector('base');
     const selector = get(styleSelectors, 'base', '').split(' ')[0];
-    onChange?.(selector);
+    onChange?.(selector ? selector : element?.definition.type);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChange, element?.id]);
 
@@ -169,6 +169,7 @@ const StyleInspector = ({
             style={style}
             value={selectorName}
             selector={selector}
+            componentType={element?.definition.type}
             displayMode={displayMode}
             onAdd={handleAddSelector}
             onChange={handleChangeSelector}

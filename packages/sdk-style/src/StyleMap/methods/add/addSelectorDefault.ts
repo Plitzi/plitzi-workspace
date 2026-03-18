@@ -3,18 +3,18 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
 
-import type { DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
 
 const addSelectorDefault = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
   type: TagType,
-  path: string,
-  value?: Exclude<StyleItem, { type: 'class-component' }>['attributes']
+  path?: string,
+  value?: Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
-  if (styleItem) {
+  if (styleItem || (path && path.includes('.')) || (path && typeof value === 'object')) {
     return false;
   }
 

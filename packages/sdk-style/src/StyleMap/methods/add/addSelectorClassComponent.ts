@@ -3,15 +3,15 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
 
-import type { DisplayMode, Style, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
 
 const addSelectorClassComponent = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
   type: TagType,
-  path: string,
-  value: Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined,
+  path: string | undefined,
+  value: Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined | StyleValue,
   componentType: string
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);

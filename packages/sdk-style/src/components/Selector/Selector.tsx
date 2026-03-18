@@ -20,6 +20,7 @@ export type SelectorProps = {
   className?: string;
   value?: string;
   selector?: Pick<StyleItem, 'name' | 'type'>;
+  componentType?: string;
   displayMode: DisplayMode;
   disabled?: boolean;
   style: Style;
@@ -33,6 +34,7 @@ const Selector = ({
   className = '',
   value = '',
   selector: selectorProp,
+  componentType,
   displayMode,
   disabled = false,
   style,
@@ -45,13 +47,18 @@ const Selector = ({
   const [inputValue, setInputValue] = useState('');
   const [open, setOpen, , triggerRef, triggerRect] = useFloating({ disabled });
   const { existsPopup, addPopup } = usePopup('floating');
-  const tags = useMemo<SelectorValue[]>(
-    () =>
-      Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))).map(tag =>
-        pick(tag, ['name', 'type'])
-      ),
-    [style, displayMode, value]
-  );
+  const tags = useMemo<SelectorValue[]>(() => {
+    const selectors = get(style, `platform.${displayMode}`);
+    const tagsAux = Object.values(pick(selectors, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
+    const tagComponent = Object.values(selectors).find(
+      selector => selector.type === 'class-component' && selector.componentType === componentType
+    );
+    if (tagComponent) {
+      return [tagComponent, ...tagsAux];
+    }
+
+    return tagsAux;
+  }, [style, displayMode, value, componentType]);
   const selectorsAvailables = useMemo<StyleItem[]>(
     () => Object.values(omit(get(style, `platform.${displayMode}`), value.split(' '))),
     [style, displayMode, value]
@@ -271,6 +278,7 @@ const Selector = ({
               key={`${i}_${tag.name}`}
               selector={tag.name}
               type={tag.type}
+              editable={tag.type !== 'class-component'}
               active={tag.name === selectorProp?.name.replace(/:.*/, '')}
               onAction={handleClickAction(i)}
               onClick={handleClickSelector}

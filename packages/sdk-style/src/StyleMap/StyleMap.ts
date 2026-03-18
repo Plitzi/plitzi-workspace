@@ -12,6 +12,7 @@ import type {
   DisplayMode,
   Style,
   StyleItem,
+  StyleValue,
   StyleVariableCategory,
   StyleVariableValue,
   TagType
@@ -36,14 +37,46 @@ class StyleMap {
     this.variables = variables ?? {};
   }
 
-  addSelector = (
+  static getInstance = (props: StyleMapProps) => new this(props);
+
+  addSelector(
+    displayMode: DisplayMode,
+    selector: string,
+    type: 'class-component',
+    path: '' | undefined,
+    value: Extract<StyleItem, { type: 'class-component' }>['attributes'],
+    params: { componentType: string }
+  ): boolean;
+  addSelector(
+    displayMode: DisplayMode,
+    selector: string,
+    type: 'class-component',
+    path: string,
+    value: StyleValue,
+    params: { componentType: string }
+  ): boolean;
+  addSelector(
+    displayMode: DisplayMode,
+    selector: string,
+    type: Exclude<TagType, 'class-component'>,
+    path: '' | undefined,
+    value: Exclude<StyleItem, { type: 'class-component' }>['attributes']
+  ): boolean;
+  addSelector(
+    displayMode: DisplayMode,
+    selector: string,
+    type: Exclude<TagType, 'class-component'>,
+    path: string,
+    value: StyleValue
+  ): boolean;
+  addSelector(
     displayMode: DisplayMode,
     selector: string,
     type: TagType,
-    path: string,
-    value?: StyleItem['attributes'],
-    params?: { componentType?: string }
-  ) => {
+    path?: string,
+    value?: StyleItem['attributes'] | StyleValue,
+    params?: { componentType: string }
+  ) {
     if (type === 'class-component') {
       return addSelectorClassComponent(
         this.platform,
@@ -51,7 +84,7 @@ class StyleMap {
         selector,
         type,
         path,
-        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined,
+        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue,
         params?.componentType ?? ''
       );
     }
@@ -62,26 +95,90 @@ class StyleMap {
       selector,
       type,
       path,
-      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | undefined
+      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
     );
-  };
+  }
 
-  getSelector = (displayMode: DisplayMode, selector: string) => getStyleItem(this.platform, displayMode, selector);
-
-  updateSelector = (
+  static addSelector(
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    type: 'class-component',
+    path: '' | undefined,
+    value: Extract<StyleItem, { type: 'class-component' }>['attributes'],
+    params: { componentType: string }
+  ): boolean;
+  static addSelector(
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    type: 'class-component',
+    path: string,
+    value: StyleValue,
+    params: { componentType: string }
+  ): boolean;
+  static addSelector(
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    type: Exclude<TagType, 'class-component'>,
+    path: '' | undefined,
+    value: Exclude<StyleItem, { type: 'class-component' }>['attributes']
+  ): boolean;
+  static addSelector(
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    type: Exclude<TagType, 'class-component'>,
+    path: string,
+    value: StyleValue
+  ): boolean;
+  static addSelector(
+    style: Pick<Style, 'platform' | 'variables'>,
     displayMode: DisplayMode,
     selector: string,
     type: TagType,
-    path: string,
-    value?: StyleItem['attributes']
-  ) => {
+    path?: string,
+    value?: StyleItem['attributes'] | StyleValue,
+    params?: { componentType: string }
+  ) {
+    return (
+      this.getInstance(style).addSelector as (
+        displayMode: DisplayMode,
+        selector: string,
+        type: TagType,
+        path?: string,
+        value?: StyleItem['attributes'] | StyleValue,
+        params?: { componentType: string }
+      ) => boolean
+    )(displayMode, selector, type, path, value, params);
+  }
+
+  getSelector = (displayMode: DisplayMode, selector: string) => getStyleItem(this.platform, displayMode, selector);
+
+  static getSelector = (style: Pick<Style, 'platform' | 'variables'>, displayMode: DisplayMode, selector: string) =>
+    this.getInstance(style).getSelector(displayMode, selector);
+
+  updateSelector<T extends TagType, P extends string | undefined>(
+    displayMode: DisplayMode,
+    selector: string,
+    type: T,
+    path?: P,
+    value?: T extends 'class-component'
+      ? P extends '' | undefined
+        ? Extract<StyleItem, { type: 'class-component' }>['attributes']
+        : StyleValue
+      : P extends '' | undefined
+        ? Exclude<StyleItem, { type: 'class-component' }>['attributes']
+        : StyleValue
+  ) {
     if (type === 'class-component') {
       return updateSelectorClassComponent(
         this.platform,
         displayMode,
         selector,
         path,
-        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined
+        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined | StyleValue
       );
     }
 
@@ -90,9 +187,26 @@ class StyleMap {
       displayMode,
       selector,
       path,
-      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | undefined
+      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | undefined | StyleValue
     );
-  };
+  }
+
+  static updateSelector<T extends TagType, P extends string | undefined>(
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    type: T,
+    path?: P,
+    value?: T extends 'class-component'
+      ? P extends '' | undefined
+        ? Extract<StyleItem, { type: 'class-component' }>['attributes']
+        : StyleValue
+      : P extends '' | undefined
+        ? Exclude<StyleItem, { type: 'class-component' }>['attributes']
+        : StyleValue
+  ) {
+    return this.getInstance(style).updateSelector(displayMode, selector, type, path, value);
+  }
 
   removeSelector = (displayMode: DisplayMode | undefined, selector: string) => {
     if (displayMode) {
@@ -115,6 +229,12 @@ class StyleMap {
 
     return found;
   };
+
+  static removeSelector = (
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode | undefined,
+    selector: string
+  ) => this.getInstance(style).removeSelector(displayMode, selector);
 
   // Selector Variables
 
@@ -140,6 +260,15 @@ class StyleMap {
     return true;
   };
 
+  static addSelectorVariable = (
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    category: StyleVariableCategory,
+    name: string,
+    value: StyleVariableValue
+  ) => this.getInstance(style).addSelectorVariable(displayMode, selector, category, name, value);
+
   updateSelectorVariable = (
     displayMode: DisplayMode,
     selector: string,
@@ -157,6 +286,15 @@ class StyleMap {
 
     return true;
   };
+
+  static updateSelectorVariable = (
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    category: StyleVariableCategory,
+    name: string,
+    value: StyleVariableValue
+  ) => this.getInstance(style).updateSelectorVariable(displayMode, selector, category, name, value);
 
   removeSelectorVariable = (
     displayMode: DisplayMode,
@@ -183,6 +321,14 @@ class StyleMap {
     return true;
   };
 
+  static removeSelectorVariable = (
+    style: Pick<Style, 'platform' | 'variables'>,
+    displayMode: DisplayMode,
+    selector: string,
+    category: StyleVariableCategory,
+    name: string
+  ) => this.getInstance(style).removeSelectorVariable(displayMode, selector, category, name);
+
   // Variables
 
   addVariable = (category: StyleVariableCategory, name: string, value: StyleVariableValue) => {
@@ -199,6 +345,13 @@ class StyleMap {
     return true;
   };
 
+  static addVariable = (
+    style: Pick<Style, 'platform' | 'variables'>,
+    category: StyleVariableCategory,
+    name: string,
+    value: StyleVariableValue
+  ) => this.getInstance(style).addVariable(category, name, value);
+
   updateVariable = (category: StyleVariableCategory, name: string, value: StyleVariableValue) => {
     if (!this.variables[category] || !this.variables[category][name]) {
       return false;
@@ -208,6 +361,13 @@ class StyleMap {
 
     return true;
   };
+
+  static updateVariable = (
+    style: Pick<Style, 'platform' | 'variables'>,
+    category: StyleVariableCategory,
+    name: string,
+    value: StyleVariableValue
+  ) => this.getInstance(style).updateVariable(category, name, value);
 
   removeVariable = (category: StyleVariableCategory, name: string) => {
     if (!this.variables[category] || !this.variables[category][name]) {
@@ -221,78 +381,6 @@ class StyleMap {
 
     return true;
   };
-
-  // Static
-
-  static getInstance = (props: StyleMapProps) => new this(props);
-
-  static addSelector = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    type: TagType,
-    path: string,
-    value?: StyleItem['attributes'],
-    params?: { componentType?: string }
-  ) => this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
-
-  static getSelector = (style: Pick<Style, 'platform' | 'variables'>, displayMode: DisplayMode, selector: string) =>
-    this.getInstance(style).getSelector(displayMode, selector);
-
-  static updateSelector = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    type: TagType,
-    path: string,
-    value?: StyleItem['attributes']
-  ) => this.getInstance(style).updateSelector(displayMode, selector, type, path, value);
-
-  static removeSelector = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode | undefined,
-    selector: string
-  ) => this.getInstance(style).removeSelector(displayMode, selector);
-
-  static addSelectorVariable = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
-  ) => this.getInstance(style).addSelectorVariable(displayMode, selector, category, name, value);
-
-  static updateSelectorVariable = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
-  ) => this.getInstance(style).updateSelectorVariable(displayMode, selector, category, name, value);
-
-  static removeSelectorVariable = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    category: StyleVariableCategory,
-    name: string
-  ) => this.getInstance(style).removeSelectorVariable(displayMode, selector, category, name);
-
-  static addVariable = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
-  ) => this.getInstance(style).addVariable(category, name, value);
-
-  static updateVariable = (
-    style: Pick<Style, 'platform' | 'variables'>,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
-  ) => this.getInstance(style).updateVariable(category, name, value);
 
   static removeVariable = (
     style: Pick<Style, 'platform' | 'variables'>,
