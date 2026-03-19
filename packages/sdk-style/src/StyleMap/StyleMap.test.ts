@@ -24,270 +24,353 @@ describe('StyleMap', () => {
   });
 
   describe('addSelector (default)', () => {
-    it('should add a selector correctly without path', () => {
-      const result = StyleMap.addSelector(style, 'desktop', 'button', 'class', undefined, {
-        'align-items': 'center'
+    it('adds without path (object)', () => {
+      const ok = StyleMap.addSelector(style, 'desktop', 'btn', 'class', undefined, {
+        color: 'red'
       });
 
-      expect(result).toBe(true);
-      expect(style.platform.desktop.button.attributes['align-items']).toBe('center');
-
-      const result2 = StyleMap.addSelector(style, 'desktop', 'button2', 'class', '', { color: 'red' });
-      expect(result2).toBe(true);
-      expect(style.platform.desktop.button2.attributes['color']).toBe('red');
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn.attributes.color).toBe('red');
     });
 
-    it('should add a selector correctly with path', () => {
+    it('adds with path (value)', () => {
+      const ok = StyleMap.addSelector(style, 'desktop', 'btn2', 'class', 'color', 'blue');
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn2.attributes.color).toBe('blue');
+    });
+
+    it('rejects object when path is string', () => {
       // @ts-expect-error // eslint-disable-line
-      const result = StyleMap.addSelector(style, 'desktop', 'button', 'class', 'align-items', {
-        'align-items': 'center'
-      });
-
-      expect(result).toBe(false);
-      expect(style.platform.desktop.button).toBeUndefined();
-
-      const result2 = StyleMap.addSelector(style, 'desktop', 'button', 'class', 'align-items', 'center');
-      expect(result2).toBe(true);
-      expect(style.platform.desktop.button).toBeDefined();
+      const ok = StyleMap.addSelector(style, 'desktop', 'x', 'class', 'color', { color: 'red' });
+      expect(ok).toBe(false);
+      expect(style.platform.desktop.x).toBeUndefined();
     });
 
-    it('should not add duplicate selector', () => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
-
-      const result = StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
-
-      expect(result).toBe(false);
-    });
-
-    it('should not handle deep path', () => {
+    it('rejects deep path', () => {
       // @ts-expect-error // eslint-disable-line
-      const result = StyleMap.addSelector(style, 'desktop', 'button', 'class', 'flex.align-items', {
-        flex: { 'align-items': 'center' }
-      });
+      const ok = StyleMap.addSelector(style, 'desktop', 'y', 'class', 'a.b', { a: { b: 'c' } });
+      expect(ok).toBe(false);
+      expect(style.platform.desktop.y).toBeUndefined();
+    });
 
-      expect(result).toEqual(false);
-      expect(style.platform.desktop.button).toBeUndefined();
+    it('prevents duplicates', () => {
+      StyleMap.addSelector(style, 'desktop', 'dup', 'class', '', {});
+      const ok = StyleMap.addSelector(style, 'desktop', 'dup', 'class', '', {});
+      expect(ok).toBe(false);
+    });
+
+    it('allows same selector name in different displayModes', () => {
+      StyleMap.addSelector(style, 'desktop', 'shared', 'class', '', {});
+      const ok = StyleMap.addSelector(style, 'mobile', 'shared', 'class', '', {});
+      expect(ok).toBe(true);
+    });
+
+    it('creates empty attributes when value is undefined and no path', () => {
+      // @ts-expect-error // eslint-disable-line
+      const ok = StyleMap.addSelector(style, 'desktop', 'undef', 'class', undefined, undefined);
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.undef.attributes).toEqual({});
     });
   });
 
   describe('addSelector (class-component)', () => {
-    it('should add class-component selector', () => {
-      const result = StyleMap.addSelector(
+    it('requires params', () => {
+      // @ts-expect-error // eslint-disable-line
+      const ok = StyleMap.addSelector(style, 'desktop', 'card', 'class-component', '', {});
+      expect(ok).toBe(false);
+      expect(style.platform.desktop.card).toBeUndefined();
+    });
+
+    it('adds with attributes object', () => {
+      const ok = StyleMap.addSelector(
         style,
         'desktop',
         'card',
         'class-component',
         '',
-        {},
+        { base: { color: 'red' } },
         { componentType: 'div' }
       );
 
-      expect(result).toBe(true);
-      expect(style.platform.desktop.card).toBeDefined();
-
-      const result2 = StyleMap.addSelector(
-        style,
-        'desktop',
-        'card2',
-        'class-component',
-        '',
-        {
-          base: {
-            color: 'red'
-          }
-        },
-        { componentType: 'div' }
-      );
-
-      expect(result2).toBe(true);
-      expect(style.platform.desktop.card2).toBeDefined();
-      expect(
-        (style.platform.desktop.card2 as Extract<StyleItem, { type: 'class-component' }>).attributes.base.color
-      ).toBe('red');
+      expect(ok).toBe(true);
+      const item = style.platform.desktop.card as Extract<StyleItem, { type: 'class-component' }>;
+      expect(item.attributes.base.color).toBe('red');
     });
 
-    it('should require componentType', () => {
-      // @ts-expect-error // eslint-disable-line
-      const result = StyleMap.addSelector(style, 'desktop', 'card', 'class-component', '', {});
+    it('adds with path value', () => {
+      const ok = StyleMap.addSelector(style, 'desktop', 'card2', 'class-component', 'base.color', 'blue', {
+        componentType: 'div'
+      });
 
-      expect(result).toBe(false);
-      expect(style.platform.desktop.card).toBeUndefined();
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.card2).toBeDefined();
+    });
+
+    it('fails when componentType is empty', () => {
+      const ok = StyleMap.addSelector(style, 'desktop', 'card3', 'class-component', '', {}, { componentType: '' });
+      expect(ok).toBe(false);
+      expect(style.platform.desktop.card3).toBeUndefined();
+    });
+
+    it('fails when adding duplicate selector', () => {
+      StyleMap.addSelector(style, 'desktop', 'dupCard', 'class-component', '', {}, { componentType: 'div' });
+      const ok = StyleMap.addSelector(style, 'desktop', 'dupCard', 'class-component', '', {}, { componentType: 'div' });
+      expect(ok).toBe(false);
+    });
+
+    it('allows same selector across displayModes', () => {
+      StyleMap.addSelector(style, 'desktop', 'cardX', 'class-component', '', {}, { componentType: 'div' });
+      const ok = StyleMap.addSelector(style, 'mobile', 'cardX', 'class-component', '', {}, { componentType: 'div' });
+      expect(ok).toBe(true);
+    });
+
+    it('creates nested structure when using path', () => {
+      StyleMap.addSelector(style, 'desktop', 'cardNested', 'class-component', 'base.color', 'red', {
+        componentType: 'div'
+      });
+
+      const item = style.platform.desktop.cardNested as Extract<StyleItem, { type: 'class-component' }>;
+      expect(item.attributes.base.color).toBe('red');
     });
   });
 
   describe('getSelector', () => {
-    it('should return selector', () => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
-
-      const result = StyleMap.getSelector(style, 'desktop', 'button');
-
-      expect(result?.name).toBe('button');
+    it('returns selector', () => {
+      StyleMap.addSelector(style, 'desktop', 'btn', 'class', '', {});
+      const res = StyleMap.getSelector(style, 'desktop', 'btn');
+      expect(res?.name).toBe('btn');
     });
 
-    it('should return undefined if not found', () => {
-      const result = StyleMap.getSelector(style, 'desktop', 'nope');
-
-      expect(result).toBeUndefined();
+    it('returns undefined when missing', () => {
+      expect(StyleMap.getSelector(style, 'desktop', 'nope')).toBeUndefined();
     });
   });
 
   describe('updateSelector', () => {
-    it('should update attribute', () => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
-
-      const result = StyleMap.updateSelector(style, 'desktop', 'button', 'class', 'align-items', 'center');
-      expect(result).toBe(true);
-      expect(style.platform.desktop.button.attributes['align-items']).toBe('center');
+    beforeEach(() => {
+      StyleMap.addSelector(style, 'desktop', 'btn', 'class', '', {});
     });
 
-    it('should remove attribute when value undefined', () => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {
-        'align-items': 'center'
-      });
-
-      StyleMap.updateSelector(style, 'desktop', 'button', 'class', 'align-items');
-
-      expect(style.platform.desktop.button.attributes['align-items']).toBeUndefined();
+    it('updates value with path', () => {
+      const ok = StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'color', 'red');
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn.attributes.color).toBe('red');
     });
 
-    it('should return false if selector does not exist', () => {
-      const result = StyleMap.updateSelector(style, 'desktop', 'nope', 'class', '', {});
+    it('removes value when undefined', () => {
+      StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'color', 'red');
+      StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'color');
+      expect(style.platform.desktop.btn.attributes.color).toBeUndefined();
+    });
 
-      expect(result).toBe(false);
+    it('fails when selector missing', () => {
+      const ok = StyleMap.updateSelector(style, 'desktop', 'nope', 'class', 'color', 'red');
+      expect(ok).toBe(false);
+
+      const ok2 = StyleMap.updateSelector(style, 'desktop', 'ghost', 'class', 'color', 'red');
+      expect(ok2).toBe(false);
+      expect(style.platform.desktop.ghost).toBeUndefined();
+    });
+
+    it('fails on deep path (default)', () => {
+      const ok = StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'a.b', 'red');
+      expect(ok).toBe(false);
+    });
+
+    it('replaces entire attributes when no path', () => {
+      const ok = StyleMap.updateSelector(style, 'desktop', 'btn', 'class', '', { color: 'green' });
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn.attributes).toEqual({ color: 'green' });
+    });
+
+    it('class-component allows deep path update but default does not', () => {
+      StyleMap.addSelector(style, 'desktop', 'card', 'class-component', '', {}, { componentType: 'div' });
+
+      const ok1 = StyleMap.updateSelector(style, 'desktop', 'card', 'class-component', 'a.b', 'red');
+      const ok2 = StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'a.b', 'red');
+
+      expect(ok1).toBe(true);
+      expect(ok2).toBe(false);
     });
   });
 
   describe('removeSelector', () => {
-    it('should remove selector from specific displayMode', () => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
-
-      const result = StyleMap.removeSelector(style, 'desktop', 'button');
-
-      expect(result).toBe(true);
-      expect(style.platform.desktop.button).toBeUndefined();
+    it('removes from one mode', () => {
+      StyleMap.addSelector(style, 'desktop', 'btn', 'class', '', {});
+      const ok = StyleMap.removeSelector(style, 'desktop', 'btn');
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn).toBeUndefined();
     });
 
-    it('should remove selector from all displayModes', () => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
-      StyleMap.addSelector(style, 'mobile', 'button', 'class', '', {});
-
-      const result = StyleMap.removeSelector(style, undefined, 'button');
-
-      expect(result).toBe(true);
-      expect(style.platform.desktop.button).toBeUndefined();
-      expect(style.platform.mobile.button).toBeUndefined();
+    it('removes from all modes', () => {
+      StyleMap.addSelector(style, 'desktop', 'btn', 'class', '', {});
+      StyleMap.addSelector(style, 'mobile', 'btn', 'class', '', {});
+      const ok = StyleMap.removeSelector(style, undefined, 'btn');
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn).toBeUndefined();
+      expect(style.platform.mobile.btn).toBeUndefined();
     });
 
-    it('should return false if selector not found', () => {
-      const result = StyleMap.removeSelector(style, 'desktop', 'nope');
-
-      expect(result).toBe(false);
+    it('returns false if not found', () => {
+      expect(StyleMap.removeSelector(style, 'desktop', 'nope')).toBe(false);
     });
   });
 
   describe('selector variables', () => {
     beforeEach(() => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
+      StyleMap.addSelector(style, 'desktop', 'btn', 'class', '', {});
     });
 
-    it('should add variable', () => {
-      const result = StyleMap.addSelectorVariable(
+    it('adds variable', () => {
+      const ok = StyleMap.addSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'primary', '#000');
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn.variables?.color?.primary).toBe('#000');
+    });
+
+    it('prevents duplicate', () => {
+      StyleMap.addSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'primary', '#000');
+      const ok = StyleMap.addSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'primary', '#111');
+      expect(ok).toBe(false);
+    });
+
+    it('updates variable', () => {
+      StyleMap.addSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'primary', '#000');
+      StyleMap.updateSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'primary', '#111');
+      expect(style.platform.desktop.btn.variables?.color?.primary).toBe('#111');
+    });
+
+    it('removes variable and cleans up', () => {
+      StyleMap.addSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'primary', '#000');
+      StyleMap.removeSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'primary');
+      expect(style.platform.desktop.btn.variables).toBeUndefined();
+    });
+
+    it('fails removing missing variable', () => {
+      const ok = StyleMap.removeSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'nope');
+      expect(ok).toBe(false);
+    });
+
+    it('fails when selector does not exist', () => {
+      const ok = StyleMap.addSelectorVariable(style, 'desktop', 'nope', StyleVariableCategory.COLOR, 'x', '#000');
+      expect(ok).toBe(false);
+    });
+
+    it('updateSelectorVariable creates variable if not exists', () => {
+      const ok = StyleMap.updateSelectorVariable(
         style,
         'desktop',
-        'button',
+        'btn',
         StyleVariableCategory.COLOR,
-        'primary',
-        '#000'
+        'newVar',
+        '#123'
       );
-
-      expect(result).toBe(true);
-      expect(style.platform.desktop.button.variables?.color?.primary).toBe('#000');
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn.variables?.color?.newVar).toBe('#123');
     });
 
-    it('should not add duplicate variable', () => {
-      StyleMap.addSelectorVariable(style, 'desktop', 'button', StyleVariableCategory.COLOR, 'primary', '#000');
+    it('removeSelectorVariable only removes target key', () => {
+      StyleMap.addSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'a', '#000');
+      StyleMap.addSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'b', '#111');
 
-      const result = StyleMap.addSelectorVariable(
-        style,
-        'desktop',
-        'button',
-        StyleVariableCategory.COLOR,
-        'primary',
-        '#111'
-      );
+      StyleMap.removeSelectorVariable(style, 'desktop', 'btn', StyleVariableCategory.COLOR, 'a');
 
-      expect(result).toBe(false);
-    });
-
-    it('should update variable', () => {
-      StyleMap.addSelectorVariable(style, 'desktop', 'button', StyleVariableCategory.COLOR, 'primary', '#000');
-
-      StyleMap.updateSelectorVariable(style, 'desktop', 'button', StyleVariableCategory.COLOR, 'primary', '#111');
-
-      expect(style.platform.desktop.button.variables?.color?.primary).toBe('#111');
-    });
-
-    it('should remove variable and cleanup empty objects', () => {
-      StyleMap.addSelectorVariable(style, 'desktop', 'button', StyleVariableCategory.COLOR, 'primary', '#000');
-
-      StyleMap.removeSelectorVariable(style, 'desktop', 'button', StyleVariableCategory.COLOR, 'primary');
-
-      expect(style.platform.desktop.button.variables).toBeUndefined();
+      expect(style.platform.desktop.btn.variables?.color?.a).toBeUndefined();
+      expect(style.platform.desktop.btn.variables?.color?.b).toBe('#111');
     });
   });
 
   describe('global variables', () => {
-    it('should add variable', () => {
-      const result = StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#000');
-
-      expect(result).toBe(true);
+    it('adds variable', () => {
+      const ok = StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#000');
+      expect(ok).toBe(true);
       expect(style.variables.color?.primary).toBe('#000');
     });
 
-    it('should not add duplicate variable', () => {
+    it('prevents duplicate', () => {
       StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#000');
-
-      const result = StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#111');
-
-      expect(result).toBe(false);
+      const ok = StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#111');
+      expect(ok).toBe(false);
     });
 
-    it('should update variable', () => {
+    it('updates variable', () => {
       StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#000');
-
       StyleMap.updateVariable(style, StyleVariableCategory.COLOR, 'primary', '#111');
-
       expect(style.variables.color?.primary).toBe('#111');
     });
 
-    it('should remove variable and cleanup', () => {
+    it('fails update when missing', () => {
+      const ok = StyleMap.updateVariable(style, StyleVariableCategory.COLOR, 'nope', '#000');
+      expect(ok).toBe(false);
+    });
+
+    it('removes variable and cleans up', () => {
       StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#000');
-
       StyleMap.removeVariable(style, StyleVariableCategory.COLOR, 'primary');
-
       expect(style.variables.color).toBeUndefined();
+    });
+
+    it('fails removing missing', () => {
+      const ok = StyleMap.removeVariable(style, StyleVariableCategory.COLOR, 'nope');
+      expect(ok).toBe(false);
+    });
+
+    it('creates category lazily', () => {
+      StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'primary', '#000');
+      expect(style.variables.color).toBeDefined();
+    });
+
+    it('does not overwrite existing category object', () => {
+      StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'a', '#000');
+      StyleMap.addVariable(style, StyleVariableCategory.COLOR, 'b', '#111');
+
+      expect(Object.keys(style.variables.color ?? {})).toHaveLength(2);
     });
   });
 
   describe('edge cases', () => {
-    it('should not crash with empty style', () => {
+    it('does not crash with empty platform', () => {
       const empty = { platform: {} as StylePlatform, variables: {} };
-
-      expect(() => {
-        StyleMap.getSelector(empty, 'desktop', 'button');
-      }).not.toThrow();
+      expect(() => StyleMap.getSelector(empty, 'desktop', 'btn')).not.toThrow();
     });
 
-    it('should regenerate cache on update', () => {
-      StyleMap.addSelector(style, 'desktop', 'button', 'class', '', {});
-
-      const before = style.platform.desktop.button.cache;
-
-      StyleMap.updateSelector(style, 'desktop', 'button', 'class', 'align-items', 'center');
-
-      const after = style.platform.desktop.button.cache;
-
+    it('regenerates cache on updates', () => {
+      StyleMap.addSelector(style, 'desktop', 'btn', 'class', '', {});
+      const before = style.platform.desktop.btn.cache;
+      StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'color', 'red');
+      const after = style.platform.desktop.btn.cache;
       expect(after).not.toBe(before);
+    });
+
+    it('removeSelector returns false when none found (all modes)', () => {
+      const ok = StyleMap.removeSelector(style, undefined, 'nope');
+      expect(ok).toBe(false);
+    });
+
+    it('updateSelector does nothing when both path and value missing', () => {
+      StyleMap.addSelector(style, 'desktop', 'btn', 'class', '', {});
+      const before = { ...style.platform.desktop.btn.attributes };
+
+      const ok = StyleMap.updateSelector(style, 'desktop', 'btn', 'class');
+
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.btn.attributes).toEqual(before);
+    });
+
+    it('class-component update supports deep path', () => {
+      StyleMap.addSelector(style, 'desktop', 'card', 'class-component', '', {}, { componentType: 'div' });
+
+      const ok = StyleMap.updateSelector(style, 'desktop', 'card', 'class-component', 'base.color', 'red');
+      expect(ok).toBe(true);
+    });
+
+    it('class-component allows undefined value with path (structure still created)', () => {
+      // @ts-expect-error // eslint-disable-line
+      const ok = StyleMap.addSelector(style, 'desktop', 'cardZ', 'class-component', 'base.color', undefined, {
+        componentType: 'div'
+      });
+
+      expect(ok).toBe(true);
+      expect(style.platform.desktop.cardZ).toBeDefined();
     });
   });
 });
