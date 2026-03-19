@@ -92,7 +92,7 @@ const SelectorItem = ({
         {!editable && selector}
         {state && type === 'class' && <span>:{state}</span>}
       </div>
-      {editable && (
+      {editable && type !== 'class-component' && (
         <ItemOptions
           selector={selector}
           type={type}

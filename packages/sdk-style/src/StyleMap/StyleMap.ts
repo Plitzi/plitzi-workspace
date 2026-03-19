@@ -42,41 +42,11 @@ class StyleMap {
   addSelector(
     displayMode: DisplayMode,
     selector: string,
-    type: 'class-component',
-    path: '' | undefined,
-    value: Extract<StyleItem, { type: 'class-component' }>['attributes'],
-    params: { componentType: string }
-  ): boolean;
-  addSelector(
-    displayMode: DisplayMode,
-    selector: string,
-    type: 'class-component',
-    path: string,
-    value: StyleValue,
-    params: { componentType: string }
-  ): boolean;
-  addSelector(
-    displayMode: DisplayMode,
-    selector: string,
-    type: Exclude<TagType, 'class-component'>,
-    path: '' | undefined,
-    value: Exclude<StyleItem, { type: 'class-component' }>['attributes']
-  ): boolean;
-  addSelector(
-    displayMode: DisplayMode,
-    selector: string,
-    type: Exclude<TagType, 'class-component'>,
-    path: string,
-    value: StyleValue
-  ): boolean;
-  addSelector(
-    displayMode: DisplayMode,
-    selector: string,
     type: TagType,
     path?: string,
     value?: StyleItem['attributes'] | StyleValue,
     params?: { componentType: string }
-  ) {
+  ): boolean {
     if (type === 'class-component') {
       return addSelectorClassComponent(
         this.platform,
@@ -103,55 +73,12 @@ class StyleMap {
     style: Pick<Style, 'platform' | 'variables'>,
     displayMode: DisplayMode,
     selector: string,
-    type: 'class-component',
-    path: '' | undefined,
-    value: Extract<StyleItem, { type: 'class-component' }>['attributes'],
-    params: { componentType: string }
-  ): boolean;
-  static addSelector(
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    type: 'class-component',
-    path: string,
-    value: StyleValue,
-    params: { componentType: string }
-  ): boolean;
-  static addSelector(
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    type: Exclude<TagType, 'class-component'>,
-    path: '' | undefined,
-    value: Exclude<StyleItem, { type: 'class-component' }>['attributes']
-  ): boolean;
-  static addSelector(
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
-    type: Exclude<TagType, 'class-component'>,
-    path: string,
-    value: StyleValue
-  ): boolean;
-  static addSelector(
-    style: Pick<Style, 'platform' | 'variables'>,
-    displayMode: DisplayMode,
-    selector: string,
     type: TagType,
     path?: string,
     value?: StyleItem['attributes'] | StyleValue,
     params?: { componentType: string }
-  ) {
-    return (
-      this.getInstance(style).addSelector as (
-        displayMode: DisplayMode,
-        selector: string,
-        type: TagType,
-        path?: string,
-        value?: StyleItem['attributes'] | StyleValue,
-        params?: { componentType: string }
-      ) => boolean
-    )(displayMode, selector, type, path, value, params);
+  ): boolean {
+    return this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
   }
 
   getSelector = (displayMode: DisplayMode, selector: string) => getStyleItem(this.platform, displayMode, selector);
@@ -159,26 +86,20 @@ class StyleMap {
   static getSelector = (style: Pick<Style, 'platform' | 'variables'>, displayMode: DisplayMode, selector: string) =>
     this.getInstance(style).getSelector(displayMode, selector);
 
-  updateSelector<T extends TagType, P extends string | undefined>(
+  updateSelector(
     displayMode: DisplayMode,
     selector: string,
-    type: T,
-    path?: P,
-    value?: T extends 'class-component'
-      ? P extends '' | undefined
-        ? Extract<StyleItem, { type: 'class-component' }>['attributes']
-        : StyleValue
-      : P extends '' | undefined
-        ? Exclude<StyleItem, { type: 'class-component' }>['attributes']
-        : StyleValue
-  ) {
+    type: TagType,
+    path?: string,
+    value?: StyleItem['attributes'] | StyleValue
+  ): boolean {
     if (type === 'class-component') {
       return updateSelectorClassComponent(
         this.platform,
         displayMode,
         selector,
         path,
-        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined | StyleValue
+        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue | undefined
       );
     }
 
@@ -187,24 +108,18 @@ class StyleMap {
       displayMode,
       selector,
       path,
-      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | undefined | StyleValue
+      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue | undefined
     );
   }
 
-  static updateSelector<T extends TagType, P extends string | undefined>(
+  static updateSelector(
     style: Pick<Style, 'platform' | 'variables'>,
     displayMode: DisplayMode,
     selector: string,
-    type: T,
-    path?: P,
-    value?: T extends 'class-component'
-      ? P extends '' | undefined
-        ? Extract<StyleItem, { type: 'class-component' }>['attributes']
-        : StyleValue
-      : P extends '' | undefined
-        ? Exclude<StyleItem, { type: 'class-component' }>['attributes']
-        : StyleValue
-  ) {
+    type: TagType,
+    path?: string,
+    value?: StyleItem['attributes'] | StyleValue
+  ): boolean {
     return this.getInstance(style).updateSelector(displayMode, selector, type, path, value);
   }
 

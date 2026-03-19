@@ -25,10 +25,7 @@ describe('StyleMap', () => {
 
   describe('addSelector (default)', () => {
     it('adds without path (object)', () => {
-      const ok = StyleMap.addSelector(style, 'desktop', 'btn', 'class', undefined, {
-        color: 'red'
-      });
-
+      const ok = StyleMap.addSelector(style, 'desktop', 'btn', 'class', undefined, { color: 'red' });
       expect(ok).toBe(true);
       expect(style.platform.desktop.btn.attributes.color).toBe('red');
     });
@@ -40,7 +37,6 @@ describe('StyleMap', () => {
     });
 
     it('rejects object when path is string', () => {
-      // @ts-expect-error // eslint-disable-line
       const ok = StyleMap.addSelector(style, 'desktop', 'x', 'class', 'color', { color: 'red' });
       expect(ok).toBe(false);
       expect(style.platform.desktop.x).toBeUndefined();
@@ -66,7 +62,6 @@ describe('StyleMap', () => {
     });
 
     it('creates empty attributes when value is undefined and no path', () => {
-      // @ts-expect-error // eslint-disable-line
       const ok = StyleMap.addSelector(style, 'desktop', 'undef', 'class', undefined, undefined);
       expect(ok).toBe(true);
       expect(style.platform.desktop.undef.attributes).toEqual({});
@@ -75,7 +70,6 @@ describe('StyleMap', () => {
 
   describe('addSelector (class-component)', () => {
     it('requires params', () => {
-      // @ts-expect-error // eslint-disable-line
       const ok = StyleMap.addSelector(style, 'desktop', 'card', 'class-component', '', {});
       expect(ok).toBe(false);
       expect(style.platform.desktop.card).toBeUndefined();
@@ -364,7 +358,6 @@ describe('StyleMap', () => {
     });
 
     it('class-component allows undefined value with path (structure still created)', () => {
-      // @ts-expect-error // eslint-disable-line
       const ok = StyleMap.addSelector(style, 'desktop', 'cardZ', 'class-component', 'base.color', undefined, {
         componentType: 'div'
       });

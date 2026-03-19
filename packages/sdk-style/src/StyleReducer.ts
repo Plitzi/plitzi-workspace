@@ -34,32 +34,22 @@ export type StyleReducerActionsBase = { fromSubscriptions?: boolean };
 export type StyleReducerActions = StyleReducerActionsBase &
   (
     | { type: 'STYLE_UPDATE'; style: Style }
-    | (
-        | {
-            type: 'STYLE_ADD_SELECTOR';
-            displayMode: DisplayMode;
-            selector: string;
-            path: string;
-            selectorType: Exclude<TagType, 'class-component'>;
-            value: StyleItem['attributes'];
-          }
-        | {
-            type: 'STYLE_ADD_SELECTOR';
-            displayMode: DisplayMode;
-            selector: string;
-            path: string;
-            selectorType: 'class-component';
-            value: StyleItem['attributes'];
-            params: { componentType: string };
-          }
-      )
+    | {
+        type: 'STYLE_ADD_SELECTOR';
+        displayMode: DisplayMode;
+        selector: string;
+        path?: string;
+        selectorType: TagType;
+        value?: StyleItem['attributes'];
+        params?: { componentType: string };
+      }
     | {
         type: 'STYLE_UPDATE_SELECTOR';
         displayMode: DisplayMode;
         selector: string;
         path: string;
         selectorType: TagType;
-        value: StyleItem['attributes'];
+        value?: StyleItem['attributes'];
       }
     | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }
     | {
@@ -97,25 +87,17 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
     // Selector
 
     case StyleActions.STYLE_ADD_SELECTOR: {
-      const { displayMode, selector, path, selectorType = 'class', value } = action;
+      const { displayMode, selectorType, selector, path = '', value, params } = action;
 
       return produce(state, draft => {
-        if (
-          action.selectorType === 'class-component' &&
-          StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value, action.params)
-        ) {
-          set(draft, 'cache', generateCache(draft));
-        } else if (
-          action.selectorType !== 'class-component' &&
-          StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value)
-        ) {
+        if (StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value, params)) {
           set(draft, 'cache', generateCache(draft));
         }
       });
     }
 
     case StyleActions.STYLE_UPDATE_SELECTOR: {
-      const { displayMode, selector, path, selectorType = 'class', value } = action;
+      const { displayMode, selector, path = '', selectorType = 'class', value } = action;
 
       return produce(state, draft => {
         if (StyleMap.updateSelector(draft, displayMode, selector, selectorType, path, value)) {
