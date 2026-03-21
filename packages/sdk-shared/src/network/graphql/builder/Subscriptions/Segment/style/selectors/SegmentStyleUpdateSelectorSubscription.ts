@@ -1,14 +1,15 @@
 import { gql } from '@apollo/client/core';
 
-import type { DisplayMode, StyleItem, TagType } from '../../../../../../../types';
+import type { DisplayMode, StyleCategory, StyleItem, TagType } from '../../../../../../../types';
 
 export type TSegmentStyleUpdateSelectorSubscription = {
   contextId: string;
   displayMode: DisplayMode;
   selector: string;
   type: TagType;
-  path: string;
-  style: StyleItem['attributes'];
+  path?: StyleCategory;
+  style?: StyleItem['attributes'];
+  params: { componentType: string; styleSelector?: string };
 };
 
 const SegmentStyleUpdateSelectorSubscription = gql`
@@ -20,6 +21,7 @@ const SegmentStyleUpdateSelectorSubscription = gql`
       type
       path
       style
+      params
     }
   }
 `;

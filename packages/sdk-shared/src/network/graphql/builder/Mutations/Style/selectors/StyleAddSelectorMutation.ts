@@ -8,7 +8,7 @@ const StyleAddSelectorMutation = gql`
     $type: String!
     $path: String
     $style: Json
-    $params: Json
+    $params: Json!
   ) {
     StyleAddSelector(
       environment: $environment

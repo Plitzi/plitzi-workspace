@@ -8,6 +8,7 @@ const SegmentStyleAddSelectorMutation = gql`
     $type: String!
     $path: String
     $style: Json
+    $params: Json!
     $contextId: String!
   ) {
     SegmentStyleAddSelector(
@@ -17,6 +18,7 @@ const SegmentStyleAddSelectorMutation = gql`
       type: $type
       path: $path
       style: $style
+      params: $params
       contextId: $contextId
     ) {
       variables

@@ -31,7 +31,8 @@ import type {
   StyleVariableValue,
   BuilderQueriesMap,
   BuilderMutationsMap,
-  BuilderSubscriptionsMap
+  BuilderSubscriptionsMap,
+  StyleCategory
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
@@ -305,8 +306,9 @@ const SegmentsContextProvider = ({
       displayMode: DisplayMode,
       selector: string,
       type: TagType,
-      path: string,
-      value?: StyleItem['attributes'],
+      path: StyleCategory | undefined,
+      value: StyleItem['attributes'] | undefined,
+      params: { componentType: string; styleSelector?: string },
       fromSubscriptions = false
     ) =>
       dispatchSegments({
@@ -317,6 +319,7 @@ const SegmentsContextProvider = ({
         selectorType: type,
         path,
         value,
+        params,
         fromSubscriptions
       }),
     [dispatchSegments]
@@ -328,8 +331,9 @@ const SegmentsContextProvider = ({
       displayMode: DisplayMode,
       selector: string,
       type: TagType,
-      path: string,
-      value?: StyleItem['attributes'],
+      path: StyleCategory | undefined,
+      value: StyleItem['attributes'] | undefined,
+      params: { componentType: string; styleSelector?: string },
       fromSubscriptions = false
     ) =>
       dispatchSegments({
@@ -340,6 +344,7 @@ const SegmentsContextProvider = ({
         selectorType: type,
         path,
         value,
+        params,
         fromSubscriptions
       }),
     [dispatchSegments]
@@ -643,27 +648,20 @@ const SegmentsContextProvider = ({
       });
 
       subscriptionManager.subscribe('SegmentStyleAddSelector', {}, data => {
-        const { displayMode, selector, type, path, style, contextId } = get(
+        const { displayMode, selector, type, path, style, contextId, params } = get(
           data,
           'data.SegmentStyleAddSelector',
           {}
         ) as BuilderSubscriptionsMap['SegmentStyleAddSelector'];
-        segmentStyleAddSelector(contextId, displayMode, selector, type, path, style, true);
+        segmentStyleAddSelector(contextId, displayMode, selector, type, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
-        const { displayMode, selector, type, path, style, contextId } = get(
+        const { displayMode, selector, type, path, style, contextId, params } = get(
           data,
           'data.SegmentStyleUpdateSelector',
           {}
-        ) as {
-          displayMode: DisplayMode;
-          selector: string;
-          path: string;
-          type: TagType;
-          style: StyleItem['attributes'];
-          contextId: string;
-        };
-        segmentStyleUpdateSelector(contextId, displayMode, selector, type, path, style, true);
+        ) as BuilderSubscriptionsMap['SegmentStyleUpdateSelector'];
+        segmentStyleUpdateSelector(contextId, displayMode, selector, type, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
         const { displayMode, selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {
