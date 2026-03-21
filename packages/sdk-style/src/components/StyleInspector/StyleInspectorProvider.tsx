@@ -102,6 +102,7 @@ const StyleInspectorProvider = ({
   const inspectorContextValue = useMemo(
     () => ({
       selector,
+      styleSelector,
       displayMode,
       variables: schemaVariables, // @todo: styleVariables (at global level) and selector?.variables (needs to be parsed in key:value)
       inheritData: inheritData.style,
@@ -110,7 +111,17 @@ const StyleInspectorProvider = ({
       resetValue,
       getDefaultValue
     }),
-    [schemaVariables, displayMode, selector, setValue, resetValue, inheritData, bindingData, getDefaultValue]
+    [
+      selector,
+      styleSelector,
+      displayMode,
+      schemaVariables,
+      inheritData.style,
+      bindingData,
+      setValue,
+      resetValue,
+      getDefaultValue
+    ]
   );
 
   return <StyleInspectorContext value={inspectorContextValue}>{children}</StyleInspectorContext>;

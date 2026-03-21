@@ -26,13 +26,20 @@ import type { DisplayMode, Element, StyleCategory, StyleItem, StyleValue } from 
 import type { ChangeEvent } from 'react';
 
 export type InspectorModeBasicProps = {
+  componentType?: string;
   selector?: StyleItem;
   styleSelector?: string;
   element?: Element;
   displayMode: DisplayMode;
 };
 
-const InspectorModeBasic = ({ selector, styleSelector = 'base', element, displayMode }: InspectorModeBasicProps) => {
+const InspectorModeBasic = ({
+  componentType,
+  selector,
+  styleSelector = 'base',
+  element,
+  displayMode
+}: InspectorModeBasicProps) => {
   const { builderHandler } = use(BuilderContext);
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
     'builder-state.styleInspector.collapsedCache',
@@ -59,24 +66,24 @@ const InspectorModeBasic = ({ selector, styleSelector = 'base', element, display
 
   const handleChange = useCallback(
     (styleKey?: StyleCategory, values?: StyleItem['attributes'] | StyleValue) => {
-      if (!element) {
-        return undefined;
-      }
-
-      const {
-        definition: { type }
-      } = element;
-      const params = { componentType: type, styleSelector };
+      const params = { componentType, styleSelector };
       if (selector) {
         builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, values, params);
 
         return;
       }
 
-      const existingClasses = get(element, `definition.styleSelectors.${styleSelector}`);
-      const customClass = makeSelector(type, styleSelector);
+      if (!componentType) {
+        return undefined;
+      }
 
+      const customClass = makeSelector(componentType, styleSelector);
       builderHandler('styleAddSelector', displayMode, customClass, 'class', styleKey, values, params);
+      if (!element) {
+        return;
+      }
+
+      const existingClasses = get(element, `definition.styleSelectors.${styleSelector}`);
       builderHandler(
         'schemaUpdateElement',
         produce(element, draft => {
@@ -88,7 +95,7 @@ const InspectorModeBasic = ({ selector, styleSelector = 'base', element, display
         })
       );
     },
-    [builderHandler, displayMode, element, selector, styleSelector]
+    [builderHandler, componentType, displayMode, element, selector, styleSelector]
   );
 
   const isList = useMemo(() => {

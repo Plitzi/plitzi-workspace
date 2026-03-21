@@ -19,7 +19,7 @@ import type { Element, StyleItem, TagType } from '@plitzi/sdk-shared';
 export type StyleInspectorProps = {
   value?: string;
   element?: Element;
-  componentType?: string;
+  componentType: string;
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
   styleSelectorsAvailables?: string[];
@@ -57,7 +57,7 @@ const StyleInspector = ({
 
   useEffect(() => {
     setStyleSelector('base');
-    if (mode === 'element') {
+    if (mode !== 'element') {
       return;
     }
 
@@ -201,6 +201,7 @@ const StyleInspector = ({
         )}
         {viewMode === 'basic' && (
           <InspectorModeBasic
+            componentType={componentType}
             styleSelector={styleSelector}
             selector={selector}
             element={element}

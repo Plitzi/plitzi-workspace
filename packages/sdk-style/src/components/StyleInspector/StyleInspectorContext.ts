@@ -10,6 +10,7 @@ export type SetValues = {
 
 export type StyleInspectorContextValue = {
   selector?: StyleItem;
+  styleSelector?: string;
   displayMode: DisplayMode;
   variables: Record<string, unknown>;
   inheritData: StyleHelperMetaData['style'];
