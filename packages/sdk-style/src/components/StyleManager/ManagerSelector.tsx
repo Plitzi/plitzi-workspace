@@ -20,7 +20,7 @@ import type { Dispatch, SetStateAction } from 'react';
 export type ManagerSelectorProps = {
   flatList: Element[];
   selected?: string;
-  onSelect?: Dispatch<SetStateAction<string | undefined>>;
+  onSelect?: Dispatch<SetStateAction<StyleItem | undefined>>;
   selectors: StyleItem[];
 };
 
@@ -78,9 +78,9 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
 
   const handleClickSelect = useCallback(
     (selector: string) => {
-      onSelect?.(state => (state === selector ? undefined : selector));
+      onSelect?.(state => (state?.name === selector ? undefined : selectors.find(s => s.name === selector)));
     },
-    [onSelect]
+    [onSelect, selectors]
   );
 
   const elementHasSelector = useCallback((element: Element, selector: string) => {

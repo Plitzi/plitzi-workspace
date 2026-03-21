@@ -20,6 +20,7 @@ import type { Element, StyleItem, TagType } from '@plitzi/sdk-shared';
 export type StyleInspectorProps = {
   value?: string;
   element?: Element;
+  componentType?: string;
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
   allowStyleSelector?: boolean;
@@ -30,6 +31,7 @@ const StyleInspector = ({
   value,
   element,
   mode = 'element',
+  componentType,
   styleSelectors,
   allowStyleSelector = true,
   onChange
@@ -56,21 +58,29 @@ const StyleInspector = ({
     () =>
       get(
         componentDefinitions.current,
-        `${get(element, 'definition.type', '')}.definition.styleSelectors`,
+        `${componentType}.definition.styleSelectors`,
         {}
       ) as Element['definition']['styleSelectors'],
-    [componentDefinitions, element]
+    [componentDefinitions, componentType]
   );
 
   useEffect(() => {
+    if (mode !== 'element') {
+      return;
+    }
+
     setStyleSelector('base');
     const selectors = get(styleSelectors, 'base', '').split(' ');
     const selector = selectors[selectors.length - 1];
     onChange?.(selector ? selector : '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onChange, element?.definition.styleSelectors]);
+  }, [onChange, styleSelectors]);
 
   useDidUpdateEffect(() => {
+    if (mode !== 'element') {
+      return;
+    }
+
     const selectors = get(styleSelectors, styleSelector, '').split(' ');
     const selector = selectors[selectors.length - 1];
     if (selector) {
@@ -174,7 +184,7 @@ const StyleInspector = ({
             style={style}
             value={selectorName}
             selector={selector}
-            componentType={element?.definition.type}
+            componentType={componentType}
             displayMode={displayMode}
             onAdd={handleAddSelector}
             onChange={handleChangeSelector}

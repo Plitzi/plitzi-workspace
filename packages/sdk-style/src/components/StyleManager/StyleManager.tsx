@@ -1,59 +1,62 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useState, use, useMemo, useCallback } from 'react';
+import { useState, use, useMemo } from 'react';
 
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import ManagerSelector from './ManagerSelector';
 import StyleInspector from '../StyleInspector';
 
+import type { StyleItem } from '@plitzi/sdk-shared';
+
 const StyleManager = () => {
-  const [selected, setSelected] = useState<string | undefined>(undefined);
+  const { componentDefinitions } = use(ComponentContext);
+  const [selector, setSelector] = useState<StyleItem | undefined>(undefined);
   const {
     schema: { flat }
   } = use(BuilderSchemaContext);
   const flatList = useMemo(() => Object.values(flat), [flat]);
   const { style, displayMode } = use(BuilderStyleContext);
-  const [selector, setSelector] = useState<string | undefined>();
   const selectors = useMemo(() => Object.values(get(style, `platform.${displayMode}`, {})), [displayMode, style]);
-  const styleSelectorsMemo = useMemo(() => {
-    if (!selected) {
+  const styleSelectors = useMemo<({ base: string } & Record<string, string>) | undefined>(() => {
+    if (!selector) {
       return undefined;
     }
 
-    return { base: selected };
-  }, [selected]);
-  const builderStyleValueMemo = useMemo(
-    () => ({
-      style,
-      displayMode,
-      selectorSelected: get(style, `platform.${displayMode}.${selected}`, undefined),
-      setSelectorSelected: undefined,
-      styleSelector: 'base',
-      setStyleSelector: undefined
-    }),
-    [style, displayMode, selected]
-  );
+    if (selector.type === 'class-component') {
+      const compoentStyleSelectors = get(
+        componentDefinitions.current,
+        `${selector.componentType}.definition.styleSelectors`,
+        {}
+      );
 
-  const handleChange = useCallback((value?: string) => setSelector(value), []);
+      return Object.keys(compoentStyleSelectors).reduce(
+        (acum, key) => ({ ...acum, [key]: selector.componentType }),
+        {}
+      ) as {
+        base: string;
+      } & Record<string, string>;
+    }
+
+    return { base: selector.name };
+  }, [componentDefinitions, selector]);
 
   return (
     <div className="flex h-full grow flex-col overflow-auto">
       <div className="flex grow overflow-auto">
-        <ManagerSelector selectors={selectors} flatList={flatList} selected={selected} onSelect={setSelected} />
+        <ManagerSelector selectors={selectors} flatList={flatList} selected={selector?.name} onSelect={setSelector} />
         <div className="flex grow basis-0 flex-col overflow-auto">
-          {selected && (
-            <BuilderStyleContext value={builderStyleValueMemo}>
-              <StyleInspector
-                mode="manager"
-                styleSelectors={styleSelectorsMemo}
-                allowStyleSelector={false}
-                value={selector}
-                onChange={handleChange}
-              />
-            </BuilderStyleContext>
+          {selector && (
+            <StyleInspector
+              mode="manager"
+              styleSelectors={styleSelectors}
+              allowStyleSelector={selector.type === 'class-component'}
+              componentType={selector.type === 'class-component' ? selector.componentType : undefined}
+              value={selector.name}
+            />
           )}
-          {!selected && (
+          {!selector && (
             <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center select-none">
               No selector or element selected. Click on one to select it.
             </div>

@@ -116,6 +116,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
             value={selector}
             mode="element"
             element={element}
+            componentType={element.definition.type}
             styleSelectors={tempDefinition.styleSelectors}
             onChange={setSelector}
           />
