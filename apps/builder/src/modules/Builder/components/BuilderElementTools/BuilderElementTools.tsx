@@ -7,6 +7,7 @@ import { use, useMemo, useCallback, useRef } from 'react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
@@ -29,10 +30,16 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   const { selector, setSelector } = use(BuilderStyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const element = useBuilderElement(elementSelected);
+  const { componentDefinitions } = use(ComponentContext);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);
   const elementRef = useRef(element);
   elementRef.current = element;
+
+  const styleSelectorsAvailables = useMemo(
+    () => Object.keys(get(componentDefinitions.current, `${element?.definition.type}.definition.styleSelectors`, {})),
+    [componentDefinitions, element?.definition.type]
+  );
 
   const handleClickListItems = useCallback((item: string) => setSelected(item), [setSelected]);
 
@@ -118,6 +125,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
             element={element}
             componentType={element.definition.type}
             styleSelectors={tempDefinition.styleSelectors}
+            styleSelectorsAvailables={styleSelectorsAvailables}
             onChange={setSelector}
           />
         )}

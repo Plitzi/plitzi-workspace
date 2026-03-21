@@ -19,28 +19,28 @@ const StyleManager = () => {
   const flatList = useMemo(() => Object.values(flat), [flat]);
   const { style, displayMode } = use(BuilderStyleContext);
   const selectors = useMemo(() => Object.values(get(style, `platform.${displayMode}`, {})), [displayMode, style]);
+
+  const styleSelectorsAvailables = useMemo(
+    () =>
+      selector?.type === 'class-component'
+        ? Object.keys(get(componentDefinitions.current, `${selector.componentType}.definition.styleSelectors`, {}))
+        : ['base'],
+    [componentDefinitions, selector]
+  );
+
   const styleSelectors = useMemo<({ base: string } & Record<string, string>) | undefined>(() => {
     if (!selector) {
       return undefined;
     }
 
-    if (selector.type === 'class-component') {
-      const compoentStyleSelectors = get(
-        componentDefinitions.current,
-        `${selector.componentType}.definition.styleSelectors`,
-        {}
-      );
-
-      return Object.keys(compoentStyleSelectors).reduce(
-        (acum, key) => ({ ...acum, [key]: selector.componentType }),
-        {}
-      ) as {
+    if (selector.type === 'class-component' && styleSelectorsAvailables.length > 1) {
+      return styleSelectorsAvailables.reduce((acum, key) => ({ ...acum, [key]: selector.componentType }), {}) as {
         base: string;
       } & Record<string, string>;
     }
 
     return { base: selector.name };
-  }, [componentDefinitions, selector]);
+  }, [selector, styleSelectorsAvailables]);
 
   return (
     <div className="flex h-full grow flex-col overflow-auto">
@@ -51,6 +51,7 @@ const StyleManager = () => {
             <StyleInspector
               mode="manager"
               styleSelectors={styleSelectors}
+              styleSelectorsAvailables={styleSelectorsAvailables}
               allowStyleSelector={selector.type === 'class-component'}
               componentType={selector.type === 'class-component' ? selector.componentType : undefined}
               value={selector.name}

@@ -8,7 +8,6 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import Selector from '../Selector';
 import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
@@ -23,6 +22,7 @@ export type StyleInspectorProps = {
   componentType?: string;
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
+  styleSelectorsAvailables?: string[];
   allowStyleSelector?: boolean;
   onChange?: (selector?: string) => void;
 };
@@ -33,11 +33,11 @@ const StyleInspector = ({
   mode = 'element',
   componentType,
   styleSelectors,
+  styleSelectorsAvailables,
   allowStyleSelector = true,
   onChange
 }: StyleInspectorProps) => {
   const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
-  const { componentDefinitions } = use(ComponentContext);
   const {
     style,
     displayMode,
@@ -53,15 +53,6 @@ const StyleInspector = ({
   const selector = useMemo<StyleItem | undefined>(
     () => get(style, `platform.${displayMode}.${value}`),
     [style, displayMode, value]
-  );
-  const styleSelectorsAvailables = useMemo<Element['definition']['styleSelectors']>(
-    () =>
-      get(
-        componentDefinitions.current,
-        `${componentType}.definition.styleSelectors`,
-        {}
-      ) as Element['definition']['styleSelectors'],
-    [componentDefinitions, componentType]
   );
 
   useEffect(() => {
@@ -192,10 +183,10 @@ const StyleInspector = ({
             onSelectorSelected={handleSelectSelector}
           />
         )}
-        {allowStyleSelector && Object.keys(styleSelectorsAvailables).length > 1 && (
+        {allowStyleSelector && styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
           <div className="flex flex-col text-xs">
             <Select className="rounded-sm" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>
-              {Object.keys(styleSelectorsAvailables).map(selectorKey => (
+              {styleSelectorsAvailables.map(selectorKey => (
                 <option key={selectorKey} value={selectorKey}>
                   {selectorKey}
                 </option>
