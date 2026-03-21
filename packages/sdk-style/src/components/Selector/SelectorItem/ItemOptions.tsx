@@ -69,7 +69,7 @@ const ItemOptions = ({
   return (
     <ContainerFloating>
       <ContainerFloating.Trigger>
-        <Icon icon="fa-solid fa-ellipsis-vertical" className="h-4 w-3 !min-w-3" />
+        <Icon icon="fa-solid fa-ellipsis-vertical" className="h-4 w-4 !min-w-4" />
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="text-xs text-gray-700">
         <div className="bg-gray-50 py-1">
