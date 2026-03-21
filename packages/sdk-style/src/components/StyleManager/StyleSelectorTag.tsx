@@ -46,7 +46,7 @@ const StyleSelectorTag = ({
       })}
       onClick={handleClickSelect}
     >
-      <SelectorItem editable={false} selector={label} type={type} active />
+      <SelectorItem editable={false} selector={label} type={type} active readOnly />
       <div className="flex">
         <div className={clsx('mr-1', { flex: active, 'hidden group-hover:flex': !active })}>
           <Button intent="danger" size="xs" onClick={handleClickDelete}>

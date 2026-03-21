@@ -16,6 +16,7 @@ export type SelectorItemProps = {
   type?: TagType;
   editable?: boolean;
   active?: boolean;
+  readOnly?: boolean;
   onClick?: (selector: SelectorValue) => void;
   onChange?: (selector: SelectorValue) => void;
   onChangeState?: (state: string) => void;
@@ -28,6 +29,7 @@ const SelectorItem = ({
   type = 'class',
   editable = true,
   active = false,
+  readOnly = false,
   onClick,
   onChange,
   onChangeState,
@@ -38,11 +40,13 @@ const SelectorItem = ({
   const handleClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
-      e.stopPropagation();
+      if (!readOnly) {
+        e.stopPropagation();
+      }
 
       onClick?.({ name: selector, type });
     },
-    [onClick, selector, type]
+    [onClick, readOnly, selector, type]
   );
 
   const handleChange = useCallback(
