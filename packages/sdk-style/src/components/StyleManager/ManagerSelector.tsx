@@ -36,17 +36,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
       selectorsParsed = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
-    return selectorsParsed.sort((a, b) => {
-      if (a.type === 'class-component') {
-        return -1;
-      }
-
-      if (b.type === 'class-component') {
-        return 0;
-      }
-
-      return 0;
-    });
+    return selectorsParsed.sort((a, b) => Number(b.type === 'class-component') - Number(a.type === 'class-component'));
   }, [selectors, searchInput]);
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
