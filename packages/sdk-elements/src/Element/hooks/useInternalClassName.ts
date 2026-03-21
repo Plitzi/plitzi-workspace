@@ -27,16 +27,20 @@ const useInternalClassName = ({
 
   return useMemo(
     () =>
-      clsx(className, {
-        'plitzi-component--hidden': visibility === false || visibility === 'false',
-        'plitzi-component': !previewMode && !plitziElementLayout,
-        'plitzi-component--layout': !previewMode && !!plitziElementLayout,
-        with__container: !previewMode && !!items,
-        'container--empty': !previewMode && !!items && items.length === 0 && !plitziElementLayout,
-        'container--base-element': !previewMode && !!items && baseElementId === id,
-        'plitzi-component--layout-body': plitziElementLayout && id === plitziElementLayout.containerId
-      }),
-    [className, visibility, previewMode, plitziElementLayout, items, id, baseElementId]
+      clsx(
+        className,
+        {
+          'plitzi-component--hidden': visibility === false || visibility === 'false',
+          'plitzi-component': !previewMode && !plitziElementLayout,
+          'plitzi-component--layout': !previewMode && !!plitziElementLayout,
+          with__container: !previewMode && !!items,
+          'container--empty': !previewMode && !!items && items.length === 0 && !plitziElementLayout,
+          'container--base-element': !previewMode && !!items && baseElementId === id,
+          'plitzi-component--layout-body': plitziElementLayout && id === plitziElementLayout.containerId
+        },
+        definition.styleSelectors.base
+      ),
+    [className, visibility, previewMode, plitziElementLayout, items, baseElementId, id, definition.styleSelectors.base]
   );
 };
 

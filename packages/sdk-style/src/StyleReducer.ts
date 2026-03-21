@@ -8,6 +8,7 @@ import StyleMap from './StyleMap';
 import type {
   DisplayMode,
   Style,
+  StyleCategory,
   StyleItem,
   StyleVariableCategory,
   StyleVariableValue,
@@ -38,18 +39,19 @@ export type StyleReducerActions = StyleReducerActionsBase &
         type: 'STYLE_ADD_SELECTOR';
         displayMode: DisplayMode;
         selector: string;
-        path?: string;
+        path?: StyleCategory;
         selectorType: TagType;
         value?: StyleItem['attributes'];
-        params?: { componentType: string };
+        params: { componentType: string; styleSelector?: string };
       }
     | {
         type: 'STYLE_UPDATE_SELECTOR';
         displayMode: DisplayMode;
         selector: string;
-        path: string;
+        path?: StyleCategory;
         selectorType: TagType;
         value?: StyleItem['attributes'];
+        params: { componentType: string; styleSelector?: string };
       }
     | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }
     | {
@@ -87,7 +89,7 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
     // Selector
 
     case StyleActions.STYLE_ADD_SELECTOR: {
-      const { displayMode, selectorType, selector, path = '', value, params } = action;
+      const { displayMode, selectorType, selector, path, value, params } = action;
 
       return produce(state, draft => {
         if (StyleMap.addSelector(draft, displayMode, selector, selectorType, path, value, params)) {
@@ -97,10 +99,10 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
     }
 
     case StyleActions.STYLE_UPDATE_SELECTOR: {
-      const { displayMode, selector, path = '', selectorType = 'class', value } = action;
+      const { displayMode, selector, path, selectorType = 'class', value, params } = action;
 
       return produce(state, draft => {
-        if (StyleMap.updateSelector(draft, displayMode, selector, selectorType, path, value)) {
+        if (StyleMap.updateSelector(draft, displayMode, selector, selectorType, path, value, params)) {
           set(draft, 'cache', generateCache(draft));
         }
       });

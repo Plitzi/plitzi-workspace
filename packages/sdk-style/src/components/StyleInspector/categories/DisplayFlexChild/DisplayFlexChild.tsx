@@ -42,7 +42,7 @@ const DisplayFlexChild = ({
 
   const handleChangeSizing = useCallback(
     (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
-      setValue(['flex-grow', 'flex-shrink', 'flex-basis'] as const, value as Record<StyleCategory, StyleValue>);
+      setValue(undefined, value as Record<StyleCategory, StyleValue>);
     },
     [setValue]
   );

@@ -1,8 +1,12 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
+import { get, set } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Switch from '@plitzi/plitzi-ui/Switch';
-import { useCallback, useMemo } from 'react';
+import { produce } from 'immer';
+import { use, useCallback, useMemo } from 'react';
 
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+
+import { makeSelector } from '../../../StyleHelper';
 import Background from '../categories/Background';
 import Border from '../categories/Border';
 import Display from '../categories/Display';
@@ -18,7 +22,7 @@ import Variables from '../categories/Variables';
 import useStyleInherit from '../hooks/useStyleInherit';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 
-import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type InspectorModeBasicProps = {
@@ -29,6 +33,7 @@ export type InspectorModeBasicProps = {
 };
 
 const InspectorModeBasic = ({ selector, styleSelector = 'base', element, displayMode }: InspectorModeBasicProps) => {
+  const { builderHandler } = use(BuilderContext);
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
     'builder-state.styleInspector.collapsedCache',
     {}
@@ -52,22 +57,48 @@ const InspectorModeBasic = ({ selector, styleSelector = 'base', element, display
     [setReplaceTokens]
   );
 
+  const handleChange = useCallback(
+    (styleKey?: StyleCategory, values?: StyleItem['attributes'] | StyleValue) => {
+      if (!element) {
+        return undefined;
+      }
+
+      const {
+        definition: { type }
+      } = element;
+      const params = { componentType: type, styleSelector };
+      if (selector) {
+        builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, values, params);
+
+        return;
+      }
+
+      const existingClasses = get(element, `definition.styleSelectors.${styleSelector}`);
+      const customClass = makeSelector(type, styleSelector);
+
+      builderHandler('styleAddSelector', displayMode, customClass, 'class', styleKey, values, params);
+      builderHandler(
+        'schemaUpdateElement',
+        produce(element, draft => {
+          if (existingClasses) {
+            set(draft, `definition.styleSelectors.${styleSelector}`, `${existingClasses} ${customClass}`);
+          } else {
+            set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
+          }
+        })
+      );
+    },
+    [builderHandler, displayMode, element, selector, styleSelector]
+  );
+
   const isList = useMemo(() => {
-    if (showAllOptions) {
-      return true;
-    }
+    const type = element?.definition.type;
 
-    const type = get(element, 'definition.type', '');
-
-    return type === 'list' || type === 'listItem';
+    return showAllOptions || type === 'list' || type === 'listItem';
   }, [element, showAllOptions]);
 
   const isFlexChild = useMemo(() => {
-    if (showAllOptions) {
-      return true;
-    }
-
-    return get(inheritData, 'parentStyle.display', 'block') === 'flex';
+    return showAllOptions || get(inheritData, 'parentStyle.display', 'block') === 'flex';
   }, [inheritData, showAllOptions]);
 
   const isFlexVertical = useMemo(
@@ -82,6 +113,7 @@ const InspectorModeBasic = ({ selector, styleSelector = 'base', element, display
       selector={selector}
       element={element}
       inheritData={inheritData}
+      onChange={handleChange}
     >
       <div className="flex grow flex-col justify-between">
         <div className="flex flex-col">

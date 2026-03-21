@@ -7,8 +7,6 @@ import ListSquares from '@plitzi/plitzi-ui/icons/ListSquares';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, useMemo, use } from 'react';
 
-import { styleConstants } from '@plitzi/sdk-shared';
-
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
@@ -17,15 +15,7 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleValue, StyleCategory } from '@plitzi/sdk-shared';
 
-const LIST_ITEM_NONE = 'none';
-const LIST_ITEM_DISC = 'disc';
-const LIST_ITEM_CIRCLE = 'circle';
-const LIST_ITEM_SQUARES = 'square';
-const LIST_ITEM_DECIMAL = 'decimal';
-const LIST_ITEM_LETTERS = 'lower-alpha';
-const LIST_ITEM_ROMAN = 'lower-roman';
-
-const dotKeys = [styleConstants.LIST_STYLE_TYPE] as StyleCategory[];
+const dotKeys = ['list-style-type'] as StyleCategory[];
 
 export type ListItemProps = {
   replaceTokens?: boolean;
@@ -35,7 +25,7 @@ export type ListItemProps = {
 
 const ListItem = ({ replaceTokens = false, isCollapsed = true, onCollapse }: ListItemProps) => {
   const { setValue } = use(StyleInspectorContext);
-  const { [styleConstants.LIST_STYLE_TYPE]: listItemStyle } = useInspectorValues({
+  const { ['list-style-type']: listItemStyle } = useInspectorValues({
     keys: dotKeys,
     asValue: true,
     replaceTokens
@@ -45,19 +35,19 @@ const ListItem = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Lis
 
   const handleChange = useCallback(
     (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      setValue(styleConstants.LIST_STYLE_TYPE, value as StyleValue),
+      setValue('list-style-type', value as StyleValue),
     [setValue]
   );
 
   const items = useMemo(
     () => [
-      { value: LIST_ITEM_NONE, icon: <XMark />, description: '', active: listItemStyle === LIST_ITEM_NONE },
-      { value: LIST_ITEM_DISC, icon: <ListDots />, description: '', active: listItemStyle === LIST_ITEM_DISC },
-      { value: LIST_ITEM_CIRCLE, icon: <ListCircles />, description: '', active: listItemStyle === LIST_ITEM_CIRCLE },
-      { value: LIST_ITEM_SQUARES, icon: <ListSquares />, description: '', active: listItemStyle === LIST_ITEM_SQUARES },
-      { value: LIST_ITEM_DECIMAL, icon: <ListNumbers />, description: '', active: listItemStyle === LIST_ITEM_DECIMAL },
-      { value: LIST_ITEM_LETTERS, icon: <ListLetters />, description: '', active: listItemStyle === LIST_ITEM_LETTERS },
-      { value: LIST_ITEM_ROMAN, icon: <ListRoman />, description: '', active: listItemStyle === LIST_ITEM_ROMAN }
+      { value: 'none', icon: <XMark />, description: '', active: listItemStyle === 'none' },
+      { value: 'disc', icon: <ListDots />, description: '', active: listItemStyle === 'disc' },
+      { value: 'circle', icon: <ListCircles />, description: '', active: listItemStyle === 'circle' },
+      { value: 'square', icon: <ListSquares />, description: '', active: listItemStyle === 'square' },
+      { value: 'decimal', icon: <ListNumbers />, description: '', active: listItemStyle === 'decimal' },
+      { value: 'lower-alpha', icon: <ListLetters />, description: '', active: listItemStyle === 'lower-alpha' },
+      { value: 'lower-roman', icon: <ListRoman />, description: '', active: listItemStyle === 'lower-roman' }
     ],
     [listItemStyle]
   );

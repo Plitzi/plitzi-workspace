@@ -52,6 +52,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
       } else {
         const { componentType } = values;
         builderHandler('styleAddSelector', displayMode, componentType, 'class-component', undefined, undefined, {
+          styleSelector: undefined,
           componentType
         });
       }

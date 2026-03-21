@@ -8,6 +8,7 @@ const StyleUpdateSelectorMutation = gql`
     $type: String!
     $path: String
     $style: Json
+    $params: Json
   ) {
     StyleUpdateSelector(
       environment: $environment
@@ -16,6 +17,7 @@ const StyleUpdateSelectorMutation = gql`
       type: $type
       path: $path
       style: $style
+      params: $params
     ) {
       displayMode
       selector

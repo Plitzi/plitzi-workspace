@@ -3,26 +3,31 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
 
-import type { DisplayMode, Style, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
 
 const addSelectorClassComponent = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
   type: TagType,
-  path: string | undefined,
+  path: StyleCategory | undefined,
   value: Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined | StyleValue,
-  componentType: string
+  params: { componentType: string; styleSelector?: string }
 ) => {
-  const styleItem = getStyleItem(platform, displayMode, selector);
-  if (styleItem || !componentType) {
+  const styleItem = getStyleItem(platform, displayMode, selector) as
+    | Exclude<StyleItem, { type: 'class-component' }>
+    | undefined;
+  if (styleItem || !(params as typeof params | undefined) || !params.componentType) {
     return false;
   }
 
+  const { componentType, styleSelector } = params;
   let attributes = {} satisfies Extract<StyleItem, { type: 'class-component' }>['attributes'];
-  if (path) {
-    set(attributes, path, value);
-  } else if (!path && value) {
+  if (path && styleSelector && value) {
+    set(attributes, `${styleSelector}.${path}`, value);
+  } else if (styleSelector && value) {
+    set(attributes, styleSelector, value);
+  } else if (value) {
     attributes = value;
   }
 

@@ -39,6 +39,7 @@ export type StyleItem = {
   | { type: Exclude<TagType, 'class-component'>; attributes: Partial<Record<StyleCategory, StyleValue>> }
   | {
       type: 'class-component';
+      // first string is the styleSelector such [base/etc]
       attributes: Record<string, Partial<Record<StyleCategory, StyleValue>>>;
       componentType: string;
     }

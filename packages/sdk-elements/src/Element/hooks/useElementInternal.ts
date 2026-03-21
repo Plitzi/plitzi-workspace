@@ -57,7 +57,15 @@ const getProps = (
       ...(state.styleSelectors ?? {})
     }
   };
-  const elementState = { ...definition.initialState, ...state };
+
+  // StyleSelectors now will include the component class
+  definition.styleSelectors = Object.fromEntries(
+    Object.entries(definition.styleSelectors).map(([key, styleSelector]) => {
+      const value = key === 'base' ? definition.type : `${definition.type}-${key}`;
+
+      return styleSelector ? [key, `${value} ${styleSelector}`] : [key, value];
+    })
+  ) as { base: string } & Omit<Record<string, string>, 'base'>;
 
   return {
     ...internalProps,
@@ -67,7 +75,7 @@ const getProps = (
       ...omit(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
     },
     definition,
-    elementState,
+    elementState: { ...definition.initialState, ...state },
     style
   };
 };

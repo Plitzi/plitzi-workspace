@@ -3,13 +3,13 @@ import { omit, set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
 
-import type { DisplayMode, Style, StyleItem, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 
 const updateSelectorDefault = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
-  path?: string,
+  path?: StyleCategory,
   value?: Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
@@ -21,7 +21,7 @@ const updateSelectorDefault = (
     set(styleItem, `attributes.${path}`, value);
   } else if (path) {
     set(styleItem, 'attributes', omit(styleItem.attributes, [path]));
-  } else if (!path && value) {
+  } else if (value) {
     set(styleItem, 'attributes', value);
   }
 

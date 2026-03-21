@@ -49,7 +49,7 @@ const Position = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Pos
     (category: StyleCategory | 'position-path') =>
       (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
         if (category === 'position-path') {
-          setValue(Object.keys(itemValue) as StyleCategory[], itemValue as Record<StyleCategory, StyleValue>);
+          setValue(undefined, itemValue as Record<StyleCategory, StyleValue>);
         } else {
           setValue(category, itemValue as StyleValue);
         }

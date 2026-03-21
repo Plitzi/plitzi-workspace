@@ -199,7 +199,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     <Tag
       ref={ref}
       style={{ ...style, ...styleParsed }}
-      className={clsx(classNameInternalProp, classNameInternal, definition.styleSelectors.base)}
+      className={clsx(classNameInternalProp, classNameInternal)}
       {...otherProps}
       {...params}
       {...eventsAttached}

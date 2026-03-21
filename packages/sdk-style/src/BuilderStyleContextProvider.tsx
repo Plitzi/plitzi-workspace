@@ -22,7 +22,8 @@ import type {
   StyleItem,
   StyleVariableCategory,
   StyleVariableValue,
-  TagType
+  TagType,
+  StyleCategory
 } from '@plitzi/sdk-shared';
 
 export type BuilderStyleContextProviderProps = {
@@ -66,37 +67,25 @@ const BuilderStyleContextProvider = ({
       displayMode: DisplayMode,
       selector: string,
       type: TagType,
-      path: string,
-      value: StyleItem['attributes'],
-      params: { componentType?: string } | undefined,
+      path: StyleCategory | undefined,
+      value: StyleItem['attributes'] | undefined,
+      params: { componentType: string; styleSelector?: string },
       fromSubscriptions = false
     ) => {
       if (!selector) {
         selector = makeSelector(type);
       }
 
-      if (type === 'class-component') {
-        dispatchStyle({
-          type: StyleActions.STYLE_ADD_SELECTOR,
-          displayMode,
-          selector,
-          selectorType: type,
-          path,
-          value,
-          params: { componentType: params?.componentType ?? '' },
-          fromSubscriptions
-        });
-      } else {
-        dispatchStyle({
-          type: StyleActions.STYLE_ADD_SELECTOR,
-          displayMode,
-          selector,
-          selectorType: type,
-          path,
-          value,
-          fromSubscriptions
-        });
-      }
+      dispatchStyle({
+        type: StyleActions.STYLE_ADD_SELECTOR,
+        displayMode,
+        selector,
+        selectorType: type,
+        path,
+        value,
+        params,
+        fromSubscriptions
+      });
     },
     [dispatchStyle]
   );
@@ -106,8 +95,9 @@ const BuilderStyleContextProvider = ({
       displayMode: DisplayMode,
       selector: string,
       type: TagType,
-      path: string,
-      value: StyleItem['attributes'],
+      path: StyleCategory | undefined,
+      value: StyleItem['attributes'] | undefined,
+      params: { componentType: string; styleSelector?: string },
       fromSubscriptions = false
     ) =>
       dispatchStyle({
@@ -117,6 +107,7 @@ const BuilderStyleContextProvider = ({
         selectorType: type,
         path,
         value,
+        params,
         fromSubscriptions
       }),
     [dispatchStyle]
@@ -231,22 +222,21 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleAddSelector', {}, data => {
-        const StyleAddSelector = get(data, 'data.StyleAddSelector', {}) as BuilderSubscriptionsMap['StyleAddSelector'];
-        const { displayMode, selector, type, path, style } = StyleAddSelector;
-        if (type === 'class-component') {
-          styleAddSelector(displayMode, selector, type, path, style, StyleAddSelector.params, true);
-        } else {
-          styleAddSelector(displayMode, selector, type, path, style, undefined, true);
-        }
+        const { displayMode, selector, type, path, style, params } = get(
+          data,
+          'data.StyleAddSelector',
+          {}
+        ) as BuilderSubscriptionsMap['StyleAddSelector'];
+        styleAddSelector(displayMode, selector, type, path, style, params, true);
       });
 
       subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
-        const { displayMode, selector, type, path, style } = get(
+        const { displayMode, selector, type, path, style, params } = get(
           data,
           'data.StyleUpdateSelector',
           {}
         ) as BuilderSubscriptionsMap['StyleUpdateSelector'];
-        styleUpdateSelector(displayMode, selector, type, path, style, true);
+        styleUpdateSelector(displayMode, selector, type, path, style, params, true);
       });
 
       subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {

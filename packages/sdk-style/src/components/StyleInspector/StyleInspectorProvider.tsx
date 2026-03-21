@@ -1,19 +1,16 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
-/* eslint-disable @typescript-eslint/no-array-delete */
 
-import { get, set, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
-import { produce } from 'immer';
+import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import { baseDefaultValue } from '@plitzi/sdk-shared';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
-import { makeSelector, type StyleHelperMetaData } from '../../StyleHelper';
 
-import type { StyleInspectorContextValue } from './StyleInspectorContext';
+import type { SetValues } from './StyleInspectorContext';
+import type { StyleHelperMetaData } from '../../StyleHelper';
 import type { DisplayMode, Element, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -24,6 +21,7 @@ export type StyleInspectorProviderProps = {
   element?: Element;
   inheritData: StyleHelperMetaData;
   displayMode: DisplayMode;
+  onChange?: (path?: StyleCategory, values?: StyleItem['attributes'] | StyleValue) => void;
 };
 
 const StyleInspectorProvider = ({
@@ -32,115 +30,56 @@ const StyleInspectorProvider = ({
   styleSelector = 'base',
   element,
   inheritData,
-  displayMode
+  displayMode,
+  onChange
 }: StyleInspectorProviderProps) => {
-  const { builderHandler } = use(BuilderContext);
   const bindingData = useStyleBinding({ element });
   const { useDataSource } = use(DataSourceContext);
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
-  const setValue: StyleInspectorContextValue['setValue'] = useCallback(
-    (styleKey: StyleCategory | StyleCategory[], value?: StyleValue | Partial<Record<StyleCategory, StyleValue>>) => {
-      if (Array.isArray(styleKey)) {
-        styleKey.forEach((styleKeyItem, i) => {
-          if (get(bindingData, styleKeyItem as string)) {
-            delete styleKey[i];
-            if (typeof value === 'object') {
-              delete value[styleKeyItem];
-            }
+  const setValue = useCallback(
+    (styleKey?: StyleCategory, values?: StyleItem['attributes'] | StyleValue): void => {
+      if (
+        (styleKey && typeof values !== 'string' && typeof values !== 'number' && typeof values !== 'undefined') ||
+        (!styleKey && typeof values !== 'object' && typeof values !== 'undefined') ||
+        (styleKey && get(bindingData, styleKey))
+      ) {
+        return;
+      }
+
+      if (!styleKey && values && typeof values === 'object') {
+        values = omit(values, Object.keys(bindingData));
+      }
+
+      if (!styleKey && selector && typeof values === 'object') {
+        const currentValues =
+          selector.type !== 'class-component' ? selector.attributes : selector.attributes[styleSelector];
+        const newValues = { ...currentValues, ...values } as Partial<Record<StyleCategory, StyleValue>>;
+        (Object.keys(newValues) as StyleCategory[]).forEach(k => {
+          if (newValues[k] === undefined) {
+            delete newValues[k];
           }
         });
-      } else if (typeof styleKey === 'string' && get(bindingData, styleKey as string)) {
+
+        values = selector.type !== 'class-component' ? newValues : { ...values, [styleSelector]: newValues };
+      }
+
+      if (!styleKey && values && typeof values === 'object' && !Object.keys(values).length) {
         return;
       }
 
-      if (selector && (!isEmpty(value) || typeof value === 'number')) {
-        if (typeof styleKey === 'string') {
-          builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, value);
-        } else if (Array.isArray(styleKey) && typeof value === 'object') {
-          const newValues = { ...selector.attributes, ...value };
-          (Object.keys(newValues) as StyleCategory[]).forEach(k => {
-            if (newValues[k] === undefined) {
-              delete newValues[k];
-            }
-          });
-
-          builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, '', newValues);
-        }
-
-        return;
-      }
-
-      // // Value empty, remove it
-      if (selector && selector.name) {
-        if ((styleKey as string) && typeof styleKey === 'string') {
-          builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, value);
-        } else if ((styleKey as string) && Array.isArray(styleKey)) {
-          builderHandler(
-            'styleUpdateSelector',
-            displayMode,
-            selector.name,
-            selector.type,
-            '',
-            omit(selector.attributes, styleKey)
-          );
-        }
-
-        return;
-      }
-
-      // New selector
-      if (!element) {
-        return;
-      }
-
-      const {
-        definition: { type }
-      } = element;
-
-      const existingClasses = get(element, `definition.styleSelectors.${styleSelector}`);
-      const customClass = makeSelector(type, styleSelector);
-
-      if (styleKey as string) {
-        if (typeof value === 'object' && Array.isArray(styleKey)) {
-          value = Object.fromEntries(
-            Object.entries(value).filter(entry => (entry[1] as StyleValue | undefined) !== undefined)
-          );
-        }
-
-        builderHandler(
-          'styleAddSelector',
-          displayMode,
-          customClass,
-          'class',
-          typeof styleKey === 'string' ? styleKey : '',
-          value
-        );
-
-        builderHandler(
-          'schemaUpdateElement',
-          produce(element, draft => {
-            if (existingClasses) {
-              set(draft, `definition.styleSelectors.${styleSelector}`, `${existingClasses} ${customClass}`);
-            } else {
-              set(draft, `definition.styleSelectors.${styleSelector}`, customClass);
-            }
-          })
-        );
-      }
+      onChange?.(styleKey, values);
     },
-    [bindingData, selector, element, styleSelector, builderHandler, displayMode]
-  );
+    [bindingData, onChange, selector, styleSelector]
+  ) as SetValues;
 
   const getDefaultValue = useCallback(
     (key?: StyleCategory[] | StyleCategory): StyleValue | Record<StyleCategory, StyleValue> => {
-      if (typeof key === 'object') {
-        const value: Record<string, string | number> = {};
-        key.forEach(k => {
-          value[k] = get(baseDefaultValue, k);
-        });
-
-        return value;
+      if (Array.isArray(key)) {
+        return key.reduce((acum, key) => ({ ...acum, [key]: get(baseDefaultValue, key) }), {}) as Record<
+          string,
+          StyleValue
+        >;
       }
 
       if (!key) {
@@ -155,7 +94,10 @@ const StyleInspectorProvider = ({
   const resetValue = useCallback(
     (keys: StyleCategory | StyleCategory[]) => {
       if (Array.isArray(keys)) {
-        setValue(keys);
+        setValue(
+          undefined,
+          keys.reduce((acum, key) => ({ ...acum, [key]: undefined }), {})
+        );
       } else {
         setValue(keys);
       }

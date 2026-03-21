@@ -187,31 +187,29 @@ const useQueueManager = ({
         // Style
 
         case StyleActions.STYLE_ADD_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value } = item.action;
-          if (item.action.selectorType === 'class-component') {
-            return mutate('StyleAddSelector', {
-              displayMode,
-              selector,
-              type: selectorType,
-              path,
-              style: value,
-              params: item.action.params
-            });
-          }
+          const { displayMode, selector, selectorType, path, value, params } = item.action;
 
           return mutate('StyleAddSelector', {
             displayMode,
             selector,
             type: selectorType,
             path,
-            style: value
+            style: value,
+            params
           });
         }
 
         case StyleActions.STYLE_UPDATE_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value } = item.action;
+          const { displayMode, selector, selectorType, path, value, params } = item.action;
 
-          return mutate('StyleUpdateSelector', { displayMode, selector, type: selectorType, path, style: value });
+          return mutate('StyleUpdateSelector', {
+            displayMode,
+            selector,
+            type: selectorType,
+            path,
+            style: value,
+            params
+          });
         }
 
         case StyleActions.STYLE_REMOVE_SELECTOR: {

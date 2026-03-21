@@ -33,7 +33,7 @@ const getBaseSelectorComponent = (
   return `${inline ? `${name}{` : `${name} {\n`}${Object.keys(attributesGroups)
     .map(group => {
       if (group !== 'base') {
-        return `${inline ? '' : '\n'}${getBaseSelector(`${name}--${group}`, attributesGroups[group], inline, separator, separatorMedia)}`;
+        return `${inline ? '' : '\n'}${getBaseSelector(`${name}-${group}`, attributesGroups[group], inline, separator, separatorMedia)}`;
       }
 
       if (inline) {

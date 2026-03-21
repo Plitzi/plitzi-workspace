@@ -3,14 +3,14 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
 
-import type { DisplayMode, Style, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
 
 const addSelectorDefault = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
   type: TagType,
-  path?: string,
+  path?: StyleCategory,
   value?: Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
@@ -21,7 +21,7 @@ const addSelectorDefault = (
   let attributes = {} satisfies Exclude<StyleItem, { type: 'class-component' }>['attributes'];
   if (path) {
     set(attributes, path, value);
-  } else if (!path && value) {
+  } else if (value) {
     attributes = value;
   }
 
