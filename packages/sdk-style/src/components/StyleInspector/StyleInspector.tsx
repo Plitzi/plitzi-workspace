@@ -56,11 +56,11 @@ const StyleInspector = ({
   );
 
   useEffect(() => {
-    if (mode !== 'element') {
+    setStyleSelector('base');
+    if (mode === 'element') {
       return;
     }
 
-    setStyleSelector('base');
     const selectors = get(styleSelectors, 'base', '').split(' ');
     const selector = selectors[selectors.length - 1];
     onChange?.(selector ? selector : '');
