@@ -350,7 +350,7 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value, segmentId } = item.action;
+          const { displayMode, selector, selectorType, path, value, params, segmentId } = item.action;
 
           return mutate('SegmentStyleAddSelector', {
             displayMode,
@@ -358,12 +358,13 @@ const useQueueManager = ({
             type: selectorType,
             path,
             style: value,
+            params,
             contextId: segmentId
           });
         }
 
         case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value, segmentId } = item.action;
+          const { displayMode, selector, selectorType, path, value, params, segmentId } = item.action;
 
           return mutate('SegmentStyleUpdateSelector', {
             displayMode,
@@ -371,6 +372,7 @@ const useQueueManager = ({
             type: selectorType,
             path,
             style: value,
+            params,
             contextId: segmentId
           });
         }
