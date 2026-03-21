@@ -15,7 +15,7 @@ import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
 import InspectorModeBasic from './modes/InspectorModeBasic';
 
 import type { SelectorValue } from '../Selector';
-import type { Element, StyleItem } from '@plitzi/sdk-shared';
+import type { Element, StyleItem, TagType } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
   value?: string;
@@ -64,13 +64,15 @@ const StyleInspector = ({
 
   useEffect(() => {
     setStyleSelector('base');
-    const selector = get(styleSelectors, 'base', '').split(' ')[0];
-    onChange?.(selector ? selector : element?.definition.type);
+    const selectors = get(styleSelectors, 'base', '').split(' ');
+    const selector = selectors[selectors.length - 1];
+    onChange?.(selector ? selector : '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onChange, element?.id]);
+  }, [onChange, element?.definition.styleSelectors]);
 
   useDidUpdateEffect(() => {
-    const selector = get(styleSelectors, styleSelector, '').split(' ')[0];
+    const selectors = get(styleSelectors, styleSelector, '').split(' ');
+    const selector = selectors[selectors.length - 1];
     if (selector) {
       onChange?.(selector);
     }
@@ -134,9 +136,12 @@ const StyleInspector = ({
     [element, builderHandler, styleSelector]
   );
 
-  const handleRemoveSelector = useCallback(() => {
-    builderHandler('styleRemoveSelector', displayMode, value);
-  }, [builderHandler, displayMode, value]);
+  const handleRemoveSelector = useCallback(
+    (selectorRemoved: { name: string; type: TagType }) => {
+      builderHandler('styleRemoveSelector', displayMode, selectorRemoved.name);
+    },
+    [builderHandler, displayMode]
+  );
 
   const handleClicViewMode = useCallback(
     () => setViewMode(state => (state === 'basic' ? 'advanced' : 'basic')),

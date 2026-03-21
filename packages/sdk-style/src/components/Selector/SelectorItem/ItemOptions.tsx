@@ -1,5 +1,6 @@
 import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Icon from '@plitzi/plitzi-ui/Icon';
+import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback } from 'react';
 
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
@@ -25,6 +26,8 @@ const ItemOptions = ({
   onChangeState,
   setState
 }: ItemOptionsProps) => {
+  const { showDialog } = useModal();
+
   const handleClickDuplicate = useCallback(
     () => onAction?.('duplicate', { name: `${selector}-${makeId(4)}`, type }),
     [onAction, selector, type]
@@ -32,7 +35,23 @@ const ItemOptions = ({
 
   const handleClickRemove = useCallback(() => onAction?.('remove'), [onAction]);
 
-  const handleClickDelete = useCallback(() => onAction?.('delete'), [onAction]);
+  const handleClickDelete = useCallback(async () => {
+    const response = await showDialog(
+      <Modal.Header>
+        <h4>Remove Selector</h4>
+      </Modal.Header>,
+      <Modal.Body>
+        <h4>Do you want to remove this item ?</h4>
+      </Modal.Body>,
+      undefined,
+      { size: 'sm' },
+      selector
+    );
+
+    if (response) {
+      onAction?.('delete');
+    }
+  }, [onAction, selector, showDialog]);
 
   const handleClickState = useCallback(
     (state: string) => () => {

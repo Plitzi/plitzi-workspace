@@ -64,10 +64,6 @@ const StyleInspectorProvider = ({
         values = selector.type !== 'class-component' ? newValues : { ...values, [styleSelector]: newValues };
       }
 
-      if (!styleKey && values && typeof values === 'object' && !Object.keys(values).length) {
-        return;
-      }
-
       onChange?.(styleKey, values);
     },
     [bindingData, onChange, selector, styleSelector]
@@ -94,10 +90,8 @@ const StyleInspectorProvider = ({
   const resetValue = useCallback(
     (keys: StyleCategory | StyleCategory[]) => {
       if (Array.isArray(keys)) {
-        setValue(
-          undefined,
-          keys.reduce((acum, key) => ({ ...acum, [key]: undefined }), {})
-        );
+        const value = keys.reduce((acum, key) => ({ ...acum, [key]: undefined }), {});
+        setValue(undefined, value);
       } else {
         setValue(keys);
       }

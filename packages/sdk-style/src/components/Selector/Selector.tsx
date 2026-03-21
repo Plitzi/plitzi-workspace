@@ -64,7 +64,7 @@ const Selector = ({
     [style, displayMode, value]
   );
 
-  const handleChange = useCallback(
+  const handleChangeInput = useCallback(
     (e: ChangeEvent) => {
       setOpen((e.target as HTMLInputElement).value.length > 0);
       setInputValue((e.target as HTMLInputElement).value);
@@ -119,7 +119,7 @@ const Selector = ({
       switch (action) {
         case 'remove':
         case 'delete': {
-          const finalTags = tags.filter((_tag, i) => i !== position);
+          const finalTags = tags.filter((tag, i) => i !== position && tag.type !== 'class-component');
           const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
           if (selectorProp && tags[position].name === selectorProp.name) {
             onSelectorSelected?.(get(finalTags, '0'));
@@ -294,7 +294,7 @@ const Selector = ({
             autoCapitalize="off"
             spellCheck="false"
             value={inputValue}
-            onChange={handleChange}
+            onChange={handleChangeInput}
           />
         </div>
       </ContainerFloating.Trigger>

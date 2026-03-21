@@ -38,13 +38,11 @@ const SelectorItem = ({
   const handleClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
-      if (editable) {
-        e.stopPropagation();
-      }
+      e.stopPropagation();
 
       onClick?.({ name: selector, type });
     },
-    [editable, onClick, selector, type]
+    [onClick, selector, type]
   );
 
   const handleChange = useCallback(

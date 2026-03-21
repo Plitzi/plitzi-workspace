@@ -31,11 +31,22 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const { components } = use(ComponentContext);
 
   const finalSelectors = useMemo(() => {
+    let selectorsParsed = selectors;
     if (!isEmpty(searchInput)) {
-      return selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
+      selectorsParsed = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
-    return selectors;
+    return selectorsParsed.sort((a, b) => {
+      if (a.type === 'class-component') {
+        return -1;
+      }
+
+      if (b.type === 'class-component') {
+        return 0;
+      }
+
+      return 0;
+    });
   }, [selectors, searchInput]);
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
