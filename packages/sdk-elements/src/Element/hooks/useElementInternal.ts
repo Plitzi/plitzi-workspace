@@ -60,10 +60,11 @@ const getProps = (
 
   // StyleSelectors now will include the component class
   definition.styleSelectors = Object.fromEntries(
-    Object.entries(definition.styleSelectors).map(([key, styleSelector]) => {
-      const value = key === 'base' ? definition.type : `${definition.type}-${key}`;
+    Object.entries(definition.styleSelectors).map(([styleSelector, selectors]) => {
+      const value =
+        styleSelector === 'base' ? `plitzi__${definition.type}` : `plitzi__${definition.type}-${styleSelector}`;
 
-      return styleSelector ? [key, `${value} ${styleSelector}`] : [key, value];
+      return value ? [styleSelector, `${value} ${selectors}`] : [styleSelector, selectors];
     })
   ) as { base: string } & Omit<Record<string, string>, 'base'>;
 

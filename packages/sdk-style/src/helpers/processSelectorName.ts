@@ -4,8 +4,11 @@ const processSelectorName = (selector: Omit<StyleItem, 'cache'>) => {
   const { name, type } = selector;
   let finalSelector = name;
   switch (type) {
-    case 'class':
     case 'class-component':
+      finalSelector = `.plitzi__${name}`;
+      break;
+
+    case 'class':
     case 'state':
       finalSelector = `.${name}`;
       break;
