@@ -10,11 +10,11 @@ const updateSelectorClassComponent = (
   displayMode: DisplayMode,
   selector: string,
   path: StyleCategory | undefined,
-  value: Extract<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue | undefined,
+  value: Extract<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
   params: { componentType: string; styleSelector?: string }
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector) as
-    | Extract<StyleItem, { type: 'class-component' }>
+    | Extract<StyleItem, { type: 'element' }>
     | undefined;
   if (!styleItem || !(params as typeof params | undefined) || !params.componentType) {
     return false;

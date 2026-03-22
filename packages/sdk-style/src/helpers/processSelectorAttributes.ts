@@ -103,7 +103,7 @@ export const processCssString = (attribute: string, value?: string) => {
 
 const processSelectorAttributes = (selector: StyleItem, styleSelector = 'base') => {
   const result: string[] = [];
-  if (selector.type === 'class-component' && styleSelector) {
+  if (selector.type === 'element' && styleSelector) {
     (Object.keys(selector.attributes[styleSelector] ?? {}) as StyleCategory[]).forEach(key => {
       const partialResult = processCssString(key, selector.attributes[styleSelector][key] as string);
       result.push(...partialResult.variables, partialResult.value);

@@ -51,7 +51,7 @@ const Selector = ({
     const selectors = get(style, `platform.${displayMode}`);
     const tagsAux = Object.values(pick(selectors, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
     const tagComponent = Object.values(selectors).find(
-      selector => selector.type === 'class-component' && selector.componentType === componentType
+      selector => selector.type === 'element' && selector.componentType === componentType
     );
     if (tagComponent) {
       return [tagComponent, ...tagsAux];
@@ -119,7 +119,7 @@ const Selector = ({
       switch (action) {
         case 'remove':
         case 'delete': {
-          const finalTags = tags.filter((tag, i) => i !== position && tag.type !== 'class-component');
+          const finalTags = tags.filter((tag, i) => i !== position && tag.type !== 'element');
           const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
           if (selectorProp && tags[position].name === selectorProp.name) {
             onSelectorSelected?.(get(finalTags, '0'));
@@ -278,7 +278,7 @@ const Selector = ({
               key={`${i}_${tag.name}`}
               selector={tag.name}
               type={tag.type}
-              editable={tag.type !== 'class-component'}
+              editable={tag.type !== 'element'}
               active={tag.name === selectorProp?.name.replace(/:.*/, '')}
               onAction={handleClickAction(i)}
               onClick={handleClickSelector}

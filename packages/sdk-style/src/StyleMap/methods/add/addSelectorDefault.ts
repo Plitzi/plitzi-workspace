@@ -11,14 +11,14 @@ const addSelectorDefault = (
   selector: string,
   type: TagType,
   path?: StyleCategory,
-  value?: Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
+  value?: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
   if (styleItem || (path && path.includes('.')) || (path && typeof value === 'object')) {
     return false;
   }
 
-  let attributes = {} satisfies Exclude<StyleItem, { type: 'class-component' }>['attributes'];
+  let attributes = {} satisfies Exclude<StyleItem, { type: 'element' }>['attributes'];
   if (path) {
     set(attributes, path, value);
   } else if (value) {
@@ -29,10 +29,7 @@ const addSelectorDefault = (
     name: selector,
     type,
     attributes,
-    cache: processSelector({ name: selector, type, attributes, cache: '' } as Exclude<
-      StyleItem,
-      { type: 'class-component' }
-    >)
+    cache: processSelector({ name: selector, type, attributes, cache: '' } as Exclude<StyleItem, { type: 'element' }>)
   });
 
   return true;

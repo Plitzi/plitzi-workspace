@@ -36,7 +36,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
       selectorsParsed = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
-    return selectorsParsed.sort((a, b) => Number(b.type === 'class-component') - Number(a.type === 'class-component'));
+    return selectorsParsed.sort((a, b) => Number(b.type === 'element') - Number(a.type === 'element'));
   }, [selectors, searchInput]);
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
@@ -52,7 +52,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
         builderHandler('styleAddSelector', displayMode, name, 'class');
       } else {
         const { componentType } = values;
-        builderHandler('styleAddSelector', displayMode, componentType, 'class-component', undefined, undefined, {
+        builderHandler('styleAddSelector', displayMode, componentType, 'element', undefined, undefined, {
           styleSelector: undefined,
           componentType
         });

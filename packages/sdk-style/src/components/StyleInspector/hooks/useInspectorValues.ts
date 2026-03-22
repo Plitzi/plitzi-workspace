@@ -47,7 +47,7 @@ const useInspectorValues = <TAsValue extends boolean>({
   }
 
   let attributes: Partial<Record<StyleCategory, StyleValue>>;
-  if (selector?.type === 'class-component') {
+  if (selector?.type === 'element') {
     attributes = selector.attributes[styleSelector ? styleSelector : 'base'];
   } else {
     attributes = selector?.attributes ?? {};

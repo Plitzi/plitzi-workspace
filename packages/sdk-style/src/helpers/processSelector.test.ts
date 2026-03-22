@@ -83,10 +83,10 @@ describe('processSelector', () => {
     );
   });
 
-  it('functionality when is class-component', () => {
+  it('functionality when is element', () => {
     const result = processSelector({
       name: 'button',
-      type: 'class-component',
+      type: 'element',
       componentType: 'button',
       attributes: {
         base: {
@@ -117,7 +117,7 @@ describe('processSelector', () => {
     const result2 = processSelector(
       {
         name: 'button',
-        type: 'class-component',
+        type: 'element',
         componentType: 'button',
         attributes: {
           base: {
@@ -170,7 +170,7 @@ describe('processSelector', () => {
 
     const result3 = processSelector({
       name: 'button',
-      type: 'class-component',
+      type: 'element',
       componentType: 'button',
       attributes: {
         base: {
@@ -204,7 +204,7 @@ describe('processSelector', () => {
     const result4 = processSelector(
       {
         name: 'button',
-        type: 'class-component',
+        type: 'element',
         componentType: 'button',
         attributes: {
           base: {

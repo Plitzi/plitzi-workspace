@@ -17,7 +17,7 @@ const selectorFormSchema = z.discriminatedUnion('mode', [
     mode: z.literal('default')
   }),
   z.object({
-    mode: z.literal('component'),
+    mode: z.literal('element'),
     componentType: z.string()
   })
 ]);
@@ -26,7 +26,7 @@ export type SelectorFormValues = z.infer<typeof selectorFormSchema>;
 
 export type SelectorFormProps = {
   name?: string;
-  mode?: 'default' | 'component';
+  mode?: 'default' | 'element';
   componentType?: string;
   components: Record<string, ComponentPluginWithHOC>;
   onClose?: () => void | Promise<void>;
@@ -58,7 +58,7 @@ const SelectorForm = ({
 
   const handleChangeMode = useCallback(
     (mode: string) => {
-      if (mode === 'component') {
+      if (mode === 'element') {
         form.formMethods.setValue('componentType', Object.keys(components)[0]);
       } else {
         form.formMethods.setValue('componentType', '');
@@ -77,11 +77,11 @@ const SelectorForm = ({
       <Form.Body>
         <Form.Select name="mode" label="Mode" onChange={handleChangeMode} size="xs">
           <option value="default">Default</option>
-          <option value="component">Component</option>
+          <option value="element">Element</option>
         </Form.Select>
         {watchMode === 'default' && <Form.Input name="name" label="Name" size="xs" />}
-        {watchMode === 'component' && (
-          <Form.Select name="componentType" label="Component Type" size="xs">
+        {watchMode === 'element' && (
+          <Form.Select name="componentType" label="Element Type" size="xs">
             {componentOptions}
           </Form.Select>
         )}

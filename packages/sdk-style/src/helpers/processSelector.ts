@@ -84,7 +84,7 @@ const getMediaQueries = (
 };
 
 const processSelectorDefault = (
-  selector: Exclude<StyleItem, { type: 'class-component' }>,
+  selector: Exclude<StyleItem, { type: 'element' }>,
   inline = true,
   tabIndentSpace = 2
 ) => {
@@ -104,7 +104,7 @@ const processSelectorDefault = (
 };
 
 const processSelectorComponent = (
-  selector: Extract<StyleItem, { type: 'class-component' }>,
+  selector: Extract<StyleItem, { type: 'element' }>,
   inline = true,
   tabIndentSpace = 2
 ) => {
@@ -129,7 +129,7 @@ const processSelectorComponent = (
 };
 
 const processSelector = (selector: StyleItem, inline = true, tabIndentSpace = 2) => {
-  if (selector.type === 'class-component') {
+  if (selector.type === 'element') {
     return processSelectorComponent(selector, inline, tabIndentSpace);
   }
 

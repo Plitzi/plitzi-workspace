@@ -39,7 +39,7 @@ describe('processSelectorAttributes', () => {
 
     const result2 = processSelectorAttributes({
       name: 'page',
-      type: 'class-component',
+      type: 'element',
       componentType: 'page',
       attributes: {
         base: {

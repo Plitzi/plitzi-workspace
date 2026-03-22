@@ -52,8 +52,7 @@ const StyleInspectorProvider = ({
       }
 
       if (!styleKey && selector && typeof values === 'object') {
-        const currentValues =
-          selector.type !== 'class-component' ? selector.attributes : selector.attributes[styleSelector];
+        const currentValues = selector.type !== 'element' ? selector.attributes : selector.attributes[styleSelector];
         const newValues = { ...currentValues, ...values } as Partial<Record<StyleCategory, StyleValue>>;
         (Object.keys(newValues) as StyleCategory[]).forEach(k => {
           if (newValues[k] === undefined) {
@@ -61,7 +60,7 @@ const StyleInspectorProvider = ({
           }
         });
 
-        values = selector.type !== 'class-component' ? newValues : { ...values, [styleSelector]: newValues };
+        values = selector.type !== 'element' ? newValues : { ...values, [styleSelector]: newValues };
       }
 
       onChange?.(styleKey, values);

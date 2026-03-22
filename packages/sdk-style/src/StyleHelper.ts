@@ -86,7 +86,7 @@ export const generateCache = (style: Style) => {
 
   orderedKeys.forEach((displayMode, i) => {
     const styleBlock = Object.values(platform[displayMode])
-      .sort((a, b) => Number(b.type === 'class-component') - Number(a.type === 'class-component'))
+      .sort((a, b) => Number(b.type === 'element') - Number(a.type === 'element'))
       .map(s => s.cache)
       .join('\n');
     if (!styleBlock) {

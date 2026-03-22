@@ -11,18 +11,18 @@ const addSelectorClassComponent = (
   selector: string,
   type: TagType,
   path: StyleCategory | undefined,
-  value: Extract<StyleItem, { type: 'class-component' }>['attributes'] | undefined | StyleValue,
+  value: Extract<StyleItem, { type: 'element' }>['attributes'] | undefined | StyleValue,
   params: { componentType: string; styleSelector?: string }
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector) as
-    | Exclude<StyleItem, { type: 'class-component' }>
+    | Exclude<StyleItem, { type: 'element' }>
     | undefined;
   if (styleItem || !(params as typeof params | undefined) || !params.componentType) {
     return false;
   }
 
   const { componentType, styleSelector } = params;
-  let attributes = {} satisfies Extract<StyleItem, { type: 'class-component' }>['attributes'];
+  let attributes = {} satisfies Extract<StyleItem, { type: 'element' }>['attributes'];
   if (path && styleSelector && value) {
     set(attributes, `${styleSelector}.${path}`, value);
   } else if (styleSelector && value) {
@@ -38,7 +38,7 @@ const addSelectorClassComponent = (
     componentType,
     cache: processSelector({ name: selector, type, attributes, componentType, cache: '' } as Extract<
       StyleItem,
-      { type: 'class-component' }
+      { type: 'element' }
     >)
   });
 

@@ -22,7 +22,7 @@ const StyleManager = () => {
 
   const styleSelectorsAvailables = useMemo(
     () =>
-      selector?.type === 'class-component'
+      selector?.type === 'element'
         ? Object.keys(get(componentDefinitions.current, `${selector.componentType}.definition.styleSelectors`, {}))
         : ['base'],
     [componentDefinitions, selector]
@@ -33,7 +33,7 @@ const StyleManager = () => {
       return undefined;
     }
 
-    if (selector.type === 'class-component' && styleSelectorsAvailables.length > 1) {
+    if (selector.type === 'element' && styleSelectorsAvailables.length > 1) {
       return styleSelectorsAvailables.reduce((acum, key) => ({ ...acum, [key]: selector.componentType }), {}) as {
         base: string;
       } & Record<string, string>;
@@ -52,8 +52,8 @@ const StyleManager = () => {
               mode="manager"
               styleSelectors={styleSelectors}
               styleSelectorsAvailables={styleSelectorsAvailables}
-              allowStyleSelector={selector.type === 'class-component'}
-              componentType={selector.type === 'class-component' ? selector.componentType : ''}
+              allowStyleSelector={selector.type === 'element'}
+              componentType={selector.type === 'element' ? selector.componentType : ''}
               value={selector.name}
             />
           )}

@@ -73,8 +73,8 @@ const SelectorItem = ({
         'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1 text-white select-none',
         className,
         {
-          'bg-primary-400': type === 'class-component' && active,
-          'bg-secondary-400': type !== 'class-component' && active,
+          'bg-primary-400': type === 'element' && active,
+          'bg-secondary-400': type !== 'element' && active,
           'bg-gray-500': !active,
           'max-w-full min-w-0': !editable
         }
@@ -94,7 +94,7 @@ const SelectorItem = ({
         {!editable && selector}
         {state && type === 'class' && <span>:{state}</span>}
       </div>
-      {editable && type !== 'class-component' && (
+      {editable && type !== 'element' && (
         <ItemOptions
           selector={selector}
           type={type}

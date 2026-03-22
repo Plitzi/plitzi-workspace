@@ -48,14 +48,14 @@ class StyleMap {
     value: StyleItem['attributes'] | StyleValue | undefined,
     params: { componentType: string; styleSelector?: string }
   ): boolean {
-    if (type === 'class-component') {
+    if (type === 'element') {
       return addSelectorClassComponent(
         this.platform,
         displayMode,
         selector,
         type,
         path,
-        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue,
+        value as Extract<StyleItem, { type: 'element' }>['attributes'] | StyleValue,
         params
       );
     }
@@ -66,7 +66,7 @@ class StyleMap {
       selector,
       type,
       path,
-      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
+      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue
     );
   }
 
@@ -95,7 +95,7 @@ class StyleMap {
     value?: StyleItem['attributes'] | StyleValue,
     params?: { componentType: string; styleSelector?: string }
   ): boolean {
-    if (type === 'class-component') {
+    if (type === 'element') {
       if (!params) {
         return false;
       }
@@ -105,7 +105,7 @@ class StyleMap {
         displayMode,
         selector,
         path,
-        value as Extract<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue | undefined,
+        value as Extract<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
         params
       );
     }
@@ -115,7 +115,7 @@ class StyleMap {
       displayMode,
       selector,
       path,
-      value as Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue | undefined
+      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined
     );
   }
 

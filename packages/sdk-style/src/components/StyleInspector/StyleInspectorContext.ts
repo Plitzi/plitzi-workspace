@@ -4,7 +4,7 @@ import type { StyleHelperMetaData } from '../../StyleHelper';
 import type { DisplayMode, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 
 export type SetValues = {
-  (path?: undefined, values?: Exclude<StyleItem, { type: 'class-component' }>['attributes']): void;
+  (path?: undefined, values?: Exclude<StyleItem, { type: 'element' }>['attributes']): void;
   (path: StyleCategory, values?: StyleValue): void;
 };
 

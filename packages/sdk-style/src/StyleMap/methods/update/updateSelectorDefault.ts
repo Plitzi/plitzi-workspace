@@ -10,7 +10,7 @@ const updateSelectorDefault = (
   displayMode: DisplayMode,
   selector: string,
   path?: StyleCategory,
-  value?: Exclude<StyleItem, { type: 'class-component' }>['attributes'] | StyleValue
+  value?: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
   if (!styleItem || (path && path.includes('.'))) {

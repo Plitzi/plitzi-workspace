@@ -5,8 +5,6 @@ import { inheritableAttributesBase } from '@plitzi/sdk-shared';
 import type { StyleHelperMetaData } from '../StyleHelper';
 import type { ComponentDefinition, DisplayMode, Element, Schema, Style, StyleCategory } from '@plitzi/sdk-shared';
 
-// no esta detectando los class-component
-
 const getDefaultStyle = (
   componentType: string | undefined,
   subType: string | undefined,
@@ -18,6 +16,10 @@ const getDefaultStyle = (
   let global = get(componentDefinitions, `${componentType}.defaultStyle`, undefined);
   if (!global) {
     return undefined;
+  }
+
+  if (global.subTypes && !subType && Object.keys(global.subTypes).length > 0) {
+    subType = Object.keys(global.subTypes)[0];
   }
 
   if (subType) {
@@ -80,7 +82,7 @@ const getDataStyle = (
       continue;
     }
 
-    const componentSelectors = Object.values(platformGroup).filter(styleItem => styleItem.type === 'class-component');
+    const componentSelectors = Object.values(platformGroup).filter(styleItem => styleItem.type === 'element');
     const compStyleItem = componentSelectors.find(styleItem => styleItem.componentType === componentType);
     if (compStyleItem) {
       metadata.tree.push({
@@ -93,12 +95,12 @@ const getDataStyle = (
     }
 
     const styleItem = get(platform, `${displayMode}.${type}`, undefined);
-    if (type && styleItem && !['class', 'class-component'].includes(styleItem.type)) {
+    if (type && styleItem && !['class', 'element'].includes(styleItem.type)) {
       metadata.tree.push({ name: type, displayMode, style: styleItem.attributes, isParent, isSubParent });
     }
 
     const styleSubItem = subType ? get(platform, `${displayMode}.${subType}`, undefined) : undefined;
-    if (subType && styleSubItem && !['class', 'class-component'].includes(styleSubItem.type)) {
+    if (subType && styleSubItem && !['class', 'element'].includes(styleSubItem.type)) {
       metadata.tree.push({ name: subType, displayMode, style: styleSubItem.attributes, isParent, isSubParent });
     }
   }

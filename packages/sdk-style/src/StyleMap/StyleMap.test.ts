@@ -76,17 +76,9 @@ describe('StyleMap', () => {
     });
   });
 
-  describe('addSelector (class-component)', () => {
+  describe('addSelector (element)', () => {
     it('requires params', () => {
-      const ok = StyleMap.addSelector(
-        style,
-        'desktop',
-        'card',
-        'class-component',
-        undefined,
-        {},
-        { componentType: '' }
-      );
+      const ok = StyleMap.addSelector(style, 'desktop', 'card', 'element', undefined, {}, { componentType: '' });
       expect(ok).toBe(false);
       expect(style.platform.desktop.card).toBeUndefined();
     });
@@ -96,19 +88,19 @@ describe('StyleMap', () => {
         style,
         'desktop',
         'card',
-        'class-component',
+        'element',
         undefined,
         { base: { color: 'red' } },
         { componentType: 'button' }
       );
 
       expect(ok).toBe(true);
-      const item = style.platform.desktop.card as Extract<StyleItem, { type: 'class-component' }>;
+      const item = style.platform.desktop.card as Extract<StyleItem, { type: 'element' }>;
       expect(item.attributes.base.color).toBe('red');
     });
 
     it('adds with path value', () => {
-      const ok = StyleMap.addSelector(style, 'desktop', 'card2', 'class-component', 'color', 'blue', {
+      const ok = StyleMap.addSelector(style, 'desktop', 'card2', 'element', 'color', 'blue', {
         styleSelector: 'base',
         componentType: 'button'
       });
@@ -118,26 +110,18 @@ describe('StyleMap', () => {
     });
 
     it('fails when componentType is empty', () => {
-      const ok = StyleMap.addSelector(
-        style,
-        'desktop',
-        'card3',
-        'class-component',
-        undefined,
-        {},
-        { componentType: '' }
-      );
+      const ok = StyleMap.addSelector(style, 'desktop', 'card3', 'element', undefined, {}, { componentType: '' });
       expect(ok).toBe(false);
       expect(style.platform.desktop.card3).toBeUndefined();
     });
 
     it('fails when adding duplicate selector', () => {
-      StyleMap.addSelector(style, 'desktop', 'dupCard', 'class-component', undefined, {}, { componentType: 'button' });
+      StyleMap.addSelector(style, 'desktop', 'dupCard', 'element', undefined, {}, { componentType: 'button' });
       const ok = StyleMap.addSelector(
         style,
         'desktop',
         'dupCard',
-        'class-component',
+        'element',
         undefined,
         {},
         { componentType: 'button' }
@@ -146,26 +130,18 @@ describe('StyleMap', () => {
     });
 
     it('allows same selector across displayModes', () => {
-      StyleMap.addSelector(style, 'desktop', 'cardX', 'class-component', undefined, {}, { componentType: 'button' });
-      const ok = StyleMap.addSelector(
-        style,
-        'mobile',
-        'cardX',
-        'class-component',
-        undefined,
-        {},
-        { componentType: 'button' }
-      );
+      StyleMap.addSelector(style, 'desktop', 'cardX', 'element', undefined, {}, { componentType: 'button' });
+      const ok = StyleMap.addSelector(style, 'mobile', 'cardX', 'element', undefined, {}, { componentType: 'button' });
       expect(ok).toBe(true);
     });
 
     it('creates nested structure when using path', () => {
-      StyleMap.addSelector(style, 'desktop', 'cardNested', 'class-component', 'color', 'red', {
+      StyleMap.addSelector(style, 'desktop', 'cardNested', 'element', 'color', 'red', {
         styleSelector: 'base',
         componentType: 'button'
       });
 
-      const item = style.platform.desktop.cardNested as Extract<StyleItem, { type: 'class-component' }>;
+      const item = style.platform.desktop.cardNested as Extract<StyleItem, { type: 'element' }>;
       expect(item.attributes.base.color).toBe('red');
     });
   });
@@ -220,11 +196,11 @@ describe('StyleMap', () => {
       expect(style.platform.desktop.btn.attributes).toEqual({ color: 'green' });
     });
 
-    it('class-component dont allows deep path update', () => {
-      StyleMap.addSelector(style, 'desktop', 'card', 'class-component', undefined, {}, { componentType: 'button' });
+    it('element dont allows deep path update', () => {
+      StyleMap.addSelector(style, 'desktop', 'card', 'element', undefined, {}, { componentType: 'button' });
 
       // @ts-expect-error // eslint-disable-line
-      const ok1 = StyleMap.updateSelector(style, 'desktop', 'card', 'class-component', 'a.b', 'red');
+      const ok1 = StyleMap.updateSelector(style, 'desktop', 'card', 'element', 'a.b', 'red');
 
       // @ts-expect-error // eslint-disable-line
       const ok2 = StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'a.b', 'red');
@@ -396,16 +372,16 @@ describe('StyleMap', () => {
       expect(style.platform.desktop.btn.attributes).toEqual(before);
     });
 
-    it('class-component update does not supports deep path', () => {
-      StyleMap.addSelector(style, 'desktop', 'card', 'class-component', undefined, {}, { componentType: 'button' });
+    it('element update does not supports deep path', () => {
+      StyleMap.addSelector(style, 'desktop', 'card', 'element', undefined, {}, { componentType: 'button' });
 
       // @ts-expect-error // eslint-disable-line
-      const ok = StyleMap.updateSelector(style, 'desktop', 'card', 'class-component', 'base.color', 'red');
+      const ok = StyleMap.updateSelector(style, 'desktop', 'card', 'element', 'base.color', 'red');
       expect(ok).toBe(false);
     });
 
-    it('class-component allows undefined value with path (structure still created)', () => {
-      const ok = StyleMap.addSelector(style, 'desktop', 'cardZ', 'class-component', 'color', undefined, {
+    it('element allows undefined value with path (structure still created)', () => {
+      const ok = StyleMap.addSelector(style, 'desktop', 'cardZ', 'element', 'color', undefined, {
         styleSelector: 'base',
         componentType: 'button'
       });
