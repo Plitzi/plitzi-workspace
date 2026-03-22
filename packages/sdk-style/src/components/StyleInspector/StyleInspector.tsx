@@ -73,10 +73,7 @@ const StyleInspector = ({
     }
 
     const selectors = get(styleSelectors, styleSelector, '').split(' ');
-    const selector = selectors[selectors.length - 1];
-    if (selector) {
-      onChange?.(selector);
-    }
+    onChange?.(selectors[selectors.length - 1]);
   }, [styleSelector]);
 
   const handleAddSelector = useCallback(
