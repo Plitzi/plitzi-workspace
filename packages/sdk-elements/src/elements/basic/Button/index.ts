@@ -45,7 +45,7 @@ const Button = Object.assign(BaseButton, {
       style: {},
       subTypes: {
         button: {
-          name: 'Normal Button',
+          name: 'Default Button',
           displayMode: 'desktop',
           style: {
             base: {

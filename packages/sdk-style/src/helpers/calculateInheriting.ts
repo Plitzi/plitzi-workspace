@@ -3,18 +3,36 @@ import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { inheritableAttributesBase } from '@plitzi/sdk-shared';
 
 import type { StyleHelperMetaData } from '../StyleHelper';
-import type {
-  ComponentDefinition,
-  DisplayMode,
-  Element,
-  Schema,
-  Style,
-  StyleItem,
-  StyleCategory
-} from '@plitzi/sdk-shared';
+import type { ComponentDefinition, DisplayMode, Element, Schema, Style, StyleCategory } from '@plitzi/sdk-shared';
+
+// no esta detectando los class-component
+
+const getDefaultStyle = (
+  componentType: string | undefined,
+  subType: string | undefined,
+  styleSelector = 'base',
+  isParent = false,
+  isSubParent = false,
+  componentDefinitions: Record<string, ComponentDefinition> = {}
+) => {
+  let global = get(componentDefinitions, `${componentType}.defaultStyle`, undefined);
+  if (!global) {
+    return undefined;
+  }
+
+  if (subType) {
+    const subGlobal = global.subTypes?.[subType];
+    if (subGlobal) {
+      global = subGlobal;
+    }
+  }
+
+  return { ...global, style: get(global, `style.${styleSelector}`, {}), isParent, isSubParent };
+};
 
 const getDataStyle = (
   element: Element | undefined,
+  componentType: string | undefined,
   platform: Style['platform'],
   styleSelector = 'base',
   isParent = false,
@@ -22,8 +40,17 @@ const getDataStyle = (
   componentDefinitions: Record<string, ComponentDefinition> = {}
 ) => {
   const metadata: { tree: StyleHelperMetaData['tree'] } = { tree: [] };
-  if (!element) {
+  if (!element && !componentType) {
     return undefined;
+  }
+
+  if (!element) {
+    const globalStyle = getDefaultStyle(componentType, undefined, styleSelector, false, false, componentDefinitions);
+    if (globalStyle) {
+      metadata.tree.push(globalStyle);
+    }
+
+    return metadata;
   }
 
   const {
@@ -32,71 +59,99 @@ const getDataStyle = (
   } = element;
 
   // get element display mode styles (mobile -> tablet -> desktop)
-  (['desktop', 'tablet', 'mobile'] as DisplayMode[]).forEach(mode => {
-    const selectorSegments = Object.values(
-      pick(get(platform, mode, {}), get(styleSelectors, styleSelector, '').split(' '))
-    );
-    selectorSegments.forEach(segment => {
-      if (!segment) {
-        return;
-      }
+  for (const displayMode of ['desktop', 'tablet', 'mobile'] as DisplayMode[]) {
+    const platformGroup = get(platform, displayMode, undefined);
+    if (!platformGroup) {
+      continue;
+    }
 
+    const selectors = get(styleSelectors, styleSelector, '').split(' ');
+    const selectorSegments = Object.values(pick(platformGroup, selectors));
+    for (const segment of selectorSegments) {
       const { name } = segment;
-      const style = platform[mode][name] as StyleItem | undefined;
-      if (style) {
-        metadata.tree.push({ name, displayMode: mode, style: style.attributes, isParent, isSubParent });
+      const styleItem = get(platform, `${displayMode}.${name}`, undefined);
+      if (styleItem) {
+        metadata.tree.push({ name, displayMode, style: styleItem.attributes, isParent, isSubParent });
       }
-    });
+    }
 
     // global native type
-    if (type && (platform[mode][type] as StyleItem | undefined) && platform[mode][type].type !== 'class') {
+    if (!componentType) {
+      continue;
+    }
+
+    const componentSelectors = Object.values(platformGroup).filter(styleItem => styleItem.type === 'class-component');
+    const compStyleItem = componentSelectors.find(styleItem => styleItem.componentType === componentType);
+    if (compStyleItem) {
       metadata.tree.push({
         name: type,
-        displayMode: mode,
-        style: platform[mode][type].attributes,
-        isParent,
-        isSubParent
-      });
-    } else if (
-      subType &&
-      (platform[mode][subType] as StyleItem | undefined) &&
-      platform[mode][subType].type !== 'class'
-    ) {
-      metadata.tree.push({
-        name: subType,
-        displayMode: mode,
-        style: platform[mode][subType].attributes,
-        isParent,
-        isSubParent
+        displayMode,
+        style: compStyleItem.attributes[styleSelector],
+        isParent: false,
+        isSubParent: false
       });
     }
-  });
 
-  // get global element type
-  let global = get(componentDefinitions, `${type}.defaultStyle`) as unknown as
-    | ComponentDefinition['defaultStyle']
-    | undefined;
-  if (global && subType) {
-    const subGlobal = global.subTypes?.[subType];
-    if (subGlobal) {
-      global = subGlobal;
+    const styleItem = get(platform, `${displayMode}.${type}`, undefined);
+    if (type && styleItem && !['class', 'class-component'].includes(styleItem.type)) {
+      metadata.tree.push({ name: type, displayMode, style: styleItem.attributes, isParent, isSubParent });
+    }
+
+    const styleSubItem = subType ? get(platform, `${displayMode}.${subType}`, undefined) : undefined;
+    if (subType && styleSubItem && !['class', 'class-component'].includes(styleSubItem.type)) {
+      metadata.tree.push({ name: subType, displayMode, style: styleSubItem.attributes, isParent, isSubParent });
     }
   }
 
-  if (global) {
-    metadata.tree.push({
-      ...global,
-      style: get(global, `style.${styleSelector}`, {}) as StyleItem['attributes'],
-      isParent,
-      isSubParent
-    });
+  // get global element type
+  const globalStyle = getDefaultStyle(type, subType, styleSelector, isParent, isSubParent, componentDefinitions);
+  if (globalStyle) {
+    metadata.tree.push(globalStyle);
   }
 
   return metadata;
 };
 
+const getElementStyle = (
+  element: Element,
+  componentType: string | undefined,
+  flat: Schema['flat'],
+  platform: Style['platform'],
+  styleSelector = 'base',
+  componentDefinitions: Record<string, ComponentDefinition> = {},
+  skipSelectors: string[] = []
+) => {
+  const tree: StyleHelperMetaData['tree'] = [];
+  const { id } = element;
+  const parentId = get(element, 'definition.parentId');
+  let elementLoop = element as Element | undefined;
+  while (elementLoop) {
+    const styleData = getDataStyle(
+      elementLoop,
+      componentType,
+      platform,
+      styleSelector,
+      elementLoop.id === parentId,
+      id !== elementLoop.id,
+      componentDefinitions
+    );
+    if (styleData) {
+      tree.push(...styleData.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isSubParent)));
+    }
+
+    if (elementLoop.id === id && styleSelector !== 'base') {
+      elementLoop = undefined;
+    } else {
+      elementLoop = get(flat, get(elementLoop, 'definition.parentId', ''), undefined);
+    }
+  }
+
+  return tree;
+};
+
 const calculateInheriting = (
   element: Element | undefined,
+  componentType: string | undefined,
   flat: Schema['flat'],
   platform: Style['platform'],
   styleSelector?: string,
@@ -104,32 +159,31 @@ const calculateInheriting = (
   skipSelectors: string[] = []
 ) => {
   const metadata: StyleHelperMetaData = { tree: [], style: {}, parentStyle: {} };
-  if (!element) {
+  if (!element && !componentType) {
     return metadata;
   }
 
-  const { id } = element;
-  const parentId = get(element, 'definition.parentId');
-  while (element as Element | undefined) {
+  if (element) {
+    metadata.tree.push(
+      ...getElementStyle(element, componentType, flat, platform, styleSelector, componentDefinitions, skipSelectors)
+    );
+  } else {
     const styleData = getDataStyle(
-      element,
+      undefined,
+      componentType,
       platform,
       styleSelector,
-      element.id === parentId,
-      id !== element.id,
+      false,
+      false,
       componentDefinitions
     );
     if (styleData) {
       metadata.tree.push(...styleData.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isSubParent)));
     }
-
-    if (element.id === id && styleSelector !== 'base') {
-      // After get the styles from the styleSelector we back to base to continue
-      styleSelector = 'base';
-    } else {
-      element = get(flat, get(element, 'definition.parentId', ''));
-    }
   }
+
+  // base styleSelector to continue the rest of the logic
+  styleSelector = 'base';
 
   const finalMeta: StyleHelperMetaData['style'] = {};
   metadata.tree.forEach(node => {

@@ -449,7 +449,7 @@ class FlatMap {
     Object.values(elements.acum).forEach(element => {
       const { id } = element;
       set(elements.acum, `${id}.definition.rootId`, elements.item?.id);
-      const calculatedStyle = calculateInheriting(element, this.flat, style.platform);
+      const calculatedStyle = calculateInheriting(element, undefined, this.flat, style.platform);
       calculatedStyle.tree.forEach(item => {
         const { displayMode, name } = item;
         if (!(name in elementsStyle.platform[displayMode]) && name in style.platform[displayMode]) {

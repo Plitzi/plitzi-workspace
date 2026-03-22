@@ -10,11 +10,12 @@ import type { Element } from '@plitzi/sdk-shared';
 
 export type UseStyleInheritProps = {
   element?: Element;
+  componentType?: string;
   selector?: string;
   styleSelector?: string;
 };
 
-const useStyleInherit = ({ element, selector, styleSelector }: UseStyleInheritProps) => {
+const useStyleInherit = ({ element, componentType, selector, styleSelector }: UseStyleInheritProps) => {
   const { componentDefinitions } = use(ComponentContext);
   const {
     schema: { flat }
@@ -29,8 +30,16 @@ const useStyleInherit = ({ element, selector, styleSelector }: UseStyleInheritPr
       selectorsToSkip.push(selector);
     }
 
-    return calculateInheriting(element, flat, platform, styleSelector, componentDefinitions.current, selectorsToSkip);
-  }, [selector, element, flat, platform, styleSelector, componentDefinitions]);
+    return calculateInheriting(
+      element,
+      componentType,
+      flat,
+      platform,
+      styleSelector,
+      componentDefinitions.current,
+      selectorsToSkip
+    );
+  }, [selector, element, componentType, flat, platform, styleSelector, componentDefinitions]);
 
   return inheritData;
 };

@@ -47,7 +47,7 @@ const InspectorModeBasic = ({
   );
   const [showAllOptions, setShowAllOptions] = useStorage<boolean>('builder-state.styleInspector.showAllOptions', false);
   const [replaceTokens, setReplaceTokens] = useStorage<boolean>('builder-state.styleInspector.replaceTokens', false);
-  const inheritData = useStyleInherit({ element, selector: selector?.name, styleSelector });
+  const inheritData = useStyleInherit({ element, componentType, selector: selector?.name, styleSelector });
 
   const handleChangeCollapse = useCallback(
     (id: string, isCollapsed: boolean) => setCollapsedCache(state => ({ ...state, [id]: isCollapsed })),
