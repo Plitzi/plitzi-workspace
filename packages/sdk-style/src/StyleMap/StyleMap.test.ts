@@ -208,6 +208,34 @@ describe('StyleMap', () => {
       expect(ok1).toBe(false);
       expect(ok2).toBe(false);
     });
+
+    it('update value with styleSelector but not path', () => {
+      StyleMap.addSelector(style, 'desktop', 'button', 'element', undefined, {}, { componentType: 'button' });
+
+      const ok1 = StyleMap.updateSelector(style, 'desktop', 'button', 'element', 'color', 'red', {
+        componentType: 'button',
+        styleSelector: 'base'
+      });
+
+      expect(ok1).toBe(true);
+      const item = style.platform.desktop.button as Extract<StyleItem, { type: 'element' }>;
+      expect(item.attributes.base.color).toBe('red');
+
+      const ok2 = StyleMap.updateSelector(
+        style,
+        'desktop',
+        'button',
+        'element',
+        undefined,
+        { color: 'purple' },
+        { componentType: 'button', styleSelector: 'base2' }
+      );
+
+      expect(ok2).toBe(true);
+      const item2 = style.platform.desktop.button as Extract<StyleItem, { type: 'element' }>;
+      expect(item2.attributes.base).toEqual({ color: 'red' });
+      expect(item2.attributes.base2).toEqual({ color: 'purple' });
+    });
   });
 
   describe('removeSelector', () => {
