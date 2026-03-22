@@ -5,7 +5,7 @@ import getStyleItem from '../../helpers/getStyleItem';
 
 import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
 
-const updateSelectorClassComponent = (
+const updateSelectorElement = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
@@ -23,10 +23,14 @@ const updateSelectorClassComponent = (
   const { styleSelector } = params;
   if (path && styleSelector && value) {
     set(styleItem, `attributes.${styleSelector}.${path}`, value);
-  } else if (path && styleSelector) {
+  } else if (path && styleSelector && !value) {
     set(styleItem, `attributes.${styleSelector}`, omit(styleItem.attributes[styleSelector], [path]));
-  } else if (!path && value) {
+  } else if (!path && styleSelector && value) {
+    set(styleItem, `attributes.${styleSelector}`, value);
+  } else if (!path && !styleSelector && value) {
     set(styleItem, 'attributes', value);
+  } else if (!value) {
+    set(styleItem, 'attributes', {});
   }
 
   set(styleItem, 'cache', processSelector(styleItem));
@@ -35,4 +39,4 @@ const updateSelectorClassComponent = (
   return true;
 };
 
-export default updateSelectorClassComponent;
+export default updateSelectorElement;

@@ -3,10 +3,10 @@ import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../helpers/processSelector';
 import getStyleItem from './helpers/getStyleItem';
-import addSelectorClassComponent from './methods/add/addSelectorClassComponent';
 import addSelectorDefault from './methods/add/addSelectorDefault';
-import updateSelectorClassComponent from './methods/update/updateSelectorClassComponent';
+import addSelectorElement from './methods/add/addSelectorElement';
 import updateSelectorDefault from './methods/update/updateSelectorDefault';
+import updateSelectorElement from './methods/update/updateSelectorElement';
 
 import type {
   DisplayMode,
@@ -49,7 +49,7 @@ class StyleMap {
     params: { componentType: string; styleSelector?: string }
   ): boolean {
     if (type === 'element') {
-      return addSelectorClassComponent(
+      return addSelectorElement(
         this.platform,
         displayMode,
         selector,
@@ -100,7 +100,7 @@ class StyleMap {
         return false;
       }
 
-      return updateSelectorClassComponent(
+      return updateSelectorElement(
         this.platform,
         displayMode,
         selector,

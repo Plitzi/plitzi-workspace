@@ -5,7 +5,7 @@ import getStyleItem from '../../helpers/getStyleItem';
 
 import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
 
-const addSelectorClassComponent = (
+const addSelectorElement = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
@@ -45,4 +45,4 @@ const addSelectorClassComponent = (
   return true;
 };
 
-export default addSelectorClassComponent;
+export default addSelectorElement;
