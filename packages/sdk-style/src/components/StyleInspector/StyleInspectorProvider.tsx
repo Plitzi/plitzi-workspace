@@ -60,7 +60,7 @@ const StyleInspectorProvider = ({
           }
         });
 
-        values = selector.type !== 'element' ? newValues : { ...values, [styleSelector]: newValues };
+        values = newValues;
       }
 
       onChange?.(styleKey, values);
