@@ -43,7 +43,7 @@ const StyleInspector = ({
     displayMode,
     style: { platform, variables }
   } = use(BuilderStyleContext);
-  const [styleSelector, setStyleSelector] = useState<string>('base');
+  const [styleSelector, setStyleSelector] = useState('base');
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectors = useMemo(
