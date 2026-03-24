@@ -47,7 +47,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; state?: StyleState }
+    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
   ): boolean {
     if (type === 'element') {
       return addSelectorElement(
@@ -79,7 +79,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; state?: StyleState }
+    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
   ): boolean {
     return this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
   }
@@ -95,7 +95,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; state?: StyleState }
+    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
   ): boolean {
     if (type === 'element') {
       return updateSelectorElement(
@@ -125,7 +125,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; state?: StyleState }
+    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
   ): boolean {
     return this.getInstance(style).updateSelector(displayMode, selector, type, path, value, params);
   }

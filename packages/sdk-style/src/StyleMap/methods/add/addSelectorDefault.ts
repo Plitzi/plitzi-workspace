@@ -13,7 +13,7 @@ const addSelectorDefault = (
   type: Exclude<TagType, 'element'>,
   path: StyleCategory | undefined,
   value: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
-  params: { state?: StyleState }
+  params: { styleState?: StyleState }
 ) => {
   if (
     !(params as typeof params | undefined) ||
@@ -31,9 +31,9 @@ const addSelectorDefault = (
     attributes = value;
   }
 
-  const { state } = params;
+  const { styleState } = params;
   const styleItem: StyleItem = { name: selector, type, attributes: {}, stateAttributes: {}, cache: '' };
-  styleItem[state ? 'stateAttributes' : 'attributes'] = state ? { [state]: attributes } : attributes;
+  styleItem[styleState ? 'stateAttributes' : 'attributes'] = styleState ? { [styleState]: attributes } : attributes;
   styleItem.cache = processSelector(styleItem);
   set(platform, `${displayMode}.${selector}`, styleItem);
 

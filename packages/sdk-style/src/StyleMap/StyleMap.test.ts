@@ -77,7 +77,7 @@ describe('StyleMap', () => {
       expect(StyleMap.addSelector(style, 'desktop', 'dup', 'class', undefined, {}, paramsGeneric)).toBe(false);
     });
 
-    it('adds selector with state, with and without path, and prevents duplicate for state', () => {
+    it('adds selector with styleState, with and without path, and prevents duplicate for styleState', () => {
       expect(
         StyleMap.addSelector(
           style,
@@ -86,7 +86,7 @@ describe('StyleMap', () => {
           'class',
           undefined,
           { color: 'red' },
-          { ...paramsGeneric, state: 'hover' }
+          { ...paramsGeneric, styleState: 'hover' }
         )
       ).toBe(true);
       const item = style.platform.desktop.btnState as Exclude<StyleItem, { type: 'element' }>;
@@ -99,7 +99,7 @@ describe('StyleMap', () => {
           'class',
           undefined,
           { color: 'blue' },
-          { ...paramsGeneric, state: 'hover' }
+          { ...paramsGeneric, styleState: 'hover' }
         )
       ).toBe(false);
       expect(item.stateAttributes?.hover?.color).toBe('red');
@@ -107,7 +107,7 @@ describe('StyleMap', () => {
       expect(
         StyleMap.addSelector(style, 'desktop', 'btnState2', 'class', 'color', 'blue', {
           ...paramsGeneric,
-          state: 'focus'
+          styleState: 'focus'
         })
       ).toBe(true);
       const item2 = style.platform.desktop.btnState2 as Exclude<StyleItem, { type: 'element' }>;
@@ -115,7 +115,7 @@ describe('StyleMap', () => {
       expect(
         StyleMap.addSelector(style, 'desktop', 'btnState2', 'class', 'color', 'red', {
           ...paramsGeneric,
-          state: 'focus'
+          styleState: 'focus'
         })
       ).toBe(false);
       expect(item2.stateAttributes?.focus?.color).toBe('blue');
@@ -239,7 +239,7 @@ describe('StyleMap', () => {
       expect(StyleMap.addSelector(style, 'mobile', 'cardX', 'element', undefined, {}, paramsGeneric)).toBe(true);
     });
 
-    it('adds element selector with state, path, and styleSelector, and prevents duplicate for state', () => {
+    it('adds element selector with styleState, path, and styleSelector, and prevents duplicate for styleState', () => {
       expect(
         StyleMap.addSelector(
           style,
@@ -248,7 +248,7 @@ describe('StyleMap', () => {
           'element',
           undefined,
           { base: { color: 'red' } },
-          { ...paramsGeneric, state: 'hover' }
+          { ...paramsGeneric, styleState: 'hover' }
         )
       ).toBe(true);
       const item = style.platform.desktop.cardState as Extract<StyleItem, { type: 'element' }>;
@@ -261,7 +261,7 @@ describe('StyleMap', () => {
           'element',
           undefined,
           { color: 'red' },
-          { ...paramsGeneric, styleSelector: 'base', state: 'hover' }
+          { ...paramsGeneric, styleSelector: 'base', styleState: 'hover' }
         )
       ).toBe(false);
       expect(item.stateAttributes?.base.hover?.color).toBe('red');
@@ -269,7 +269,7 @@ describe('StyleMap', () => {
         StyleMap.addSelector(style, 'desktop', 'cardState2', 'element', 'color', 'blue', {
           ...paramsGeneric,
           styleSelector: 'base',
-          state: 'focus'
+          styleState: 'focus'
         })
       ).toBe(true);
       const item2 = style.platform.desktop.cardState2 as Extract<StyleItem, { type: 'element' }>;
@@ -331,19 +331,19 @@ describe('StyleMap', () => {
       expect(StyleMap.updateSelector(style, 'desktop', 'btn', 'class', 'a.b', 'red')).toBe(false);
     });
 
-    it('updates selector with state, sets and removes stateAttributes', () => {
+    it('updates selector with styleState, sets and removes stateAttributes', () => {
       StyleMap.addSelector(style, 'desktop', 'btnStateUpd', 'class', undefined, {}, { componentType: '' });
       expect(
         StyleMap.updateSelector(style, 'desktop', 'btnStateUpd', 'class', 'color', 'red', {
           componentType: '',
-          state: 'hover'
+          styleState: 'hover'
         })
       ).toBe(true);
       const item = style.platform.desktop.btnStateUpd as Exclude<StyleItem, { type: 'element' }>;
       expect(item.stateAttributes?.hover?.color).toBe('red');
       StyleMap.updateSelector(style, 'desktop', 'btnStateUpd', 'class', 'color', undefined, {
         componentType: '',
-        state: 'hover'
+        styleState: 'hover'
       });
       expect(item.stateAttributes?.hover?.color).toBeUndefined();
     });
@@ -376,20 +376,20 @@ describe('StyleMap', () => {
       expect(item.attributes.base2).toEqual({ color: 'purple' });
     });
 
-    it('updates element selector with state and styleSelector', () => {
+    it('updates element selector with styleState and styleSelector', () => {
       StyleMap.addSelector(style, 'desktop', 'cardUpd', 'element', undefined, {}, { componentType: 'button' });
       expect(
         StyleMap.updateSelector(style, 'desktop', 'cardUpd', 'element', 'color', 'red', {
           componentType: 'button',
           styleSelector: 'base',
-          state: 'hover'
+          styleState: 'hover'
         })
       ).toBe(true);
       const item = style.platform.desktop.cardUpd as Extract<StyleItem, { type: 'element' }>;
       expect(item.stateAttributes?.base.hover?.color).toBe('red');
     });
 
-    it('updates element selector state without path and sets stateAttributes', () => {
+    it('updates element selector styleState without path and sets stateAttributes', () => {
       StyleMap.addSelector(
         style,
         'desktop',
@@ -406,7 +406,7 @@ describe('StyleMap', () => {
         'element',
         undefined,
         { color: 'blue' },
-        { ...paramsGeneric, styleSelector: 'base', state: 'hover' }
+        { ...paramsGeneric, styleSelector: 'base', styleState: 'hover' }
       );
       const item = style.platform.desktop.stateTest as Extract<StyleItem, { type: 'element' }>;
       expect(item.stateAttributes?.base.hover?.color).toBe('blue');
@@ -574,18 +574,18 @@ describe('StyleMap', () => {
       expect(style.platform.desktop.cardZ).toBeDefined();
     });
 
-    it('does not override normal attributes when updating with state', () => {
+    it('does not override normal attributes when updating with styleState', () => {
       StyleMap.addSelector(style, 'desktop', 'btnMix', 'class', undefined, { color: 'blue' }, { componentType: '' });
       StyleMap.updateSelector(style, 'desktop', 'btnMix', 'class', 'color', 'red', {
         componentType: '',
-        state: 'hover'
+        styleState: 'hover'
       });
       const item = style.platform.desktop.btnMix as Exclude<StyleItem, { type: 'element' }>;
       expect(item.attributes.color).toBe('blue');
       expect(item.stateAttributes?.hover?.color).toBe('red');
     });
 
-    it('resets state attributes when value is undefined and no path (class selector)', () => {
+    it('resets styleState attributes when value is undefined and no path (class selector)', () => {
       StyleMap.addSelector(style, 'desktop', 'cardReset', 'class', undefined, {}, { componentType: 'button' });
       StyleMap.updateSelector(style, 'desktop', 'cardReset', 'class', undefined, { color: 'blue' }, paramsGeneric);
       StyleMap.updateSelector(
@@ -595,11 +595,11 @@ describe('StyleMap', () => {
         'class',
         undefined,
         { color: 'red' },
-        { ...paramsGeneric, state: 'hover' }
+        { ...paramsGeneric, styleState: 'hover' }
       );
       StyleMap.updateSelector(style, 'desktop', 'cardReset', 'class', undefined, undefined, {
         ...paramsGeneric,
-        state: 'hover'
+        styleState: 'hover'
       });
       const item = style.platform.desktop.cardReset as Exclude<StyleItem, { type: 'element' }>;
       expect(item.stateAttributes?.hover).toEqual({});
@@ -608,7 +608,7 @@ describe('StyleMap', () => {
       expect(item.attributes).toEqual({});
     });
 
-    it('resets state attributes when value is undefined and no path (element selector)', () => {
+    it('resets styleState attributes when value is undefined and no path (element selector)', () => {
       StyleMap.addSelector(style, 'desktop', 'cardReset', 'element', undefined, {}, { componentType: 'button' });
       StyleMap.updateSelector(
         style,
@@ -626,11 +626,11 @@ describe('StyleMap', () => {
         'element',
         undefined,
         { base: { color: 'red' } },
-        { ...paramsGeneric, state: 'hover' }
+        { ...paramsGeneric, styleState: 'hover' }
       );
       StyleMap.updateSelector(style, 'desktop', 'cardReset', 'element', undefined, undefined, {
         ...paramsGeneric,
-        state: 'hover'
+        styleState: 'hover'
       });
       const item = style.platform.desktop.cardReset as Extract<StyleItem, { type: 'element' }>;
       expect(item.stateAttributes?.base.hover).toEqual({});

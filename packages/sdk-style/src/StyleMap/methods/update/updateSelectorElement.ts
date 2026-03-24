@@ -16,13 +16,13 @@ const updateSelectorElement = (
     | Partial<Record<StyleCategory, StyleValue>>
     | StyleValue
     | undefined,
-  params: { componentType: string; styleSelector?: string; state?: StyleState }
+  params: { componentType: string; styleSelector?: string; styleState?: StyleState }
 ) => {
   if (!(params as typeof params | undefined)) {
     return false;
   }
 
-  const { componentType, styleSelector, state } = params;
+  const { componentType, styleSelector, styleState } = params;
   const styleItem = getStyleItem(platform, displayMode, selector) as
     | Extract<StyleItem, { type: 'element' }>
     | undefined;
@@ -48,7 +48,7 @@ const updateSelectorElement = (
   }
 
   Object.entries(attributes).forEach(([selectorKey, val]) => {
-    const basePath = state ? `stateAttributes.${selectorKey}.${state}` : `attributes.${selectorKey}`;
+    const basePath = styleState ? `stateAttributes.${selectorKey}.${styleState}` : `attributes.${selectorKey}`;
     if (path && val[path] !== undefined) {
       set(styleItem, `${basePath}.${path}`, val[path]);
     } else if (!path) {
@@ -58,20 +58,20 @@ const updateSelectorElement = (
 
   if (value === undefined) {
     if (path) {
-      const basePath = state ? `stateAttributes.${key}.${state}` : `attributes.${key}`;
+      const basePath = styleState ? `stateAttributes.${key}.${styleState}` : `attributes.${key}`;
       const current = get(styleItem, basePath, {});
       set(styleItem, basePath, omit(current, [path]));
     } else {
       if (styleSelector) {
         // reset only one styleSelector
-        const basePath = state ? `stateAttributes.${key}.${state}` : `attributes.${key}`;
+        const basePath = styleState ? `stateAttributes.${key}.${styleState}` : `attributes.${key}`;
         set(styleItem, basePath, {});
       } else {
         // reset all styleSelectors
-        const containerPath = state ? 'stateAttributes' : 'attributes';
+        const containerPath = styleState ? 'stateAttributes' : 'attributes';
         const container = get(styleItem, containerPath, {});
         Object.keys(container).forEach(selectorKey => {
-          const basePath = state ? `stateAttributes.${selectorKey}.${state}` : `attributes.${selectorKey}`;
+          const basePath = styleState ? `stateAttributes.${selectorKey}.${styleState}` : `attributes.${selectorKey}`;
           set(styleItem, basePath, {});
         });
       }

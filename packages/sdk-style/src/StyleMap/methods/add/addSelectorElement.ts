@@ -17,13 +17,13 @@ const addSelectorElement = (
     | Partial<Record<StyleCategory, StyleValue>>
     | StyleValue
     | undefined,
-  params: { componentType: string; styleSelector?: string; state?: StyleState }
+  params: { componentType: string; styleSelector?: string; styleState?: StyleState }
 ) => {
   if (!(params as typeof params | undefined)) {
     return false;
   }
 
-  const { componentType, styleSelector, state } = params;
+  const { componentType, styleSelector, styleState } = params;
   if (
     getStyleItem(platform, displayMode, selector) ||
     !componentType ||
@@ -47,8 +47,8 @@ const addSelectorElement = (
   }
 
   Object.entries(attributes).forEach(([key, val]) => {
-    if (state) {
-      set(styleItem, `stateAttributes.${key}.${state}`, val);
+    if (styleState) {
+      set(styleItem, `stateAttributes.${key}.${styleState}`, val);
     } else {
       set(styleItem, `attributes.${key}`, val);
     }

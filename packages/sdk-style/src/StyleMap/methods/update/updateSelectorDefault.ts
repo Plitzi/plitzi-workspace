@@ -12,7 +12,7 @@ const updateSelectorDefault = (
   selector: string,
   path: StyleCategory | undefined,
   value: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
-  params: { state?: StyleState }
+  params: { styleState?: StyleState }
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
   if (
@@ -24,8 +24,8 @@ const updateSelectorDefault = (
     return false;
   }
 
-  const { state } = params;
-  const basePath = state ? `stateAttributes.${state}` : 'attributes';
+  const { styleState } = params;
+  const basePath = styleState ? `stateAttributes.${styleState}` : 'attributes';
   if (value === undefined) {
     if (path) {
       const current = get(styleItem, basePath, {});
@@ -38,8 +38,6 @@ const updateSelectorDefault = (
   } else {
     set(styleItem, basePath, value);
   }
-
-  console.log(styleItem);
 
   set(styleItem, 'cache', processSelector(styleItem));
   set(platform, `${displayMode}.${selector}`, styleItem);
