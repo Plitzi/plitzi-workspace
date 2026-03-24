@@ -1,29 +1,45 @@
-import { omit, set } from '@plitzi/plitzi-ui/helpers';
+import { get, omit, set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
+import isValidValue from '../../helpers/isValueValid';
 
-import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
 
 const updateSelectorDefault = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
-  path?: StyleCategory,
-  value?: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue
+  path: StyleCategory | undefined,
+  value: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
+  params: { state?: StyleState }
 ) => {
   const styleItem = getStyleItem(platform, displayMode, selector);
-  if (!styleItem || (path && path.includes('.'))) {
+  if (
+    !(params as typeof params | undefined) ||
+    !styleItem ||
+    (path && path.includes('.')) ||
+    !isValidValue(styleItem.type, path, value, 1)
+  ) {
     return false;
   }
 
-  if (path && value) {
-    set(styleItem, `attributes.${path}`, value);
+  const { state } = params;
+  const basePath = state ? `stateAttributes.${state}` : 'attributes';
+  if (value === undefined) {
+    if (path) {
+      const current = get(styleItem, basePath, {});
+      set(styleItem, basePath, omit(current, [path]));
+    } else {
+      set(styleItem, basePath, {});
+    }
   } else if (path) {
-    set(styleItem, 'attributes', omit(styleItem.attributes, [path]));
-  } else if (value) {
-    set(styleItem, 'attributes', value);
+    set(styleItem, `${basePath}.${path}`, value);
+  } else {
+    set(styleItem, basePath, value);
   }
+
+  console.log(styleItem);
 
   set(styleItem, 'cache', processSelector(styleItem));
   set(platform, `${displayMode}.${selector}`, styleItem);

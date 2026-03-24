@@ -86,8 +86,8 @@
   "sideEffects": false,
   "devDependencies": {
     "eslint": "^9.39.4",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.0"
+    "typescript": "^6.0.2",
+    "vite": "^8.0.2"
   },
   "dependencies": {
     "@plitzi/sdk-auth": "workspace:*",

@@ -9,7 +9,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import styleConstants from '@plitzi/sdk-shared/style/styleConstants';
 
-import { processSelectorsMultiLine } from '../../../helpers';
+import { processSelectors } from '../../../helpers';
 import { cssToSelectors, getReadOnlyRangesFromContent } from '../../../helpers/formatCssFromSelector';
 
 import type { EditorState, AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
@@ -29,7 +29,7 @@ const InspectorModeAdvanced = ({ selectors, displayMode, styleVariables }: Inspe
   const { useDataSource } = use(DataSourceContext);
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
   const CMValue = useMemo(
-    () => processSelectorsMultiLine(selectors, false, 2).join('\n\n'),
+    () => processSelectors(selectors, false).join('\n\n'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectors, reRender]
   );

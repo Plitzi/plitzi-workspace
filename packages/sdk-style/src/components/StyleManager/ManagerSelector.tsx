@@ -29,7 +29,10 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const { builderHandler } = use(BuilderContext);
   const { displayMode } = use(BuilderStyleContext);
   const { components } = use(ComponentContext);
-
+  const componentsNotAvailables = useMemo(
+    () => selectors.filter(selector => selector.type === 'element').map(selector => selector.componentType),
+    [selectors]
+  );
   const finalSelectors = useMemo(() => {
     let selectorsParsed = selectors;
     if (!isEmpty(searchInput)) {
@@ -49,7 +52,10 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
 
       if (values.mode === 'default') {
         const { name } = values;
-        builderHandler('styleAddSelector', displayMode, name, 'class');
+        builderHandler('styleAddSelector', displayMode, name, 'class', undefined, undefined, {
+          styleSelector: undefined,
+          componentType: undefined
+        });
       } else {
         const { componentType } = values;
         builderHandler('styleAddSelector', displayMode, componentType, 'element', undefined, undefined, {
@@ -168,7 +174,12 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           <h4>Add Selector</h4>
         </Modal.Header>
         <Modal.Body>
-          <SelectorForm components={components.current} onSubmit={onCloseAddSelector} onClose={onCloseAddSelector} />
+          <SelectorForm
+            componentsNotAvailables={componentsNotAvailables}
+            components={components.current}
+            onSubmit={onCloseAddSelector}
+            onClose={onCloseAddSelector}
+          />
         </Modal.Body>
       </Modal>
       <Modal id={idDeleteSelector} open={openDeleteSelector} onClose={onCloseDeleteSelector}>

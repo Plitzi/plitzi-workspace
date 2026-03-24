@@ -35,10 +35,8 @@ export const selectorToString = (
 
       switch (tag.type) {
         case 'class':
-        case 'state':
           return `.${tag.value}`;
         case 'element':
-        case 'parent':
           return tag.value;
         case 'id':
           return `#${tag.value}`;

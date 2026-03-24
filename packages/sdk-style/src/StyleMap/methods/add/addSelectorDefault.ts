@@ -2,19 +2,25 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../../../helpers/processSelector';
 import getStyleItem from '../../helpers/getStyleItem';
+import isValidValue from '../../helpers/isValueValid';
 
-import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue, TagType } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleCategory, StyleItem, StyleState, StyleValue, TagType } from '@plitzi/sdk-shared';
 
 const addSelectorDefault = (
   platform: Style['platform'],
   displayMode: DisplayMode,
   selector: string,
-  type: TagType,
-  path?: StyleCategory,
-  value?: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue
+  type: Exclude<TagType, 'element'>,
+  path: StyleCategory | undefined,
+  value: Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
+  params: { state?: StyleState }
 ) => {
-  const styleItem = getStyleItem(platform, displayMode, selector);
-  if (styleItem || (path && path.includes('.')) || (path && typeof value === 'object')) {
+  if (
+    !(params as typeof params | undefined) ||
+    getStyleItem(platform, displayMode, selector) ||
+    (path && path.includes('.')) ||
+    !isValidValue(type, path, value, 1)
+  ) {
     return false;
   }
 
@@ -25,12 +31,11 @@ const addSelectorDefault = (
     attributes = value;
   }
 
-  set(platform, `${displayMode}.${selector}`, {
-    name: selector,
-    type,
-    attributes,
-    cache: processSelector({ name: selector, type, attributes, cache: '' } as Exclude<StyleItem, { type: 'element' }>)
-  });
+  const { state } = params;
+  const styleItem: StyleItem = { name: selector, type, attributes: {}, stateAttributes: {}, cache: '' };
+  styleItem[state ? 'stateAttributes' : 'attributes'] = state ? { [state]: attributes } : attributes;
+  styleItem.cache = processSelector(styleItem);
+  set(platform, `${displayMode}.${selector}`, styleItem);
 
   return true;
 };

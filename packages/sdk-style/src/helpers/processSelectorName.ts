@@ -9,7 +9,6 @@ const processSelectorName = (selector: Omit<StyleItem, 'cache'>) => {
       break;
 
     case 'class':
-    case 'state':
       finalSelector = `.${name}`;
       break;
 
@@ -17,7 +16,6 @@ const processSelectorName = (selector: Omit<StyleItem, 'cache'>) => {
       finalSelector = `#${name}`;
       break;
 
-    case 'parent':
     default:
   }
 

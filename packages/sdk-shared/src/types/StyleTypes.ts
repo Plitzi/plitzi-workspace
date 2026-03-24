@@ -1,10 +1,12 @@
 import type styleConstants from '../style/styleConstants';
 
-export type TagType = 'class' | 'element' | 'id' | 'state' | 'parent';
+export type TagType = 'class' | 'element' | 'id';
 
 export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
 
 export type StyleMode = 'mobile-first' | 'desktop-first';
+
+export type StyleState = 'hover' | 'active' | 'focus' | 'disabled';
 
 export type StyleValue = number | string;
 
@@ -36,11 +38,16 @@ export type StyleItem = {
   variables?: Partial<StyleVariables>;
   cache: string;
 } & (
-  | { type: Exclude<TagType, 'element'>; attributes: Partial<Record<StyleCategory, StyleValue>> }
+  | {
+      type: Exclude<TagType, 'element'>;
+      attributes: Partial<Record<StyleCategory, StyleValue>>;
+      stateAttributes?: Partial<Record<StyleState, Partial<Record<StyleCategory, StyleValue>>>>;
+    }
   | {
       type: 'element';
       // first string is the styleSelector such [base/etc]
       attributes: Record<string, Partial<Record<StyleCategory, StyleValue>>>;
+      stateAttributes?: Record<string, Partial<Record<StyleState, Partial<Record<StyleCategory, StyleValue>>>>>;
       componentType: string;
     }
 );

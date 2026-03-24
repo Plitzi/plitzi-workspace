@@ -84,7 +84,10 @@ const StyleInspector = ({
 
       const { name, type } = selector;
       if (!isDuplicated && name !== '' && !(platform[displayMode][name] as StyleItem | undefined)) {
-        builderHandler('styleAddSelector', displayMode, name, type);
+        builderHandler('styleAddSelector', displayMode, name, type, undefined, undefined, {
+          styleSelector: undefined,
+          componentType
+        });
       } else if (
         isDuplicated &&
         originalSelector &&
@@ -97,12 +100,13 @@ const StyleInspector = ({
           displayMode,
           name,
           type,
-          '',
-          get(platform, `${displayMode}.${originalSelector.name}.attributes`, {})
+          undefined,
+          get(platform, `${displayMode}.${originalSelector.name}.attributes`, {}),
+          { styleSelector: undefined, componentType }
         );
       }
     },
-    [builderHandler, displayMode, platform]
+    [builderHandler, componentType, displayMode, platform]
   );
 
   const handleSelectSelector = useCallback(

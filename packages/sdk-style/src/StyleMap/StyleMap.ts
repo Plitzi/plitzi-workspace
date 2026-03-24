@@ -13,6 +13,7 @@ import type {
   Style,
   StyleCategory,
   StyleItem,
+  StyleState,
   StyleValue,
   StyleVariableCategory,
   StyleVariableValue,
@@ -46,7 +47,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string }
+    params: { componentType: string; styleSelector?: string; state?: StyleState }
   ): boolean {
     if (type === 'element') {
       return addSelectorElement(
@@ -66,7 +67,8 @@ class StyleMap {
       selector,
       type,
       path,
-      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue
+      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue,
+      params
     );
   }
 
@@ -77,7 +79,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string }
+    params: { componentType: string; styleSelector?: string; state?: StyleState }
   ): boolean {
     return this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
   }
@@ -91,15 +93,11 @@ class StyleMap {
     displayMode: DisplayMode,
     selector: string,
     type: TagType,
-    path?: StyleCategory,
-    value?: StyleItem['attributes'] | StyleValue,
-    params?: { componentType: string; styleSelector?: string }
+    path: StyleCategory | undefined,
+    value: StyleItem['attributes'] | StyleValue | undefined,
+    params: { componentType: string; styleSelector?: string; state?: StyleState }
   ): boolean {
     if (type === 'element') {
-      if (!params) {
-        return false;
-      }
-
       return updateSelectorElement(
         this.platform,
         displayMode,
@@ -115,7 +113,8 @@ class StyleMap {
       displayMode,
       selector,
       path,
-      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined
+      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
+      params
     );
   }
 
@@ -124,9 +123,9 @@ class StyleMap {
     displayMode: DisplayMode,
     selector: string,
     type: TagType,
-    path?: StyleCategory,
-    value?: StyleItem['attributes'] | StyleValue,
-    params?: { componentType: string; styleSelector?: string }
+    path: StyleCategory | undefined,
+    value: StyleItem['attributes'] | StyleValue | undefined,
+    params: { componentType: string; styleSelector?: string; state?: StyleState }
   ): boolean {
     return this.getInstance(style).updateSelector(displayMode, selector, type, path, value, params);
   }

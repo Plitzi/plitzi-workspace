@@ -29,6 +29,7 @@ export type SelectorFormProps = {
   mode?: 'default' | 'element';
   componentType?: string;
   components: Record<string, ComponentPluginWithHOC>;
+  componentsNotAvailables?: string[];
   onClose?: () => void | Promise<void>;
   onSubmit?: (e: MouseEvent | undefined, values: SelectorFormValues) => void | Promise<void>;
 };
@@ -38,6 +39,7 @@ const SelectorForm = ({
   mode = 'default',
   componentType = '',
   components,
+  componentsNotAvailables,
   onClose,
   onSubmit
 }: SelectorFormProps) => {
@@ -49,11 +51,11 @@ const SelectorForm = ({
   const componentOptions = useMemo(
     () =>
       Object.keys(components).map(componentType => (
-        <option key={componentType} value={componentType}>
+        <option key={componentType} value={componentType} disabled={componentsNotAvailables?.includes(componentType)}>
           {capitalize(componentType.replace(/([a-z0-9])([A-Z])/g, '$1 $2'))}
         </option>
       )),
-    [components]
+    [components, componentsNotAvailables]
   );
 
   const handleChangeMode = useCallback(
