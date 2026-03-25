@@ -15,6 +15,7 @@ import InspectorModeBasic from './modes/InspectorModeBasic';
 
 import type { SelectorValue } from '../Selector';
 import type { Element, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { StyleState } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
   value?: string;
@@ -24,6 +25,7 @@ export type StyleInspectorProps = {
   styleSelectors?: Element['definition']['styleSelectors'];
   styleSelectorsAvailables?: string[];
   allowStyleSelector?: boolean;
+  allowStyleState?: boolean;
   onChange?: (selector?: string) => void;
 };
 
@@ -35,6 +37,7 @@ const StyleInspector = ({
   styleSelectors,
   styleSelectorsAvailables,
   allowStyleSelector = true,
+  allowStyleState = true,
   onChange
 }: StyleInspectorProps) => {
   const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
@@ -44,6 +47,7 @@ const StyleInspector = ({
     style: { platform, variables }
   } = use(BuilderStyleContext);
   const [styleSelector, setStyleSelector] = useState('base');
+  const [styleState, setStyleState] = useState<StyleState | undefined>(undefined);
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectors = useMemo(
@@ -64,6 +68,7 @@ const StyleInspector = ({
     const selectors = get(styleSelectors, 'base', '').split(' ');
     const selector = selectors[selectors.length - 1];
     onChange?.(selector ? selector : '');
+    setStyleState(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChange, styleSelectors]);
 
@@ -74,7 +79,12 @@ const StyleInspector = ({
 
     const selectors = get(styleSelectors, styleSelector, '').split(' ');
     onChange?.(selectors[selectors.length - 1]);
+    setStyleState(undefined);
   }, [styleSelector]);
+
+  useDidUpdateEffect(() => {
+    setStyleState(undefined);
+  }, [value]);
 
   const handleAddSelector = useCallback(
     (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => {
@@ -154,6 +164,8 @@ const StyleInspector = ({
     setStyleSelector(value);
   }, []);
 
+  const handleChangeStyleState = useCallback((value: string) => setStyleState(value as StyleState), []);
+
   return (
     <div className="flex w-full grow flex-col gap-2">
       <div className="flex w-full flex-col gap-2 px-1">
@@ -195,6 +207,17 @@ const StyleInspector = ({
             </Select>
           </div>
         )}
+        {allowStyleState && (
+          <div className="flex flex-col text-xs">
+            <Select className="rounded-sm" size="xs" onChange={handleChangeStyleState} value={styleState}>
+              <option value="">None</option>
+              <option value="hover">Hover</option>
+              <option value="focus">Focus</option>
+              <option value="active">Active</option>
+              <option value="disabled">Disabled</option>
+            </Select>
+          </div>
+        )}
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300">
         {viewMode === 'advanced' && (
@@ -205,6 +228,7 @@ const StyleInspector = ({
             componentType={componentType}
             styleSelector={styleSelector}
             selector={selector}
+            styleState={styleState}
             element={element}
             displayMode={displayMode}
           />

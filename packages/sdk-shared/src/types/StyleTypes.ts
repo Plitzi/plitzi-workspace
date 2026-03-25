@@ -52,10 +52,8 @@ export type StyleItem = {
     }
 );
 
-export type StylePlatform = Record<DisplayMode, Record<string, StyleItem>>;
-
 export type Style = {
-  platform: StylePlatform;
+  platform: Record<DisplayMode, Record<string, StyleItem>>;
   mode?: StyleMode;
   theme: { default: StyleThemeMode; schemes: StyleThemeMode[] };
   variables: Partial<StyleVariables>;

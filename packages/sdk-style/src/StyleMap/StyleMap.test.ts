@@ -5,7 +5,6 @@ import { StyleVariableCategory } from '@plitzi/sdk-shared';
 import StyleMap from './StyleMap';
 
 import type { Style, StyleItem } from '@plitzi/sdk-shared';
-import type { StylePlatform } from '@plitzi/sdk-shared';
 
 const createBaseStyle = (): Pick<Style, 'platform' | 'variables'> => ({
   platform: {
@@ -547,7 +546,7 @@ describe('StyleMap', () => {
   // 9. edge cases/general
   describe('edge cases/general', () => {
     it('handles empty platform gracefully and regenerates selector cache on update', () => {
-      const empty = { platform: {} as StylePlatform, variables: {} };
+      const empty = { platform: {} as Style['platform'], variables: {} };
       expect(() => StyleMap.getSelector(empty, 'desktop', 'btn')).not.toThrow();
       StyleMap.addSelector(style, 'desktop', 'btn', 'class', undefined, {}, paramsGeneric);
       const before = style.platform.desktop.btn.cache;

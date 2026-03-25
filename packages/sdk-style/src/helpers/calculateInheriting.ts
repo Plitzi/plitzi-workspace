@@ -10,7 +10,7 @@ const getDefaultStyle = (
   subType: string | undefined,
   styleSelector = 'base',
   isParent = false,
-  isSubParent = false,
+  isAncestor = false,
   componentDefinitions: Record<string, ComponentDefinition> = {}
 ) => {
   let global = get(componentDefinitions, `${componentType}.defaultStyle`, undefined);
@@ -18,18 +18,31 @@ const getDefaultStyle = (
     return undefined;
   }
 
-  if (global.subTypes && !subType && Object.keys(global.subTypes).length > 0) {
+  if (global.subTypes && !subType) {
     subType = Object.keys(global.subTypes)[0];
   }
 
-  if (subType) {
-    const subGlobal = global.subTypes?.[subType];
-    if (subGlobal) {
-      global = subGlobal;
+  if (subType && global.subTypes?.[subType]) {
+    global = global.subTypes[subType];
+  }
+
+  return { ...global, style: get(global, `style.${styleSelector}`, {}), isParent, isAncestor };
+};
+
+const getSelectorsStyle = (selectors: string[], platform: Style['platform'], isParent = false, isAncestor = false) => {
+  const tree: StyleHelperMetaData['tree'] = [];
+  for (const displayMode of Object.keys(platform) as DisplayMode[]) {
+    const group = get(platform, displayMode);
+    for (const segment of Object.values(pick(group, selectors))) {
+      const { name } = segment;
+      const styleItem = get(platform, `${displayMode}.${name}`, undefined);
+      if (styleItem) {
+        tree.push({ name, displayMode, style: styleItem.attributes, isParent, isAncestor });
+      }
     }
   }
 
-  return { ...global, style: get(global, `style.${styleSelector}`, {}), isParent, isSubParent };
+  return tree;
 };
 
 const getDataStyle = (
@@ -38,14 +51,11 @@ const getDataStyle = (
   platform: Style['platform'],
   styleSelector = 'base',
   isParent = false,
-  isSubParent = false,
-  componentDefinitions: Record<string, ComponentDefinition> = {}
+  isAncestor = false,
+  componentDefinitions: Record<string, ComponentDefinition> = {},
+  addSelectors: string[] = []
 ) => {
   const metadata: { tree: StyleHelperMetaData['tree'] } = { tree: [] };
-  if (!element && !componentType) {
-    return undefined;
-  }
-
   if (!element) {
     const globalStyle = getDefaultStyle(componentType, undefined, styleSelector, false, false, componentDefinitions);
     if (globalStyle) {
@@ -61,19 +71,14 @@ const getDataStyle = (
   } = element;
 
   // get element display mode styles (mobile -> tablet -> desktop)
-  for (const displayMode of ['desktop', 'tablet', 'mobile'] as DisplayMode[]) {
-    const platformGroup = get(platform, displayMode, undefined);
-    if (!platformGroup) {
-      continue;
-    }
-
+  for (const displayMode of Object.keys(platform) as DisplayMode[]) {
+    const platformGroup = get(platform, displayMode);
     const selectors = get(styleSelectors, styleSelector, '').split(' ');
-    const selectorSegments = Object.values(pick(platformGroup, selectors));
-    for (const segment of selectorSegments) {
-      const { name } = segment;
+    for (const selector of Object.values(pick(platformGroup, [...selectors, ...addSelectors]))) {
+      const { name } = selector;
       const styleItem = get(platform, `${displayMode}.${name}`, undefined);
       if (styleItem) {
-        metadata.tree.push({ name, displayMode, style: styleItem.attributes, isParent, isSubParent });
+        metadata.tree.push({ name, displayMode, style: styleItem.attributes, isParent, isAncestor });
       }
     }
 
@@ -90,23 +95,23 @@ const getDataStyle = (
         displayMode,
         style: compStyleItem.attributes[styleSelector],
         isParent: false,
-        isSubParent: false
+        isAncestor: false
       });
     }
 
     const styleItem = get(platform, `${displayMode}.${type}`, undefined);
     if (type && styleItem && !['class', 'element'].includes(styleItem.type)) {
-      metadata.tree.push({ name: type, displayMode, style: styleItem.attributes, isParent, isSubParent });
+      metadata.tree.push({ name: type, displayMode, style: styleItem.attributes, isParent, isAncestor });
     }
 
     const styleSubItem = subType ? get(platform, `${displayMode}.${subType}`, undefined) : undefined;
     if (subType && styleSubItem && !['class', 'element'].includes(styleSubItem.type)) {
-      metadata.tree.push({ name: subType, displayMode, style: styleSubItem.attributes, isParent, isSubParent });
+      metadata.tree.push({ name: subType, displayMode, style: styleSubItem.attributes, isParent, isAncestor });
     }
   }
 
   // get global element type
-  const globalStyle = getDefaultStyle(type, subType, styleSelector, isParent, isSubParent, componentDefinitions);
+  const globalStyle = getDefaultStyle(type, subType, styleSelector, isParent, isAncestor, componentDefinitions);
   if (globalStyle) {
     metadata.tree.push(globalStyle);
   }
@@ -137,9 +142,7 @@ const getElementStyle = (
       id !== elementLoop.id,
       componentDefinitions
     );
-    if (styleData) {
-      tree.push(...styleData.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isSubParent)));
-    }
+    tree.push(...styleData.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isAncestor)));
 
     if (elementLoop.id === id && styleSelector !== 'base') {
       elementLoop = undefined;
@@ -156,66 +159,66 @@ const calculateInheriting = (
   componentType: string | undefined,
   flat: Schema['flat'],
   platform: Style['platform'],
-  styleSelector?: string,
+  styleSelector: string = 'base',
   componentDefinitions: Record<string, ComponentDefinition> = {},
-  skipSelectors: string[] = []
+  skipSelectors: string[] = [],
+  addSelectors: string[] = []
 ) => {
   const metadata: StyleHelperMetaData = { tree: [], style: {}, parentStyle: {} };
   if (!element && !componentType) {
-    return metadata;
-  }
-
-  if (element) {
+    if (addSelectors.length) {
+      metadata.tree.push(...getSelectorsStyle(addSelectors, platform));
+    }
+  } else if (element) {
     metadata.tree.push(
       ...getElementStyle(element, componentType, flat, platform, styleSelector, componentDefinitions, skipSelectors)
     );
   } else {
-    const styleData = getDataStyle(
+    const data = getDataStyle(
       undefined,
       componentType,
       platform,
       styleSelector,
       false,
       false,
-      componentDefinitions
+      componentDefinitions,
+      addSelectors
     );
-    if (styleData) {
-      metadata.tree.push(...styleData.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isSubParent)));
-    }
+
+    metadata.tree.push(...data.tree.filter(node => !(skipSelectors.includes(node.name) && !node.isAncestor)));
   }
 
-  // base styleSelector to continue the rest of the logic
-  styleSelector = 'base';
-
-  const finalMeta: StyleHelperMetaData['style'] = {};
-  metadata.tree.forEach(node => {
-    let styleData = get(node, `style.${styleSelector}`, node.style) as { [key: string]: string } | undefined;
+  const finalStyle: StyleHelperMetaData['style'] = {};
+  for (const node of metadata.tree) {
+    let styleData = get(node, `style.${styleSelector}`, node.style) as Record<string, string> | undefined;
     if (!styleData) {
-      return;
+      continue;
     }
 
-    if (node.isSubParent) {
+    // SubParent: only inheritable attributes
+    if (node.isAncestor) {
       styleData = pick(styleData, inheritableAttributesBase);
     }
 
-    (Object.keys(styleData) as StyleCategory[])
-      .filter(key => (inheritableAttributesBase.includes(key) && node.isSubParent) || !node.isSubParent)
-      .forEach(key => {
-        if (!(finalMeta[key] as StyleHelperMetaData['style'][string] | undefined)) {
-          finalMeta[key] = [];
-        }
+    for (const key of Object.keys(styleData) as StyleCategory[]) {
+      const isAllowed = node.isAncestor ? inheritableAttributesBase.includes(key) : true;
+      if (!isAllowed) {
+        continue;
+      }
 
-        finalMeta[key].push({ key: node.name, value: styleData[key], displayMode: node.displayMode });
-      });
-  });
+      if (!(finalStyle[key] as (typeof finalStyle)[string] | undefined)) {
+        finalStyle[key] = [];
+      }
 
-  return {
-    ...metadata,
-    style: finalMeta,
-    parentStyle: metadata.tree
-      .filter(node => node.isParent)
-      .reduce((acum, node) => ({ ...acum, ...get(node, 'style', {}) }), {})
-  } as StyleHelperMetaData;
+      finalStyle[key].push({ key: node.name, value: styleData[key], displayMode: node.displayMode });
+    }
+  }
+
+  const parentStyle = metadata.tree
+    .filter(node => node.isParent)
+    .reduce((acc, node) => ({ ...acc, ...get(node, 'style', {}) }), {});
+
+  return { ...metadata, style: finalStyle, parentStyle } as StyleHelperMetaData;
 };
 
 export default calculateInheriting;

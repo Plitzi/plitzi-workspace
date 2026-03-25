@@ -9,7 +9,7 @@ export type StyleHelperMetaData = {
     displayMode: DisplayMode;
     style: StyleItem['attributes'];
     isParent: boolean;
-    isSubParent: boolean;
+    isAncestor: boolean;
   }[];
   style: { [key: string]: { key: string; value: StyleValue; displayMode: DisplayMode }[] };
   parentStyle: { [key: string]: string };

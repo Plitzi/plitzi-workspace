@@ -1,7 +1,7 @@
 import { createContext } from 'react';
 
 import type { StyleHelperMetaData } from '../../StyleHelper';
-import type { DisplayMode, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleCategory, StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
 
 export type SetValues = {
   (path?: undefined, values?: Exclude<StyleItem, { type: 'element' }>['attributes']): void;
@@ -10,7 +10,8 @@ export type SetValues = {
 
 export type StyleInspectorContextValue = {
   selector?: StyleItem;
-  styleSelector?: string;
+  styleSelector: string;
+  styleState?: StyleState;
   displayMode: DisplayMode;
   variables: Record<string, unknown>;
   inheritData: StyleHelperMetaData['style'];
@@ -22,6 +23,6 @@ export type StyleInspectorContextValue = {
 
 const styleInspectorContextDefaultValue = {} as StyleInspectorContextValue;
 
-const StyleInspectorContext = createContext<StyleInspectorContextValue>(styleInspectorContextDefaultValue);
+const StyleInspectorContext = createContext(styleInspectorContextDefaultValue);
 
 export default StyleInspectorContext;

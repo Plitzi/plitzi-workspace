@@ -25,7 +25,7 @@ export type BuilderElementToolsProps = {
 };
 
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
-  const [selected, setSelected] = useStorage<string>('builder-state.elementTools.tabSelected', initialTab);
+  const [selected, setSelected] = useStorage('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
   const { selector, setSelector } = use(BuilderStyleContext);
   const { elementSelected } = use(BuilderSelectedContext);
@@ -43,7 +43,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
 
   const handleClickListItems = useCallback((item: string) => setSelected(item), [setSelected]);
 
-  const [tempAttributes, setTempAttributes] = useStateDebounce<Element['attributes']>(
+  const [tempAttributes, setTempAttributes] = useStateDebounce(
     attributes,
     useCallback(
       (state: Element['attributes']) =>
@@ -53,7 +53,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
     500
   );
 
-  const [tempDefinition, setTempDefinition] = useStateDebounce<Element['definition']>(
+  const [tempDefinition, setTempDefinition] = useStateDebounce(
     definition,
     useCallback(
       (state: Element['definition']) =>

@@ -22,12 +22,13 @@ import Variables from '../categories/Variables';
 import useStyleInherit from '../hooks/useStyleInherit';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 
-import type { DisplayMode, Element, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleCategory, StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type InspectorModeBasicProps = {
   componentType?: string;
   selector?: StyleItem;
+  styleState?: StyleState;
   styleSelector?: string;
   element?: Element;
   displayMode: DisplayMode;
@@ -36,6 +37,7 @@ export type InspectorModeBasicProps = {
 const InspectorModeBasic = ({
   componentType,
   selector,
+  styleState,
   styleSelector = 'base',
   element,
   displayMode
@@ -47,7 +49,7 @@ const InspectorModeBasic = ({
   );
   const [showAllOptions, setShowAllOptions] = useStorage('builder-state.styleInspector.showAllOptions', false);
   const [replaceTokens, setReplaceTokens] = useStorage('builder-state.styleInspector.replaceTokens', false);
-  const inheritData = useStyleInherit({ element, componentType, selector: selector?.name, styleSelector });
+  const inheritData = useStyleInherit({ element, componentType, selector: selector?.name, styleSelector, styleState });
 
   const handleChangeCollapse = useCallback(
     (id: string, isCollapsed: boolean) => setCollapsedCache(state => ({ ...state, [id]: isCollapsed })),
@@ -66,7 +68,7 @@ const InspectorModeBasic = ({
 
   const handleChange = useCallback(
     (styleKey?: StyleCategory, values?: StyleItem['attributes'] | StyleValue) => {
-      const params = { componentType, styleSelector };
+      const params = { componentType, styleSelector, styleState };
       if (selector) {
         builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, values, params);
 
@@ -95,7 +97,7 @@ const InspectorModeBasic = ({
         })
       );
     },
-    [builderHandler, componentType, displayMode, element, selector, styleSelector]
+    [builderHandler, componentType, displayMode, element, selector, styleSelector, styleState]
   );
 
   const isList = useMemo(() => {
@@ -117,6 +119,7 @@ const InspectorModeBasic = ({
     <StyleInspectorProvider
       displayMode={displayMode}
       styleSelector={styleSelector}
+      styleState={styleState}
       selector={selector}
       element={element}
       inheritData={inheritData}

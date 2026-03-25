@@ -39,18 +39,28 @@ const useInspectorValues = <TAsValue extends boolean>({
   strictMode = false,
   replaceTokens = false
 }: UseInspectorValuesProps<TAsValue>): UseInspectorValuesReturn<TAsValue> => {
-  let { inheritData, bindingData, selector, styleSelector, variables } = {} as StyleInspectorContextValue;
+  let { inheritData, bindingData, selector, styleSelector, styleState, variables } = {} as StyleInspectorContextValue;
   if (skipContext) {
-    ({ inheritData, bindingData, selector, styleSelector, variables } = context);
+    ({ inheritData, bindingData, selector, styleSelector, styleState, variables } = context);
   } else {
-    ({ inheritData, bindingData, selector, styleSelector, variables } = use(StyleInspectorContext));
+    ({ inheritData, bindingData, selector, styleSelector, styleState, variables } = use(StyleInspectorContext));
   }
 
-  let attributes: Partial<Record<StyleCategory, StyleValue>>;
-  if (selector?.type === 'element') {
-    attributes = selector.attributes[styleSelector ? styleSelector : 'base'];
-  } else {
-    attributes = selector?.attributes ?? {};
+  let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
+  if (selector) {
+    if (styleState) {
+      if (selector.type === 'element') {
+        attributes = selector.stateAttributes?.[styleSelector][styleState] ?? {};
+      } else {
+        attributes = selector.stateAttributes?.[styleState] ?? {};
+      }
+    } else {
+      if (selector.type === 'element') {
+        attributes = selector.attributes[styleSelector];
+      } else {
+        attributes = selector.attributes;
+      }
+    }
   }
 
   const hasInherit = useMemo(
@@ -71,6 +81,7 @@ const useInspectorValues = <TAsValue extends boolean>({
 
   const hasVariables = useMemo(
     () =>
+      !!attributes &&
       !!keys &&
       !asValue &&
       (Object.keys(pick(attributes, keys)) as StyleCategory[]).filter(
@@ -80,7 +91,7 @@ const useInspectorValues = <TAsValue extends boolean>({
   );
 
   const hasValues = useMemo(() => {
-    if (!keys) {
+    if (!keys || !attributes) {
       return false;
     }
 

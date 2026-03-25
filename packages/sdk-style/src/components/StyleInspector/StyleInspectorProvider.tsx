@@ -11,13 +11,14 @@ import StyleInspectorContext from './StyleInspectorContext';
 
 import type { SetValues } from './StyleInspectorContext';
 import type { StyleHelperMetaData } from '../../StyleHelper';
-import type { DisplayMode, Element, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleCategory, StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type StyleInspectorProviderProps = {
   children: ReactNode;
   selector?: StyleItem;
-  styleSelector: string;
+  styleSelector?: string;
+  styleState?: StyleState;
   element?: Element;
   inheritData: StyleHelperMetaData;
   displayMode: DisplayMode;
@@ -28,6 +29,7 @@ const StyleInspectorProvider = ({
   children,
   selector,
   styleSelector = 'base',
+  styleState,
   element,
   inheritData,
   displayMode,
@@ -102,8 +104,9 @@ const StyleInspectorProvider = ({
     () => ({
       selector,
       styleSelector,
+      styleState,
       displayMode,
-      variables: schemaVariables, // @todo: styleVariables (at global level) and selector?.variables (needs to be parsed in key:value)
+      variables: schemaVariables,
       inheritData: inheritData.style,
       bindingData: bindingData,
       setValue,
@@ -113,6 +116,7 @@ const StyleInspectorProvider = ({
     [
       selector,
       styleSelector,
+      styleState,
       displayMode,
       schemaVariables,
       inheritData.style,
