@@ -196,26 +196,26 @@ const StyleInspector = ({
             onSelectorSelected={handleSelectSelector}
           />
         )}
-        {allowStyleSelector && styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
-          <div className="flex flex-col text-xs">
-            <Select className="rounded-sm" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>
-              {styleSelectorsAvailables.map(selectorKey => (
-                <option key={selectorKey} value={selectorKey}>
-                  {selectorKey}
-                </option>
-              ))}
-            </Select>
-          </div>
-        )}
-        {allowStyleState && (
-          <div className="flex flex-col text-xs">
-            <Select className="rounded-sm" size="xs" onChange={handleChangeStyleState} value={styleState}>
-              <option value="">None</option>
-              <option value="hover">Hover</option>
-              <option value="focus">Focus</option>
-              <option value="active">Active</option>
-              <option value="disabled">Disabled</option>
-            </Select>
+        {(allowStyleSelector || allowStyleState) && (
+          <div className="flex w-full items-center gap-2">
+            {allowStyleSelector && styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
+              <Select className="grow basis-0" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>
+                {styleSelectorsAvailables.map(selectorKey => (
+                  <option key={selectorKey} value={selectorKey}>
+                    {selectorKey}
+                  </option>
+                ))}
+              </Select>
+            )}
+            {allowStyleState && (
+              <Select className="grow basis-0" size="xs" onChange={handleChangeStyleState} value={styleState}>
+                <option value="">None</option>
+                <option value="hover">Hover</option>
+                <option value="focus">Focus</option>
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+              </Select>
+            )}
           </div>
         )}
       </div>

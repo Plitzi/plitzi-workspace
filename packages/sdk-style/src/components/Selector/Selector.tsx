@@ -99,21 +99,6 @@ const Selector = ({
     [tags, onAdd, onChange, onSelectorSelected]
   );
 
-  const handleChangeItemState = useCallback(
-    (tag: SelectorValue) => (tagState: string) => {
-      if (!tagState) {
-        onSelectorSelected?.(tag);
-
-        return;
-      }
-
-      const tempTag: Pick<StyleItem, 'name' | 'type'> = { name: `${tag.name}:${tagState}`, type: 'state' };
-      onAdd?.(tempTag, false);
-      onSelectorSelected?.(tempTag);
-    },
-    [onAdd, onSelectorSelected]
-  );
-
   const handleClickAction = useCallback(
     (position: number) => (action: 'duplicate' | 'remove' | 'delete', value?: SelectorValue) => {
       switch (action) {
@@ -224,7 +209,7 @@ const Selector = ({
     (tag: SelectorValue) => {
       setTimeout(() => setInputValue(''), 0);
       setOpen(false);
-      const finalValue = [...tags, tag].reduce<string>((acum, tag) => `${acum} ${tag.name}`, '').trim();
+      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
       onChange?.(finalValue);
       onAdd?.(tag, false);
       onSelectorSelected?.(tag);
@@ -283,7 +268,6 @@ const Selector = ({
               onAction={handleClickAction(i)}
               onClick={handleClickSelector}
               onChange={handleChangeItem(i)}
-              onChangeState={handleChangeItemState(tag)}
             />
           ))}
           <input
