@@ -1,9 +1,9 @@
 import { set } from '@plitzi/plitzi-ui/helpers';
 
-import processSelector from '../../../helpers/processSelector';
-import getStyleItem from '../../helpers/getStyleItem';
-import isValidValue, { isStyleAttributes, isStyleObject } from '../../helpers/isValueValid';
-import omitUndefined from '../../helpers/omitUndefined';
+import processSelector from '../../helpers/processSelector';
+import getStyleItem from '../helpers/getStyleItem';
+import isValidValue, { isStyleAttributes, isStyleObject } from '../helpers/isValueValid';
+import omitUndefined from '../helpers/omitUndefined';
 
 import type {
   DisplayMode,

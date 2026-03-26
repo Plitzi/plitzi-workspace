@@ -2,10 +2,10 @@
 
 import { omit, set, get } from '@plitzi/plitzi-ui/helpers';
 
-import processSelector from '../../../helpers/processSelector';
-import getBasePath from '../../helpers/getBasePath';
-import getStyleItem from '../../helpers/getStyleItem';
-import isValidValue, { isStyleObject } from '../../helpers/isValueValid';
+import processSelector from '../../helpers/processSelector';
+import getBasePath from '../helpers/getBasePath';
+import getStyleItem from '../helpers/getStyleItem';
+import isValidValue, { isStyleObject } from '../helpers/isValueValid';
 
 import type {
   DisplayMode,

@@ -3,8 +3,8 @@ import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../helpers/processSelector';
 import getStyleItem from './helpers/getStyleItem';
-import addSelector from './methods/add/addSelector';
-import updateSelector from './methods/update/updateSelector';
+import addSelector from './methods/addSelector';
+import updateSelector from './methods/updateSelector';
 
 import type {
   DisplayMode,
