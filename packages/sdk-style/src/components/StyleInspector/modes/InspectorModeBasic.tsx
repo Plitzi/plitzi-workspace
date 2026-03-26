@@ -22,7 +22,15 @@ import Variables from '../categories/Variables';
 import useStyleInherit from '../hooks/useStyleInherit';
 import StyleInspectorProvider from '../StyleInspectorProvider';
 
-import type { DisplayMode, Element, StyleCategory, StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type {
+  DisplayMode,
+  Element,
+  StyleCategory,
+  StyleItem,
+  StyleObject,
+  StyleState,
+  StyleValue
+} from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type InspectorModeBasicProps = {
@@ -67,7 +75,7 @@ const InspectorModeBasic = ({
   );
 
   const handleChange = useCallback(
-    (styleKey?: StyleCategory, values?: StyleItem['attributes'] | StyleValue) => {
+    (styleKey?: StyleCategory, values?: StyleObject | StyleValue) => {
       const params = { componentType, styleSelector, styleState };
       if (selector) {
         builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, values, params);

@@ -2,21 +2,23 @@ import { describe, it, expect } from 'vitest';
 
 import processSelector, { processSelectors } from './processSelector';
 
-import type { StyleItem } from '@plitzi/sdk-shared';
-
 describe('processSelector', () => {
   it('functionality', () => {
     const result = processSelector({
       name: 'page-1',
       type: 'class',
       attributes: {
-        'align-items': 'center',
-        'justify-content': 'space-around',
-        'row-gap': '32px',
-        'column-gap': '32px',
-        'flex-wrap': 'nowrap',
-        'flex-direction': 'column',
-        'padding-right': '10px'
+        base: {
+          default: {
+            'align-items': 'center',
+            'justify-content': 'space-around',
+            'row-gap': '32px',
+            'column-gap': '32px',
+            'flex-wrap': 'nowrap',
+            'flex-direction': 'column',
+            'padding-right': '10px'
+          }
+        }
       },
       variables: {
         color: {
@@ -38,13 +40,17 @@ describe('processSelector', () => {
         name: 'page-1',
         type: 'class',
         attributes: {
-          'align-items': 'center',
-          'justify-content': 'space-around',
-          'row-gap': '32px',
-          'column-gap': '32px',
-          'flex-wrap': 'nowrap',
-          'flex-direction': 'column',
-          'padding-right': '10px'
+          base: {
+            default: {
+              'align-items': 'center',
+              'justify-content': 'space-around',
+              'row-gap': '32px',
+              'column-gap': '32px',
+              'flex-wrap': 'nowrap',
+              'flex-direction': 'column',
+              'padding-right': '10px'
+            }
+          }
         },
         variables: {
           color: {
@@ -90,11 +96,15 @@ describe('processSelector', () => {
       name: 'btn',
       type: 'class',
       attributes: {
-        color: 'blue'
-      },
-      stateAttributes: {
-        hover: {
-          color: 'red'
+        base: {
+          default: {
+            color: 'blue'
+          },
+          states: {
+            hover: {
+              color: 'red'
+            }
+          }
         }
       },
       cache: ''
@@ -107,11 +117,15 @@ describe('processSelector', () => {
         name: 'btn',
         type: 'class',
         attributes: {
-          color: 'blue'
-        },
-        stateAttributes: {
-          hover: {
-            color: 'red'
+          base: {
+            default: {
+              color: 'blue'
+            },
+            states: {
+              hover: {
+                color: 'red'
+              }
+            }
           }
         },
         cache: ''
@@ -130,6 +144,117 @@ describe('processSelector', () => {
     );
   });
 
+  it('functionality + state + variants', () => {
+    const result = processSelector({
+      name: 'btn',
+      type: 'class',
+      attributes: {
+        base: {
+          default: {
+            color: 'blue'
+          },
+          states: {
+            hover: {
+              color: 'red'
+            }
+          },
+          variants: {
+            primary: { default: { 'background-color': 'purple' }, states: { hover: { 'background-color': 'blue' } } }
+          }
+        },
+        selectorA: {
+          default: {
+            color: 'red'
+          },
+          states: {
+            hover: {
+              color: 'orange'
+            }
+          },
+          variants: {
+            secondary: { default: { 'background-color': 'pink' }, states: { hover: { 'background-color': 'blue' } } }
+          }
+        }
+      },
+      cache: ''
+    });
+
+    expect(result).toEqual(
+      '.btn{color:blue;&:hover{color:red;}&[data-variant="primary"],&.btn--primary{background-color:purple;&:hover{background-color:blue;}}.btn-selectorA{color:red;&:hover{color:orange;}&[data-variant="secondary"],&.btn-selectorA--secondary{background-color:pink;&:hover{background-color:blue;}}}}'
+    );
+
+    const result2 = processSelector(
+      {
+        name: 'btn',
+        type: 'class',
+        attributes: {
+          base: {
+            default: {
+              color: 'blue'
+            },
+            states: {
+              hover: {
+                color: 'red'
+              }
+            },
+            variants: {
+              primary: { default: { 'background-color': 'purple' }, states: { hover: { 'background-color': 'blue' } } }
+            }
+          },
+          selectorA: {
+            default: {
+              color: 'red'
+            },
+            states: {
+              hover: {
+                color: 'orange'
+              }
+            },
+            variants: {
+              secondary: { default: { 'background-color': 'pink' }, states: { hover: { 'background-color': 'blue' } } }
+            }
+          }
+        },
+        cache: ''
+      },
+      false
+    );
+
+    expect(result2).toEqual(
+      `.btn {
+  color: blue;
+
+  &:hover {
+    color: red;
+  }
+
+  &[data-variant="primary"], &.btn--primary {
+    background-color: purple;
+
+    &:hover {
+      background-color: blue;
+    }
+  }
+
+  .btn-selectorA {
+    color: red;
+
+    &:hover {
+      color: orange;
+    }
+
+    &[data-variant="secondary"], &.btn-selectorA--secondary {
+      background-color: pink;
+
+      &:hover {
+        background-color: blue;
+      }
+    }
+  }
+}`
+    );
+  });
+
   it('functionality when is element', () => {
     const result = processSelector({
       name: 'button',
@@ -137,13 +262,15 @@ describe('processSelector', () => {
       componentType: 'button',
       attributes: {
         base: {
-          'align-items': 'center',
-          'justify-content': 'space-around',
-          'row-gap': '32px',
-          'column-gap': '32px',
-          'flex-wrap': 'nowrap',
-          'flex-direction': 'column',
-          'padding-right': '10px'
+          default: {
+            'align-items': 'center',
+            'justify-content': 'space-around',
+            'row-gap': '32px',
+            'column-gap': '32px',
+            'flex-wrap': 'nowrap',
+            'flex-direction': 'column',
+            'padding-right': '10px'
+          }
         }
       },
       variables: {
@@ -168,13 +295,15 @@ describe('processSelector', () => {
         componentType: 'button',
         attributes: {
           base: {
-            'align-items': 'center',
-            'justify-content': 'space-around',
-            'row-gap': '32px',
-            'column-gap': '32px',
-            'flex-wrap': 'nowrap',
-            'flex-direction': 'column',
-            'padding-right': '10px'
+            default: {
+              'align-items': 'center',
+              'justify-content': 'space-around',
+              'row-gap': '32px',
+              'column-gap': '32px',
+              'flex-wrap': 'nowrap',
+              'flex-direction': 'column',
+              'padding-right': '10px'
+            }
           }
         },
         variables: {
@@ -221,16 +350,20 @@ describe('processSelector', () => {
       componentType: 'button',
       attributes: {
         base: {
-          'align-items': 'center',
-          'justify-content': 'space-around',
-          'row-gap': '32px',
-          'column-gap': '32px',
-          'flex-wrap': 'nowrap',
-          'flex-direction': 'column',
-          'padding-right': '10px'
+          default: {
+            'align-items': 'center',
+            'justify-content': 'space-around',
+            'row-gap': '32px',
+            'column-gap': '32px',
+            'flex-wrap': 'nowrap',
+            'flex-direction': 'column',
+            'padding-right': '10px'
+          }
         },
         selectorA: {
-          color: 'red'
+          default: {
+            color: 'red'
+          }
         }
       },
       variables: {
@@ -255,16 +388,20 @@ describe('processSelector', () => {
         componentType: 'button',
         attributes: {
           base: {
-            'align-items': 'center',
-            'justify-content': 'space-around',
-            'row-gap': '32px',
-            'column-gap': '32px',
-            'flex-wrap': 'nowrap',
-            'flex-direction': 'column',
-            'padding-right': '10px'
+            default: {
+              'align-items': 'center',
+              'justify-content': 'space-around',
+              'row-gap': '32px',
+              'column-gap': '32px',
+              'flex-wrap': 'nowrap',
+              'flex-direction': 'column',
+              'padding-right': '10px'
+            }
           },
           selectorA: {
-            color: 'red'
+            default: {
+              color: 'red'
+            }
           }
         },
         variables: {
@@ -313,19 +450,17 @@ describe('processSelector', () => {
   it('functionality when is element + state', () => {
     const styleItem = {
       name: 'button',
-      type: 'element',
+      type: 'element' as const,
       componentType: 'button',
       attributes: {
         base: {
-          color: 'blue'
+          default: { color: 'blue' },
+          states: { hover: { color: 'red' } }
         },
         selectorA: {
-          color: 'blue'
+          default: { color: 'blue' },
+          states: { hover: { color: 'green' } }
         }
-      },
-      stateAttributes: {
-        base: { hover: { color: 'red' } },
-        selectorA: { hover: { color: 'green' } }
       },
       variables: {
         color: {
@@ -337,7 +472,7 @@ describe('processSelector', () => {
         }
       },
       cache: ''
-    } as StyleItem;
+    };
 
     const result = processSelector(styleItem);
     expect(result).toEqual(
@@ -378,19 +513,17 @@ describe('processSelector', () => {
 
     const styleItem2 = {
       name: 'button',
-      type: 'element',
+      type: 'element' as const,
       componentType: 'button',
       attributes: {
         base: {
-          color: 'blue'
+          default: { color: 'blue' },
+          states: { hover: { color: 'red' }, focus: { 'background-color': 'purple' } }
         },
         selectorA: {
-          color: 'blue'
+          default: { color: 'blue' },
+          states: { hover: { color: 'green' } }
         }
-      },
-      stateAttributes: {
-        base: { hover: { color: 'red' }, focus: { 'background-color': 'purple' } },
-        selectorA: { hover: { color: 'green' } }
       },
       variables: {
         color: {
@@ -402,7 +535,7 @@ describe('processSelector', () => {
         }
       },
       cache: ''
-    } as StyleItem;
+    };
 
     const result3 = processSelector(styleItem2);
     expect(result3).toEqual(
@@ -453,13 +586,17 @@ describe('processSelector', () => {
           name: 'page-1',
           type: 'class',
           attributes: {
-            'align-items': 'center',
-            'justify-content': 'space-around',
-            'row-gap': '32px',
-            'column-gap': '32px',
-            'flex-wrap': 'nowrap',
-            'flex-direction': 'column',
-            'padding-right': '10px'
+            base: {
+              default: {
+                'align-items': 'center',
+                'justify-content': 'space-around',
+                'row-gap': '32px',
+                'column-gap': '32px',
+                'flex-wrap': 'nowrap',
+                'flex-direction': 'column',
+                'padding-right': '10px'
+              }
+            }
           },
           variables: {
             color: {
@@ -476,13 +613,17 @@ describe('processSelector', () => {
           name: 'page-2',
           type: 'class',
           attributes: {
-            'align-items': 'center',
-            'justify-content': 'space-around',
-            'row-gap': '32px',
-            'column-gap': '32px',
-            'flex-wrap': 'nowrap',
-            'flex-direction': 'column',
-            'padding-right': '10px'
+            base: {
+              default: {
+                'align-items': 'center',
+                'justify-content': 'space-around',
+                'row-gap': '32px',
+                'column-gap': '32px',
+                'flex-wrap': 'nowrap',
+                'flex-direction': 'column',
+                'padding-right': '10px'
+              }
+            }
           },
           variables: {
             color: {

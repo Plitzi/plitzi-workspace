@@ -6,159 +6,147 @@ import type { StyleItem, StyleState } from '@plitzi/sdk-shared';
 
 const TAB_SIZE = 2;
 
-type SelectorVariables = { default: string[]; light: string[]; dark: string[] };
+const getSpaces = (n = TAB_SIZE) => ' '.repeat(n);
 
-const getSpaces = (tabIndentSpace = TAB_SIZE) => ' '.repeat(tabIndentSpace);
+type Attributes = Record<
+  string,
+  {
+    default: string[];
+    states?: Record<StyleState, string[]>;
+    variants?: Record<string, { default: string[]; states?: Record<StyleState, string[]> }>;
+  }
+>;
 
-const combine = (base: string, media: string[], inline: boolean) => {
-  return `${inline || !media.length ? base : `${base}\n`}${media.join(inline ? '' : '\n')}`;
-};
+const combine = (base: string, media: string[], inline: boolean) =>
+  `${inline || !media.length ? base : `${base}\n`}${media.join(inline ? '' : '\n')}`;
 
 const getMediaQueries = (
   name: string,
-  selectorVariables: SelectorVariables,
+  variables: { default: string[]; light: string[]; dark: string[] },
   inline = true,
-  tabIndentSpace = TAB_SIZE
+  tab = TAB_SIZE
 ) => {
-  const extraCss: string[] = [];
-  const separator = getSpaces(tabIndentSpace);
-  const separatorMedia = getSpaces(tabIndentSpace + tabIndentSpace);
-  if (selectorVariables.light.length > 0 && inline) {
-    extraCss.push(`@media(prefers-color-scheme:light){${name}{${selectorVariables.light.join('')}}}`);
-  } else if (selectorVariables.light.length > 0 && !inline) {
-    const bodyLight = selectorVariables.light
-      .map(variable => `${separatorMedia}${variable}`)
-      .join('\n')
-      .replaceAll(':', ': ');
-    extraCss.push(`\n@media(prefers-color-scheme: light) {\n${separator}${name} {\n${bodyLight}\n${separator}}\n}`);
+  const out: string[] = [];
+  const sep = getSpaces(tab);
+  const sepMedia = getSpaces(tab + TAB_SIZE);
+
+  for (const mode of ['light', 'dark'] as const) {
+    if (!variables[mode].length) {
+      continue;
+    }
+
+    if (inline) {
+      out.push(`@media(prefers-color-scheme:${mode}){${name}{${variables[mode].join('')}}}`);
+    } else {
+      const body = variables[mode]
+        .map(v => `${sepMedia}${v}`)
+        .join('\n')
+        .replaceAll(':', ': ');
+
+      out.push(`\n@media(prefers-color-scheme: ${mode}) {\n${sep}${name} {\n${body}\n${sep}}\n}`);
+    }
   }
 
-  if (selectorVariables.dark.length > 0 && inline) {
-    extraCss.push(`@media(prefers-color-scheme:dark){${name}{${selectorVariables.dark.join('')}}}`);
-  } else if (selectorVariables.dark.length > 0 && !inline) {
-    const bodyDark = selectorVariables.dark
-      .map(variable => `${separatorMedia}${variable}`)
-      .join('\n')
-      .replaceAll(':', ': ');
-    extraCss.push(`\n@media(prefers-color-scheme: dark) {\n${separator}${name} {\n${bodyDark}\n${separator}}\n}`);
-  }
-
-  return extraCss;
+  return out;
 };
 
 const attributesToString = (
-  attributes: string[],
-  stateAttributes: Record<StyleState, string[]> | Record<StyleState, Record<string, string[]>> | undefined,
-  inline = false,
-  tabIndentSpace = TAB_SIZE
-) => {
-  let state = '';
-  if (stateAttributes) {
-    state = parseState(stateAttributes, inline, tabIndentSpace);
-  }
-
-  let body = '';
-  if (inline) {
-    body = attributes.join('');
-  } else {
-    const separator = getSpaces(tabIndentSpace + TAB_SIZE);
-    body = attributes
-      .map(attribute => `${separator}${attribute}`)
-      .join('\n')
-      .replaceAll(':', ': ');
-  }
-
-  if (!state) {
-    return body;
-  }
-
-  if (inline) {
-    return `${body}${state}`;
-  }
-
-  return `${body}\n\n${state}`;
-};
-
-const parseState = (
-  stateAttributes: Record<StyleState, string[]> | Record<StyleState, Record<string, string[]>>,
+  name: string,
+  attrs: string[],
+  states?: Attributes[string]['states'],
+  variants?: Attributes[string]['variants'],
   inline = true,
-  tabIndentSpace = TAB_SIZE
+  tab = TAB_SIZE
 ) => {
-  const states: string[] = [];
-  for (const [state, attributes] of Object.entries<string[]>(stateAttributes as Record<StyleState, string[]>)) {
-    states.push(getSelector(`&:${state}`, attributes, undefined, inline, tabIndentSpace + TAB_SIZE));
+  const body = inline
+    ? attrs.join('')
+    : attrs
+        .map(a => `${getSpaces(tab + TAB_SIZE)}${a}`)
+        .join('\n')
+        .replaceAll(':', ': ');
+
+  const stateBlocks: string[] = states
+    ? Object.entries(states).map(([state, values]) =>
+        getSelector(`&:${state}`, values, undefined, undefined, inline, tab + TAB_SIZE)
+      )
+    : [];
+
+  const variantBlocks: string[] = variants
+    ? Object.entries(variants).map(([variant, values]) =>
+        getSelector(
+          `&[data-variant="${variant}"]${inline ? ',' : ', '}&${name}--${variant}`,
+          values.default,
+          values.states,
+          undefined,
+          inline,
+          tab + TAB_SIZE
+        )
+      )
+    : [];
+
+  if (inline) {
+    return `${body}${stateBlocks.join('')}${variantBlocks.join('')}`;
   }
 
-  return states.join(inline ? '' : '\n\n');
+  const sections = [body];
+
+  if (stateBlocks.length) {
+    sections.push(stateBlocks.join('\n\n'));
+  }
+
+  if (variantBlocks.length) {
+    sections.push(variantBlocks.join('\n\n'));
+  }
+
+  return sections.join('\n\n');
 };
 
 const getSelector = (
   name: string,
-  attributes: string[],
-  stateAttributes: Record<StyleState, string[]> | undefined,
+  attrs: string[],
+  states?: Attributes[string]['states'],
+  variants?: Attributes[string]['variants'],
   inline = true,
-  tabIndentSpace = TAB_SIZE
+  tab = TAB_SIZE
 ) => {
-  const body = attributesToString(attributes, stateAttributes, inline, tabIndentSpace);
-  if (inline) {
-    return `${name}{${body}}`;
-  }
+  const body = attributesToString(name, attrs, states, variants, inline, tab);
 
-  const separator = getSpaces(tabIndentSpace);
-
-  return `${separator}${name} {\n${body}\n${separator}}`;
+  return inline ? `${name}{${body}}` : `${getSpaces(tab)}${name} {\n${body}\n${getSpaces(tab)}}`;
 };
 
-const getBaseSelectorElement = (
-  name: string,
-  attributes: Record<string, string[]>,
-  stateAttributes: Partial<Record<string, Record<StyleState, string[]>>> | undefined,
-  inline = true,
-  tabIndentSpace = TAB_SIZE
-) => {
-  const parts = Object.entries(attributes).map(([styleSelector, attrs]) => {
+const getElementSelector = (name: string, attributes: Attributes, inline = true, tab = TAB_SIZE) => {
+  const parts: string[] = [];
+
+  for (const [styleSelector, block] of Object.entries(attributes)) {
+    // Base selector - inline in the root
     if (styleSelector === 'base') {
-      return attributesToString(attrs, stateAttributes?.[styleSelector], inline, tabIndentSpace);
+      parts.push(attributesToString(name, block.default, block.states, block.variants, inline, tab));
+
+      continue;
     }
 
-    const selectorName = `${name}-${styleSelector}`;
-
-    return getSelector(selectorName, attrs, stateAttributes?.[styleSelector], inline, tabIndentSpace + TAB_SIZE);
-  });
+    // Sub Selectors
+    parts.push(
+      getSelector(`${name}-${styleSelector}`, block.default, block.states, block.variants, inline, tab + TAB_SIZE)
+    );
+  }
 
   return inline ? `${name}{${parts.join('')}}` : `${name} {\n${parts.join('\n\n')}\n}`;
 };
 
 const processSelector = (selector: StyleItem, inline = true) => {
   const name = processSelectorName(selector);
-  const selectorVariables = processSelectorVariables(selector);
-  let mediaQueries: string[] | undefined = undefined;
-  if (selectorVariables) {
-    mediaQueries = getMediaQueries(name, selectorVariables, inline);
+  const vars = processSelectorVariables(selector);
+
+  const processed = processSelectorAttributes(selector);
+  const media = vars ? getMediaQueries(name, vars, inline) : undefined;
+  if (vars) {
+    processed.attributes.base.default.push(...vars.default);
   }
 
-  let base: string = '';
-  if (selector.type === 'element') {
-    const { attributes, stateAttributes } = processSelectorAttributes(selector);
-    if (selectorVariables) {
-      attributes.base.push(...selectorVariables.default);
-    }
+  const css = getElementSelector(name, processed.attributes, inline, 0);
 
-    base = getBaseSelectorElement(name, attributes, stateAttributes, inline, 0);
-  } else {
-    const { attributes, stateAttributes } = processSelectorAttributes(selector);
-    if (selectorVariables) {
-      attributes.push(...selectorVariables.default);
-    }
-
-    base = getSelector(name, attributes, stateAttributes, inline, 0);
-  }
-
-  if (!mediaQueries) {
-    return base;
-  }
-
-  return combine(base, mediaQueries, inline);
+  return media ? combine(css, media, inline) : css;
 };
 
 export const processSelectors = (selectors: StyleItem[], inline = false) => {

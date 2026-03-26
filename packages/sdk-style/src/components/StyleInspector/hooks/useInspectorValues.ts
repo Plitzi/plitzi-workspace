@@ -7,7 +7,7 @@ import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import StyleInspectorContext from '../StyleInspectorContext';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
-import type { DisplayMode, Style, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseInspectorValuesProps<TAsValue extends boolean> = {
   keys?: StyleCategory[];
@@ -39,27 +39,23 @@ const useInspectorValues = <TAsValue extends boolean>({
   strictMode = false,
   replaceTokens = false
 }: UseInspectorValuesProps<TAsValue>): UseInspectorValuesReturn<TAsValue> => {
-  let { inheritData, bindingData, selector, styleSelector, styleState, variables } = {} as StyleInspectorContextValue;
+  let { inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } =
+    {} as StyleInspectorContextValue;
   if (skipContext) {
-    ({ inheritData, bindingData, selector, styleSelector, styleState, variables } = context);
+    ({ inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } = context);
   } else {
-    ({ inheritData, bindingData, selector, styleSelector, styleState, variables } = use(StyleInspectorContext));
+    ({ inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } =
+      use(StyleInspectorContext));
   }
 
   let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
   if (selector) {
     if (styleState) {
-      if (selector.type === 'element') {
-        attributes = selector.stateAttributes?.[styleSelector][styleState] ?? {};
-      } else {
-        attributes = selector.stateAttributes?.[styleState] ?? {};
-      }
+      attributes = selector.attributes[styleSelector].states?.[styleState];
+    } else if (styleVariant) {
+      attributes = selector.attributes[styleSelector].variants?.[styleVariant];
     } else {
-      if (selector.type === 'element') {
-        attributes = selector.attributes[styleSelector];
-      } else {
-        attributes = selector.attributes;
-      }
+      attributes = selector.attributes[styleSelector].default;
     }
   }
 
@@ -103,7 +99,7 @@ const useInspectorValues = <TAsValue extends boolean>({
   }, [keys, asValue, attributes]);
 
   const valuesParsed = useMemo(() => {
-    const valuesParsedAux: Style['platform'][DisplayMode][number]['attributes'] = {};
+    const valuesParsedAux: StyleObject = {};
     if (!keys) {
       return valuesParsedAux;
     }

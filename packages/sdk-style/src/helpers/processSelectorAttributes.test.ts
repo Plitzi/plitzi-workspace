@@ -8,17 +8,27 @@ describe('processSelectorAttributes', () => {
       name: 'page-1',
       type: 'class',
       attributes: {
-        'align-items': 'center',
-        'justify-content': 'space-around',
-        'row-gap': '32px',
-        'column-gap': '32px',
-        'flex-wrap': 'nowrap',
-        'flex-direction': 'column',
-        'padding-right': '10px'
-      },
-      stateAttributes: {
-        hover: {
-          color: 'red'
+        base: {
+          default: {
+            'align-items': 'center',
+            'justify-content': 'space-around',
+            'row-gap': '32px',
+            'column-gap': '32px',
+            'flex-wrap': 'nowrap',
+            'flex-direction': 'column',
+            'padding-right': '10px'
+          },
+          states: {
+            hover: {
+              color: 'red'
+            }
+          },
+          variants: {
+            active: {
+              default: { color: 'purple' },
+              states: { hover: { color: 'orange' } }
+            }
+          }
         }
       },
       variables: {
@@ -33,17 +43,29 @@ describe('processSelectorAttributes', () => {
       cache: ''
     });
     expect(result).toEqual({
-      attributes: [
-        'align-items:center;',
-        'justify-content:space-around;',
-        'row-gap:32px;',
-        'column-gap:32px;',
-        'flex-wrap:nowrap;',
-        'flex-direction:column;',
-        'padding-right:10px;'
-      ],
-      stateAttributes: {
-        hover: ['color:red;']
+      attributes: {
+        base: {
+          default: [
+            'align-items:center;',
+            'justify-content:space-around;',
+            'row-gap:32px;',
+            'column-gap:32px;',
+            'flex-wrap:nowrap;',
+            'flex-direction:column;',
+            'padding-right:10px;'
+          ],
+          states: {
+            hover: ['color:red;']
+          },
+          variants: {
+            active: {
+              default: ['color:purple;'],
+              states: {
+                hover: ['color:orange;']
+              }
+            }
+          }
+        }
       }
     });
 
@@ -53,17 +75,19 @@ describe('processSelectorAttributes', () => {
       componentType: 'page',
       attributes: {
         base: {
-          'align-items': 'center',
-          'justify-content': 'space-around',
-          'row-gap': '32px',
-          'column-gap': '32px',
-          'flex-wrap': 'nowrap',
-          'flex-direction': 'column',
-          'padding-right': '10px'
+          default: {
+            'align-items': 'center',
+            'justify-content': 'space-around',
+            'row-gap': '32px',
+            'column-gap': '32px',
+            'flex-wrap': 'nowrap',
+            'flex-direction': 'column',
+            'padding-right': '10px'
+          },
+          states: {
+            hover: { color: 'red' }
+          }
         }
-      },
-      stateAttributes: {
-        base: { hover: { color: 'red' } }
       },
       variables: {
         color: {
@@ -78,19 +102,19 @@ describe('processSelectorAttributes', () => {
     });
     expect(result2).toEqual({
       attributes: {
-        base: [
-          'align-items:center;',
-          'justify-content:space-around;',
-          'row-gap:32px;',
-          'column-gap:32px;',
-          'flex-wrap:nowrap;',
-          'flex-direction:column;',
-          'padding-right:10px;'
-        ]
-      },
-      stateAttributes: {
         base: {
-          hover: ['color:red;']
+          default: [
+            'align-items:center;',
+            'justify-content:space-around;',
+            'row-gap:32px;',
+            'column-gap:32px;',
+            'flex-wrap:nowrap;',
+            'flex-direction:column;',
+            'padding-right:10px;'
+          ],
+          states: {
+            hover: ['color:red;']
+          }
         }
       }
     });

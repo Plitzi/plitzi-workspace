@@ -53,7 +53,7 @@ const StyleManager = () => {
               styleSelectors={styleSelectors}
               styleSelectorsAvailables={styleSelectorsAvailables}
               allowStyleSelector={selector.type === 'element'}
-              componentType={selector.type === 'element' ? selector.componentType : ''}
+              componentType={selector.componentType}
               value={selector.name}
             />
           )}

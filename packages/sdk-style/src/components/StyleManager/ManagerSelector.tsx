@@ -30,7 +30,7 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   const { displayMode } = use(BuilderStyleContext);
   const { components } = use(ComponentContext);
   const componentsNotAvailables = useMemo(
-    () => selectors.filter(selector => selector.type === 'element').map(selector => selector.componentType),
+    () => selectors.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
     [selectors]
   );
   const finalSelectors = useMemo(() => {

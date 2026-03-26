@@ -11,7 +11,15 @@ import StyleInspectorContext from './StyleInspectorContext';
 
 import type { SetValues } from './StyleInspectorContext';
 import type { StyleHelperMetaData } from '../../StyleHelper';
-import type { DisplayMode, Element, StyleCategory, StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type {
+  DisplayMode,
+  Element,
+  StyleCategory,
+  StyleItem,
+  StyleObject,
+  StyleState,
+  StyleValue
+} from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type StyleInspectorProviderProps = {
@@ -22,7 +30,7 @@ export type StyleInspectorProviderProps = {
   element?: Element;
   inheritData: StyleHelperMetaData;
   displayMode: DisplayMode;
-  onChange?: (path?: StyleCategory, values?: StyleItem['attributes'] | StyleValue) => void;
+  onChange?: (path?: StyleCategory, values?: StyleObject | StyleValue) => void;
 };
 
 const StyleInspectorProvider = ({
@@ -40,7 +48,7 @@ const StyleInspectorProvider = ({
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
   const setValue = useCallback(
-    (styleKey?: StyleCategory, values?: StyleItem['attributes'] | StyleValue): void => {
+    (styleKey?: StyleCategory, values?: StyleObject | StyleValue): void => {
       if (
         (styleKey && typeof values !== 'string' && typeof values !== 'number' && typeof values !== 'undefined') ||
         (!styleKey && typeof values !== 'object' && typeof values !== 'undefined') ||
@@ -105,6 +113,7 @@ const StyleInspectorProvider = ({
       selector,
       styleSelector,
       styleState,
+      styleVariant: undefined, // @todo: pending to implement
       displayMode,
       variables: schemaVariables,
       inheritData: inheritData.style,

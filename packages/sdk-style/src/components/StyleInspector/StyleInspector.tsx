@@ -20,7 +20,7 @@ import type { StyleState } from '@plitzi/sdk-shared';
 export type StyleInspectorProps = {
   value?: string;
   element?: Element;
-  componentType: string;
+  componentType?: string;
   mode?: 'element' | 'manager';
   styleSelectors?: Element['definition']['styleSelectors'];
   styleSelectorsAvailables?: string[];

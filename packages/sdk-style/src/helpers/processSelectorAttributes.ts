@@ -1,9 +1,36 @@
-import type { StyleCategory, StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
 
 type CssResult = { variables: Record<string, string>; value: string };
 
+type Attributes = Record<
+  string,
+  {
+    default: string[];
+    states?: Record<StyleState, string[]>;
+    variants?: Record<string, { default: string[]; states?: Record<StyleState, string[]> }>;
+  }
+>;
+
+// Helpers
+
 const getValue = (attribute: string, cssValue: string, nested: boolean = false) =>
   nested ? cssValue : `${attribute}:${cssValue};`;
+
+const processObject = (obj?: Record<string, StyleValue>): string[] => {
+  if (!obj) {
+    return [];
+  }
+
+  const result: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const partial = processCssString(key, String(value));
+    result.push(...partial.variables, partial.value);
+  }
+
+  return result;
+};
+
+// End - Helpers
 
 const processCssNonFunction = (result: CssResult, attribute: string, cssValue: string, nested: boolean = false) => {
   const myResult: CssResult = { variables: {}, value: '' };
@@ -101,86 +128,60 @@ export const processCssString = (attribute: string, value?: string) => {
   };
 };
 
-function processSelectorAttributes(selector: Extract<StyleItem, { type: 'element' }>): {
-  attributes: Record<string, string[]>;
-  stateAttributes: Record<StyleState, Record<string, string[]>>;
-};
-function processSelectorAttributes(selector: Exclude<StyleItem, { type: 'element' }>): {
-  attributes: string[];
-  stateAttributes: Record<StyleState, string[]>;
-};
-function processSelectorAttributes(selector: StyleItem) {
-  if (selector.type === 'element') {
-    const attributes: Record<string, string[]> = {};
-    const stateAttributes: Record<StyleState, Record<string, string[]>> = {} as Record<
-      StyleState,
-      Record<string, string[]>
-    >;
+function processSelectorAttributes(selector?: StyleItem) {
+  if (!selector?.attributes || !Object.keys(selector.attributes).length) {
+    return { attributes: { base: { default: [] } } };
+  }
 
-    for (const [styleSelector, selectorAttributes] of Object.entries(selector.attributes)) {
-      for (const [key, value] of Object.entries(selectorAttributes)) {
-        const partialResult = processCssString(key, value as string);
-        if (!(attributes[styleSelector] as string[] | undefined)) {
-          attributes[styleSelector] = [];
-        }
-
-        attributes[styleSelector].push(...partialResult.variables, partialResult.value);
-      }
-    }
-
-    if (!selector.stateAttributes) {
-      return { attributes, stateAttributes };
-    }
-
-    for (const [state, selectorAttributesGroups] of Object.entries(selector.stateAttributes) as [
-      StyleState,
-      Record<string, Partial<Record<StyleCategory, StyleValue>>>
-    ][]) {
-      for (const [styleSelector, selectorAttributes] of Object.entries(selectorAttributesGroups)) {
-        for (const [key, value] of Object.entries(selectorAttributes)) {
-          const partialResult = processCssString(key, value as string);
-          if (!(stateAttributes[state] as Record<string, string[]> | undefined)) {
-            stateAttributes[state] = {} as Record<string, string[]>;
-          }
-
-          if (!(stateAttributes[state][styleSelector] as string[] | undefined)) {
-            stateAttributes[state][styleSelector] = [];
-          }
-
-          stateAttributes[state][styleSelector].push(...partialResult.variables, partialResult.value);
+  const attributes: Attributes = {};
+  for (const styleSelector in selector.attributes) {
+    const block = selector.attributes[styleSelector];
+    const defaultStyles = processObject(block.default);
+    const states: NonNullable<Attributes[string]['states']> = {} as NonNullable<Attributes[string]['states']>;
+    if (block.states) {
+      for (const [state, styleObject] of Object.entries(block.states) as [StyleState, Record<string, StyleValue>][]) {
+        const processed = processObject(styleObject);
+        if (processed.length) {
+          states[state] = processed;
         }
       }
     }
 
-    return { attributes, stateAttributes };
-  }
+    const variants: NonNullable<Attributes[string]['variants']> = {};
+    if (block.variants) {
+      for (const variantName in block.variants) {
+        const variantBlock = block.variants[variantName];
+        const variantDefault = processObject(variantBlock.default);
+        const variantStates: NonNullable<Attributes[string]['states']> = {} as NonNullable<
+          Attributes[string]['states']
+        >;
+        if (variantBlock.states) {
+          for (const [state, styleObject] of Object.entries(variantBlock.states) as [
+            StyleState,
+            Record<string, StyleValue>
+          ][]) {
+            const processed = processObject(styleObject);
+            if (processed.length) {
+              variantStates[state] = processed;
+            }
+          }
+        }
 
-  const attributes: string[] = [];
-  const stateAttributes: Record<StyleState, string[]> = {} as Record<StyleState, string[]>;
-  for (const [key, value] of Object.entries(selector.attributes)) {
-    const partialResult = processCssString(key, value as string);
-    attributes.push(...partialResult.variables, partialResult.value);
-  }
-
-  if (!selector.stateAttributes) {
-    return { attributes, stateAttributes };
-  }
-
-  for (const [state, selectorAttributes] of Object.entries(selector.stateAttributes) as [
-    StyleState,
-    Partial<Record<StyleCategory, StyleValue>>
-  ][]) {
-    for (const [key, value] of Object.entries(selectorAttributes)) {
-      const partialResult = processCssString(key, value as string);
-      if (!(stateAttributes[state] as string[] | undefined)) {
-        stateAttributes[state] = [];
+        variants[variantName] = {
+          default: variantDefault,
+          ...(Object.keys(variantStates).length && { states: variantStates })
+        };
       }
-
-      stateAttributes[state].push(...partialResult.variables, partialResult.value);
     }
+
+    attributes[styleSelector] = {
+      default: defaultStyles,
+      ...(Object.keys(states).length && { states }),
+      ...(Object.keys(variants).length && { variants })
+    };
   }
 
-  return { attributes, stateAttributes };
+  return { attributes };
 }
 
 export default processSelectorAttributes;
