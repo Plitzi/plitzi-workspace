@@ -9,13 +9,13 @@ export default {
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   coverageReporters: ['clover', 'json', 'lcov', 'text', 'html'],
-  setupFilesAfterEnv: ['@plitzi/sdk-shared/jest.setup'],
+  setupFilesAfterEnv: ['<rootDir>/packages/sdk-shared/jest.setup.js'],
   moduleNameMapper: {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1'
   },
   transform: {
-    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: path.resolve(__dirname, './babel-jest.config.cjs') }]
+    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: path.resolve(__dirname, './babel-jest.config.mjs') }]
   },
   transformIgnorePatterns: []
 };

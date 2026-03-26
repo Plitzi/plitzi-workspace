@@ -3,16 +3,15 @@ import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../helpers/processSelector';
 import getStyleItem from './helpers/getStyleItem';
-import addSelectorDefault from './methods/add/addSelectorDefault';
-import addSelectorElement from './methods/add/addSelectorElement';
-import updateSelectorDefault from './methods/update/updateSelectorDefault';
-import updateSelectorElement from './methods/update/updateSelectorElement';
+import addSelector from './methods/add/addSelector';
+import updateSelector from './methods/update/updateSelector';
 
 import type {
   DisplayMode,
   Style,
   StyleCategory,
   StyleItem,
+  StyleObject,
   StyleState,
   StyleValue,
   StyleVariableCategory,
@@ -46,30 +45,10 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
+    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
-    if (type === 'element') {
-      return addSelectorElement(
-        this.platform,
-        displayMode,
-        selector,
-        type,
-        path,
-        value as Extract<StyleItem, { type: 'element' }>['attributes'] | StyleValue,
-        params
-      );
-    }
-
-    return addSelectorDefault(
-      this.platform,
-      displayMode,
-      selector,
-      type,
-      path,
-      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue,
-      params
-    );
+    return addSelector(this.platform, displayMode, selector, type, path, value, params);
   }
 
   static addSelector(
@@ -78,8 +57,8 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
+    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
     return this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
   }
@@ -92,42 +71,22 @@ class StyleMap {
   updateSelector(
     displayMode: DisplayMode,
     selector: string,
-    type: TagType,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
+    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
-    if (type === 'element') {
-      return updateSelectorElement(
-        this.platform,
-        displayMode,
-        selector,
-        path,
-        value as Extract<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
-        params
-      );
-    }
-
-    return updateSelectorDefault(
-      this.platform,
-      displayMode,
-      selector,
-      path,
-      value as Exclude<StyleItem, { type: 'element' }>['attributes'] | StyleValue | undefined,
-      params
-    );
+    return updateSelector(this.platform, displayMode, selector, path, value, params);
   }
 
   static updateSelector(
     style: Pick<Style, 'platform' | 'variables'>,
     displayMode: DisplayMode,
     selector: string,
-    type: TagType,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; styleState?: StyleState }
+    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
-    return this.getInstance(style).updateSelector(displayMode, selector, type, path, value, params);
+    return this.getInstance(style).updateSelector(displayMode, selector, path, value, params);
   }
 
   removeSelector = (displayMode: DisplayMode | undefined, selector: string) => {
