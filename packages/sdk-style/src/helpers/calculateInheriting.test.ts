@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import calculateInheriting from './calculateInheriting';
 
-import type { Element, Schema, Style } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Element, Schema, Style } from '@plitzi/sdk-shared';
 
 const baseElement: Element = {
   id: '1',
@@ -364,6 +364,155 @@ describe('calculateInheriting', () => {
   });
 
   describe('edge cases', () => {
+    describe('defaultStyle deduplication (same componentType in hierarchy)', () => {
+      it('should apply defaultStyle only once for nested same-type elements', () => {
+        const element: Element = {
+          ...baseElement,
+          id: 'child',
+          definition: {
+            ...baseElement.definition,
+            parentId: 'parent'
+          }
+        };
+
+        const flat: Schema['flat'] = {
+          parent: {
+            id: 'parent',
+            attributes: {},
+            definition: {
+              label: 'Parent',
+              type: 'button',
+              rootId: 'parent',
+              parentId: undefined,
+              styleSelectors: { base: '' }
+            }
+          }
+        };
+
+        const componentDefinitions = {
+          button: {
+            defaultStyle: {
+              style: {
+                base: {
+                  default: { color: 'red' }
+                }
+              }
+            }
+          }
+        } as unknown as Record<string, ComponentDefinition>;
+
+        const result = calculateInheriting(
+          element,
+          undefined,
+          flat,
+          emptyPlatform,
+          { styleSelector: 'base' },
+          componentDefinitions
+        );
+
+        const colorValues = result.style.color.map(v => v.value);
+
+        // 🔥 should only appear once
+        expect(colorValues.filter(v => v === 'red').length).toBe(1);
+      });
+
+      it('should still apply defaultStyle if no ancestor of same type exists', () => {
+        const element: Element = {
+          ...baseElement,
+          definition: {
+            ...baseElement.definition,
+            parentId: 'parent'
+          }
+        };
+
+        const flat: Schema['flat'] = {
+          parent: {
+            id: 'parent',
+            attributes: {},
+            definition: {
+              label: 'Parent',
+              type: 'div', // 🔥 different type
+              rootId: 'parent',
+              parentId: undefined,
+              styleSelectors: { base: '' }
+            }
+          }
+        };
+
+        const componentDefinitions = {
+          button: {
+            defaultStyle: {
+              style: {
+                base: {
+                  default: { color: 'red' }
+                }
+              }
+            }
+          }
+        } as unknown as Record<string, ComponentDefinition>;
+
+        const result = calculateInheriting(
+          element,
+          undefined,
+          flat,
+          emptyPlatform,
+          { styleSelector: 'base' },
+          componentDefinitions
+        );
+
+        const colorValues = result.style.color.map(v => v.value);
+
+        expect(colorValues.includes('red')).toBe(true);
+      });
+
+      it('deep nesting should still only apply one defaultStyle per type chain', () => {
+        const flat: Schema['flat'] = {};
+
+        let parentId: string | undefined = undefined;
+        for (let i = 0; i < 5; i++) {
+          const id = `node${i}`;
+          flat[id] = {
+            id,
+            attributes: {},
+            definition: {
+              label: id,
+              type: 'button',
+              rootId: id,
+              parentId,
+              styleSelectors: { base: '' }
+            }
+          };
+          parentId = id;
+        }
+
+        const componentDefinitions = {
+          button: {
+            defaultStyle: {
+              style: {
+                base: {
+                  default: { color: 'red' }
+                }
+              }
+            }
+          }
+        } as unknown as Record<string, ComponentDefinition>;
+
+        const result = calculateInheriting(
+          flat['node4'],
+          undefined,
+          flat,
+          emptyPlatform,
+          { styleSelector: 'base' },
+          componentDefinitions
+        );
+
+        const colorValues = result.style.color.map(v => v.value);
+
+        // 🔥 still only once
+        expect(colorValues.filter(v => v === 'red').length).toBe(1);
+      });
+    });
+
     it('handles unknown selectors safely', () => {
       const element: Element = {
         ...baseElement,

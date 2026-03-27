@@ -20,6 +20,8 @@ export type InheritData = {
     name: string;
     displayMode: DisplayMode;
     attributes: StyleItem['attributes'];
+    componentType?: string;
+    isDefault?: boolean;
     isParent: boolean;
     isAncestor: boolean;
   }[];
@@ -130,8 +132,10 @@ const getDefaultStyle = (
   return {
     name: 'defaultStyle',
     attributes: { [styleSelector]: get(global, `style.${styleSelector}`, {}) },
+    componentType,
     isParent: false,
-    isAncestor: false
+    isAncestor: false,
+    isDefault: true
   };
 };
 
@@ -279,6 +283,7 @@ const calculateInheriting = (
   const { styleSelector = 'base', styleState, styleVariant } = params;
   const metadata: InheritData = { tree: [], style: {}, parentStyle: {} };
   const hierarchy = element ? buildHierarchy(flat, element) : [];
+  const seenDefaultTypes = new Set<string>();
   for (const displayMode of Object.keys(platform) as DisplayMode[]) {
     const group = platform[displayMode];
     if (!(group as Record<string, StyleItem> | undefined)) {
@@ -349,8 +354,10 @@ const calculateInheriting = (
           name: source.name,
           displayMode,
           attributes: source.attributes,
+          componentType: source.componentType,
           isParent,
-          isAncestor
+          isAncestor,
+          isDefault: false
         });
       }
 
@@ -361,7 +368,8 @@ const calculateInheriting = (
         componentDefinitions
       );
 
-      if (defaultStyle) {
+      if (defaultStyle && !seenDefaultTypes.has(node.definition.type)) {
+        seenDefaultTypes.add(node.definition.type);
         metadata.tree.push({ ...defaultStyle, displayMode, isParent, isAncestor });
       }
     }
