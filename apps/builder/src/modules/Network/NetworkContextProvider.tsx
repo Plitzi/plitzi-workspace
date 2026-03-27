@@ -56,7 +56,7 @@ const NetworkContextProvider = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
   const { registerDefinition } = use(ComponentContext);
-  const [internalData, setInternalData] = useState<NetworkInternalContextValue>({} as NetworkInternalContextValue);
+  const [internalData, setInternalData] = useState({} as NetworkInternalContextValue);
 
   const query = useCallback(
     async <T extends keyof BuilderQueriesMap>(
