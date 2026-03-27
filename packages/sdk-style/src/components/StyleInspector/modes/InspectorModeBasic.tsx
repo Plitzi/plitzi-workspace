@@ -76,9 +76,12 @@ const InspectorModeBasic = ({
 
   const handleChange = useCallback(
     (styleKey?: StyleCategory, values?: StyleObject | StyleValue) => {
-      const params = { componentType, styleSelector, styleState };
       if (selector) {
-        builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, values, params);
+        builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, values, {
+          componentType,
+          styleSelector,
+          styleState
+        });
 
         return;
       }
@@ -88,7 +91,10 @@ const InspectorModeBasic = ({
       }
 
       const customClass = makeSelector(componentType, styleSelector);
-      builderHandler('styleAddSelector', displayMode, customClass, 'class', styleKey, values, params);
+      builderHandler('styleAddSelector', displayMode, customClass, 'class', styleKey, values, {
+        styleSelector,
+        styleState
+      });
       if (!element) {
         return;
       }

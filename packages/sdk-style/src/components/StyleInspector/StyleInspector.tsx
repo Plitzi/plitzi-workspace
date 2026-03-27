@@ -95,8 +95,8 @@ const StyleInspector = ({
       const { name, type } = selector;
       if (!isDuplicated && name !== '' && !(platform[displayMode][name] as StyleItem | undefined)) {
         builderHandler('styleAddSelector', displayMode, name, type, undefined, undefined, {
-          styleSelector: undefined,
-          componentType
+          styleSelector,
+          componentType: type === 'element' ? componentType : undefined
         });
       } else if (
         isDuplicated &&
@@ -112,11 +112,11 @@ const StyleInspector = ({
           type,
           undefined,
           get(platform, `${displayMode}.${originalSelector.name}.attributes`, {}),
-          { styleSelector: undefined, componentType }
+          { styleSelector, componentType: type === 'element' ? componentType : undefined }
         );
       }
     },
-    [builderHandler, componentType, displayMode, platform]
+    [builderHandler, componentType, displayMode, platform, styleSelector]
   );
 
   const handleSelectSelector = useCallback(

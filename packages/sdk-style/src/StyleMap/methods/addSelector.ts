@@ -44,6 +44,7 @@ const addSelector = (
   if (
     getStyleItem(platform, displayMode, selector) ||
     (!componentType && type === 'element') ||
+    (componentType && type !== 'element') ||
     (styleState && styleVariant) ||
     (styleSelector && typeof styleSelector !== 'string') ||
     (!styleSelector && (styleState || styleVariant)) ||

@@ -11,8 +11,8 @@ const createBaseStyle = (): Pick<Style, 'platform' | 'variables'> => ({
   variables: {}
 });
 
-const paramsBase: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string } = {
-  componentType: 'button',
+const paramsBase: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string } = {
+  componentType: undefined,
   styleSelector: 'base'
 };
 
@@ -121,10 +121,28 @@ describe('StyleMap', () => {
             'element',
             undefined,
             { color: 'red' },
-            { ...paramsBase, componentType: '' }
+            { ...paramsBase, componentType: undefined }
           )
         ).toBe(false);
         expect(style.platform.desktop.btnFail).toBeUndefined();
+      });
+    });
+
+    describe('invalid componentType and type combinations', () => {
+      it('rejects when componentType is defined and type is class or component undefined and type is element', () => {
+        expect(
+          StyleMap.addSelector(style, 'desktop', 'x', 'class', undefined, undefined, {
+            ...paramsBase,
+            componentType: 'button'
+          })
+        ).toBe(false);
+
+        expect(
+          StyleMap.addSelector(style, 'desktop', 'y', 'element', undefined, undefined, {
+            ...paramsBase,
+            componentType: undefined
+          })
+        ).toBe(false);
       });
     });
 
@@ -324,7 +342,7 @@ describe('StyleMap', () => {
               body: { default: { color: 'red' } },
               footer: { default: { color: 'red' } }
             },
-            { componentType: 'button', styleSelector: undefined }
+            { componentType: undefined, styleSelector: undefined }
           )
         ).toBe(true);
       });
@@ -342,7 +360,7 @@ describe('StyleMap', () => {
               body: { default: { color: 'red' } },
               footer: { default: { color: 'red' } }
             },
-            { componentType: 'button', styleSelector: undefined }
+            { componentType: undefined, styleSelector: undefined }
           )
         ).toBe(false);
       });
@@ -361,7 +379,7 @@ describe('StyleMap', () => {
               body: { default: { color: 'blue' } },
               footer: { default: { color: 'blue' } }
             } satisfies StyleAttributes,
-            { componentType: 'button', styleSelector: undefined, styleState: 'hover' }
+            { componentType: undefined, styleSelector: undefined, styleState: 'hover' }
           )
         ).toBe(false);
       });
@@ -380,7 +398,7 @@ describe('StyleMap', () => {
               body: { default: { color: 'blue' } },
               footer: { default: { color: 'blue' } }
             } satisfies StyleAttributes,
-            { componentType: 'button', styleSelector: undefined, styleVariant: 'primary' }
+            { componentType: undefined, styleSelector: undefined, styleVariant: 'primary' }
           )
         ).toBe(false);
       });
@@ -405,7 +423,7 @@ describe('StyleMap', () => {
             body: { default: { color: 'red' } },
             footer: { default: { color: 'red' } }
           },
-          { componentType: '', styleSelector: undefined }
+          { componentType: undefined, styleSelector: undefined }
         )
       ).toEqual(true);
     });
@@ -640,7 +658,7 @@ describe('StyleMap', () => {
       expect(
         StyleMap.updateSelector(style, 'desktop', 'btnMix', 'color', 'red', {
           ...paramsBase,
-          componentType: '',
+          componentType: undefined,
           styleState: 'hover'
         })
       ).toBe(true);

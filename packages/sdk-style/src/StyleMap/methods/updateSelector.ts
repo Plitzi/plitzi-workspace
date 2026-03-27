@@ -47,6 +47,7 @@ const updateSelector = (
     !styleSelector ||
     (styleState && styleVariant) ||
     (!componentType && styleItem.type === 'element') ||
+    (componentType && styleItem.type !== 'element') ||
     (styleSelector && typeof styleSelector !== 'string') ||
     (path && path.includes('.')) ||
     !isValidValue(path, value, params)
