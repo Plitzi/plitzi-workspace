@@ -1,6 +1,6 @@
 import type { ComponentDefinition } from './ElementTypes';
 import type { Element } from './SchemaTypes';
-import type { DisplayMode } from './StyleTypes';
+import type { DisplayMode, StyleAttributes } from './StyleTypes';
 
 export type PluginSchema = {
   attributes: Element['attributes'];
@@ -10,8 +10,8 @@ export type PluginSchema = {
   defaultStyle: {
     name: string;
     displayMode: DisplayMode;
-    style: { [key: string]: { [key: string]: string | number } };
-    subTypes?: { [key: string]: Omit<PluginSchema['defaultStyle'], 'subTypes'> };
+    style: StyleAttributes;
+    subTypes?: Record<string, Omit<PluginSchema['defaultStyle'], 'subTypes'>>;
     bindingsAllowed: {
       attributes: { path: string; label: string }[];
       initialState: { path: string; label: string }[];
