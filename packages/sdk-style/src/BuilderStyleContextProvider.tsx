@@ -23,7 +23,8 @@ import type {
   StyleVariableCategory,
   StyleVariableValue,
   TagType,
-  StyleCategory
+  StyleCategory,
+  StyleState
 } from '@plitzi/sdk-shared';
 
 export type BuilderStyleContextProviderProps = {
@@ -53,7 +54,7 @@ const BuilderStyleContextProvider = ({
     [middlewaresProp]
   );
   const [style, dispatchStyle] = useReducerWithMiddleware(StyleReducer, styleProp ?? EMPTY_STYLE_SCHEMA, middlewares);
-  const styleRef = useRef<Style>(style);
+  const styleRef = useRef(style);
   styleRef.current = style;
 
   const styleUpdate = useCallback(
@@ -69,7 +70,7 @@ const BuilderStyleContextProvider = ({
       type: TagType,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType: string; styleSelector?: string },
+      params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string },
       fromSubscriptions = false
     ) => {
       if (!selector) {
@@ -94,17 +95,15 @@ const BuilderStyleContextProvider = ({
     (
       displayMode: DisplayMode,
       selector: string,
-      type: TagType,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType: string; styleSelector?: string },
+      params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string },
       fromSubscriptions = false
     ) =>
       dispatchStyle({
         type: StyleActions.STYLE_UPDATE_SELECTOR,
         displayMode,
         selector,
-        selectorType: type,
         path,
         value,
         params,
@@ -231,12 +230,12 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
-        const { displayMode, selector, type, path, style, params } = get(
+        const { displayMode, selector, path, style, params } = get(
           data,
           'data.StyleUpdateSelector',
           {}
         ) as BuilderSubscriptionsMap['StyleUpdateSelector'];
-        styleUpdateSelector(displayMode, selector, type, path, style, params, true);
+        styleUpdateSelector(displayMode, selector, path, style, params, true);
       });
 
       subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {

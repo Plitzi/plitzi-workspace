@@ -10,6 +10,7 @@ import type {
   Style,
   StyleCategory,
   StyleItem,
+  StyleState,
   StyleVariableCategory,
   StyleVariableValue,
   TagType
@@ -42,16 +43,15 @@ export type StyleReducerActions = StyleReducerActionsBase &
         path?: StyleCategory;
         selectorType: TagType;
         value?: StyleItem['attributes'];
-        params: { componentType: string; styleSelector?: string };
+        params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string };
       }
     | {
         type: 'STYLE_UPDATE_SELECTOR';
         displayMode: DisplayMode;
         selector: string;
         path?: StyleCategory;
-        selectorType: TagType;
         value?: StyleItem['attributes'];
-        params: { componentType: string; styleSelector?: string };
+        params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string };
       }
     | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }
     | {
@@ -99,10 +99,10 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
     }
 
     case StyleActions.STYLE_UPDATE_SELECTOR: {
-      const { displayMode, selector, path, selectorType = 'class', value, params } = action;
+      const { displayMode, selector, path, value, params } = action;
 
       return produce(state, draft => {
-        if (StyleMap.updateSelector(draft, displayMode, selector, selectorType, path, value, params)) {
+        if (StyleMap.updateSelector(draft, displayMode, selector, path, value, params)) {
           set(draft, 'cache', generateCache(draft));
         }
       });
