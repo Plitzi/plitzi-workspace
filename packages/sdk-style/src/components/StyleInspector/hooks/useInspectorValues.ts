@@ -7,7 +7,7 @@ import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import StyleInspectorContext from '../StyleInspectorContext';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
-import type { StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleBlock, StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseInspectorValuesProps<TAsValue extends boolean> = {
   keys?: StyleCategory[];
@@ -49,13 +49,14 @@ const useInspectorValues = <TAsValue extends boolean>({
   }
 
   let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
-  if (selector) {
-    if (styleState) {
-      attributes = selector.attributes[styleSelector].states?.[styleState];
-    } else if (styleVariant) {
-      attributes = selector.attributes[styleSelector].variants?.[styleVariant];
+  if (selector && styleSelector && (selector.attributes[styleSelector] as StyleBlock | undefined)) {
+    const block = selector.attributes[styleSelector];
+    if (styleState && block.states?.[styleState]) {
+      attributes = block.states[styleState];
+    } else if (styleVariant && block.variants?.[styleVariant]?.default) {
+      attributes = block.variants[styleVariant].default;
     } else {
-      attributes = selector.attributes[styleSelector].default;
+      attributes = block.default;
     }
   }
 
