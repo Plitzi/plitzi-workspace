@@ -8,8 +8,10 @@ import type {
   Element,
   Schema,
   Style,
+  StyleBlock,
   StyleCategory,
   StyleItem,
+  StyleState,
   StyleValue
 } from '@plitzi/sdk-shared';
 
@@ -17,12 +19,12 @@ export type InheritData = {
   tree: {
     name: string;
     displayMode: DisplayMode;
-    style: StyleItem['attributes'];
+    attributes: StyleItem['attributes'];
     isParent: boolean;
     isAncestor: boolean;
   }[];
-  style: { [key: string]: { key: string; value: StyleValue; displayMode: DisplayMode }[] };
-  parentStyle: { [key: string]: string };
+  style: Record<string, { key: string; value: StyleValue; displayMode: DisplayMode }[]>;
+  parentStyle: Record<string, string>;
 };
 
 /* --------------------------------- HELPERS -------------------------------- */
@@ -47,46 +49,59 @@ const resolveSources = (
   styleSelector: string,
   addSelectors: string[]
 ) => {
-  const sources: { name: string; attributes: Record<string, unknown>; type: string; componentType?: string }[] = [];
+  const sources: StyleItem[] = [];
+  const seen = new Set<string>();
   const {
     definition: { styleSelectors, type },
     attributes: { subType }
   } = node;
 
-  // selectors (class)
   const selectors = (styleSelectors[styleSelector] || '').split(' ').filter(Boolean);
-
   for (const name of [...selectors, ...addSelectors]) {
-    const styleItem = platformGroup[name] as StyleItem | undefined;
-    if (!styleItem || !styleItem.name) {
+    if (seen.has(name)) {
       continue;
     }
 
+    const styleItem = platformGroup[name];
+    if (!(styleItem as StyleItem | undefined)?.name) {
+      continue;
+    }
+
+    seen.add(name);
     sources.push(styleItem);
   }
 
-  // element styles
+  // Element styles
   if (componentType) {
     for (const item of Object.values(platformGroup)) {
       if (item.type === 'element' && item.componentType === componentType && item.name) {
+        if (seen.has(item.name)) {
+          continue;
+        }
+
+        seen.add(item.name);
         sources.push(item);
       }
     }
   }
 
-  // direct type
-  const typeStyle = platformGroup[type];
-  const typedTypeStyle = typeStyle as StyleItem | undefined;
-  if (typedTypeStyle && typedTypeStyle.name && !['class', 'element'].includes(typedTypeStyle.type)) {
-    sources.push(typedTypeStyle);
+  // Direct type
+  const typeStyle = platformGroup[type] as StyleItem | undefined;
+  if (typeStyle && typeStyle.name && !['class', 'element'].includes(typeStyle.type)) {
+    if (!seen.has(typeStyle.name)) {
+      seen.add(typeStyle.name);
+      sources.push(typeStyle);
+    }
   }
 
-  // subtype
+  // Subtype
   if (subType) {
-    const subStyle = platformGroup[subType];
-    const typedSubStyle = subStyle as StyleItem | undefined;
-    if (typedSubStyle && typedSubStyle.name && !['class', 'element'].includes(typedSubStyle.type)) {
-      sources.push(typedSubStyle);
+    const subStyle = platformGroup[subType] as StyleItem | undefined;
+    if (subStyle && subStyle.name && !['class', 'element'].includes(subStyle.type)) {
+      if (!seen.has(subStyle.name)) {
+        seen.add(subStyle.name);
+        sources.push(subStyle);
+      }
     }
   }
 
@@ -113,31 +128,164 @@ const getDefaultStyle = (
   }
 
   return {
-    ...global,
-    style: get(global, `style.${styleSelector}`, {}),
+    name: 'defaultStyle',
+    attributes: { [styleSelector]: get(global, `style.${styleSelector}`, {}) },
     isParent: false,
     isAncestor: false
   };
 };
 
+/* -------------------- STYLE RESOLUTION -------------------- */
+
+const resolveStyleBlock = (
+  attributes: StyleItem['attributes'],
+  styleSelector: string,
+  styleState?: StyleState,
+  styleVariant?: string
+) => {
+  const block = attributes[styleSelector];
+  if (!(block as StyleBlock | undefined)) {
+    return {};
+  }
+
+  const base = block.default ?? {};
+  const variantBase = styleVariant ? (block.variants?.[styleVariant]?.default ?? {}) : {};
+  const state = styleState ? (block.states?.[styleState] ?? {}) : {};
+  const variantState = styleVariant && styleState ? (block.variants?.[styleVariant]?.states?.[styleState] ?? {}) : {};
+
+  return {
+    ...base,
+    ...variantBase,
+    ...state,
+    ...variantState
+  };
+};
+
+const resolveNodeStyle = (
+  node: InheritData['tree'][number],
+  styleSelector: string,
+  styleState?: StyleState,
+  styleVariant?: string
+) => {
+  return resolveStyleBlock(node.attributes, styleSelector, styleState, styleVariant);
+};
+
 /* --------------------------- MAIN CALCULATION ----------------------------- */
+
+/**
+ * ============================================================
+ * 🧠 STYLE INHERITANCE FLOW (calculateInheriting)
+ * ============================================================
+ *
+ * 🌳 HIERARCHY (top → bottom priority)
+ *
+ *   Ancestors
+ *      ↓
+ *   Parent
+ *      ↓
+ *   Current Element
+ *      ↓
+ *   DefaultStyle (componentDefinition fallback)
+ *
+ *
+ * 🎯 SOURCE RESOLUTION (per node)
+ *
+ *   styleSelectors (e.g. "btn card")
+ *          ↓
+ *   StyleItem.attributes
+ *          ↓
+ *   resolveStyleBlock()
+ *
+ *
+ * 🔥 STYLE LAYERING (inside a single StyleBlock)
+ *
+ *   base.default
+ *        ↓
+ *   variant.default
+ *        ↓
+ *   state
+ *        ↓
+ *   variant.state
+ *
+ *   Final:
+ *
+ *   {
+ *     ...base,
+ *     ...variant,
+ *     ...state,
+ *     ...variantState
+ *   }
+ *
+ *
+ * 🧩 FINAL MERGE (global result)
+ *
+ *   for each node in tree:
+ *
+ *     style = resolveNodeStyle(node)
+ *
+ *     if node.isAncestor:
+ *       style = pick(inheritableAttributesBase)
+ *
+ *     for each key in style:
+ *       finalStyle[key].push({
+ *         value,
+ *         source: node.name,
+ *         displayMode
+ *       })
+ *
+ *
+ * ⚠️ PRIORITY RULES
+ *
+ *   Between nodes:
+ *     ancestor < parent < current
+ *
+ *   Inside a node:
+ *     base < variant < state < variant+state
+ *
+ *
+ * 📱 DISPLAY MODES
+ *
+ *   Current order:
+ *     desktop → tablet → mobile
+ *
+ *   (Can be extended to support:
+ *     mobile-first or desktop-first)
+ *
+ *
+ * 🚀 RESULT
+ *
+ *   finalStyle = {
+ *     color: [
+ *       { value: 'red', source: 'btn', displayMode: 'desktop' },
+ *       { value: 'blue', source: 'btn', displayMode: 'tablet' }
+ *     ]
+ *   }
+ *
+ *   parentStyle = merged styles from direct parent only
+ *
+ * ============================================================
+ */
 
 const calculateInheriting = (
   element: Element | undefined,
   componentType: string | undefined,
   flat: Schema['flat'],
   platform: Style['platform'],
-  styleSelector: string = 'base',
+  params: { styleSelector?: string; styleState?: StyleState; styleVariant?: string } = {},
   componentDefinitions: Record<string, ComponentDefinition> = {},
   skipSelectors: string[] = [],
   addSelectors: string[] = []
 ): InheritData => {
+  const { styleSelector = 'base', styleState, styleVariant } = params;
   const metadata: InheritData = { tree: [], style: {}, parentStyle: {} };
   const hierarchy = element ? buildHierarchy(flat, element) : [];
   for (const displayMode of Object.keys(platform) as DisplayMode[]) {
     const group = platform[displayMode];
+    if (!(group as Record<string, StyleItem> | undefined)) {
+      continue;
+    }
 
-    // No element → only selectors
+    // No element
     if (!element && !componentType) {
       for (const name of addSelectors) {
         const styleItem = group[name];
@@ -145,25 +293,26 @@ const calculateInheriting = (
           continue;
         }
 
-        metadata.tree.push({ name, displayMode, style: styleItem.attributes, isParent: false, isAncestor: false });
+        metadata.tree.push({
+          name,
+          displayMode,
+          attributes: styleItem.attributes,
+          isParent: false,
+          isAncestor: false
+        });
       }
 
       continue;
     }
 
-    // Only componentType (no element) → treat as virtual node
+    // Virtual node
     if (!element && componentType) {
       const virtualNode = {
-        definition: {
-          type: componentType,
-          styleSelectors: {},
-          parentId: undefined
-        },
+        definition: { type: componentType, styleSelectors: {}, parentId: undefined },
         attributes: {}
       } as unknown as Element;
 
       const sources = resolveSources(virtualNode, componentType, group, styleSelector, addSelectors);
-
       for (const source of sources) {
         if (skipSelectors.includes(source.name)) {
           continue;
@@ -172,7 +321,7 @@ const calculateInheriting = (
         metadata.tree.push({
           name: source.name,
           displayMode,
-          style: source.attributes,
+          attributes: source.attributes,
           isParent: false,
           isAncestor: false
         });
@@ -186,7 +335,7 @@ const calculateInheriting = (
       continue;
     }
 
-    // Full hierarchy
+    // Hierarchy
     for (const node of hierarchy) {
       const isParent = element?.definition.parentId === node.id;
       const isAncestor = node.id !== element?.id;
@@ -196,10 +345,15 @@ const calculateInheriting = (
           continue;
         }
 
-        metadata.tree.push({ name: source.name, displayMode, style: source.attributes, isParent, isAncestor });
+        metadata.tree.push({
+          name: source.name,
+          displayMode,
+          attributes: source.attributes,
+          isParent,
+          isAncestor
+        });
       }
 
-      // Default style
       const defaultStyle = getDefaultStyle(
         node.definition.type,
         node.attributes.subType,
@@ -217,8 +371,8 @@ const calculateInheriting = (
 
   const finalStyle: InheritData['style'] = {};
   for (const node of metadata.tree) {
-    let styleData = get(node, `style.${styleSelector}`, node.style) as Record<string, string> | undefined;
-    if (!styleData) {
+    let styleData = resolveNodeStyle(node, styleSelector, styleState, styleVariant);
+    if (!(styleData as typeof styleData | undefined)) {
       continue;
     }
 
@@ -227,8 +381,7 @@ const calculateInheriting = (
     }
 
     for (const key of Object.keys(styleData) as StyleCategory[]) {
-      const isAllowed = node.isAncestor ? inheritableAttributesBase.includes(key) : true;
-      if (!isAllowed) {
+      if (node.isAncestor && !inheritableAttributesBase.includes(key)) {
         continue;
       }
 
@@ -238,7 +391,7 @@ const calculateInheriting = (
 
       finalStyle[key].push({
         key: node.name,
-        value: styleData[key],
+        value: styleData[key] as StyleValue,
         displayMode: node.displayMode
       });
     }
@@ -248,7 +401,7 @@ const calculateInheriting = (
 
   const parentStyle = metadata.tree
     .filter(node => node.isParent)
-    .reduce((acc, node) => ({ ...acc, ...get(node, 'style', {}) }), {});
+    .reduce((acc, node) => ({ ...acc, ...resolveNodeStyle(node, styleSelector, styleState, styleVariant) }), {});
 
   return { ...metadata, style: finalStyle, parentStyle };
 };

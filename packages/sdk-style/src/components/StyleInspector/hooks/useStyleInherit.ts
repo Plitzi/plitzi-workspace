@@ -14,9 +14,17 @@ export type UseStyleInheritProps = {
   selector?: string;
   styleSelector?: string;
   styleState?: StyleState;
+  styleVariant?: string;
 };
 
-const useStyleInherit = ({ element, componentType, selector, styleSelector, styleState }: UseStyleInheritProps) => {
+const useStyleInherit = ({
+  element,
+  componentType,
+  selector,
+  styleSelector,
+  styleState,
+  styleVariant
+}: UseStyleInheritProps) => {
   const { componentDefinitions } = use(ComponentContext);
   const {
     schema: { flat }
@@ -28,11 +36,11 @@ const useStyleInherit = ({ element, componentType, selector, styleSelector, styl
   const inheritData = useMemo(() => {
     const selectorsToSkip: string[] = [];
     const selectorsToInclude: string[] = [];
-    if (selector && !selector.includes(':') && !styleState) {
+    if (selector && !styleState && !styleVariant) {
       selectorsToSkip.push(selector);
     }
 
-    if (!element && selector && styleState) {
+    if (!element && selector && (styleState || styleVariant)) {
       selectorsToInclude.push(selector);
     }
 
@@ -41,12 +49,12 @@ const useStyleInherit = ({ element, componentType, selector, styleSelector, styl
       componentType,
       flat,
       platform,
-      styleSelector,
+      { styleSelector, styleState, styleVariant },
       componentDefinitions.current,
       selectorsToSkip,
       selectorsToInclude
     );
-  }, [selector, element, componentType, flat, platform, styleSelector, styleState, componentDefinitions]);
+  }, [selector, styleState, element, componentType, flat, platform, styleSelector, styleVariant, componentDefinitions]);
 
   return inheritData;
 };
