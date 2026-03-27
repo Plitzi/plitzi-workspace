@@ -50,17 +50,19 @@ const Page = Object.assign(BasePage, {
       displayMode: 'desktop',
       style: {
         base: {
-          display: 'flex',
-          'flex-direction': 'column',
-          'min-height': '100%',
-          'min-width': '100%',
-          'font-family': 'Arial',
-          color: '#333',
-          'font-size': '14px',
-          'font-weight': 400,
-          'line-height': '16px',
-          'text-align': 'left',
-          'background-color': '#ffffff'
+          default: {
+            display: 'flex',
+            'flex-direction': 'column',
+            'min-height': '100%',
+            'min-width': '100%',
+            'font-family': 'Arial',
+            color: '#333',
+            'font-size': '14px',
+            'font-weight': 400,
+            'line-height': '16px',
+            'text-align': 'left',
+            'background-color': '#ffffff'
+          }
         }
       }
     },

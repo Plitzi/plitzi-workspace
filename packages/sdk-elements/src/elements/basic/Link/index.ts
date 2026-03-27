@@ -44,11 +44,13 @@ const Link = Object.assign(BaseLink, {
       displayMode: 'desktop',
       style: {
         base: {
-          display: 'inline-block',
-          'min-height': '30px',
-          'min-width': '30px',
-          color: '#333',
-          cursor: 'pointer'
+          default: {
+            display: 'inline-block',
+            'min-height': '30px',
+            'min-width': '30px',
+            color: '#333',
+            cursor: 'pointer'
+          }
         }
       }
     },

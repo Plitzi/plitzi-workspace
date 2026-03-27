@@ -37,7 +37,11 @@ const NotFound = Object.assign(BaseNotFound, {
     defaultStyle: {
       name: 'Not Found',
       displayMode: 'desktop',
-      style: {}
+      style: {
+        base: {
+          default: {}
+        }
+      }
     },
     settings: {}
   }

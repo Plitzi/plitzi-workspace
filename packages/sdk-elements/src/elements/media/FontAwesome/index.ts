@@ -42,8 +42,10 @@ const FontAwesome = Object.assign(BaseFontAwesome, {
       displayMode: 'desktop',
       style: {
         base: {
-          display: 'inline-block',
-          'font-size': '16px'
+          default: {
+            display: 'inline-block',
+            'font-size': '16px'
+          }
         }
       }
     },

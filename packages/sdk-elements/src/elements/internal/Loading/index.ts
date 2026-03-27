@@ -37,7 +37,11 @@ const Loading = Object.assign(BaseLoading, {
     defaultStyle: {
       name: 'Loading',
       displayMode: 'desktop',
-      style: {}
+      style: {
+        base: {
+          default: {}
+        }
+      }
     },
     settings: {}
   }

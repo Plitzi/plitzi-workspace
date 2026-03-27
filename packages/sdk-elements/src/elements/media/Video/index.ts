@@ -45,9 +45,11 @@ const Video = Object.assign(BaseVideo, {
       displayMode: 'desktop',
       style: {
         base: {
-          display: 'block',
-          width: '400px',
-          height: '250px'
+          default: {
+            display: 'block',
+            width: '400px',
+            height: '250px'
+          }
         }
       }
     },

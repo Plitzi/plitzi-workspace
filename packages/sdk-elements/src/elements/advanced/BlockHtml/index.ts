@@ -38,7 +38,11 @@ const BlockHtml = Object.assign(BaseBlockHtml, {
     defaultStyle: {
       name: 'HTML Block',
       displayMode: 'desktop',
-      style: {}
+      style: {
+        base: {
+          default: {}
+        }
+      }
     },
     settings: {}
   }

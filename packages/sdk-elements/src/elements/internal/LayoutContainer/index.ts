@@ -40,7 +40,11 @@ const LayoutContainer = Object.assign(BaseLayoutContainer, {
     defaultStyle: {
       name: 'Layout Container',
       displayMode: 'desktop',
-      style: {},
+      style: {
+        base: {
+          default: {}
+        }
+      },
       subTypes: {}
     },
     settings: {}

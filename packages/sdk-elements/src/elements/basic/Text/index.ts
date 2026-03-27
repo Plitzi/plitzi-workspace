@@ -40,9 +40,11 @@ const Text = Object.assign(BaseText, {
       displayMode: 'desktop',
       style: {
         base: {
-          'font-size': '14px', // browser default
-          'line-height': '24px', // browser default
-          display: 'inline'
+          default: {
+            'font-size': '14px',
+            'line-height': '24px',
+            display: 'inline'
+          }
         }
       }
     },

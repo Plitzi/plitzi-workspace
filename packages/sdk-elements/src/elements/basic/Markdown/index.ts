@@ -40,8 +40,10 @@ const Markdown = Object.assign(BaseMarkdown, {
       displayMode: 'desktop',
       style: {
         base: {
-          'font-size': '14px', // browser default
-          'line-height': '24px' // browser default
+          default: {
+            'font-size': '14px',
+            'line-height': '24px'
+          }
         }
       }
     },

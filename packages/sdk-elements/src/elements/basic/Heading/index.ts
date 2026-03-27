@@ -46,11 +46,13 @@ const Heading = Object.assign(BaseHeading, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '25px',
-              'margin-bottom': '25px',
-              'font-size': '38px',
-              'font-weight': 700,
-              'line-height': '44px'
+              default: {
+                'margin-top': '25px',
+                'margin-bottom': '25px',
+                'font-size': '38px',
+                'font-weight': 700,
+                'line-height': '44px'
+              }
             }
           }
         },
@@ -59,11 +61,13 @@ const Heading = Object.assign(BaseHeading, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '25px',
-              'margin-bottom': '25px',
-              'font-size': '32px',
-              'font-weight': 700,
-              'line-height': '36px'
+              default: {
+                'margin-top': '25px',
+                'margin-bottom': '25px',
+                'font-size': '32px',
+                'font-weight': 700,
+                'line-height': '36px'
+              }
             }
           }
         },
@@ -72,11 +76,13 @@ const Heading = Object.assign(BaseHeading, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '25px',
-              'margin-bottom': '25px',
-              'font-size': '24px',
-              'font-weight': 700,
-              'line-height': '30px'
+              default: {
+                'margin-top': '25px',
+                'margin-bottom': '25px',
+                'font-size': '24px',
+                'font-weight': 700,
+                'line-height': '30px'
+              }
             }
           }
         },
@@ -85,11 +91,13 @@ const Heading = Object.assign(BaseHeading, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '25px',
-              'margin-bottom': '25px',
-              'font-size': '18px',
-              'font-weight': 700,
-              'line-height': '24px'
+              default: {
+                'margin-top': '25px',
+                'margin-bottom': '25px',
+                'font-size': '18px',
+                'font-weight': 700,
+                'line-height': '24px'
+              }
             }
           }
         },
@@ -98,11 +106,13 @@ const Heading = Object.assign(BaseHeading, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '25px',
-              'margin-bottom': '25px',
-              'font-size': '14px',
-              'font-weight': 700,
-              'line-height': '20px'
+              default: {
+                'margin-top': '25px',
+                'margin-bottom': '25px',
+                'font-size': '14px',
+                'font-weight': 700,
+                'line-height': '20px'
+              }
             }
           }
         },
@@ -111,11 +121,13 @@ const Heading = Object.assign(BaseHeading, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '25px',
-              'margin-bottom': '25px',
-              'font-size': '12px',
-              'font-weight': 700,
-              'line-height': '18px'
+              default: {
+                'margin-top': '25px',
+                'margin-bottom': '25px',
+                'font-size': '12px',
+                'font-weight': 700,
+                'line-height': '18px'
+              }
             }
           }
         }
