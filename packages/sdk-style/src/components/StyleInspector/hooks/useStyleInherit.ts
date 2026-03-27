@@ -21,7 +21,7 @@ const useStyleInherit = ({
   element,
   componentType,
   selector,
-  styleSelector,
+  styleSelector = 'base',
   styleState,
   styleVariant
 }: UseStyleInheritProps) => {
@@ -36,12 +36,9 @@ const useStyleInherit = ({
   const inheritData = useMemo(() => {
     const selectorsToSkip: string[] = [];
     const selectorsToInclude: string[] = [];
-    if (selector && !styleState && !styleVariant) {
+    const selectors = element?.definition.styleSelectors[styleSelector].split(' ') ?? [];
+    if (selector && selectors.length > 1) {
       selectorsToSkip.push(selector);
-    }
-
-    if (!element && selector && (styleState || styleVariant)) {
-      selectorsToInclude.push(selector);
     }
 
     return calculateInheriting(
@@ -49,12 +46,14 @@ const useStyleInherit = ({
       componentType,
       flat,
       platform,
-      { styleSelector, styleState, styleVariant },
+      { styleSelector, styleState, styleVariant, includeSelf: selectors.length > 1 },
       componentDefinitions.current,
       selectorsToSkip,
       selectorsToInclude
     );
-  }, [selector, styleState, element, componentType, flat, platform, styleSelector, styleVariant, componentDefinitions]);
+  }, [selector, element, componentType, flat, platform, styleSelector, styleState, styleVariant, componentDefinitions]);
+
+  console.log(inheritData);
 
   return inheritData;
 };
