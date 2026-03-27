@@ -42,6 +42,10 @@
       "types": "./dist/src/StyleMap/StyleMap.d.ts",
       "import": "./dist/src/StyleMap/StyleMap.mjs"
     },
+    "./StyleMap/helpers/getBasePath": {
+      "types": "./dist/src/StyleMap/helpers/getBasePath.d.ts",
+      "import": "./dist/src/StyleMap/helpers/getBasePath.mjs"
+    },
     "./StyleMap/helpers/getStyleItem": {
       "types": "./dist/src/StyleMap/helpers/getStyleItem.d.ts",
       "import": "./dist/src/StyleMap/helpers/getStyleItem.mjs"
@@ -49,6 +53,10 @@
     "./StyleMap/helpers/isValueValid": {
       "types": "./dist/src/StyleMap/helpers/isValueValid.d.ts",
       "import": "./dist/src/StyleMap/helpers/isValueValid.mjs"
+    },
+    "./StyleMap/helpers/omitUndefined": {
+      "types": "./dist/src/StyleMap/helpers/omitUndefined.d.ts",
+      "import": "./dist/src/StyleMap/helpers/omitUndefined.mjs"
     },
     "./StyleMap/index": {
       "types": "./dist/src/StyleMap/index.d.ts",
@@ -62,6 +70,10 @@
       "types": "./dist/src/StyleMap/methods/add/addSelectorElement.d.ts",
       "import": "./dist/src/StyleMap/methods/add/addSelectorElement.mjs"
     },
+    "./StyleMap/methods/addSelector": {
+      "types": "./dist/src/StyleMap/methods/addSelector.d.ts",
+      "import": "./dist/src/StyleMap/methods/addSelector.mjs"
+    },
     "./StyleMap/methods/update/updateSelectorDefault": {
       "types": "./dist/src/StyleMap/methods/update/updateSelectorDefault.d.ts",
       "import": "./dist/src/StyleMap/methods/update/updateSelectorDefault.mjs"
@@ -69,6 +81,10 @@
     "./StyleMap/methods/update/updateSelectorElement": {
       "types": "./dist/src/StyleMap/methods/update/updateSelectorElement.d.ts",
       "import": "./dist/src/StyleMap/methods/update/updateSelectorElement.mjs"
+    },
+    "./StyleMap/methods/updateSelector": {
+      "types": "./dist/src/StyleMap/methods/updateSelector.d.ts",
+      "import": "./dist/src/StyleMap/methods/updateSelector.mjs"
     },
     "./StyleReducer": {
       "types": "./dist/src/StyleReducer.d.ts",
@@ -724,7 +740,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.11",
+    "@plitzi/plitzi-ui": "^1.4.12",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
@@ -736,7 +752,7 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^6.0.2",
-    "vite": "^8.0.2",
-    "vitest": "^4.1.1"
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2"
   }
 }

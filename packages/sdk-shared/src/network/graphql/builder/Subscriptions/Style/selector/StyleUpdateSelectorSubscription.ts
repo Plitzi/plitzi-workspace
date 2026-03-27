@@ -7,7 +7,7 @@ export type TStyleUpdateSelectorSubscription = {
   selector: string;
   path?: StyleCategory;
   style?: StyleItem['attributes'];
-  params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string };
+  params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string };
 };
 
 const StyleUpdateSelectorSubscription = gql`

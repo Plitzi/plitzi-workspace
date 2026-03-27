@@ -33,7 +33,7 @@ const updateSelector = (
     | StyleStates
     | StyleBlock
     | undefined,
-  params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
+  params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
 ) => {
   if (!(params as typeof params | undefined)) {
     return false;

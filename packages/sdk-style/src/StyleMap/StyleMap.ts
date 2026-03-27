@@ -46,7 +46,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
+    params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
     return addSelector(this.platform, displayMode, selector, type, path, value, params);
   }
@@ -58,7 +58,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
+    params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
     return this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
   }
@@ -73,7 +73,7 @@ class StyleMap {
     selector: string,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
+    params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
     return updateSelector(this.platform, displayMode, selector, path, value, params);
   }
@@ -84,7 +84,7 @@ class StyleMap {
     selector: string,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
+    params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
   ): boolean {
     return this.getInstance(style).updateSelector(displayMode, selector, path, value, params);
   }

@@ -37,13 +37,13 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.11",
+    "@plitzi/plitzi-ui": "^1.4.12",
     "@plitzi/sdk-shared": "workspace:*",
     "immer": "^11.1.4"
   },
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^6.0.2",
-    "vite": "^8.0.2"
+    "vite": "^8.0.3"
   }
 }

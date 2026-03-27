@@ -17,7 +17,8 @@ import type {
   DropPosition,
   StyleVariableCategory,
   StyleVariableValue,
-  StyleCategory
+  StyleCategory,
+  StyleState
 } from '@plitzi/sdk-shared';
 
 export const SegmentsActions = {
@@ -80,13 +81,31 @@ export type SegmentsReducerActions =
     } & SegmentsReducerActionsBase)
   | ({ type: 'SEGMENTS_SPACE_REMOVE_VARIABLE'; name: string } & SegmentsReducerActionsBase)
   | ({
-      type: 'SEGMENTS_STYLE_ADD_SELECTOR' | 'SEGMENTS_STYLE_UPDATE_SELECTOR';
+      type: 'SEGMENTS_STYLE_ADD_SELECTOR';
       displayMode: DisplayMode;
       selector: string;
       selectorType: TagType;
       path?: StyleCategory;
       value?: StyleItem['attributes'];
-      params: { componentType: string; styleSelector?: string };
+      params: {
+        componentType?: string;
+        styleSelector?: string;
+        styleState?: StyleState;
+        styleVariant?: string;
+      };
+    } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_STYLE_UPDATE_SELECTOR';
+      displayMode: DisplayMode;
+      selector: string;
+      path?: StyleCategory;
+      value?: StyleItem['attributes'];
+      params: {
+        componentType?: string;
+        styleSelector: string;
+        styleState?: StyleState;
+        styleVariant?: string;
+      };
     } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_STYLE_REMOVE_SELECTOR';
@@ -265,12 +284,10 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
     }
 
     case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR: {
-      const { displayMode, selector, selectorType = 'class', path, value, params } = action;
+      const { displayMode, selector, path, value, params } = action;
 
       return produce(state, draft => {
-        if (
-          StyleMap.updateSelector(draft[identifier].style, displayMode, selector, selectorType, path, value, params)
-        ) {
+        if (StyleMap.updateSelector(draft[identifier].style, displayMode, selector, path, value, params)) {
           set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
         }
       });

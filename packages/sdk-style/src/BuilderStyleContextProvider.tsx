@@ -70,7 +70,7 @@ const BuilderStyleContextProvider = ({
       type: TagType,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string },
+      params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string },
       fromSubscriptions = false
     ) => {
       if (!selector) {
@@ -97,7 +97,7 @@ const BuilderStyleContextProvider = ({
       selector: string,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string },
+      params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string },
       fromSubscriptions = false
     ) =>
       dispatchStyle({

@@ -32,7 +32,8 @@ import type {
   BuilderQueriesMap,
   BuilderMutationsMap,
   BuilderSubscriptionsMap,
-  StyleCategory
+  StyleCategory,
+  StyleState
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
@@ -308,7 +309,7 @@ const SegmentsContextProvider = ({
       type: TagType,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType: string; styleSelector?: string },
+      params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string },
       fromSubscriptions = false
     ) =>
       dispatchSegments({
@@ -330,10 +331,9 @@ const SegmentsContextProvider = ({
       segmentId: string,
       displayMode: DisplayMode,
       selector: string,
-      type: TagType,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType: string; styleSelector?: string },
+      params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string },
       fromSubscriptions = false
     ) =>
       dispatchSegments({
@@ -341,7 +341,6 @@ const SegmentsContextProvider = ({
         segmentId,
         displayMode,
         selector,
-        selectorType: type,
         path,
         value,
         params,
@@ -656,12 +655,12 @@ const SegmentsContextProvider = ({
         segmentStyleAddSelector(contextId, displayMode, selector, type, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
-        const { displayMode, selector, type, path, style, contextId, params } = get(
+        const { displayMode, selector, path, style, contextId, params } = get(
           data,
           'data.SegmentStyleUpdateSelector',
           {}
         ) as BuilderSubscriptionsMap['SegmentStyleUpdateSelector'];
-        segmentStyleUpdateSelector(contextId, displayMode, selector, type, path, style, params, true);
+        segmentStyleUpdateSelector(contextId, displayMode, selector, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
         const { displayMode, selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {

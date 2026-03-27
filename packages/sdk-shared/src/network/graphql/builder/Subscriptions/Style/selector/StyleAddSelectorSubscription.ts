@@ -8,7 +8,7 @@ export type TStyleAddSelectorSubscription = {
   path?: StyleCategory;
   type: TagType;
   style?: StyleItem['attributes'];
-  params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string };
+  params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string };
 };
 
 const StyleAddSelectorSubscription = gql`

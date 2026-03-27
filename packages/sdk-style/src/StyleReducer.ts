@@ -43,7 +43,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
         path?: StyleCategory;
         selectorType: TagType;
         value?: StyleItem['attributes'];
-        params: { componentType: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string };
+        params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string };
       }
     | {
         type: 'STYLE_UPDATE_SELECTOR';
@@ -51,7 +51,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
         selector: string;
         path?: StyleCategory;
         value?: StyleItem['attributes'];
-        params: { componentType: string; styleSelector: string; styleState?: StyleState; styleVariant?: string };
+        params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string };
       }
     | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }
     | {

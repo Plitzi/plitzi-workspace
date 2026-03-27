@@ -297,14 +297,14 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "typescript": "^6.0.2",
-    "vite": "^8.0.2"
+    "vite": "^8.0.3"
   },
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.11",
+    "@plitzi/plitzi-ui": "^1.4.12",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
