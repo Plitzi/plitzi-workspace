@@ -30,6 +30,65 @@ describe('calculateInheriting', () => {
       const result = calculateInheriting(baseElement, undefined, {}, emptyPlatform);
       expect(result.style).toEqual({});
     });
+
+    it('should NOT include current element styles when no state/variant (only inherited)', () => {
+      const element = {
+        ...baseElement,
+        definition: {
+          ...baseElement.definition,
+          parentId: 'parent'
+        }
+      } as Element;
+
+      const flat: Schema['flat'] = {
+        parent: {
+          id: 'parent',
+          attributes: {},
+          definition: {
+            label: 'Parent',
+            type: 'button',
+            rootId: 'parent',
+            parentId: undefined,
+            styleSelectors: { base: 'parentBtn' }
+          }
+        }
+      };
+
+      const platform: Style['platform'] = {
+        desktop: {
+          btn: {
+            name: 'btn',
+            type: 'class',
+            attributes: {
+              base: { default: { color: 'red' } } // 🔥 current
+            },
+            cache: ''
+          },
+          parentBtn: {
+            name: 'parentBtn',
+            type: 'class',
+            attributes: {
+              base: { default: { color: 'blue' } } // 🔥 inherited
+            },
+            cache: ''
+          }
+        },
+        tablet: {},
+        mobile: {}
+      };
+
+      const result = calculateInheriting(element, undefined, flat, platform, {
+        styleSelector: 'base'
+      });
+
+      const values = result.style.color.map(v => v.value);
+
+      // 🔥 NO debe incluir el current ('red')
+      expect(values.includes('red')).toBe(false);
+
+      // 🔥 solo debe incluir el inherited
+      expect(values.includes('blue')).toBe(true);
+    });
   });
 
   describe('selectors', () => {
@@ -42,7 +101,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform);
+      const result = calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
       expect(result.style.color[0].value).toBe('red');
     });
 
@@ -79,7 +138,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, {}, platform);
+      const result = calculateInheriting(element, undefined, {}, platform, { includeSelf: true });
 
       expect(result.style.color[0].value).toBe('red');
       expect(result.style['background-color'][0].value).toBe('blue');
@@ -98,7 +157,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform);
+      const result = calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
       expect(result.style.color.length).toBeGreaterThan(1);
     });
 
@@ -127,7 +186,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, 'button', {}, platform);
+      const result = calculateInheriting(baseElement, 'button', {}, platform, { includeSelf: true });
 
       expect(result.style.color.some(s => s.value === 'green')).toBe(true);
     });
@@ -576,11 +635,13 @@ describe('calculateInheriting', () => {
 
       const withState = calculateInheriting(baseElement, undefined, {}, platform, {
         styleSelector: 'base',
-        styleState: 'hover'
+        styleState: 'hover',
+        includeSelf: true
       });
 
       const withoutState = calculateInheriting(baseElement, undefined, {}, platform, {
-        styleSelector: 'base'
+        styleSelector: 'base',
+        includeSelf: true
       });
 
       expect(withState.style.color[0].value).toBe('blue');
@@ -611,7 +672,8 @@ describe('calculateInheriting', () => {
       };
 
       const result = calculateInheriting(baseElement, undefined, {}, platform, {
-        styleSelector: 'base'
+        styleSelector: 'base',
+        includeSelf: true
       });
 
       expect(result.style.color[0].value).toBe('red');
@@ -670,7 +732,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      calculateInheriting(baseElement, undefined, {}, platform);
+      calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
 
       expect(attributes).toEqual({
         base: {
@@ -726,7 +788,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, flat, platform);
+      const result = calculateInheriting(element, undefined, flat, platform, { includeSelf: true });
 
       expect(result.style.position[result.style.position.length - 1].value).toBe('relative');
     });
@@ -759,7 +821,7 @@ describe('calculateInheriting', () => {
         }
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform);
+      const result = calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
 
       const values = result.style.color.map(v => v.value);
       expect(values).toContain('red');
@@ -827,7 +889,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, {}, platform);
+      const result = calculateInheriting(element, undefined, {}, platform, { includeSelf: true });
 
       // 🔥 si falla → duplicación silenciosa
       expect(result.style.color.length).toBe(1);
@@ -889,7 +951,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, flat, platform);
+      const result = calculateInheriting(element, undefined, flat, platform, { includeSelf: true });
       const values = result.style.color.map(v => v.value);
 
       expect(values[0]).toBe('red');
@@ -929,7 +991,8 @@ describe('calculateInheriting', () => {
       });
 
       const result = calculateInheriting(flat['node9'], undefined, flat, platform, {
-        styleSelector: 'base'
+        styleSelector: 'base',
+        includeSelf: true
       });
 
       // 🔥 first node color wins
