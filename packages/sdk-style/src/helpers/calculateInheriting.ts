@@ -2,7 +2,6 @@ import { get, pick } from '@plitzi/plitzi-ui/helpers';
 
 import { inheritableAttributesBase } from '@plitzi/sdk-shared';
 
-import type { StyleHelperMetaData } from '../StyleHelper';
 import type {
   ComponentDefinition,
   DisplayMode,
@@ -10,8 +9,21 @@ import type {
   Schema,
   Style,
   StyleCategory,
-  StyleItem
+  StyleItem,
+  StyleValue
 } from '@plitzi/sdk-shared';
+
+export type InheritData = {
+  tree: {
+    name: string;
+    displayMode: DisplayMode;
+    style: StyleItem['attributes'];
+    isParent: boolean;
+    isAncestor: boolean;
+  }[];
+  style: { [key: string]: { key: string; value: StyleValue; displayMode: DisplayMode }[] };
+  parentStyle: { [key: string]: string };
+};
 
 /* --------------------------------- HELPERS -------------------------------- */
 
@@ -57,7 +69,7 @@ const resolveSources = (
   if (componentType) {
     for (const item of Object.values(platformGroup)) {
       if (item.type === 'element' && item.componentType === componentType && item.name) {
-        sources.push(item as StyleItem);
+        sources.push(item);
       }
     }
   }
@@ -119,8 +131,8 @@ const calculateInheriting = (
   componentDefinitions: Record<string, ComponentDefinition> = {},
   skipSelectors: string[] = [],
   addSelectors: string[] = []
-): StyleHelperMetaData => {
-  const metadata: StyleHelperMetaData = { tree: [], style: {}, parentStyle: {} };
+): InheritData => {
+  const metadata: InheritData = { tree: [], style: {}, parentStyle: {} };
   const hierarchy = element ? buildHierarchy(flat, element) : [];
   for (const displayMode of Object.keys(platform) as DisplayMode[]) {
     const group = platform[displayMode];
@@ -203,7 +215,7 @@ const calculateInheriting = (
 
   /* -------------------------- FINAL STYLE BUILD --------------------------- */
 
-  const finalStyle: StyleHelperMetaData['style'] = {};
+  const finalStyle: InheritData['style'] = {};
   for (const node of metadata.tree) {
     let styleData = get(node, `style.${styleSelector}`, node.style) as Record<string, string> | undefined;
     if (!styleData) {

@@ -19,7 +19,6 @@ const baseElement: Element = {
 const emptyPlatform: Style['platform'] = { desktop: {}, tablet: {}, mobile: {} };
 
 describe('calculateInheriting', () => {
-  /* ----------------------------- BASIC CASES ----------------------------- */
   describe('basic behavior', () => {
     it('returns empty when no element and no componentType', () => {
       const result = calculateInheriting(undefined, undefined, {}, emptyPlatform);
@@ -33,12 +32,11 @@ describe('calculateInheriting', () => {
     });
   });
 
-  /* ----------------------------- SELECTORS ------------------------------ */
   describe('selectors (class styles)', () => {
     it('applies base class styles', () => {
       const platform: Style['platform'] = {
         desktop: {
-          btn: { name: 'btn', type: 'class', attributes: { color: 'red' }, cache: '' }
+          btn: { name: 'btn', type: 'class', attributes: { base: { default: { color: 'red' } } }, cache: '' }
         },
         tablet: {},
         mobile: {}
@@ -51,7 +49,7 @@ describe('calculateInheriting', () => {
     it('skips selectors when provided', () => {
       const platform: Style['platform'] = {
         desktop: {
-          btn: { name: 'btn', type: 'class', attributes: { color: 'red' }, cache: '' }
+          btn: { name: 'btn', type: 'class', attributes: { base: { default: { color: 'red' } } }, cache: '' }
         },
         tablet: {},
         mobile: {}
@@ -69,8 +67,13 @@ describe('calculateInheriting', () => {
 
       const platform: Style['platform'] = {
         desktop: {
-          btn: { name: 'btn', type: 'class', attributes: { color: 'red' }, cache: '' },
-          card: { name: 'card', type: 'class', attributes: { 'background-color': 'blue' }, cache: '' }
+          btn: { name: 'btn', type: 'class', attributes: { base: { default: { color: 'red' } } }, cache: '' },
+          card: {
+            name: 'card',
+            type: 'class',
+            attributes: { base: { default: { 'background-color': 'blue' } } },
+            cache: ''
+          }
         },
         tablet: {},
         mobile: {}
@@ -83,15 +86,14 @@ describe('calculateInheriting', () => {
     });
   });
 
-  /* ----------------------------- DISPLAY MODES -------------------------- */
   describe('responsive (display modes)', () => {
     it('merges styles across display modes', () => {
       const platform: Style['platform'] = {
         desktop: {
-          btn: { name: 'btn', type: 'class', attributes: { color: 'red' }, cache: '' }
+          btn: { name: 'btn', type: 'class', attributes: { base: { default: { color: 'red' } } }, cache: '' }
         },
         tablet: {
-          btn: { name: 'btn', type: 'class', attributes: { color: 'blue' }, cache: '' }
+          btn: { name: 'btn', type: 'class', attributes: { base: { default: { color: 'blue' } } }, cache: '' }
         },
         mobile: {}
       };
@@ -108,17 +110,16 @@ describe('calculateInheriting', () => {
     });
   });
 
-  /* ----------------------------- ELEMENT TYPE --------------------------- */
   describe('element type styles', () => {
     it('applies element styles over class styles', () => {
       const platform: Style['platform'] = {
         desktop: {
-          btn: { name: 'btn', type: 'class', attributes: { color: 'red' }, cache: '' },
+          btn: { name: 'btn', type: 'class', attributes: { base: { default: { color: 'red' } } }, cache: '' },
           el: {
             name: 'el',
             type: 'element',
             componentType: 'button',
-            attributes: { base: { color: 'green' } },
+            attributes: { base: { default: { color: 'green' } } },
             cache: ''
           }
         },
@@ -138,7 +139,7 @@ describe('calculateInheriting', () => {
             name: 'el',
             type: 'element',
             componentType: 'button',
-            attributes: { base: { color: 'green' } },
+            attributes: { base: { default: { color: 'green' } } },
             cache: ''
           }
         },
@@ -152,7 +153,6 @@ describe('calculateInheriting', () => {
     });
   });
 
-  /* ----------------------------- INHERITANCE ---------------------------- */
   describe('inheritance (parent chain)', () => {
     it('inherits parent styles', () => {
       const element = {
@@ -179,7 +179,7 @@ describe('calculateInheriting', () => {
           parentBtn: {
             name: 'parentBtn',
             type: 'class',
-            attributes: { color: 'purple', 'margin-top': '10px' },
+            attributes: { base: { default: { color: 'purple', 'margin-top': '10px' } } },
             cache: ''
           }
         },
@@ -217,7 +217,7 @@ describe('calculateInheriting', () => {
           parentBtn: {
             name: 'parentBtn',
             type: 'class',
-            attributes: { position: 'absolute', color: 'purple' },
+            attributes: { base: { default: { position: 'absolute', color: 'purple' } } },
             cache: ''
           }
         },
@@ -232,7 +232,6 @@ describe('calculateInheriting', () => {
     });
   });
 
-  /* ----------------------------- EDGE CASES ----------------------------- */
   describe('edge cases', () => {
     it('handles unknown selectors safely', () => {
       const element: Element = {

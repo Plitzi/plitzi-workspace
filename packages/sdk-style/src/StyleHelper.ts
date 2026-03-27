@@ -1,19 +1,7 @@
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 import { styleVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
-import type { DisplayMode, StyleItem, Style, TagType, StyleValue, StyleVariables } from '@plitzi/sdk-shared';
-
-export type StyleHelperMetaData = {
-  tree: {
-    name: string;
-    displayMode: DisplayMode;
-    style: StyleItem['attributes'];
-    isParent: boolean;
-    isAncestor: boolean;
-  }[];
-  style: { [key: string]: { key: string; value: StyleValue; displayMode: DisplayMode }[] };
-  parentStyle: { [key: string]: string };
-};
+import type { DisplayMode, Style, TagType, StyleVariables } from '@plitzi/sdk-shared';
 
 export const selectorToString = (
   tags?: { type: TagType; value: string }[],

@@ -10,7 +10,7 @@ import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
 
 import type { SetValues } from './StyleInspectorContext';
-import type { StyleHelperMetaData } from '../../StyleHelper';
+import type { InheritData } from '../../helpers';
 import type {
   DisplayMode,
   Element,
@@ -28,7 +28,7 @@ export type StyleInspectorProviderProps = {
   styleSelector?: string;
   styleState?: StyleState;
   element?: Element;
-  inheritData: StyleHelperMetaData;
+  inheritData: InheritData;
   displayMode: DisplayMode;
   onChange?: (path?: StyleCategory, values?: StyleObject | StyleValue) => void;
 };
