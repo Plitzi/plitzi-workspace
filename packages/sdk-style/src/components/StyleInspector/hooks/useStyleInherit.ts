@@ -53,8 +53,6 @@ const useStyleInherit = ({
     );
   }, [selector, element, componentType, flat, platform, styleSelector, styleState, styleVariant, componentDefinitions]);
 
-  console.log(inheritData);
-
   return inheritData;
 };
 

@@ -363,12 +363,11 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value, params, segmentId } = item.action;
+          const { displayMode, selector, path, value, params, segmentId } = item.action;
 
           return mutate('SegmentStyleUpdateSelector', {
             displayMode,
             selector,
-            type: selectorType,
             path,
             style: value,
             params,
