@@ -62,25 +62,9 @@
       "types": "./dist/src/StyleMap/index.d.ts",
       "import": "./dist/src/StyleMap/index.mjs"
     },
-    "./StyleMap/methods/add/addSelectorDefault": {
-      "types": "./dist/src/StyleMap/methods/add/addSelectorDefault.d.ts",
-      "import": "./dist/src/StyleMap/methods/add/addSelectorDefault.mjs"
-    },
-    "./StyleMap/methods/add/addSelectorElement": {
-      "types": "./dist/src/StyleMap/methods/add/addSelectorElement.d.ts",
-      "import": "./dist/src/StyleMap/methods/add/addSelectorElement.mjs"
-    },
     "./StyleMap/methods/addSelector": {
       "types": "./dist/src/StyleMap/methods/addSelector.d.ts",
       "import": "./dist/src/StyleMap/methods/addSelector.mjs"
-    },
-    "./StyleMap/methods/update/updateSelectorDefault": {
-      "types": "./dist/src/StyleMap/methods/update/updateSelectorDefault.d.ts",
-      "import": "./dist/src/StyleMap/methods/update/updateSelectorDefault.mjs"
-    },
-    "./StyleMap/methods/update/updateSelectorElement": {
-      "types": "./dist/src/StyleMap/methods/update/updateSelectorElement.d.ts",
-      "import": "./dist/src/StyleMap/methods/update/updateSelectorElement.mjs"
     },
     "./StyleMap/methods/updateSelector": {
       "types": "./dist/src/StyleMap/methods/updateSelector.d.ts",
