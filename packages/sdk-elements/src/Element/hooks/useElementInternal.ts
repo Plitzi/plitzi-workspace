@@ -10,13 +10,14 @@ import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
 
+import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, InternalPropsSTG1, Schema } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 // Methods
 
 const getProps = (
-  element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] },
+  element: Element,
   internalProps: InternalPropsSTG1,
   dataSource = {} as Record<string, unknown>,
   state = {} as Record<string, unknown>
@@ -31,7 +32,7 @@ const getProps = (
 
   // Data Sources
   if (Object.keys(dataSource).length > 0) {
-    const bindingData = getBindingsDetails(dataSource, attributes, definition, style);
+    const bindingData = getBindingsDetails(dataSource as Record<string, RuleValue>, { ...element, attributes }, style);
     ({ attributes, definition, style } = bindingData);
   }
 

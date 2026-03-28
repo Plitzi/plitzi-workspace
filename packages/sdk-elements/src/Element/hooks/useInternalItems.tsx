@@ -28,7 +28,7 @@ const useInternalItems = ({
   children: ReactNode | ReactNode[];
   SchemaContext: Context<SchemaContextValue>;
   prevSchema?: Schema;
-  newSchema: Schema; // SchemaContextValue;
+  newSchema: Schema;
   previewMode?: boolean;
 }) => {
   const { components } = use(ComponentContext);

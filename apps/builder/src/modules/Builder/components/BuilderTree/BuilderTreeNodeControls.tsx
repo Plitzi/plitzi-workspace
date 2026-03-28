@@ -13,6 +13,7 @@ import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import useBuilderElement from '../../hooks/useBuilderElement';
 import BuilderElementTools from '../BuilderElementTools';
 
+import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { MouseEvent } from 'react';
 
 export type BuilderTreeNodeControlsProps = {
@@ -53,8 +54,7 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
       return false;
     }
 
-    const { attributes, definition } = element;
-    const bindingData = getBindingsDetails(dataSource, attributes, definition);
+    const bindingData = getBindingsDetails(dataSource as Record<string, RuleValue>, element);
 
     return get(bindingData, 'definition.initialState.visibility', true);
   }, [dataSource, element]);

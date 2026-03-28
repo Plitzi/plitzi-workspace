@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import type { Element, Schema } from './SchemaTypes';
 import type useDataSource from '../dataSource/hooks/useDataSource';
 import type { Field, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -23,7 +25,7 @@ export type DataSourceUtilityParamsValue<T = string | boolean | number> = Record
 export type DataSourceUtilityParamType = 'text' | 'select' | 'textarea' | 'checkbox' | 'codemirror-text';
 
 export type DataSourceUtility<
-  TSource = string,
+  TSource = any,
   TSourceReturn = string | boolean | number,
   TParams = string | boolean | number
 > = {
@@ -36,7 +38,7 @@ export type DataSourceUtility<
     source: TSource,
     params: DataSourceUtilityParamsValue<TParams>,
     element: Partial<Element>,
-    dataSources?: Record<string, string>
+    dataSources?: Record<string, any>
   ) => TSourceReturn;
 };
 
