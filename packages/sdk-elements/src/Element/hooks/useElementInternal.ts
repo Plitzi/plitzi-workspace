@@ -59,10 +59,14 @@ const getProps = (
   };
 
   // StyleSelectors now will include the component class
+  const styleVariant = definition.initialState?.styleVariant;
   definition.styleSelectors = Object.fromEntries(
     Object.entries(definition.styleSelectors).map(([styleSelector, selectors]) => {
       const value =
         styleSelector === 'base' ? `plitzi__${definition.type}` : `plitzi__${definition.type}-${styleSelector}`;
+      if (styleVariant && styleVariant[styleSelector]) {
+        selectors = selectors.replace(/\S+/g, selector => `${selector} ${selectors}--${styleVariant[styleSelector]}`);
+      }
 
       return value ? [styleSelector, `${value} ${selectors}`] : [styleSelector, selectors];
     })

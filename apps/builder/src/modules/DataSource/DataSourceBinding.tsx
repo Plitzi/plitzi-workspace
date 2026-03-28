@@ -167,7 +167,11 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
         { path: 'visibility', label: 'Visibility' },
         ...Object.keys(definition.styleSelectors).map(styleSelector => ({
           path: `styleSelectors.${styleSelector}`,
-          label: `Selector - ${styleSelector}`
+          label: `Style Selector - ${styleSelector}`
+        })),
+        ...Object.keys(definition.styleSelectors).map(styleSelector => ({
+          path: `styleVariant.${styleSelector}`,
+          label: `Style Variant Selector - ${styleSelector}`
         }))
       ]
     }),
