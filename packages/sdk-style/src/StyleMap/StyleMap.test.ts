@@ -163,6 +163,9 @@ describe('StyleMap', () => {
           true
         );
         expect(style.platform.desktop.btnUndef.attributes.base.default).toEqual({});
+
+        expect(StyleMap.addSelector(style, 'desktop', 'btnUndef2', 'class', undefined, undefined, {})).toBe(true);
+        expect(style.platform.desktop.btnUndef2.attributes.base.default).toEqual({});
       });
 
       it('allows undefined value for state', () => {
@@ -489,6 +492,11 @@ describe('StyleMap', () => {
 
     it('allows undefined to reset default value', () => {
       expect(StyleMap.updateSelector(style, 'desktop', 'btn', undefined, undefined, paramsBase)).toBe(true);
+      expect(style.platform.desktop.btn.attributes.base.default).toEqual({});
+
+      expect(StyleMap.updateSelector(style, 'desktop', 'btn', undefined, undefined, { styleSelector: 'base' })).toBe(
+        true
+      );
       expect(style.platform.desktop.btn.attributes.base.default).toEqual({});
     });
 

@@ -62,6 +62,10 @@ const addSelector = (
   };
 
   if (!styleSelector && isStyleAttributes(value as StyleAttributes)) {
+    if (!value) {
+      value = { base: { default: {} } };
+    }
+
     styleItem.attributes = value as StyleAttributes;
     styleItem.cache = processSelector(styleItem);
     set(platform, `${displayMode}.${selector}`, styleItem);

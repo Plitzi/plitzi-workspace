@@ -28,6 +28,7 @@ describe('isValidValue (context-based)', () => {
 
   describe('full attributes (no params)', () => {
     it('accepts StyleAttributes', () => {
+      expect(isValidValue(undefined, undefined, {})).toBe(true);
       expect(isValidValue(undefined, { base: { default: { color: 'red' } } })).toBe(true);
       expect(
         isValidValue(undefined, {
