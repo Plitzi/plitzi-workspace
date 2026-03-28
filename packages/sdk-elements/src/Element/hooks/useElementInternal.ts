@@ -96,7 +96,7 @@ const useElementInternal = ({
 }: UseElementInternalProps) => {
   const { prevSchema, schema } = use(SchemaContext);
   const { id } = internalProps;
-  const element = useValueMemo<Element | undefined>(id ? schema.flat[id] : undefined);
+  const element = useValueMemo(id ? schema.flat[id] : undefined);
   if (!element) {
     throw new Error(`Element ${id} not found, Page ${baseElementId}`);
   }
