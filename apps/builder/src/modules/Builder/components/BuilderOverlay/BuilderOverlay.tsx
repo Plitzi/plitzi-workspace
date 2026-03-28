@@ -9,7 +9,6 @@ import { processContainer } from './BuilderOverlayHelper';
 import OverlayNormal from './OverlayNormal';
 import useBuilderElement from '../../hooks/useBuilderElement';
 
-import type { OverlayRect } from './BuilderOverlayHelper';
 import type { DisplayMode, Element, EventBridgeEvent } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
@@ -41,7 +40,7 @@ const BuilderOverlay = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const element = useBuilderElement(id);
-  const [container, setContainer] = useState<OverlayRect>({
+  const [container, setContainer] = useState({
     width: 0,
     height: 0,
     x: 0,
@@ -173,7 +172,7 @@ const BuilderOverlay = ({
     }
 
     const handler = (events: Record<EventBridgeEvent, unknown>) => {
-      const attribute = (events['styleUpdateSelector'] as string[])[3] ?? '';
+      const attribute = (events['styleUpdateSelector'] as string[])[2] ?? '';
       if (attribute.includes('padding') || attribute.includes('margin') || attribute.includes('border') || !attribute) {
         handleProcessContainer(overlayProps.elementDOM);
       }

@@ -41,7 +41,7 @@ const OverlaySpacing = ({
 
   useEffect(() => {
     const handler = (events: Record<EventBridgeEvent, unknown>) => {
-      const attribute = (events['styleUpdateSelector'] as string[])[3] ?? '';
+      const attribute = (events['styleUpdateSelector'] as string[])[2] ?? '';
       if (attribute.includes('padding') || attribute.includes('margin') || !attribute) {
         const value = getStyle();
         setRawStyle(value);

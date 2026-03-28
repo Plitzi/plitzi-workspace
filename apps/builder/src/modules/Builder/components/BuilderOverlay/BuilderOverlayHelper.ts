@@ -9,21 +9,6 @@ export type OverlayDistanceRect = {
   height: number;
 };
 
-export type OverlayRect = {
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  scrollX: number;
-  scrollY: number;
-  innerHeight: number;
-  innerWidth: number;
-  rounded: {
-    width: number;
-    height: number;
-  };
-};
-
 export type ContainerPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 export type OverlayQuadrant = {
