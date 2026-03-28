@@ -126,7 +126,7 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
                         description={description}
                         value={paramValue}
                         index={i}
-                        options={action === 'styleSelector' ? styleSelectors : options}
+                        options={action === 'styleSelector' && paramKey === 'selector' ? styleSelectors : options}
                         dataSourceFields={dataSourceFields}
                         disabled={typeof disabled === 'function' ? disabled(params) : disabled}
                         onChange={handleChangeParam}

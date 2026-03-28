@@ -64,7 +64,7 @@ const getBindingsDetails = (
                   break;
                 }
 
-                resultValue = callback(resultValue, params, draft, { ...dataSource, element, sourceTo: toValue });
+                resultValue = callback(resultValue, params, draft, { ...dataSource, sourceTo: toValue });
 
                 break;
               }
