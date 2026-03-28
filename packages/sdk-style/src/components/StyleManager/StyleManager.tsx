@@ -16,9 +16,17 @@ const StyleManager = () => {
   const {
     schema: { flat }
   } = use(BuilderSchemaContext);
-  const flatList = useMemo(() => Object.values(flat), [flat]);
   const { style, displayMode } = use(BuilderStyleContext);
-  const selectors = useMemo(() => Object.values(get(style, `platform.${displayMode}`, {})), [displayMode, style]);
+  const flatList = useMemo(
+    () => Object.values(flat),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [Object.keys(flat).length]
+  );
+  const selectors = useMemo(
+    () => Object.values(get(style, `platform.${displayMode}`, {})),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [displayMode, Object.keys(style.platform[displayMode]).length]
+  );
 
   const styleSelectorsAvailables = useMemo(
     () =>
@@ -45,7 +53,13 @@ const StyleManager = () => {
   return (
     <div className="flex h-full grow flex-col overflow-auto">
       <div className="flex grow overflow-auto">
-        <ManagerSelector selectors={selectors} flatList={flatList} selected={selector?.name} onSelect={setSelector} />
+        <ManagerSelector
+          displayMode={displayMode}
+          selectors={selectors}
+          flatList={flatList}
+          selected={selector?.name}
+          onSelect={setSelector}
+        />
         <div className="flex grow basis-0 flex-col overflow-auto">
           {selector && (
             <StyleInspector

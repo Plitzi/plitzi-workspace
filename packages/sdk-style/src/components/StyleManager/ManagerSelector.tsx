@@ -4,30 +4,29 @@ import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
 import { produce } from 'immer';
-import { useCallback, use, useMemo, useState } from 'react';
+import { useCallback, use, useMemo, useState, memo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import StyleSelectorTag from './StyleSelectorTag';
 import SelectorForm from '../../models/SelectorForm';
 
 import type { SelectorFormValues } from '../../models/SelectorForm';
-import type { Element, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type ManagerSelectorProps = {
+  displayMode: DisplayMode;
   flatList: Element[];
   selected?: string;
   onSelect?: Dispatch<SetStateAction<StyleItem | undefined>>;
   selectors: StyleItem[];
 };
 
-const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
+const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
   const [searchInput, setSearchInput] = useState('');
   const { builderHandler } = use(BuilderContext);
-  const { displayMode } = use(BuilderStyleContext);
   const { components } = use(ComponentContext);
   const componentsNotAvailables = useMemo(
     () => selectors.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
@@ -202,4 +201,4 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   );
 };
 
-export default ManagerSelector;
+export default memo(ManagerSelector);
