@@ -37,6 +37,7 @@ export type InspectorModeBasicProps = {
   componentType?: string;
   selector?: StyleItem;
   styleState?: StyleState;
+  styleVariant?: string;
   styleSelector?: string;
   element?: Element;
   displayMode: DisplayMode;
@@ -46,6 +47,7 @@ const InspectorModeBasic = ({
   componentType,
   selector,
   styleState,
+  styleVariant,
   styleSelector = 'base',
   element,
   displayMode
@@ -57,7 +59,14 @@ const InspectorModeBasic = ({
   );
   const [showAllOptions, setShowAllOptions] = useStorage('builder-state.styleInspector.showAllOptions', false);
   const [replaceTokens, setReplaceTokens] = useStorage('builder-state.styleInspector.replaceTokens', false);
-  const inheritData = useStyleInherit({ element, componentType, selector: selector?.name, styleSelector, styleState });
+  const inheritData = useStyleInherit({
+    element,
+    componentType,
+    selector: selector?.name,
+    styleSelector,
+    styleState,
+    styleVariant
+  });
 
   const handleChangeCollapse = useCallback(
     (id: string, isCollapsed: boolean) => setCollapsedCache(state => ({ ...state, [id]: isCollapsed })),
@@ -80,7 +89,8 @@ const InspectorModeBasic = ({
         builderHandler('styleUpdateSelector', displayMode, selector.name, styleKey, values, {
           componentType: selector.type === 'element' ? componentType : undefined,
           styleSelector,
-          styleState
+          styleState,
+          styleVariant
         });
 
         return;
@@ -93,7 +103,8 @@ const InspectorModeBasic = ({
       const customClass = makeSelector(componentType, styleSelector);
       builderHandler('styleAddSelector', displayMode, customClass, 'class', styleKey, values, {
         styleSelector,
-        styleState
+        styleState,
+        styleVariant
       });
       if (!element) {
         return;
@@ -111,7 +122,7 @@ const InspectorModeBasic = ({
         })
       );
     },
-    [builderHandler, componentType, displayMode, element, selector, styleSelector, styleState]
+    [builderHandler, componentType, displayMode, element, selector, styleSelector, styleState, styleVariant]
   );
 
   const isList = useMemo(() => {
@@ -134,6 +145,7 @@ const InspectorModeBasic = ({
       displayMode={displayMode}
       styleSelector={styleSelector}
       styleState={styleState}
+      styleVariant={styleVariant}
       selector={selector}
       element={element}
       inheritData={inheritData}

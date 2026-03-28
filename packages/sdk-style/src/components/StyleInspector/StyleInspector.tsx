@@ -2,6 +2,7 @@ import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Select from '@plitzi/plitzi-ui/Select';
+import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
@@ -14,6 +15,7 @@ import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
 import InspectorModeBasic from './modes/InspectorModeBasic';
 
 import type { SelectorValue } from '../Selector';
+import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { Element, StyleItem, TagType } from '@plitzi/sdk-shared';
 import type { StyleState } from '@plitzi/sdk-shared';
 
@@ -26,6 +28,7 @@ export type StyleInspectorProps = {
   styleSelectorsAvailables?: string[];
   allowStyleSelector?: boolean;
   allowStyleState?: boolean;
+  allowStyleVariant?: boolean;
   onChange?: (selector?: string) => void;
 };
 
@@ -38,6 +41,7 @@ const StyleInspector = ({
   styleSelectorsAvailables,
   allowStyleSelector = true,
   allowStyleState = true,
+  allowStyleVariant = true,
   onChange
 }: StyleInspectorProps) => {
   const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
@@ -47,6 +51,7 @@ const StyleInspector = ({
     style: { platform, variables }
   } = use(BuilderStyleContext);
   const [styleSelector, setStyleSelector] = useState('base');
+  const [styleVariant, setStyleVariant] = useState<string | undefined>(undefined);
   const [styleState, setStyleState] = useState<StyleState | undefined>(undefined);
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
@@ -80,10 +85,12 @@ const StyleInspector = ({
     const selectors = get(styleSelectors, styleSelector, '').split(' ');
     onChange?.(selectors[selectors.length - 1]);
     setStyleState(undefined);
+    setStyleVariant(undefined);
   }, [styleSelector]);
 
   useDidUpdateEffect(() => {
     setStyleState(undefined);
+    setStyleVariant(undefined);
   }, [value]);
 
   const handleAddSelector = useCallback(
@@ -166,6 +173,20 @@ const StyleInspector = ({
 
   const handleChangeStyleState = useCallback((value: string) => setStyleState(value as StyleState), []);
 
+  const handleChangeStyleVariant = useCallback(
+    (value?: Exclude<Option, OptionGroup>) => setStyleVariant(value?.value),
+    []
+  );
+
+  const variants = useMemo(
+    () =>
+      Object.keys(selector?.attributes[styleSelector].variants ?? {}).map(variant => ({
+        label: variant,
+        value: variant
+      })),
+    [selector?.attributes, styleSelector]
+  );
+
   return (
     <div className="flex w-full grow flex-col gap-2">
       <div className="flex w-full flex-col gap-2 px-1">
@@ -216,6 +237,18 @@ const StyleInspector = ({
                 <option value="disabled">Disabled</option>
               </Select>
             )}
+            {allowStyleVariant && (
+              <Select2
+                className="grow basis-0"
+                value={styleVariant}
+                options={variants}
+                onChange={handleChangeStyleVariant}
+                size="xs"
+                placeholder="Variant"
+                allowCreateOptions
+                clearable
+              />
+            )}
           </div>
         )}
       </div>
@@ -229,6 +262,7 @@ const StyleInspector = ({
             styleSelector={styleSelector}
             selector={selector}
             styleState={styleState}
+            styleVariant={styleVariant}
             element={element}
             displayMode={displayMode}
           />

@@ -27,6 +27,7 @@ export type StyleInspectorProviderProps = {
   selector?: StyleItem;
   styleSelector?: string;
   styleState?: StyleState;
+  styleVariant?: string;
   element?: Element;
   inheritData: InheritData;
   displayMode: DisplayMode;
@@ -38,6 +39,7 @@ const StyleInspectorProvider = ({
   selector,
   styleSelector = 'base',
   styleState,
+  styleVariant,
   element,
   inheritData,
   displayMode,
@@ -112,7 +114,7 @@ const StyleInspectorProvider = ({
       selector,
       styleSelector,
       styleState,
-      styleVariant: undefined, // @todo: pending to implement
+      styleVariant,
       displayMode,
       variables: schemaVariables,
       inheritData: inheritData.style,
@@ -125,6 +127,7 @@ const StyleInspectorProvider = ({
       selector,
       styleSelector,
       styleState,
+      styleVariant,
       displayMode,
       schemaVariables,
       inheritData.style,

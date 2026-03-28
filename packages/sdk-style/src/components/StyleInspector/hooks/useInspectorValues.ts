@@ -51,10 +51,12 @@ const useInspectorValues = <TAsValue extends boolean>({
   let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
   if (selector && styleSelector && (selector.attributes[styleSelector] as StyleBlock | undefined)) {
     const block = selector.attributes[styleSelector];
-    if (styleState && block.states?.[styleState]) {
-      attributes = block.states[styleState];
-    } else if (styleVariant && block.variants?.[styleVariant]?.default) {
-      attributes = block.variants[styleVariant].default;
+    if (styleState && styleVariant) {
+      attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
+    } else if (styleState) {
+      attributes = block.states?.[styleState] ?? {};
+    } else if (styleVariant) {
+      attributes = block.variants?.[styleVariant].default ?? {};
     } else {
       attributes = block.default;
     }

@@ -35,7 +35,7 @@ export type StyleObject = Partial<Record<StyleCategory, StyleValue>>;
 export type StyleStates = Partial<Record<StyleState, StyleObject>>;
 
 // Variants (sm, lg, primary)
-export type StyleVariants = Record<string, Exclude<StyleBlock, 'variants'>>;
+export type StyleVariants = Record<string, Omit<StyleBlock, 'variants'>>;
 
 // Full block per selector (base, header, etc)
 export type StyleBlock = { default?: StyleObject; states?: StyleStates; variants?: StyleVariants };
