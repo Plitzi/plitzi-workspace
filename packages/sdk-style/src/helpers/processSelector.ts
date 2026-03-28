@@ -116,8 +116,12 @@ const getSelector = (
 
 const getElementSelector = (name: string, attributes: Attributes, inline = true, tab = TAB_SIZE) => {
   const parts: string[] = [];
-
   for (const [styleSelector, block] of Object.entries(attributes)) {
+    if (styleSelector === 'base' && !block.default.length) {
+      // Base is empty, so we just skip it to avoid multi empty lines
+      continue;
+    }
+
     // Base selector - inline in the root
     if (styleSelector === 'base') {
       parts.push(attributesToString(name, block.default, block.states, block.variants, inline, tab));

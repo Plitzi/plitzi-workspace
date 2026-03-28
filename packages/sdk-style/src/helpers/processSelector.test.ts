@@ -579,6 +579,51 @@ describe('processSelector', () => {
     );
   });
 
+  it('', () => {
+    const styleItem = {
+      name: 'modalContainer',
+      type: 'element' as const,
+      attributes: {
+        base: {
+          default: {}
+        },
+        headerContainer: {
+          default: {
+            'border-bottom-color': 'var(--border)',
+            'border-bottom-style': 'solid',
+            'border-bottom-width': '1px'
+          }
+        },
+        rootContainer: {
+          default: {
+            'background-color': 'var(--card)',
+            height: 'auto'
+          }
+        }
+      },
+      componentType: 'modalContainer',
+      cache: ''
+    };
+    const result = processSelector(styleItem);
+    expect(result).toEqual(
+      '.plitzi__modalContainer{.plitzi__modalContainer-headerContainer{border-bottom-color:var(--border);border-bottom-style:solid;border-bottom-width:1px;}.plitzi__modalContainer-rootContainer{background-color:var(--card);height:auto;}}'
+    );
+
+    const result2 = processSelector(styleItem, false);
+    expect(result2).toEqual(`.plitzi__modalContainer {
+  .plitzi__modalContainer-headerContainer {
+    border-bottom-color: var(--border);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+  }
+
+  .plitzi__modalContainer-rootContainer {
+    background-color: var(--card);
+    height: auto;
+  }
+}`);
+  });
+
   describe('processSelector.processSelectors', () => {
     it('functionality', () => {
       const result = processSelectors([
