@@ -50,7 +50,7 @@ export type ElementDefinition = {
   bindings?: Partial<Record<BindingCategory, ElementBinding[]>>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
-    styleVariant?: Record<string, string>;
+    styleVariant?: Partial<Record<string, string>>;
     styleSelectors?: ElementDefinition['styleSelectors'];
     visibility?: boolean;
     [key: string]: unknown;
