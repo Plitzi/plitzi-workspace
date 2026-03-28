@@ -3408,7 +3408,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.2"
     "@babel/preset-react": "npm:^7.28.5"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3486,7 +3486,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.28.5"
     "@babel/preset-typescript": "npm:^7.28.5"
     "@dr.pogodin/react-helmet": "npm:^3.1.1"
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -3546,9 +3546,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.4.15":
-  version: 1.4.15
-  resolution: "@plitzi/plitzi-ui@npm:1.4.15::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.4.15%2F1b32f50ec26c5e29c3567a648be499f38a2970e3"
+"@plitzi/plitzi-ui@npm:^1.4.16":
+  version: 1.4.16
+  resolution: "@plitzi/plitzi-ui@npm:1.4.16::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.4.16%2F945b6c012b6b2467a62c5866b669258b65eb347d"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.1"
     "@codemirror/commands": "npm:^6.10.3"
@@ -3578,7 +3578,7 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^13.0.0"
     zod: "npm:^4.3.6"
-  checksum: 10c0/9da0f8ecff06541feb8400235a64747bc9f4db4a79bf9e6d8461c0ce399e221045e8a568f689355b356137b42440824717b8416c3026bc5041b1152eea31ac3e
+  checksum: 10c0/8b724a1da3e3e26ced158ab9fc4b62cd9aaff89bc81f1ce379386a87d84e1a859d4620f5b263e202f1ed17a05a5b0cf1904847e14fa4c57b84f67d73b55adb18
   languageName: node
   linkType: hard
 
@@ -3587,7 +3587,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.30.0"
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.14"
     eslint: "npm:^9.39.4"
@@ -3602,7 +3602,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3617,7 +3617,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-collections@workspace:packages/sdk-collections"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.4"
     immer: "npm:^11.1.4"
@@ -3646,7 +3646,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-data-source": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -3669,7 +3669,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-data-source": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3705,7 +3705,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3772,7 +3772,7 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.28.6"
     "@babel/preset-env": "npm:^7.29.2"
     "@eslint/js": "npm:^10.0.1"
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.1"
@@ -3845,7 +3845,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
@@ -3864,7 +3864,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-variables@workspace:packages/sdk-variables"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.4.15"
+    "@plitzi/plitzi-ui": "npm:^1.4.16"
     "@plitzi/sdk-shared": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.4"
