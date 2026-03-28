@@ -66,7 +66,9 @@ export const isStyleBlock = (obj: StyleBlock): boolean => {
 };
 
 export const isStyleAttributes = (obj?: StyleAttributes): boolean =>
-  obj === undefined || (isPlainObject(obj) && 'base' in obj && Object.values(obj).every(isStyleBlock));
+  obj === undefined ||
+  (isPlainObject(obj) && !Object.keys(obj).length) ||
+  (isPlainObject(obj) && 'base' in obj && Object.values(obj).every(isStyleBlock));
 
 // ===== main =====
 

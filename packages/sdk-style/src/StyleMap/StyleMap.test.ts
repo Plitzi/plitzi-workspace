@@ -69,6 +69,19 @@ describe('StyleMap', () => {
         expect(StyleMap.addSelector(style, 'desktop', 'btn', 'class', 'color', 'red', params)).toBe(true);
         expect(style.platform.desktop.btn.attributes.base.variants?.primary.states?.hover?.color).toEqual('red');
       });
+
+      it('allows empty object or undefined to create new selector with componentType and no selectorStyle', () => {
+        expect(StyleMap.addSelector(style, 'desktop', 'btn', 'class', undefined, {}, {})).toBe(true);
+        expect(style.platform.desktop.btn.attributes.base.default).toEqual({});
+
+        expect(StyleMap.addSelector(style, 'desktop', 'btn2', 'class', undefined, undefined, {})).toBe(true);
+        expect(style.platform.desktop.btn2.attributes.base.default).toEqual({});
+
+        expect(
+          StyleMap.addSelector(style, 'desktop', 'button', 'element', undefined, {}, { componentType: 'button' })
+        ).toBe(true);
+        expect(style.platform.desktop.button.attributes.base.default).toEqual({});
+      });
     });
 
     describe('duplicate selectors', () => {

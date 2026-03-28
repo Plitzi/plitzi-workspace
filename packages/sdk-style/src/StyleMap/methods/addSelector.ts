@@ -62,7 +62,7 @@ const addSelector = (
   };
 
   if (!styleSelector && isStyleAttributes(value as StyleAttributes)) {
-    if (!value) {
+    if (!value || !Object.keys(value).length) {
       value = { base: { default: {} } };
     }
 
