@@ -58,6 +58,17 @@ describe('StyleMap', () => {
         );
         expect(style.platform.desktop.btn.attributes.base.variants?.primary.default?.color).toBe('green');
       });
+
+      it('allows empty object to reset default value', () => {
+        expect(StyleMap.addSelector(style, 'desktop', 'btn', 'class', undefined, {}, paramsBase)).toBe(true);
+        expect(style.platform.desktop.btn.attributes.base.default).toEqual({});
+      });
+
+      it('allows adding ting both state and variant at the same time', () => {
+        const params = { ...paramsBase, styleState: 'hover' as const, styleVariant: 'primary' };
+        expect(StyleMap.addSelector(style, 'desktop', 'btn', 'class', 'color', 'red', params)).toBe(true);
+        expect(style.platform.desktop.btn.attributes.base.variants?.primary.states?.hover?.color).toEqual('red');
+      });
     });
 
     describe('duplicate selectors', () => {
@@ -415,7 +426,10 @@ describe('StyleMap', () => {
           'class',
           undefined,
           {
-            base: { default: { color: 'red', 'background-color': 'yellow' }, states: { hover: { color: 'purple' } } },
+            base: {
+              default: { color: 'red', 'background-color': 'yellow' },
+              states: { hover: { color: 'purple' }, focus: { color: 'green' } }
+            },
             header: {
               default: { color: 'red' },
               variants: { primary: { default: { color: 'blue' }, states: { hover: { color: 'orange' } } } }
@@ -478,9 +492,25 @@ describe('StyleMap', () => {
       expect(style.platform.desktop.btn.attributes.base.default).toEqual({});
     });
 
+    it('allows empty object to reset default value', () => {
+      expect(StyleMap.updateSelector(style, 'desktop', 'btn', undefined, {}, paramsBase)).toBe(true);
+      expect(style.platform.desktop.btn.attributes.base.default).toEqual({});
+    });
+
     it('allows undefined to reset state value', () => {
-      const paramsState = { ...paramsBase, styleState: 'hover' as const };
-      expect(StyleMap.updateSelector(style, 'desktop', 'btn', undefined, undefined, paramsState)).toBe(true);
+      expect(
+        StyleMap.updateSelector(style, 'desktop', 'btn', undefined, undefined, {
+          ...paramsBase,
+          styleState: 'hover' as const
+        })
+      ).toBe(true);
+      expect(style.platform.desktop.btn.attributes.base.states).toEqual({ focus: { color: 'green' } });
+      expect(
+        StyleMap.updateSelector(style, 'desktop', 'btn', undefined, undefined, {
+          ...paramsBase,
+          styleState: 'focus' as const
+        })
+      ).toBe(true);
       expect(style.platform.desktop.btn.attributes.base.states).toBeUndefined();
     });
 
@@ -498,9 +528,10 @@ describe('StyleMap', () => {
       expect(style.platform.desktop.btn.attributes.header.variants).toBeUndefined();
     });
 
-    it('prevents updating both state and variant at the same time', () => {
-      const paramsInvalid = { ...paramsBase, styleState: 'hover' as const, styleVariant: 'primary' };
-      expect(StyleMap.updateSelector(style, 'desktop', 'btn', 'color', 'red', paramsInvalid)).toBe(false);
+    it('allows updating both state and variant at the same time', () => {
+      const params = { ...paramsBase, styleState: 'hover' as const, styleVariant: 'primary' };
+      expect(StyleMap.updateSelector(style, 'desktop', 'btn', 'color', 'red', params)).toBe(true);
+      expect(style.platform.desktop.btn.attributes.base.variants?.primary.states?.hover?.color).toEqual('red');
     });
 
     it('does nothing if styleItem does not exist', () => {

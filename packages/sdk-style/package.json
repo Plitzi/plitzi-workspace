@@ -42,10 +42,6 @@
       "types": "./dist/src/StyleMap/StyleMap.d.ts",
       "import": "./dist/src/StyleMap/StyleMap.mjs"
     },
-    "./StyleMap/helpers/getBasePath": {
-      "types": "./dist/src/StyleMap/helpers/getBasePath.d.ts",
-      "import": "./dist/src/StyleMap/helpers/getBasePath.mjs"
-    },
     "./StyleMap/helpers/getStyleItem": {
       "types": "./dist/src/StyleMap/helpers/getStyleItem.d.ts",
       "import": "./dist/src/StyleMap/helpers/getStyleItem.mjs"
@@ -53,10 +49,6 @@
     "./StyleMap/helpers/isValueValid": {
       "types": "./dist/src/StyleMap/helpers/isValueValid.d.ts",
       "import": "./dist/src/StyleMap/helpers/isValueValid.mjs"
-    },
-    "./StyleMap/helpers/omitUndefined": {
-      "types": "./dist/src/StyleMap/helpers/omitUndefined.d.ts",
-      "import": "./dist/src/StyleMap/helpers/omitUndefined.mjs"
     },
     "./StyleMap/index": {
       "types": "./dist/src/StyleMap/index.d.ts",

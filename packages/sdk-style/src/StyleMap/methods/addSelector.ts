@@ -2,8 +2,8 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../../helpers/processSelector';
 import getStyleItem from '../helpers/getStyleItem';
-import isValidValue, { isStyleAttributes, isStyleObject } from '../helpers/isValueValid';
-import omitUndefined from '../helpers/omitUndefined';
+import isValidValue, { isStyleAttributes } from '../helpers/isValueValid';
+import { applyValue } from '../helpers/utils';
 
 import type {
   DisplayMode,
@@ -45,7 +45,6 @@ const addSelector = (
     getStyleItem(platform, displayMode, selector) ||
     (!componentType && type === 'element') ||
     (componentType && type !== 'element') ||
-    (styleState && styleVariant) ||
     (styleSelector && typeof styleSelector !== 'string') ||
     (!styleSelector && (styleState || styleVariant)) ||
     (path && path.includes('.')) ||
@@ -71,46 +70,27 @@ const addSelector = (
   }
 
   const attrBlock = styleItem.attributes[styleSelector ? styleSelector : 'base'];
+
   if (styleVariant) {
-    if (!attrBlock.variants) {
-      attrBlock.variants = {};
-    }
+    attrBlock.variants ??= {};
+    const variant = (attrBlock.variants[styleVariant] ??= { default: {}, states: {} });
+    if (styleState) {
+      variant.states ??= {};
+      variant.states[styleState] ??= {};
 
-    if (!(attrBlock.variants[styleVariant] as StyleVariants[string] | undefined)) {
-      attrBlock.variants[styleVariant] = { default: {}, states: {} };
-    }
-
-    if (attrBlock.variants[styleVariant].default) {
-      if (path && (typeof value === 'string' || typeof value === 'number')) {
-        attrBlock.variants[styleVariant].default[path] = value as StyleValue;
-      } else if (value && isStyleObject(value as StyleObject)) {
-        Object.assign(attrBlock.variants[styleVariant].default, omitUndefined(value as StyleObject));
-      }
+      applyValue(path, value, variant.states[styleState]);
+    } else {
+      variant.default ??= {};
+      applyValue(path, value, variant.default);
     }
   } else if (styleState) {
-    if (!attrBlock.states) {
-      attrBlock.states = {};
-    }
-
-    if (!attrBlock.states[styleState]) {
-      attrBlock.states[styleState] = {};
-    }
-
-    if (path && (typeof value === 'string' || typeof value === 'number')) {
-      attrBlock.states[styleState][path] = value as StyleValue;
-    } else if (value && isStyleObject(value as StyleObject)) {
-      Object.assign(attrBlock.states[styleState], omitUndefined(value as StyleObject));
-    }
+    attrBlock.states ??= {};
+    attrBlock.states[styleState] ??= {};
+    applyValue(path, value, attrBlock.states[styleState]);
   } else {
-    if (!attrBlock.default) {
-      attrBlock.default = {};
-    }
+    attrBlock.default ??= {};
 
-    if (path && (typeof value === 'string' || typeof value === 'number')) {
-      attrBlock.default[path] = value as StyleValue;
-    } else if (value && isStyleObject(value as StyleObject)) {
-      Object.assign(attrBlock.default, omitUndefined(value as StyleObject));
-    }
+    applyValue(path, value, attrBlock.default);
   }
 
   styleItem.cache = processSelector(styleItem);

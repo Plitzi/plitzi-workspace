@@ -77,8 +77,8 @@ const InspectorModeBasic = ({
   const handleChange = useCallback(
     (styleKey?: StyleCategory, values?: StyleObject | StyleValue) => {
       if (selector) {
-        builderHandler('styleUpdateSelector', displayMode, selector.name, selector.type, styleKey, values, {
-          componentType,
+        builderHandler('styleUpdateSelector', displayMode, selector.name, styleKey, values, {
+          componentType: selector.type === 'element' ? componentType : undefined,
           styleSelector,
           styleState
         });

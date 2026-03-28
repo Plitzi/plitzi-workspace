@@ -62,8 +62,7 @@ const StyleInspectorProvider = ({
       }
 
       if (!styleKey && selector && typeof values === 'object') {
-        const currentValues = selector.type !== 'element' ? selector.attributes : selector.attributes[styleSelector];
-        const newValues = { ...currentValues, ...values } as Partial<Record<StyleCategory, StyleValue>>;
+        const newValues = { ...get(selector.attributes, `${styleSelector}.default`, {}), ...values };
         (Object.keys(newValues) as StyleCategory[]).forEach(k => {
           if (newValues[k] === undefined) {
             delete newValues[k];

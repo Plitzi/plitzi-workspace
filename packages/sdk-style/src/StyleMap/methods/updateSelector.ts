@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { omit, set, get } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../../helpers/processSelector';
-import getBasePath from '../helpers/getBasePath';
 import getStyleItem from '../helpers/getStyleItem';
 import isValidValue, { isStyleObject } from '../helpers/isValueValid';
+import { getTargetPath, isEmptyObject, applyValue } from '../helpers/utils';
 
 import type {
   DisplayMode,
@@ -45,7 +43,6 @@ const updateSelector = (
   if (
     !styleItem ||
     !styleSelector ||
-    (styleState && styleVariant) ||
     (!componentType && styleItem.type === 'element') ||
     (componentType && styleItem.type !== 'element') ||
     (styleSelector && typeof styleSelector !== 'string') ||
@@ -55,40 +52,30 @@ const updateSelector = (
     return false;
   }
 
-  const basePath = getBasePath(value, styleSelector, path, styleVariant, styleState);
-
   if (value !== undefined) {
-    if (path && (typeof value === 'string' || typeof value === 'number')) {
-      set(styleItem, `${basePath}.${path}`, value);
-    } else if (value && isStyleObject(value as Partial<StyleObject>) && Object.keys(value).length) {
-      const current = get(styleItem, basePath, {});
-      const merged = { ...current, ...(value as StyleObject) };
-      for (const k in merged) {
-        if (merged[k as StyleCategory] === undefined) {
-          delete merged[k as StyleCategory];
-        }
+    const targetPath = getTargetPath(styleSelector, styleVariant, styleState);
+    if (isStyleObject(value as Partial<StyleObject>) && isEmptyObject(value)) {
+      if (!styleState && !styleVariant) {
+        // reset default only
+        set(styleItem, targetPath, {});
       }
-      set(styleItem, basePath, merged);
+      // do nothing for state/variant
+    } else {
+      const target = get(styleItem, targetPath, {});
+      applyValue(path, value, target);
+      set(styleItem, targetPath, target);
     }
   } else if (path) {
-    const current = get(styleItem, basePath, {});
-    set(styleItem, basePath, omit(current, [path]));
-  } else if (styleState) {
-    const fragment = get(styleItem, basePath) as StyleStates | undefined;
-    if (fragment) {
-      const newFragment = omit(fragment, [styleState]);
-      if (Object.keys(newFragment).length) {
-        set(styleItem, basePath, newFragment);
-      } else {
-        set(styleItem, `attributes.${styleSelector}`, omit(get(styleItem, `attributes.${styleSelector}`), ['states']));
-      }
-    }
+    const targetPath = getTargetPath(styleSelector, styleVariant, styleState);
+    const current = get(styleItem, targetPath, {});
+    set(styleItem, targetPath, omit(current, [path]));
   } else if (styleVariant) {
-    const fragment = get(styleItem, basePath) as StyleVariants | undefined;
+    const variantsPath = `attributes.${styleSelector}.variants`;
+    const fragment = get(styleItem, variantsPath) as StyleVariants | undefined;
     if (fragment) {
-      const newFragment = omit(fragment, [styleVariant]);
-      if (Object.keys(newFragment).length) {
-        set(styleItem, basePath, newFragment);
+      const next = omit(fragment, [styleVariant]);
+      if (Object.keys(next).length) {
+        set(styleItem, variantsPath, next);
       } else {
         set(
           styleItem,
@@ -97,8 +84,20 @@ const updateSelector = (
         );
       }
     }
+  } else if (styleState) {
+    const statesPath = `attributes.${styleSelector}.states`;
+    const fragment = get(styleItem, statesPath) as StyleStates | undefined;
+    if (fragment) {
+      const next = omit(fragment, [styleState]);
+      if (Object.keys(next).length) {
+        set(styleItem, statesPath, next);
+      } else {
+        set(styleItem, `attributes.${styleSelector}`, omit(get(styleItem, `attributes.${styleSelector}`), ['states']));
+      }
+    }
   } else {
-    set(styleItem, basePath, {});
+    const targetPath = getTargetPath(styleSelector);
+    set(styleItem, targetPath, {});
   }
 
   set(styleItem, 'cache', processSelector(styleItem));
