@@ -22,7 +22,7 @@ export type StyleInspectorProps = {
   element?: Element;
   componentType?: string;
   mode?: 'element' | 'manager';
-  styleSelectors?: Element['definition']['styleSelectors'];
+  styleSelectors?: Record<string, string>;
   styleSelectorsAvailables?: string[];
   allowStyleSelector?: boolean;
   allowStyleState?: boolean;

@@ -36,15 +36,13 @@ const StyleManager = () => {
     [componentDefinitions, selector]
   );
 
-  const styleSelectors = useMemo<({ base: string } & Record<string, string>) | undefined>(() => {
+  const styleSelectors = useMemo<Record<string, string> | undefined>(() => {
     if (!selector) {
       return undefined;
     }
 
     if (selector.type === 'element' && styleSelectorsAvailables.length > 1) {
-      return styleSelectorsAvailables.reduce((acum, key) => ({ ...acum, [key]: selector.componentType }), {}) as {
-        base: string;
-      } & Record<string, string>;
+      return styleSelectorsAvailables.reduce((acum, key) => ({ ...acum, [key]: selector.componentType }), {});
     }
 
     return { base: selector.name };
