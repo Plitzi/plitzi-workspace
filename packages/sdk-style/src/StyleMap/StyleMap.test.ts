@@ -547,6 +547,11 @@ describe('StyleMap', () => {
         })
       ).toBe(true);
       expect(style.platform.desktop.btn.attributes.header.variants).toBeUndefined();
+
+      expect(StyleMap.updateSelector(style, 'desktop', 'btn', undefined, { color: 'red' }, paramsVariant)).toBe(true);
+      expect(style.platform.desktop.btn.attributes.base.variants?.primary.default?.color).toEqual('red');
+      expect(StyleMap.updateSelector(style, 'desktop', 'btn', undefined, {}, paramsVariant)).toBe(true);
+      expect(style.platform.desktop.btn.attributes.base.variants?.primary.default).toEqual({});
     });
 
     it('allows updating both state and variant at the same time', () => {

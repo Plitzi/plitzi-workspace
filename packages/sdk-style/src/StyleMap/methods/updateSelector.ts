@@ -1,9 +1,9 @@
-import { omit, set, get } from '@plitzi/plitzi-ui/helpers';
+import { set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../../helpers/processSelector';
 import getStyleItem from '../helpers/getStyleItem';
-import isValidValue, { isStyleObject } from '../helpers/isValueValid';
-import { getTargetPath, isEmptyObject, parseValue } from '../helpers/utils';
+import isValidValue from '../helpers/isValueValid';
+import { writeStyle } from '../helpers/utils';
 
 import type {
   DisplayMode,
@@ -52,53 +52,7 @@ const updateSelector = (
     return false;
   }
 
-  if (value !== undefined) {
-    const targetPath = getTargetPath(styleSelector, styleVariant, styleState);
-    if (isStyleObject(value as Partial<StyleObject>) && isEmptyObject(value)) {
-      if (!styleState && !styleVariant) {
-        // reset default only
-        set(styleItem, targetPath, {});
-      }
-      // do nothing for state/variant
-    } else {
-      const currentValue = get(styleItem, targetPath, {});
-      set(styleItem, targetPath, parseValue(path, value, currentValue));
-    }
-  } else if (path) {
-    const targetPath = getTargetPath(styleSelector, styleVariant, styleState);
-    const current = get(styleItem, targetPath, {});
-    set(styleItem, targetPath, omit(current, [path]));
-  } else if (styleVariant) {
-    const variantsPath = `attributes.${styleSelector}.variants`;
-    const fragment = get(styleItem, variantsPath) as StyleVariants | undefined;
-    if (fragment) {
-      const next = omit(fragment, [styleVariant]);
-      if (Object.keys(next).length) {
-        set(styleItem, variantsPath, next);
-      } else {
-        set(
-          styleItem,
-          `attributes.${styleSelector}`,
-          omit(get(styleItem, `attributes.${styleSelector}`), ['variants'])
-        );
-      }
-    }
-  } else if (styleState) {
-    const statesPath = `attributes.${styleSelector}.states`;
-    const fragment = get(styleItem, statesPath) as StyleStates | undefined;
-    if (fragment) {
-      const next = omit(fragment, [styleState]);
-      if (Object.keys(next).length) {
-        set(styleItem, statesPath, next);
-      } else {
-        set(styleItem, `attributes.${styleSelector}`, omit(get(styleItem, `attributes.${styleSelector}`), ['states']));
-      }
-    }
-  } else {
-    const targetPath = getTargetPath(styleSelector);
-    set(styleItem, targetPath, {});
-  }
-
+  writeStyle('update', styleItem, styleSelector, path, value, styleState, styleVariant);
   set(styleItem, 'cache', processSelector(styleItem));
   set(platform, `${displayMode}.${selector}`, styleItem);
 

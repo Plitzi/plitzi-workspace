@@ -3,7 +3,7 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../helpers/processSelector';
 import getStyleItem from '../helpers/getStyleItem';
 import isValidValue, { isStyleAttributes } from '../helpers/isValueValid';
-import { parseValue } from '../helpers/utils';
+import { writeStyle } from '../helpers/utils';
 
 import type {
   DisplayMode,
@@ -73,30 +73,7 @@ const addSelector = (
     return true;
   }
 
-  const attrBlock = styleItem.attributes[styleSelector ? styleSelector : 'base'];
-
-  if (styleVariant) {
-    attrBlock.variants ??= {};
-    const variant = (attrBlock.variants[styleVariant] ??= { default: {}, states: {} });
-    if (styleState) {
-      variant.states ??= {};
-      variant.states[styleState] ??= {};
-
-      variant.states[styleState] = parseValue(path, value, variant.states[styleState]);
-    } else {
-      variant.default ??= {};
-      variant.default = parseValue(path, value, variant.default);
-    }
-  } else if (styleState) {
-    attrBlock.states ??= {};
-    attrBlock.states[styleState] ??= {};
-    attrBlock.states[styleState] = parseValue(path, value, attrBlock.states[styleState]);
-  } else {
-    attrBlock.default ??= {};
-
-    attrBlock.default = parseValue(path, value, attrBlock.default);
-  }
-
+  writeStyle('add', styleItem, styleSelector ?? 'base', path, value, styleState, styleVariant);
   styleItem.cache = processSelector(styleItem);
   set(platform, `${displayMode}.${selector}`, styleItem);
 
