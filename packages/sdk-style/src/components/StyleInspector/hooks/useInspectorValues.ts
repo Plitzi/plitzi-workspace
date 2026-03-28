@@ -82,7 +82,6 @@ const useInspectorValues = <TAsValue extends boolean>({
 
   const hasVariables = useMemo(
     () =>
-      !!attributes &&
       !!keys &&
       !asValue &&
       (Object.keys(pick(attributes, keys)) as StyleCategory[]).filter(
@@ -92,7 +91,7 @@ const useInspectorValues = <TAsValue extends boolean>({
   );
 
   const hasValues = useMemo(() => {
-    if (!keys || !attributes) {
+    if (!keys) {
       return false;
     }
 
