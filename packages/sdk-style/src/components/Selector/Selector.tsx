@@ -47,18 +47,18 @@ const Selector = ({
   const [inputValue, setInputValue] = useState('');
   const [open, setOpen, , triggerRef, triggerRect] = useFloating({ disabled });
   const { existsPopup, addPopup } = usePopup('floating');
+  const tagComponent = useMemo(
+    () =>
+      Object.values(get(style, `platform.${displayMode}`, {})).find(
+        selector => selector.type === 'element' && selector.componentType === componentType
+      ),
+    [componentType, displayMode, style]
+  );
   const tags = useMemo<SelectorValue[]>(() => {
     const selectors = get(style, `platform.${displayMode}`);
-    const tagsAux = Object.values(pick(selectors, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
-    const tagComponent = Object.values(selectors).find(
-      selector => selector.type === 'element' && selector.componentType === componentType
-    );
-    if (tagComponent) {
-      return [tagComponent, ...tagsAux];
-    }
 
-    return tagsAux;
-  }, [style, displayMode, value, componentType]);
+    return Object.values(pick(selectors, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
+  }, [style, displayMode, value]);
   const selectorsAvailables = useMemo<StyleItem[]>(
     () => Object.values(omit(get(style, `platform.${displayMode}`), value.split(' '))),
     [style, displayMode, value]
@@ -104,7 +104,7 @@ const Selector = ({
       switch (action) {
         case 'remove':
         case 'delete': {
-          const finalTags = tags.filter((tag, i) => i !== position && tag.type !== 'element');
+          const finalTags = tags.filter((_tag, i) => i !== position);
           const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
           if (selectorProp && tags[position].name === selectorProp.name) {
             onSelectorSelected?.(get(finalTags, '0'));
@@ -237,6 +237,7 @@ const Selector = ({
   );
 
   const contentStyle = useMemo<CSSProperties>(() => ({ width: triggerRect?.width }), [triggerRect]);
+  const tagsToRender = tagComponent ? [tagComponent, ...tags] : tags;
 
   return (
     <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
@@ -258,16 +259,16 @@ const Selector = ({
           >
             <Button.Icon icon="fas fa-swatchbook" />
           </Button>
-          {tags.map((tag, i) => (
+          {tagsToRender.map((tag, i) => (
             <SelectorItem
               key={`${i}_${tag.name}`}
               selector={tag.name}
               type={tag.type}
               editable={tag.type !== 'element'}
               active={tag.name === selectorProp?.name.replace(/:.*/, '')}
-              onAction={handleClickAction(i)}
+              onAction={handleClickAction(tagComponent ? i - 1 : i)}
               onClick={handleClickSelector}
-              onChange={handleChangeItem(i)}
+              onChange={handleChangeItem(tagComponent ? i - 1 : i)}
             />
           ))}
           <input
