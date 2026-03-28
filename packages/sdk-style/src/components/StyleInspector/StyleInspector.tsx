@@ -171,10 +171,13 @@ const StyleInspector = ({
     setStyleSelector(value);
   }, []);
 
-  const handleChangeStyleState = useCallback((value: string) => setStyleState(value as StyleState), []);
+  const handleChangeStyleState = useCallback(
+    (option?: Exclude<Option, OptionGroup>) => setStyleState(option?.value as StyleState),
+    []
+  );
 
   const handleChangeStyleVariant = useCallback(
-    (value?: Exclude<Option, OptionGroup>) => setStyleVariant(value?.value),
+    (option?: Exclude<Option, OptionGroup>) => setStyleVariant(option?.value),
     []
   );
 
@@ -228,26 +231,37 @@ const StyleInspector = ({
                 ))}
               </Select>
             )}
-            {allowStyleState && (
-              <Select className="grow basis-0" size="xs" onChange={handleChangeStyleState} value={styleState}>
-                <option value="">None</option>
-                <option value="hover">Hover</option>
-                <option value="focus">Focus</option>
-                <option value="active">Active</option>
-                <option value="disabled">Disabled</option>
-              </Select>
-            )}
             {allowStyleVariant && (
-              <Select2
-                className="grow basis-0"
-                value={styleVariant}
-                options={variants}
-                onChange={handleChangeStyleVariant}
-                size="xs"
-                placeholder="Variant"
-                allowCreateOptions
-                clearable
-              />
+              <div className="grow basis-0">
+                <Select2
+                  className="grow basis-0"
+                  value={styleVariant}
+                  options={variants}
+                  placeholder="Variant"
+                  size="xs"
+                  allowCreateOptions
+                  clearable
+                  onChange={handleChangeStyleVariant}
+                />
+              </div>
+            )}
+            {allowStyleState && (
+              <div className="grow basis-0">
+                <Select2
+                  className="grow basis-0"
+                  value={styleState}
+                  options={[
+                    { label: 'Hover', value: 'hover' },
+                    { label: 'Focus', value: 'focus' },
+                    { label: 'Active', value: 'active' },
+                    { label: 'Disabled', value: 'disabled' }
+                  ]}
+                  placeholder="State"
+                  size="xs"
+                  clearable
+                  onChange={handleChangeStyleState}
+                />
+              </div>
             )}
           </div>
         )}
