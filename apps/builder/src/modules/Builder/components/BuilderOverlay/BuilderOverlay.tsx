@@ -172,13 +172,26 @@ const BuilderOverlay = ({
     }
 
     const handler = (events: Record<EventBridgeEvent, unknown>) => {
-      const attribute = (events['styleUpdateSelector'] as string[])[2] ?? '';
-      if (attribute.includes('padding') || attribute.includes('margin') || attribute.includes('border') || !attribute) {
-        handleProcessContainer(overlayProps.elementDOM);
+      for (const event in events) {
+        let refresh = false;
+        if (event === 'styleAddSelector') {
+          const attribute = (events[event] as string[])[3] ?? '';
+          refresh =
+            attribute.includes('padding') || attribute.includes('margin') || attribute.includes('border') || !attribute;
+        } else if (event === 'styleUpdateSelector') {
+          const attribute = (events[event] as string[])[2] ?? '';
+          refresh =
+            attribute.includes('padding') || attribute.includes('margin') || attribute.includes('border') || !attribute;
+        }
+
+        if (refresh) {
+          handleProcessContainer(overlayProps.elementDOM);
+          refresh = false;
+        }
       }
     };
 
-    return eventBridge.listen(['styleUpdateSelector'], handler);
+    return eventBridge.listen(['styleAddSelector', 'styleUpdateSelector'], handler);
   }, [handleProcessContainer, overlayProps]);
 
   useEffect(() => {

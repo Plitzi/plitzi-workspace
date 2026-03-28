@@ -41,14 +41,25 @@ const OverlaySpacing = ({
 
   useEffect(() => {
     const handler = (events: Record<EventBridgeEvent, unknown>) => {
-      const attribute = (events['styleUpdateSelector'] as string[])[2] ?? '';
-      if (attribute.includes('padding') || attribute.includes('margin') || !attribute) {
-        const value = getStyle();
-        setRawStyle(value);
+      for (const event in events) {
+        let refresh = false;
+        if (event === 'styleAddSelector') {
+          const attribute = (events[event] as string[])[3] ?? '';
+          refresh = attribute.includes('padding') || attribute.includes('margin') || !attribute;
+        } else if (event === 'styleUpdateSelector') {
+          const attribute = (events[event] as string[])[2] ?? '';
+          refresh = attribute.includes('padding') || attribute.includes('margin') || !attribute;
+        }
+
+        if (refresh) {
+          const value = getStyle();
+          setRawStyle(value);
+          refresh = false;
+        }
       }
     };
 
-    return eventBridge.listen(['styleUpdateSelector'], handler);
+    return eventBridge.listen(['styleAddSelector', 'styleUpdateSelector'], handler);
   }, [getStyle, id]);
 
   useEffect(() => {
