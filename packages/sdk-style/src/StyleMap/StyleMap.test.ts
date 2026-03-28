@@ -537,6 +537,46 @@ describe('StyleMap', () => {
     it('does nothing if styleItem does not exist', () => {
       expect(StyleMap.updateSelector(style, 'desktop', 'ghost', 'color', 'red', paramsBase)).toBe(false);
     });
+
+    it('allows set a new object value when path is not defined, should auto-remove undefined atributes', () => {
+      expect(
+        StyleMap.addSelector(
+          style,
+          'desktop',
+          'modalContainer',
+          'element',
+          undefined,
+          {
+            base: { default: {} },
+            headerContainer: {
+              default: {
+                'border-bottom-color': 'var(--border)',
+                'border-bottom-style': 'solid',
+                'border-bottom-width': '1px'
+              }
+            },
+            rootContainer: { default: { 'background-color': 'var(--card)', height: 'auto', 'padding-right': '10px' } }
+          },
+          { ...paramsBase, componentType: 'modalContainer', styleSelector: undefined }
+        )
+      ).toBe(true);
+
+      expect(
+        StyleMap.updateSelector(
+          style,
+          'desktop',
+          'modalContainer',
+          undefined,
+          { 'background-color': 'var(--card)', height: 'auto', color: undefined },
+          { ...paramsBase, componentType: 'modalContainer', styleSelector: 'rootContainer' }
+        )
+      ).toBe(true);
+
+      expect(style.platform.desktop.modalContainer.attributes.rootContainer.default).toEqual({
+        'background-color': 'var(--card)',
+        height: 'auto'
+      });
+    });
   });
 
   describe('getSelector', () => {

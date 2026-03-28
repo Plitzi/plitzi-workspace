@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
+
 import { isStyleObject } from './isValueValid';
 
 import type {
@@ -11,7 +12,7 @@ import type {
   StyleVariants
 } from '@plitzi/sdk-shared';
 
-const applyValue = (
+const parseValue = (
   path: StyleCategory | undefined,
   value:
     | StyleItem['attributes']
@@ -21,24 +22,24 @@ const applyValue = (
     | StyleStates
     | StyleBlock
     | undefined,
-  target: StyleObject
-) => {
+  prevValue: StyleObject
+): StyleObject => {
   if (path && (typeof value === 'string' || typeof value === 'number')) {
-    target[path] = value as StyleValue;
-
-    return;
+    return { ...prevValue, [path]: value };
   }
 
   if (value && isStyleObject(value as Partial<StyleObject>)) {
-    const v = value as StyleObject;
-    for (const k in v) {
-      if (v[k as StyleCategory] === undefined) {
-        delete target[k as StyleCategory];
-      } else {
-        target[k as StyleCategory] = v[k as StyleCategory] as StyleValue;
+    const newValue = { ...(value as StyleObject) } as StyleObject;
+    for (const k in value as StyleObject) {
+      if (newValue[k as StyleCategory] === undefined) {
+        delete newValue[k as StyleCategory];
       }
     }
+
+    return newValue;
   }
+
+  return prevValue;
 };
 
 const getTargetPath = (styleSelector: string, styleVariant?: string, styleState?: string) => {
@@ -60,4 +61,4 @@ const getTargetPath = (styleSelector: string, styleVariant?: string, styleState?
 const isEmptyObject = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0;
 
-export { getTargetPath, isEmptyObject, applyValue };
+export { getTargetPath, isEmptyObject, parseValue };

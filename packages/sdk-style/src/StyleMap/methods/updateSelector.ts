@@ -3,7 +3,7 @@ import { omit, set, get } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../helpers/processSelector';
 import getStyleItem from '../helpers/getStyleItem';
 import isValidValue, { isStyleObject } from '../helpers/isValueValid';
-import { getTargetPath, isEmptyObject, applyValue } from '../helpers/utils';
+import { getTargetPath, isEmptyObject, parseValue } from '../helpers/utils';
 
 import type {
   DisplayMode,
@@ -61,9 +61,8 @@ const updateSelector = (
       }
       // do nothing for state/variant
     } else {
-      const target = get(styleItem, targetPath, {});
-      applyValue(path, value, target);
-      set(styleItem, targetPath, target);
+      const currentValue = get(styleItem, targetPath, {});
+      set(styleItem, targetPath, parseValue(path, value, currentValue));
     }
   } else if (path) {
     const targetPath = getTargetPath(styleSelector, styleVariant, styleState);

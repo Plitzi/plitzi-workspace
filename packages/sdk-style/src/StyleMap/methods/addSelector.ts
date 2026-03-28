@@ -3,7 +3,7 @@ import { set } from '@plitzi/plitzi-ui/helpers';
 import processSelector from '../../helpers/processSelector';
 import getStyleItem from '../helpers/getStyleItem';
 import isValidValue, { isStyleAttributes } from '../helpers/isValueValid';
-import { applyValue } from '../helpers/utils';
+import { parseValue } from '../helpers/utils';
 
 import type {
   DisplayMode,
@@ -78,19 +78,19 @@ const addSelector = (
       variant.states ??= {};
       variant.states[styleState] ??= {};
 
-      applyValue(path, value, variant.states[styleState]);
+      variant.states[styleState] = parseValue(path, value, variant.states[styleState]);
     } else {
       variant.default ??= {};
-      applyValue(path, value, variant.default);
+      variant.default = parseValue(path, value, variant.default);
     }
   } else if (styleState) {
     attrBlock.states ??= {};
     attrBlock.states[styleState] ??= {};
-    applyValue(path, value, attrBlock.states[styleState]);
+    attrBlock.states[styleState] = parseValue(path, value, attrBlock.states[styleState]);
   } else {
     attrBlock.default ??= {};
 
-    applyValue(path, value, attrBlock.default);
+    attrBlock.default = parseValue(path, value, attrBlock.default);
   }
 
   styleItem.cache = processSelector(styleItem);
