@@ -53,13 +53,15 @@ const useInspectorValues = <TAsValue extends boolean>({
     const block = selector.attributes[styleSelector];
     if (styleState && styleVariant) {
       attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
-    } else if (styleState) {
-      attributes = block.states?.[styleState] ?? {};
     } else if (styleVariant) {
       attributes = block.variants?.[styleVariant].default ?? {};
+    } else if (styleState) {
+      attributes = block.states?.[styleState] ?? {};
     } else {
-      attributes = block.default;
+      attributes = block.default ?? {};
     }
+  } else {
+    attributes = {};
   }
 
   const hasInherit = useMemo(
