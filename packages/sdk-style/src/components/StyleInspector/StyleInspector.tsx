@@ -30,6 +30,7 @@ export type StyleInspectorProps = {
   allowStyleState?: boolean;
   allowStyleVariant?: boolean;
   onChange?: (selector?: string) => void;
+  onRemoveVariant?: (variant: string) => void;
 };
 
 const StyleInspector = ({
@@ -42,7 +43,8 @@ const StyleInspector = ({
   allowStyleSelector = true,
   allowStyleState = true,
   allowStyleVariant = true,
-  onChange
+  onChange,
+  onRemoveVariant
 }: StyleInspectorProps) => {
   const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
   const {
@@ -62,6 +64,14 @@ const StyleInspector = ({
   const selector = useMemo<StyleItem | undefined>(
     () => get(style, `platform.${displayMode}.${value}`),
     [style, displayMode, value]
+  );
+  const variants = useMemo(
+    () =>
+      Object.keys(selector?.attributes[styleSelector].variants ?? {}).map(variant => ({
+        label: variant,
+        value: variant
+      })),
+    [selector?.attributes, styleSelector]
   );
 
   useEffect(() => {
@@ -176,18 +186,38 @@ const StyleInspector = ({
     []
   );
 
-  const handleChangeStyleVariant = useCallback(
-    (option?: Exclude<Option, OptionGroup>) => setStyleVariant(option?.value),
-    []
-  );
+  const handleChangeStyleVariant = useCallback((option?: Exclude<Option, OptionGroup>) => {
+    setStyleVariant(option?.value);
+  }, []);
 
-  const variants = useMemo(
-    () =>
-      Object.keys(selector?.attributes[styleSelector].variants ?? {}).map(variant => ({
-        label: variant,
-        value: variant
-      })),
-    [selector?.attributes, styleSelector]
+  const handleRemoveStyleVariant = useCallback(
+    (option: Exclude<Option, OptionGroup>) => {
+      onRemoveVariant?.(option.value);
+      if (styleState) {
+        setStyleState(undefined);
+      }
+
+      if (option.value === styleVariant) {
+        setStyleVariant(undefined);
+      }
+
+      builderHandler('styleUpdateSelector', displayMode, selector?.name, undefined, undefined, {
+        styleSelector,
+        styleVariant: option.value,
+        styleState,
+        componentType: selector?.componentType
+      });
+    },
+    [
+      builderHandler,
+      displayMode,
+      onRemoveVariant,
+      selector?.componentType,
+      selector?.name,
+      styleSelector,
+      styleState,
+      styleVariant
+    ]
   );
 
   return (
@@ -240,8 +270,10 @@ const StyleInspector = ({
                   placeholder="Variant"
                   size="xs"
                   allowCreateOptions
+                  allowRemoveOptions
                   clearable
                   onChange={handleChangeStyleVariant}
+                  onRemove={handleRemoveStyleVariant}
                 />
               </div>
             )}
