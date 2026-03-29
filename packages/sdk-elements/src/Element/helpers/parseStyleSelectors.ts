@@ -7,15 +7,6 @@ const parseStyleSelectors = (definition: Element['definition']) => {
 
   return Object.fromEntries(
     Object.entries(definition.styleSelectors).map(([styleSelector, selectors]) => {
-      if (!selectors.includes(definition.type)) {
-        // element global selector, we need to add the element type as a base selector
-        if (selectors) {
-          selectors = `${definition.type} ${selectors}`;
-        } else {
-          selectors = definition.type;
-        }
-      }
-
       const baseClass =
         styleSelector === 'base' ? `plitzi__${definition.type}` : `plitzi__${definition.type}-${styleSelector}`;
 
@@ -29,7 +20,13 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         const variantList = Array.isArray(variants) ? variants : [variants];
         nextSelectors = selectors
           .split(' ')
-          .map(sel => `${sel} ${variantList.map(v => `${sel}--${v}`).join(' ')}`)
+          .map(sel => {
+            if (sel === definition.type) {
+              return variantList.map(v => `${sel}--${v}`).join(' ');
+            }
+
+            return `${sel} ${variantList.map(v => `${sel}--${v}`).join(' ')}`;
+          })
           .join(' ');
       }
 
