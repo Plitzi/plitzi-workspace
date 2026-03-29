@@ -37,9 +37,15 @@ const parseStyleSelectors = (definition: Element['definition']) => {
             return `${sel} ${variantList.map(v => `${sel}--${v}`).join(' ')}`;
           })
           .join(' ');
+
+        if (selectors === nextSelectors) {
+          return [styleSelector, selectors];
+        }
+
+        return [styleSelector, `${baseClass} ${nextSelectors}`];
       }
 
-      return [styleSelector, `${baseClass} ${nextSelectors}`];
+      return [styleSelector, selectors];
     })
   ) as { base: string } & Omit<Record<string, string>, 'base'>;
 };
