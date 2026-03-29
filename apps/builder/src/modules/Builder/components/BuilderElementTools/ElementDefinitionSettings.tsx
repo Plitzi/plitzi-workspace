@@ -15,13 +15,19 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
   const [showStyleVariants, setShowStyleVariants] = useState(false);
   const { label, initialState, styleSelectors } = definition;
   const visibility = useMemo(() => get(initialState, 'visibility', true), [initialState]);
-  const styleVariant = useMemo(
-    () => get(initialState, 'styleVariant', {} as Partial<Record<string, string>>),
-    [initialState]
-  );
+  const styleVariant = useMemo(() => get(initialState, 'styleVariant'), [initialState]);
 
   const styleVariants = useMemo<[string, string][]>(
-    () => Object.keys(styleSelectors).map(key => [key, styleVariant[key] ?? '']),
+    () =>
+      Object.keys(styleSelectors).flatMap(key => {
+        const value = styleVariant?.[key];
+
+        if (Array.isArray(value)) {
+          return value.map(v => [key, v] as [string, string]);
+        }
+
+        return [[key, value ?? ''] as [string, string]];
+      }),
     [styleSelectors, styleVariant]
   );
 
@@ -31,7 +37,19 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
 
   const handleChangeStyleVariant = useCallback(
     (value: [string, string][]) => {
-      onUpdate?.('initialState', { ...initialState, styleVariant: Object.fromEntries(value) }, true);
+      const valueParsed = value.reduce<Record<string, string | string[]>>((acc, [key, val]) => {
+        if (!acc[key]) {
+          acc[key] = val;
+        } else if (Array.isArray(acc[key])) {
+          acc[key] = [...acc[key], val];
+        } else {
+          acc[key] = [acc[key], val];
+        }
+
+        return acc;
+      }, {});
+
+      onUpdate?.('initialState', { ...initialState, styleVariant: valueParsed }, true);
     },
     [initialState, onUpdate]
   );
@@ -57,9 +75,8 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
           size="xs"
           label="Style Variants"
           value={styleVariants}
-          allowRemove={false}
-          allowAppend={false}
-          allowKeyEdit={false}
+          allowDuplicateKeys
+          keysAllowed={Object.keys(styleSelectors)}
           required={false}
           clearable
           onChange={handleChangeStyleVariant}

@@ -9,6 +9,7 @@ import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
+import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, InternalPropsSTG1, Schema } from '@plitzi/sdk-shared';
@@ -60,18 +61,7 @@ const getProps = (
   };
 
   // StyleSelectors now will include the component class
-  const styleVariant = definition.initialState?.styleVariant;
-  definition.styleSelectors = Object.fromEntries(
-    Object.entries(definition.styleSelectors).map(([styleSelector, selectors]) => {
-      const value =
-        styleSelector === 'base' ? `plitzi__${definition.type}` : `plitzi__${definition.type}-${styleSelector}`;
-      if (styleVariant && styleVariant[styleSelector] && typeof selectors === 'string') {
-        selectors = selectors.replace(/\S+/g, selector => `${selector} ${selectors}--${styleVariant[styleSelector]}`);
-      }
-
-      return value ? [styleSelector, `${value} ${selectors}`] : [styleSelector, selectors];
-    })
-  ) as { base: string } & Omit<Record<string, string>, 'base'>;
+  definition.styleSelectors = parseStyleSelectors(definition);
 
   return {
     ...internalProps,
