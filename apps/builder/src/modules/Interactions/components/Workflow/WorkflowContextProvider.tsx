@@ -231,7 +231,10 @@ const WorkflowContextProvider = ({
   }, []);
 
   const dataSource = useMemo<Record<string, Source['meta']>>(
-    () => Object.values(getSources()).reduce((acum, source) => ({ ...acum, [source.meta.source]: source.meta }), {}),
+    () =>
+      Object.values(getSources())
+        .filter(source => source.meta.source)
+        .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {}),
     [getSources]
   );
 

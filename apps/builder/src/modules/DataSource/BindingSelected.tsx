@@ -28,7 +28,7 @@ const BindingSelected = ({
   id = '',
   sources,
   category = '',
-  fromPath = '',
+  fromPath,
   toPath = '',
   source = '',
   transformers,
@@ -39,8 +39,12 @@ const BindingSelected = ({
   onRemove
 }: BindingSelected) => {
   const [fields, setFields] = useState<SourceField[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(typeof get(sources, source, {} as SourceMeta).fields === 'function');
   const name = useMemo(() => {
+    if (!fromPath) {
+      return 'None';
+    }
+
     const field = fields.find(f => f.path === fromPath);
     if (!field) {
       return fromPath;
@@ -69,6 +73,8 @@ const BindingSelected = ({
   useEffect(() => {
     if (source && sources?.[source]) {
       void processFields();
+    } else {
+      setLoading(false);
     }
   }, [sources, source, processFields]);
 
@@ -107,11 +113,13 @@ const BindingSelected = ({
       <div className="flex w-full flex-col truncate border-l border-gray-300">
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
-          <div className="ml-1 truncate capitalize">{!loading && `${sourceName} [${name}]`}</div>
+          <div className="ml-1 truncate capitalize">
+            {!loading ? (fromPath ? `${sourceName} [${name}]` : 'None') : 'Loading...'}
+          </div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={fromPath}>
           <div className="font-bold">Path:</div>
-          <div className="ml-1 truncate">{`${source}.${fromPath}`}</div>
+          <div className="ml-1 truncate">{fromPath ? `${source}.${fromPath}` : ''}</div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={toPath}>
           <div className="font-bold">To:</div>

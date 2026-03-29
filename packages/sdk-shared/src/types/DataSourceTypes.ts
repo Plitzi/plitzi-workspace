@@ -50,9 +50,9 @@ export type SourceField = {
 };
 
 export type SourceMeta = {
-  id: string;
+  id?: string;
   name: string;
-  source: string;
+  source?: string;
   fields?: SourceField[] | (() => SourceField[] | Promise<SourceField[]>);
 };
 

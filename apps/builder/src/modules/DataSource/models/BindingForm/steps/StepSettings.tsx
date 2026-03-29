@@ -4,11 +4,12 @@ import { useMemo } from 'react';
 import type { SourceField } from '@plitzi/sdk-shared';
 
 export type StepSettingsProps = {
+  source: string;
   fields: SourceField[];
   attributes?: { label: string; path: string }[];
 };
 
-const StepSettings = ({ fields, attributes }: StepSettingsProps) => {
+const StepSettings = ({ source, fields, attributes }: StepSettingsProps) => {
   const fromPathOptions = useMemo(
     () =>
       fields.reduce<{ label: string; value: string }[]>(
@@ -37,14 +38,16 @@ const StepSettings = ({ fields, attributes }: StepSettingsProps) => {
         size="xs"
         valueAsString
       />
-      <Form.Select2
-        name="fromPath"
-        placeholder="Select Path"
-        allowCreateOptions
-        options={fromPathOptions}
-        size="xs"
-        valueAsString
-      />
+      {source && (
+        <Form.Select2
+          name="fromPath"
+          placeholder="Select Path"
+          allowCreateOptions
+          options={fromPathOptions}
+          size="xs"
+          valueAsString
+        />
+      )}
     </>
   );
 };

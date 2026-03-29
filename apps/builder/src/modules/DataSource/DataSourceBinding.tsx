@@ -15,7 +15,7 @@ import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';
 
-import type { Element, ElementBinding, BindingCategory } from '@plitzi/sdk-shared';
+import type { Element, ElementBinding, BindingCategory, SourceMeta } from '@plitzi/sdk-shared';
 
 const bindingCategories: BindingCategory[] = ['attributes', 'style', 'initialState'];
 
@@ -35,10 +35,11 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
   );
   const sources = useMemo(
     () =>
-      Object.values(getSourcesByElementId(schema.flat, id)).reduce(
-        (acum, source) => ({ ...acum, [source.meta.source]: source.meta }),
-        {}
-      ),
+      Object.values(getSourcesByElementId(schema.flat, id))
+        .filter(source => source.meta.source)
+        .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {
+          '': { id: undefined, source: undefined, name: 'None', fields: () => [] } as SourceMeta
+        }),
     [getSourcesByElementId, id, schema.flat]
   );
 
@@ -165,14 +166,10 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
       style: StyleBindingsAllowed,
       initialState: [
         { path: 'visibility', label: 'Visibility' },
-        ...Object.keys(definition.styleSelectors).map(styleSelector => ({
-          path: `styleSelectors.${styleSelector}`,
-          label: `Style Selector - ${styleSelector}`
-        })),
-        ...Object.keys(definition.styleSelectors).map(styleSelector => ({
-          path: `styleVariant.${styleSelector}`,
-          label: `Style Variant Selector - ${styleSelector}`
-        }))
+        ...Object.keys(definition.styleSelectors).flatMap(styleSelector => [
+          { path: `styleSelectors.${styleSelector}`, label: `Style Selector - ${styleSelector}` },
+          { path: `styleVariant.${styleSelector}`, label: `Style Variant - ${styleSelector}` }
+        ])
       ]
     }),
     [attributes, definition]

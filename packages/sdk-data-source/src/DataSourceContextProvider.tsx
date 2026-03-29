@@ -69,7 +69,7 @@ const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourc
 
       const ids = FlatMap.parentTree(schemaFlat, id);
       const sources = Object.values(sourcesRef.current)
-        .filter(source => ids.includes(source.meta.id) || source.meta.id === 'global')
+        .filter(source => (source.meta.id && ids.includes(source.meta.id)) || source.meta.id === 'global')
         .reduce<Record<string, { id: string; meta: SourceMeta; context: Context<unknown> }>>(
           (acum, source) => ({ ...acum, [source.id]: source }),
           {}

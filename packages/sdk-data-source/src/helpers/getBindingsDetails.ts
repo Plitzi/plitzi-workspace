@@ -9,18 +9,18 @@ import type { BindingCategory, Element, ElementBinding } from '@plitzi/sdk-share
 
 const getValues = (
   dataSource: Record<string, unknown>,
-  source: string,
-  path: string,
+  source: string | undefined,
+  path: string | undefined,
   result: Record<string, unknown>,
   bkey: string,
   attrKey: string
 ) => {
-  const fromPath = `${source}.${path}`;
+  const fromPath = path && source ? `${source}.${path}` : undefined;
   const toPath = bkey === 'initialState' ? `definition.${bkey}.${attrKey}` : `${bkey}.${attrKey}`;
 
   return {
-    fromValue: get(dataSource, fromPath, get(result, toPath)),
-    toValue: get(result, toPath, get(dataSource, fromPath))
+    fromValue: fromPath ? get(dataSource, fromPath, get(result, toPath)) : undefined,
+    toValue: get(result, toPath, fromPath ? get(dataSource, fromPath) : undefined)
   };
 };
 
@@ -44,7 +44,7 @@ const getBindingsDetails = (
       bindings[bkey].forEach((binding: ElementBinding) => {
         const { source, fromPath, transformers, when, enabled = true } = binding;
         let { toPath } = binding;
-        if (!source || !toPath || (when && !QueryBuilderEvaluator(when, dataSource, false, true)) || !enabled) {
+        if (!toPath || (when && !QueryBuilderEvaluator(when, dataSource, false, true)) || !enabled) {
           return;
         }
 
