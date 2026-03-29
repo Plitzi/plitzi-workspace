@@ -14,6 +14,15 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         return [styleSelector, selectors];
       }
 
+      if (!selectors.includes(definition.type)) {
+        // element global selector, we need to add the element type as a base selector
+        if (selectors) {
+          selectors = `${definition.type} ${selectors}`;
+        } else {
+          selectors = definition.type;
+        }
+      }
+
       const variants = definition.initialState?.styleVariant?.[styleSelector];
       let nextSelectors = selectors;
       if (variants) {
