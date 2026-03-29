@@ -71,10 +71,11 @@ const attributesToString = (
       )
     : [];
 
+  const variantBaseName = name.replace('plitzi__', '');
   const variantBlocks: string[] = variants
     ? Object.entries(variants).map(([variant, values]) =>
         getSelector(
-          `&[data-variant="${variant}"]${inline ? ',' : ', '}&${name}--${variant}`,
+          `&[data-variant="${variant}"]${inline ? ',' : ', '}&${variantBaseName}--${variant}`,
           values.default,
           values.states,
           undefined,

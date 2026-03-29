@@ -518,7 +518,10 @@ describe('processSelector', () => {
       attributes: {
         base: {
           default: { color: 'blue' },
-          states: { hover: { color: 'red' }, focus: { 'background-color': 'purple' } }
+          states: { hover: { color: 'red' }, focus: { 'background-color': 'purple' } },
+          variants: {
+            primary: { default: { 'background-color': 'purple' }, states: { hover: { 'background-color': 'blue' } } }
+          }
         },
         selectorA: {
           default: { color: 'blue' },
@@ -539,7 +542,7 @@ describe('processSelector', () => {
 
     const result3 = processSelector(styleItem2);
     expect(result3).toEqual(
-      '.plitzi__button{color:blue;--fancyVariable:#111;&:hover{color:red;}&:focus{background-color:purple;}.plitzi__button-selectorA{color:blue;&:hover{color:green;}}}@media(prefers-color-scheme:light){.plitzi__button{--fancyVariable:#111;}}@media(prefers-color-scheme:dark){.plitzi__button{--fancyVariable:#000;}}'
+      '.plitzi__button{color:blue;--fancyVariable:#111;&:hover{color:red;}&:focus{background-color:purple;}&[data-variant="primary"],&.button--primary{background-color:purple;&:hover{background-color:blue;}}.plitzi__button-selectorA{color:blue;&:hover{color:green;}}}@media(prefers-color-scheme:light){.plitzi__button{--fancyVariable:#111;}}@media(prefers-color-scheme:dark){.plitzi__button{--fancyVariable:#000;}}'
     );
 
     const result4 = processSelector(styleItem2, false);
@@ -554,6 +557,14 @@ describe('processSelector', () => {
 
   &:focus {
     background-color: purple;
+  }
+
+  &[data-variant="primary"], &.button--primary {
+    background-color: purple;
+
+    &:hover {
+      background-color: blue;
+    }
   }
 
   .plitzi__button-selectorA {
@@ -579,7 +590,7 @@ describe('processSelector', () => {
     );
   });
 
-  it('', () => {
+  it('functionality when is element + multiple styleSelector', () => {
     const styleItem = {
       name: 'modalContainer',
       type: 'element' as const,
