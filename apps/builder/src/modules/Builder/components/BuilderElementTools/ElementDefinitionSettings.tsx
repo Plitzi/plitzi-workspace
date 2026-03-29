@@ -16,7 +16,6 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
   const { label, initialState, styleSelectors } = definition;
   const visibility = useMemo(() => get(initialState, 'visibility', true), [initialState]);
   const styleVariant = useMemo(() => get(initialState, 'styleVariant'), [initialState]);
-
   const styleVariants = useMemo<[string, string][]>(
     () =>
       Object.keys(styleSelectors).flatMap(key => {
