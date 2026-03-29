@@ -18,16 +18,17 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
   const styleVariant = useMemo(() => get(initialState, 'styleVariant'), [initialState]);
   const styleVariants = useMemo<[string, string][]>(
     () =>
-      Object.keys(styleSelectors).flatMap(key => {
-        const value = styleVariant?.[key];
+      styleVariant
+        ? Object.keys(styleVariant).flatMap(key => {
+            const value = styleVariant[key];
+            if (Array.isArray(value)) {
+              return value.map(v => [key, v] as [string, string]);
+            }
 
-        if (Array.isArray(value)) {
-          return value.map(v => [key, v] as [string, string]);
-        }
-
-        return [[key, value ?? ''] as [string, string]];
-      }),
-    [styleSelectors, styleVariant]
+            return [[key, value ?? ''] as [string, string]];
+          })
+        : [],
+    [styleVariant]
   );
 
   const handleClickStyleVariants = useCallback(() => setShowStyleVariants(state => !state), []);
