@@ -3,7 +3,6 @@ import capitalize from './capitalize';
 import dateConverter from './dateConverter';
 import staticValue from './staticValue';
 import styleSelector from './styleSelector';
-import styleVariantSelector from './styleVariantSelector';
 import twigTemplate from './twigTemplate';
 
 import type { DataSourceUtility } from '@plitzi/sdk-shared';
@@ -14,8 +13,7 @@ const utilities = {
   staticValue,
   capitalize,
   arrayMap,
-  styleSelector,
-  styleVariantSelector
+  styleSelector
 } as Record<string, DataSourceUtility>;
 
 export const utilityOptions = Object.values(utilities).map(({ title, action }) => ({ label: title, value: action }));
