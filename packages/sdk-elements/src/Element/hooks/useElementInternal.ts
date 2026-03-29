@@ -65,7 +65,7 @@ const getProps = (
     Object.entries(definition.styleSelectors).map(([styleSelector, selectors]) => {
       const value =
         styleSelector === 'base' ? `plitzi__${definition.type}` : `plitzi__${definition.type}-${styleSelector}`;
-      if (styleVariant && styleVariant[styleSelector]) {
+      if (styleVariant && styleVariant[styleSelector] && typeof selectors === 'string') {
         selectors = selectors.replace(/\S+/g, selector => `${selector} ${selectors}--${styleVariant[styleSelector]}`);
       }
 

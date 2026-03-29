@@ -2,6 +2,7 @@ import arrayMap from './arrayMap';
 import capitalize from './capitalize';
 import dateConverter from './dateConverter';
 import staticValue from './staticValue';
+import stringToArray from './stringToArray';
 import styleSelector from './styleSelector';
 import twigTemplate from './twigTemplate';
 
@@ -13,6 +14,7 @@ const utilities = {
   staticValue,
   capitalize,
   arrayMap,
+  stringToArray,
   styleSelector
 } as Record<string, DataSourceUtility>;
 
