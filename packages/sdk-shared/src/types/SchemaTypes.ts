@@ -50,8 +50,8 @@ export type ElementDefinition = {
   bindings?: Partial<Record<BindingCategory, ElementBinding[]>>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
-    // example - styleVariant: { base: 'primary', selectorA: 'secondary', selectorB: ['primary', 'xs'] }
-    styleVariant?: Partial<Record<string, string | string[]>>;
+    // example - styleVariant: { class1: { base: 'primary', selectorA: 'secondary', selectorB: ['primary', 'xs'] } }
+    styleVariant?: Partial<Record<string, Partial<Record<string, string | string[]>>>>;
     styleSelectors?: ElementDefinition['styleSelectors'];
     visibility?: boolean;
     [key: string]: unknown;

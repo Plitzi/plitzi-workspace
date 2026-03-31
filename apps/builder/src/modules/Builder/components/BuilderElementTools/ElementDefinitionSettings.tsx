@@ -16,19 +16,17 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
   const { label, initialState, styleSelectors } = definition;
   const visibility = useMemo(() => get(initialState, 'visibility', true), [initialState]);
   const styleVariant = useMemo(() => get(initialState, 'styleVariant'), [initialState]);
-  const styleVariants = useMemo<[string, string][]>(
+  const keysAllowed = useMemo(
     () =>
-      styleVariant
-        ? Object.keys(styleVariant).flatMap(key => {
-            const value = styleVariant[key];
-            if (Array.isArray(value)) {
-              return value.map(v => [key, v] as [string, string]);
-            }
+      Object.entries(styleSelectors).flatMap(([styleSelector, selectors]) => {
+        const selectorsArr = selectors ? [definition.type, ...selectors.split(' ')] : [definition.type];
 
-            return [[key, value ?? ''] as [string, string]];
-          })
-        : [],
-    [styleVariant]
+        return selectorsArr.map(selector => ({
+          value: `${selector}.${styleSelector}`,
+          label: `${selector} (${styleSelector})`
+        }));
+      }),
+    [definition.type, styleSelectors]
   );
 
   const handleClickStyleVariants = useCallback(() => setShowStyleVariants(state => !state), []);
@@ -36,20 +34,8 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
   const handleChangeLabel = useCallback((value: string) => onUpdate?.('label', value, true), [onUpdate]);
 
   const handleChangeStyleVariant = useCallback(
-    (value: [string, string][]) => {
-      const valueParsed = value.reduce<Record<string, string | string[]>>((acc, [key, val]) => {
-        if (!acc[key]) {
-          acc[key] = val;
-        } else if (Array.isArray(acc[key])) {
-          acc[key] = [...acc[key], val];
-        } else {
-          acc[key] = [acc[key], val];
-        }
-
-        return acc;
-      }, {});
-
-      onUpdate?.('initialState', { ...initialState, styleVariant: valueParsed }, true);
+    (_value: [string, string][], valueObj: object) => {
+      onUpdate?.('initialState', { ...initialState, styleVariant: valueObj }, true);
     },
     [initialState, onUpdate]
   );
@@ -74,9 +60,9 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
         <KVInput
           size="xs"
           label="Style Variants"
-          value={styleVariants}
+          value={styleVariant}
           allowDuplicateKeys
-          keysAllowed={Object.keys(styleSelectors)}
+          keysAllowed={keysAllowed}
           required={false}
           clearable
           onChange={handleChangeStyleVariant}

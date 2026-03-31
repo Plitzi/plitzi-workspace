@@ -1,9 +1,7 @@
 import type { Element } from '@plitzi/sdk-shared';
 
 const parseStyleSelectors = (definition: Element['definition']) => {
-  if (!definition.initialState?.styleVariant) {
-    return definition.styleSelectors;
-  }
+  const styleVariant = definition.initialState?.styleVariant;
 
   return Object.fromEntries(
     Object.entries(definition.styleSelectors).map(([styleSelector, selectors]) => {
@@ -14,38 +12,32 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         return [styleSelector, selectors];
       }
 
-      if (!selectors.includes(definition.type)) {
-        // element global selector, we need to add the element type as a base selector
-        if (selectors) {
-          selectors = `${definition.type} ${selectors}`;
-        } else {
-          selectors = definition.type;
-        }
+      if (!selectors.includes(definition.type) && styleVariant?.[definition.type]?.[styleSelector]) {
+        selectors = selectors ? `${definition.type} ${selectors}` : definition.type;
       }
 
-      const variants = definition.initialState?.styleVariant?.[styleSelector];
-      let nextSelectors = selectors;
-      if (variants) {
-        const variantList = Array.isArray(variants) ? variants : [variants];
-        nextSelectors = selectors
-          .split(' ')
-          .map(sel => {
-            if (sel === definition.type) {
-              return variantList.map(v => `${sel}--${v}`).join(' ');
-            }
+      const nextSelectors = selectors
+        .split(' ')
+        .map(sel => {
+          const variantsForSelector = styleVariant?.[sel]?.[styleSelector];
+          if (!variantsForSelector) {
+            return sel;
+          }
 
-            return `${sel} ${variantList.map(v => `${sel}--${v}`).join(' ')}`;
-          })
-          .join(' ');
+          const list = Array.isArray(variantsForSelector) ? variantsForSelector : [variantsForSelector];
+          if (sel === definition.type) {
+            return list.map(v => `${sel}--${v}`).join(' ');
+          }
 
-        if (selectors === nextSelectors) {
-          return [styleSelector, selectors];
-        }
+          return [sel, ...list.map(v => `${sel}--${v}`)].join(' ');
+        })
+        .join(' ');
 
-        return [styleSelector, `${baseClass} ${nextSelectors}`];
+      if (!nextSelectors) {
+        return [styleSelector, nextSelectors];
       }
 
-      return [styleSelector, selectors];
+      return [styleSelector, `${baseClass} ${nextSelectors}`];
     })
   ) as { base: string } & Omit<Record<string, string>, 'base'>;
 };
