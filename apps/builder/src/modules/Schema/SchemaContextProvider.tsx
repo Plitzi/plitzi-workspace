@@ -606,7 +606,7 @@ const SchemaContextProvider = ({
     schemaRemoveVariable
   ]);
 
-  const pageDefinitions = useValueMemo<Record<string, Element>>(
+  const pageDefinitions = useValueMemo(
     pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
     'soft'
   );
