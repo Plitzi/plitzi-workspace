@@ -38,14 +38,12 @@ import type { ReactNode } from 'react';
 
 export type SchemaContextProviderProps = {
   children?: ReactNode;
-  type?: 'main' | 'partial' | 'template' | 'segment';
   schema?: Schema;
   includeSubscriptions?: boolean;
 };
 
 const SchemaContextProvider = ({
   children,
-  type = 'main',
   schema: schemaProp,
   includeSubscriptions = true
 }: SchemaContextProviderProps) => {
@@ -56,26 +54,18 @@ const SchemaContextProvider = ({
       return { ...EMPTY_SCHEMA.schema, ...schemaProp };
     }
 
-    switch (type) {
-      case 'main':
-        return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
-
-      case 'partial':
-      case 'template':
-      default:
-        return EMPTY_SCHEMA.schema;
-    }
-  }, [internalData.schema, schemaProp, type]);
+    return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
+  }, [internalData.schema, schemaProp]);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
   const [schema, dispatchSchema] = useReducerWithMiddleware(SchemaReducer, schemaPropMemo, [
     {
       middleware: undoableMiddleware as ReducerMiddlewareCallback<Schema, [action: SchemaReducerActions]>,
-      filterCallback: action => !action.fromSubscriptions && type === 'main'
+      filterCallback: action => !action.fromSubscriptions
     },
     {
       middleware: enqueueMiddleware as ReducerMiddlewareCallback<Schema, [action: SchemaReducerActions]>,
-      filterCallback: action => !action.fromSubscriptions && type === 'main'
+      filterCallback: action => !action.fromSubscriptions
     }
   ]);
   const schemaRef = useRef(schema);
@@ -272,7 +262,7 @@ const SchemaContextProvider = ({
   );
 
   useEffect(() => {
-    if (includeSubscriptions && type === 'main') {
+    if (includeSubscriptions) {
       // Pages
 
       subscriptionManager.subscribe('SpaceAddPage', {}, data => {
@@ -441,7 +431,7 @@ const SchemaContextProvider = ({
     }
 
     return () => {
-      if (includeSubscriptions && type === 'main') {
+      if (includeSubscriptions) {
         subscriptionManager.unsubscribe([
           'SpaceAddPage',
           'SpaceHomePage',
@@ -467,7 +457,6 @@ const SchemaContextProvider = ({
   }, [
     subscriptionManager,
     includeSubscriptions,
-    type,
     schemaAddPage,
     schemaHomePage,
     schemaUpdatePage,
@@ -517,7 +506,7 @@ const SchemaContextProvider = ({
     ]
   );
 
-  useEventBridge('main', mainEvents, undefined, undefined, type !== 'main');
+  useEventBridge('main', mainEvents, undefined, undefined);
   // End When type = 'main'
 
   const events = useMemo(
@@ -545,31 +534,6 @@ const SchemaContextProvider = ({
 
   // @todo: move everything to builderHandler
   const valueMemo = useMemo(() => {
-    if (type === 'main') {
-      return {
-        dispatchSchema,
-        schema,
-        schemaUpdate,
-        schemaAddElement,
-        schemaUpdateElement,
-        schemaMoveElement,
-        schemaCloneElement,
-        schemaRemoveElement,
-        schemaAddPage,
-        schemaHomePage,
-        schemaUpdatePage,
-        schemaRemovePage,
-        schemaAddPageFolder,
-        schemaUpdatePageFolder,
-        schemaRemovePageFolder,
-        schemaAddVariable,
-        schemaUpdateVariable,
-        schemaRemoveVariable,
-        schemaAddTemplate,
-        schemaUpdateSettings
-      };
-    }
-
     return {
       dispatchSchema,
       schema,
@@ -579,11 +543,20 @@ const SchemaContextProvider = ({
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
+      schemaAddPage,
+      schemaHomePage,
+      schemaUpdatePage,
+      schemaRemovePage,
+      schemaAddPageFolder,
+      schemaUpdatePageFolder,
+      schemaRemovePageFolder,
+      schemaAddVariable,
+      schemaUpdateVariable,
+      schemaRemoveVariable,
       schemaAddTemplate,
       schemaUpdateSettings
     };
   }, [
-    type,
     dispatchSchema,
     schema,
     schemaUpdate,
@@ -624,17 +597,13 @@ const SchemaContextProvider = ({
 
   const schemaSettings = useMemo(() => schema.settings, [schema.settings]);
 
-  if (type === 'main') {
-    return (
-      <SchemaMainContext value={mainSchemaValueMemo}>
-        <SchemaSettingsContext value={schemaSettings}>
-          <SchemaContext value={valueMemo}>{children}</SchemaContext>
-        </SchemaSettingsContext>
-      </SchemaMainContext>
-    );
-  }
-
-  return <SchemaContext value={valueMemo}>{children}</SchemaContext>;
+  return (
+    <SchemaMainContext value={mainSchemaValueMemo}>
+      <SchemaSettingsContext value={schemaSettings}>
+        <SchemaContext value={valueMemo}>{children}</SchemaContext>
+      </SchemaSettingsContext>
+    </SchemaMainContext>
+  );
 };
 
 export default SchemaContextProvider;

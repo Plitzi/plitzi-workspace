@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import arrayMap from './arrayMap';
 import capitalize from './capitalize';
 import dateConverter from './dateConverter';
@@ -16,7 +18,7 @@ const utilities = {
   arrayMap,
   stringToArray,
   styleSelector
-} as Record<string, DataSourceUtility>;
+} as Record<string, DataSourceUtility<any, any, any>>;
 
 export const utilityOptions = Object.values(utilities).map(({ title, action }) => ({ label: title, value: action }));
 

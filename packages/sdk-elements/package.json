@@ -74,6 +74,10 @@
       "types": "./dist/src/Element/helpers/parseStyle.d.ts",
       "import": "./dist/src/Element/helpers/parseStyle.mjs"
     },
+    "./Element/helpers/parseStyleSelectors": {
+      "types": "./dist/src/Element/helpers/parseStyleSelectors.d.ts",
+      "import": "./dist/src/Element/helpers/parseStyleSelectors.mjs"
+    },
     "./Element/helpers/pluginSelector": {
       "types": "./dist/src/Element/helpers/pluginSelector.d.ts",
       "import": "./dist/src/Element/helpers/pluginSelector.mjs"

@@ -178,6 +178,10 @@
       "types": "./dist/src/components/StyleInspector/index.d.ts",
       "import": "./dist/src/components/StyleInspector/index.mjs"
     },
+    "./components/StyleInspector/Inspector": {
+      "types": "./dist/src/components/StyleInspector/Inspector.d.ts",
+      "import": "./dist/src/components/StyleInspector/Inspector.mjs"
+    },
     "./components/StyleInspector/StyleInspector": {
       "types": "./dist/src/components/StyleInspector/StyleInspector.d.ts",
       "import": "./dist/src/components/StyleInspector/StyleInspector.mjs"
@@ -425,6 +429,18 @@
     "./components/StyleInspector/categories/Position/index": {
       "types": "./dist/src/components/StyleInspector/categories/Position/index.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Position/index.mjs"
+    },
+    "./components/StyleInspector/categories/RawStyle": {
+      "types": "./dist/src/components/StyleInspector/categories/RawStyle/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/RawStyle/index.mjs"
+    },
+    "./components/StyleInspector/categories/RawStyle/RawStyle": {
+      "types": "./dist/src/components/StyleInspector/categories/RawStyle/RawStyle.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/RawStyle/RawStyle.mjs"
+    },
+    "./components/StyleInspector/categories/RawStyle/index": {
+      "types": "./dist/src/components/StyleInspector/categories/RawStyle/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/RawStyle/index.mjs"
     },
     "./components/StyleInspector/categories/Size": {
       "types": "./dist/src/components/StyleInspector/categories/Size/index.d.ts",

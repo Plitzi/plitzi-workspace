@@ -66,6 +66,10 @@
       "types": "./dist/src/utility/staticValue.d.ts",
       "import": "./dist/src/utility/staticValue.mjs"
     },
+    "./utility/stringToArray": {
+      "types": "./dist/src/utility/stringToArray.d.ts",
+      "import": "./dist/src/utility/stringToArray.mjs"
+    },
     "./utility/styleSelector": {
       "types": "./dist/src/utility/styleSelector.d.ts",
       "import": "./dist/src/utility/styleSelector.mjs"
