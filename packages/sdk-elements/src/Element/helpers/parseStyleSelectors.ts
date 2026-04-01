@@ -29,22 +29,19 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         selectors = selectors ? `${definition.type} ${selectors}` : definition.type;
       }
 
-      const nextSelectors = selectors
-        .split(' ')
-        .map(sel => {
-          const variantsForSelector = styleVariant?.[sel]?.[styleSelector];
-          if (!variantsForSelector) {
-            return sel;
-          }
+      const nextSelectors = selectors.replace(/\S+/g, sel => {
+        const variantsForSelector = styleVariant?.[sel]?.[styleSelector];
+        if (!variantsForSelector) {
+          return sel;
+        }
 
-          const list = Array.isArray(variantsForSelector) ? variantsForSelector : [variantsForSelector];
-          if (sel === definition.type) {
-            return list.map(v => `${sel}--${v}`).join(' ');
-          }
+        const list = Array.isArray(variantsForSelector) ? variantsForSelector : [variantsForSelector];
+        if (sel === definition.type) {
+          return list.map(v => `${sel}--${v}`).join(' ');
+        }
 
-          return [sel, ...list.map(v => `${sel}--${v}`)].join(' ');
-        })
-        .join(' ');
+        return `${sel} ${list.map(v => `${sel}--${v}`).join(' ')}`;
+      });
 
       if (!nextSelectors) {
         return [styleSelector, baseClass];
