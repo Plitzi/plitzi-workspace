@@ -6,7 +6,6 @@ import useEventBridge from './hooks/useEventBridge';
 export * from './EventBridge';
 export * from './EventBridgeContext';
 export * from './EventBridgeContextProvider';
-export * from './EventBridgeHelper';
 export * from './hooks/useEventBridge';
 
 export { EventBridge, EventBridgeContext, EventBridgeContextProvider, useEventBridge };
