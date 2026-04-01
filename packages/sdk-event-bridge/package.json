@@ -26,6 +26,10 @@
       "types": "./dist/src/EventBridgeContextProvider.d.ts",
       "import": "./dist/src/EventBridgeContextProvider.mjs"
     },
+    "./EventBridgeHelper": {
+      "types": "./dist/src/EventBridgeHelper.d.ts",
+      "import": "./dist/src/EventBridgeHelper.mjs"
+    },
     "./hooks/useEventBridge": {
       "types": "./dist/src/hooks/useEventBridge.d.ts",
       "import": "./dist/src/hooks/useEventBridge.mjs"
