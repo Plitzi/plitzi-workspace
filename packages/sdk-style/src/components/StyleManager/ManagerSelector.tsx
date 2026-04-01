@@ -158,11 +158,11 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
             <StyleSelectorTag
               key={name}
               id={name}
-              onSelect={handleClickSelect}
               active={name === selected}
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
+              onSelect={handleClickSelect}
               onDelete={handleClickDelete}
             />
           );

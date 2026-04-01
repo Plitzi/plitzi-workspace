@@ -107,7 +107,7 @@ describe('parseStyleSelectors', () => {
         initialState: { styleVariant: {} }
       };
       const result = parseStyleSelectors(def);
-      expect(result.base).toBe('');
+      expect(result.base).toBe('plitzi__empty');
     });
 
     it('handles undefined styleVariant', () => {

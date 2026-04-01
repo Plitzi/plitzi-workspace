@@ -34,7 +34,7 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         .join(' ');
 
       if (!nextSelectors) {
-        return [styleSelector, nextSelectors];
+        return [styleSelector, baseClass];
       }
 
       return [styleSelector, `${baseClass} ${nextSelectors}`];

@@ -61,9 +61,7 @@ const getProps = (
   };
 
   // StyleSelectors now will include the component class
-  if (definition.initialState?.styleVariant) {
-    definition.styleSelectors = parseStyleSelectors(definition);
-  }
+  definition.styleSelectors = parseStyleSelectors(definition);
 
   return {
     ...internalProps,
