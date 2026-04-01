@@ -445,6 +445,49 @@ describe('processSelector', () => {
   }
 }`
     );
+
+    const result5 = processSelector({
+      name: 'container',
+      type: 'element',
+      attributes: {
+        base: {
+          default: {},
+          variants: { 'container-md': { default: { 'flex-grow': '1', 'flex-shrink': '1', 'flex-basis': '0%' } } }
+        }
+      },
+      componentType: 'container',
+      cache: '.plitzi__container{}'
+    });
+
+    expect(result5).toEqual(
+      '.plitzi__container{&[data-variant="container-md"],&.container--container-md{flex-grow:1;flex-shrink:1;flex-basis:0%;}}'
+    );
+
+    const result6 = processSelector(
+      {
+        name: 'container',
+        type: 'element',
+        attributes: {
+          base: {
+            default: {},
+            variants: { 'container-md': { default: { 'flex-grow': '1', 'flex-shrink': '1', 'flex-basis': '0%' } } }
+          }
+        },
+        componentType: 'container',
+        cache: '.plitzi__container{}'
+      },
+      false
+    );
+
+    expect(result6).toEqual(
+      `.plitzi__container {
+  &[data-variant="container-md"], &.container--container-md {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+  }
+}`
+    );
   });
 
   it('functionality when is element + state', () => {

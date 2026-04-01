@@ -58,8 +58,14 @@ const StyleInspector = ({
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectors = useMemo(
-    () => Object.values(pick(get(style.platform, displayMode), selectorName.split(' '))),
-    [style, displayMode, selectorName]
+    () =>
+      Object.values(
+        pick(
+          get(style.platform, displayMode),
+          element ? [element.definition.type, ...selectorName.split(' ')] : selectorName.split(' ')
+        )
+      ),
+    [style.platform, displayMode, element, selectorName]
   );
   const selector = useMemo<StyleItem | undefined>(
     () => get(style, `platform.${displayMode}.${value}`),
@@ -80,8 +86,8 @@ const StyleInspector = ({
       return;
     }
 
-    const selectors = get(styleSelectors, 'base', '').split(' ');
-    const selector = selectors[selectors.length - 1];
+    const selectorNames = get(styleSelectors, 'base', '').split(' ');
+    const selector = selectorNames[selectorNames.length - 1];
     onChange?.(selector ? selector : '');
     setStyleState(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,8 +98,8 @@ const StyleInspector = ({
       return;
     }
 
-    const selectors = get(styleSelectors, styleSelector, '').split(' ');
-    onChange?.(selectors[selectors.length - 1]);
+    const selectorNames = get(styleSelectors, styleSelector, '').split(' ');
+    onChange?.(selectorNames[selectorNames.length - 1]);
     setStyleState(undefined);
     setStyleVariant(undefined);
   }, [styleSelector]);
@@ -300,13 +306,20 @@ const StyleInspector = ({
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300">
         {viewMode === 'advanced' && (
-          <InspectorModeAdvanced selectors={selectors} displayMode={displayMode} styleVariables={variables} />
+          <InspectorModeAdvanced
+            styleSelector={styleSelector}
+            styleState={styleState}
+            styleVariant={styleVariant}
+            selectors={selectors}
+            displayMode={displayMode}
+            styleVariables={variables}
+          />
         )}
         {viewMode === 'basic' && (
           <InspectorModeBasic
             componentType={componentType}
-            styleSelector={styleSelector}
             selector={selector}
+            styleSelector={styleSelector}
             styleState={styleState}
             styleVariant={styleVariant}
             element={element}

@@ -1,8 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import { get } from '@plitzi/plitzi-ui/helpers';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Input from '@plitzi/plitzi-ui/Input';
 import KVInput from '@plitzi/plitzi-ui/KVInput';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { Element } from '@plitzi/sdk-shared';
 
@@ -12,7 +13,7 @@ export type ElementDefinitionSettingsProps = {
 };
 
 const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSettingsProps) => {
-  const [showStyleVariants, setShowStyleVariants] = useState(false);
+  const [showStyleVariants, setShowStyleVariants] = useStorage('builder-state.elementTools.showStyleVariants', false);
   const { label, initialState, styleSelectors } = definition;
   const visibility = useMemo(() => get(initialState, 'visibility', true), [initialState]);
   const styleVariant = useMemo(() => get(initialState, 'styleVariant'), [initialState]);
@@ -29,7 +30,7 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
     [definition.type, styleSelectors]
   );
 
-  const handleClickStyleVariants = useCallback(() => setShowStyleVariants(state => !state), []);
+  const handleClickStyleVariants = useCallback(() => setShowStyleVariants(state => !state), [setShowStyleVariants]);
 
   const handleChangeLabel = useCallback((value: string) => onUpdate?.('label', value, true), [onUpdate]);
 
@@ -50,7 +51,7 @@ const ElementDefinitionSettings = ({ definition, onUpdate }: ElementDefinitionSe
       <div className="flex gap-2">
         <Input className="grow" size="xs" value={label} onChange={handleChangeLabel} />
         <Button size="xs" onClick={handleClickStyleVariants} title="Style Manager">
-          <Button.Icon icon={showStyleVariants ? 'fas fa-xmark' : 'fas fa-swatchbook'} />
+          <Button.Icon icon="fas fa-swatchbook" />
         </Button>
         <Button size="xs" onClick={handleClickVisibility}>
           <Button.Icon icon={visibility ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'} />
