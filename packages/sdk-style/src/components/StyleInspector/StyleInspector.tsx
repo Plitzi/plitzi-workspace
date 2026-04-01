@@ -2,6 +2,7 @@ import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
+import { clsx } from 'clsx';
 import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -235,7 +236,7 @@ const StyleInspector = ({
           />
         )}
         {(allowStyleSelector || allowStyleState) && (
-          <div className="flex w-full items-center gap-2">
+          <div className={clsx('flex w-full items-center gap-2', { 'mt-2': mode === 'manager' })}>
             {allowStyleSelector && styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
               <Select className="grow basis-0" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>
                 {styleSelectorsAvailables.map(selectorKey => (
