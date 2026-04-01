@@ -59,7 +59,7 @@ const InspectorModeBasic = ({
 }: InspectorModeBasicProps) => {
   const { builderHandler } = use(BuilderContext);
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
-    'builder-state.styleInspector.collapsedCache',
+    `builder-state.styleInspector.${mode}.collapsedCache`,
     {}
   );
   const [showAllOptions, setShowAllOptions] = useStorage(`builder-state.styleInspector.${mode}.showAllOptions`, false);
