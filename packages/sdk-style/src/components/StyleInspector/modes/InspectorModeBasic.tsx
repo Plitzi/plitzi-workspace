@@ -41,6 +41,7 @@ export type InspectorModeBasicProps = {
   styleSelector?: string;
   element?: Element;
   displayMode: DisplayMode;
+  mode?: 'element' | 'manager';
 };
 
 const InspectorModeBasic = ({
@@ -50,7 +51,8 @@ const InspectorModeBasic = ({
   styleVariant,
   styleSelector = 'base',
   element,
-  displayMode
+  displayMode,
+  mode = 'element'
 }: InspectorModeBasicProps) => {
   const { builderHandler } = use(BuilderContext);
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
@@ -128,12 +130,12 @@ const InspectorModeBasic = ({
   const isList = useMemo(() => {
     const type = element?.definition.type;
 
-    return showAllOptions || type === 'list' || type === 'listItem';
-  }, [element, showAllOptions]);
+    return showAllOptions || mode === 'manager' || type === 'list' || type === 'listItem';
+  }, [element?.definition.type, mode, showAllOptions]);
 
   const isFlexChild = useMemo(() => {
-    return showAllOptions || get(inheritData, 'parentStyle.display', 'block') === 'flex';
-  }, [inheritData, showAllOptions]);
+    return showAllOptions || mode === 'manager' || get(inheritData, 'parentStyle.display', 'block') === 'flex';
+  }, [inheritData, mode, showAllOptions]);
 
   const isFlexVertical = useMemo(
     () => get(inheritData, 'parentStyle.flex-direction', 'row') === 'column',
@@ -219,7 +221,9 @@ const InspectorModeBasic = ({
         </div>
         <div className="flex items-center justify-end gap-4 px-2 py-1">
           <Switch size="xs" label="Replace Tokens" checked={replaceTokens} onChange={handleChangeReplaceTokens} />
-          <Switch size="xs" label="Show All Options" checked={showAllOptions} onChange={handleChangeShowAllOptions} />
+          {mode === 'element' && (
+            <Switch size="xs" label="Show All Options" checked={showAllOptions} onChange={handleChangeShowAllOptions} />
+          )}
         </div>
       </div>
     </StyleInspectorProvider>

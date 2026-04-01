@@ -311,6 +311,7 @@ const StyleInspector = ({
             styleVariant={styleVariant}
             element={element}
             displayMode={displayMode}
+            mode={mode}
           />
         )}
       </div>
