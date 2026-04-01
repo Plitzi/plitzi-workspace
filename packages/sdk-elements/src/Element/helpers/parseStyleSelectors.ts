@@ -1,5 +1,17 @@
 import type { Element } from '@plitzi/sdk-shared';
 
+const regexCache = new Map<string, RegExp>();
+
+const getTypeRegex = (type: string) => {
+  let regex = regexCache.get(type);
+  if (!regex) {
+    regex = new RegExp(`(^|\\s)${type}(?=\\s|$)`);
+    regexCache.set(type, regex);
+  }
+
+  return regex;
+};
+
 const parseStyleSelectors = (definition: Element['definition']) => {
   const styleVariant = definition.initialState?.styleVariant;
 
@@ -12,7 +24,8 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         return [styleSelector, selectors];
       }
 
-      if (!selectors.includes(definition.type) && styleVariant?.[definition.type]?.[styleSelector]) {
+      const hasExactTypeSelector = getTypeRegex(definition.type).test(selectors);
+      if (!hasExactTypeSelector && styleVariant?.[definition.type]?.[styleSelector]) {
         selectors = selectors ? `${definition.type} ${selectors}` : definition.type;
       }
 

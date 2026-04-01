@@ -24,6 +24,7 @@ import type { ReactNode } from 'react';
 
 export type StyleInspectorProviderProps = {
   children: ReactNode;
+  componentType?: string;
   selector?: StyleItem;
   styleSelector?: string;
   styleState?: StyleState;
@@ -36,6 +37,7 @@ export type StyleInspectorProviderProps = {
 
 const StyleInspectorProvider = ({
   children,
+  componentType,
   selector,
   styleSelector = 'base',
   styleState,
@@ -111,6 +113,7 @@ const StyleInspectorProvider = ({
 
   const inspectorContextValue = useMemo(
     () => ({
+      componentType,
       selector,
       styleSelector,
       styleState,
@@ -124,6 +127,7 @@ const StyleInspectorProvider = ({
       getDefaultValue
     }),
     [
+      componentType,
       selector,
       styleSelector,
       styleState,

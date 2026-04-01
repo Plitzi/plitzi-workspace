@@ -202,5 +202,30 @@ describe('parseStyleSelectors', () => {
       const result = parseStyleSelectors(def);
       expect(result.base).toBe('plitzi__undef btn');
     });
+
+    it('handles when other selectors contains the name of the element type', () => {
+      const def: Element['definition'] = {
+        label: 'Login Button',
+        type: 'button',
+        initialState: {
+          styleVariant: {
+            button: {
+              base: 'primary'
+            }
+          }
+        },
+        styleSelectors: {
+          base: 'form-button btn-primary'
+        },
+        bindings: {},
+        interactions: {},
+        parentId: '6459d573b6dbe8c90cf84469',
+        rootId: '64599fe5e07288d4094abbed',
+        items: []
+      };
+
+      const result = parseStyleSelectors(def);
+      expect(result.base).toBe('plitzi__button button--primary form-button btn-primary');
+    });
   });
 });

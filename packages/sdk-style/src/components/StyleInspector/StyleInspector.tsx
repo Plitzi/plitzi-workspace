@@ -1,9 +1,7 @@
 import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
-import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
-import Switch from '@plitzi/plitzi-ui/Switch';
 import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -11,8 +9,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 
 import Selector from '../Selector';
-import InspectorModeAdvanced from './modes/InspectorModeAdvanced';
-import InspectorModeBasic from './modes/InspectorModeBasic';
+import Inspector from './Inspector';
 
 import type { SelectorValue } from '../Selector';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -46,11 +43,10 @@ const StyleInspector = ({
   onChange,
   onRemoveVariant
 }: StyleInspectorProps) => {
-  const [viewMode, setViewMode] = useStorage<'basic' | 'advanced'>('builder-state.styleInspector.viewMode', 'basic');
   const {
     style,
     displayMode,
-    style: { platform, variables }
+    style: { platform }
   } = use(BuilderStyleContext);
   const [styleSelector, setStyleSelector] = useState('base');
   const [styleVariant, setStyleVariant] = useState<string | undefined>(undefined);
@@ -178,11 +174,6 @@ const StyleInspector = ({
     [builderHandler, displayMode]
   );
 
-  const handleClicViewMode = useCallback(
-    () => setViewMode(state => (state === 'basic' ? 'advanced' : 'basic')),
-    [setViewMode]
-  );
-
   const handleChangeStyleSelector = useCallback((value: string) => {
     setStyleSelector(value);
   }, []);
@@ -229,20 +220,7 @@ const StyleInspector = ({
   return (
     <div className="flex w-full grow flex-col gap-2">
       <div className="flex w-full flex-col gap-2 px-1">
-        <div className="flex items-center justify-between px-1">
-          <label>Style Selector</label>
-          <div className="flex items-center gap-2 py-1 text-xs">
-            Dev Mode
-            <Switch
-              size="sm"
-              intent="secondary"
-              checked={viewMode === 'advanced'}
-              onChange={handleClicViewMode}
-              disabled={selector?.name.includes(':')}
-            />
-          </div>
-        </div>
-        {mode === 'element' && viewMode === 'basic' && (
+        {mode === 'element' && (
           <Selector
             className="min-h-0 w-full"
             style={style}
@@ -305,28 +283,17 @@ const StyleInspector = ({
         )}
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300">
-        {viewMode === 'advanced' && (
-          <InspectorModeAdvanced
-            styleSelector={styleSelector}
-            styleState={styleState}
-            styleVariant={styleVariant}
-            selectors={selectors}
-            displayMode={displayMode}
-            styleVariables={variables}
-          />
-        )}
-        {viewMode === 'basic' && (
-          <InspectorModeBasic
-            componentType={componentType}
-            selector={selector}
-            styleSelector={styleSelector}
-            styleState={styleState}
-            styleVariant={styleVariant}
-            element={element}
-            displayMode={displayMode}
-            mode={mode}
-          />
-        )}
+        <Inspector
+          selectors={selectors}
+          componentType={componentType}
+          selector={selector}
+          styleSelector={styleSelector}
+          styleState={styleState}
+          styleVariant={styleVariant}
+          element={element}
+          displayMode={displayMode}
+          mode={mode}
+        />
       </div>
     </div>
   );

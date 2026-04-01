@@ -6,21 +6,22 @@ import { use, useCallback, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
-import { makeSelector } from '../../../StyleHelper';
-import Background from '../categories/Background';
-import Border from '../categories/Border';
-import Display from '../categories/Display';
-import DisplayFlexChild from '../categories/DisplayFlexChild';
-import Effects from '../categories/Effects';
-import List from '../categories/List';
-import ListItem from '../categories/ListItem';
-import Position from '../categories/Position';
-import Size from '../categories/Size';
-import Spacing from '../categories/Spacing';
-import Typography from '../categories/Typography';
-import Variables from '../categories/Variables';
-import useStyleInherit from '../hooks/useStyleInherit';
-import StyleInspectorProvider from '../StyleInspectorProvider';
+import { makeSelector } from '../../StyleHelper';
+import Background from './categories/Background';
+import Border from './categories/Border';
+import Display from './categories/Display';
+import DisplayFlexChild from './categories/DisplayFlexChild';
+import Effects from './categories/Effects';
+import List from './categories/List';
+import ListItem from './categories/ListItem';
+import Position from './categories/Position';
+import RawStyle from './categories/RawStyle';
+import Size from './categories/Size';
+import Spacing from './categories/Spacing';
+import Typography from './categories/Typography';
+import Variables from './categories/Variables';
+import useStyleInherit from './hooks/useStyleInherit';
+import StyleInspectorProvider from './StyleInspectorProvider';
 
 import type {
   DisplayMode,
@@ -34,6 +35,7 @@ import type {
 import type { ChangeEvent } from 'react';
 
 export type InspectorModeBasicProps = {
+  selectors?: StyleItem[];
   componentType?: string;
   selector?: StyleItem;
   styleState?: StyleState;
@@ -45,6 +47,7 @@ export type InspectorModeBasicProps = {
 };
 
 const InspectorModeBasic = ({
+  selectors,
   componentType,
   selector,
   styleState,
@@ -144,6 +147,7 @@ const InspectorModeBasic = ({
 
   return (
     <StyleInspectorProvider
+      componentType={componentType}
       displayMode={displayMode}
       styleSelector={styleSelector}
       styleState={styleState}
@@ -154,7 +158,7 @@ const InspectorModeBasic = ({
       onChange={handleChange}
     >
       <div className="flex grow flex-col justify-between">
-        <div className="flex flex-col">
+        <div className="flex grow flex-col">
           {isList && (
             <List
               replaceTokens={replaceTokens}
@@ -218,6 +222,11 @@ const InspectorModeBasic = ({
             onCollapse={handleChangeCollapse}
           />
           <Variables isCollapsed={collapsedCache.variables ?? true} onCollapse={handleChangeCollapse} />
+          <RawStyle
+            isCollapsed={collapsedCache.rawStyle ?? true}
+            selectors={selectors}
+            onCollapse={handleChangeCollapse}
+          />
         </div>
         <div className="flex items-center justify-end gap-4 px-2 py-1">
           <Switch size="xs" label="Replace Tokens" checked={replaceTokens} onChange={handleChangeReplaceTokens} />

@@ -9,6 +9,7 @@ export type SetValues = {
 };
 
 export type StyleInspectorContextValue = {
+  componentType?: string;
   selector?: StyleItem;
   styleSelector: string;
   styleState?: StyleState;
