@@ -62,8 +62,8 @@ const InspectorModeBasic = ({
     'builder-state.styleInspector.collapsedCache',
     {}
   );
-  const [showAllOptions, setShowAllOptions] = useStorage('builder-state.styleInspector.showAllOptions', false);
-  const [replaceTokens, setReplaceTokens] = useStorage('builder-state.styleInspector.replaceTokens', false);
+  const [showAllOptions, setShowAllOptions] = useStorage(`builder-state.styleInspector.${mode}.showAllOptions`, false);
+  const [replaceTokens, setReplaceTokens] = useStorage(`builder-state.styleInspector.${mode}.replaceTokens`, false);
   const inheritData = useStyleInherit({
     element,
     componentType,
