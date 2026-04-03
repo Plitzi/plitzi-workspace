@@ -864,6 +864,34 @@
       "types": "./dist/src/segments/index.d.ts",
       "import": "./dist/src/segments/index.mjs"
     },
+    "./store": {
+      "types": "./dist/src/store/index.d.ts",
+      "import": "./dist/src/store/index.mjs"
+    },
+    "./store/StoreProvider": {
+      "types": "./dist/src/store/StoreProvider.d.ts",
+      "import": "./dist/src/store/StoreProvider.mjs"
+    },
+    "./store/createStore": {
+      "types": "./dist/src/store/createStore.d.ts",
+      "import": "./dist/src/store/createStore.mjs"
+    },
+    "./store/helpers/getByPath": {
+      "types": "./dist/src/store/helpers/getByPath.d.ts",
+      "import": "./dist/src/store/helpers/getByPath.mjs"
+    },
+    "./store/helpers/setByPath": {
+      "types": "./dist/src/store/helpers/setByPath.d.ts",
+      "import": "./dist/src/store/helpers/setByPath.mjs"
+    },
+    "./store/hooks/useStore": {
+      "types": "./dist/src/store/hooks/useStore.d.ts",
+      "import": "./dist/src/store/hooks/useStore.mjs"
+    },
+    "./store/index": {
+      "types": "./dist/src/store/index.d.ts",
+      "import": "./dist/src/store/index.mjs"
+    },
     "./style": {
       "types": "./dist/src/style/index.d.ts",
       "import": "./dist/src/style/index.mjs"
@@ -951,6 +979,10 @@
     "./types/StateTypes": {
       "types": "./dist/src/types/StateTypes.d.ts",
       "import": "./dist/src/types/StateTypes.mjs"
+    },
+    "./types/StoreTypes": {
+      "types": "./dist/src/types/StoreTypes.d.ts",
+      "import": "./dist/src/types/StoreTypes.mjs"
     },
     "./types/StyleTypes": {
       "types": "./dist/src/types/StyleTypes.d.ts",
