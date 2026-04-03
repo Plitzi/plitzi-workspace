@@ -46,7 +46,7 @@ export type StoreApi<T> = {
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
 };
 
-// Vitest purposes only
+// Tests purposes only
 export type StoreApiInternal<T> = StoreApi<T> & {
   listeners: Set<Listener>;
   pathListeners: Map<string, Set<Listener>>;

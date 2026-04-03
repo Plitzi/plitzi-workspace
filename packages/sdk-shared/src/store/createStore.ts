@@ -7,8 +7,6 @@ import useStoreBase from './hooks/useStore';
 
 import type { GetState, Listener, Path, PathOf, PathValue, SetState, StoreApi, StoreApiInternal } from '../types';
 
-const isTest = import.meta.env.MODE === 'test';
-
 function createStore<TState extends object>(
   initializer: (set: SetState<TState>, get: GetState<TState>) => TState
 ): StoreApi<TState> {
@@ -19,64 +17,65 @@ function createStore<TState extends object>(
   const getState: GetState<TState> = () => state;
 
   const setState: SetState<TState> = <P extends PathOf<TState>>(
-    path: P | '' | undefined,
-    value?:
+    path: P | undefined,
+    value:
       | PathValue<TState, P>
       | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
       | TState
       | ((prev: TState) => TState)
   ) => {
     const prevState = state;
-    let nextState: TState;
 
-    if (path) {
-      const prevValue = getByPath(prevState, path);
-      const newValue =
-        typeof value === 'function' ? (value as (prev: typeof prevValue) => typeof prevValue)(prevValue) : value;
-      nextState = setByPath(prevState, path, newValue);
-    } else {
-      nextState =
-        typeof value === 'function' ? (value as (prev: TState) => TState)(prevState) : { ...prevState, ...value };
-    }
+    const nextState: TState = path
+      ? setByPath(
+          prevState,
+          path,
+          typeof value === 'function'
+            ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(
+                getByPath(prevState, path) as PathValue<TState, P>
+              )
+            : value
+        )
+      : typeof value === 'function'
+        ? (value as (prev: TState) => TState)(prevState)
+        : { ...prevState, ...(value as TState) };
 
     if (Object.is(nextState, prevState)) {
       return;
     }
 
     state = nextState;
+
     listeners.forEach(l => l());
-    pathListeners.forEach((set, path) => {
-      const prevValue = getByPath(prevState, path as PathOf<TState>);
-      const nextValue = getByPath(state, path as PathOf<TState>);
-      if (!Object.is(prevValue, nextValue)) {
+
+    pathListeners.forEach((set, p) => {
+      if (!Object.is(getByPath(prevState, p as PathOf<TState>), getByPath(state, p as PathOf<TState>))) {
         set.forEach(l => l());
       }
     });
   };
 
-  const subscribe = (listener: Listener) => {
+  const subscribe = (listener: Listener): (() => void) => {
     listeners.add(listener);
     return () => listeners.delete(listener);
   };
 
-  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener) => {
+  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener): (() => void) => {
     if (!pathListeners.has(path)) {
       pathListeners.set(path, new Set());
     }
 
     pathListeners.get(path)?.add(listener);
 
-    return () => {
-      pathListeners.get(path)?.delete(listener);
-    };
+    return () => pathListeners.get(path)?.delete(listener);
   };
 
   state = initializer(setState, getState);
 
   const api: StoreApi<TState> = { getState, setState, subscribe, subscribePath };
 
-  // Solo en tests exponemos los internals para poder verificar memoria y listeners
-  if (isTest) {
+  // En modo test exponemos los internals para verificar memoria y listeners
+  if (import.meta.env.MODE === 'test') {
     (api as StoreApiInternal<TState>).listeners = listeners;
     (api as StoreApiInternal<TState>).pathListeners = pathListeners;
   }
@@ -84,6 +83,11 @@ function createStore<TState extends object>(
   return api;
 }
 
+// Fija TState una sola vez vía currying; TArg se infiere del argumento en cada llamada:
+//   const useMyStore = createStoreHook<MyState>()
+//   useMyStore()                       → [MyState, setState]
+//   useMyStore('user.name')            → [string, setName]
+//   useMyStore(s => s.count)           → [number, setState]
 export const createStoreHook = <TState extends object>() => {
   function useStore(): [TState, StoreApi<TState>['setState']];
 

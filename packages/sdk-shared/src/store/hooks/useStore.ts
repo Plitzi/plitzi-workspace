@@ -5,6 +5,10 @@ import { StoreContext } from '../StoreProvider';
 
 import type { PathOf, PathValue, StoreApi } from '../../types/StoreTypes';
 
+// Return based on the arguments:
+//   path string  → [PathValue, setByPath]
+//   selector fn  → [TSelected, setState]
+//   undefined    → [TState, setState]
 export type UseStoreReturn<TState extends object, TArg> =
   TArg extends PathOf<TState>
     ? [
@@ -17,7 +21,7 @@ export type UseStoreReturn<TState extends object, TArg> =
 
 function useStore<
   TState extends object,
-  TArg extends PathOf<TState> | ((state: TState) => unknown) | undefined = undefined
+  TArg extends PathOf<TState> | ((state: TState) => TState | PathValue<TState, TArg>) | undefined = undefined
 >(pathOrSelector?: TArg, equalityFn: (a: unknown, b: unknown) => boolean = Object.is): UseStoreReturn<TState, TArg> {
   const store = use(StoreContext) as StoreApi<TState> | undefined;
   if (!store) {
@@ -25,26 +29,26 @@ function useStore<
   }
 
   const getSnapshot = () => {
-    if (!pathOrSelector) {
-      return store.getState();
-    }
-
     if (typeof pathOrSelector === 'function') {
-      return pathOrSelector(store.getState());
+      return pathOrSelector(store.getState()) as TState;
     }
 
-    return getByPath(store.getState(), pathOrSelector as PathOf<TState>);
+    if (typeof pathOrSelector === 'string') {
+      return getByPath(store.getState(), pathOrSelector as PathOf<TState>);
+    }
+
+    return store.getState();
   };
 
   const lastRef = useRef(getSnapshot());
 
   const selected = useSyncExternalStore(
     cb => {
-      if (!pathOrSelector || typeof pathOrSelector === 'function') {
-        return store.subscribe(cb);
+      if (typeof pathOrSelector === 'string') {
+        return store.subscribePath(pathOrSelector as PathOf<TState>, cb);
       }
 
-      return store.subscribePath(pathOrSelector as PathOf<TState>, cb);
+      return store.subscribe(cb);
     },
     () => {
       const next = getSnapshot();
