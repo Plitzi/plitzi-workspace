@@ -23,7 +23,7 @@ const transformerString = (
     }
   }, []);
   if (str.length) {
-    return str.join(', ');
+    return str.join(' / ');
   }
 
   return 'None';

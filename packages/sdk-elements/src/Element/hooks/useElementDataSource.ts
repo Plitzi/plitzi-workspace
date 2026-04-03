@@ -25,7 +25,7 @@ const useElementDataSource = ({ id, bindings, filterMode }: UseElementDataSource
       }
     }
 
-    sources.add('variables'); // no duplica si ya existe
+    sources.add('variables');
 
     return [...sources];
   }, [bindings]);

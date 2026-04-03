@@ -22,7 +22,7 @@ export type TransitionItemProps = {
 
 const TransitionItem = ({ value = '', onRemove, onChange }: TransitionItemProps) => {
   const [progress, setProgress] = useState(0);
-  const [loopHandler, setLoopHandler] = useState<NodeJS.Timeout>();
+  const [loopHandler, setLoopHandler] = useState<NodeJS.Timeout | undefined>(undefined);
 
   const handleClickEaseAnimation = () => {
     if (loopHandler) {

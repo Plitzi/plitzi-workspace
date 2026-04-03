@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 
-import Subscriptions from '../Subscriptions';
+import { BuilderSubscriptions } from '@plitzi/sdk-shared/network/graphql/builder';
 
-import type { SubscriptionsMap } from './../Subscriptions';
 import type { ApolloClient } from '@apollo/client/core';
+import type { BuilderSubscriptionsMap } from '@plitzi/sdk-shared';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
 
@@ -14,29 +14,29 @@ export type UseSubscriptionsManagerProps = {
   disabled?: boolean;
 };
 
-type Subscription = { closed: boolean; unsubscribe(): void; name: keyof SubscriptionsMap };
+type Subscription = { closed: boolean; unsubscribe(): void; name: keyof BuilderSubscriptionsMap };
 
 const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: UseSubscriptionsManagerProps) => {
   const subscriptions = useRef<Subscription[]>([]);
 
   const subscribe = useCallback(
-    <T extends keyof SubscriptionsMap>(
+    <T extends keyof BuilderSubscriptionsMap>(
       subscriptionKey: T,
       variables: Record<string, unknown>,
-      callback: (result: ApolloClient.SubscribeResult<SubscriptionsMap[T]>) => void
+      callback: (result: ApolloClient.SubscribeResult<BuilderSubscriptionsMap[T]>) => void
     ) => {
       if (disabled) {
         return false;
       }
 
-      if (!(Subscriptions[subscriptionKey] as DocumentNode | undefined)) {
+      if (!(BuilderSubscriptions[subscriptionKey] as DocumentNode | undefined)) {
         onMessage?.('Subscription not found', 'error');
 
         return null;
       }
 
-      const subscriptionObserver = client.subscribe<SubscriptionsMap[T]>({
-        query: Subscriptions[subscriptionKey],
+      const subscriptionObserver = client.subscribe<BuilderSubscriptionsMap[T]>({
+        query: BuilderSubscriptions[subscriptionKey],
         variables: { ...variables, environment }
       });
 
@@ -53,21 +53,24 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
     [client, onMessage, environment, disabled]
   );
 
-  const unsubscribe = useCallback((subscriptionKey: keyof SubscriptionsMap | (keyof SubscriptionsMap)[]) => {
-    if (typeof subscriptionKey === 'string') {
-      subscriptionKey = [subscriptionKey];
-    }
+  const unsubscribe = useCallback(
+    (subscriptionKey: keyof BuilderSubscriptionsMap | (keyof BuilderSubscriptionsMap)[]) => {
+      if (typeof subscriptionKey === 'string') {
+        subscriptionKey = [subscriptionKey];
+      }
 
-    const subscriptionsToStop = subscriptions.current.filter(subscription =>
-      subscriptionKey.includes(subscription.name)
-    );
+      const subscriptionsToStop = subscriptions.current.filter(subscription =>
+        subscriptionKey.includes(subscription.name)
+      );
 
-    subscriptionsToStop.forEach(subscription => {
-      subscription.unsubscribe();
-    });
+      subscriptionsToStop.forEach(subscription => {
+        subscription.unsubscribe();
+      });
 
-    subscriptions.current = subscriptions.current.filter(subscription => !subscription.closed);
-  }, []);
+      subscriptions.current = subscriptions.current.filter(subscription => !subscription.closed);
+    },
+    []
+  );
 
   const stop = useCallback(() => {
     subscriptions.current.forEach(subscription => {

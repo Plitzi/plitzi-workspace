@@ -4,23 +4,10 @@ import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-style/StyleMap';
 
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
-
-export const EMPTY_SCHEMA: { schema: Schema; style: Style; definition: { rootId: string } } = {
-  schema: {
-    definition: { name: '', permanentUrl: '' },
-    flat: {},
-    variables: [],
-    settings: { customCss: '' },
-    pages: [],
-    pageFolders: []
-  },
-  style: EMPTY_STYLE_SCHEMA,
-  definition: { rootId: '' } // for segments and templates
-};
 
 export type FlatMapProps = {
   flat?: Schema['flat'];
@@ -462,7 +449,7 @@ class FlatMap {
     Object.values(elements.acum).forEach(element => {
       const { id } = element;
       set(elements.acum, `${id}.definition.rootId`, elements.item?.id);
-      const calculatedStyle = calculateInheriting(element, this.flat, style.platform);
+      const calculatedStyle = calculateInheriting(element, undefined, this.flat, style.platform);
       calculatedStyle.tree.forEach(item => {
         const { displayMode, name } = item;
         if (!(name in elementsStyle.platform[displayMode]) && name in style.platform[displayMode]) {

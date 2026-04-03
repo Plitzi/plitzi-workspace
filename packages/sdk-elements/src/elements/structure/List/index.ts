@@ -51,11 +51,13 @@ const List = Object.assign(BaseList, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '0px',
-              'margin-bottom': '10px',
-              'padding-left': '40px',
-              'min-width': '50px',
-              'min-height': '50px'
+              default: {
+                'margin-top': '0px',
+                'margin-bottom': '10px',
+                'padding-left': '40px',
+                'min-width': '50px',
+                'min-height': '50px'
+              }
             }
           }
         },
@@ -64,11 +66,13 @@ const List = Object.assign(BaseList, {
           displayMode: 'desktop',
           style: {
             base: {
-              'margin-top': '0px',
-              'margin-bottom': '10px',
-              'padding-left': '40px',
-              'min-width': '50px',
-              'min-height': '50px'
+              default: {
+                'margin-top': '0px',
+                'margin-bottom': '10px',
+                'padding-left': '40px',
+                'min-width': '50px',
+                'min-height': '50px'
+              }
             }
           }
         }

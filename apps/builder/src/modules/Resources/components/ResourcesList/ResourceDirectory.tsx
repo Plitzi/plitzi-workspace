@@ -11,9 +11,12 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import Resource from '../Resource';
 import { ResourcesListContext } from './ResourcesListProvider';
 
-import type { BuilderNetworkContextValue, Resource as TResource } from '@plitzi/sdk-shared';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
+import type {
+  BuilderMutationsMap,
+  BuilderNetworkContextValue,
+  BuilderQueriesMap,
+  Resource as TResource
+} from '@plitzi/sdk-shared';
 import type { DragEvent, MouseEvent } from 'react';
 
 export type ResourcesDirectoryProps = {
@@ -41,7 +44,7 @@ const ResourceDirectory = ({
   onRemove,
   onRemoveDirectory
 }: ResourcesDirectoryProps) => {
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const { addToast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const { plugins, remove } = use(PluginsContext);
@@ -173,7 +176,7 @@ const ResourceDirectory = ({
         )}
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={clsx('max-h-[350px] overflow-y-auto', { 'pointer-events-none': isDragging })}
+        className={clsx('max-h-87.5 overflow-y-auto', { 'pointer-events-none': isDragging })}
       >
         {items.length > 0 && (
           <div className="mt-2 block columns-3 gap-2">

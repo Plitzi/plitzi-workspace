@@ -276,7 +276,12 @@ export const processPaste = async (
       set(
         templateData,
         `style.platform.desktop.${selector}`,
-        generateStyleSelector(selector, 'class', { height: `${size.height}px`, width: `${size.width}px` }, {})
+        generateStyleSelector(
+          selector,
+          'class',
+          { base: { default: { height: `${size.height}px`, width: `${size.width}px` } } },
+          {}
+        )
       );
       set(templateData, 'style.cache', generateCache(templateData.style));
     }

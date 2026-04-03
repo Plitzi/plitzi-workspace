@@ -1,7 +1,6 @@
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
-import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 import { selectorFormatter } from '../SelectorHelper';
 import ItemOptions from './ItemOptions';
@@ -16,9 +15,9 @@ export type SelectorItemProps = {
   type?: TagType;
   editable?: boolean;
   active?: boolean;
+  readOnly?: boolean;
   onClick?: (selector: SelectorValue) => void;
   onChange?: (selector: SelectorValue) => void;
-  onChangeState?: (state: string) => void;
   onAction?: (action: 'duplicate' | 'remove' | 'delete', data?: SelectorValue) => void;
 };
 
@@ -28,42 +27,29 @@ const SelectorItem = ({
   type = 'class',
   editable = true,
   active = false,
+  readOnly = false,
   onClick,
   onChange,
-  onChangeState,
   onAction
 }: SelectorItemProps) => {
-  const [state, setState] = useState(() => get(selector.split(':'), '1', ''));
-
   const handleClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
-      if (editable) {
+      if (!readOnly) {
         e.stopPropagation();
       }
 
       onClick?.({ name: selector, type });
     },
-    [editable, onClick, selector, type]
+    [onClick, readOnly, selector, type]
   );
 
   const handleChange = useCallback(
     (value: string) => {
-      if (state) {
-        onChange?.({ name: `${selectorFormatter(value)}:${state}`, type });
-      } else {
-        onChange?.({ name: selectorFormatter(value), type });
-      }
+      onChange?.({ name: selectorFormatter(value), type });
     },
-    [type, onChange, state]
+    [type, onChange]
   );
-
-  useEffect(() => {
-    if (!active && state) {
-      setState('');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
 
   return (
     <div
@@ -71,7 +57,8 @@ const SelectorItem = ({
         'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1 text-white select-none',
         className,
         {
-          'bg-secondary-400': active,
+          'bg-primary-400': type === 'element' && active,
+          'bg-secondary-400': type !== 'element' && active,
           'bg-gray-500': !active,
           'max-w-full min-w-0': !editable
         }
@@ -89,18 +76,8 @@ const SelectorItem = ({
           />
         )}
         {!editable && selector}
-        {state && type === 'class' && <span>:{state}</span>}
       </div>
-      {editable && (
-        <ItemOptions
-          selector={selector}
-          type={type}
-          state={state}
-          setState={setState}
-          onAction={onAction}
-          onChangeState={onChangeState}
-        />
-      )}
+      {editable && type !== 'element' && <ItemOptions selector={selector} type={type} onAction={onAction} />}
     </div>
   );
 };

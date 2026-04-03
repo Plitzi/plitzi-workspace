@@ -5,8 +5,7 @@ import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalCon
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 
-import type { QueriesMap } from '@modules/Network/Queries';
-import type { NetworkContextValue, Segment } from '@plitzi/sdk-shared';
+import type { SdkQueriesMap, NetworkContextValue, Segment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type SegmentsContextProviderProps = {
@@ -15,7 +14,7 @@ export type SegmentsContextProviderProps = {
 };
 
 const SegmentsContextProvider = ({ children, segments: segmentsProp }: SegmentsContextProviderProps) => {
-  const { query } = use(NetworkContext) as NetworkContextValue<QueriesMap>;
+  const { query } = use(NetworkContext) as NetworkContextValue<SdkQueriesMap>;
   const internalData = use(NetworkInternalContext);
   const segmentsPropMemo = useMemo(() => {
     if (segmentsProp) {

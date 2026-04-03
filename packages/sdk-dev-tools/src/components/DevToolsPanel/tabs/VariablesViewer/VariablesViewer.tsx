@@ -1,8 +1,8 @@
 import Heading from '@plitzi/plitzi-ui/Heading';
 import { use } from 'react';
 
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 
 import VariablesList from './VariablesList';

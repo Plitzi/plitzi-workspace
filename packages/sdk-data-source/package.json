@@ -66,9 +66,17 @@
       "types": "./dist/src/utility/staticValue.d.ts",
       "import": "./dist/src/utility/staticValue.mjs"
     },
+    "./utility/stringToArray": {
+      "types": "./dist/src/utility/stringToArray.d.ts",
+      "import": "./dist/src/utility/stringToArray.mjs"
+    },
     "./utility/styleSelector": {
       "types": "./dist/src/utility/styleSelector.d.ts",
       "import": "./dist/src/utility/styleSelector.mjs"
+    },
+    "./utility/styleVariantSelector": {
+      "types": "./dist/src/utility/styleVariantSelector.d.ts",
+      "import": "./dist/src/utility/styleVariantSelector.mjs"
     },
     "./utility/twigTemplate": {
       "types": "./dist/src/utility/twigTemplate.d.ts",
@@ -86,8 +94,8 @@
   "sideEffects": false,
   "devDependencies": {
     "eslint": "^9.39.4",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3"
   },
   "dependencies": {
     "@plitzi/sdk-auth": "workspace:*",

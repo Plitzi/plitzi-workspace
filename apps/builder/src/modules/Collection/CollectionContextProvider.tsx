@@ -6,10 +6,8 @@ import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext'
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 
-import type { Collection, CollectionRecord } from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap, BuilderQueriesMap, Collection, CollectionRecord } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { ReactNode } from 'react';
 
 export type CollectionContextProviderProps = {
@@ -18,7 +16,7 @@ export type CollectionContextProviderProps = {
 };
 
 const CollectionContextProvider = ({ children, collections: collectionsProp }: CollectionContextProviderProps) => {
-  const { query, mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { query, mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const internalData = use(NetworkInternalContext);
   const collectionsPropMemo = useMemo(() => {
     if (collectionsProp) {

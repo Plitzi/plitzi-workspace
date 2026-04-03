@@ -40,8 +40,10 @@ const Paragraph = Object.assign(BaseParagraph, {
       displayMode: 'desktop',
       style: {
         base: {
-          'margin-top': '14px',
-          'margin-bottom': '14px'
+          default: {
+            'margin-top': '14px',
+            'margin-bottom': '14px'
+          }
         }
       }
     },

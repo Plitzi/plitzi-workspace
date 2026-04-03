@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import { EMPTY_STYLE_SCHEMA } from './StyleMap';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 
 import type { StyleContextValue } from '@plitzi/sdk-shared';
 

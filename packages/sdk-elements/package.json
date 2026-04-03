@@ -74,6 +74,10 @@
       "types": "./dist/src/Element/helpers/parseStyle.d.ts",
       "import": "./dist/src/Element/helpers/parseStyle.mjs"
     },
+    "./Element/helpers/parseStyleSelectors": {
+      "types": "./dist/src/Element/helpers/parseStyleSelectors.d.ts",
+      "import": "./dist/src/Element/helpers/parseStyleSelectors.mjs"
+    },
     "./Element/helpers/pluginSelector": {
       "types": "./dist/src/Element/helpers/pluginSelector.d.ts",
       "import": "./dist/src/Element/helpers/pluginSelector.mjs"
@@ -736,7 +740,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.4",
+    "@plitzi/plitzi-ui": "^1.4.26",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
@@ -753,8 +757,8 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "react": "^19.2.4",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2"
   }
 }

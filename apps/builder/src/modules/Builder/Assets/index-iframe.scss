@@ -59,14 +59,6 @@ body {
         clip-path: var(--child-clip, polygon(0 0, 100% 0, 100% 100%, 0 100%));
       }
     }
-
-    // .with__container {
-    //   &.container--empty:not(.container--base-element):not(.container--empty--skip),
-    //   .plitzi-component__plitzi-sdk.with__plitzi-sdk {
-    //     min-height: 10px;
-    //     min-width: 10px;
-    //   }
-    // }
   }
 
   .with__container {

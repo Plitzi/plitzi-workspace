@@ -1,8 +1,8 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { use, useMemo } from 'react';
 
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
-import { formatDate } from '@plitzi/sdk-shared';
+import { formatDate } from '@plitzi/sdk-shared/helpers';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import type { Element } from '@plitzi/sdk-shared';
 

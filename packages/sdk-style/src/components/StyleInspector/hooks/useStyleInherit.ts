@@ -6,15 +6,25 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import calculateInheriting from '../../../helpers/calculateInheriting';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, StyleState } from '@plitzi/sdk-shared';
 
 export type UseStyleInheritProps = {
   element?: Element;
+  componentType?: string;
   selector?: string;
   styleSelector?: string;
+  styleState?: StyleState;
+  styleVariant?: string;
 };
 
-const useStyleInherit = ({ element, selector, styleSelector }: UseStyleInheritProps) => {
+const useStyleInherit = ({
+  element,
+  componentType,
+  selector,
+  styleSelector = 'base',
+  styleState,
+  styleVariant
+}: UseStyleInheritProps) => {
   const { componentDefinitions } = use(ComponentContext);
   const {
     schema: { flat }
@@ -25,12 +35,23 @@ const useStyleInherit = ({ element, selector, styleSelector }: UseStyleInheritPr
 
   const inheritData = useMemo(() => {
     const selectorsToSkip: string[] = [];
-    if (selector && !selector.includes(':')) {
+    const selectorsToInclude: string[] = [];
+    const selectors = element?.definition.styleSelectors[styleSelector].split(' ') ?? [];
+    if (selector && selectors.length > 1) {
       selectorsToSkip.push(selector);
     }
 
-    return calculateInheriting(element, flat, platform, styleSelector, componentDefinitions.current, selectorsToSkip);
-  }, [selector, element, flat, platform, styleSelector, componentDefinitions]);
+    return calculateInheriting(
+      element,
+      componentType,
+      flat,
+      platform,
+      { styleSelector, styleState, styleVariant, includeSelf: selectors.length > 1 },
+      componentDefinitions.current,
+      selectorsToSkip,
+      selectorsToInclude
+    );
+  }, [selector, element, componentType, flat, platform, styleSelector, styleState, styleVariant, componentDefinitions]);
 
   return inheritData;
 };

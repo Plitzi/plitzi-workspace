@@ -4,7 +4,7 @@ import { use, useMemo, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 

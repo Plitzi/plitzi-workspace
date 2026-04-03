@@ -42,8 +42,10 @@ const NodeHtml = Object.assign(BaseNodeHtml, {
       displayMode: 'desktop',
       style: {
         base: {
-          'min-width': '50px',
-          'min-height': '50px'
+          default: {
+            'min-width': '50px',
+            'min-height': '50px'
+          }
         }
       },
       subTypes: {
@@ -52,7 +54,9 @@ const NodeHtml = Object.assign(BaseNodeHtml, {
           displayMode: 'desktop',
           style: {
             base: {
-              'border-top-width': '1px'
+              default: {
+                'border-top-width': '1px'
+              }
             }
           }
         }

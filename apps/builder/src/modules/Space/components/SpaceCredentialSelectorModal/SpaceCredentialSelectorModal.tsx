@@ -10,9 +10,13 @@ import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
 
 import ModalBody from './ModalBody';
 
-import type { BuilderNetworkContextValue, SpaceCredential, SpaceCredentialProvider } from '@plitzi/sdk-shared';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
+import type {
+  BuilderMutationsMap,
+  BuilderNetworkContextValue,
+  BuilderQueriesMap,
+  SpaceCredential,
+  SpaceCredentialProvider
+} from '@plitzi/sdk-shared';
 import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent, ReactNode } from 'react';
 import type z from 'zod';
@@ -32,7 +36,10 @@ const SpaceCredentialSelectorModal = ({
   selected: selectedProp,
   onSelect
 }: SpaceCredentialSelectorModalProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
+    BuilderQueriesMap,
+    BuilderMutationsMap
+  >;
   const [selected, setSelected] = useState(selectedProp);
   const [newCredential, setNewCredential] = useState<
     Omit<SpaceCredential, 'identifier' | 'createdAt' | 'updatedAt'> | undefined

@@ -44,27 +44,21 @@ const Spacing = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Spac
       }
 
       if (['margin-top', 'margin-bottom', 'margin-left', 'margin-right'].includes(type)) {
-        setValue(
-          ['margin-top', 'margin-bottom', 'margin-left', 'margin-right'] as const,
-          {
-            'margin-top': partialValue,
-            'margin-bottom': partialValue,
-            'margin-left': partialValue,
-            'margin-right': partialValue
-          } as Record<StyleCategory, StyleValue | undefined>
-        );
+        setValue(undefined, {
+          'margin-top': partialValue,
+          'margin-bottom': partialValue,
+          'margin-left': partialValue,
+          'margin-right': partialValue
+        });
       }
 
       if (['padding-top', 'padding-bottom', 'padding-left', 'padding-right'].includes(type)) {
-        setValue(
-          ['padding-top', 'padding-bottom', 'padding-left', 'padding-right'] as const,
-          {
-            'padding-top': partialValue,
-            'padding-bottom': partialValue,
-            'padding-left': partialValue,
-            'padding-right': partialValue
-          } as Record<StyleCategory, StyleValue | undefined>
-        );
+        setValue(undefined, {
+          'padding-top': partialValue,
+          'padding-bottom': partialValue,
+          'padding-left': partialValue,
+          'padding-right': partialValue
+        });
       }
     },
     [isLinked, setValue]

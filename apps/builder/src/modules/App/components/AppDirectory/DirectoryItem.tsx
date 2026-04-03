@@ -6,7 +6,7 @@ import { useCallback, use, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 

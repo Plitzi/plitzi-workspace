@@ -15,14 +15,14 @@ import ResourceManager from '../ResourceManager';
 import ResourcesList from '../ResourcesList';
 
 import type {
+  BuilderMutationsMap,
+  BuilderQueriesMap,
   ComponentDefinition,
   NetworkContextValue,
   ResourceFile,
   ResourceWithFile,
   Resource as TResource
 } from '@plitzi/sdk-shared';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 import type { MouseEvent } from 'react';
 
 export type ResourcesCdnProps = {
@@ -52,7 +52,7 @@ const ResourcesCdn = ({
   const { showDialog } = useModal();
   const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
-  const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
     cdnIdentifier: identifier
   });

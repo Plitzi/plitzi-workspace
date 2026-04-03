@@ -2,9 +2,9 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo, use } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import AuthContext from './AuthContext';
 import useAuth from './hooks/useAuth';

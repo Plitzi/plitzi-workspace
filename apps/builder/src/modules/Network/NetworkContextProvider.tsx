@@ -5,19 +5,15 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import NetworkInternalContext from './contexts/NetworkInternalContext';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
-import Mutations from './Mutations';
-import Queries from './Queries';
 
 import type { NetworkInternalContextValue } from './contexts/NetworkInternalContext';
-import type { MutationsMap } from './Mutations';
-import type { QueriesMap } from './Queries';
-import type { SubscriptionsMap } from './Subscriptions';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type {
   Server,
@@ -26,7 +22,10 @@ import type {
   Schema,
   BuilderNetworkContextValue,
   Environment,
-  ServerEnvironment
+  ServerEnvironment,
+  BuilderQueriesMap,
+  BuilderMutationsMap,
+  BuilderSubscriptionsMap
 } from '@plitzi/sdk-shared';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
@@ -57,25 +56,25 @@ const NetworkContextProvider = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
   const { registerDefinition } = use(ComponentContext);
-  const [internalData, setInternalData] = useState<NetworkInternalContextValue>({} as NetworkInternalContextValue);
+  const [internalData, setInternalData] = useState({} as NetworkInternalContextValue);
 
   const query = useCallback(
-    async <T extends keyof QueriesMap>(
+    async <T extends keyof BuilderQueriesMap>(
       queryKey: T,
       variables?: Record<string, unknown>,
       fetchPolicy: FetchPolicy = 'network-only',
       silentError = false
-    ): Promise<{ success: boolean; result?: QueriesMap[T]; error?: string | Error }> => {
-      const document = Queries[queryKey];
+    ): Promise<{ success: boolean; result?: BuilderQueriesMap[T]; error?: string | Error }> => {
+      const document = BuilderQueries[queryKey];
       if (!(document as DocumentNode | undefined)) {
         addToast('Query not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
         throw new Error(`Query ${queryKey} not found`);
       }
 
-      let result: ApolloClient.QueryResult<QueriesMap[T]>;
+      let result: ApolloClient.QueryResult<BuilderQueriesMap[T]>;
       try {
-        result = await client.query<QueriesMap[T]>({
+        result = await client.query<BuilderQueriesMap[T]>({
           query: document,
           variables: { environment, ...variables },
           fetchPolicy
@@ -102,24 +101,24 @@ const NetworkContextProvider = ({
   );
 
   const mutate = useCallback(
-    async <T extends keyof MutationsMap>(
+    async <T extends keyof BuilderMutationsMap>(
       mutationKey: T,
       variables?: Record<string, unknown>,
       silentError = false,
       includeEnvironment = true,
       uploadOptions = {}
-    ): Promise<{ success: boolean; result?: MutationsMap[T]; error?: string | Error }> => {
-      if (!(Mutations[mutationKey] as DocumentNode | undefined)) {
+    ): Promise<{ success: boolean; result?: BuilderMutationsMap[T]; error?: string | Error }> => {
+      if (!(BuilderMutations[mutationKey] as DocumentNode | undefined)) {
         addToast('Mutation not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
         return { success: false, result: undefined, error: 'Mutation Not Found' };
       }
 
-      let result: ApolloClient.MutateResult<MutationsMap[T]>;
+      let result: ApolloClient.MutateResult<BuilderMutationsMap[T]>;
       // let abortHandler;
       try {
-        result = await client.mutate<MutationsMap[T]>({
-          mutation: Mutations[mutationKey],
+        result = await client.mutate<BuilderMutationsMap[T]>({
+          mutation: BuilderMutations[mutationKey],
           variables: includeEnvironment ? { environment, ...variables } : variables,
           context: {
             fetchOptions: {
@@ -157,7 +156,7 @@ const NetworkContextProvider = ({
       }
 
       if (result.data && (result.data as Record<string, unknown>)[mutationKey] !== undefined) {
-        return { success: true, result: (result.data as unknown as MutationsMap)[mutationKey] };
+        return { success: true, result: (result.data as unknown as BuilderMutationsMap)[mutationKey] };
       }
 
       return { success: true, result: result.data };
@@ -252,7 +251,9 @@ const NetworkContextProvider = ({
 
   const subscriptionManager = useSubscriptionsManager({ client, environment, onMessage: handleMessage });
 
-  const networkValue = useMemo<BuilderNetworkContextValue<QueriesMap, MutationsMap, SubscriptionsMap>>(
+  const networkValue = useMemo<
+    BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap, BuilderSubscriptionsMap>
+  >(
     () => ({
       mutate,
       query,

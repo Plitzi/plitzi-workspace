@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import CollectionContextProvider from '@modules/Collection/CollectionContextProvider';
 import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
 import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
@@ -72,89 +70,63 @@ const AppMain = ({
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
-  const childrenMemo = useMemo(
-    () => (
-      <NetworkContextProvider
-        webKey={webKey}
-        webId={webId}
-        instanceId={instanceId}
-        server={server}
-        offlineMode={offlineMode}
-        offlineData={offlineData}
-        offlineDataType={offlineDataType}
-        environment={environment}
-        sdkEnvironment={sdkEnvironment}
-        revision={revision}
-        debugMode={debugMode}
-      >
-        <SchemaContextProvider>
-          <CollectionContextProvider>
-            <PluginsContextProvider renderMode={renderMode} sdkStylePath={sdkStylePath}>
-              <StyleContextProvider>
-                <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
-                  <SegmentsContextProvider>
-                    <AuthContextProvider
+  return (
+    <NetworkContextProvider
+      webKey={webKey}
+      webId={webId}
+      instanceId={instanceId}
+      server={server}
+      offlineMode={offlineMode}
+      offlineData={offlineData}
+      offlineDataType={offlineDataType}
+      environment={environment}
+      sdkEnvironment={sdkEnvironment}
+      revision={revision}
+      debugMode={debugMode}
+    >
+      <SchemaContextProvider>
+        <CollectionContextProvider>
+          <PluginsContextProvider renderMode={renderMode} sdkStylePath={sdkStylePath}>
+            <StyleContextProvider>
+              <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
+                <SegmentsContextProvider>
+                  <AuthContextProvider
+                    previewMode={previewMode}
+                    environment={environment}
+                    server={server}
+                    isHydrating={isHydrating}
+                  >
+                    <NavigationContextProvider
+                      renderMode={renderMode}
+                      currentPageId={currentPageId}
                       previewMode={previewMode}
-                      environment={environment}
-                      server={server}
-                      isHydrating={isHydrating}
                     >
-                      <NavigationContextProvider
-                        renderMode={renderMode}
-                        currentPageId={currentPageId}
-                        previewMode={previewMode}
-                      >
-                        <StateManagerContextProvider webId={webId} state={state} onInit={onInitStateManager}>
-                          <DataSourceContextProvider environment={environment}>
-                            <InteractionsSdkContextProvider previewMode={previewMode}>
-                              <DevToolsContainer enabled={debugMode}>
-                                <Sdk
-                                  renderMode={renderMode}
-                                  previewMode={previewMode}
-                                  debugMode={debugMode}
-                                  environment={environment}
-                                  isHydrating={isHydrating}
-                                  {...sdkProps}
-                                />
-                              </DevToolsContainer>
-                            </InteractionsSdkContextProvider>
-                          </DataSourceContextProvider>
-                        </StateManagerContextProvider>
-                      </NavigationContextProvider>
-                    </AuthContextProvider>
-                  </SegmentsContextProvider>
-                </EventBridgeContextProvider>
-              </StyleContextProvider>
-            </PluginsContextProvider>
-          </CollectionContextProvider>
-        </SchemaContextProvider>
-      </NetworkContextProvider>
-    ),
-    [
-      webKey,
-      webId,
-      instanceId,
-      server,
-      offlineMode,
-      offlineData,
-      offlineDataType,
-      environment,
-      sdkEnvironment,
-      revision,
-      debugMode,
-      renderMode,
-      sdkStylePath,
-      onInitEventBridge,
-      previewMode,
-      isHydrating,
-      currentPageId,
-      state,
-      onInitStateManager,
-      sdkProps
-    ]
+                      <StateManagerContextProvider webId={webId} state={state} onInit={onInitStateManager}>
+                        <DataSourceContextProvider environment={environment}>
+                          <InteractionsSdkContextProvider previewMode={previewMode}>
+                            <DevToolsContainer enabled={debugMode}>
+                              <Sdk
+                                renderMode={renderMode}
+                                previewMode={previewMode}
+                                debugMode={debugMode}
+                                environment={environment}
+                                isHydrating={isHydrating}
+                                {...sdkProps}
+                              />
+                            </DevToolsContainer>
+                          </InteractionsSdkContextProvider>
+                        </DataSourceContextProvider>
+                      </StateManagerContextProvider>
+                    </NavigationContextProvider>
+                  </AuthContextProvider>
+                </SegmentsContextProvider>
+              </EventBridgeContextProvider>
+            </StyleContextProvider>
+          </PluginsContextProvider>
+        </CollectionContextProvider>
+      </SchemaContextProvider>
+    </NetworkContextProvider>
   );
-
-  return childrenMemo;
 };
 
 export default AppMain;

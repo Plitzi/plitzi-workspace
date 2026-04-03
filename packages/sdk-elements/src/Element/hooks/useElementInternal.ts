@@ -3,20 +3,22 @@ import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { use, useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
+import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
+import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, InternalPropsSTG1, Schema } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 // Methods
 
 const getProps = (
-  element: Partial<Element> & { attributes: Element['attributes']; definition: Element['definition'] },
+  element: Element,
   internalProps: InternalPropsSTG1,
   dataSource = {} as Record<string, unknown>,
   state = {} as Record<string, unknown>
@@ -31,7 +33,7 @@ const getProps = (
 
   // Data Sources
   if (Object.keys(dataSource).length > 0) {
-    const bindingData = getBindingsDetails(dataSource, attributes, definition, style);
+    const bindingData = getBindingsDetails(dataSource as Record<string, RuleValue>, { ...element, attributes }, style);
     ({ attributes, definition, style } = bindingData);
   }
 
@@ -57,7 +59,9 @@ const getProps = (
       ...(state.styleSelectors ?? {})
     }
   };
-  const elementState = { ...definition.initialState, ...state };
+
+  // StyleSelectors now will include the component class
+  definition.styleSelectors = parseStyleSelectors(definition);
 
   return {
     ...internalProps,
@@ -67,7 +71,7 @@ const getProps = (
       ...omit(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
     },
     definition,
-    elementState,
+    elementState: { ...definition.initialState, ...state },
     style
   };
 };
@@ -87,7 +91,7 @@ const useElementInternal = ({
 }: UseElementInternalProps) => {
   const { prevSchema, schema } = use(SchemaContext);
   const { id } = internalProps;
-  const element = useValueMemo<Element | undefined>(id ? schema.flat[id] : undefined);
+  const element = useValueMemo(id ? schema.flat[id] : undefined);
   if (!element) {
     throw new Error(`Element ${id} not found, Page ${baseElementId}`);
   }

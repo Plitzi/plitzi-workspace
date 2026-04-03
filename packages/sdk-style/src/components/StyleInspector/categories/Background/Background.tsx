@@ -1,7 +1,6 @@
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import { memo, useCallback, use, useState, useMemo } from 'react';
 
-import { styleConstants } from '@plitzi/sdk-shared';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import ImageMode from './modes/ImageMode';
@@ -16,14 +15,14 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
-  styleConstants.BACKGROUND_COLOR,
-  styleConstants.BACKGROUND_IMAGE,
-  styleConstants.BACKGROUND_ATTACHMENT,
-  styleConstants.BACKGROUND_POSITION,
-  styleConstants.BACKGROUND_REPEAT,
-  styleConstants.BACKGROUND_CLIP,
-  styleConstants.BACKGROUND_SIZE,
-  styleConstants.MASK_IMAGE
+  'background-color',
+  'background-image',
+  'background-attachment',
+  'background-position',
+  'background-repeat',
+  'background-clip',
+  'background-size',
+  'mask-image'
 ] as StyleCategory[];
 
 export type BackgroundProps = {
@@ -35,24 +34,24 @@ export type BackgroundProps = {
 const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BackgroundProps) => {
   const { setValue, variables } = use(StyleInspectorContext);
   const {
-    [styleConstants.BACKGROUND_COLOR]: bgColor,
-    [styleConstants.BACKGROUND_CLIP]: bgClip,
-    [styleConstants.MASK_IMAGE]: maskImage
+    'background-color': bgColor,
+    'background-clip': bgClip,
+    'mask-image': maskImage
   } = useInspectorValues({
     keys: [
-      styleConstants.BACKGROUND_COLOR,
-      styleConstants.BACKGROUND_IMAGE,
-      styleConstants.BACKGROUND_ATTACHMENT,
-      styleConstants.BACKGROUND_POSITION,
-      styleConstants.BACKGROUND_REPEAT,
-      styleConstants.BACKGROUND_CLIP,
-      styleConstants.MASK_IMAGE
+      'background-color',
+      'background-image',
+      'background-attachment',
+      'background-position',
+      'background-repeat',
+      'background-clip',
+      'mask-image'
     ],
     asValue: true,
     replaceTokens
   });
-  const { [styleConstants.BACKGROUND_IMAGE]: bgImage } = useInspectorValues({
-    keys: [styleConstants.BACKGROUND_IMAGE],
+  const { 'background-image': bgImage } = useInspectorValues({
+    keys: ['background-image'],
     asValue: true,
     strictMode: true,
     replaceTokens
@@ -96,22 +95,22 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
 
   const handleChange = useCallback(
     (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
-      if (type === styleConstants.BACKGROUND_IMAGE) {
+      if (type === 'background-image') {
         switch (imgType) {
           case 'image':
-            setValue(styleConstants.BACKGROUND_IMAGE, `url("${value as string}")`);
+            setValue('background-image', `url("${value as string}")`);
 
             break;
           case 'linear-gradient':
-            setValue(styleConstants.BACKGROUND_IMAGE, `linear-gradient(${value as string})`);
+            setValue('background-image', `linear-gradient(${value as string})`);
 
             break;
           case 'radial-gradient':
-            setValue(styleConstants.BACKGROUND_IMAGE, `radial-gradient(${value as string})`);
+            setValue('background-image', `radial-gradient(${value as string})`);
 
             break;
           default:
-            setValue(styleConstants.BACKGROUND_IMAGE, value as StyleValue);
+            setValue('background-image', value as StyleValue);
         }
       } else {
         setValue(type, value as StyleValue);
@@ -124,52 +123,39 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
     (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
       switch (value) {
         case 'color':
-          setValue(
-            [
-              styleConstants.BACKGROUND_IMAGE,
-              styleConstants.BACKGROUND_POSITION,
-              styleConstants.BACKGROUND_SIZE,
-              styleConstants.BACKGROUND_REPEAT,
-              styleConstants.BACKGROUND_ATTACHMENT,
-              styleConstants.BACKGROUND_CLIP
-            ],
-            {
-              [styleConstants.BACKGROUND_IMAGE]: undefined,
-              [styleConstants.BACKGROUND_POSITION]: undefined,
-              [styleConstants.BACKGROUND_SIZE]: undefined,
-              [styleConstants.BACKGROUND_REPEAT]: undefined,
-              [styleConstants.BACKGROUND_ATTACHMENT]: undefined,
-              [styleConstants.BACKGROUND_CLIP]: undefined
-            } as Record<StyleCategory, StyleValue | undefined>
-          );
+          setValue(undefined, {
+            'background-color': undefined,
+            'background-position': undefined,
+            'background-size': undefined,
+            'background-repeat': undefined,
+            'background-attachment': undefined,
+            'background-clip': undefined
+          });
 
           break;
         case 'image':
-          setValue([styleConstants.BACKGROUND_COLOR, styleConstants.BACKGROUND_IMAGE], {
-            [styleConstants.BACKGROUND_COLOR]: undefined,
-            [styleConstants.BACKGROUND_IMAGE]: 'url("https://cdn.plitzi.com/resources/img/background-image.svg")'
-          } as Record<StyleCategory, StyleValue | undefined>);
+          setValue(undefined, {
+            'background-color': undefined,
+            'background-image': 'url("https://cdn.plitzi.com/resources/img/background-image.svg")'
+          });
 
           break;
         case 'linear-gradient':
-          setValue([styleConstants.BACKGROUND_COLOR, styleConstants.BACKGROUND_IMAGE], {
-            [styleConstants.BACKGROUND_COLOR]: undefined,
-            [styleConstants.BACKGROUND_IMAGE]: 'linear-gradient(black, white)'
-          } as Record<StyleCategory, StyleValue | undefined>);
+          setValue(undefined, {
+            'background-color': undefined,
+            'background-image': 'linear-gradient(black, white)'
+          });
 
           break;
         case 'radial-gradient':
-          setValue([styleConstants.BACKGROUND_COLOR, styleConstants.BACKGROUND_IMAGE], {
-            [styleConstants.BACKGROUND_COLOR]: undefined,
-            [styleConstants.BACKGROUND_IMAGE]: 'radial-gradient(circle at 50% 50%, black, white)'
-          } as Record<StyleCategory, StyleValue | undefined>);
+          setValue(undefined, {
+            'background-color': undefined,
+            'background-image': 'radial-gradient(circle at 50% 50%, black, white)'
+          });
 
           break;
         default:
-          setValue([styleConstants.BACKGROUND_COLOR, styleConstants.BACKGROUND_IMAGE], {
-            [styleConstants.BACKGROUND_COLOR]: undefined,
-            [styleConstants.BACKGROUND_IMAGE]: undefined
-          } as Record<StyleCategory, StyleValue | undefined>);
+          setValue(undefined, { 'background-color': undefined, 'background-image': undefined });
       }
     },
     [setValue]
@@ -192,11 +178,11 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
             <option value="radial-gradient">Radial Gradient</option>
           </CategoryOption>
         </CategorySection>
-        <CategorySection label="Mask Img" keys={[styleConstants.MASK_IMAGE]}>
-          <CategoryOption value={maskImage} onChange={handleChange(styleConstants.MASK_IMAGE)} />
+        <CategorySection label="Mask Img" keys={['mask-image']}>
+          <CategoryOption value={maskImage} onChange={handleChange('mask-image')} />
         </CategorySection>
-        <CategorySection label="Clip" keys={[styleConstants.BACKGROUND_CLIP]}>
-          <CategoryOption value={bgClip} onChange={handleChange(styleConstants.BACKGROUND_CLIP)} type="select">
+        <CategorySection label="Clip" keys={['background-clip']}>
+          <CategoryOption value={bgClip} onChange={handleChange('background-clip')} type="select">
             <option value="border-box">Border Box</option>
             <option value="padding-box">Padding Box</option>
             <option value="content-box">Content Box</option>
@@ -208,8 +194,8 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
         {/* {imgType === 'linear-gradient' && <LinearGradientMode partialValue={bgImage} />}
         {imgType === 'radial-gradient' && <RadialGradientMode partialValue={bgImage} />} */}
         {imgType === 'color' && (
-          <CategorySection label="Color" keys={[styleConstants.BACKGROUND_COLOR]}>
-            <CategoryOption type="color" value={bgColor} onChange={handleChange(styleConstants.BACKGROUND_COLOR)} />
+          <CategorySection label="Color" keys={['background-color']}>
+            <CategoryOption type="color" value={bgColor} onChange={handleChange('background-color')} />
           </CategorySection>
         )}
       </div>

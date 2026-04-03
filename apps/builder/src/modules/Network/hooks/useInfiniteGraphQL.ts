@@ -4,20 +4,18 @@ import useSWRInfinite from 'swr/infinite';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { MutationsMap } from '../Mutations';
-import type { QueriesMap } from '../Queries';
-import type { PageInfo } from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap, BuilderQueriesMap, PageInfo } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { SWRInfiniteConfiguration } from 'swr/infinite';
 
-const useInfiniteGraphQL = <K extends keyof QueriesMap, T>(
+const useInfiniteGraphQL = <K extends keyof BuilderQueriesMap, T>(
   queryKey: K | null,
-  transform: (data: QueriesMap[K] | undefined) => { edges: T[]; pageInfo: PageInfo } | undefined,
+  transform: (data: BuilderQueriesMap[K] | undefined) => { edges: T[]; pageInfo: PageInfo } | undefined,
   variables?: Record<string, unknown>,
-  config?: SWRInfiniteConfiguration<QueriesMap[K]> & { pageSize?: number }
+  config?: SWRInfiniteConfiguration<BuilderQueriesMap[K]> & { pageSize?: number }
   // mode: 'query' | 'mutate' = 'query'
 ) => {
-  const { query } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { query } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const { pageSize = 10 } = config ?? {};
   const transformMemo = useValueMemo(transform, 'soft', { skipFunctions: true });
 
@@ -25,12 +23,12 @@ const useInfiniteGraphQL = <K extends keyof QueriesMap, T>(
   const swrFetcher = useMemo(
     () =>
       async ([qKey, vars]: [qKey: K, vars: Record<string, unknown>]) =>
-        (await fetcher(qKey, vars)).result as QueriesMap[K],
+        (await fetcher(qKey, vars)).result as BuilderQueriesMap[K],
     [fetcher]
   );
 
   const getKey = useCallback(
-    (page: number, previousPageData: QueriesMap[K] | null) => {
+    (page: number, previousPageData: BuilderQueriesMap[K] | null) => {
       if (!queryKey) {
         return null;
       }
@@ -45,7 +43,7 @@ const useInfiniteGraphQL = <K extends keyof QueriesMap, T>(
     [pageSize, queryKey, transformMemo, variables]
   );
 
-  const { data, error, size, setSize, isValidating, mutate } = useSWRInfinite<QueriesMap[K], Error>(
+  const { data, error, size, setSize, isValidating, mutate } = useSWRInfinite<BuilderQueriesMap[K], Error>(
     getKey,
     swrFetcher,
     config

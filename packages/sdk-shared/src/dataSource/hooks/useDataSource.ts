@@ -2,8 +2,7 @@
 
 import { use, useEffect, useMemo, useRef } from 'react';
 
-import { emptyObject, makeId } from '@plitzi/sdk-shared/helpers/utils';
-
+import { emptyObject, makeId } from '../../helpers';
 import DataSourceContext from '../DataSourceContext';
 
 import type { Source, SourceMeta } from '../../types';
@@ -75,12 +74,15 @@ function useDataSource<T = unknown, M extends UseDataSourceMode = 'read'>({
 
   let sources = Object.values(getSources() as Record<string, Source>);
   if (sourceFilter.length) {
-    sources = sources.filter(source => !sourceFilter.length || sourceFilter.includes(source.meta.source));
+    sources = sources.filter(
+      source => !sourceFilter.length || !source.meta.source || sourceFilter.includes(source.meta.source)
+    );
   }
 
   const sourcesData = sources
+    .filter(source => source.meta.source)
     .map(source => ({ ...source, value: use(source.context) }))
-    .reduce<Record<string, T>>((acum, source) => ({ ...acum, [source.meta.source]: source.value as T }), {});
+    .reduce<Record<string, T>>((acum, source) => ({ ...acum, [source.meta.source as string]: source.value as T }), {});
 
   const shouldReRender =
     Object.entries(sourcesRef.current).filter(([source, value]) => value !== sourcesData[source]).length > 0 ||

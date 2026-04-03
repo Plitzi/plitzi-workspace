@@ -7,7 +7,7 @@ import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import StyleInspectorContext from '../StyleInspectorContext';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
-import type { DisplayMode, Style, StyleCategory, StyleItem, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleBlock, StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseInspectorValuesProps<TAsValue extends boolean> = {
   keys?: StyleCategory[];
@@ -39,14 +39,30 @@ const useInspectorValues = <TAsValue extends boolean>({
   strictMode = false,
   replaceTokens = false
 }: UseInspectorValuesProps<TAsValue>): UseInspectorValuesReturn<TAsValue> => {
-  let { inheritData, bindingData, selector, variables } = {} as StyleInspectorContextValue;
+  let { inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } =
+    {} as StyleInspectorContextValue;
   if (skipContext) {
-    ({ inheritData, bindingData, selector, variables } = context);
+    ({ inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } = context);
   } else {
-    ({ inheritData, bindingData, selector, variables } = use(StyleInspectorContext));
+    ({ inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } =
+      use(StyleInspectorContext));
   }
 
-  const { attributes } = useMemo(() => selector ?? ({ attributes: {} } as StyleItem), [selector]);
+  let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
+  if (selector && styleSelector && (selector.attributes[styleSelector] as StyleBlock | undefined)) {
+    const block = selector.attributes[styleSelector];
+    if (styleState && styleVariant) {
+      attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
+    } else if (styleVariant && block.variants?.[styleVariant]) {
+      attributes = block.variants[styleVariant].default ?? {};
+    } else if (styleState && block.states?.[styleState]) {
+      attributes = block.states[styleState] ?? {};
+    } else {
+      attributes = block.default ?? {};
+    }
+  } else {
+    attributes = {};
+  }
 
   const hasInherit = useMemo(
     () =>
@@ -87,7 +103,7 @@ const useInspectorValues = <TAsValue extends boolean>({
   }, [keys, asValue, attributes]);
 
   const valuesParsed = useMemo(() => {
-    const valuesParsedAux: Style['platform'][DisplayMode][number]['attributes'] = {};
+    const valuesParsedAux: StyleObject = {};
     if (!keys) {
       return valuesParsedAux;
     }

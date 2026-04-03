@@ -6,7 +6,7 @@ const callback = (
   source: string,
   params: DataSourceUtilityParamsValue<string>,
   _element: Partial<Element>,
-  dataSources = {} as Record<string, string>
+  dataSources = {} as Record<string, unknown>
 ) => {
   const { template } = params;
   let content: string | object = source;

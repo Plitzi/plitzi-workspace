@@ -42,8 +42,10 @@ const Container = Object.assign(BaseContainer, {
       displayMode: 'desktop',
       style: {
         base: {
-          'min-width': '50px',
-          'min-height': '50px'
+          default: {
+            'min-width': '50px',
+            'min-height': '50px'
+          }
         }
       },
       subTypes: {}

@@ -8,7 +8,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
 import DirectoryItem from './DirectoryItem';

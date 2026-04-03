@@ -43,7 +43,11 @@ const BlockJsx = Object.assign(BaseBlockJsx, {
     defaultStyle: {
       name: 'Block JSX',
       displayMode: 'desktop',
-      style: {}
+      style: {
+        base: {
+          default: {}
+        }
+      }
     },
     settings: {}
   }

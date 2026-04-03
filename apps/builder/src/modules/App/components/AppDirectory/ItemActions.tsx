@@ -8,7 +8,7 @@ import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';

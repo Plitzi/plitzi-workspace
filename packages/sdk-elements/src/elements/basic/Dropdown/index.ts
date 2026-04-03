@@ -50,19 +50,23 @@ const Dropdown = Object.assign(BaseDropdown, {
       displayMode: 'desktop',
       style: {
         base: {
-          'min-height': '50px',
-          'min-width': '50px',
-          cursor: 'pointer',
-          'user-select': 'none'
+          default: {
+            'min-height': '50px',
+            'min-width': '50px',
+            cursor: 'pointer',
+            'user-select': 'none'
+          }
         },
         backgroundContainer: {
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          position: 'fixed',
-          cursor: 'default',
-          'z-index': 50
+          default: {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            position: 'fixed',
+            cursor: 'default',
+            'z-index': 50
+          }
         }
       }
     },

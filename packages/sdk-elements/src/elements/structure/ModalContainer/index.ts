@@ -49,71 +49,85 @@ const ModalContainer = Object.assign(BaseModalContainer, {
       displayMode: 'desktop',
       style: {
         base: {
-          position: 'absolute',
-          top: '0',
-          bottom: '0',
-          left: '0',
-          right: '0'
+          default: {
+            position: 'absolute',
+            top: '0',
+            bottom: '0',
+            left: '0',
+            right: '0'
+          }
         },
         backgroundContainer: {
-          height: '100%',
-          width: '100%',
-          left: '0',
-          top: '0',
-          position: 'absolute',
-          'background-color': 'black',
-          opacity: '0.5'
+          default: {
+            height: '100%',
+            width: '100%',
+            left: '0',
+            top: '0',
+            position: 'absolute',
+            'background-color': 'black',
+            opacity: '0.5'
+          }
         },
         rootContainer: {
-          display: 'flex',
-          'flex-direction': 'column',
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: '500px',
-          height: '300px',
-          'background-color': 'white',
-          transform: 'translate3d(-50%, -50%, 0px)',
-          'border-top-left-radius': '8px',
-          'border-top-right-radius': '8px',
-          'border-bottom-left-radius': '8px',
-          'border-bottom-right-radius': '8px'
+          default: {
+            display: 'flex',
+            'flex-direction': 'column',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: '500px',
+            height: '300px',
+            'background-color': 'white',
+            transform: 'translate3d(-50%, -50%, 0px)',
+            'border-top-left-radius': '8px',
+            'border-top-right-radius': '8px',
+            'border-bottom-left-radius': '8px',
+            'border-bottom-right-radius': '8px'
+          }
         },
         headerContainer: {
-          display: 'flex',
-          'align-items': 'center',
-          'justify-content': 'space-between',
-          'border-bottom-width': '1px',
-          'border-bottom-color': '#d1d5db',
-          'border-bottom-style': 'solid',
-          'padding-left': '20px',
-          'padding-right': '20px',
-          'padding-top': '10px',
-          'padding-bottom': '10px'
+          default: {
+            display: 'flex',
+            'align-items': 'center',
+            'justify-content': 'space-between',
+            'border-bottom-width': '1px',
+            'border-bottom-color': '#d1d5db',
+            'border-bottom-style': 'solid',
+            'padding-left': '20px',
+            'padding-right': '20px',
+            'padding-top': '10px',
+            'padding-bottom': '10px'
+          }
         },
         headerTitle: {
-          'font-size': '20px',
-          'font-weight': '500',
-          'line-height': '1.2'
+          default: {
+            'font-size': '20px',
+            'font-weight': '500',
+            'line-height': '1.2'
+          }
         },
         headerCloseButton: {
-          height: '20px',
-          width: '20px',
-          padding: '4px',
-          display: 'flex',
-          'justify-content': 'center',
-          'align-items': 'center',
-          cursor: 'pointer'
-        },
-        bodyContainer: {
-          display: 'flex',
-          'flex-direction': 'column',
-          'flex-grow': '1',
-          'flex-basis': '0',
-          'padding-top': '20px',
-          'padding-bottom': '20px',
-          'padding-left': '20px',
-          'padding-right': '20px'
+          default: {
+            height: '20px',
+            width: '20px',
+            padding: '4px',
+            display: 'flex',
+            'justify-content': 'center',
+            'align-items': 'center',
+            cursor: 'pointer'
+          },
+          bodyContainer: {
+            default: {
+              display: 'flex',
+              'flex-direction': 'column',
+              'flex-grow': '1',
+              'flex-basis': '0',
+              'padding-top': '20px',
+              'padding-bottom': '20px',
+              'padding-left': '20px',
+              'padding-right': '20px'
+            }
+          }
         }
       },
       subTypes: {}

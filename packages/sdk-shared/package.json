@@ -188,6 +188,650 @@
       "types": "./dist/src/network/NetworkContext.d.ts",
       "import": "./dist/src/network/NetworkContext.mjs"
     },
+    "./network/graphql": {
+      "types": "./dist/src/network/graphql/index.d.ts",
+      "import": "./dist/src/network/graphql/index.mjs"
+    },
+    "./network/graphql/builder": {
+      "types": "./dist/src/network/graphql/builder/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/index.mjs"
+    },
+    "./network/graphql/builder/Mutations": {
+      "types": "./dist/src/network/graphql/builder/Mutations/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/index.mjs"
+    },
+    "./network/graphql/builder/Mutations/Collection/CollectionAddMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionAddMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionAddMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Collection/CollectionAddRecordMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionAddRecordMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionAddRecordMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Collection/CollectionRemoveMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionRemoveMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionRemoveMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Collection/CollectionRemoveRecordMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionRemoveRecordMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionRemoveRecordMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Collection/CollectionUpdateMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionUpdateMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionUpdateMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Collection/CollectionUpdateRecordMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionUpdateRecordMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Collection/CollectionUpdateRecordMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/SegmentAddMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentAddMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentAddMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/SegmentAddTemplateMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentAddTemplateMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentAddTemplateMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/SegmentPublishMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentPublishMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentPublishMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/SegmentRemoveMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentRemoveMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentRemoveMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/SegmentUpdateMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentUpdateMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/SegmentUpdateMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentAddElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentAddElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentAddElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentCloneElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentCloneElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentCloneElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentMoveElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentMoveElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentMoveElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceAddVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceAddVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceAddVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceRemoveVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceRemoveVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceRemoveVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceUpdateVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceUpdateVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceUpdateVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleAddSelectorVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleAddSelectorVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleAddSelectorVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleAddSelectorMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleAddSelectorMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleAddSelectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleUpdateSelectorMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleUpdateSelectorMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleUpdateSelectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleAddVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleAddVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleAddVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleRemoveVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleRemoveVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleRemoveVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleUpdateVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleUpdateVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Segment/style/variables/SegmentStyleUpdateVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceAddElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceAddElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceAddElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceAddPluginMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceAddPluginMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceAddPluginMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceCloneElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceCloneElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceCloneElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceDeployMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceDeployMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceDeployMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceMoveElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceMoveElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceMoveElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpacePublishMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpacePublishMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpacePublishMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceRemoveElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceRemoveElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceRemoveElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceUpdateMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceUpdatePluginMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdatePluginMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdatePluginMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceUpdateSchemaMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateSchemaMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateSchemaMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceUpdateSettingsMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateSettingsMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/SpaceUpdateSettingsMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/cdns/SpaceSetCdnCredentialMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceSetCdnCredentialMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceSetCdnCredentialMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/credentials/SpaceAddCredentialMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/credentials/SpaceAddCredentialMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/credentials/SpaceAddCredentialMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/credentials/SpaceRemoveCredentialMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/credentials/SpaceRemoveCredentialMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/credentials/SpaceRemoveCredentialMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/folders/SpaceAddPageFolderMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/folders/SpaceAddPageFolderMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/folders/SpaceAddPageFolderMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/folders/SpaceRemovePageFolderMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/folders/SpaceRemovePageFolderMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/folders/SpaceRemovePageFolderMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/folders/SpaceUpdatePageFolderMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/folders/SpaceUpdatePageFolderMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/folders/SpaceUpdatePageFolderMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/pages/SpaceAddPageMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceAddPageMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceAddPageMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/pages/SpaceHomePageMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceHomePageMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceHomePageMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/pages/SpaceRemovePageMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceRemovePageMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceRemovePageMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/pages/SpaceUpdatePageMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceUpdatePageMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/pages/SpaceUpdatePageMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/resources/SpaceAddResourceMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/resources/SpaceAddResourceMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/resources/SpaceAddResourceMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/resources/SpaceMoveResourceMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/resources/SpaceMoveResourceMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/resources/SpaceMoveResourceMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/resources/SpaceRemoveResourceMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/resources/SpaceRemoveResourceMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/resources/SpaceRemoveResourceMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/variables/SpaceAddVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/variables/SpaceAddVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/variables/SpaceAddVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/variables/SpaceRemoveVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/variables/SpaceRemoveVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/variables/SpaceRemoveVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/variables/SpaceUpdateVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Space/variables/SpaceUpdateVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Space/variables/SpaceUpdateVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/StyleUpdateMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/StyleUpdateMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/StyleUpdateMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/StyleUpdateSettingsMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/StyleUpdateSettingsMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/StyleUpdateSettingsMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/selectorVariables/StyleRemoveSelectorVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/selectorVariables/StyleRemoveSelectorVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/selectorVariables/StyleRemoveSelectorVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/selectorVariables/StyleUpdateSelectorVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/selectorVariables/StyleUpdateSelectorVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/selectorVariables/StyleUpdateSelectorVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/selectors/StyleAddSelectorMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/selectors/StyleAddSelectorMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/selectors/StyleAddSelectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/selectors/StyleUpdateSelectorMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/selectors/StyleUpdateSelectorMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/selectors/StyleUpdateSelectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/variables/StyleAddVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/variables/StyleAddVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/variables/StyleAddVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/variables/StyleRemoveVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/variables/StyleRemoveVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/variables/StyleRemoveVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/variables/StyleUpdateVariableMutation": {
+      "types": "./dist/src/network/graphql/builder/Mutations/Style/variables/StyleUpdateVariableMutation.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/Style/variables/StyleUpdateVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/index": {
+      "types": "./dist/src/network/graphql/builder/Mutations/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/Mutations/index.mjs"
+    },
+    "./network/graphql/builder/Queries": {
+      "types": "./dist/src/network/graphql/builder/Queries/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/index.mjs"
+    },
+    "./network/graphql/builder/Queries/Collection/CollectionQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Collection/CollectionQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Collection/CollectionQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Collection/CollectionRecordQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Collection/CollectionRecordQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Collection/CollectionRecordQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Collection/CollectionRecordsQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Collection/CollectionRecordsQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Collection/CollectionRecordsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Collection/CollectionsQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Collection/CollectionsQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Collection/CollectionsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/InitQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/InitQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/InitQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/PluginsQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/PluginsQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/PluginsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Segment/SegmentQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Segment/SegmentQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Segment/SegmentQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Segment/SegmentsQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Segment/SegmentsQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Segment/SegmentsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceCdnsQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Space/SpaceCdnsQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Space/SpaceCdnsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceCredentialsQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Space/SpaceCredentialsQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Space/SpaceCredentialsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceDeploymentsQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Space/SpaceDeploymentsQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Space/SpaceDeploymentsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceResourcesQuery": {
+      "types": "./dist/src/network/graphql/builder/Queries/Space/SpaceResourcesQuery.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/Space/SpaceResourcesQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/index": {
+      "types": "./dist/src/network/graphql/builder/Queries/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/Queries/index.mjs"
+    },
+    "./network/graphql/builder/Subscriptions": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/index.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Collaborator/CollaboratorConnectedSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Collaborator/CollaboratorConnectedSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Collaborator/CollaboratorConnectedSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Collaborator/CollaboratorDisconnectedSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Collaborator/CollaboratorDisconnectedSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Collaborator/CollaboratorDisconnectedSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/SegmentAddTemplateSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/SegmentAddTemplateSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/SegmentAddTemplateSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/elements/SegmentAddElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentAddElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentAddElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/elements/SegmentCloneElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentCloneElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentCloneElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/elements/SegmentMoveElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentMoveElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentMoveElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/elements/SegmentRemoveElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentRemoveElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentRemoveElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceAddVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceAddVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceAddVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceRemoveVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceRemoveVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceRemoveVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceUpdateVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceUpdateVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceUpdateVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleAddSelectorVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleAddSelectorVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleAddSelectorVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleAddSelectorSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleAddSelectorSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleAddSelectorSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleUpdateSelectorSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleUpdateSelectorSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleUpdateSelectorSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleAddVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleAddVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleAddVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleRemoveVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleRemoveVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleRemoveVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleUpdateVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleUpdateVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Segment/style/variables/SegmentStyleUpdateVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/SpaceAddTemplateSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/SpaceAddTemplateSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/SpaceAddTemplateSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/SpaceUpdateSettingsSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/SpaceUpdateSettingsSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/SpaceUpdateSettingsSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/SpaceUpdatedSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/SpaceUpdatedSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/SpaceUpdatedSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/elements/SpaceAddElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceAddElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceAddElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/elements/SpaceCloneElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceCloneElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceCloneElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/elements/SpaceMoveElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceMoveElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceMoveElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/elements/SpaceRemoveElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceRemoveElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceRemoveElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/folders/SpaceAddPageFolderSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/folders/SpaceAddPageFolderSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/folders/SpaceAddPageFolderSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/folders/SpaceRemovePageFolderSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/folders/SpaceRemovePageFolderSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/folders/SpaceRemovePageFolderSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/folders/SpaceUpdatePageFolderSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/folders/SpaceUpdatePageFolderSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/folders/SpaceUpdatePageFolderSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/pages/SpaceAddPageSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceAddPageSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceAddPageSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/pages/SpaceHomePageSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceHomePageSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceHomePageSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/pages/SpaceRemovePageSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceRemovePageSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceRemovePageSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/pages/SpaceUpdatePageSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceUpdatePageSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/pages/SpaceUpdatePageSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/variables/SpaceAddVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/variables/SpaceAddVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/variables/SpaceAddVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/variables/SpaceRemoveVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/variables/SpaceRemoveVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/variables/SpaceRemoveVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/variables/SpaceUpdateVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Space/variables/SpaceUpdateVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Space/variables/SpaceUpdateVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/StyleUpdateSettingsSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/StyleUpdateSettingsSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/StyleUpdateSettingsSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/StyleUpdatedSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/StyleUpdatedSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/StyleUpdatedSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/selector/StyleAddSelectorSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/selector/StyleAddSelectorSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/selector/StyleAddSelectorSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/selector/StyleUpdateSelectorSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/selector/StyleUpdateSelectorSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/selector/StyleUpdateSelectorSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/selectorVariables/StyleAddSelectorVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/selectorVariables/StyleAddSelectorVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/selectorVariables/StyleAddSelectorVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/selectorVariables/StyleRemoveSelectorVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/selectorVariables/StyleRemoveSelectorVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/selectorVariables/StyleRemoveSelectorVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/selectorVariables/StyleUpdateSelectorVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/selectorVariables/StyleUpdateSelectorVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/selectorVariables/StyleUpdateSelectorVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/variables/StyleAddVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/variables/StyleAddVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/variables/StyleAddVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/variables/StyleRemoveVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/variables/StyleRemoveVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/variables/StyleRemoveVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/variables/StyleUpdateVariableSubscription": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/Style/variables/StyleUpdateVariableSubscription.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/Style/variables/StyleUpdateVariableSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/index": {
+      "types": "./dist/src/network/graphql/builder/Subscriptions/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/Subscriptions/index.mjs"
+    },
+    "./network/graphql/builder/index": {
+      "types": "./dist/src/network/graphql/builder/index.d.ts",
+      "import": "./dist/src/network/graphql/builder/index.mjs"
+    },
+    "./network/graphql/index": {
+      "types": "./dist/src/network/graphql/index.d.ts",
+      "import": "./dist/src/network/graphql/index.mjs"
+    },
+    "./network/graphql/sdk": {
+      "types": "./dist/src/network/graphql/sdk/index.d.ts",
+      "import": "./dist/src/network/graphql/sdk/index.mjs"
+    },
+    "./network/graphql/sdk/Mutations": {
+      "types": "./dist/src/network/graphql/sdk/Mutations/index.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Mutations/index.mjs"
+    },
+    "./network/graphql/sdk/Mutations/Collection/CollectionAddRecordMutation": {
+      "types": "./dist/src/network/graphql/sdk/Mutations/Collection/CollectionAddRecordMutation.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Mutations/Collection/CollectionAddRecordMutation.mjs"
+    },
+    "./network/graphql/sdk/Mutations/Collection/CollectionRemoveRecordMutation": {
+      "types": "./dist/src/network/graphql/sdk/Mutations/Collection/CollectionRemoveRecordMutation.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Mutations/Collection/CollectionRemoveRecordMutation.mjs"
+    },
+    "./network/graphql/sdk/Mutations/Collection/CollectionUpdateRecordMutation": {
+      "types": "./dist/src/network/graphql/sdk/Mutations/Collection/CollectionUpdateRecordMutation.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Mutations/Collection/CollectionUpdateRecordMutation.mjs"
+    },
+    "./network/graphql/sdk/Mutations/index": {
+      "types": "./dist/src/network/graphql/sdk/Mutations/index.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Mutations/index.mjs"
+    },
+    "./network/graphql/sdk/Queries": {
+      "types": "./dist/src/network/graphql/sdk/Queries/index.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/index.mjs"
+    },
+    "./network/graphql/sdk/Queries/Collection/CollectionQuery": {
+      "types": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionQuery.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionQuery.mjs"
+    },
+    "./network/graphql/sdk/Queries/Collection/CollectionRecordQuery": {
+      "types": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionRecordQuery.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionRecordQuery.mjs"
+    },
+    "./network/graphql/sdk/Queries/Collection/CollectionRecordsQuery": {
+      "types": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionRecordsQuery.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionRecordsQuery.mjs"
+    },
+    "./network/graphql/sdk/Queries/Collection/CollectionsQuery": {
+      "types": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionsQuery.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/Collection/CollectionsQuery.mjs"
+    },
+    "./network/graphql/sdk/Queries/InitQuery": {
+      "types": "./dist/src/network/graphql/sdk/Queries/InitQuery.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/InitQuery.mjs"
+    },
+    "./network/graphql/sdk/Queries/Segment/SegmentQuery": {
+      "types": "./dist/src/network/graphql/sdk/Queries/Segment/SegmentQuery.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/Segment/SegmentQuery.mjs"
+    },
+    "./network/graphql/sdk/Queries/Segment/SegmentsQuery": {
+      "types": "./dist/src/network/graphql/sdk/Queries/Segment/SegmentsQuery.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/Segment/SegmentsQuery.mjs"
+    },
+    "./network/graphql/sdk/Queries/index": {
+      "types": "./dist/src/network/graphql/sdk/Queries/index.d.ts",
+      "import": "./dist/src/network/graphql/sdk/Queries/index.mjs"
+    },
+    "./network/graphql/sdk/index": {
+      "types": "./dist/src/network/graphql/sdk/index.d.ts",
+      "import": "./dist/src/network/graphql/sdk/index.mjs"
+    },
     "./network/index": {
       "types": "./dist/src/network/index.d.ts",
       "import": "./dist/src/network/index.mjs"
@@ -195,6 +839,10 @@
     "./schema": {
       "types": "./dist/src/schema/index.d.ts",
       "import": "./dist/src/schema/index.mjs"
+    },
+    "./schema/SchemaContext": {
+      "types": "./dist/src/schema/SchemaContext.d.ts",
+      "import": "./dist/src/schema/SchemaContext.mjs"
     },
     "./schema/index": {
       "types": "./dist/src/schema/index.d.ts",
@@ -336,10 +984,11 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.4",
+    "@plitzi/plitzi-ui": "^1.4.26",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "twig": "^1.17.1"
+    "graphql-tag": "^2.12.6",
+    "twig": "^3.0.0"
   },
   "peerDependencies": {
     "react": "^19",
@@ -351,7 +1000,7 @@
     "@babel/eslint-parser": "^7.28.6",
     "@babel/plugin-syntax-flow": "^7.28.6",
     "@babel/plugin-transform-react-jsx": "^7.28.6",
-    "@babel/preset-env": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
     "@eslint/js": "^10.0.1",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@tailwindcss/forms": "^0.5.11",
@@ -363,40 +1012,40 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/twig": "^1.12.17",
-    "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.2",
     "babel-minify": "^0.5.2",
     "eslint": "^9.39.4",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-config-turbo": "^2.8.14",
+    "eslint-config-turbo": "^2.9.2",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-cypress": "^6.1.0",
+    "eslint-plugin-cypress": "^6.2.1",
     "eslint-plugin-flowtype": "8.0.3",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^29.15.0",
-    "eslint-plugin-jsdoc": "^62.7.1",
+    "eslint-plugin-jest": "^29.15.1",
+    "eslint-plugin-jsdoc": "^62.8.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "eslint-plugin-storybook": "^10.2.16",
+    "eslint-plugin-storybook": "^10.3.3",
     "globals": "^17.4.0",
-    "jest-environment-jsdom": "^30.2.0",
+    "jest-environment-jsdom": "^30.3.0",
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "tailwindcss": "^4.2.1",
-    "terser": "^5.46.0",
+    "tailwindcss": "^4.2.2",
+    "terser": "^5.46.1",
     "ts-jest": "^29.4.6",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1",
-    "vite": "^7.3.1",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.0",
+    "vite": "^8.0.3",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-react": "^4.0.1",
-    "vitest": "^4.0.18",
+    "vitest": "^4.1.2",
     "vitest-fetch-mock": "^0.4.5"
   }
 }

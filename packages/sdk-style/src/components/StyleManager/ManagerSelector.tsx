@@ -1,61 +1,81 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers';
+import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers/lodash';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
 import { produce } from 'immer';
-import { useCallback, use, useMemo, useState } from 'react';
+import { useCallback, use, useMemo, useState, memo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import StyleSelectorTag from './StyleSelectorTag';
-import SelectorForm from '../SelectorForm';
+import SelectorForm from '../../models/SelectorForm';
 
-import type { Element, StyleItem } from '@plitzi/sdk-shared';
+import type { SelectorFormValues } from '../../models/SelectorForm';
+import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type ManagerSelectorProps = {
+  displayMode: DisplayMode;
   flatList: Element[];
   selected?: string;
-  onSelect?: Dispatch<SetStateAction<string | undefined>>;
+  onSelect?: Dispatch<SetStateAction<StyleItem | undefined>>;
   selectors: StyleItem[];
 };
 
-const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
+const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
   const [searchInput, setSearchInput] = useState('');
   const { builderHandler } = use(BuilderContext);
-  const { displayMode } = use(BuilderStyleContext);
+  const { components } = use(ComponentContext);
+  const componentsNotAvailables = useMemo(
+    () => selectors.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
+    [selectors]
+  );
   const finalSelectors = useMemo(() => {
+    let selectorsParsed = selectors;
     if (!isEmpty(searchInput)) {
-      return selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
+      selectorsParsed = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
-    return selectors;
+    return selectorsParsed.sort((a, b) => Number(b.type === 'element') - Number(a.type === 'element'));
   }, [selectors, searchInput]);
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
 
   const handleCloseAddSelector = useCallback(
-    (_e: MouseEvent | React.MouseEvent | undefined, values?: { name: string }) => {
-      if (values) {
+    (_e: MouseEvent | React.MouseEvent | undefined, values?: SelectorFormValues) => {
+      if (!values) {
+        return;
+      }
+
+      if (values.mode === 'default') {
         const { name } = values;
-        builderHandler('styleAddSelector', displayMode, name, 'class');
+        builderHandler('styleAddSelector', displayMode, name, 'class', undefined, undefined, {
+          styleSelector: undefined,
+          componentType: undefined
+        });
+      } else {
+        const { componentType } = values;
+        builderHandler('styleAddSelector', displayMode, componentType, 'element', undefined, undefined, {
+          styleSelector: undefined,
+          componentType
+        });
       }
     },
     [builderHandler, displayMode]
   );
 
-  const [idAddSelector, openAddSelector, onOpenAddSelector, onCloseAddSelector] = useDisclosure<{ name: string }>({
+  const [idAddSelector, openAddSelector, onOpenAddSelector, onCloseAddSelector] = useDisclosure<SelectorFormValues>({
     id: 'add-selector',
     onClose: handleCloseAddSelector
   });
 
   const handleClickSelect = useCallback(
     (selector: string) => {
-      onSelect?.(state => (state === selector ? undefined : selector));
+      onSelect?.(state => (state?.name === selector ? undefined : selectors.find(s => s.name === selector)));
     },
-    [onSelect]
+    [onSelect, selectors]
   );
 
   const elementHasSelector = useCallback((element: Element, selector: string) => {
@@ -138,11 +158,11 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
             <StyleSelectorTag
               key={name}
               id={name}
-              onSelect={handleClickSelect}
               active={name === selected}
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
+              onSelect={handleClickSelect}
               onDelete={handleClickDelete}
             />
           );
@@ -153,7 +173,12 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
           <h4>Add Selector</h4>
         </Modal.Header>
         <Modal.Body>
-          <SelectorForm onSubmit={onCloseAddSelector} onClose={onCloseAddSelector} />
+          <SelectorForm
+            componentsNotAvailables={componentsNotAvailables}
+            components={components.current}
+            onSubmit={onCloseAddSelector}
+            onClose={onCloseAddSelector}
+          />
         </Modal.Body>
       </Modal>
       <Modal id={idDeleteSelector} open={openDeleteSelector} onClose={onCloseDeleteSelector}>
@@ -176,4 +201,4 @@ const ManagerSelector = ({ flatList, selectors, selected, onSelect }: ManagerSel
   );
 };
 
-export default ManagerSelector;
+export default memo(ManagerSelector);

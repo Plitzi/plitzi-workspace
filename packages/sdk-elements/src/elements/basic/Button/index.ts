@@ -45,23 +45,25 @@ const Button = Object.assign(BaseButton, {
       style: {},
       subTypes: {
         button: {
-          name: 'Normal Button',
+          name: 'Default Button',
           displayMode: 'desktop',
           style: {
             base: {
-              'min-height': '30px',
-              'min-width': '30px',
-              'padding-top': '6px',
-              'padding-left': '12px',
-              'padding-right': '12px',
-              'padding-bottom': '6px',
-              cursor: 'pointer',
-              'font-size': '16px',
-              'line-height': '24px',
-              'border-top-left-radius': '4px',
-              'border-top-right-radius': '4px',
-              'border-bottom-left-radius': '4px',
-              'border-bottom-right-radius': '4px'
+              default: {
+                'min-height': '30px',
+                'min-width': '30px',
+                'padding-top': '6px',
+                'padding-left': '12px',
+                'padding-right': '12px',
+                'padding-bottom': '6px',
+                cursor: 'pointer',
+                'font-size': '16px',
+                'line-height': '24px',
+                'border-top-left-radius': '4px',
+                'border-top-right-radius': '4px',
+                'border-bottom-left-radius': '4px',
+                'border-bottom-right-radius': '4px'
+              }
             }
           }
         },
@@ -70,19 +72,21 @@ const Button = Object.assign(BaseButton, {
           displayMode: 'desktop',
           style: {
             base: {
-              'min-height': '30px',
-              'min-width': '30px',
-              'padding-top': '6px',
-              'padding-left': '12px',
-              'padding-right': '12px',
-              'padding-bottom': '6px',
-              cursor: 'pointer',
-              'font-size': '16px',
-              'line-height': '24px',
-              'border-top-left-radius': '4px',
-              'border-top-right-radius': '4px',
-              'border-bottom-left-radius': '4px',
-              'border-bottom-right-radius': '4px'
+              default: {
+                'min-height': '30px',
+                'min-width': '30px',
+                'padding-top': '6px',
+                'padding-left': '12px',
+                'padding-right': '12px',
+                'padding-bottom': '6px',
+                cursor: 'pointer',
+                'font-size': '16px',
+                'line-height': '24px',
+                'border-top-left-radius': '4px',
+                'border-top-right-radius': '4px',
+                'border-bottom-left-radius': '4px',
+                'border-bottom-right-radius': '4px'
+              }
             }
           }
         },
@@ -91,19 +95,21 @@ const Button = Object.assign(BaseButton, {
           displayMode: 'desktop',
           style: {
             base: {
-              'min-height': '30px',
-              'min-width': '30px',
-              'padding-top': '6px',
-              'padding-left': '12px',
-              'padding-right': '12px',
-              'padding-bottom': '6px',
-              cursor: 'pointer',
-              'font-size': '16px',
-              'line-height': '24px',
-              'border-top-left-radius': '4px',
-              'border-top-right-radius': '4px',
-              'border-bottom-left-radius': '4px',
-              'border-bottom-right-radius': '4px'
+              default: {
+                'min-height': '30px',
+                'min-width': '30px',
+                'padding-top': '6px',
+                'padding-left': '12px',
+                'padding-right': '12px',
+                'padding-bottom': '6px',
+                cursor: 'pointer',
+                'font-size': '16px',
+                'line-height': '24px',
+                'border-top-left-radius': '4px',
+                'border-top-right-radius': '4px',
+                'border-bottom-left-radius': '4px',
+                'border-bottom-right-radius': '4px'
+              }
             }
           }
         }

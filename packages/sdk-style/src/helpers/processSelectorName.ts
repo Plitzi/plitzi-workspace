@@ -4,8 +4,11 @@ const processSelectorName = (selector: Omit<StyleItem, 'cache'>) => {
   const { name, type } = selector;
   let finalSelector = name;
   switch (type) {
+    case 'element':
+      finalSelector = `.plitzi__${name}`;
+      break;
+
     case 'class':
-    case 'state':
       finalSelector = `.${name}`;
       break;
 
@@ -13,8 +16,6 @@ const processSelectorName = (selector: Omit<StyleItem, 'cache'>) => {
       finalSelector = `#${name}`;
       break;
 
-    case 'element':
-    case 'parent':
     default:
   }
 

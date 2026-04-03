@@ -49,20 +49,12 @@ const Border = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Borde
       (partialValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
         switch (type) {
           case 'radius': {
-            setValue(
-              [
-                'border-top-left-radius',
-                'border-top-right-radius',
-                'border-bottom-left-radius',
-                'border-bottom-right-radius'
-              ],
-              {
-                ['border-top-left-radius']: partialValue,
-                ['border-top-right-radius']: partialValue,
-                ['border-bottom-left-radius']: partialValue,
-                ['border-bottom-right-radius']: partialValue
-              } as Record<StyleCategory, StyleValue>
-            );
+            setValue(undefined, {
+              ['border-top-left-radius']: partialValue,
+              ['border-top-right-radius']: partialValue,
+              ['border-bottom-left-radius']: partialValue,
+              ['border-bottom-right-radius']: partialValue
+            } as Record<StyleCategory, StyleValue>);
 
             break;
           }
@@ -81,53 +73,28 @@ const Border = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Borde
           case 'width': {
             const options = (['style', 'color', 'width'] as const).filter(part => part !== type);
             if (currentPlacement === 'all') {
-              setValue(
-                [
-                  `border-top-${type}`,
-                  `border-bottom-${type}`,
-                  `border-left-${type}`,
-                  `border-right-${type}`,
+              setValue(undefined, {
+                [`border-top-${type}`]: partialValue,
+                [`border-bottom-${type}`]: partialValue,
+                [`border-left-${type}`]: partialValue,
+                [`border-right-${type}`]: partialValue,
 
-                  `border-top-${options[0]}`,
-                  `border-bottom-${options[0]}`,
-                  `border-left-${options[0]}`,
-                  `border-right-${options[0]}`,
+                [`border-top-${options[0]}`]: values[`border-top-${options[0]}`],
+                [`border-bottom-${options[0]}`]: values[`border-bottom-${options[0]}`],
+                [`border-left-${options[0]}`]: values[`border-left-${options[0]}`],
+                [`border-right-${options[0]}`]: values[`border-right-${options[0]}`],
 
-                  `border-top-${options[1]}`,
-                  `border-bottom-${options[1]}`,
-                  `border-left-${options[1]}`,
-                  `border-right-${options[1]}`
-                ],
-                {
-                  [`border-top-${type}`]: partialValue,
-                  [`border-bottom-${type}`]: partialValue,
-                  [`border-left-${type}`]: partialValue,
-                  [`border-right-${type}`]: partialValue,
-
-                  [`border-top-${options[0]}`]: values[`border-top-${options[0]}`],
-                  [`border-bottom-${options[0]}`]: values[`border-bottom-${options[0]}`],
-                  [`border-left-${options[0]}`]: values[`border-left-${options[0]}`],
-                  [`border-right-${options[0]}`]: values[`border-right-${options[0]}`],
-
-                  [`border-top-${options[1]}`]: values[`border-right-${options[1]}`],
-                  [`border-bottom-${options[1]}`]: values[`border-bottom-${options[1]}`],
-                  [`border-left-${options[1]}`]: values[`border-left-${options[1]}`],
-                  [`border-right-${options[1]}`]: values[`border-right-${options[1]}`]
-                } as Record<StyleCategory, StyleValue>
-              );
+                [`border-top-${options[1]}`]: values[`border-right-${options[1]}`],
+                [`border-bottom-${options[1]}`]: values[`border-bottom-${options[1]}`],
+                [`border-left-${options[1]}`]: values[`border-left-${options[1]}`],
+                [`border-right-${options[1]}`]: values[`border-right-${options[1]}`]
+              });
             } else {
-              setValue(
-                [
-                  `border-${currentPlacement}-${type}`,
-                  `border-${currentPlacement}-${options[0]}`,
-                  `border-${currentPlacement}-${options[1]}`
-                ],
-                {
-                  [`border-${currentPlacement}-${type}`]: partialValue,
-                  [`border-${currentPlacement}-${options[0]}`]: values[`border-${currentPlacement}-${options[0]}`],
-                  [`border-${currentPlacement}-${options[1]}`]: values[`border-${currentPlacement}-${options[1]}`]
-                } as Record<StyleCategory, StyleValue>
-              );
+              setValue(undefined, {
+                [`border-${currentPlacement}-${type}`]: partialValue,
+                [`border-${currentPlacement}-${options[0]}`]: values[`border-${currentPlacement}-${options[0]}`],
+                [`border-${currentPlacement}-${options[1]}`]: values[`border-${currentPlacement}-${options[1]}`]
+              });
             }
 
             break;

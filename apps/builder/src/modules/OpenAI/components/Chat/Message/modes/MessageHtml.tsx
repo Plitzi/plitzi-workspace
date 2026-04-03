@@ -5,11 +5,11 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, useEffect, use, useState } from 'react';
 
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import TransformPreview from '@pmodules/Transformers/TransformPreview';
 
 import type { Schema, Style } from '@plitzi/sdk-shared';

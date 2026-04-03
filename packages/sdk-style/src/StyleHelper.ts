@@ -1,19 +1,7 @@
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 import { styleVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
-import type { DisplayMode, StyleItem, Style, TagType, StyleValue, StyleVariables } from '@plitzi/sdk-shared';
-
-export type StyleHelperMetaData = {
-  tree: {
-    name: string;
-    displayMode: DisplayMode;
-    style: StyleItem['attributes'];
-    isParent: boolean;
-    isSubParent: boolean;
-  }[];
-  style: { [key: string]: { key: string; value: StyleValue; displayMode: DisplayMode }[] };
-  parentStyle: { [key: string]: string };
-};
+import type { DisplayMode, Style, TagType, StyleVariables } from '@plitzi/sdk-shared';
 
 export const selectorToString = (
   tags?: { type: TagType; value: string }[],
@@ -35,10 +23,8 @@ export const selectorToString = (
 
       switch (tag.type) {
         case 'class':
-        case 'state':
           return `.${tag.value}`;
         case 'element':
-        case 'parent':
           return tag.value;
         case 'id':
           return `#${tag.value}`;
@@ -86,6 +72,7 @@ export const generateCache = (style: Style) => {
 
   orderedKeys.forEach((displayMode, i) => {
     const styleBlock = Object.values(platform[displayMode])
+      .sort((a, b) => Number(b.type === 'element') - Number(a.type === 'element'))
       .map(s => s.cache)
       .join('\n');
     if (!styleBlock) {

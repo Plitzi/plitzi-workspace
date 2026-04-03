@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import ElementDetails from './ElementDetails';
 import ElementsList from './ElementsList';

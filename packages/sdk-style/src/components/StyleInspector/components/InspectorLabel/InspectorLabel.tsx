@@ -53,7 +53,7 @@ const InspectorLabel = ({
           'cursor-pointer bg-blue-200 text-blue-400': hasValues && !hasBinding && !hasVariables,
           'cursor-pointer bg-green-200 text-green-400': hasVariables,
           'cursor-pointer bg-purple-200 text-purple-400': hasBinding,
-          'cursor-pointer bg-orange-200 text-orange-400': hasInherit && !hasValues && !hasVariables
+          'bg-orange-200 text-orange-400': hasInherit && !hasValues && !hasVariables
         })}
         onClick={handleClickResetValue}
       >

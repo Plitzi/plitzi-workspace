@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 

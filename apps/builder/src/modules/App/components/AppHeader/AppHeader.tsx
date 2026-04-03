@@ -20,15 +20,14 @@ import AppContext from '../../AppContext';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
 
+import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 
 const AppHeader = () => {
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const queueProcessing = use(QueueStatusContext);
   const { previewMode, setPreviewMode } = use(AppContext);
   const [loadingDeployment, setLoadingDeployment] = useState(false);

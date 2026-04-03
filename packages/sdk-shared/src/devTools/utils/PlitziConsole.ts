@@ -1,4 +1,4 @@
-import { formatDate } from '@plitzi/sdk-shared';
+import { formatDate } from '../../helpers';
 
 import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
 

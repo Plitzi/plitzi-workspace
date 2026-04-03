@@ -14,6 +14,18 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
+    "./BuilderStyleContextProvider": {
+      "types": "./dist/src/BuilderStyleContextProvider.d.ts",
+      "import": "./dist/src/BuilderStyleContextProvider.mjs"
+    },
+    "./SdkStyleContextProvider": {
+      "types": "./dist/src/SdkStyleContextProvider.d.ts",
+      "import": "./dist/src/SdkStyleContextProvider.mjs"
+    },
+    "./StyleAdvanceEditor": {
+      "types": "./dist/src/StyleAdvanceEditor.d.ts",
+      "import": "./dist/src/StyleAdvanceEditor.mjs"
+    },
     "./StyleContext": {
       "types": "./dist/src/StyleContext.d.ts",
       "import": "./dist/src/StyleContext.mjs"
@@ -23,12 +35,48 @@
       "import": "./dist/src/StyleHelper.mjs"
     },
     "./StyleMap": {
-      "types": "./dist/src/StyleMap.d.ts",
-      "import": "./dist/src/StyleMap.mjs"
+      "types": "./dist/src/StyleMap/index.d.ts",
+      "import": "./dist/src/StyleMap/index.mjs"
     },
-    "./StyleViewer": {
-      "types": "./dist/src/StyleViewer.d.ts",
-      "import": "./dist/src/StyleViewer.mjs"
+    "./StyleMap/StyleMap": {
+      "types": "./dist/src/StyleMap/StyleMap.d.ts",
+      "import": "./dist/src/StyleMap/StyleMap.mjs"
+    },
+    "./StyleMap/helpers/getBasePath": {
+      "types": "./dist/src/StyleMap/helpers/getBasePath.d.ts",
+      "import": "./dist/src/StyleMap/helpers/getBasePath.mjs"
+    },
+    "./StyleMap/helpers/getStyleItem": {
+      "types": "./dist/src/StyleMap/helpers/getStyleItem.d.ts",
+      "import": "./dist/src/StyleMap/helpers/getStyleItem.mjs"
+    },
+    "./StyleMap/helpers/isValueValid": {
+      "types": "./dist/src/StyleMap/helpers/isValueValid.d.ts",
+      "import": "./dist/src/StyleMap/helpers/isValueValid.mjs"
+    },
+    "./StyleMap/helpers/omitUndefined": {
+      "types": "./dist/src/StyleMap/helpers/omitUndefined.d.ts",
+      "import": "./dist/src/StyleMap/helpers/omitUndefined.mjs"
+    },
+    "./StyleMap/helpers/utils": {
+      "types": "./dist/src/StyleMap/helpers/utils.d.ts",
+      "import": "./dist/src/StyleMap/helpers/utils.mjs"
+    },
+    "./StyleMap/index": {
+      "types": "./dist/src/StyleMap/index.d.ts",
+      "import": "./dist/src/StyleMap/index.mjs"
+    },
+    "./StyleMap/methods/addSelector": {
+      "types": "./dist/src/StyleMap/methods/addSelector.d.ts",
+      "import": "./dist/src/StyleMap/methods/addSelector.mjs"
+    },
+    "./StyleMap/methods/updateSelector": {
+      "types": "./dist/src/StyleMap/methods/updateSelector.d.ts",
+      "import": "./dist/src/StyleMap/methods/updateSelector.mjs"
+    },
+    "./StyleReducer": {
+      "types": "./dist/src/StyleReducer.d.ts",
+      "import": "./dist/src/StyleReducer.mjs"
     },
     "./components": {
       "types": "./dist/src/components/index.d.ts",
@@ -126,21 +174,13 @@
       "types": "./dist/src/components/Selector/index.d.ts",
       "import": "./dist/src/components/Selector/index.mjs"
     },
-    "./components/SelectorForm": {
-      "types": "./dist/src/components/SelectorForm/index.d.ts",
-      "import": "./dist/src/components/SelectorForm/index.mjs"
-    },
-    "./components/SelectorForm/SelectorForm": {
-      "types": "./dist/src/components/SelectorForm/SelectorForm.d.ts",
-      "import": "./dist/src/components/SelectorForm/SelectorForm.mjs"
-    },
-    "./components/SelectorForm/index": {
-      "types": "./dist/src/components/SelectorForm/index.d.ts",
-      "import": "./dist/src/components/SelectorForm/index.mjs"
-    },
     "./components/StyleInspector": {
       "types": "./dist/src/components/StyleInspector/index.d.ts",
       "import": "./dist/src/components/StyleInspector/index.mjs"
+    },
+    "./components/StyleInspector/Inspector": {
+      "types": "./dist/src/components/StyleInspector/Inspector.d.ts",
+      "import": "./dist/src/components/StyleInspector/Inspector.mjs"
     },
     "./components/StyleInspector/StyleInspector": {
       "types": "./dist/src/components/StyleInspector/StyleInspector.d.ts",
@@ -389,6 +429,18 @@
     "./components/StyleInspector/categories/Position/index": {
       "types": "./dist/src/components/StyleInspector/categories/Position/index.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Position/index.mjs"
+    },
+    "./components/StyleInspector/categories/RawStyle": {
+      "types": "./dist/src/components/StyleInspector/categories/RawStyle/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/RawStyle/index.mjs"
+    },
+    "./components/StyleInspector/categories/RawStyle/RawStyle": {
+      "types": "./dist/src/components/StyleInspector/categories/RawStyle/RawStyle.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/RawStyle/RawStyle.mjs"
+    },
+    "./components/StyleInspector/categories/RawStyle/index": {
+      "types": "./dist/src/components/StyleInspector/categories/RawStyle/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/RawStyle/index.mjs"
     },
     "./components/StyleInspector/categories/Size": {
       "types": "./dist/src/components/StyleInspector/categories/Size/index.d.ts",
@@ -665,6 +717,18 @@
     "./index": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
+    },
+    "./models/SelectorForm": {
+      "types": "./dist/src/models/SelectorForm/index.d.ts",
+      "import": "./dist/src/models/SelectorForm/index.mjs"
+    },
+    "./models/SelectorForm/SelectorForm": {
+      "types": "./dist/src/models/SelectorForm/SelectorForm.d.ts",
+      "import": "./dist/src/models/SelectorForm/SelectorForm.mjs"
+    },
+    "./models/SelectorForm/index": {
+      "types": "./dist/src/models/SelectorForm/index.d.ts",
+      "import": "./dist/src/models/SelectorForm/index.mjs"
     }
   },
   "type": "module",
@@ -680,7 +744,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.4",
+    "@plitzi/plitzi-ui": "^1.4.26",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
@@ -691,8 +755,8 @@
   },
   "devDependencies": {
     "eslint": "^9.39.4",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2"
   }
 }

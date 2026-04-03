@@ -64,44 +64,24 @@ const Display = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Disp
   const handleChange = useCallback(
     (type: StyleCategory, partialValue: StyleValue) => {
       if (type === 'display') {
-        setValue(
-          [
-            'flex-direction',
-            'flex-wrap',
-            'align-items',
-            'justify-content',
-            'align-content',
-            'column-gap',
-            'row-gap',
-            'grid-row-gap',
-            'grid-column-gap',
-            'grid-template-areas',
-            'grid-template-columns',
-            'grid-template-rows',
-            'grid-auto-flow',
-            'grid-auto-rows',
-            'grid-auto-columns',
-            'display'
-          ] as const,
-          {
-            'flex-direction': undefined,
-            'flex-wrap': undefined,
-            'align-items': undefined,
-            'justify-content': undefined,
-            'align-content': undefined,
-            'row-gap': undefined,
-            'column-gap': undefined,
-            'grid-row-gap': undefined,
-            'grid-column-gap': undefined,
-            'grid-template-areas': undefined,
-            'grid-template-columns': undefined,
-            'grid-template-rows': undefined,
-            'grid-auto-flow': undefined,
-            'grid-auto-rows': undefined,
-            'grid-auto-columns': undefined,
-            display: partialValue
-          } as Record<StyleCategory, StyleValue | undefined>
-        );
+        setValue(undefined, {
+          'flex-direction': undefined,
+          'flex-wrap': undefined,
+          'align-items': undefined,
+          'justify-content': undefined,
+          'align-content': undefined,
+          'row-gap': undefined,
+          'column-gap': undefined,
+          'grid-row-gap': undefined,
+          'grid-column-gap': undefined,
+          'grid-template-areas': undefined,
+          'grid-template-columns': undefined,
+          'grid-template-rows': undefined,
+          'grid-auto-flow': undefined,
+          'grid-auto-rows': undefined,
+          'grid-auto-columns': undefined,
+          display: partialValue
+        });
       } else {
         setValue(type, partialValue);
       }

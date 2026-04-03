@@ -40,11 +40,11 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
       <div className="flex w-full flex-col truncate rounded-sm border border-gray-300">
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
-          <div className="ml-1 truncate capitalize">{`${sourceName} [${name}]`}</div>
+          <div className="ml-1 truncate capitalize">{fromPath ? `${sourceName} [${name}]` : 'None'}</div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={fromPath}>
           <div className="font-bold">Path:</div>
-          <div className="ml-1 truncate">{`${source}.${fromPath}`}</div>
+          <div className="ml-1 truncate">{fromPath ? `${source}.${fromPath}` : ''}</div>
         </div>
         <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs" title={toPath}>
           <div className="font-bold">To:</div>

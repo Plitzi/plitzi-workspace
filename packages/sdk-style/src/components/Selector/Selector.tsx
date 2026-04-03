@@ -19,7 +19,8 @@ export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
 export type SelectorProps = {
   className?: string;
   value?: string;
-  selectorSelected?: Pick<StyleItem, 'name' | 'type'>;
+  selector?: Pick<StyleItem, 'name' | 'type'>;
+  componentType?: string;
   displayMode: DisplayMode;
   disabled?: boolean;
   style: Style;
@@ -32,7 +33,8 @@ export type SelectorProps = {
 const Selector = ({
   className = '',
   value = '',
-  selectorSelected,
+  selector: selectorProp,
+  componentType,
   displayMode,
   disabled = false,
   style,
@@ -43,22 +45,26 @@ const Selector = ({
 }: SelectorProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState('');
-  // const [popupOpened, setPopupOpened] = useState(false);
   const [open, setOpen, , triggerRef, triggerRect] = useFloating({ disabled });
   const { existsPopup, addPopup } = usePopup('floating');
-  const tags = useMemo<SelectorValue[]>(
+  const tagComponent = useMemo(
     () =>
-      Object.values(pick(get(style, `platform.${displayMode}`), value.split(' '))).map(tag =>
-        pick(tag, ['name', 'type'])
+      Object.values(get(style, `platform.${displayMode}`, {})).find(
+        selector => selector.type === 'element' && selector.componentType === componentType
       ),
-    [style, displayMode, value]
+    [componentType, displayMode, style]
   );
+  const tags = useMemo<SelectorValue[]>(() => {
+    const selectors = get(style, `platform.${displayMode}`);
+
+    return Object.values(pick(selectors, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
+  }, [style, displayMode, value]);
   const selectorsAvailables = useMemo<StyleItem[]>(
     () => Object.values(omit(get(style, `platform.${displayMode}`), value.split(' '))),
     [style, displayMode, value]
   );
 
-  const handleChange = useCallback(
+  const handleChangeInput = useCallback(
     (e: ChangeEvent) => {
       setOpen((e.target as HTMLInputElement).value.length > 0);
       setInputValue((e.target as HTMLInputElement).value);
@@ -93,21 +99,6 @@ const Selector = ({
     [tags, onAdd, onChange, onSelectorSelected]
   );
 
-  const handleChangeItemState = useCallback(
-    (tag: SelectorValue) => (tagState: string) => {
-      if (!tagState) {
-        onSelectorSelected?.(tag);
-
-        return;
-      }
-
-      const tempTag: Pick<StyleItem, 'name' | 'type'> = { name: `${tag.name}:${tagState}`, type: 'state' };
-      onAdd?.(tempTag, false);
-      onSelectorSelected?.(tempTag);
-    },
-    [onAdd, onSelectorSelected]
-  );
-
   const handleClickAction = useCallback(
     (position: number) => (action: 'duplicate' | 'remove' | 'delete', value?: SelectorValue) => {
       switch (action) {
@@ -115,7 +106,7 @@ const Selector = ({
         case 'delete': {
           const finalTags = tags.filter((_tag, i) => i !== position);
           const finalValue = finalTags.reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
-          if (selectorSelected && tags[position].name === selectorSelected.name) {
+          if (selectorProp && tags[position].name === selectorProp.name) {
             onSelectorSelected?.(get(finalTags, '0'));
           }
 
@@ -146,7 +137,7 @@ const Selector = ({
           break;
       }
     },
-    [tags, selectorSelected, onChange, onSelectorSelected, onAdd, onRemove]
+    [tags, selectorProp, onChange, onSelectorSelected, onAdd, onRemove]
   );
 
   const handleKeyDown = useCallback(
@@ -218,7 +209,7 @@ const Selector = ({
     (tag: SelectorValue) => {
       setTimeout(() => setInputValue(''), 0);
       setOpen(false);
-      const finalValue = [...tags, tag].reduce<string>((acum, tag) => `${acum} ${tag.name}`, '').trim();
+      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
       onChange?.(finalValue);
       onAdd?.(tag, false);
       onSelectorSelected?.(tag);
@@ -246,6 +237,7 @@ const Selector = ({
   );
 
   const contentStyle = useMemo<CSSProperties>(() => ({ width: triggerRect?.width }), [triggerRect]);
+  const tagsToRender = tagComponent ? [tagComponent, ...tags] : tags;
 
   return (
     <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
@@ -267,16 +259,16 @@ const Selector = ({
           >
             <Button.Icon icon="fas fa-swatchbook" />
           </Button>
-          {tags.map((tag, i) => (
+          {tagsToRender.map((tag, i) => (
             <SelectorItem
               key={`${i}_${tag.name}`}
               selector={tag.name}
               type={tag.type}
-              active={tag.name === selectorSelected?.name.replace(/:.*/, '')}
-              onAction={handleClickAction(i)}
+              editable={tag.type !== 'element'}
+              active={tag.name === selectorProp?.name.replace(/:.*/, '')}
+              onAction={handleClickAction(tagComponent ? i - 1 : i)}
               onClick={handleClickSelector}
-              onChange={handleChangeItem(i)}
-              onChangeState={handleChangeItemState(tag)}
+              onChange={handleChangeItem(tagComponent ? i - 1 : i)}
             />
           ))}
           <input
@@ -287,7 +279,7 @@ const Selector = ({
             autoCapitalize="off"
             spellCheck="false"
             value={inputValue}
-            onChange={handleChange}
+            onChange={handleChangeInput}
           />
         </div>
       </ContainerFloating.Trigger>

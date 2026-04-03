@@ -8,6 +8,8 @@ import type { StyleCategory } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type CategoryContainerProps = {
+  className?: string;
+  classNameContent?: string;
   children?: ReactNode;
   title?: string;
   dotKeys?: StyleCategory[];
@@ -16,6 +18,8 @@ export type CategoryContainerProps = {
 };
 
 const CategoryContainer = ({
+  className,
+  classNameContent,
   children,
   title = 'Title',
   dotKeys,
@@ -23,7 +27,7 @@ const CategoryContainer = ({
   onCollapse
 }: CategoryContainerProps) => {
   return (
-    <ContainerCollapsable collapsed={isCollapsed} onChange={onCollapse}>
+    <ContainerCollapsable className={className} collapsed={isCollapsed} onChange={onCollapse}>
       <ContainerCollapsable.Header
         className={clsx('h-8', {
           'border-b border-gray-300 hover:bg-slate-100': isCollapsed,
@@ -37,7 +41,7 @@ const CategoryContainer = ({
         <InspectorDots styleKeys={dotKeys} />
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={clsx('flex flex-col gap-3 p-2', { 'border-b border-gray-300': !isCollapsed })}
+        className={clsx('flex flex-col gap-3 p-2', { 'border-b border-gray-300': !isCollapsed }, classNameContent)}
       >
         {children}
       </ContainerCollapsable.Content>

@@ -13,10 +13,10 @@ import type {
   PluginManifest,
   ResourceFile,
   ResourceType as TResourceType,
-  ResourceWithFile
+  ResourceWithFile,
+  BuilderQueriesMap,
+  BuilderMutationsMap
 } from '@plitzi/sdk-shared';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 
 export type TemporalResourceProps = {
   className?: string;
@@ -43,7 +43,7 @@ const TemporalResource = ({
   onError: onErrorProp,
   onUploadCancel
 }: TemporalResourceProps) => {
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [isUploaded, setIsUploaded] = useState(!!id);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);

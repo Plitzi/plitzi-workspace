@@ -31,10 +31,10 @@ import type {
   Style,
   DropPosition,
   BuilderNetworkContextValue,
-  StyleThemeMode
+  StyleThemeMode,
+  BuilderQueriesMap,
+  BuilderMutationsMap
 } from '@plitzi/sdk-shared';
-import type { MutationsMap } from '@pmodules/Network/Mutations';
-import type { QueriesMap } from '@pmodules/Network/Queries';
 
 export type BuilderProviderProps = {
   children: React.ReactNode;
@@ -58,7 +58,7 @@ const BuilderProvider = ({
   onBaseElementChange
 }: BuilderProviderProps) => {
   const { displayMode } = use(AppContext);
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<QueriesMap, MutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);

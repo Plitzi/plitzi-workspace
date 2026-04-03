@@ -46,8 +46,10 @@ const Custom = Object.assign(BaseCustom, {
       displayMode: 'desktop',
       style: {
         base: {
-          'min-width': '50px',
-          'min-height': '50px'
+          default: {
+            'min-width': '50px',
+            'min-height': '50px'
+          }
         }
       }
     },

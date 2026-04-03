@@ -2,9 +2,9 @@ import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
 import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 
 import SchemaPagesContext from './SchemaPagesContext';
 

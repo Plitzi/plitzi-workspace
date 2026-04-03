@@ -44,9 +44,11 @@ const Image = Object.assign(BaseImage, {
       displayMode: 'desktop',
       style: {
         base: {
-          display: 'block',
-          width: '140px',
-          height: '140px'
+          default: {
+            display: 'block',
+            width: '140px',
+            height: '140px'
+          }
         }
       }
     },

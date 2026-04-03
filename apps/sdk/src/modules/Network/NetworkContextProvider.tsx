@@ -3,17 +3,22 @@ import { get, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-schema/helpers/FlatMap';
+import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import NetworkInternalContext from './contexts/NetworkInternalContext';
-import Mutations from './Mutations';
-import Queries from './Queries';
 
-import type { MutationsMap } from './Mutations';
-import type { QueriesMap } from './Queries';
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
-import type { Environment, OfflineData, OfflineDataRaw, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  OfflineData,
+  OfflineDataRaw,
+  Server,
+  ServerEnvironment,
+  SdkQueriesMap,
+  SdkMutationsMap
+} from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
@@ -62,21 +67,21 @@ const NetworkContextProvider = ({
   });
 
   const query = useCallback(
-    async <T extends keyof QueriesMap>(
+    async <T extends keyof SdkQueriesMap>(
       queryKey: T,
       variables?: Record<string, unknown>,
       fetchPolicy: FetchPolicy = 'network-only'
-    ): Promise<{ success: boolean; result?: QueriesMap[T]; error?: string | Error }> => {
-      const document = Queries[queryKey];
+    ): Promise<{ success: boolean; result?: SdkQueriesMap[T]; error?: string | Error }> => {
+      const document = SdkQueries[queryKey];
       if (!(document as DocumentNode | undefined)) {
         setError('Query Not Found');
 
         throw new Error(`Query ${queryKey} not found`);
       }
 
-      let result: ApolloClient.QueryResult<QueriesMap[T]> | undefined;
+      let result: ApolloClient.QueryResult<SdkQueriesMap[T]> | undefined;
       try {
-        result = await client?.query<QueriesMap[T]>({
+        result = await client?.query<SdkQueriesMap[T]>({
           query: document,
           variables: { environment, ...variables },
           fetchPolicy
@@ -95,21 +100,21 @@ const NetworkContextProvider = ({
   );
 
   const mutate = useCallback(
-    async <T extends keyof MutationsMap>(
+    async <T extends keyof SdkMutationsMap>(
       mutationKey: T,
       variables?: Record<string, unknown>,
       includeEnvironment = true,
       uploadOptions = {}
-    ): Promise<{ success: boolean; result?: MutationsMap[T]; error?: string | Error }> => {
-      if (!(Mutations[mutationKey] as DocumentNode | undefined)) {
+    ): Promise<{ success: boolean; result?: SdkMutationsMap[T]; error?: string | Error }> => {
+      if (!(SdkMutations[mutationKey] as DocumentNode | undefined)) {
         return { success: false, result: undefined, error: 'Mutation Not Found' };
       }
 
-      let result: ApolloClient.MutateResult<MutationsMap[T]> | undefined;
+      let result: ApolloClient.MutateResult<SdkMutationsMap[T]> | undefined;
       // let abortHandler;
       try {
         result = await client?.mutate({
-          mutation: Mutations[mutationKey],
+          mutation: SdkMutations[mutationKey],
           variables: includeEnvironment ? { environment, ...variables } : variables,
           context: {
             fetchOptions: {
@@ -135,7 +140,7 @@ const NetworkContextProvider = ({
       }
 
       if (result.data && (result.data as Record<string, unknown>)[mutationKey] !== undefined) {
-        return { success: true, result: (result.data as unknown as MutationsMap)[mutationKey] };
+        return { success: true, result: (result.data as unknown as SdkMutationsMap)[mutationKey] };
       }
 
       return { success: true, result: result.data };
@@ -235,7 +240,7 @@ const NetworkContextProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
-  const networkValue = useMemo<NetworkContextValue<QueriesMap, MutationsMap>>(
+  const networkValue = useMemo<NetworkContextValue<SdkQueriesMap, SdkMutationsMap>>(
     () => ({ query, mutate, webKey, webId, server, environment, instanceId, userKey, sdkEnvironment }),
     [query, mutate, webKey, webId, server, environment, instanceId, userKey, sdkEnvironment]
   );

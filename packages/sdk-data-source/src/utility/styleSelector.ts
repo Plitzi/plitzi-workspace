@@ -6,13 +6,13 @@ const callback = (
   _source: string,
   params: DataSourceUtilityParamsValue,
   _element: Partial<Element>,
-  dataSources = {} as Record<string, string>
+  dataSources = {} as Record<string, unknown>
 ) => {
   const { originalSelector, append, selector } = params;
 
   const finalSelector: string[] = [];
   if (append && !originalSelector && dataSources.sourceTo) {
-    finalSelector.push(...[dataSources.sourceTo, selector as string]);
+    finalSelector.push(...[dataSources.sourceTo as string, selector as string]);
   } else if (originalSelector && append) {
     const originalSelector = get(_element as Element, 'definition.styleSelectors.base', '');
     if (originalSelector) {

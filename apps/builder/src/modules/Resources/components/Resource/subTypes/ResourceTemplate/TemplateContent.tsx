@@ -1,7 +1,7 @@
 import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import { useMemo } from 'react';
 
-import SchemaContext from '@plitzi/sdk-schema/SchemaContext';
+import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
@@ -22,7 +22,7 @@ const TemplateContent = ({ baseElementId, schema, style }: TemplateContentProps)
       <div className="relative flex flex-col overflow-hidden">
         <SchemaContext value={builderSchemaValueMemo}>
           <StyleContext value={builderStyleValueMemo}>
-            <ContainerAutoScale className="flex min-h-[184px] w-full items-center justify-center overflow-hidden rounded-sm">
+            <ContainerAutoScale className="flex min-h-46 w-full items-center justify-center overflow-hidden rounded-sm">
               <BuilderAreaPreview
                 id={baseElementId}
                 schema={schema}
