@@ -42,10 +42,6 @@
       "types": "./dist/src/StyleMap/StyleMap.d.ts",
       "import": "./dist/src/StyleMap/StyleMap.mjs"
     },
-    "./StyleMap/helpers/getBasePath": {
-      "types": "./dist/src/StyleMap/helpers/getBasePath.d.ts",
-      "import": "./dist/src/StyleMap/helpers/getBasePath.mjs"
-    },
     "./StyleMap/helpers/getStyleItem": {
       "types": "./dist/src/StyleMap/helpers/getStyleItem.d.ts",
       "import": "./dist/src/StyleMap/helpers/getStyleItem.mjs"
@@ -53,10 +49,6 @@
     "./StyleMap/helpers/isValueValid": {
       "types": "./dist/src/StyleMap/helpers/isValueValid.d.ts",
       "import": "./dist/src/StyleMap/helpers/isValueValid.mjs"
-    },
-    "./StyleMap/helpers/omitUndefined": {
-      "types": "./dist/src/StyleMap/helpers/omitUndefined.d.ts",
-      "import": "./dist/src/StyleMap/helpers/omitUndefined.mjs"
     },
     "./StyleMap/helpers/utils": {
       "types": "./dist/src/StyleMap/helpers/utils.d.ts",
@@ -641,14 +633,6 @@
     "./components/StyleInspector/index": {
       "types": "./dist/src/components/StyleInspector/index.d.ts",
       "import": "./dist/src/components/StyleInspector/index.mjs"
-    },
-    "./components/StyleInspector/modes/InspectorModeAdvanced": {
-      "types": "./dist/src/components/StyleInspector/modes/InspectorModeAdvanced.d.ts",
-      "import": "./dist/src/components/StyleInspector/modes/InspectorModeAdvanced.mjs"
-    },
-    "./components/StyleInspector/modes/InspectorModeBasic": {
-      "types": "./dist/src/components/StyleInspector/modes/InspectorModeBasic.d.ts",
-      "import": "./dist/src/components/StyleInspector/modes/InspectorModeBasic.mjs"
     },
     "./components/StyleManager": {
       "types": "./dist/src/components/StyleManager/index.d.ts",

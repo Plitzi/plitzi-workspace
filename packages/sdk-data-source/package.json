@@ -74,10 +74,6 @@
       "types": "./dist/src/utility/styleSelector.d.ts",
       "import": "./dist/src/utility/styleSelector.mjs"
     },
-    "./utility/styleVariantSelector": {
-      "types": "./dist/src/utility/styleVariantSelector.d.ts",
-      "import": "./dist/src/utility/styleVariantSelector.mjs"
-    },
     "./utility/twigTemplate": {
       "types": "./dist/src/utility/twigTemplate.d.ts",
       "import": "./dist/src/utility/twigTemplate.mjs"

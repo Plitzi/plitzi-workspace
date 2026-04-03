@@ -864,6 +864,34 @@
       "types": "./dist/src/segments/index.d.ts",
       "import": "./dist/src/segments/index.mjs"
     },
+    "./store": {
+      "types": "./dist/src/store/index.d.ts",
+      "import": "./dist/src/store/index.mjs"
+    },
+    "./store/StoreProvider": {
+      "types": "./dist/src/store/StoreProvider.d.ts",
+      "import": "./dist/src/store/StoreProvider.mjs"
+    },
+    "./store/createStore": {
+      "types": "./dist/src/store/createStore.d.ts",
+      "import": "./dist/src/store/createStore.mjs"
+    },
+    "./store/helpers/getByPath": {
+      "types": "./dist/src/store/helpers/getByPath.d.ts",
+      "import": "./dist/src/store/helpers/getByPath.mjs"
+    },
+    "./store/helpers/setByPath": {
+      "types": "./dist/src/store/helpers/setByPath.d.ts",
+      "import": "./dist/src/store/helpers/setByPath.mjs"
+    },
+    "./store/hooks/useStore": {
+      "types": "./dist/src/store/hooks/useStore.d.ts",
+      "import": "./dist/src/store/hooks/useStore.mjs"
+    },
+    "./store/index": {
+      "types": "./dist/src/store/index.d.ts",
+      "import": "./dist/src/store/index.mjs"
+    },
     "./style": {
       "types": "./dist/src/style/index.d.ts",
       "import": "./dist/src/style/index.mjs"
@@ -952,6 +980,10 @@
       "types": "./dist/src/types/StateTypes.d.ts",
       "import": "./dist/src/types/StateTypes.mjs"
     },
+    "./types/StoreTypes": {
+      "types": "./dist/src/types/StoreTypes.d.ts",
+      "import": "./dist/src/types/StoreTypes.mjs"
+    },
     "./types/StyleTypes": {
       "types": "./dist/src/types/StyleTypes.d.ts",
       "import": "./dist/src/types/StyleTypes.mjs"
@@ -1018,19 +1050,19 @@
     "eslint": "^9.39.4",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-config-turbo": "^2.9.2",
+    "eslint-config-turbo": "^2.9.3",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-cypress": "^6.2.1",
+    "eslint-plugin-cypress": "^6.2.2",
     "eslint-plugin-flowtype": "8.0.3",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jest": "^29.15.1",
-    "eslint-plugin-jsdoc": "^62.8.1",
+    "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "eslint-plugin-storybook": "^10.3.3",
+    "eslint-plugin-storybook": "^10.3.4",
     "globals": "^17.4.0",
     "jest-environment-jsdom": "^30.3.0",
     "postcss": "^8.5.8",
@@ -1039,7 +1071,7 @@
     "react-dom": "^19.2.4",
     "tailwindcss": "^4.2.2",
     "terser": "^5.46.1",
-    "ts-jest": "^29.4.6",
+    "ts-jest": "^29.4.9",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.0",
     "vite": "^8.0.3",

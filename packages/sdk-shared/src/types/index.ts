@@ -17,3 +17,4 @@ export * from './ResourceTypes';
 export * from './SdkTypes';
 export * from './SpaceTypes';
 export * from './DevToolsTypes';
+export * from './StoreTypes';
