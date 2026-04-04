@@ -103,6 +103,12 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       return this.cache.user;
     }
 
+    if (!this.options.userUrl) {
+      super.internalGetUser(undefined);
+
+      return undefined;
+    }
+
     const res = await this.request<T>(this.options.userUrl, {
       method: 'GET',
       credentials: 'include',
@@ -119,7 +125,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: this.cache?.token?.refreshToken })
+      body: JSON.stringify({ refreshToken: this.cache?.token?.refreshToken ?? '' })
     });
 
     const tokenResult = this.getTokenFromResponse(res);

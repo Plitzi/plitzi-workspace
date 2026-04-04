@@ -54,8 +54,6 @@ const SchemaContextProvider = ({
     () => ({ ...EMPTY_SCHEMA.schema, ...(schemaProp ? schemaProp : internalData.schema) }),
     [schemaProp, internalData.schema]
   );
-  const { useStoreSync } = createStoreHook<BuilderState>();
-  useStoreSync('schema', schemaPropMemo);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
   const [schema, dispatchSchema] = useReducerWithMiddleware(SchemaReducer, schemaPropMemo, [
@@ -75,6 +73,8 @@ const SchemaContextProvider = ({
     BuilderSubscriptionsMap
   >;
   schemaRef.current = schema;
+  const { useStoreSync } = createStoreHook<BuilderState>();
+  useStoreSync('schema', schema);
 
   const schemaUpdate = useCallback(
     (newSchema: SchemaRaw, fromSubscriptions = false) =>

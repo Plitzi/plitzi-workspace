@@ -22,7 +22,7 @@ const InteractionsBuilderContextProvider = ({
 }: InteractionsBuilderContextProviderProps) => {
   const { currentPageId, routeParams, queryParams } = use(NavigationContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [userProvider] = useStore('schema.settings.userProvider');
+  const [userProvider = 'basic'] = useStore('schema.settings.userProvider');
 
   return (
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>

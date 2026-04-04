@@ -68,7 +68,7 @@ const NodePreview = ({ preview, defaultPreview, onChange }: NodePreviewProps) =>
         <ContainerCollapsable.Header title="Preview" placement="right" />
         <ContainerCollapsable.Content>
           <CodeMirror
-            className="min-h-[80px] pt-2"
+            className="min-h-20 pt-2"
             value={previewState}
             theme="light"
             mode="json"

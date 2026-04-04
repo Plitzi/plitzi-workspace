@@ -71,9 +71,9 @@ const AuthContextProvider = ({
     }, {});
   }, [variables, variablesWhenData]);
 
-  const authData = useMemo(
-    () =>
-      JSON.parse(
+  const authData = useMemo(() => {
+    try {
+      return JSON.parse(
         processTwig(
           JSON.stringify({ loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath }),
           variablesParsed
@@ -86,9 +86,11 @@ const AuthContextProvider = ({
         detailsPath?: string;
         tokenPath?: string;
         expirationTimePath?: string;
-      },
-    [loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath, variablesParsed]
-  );
+      };
+    } catch {
+      return { loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath };
+    }
+  }, [loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath, variablesParsed]);
 
   const { manager, loading, authenticated } = useAuth({
     server,
