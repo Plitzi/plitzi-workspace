@@ -6,6 +6,6 @@ const stateManagerContextDefaultValue: StateManagerContextValue = {
   state: {}
 } as StateManagerContextValue;
 
-const StateManagerContext = createContext<StateManagerContextValue>(stateManagerContextDefaultValue);
+const StateManagerContext = createContext(stateManagerContextDefaultValue);
 
 export default StateManagerContext;
