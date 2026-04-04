@@ -326,6 +326,10 @@
       "types": "./dist/src/components/StyleInspector/categories/Effects/Effects.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Effects/Effects.mjs"
     },
+    "./components/StyleInspector/categories/Effects/Filters": {
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Filters/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Filters/index.mjs"
+    },
     "./components/StyleInspector/categories/Effects/Filters/Filter": {
       "types": "./dist/src/components/StyleInspector/categories/Effects/Filters/Filter.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Effects/Filters/Filter.mjs"
@@ -333,6 +337,10 @@
     "./components/StyleInspector/categories/Effects/Filters/FilterItem": {
       "types": "./dist/src/components/StyleInspector/categories/Effects/Filters/FilterItem.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Effects/Filters/FilterItem.mjs"
+    },
+    "./components/StyleInspector/categories/Effects/Filters/index": {
+      "types": "./dist/src/components/StyleInspector/categories/Effects/Filters/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Effects/Filters/index.mjs"
     },
     "./components/StyleInspector/categories/Effects/Transform": {
       "types": "./dist/src/components/StyleInspector/categories/Effects/Transform/index.d.ts",

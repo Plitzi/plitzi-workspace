@@ -226,6 +226,10 @@
       "types": "./dist/src/components/DevToolsPanel/tabs/Logs/index.d.ts",
       "import": "./dist/src/components/DevToolsPanel/tabs/Logs/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/PluginsViewer": {
+      "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/PluginsViewer/PluginDetails": {
       "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginDetails.d.ts",
       "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginDetails.mjs"
@@ -233,6 +237,10 @@
     "./components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer": {
       "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer.d.ts",
       "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/PluginsViewer.mjs"
+    },
+    "./components/DevToolsPanel/tabs/PluginsViewer/index": {
+      "types": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/index.d.ts",
+      "import": "./dist/src/components/DevToolsPanel/tabs/PluginsViewer/index.mjs"
     },
     "./components/DevToolsPanel/tabs/VariablesViewer": {
       "types": "./dist/src/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts",
