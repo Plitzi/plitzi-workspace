@@ -5,6 +5,7 @@ import SdkStyleContextProvider from './SdkStyleContextProvider';
 import StyleAdvanceEditor from './StyleAdvanceEditor';
 import StyleContext from './StyleContext';
 import StyleMap from './StyleMap';
+import StyleReducer from './StyleReducer';
 
 export * from './BuilderStyleContextProvider';
 export * from './SdkStyleContextProvider';
@@ -14,8 +15,10 @@ export * from './StyleHelper';
 export * from './helpers';
 export * from './StyleContext';
 export * from './StyleAdvanceEditor';
+export * from './StyleReducer';
 
 export {
+  StyleReducer,
   BuilderStyleContextProvider,
   SdkStyleContextProvider,
   StyleAdvanceEditor,
