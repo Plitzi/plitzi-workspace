@@ -65,7 +65,7 @@
     "@tailwindcss/postcss": "^4.2.2",
     "css-loader": "^7.1.4",
     "cypress": "15.13.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.2.0",
     "flow-bin": "^0.307.1",
     "jest": "^30.3.0",
     "postcss": "^8.5.8",
