@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useReducer, useRef } from 'react';
 
-import { StyleActions } from '@plitzi/sdk-Style/StyleReducer';
+import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
 import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
@@ -9,7 +9,7 @@ import UndoableReducer, { initialState } from './UndoableReducer';
 
 import type { UndoableItem } from './UndoableContext';
 import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
-import type { StyleReducerActions } from '@plitzi/sdk-Style/StyleReducer';
+import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
 import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 import type { ReactNode } from 'react';
