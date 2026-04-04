@@ -14,7 +14,7 @@ import { markdownTheme } from '@plitzi/plitzi-ui/Markdown';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
-import { useEffect, Children, isValidElement, useMemo, useCallback, Fragment } from 'react';
+import { useEffect, Children, isValidElement, useMemo, useCallback, Fragment, useRef } from 'react';
 import * as React from 'react';
 import * as JSXRuntime from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';
@@ -27,7 +27,7 @@ import AppMain from '@modules/App/AppMain';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { generateFacade } from '@plitzi/sdk-shared';
+import { createStore, generateFacade, StoreProvider } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 import { getEnvironmentServer } from './config';
@@ -42,6 +42,7 @@ import type {
   EventBridgeContextValue,
   OfflineDataRaw,
   RenderMode,
+  SdkState,
   Server,
   ServerEnvironment,
   StateManagerContextValue
@@ -161,6 +162,8 @@ const App = ({
     return components;
   }, [children]);
 
+  const store = useRef(createStore<SdkState>(() => ({ schema: undefined, style: undefined })));
+
   const routerParams = {} as { location: Location | string };
   if (typeof window === 'undefined') {
     routerParams.location = finalServer.requestUrl ?? '';
@@ -176,27 +179,29 @@ const App = ({
         };
 
   return (
-    <Provider components={components}>
-      <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
-        <HelmetProvider>
-          <ReactRouter {...(reactRouterProps as { location: string })}>
-            <ApolloProvider client={client}>
-              <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                <AppMain
-                  server={finalServer}
-                  webKey={webKey}
-                  renderMode={renderMode}
-                  debugMode={debugMode}
-                  webId={webId}
-                  sdkEnvironment={sdkEnvironment}
-                  {...sdkProps}
-                />
-              </ComponentProvider>
-            </ApolloProvider>
-          </ReactRouter>
-        </HelmetProvider>
-      </ContainerRoot>
-    </Provider>
+    <StoreProvider store={store.current}>
+      <Provider components={components}>
+        <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
+          <HelmetProvider>
+            <ReactRouter {...(reactRouterProps as { location: string })}>
+              <ApolloProvider client={client}>
+                <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                  <AppMain
+                    server={finalServer}
+                    webKey={webKey}
+                    renderMode={renderMode}
+                    debugMode={debugMode}
+                    webId={webId}
+                    sdkEnvironment={sdkEnvironment}
+                    {...sdkProps}
+                  />
+                </ComponentProvider>
+              </ApolloProvider>
+            </ReactRouter>
+          </HelmetProvider>
+        </ContainerRoot>
+      </Provider>
+    </StoreProvider>
   );
 };
 

@@ -1,12 +1,12 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import StateManagerContext from './StateManagerContext';
 
-import type { StateManagerContextValue } from '@plitzi/sdk-shared';
+import type { CommonState, StateManagerContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export const STYLE_TYPE_NORMAL = 'normal';
@@ -28,7 +28,8 @@ const StateManagerContextProvider = ({
   onInit
 }: StateManagerContextProviderProps) => {
   const storageId = useMemo(() => `plitzi_${webId}_state`, [webId]);
-  const settings = use(SchemaSettingsContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [settings] = useStore('schema.settings');
 
   const getCache = useCallback(
     (path?: string, defaultValue: Record<string, unknown> = {}, storeMode = '') => {

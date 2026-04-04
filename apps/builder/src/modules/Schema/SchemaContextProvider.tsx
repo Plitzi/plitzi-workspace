@@ -9,7 +9,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { createStoreHook } from '@plitzi/sdk-shared';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
@@ -25,6 +25,7 @@ import type {
   BuilderMutationsMap,
   BuilderNetworkContextValue,
   BuilderQueriesMap,
+  BuilderState,
   BuilderSubscriptionsMap,
   DropPosition,
   Element,
@@ -49,13 +50,12 @@ const SchemaContextProvider = ({
 }: SchemaContextProviderProps) => {
   const internalData = use(NetworkInternalContext);
   const { eventBridge } = use(EventBridgeContext);
-  const schemaPropMemo = useMemo<Schema>(() => {
-    if (schemaProp) {
-      return { ...EMPTY_SCHEMA.schema, ...schemaProp };
-    }
-
-    return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
-  }, [internalData.schema, schemaProp]);
+  const schemaPropMemo = useMemo<Schema>(
+    () => ({ ...EMPTY_SCHEMA.schema, ...(schemaProp ? schemaProp : internalData.schema) }),
+    [schemaProp, internalData.schema]
+  );
+  const { useStoreSync } = createStoreHook<BuilderState>();
+  useStoreSync('schema', schemaPropMemo);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
   const [schema, dispatchSchema] = useReducerWithMiddleware(SchemaReducer, schemaPropMemo, [
@@ -595,13 +595,9 @@ const SchemaContextProvider = ({
     [schema.pages, schema.settings, schema.pageFolders, schema.variables, pageDefinitions]
   );
 
-  const schemaSettings = useMemo(() => schema.settings, [schema.settings]);
-
   return (
     <SchemaMainContext value={mainSchemaValueMemo}>
-      <SchemaSettingsContext value={schemaSettings}>
-        <SchemaContext value={valueMemo}>{children}</SchemaContext>
-      </SchemaSettingsContext>
+      <SchemaContext value={valueMemo}>{children}</SchemaContext>
     </SchemaMainContext>
   );
 };

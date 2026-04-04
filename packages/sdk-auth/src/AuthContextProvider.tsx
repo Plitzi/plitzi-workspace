@@ -2,14 +2,14 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo, use } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
 import useAuth from './hooks/useAuth';
 
-import type { AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
+import type { CommonState, AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AuthContextProviderProps = {
@@ -28,17 +28,20 @@ const AuthContextProvider = ({
   server,
   environment = 'production'
 }: AuthContextProviderProps) => {
-  const {
-    userProvider,
-    loginUrl,
-    userUrl,
-    refreshUrl,
-    logoutUrl,
-    tokenStorage = 'localStorage',
-    detailsPath = 'details',
-    tokenPath = 'access_token',
-    expirationTimePath = 'expire_at'
-  } = use(SchemaSettingsContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [
+    {
+      userProvider,
+      loginUrl,
+      userUrl,
+      refreshUrl,
+      logoutUrl,
+      tokenStorage = 'localStorage',
+      detailsPath = 'details',
+      tokenPath = 'access_token',
+      expirationTimePath = 'expire_at'
+    }
+  ] = useStore('schema.settings');
   const {
     schema: { variables }
   } = use(SchemaContext);

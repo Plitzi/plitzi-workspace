@@ -59,14 +59,13 @@ export type StoreApiInternal<T> = StoreApi<T> & {
   pathListeners: Map<string, Set<Listener>>;
 };
 
-// Builder State
+// States
 
-export type BuilderState = {
+export type CommonState = {
   schema: Schema;
   style: Style;
 };
 
-export type SdkState = {
-  schema: Schema;
-  style: Style;
-};
+export type BuilderState = CommonState; // & {};
+
+export type SdkState = CommonState; // & {};

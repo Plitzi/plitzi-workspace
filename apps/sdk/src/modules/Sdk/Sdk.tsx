@@ -5,7 +5,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { createStoreHook } from '@plitzi/sdk-shared';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -25,7 +25,7 @@ import SdkPlugin from './SdkPlugin';
 // @ts-ignore
 import style from '../../assets/index.scss?inline';
 
-import type { Environment, RenderMode } from '@plitzi/sdk-shared';
+import type { Environment, RenderMode, SdkState } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   renderMode?: RenderMode;
@@ -48,7 +48,8 @@ const Sdk = ({
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const schemaSettings = use(SchemaSettingsContext);
+  const { useStore } = createStoreHook<SdkState>();
+  const [schemaSettings] = useStore('schema.settings');
   const { segments } = use(SegmentsContext);
   const { useDataSource } = use(DataSourceContext);
   const { sdkEnvironment } = use(NetworkContext);

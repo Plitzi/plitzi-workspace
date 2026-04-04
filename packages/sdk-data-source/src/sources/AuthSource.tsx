@@ -1,11 +1,11 @@
 import { useCallback, use, useMemo } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import { createStoreHook } from '@plitzi/sdk-shared';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 
-import type { SourceField } from '@plitzi/sdk-shared';
+import type { CommonState, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AuthSourceProps = {
@@ -15,7 +15,8 @@ export type AuthSourceProps = {
 const AuthSource = ({ children }: AuthSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { user, authenticated } = use(AuthContext);
-  const { userProvider = 'basic' } = use(SchemaSettingsContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [userProvider = 'basic'] = useStore('schema.settings.userProvider');
   const authContextMemo = useMemo(() => {
     switch (userProvider) {
       case 'auth0':
