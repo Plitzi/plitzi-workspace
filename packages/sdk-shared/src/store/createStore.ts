@@ -2,13 +2,25 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import getByPath from './helpers/getByPath';
+import isPathAffected from './helpers/isPathAffected';
 import setByPath from './helpers/setByPath';
 import useStoreBase from './hooks/useStore';
+import useStoreSyncBase from './hooks/useStoreSync';
 
-import type { GetState, Listener, Path, PathOf, PathValue, SetState, StoreApi, StoreApiInternal } from '../types';
+import type {
+  GetState,
+  Listener,
+  Path,
+  PathOf,
+  PathValue,
+  SetState,
+  StoreApi,
+  StoreApiInternal,
+  SyncMode
+} from '../types';
 
 function createStore<TState extends object>(
-  initializer: (set: SetState<TState>, get: GetState<TState>) => TState
+  initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>)
 ): StoreApi<TState> {
   let state: TState;
   const listeners = new Set<Listener>();
@@ -48,8 +60,14 @@ function createStore<TState extends object>(
 
     listeners.forEach(l => l());
 
-    pathListeners.forEach((set, p) => {
-      if (!Object.is(getByPath(prevState, p as PathOf<TState>), getByPath(state, p as PathOf<TState>))) {
+    pathListeners.forEach((set, candidate) => {
+      if (path && !isPathAffected(path, candidate)) {
+        return;
+      }
+
+      const prev = getByPath(prevState, candidate as PathOf<TState>);
+      const next = getByPath(state, candidate as PathOf<TState>);
+      if (!Object.is(prev, next)) {
         set.forEach(l => l());
       }
     });
@@ -61,20 +79,22 @@ function createStore<TState extends object>(
   };
 
   const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener): (() => void) => {
-    if (!pathListeners.has(path)) {
-      pathListeners.set(path, new Set());
+    let set = pathListeners.get(path);
+    if (!set) {
+      set = new Set();
+      pathListeners.set(path, set);
     }
 
-    pathListeners.get(path)?.add(listener);
+    set.add(listener);
 
-    return () => pathListeners.get(path)?.delete(listener);
+    return () => set.delete(listener);
   };
 
-  state = initializer(setState, getState);
+  state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
 
   const api: StoreApi<TState> = { getState, setState, subscribe, subscribePath };
 
-  // En modo test exponemos los internals para verificar memoria y listeners
+  // Expose internals in test mode to verify memory and listener cleanup
   if (import.meta.env.MODE === 'test') {
     (api as StoreApiInternal<TState>).listeners = listeners;
     (api as StoreApiInternal<TState>).pathListeners = pathListeners;
@@ -83,12 +103,13 @@ function createStore<TState extends object>(
   return api;
 }
 
-// Fija TState una sola vez vía currying; TArg se infiere del argumento en cada llamada:
 //   const useMyStore = createStoreHook<MyState>()
 //   useMyStore()                       → [MyState, setState]
 //   useMyStore('user.name')            → [string, setName]
 //   useMyStore(s => s.count)           → [number, setState]
 export const createStoreHook = <TState extends object>() => {
+  // useStore
+
   function useStore(): [TState, StoreApi<TState>['setState']];
 
   function useStore<P extends PathOf<TState>>(
@@ -111,7 +132,18 @@ export const createStoreHook = <TState extends object>() => {
     return useStoreBase<TState, any>(pathOrSelector, equalityFn);
   }
 
-  return useStore;
+  // useStoreSync
+
+  function useStoreSync<P extends PathOf<TState>>(
+    path: P,
+    value: PathValue<TState, P>,
+    mode?: SyncMode,
+    equalityFn?: (a: PathValue<TState, P>, b: PathValue<TState, P>) => boolean
+  ) {
+    return useStoreSyncBase<TState, P>(path, value, mode, equalityFn);
+  }
+
+  return { useStore, useStoreSync };
 };
 
 export default createStore;

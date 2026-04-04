@@ -55,7 +55,7 @@ import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import clsx from 'clsx';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
-import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
+import { Children, isValidElement, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
 import * as JSXRuntime from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';
@@ -67,7 +67,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import { generateFacade } from '@plitzi/sdk-shared';
+import { createStore, generateFacade, StoreProvider } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -79,7 +79,7 @@ import packageSettings from '../package.json';
 
 import './assets/index.scss';
 
-import type { ComponentPlugin, ComponentPluginFC, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { BuilderState, ComponentPlugin, ComponentPluginFC, Server, ServerEnvironment } from '@plitzi/sdk-shared';
 import type { BuilderPluginProps } from '@pmodules/Builder/BuilderPlugin';
 import type { Client } from 'graphql-ws';
 import type { ReactNode } from 'react';
@@ -166,7 +166,7 @@ const App = (props: AppProps) => {
     []
   );
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
-  const [instanceId, setInstanceId] = useStorage<string>(`web_${webId}_state.instanceId`, '', 'sessionStorage');
+  const [instanceId, setInstanceId] = useStorage(`web_${webId}_state.instanceId`, '', 'sessionStorage');
   const server = useMemo(() => getEnvironmentServer(builderEnvironment, serverProp), [builderEnvironment, serverProp]);
 
   useEffect(() => {
@@ -339,13 +339,17 @@ const App = (props: AppProps) => {
     [client, instanceId, localComponents, props, server, webId]
   );
 
+  const store = useRef(createStore<BuilderState>(() => ({ schema: undefined, style: undefined })));
+
   return (
-    <Provider components={components}>
-      <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
-        {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
-        {hasBrowserRouter && childrenParsed}
-      </ContainerRoot>
-    </Provider>
+    <StoreProvider store={store.current}>
+      <Provider components={components}>
+        <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
+          {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
+          {hasBrowserRouter && childrenParsed}
+        </ContainerRoot>
+      </Provider>
+    </StoreProvider>
   );
 };
 

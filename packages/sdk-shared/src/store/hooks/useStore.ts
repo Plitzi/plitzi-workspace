@@ -1,11 +1,11 @@
-import { use, useCallback, useRef, useSyncExternalStore } from 'react';
+import { use, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import getByPath from '../helpers/getByPath';
 import { StoreContext } from '../StoreProvider';
 
 import type { PathOf, PathValue, StoreApi } from '../../types/StoreTypes';
 
-// Return based on the arguments:
+// Return type based on the argument:
 //   path string  → [PathValue, setByPath]
 //   selector fn  → [TSelected, setState]
 //   undefined    → [TState, setState]
@@ -28,28 +28,46 @@ function useStore<
     throw new Error('useStore must be used inside a StoreProvider');
   }
 
-  const getSnapshot = () => {
-    if (typeof pathOrSelector === 'function') {
-      return pathOrSelector(store.getState()) as TState;
-    }
+  // Stable snapshot function — recreated only when pathOrSelector or store changes,
+  // not on every render. This is critical for useSyncExternalStore performance.
+  const getSnapshot = useMemo(
+    () => (): unknown => {
+      if (typeof pathOrSelector === 'function') {
+        return pathOrSelector(store.getState());
+      }
 
-    if (typeof pathOrSelector === 'string') {
-      return getByPath(store.getState(), pathOrSelector as PathOf<TState>);
-    }
+      if (typeof pathOrSelector === 'string') {
+        return getByPath(store.getState(), pathOrSelector as PathOf<TState>);
+      }
 
-    return store.getState();
-  };
+      return store.getState();
+    },
+    [store, pathOrSelector]
+  );
 
-  const lastRef = useRef(getSnapshot());
+  // Tracks the last returned value to bail out of re-renders when equalityFn returns true.
+  // Initialized lazily to avoid calling getSnapshot before the store is ready.
+  const lastRef = useRef<unknown>(undefined);
+  if (lastRef.current === undefined) {
+    lastRef.current = getSnapshot();
+  }
 
-  const selected = useSyncExternalStore(
-    cb => {
+  // Stable subscribe function — same rationale as getSnapshot.
+  const subscribe = useMemo(
+    () => (cb: () => void) => {
       if (typeof pathOrSelector === 'string') {
         return store.subscribePath(pathOrSelector as PathOf<TState>, cb);
       }
 
       return store.subscribe(cb);
     },
+    [store, pathOrSelector]
+  );
+
+  const selected = useSyncExternalStore(
+    subscribe,
+    // Returns the cached value if equalityFn says nothing changed,
+    // avoiding a re-render even when the store notifies.
     () => {
       const next = getSnapshot();
       if (equalityFn(lastRef.current, next)) {

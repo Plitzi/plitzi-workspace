@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
+import type { Schema } from './SchemaTypes';
+import type { Style } from './StyleTypes';
+
+// 'mount' — writes the value to the store only on the first render.
+// 'sync'  — writes the value to the store on every render where it changed (default).
+export type SyncMode = 'mount' | 'sync';
+
 export type Listener = () => void;
 
 export type Path = string;
@@ -50,4 +57,16 @@ export type StoreApi<T> = {
 export type StoreApiInternal<T> = StoreApi<T> & {
   listeners: Set<Listener>;
   pathListeners: Map<string, Set<Listener>>;
+};
+
+// Builder State
+
+export type BuilderState = {
+  schema: Schema;
+  style: Style;
+};
+
+export type SdkState = {
+  schema: Schema;
+  style: Style;
 };
