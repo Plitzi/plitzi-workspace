@@ -4,6 +4,6 @@ import type { PluginsContextValue } from '@plitzi/sdk-shared';
 
 const pluginsContextDefaultValue = { assets: {} } as PluginsContextValue;
 
-const PluginsContext = createContext<PluginsContextValue>(pluginsContextDefaultValue);
+const PluginsContext = createContext(pluginsContextDefaultValue);
 
 export default PluginsContext;
