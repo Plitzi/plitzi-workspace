@@ -46,6 +46,7 @@ export default tsEslint.config({
         prefer: 'type-imports'
       }
     ],
+    '@typescript-eslint/no-unnecessary-type-arguments': 'off',
     '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false, arguments: false } }],
     '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],

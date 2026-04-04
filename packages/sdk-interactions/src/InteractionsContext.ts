@@ -8,6 +8,6 @@ export type InteractionsContextValue = InteractionsContextValueShared<InstanceTy
 
 const InteractionsContextDefaultValue = {} as InteractionsContextValue;
 
-const InteractionsContext = createContext<InteractionsContextValue>(InteractionsContextDefaultValue);
+const InteractionsContext = createContext(InteractionsContextDefaultValue);
 
 export default InteractionsContext;

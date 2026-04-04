@@ -6,6 +6,6 @@ export type SchemaSettingsContextValue = Schema['settings'];
 
 const schemaSettingsContextDefaultValue = {} as SchemaSettingsContextValue;
 
-const SchemaSettingsContext = createContext<Schema['settings']>(schemaSettingsContextDefaultValue);
+const SchemaSettingsContext = createContext(schemaSettingsContextDefaultValue);
 
 export default SchemaSettingsContext;

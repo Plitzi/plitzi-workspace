@@ -12,6 +12,6 @@ export type NetworkInternalContextValue = {
 
 const networkInternalContextDefaultValue = {} as NetworkInternalContextValue;
 
-const NetworkInternalContext = createContext<NetworkInternalContextValue>(networkInternalContextDefaultValue);
+const NetworkInternalContext = createContext(networkInternalContextDefaultValue);
 
 export default NetworkInternalContext;

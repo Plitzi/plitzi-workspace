@@ -10,6 +10,6 @@ export type DropdownContextValue = {
   onClick: (e: MouseEvent) => void;
 };
 
-const DropdownContext = createContext<DropdownContextValue>(undefined as unknown as DropdownContextValue);
+const DropdownContext = createContext(undefined as unknown as DropdownContextValue);
 
 export default DropdownContext;

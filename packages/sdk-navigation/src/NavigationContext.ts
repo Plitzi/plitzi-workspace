@@ -4,6 +4,6 @@ import type { NavigationContextValue } from '@plitzi/sdk-shared';
 
 const navigationContextDefaultValue = {} as NavigationContextValue;
 
-const NavigationContext = createContext<NavigationContextValue>(navigationContextDefaultValue);
+const NavigationContext = createContext(navigationContextDefaultValue);
 
 export default NavigationContext;

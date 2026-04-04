@@ -7,6 +7,6 @@ export type EventBridgeContextValue<T = unknown> = EventBridgeContextValueShared
 
 const eventBridgeContextDefaultValue = {} as EventBridgeContextValue;
 
-const EventBridgeContext = createContext<EventBridgeContextValue>(eventBridgeContextDefaultValue);
+const EventBridgeContext = createContext(eventBridgeContextDefaultValue);
 
 export default EventBridgeContext;

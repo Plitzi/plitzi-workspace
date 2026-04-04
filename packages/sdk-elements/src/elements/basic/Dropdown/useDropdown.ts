@@ -41,7 +41,7 @@ const useDropdown = ({
   myWindow,
   onChange
 }: UseDropdownProps): UseDropdownReturn => {
-  const [open, setOpen] = useState<boolean>(openProp ?? false);
+  const [open, setOpen] = useState(openProp ?? false);
   const [triggerRect, setTriggerRect] = useState<DOMRect | undefined>(() => ref?.current?.getBoundingClientRect());
   const windowInstance = useMemo(() => {
     if (myWindow) {

@@ -18,6 +18,6 @@ const schemaMainContextDefaultValue: SchemaMainContextValue = {
   pageFolders: []
 };
 
-const SchemaMainContext = createContext<SchemaMainContextValue>(schemaMainContextDefaultValue);
+const SchemaMainContext = createContext(schemaMainContextDefaultValue);
 
 export default SchemaMainContext;

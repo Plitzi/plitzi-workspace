@@ -25,8 +25,8 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
   const { currentPageId } = use(NavigationContext);
   const [elementSelected, setElementSelected] = useState<string | undefined>();
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
-  const parentRef = useRef<HTMLElement | null>(
-    typeof document !== 'undefined' ? document.querySelector('.plitzi-sdk') : null
+  const parentRef = useRef(
+    typeof document !== 'undefined' ? (document.querySelector('.plitzi-sdk') as HTMLElement) : null
   );
 
   const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), []);
