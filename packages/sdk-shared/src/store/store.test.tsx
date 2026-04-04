@@ -352,7 +352,7 @@ describe('performance', () => {
   describe('Performance: re-renders innecesarios', () => {
     it('no re-renderiza cuando cambia un path no suscrito (1000 updates)', () => {
       const store = makeStore();
-      const useStore = createStoreHook<PerfState>();
+      const { useStore } = createStoreHook<PerfState>();
       const renderFn = vi.fn();
 
       const { result } = renderHook(
@@ -379,7 +379,7 @@ describe('performance', () => {
 
     it('re-renderiza exactamente 1 vez por update relevante (1000 updates)', () => {
       const store = makeStore();
-      const useStore = createStoreHook<PerfState>();
+      const { useStore } = createStoreHook<PerfState>();
       const renderFn = vi.fn();
 
       renderHook(
@@ -404,7 +404,7 @@ describe('performance', () => {
 
     it('equalityFn evita re-renders con objetos equivalentes (selector)', () => {
       const store = makeStore();
-      const useStore = createStoreHook<PerfState>();
+      const { useStore } = createStoreHook<PerfState>();
       const renderFn = vi.fn();
 
       renderHook(
@@ -431,7 +431,7 @@ describe('performance', () => {
 
     it('1000 hooks suscritos al mismo path: solo re-renderizan cuando cambia', () => {
       const store = makeStore();
-      const useStore = createStoreHook<PerfState>();
+      const { useStore } = createStoreHook<PerfState>();
       const renderCounts: number[] = Array(1000).fill(0) as number[];
 
       const hooks = Array.from({ length: 1000 }, (_, i) =>
@@ -511,7 +511,7 @@ describe('performance', () => {
 
     it('hooks: mount y unmount de 500 componentes en menos de 2s', () => {
       const store = makeStore();
-      const useStore = createStoreHook<PerfState>();
+      const { useStore } = createStoreHook<PerfState>();
 
       const elapsed = measure('mount + unmount de 500 hooks', () => {
         const hooks = Array.from({ length: 500 }, () =>
@@ -589,7 +589,7 @@ describe('performance', () => {
 
     it('hooks: no re-renderiza paths no suscritos tras unmount masivo', () => {
       const store = makeStore();
-      const useStore = createStoreHook<PerfState>();
+      const { useStore } = createStoreHook<PerfState>();
       const renderFn = vi.fn();
 
       // Montamos y desmontamos 200 hooks para asegurarnos que no queden suscripciones colgadas
@@ -620,7 +620,7 @@ describe('performance', () => {
   describe('Performance: stress test combinado', () => {
     it('500 hooks × 100 updates × paths mixtos en menos de 5s', () => {
       const store = makeStore();
-      const useStore = createStoreHook<PerfState>();
+      const { useStore } = createStoreHook<PerfState>();
       const paths = ['count', 'user.name', 'user.age'] as const;
 
       const hooks = Array.from({ length: 500 }, (_, i) =>
@@ -685,7 +685,7 @@ describe('fiability', () => {
     ({ children }: { children: ReactNode }) =>
       createElement(StoreContext, { value: store }, children);
 
-  const useStore = createStoreHook<StabilityState>();
+  const { useStore } = createStoreHook<StabilityState>();
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────
 

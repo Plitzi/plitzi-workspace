@@ -21,14 +21,13 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
     throw new Error('useStoreSync must be used inside a StoreProvider');
   }
 
-  // Tracks the last synced value to avoid writing to the store on every render
-  // when the incoming value hasn't changed.
+  // ── Sync write ────────────────────────────────────────────────────────────
+
   const lastSyncedRef = useRef<PathValue<TState, P> | undefined>(undefined);
   const mountedRef = useRef(false);
 
-  const shouldSync = !mountedRef.current // always sync on mount
-    ? true
-    : mode === 'sync' && !equalityFn(lastSyncedRef.current as PathValue<TState, P>, value);
+  const shouldSync =
+    !mountedRef.current || (mode === 'sync' && !equalityFn(lastSyncedRef.current as PathValue<TState, P>, value));
 
   if (shouldSync) {
     lastSyncedRef.current = value;
@@ -37,29 +36,35 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
 
   mountedRef.current = true;
 
-  // ── Read side (same as useStore with a path) ────────────────────────────────
+  // ── Read side (fully typed) ───────────────────────────────────────────────
 
-  const lastSelectedRef = useRef<unknown>(getByPath(store.getState(), path));
-
-  const getSnapshot = useMemo(() => (): unknown => getByPath(store.getState(), path), [store, path]);
+  const getSnapshot = useMemo(() => (): PathValue<TState, P> => getByPath(store.getState(), path), [store, path]);
 
   const subscribe = useMemo(() => (cb: () => void) => store.subscribePath(path, cb), [store, path]);
 
+  const lastSelectedRef = useRef<PathValue<TState, P>>(getSnapshot());
+
   const selected = useSyncExternalStore(subscribe, () => {
     const next = getSnapshot();
-    if (equalityFn(lastSelectedRef.current as PathValue<TState, P>, next as PathValue<TState, P>)) {
+    if (equalityFn(lastSelectedRef.current, next)) {
       return lastSelectedRef.current;
     }
+
     lastSelectedRef.current = next;
+
     return next;
   });
 
+  // ── Setter ────────────────────────────────────────────────────────────────
+
   const setState = useCallback(
-    (v: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => store.setState(path, v),
+    (v: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => {
+      store.setState(path, v);
+    },
     [store, path]
   );
 
-  return [selected as PathValue<TState, P>, setState];
+  return [selected, setState];
 }
 
 export default useStoreSync;
