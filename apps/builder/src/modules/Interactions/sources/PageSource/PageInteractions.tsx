@@ -3,11 +3,11 @@ import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
-import type { InteractionCallback, InteractionCallbackParamValues, Schema } from '@plitzi/sdk-shared';
+import type { BuilderState, InteractionCallback, InteractionCallbackParamValues, Schema } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type PageInteractionsProps = {
@@ -21,7 +21,9 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
   const { setStateByKey, clearCache } = use(StateManagerContext);
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
-  const { pages: pageIds, pageDefinitions } = use(SchemaMainContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [pageIds] = useStore('schema.pages');
+  const [pageDefinitions] = useStore('pageDefinitions');
 
   const handleSetPageState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {

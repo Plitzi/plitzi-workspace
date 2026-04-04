@@ -14,10 +14,6 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
-    "./SchemaMainContext": {
-      "types": "./dist/src/SchemaMainContext.d.ts",
-      "import": "./dist/src/SchemaMainContext.mjs"
-    },
     "./helpers/FlatMap": {
       "types": "./dist/src/helpers/FlatMap.d.ts",
       "import": "./dist/src/helpers/FlatMap.mjs"

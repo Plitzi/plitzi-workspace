@@ -1,9 +1,8 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
-import { useMemo, use } from 'react';
+import { useMemo } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
@@ -42,9 +41,7 @@ const AuthContextProvider = ({
       expirationTimePath = 'expire_at'
     }
   ] = useStore('schema.settings');
-  const {
-    schema: { variables }
-  } = use(SchemaContext);
+  const [variables] = useStore('schema.variables');
   const { queryParams, hostname } = useNavigation({ server });
 
   const variablesWhenData = useMemo(

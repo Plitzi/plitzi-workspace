@@ -2,9 +2,9 @@ import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
-import { createStoreHook } from '@plitzi/sdk-shared';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import SchemaPagesContext from './SchemaPagesContext';
 

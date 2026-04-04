@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
-import type { Schema } from './SchemaTypes';
+import type { Schema, Element } from './SchemaTypes';
 import type { Style } from './StyleTypes';
 
 // 'mount' — writes the value to the store only on the first render.
@@ -66,6 +66,8 @@ export type CommonState = {
   style: Style;
 };
 
-export type BuilderState = CommonState; // & {};
+export type BuilderState = CommonState & {
+  pageDefinitions: Record<string, Element>;
+};
 
 export type SdkState = CommonState; // & {};

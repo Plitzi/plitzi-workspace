@@ -5,16 +5,17 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, use, useState } from 'react';
-// import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 
+import type { BuilderState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 const ContainerSettings = () => {
-  const { settings: settingsProp } = use(SchemaMainContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [settingsProp] = useStore('schema.settings');
   const {
     style: { mode }
   } = use(StyleContext);

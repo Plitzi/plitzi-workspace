@@ -8,11 +8,12 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { BuilderState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -38,7 +39,8 @@ const Settings = ({
   credentials = 'same-origin',
   onUpdate
 }: SettingsProps) => {
-  const { pageDefinitions } = use(SchemaMainContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [pageDefinitions] = useStore('pageDefinitions');
   const [advancedSettings, setAdvancedSettings] = useState(false);
   const { routeParams, queryParams, currentPageId } = use(NavigationContext);
 

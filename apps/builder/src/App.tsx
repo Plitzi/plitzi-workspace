@@ -339,7 +339,7 @@ const App = (props: AppProps) => {
     [client, instanceId, localComponents, props, server, webId]
   );
 
-  const store = useRef(createStore<BuilderState>(() => ({ schema: undefined, style: undefined })));
+  const store = useRef(createStore<BuilderState>(() => ({})));
 
   return (
     <StoreProvider store={store.current}>

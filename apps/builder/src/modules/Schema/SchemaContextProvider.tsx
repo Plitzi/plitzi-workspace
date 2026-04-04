@@ -8,11 +8,10 @@ import { useMemo, useRef, useCallback, use, useEffect } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
-import { createStoreHook } from '@plitzi/sdk-shared';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
@@ -75,6 +74,12 @@ const SchemaContextProvider = ({
   schemaRef.current = schema;
   const { useStoreSync } = createStoreHook<BuilderState>();
   useStoreSync('schema', schema);
+
+  const pageDefinitions = useValueMemo(
+    pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
+    'soft'
+  );
+  useStoreSync('pageDefinitions', pageDefinitions);
 
   const schemaUpdate = useCallback(
     (newSchema: SchemaRaw, fromSubscriptions = false) =>
@@ -579,27 +584,7 @@ const SchemaContextProvider = ({
     schemaRemoveVariable
   ]);
 
-  const pageDefinitions = useValueMemo(
-    pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
-    'soft'
-  );
-  const mainSchemaValueMemo = useMemo(
-    () => ({
-      pages: get(schema, 'pages', []) as string[],
-      pageDefinitions,
-      pageFolders: get(schema, 'pageFolders', []),
-      settings: get(schema, 'settings', {}) as Schema['settings'],
-      variables: get(schema, 'variables', []) as SchemaVariable[]
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [schema.pages, schema.settings, schema.pageFolders, schema.variables, pageDefinitions]
-  );
-
-  return (
-    <SchemaMainContext value={mainSchemaValueMemo}>
-      <SchemaContext value={valueMemo}>{children}</SchemaContext>
-    </SchemaMainContext>
-  );
+  return <SchemaContext value={valueMemo}>{children}</SchemaContext>;
 };
 
 export default SchemaContextProvider;

@@ -3,18 +3,20 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import WorkflowDiagram from '@pmodules/App/components/WorkflowDiagram';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
 
-import type { Element, PageFolder } from '@plitzi/sdk-shared';
+import type { BuilderState, Element, PageFolder } from '@plitzi/sdk-shared';
 import type { Connection, Edge, Node } from '@pmodules/App/components/WorkflowDiagram';
 
 const ContainerSitemap = () => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
-  const { pageDefinitions, pageFolders } = use(SchemaMainContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [pageFolders] = useStore('schema.pageFolders');
+  const [pageDefinitions] = useStore('pageDefinitions');
   const pages = useMemo(() => Object.values(pageDefinitions), [pageDefinitions]);
 
   const handleAddNode = useCallback(
