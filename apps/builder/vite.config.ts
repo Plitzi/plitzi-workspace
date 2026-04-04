@@ -5,7 +5,6 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import { nodeResolve } from '@rollup/plugin-node-resolve';
 import react from '@vitejs/plugin-react';
 import ejs from 'ejs';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -94,7 +93,6 @@ export default defineConfig(({ mode, command }) => {
   return {
     plugins: [
       mkcert(),
-      nodeResolve({ extensions: ['.js', '.mjs', '.ts', '.tsx'] }),
       react(),
       ViteEjsPlugin({
         title: 'Plitzi SDK Builder',
