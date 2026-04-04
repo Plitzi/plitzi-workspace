@@ -1,13 +1,48 @@
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
 
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
 const importedPackages = new Set();
+
+type Options = {
+  root?: string;
+  pattern?: RegExp;
+};
+
+export function getEntries(options: Options = {}) {
+  const root = options.root ?? path.resolve(process.cwd(), 'src');
+  const pattern = options.pattern ?? /index\.(ts|js|mjs)$/;
+
+  const entries: Record<string, string> = {};
+
+  function walk(dir: string) {
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        walk(fullPath);
+      } else if (pattern.test(file)) {
+        // nombre del entry basado en carpeta
+        const name = path.relative(root, fullPath).replace(pattern, '').replace(/\/$/, '') || 'index';
+
+        entries[name] = fullPath;
+      }
+    }
+  }
+
+  walk(root);
+
+  return entries;
+}
 
 export default defineConfig(({ mode, command }) => {
   return {
@@ -64,7 +99,7 @@ export default defineConfig(({ mode, command }) => {
     build: {
       outDir: 'dist/src',
       lib: {
-        entry: ['./src/index.ts']
+        entry: Object.values(getEntries()) // ['./src/index.ts'] // , './src/network/index.ts', './src/network/graphql/index.ts'
       },
       rollupOptions: {
         treeshake: false,
