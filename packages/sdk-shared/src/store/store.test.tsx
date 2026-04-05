@@ -1124,6 +1124,15 @@ describe('useStore (multi-path)', () => {
     expect(result.current[0]).toEqual(['Carlos', 0]);
   });
 
+  it('returns values for multiple paths with invalid paths', () => {
+    const store = makeStore();
+
+    // @ts-expect-error // eslint-disable-line
+    const { result } = renderHook(() => useStore(['user.name', 'count', 'blah']), { wrapper: makeWrapper(store) });
+
+    expect(result.current[0]).toEqual(['Carlos', 0, undefined]);
+  });
+
   it('re-renders when one path changes', () => {
     const store = makeStore();
     const renderFn = vi.fn();
