@@ -14,8 +14,7 @@ export type ContainerDefaultProps = {
 
 const ContainerDefault = ({ previewMode = false, externalStyle = '' }: ContainerDefaultProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [pages] = useStore('schema.pages');
-  const [settings] = useStore('schema.settings');
+  const [[settings, pages]] = useStore(['schema.settings', 'schema.pages']);
   const { segments } = use(SegmentsContext);
   const customCss = useMemo(() => {
     let css = settings.customCss;

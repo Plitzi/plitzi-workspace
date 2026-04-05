@@ -194,13 +194,13 @@ describe('setByPath', () => {
   });
 });
 
-type State2 = {
-  user: { name: string; age: number };
-  items: string[];
-  count: number;
-};
-
 describe('Advanced store tests', () => {
+  type State2 = {
+    user: { name: string; age: number };
+    items: string[];
+    count: number;
+  };
+
   let store: StoreApi<State2>;
 
   beforeEach(() => {
@@ -314,8 +314,6 @@ describe('Advanced store tests', () => {
     expect(getByPath(store.getState(), [])).toEqual(store.getState());
   });
 });
-
-// Performance
 
 describe('performance', () => {
   type PerfState = {
@@ -1090,5 +1088,254 @@ describe('fiability', () => {
       act(() => store.setState('schema.version', 5));
       expect(count()).toBe(1);
     });
+  });
+});
+
+describe('useStore (multi-path)', () => {
+  type State = {
+    user: { name: string; age: number };
+    meta: { active: boolean };
+    items: string[];
+    count: number;
+  };
+
+  const makeStore = () =>
+    createStore<State>(() => ({
+      user: { name: 'Carlos', age: 30 },
+      meta: { active: true },
+      items: ['a', 'b'],
+      count: 0
+    }));
+
+  const makeWrapper =
+    (store: StoreApi<State>) =>
+    ({ children }: { children: ReactNode }) =>
+      createElement(StoreContext, { value: store }, children);
+
+  const { useStore } = createStoreHook<State>();
+
+  // ─────────────────────────────────────────────
+
+  it('returns values for multiple paths', () => {
+    const store = makeStore();
+
+    const { result } = renderHook(() => useStore(['user.name', 'count']), { wrapper: makeWrapper(store) });
+
+    expect(result.current[0]).toEqual(['Carlos', 0]);
+  });
+
+  it('re-renders when one path changes', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['user.name', 'count']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() => store.setState('count', 1));
+
+    expect(renderFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('does NOT re-render when unrelated path changes', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['user.name', 'count']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() => store.setState('meta.active', false));
+
+    expect(renderFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-renders once when both paths change in same act', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['user.name', 'count']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() => {
+      store.setState('user.name', 'Ana');
+      store.setState('count', 10);
+    });
+
+    expect(renderFn).toHaveBeenCalledTimes(2);
+  });
+
+  // ─────────────────────────────────────────────
+  // same parent
+  // ─────────────────────────────────────────────
+
+  it('paths with same parent: only affected child triggers re-render', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['user.name', 'user.age']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() => store.setState('user.name', 'Pedro'));
+
+    expect(renderFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('paths with same parent: replacing parent triggers re-render if values change', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['user.name', 'user.age']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() =>
+      store.setState(undefined, prev => ({
+        ...prev,
+        user: { name: 'Luis', age: 31 }
+      }))
+    );
+
+    expect(renderFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('paths with same parent: replacing parent with equal values does NOT re-render', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['user.name', 'user.age']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() =>
+      store.setState(undefined, prev => ({
+        ...prev,
+        user: { ...prev.user } // same values
+      }))
+    );
+
+    expect(renderFn).toHaveBeenCalledTimes(1);
+  });
+
+  // ─────────────────────────────────────────────
+  // arrays
+  // ─────────────────────────────────────────────
+
+  it('array paths: only affected index re-renders', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['items.0', 'items.1']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() => store.setState('items.1', 'z'));
+
+    expect(renderFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('array paths: unrelated index does not re-render', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        useStore(['items.0', 'items.1']);
+        renderFn();
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() => store.setState('items.2', 'x'));
+
+    expect(renderFn).toHaveBeenCalledTimes(1);
+  });
+
+  // ─────────────────────────────────────────────
+  // setters
+  // ─────────────────────────────────────────────
+
+  it('setters update independently', () => {
+    const store = makeStore();
+
+    const { result } = renderHook(() => useStore(['user.name', 'count']), { wrapper: makeWrapper(store) });
+
+    const [, setName, setCount] = result.current;
+
+    act(() => setName('Mario'));
+    expect(store.getState().user.name).toBe('Mario');
+
+    act(() => setCount(99));
+    expect(store.getState().count).toBe(99);
+  });
+
+  // ─────────────────────────────────────────────
+  // equalityFn
+  // ─────────────────────────────────────────────
+
+  it('equalityFn prevents re-render', () => {
+    const store = makeStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        renderFn();
+        return useStore(['user.name', 'count'], (a, b) => a['user.name'] === b['user.name'] && a.count === b.count);
+      },
+      { wrapper: makeWrapper(store) }
+    );
+
+    // meta.active is not in the watched paths — should not trigger a re-render
+    act(() => store.setState('meta.active', false));
+
+    expect(renderFn).toHaveBeenCalledTimes(1);
+  });
+
+  // ─────────────────────────────────────────────
+  // reference stability
+  // ─────────────────────────────────────────────
+
+  it('returns same reference if values did not change', () => {
+    const store = makeStore();
+
+    const { result } = renderHook(() => useStore(['user.name', 'count']), { wrapper: makeWrapper(store) });
+
+    const first = result.current[0];
+
+    act(() => store.setState('meta.active', false));
+
+    const second = result.current[0];
+
+    expect(first).toBe(second);
   });
 });

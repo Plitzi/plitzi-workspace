@@ -22,8 +22,7 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [pageIds] = useStore('schema.pages');
-  const [pageDefinitions] = useStore('pageDefinitions');
+  const [[pageIds, pageDefinitions]] = useStore(['schema.pages', 'pageDefinitions']);
 
   const handleSetPageState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {

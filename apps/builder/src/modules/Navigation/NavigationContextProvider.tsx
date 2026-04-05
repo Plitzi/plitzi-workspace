@@ -20,9 +20,7 @@ export type NavigationContextProviderProps = {
 
 const NavigationContextProvider = ({ previewMode = false, children }: NavigationContextProviderProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [pages] = useStore('schema.pages');
-  const [pageFolders] = useStore('schema.pageFolders');
-  const [pageDefinitions] = useStore('pageDefinitions');
+  const [[pages, pageFolders, pageDefinitions]] = useStore(['schema.pages', 'schema.pageFolders', 'pageDefinitions']);
   const { server } = use(NetworkContext);
   const { authenticated } = use(AuthContext);
   const { queryParams, hostname, location } = useNavigation({ server });

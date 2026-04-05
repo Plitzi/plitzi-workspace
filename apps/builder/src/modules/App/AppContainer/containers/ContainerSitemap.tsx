@@ -15,8 +15,7 @@ const ContainerSitemap = () => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [pageFolders] = useStore('schema.pageFolders');
-  const [pageDefinitions] = useStore('pageDefinitions');
+  const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
   const pages = useMemo(() => Object.values(pageDefinitions), [pageDefinitions]);
 
   const handleAddNode = useCallback(

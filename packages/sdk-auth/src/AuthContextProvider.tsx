@@ -29,19 +29,21 @@ const AuthContextProvider = ({
 }: AuthContextProviderProps) => {
   const { useStore } = createStoreHook<CommonState>();
   const [
-    {
-      userProvider,
-      loginUrl,
-      userUrl,
-      refreshUrl,
-      logoutUrl,
-      tokenStorage = 'localStorage',
-      detailsPath = 'details',
-      tokenPath = 'access_token',
-      expirationTimePath = 'expire_at'
-    }
-  ] = useStore('schema.settings');
-  const [variables] = useStore('schema.variables');
+    [
+      {
+        userProvider,
+        loginUrl,
+        userUrl,
+        refreshUrl,
+        logoutUrl,
+        tokenStorage = 'localStorage',
+        detailsPath = 'details',
+        tokenPath = 'access_token',
+        expirationTimePath = 'expire_at'
+      },
+      variables
+    ]
+  ] = useStore(['schema.settings', 'schema.variables']);
   const { queryParams, hostname } = useNavigation({ server });
 
   const variablesWhenData = useMemo(

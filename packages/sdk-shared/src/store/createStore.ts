@@ -18,6 +18,7 @@ import type {
   StoreApiInternal,
   SyncMode
 } from '../types';
+import type { MultiPathReturn } from './hooks/useStore';
 
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>)
@@ -103,15 +104,21 @@ function createStore<TState extends object>(
   return api;
 }
 
-//   const useMyStore = createStoreHook<MyState>()
-//   useMyStore()                       → [MyState, setState]
-//   useMyStore('user.name')            → [string, setName]
-//   useMyStore(s => s.count)           → [number, setState]
+//   const { useStore, useStoreSync } = createStoreHook<MyState>()
+//
+//   useStore()                              → [MyState, setState]
+//   useStore('user.name')                   → [string, setName]
+//   useStore(s => s.count)                  → [number, setState]
+//   useStore(['user.name', 'count'])        → [[name, count], setName, setCount]
+//   useStoreSync('schema', schema)          → [Schema, setSchema]  sync on every render
+//   useStoreSync('schema', schema, 'mount') → [Schema, setSchema]  sync on mount only
 export const createStoreHook = <TState extends object>() => {
-  // useStore
+  // ── useStore ────────────────────────────────────────────────────────────────
 
+  // Overload 1: no argument → full state
   function useStore(): [TState, StoreApi<TState>['setState']];
 
+  // Overload 2: path string → value at that path
   function useStore<P extends PathOf<TState>>(
     path: P,
     equalityFn?: (a: PathValue<TState, P>, b: PathValue<TState, P>) => boolean
@@ -120,26 +127,40 @@ export const createStoreHook = <TState extends object>() => {
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
   ];
 
+  // Overload 3: selector function → derived value
   function useStore<TSelected>(
     selector: (state: TState) => TSelected,
     equalityFn?: (a: TSelected, b: TSelected) => boolean
   ): [TSelected, StoreApi<TState>['setState']];
 
-  function useStore(
-    pathOrSelector?: PathOf<TState> | ((state: TState) => any),
+  // Overload 4: multi-path array — last because ReadonlyArray could overlap with string generics
+  function useStore<const Paths extends ReadonlyArray<PathOf<TState>>>(
+    paths: Paths,
+    equalityFn?: (
+      a: { [K in Paths[number]]: PathValue<TState, K> },
+      b: { [K in Paths[number]]: PathValue<TState, K> }
+    ) => boolean
+  ): MultiPathReturn<TState, Paths>;
+
+  // Implementation: no generics, widest possible param types, cast to bypass overload resolution
+  function useStore<P extends PathOf<TState> | ReadonlyArray<PathOf<TState>> | ((state: TState) => unknown)>(
+    arg?: P,
     equalityFn?: (a: any, b: any) => boolean
-  ): any {
-    return useStoreBase<TState, any>(pathOrSelector, equalityFn);
+  ): unknown {
+    return (useStoreBase as (a?: unknown, b?: unknown) => unknown)(arg, equalityFn);
   }
 
-  // useStoreSync
+  // ── useStoreSync ────────────────────────────────────────────────────────────
 
   function useStoreSync<P extends PathOf<TState>>(
     path: P,
     value: PathValue<TState, P>,
     mode?: SyncMode,
     equalityFn?: (a: PathValue<TState, P>, b: PathValue<TState, P>) => boolean
-  ) {
+  ): [
+    PathValue<TState, P>,
+    (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
+  ] {
     return useStoreSyncBase<TState, P>(path, value, mode, equalityFn);
   }
 
