@@ -6,8 +6,6 @@ import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import SchemaPagesContext from './SchemaPagesContext';
-
 import type { SdkState, Element, Schema } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -24,21 +22,17 @@ const SchemaContextProvider = ({ children, schema: schemaProp }: SchemaContextPr
   );
   const { useStoreSync } = createStoreHook<SdkState>();
   useStoreSync('schema', schema);
-  const valueMemo = useMemo(() => ({ schema }), [schema]);
-  const schemaPages = useMemo(
-    () => ({
-      pages: get(schema, 'pages', []),
-      pageDefinitions: pick(get(schema, 'flat', {}), get(schema, 'pages', [])) as Record<string, Element>
-    }),
+
+  const pageDefinitions = useMemo(
+    () => pick(get(schema, 'flat', {}), get(schema, 'pages', [])) as Record<string, Element>,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [schema.pages]
   );
 
-  return (
-    <SchemaPagesContext value={schemaPages}>
-      <SchemaContext value={valueMemo}>{children}</SchemaContext>
-    </SchemaPagesContext>
-  );
+  useStoreSync('pageDefinitions', pageDefinitions);
+  const valueMemo = useMemo(() => ({ schema }), [schema]);
+
+  return <SchemaContext value={valueMemo}>{children}</SchemaContext>;
 };
 
 export default SchemaContextProvider;

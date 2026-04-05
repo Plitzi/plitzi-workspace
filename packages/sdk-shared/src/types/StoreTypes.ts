@@ -64,10 +64,9 @@ export type StoreApiInternal<T> = StoreApi<T> & {
 export type CommonState = {
   schema: Schema;
   style: Style;
-};
-
-export type BuilderState = CommonState & {
   pageDefinitions: Record<string, Element>;
 };
 
-export type SdkState = CommonState; // & {};
+export type BuilderState = CommonState & {};
+
+export type SdkState = CommonState & {};
