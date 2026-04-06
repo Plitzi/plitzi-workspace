@@ -232,12 +232,18 @@ function useStore<TState extends object>(
 function useStore<TState extends object, P extends PathOf<TState>>(
   path: P,
   options?: UseStoreOptions<PathValue<TState, P>> & { defaultValue?: never }
-): [PathValue<TState, P>, PathSetter<TState, P>];
+): [
+  PathValue<TState, P>,
+  (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
+];
 
 function useStore<TState extends object, P extends PathOf<TState>, D>(
   path: P,
   options: UseStoreOptions<PathValue<TState, P>> & { defaultValue: D }
-): [PathValue<TState, P> | D, PathSetter<TState, P>];
+): [
+  NonNullable<PathValue<TState, P>> | D,
+  (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
+];
 
 function useStore<TState extends object, TSelected>(
   selector: (state: TState) => TSelected,

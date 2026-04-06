@@ -1,12 +1,11 @@
-import { use, useCallback, useMemo, useRef, useSyncExternalStore, useLayoutEffect, useEffect } from 'react';
+import { use, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import getByPath from '../helpers/getByPath';
 import shallowEqual from '../helpers/shallowEqual';
+import useIsomorphicLayoutEffect from '../helpers/useIsomorphicLayoutEffect';
 import { StoreContext } from '../StoreProvider';
 
 import type { PathOf, PathValue, StoreApi, SyncMode } from '../../types/StoreTypes';
-
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export type UseStoreSyncOptions<T> = {
   mode?: SyncMode;
@@ -55,9 +54,12 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
   const lastSyncedRef = useRef<typeof value | undefined>(undefined);
   const mountedRef = useRef(false);
 
+  const isFirstRender = !mountedRef.current;
+  mountedRef.current = true;
+
   const shouldSync =
     enabled &&
-    (!mountedRef.current || (mode === 'sync' && !equalityFn(lastSyncedRef.current as PathValue<TState, P>, value)));
+    (isFirstRender || (mode === 'sync' && !equalityFn(lastSyncedRef.current as PathValue<TState, P>, value)));
 
   const runSync = () => {
     lastSyncedRef.current = value;
@@ -72,14 +74,12 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
     if (shouldSync) {
       runSync();
     }
-
-    mountedRef.current = true;
   } else {
-    if (shouldSync && !mountedRef.current) {
+    // SSR: sync during render on first mount since effects don't run on the server
+    if (shouldSync && isFirstRender) {
       runSync();
     }
 
-    mountedRef.current = true;
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useIsomorphicLayoutEffect(() => {
       if (shouldSync) {
