@@ -36,13 +36,11 @@ const BuilderAreaHeader = ({
   previewMode = false
 }: BuilderAreaHeaderProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, pageFolders, definition, pageDefinitions]] = useStore([
-    'schema.flat',
+  const [[pageFolders, definition, pageDefinitions]] = useStore([
     'schema.pageFolders',
     'schema.definition',
     'pageDefinitions'
   ]);
-  console.log(pageDefinitions);
   const { existsPopup, addPopup } = usePopup();
   const {
     theme,
@@ -110,13 +108,13 @@ const BuilderAreaHeader = ({
   }, [addPopup, baseElementId, existsPopup, mode, setSelected]);
 
   const fullpath = useMemo(() => {
-    const path = getPageFullPath(flat, pageFolders, baseElementId, true);
+    const path = getPageFullPath(pageDefinitions, pageFolders, baseElementId, true);
     if (path === '/') {
       return '';
     }
 
     return path;
-  }, [flat, pageFolders, baseElementId]);
+  }, [pageDefinitions, pageFolders, baseElementId]);
 
   const title = get(element, 'attributes.name', 'Page') as string;
   const defaultPage = get(element, 'attributes.default', false) as boolean;
