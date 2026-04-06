@@ -8,7 +8,7 @@ import useStoreBase from './hooks/useStore';
 import useStoreSyncBase from './hooks/useStoreSync';
 
 import type { GetState, Listener, Path, PathOf, PathValue, SetState, StoreApi, StoreApiInternal } from '../types';
-import type { MultiPathReturn, UseStoreMultiOptions, UseStoreOptions } from './hooks/useStore';
+import type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions } from './hooks/useStore';
 import type { UseStoreSyncOptions } from './hooks/useStoreSync';
 
 function createStore<TState extends object>(
@@ -49,9 +49,7 @@ function createStore<TState extends object>(
     }
 
     state = nextState;
-
     listeners.forEach(l => l());
-
     pathListeners.forEach((set, candidate) => {
       if (path && !isPathAffected(path, candidate)) {
         return;
@@ -112,9 +110,17 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<P extends PathOf<TState>>(
     path: P,
-    options?: UseStoreOptions<PathValue<TState, P>>
+    options?: UseStoreOptions<PathValue<TState, P>> & { defaultValue?: never }
   ): [
     PathValue<TState, P>,
+    (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
+  ];
+
+  function useStore<P extends PathOf<TState>>(
+    path: P,
+    options: UseStoreOptions<NonNullable<PathValue<TState, P>>> & { defaultValue: NonNullable<PathValue<TState, P>> }
+  ): [
+    NonNullable<PathValue<TState, P>>,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
   ];
 
@@ -125,8 +131,24 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<const Paths extends ReadonlyArray<PathOf<TState>>>(
     paths: Paths,
-    options?: UseStoreMultiOptions<TState, Paths>
+    options?: Omit<UseStoreMultiOptions<TState, Paths>, 'defaultValue'>
   ): MultiPathReturn<TState, Paths>;
+
+  function useStore<
+    const Paths extends ReadonlyArray<PathOf<TState>>,
+    const TDefaultValue extends readonly (PathValue<TState, Paths[number]> | undefined)[]
+  >(
+    paths: Paths,
+    options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue }
+  ): MultiPathReturn<TState, Paths, TDefaultValue>;
+
+  function useStore<
+    const Paths extends ReadonlyArray<PathOf<TState>>,
+    const TDefaultValue extends PathValue<TState, Paths[number]>
+  >(
+    paths: Paths,
+    options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue }
+  ): MultiPathReturn<TState, Paths, TDefaultValue>;
 
   function useStore(
     arg?: PathOf<TState> | ReadonlyArray<PathOf<TState>> | ((state: TState) => unknown) | UseStoreOptions<any>,

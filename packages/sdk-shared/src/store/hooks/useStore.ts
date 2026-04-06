@@ -8,22 +8,45 @@ import { StoreContext } from '../StoreProvider';
 
 import type { PathOf, PathValue, StoreApi } from '../../types/StoreTypes';
 
+// ─── Internal types ───────────────────────────────────────────────────────────
+
 type PathSetter<TState extends object, P extends PathOf<TState>> = (
   value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
 ) => void;
 
-type PathValues<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
-  [I in keyof Paths]: Paths[I] extends PathOf<TState> ? PathValue<TState, Paths[I]> : never;
+type __NoDefault = { __noDefault: true };
+
+// Converts a tuple key (e.g. "0", "1") to its numeric literal (0, 1)
+// so it can be used to index a DefaultValue tuple.
+type NumericIndex<I> = I extends `${infer N extends number}` ? N : I extends number ? I : never;
+
+type PathValues<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>, DefaultValue = __NoDefault> = {
+  [I in keyof Paths]: Paths[I] extends PathOf<TState>
+    ? [DefaultValue] extends [__NoDefault]
+      ? PathValue<TState, Paths[I]>
+      : DefaultValue extends readonly any[]
+        ? NumericIndex<I> extends infer NI
+          ? NI extends keyof DefaultValue
+            ? DefaultValue[NI] extends undefined
+              ? PathValue<TState, Paths[I]> | undefined
+              : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue[NI]
+            : PathValue<TState, Paths[I]>
+          : never
+        : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue
+    : never;
 };
 
 type PathSetters<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
   [I in keyof Paths]: Paths[I] extends PathOf<TState> ? PathSetter<TState, Paths[I]> : never;
 };
 
-export type MultiPathReturn<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = [
-  PathValues<TState, Paths>,
-  ...PathSetters<TState, Paths>
-];
+// ─── Public types ─────────────────────────────────────────────────────────────
+
+export type MultiPathReturn<
+  TState extends object,
+  Paths extends ReadonlyArray<PathOf<TState>>,
+  TDefaultValue = __NoDefault
+> = [PathValues<TState, Paths, TDefaultValue>, ...PathSetters<TState, Paths>];
 
 export type UseStoreReturn<TState extends object, TArg> =
   TArg extends PathOf<TState>
@@ -39,9 +62,19 @@ export type UseStoreOptions<T> = {
   defaultValue?: NonNullable<T>;
 };
 
-export type UseStoreMultiOptions<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = UseStoreOptions<{
-  [K in Paths[number]]?: PathValue<TState, K>;
-}>;
+export type UseStoreMultiOptions<
+  TState extends object,
+  Paths extends ReadonlyArray<PathOf<TState>>,
+  TDefaultValue extends
+    | readonly (PathValue<TState, Paths[number]> | undefined)[]
+    | PathValue<TState, Paths[number]>
+    | undefined = undefined
+> = Omit<UseStoreOptions<never>, 'defaultValue' | 'equalityFn'> & {
+  equalityFn?: (a: PathValues<TState, Paths>, b: PathValues<TState, Paths>) => boolean;
+  defaultValue?: TDefaultValue;
+};
+
+// ─── useSingleStore ───────────────────────────────────────────────────────────
 
 function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((state: TState) => unknown) | undefined>(
   store: StoreApi<TState>,
@@ -49,18 +82,17 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
   options: UseStoreOptions<unknown>
 ): UseStoreReturn<TState, TArg> {
   const { mode = 'sync', enabled = true, defaultValue } = options;
-  const defaultEq = typeof pathOrSelector === 'function' ? shallowEqual : Object.is;
-  const equalityFn = options.equalityFn ?? defaultEq;
+  const equalityFn = options.equalityFn ?? (typeof pathOrSelector === 'function' ? shallowEqual : Object.is);
 
   const getSnapshot = useCallback((): unknown => {
     const state = store.getState();
+
     if (typeof pathOrSelector === 'function') {
       return (pathOrSelector as (s: TState) => unknown)(state);
     }
 
     if (typeof pathOrSelector === 'string') {
       const val = getByPath(state, pathOrSelector as PathOf<TState>);
-
       return val === undefined ? defaultValue : val;
     }
 
@@ -118,42 +150,51 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
   return [selected, setState] as UseStoreReturn<TState, TArg>;
 }
 
+// ─── useMultiStore ────────────────────────────────────────────────────────────
+
+const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.length; i++) {
+    if (!Object.is(a[i], b[i])) {
+      return false;
+    }
+  }
+  return true;
+};
+
 function useMultiStore<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
   store: StoreApi<TState>,
   paths: Paths,
   options: UseStoreMultiOptions<TState, Paths>
 ): MultiPathReturn<TState, Paths> {
-  const { mode = 'sync', enabled = true, equalityFn = Object.is, defaultValue } = options;
+  const { mode = 'sync', enabled = true } = options;
+  const defaultValue = options.defaultValue as unknown;
+  const equalityFn =
+    (options.equalityFn as ((a: unknown[], b: unknown[]) => boolean) | undefined) ?? defaultMultiEqualityFn;
   const pathsKey = paths.join('|');
 
-  const lastRef = useRef<PathValues<TState, Paths> | null>(null);
+  const lastRef = useRef<unknown[] | null>(null);
 
-  const getSnapshot = useCallback((): PathValues<TState, Paths> => {
+  const getSnapshot = useCallback((): unknown[] => {
     const state = store.getState();
-    let changed = lastRef.current === null;
 
-    if (!changed) {
-      for (let i = 0; i < paths.length; i++) {
-        if (!Object.is((lastRef.current as unknown[])[i], getByPath(state, paths[i]))) {
-          changed = true;
-          break;
-        }
-      }
-    }
-
-    if (!changed) {
-      return lastRef.current as PathValues<TState, Paths>;
-    }
-
-    // Point 3: apply per-path defaultValue for multi-path
-    const next = paths.map(p => {
+    const next = paths.map((p, i) => {
       const val = getByPath(state, p);
-      if (val === undefined && defaultValue && p in (defaultValue as object)) {
-        return defaultValue[p];
+      if (val !== undefined || !defaultValue) {
+        return val;
       }
 
-      return val;
-    }) as PathValues<TState, Paths>;
+      if (Array.isArray(defaultValue)) {
+        const def = (defaultValue as unknown[])[i];
+
+        return def !== undefined ? def : val;
+      }
+
+      return defaultValue;
+    });
 
     if (lastRef.current !== null && equalityFn(lastRef.current, next)) {
       return lastRef.current;
@@ -181,18 +222,12 @@ function useMultiStore<TState extends object, const Paths extends ReadonlyArray<
   );
 
   const selected = useSyncExternalStore(subscribe, () => {
-    if (!enabled && lastRef.current === null) {
-      lastRef.current = getSnapshot();
-
-      return lastRef.current;
-    }
-
     if (!enabled) {
-      return lastRef.current;
-    }
+      if (lastRef.current === null) {
+        lastRef.current = getSnapshot();
+      }
 
-    if (mode === 'mount') {
-      return getSnapshot();
+      return lastRef.current;
     }
 
     return getSnapshot();
@@ -211,6 +246,8 @@ function useMultiStore<TState extends object, const Paths extends ReadonlyArray<
 
   return [selected, ...setters] as unknown as MultiPathReturn<TState, Paths>;
 }
+
+// ─── useStore ─────────────────────────────────────────────────────────────────
 
 function useStore<TState extends object>(
   arg?: undefined,
@@ -234,8 +271,26 @@ function useStore<TState extends object, TSelected>(
 
 function useStore<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
   paths: Paths,
-  options?: UseStoreMultiOptions<TState, Paths>
-): MultiPathReturn<TState, Paths>;
+  options?: Omit<UseStoreMultiOptions<TState, Paths>, 'defaultValue'>
+): MultiPathReturn<TState, Paths, __NoDefault>;
+
+function useStore<
+  TState extends object,
+  const Paths extends ReadonlyArray<PathOf<TState>>,
+  const TDefaultValue extends readonly (PathValue<TState, Paths[number]> | undefined)[]
+>(
+  paths: Paths,
+  options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue }
+): MultiPathReturn<TState, Paths, TDefaultValue>;
+
+function useStore<
+  TState extends object,
+  const Paths extends ReadonlyArray<PathOf<TState>>,
+  const TDefaultValue extends PathValue<TState, Paths[number]>
+>(
+  paths: Paths,
+  options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue }
+): MultiPathReturn<TState, Paths, TDefaultValue>;
 
 function useStore<TState extends object>(
   arg?: PathOf<TState> | ReadonlyArray<PathOf<TState>> | ((state: TState) => unknown),

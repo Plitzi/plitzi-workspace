@@ -72,6 +72,7 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
     if (shouldSync) {
       runSync();
     }
+
     mountedRef.current = true;
   } else {
     mountedRef.current = true;
