@@ -9,25 +9,26 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { processPaste } from '@pmodules/Builder/BuilderHelper';
 
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
 import { recursiveMap } from './utils';
 
 import type { DropPosition, TreeChangeState } from '@plitzi/plitzi-ui/Tree';
-import type { Element } from '@plitzi/sdk-shared';
+import type { BuilderState, Element } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const BuilderTree = () => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[schema, style]] = useStore(['schema', 'style']);
   const { componentDefinitions } = use(ComponentContext);
   const { elementHovered, setHovered: setHoverElement } = use(BuilderHoveredContext);
   const { elementSelected, setSelected: setSelectElement } = use(BuilderSelectedContext);
-  const { builderDropElement, schema } = use(BuilderSchemaContext);
+  const { builderDropElement } = use(BuilderSchemaContext);
   const { addToast } = useToast();
-  const { style } = use(BuilderStyleContext);
   const { mutate } = use(NetworkContext);
   const {
     builderHandler,

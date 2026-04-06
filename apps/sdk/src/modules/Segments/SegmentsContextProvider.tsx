@@ -1,8 +1,8 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use, useRef, useCallback, useState, useEffect } from 'react';
 
-import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 
 import type { SdkQueriesMap, NetworkContextValue, Segment } from '@plitzi/sdk-shared';
@@ -21,7 +21,7 @@ const SegmentsContextProvider = ({ children, segments: segmentsProp }: SegmentsC
       return segmentsProp;
     }
 
-    return internalData.segments ?? {};
+    return internalData.segments;
   }, [segmentsProp, internalData]);
 
   const [segments, setSegments] = useState(segmentsPropMemo);

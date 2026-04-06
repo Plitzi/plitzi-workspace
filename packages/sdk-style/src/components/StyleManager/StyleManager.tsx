@@ -1,22 +1,20 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useState, use, useMemo } from 'react';
 
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import ManagerSelector from './ManagerSelector';
 import StyleInspector from '../StyleInspector';
 
-import type { StyleItem } from '@plitzi/sdk-shared';
+import type { BuilderState, StyleItem } from '@plitzi/sdk-shared';
 
 const StyleManager = () => {
   const { componentDefinitions } = use(ComponentContext);
   const [selector, setSelector] = useState<StyleItem | undefined>(undefined);
-  const {
-    schema: { flat }
-  } = use(BuilderSchemaContext);
-  const { style, displayMode } = use(BuilderStyleContext);
+
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[flat, style, displayMode]] = useStore(['schema.flat', 'style', 'displayMode']);
   const flatList = useMemo(
     () => Object.values(flat),
     // eslint-disable-next-line react-hooks/exhaustive-deps

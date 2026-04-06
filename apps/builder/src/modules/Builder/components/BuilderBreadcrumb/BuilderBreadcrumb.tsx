@@ -2,25 +2,24 @@ import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { BuilderState, Element } from '@plitzi/sdk-shared';
 
 export type BuilderBreadcrumbProps = {
   limit?: number;
 };
 
 const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [flat] = useStore('schema.flat');
   const ref = useRef<HTMLUListElement>(null);
   const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const { elementHovered, setHovered } = use(BuilderHoveredContext);
   const { builderElementPermissions, baseElementIdOriginal } = use(BuilderContext);
-  const {
-    schema: { flat }
-  } = use(BuilderSchemaContext);
 
   useEffect(() => {
     if (ref.current) {

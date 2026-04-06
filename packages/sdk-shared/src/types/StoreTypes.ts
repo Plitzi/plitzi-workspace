@@ -1,14 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import type { Schema, Element } from './SchemaTypes';
 import type { DisplayMode, Style } from './StyleTypes';
 import type { Dispatch, SetStateAction } from 'react';
 
-// 'mount' — writes the value to the store only on the first render.
-// 'sync'  — writes the value to the store on every render where it changed (default).
-export type SyncMode = 'mount' | 'sync';
-
-export type Listener = () => void;
+// ─── Internal types ───────────────────────────────────────────────────────────
 
 export type Path = string;
 
@@ -39,6 +36,44 @@ export type PathValue<T, P> = P extends `${infer K}.${infer Rest}`
   : P extends keyof T
     ? T[P]
     : never;
+
+export type PathSetter<TState extends object, P extends PathOf<TState>> = (
+  value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
+) => void;
+
+export type __NoDefault = { __noDefault: true };
+type NumericIndex<I> = I extends `${infer N extends number}` ? N : I extends number ? I : never;
+export type PathValues<
+  TState extends object,
+  Paths extends ReadonlyArray<PathOf<TState>>,
+  DefaultValue = __NoDefault
+> = {
+  [I in keyof Paths]: Paths[I] extends PathOf<TState>
+    ? [DefaultValue] extends [__NoDefault]
+      ? PathValue<TState, Paths[I]>
+      : DefaultValue extends readonly any[]
+        ? NumericIndex<I> extends infer NI
+          ? NI extends keyof DefaultValue
+            ? DefaultValue[NI] extends undefined
+              ? PathValue<TState, Paths[I]> | undefined
+              : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue[NI]
+            : PathValue<TState, Paths[I]>
+          : never
+        : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue
+    : never;
+};
+
+export type PathSetters<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
+  [I in keyof Paths]: Paths[I] extends PathOf<TState> ? PathSetter<TState, Paths[I]> : never;
+};
+
+// ─── Public types ─────────────────────────────────────────────────────────────
+
+// 'mount' — writes the value to the store only on the first render.
+// 'sync'  — writes the value to the store on every render where it changed (default).
+export type SyncMode = 'mount' | 'sync';
+
+export type Listener = () => void;
 
 export type SetState<T> = {
   (path: undefined, value: T | ((prev: T) => T)): void;

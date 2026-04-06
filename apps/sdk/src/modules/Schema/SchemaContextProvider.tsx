@@ -1,7 +1,7 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use } from 'react';
 
-import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 

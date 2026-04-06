@@ -4,7 +4,6 @@ import { use, useMemo, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
 import AppContext from '../AppContext';
@@ -18,7 +17,7 @@ import ContainerSitemap from './containers/ContainerSitemap';
 import { getPopups } from '../helpers/utils';
 
 import type { PopupInstance, PopupPlacement, PopupUpdateState } from '@plitzi/plitzi-ui/Popup';
-import type { BuilderState, EventBridgeEvent } from '@plitzi/sdk-shared';
+import type { EventBridgeEvent } from '@plitzi/sdk-shared';
 
 export type AppContainerProps = {
   externalStyle?: string;
@@ -28,8 +27,6 @@ const separatorsBefore = ['layerManager', 'settings'];
 
 const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { previewMode } = use(AppContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, style]] = useStore(['schema', 'style']);
   const { eventBridge } = use(EventBridgeContext);
   const { currentPageId } = use(NavigationContext);
   const [popupsActiveLeft, setPopupsActiveLeft] = useStorage<string[]>(
@@ -64,7 +61,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   return (
     <div className="flex grow flex-col overflow-auto">
       <AppHeader />
-      <BuilderProvider schema={schema} style={style} baseElementId={currentPageId} onHandler={builderHandler}>
+      <BuilderProvider baseElementId={currentPageId} onHandler={builderHandler}>
         <PopupProvider
           popups={popups}
           multi

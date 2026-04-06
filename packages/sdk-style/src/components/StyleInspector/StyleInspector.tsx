@@ -7,14 +7,14 @@ import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import Selector from '../Selector';
 import Inspector from './Inspector';
 
 import type { SelectorValue } from '../Selector';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { Element, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { BuilderState, Element, StyleItem, TagType } from '@plitzi/sdk-shared';
 import type { StyleState } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
@@ -44,11 +44,8 @@ const StyleInspector = ({
   onChange,
   onRemoveVariant
 }: StyleInspectorProps) => {
-  const {
-    style,
-    displayMode,
-    style: { platform }
-  } = use(BuilderStyleContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[style, platform, displayMode]] = useStore(['style', 'style.platform', 'displayMode']);
   const [styleSelector, setStyleSelector] = useState('base');
   const [styleVariant, setStyleVariant] = useState<string | undefined>(undefined);
   const [styleState, setStyleState] = useState<StyleState | undefined>(undefined);

@@ -5,7 +5,7 @@ import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelpe
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 
 import PluginsReducer from './PluginsReducer';
 

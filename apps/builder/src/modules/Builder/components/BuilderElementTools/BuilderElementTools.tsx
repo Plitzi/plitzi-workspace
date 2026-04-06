@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import useStateDebounce from '@plitzi/plitzi-ui/hooks/useStateDebounce';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { use, useMemo, useCallback, useRef, Dispatch, SetStateAction } from 'react';
+import { use, useMemo, useCallback, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
@@ -26,9 +26,11 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
-  const { useStore } = createStoreHook<BuilderState>();
   const { elementSelected } = use(BuilderSelectedContext);
-  const [[selector, setSelector, element]] = useStore(['selector', 'setSelector', `schema.flat.${elementSelected}`]);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[selector, setSelector, element]] = useStore(['selector', 'setSelector', `schema.flat.${elementSelected}`], {
+    defaultValue: undefined
+  });
   const { componentDefinitions } = use(ComponentContext);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);

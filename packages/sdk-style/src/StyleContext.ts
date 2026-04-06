@@ -1,11 +1,9 @@
 import { createContext } from 'react';
 
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
-
 import type { StyleContextValue } from '@plitzi/sdk-shared';
 
-const styleContextDefaultValue: StyleContextValue = { style: EMPTY_STYLE_SCHEMA };
+const styleContextDefaultValue: StyleContextValue = {};
 
-const StyleContext = createContext<StyleContextValue>(styleContextDefaultValue);
+const StyleContext = createContext(styleContextDefaultValue);
 
 export default StyleContext;

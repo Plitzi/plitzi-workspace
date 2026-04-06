@@ -1,8 +1,8 @@
 import { use, useMemo } from 'react';
 
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import BuilderStyleContextProvider from '@plitzi/sdk-style/BuilderStyleContextProvider';
-import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 

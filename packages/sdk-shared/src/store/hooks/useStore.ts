@@ -6,41 +6,15 @@ import getByPath from '../helpers/getByPath';
 import shallowEqual from '../helpers/shallowEqual';
 import { StoreContext } from '../StoreProvider';
 
-import type { PathOf, PathValue, StoreApi } from '../../types/StoreTypes';
-
-// ─── Internal types ───────────────────────────────────────────────────────────
-
-type PathSetter<TState extends object, P extends PathOf<TState>> = (
-  value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
-) => void;
-
-type __NoDefault = { __noDefault: true };
-
-// Converts a tuple key (e.g. "0", "1") to its numeric literal (0, 1)
-// so it can be used to index a DefaultValue tuple.
-type NumericIndex<I> = I extends `${infer N extends number}` ? N : I extends number ? I : never;
-
-type PathValues<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>, DefaultValue = __NoDefault> = {
-  [I in keyof Paths]: Paths[I] extends PathOf<TState>
-    ? [DefaultValue] extends [__NoDefault]
-      ? PathValue<TState, Paths[I]>
-      : DefaultValue extends readonly any[]
-        ? NumericIndex<I> extends infer NI
-          ? NI extends keyof DefaultValue
-            ? DefaultValue[NI] extends undefined
-              ? PathValue<TState, Paths[I]> | undefined
-              : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue[NI]
-            : PathValue<TState, Paths[I]>
-          : never
-        : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue
-    : never;
-};
-
-type PathSetters<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
-  [I in keyof Paths]: Paths[I] extends PathOf<TState> ? PathSetter<TState, Paths[I]> : never;
-};
-
-// ─── Public types ─────────────────────────────────────────────────────────────
+import type {
+  __NoDefault,
+  PathOf,
+  PathSetter,
+  PathSetters,
+  PathValue,
+  PathValues,
+  StoreApi
+} from '../../types/StoreTypes';
 
 export type MultiPathReturn<
   TState extends object,
@@ -162,6 +136,7 @@ const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
       return false;
     }
   }
+
   return true;
 };
 

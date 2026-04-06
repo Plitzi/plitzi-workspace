@@ -188,6 +188,10 @@
       "types": "./dist/src/network/NetworkContext.d.ts",
       "import": "./dist/src/network/NetworkContext.mjs"
     },
+    "./network/NetworkInternalContext": {
+      "types": "./dist/src/network/NetworkInternalContext.d.ts",
+      "import": "./dist/src/network/NetworkInternalContext.mjs"
+    },
     "./network/graphql": {
       "types": "./dist/src/network/graphql/index.d.ts",
       "import": "./dist/src/network/graphql/index.mjs"

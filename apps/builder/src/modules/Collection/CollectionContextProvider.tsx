@@ -4,7 +4,7 @@ import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 import CollectionReducer, { CollectionsActions } from '@plitzi/sdk-collections/CollectionReducer';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 
 import type { BuilderMutationsMap, BuilderQueriesMap, Collection, CollectionRecord } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';

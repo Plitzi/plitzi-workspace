@@ -2,10 +2,10 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { get, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import { getStyle } from '@plitzi/sdk-plugins/PluginHelper';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 
 import type { Asset, ComponentDefinition, ComponentPlugin, RenderMode } from '@plitzi/sdk-shared';
 

@@ -11,14 +11,14 @@ import { Link } from 'react-router-dom';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { BuilderState, Element } from '@plitzi/sdk-shared';
 
 export type BuilderAreaHeaderProps = {
   baseElementId: string;
@@ -35,6 +35,8 @@ const BuilderAreaHeader = ({
   headerTitle = '',
   previewMode = false
 }: BuilderAreaHeaderProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[flat, pageFolders, definition]] = useStore(['schema.flat', 'schema.pageFolders', 'schema.definition']);
   const { existsPopup, addPopup } = usePopup();
   const {
     theme,
@@ -46,9 +48,6 @@ const BuilderAreaHeader = ({
     baseElementIdOriginal,
     mode
   } = use(BuilderContext);
-  const {
-    schema: { flat, pageFolders, definition }
-  } = use(BuilderSchemaContext);
   const {
     server: { basePath }
   } = use(NetworkContext);

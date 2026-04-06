@@ -344,8 +344,6 @@ const BuilderStyleContextProvider = ({
     styleUpdateSettings
   ]);
 
-  const styleContextMemo = useMemo(() => ({ style }), [style]);
-
   const events = useMemo(
     () => ({
       styleUpdate,
@@ -379,7 +377,7 @@ const BuilderStyleContextProvider = ({
 
   useEventBridge('main', events);
 
-  return <StyleContext value={styleContextMemo}>{children}</StyleContext>;
+  return <StyleContext value={events}>{children}</StyleContext>;
 };
 
 export default BuilderStyleContextProvider;

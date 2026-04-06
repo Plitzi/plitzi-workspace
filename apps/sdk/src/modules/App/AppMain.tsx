@@ -6,12 +6,12 @@ import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import Sdk from '@modules/Sdk';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
-import StyleContextProvider from '@modules/Style/StyleContextProvider';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
+import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
 
 import type {
   Environment,
@@ -87,7 +87,7 @@ const AppMain = ({
       <SchemaContextProvider>
         <CollectionContextProvider>
           <PluginsContextProvider renderMode={renderMode} sdkStylePath={sdkStylePath}>
-            <StyleContextProvider>
+            <SdkStyleContextProvider>
               <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
                 <SegmentsContextProvider>
                   <AuthContextProvider
@@ -121,7 +121,7 @@ const AppMain = ({
                   </AuthContextProvider>
                 </SegmentsContextProvider>
               </EventBridgeContextProvider>
-            </StyleContextProvider>
+            </SdkStyleContextProvider>
           </PluginsContextProvider>
         </CollectionContextProvider>
       </SchemaContextProvider>

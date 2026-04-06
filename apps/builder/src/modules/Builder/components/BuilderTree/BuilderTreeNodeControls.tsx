@@ -9,11 +9,12 @@ import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetai
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import useBuilderElement from '../../hooks/useBuilderElement';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { BuilderState } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type BuilderTreeNodeControlsProps = {
@@ -23,13 +24,14 @@ export type BuilderTreeNodeControlsProps = {
 };
 
 const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeControlsProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [element] = useStore(`schema.flat.${id}`, { defaultValue: undefined });
   const { builderSetElementVisibility } = use(BuilderSchemaContext);
   const { existsPopup, addPopup } = usePopup();
   const { showDialog } = useModal();
   const { builderHandler, builderElementPermissions } = use(BuilderContext);
 
   const dataSource = useDataSource({ id, mode: 'read' });
-  const element = useBuilderElement(id);
   const { canDelete } = useMemo(() => {
     if (!element) {
       return { canDelete: false };

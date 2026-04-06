@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import OverlayButtonContainer from './OverlayButtonContainer';
@@ -13,7 +13,7 @@ import OverlayButtonResize from './OverlayButtonResize';
 import OverlaySpacing from './OverlaySpacing';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { DisplayMode, Element } from '@plitzi/sdk-shared';
+import type { BuilderState, DisplayMode, Element } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type OverlayNormalProps = {
@@ -47,9 +47,10 @@ const OverlayNormal = ({
   color,
   collaboratorName = ''
 }: OverlayNormalProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[style, selector]] = useStore(['style', 'selector']);
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = use(BuilderContext);
-  const { style, selector } = use(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
 

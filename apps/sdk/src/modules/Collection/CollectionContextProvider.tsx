@@ -1,9 +1,9 @@
 import { useCallback, use, useMemo, useReducer, useRef } from 'react';
 
-import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import CollectionReducer, { CollectionsActions } from '@plitzi/sdk-collections/CollectionReducer';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 
 import type {
   Collection,
@@ -27,7 +27,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
       return collectionsProp;
     }
 
-    return internalData.collections ?? {};
+    return internalData.collections;
   }, [collectionsProp, internalData.collections]);
   const [collections, dispatchCollection] = useReducer(CollectionReducer, collectionsPropMemo);
   const collectionsRef = useRef(collections);
