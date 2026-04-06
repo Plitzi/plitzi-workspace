@@ -313,7 +313,7 @@ const BuilderProvider = ({
         return true;
       }
 
-      if (typeArr[1] === 'plitzi-element') {
+      if (typeArr[1]) {
         try {
           const dataParsed = data as {
             id: string;
