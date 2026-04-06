@@ -1,10 +1,9 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
@@ -12,10 +11,8 @@ import useInternalItems from './useInternalItems';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { Element, InternalPropsSTG1, Schema } from '@plitzi/sdk-shared';
+import type { CommonState, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
-
-// Methods
 
 const getProps = (
   element: Element,
@@ -89,10 +86,10 @@ const useElementInternal = ({
   previewMode = false,
   baseElementId
 }: UseElementInternalProps) => {
-  const { prevSchema, schema } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
   const { id } = internalProps;
-  const element = useValueMemo(id ? schema.flat[id] : undefined);
-  if (!element) {
+  const [element] = useStore(`schema.flat.${id}`);
+  if (!(element as Element | undefined)) {
     throw new Error(`Element ${id} not found, Page ${baseElementId}`);
   }
 
@@ -120,11 +117,7 @@ const useElementInternal = ({
       id,
       definition: internalPropsParsed.definition,
       plitziElementLayout: internalPropsParsed.plitziElementLayout,
-      schema,
       children,
-      SchemaContext,
-      prevSchema,
-      newSchema: prevSchema as Schema,
       previewMode
     })
   };

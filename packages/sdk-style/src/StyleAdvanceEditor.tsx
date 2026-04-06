@@ -7,14 +7,14 @@ import { useCallback, useMemo, useState, use } from 'react';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
+
+import type { CommonState } from '@plitzi/sdk-shared';
 
 const StyleAdvanceEditor = () => {
-  const {
-    schema: {
-      settings: { customCss: customCssProp }
-    },
-    schemaUpdateSettings
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [customCssProp] = useStore('schema.settings.customCss');
+  const { schemaUpdateSettings } = use(SchemaContext);
   const [customCss, setCustomCss] = useState(() => {
     if (typeof customCssProp !== 'string') {
       return '';

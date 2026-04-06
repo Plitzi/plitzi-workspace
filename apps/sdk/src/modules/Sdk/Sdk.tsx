@@ -9,12 +9,10 @@ import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext'
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
 import IframeMode from './renderModes/IframeMode';
@@ -49,26 +47,23 @@ const Sdk = ({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
   const { useStore } = createStoreHook<SdkState>();
-  const [schemaSettings] = useStore('schema.settings');
+  const [[schemaSettings, styleCache]] = useStore(['schema.settings', 'style.cache']);
   const { segments } = use(SegmentsContext);
   const { useDataSource } = use(DataSourceContext);
   const { sdkEnvironment } = use(NetworkContext);
   const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
 
-  const {
-    style: { cache }
-  } = use(StyleContext);
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
     const cssVariables = schemaVariablesToCss(variables);
-    const cacheParsed = processCssTokens(cache, variables);
+    const cacheParsed = processCssTokens(styleCache, variables);
 
     if (renderMode === 'iframe' || renderMode === 'shadow') {
       return `${style}.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
     }
 
     return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
-  }, [segments, variables, cache, renderMode, schemaSettings.customCss, externalStyle]);
+  }, [segments, variables, styleCache, renderMode, schemaSettings.customCss, externalStyle]);
 
   const getWindow = useCallback(() => {
     if (iframeRef.current) {
@@ -106,9 +101,7 @@ const Sdk = ({
       customContexts: {},
       contexts: {
         ComponentContext,
-        SchemaContext,
         SegmentsContext,
-        StyleContext,
         CollectionContext,
         NetworkContext,
         PluginsContext,

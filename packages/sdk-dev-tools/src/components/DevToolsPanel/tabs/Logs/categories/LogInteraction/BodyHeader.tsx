@@ -1,10 +1,10 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { use, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { formatDate } from '@plitzi/sdk-shared/helpers';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { CommonState, Element } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type BodyHeaderProps = {
@@ -17,8 +17,9 @@ export type BodyHeaderProps = {
 };
 
 const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: BodyHeaderProps) => {
-  const { schema } = use(SchemaContext);
-  const element = useMemo(() => get(schema, `flat.${elementId}`), [schema, elementId]);
+  const { useStore } = createStoreHook<CommonState>();
+  const [flat] = useStore('schema.flat');
+  const element = useMemo(() => (elementId ? get(flat, elementId) : undefined), [elementId, flat]);
   const startTimeParsed = useMemo(() => formatDate(startTime, 'HH:mm:ss.SSS'), [startTime]);
   const endTimeParsed = useMemo(() => formatDate(endTime, 'HH:mm:ss.SSS'), [endTime]);
   const elementDOM = useMemo(() => {

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import type { Schema, Element } from './SchemaTypes';
-import type { Style } from './StyleTypes';
+import type { DisplayMode, Style } from './StyleTypes';
+import type { Dispatch, SetStateAction } from 'react';
 
 // 'mount' — writes the value to the store only on the first render.
 // 'sync'  — writes the value to the store on every render where it changed (default).
@@ -62,11 +63,16 @@ export type StoreApiInternal<T> = StoreApi<T> & {
 // States
 
 export type CommonState = {
-  schema: Schema;
+  prevSchema?: Schema; // used when elements are inside a reference and refer to main schema
+  schema: Schema; // current schema, normally is the main one but can be from a segment
   style: Style;
   pageDefinitions: Record<string, Element>;
 };
 
-export type BuilderState = CommonState & {};
+export type BuilderState = CommonState & {
+  displayMode: DisplayMode;
+  selector?: string;
+  setSelector: Dispatch<SetStateAction<string | undefined>>;
+};
 
 export type SdkState = CommonState & {};

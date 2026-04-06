@@ -4,9 +4,9 @@ import { useCallback, use, useMemo } from 'react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { SchemaVariable } from '@plitzi/sdk-shared';
+import type { CommonState, SchemaVariable } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type VariablesSourceProps = {
@@ -16,9 +16,8 @@ export type VariablesSourceProps = {
 
 const VariablesSource = ({ children, environment }: VariablesSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
-  const {
-    schema: { variables }
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [variables] = useStore('schema.variables');
   const { routeParams, queryParams, hostname } = use(NavigationContext);
   const whenData = useMemo(
     () => ({ routeParams, queryParams, hostname, environment }),

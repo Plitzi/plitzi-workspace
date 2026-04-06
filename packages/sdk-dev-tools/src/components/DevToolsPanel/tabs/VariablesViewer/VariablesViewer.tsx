@@ -1,20 +1,16 @@
 import Heading from '@plitzi/plitzi-ui/Heading';
-import { use } from 'react';
 
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import VariablesList from './VariablesList';
 import VariablesStyleList from './VariablesStyleList';
 
+import type { CommonState } from '@plitzi/sdk-shared';
+
 const VariablesViewer = () => {
-  const {
-    schema: { variables }
-  } = use(SchemaContext);
-  const {
-    style: { variables: styleVariables }
-  } = use(StyleContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [[variables, styleVariables]] = useStore(['schema.variables', 'style.variables']);
   const { variables: variablesParsed } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
 
   return (

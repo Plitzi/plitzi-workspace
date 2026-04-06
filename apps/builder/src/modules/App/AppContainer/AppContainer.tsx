@@ -4,8 +4,7 @@ import { use, useMemo, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
 import AppContext from '../AppContext';
@@ -19,7 +18,7 @@ import ContainerSitemap from './containers/ContainerSitemap';
 import { getPopups } from '../helpers/utils';
 
 import type { PopupInstance, PopupPlacement, PopupUpdateState } from '@plitzi/plitzi-ui/Popup';
-import type { EventBridgeEvent } from '@plitzi/sdk-shared';
+import type { BuilderState, EventBridgeEvent } from '@plitzi/sdk-shared';
 
 export type AppContainerProps = {
   externalStyle?: string;
@@ -29,8 +28,8 @@ const separatorsBefore = ['layerManager', 'settings'];
 
 const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { previewMode } = use(AppContext);
-  const schemaContext = use(SchemaContext);
-  const styleContext = use(StyleContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[schema, style]] = useStore(['schema', 'style']);
   const { eventBridge } = use(EventBridgeContext);
   const { currentPageId } = use(NavigationContext);
   const [popupsActiveLeft, setPopupsActiveLeft] = useStorage<string[]>(
@@ -65,12 +64,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   return (
     <div className="flex grow flex-col overflow-auto">
       <AppHeader />
-      <BuilderProvider
-        schema={schemaContext.schema}
-        style={styleContext.style}
-        baseElementId={currentPageId}
-        onHandler={builderHandler}
-      >
+      <BuilderProvider schema={schema} style={style} baseElementId={currentPageId} onHandler={builderHandler}>
         <PopupProvider
           popups={popups}
           multi

@@ -1,8 +1,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useMemo, use, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
+import type { CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type DetailsValue = {
@@ -22,7 +23,8 @@ const DetailsValue = ({
   // isStyle = false,
   onSelectElement
 }: DetailsValue) => {
-  const { schema } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [flat] = useStore('schema.flat');
 
   const handleClickElement = useCallback((elementId: string) => () => onSelectElement?.(elementId), [onSelectElement]);
 
@@ -33,7 +35,7 @@ const DetailsValue = ({
         <div className="flex flex-col">
           {value.map((item: string, i) => (
             <div key={i} className="cursor-pointer text-purple-400" onClick={handleClickElement(item)}>
-              {get(schema, `flat.${item}.definition.label`, item)}
+              {get(flat, `${item}.definition.label`, item)}
             </div>
           ))}
         </div>
@@ -43,7 +45,7 @@ const DetailsValue = ({
     if (attribute && ['rootId', 'parentId'].includes(attribute) && isDefinition) {
       return (
         <div className="cursor-pointer text-purple-400" onClick={handleClickElement(value as string)}>
-          {get(schema, `flat.${value as string}.definition.label`, value) as string}
+          {get(flat, `${value as string}.definition.label`, value) as string}
         </div>
       );
     }
@@ -61,7 +63,7 @@ const DetailsValue = ({
     }
 
     return value as ReactNode;
-  }, [attribute, isDefinition, value, handleClickElement, schema]);
+  }, [attribute, isDefinition, value, handleClickElement, flat]);
 
   return <div className="grow basis-0 truncate">{valueParsed}</div>;
 };

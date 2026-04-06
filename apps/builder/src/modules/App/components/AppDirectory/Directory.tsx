@@ -8,12 +8,12 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
 import DirectoryItem from './DirectoryItem';
 
-import type { PageFolder } from '@plitzi/sdk-shared';
+import type { PageFolder, BuilderState } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type DirectoryProps = {
@@ -40,9 +40,8 @@ const Directory = ({
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
-  const {
-    schema: { flat }
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [flat] = useStore('schema.flat');
   const items = useMemo(
     () =>
       Object.values(flat)

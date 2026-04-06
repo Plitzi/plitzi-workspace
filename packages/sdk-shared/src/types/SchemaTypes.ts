@@ -99,9 +99,6 @@ export type Schema = {
 };
 
 export type SchemaContextValue = {
-  prevSchema?: Schema;
-  schema: Schema;
-  style?: Style;
   definition?: { rootId: string }; // for segments and templates
   // When is main Schema in builder
   dispatchSchema?: unknown;

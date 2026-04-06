@@ -5,11 +5,13 @@ import { useMemo, use } from 'react';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { CommonState } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
@@ -25,12 +27,11 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
   const { style } = useElement();
   const {
     settings: { previewMode },
-    contexts: { NavigationContext, SchemaContext }
+    contexts: { NavigationContext }
   } = usePlitziServiceContext();
   const { navigate, routeParams, queryParams } = use(NavigationContext);
-  const {
-    schema: { flat, pageFolders }
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [[flat, pageFolders]] = useStore(['schema.flat', 'schema.pageFolders']);
 
   const url = useMemo(() => {
     if (mode === 'external') {

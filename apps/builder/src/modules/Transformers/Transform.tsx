@@ -13,7 +13,7 @@ import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderS
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
@@ -21,7 +21,7 @@ import TransformPreview from './TransformPreview';
 
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const Transform = () => {
@@ -32,9 +32,8 @@ const Transform = () => {
     builderHandler,
     baseContext: { baseElementId }
   } = use(BuilderContext);
-  const {
-    style: { mode: styleMode }
-  } = use(StyleContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [styleMode] = useStore('style.mode');
   const { elementSelected } = use(BuilderSelectedContext);
   const { rootRef } = use(ContainerRootContext);
   const [mode, setMode] = useState<'html-tailwind' | 'webflow' | 'html'>('html-tailwind');

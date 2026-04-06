@@ -14,11 +14,9 @@ import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
@@ -67,11 +65,9 @@ const BuilderAreaPreview = ({
       customContexts: {},
       contexts: {
         CollectionContext,
-        StyleContext,
         ComponentContext,
         PluginsContext,
         DataSourceContext,
-        SchemaContext,
         NetworkContext,
         NavigationContext,
         StateManagerContext,

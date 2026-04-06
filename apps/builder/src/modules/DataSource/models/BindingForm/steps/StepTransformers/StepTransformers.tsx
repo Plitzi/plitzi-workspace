@@ -4,16 +4,16 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
-import { use, useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import utility, { utilityOptions } from '@plitzi/sdk-data-source/utility';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import TransformerParam from './TransformerParam';
 
 import type { BindingSchema } from '../../BindingForm';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { DataSourceUtilityParams, DisplayMode, SourceField } from '@plitzi/sdk-shared';
+import type { BuilderState, DataSourceUtilityParams, DisplayMode, SourceField } from '@plitzi/sdk-shared';
 
 export type StepTransformersProps = {
   dataSourceFields?: Record<string, SourceField[]>;
@@ -25,15 +25,16 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
   const watchTransformers = useFormWatch(form, 'transformers');
   const watchTransformersRef = useRef(watchTransformers);
   watchTransformersRef.current = watchTransformers;
-  const { style } = use(BuilderStyleContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [stylePlatform] = useStore('style.platform');
   const styleSelectors = useMemo(() => {
-    return (Object.keys(style.platform) as DisplayMode[]).map(displayMode => ({
+    return (Object.keys(stylePlatform) as DisplayMode[]).map(displayMode => ({
       label: displayMode,
-      options: Object.values(style.platform[displayMode])
+      options: Object.values(stylePlatform[displayMode])
         .filter(selector => selector.type === 'class')
         .map(selector => ({ label: selector.name, value: selector.name }))
     }));
-  }, [style]);
+  }, [stylePlatform]);
 
   const handleClickAdd = useCallback(
     () => setValue('transformers', [...watchTransformers, { type: 'utility', action: '', params: {} }]),

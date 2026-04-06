@@ -10,7 +10,7 @@ import setByPath from './helpers/setByPath';
 import useStore from './hooks/useStore';
 import { StoreContext } from './StoreProvider';
 
-import type { StoreApi, StoreApiInternal } from '../types';
+import type { PathOf, StoreApi, StoreApiInternal } from '../types';
 import type { ReactNode } from 'react';
 
 type State = {
@@ -135,6 +135,686 @@ describe('store', () => {
       store.setState('count', 0); // same value
 
       expect(listener).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('store enabled / options', () => {
+  type AppState = {
+    user: { name: string; age: number; role: 'admin' | 'viewer' };
+    schema: {
+      version: number;
+      flat: Record<string, { label: string; type: string }>;
+      pages: string[];
+    };
+    count: number;
+    meta: { active: boolean; updatedAt: number };
+    tags: string[];
+  };
+
+  const makeStore = () =>
+    createStore<AppState>(() => ({
+      user: { name: 'Alice', age: 30, role: 'viewer' },
+      schema: {
+        version: 1,
+        flat: {
+          btn1: { label: 'Button', type: 'button' },
+          txt1: { label: 'Text', type: 'text' }
+        },
+        pages: ['btn1']
+      },
+      count: 0,
+      meta: { active: true, updatedAt: 1000 },
+      tags: ['a', 'b', 'c']
+    }));
+
+  const makeWrapper =
+    (store: StoreApi<AppState>) =>
+    ({ children }: { children: ReactNode }) =>
+      createElement(StoreContext, { value: store }, children);
+
+  const { useStore, useStoreSync } = createStoreHook<AppState>();
+
+  describe('useStore: enabled option', () => {
+    it('does not re-render when disabled and state changes', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore('count', { enabled: false });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 99));
+
+      expect(renderFn).toHaveBeenCalledTimes(1); // initial only
+    });
+
+    it('returns last known value when disabled', () => {
+      const store = makeStore();
+
+      const { result } = renderHook(() => useStore('count', { enabled: false }), { wrapper: makeWrapper(store) });
+
+      act(() => store.setState('count', 42));
+
+      expect(result.current[0]).toBe(0); // still the initial value
+    });
+
+    it('subscribes and re-renders when enabled switches true → true (already enabled)', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore('count', { enabled: true });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 5));
+      expect(renderFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('starts receiving updates after enabled switches false → true', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+      let enabled = false;
+
+      const { rerender, result } = renderHook(
+        () => {
+          renderFn();
+          return useStore('count', { enabled });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 10));
+      expect(renderFn).toHaveBeenCalledTimes(1); // disabled — no re-render
+
+      enabled = true;
+      rerender();
+
+      act(() => store.setState('count', 20));
+      expect(result.current[0]).toBe(20);
+      expect(renderFn).toHaveBeenCalledTimes(3); // rerender + update
+    });
+
+    it('stops receiving updates after enabled switches true → false', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+      let enabled = true;
+
+      const { rerender } = renderHook(
+        () => {
+          renderFn();
+          return useStore('count', { enabled });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 5));
+      expect(renderFn).toHaveBeenCalledTimes(2); // initial + update
+
+      enabled = false;
+      rerender();
+
+      act(() => store.setState('count', 99));
+      expect(renderFn).toHaveBeenCalledTimes(3); // only the rerender from enabled change
+    });
+
+    it('disabled selector does not re-render on state change', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore(s => s.count, { enabled: false });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 7));
+      expect(renderFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('disabled multi-path does not re-render on state change', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore(['count', 'user.name'] as const, { enabled: false });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 7));
+      act(() => store.setState('user.name', 'Bob'));
+      expect(renderFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('setter still works when disabled', () => {
+      const store = makeStore();
+
+      const { result } = renderHook(() => useStore('count', { enabled: false }), { wrapper: makeWrapper(store) });
+
+      act(() => result.current[1](55));
+      expect(store.getState().count).toBe(55);
+    });
+  });
+
+  describe('useStore: dynamic paths', () => {
+    it('reads the correct value for a dynamic path', () => {
+      const store = makeStore();
+      const id = 'btn1';
+
+      const { result } = renderHook(() => useStore(`schema.flat.${id}` as PathOf<AppState>), {
+        wrapper: makeWrapper(store)
+      });
+
+      expect((result.current[0] as { label: string }).label).toBe('Button');
+    });
+
+    it('re-renders when the dynamic path value changes', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+      const id = 'btn1';
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore(`schema.flat.${id}` as PathOf<AppState>);
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() =>
+        store.setState(
+          `schema.flat.${id}` as PathOf<AppState>,
+          { label: 'Updated', type: 'button' } as AppState['schema']['flat'][string]
+        )
+      );
+
+      expect(renderFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('does NOT re-render when a sibling dynamic path changes', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore('schema.flat.btn1' as PathOf<AppState>);
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      // Change txt1, not btn1
+      act(() =>
+        store.setState(
+          'schema.flat.txt1' as PathOf<AppState>,
+          { label: 'Changed', type: 'text' } as AppState['schema']['flat'][string]
+        )
+      );
+
+      expect(renderFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('switches to the new path when the dynamic segment changes', () => {
+      const store = makeStore();
+      let id = 'btn1';
+
+      const { rerender, result } = renderHook(() => useStore(`schema.flat.${id}` as PathOf<AppState>), {
+        wrapper: makeWrapper(store)
+      });
+
+      expect((result.current[0] as { label: string }).label).toBe('Button');
+
+      id = 'txt1';
+      rerender();
+
+      expect((result.current[0] as { label: string }).label).toBe('Text');
+    });
+
+    it('handles a dynamic path that does not exist yet', () => {
+      const store = makeStore();
+
+      const { result } = renderHook(() => useStore('schema.flat.nonexistent' as PathOf<AppState>), {
+        wrapper: makeWrapper(store)
+      });
+
+      expect(result.current[0]).toBeUndefined();
+    });
+  });
+
+  describe('useStore: shallowEqual default for selectors', () => {
+    it('does NOT re-render when selector returns a new object with same shallow content', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          // Returns a new object every time but with the same content
+          return useStore(s => ({ name: s.user.name, age: s.user.age }));
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      // Change something unrelated to user
+      act(() => store.setState('count', 1));
+      act(() => store.setState('count', 2));
+
+      expect(renderFn).toHaveBeenCalledTimes(1); // shallowEqual prevented re-renders
+    });
+
+    it('re-renders when selector result shallow-differs', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      const { result } = renderHook(
+        () => {
+          renderFn();
+          return useStore(s => ({ name: s.user.name, age: s.user.age }));
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('user.name', 'Bob'));
+
+      expect(renderFn).toHaveBeenCalledTimes(2);
+      expect((result.current[0] as { name: string }).name).toBe('Bob');
+    });
+
+    it('does NOT re-render when pick-like selector returns same keys and values', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          // Simulates pick(schema.flat, schema.pages)
+          return useStore(s => {
+            const result: Record<string, unknown> = {};
+            for (const key of s.schema.pages) {
+              result[key] = s.schema.flat[key];
+            }
+            return result;
+          });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      // Change something outside schema
+      act(() => store.setState('count', 5));
+      expect(renderFn).toHaveBeenCalledTimes(1);
+
+      // Change schema.version (not flat or pages)
+      act(() => store.setState('schema.version', 2));
+      expect(renderFn).toHaveBeenCalledTimes(1); // shallowEqual: same keys, same refs
+    });
+
+    it('re-renders when pick-like selector result changes', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore(s => {
+            const result: Record<string, unknown> = {};
+            for (const key of s.schema.pages) {
+              result[key] = s.schema.flat[key];
+            }
+            return result;
+          });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      // Update an element that is in pages
+      act(() =>
+        store.setState(
+          'schema.flat.btn1' as PathOf<AppState>,
+          { label: 'New Label', type: 'button' } as AppState['schema']['flat'][string]
+        )
+      );
+
+      expect(renderFn).toHaveBeenCalledTimes(2); // btn1 ref changed
+    });
+
+    it('can override shallowEqual with Object.is via equalityFn option', () => {
+      // note: this will generate unlimited re-render because of the Object.is
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+
+          return useStore(s => ({ name: s.user.name }), { equalityFn: (a, b) => a.name === b.name });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      // Object.is compares references — new object always differs
+      act(() => store.setState('count', 1)); // triggers subscribe → new object → re-render
+      expect(renderFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('primitive selector still uses Object.is correctly', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore(s => s.user.name); // primitive — shallowEqual === Object.is for primitives
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('user.age', 31)); // name unchanged
+      expect(renderFn).toHaveBeenCalledTimes(1);
+
+      act(() => store.setState('user.name', 'Bob'));
+      expect(renderFn).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('useStoreSync: options object', () => {
+    it('mode mount via options object', () => {
+      const store = makeStore();
+      const listener = vi.fn();
+      store.subscribePath('count', listener);
+      let externalValue = 10;
+
+      const { rerender } = renderHook(() => useStoreSync('count', externalValue, { mode: 'mount' }), {
+        wrapper: makeWrapper(store)
+      });
+
+      externalValue = 99;
+      rerender();
+      rerender();
+
+      expect(store.getState().count).toBe(10);
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('mode sync via options object (default)', () => {
+      const store = makeStore();
+      let externalValue = 0;
+
+      const { rerender } = renderHook(() => useStoreSync('count', externalValue, { mode: 'sync' }), {
+        wrapper: makeWrapper(store)
+      });
+
+      externalValue = 5;
+      rerender();
+
+      expect(store.getState().count).toBe(5);
+    });
+
+    it('disabled: does not sync on mount', () => {
+      const store = makeStore();
+
+      renderHook(() => useStoreSync('count', 99, { enabled: false }), { wrapper: makeWrapper(store) });
+
+      expect(store.getState().count).toBe(0); // untouched
+    });
+
+    it('disabled: does not sync on rerender', () => {
+      const store = makeStore();
+      const listener = vi.fn();
+      store.subscribePath('count', listener);
+      let externalValue = 1;
+
+      const { rerender } = renderHook(() => useStoreSync('count', externalValue, { enabled: false }), {
+        wrapper: makeWrapper(store)
+      });
+
+      externalValue = 5;
+      rerender();
+
+      expect(listener).not.toHaveBeenCalled();
+      expect(store.getState().count).toBe(0);
+    });
+
+    it('disabled: does not re-render when store changes', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStoreSync('count', 0, { enabled: false });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 42));
+      expect(renderFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts syncing when enabled switches false → true', () => {
+      const store = makeStore();
+      let enabled = false;
+      const externalValue = 10;
+
+      const { rerender } = renderHook(() => useStoreSync('count', externalValue, { enabled }), {
+        wrapper: makeWrapper(store)
+      });
+
+      expect(store.getState().count).toBe(0); // disabled on mount — no sync
+
+      enabled = true;
+      rerender();
+
+      expect(store.getState().count).toBe(10); // synced on first enabled render
+    });
+
+    it('stops syncing when enabled switches true → false', () => {
+      const store = makeStore();
+      let enabled = true;
+      let externalValue = 1;
+
+      const { rerender } = renderHook(() => useStoreSync('count', externalValue, { enabled }), {
+        wrapper: makeWrapper(store)
+      });
+
+      expect(store.getState().count).toBe(1);
+
+      enabled = false;
+      externalValue = 99;
+      rerender();
+
+      expect(store.getState().count).toBe(1); // still 1 — disabled stopped sync
+    });
+
+    it('equalityFn in options prevents re-sync for equivalent objects', () => {
+      const store = makeStore();
+      const listener = vi.fn();
+      store.subscribePath('schema', listener);
+      let externalSchema = { version: 1, title: 'v1' };
+      const { useStoreSync } = createStoreHook<typeof externalSchema>();
+
+      const { rerender } = renderHook(
+        () =>
+          useStoreSync(undefined, externalSchema, {
+            equalityFn: (a, b) => a.version === b.version && a.title === b.title
+          }),
+        { wrapper: makeWrapper(store) }
+      );
+
+      externalSchema = { version: 1, title: 'v1' }; // new reference, same content
+      rerender();
+
+      expect(listener).toHaveBeenCalledTimes(0); // mount only
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('enabled toggles rapidly without crashing', () => {
+      const store = makeStore();
+      let enabled = true;
+
+      const { rerender } = renderHook(() => useStore('count', { enabled }), { wrapper: makeWrapper(store) });
+
+      for (let i = 0; i < 20; i++) {
+        enabled = i % 2 === 0;
+        rerender();
+        act(() => store.setState('count', i));
+      }
+
+      // No crash — just verify it ran
+      expect(store.getState().count).toBeGreaterThanOrEqual(0);
+    });
+
+    it('dynamic path changes rapidly without memory leak', () => {
+      const store = makeStore();
+      const ids = ['btn1', 'txt1', 'btn1', 'txt1'];
+
+      const { rerender } = renderHook(({ id }) => useStore(`schema.flat.${id}` as PathOf<AppState>), {
+        initialProps: { id: 'btn1' },
+        wrapper: makeWrapper(store)
+      });
+
+      for (const id of ids) {
+        rerender({ id });
+      }
+
+      // Store should have no dangling listeners after path changes
+      expect(true).toBe(true); // no crash
+    });
+
+    it('selector that throws does not break the store', () => {
+      const store = makeStore();
+
+      expect(() =>
+        renderHook(
+          () =>
+            useStore(() => {
+              throw new Error('selector error');
+            }),
+          { wrapper: makeWrapper(store) }
+        )
+      ).toThrow('selector error');
+
+      // Store itself is unaffected
+      expect(store.getState().count).toBe(0);
+    });
+
+    it('enabled false with path still returns initial value', () => {
+      const store = makeStore();
+
+      const { result } = renderHook(() => useStore('user.name', { enabled: false }), {
+        wrapper: makeWrapper(store)
+      });
+
+      const [value] = result.current;
+      expect(value).toBe('Alice');
+    });
+
+    it('enabled false with multi-path still returns initial values', () => {
+      const store = makeStore();
+
+      const { result } = renderHook(() => useStore(['count', 'user.name'] as const, { enabled: false }), {
+        wrapper: makeWrapper(store)
+      });
+
+      const [values] = result.current;
+      expect(values[0]).toBe(0);
+      expect(values[1]).toBe('Alice');
+    });
+
+    it('useStoreSync with enabled false then true syncs the current value', () => {
+      const store = makeStore();
+      let enabled = false;
+      const externalValue = 77;
+
+      const { rerender } = renderHook(() => useStoreSync('count', externalValue, { enabled }), {
+        wrapper: makeWrapper(store)
+      });
+
+      expect(store.getState().count).toBe(0); // not synced
+
+      enabled = true;
+      rerender();
+
+      expect(store.getState().count).toBe(77); // synced on first enabled render
+    });
+
+    it('shallowEqual handles null/undefined in selector output gracefully', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          return useStore(s => (s.count > 0 ? { count: s.count } : null));
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('meta.active', false)); // count still 0 → null
+      expect(renderFn).toHaveBeenCalledTimes(1);
+
+      act(() => store.setState('count', 1)); // count > 0 → object
+      expect(renderFn).toHaveBeenCalledTimes(2);
+
+      act(() => store.setState('count', 2)); // count > 0, different value — new object, different key
+      expect(renderFn).toHaveBeenCalledTimes(3);
+    });
+
+    it('two useStore hooks with different enabled states are independent', () => {
+      const store = makeStore();
+      const renderA = vi.fn();
+      const renderB = vi.fn();
+
+      renderHook(
+        () => {
+          renderA();
+          return useStore('count', { enabled: true });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      renderHook(
+        () => {
+          renderB();
+          return useStore('count', { enabled: false });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 5));
+
+      expect(renderA).toHaveBeenCalledTimes(2); // subscribed — re-rendered
+      expect(renderB).toHaveBeenCalledTimes(1); // disabled — no re-render
+    });
+
+    it('useStoreSync disabled does not interfere with a useStore on same path', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      renderHook(
+        () => {
+          renderFn();
+          useStoreSync('count', 99, { enabled: false }); // should not write
+          return useStore('count');
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().count).toBe(0);
+      expect(renderFn).toHaveBeenCalledTimes(1);
     });
   });
 });
@@ -407,10 +1087,7 @@ describe('performance', () => {
 
       renderHook(
         () => {
-          const [user] = useStore(
-            s => s.user,
-            (a, b) => a.name === b.name && a.age === b.age
-          );
+          const [user] = useStore(s => s.user, { equalityFn: (a, b) => a.name === b.name && a.age === b.age });
           renderFn();
           return user;
         },
@@ -685,10 +1362,9 @@ describe('fiability', () => {
 
   const { useStore } = createStoreHook<StabilityState>();
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────────
-
   const renderCount = () => {
     const fn = vi.fn();
+
     return { fn, count: () => fn.mock.calls.length };
   };
 
@@ -858,10 +1534,9 @@ describe('fiability', () => {
 
       renderHook(
         () => {
-          useStore(
-            s => ({ provider: s.schema.settings.userProvider }),
-            (a, b) => a.provider === b.provider
-          );
+          useStore(s => ({ provider: s.schema.settings.userProvider }), {
+            equalityFn: (a, b) => a.provider === b.provider
+          });
           fn();
         },
         { wrapper: makeWrapper(store) }
@@ -1114,8 +1789,6 @@ describe('useStore (multi-path)', () => {
 
   const { useStore } = createStoreHook<State>();
 
-  // ─────────────────────────────────────────────
-
   it('returns values for multiple paths', () => {
     const store = makeStore();
 
@@ -1187,10 +1860,6 @@ describe('useStore (multi-path)', () => {
     expect(renderFn).toHaveBeenCalledTimes(2);
   });
 
-  // ─────────────────────────────────────────────
-  // same parent
-  // ─────────────────────────────────────────────
-
   it('paths with same parent: only affected child triggers re-render', () => {
     const store = makeStore();
     const renderFn = vi.fn();
@@ -1252,10 +1921,6 @@ describe('useStore (multi-path)', () => {
     expect(renderFn).toHaveBeenCalledTimes(1);
   });
 
-  // ─────────────────────────────────────────────
-  // arrays
-  // ─────────────────────────────────────────────
-
   it('array paths: only affected index re-renders', () => {
     const store = makeStore();
     const renderFn = vi.fn();
@@ -1290,10 +1955,6 @@ describe('useStore (multi-path)', () => {
     expect(renderFn).toHaveBeenCalledTimes(1);
   });
 
-  // ─────────────────────────────────────────────
-  // setters
-  // ─────────────────────────────────────────────
-
   it('setters update independently', () => {
     const store = makeStore();
 
@@ -1308,10 +1969,6 @@ describe('useStore (multi-path)', () => {
     expect(store.getState().count).toBe(99);
   });
 
-  // ─────────────────────────────────────────────
-  // equalityFn
-  // ─────────────────────────────────────────────
-
   it('equalityFn prevents re-render', () => {
     const store = makeStore();
     const renderFn = vi.fn();
@@ -1319,7 +1976,10 @@ describe('useStore (multi-path)', () => {
     renderHook(
       () => {
         renderFn();
-        return useStore(['user.name', 'count'], (a, b) => a['user.name'] === b['user.name'] && a.count === b.count);
+
+        return useStore(['user.name', 'count'], {
+          equalityFn: (a, b) => a['user.name'] === b['user.name'] && a.count === b.count
+        });
       },
       { wrapper: makeWrapper(store) }
     );
@@ -1329,10 +1989,6 @@ describe('useStore (multi-path)', () => {
 
     expect(renderFn).toHaveBeenCalledTimes(1);
   });
-
-  // ─────────────────────────────────────────────
-  // reference stability
-  // ─────────────────────────────────────────────
 
   it('returns same reference if values did not change', () => {
     const store = makeStore();

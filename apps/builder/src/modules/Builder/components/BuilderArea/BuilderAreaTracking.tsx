@@ -8,9 +8,9 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import AppContext from '@pmodules/App/AppContext';
 import useNormalizedCursor from '@pmodules/Builder/hooks/useNormalizedCursor';
@@ -19,7 +19,7 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
 
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type BuilderAreaTrackingProps = {
@@ -54,8 +54,9 @@ const BuilderAreaTracking = ({
     baseElementIdOriginal,
     builderSetBaseContext
   } = use(BuilderContext);
-  const { schema, builderDropElement } = use(BuilderSchemaContext);
-  const { style } = use(BuilderStyleContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[schema, style]] = useStore(['schema', 'style']);
+  const { builderDropElement } = use(BuilderSchemaContext);
   const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);

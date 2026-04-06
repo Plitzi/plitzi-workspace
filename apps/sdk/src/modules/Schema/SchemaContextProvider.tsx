@@ -3,7 +3,6 @@ import { useMemo, use } from 'react';
 
 import NetworkInternalContext from '@modules/Network/contexts/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import type { SdkState, Element, Schema } from '@plitzi/sdk-shared';
@@ -30,9 +29,8 @@ const SchemaContextProvider = ({ children, schema: schemaProp }: SchemaContextPr
   );
 
   useStoreSync('pageDefinitions', pageDefinitions);
-  const valueMemo = useMemo(() => ({ schema }), [schema]);
 
-  return <SchemaContext value={valueMemo}>{children}</SchemaContext>;
+  return children;
 };
 
 export default SchemaContextProvider;

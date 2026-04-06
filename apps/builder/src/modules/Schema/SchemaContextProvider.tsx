@@ -537,11 +537,9 @@ const SchemaContextProvider = ({
 
   useEventBridge('main', events);
 
-  // @todo: move everything to builderHandler
   const valueMemo = useMemo(() => {
     return {
       dispatchSchema,
-      schema,
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
@@ -563,7 +561,6 @@ const SchemaContextProvider = ({
     };
   }, [
     dispatchSchema,
-    schema,
     schemaUpdate,
     schemaAddElement,
     schemaUpdateElement,

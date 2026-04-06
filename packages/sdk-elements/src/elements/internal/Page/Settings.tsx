@@ -5,12 +5,13 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
+import type { CommonState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -46,17 +47,8 @@ const Settings = ({
   unauthorizedPageRedirect = '',
   onUpdate
 }: SettingsProps) => {
-  let description = seoPageDescription;
-  if (seoPageDescription.length > 160) {
-    description = `${seoPageDescription.slice(0, 160)}...`;
-  }
-
-  const {
-    contexts: { SchemaContext }
-  } = usePlitziServiceContext();
-  const {
-    schema: { flat, pageFolders, pages }
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [[flat, pages, pageFolders]] = useStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
 
   const layouts = useMemo(
     () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'layoutContainer'),
@@ -283,7 +275,7 @@ const Settings = ({
               <div className="text-sm text-[#006621]">
                 <span>www.url.com</span>
               </div>
-              <div className="settings-seo__description mb-1 pt-1 text-sm">{description}</div>
+              <div className="settings-seo__description mb-1 pt-1 text-sm">{`${seoPageDescription.slice(0, 160)}...`}</div>
             </div>
           </div>
         </>

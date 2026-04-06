@@ -11,13 +11,12 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
-import AppContext from '@pmodules/App/AppContext';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
@@ -33,7 +32,8 @@ import type {
   BuilderNetworkContextValue,
   StyleThemeMode,
   BuilderQueriesMap,
-  BuilderMutationsMap
+  BuilderMutationsMap,
+  BuilderState
 } from '@plitzi/sdk-shared';
 
 export type BuilderProviderProps = {
@@ -41,8 +41,7 @@ export type BuilderProviderProps = {
   baseElementId: string;
   mode?: 'normal' | 'template' | 'segment';
   schemaName?: string;
-  style: Style;
-  schema: Schema;
+
   onHandler?: (event: EventBridgeEvent, data: unknown[]) => void;
   onBaseElementChange?: (baseElementId: string) => void;
 };
@@ -52,12 +51,9 @@ const BuilderProvider = ({
   baseElementId: baseElementIdProp = '',
   mode = 'normal',
   schemaName = '',
-  style,
-  schema,
   onHandler,
   onBaseElementChange
 }: BuilderProviderProps) => {
-  const { displayMode } = use(AppContext);
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
@@ -80,14 +76,15 @@ const BuilderProvider = ({
   });
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
-  const pages = useMemo(() => get(schema, 'pages', []), [schema]);
+  const { useStore, useStoreSync } = createStoreHook<BuilderState>();
+  useStoreSync('selector', selector);
+  useStoreSync('setSelector', setSelector);
+  const [[schemaFlat, pages]] = useStore(['schema.flat', 'schema.pages']);
 
   // Manage Refs
 
-  const schemaRef = useRef(schema);
-  const styleRef = useRef(style);
-  schemaRef.current = schema;
-  styleRef.current = style;
+  const schemaFlatRef = useRef(schemaFlat);
+  schemaFlatRef.current = schemaFlat;
 
   // Builder Methods
 
@@ -105,7 +102,7 @@ const BuilderProvider = ({
   );
 
   const getElement = useCallback(
-    (elementId?: string) => (elementId ? FlatMap.getElement(schemaRef.current.flat, elementId) : undefined),
+    (elementId?: string) => (elementId ? FlatMap.getElement(schemaFlatRef.current, elementId) : undefined),
     []
   );
 
@@ -151,8 +148,8 @@ const BuilderProvider = ({
           return state;
         }
 
-        const element = get(schemaRef.current, `flat.${elementId}`);
-        if (!elementId || !(element as Element | undefined)) {
+        const element = elementId ? get(schemaFlatRef.current, elementId) : undefined;
+        if (!elementId || !element) {
           return undefined;
         }
 
@@ -184,7 +181,7 @@ const BuilderProvider = ({
       if (
         (!state && !elementId) ||
         (elementId && state === elementId) ||
-        (elementId && !(get(schemaRef.current, `flat.${elementId}`) as Element | undefined))
+        (elementId && !(get(schemaFlatRef.current, elementId) as Element | undefined))
       ) {
         return state;
       }
@@ -199,7 +196,7 @@ const BuilderProvider = ({
         id = baseElementIdProp;
       }
 
-      const element = get(schemaRef.current, `flat.${id}`);
+      const element = get(schemaFlatRef.current, id);
       if (!(element as Element | undefined)) {
         return;
       }
@@ -517,17 +514,11 @@ const BuilderProvider = ({
 
   const builderSchemaValueMemo = useMemo(
     () => ({
-      schema,
       builderGetBaseElement: getBaseElement,
       builderDropElement: drop,
       builderSetElementVisibility: setVisibility
     }),
-    [getBaseElement, drop, setVisibility, schema]
-  );
-
-  const builderStyleValueMemo = useMemo(
-    () => ({ style, displayMode, selector, setSelector }),
-    [style, displayMode, selector]
+    [getBaseElement, drop, setVisibility]
   );
 
   const events = useMemo<Record<string, EventBridgeCallback>>(
@@ -573,13 +564,11 @@ const BuilderProvider = ({
 
   return (
     <BuilderSchemaContext value={builderSchemaValueMemo}>
-      <BuilderStyleContext value={builderStyleValueMemo}>
-        <BuilderSelectedContext value={selectedValueMemo}>
-          <BuilderHoveredContext value={hoveredValueMemo}>
-            <BuilderContext value={builderValue}>{children}</BuilderContext>
-          </BuilderHoveredContext>
-        </BuilderSelectedContext>
-      </BuilderStyleContext>
+      <BuilderSelectedContext value={selectedValueMemo}>
+        <BuilderHoveredContext value={hoveredValueMemo}>
+          <BuilderContext value={builderValue}>{children}</BuilderContext>
+        </BuilderHoveredContext>
+      </BuilderSelectedContext>
     </BuilderSchemaContext>
   );
 };

@@ -14,7 +14,7 @@ import { markdownTheme } from '@plitzi/plitzi-ui/Markdown';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
-import { useEffect, Children, isValidElement, useMemo, useCallback, Fragment, useRef } from 'react';
+import { useEffect, Children, isValidElement, useMemo, useCallback, Fragment } from 'react';
 import * as React from 'react';
 import * as JSXRuntime from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';
@@ -27,7 +27,7 @@ import AppMain from '@modules/App/AppMain';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { createStore, generateFacade, StoreProvider } from '@plitzi/sdk-shared';
+import { generateFacade, StoreProvider } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 import { getEnvironmentServer } from './config';
@@ -42,7 +42,6 @@ import type {
   EventBridgeContextValue,
   OfflineDataRaw,
   RenderMode,
-  SdkState,
   Server,
   ServerEnvironment,
   StateManagerContextValue
@@ -162,8 +161,6 @@ const App = ({
     return components;
   }, [children]);
 
-  const store = useRef(createStore<SdkState>(() => ({ schema: undefined, style: undefined })));
-
   const routerParams = {} as { location: Location | string };
   if (typeof window === 'undefined') {
     routerParams.location = finalServer.requestUrl ?? '';
@@ -179,7 +176,7 @@ const App = ({
         };
 
   return (
-    <StoreProvider store={store.current}>
+    <StoreProvider>
       <Provider components={components}>
         <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
           <HelmetProvider>

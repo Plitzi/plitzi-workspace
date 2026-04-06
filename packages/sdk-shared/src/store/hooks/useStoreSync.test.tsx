@@ -125,7 +125,7 @@ describe('useStoreSync: mount mode', () => {
 
     let externalValue = 10;
 
-    const { rerender } = renderHook(() => useStoreSync('count', externalValue, 'mount'), {
+    const { rerender } = renderHook(() => useStoreSync('count', externalValue, { mode: 'mount' }), {
       wrapper: makeWrapper(store)
     });
 
@@ -143,7 +143,7 @@ describe('useStoreSync: mount mode', () => {
   it('still reflects external store updates in mount mode', () => {
     const store = makeStore();
 
-    const { result } = renderHook(() => useStoreSync('count', 5, 'mount'), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreSync('count', 5, { mode: 'mount' }), { wrapper: makeWrapper(store) });
 
     act(() => store.setState('count', 42));
 
@@ -185,7 +185,11 @@ describe('useStoreSync: custom equalityFn', () => {
     let externalSchema = schema1;
 
     const { rerender } = renderHook(
-      () => useStoreSync('schema', externalSchema, 'sync', (a, b) => a.version === b.version && a.title === b.title),
+      () =>
+        useStoreSync('schema', externalSchema, {
+          mode: 'sync',
+          equalityFn: (a, b) => a.version === b.version && a.title === b.title
+        }),
       { wrapper: makeWrapper(store) }
     );
 
@@ -205,8 +209,14 @@ describe('useStoreSync: custom equalityFn', () => {
     let externalSchema = { version: 1, title: 'v1' };
 
     const { rerender } = renderHook(
-      () => useStoreSync('schema', externalSchema, 'sync', (a, b) => a.version === b.version && a.title === b.title),
-      { wrapper: makeWrapper(store) }
+      () =>
+        useStoreSync('schema', externalSchema, {
+          mode: 'sync',
+          equalityFn: (a, b) => a.version === b.version && a.title === b.title
+        }),
+      {
+        wrapper: makeWrapper(store)
+      }
     );
 
     externalSchema = { version: 2, title: 'v2' };
@@ -274,8 +284,6 @@ describe('useStoreSync: interaction with other subscribers', () => {
   });
 });
 
-// ─── 7. React state as the sync source ───────────────────────────────────────
-
 describe('useStoreSync: driven by React local state', () => {
   it('syncs to the store when local state changes', () => {
     const store = makeStore();
@@ -303,7 +311,7 @@ describe('useStoreSync: driven by React local state', () => {
     const { result } = renderHook(
       () => {
         const [localCount, setLocalCount] = useState(10);
-        const [storeCount] = useStoreSync('count', localCount, 'mount');
+        const [storeCount] = useStoreSync('count', localCount, { mode: 'mount' });
         return { storeCount, setLocalCount };
       },
       { wrapper: makeWrapper(store) }

@@ -1,10 +1,10 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { formatDate } from '@plitzi/sdk-shared/helpers';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { CommonState } from '@plitzi/sdk-shared';
 
 export type LogNavigationBodyProps = {
   className?: string;
@@ -15,8 +15,9 @@ export type LogNavigationBodyProps = {
 };
 
 const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavigationBodyProps) => {
-  const { schema } = use(SchemaContext);
-  const element = useMemo(() => get(schema, `flat.${elementId}`), [schema, elementId]);
+  const { useStore } = createStoreHook<CommonState>();
+  const [flat] = useStore('schema.flat');
+  const element = useMemo(() => (elementId ? get(flat, elementId) : undefined), [elementId, flat]);
 
   return (
     <div className="m-2 flex justify-around gap-4">
@@ -55,7 +56,7 @@ const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavig
             <span>Trigger:</span>
             <span className="truncate">-</span>
           </div>
-          {(element as Element | undefined) && (
+          {element && (
             <div className="flex gap-1">
               <span>Element:</span>
               <span className="cursor-pointer truncate text-blue-500">

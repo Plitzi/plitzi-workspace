@@ -4,7 +4,6 @@ import type { DropPosition, Element, Schema, Style } from '../../types';
 import type { ComponentPluginWithHOC } from '../../types/ComponentTypes';
 
 export type BuilderSchemaContextValue = {
-  schema: Schema;
   builderGetBaseElement: (
     otherBaseElementId?: string
   ) => undefined | { data: Element; Plugin: ComponentPluginWithHOC | Record<string, ComponentPluginWithHOC> };

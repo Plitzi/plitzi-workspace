@@ -12,10 +12,8 @@ import type {
   InteractionsContextValue,
   NavigationContextValue,
   PluginsContextValue,
-  SchemaContextValue,
   SegmentsContextValue,
-  StateManagerContextValue,
-  StyleContextValue
+  StateManagerContextValue
 } from '../types';
 import type { Context, ReactNode, RefObject } from 'react';
 
@@ -29,8 +27,6 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
   customContexts: Record<string, Context<any>>;
   contexts: {
     DataSourceContext: Context<DataSourceContextValue>;
-    SchemaContext: Context<SchemaContextValue>;
-    StyleContext: Context<StyleContextValue>;
     SegmentsContext: Context<SegmentsContextValue>;
     NavigationContext: Context<NavigationContextValue>;
     CollectionContext: Context<CollectionContextValue>;

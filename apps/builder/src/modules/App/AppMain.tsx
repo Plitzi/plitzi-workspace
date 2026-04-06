@@ -3,6 +3,7 @@ import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { useState, useMemo } from 'react';
 
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
@@ -11,7 +12,7 @@ import AppContext from './AppContext';
 import AppProvider from './AppProvider';
 
 import type { AppContextValue } from './AppContext';
-import type { DisplayMode, Environment, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { DisplayMode, Environment, Server, ServerEnvironment, BuilderState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppMainProps = {
@@ -52,6 +53,8 @@ const AppMain = ({
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
+  const { useStoreSync } = createStoreHook<BuilderState>();
+  useStoreSync('displayMode', displayMode);
 
   const appValueMemo = useMemo(
     () => ({
