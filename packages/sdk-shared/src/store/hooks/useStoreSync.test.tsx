@@ -69,7 +69,9 @@ describe('useStoreSync: sync mode', () => {
     const store = makeStore();
     let externalValue = 'Alice';
 
-    const { rerender } = renderHook(() => useStoreSync('user.name', externalValue), { wrapper: makeWrapper(store) });
+    const { rerender } = renderHook(() => useStoreSync('user.name', externalValue, { syncStrategy: 'afterRender' }), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(store.getState().user.name).toBe('Alice');
 
@@ -107,7 +109,9 @@ describe('useStoreSync: sync mode', () => {
     const store = makeStore();
     let externalCount = 0;
 
-    const { rerender } = renderHook(() => useStoreSync('count', externalCount), { wrapper: makeWrapper(store) });
+    const { rerender } = renderHook(() => useStoreSync('count', externalCount, { syncStrategy: 'afterRender' }), {
+      wrapper: makeWrapper(store)
+    });
 
     for (let i = 1; i <= 5; i++) {
       externalCount = i;
@@ -212,6 +216,7 @@ describe('useStoreSync: custom equalityFn', () => {
       () =>
         useStoreSync('schema', externalSchema, {
           mode: 'sync',
+          syncStrategy: 'afterRender',
           equalityFn: (a, b) => a.version === b.version && a.title === b.title
         }),
       {
@@ -235,7 +240,9 @@ describe('useStoreSync: interaction with other subscribers', () => {
 
     let externalCount = 1;
 
-    const { rerender } = renderHook(() => useStoreSync('count', externalCount), { wrapper: makeWrapper(store) });
+    const { rerender } = renderHook(() => useStoreSync('count', externalCount, { syncStrategy: 'afterRender' }), {
+      wrapper: makeWrapper(store)
+    });
 
     externalCount = 5;
     rerender();
@@ -253,7 +260,9 @@ describe('useStoreSync: interaction with other subscribers', () => {
     store.subscribePath('user.name', userListener);
 
     let externalCount = 0;
-    const { rerender } = renderHook(() => useStoreSync('count', externalCount), { wrapper: makeWrapper(store) });
+    const { rerender } = renderHook(() => useStoreSync('count', externalCount, { syncStrategy: 'afterRender' }), {
+      wrapper: makeWrapper(store)
+    });
 
     externalCount = 1;
     rerender();
@@ -269,8 +278,8 @@ describe('useStoreSync: interaction with other subscribers', () => {
 
     const { rerender } = renderHook(
       () => {
-        useStoreSync('count', externalCount);
-        useStoreSync('user.name', externalName);
+        useStoreSync('count', externalCount, { syncStrategy: 'afterRender' });
+        useStoreSync('user.name', externalName, { syncStrategy: 'afterRender' });
       },
       { wrapper: makeWrapper(store) }
     );
@@ -291,7 +300,7 @@ describe('useStoreSync: driven by React local state', () => {
     const { result } = renderHook(
       () => {
         const [localCount, setLocalCount] = useState(0);
-        const [storeCount] = useStoreSync('count', localCount);
+        const [storeCount] = useStoreSync('count', localCount, { syncStrategy: 'afterRender' });
         return { storeCount, setLocalCount };
       },
       { wrapper: makeWrapper(store) }

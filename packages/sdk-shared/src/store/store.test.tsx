@@ -552,9 +552,10 @@ describe('store enabled / options', () => {
       const store = makeStore();
       let externalValue = 0;
 
-      const { rerender } = renderHook(() => useStoreSync('count', externalValue, { mode: 'sync' }), {
-        wrapper: makeWrapper(store)
-      });
+      const { rerender } = renderHook(
+        () => useStoreSync('count', externalValue, { mode: 'sync', syncStrategy: 'afterRender' }),
+        { wrapper: makeWrapper(store) }
+      );
 
       externalValue = 5;
       rerender();

@@ -50,7 +50,7 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
 
   const isFullState = path === undefined;
   const defaultEq = isFullState ? shallowEqual : Object.is;
-  const { mode = 'sync', enabled = true, equalityFn = defaultEq, syncStrategy = 'afterRender' } = options;
+  const { mode = 'sync', enabled = true, equalityFn = defaultEq, syncStrategy = 'render' } = options;
 
   const lastSyncedRef = useRef<typeof value | undefined>(undefined);
   const mountedRef = useRef(false);
