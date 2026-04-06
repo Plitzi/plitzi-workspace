@@ -28,7 +28,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   const { builderHandler } = use(BuilderContext);
   const { elementSelected } = use(BuilderSelectedContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [[selector, setSelector, element]] = useStore(['selector', 'setSelector', `schema.flat.${elementSelected}`], {
+  const [[selector, element], setSelector] = useStore(['selector', `schema.flat.${elementSelected}`], {
     defaultValue: undefined
   });
   const { componentDefinitions } = use(ComponentContext);

@@ -1,13 +1,12 @@
 import { use, useMemo } from 'react';
 
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import BuilderStyleContextProvider from '@plitzi/sdk-style/BuilderStyleContextProvider';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui';
-import type { BuilderState, Style } from '@plitzi/sdk-shared';
+import type { Style } from '@plitzi/sdk-shared';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
 
 export type StyleContextProviderProps = {
@@ -19,9 +18,6 @@ const StyleContextProvider = ({ children, includeSubscriptions = true }: StyleCo
   const { style } = use(NetworkInternalContext);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
-
-  const { useStoreSync } = createStoreHook<BuilderState>();
-  useStoreSync('style', style);
 
   const middlewares = useMemo(
     () => [enqueueMiddleware, undoableMiddleware] as ReducerMiddlewareCallback<Style, [action: StyleReducerActions]>[],

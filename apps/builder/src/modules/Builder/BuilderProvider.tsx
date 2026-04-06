@@ -62,7 +62,6 @@ const BuilderProvider = ({
   const elementSelectedRef = useRef(elementSelected);
   elementSelectedRef.current = elementSelected;
   const [elementHovered, setElementHovered] = useState<string | undefined>(undefined);
-  const [selector, setSelector] = useState<string | undefined>();
   const [theme, setTheme] = useState<StyleThemeMode>(() => {
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
@@ -76,9 +75,7 @@ const BuilderProvider = ({
   });
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
-  const { useStore, useStoreSync } = createStoreHook<BuilderState>();
-  useStoreSync('selector', selector);
-  useStoreSync('setSelector', setSelector);
+  const { useStore } = createStoreHook<BuilderState>();
   const [[schemaFlat, pages]] = useStore(['schema.flat', 'schema.pages']);
 
   // Manage Refs

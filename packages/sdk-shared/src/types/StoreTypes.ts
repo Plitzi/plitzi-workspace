@@ -3,7 +3,6 @@
 
 import type { Schema, Element } from './SchemaTypes';
 import type { DisplayMode, Style } from './StyleTypes';
-import type { Dispatch, SetStateAction } from 'react';
 
 // ─── Internal types ───────────────────────────────────────────────────────────
 
@@ -107,7 +106,6 @@ export type CommonState = {
 export type BuilderState = CommonState & {
   displayMode: DisplayMode;
   selector?: string;
-  setSelector: Dispatch<SetStateAction<string | undefined>>;
 };
 
 export type SdkState = CommonState & {};

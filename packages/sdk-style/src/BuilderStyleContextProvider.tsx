@@ -1,9 +1,10 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, use, useEffect, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
@@ -24,7 +25,8 @@ import type {
   StyleVariableValue,
   TagType,
   StyleCategory,
-  StyleState
+  StyleState,
+  CommonState
 } from '@plitzi/sdk-shared';
 
 export type BuilderStyleContextProviderProps = {
@@ -54,8 +56,9 @@ const BuilderStyleContextProvider = ({
     [middlewaresProp]
   );
   const [style, dispatchStyle] = useReducerWithMiddleware(StyleReducer, styleProp ?? EMPTY_STYLE_SCHEMA, middlewares);
-  const styleRef = useRef(style);
-  styleRef.current = style;
+
+  const { useStoreSync } = createStoreHook<CommonState>();
+  useStoreSync('style', style);
 
   const styleUpdate = useCallback(
     (style: Style, fromSubscriptions = false) =>
