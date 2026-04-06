@@ -67,6 +67,7 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
 
     if (typeof pathOrSelector === 'string') {
       const val = getByPath(state, pathOrSelector as PathOf<TState>);
+
       return val === undefined ? defaultValue : val;
     }
 

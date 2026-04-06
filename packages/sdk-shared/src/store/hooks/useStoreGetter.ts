@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { use, useCallback } from 'react';
 
 import getByPath from '../helpers/getByPath';
@@ -25,7 +28,6 @@ function useStoreGetter<TState extends object, P extends PathOf<TState>>(
 
 function useStoreGetter<TState extends object, P extends PathOf<TState>>(
   basePath?: P
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): { getValue: (subPath?: string) => any } {
   const store = use(StoreContext) as StoreApi<TState> | undefined;
   if (!store) {
@@ -33,12 +35,11 @@ function useStoreGetter<TState extends object, P extends PathOf<TState>>(
   }
 
   const getValue = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (subPath?: string): any => {
       const state = store.getState();
       if (basePath !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         const base = getByPath(state, basePath) as any;
+
         return subPath !== undefined ? getByPath(base, subPath as PathOf<TState>) : base;
       }
 
