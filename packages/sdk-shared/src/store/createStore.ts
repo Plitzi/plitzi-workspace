@@ -110,17 +110,17 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<P extends PathOf<TState>>(
     path: P,
-    options?: UseStoreOptions<PathValue<TState, P>> & { defaultValue?: never }
+    options?: Omit<UseStoreOptions<PathValue<TState, P>>, 'defaultValue'>
   ): [
     PathValue<TState, P>,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
   ];
 
-  function useStore<P extends PathOf<TState>>(
+  function useStore<P extends PathOf<TState>, D>(
     path: P,
-    options: UseStoreOptions<NonNullable<PathValue<TState, P>>> & { defaultValue: NonNullable<PathValue<TState, P>> }
+    options: UseStoreOptions<PathValue<TState, P>> & { defaultValue: D }
   ): [
-    NonNullable<PathValue<TState, P>>,
+    PathValue<TState, P> | D,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
   ];
 
