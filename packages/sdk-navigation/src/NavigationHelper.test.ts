@@ -1,3 +1,4 @@
+import { pick } from '@plitzi/plitzi-ui/helpers/lodash';
 import { describe, it, expect } from 'vitest';
 
 import { getPageFullPath, getPaths } from './NavigationHelper';
@@ -510,7 +511,7 @@ describe('Testing NavigationHelper', () => {
     const previewMode = false;
     const strictMode = true;
 
-    expect(getPaths(pages, schemaFlat, pageFolders, authenticated, basePath, previewMode, strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, previewMode, strictMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',
@@ -683,7 +684,7 @@ describe('Testing NavigationHelper', () => {
       }
     ]);
 
-    expect(getPaths(pages, schemaFlat, pageFolders, authenticated, basePath, !previewMode, strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, !previewMode, strictMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',
@@ -826,7 +827,7 @@ describe('Testing NavigationHelper', () => {
       }
     ]);
 
-    expect(getPaths(pages, schemaFlat, pageFolders, authenticated, basePath, !previewMode, !strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, !previewMode, !strictMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',

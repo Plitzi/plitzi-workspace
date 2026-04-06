@@ -36,7 +36,7 @@ const NavigationContextProvider = ({
 }: NavigationContextProviderProps) => {
   const { server } = use(NetworkContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [[pages, pageFolders, pageDefinitions]] = useStore(['schema.pages', 'schema.pageFolders', 'pageDefinitions']);
+  const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
   const { queryParams, hostname, location } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -45,8 +45,8 @@ const NavigationContextProvider = ({
   const navigate = renderMode !== 'widget' ? useNavigate() : undefined;
 
   const paths = useMemo(
-    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
-    [pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
+    () => getPaths(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
+    [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 
   const matchResult = useMemo<{

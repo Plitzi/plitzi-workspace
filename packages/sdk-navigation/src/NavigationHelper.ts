@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { matchPath } from 'react-router-dom';
 
-import type { Schema, PageFolder } from '@plitzi/sdk-shared';
+import type { PageFolder, Element } from '@plitzi/sdk-shared';
 import type { PathMatch } from 'react-router-dom';
 
 export type NavigationAction = 'accessDenied' | 'normal' | 'redirect' | 'notFound';
@@ -35,15 +35,20 @@ const recursiveFolderSlug = (pageFolders: Record<string, PageFolder | undefined>
   return `${recursiveFolderSlug(pageFolders, parentId)}/${slug}`;
 };
 
-function getPageFullPath(flat: Schema['flat'], pageFolders: PageFolder[], pageId: string, asString: true): string;
 function getPageFullPath(
-  flat: Schema['flat'],
+  pages: Record<string, Element>,
+  pageFolders: PageFolder[],
+  pageId: string,
+  asString: true
+): string;
+function getPageFullPath(
+  pages: Record<string, Element>,
   pageFolders: PageFolder[],
   pageId: string,
   asString?: false
 ): Record<string, string>;
 function getPageFullPath(
-  flat: Schema['flat'],
+  pages: Record<string, Element>,
   pageFolders: PageFolder[],
   pageId: string,
   asString: boolean = false
@@ -52,7 +57,7 @@ function getPageFullPath(
     slug: pageSlug = '',
     folder: folderId,
     default: defaultPage
-  } = get(flat, `${pageId}.attributes`, { slug: pageId, folder: '', default: false }) as {
+  } = get(pages, `${pageId}.attributes`, { slug: pageId, folder: '', default: false }) as {
     slug?: string;
     folder: string;
     default: boolean;
@@ -108,22 +113,21 @@ const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boo
 };
 
 const getPaths = (
-  pages: string[],
-  flat: Schema['flat'],
+  pages: Record<string, Element>,
   pageFolders: PageFolder[],
   authenticated?: boolean,
   basePath: string = '',
   previewMode: boolean = true,
   strictMode: boolean = true
 ) => {
-  const paths = pages
+  const paths = Object.keys(pages)
     .reduce<Path[]>((acum, pageId) => {
       const {
         attributes: { accessLevel, enabled, unauthorizedBehaviour }
-      } = flat[pageId];
+      } = pages[pageId];
       let {
         attributes: { unauthorizedPageRedirect }
-      } = flat[pageId];
+      } = pages[pageId];
 
       if (typeof enabled === 'boolean' && !enabled && previewMode) {
         return acum;
@@ -131,14 +135,14 @@ const getPaths = (
 
       if (unauthorizedPageRedirect) {
         unauthorizedPageRedirect = getPageFullPath(
-          flat,
+          pages,
           pageFolders,
           (unauthorizedPageRedirect as string).replace('/', ''),
           true
         );
       }
 
-      const subPaths = getPageFullPath(flat, pageFolders, pageId);
+      const subPaths = getPageFullPath(pages, pageFolders, pageId);
       const subPathsParsed = Object.keys(subPaths).map(subPath => {
         return {
           pageId,

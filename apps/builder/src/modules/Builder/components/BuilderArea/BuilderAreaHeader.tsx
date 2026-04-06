@@ -36,7 +36,13 @@ const BuilderAreaHeader = ({
   previewMode = false
 }: BuilderAreaHeaderProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, pageFolders, definition]] = useStore(['schema.flat', 'schema.pageFolders', 'schema.definition']);
+  const [[flat, pageFolders, definition, pageDefinitions]] = useStore([
+    'schema.flat',
+    'schema.pageFolders',
+    'schema.definition',
+    'pageDefinitions'
+  ]);
+  console.log(pageDefinitions);
   const { existsPopup, addPopup } = usePopup();
   const {
     theme,

@@ -20,7 +20,7 @@ export type NavigationContextProviderProps = {
 
 const NavigationContextProvider = ({ previewMode = false, children }: NavigationContextProviderProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[pages, pageFolders, pageDefinitions]] = useStore(['schema.pages', 'schema.pageFolders', 'pageDefinitions']);
+  const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
   const { server } = use(NetworkContext);
   const { authenticated } = use(AuthContext);
   const { queryParams, hostname, location } = useNavigation({ server });
@@ -29,16 +29,8 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
   pageDefinitionsRef.current = pageDefinitions;
 
   const paths = useMemo(
-    () =>
-      getPaths(
-        pages,
-        pageDefinitions,
-        pageFolders,
-        previewMode ? undefined : authenticated,
-        server.basePath,
-        previewMode
-      ),
-    [pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
+    () => getPaths(pageDefinitions, pageFolders, previewMode ? undefined : authenticated, server.basePath, previewMode),
+    [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 
   const matchResult = useMemo(
