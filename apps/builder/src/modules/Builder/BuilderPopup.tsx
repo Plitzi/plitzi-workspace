@@ -20,6 +20,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
   const { useStore } = createStoreHook<BuilderState>();
   const [segments] = useStore('segments');
   const segment = segments[segmentIdentifier] as Segment | undefined;
+
   const generateStoreState = useCallback(
     (currentState: BuilderState) => ({
       ...currentState,
