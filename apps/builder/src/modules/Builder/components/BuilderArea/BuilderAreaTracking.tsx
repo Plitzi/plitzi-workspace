@@ -5,7 +5,6 @@ import { use, useRef, useCallback, useMemo, useEffect, useImperativeHandle } fro
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
@@ -48,7 +47,8 @@ const BuilderAreaTracking = ({
     builderHandler,
     baseContext: { baseElementId },
     baseElementIdOriginal,
-    builderSetBaseContext
+    builderSetBaseContext,
+    builderDropElement
   } = use(BuilderContext);
   const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
   const [[elementHovered, setHovered, elementSelected, setSelected]] = useStore([
@@ -59,7 +59,6 @@ const BuilderAreaTracking = ({
   ]);
   const getSchema = useStoreGetter('schema');
   const getStyle = useStoreGetter('style');
-  const { builderDropElement } = use(BuilderSchemaContext);
   const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);

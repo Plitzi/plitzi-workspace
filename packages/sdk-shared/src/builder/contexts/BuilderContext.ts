@@ -1,6 +1,15 @@
 import { createContext } from 'react';
 
-import type { Element, EventBridgeEvent, PluginBuilder, Schema, Style, StyleThemeMode } from '../../types';
+import type {
+  ComponentPluginWithHOC,
+  DropPosition,
+  Element,
+  EventBridgeEvent,
+  PluginBuilder,
+  Schema,
+  Style,
+  StyleThemeMode
+} from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderContextValue = {
@@ -34,6 +43,67 @@ export type BuilderContextValue = {
     description: string,
     element: Element
   ) => Promise<void>;
+  builderGetBaseElement: (
+    otherBaseElementId?: string
+  ) => undefined | { data: Element; Plugin: ComponentPluginWithHOC | Record<string, ComponentPluginWithHOC> };
+  builderDropElement: {
+    (
+      type: 'add##plitzi-template',
+      data: {
+        elements: Record<string, Element>;
+        baseElement?: Element;
+        style: Style;
+        variables: Schema['variables'];
+      },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+    <T extends string>(
+      type: `add##${Exclude<T, 'plitzi-template'>}`,
+      data: {
+        id: string;
+        element: Element;
+      },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+    <T extends string>(
+      type: `move##${Exclude<T, 'plitzi-template'>}`,
+      data: {
+        id: string;
+        parentId: string;
+        element: Element;
+      },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+    (
+      type: string,
+      data:
+        | {
+            elements: Record<string, Element>;
+            baseElement?: Element;
+            style: Style;
+            variables: Schema['variables'];
+          }
+        | {
+            id: string;
+            element: Element;
+          }
+        | {
+            id: string;
+            parentId: string;
+            element: Element;
+          },
+      dropPosition: DropPosition,
+      toElementId: string,
+      rootId?: string
+    ): boolean;
+  };
+  builderSetElementVisibility: (elementId: string, visibility: boolean) => void;
 };
 
 const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValue;

@@ -32,10 +32,6 @@
       "types": "./dist/src/builder/contexts/BuilderContext.d.ts",
       "import": "./dist/src/builder/contexts/BuilderContext.mjs"
     },
-    "./builder/contexts/BuilderSchemaContext": {
-      "types": "./dist/src/builder/contexts/BuilderSchemaContext.d.ts",
-      "import": "./dist/src/builder/contexts/BuilderSchemaContext.mjs"
-    },
     "./builder/contexts/BuilderStyleContext": {
       "types": "./dist/src/builder/contexts/BuilderStyleContext.d.ts",
       "import": "./dist/src/builder/contexts/BuilderStyleContext.mjs"

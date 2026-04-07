@@ -5,7 +5,6 @@ import { useCallback, use, useMemo } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
@@ -30,13 +29,13 @@ const BuilderTree = () => {
     'setSelected'
   ]);
   const { componentDefinitions } = use(ComponentContext);
-  const { builderDropElement } = use(BuilderSchemaContext);
   const { addToast } = useToast();
   const { mutate } = use(NetworkContext);
   const {
+    baseContext: { baseElementId },
     builderHandler,
     builderElementPermissions,
-    baseContext: { baseElementId }
+    builderDropElement
   } = use(BuilderContext);
   const [openedCache, setOpenedCache] = useStorage<Record<string, boolean>>(
     'builder-state.builderTree.openedCache',

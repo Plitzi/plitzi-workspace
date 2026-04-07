@@ -3,7 +3,6 @@ import clsx from 'clsx';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import type { BuilderState, DropPosition, Element as PlitziElement } from '@plitzi/sdk-shared';
@@ -24,10 +23,10 @@ const BuilderOverlayDrag = ({ refIframe, sizeOffset = 2, zoom = 1 }: BuilderOver
   const elementDOM = useRef<Element | undefined | null>(null);
   const [, setRerender] = useState(false);
   const {
+    baseContext: { baseElementId },
     builderElementPermissions,
-    baseContext: { baseElementId }
+    builderDropElement
   } = use(BuilderContext);
-  const { builderDropElement } = use(BuilderSchemaContext);
   const setRerenderDebounced = useMemo(() => debounce(setRerender, 50), [setRerender]);
 
   const dragMetadata = useRef<{

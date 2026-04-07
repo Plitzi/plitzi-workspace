@@ -8,7 +8,6 @@ import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeH
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -504,15 +503,6 @@ const BuilderProvider = ({
   useStoreSync('elementSelected', elementSelected);
   useStoreSync('setSelected', () => setSelected);
 
-  const builderSchemaValueMemo = useMemo(
-    () => ({
-      builderGetBaseElement: getBaseElement,
-      builderDropElement: drop,
-      builderSetElementVisibility: setVisibility
-    }),
-    [getBaseElement, drop, setVisibility]
-  );
-
   const events = useMemo<Record<string, EventBridgeCallback>>(
     () => ({ builderSetBaseContext, builderSetSelected: setSelected, builderSetHovered: setHovered }),
     [builderSetBaseContext, setSelected, setHovered]
@@ -534,14 +524,15 @@ const BuilderProvider = ({
       builderElementPermissions,
       builderHandler,
       updateElement,
-      elementAsTemplate
+      elementAsTemplate,
+      builderGetBaseElement: getBaseElement,
+      builderDropElement: drop,
+      builderSetElementVisibility: setVisibility
     }),
     [
       theme,
-      setTheme,
       mode,
       schemaName,
-      setMultiPagesMode,
       multiPagesMode,
       pages.length,
       baseContext,
@@ -550,15 +541,14 @@ const BuilderProvider = ({
       builderElementPermissions,
       builderHandler,
       updateElement,
-      elementAsTemplate
+      elementAsTemplate,
+      getBaseElement,
+      drop,
+      setVisibility
     ]
   );
 
-  return (
-    <BuilderSchemaContext value={builderSchemaValueMemo}>
-      <BuilderContext value={builderValue}>{children}</BuilderContext>
-    </BuilderSchemaContext>
-  );
+  return <BuilderContext value={builderValue}>{children}</BuilderContext>;
 };
 
 export default BuilderProvider;

@@ -9,7 +9,6 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -66,7 +65,8 @@ const BuilderArea = ({
     theme,
     multiPagesMode,
     mode,
-    baseContext: { baseElementId }
+    baseContext: { baseElementId },
+    builderGetBaseElement
   } = use(BuilderContext);
   const { displayBorderComponents, zoom } = use(AppContext);
   const { useDataSource } = use(DataSourceContext);
@@ -83,7 +83,6 @@ const BuilderArea = ({
   const refContainer = useRef<HTMLDivElement>(null);
   const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
   const { currentPageId } = use(NavigationContext);
-  const { builderGetBaseElement } = use(BuilderSchemaContext);
   const { rootRef } = use(ContainerRootContext);
   const { sdkEnvironment, builderEnvironment } = use(NetworkContext) as BuilderNetworkContextValue;
 
