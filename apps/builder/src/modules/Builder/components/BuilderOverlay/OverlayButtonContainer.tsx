@@ -36,14 +36,9 @@ const OverlayButtonContainer = ({
   zoom = 1,
   onHoverRemove
 }: OverlayButtonContainerProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, style, elementSelected, setSelected, setHovered]] = useStore([
-    'schema',
-    'style',
-    'elementSelected',
-    'setSelected',
-    'setHovered'
-  ]);
+  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
+  const [getSchema, getStyle] = useStoreGetter(['schema', 'style']);
+  const [[elementSelected, setSelected, setHovered]] = useStore(['elementSelected', 'setSelected', 'setHovered']);
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
@@ -87,7 +82,7 @@ const OverlayButtonContainer = ({
     }
   }, [addPopup, existsPopup, mode]);
 
-  const handleClickAsTemplate = async () => {
+  const handleClickAsTemplate = useCallback(async () => {
     const response = await showModal<{ name: string; description?: string; cdnIdentifier: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
@@ -101,7 +96,7 @@ const OverlayButtonContainer = ({
 
     if (response) {
       const { name, description, cdnIdentifier } = response;
-      void elementAsTemplate(cdnIdentifier, schema, style, name, description ?? '', element);
+      void elementAsTemplate(cdnIdentifier, getSchema(), getStyle(), name, description ?? '', element);
       addToast(
         <div>
           Template <b>{name}</b> Created
@@ -113,9 +108,9 @@ const OverlayButtonContainer = ({
         }
       );
     }
-  };
+  }, [addToast, element, elementAsTemplate, getSchema, getStyle, showModal]);
 
-  const handleClickAsSegment = async () => {
+  const handleClickAsSegment = useCallback(async () => {
     const response = await showModal<{ name: string; description: string }>(
       <Modal.Header>
         <h4>Add Segment</h4>
@@ -129,7 +124,7 @@ const OverlayButtonContainer = ({
 
     if (response) {
       const { name, description } = response;
-      void builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
+      void builderSegmentsContext.elementAsSegment(getSchema(), getStyle(), name, description, element);
       addToast(
         <div>
           Segment <b>{name}</b> Created
@@ -141,7 +136,7 @@ const OverlayButtonContainer = ({
         }
       );
     }
-  };
+  }, [addToast, builderSegmentsContext, element, getSchema, getStyle, showModal]);
 
   const handleMouseEnter = useCallback(() => setHovered(undefined), [setHovered]);
 
