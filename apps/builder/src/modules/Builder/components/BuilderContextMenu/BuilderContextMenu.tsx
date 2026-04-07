@@ -5,7 +5,6 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
@@ -25,7 +24,13 @@ export type BuilderContextMenuProps = {
 
 const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: BuilderContextMenuProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, flat, style]] = useStore(['schema', 'schema.flat', 'style']);
+  const [[schema, flat, style, elementSelected, setSelected]] = useStore([
+    'schema',
+    'schema.flat',
+    'style',
+    'elementSelected',
+    'setSelected'
+  ]);
   const { showModal } = useModal();
   const { existsPopup, addPopup } = usePopup();
   const ref = useRef<HTMLDivElement>(null);
@@ -35,7 +40,6 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const [showMenu, setShowMenu] = useState(false);
   const { builderElementPermissions, builderHandler, elementAsTemplate } = use(BuilderContext);
   const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
-  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const element = useMemo(() => (elementSelected ? flat[elementSelected] : undefined), [elementSelected, flat]);
   const componentConfig = useMemo(
     () => (element ? builderElementPermissions(element) : {}),

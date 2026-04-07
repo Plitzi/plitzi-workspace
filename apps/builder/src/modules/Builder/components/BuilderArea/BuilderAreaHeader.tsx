@@ -11,7 +11,6 @@ import { Link } from 'react-router-dom';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import Transform from '@pmodules/Transformers/Transform';
@@ -36,10 +35,12 @@ const BuilderAreaHeader = ({
   previewMode = false
 }: BuilderAreaHeaderProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[pageFolders, definition, pageDefinitions]] = useStore([
+  const [[pageFolders, definition, pageDefinitions, elementSelected, setSelected]] = useStore([
     'schema.pageFolders',
     'schema.definition',
-    'pageDefinitions'
+    'pageDefinitions',
+    'elementSelected',
+    'setSelected'
   ]);
   const { existsPopup, addPopup } = usePopup();
   const {
@@ -55,7 +56,6 @@ const BuilderAreaHeader = ({
   const {
     server: { basePath }
   } = use(NetworkContext);
-  const { elementSelected, setSelected } = use(BuilderSelectedContext);
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
 

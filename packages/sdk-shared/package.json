@@ -32,17 +32,9 @@
       "types": "./dist/src/builder/contexts/BuilderContext.d.ts",
       "import": "./dist/src/builder/contexts/BuilderContext.mjs"
     },
-    "./builder/contexts/BuilderHoveredContext": {
-      "types": "./dist/src/builder/contexts/BuilderHoveredContext.d.ts",
-      "import": "./dist/src/builder/contexts/BuilderHoveredContext.mjs"
-    },
     "./builder/contexts/BuilderSchemaContext": {
       "types": "./dist/src/builder/contexts/BuilderSchemaContext.d.ts",
       "import": "./dist/src/builder/contexts/BuilderSchemaContext.mjs"
-    },
-    "./builder/contexts/BuilderSelectedContext": {
-      "types": "./dist/src/builder/contexts/BuilderSelectedContext.d.ts",
-      "import": "./dist/src/builder/contexts/BuilderSelectedContext.mjs"
     },
     "./builder/contexts/BuilderStyleContext": {
       "types": "./dist/src/builder/contexts/BuilderStyleContext.d.ts",
@@ -896,9 +888,17 @@
       "types": "./dist/src/store/helpers/shallowEqual.d.ts",
       "import": "./dist/src/store/helpers/shallowEqual.mjs"
     },
+    "./store/helpers/useIsomorphicLayoutEffect": {
+      "types": "./dist/src/store/helpers/useIsomorphicLayoutEffect.d.ts",
+      "import": "./dist/src/store/helpers/useIsomorphicLayoutEffect.mjs"
+    },
     "./store/hooks/useStore": {
       "types": "./dist/src/store/hooks/useStore.d.ts",
       "import": "./dist/src/store/hooks/useStore.mjs"
+    },
+    "./store/hooks/useStoreGetter": {
+      "types": "./dist/src/store/hooks/useStoreGetter.d.ts",
+      "import": "./dist/src/store/hooks/useStoreGetter.mjs"
     },
     "./store/hooks/useStoreSync": {
       "types": "./dist/src/store/hooks/useStoreSync.d.ts",

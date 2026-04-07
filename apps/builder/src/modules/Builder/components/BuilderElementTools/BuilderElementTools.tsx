@@ -5,7 +5,6 @@ import clsx from 'clsx';
 import { use, useMemo, useCallback, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
@@ -26,11 +25,11 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
-  const { elementSelected } = use(BuilderSelectedContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [[selector, element], setSelector] = useStore(['selector', `schema.flat.${elementSelected}`], {
+  const [[selector, elementSelected], setSelector] = useStore(['selector', 'elementSelected'], {
     defaultValue: undefined
   });
+  const [element] = useStore(`schema.flat.${elementSelected}`, { defaultValue: undefined });
   const { componentDefinitions } = use(ComponentContext);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);

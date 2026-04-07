@@ -1,4 +1,3 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
@@ -6,9 +5,7 @@ import { useCallback, use, useMemo } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
@@ -22,11 +19,17 @@ import type { BuilderState, Element } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const BuilderTree = () => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, style]] = useStore(['schema', 'style']);
+  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
+  const getStyle = useStoreGetter('style');
+  const getElement = useStoreGetter('schema.flat');
+  const getSchema = useStoreGetter('schema');
+  const [[elementHovered, setHoverElement, elementSelected, setSelectElement]] = useStore([
+    'elementHovered',
+    'setHovered',
+    'elementSelected',
+    'setSelected'
+  ]);
   const { componentDefinitions } = use(ComponentContext);
-  const { elementHovered, setHovered: setHoverElement } = use(BuilderHoveredContext);
-  const { elementSelected, setSelected: setSelectElement } = use(BuilderSelectedContext);
   const { builderDropElement } = use(BuilderSchemaContext);
   const { addToast } = useToast();
   const { mutate } = use(NetworkContext);
@@ -42,8 +45,8 @@ const BuilderTree = () => {
 
   const isDragAllowed = useCallback(
     (id: string, dropPosition: DropPosition, parentId?: string) => {
-      const element = get(schema.flat, id, undefined);
-      const parentElement = parentId ? get(schema.flat, parentId, undefined) : undefined;
+      const element = getElement(id);
+      const parentElement = parentId ? getElement(parentId) : undefined;
       if (!element || (dropPosition !== 'inside' && !parentElement)) {
         return true;
       }
@@ -67,7 +70,7 @@ const BuilderTree = () => {
 
       return true;
     },
-    [builderElementPermissions, schema.flat]
+    [builderElementPermissions, getElement]
   );
 
   const handleChange = useCallback(
@@ -80,7 +83,7 @@ const BuilderTree = () => {
 
         case 'itemChanged': {
           const { item } = state.data;
-          const element = get(schema.flat, item.id) as Element | undefined;
+          const element = getElement(item.id);
           if (!element) {
             break;
           }
@@ -94,7 +97,7 @@ const BuilderTree = () => {
 
         case 'itemDragged': {
           const { id, toId, dropPosition } = state.data;
-          const element = get(schema.flat, id) as Element | undefined;
+          const element = getElement(id);
           if (!element) {
             break;
           }
@@ -146,17 +149,17 @@ const BuilderTree = () => {
         default:
       }
     },
-    [setOpenedCache, schema.flat, builderHandler, builderDropElement, baseElementId, setHoverElement, setSelectElement]
+    [setOpenedCache, getElement, builderHandler, builderDropElement, baseElementId, setHoverElement, setSelectElement]
   );
 
   const nodes = useMemo(() => {
-    const nodesMapped = recursiveMap(schema.flat, componentDefinitions.current, baseElementId, undefined, schema.flat);
+    const nodesMapped = recursiveMap(getSchema('flat'), componentDefinitions.current, baseElementId);
     if (!baseElementId || !nodesMapped) {
       return [];
     }
 
     return [nodesMapped];
-  }, [baseElementId, schema.flat, componentDefinitions]);
+  }, [getSchema, componentDefinitions, baseElementId]);
 
   const handleCopy = useCallback(
     (e: ClipboardEvent) => {
@@ -164,7 +167,7 @@ const BuilderTree = () => {
         return;
       }
 
-      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, elementSelected);
+      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(getSchema(), getStyle(), elementSelected);
       e.clipboardData.setData(
         'application/json',
         JSON.stringify({
@@ -176,7 +179,7 @@ const BuilderTree = () => {
       addToast('Element copied into the clipboard', { appeareance: 'info', autoDismiss: true, placement: 'top-right' });
       e.preventDefault();
     },
-    [addToast, elementSelected, schema, style]
+    [addToast, elementSelected, getSchema, getStyle]
   );
 
   const handlePaste = useCallback(

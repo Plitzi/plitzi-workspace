@@ -5,8 +5,6 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import SegmentForm from '@pmodules/Segments/models/SegmentForm';
@@ -39,12 +37,16 @@ const OverlayButtonContainer = ({
   onHoverRemove
 }: OverlayButtonContainerProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, style]] = useStore(['schema', 'style']);
+  const [[schema, style, elementSelected, setSelected, setHovered]] = useStore([
+    'schema',
+    'style',
+    'elementSelected',
+    'setSelected',
+    'setHovered'
+  ]);
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { setHovered } = use(BuilderHoveredContext);
-  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
   const { builderHandler, builderElementPermissions, mode, elementAsTemplate } = use(BuilderContext);
   const {

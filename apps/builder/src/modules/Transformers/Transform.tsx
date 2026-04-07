@@ -9,7 +9,6 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
@@ -33,8 +32,7 @@ const Transform = () => {
     baseContext: { baseElementId }
   } = use(BuilderContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [styleMode] = useStore('style.mode');
-  const { elementSelected } = use(BuilderSelectedContext);
+  const [[styleMode, elementSelected]] = useStore(['style.mode', 'elementSelected']);
   const { rootRef } = use(ContainerRootContext);
   const [mode, setMode] = useState<'html-tailwind' | 'webflow' | 'html'>('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);

@@ -1,16 +1,14 @@
 import { get, pick, set } from '@plitzi/plitzi-ui/helpers';
 import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
 import { produce } from 'immer';
-import { useCallback, use, useMemo, useState, useRef, useEffect } from 'react';
+import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -58,10 +56,6 @@ const BuilderProvider = ({
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
-  const [elementSelected, setElementSelected] = useState<string | undefined>(undefined);
-  const elementSelectedRef = useRef(elementSelected);
-  elementSelectedRef.current = elementSelected;
-  const [elementHovered, setElementHovered] = useState<string | undefined>(undefined);
   const [theme, setTheme] = useState<StyleThemeMode>(() => {
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
@@ -75,13 +69,14 @@ const BuilderProvider = ({
   });
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[schemaFlat, pages]] = useStore(['schema.flat', 'schema.pages']);
-
-  // Manage Refs
-
-  const schemaFlatRef = useRef(schemaFlat);
-  schemaFlatRef.current = schemaFlat;
+  const { useStore, useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
+  const [[pages, elementHovered, elementSelected], , setElementHovered, setElementSelected] = useStore([
+    'schema.pages',
+    'elementHovered',
+    'elementSelected'
+  ]);
+  const getElementSelected = useStoreGetter('elementSelected');
+  const getElement = useStoreGetter('schema.flat');
 
   // Builder Methods
 
@@ -96,11 +91,6 @@ const BuilderProvider = ({
       }
     },
     [eventBridge, onHandler]
-  );
-
-  const getElement = useCallback(
-    (elementId?: string) => (elementId ? FlatMap.getElement(schemaFlatRef.current, elementId) : undefined),
-    []
   );
 
   const builderElementPermissions = useCallback(
@@ -145,7 +135,7 @@ const BuilderProvider = ({
           return state;
         }
 
-        const element = elementId ? get(schemaFlatRef.current, elementId) : undefined;
+        const element = elementId ? getElement(elementId) : undefined;
         if (!elementId || !element) {
           return undefined;
         }
@@ -170,22 +160,21 @@ const BuilderProvider = ({
         return elementId;
       });
     },
-    [builderElementPermissions]
+    [builderElementPermissions, getElement, setElementSelected]
   );
 
-  const setHovered = useCallback((elementId?: string) => {
-    setElementHovered(state => {
-      if (
-        (!state && !elementId) ||
-        (elementId && state === elementId) ||
-        (elementId && !(get(schemaFlatRef.current, elementId) as Element | undefined))
-      ) {
-        return state;
-      }
+  const setHovered = useCallback(
+    (elementId?: string) => {
+      setElementHovered(state => {
+        if ((!state && !elementId) || (elementId && state === elementId) || (elementId && !getElement(elementId))) {
+          return state;
+        }
 
-      return elementId;
-    });
-  }, []);
+        return elementId;
+      });
+    },
+    [getElement, setElementHovered]
+  );
 
   const builderSetBaseContext = useCallback(
     (id?: string) => {
@@ -193,8 +182,8 @@ const BuilderProvider = ({
         id = baseElementIdProp;
       }
 
-      const element = get(schemaFlatRef.current, id);
-      if (!(element as Element | undefined)) {
+      const element = getElement(id);
+      if (!element) {
         return;
       }
 
@@ -210,7 +199,7 @@ const BuilderProvider = ({
         return { baseElementId: id };
       });
     },
-    [onBaseElementChange, setBaseContext, baseElementIdProp, setHovered, setSelected]
+    [getElement, onBaseElementChange, setBaseContext, baseElementIdProp, setHovered, setSelected]
   );
 
   const isDragAllowed = (
@@ -256,7 +245,7 @@ const BuilderProvider = ({
       }
 
       const toParentId = get(toElement, 'definition.parentId');
-      const toParentElement = getElement(toParentId);
+      const toParentElement = toParentId ? getElement(toParentId) : undefined;
       if (!type) {
         return false;
       }
@@ -458,7 +447,7 @@ const BuilderProvider = ({
       }
 
       const element = getElement(elementId);
-      if (!element || elementId !== elementSelectedRef.current) {
+      if (!element || elementId !== getElementSelected()) {
         return;
       }
 
@@ -467,7 +456,7 @@ const BuilderProvider = ({
         [category]: { ...element[category], [attributeKey]: attributeValue }
       });
     },
-    [builderHandler, getElement]
+    [builderHandler, getElement, getElementSelected]
   );
 
   useEffect(() => {
@@ -505,9 +494,15 @@ const BuilderProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseElementId, mode]);
 
-  const selectedValueMemo = useMemo(() => ({ elementSelected, setSelected }), [elementSelected, setSelected]);
+  // useStoreSync(
+  //   ['elementHovered', 'setHovered', 'elementSelected', 'setSelected'],
+  //   [elementHovered, setHovered, elementSelected, setSelected]
+  // );
 
-  const hoveredValueMemo = useMemo(() => ({ elementHovered, setHovered }), [elementHovered, setHovered]);
+  useStoreSync('elementHovered', elementHovered);
+  useStoreSync('setHovered', () => setHovered);
+  useStoreSync('elementSelected', elementSelected);
+  useStoreSync('setSelected', () => setSelected);
 
   const builderSchemaValueMemo = useMemo(
     () => ({
@@ -561,11 +556,7 @@ const BuilderProvider = ({
 
   return (
     <BuilderSchemaContext value={builderSchemaValueMemo}>
-      <BuilderSelectedContext value={selectedValueMemo}>
-        <BuilderHoveredContext value={hoveredValueMemo}>
-          <BuilderContext value={builderValue}>{children}</BuilderContext>
-        </BuilderHoveredContext>
-      </BuilderSelectedContext>
+      <BuilderContext value={builderValue}>{children}</BuilderContext>
     </BuilderSchemaContext>
   );
 };

@@ -5,9 +5,7 @@ import { use, useRef, useCallback, useMemo, useEffect, useImperativeHandle } fro
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
 import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
@@ -19,7 +17,7 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
 
-import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type BuilderAreaTrackingProps = {
@@ -45,8 +43,6 @@ const BuilderAreaTracking = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => containerRef.current, []);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
-  const { elementHovered, setHovered } = use(BuilderHoveredContext);
-  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const {
     multiPagesMode,
     builderHandler,
@@ -54,19 +50,21 @@ const BuilderAreaTracking = ({
     baseElementIdOriginal,
     builderSetBaseContext
   } = use(BuilderContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, style]] = useStore(['schema', 'style']);
+  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
+  const [[elementHovered, setHovered, elementSelected, setSelected]] = useStore([
+    'elementHovered',
+    'setHovered',
+    'elementSelected',
+    'setSelected'
+  ]);
+  const getSchema = useStoreGetter('schema');
+  const getStyle = useStoreGetter('style');
   const { builderDropElement } = use(BuilderSchemaContext);
   const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
   const { mutate } = use(NetworkContext);
   const { componentDefinitions } = use(ComponentContext);
-
-  const schemaRef = useRef(schema);
-  schemaRef.current = schema;
-  const styleRef = useRef(style);
-  styleRef.current = style;
 
   const handleMouseEnter = () => {
     if (supportRealTime) {
@@ -137,11 +135,7 @@ const BuilderAreaTracking = ({
       switch (e.key) {
         case 'Delete':
         case 'Backspace': {
-          if (
-            !elementSelected ||
-            elementSelected === baseElementId ||
-            !get(schemaRef, `current.flat.${elementSelected}`, undefined)
-          ) {
+          if (!elementSelected || elementSelected === baseElementId || !getSchema(`flat.${elementSelected}`)) {
             break;
           }
 
@@ -210,7 +204,8 @@ const BuilderAreaTracking = ({
     [
       elementSelected,
       baseElementId,
-      iframeDOM,
+      getSchema,
+      iframeDOM?.contentWindow?.document.body,
       builderHandler,
       baseElementIdOriginal,
       setSelected,
@@ -228,11 +223,7 @@ const BuilderAreaTracking = ({
         return;
       }
 
-      if (
-        elementSelected === baseElementId ||
-        !(schemaRef.current as Schema | undefined) ||
-        !(styleRef.current as Style | undefined)
-      ) {
+      if (elementSelected === baseElementId || !getSchema() || !getStyle()) {
         return;
       }
 
@@ -240,11 +231,7 @@ const BuilderAreaTracking = ({
         return;
       }
 
-      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(
-        schemaRef.current,
-        styleRef.current,
-        elementSelected
-      );
+      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(getSchema(), getStyle(), elementSelected);
       e.clipboardData?.setData(
         'application/json',
         JSON.stringify({
@@ -256,7 +243,7 @@ const BuilderAreaTracking = ({
       addToast('Element copied into the clipboard', { appeareance: 'info', autoDismiss: true, placement: 'top-right' });
       e.preventDefault();
     },
-    [elementSelected, baseElementId, iframeDOM, addToast]
+    [elementSelected, baseElementId, getSchema, getStyle, iframeDOM?.contentWindow?.document.body, addToast]
   );
 
   const handlePaste = useCallback(
