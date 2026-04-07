@@ -3,7 +3,7 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import { useMemo, useRef, useCallback, use, useEffect } from 'react';
+import { useMemo, useCallback, use, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -65,15 +65,14 @@ const SchemaContextProvider = ({
       filterCallback: action => !action.fromSubscriptions
     }
   ]);
-  const schemaRef = useRef(schema);
   const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
     BuilderMutationsMap,
     BuilderSubscriptionsMap
   >;
-  schemaRef.current = schema;
-  const { useStoreSync } = createStoreHook<BuilderState>();
+  const { useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
   useStoreSync('schema', schema);
+  const getSchemaFlat = useStoreGetter('schema.flat');
 
   const pageDefinitions = useValueMemo(
     pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
@@ -129,8 +128,7 @@ const SchemaContextProvider = ({
 
   const schemaCloneElement = useCallback(
     (elementId: string, targetId?: string, fromSubscriptions = false) => {
-      const flat = get(schemaRef.current, 'flat');
-      const elements = FlatMap.cloneElements(flat, elementId, targetId);
+      const elements = FlatMap.cloneElements(getSchemaFlat(), elementId, targetId);
       if (!elements.item) {
         return;
       }
@@ -148,7 +146,7 @@ const SchemaContextProvider = ({
         fromSubscriptions
       });
     },
-    [dispatchSchema]
+    [dispatchSchema, getSchemaFlat]
   );
 
   const schemaRemoveElement = useCallback(

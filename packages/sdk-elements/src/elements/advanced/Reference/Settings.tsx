@@ -25,8 +25,8 @@ const Settings = ({
     contexts: { SegmentsContext }
   } = usePlitziServiceContext();
   const { useStore } = createStoreHook<CommonState>();
-  const [schema] = useStore('schema');
-  const { segments, segmentGet, segmentsFetch } = use(SegmentsContext) as SegmentsContextValue<'builder'>;
+  const [[schema, segments]] = useStore(['schema', 'segments']);
+  const { segmentGet, segmentsFetch } = use(SegmentsContext) as SegmentsContextValue<'builder'>;
 
   const handleChangeReferenceType = useCallback(
     (option?: Exclude<Option, OptionGroup>) => {

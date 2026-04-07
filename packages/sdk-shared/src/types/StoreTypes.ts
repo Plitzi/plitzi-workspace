@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import type { Schema, Element } from './SchemaTypes';
+import type { Segment } from './SegmentTypes';
 import type { DisplayMode, Style } from './StyleTypes';
 
 // ─── Internal types ───────────────────────────────────────────────────────────
@@ -111,8 +112,9 @@ export type StoreApiInternal<T> = StoreApi<T> & {
 export type CommonState = {
   prevSchema?: Schema; // used when elements are inside a reference and refer to main schema
   schema: Schema; // current schema, normally is the main one but can be from a segment
-  style: Style;
   pageDefinitions: Record<string, Element>;
+  style: Style;
+  segments: Record<string, Segment>;
 };
 
 export type BuilderState = CommonState & {

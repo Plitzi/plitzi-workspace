@@ -41,8 +41,8 @@ const Reference = ({
     contexts: { SegmentsContext }
   } = usePlitziServiceContext();
   const { useStore } = createStoreHook<CommonState>();
-  const [mainSchema] = useStore('schema');
-  const { segments, segmentGet } = use(SegmentsContext);
+  const [[mainSchema, segments]] = useStore(['schema', 'segments']);
+  const { segmentGet } = use(SegmentsContext);
 
   const schemaRef = useRef(mainSchema);
   schemaRef.current = mainSchema;

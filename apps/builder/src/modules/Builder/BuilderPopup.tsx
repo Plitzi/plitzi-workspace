@@ -2,12 +2,13 @@ import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StoreProvider from '@plitzi/sdk-shared/store/StoreProvider';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
-import type { EventBridgeEvent, Segment } from '@plitzi/sdk-shared';
+import type { BuilderState, EventBridgeEvent, Segment } from '@plitzi/sdk-shared';
 
 export type BuilderPopupProps = {
   previewMode?: boolean;
@@ -16,8 +17,17 @@ export type BuilderPopupProps = {
 
 const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPopupProps) => {
   const { eventBridge } = use(EventBridgeContext);
-  const { segments } = use(SegmentsContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [segments] = useStore('segments');
   const segment = segments[segmentIdentifier] as Segment | undefined;
+  const generateStoreState = useCallback(
+    (currentState: BuilderState) => ({
+      ...currentState,
+      schema: { ...currentState.schema, ...segment?.schema },
+      style: segment?.style ?? EMPTY_STYLE_SCHEMA
+    }),
+    [segment]
+  );
 
   const builderHandler = useCallback(
     (event: EventBridgeEvent, data: unknown[]): void => void eventBridge.emit('segment', event, segment?.id, ...data),
@@ -36,7 +46,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
 
   return (
     <div className="flex w-full grow">
-      <StoreProvider value={segment}>
+      <StoreProvider value={generateStoreState} inherit>
         <BuilderProvider
           schemaName={definition.name}
           baseElementId={definition.baseElementId}
