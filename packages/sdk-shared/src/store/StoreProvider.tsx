@@ -18,18 +18,6 @@ export type StoreProviderProps<TState extends object = any> = {
   children?: ReactNode;
 };
 
-const StoreProviderInner = <TState extends object>({
-  value,
-  children
-}: {
-  value?: Partial<TState>;
-  children?: ReactNode;
-}) => {
-  useStoreSync<TState>(undefined, (value ?? {}) as Partial<TState>, { enabled: !!value });
-
-  return <>{children}</>;
-};
-
 const StoreProvider = <TState extends object = any>({
   store,
   value,
@@ -44,17 +32,14 @@ const StoreProvider = <TState extends object = any>({
     if (store) {
       storeRef.current = store;
     } else {
-      // Point 1: if inherit, seed child store with parent state + value override
       const parentState = inherit && parentStore ? parentStore.getState() : {};
       storeRef.current = createStore<TState>(() => ({ ...parentState, ...(value ?? {}) }) as TState);
     }
   }
 
-  return (
-    <StoreContext value={storeRef.current}>
-      <StoreProviderInner<TState> value={value}>{children}</StoreProviderInner>
-    </StoreContext>
-  );
+  useStoreSync<TState>(undefined, (value ?? {}) as Partial<TState>, { enabled: !!value, store: storeRef.current });
+
+  return <StoreContext value={storeRef.current}>{children}</StoreContext>;
 };
 
 export default StoreProvider;

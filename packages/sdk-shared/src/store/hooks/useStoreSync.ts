@@ -244,13 +244,13 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
 function useStoreSync<TState extends object>(
   path: undefined,
   value: TState | Partial<TState>,
-  options?: UseStoreSyncOptions<TState>
+  options?: UseStoreSyncOptions<TState, TState>
 ): [TState, (value: TState | ((prev: TState) => TState)) => void];
 
 function useStoreSync<TState extends object, P extends PathOf<TState>>(
   path: P,
   value: PathValue<TState, P>,
-  options?: UseStoreSyncOptions<PathValue<TState, P>>
+  options?: UseStoreSyncOptions<PathValue<TState, P>, TState>
 ): [
   PathValue<TState, P>,
   (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
