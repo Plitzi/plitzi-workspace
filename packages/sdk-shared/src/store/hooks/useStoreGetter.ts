@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
+import { useResolvedStore } from './shared';
 import getByPath from '../helpers/getByPath';
-import { StoreContext } from '../StoreProvider';
 
-import type { __NoDefault, PathOf, PathValue, StoreApi, StoreHookBaseOptions } from '../../types/StoreTypes';
+import type { __NoDefault, PathOf, PathValue, StoreHookBaseOptions } from '../../types/StoreTypes';
 
 export type GetValueFn<TState extends object> = {
   (): TState;
@@ -36,8 +36,23 @@ export type GetValueFromBaseWithDefaultFn<TBase, D> = TBase extends object
     }
   : () => NonNullable<TBase> | D;
 
-export type GetterTuple<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
-  [K in keyof Paths]: Paths[K] extends PathOf<TState> ? GetValueFromBaseFn<PathValue<TState, Paths[K]>> : never;
+// A getter for a single path-or-selector entry in a multi-path call.
+// - string path → GetValueFromBaseFn<PathValue<TState, P>>
+// - selector fn → (() => ReturnType) with optional sub-path navigation
+type EntryGetter<TState extends object, Entry> =
+  Entry extends PathOf<TState>
+    ? GetValueFromBaseFn<PathValue<TState, Entry>>
+    : Entry extends (state: TState) => infer R
+      ? R extends object
+        ? GetValueFromBaseFn<R>
+        : () => R
+      : never;
+
+export type GetterTuple<
+  TState extends object,
+  Entries extends ReadonlyArray<PathOf<TState> | ((state: TState) => unknown)>
+> = {
+  [K in keyof Entries]: EntryGetter<TState, Entries[K]>;
 };
 
 export type UseStoreGetterOptions<TState extends object = object, D = __NoDefault> = StoreHookBaseOptions<TState> & {
@@ -59,37 +74,37 @@ function useStoreGetter<TState extends object, P extends PathOf<TState>, D>(
   options: UseStoreGetterOptions<TState, D> & { defaultValue: D }
 ): GetValueFromBaseWithDefaultFn<PathValue<TState, P>, D>;
 
-// 4. Array paths — returns tuple of individual getters
-function useStoreGetter<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
-  paths: Paths,
-  options?: UseStoreGetterOptions<TState>
-): GetterTuple<TState, Paths>;
+// 4. Array of paths and/or selectors — returns tuple of individual getters
+function useStoreGetter<
+  TState extends object,
+  const Entries extends ReadonlyArray<PathOf<TState> | ((state: TState) => unknown)>
+>(entries: Entries, options?: UseStoreGetterOptions<TState>): GetterTuple<TState, Entries>;
 
 function useStoreGetter<TState extends object>(
-  arg?: string | readonly string[] | UseStoreGetterOptions<TState>,
+  arg?: string | readonly (string | ((state: TState) => unknown))[] | UseStoreGetterOptions<TState>,
   options?: UseStoreGetterOptions<TState, any>
 ): any {
   const resolvedBasePath = typeof arg === 'string' ? arg : undefined;
-  const resolvedPaths = Array.isArray(arg) ? arg : undefined;
+  const resolvedEntries = Array.isArray(arg) ? (arg as readonly (string | ((state: TState) => unknown))[]) : undefined;
   const resolvedOptions: UseStoreGetterOptions<TState, any> | undefined =
     typeof arg === 'object' && !Array.isArray(arg) ? (arg as UseStoreGetterOptions<TState, any>) : options;
 
-  const contextStore = use(StoreContext) as StoreApi<TState> | undefined;
-  const store = resolvedOptions?.store ?? contextStore;
-  if (!store) {
-    throw new Error('useStoreGetter must be used inside a StoreProvider');
-  }
-
+  const store = useResolvedStore(resolvedOptions?.store, 'useStoreGetter');
   const { defaultValue } = resolvedOptions ?? {};
-  const pathsKey = resolvedPaths?.join('|');
+  const entriesKey = resolvedEntries?.map(e => (typeof e === 'function' ? e.toString() : e)).join('|');
 
   return useMemo(
     () => {
-      if (resolvedPaths) {
-        return resolvedPaths.map(p => (subPath?: string, callDefault?: unknown): any => {
-          const base = getByPath(store.getState(), p as PathOf<TState>);
+      if (resolvedEntries) {
+        return resolvedEntries.map(entry => (subPath?: string, callDefault?: unknown): any => {
+          const base =
+            typeof entry === 'function'
+              ? entry(store.getState())
+              : getByPath(store.getState(), entry as PathOf<TState>);
+
           if (subPath !== undefined) {
             const subVal = getByPath(base as TState, subPath as PathOf<TState>);
+
             return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
           }
 
@@ -104,15 +119,18 @@ function useStoreGetter<TState extends object>(
           const base = getByPath(state, resolvedBasePath as PathOf<TState>);
           if (subPath !== undefined) {
             const subVal = getByPath(base as TState, subPath as PathOf<TState>);
+
             return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
           }
 
           const baseDefault = callDefault !== undefined ? callDefault : defaultValue;
+
           return base === undefined && baseDefault !== undefined ? baseDefault : base;
         }
 
         if (subPath !== undefined) {
           const val = getByPath(state, subPath as PathOf<TState>);
+
           return val === undefined && callDefault !== undefined ? callDefault : val;
         }
 
@@ -120,7 +138,7 @@ function useStoreGetter<TState extends object>(
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, resolvedBasePath, pathsKey, defaultValue]
+    [store, resolvedBasePath, entriesKey, defaultValue]
   );
 }
 

@@ -121,16 +121,18 @@ function createStore<TState extends object>(
 
 //   const { useStore, useStoreSync } = createStoreHook<MyState>()
 //
-//   useStore()                                          → [MyState, setState]
-//   useStore('user.name')                               → [string, setName]
-//   useStore(`schema.flat.${id}` as PathOf<MyState>)   → [Element, setElement]  dynamic path
-//   useStore(s => s.count)                              → [number, setState]  shallowEqual by default
-//   useStore(['user.name', 'count'])                    → [[name, count], setName, setCount]
-//   useStore('user.name', { enabled: false })           → unsubscribed, returns last value
-//   useStoreSync(undefined, fullState)                  → [TState, setState]  syncs full state
-//   useStoreSync('schema', schema)                      → [Schema, setSchema]  sync on every render
-//   useStoreSync('schema', schema, { mode: 'mount' })   → [Schema, setSchema]  sync on mount only
-//   useStoreSync('schema', schema, { enabled: false })  → disabled, no sync
+//   useStore()                                                   → [MyState, setState]
+//   useStore('user.name')                                        → [string, setName]
+//   useStore(`schema.flat.${id}` as PathOf<MyState>)            → [Element, setElement]  dynamic path
+//   useStore(s => s.count)                                       → [number, setState]  shallowEqual by default
+//   useStore(s => ({ flat: s.schema.flat, count: s.count }))    → [derived, setState]  single subscription
+//   useStore(['user.name', 'count'])                             → [[name, count], setName, setCount]
+//   useStore('user.name', { enabled: false })                    → unsubscribed, returns last value
+//   useStoreSync(undefined, fullState)                           → [TState, setState]  syncs full state
+//   useStoreSync('schema', schema)                               → [Schema, setSchema]  sync on every render
+//   useStoreSync('schema', schema, { mode: 'mount' })            → [Schema, setSchema]  sync on mount only
+//   useStoreSync('schema', schema, { enabled: false })           → disabled, no sync
+//   useStoreGetter(['schema.flat', s => s.count])                → [getFlat, getCount]  mixed paths + selectors
 export const createStoreHook = <TState extends object>() => {
   // The overloads below intentionally mirror useStore.ts / useStoreSync.ts.
   // TypeScript does not support instantiating a generic function type (e.g. typeof useStoreBase<TState>),
@@ -221,10 +223,10 @@ export const createStoreHook = <TState extends object>() => {
     options: UseStoreGetterOptions<TState, D> & { defaultValue: D }
   ): GetValueFromBaseWithDefaultFn<PathValue<TState, P>, D>;
 
-  function useStoreGetter<const Paths extends ReadonlyArray<PathOf<TState>>>(
-    paths: Paths,
+  function useStoreGetter<const Entries extends ReadonlyArray<PathOf<TState> | ((state: TState) => unknown)>>(
+    entries: Entries,
     options?: UseStoreGetterOptions<TState>
-  ): GetterTuple<TState, Paths>;
+  ): GetterTuple<TState, Entries>;
 
   function useStoreGetter(arg?: any, options?: any): unknown {
     return (useStoreGetterBase as (a?: any, b?: any) => unknown)(arg, options);

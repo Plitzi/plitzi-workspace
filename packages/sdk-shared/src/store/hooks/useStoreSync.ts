@@ -1,40 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { use, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useMemo, useSyncExternalStore } from 'react';
 
+import { useMultiExternalStore, useMultiSetters, useMultiSubscribe, useResolvedStore } from './shared';
+import { defaultMultiEqualityFn } from './useStore';
 import getByPath from '../helpers/getByPath';
 import shallowEqual from '../helpers/shallowEqual';
 import useIsomorphicLayoutEffect from '../helpers/useIsomorphicLayoutEffect';
-import { StoreContext } from '../StoreProvider';
 
 import type { MultiPathReturn } from './useStore';
-import type {
-  PathOf,
-  PathValue,
-  PathValues,
-  StoreApi,
-  StoreHookBaseOptions,
-  StoreHookReactiveOptions,
-  SyncMode
-} from '../../types/StoreTypes';
+import type { PathOf, PathValue, PathValues, StoreApi, StoreHookReactiveOptions } from '../../types/StoreTypes';
 
 export type UseStoreSyncOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
   syncStrategy?: 'render' | 'afterRender';
 };
 
-export type UseStoreSyncMultiOptions<TState extends object = object> = StoreHookBaseOptions<TState> & {
-  mode?: SyncMode;
-  enabled?: boolean;
+export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
+  StoreHookReactiveOptions<never, TState>,
+  'equalityFn'
+> & {
   syncStrategy?: 'render' | 'afterRender';
 };
-
-export type UseStoreSyncReturn<TState extends object, P extends PathOf<TState> | undefined> =
-  P extends PathOf<TState>
-    ? [
-        PathValue<TState, P>,
-        (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
-      ]
-    : [TState, (value: TState | ((prev: TState) => TState)) => void];
 
 // ─── useStoreSyncMulti ────────────────────────────────────────────────────────
 
@@ -76,7 +62,7 @@ function useStoreSyncMulti<TState extends object, const Paths extends ReadonlyAr
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useIsomorphicLayoutEffect(() => {
-      if (shouldSync) {
+      if (shouldSync && !isFirstRender) {
         runSync();
       }
     }, [shouldSync, values, pathsKey]);
@@ -88,50 +74,19 @@ function useStoreSyncMulti<TState extends object, const Paths extends ReadonlyAr
     const state = store.getState();
     const next = paths.map(p => getByPath(state, p));
     const prev = lastRef.current;
-
-    if (prev !== null && next.every((v, i) => Object.is(v, prev[i]))) {
+    if (prev !== null && defaultMultiEqualityFn(prev, next)) {
       return prev;
     }
 
     lastRef.current = next;
+
     return next;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, pathsKey]);
 
-  const subscribe = useMemo(
-    () =>
-      (cb: () => void): (() => void) => {
-        if (!enabled || mode === 'mount') {
-          return () => {};
-        }
-
-        const unsubs = paths.map(p => store.subscribePath(p, cb));
-        return () => unsubs.forEach(u => u());
-      },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, pathsKey, enabled, mode]
-  );
-
-  const selected = useSyncExternalStore(subscribe, () => {
-    if (!enabled) {
-      if (lastRef.current === null) {
-        lastRef.current = getSnapshot();
-      }
-      return lastRef.current;
-    }
-    return getSnapshot();
-  });
-
-  const setters = useMemo(
-    () =>
-      paths.map(
-        p =>
-          (value: PathValue<TState, typeof p> | ((prev: PathValue<TState, typeof p>) => PathValue<TState, typeof p>)) =>
-            store.setState(p, value)
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, pathsKey]
-  );
+  const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode);
+  const selected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
+  const setters = useMultiSetters(store, paths, pathsKey);
 
   return [selected, ...setters] as unknown as MultiPathReturn<TState, Paths>;
 }
@@ -178,14 +133,14 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useIsomorphicLayoutEffect(() => {
-      if (shouldSync) {
+      if (shouldSync && !isFirstRender) {
         runSync();
       }
     }, [shouldSync, value, path]);
   }
 
   const getSnapshot = useMemo(
-    () => (): unknown => (isFullState ? store.getState() : getByPath(store.getState(), path as PathOf<TState>)),
+    () => () => (isFullState ? store.getState() : getByPath(store.getState(), path as PathOf<TState>)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, path]
   );
@@ -207,7 +162,7 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
     [store, path, enabled]
   );
 
-  const lastSelectedRef = useRef<unknown>(getSnapshot());
+  const lastSelectedRef = useRef(getSnapshot());
 
   const selected = useSyncExternalStore(subscribe, () => {
     if (!enabled) {
@@ -267,11 +222,10 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
   value: PathValue<TState, P> | TState | PathValues<TState, ReadonlyArray<PathOf<TState>>>,
   options: UseStoreSyncOptions<any, any> | UseStoreSyncMultiOptions<TState> = {}
 ): unknown {
-  const contextStore = use(StoreContext) as StoreApi<TState> | undefined;
-  const store = ((options as UseStoreSyncOptions<any, any>).store as StoreApi<TState> | undefined) ?? contextStore;
-  if (!store) {
-    throw new Error('useStoreSync must be used inside a StoreProvider');
-  }
+  const store = useResolvedStore(
+    (options as UseStoreSyncOptions<any, any>).store as StoreApi<TState> | undefined,
+    'useStoreSync'
+  );
 
   if (Array.isArray(pathOrPaths)) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
