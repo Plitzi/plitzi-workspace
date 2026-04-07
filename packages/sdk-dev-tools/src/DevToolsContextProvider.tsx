@@ -63,6 +63,7 @@ const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => 
     pConsole.setCallback(handleAddLog);
     pConsole.setCallbackAddProvider(handleAddProvider);
     pConsole.setCallbackRemoveProvider(handleRemoveProvider);
+    pConsole.processPendingLogs();
 
     return () => {
       pConsole.setCallback(undefined);

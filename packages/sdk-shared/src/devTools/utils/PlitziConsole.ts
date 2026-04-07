@@ -36,6 +36,9 @@ class PlitziConsole {
 
   setCallback(callback?: CallbackInternal) {
     this.callbackInternal = callback;
+  }
+
+  processPendingLogs() {
     if (this.pendingLogs.length && this.callbackInternal) {
       for (const log of this.pendingLogs) {
         this.callbackInternal(log.logType, log.category, log.message, log.params, log.time);
