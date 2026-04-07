@@ -18,16 +18,16 @@ import type {
 export type GetValueFn<TState extends object> = {
   (): TState;
   <P extends PathOf<TState>>(path: P): PathValue<TState, P>;
-  <P extends PathOf<TState>, D>(path: P, opts: { defaultValue: D }): NonNullable<PathValue<TState, P>> | D;
-  <D>(path: undefined, opts: { defaultValue: D }): NonNullable<TState> | D;
+  <P extends PathOf<TState>, D>(path: P, defaultValue: D): NonNullable<PathValue<TState, P>> | D;
+  <D>(path: undefined, defaultValue: D): NonNullable<TState> | D;
 };
 
 export type GetValueFromBaseFn<TBase> = TBase extends object
   ? {
       (): TBase;
       <SubP extends PathOf<TBase>>(path: SubP): PathValue<TBase, SubP>;
-      <SubP extends PathOf<TBase>, D>(path: SubP, opts: { defaultValue: D }): NonNullable<PathValue<TBase, SubP>> | D;
-      <D>(path: undefined, opts: { defaultValue: D }): NonNullable<TBase> | D;
+      <SubP extends PathOf<TBase>, D>(path: SubP, defaultValue: D): NonNullable<PathValue<TBase, SubP>> | D;
+      <D>(path: undefined, defaultValue: D): NonNullable<TBase> | D;
     }
   : () => TBase;
 
@@ -37,9 +37,9 @@ export type GetValueFromBaseWithDefaultFn<TBase, D> = TBase extends object
       <SubP extends PathOf<NonNullable<TBase>>>(path: SubP): PathValue<NonNullable<TBase>, SubP>;
       <SubP extends PathOf<NonNullable<TBase>>, D2>(
         path: SubP,
-        opts: { defaultValue: D2 }
+        defaultValue: D2
       ): NonNullable<PathValue<NonNullable<TBase>, SubP>> | D2;
-      <D2>(path: undefined, opts: { defaultValue: D2 }): NonNullable<TBase> | D2;
+      <D2>(path: undefined, defaultValue: D2): NonNullable<TBase> | D2;
     }
   : () => NonNullable<TBase> | D;
 
@@ -113,8 +113,7 @@ function useStoreGetter<TState extends object>(
   const pathsKey = resolvedPaths?.join('|');
 
   return useCallback(
-    (subPath?: string, opts?: { defaultValue?: unknown }): any => {
-      const callDefault = opts?.defaultValue;
+    (subPath?: string, callDefault?: unknown): any => {
       const state = store.getState();
 
       if (resolvedPaths) {

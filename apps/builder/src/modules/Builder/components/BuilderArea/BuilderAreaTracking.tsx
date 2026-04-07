@@ -137,7 +137,7 @@ const BuilderAreaTracking = ({
           if (
             !elementSelected ||
             elementSelected === baseElementId ||
-            !getSchema(`flat.${elementSelected}`, { defaultValue: undefined })
+            !getSchema(`flat.${elementSelected}`, undefined)
           ) {
             break;
           }
@@ -226,11 +226,7 @@ const BuilderAreaTracking = ({
         return;
       }
 
-      if (
-        elementSelected === baseElementId ||
-        !getSchema(undefined, { defaultValue: undefined }) ||
-        !getStyle(undefined, { defaultValue: undefined })
-      ) {
+      if (elementSelected === baseElementId || !getSchema(undefined, undefined) || !getStyle(undefined, undefined)) {
         return;
       }
 

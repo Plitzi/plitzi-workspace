@@ -77,7 +77,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, flat, platform, {
+      const result = calculateInheriting(element, undefined, flat, platform, undefined, {
         styleSelector: 'base'
       });
 
@@ -101,7 +101,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
+      const result = calculateInheriting(baseElement, undefined, {}, platform, undefined, { includeSelf: true });
       expect(result.style.color[0].value).toBe('red');
     });
 
@@ -114,7 +114,10 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform, { styleSelector: 'base' }, {}, ['btn']);
+      const result = calculateInheriting(baseElement, undefined, {}, platform, undefined, {
+        styleSelector: 'base',
+        skipSelectors: ['btn']
+      });
       expect(result.style.color).toBeUndefined();
     });
 
@@ -138,7 +141,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, {}, platform, { includeSelf: true });
+      const result = calculateInheriting(element, undefined, {}, platform, undefined, { includeSelf: true });
 
       expect(result.style.color[0].value).toBe('red');
       expect(result.style['background-color'][0].value).toBe('blue');
@@ -157,7 +160,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
+      const result = calculateInheriting(baseElement, undefined, {}, platform, undefined, { includeSelf: true });
       expect(result.style.color.length).toBeGreaterThan(1);
     });
 
@@ -186,7 +189,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, 'button', {}, platform, { includeSelf: true });
+      const result = calculateInheriting(baseElement, 'button', {}, platform, undefined, { includeSelf: true });
 
       expect(result.style.color.some(s => s.value === 'green')).toBe(true);
     });
@@ -317,7 +320,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform, {
+      const result = calculateInheriting(baseElement, undefined, {}, platform, undefined, {
         styleSelector: 'base',
         styleState: 'hover',
         styleVariant: 'primary'
@@ -397,7 +400,7 @@ describe('calculateInheriting', () => {
         }
       };
 
-      const result = calculateInheriting(element, undefined, flat, platform, {
+      const result = calculateInheriting(element, undefined, flat, platform, undefined, {
         styleSelector: 'base',
         styleState: 'hover'
       });
@@ -460,14 +463,9 @@ describe('calculateInheriting', () => {
           }
         } as unknown as Record<string, ComponentDefinition>;
 
-        const result = calculateInheriting(
-          element,
-          undefined,
-          flat,
-          emptyPlatform,
-          { styleSelector: 'base' },
-          componentDefinitions
-        );
+        const result = calculateInheriting(element, undefined, flat, emptyPlatform, componentDefinitions, {
+          styleSelector: 'base'
+        });
 
         const colorValues = result.style.color.map(v => v.value);
 
@@ -510,14 +508,9 @@ describe('calculateInheriting', () => {
           }
         } as unknown as Record<string, ComponentDefinition>;
 
-        const result = calculateInheriting(
-          element,
-          undefined,
-          flat,
-          emptyPlatform,
-          { styleSelector: 'base' },
-          componentDefinitions
-        );
+        const result = calculateInheriting(element, undefined, flat, emptyPlatform, componentDefinitions, {
+          styleSelector: 'base'
+        });
 
         const colorValues = result.style.color.map(v => v.value);
 
@@ -556,14 +549,9 @@ describe('calculateInheriting', () => {
           }
         } as unknown as Record<string, ComponentDefinition>;
 
-        const result = calculateInheriting(
-          flat['node4'],
-          undefined,
-          flat,
-          emptyPlatform,
-          { styleSelector: 'base' },
-          componentDefinitions
-        );
+        const result = calculateInheriting(flat['node4'], undefined, flat, emptyPlatform, componentDefinitions, {
+          styleSelector: 'base'
+        });
 
         const colorValues = result.style.color.map(v => v.value);
 
@@ -633,13 +621,13 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const withState = calculateInheriting(baseElement, undefined, {}, platform, {
+      const withState = calculateInheriting(baseElement, undefined, {}, platform, undefined, {
         styleSelector: 'base',
         styleState: 'hover',
         includeSelf: true
       });
 
-      const withoutState = calculateInheriting(baseElement, undefined, {}, platform, {
+      const withoutState = calculateInheriting(baseElement, undefined, {}, platform, undefined, {
         styleSelector: 'base',
         includeSelf: true
       });
@@ -671,7 +659,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform, {
+      const result = calculateInheriting(baseElement, undefined, {}, platform, undefined, {
         styleSelector: 'base',
         includeSelf: true
       });
@@ -703,7 +691,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform, {
+      const result = calculateInheriting(baseElement, undefined, {}, platform, undefined, {
         styleSelector: 'base',
         styleState: 'hover',
         styleVariant: 'primary'
@@ -732,7 +720,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
+      calculateInheriting(baseElement, undefined, {}, platform, undefined, { includeSelf: true });
 
       expect(attributes).toEqual({
         base: {
@@ -788,7 +776,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, flat, platform, { includeSelf: true });
+      const result = calculateInheriting(element, undefined, flat, platform, undefined, { includeSelf: true });
 
       expect(result.style.position[result.style.position.length - 1].value).toBe('relative');
     });
@@ -821,7 +809,7 @@ describe('calculateInheriting', () => {
         }
       };
 
-      const result = calculateInheriting(baseElement, undefined, {}, platform, { includeSelf: true });
+      const result = calculateInheriting(baseElement, undefined, {}, platform, undefined, { includeSelf: true });
 
       const values = result.style.color.map(v => v.value);
       expect(values).toContain('red');
@@ -862,9 +850,10 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, flat, platform, { styleSelector: 'base' }, {}, [
-        'parentBtn'
-      ]);
+      const result = calculateInheriting(element, undefined, flat, platform, undefined, {
+        styleSelector: 'base',
+        skipSelectors: ['parentBtn']
+      });
 
       // should still inherit because it's ancestor
       expect(result.style.color[0]?.value).toBe('purple');
@@ -889,7 +878,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, {}, platform, { includeSelf: true });
+      const result = calculateInheriting(element, undefined, {}, platform, undefined, { includeSelf: true });
 
       // 🔥 si falla → duplicación silenciosa
       expect(result.style.color.length).toBe(1);
@@ -951,7 +940,7 @@ describe('calculateInheriting', () => {
         mobile: {}
       };
 
-      const result = calculateInheriting(element, undefined, flat, platform, { includeSelf: true });
+      const result = calculateInheriting(element, undefined, flat, platform, undefined, { includeSelf: true });
       const values = result.style.color.map(v => v.value);
 
       expect(values[0]).toBe('red');
@@ -990,7 +979,7 @@ describe('calculateInheriting', () => {
         };
       });
 
-      const result = calculateInheriting(flat['node9'], undefined, flat, platform, {
+      const result = calculateInheriting(flat['node9'], undefined, flat, platform, undefined, {
         styleSelector: 'base',
         includeSelf: true
       });

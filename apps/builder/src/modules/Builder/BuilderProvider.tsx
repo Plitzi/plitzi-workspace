@@ -168,7 +168,7 @@ const BuilderProvider = ({
         if (
           (!state && !elementId) ||
           (elementId && state === elementId) ||
-          (elementId && !getElement(elementId, { defaultValue: undefined }))
+          (elementId && !getElement(elementId, undefined))
         ) {
           return state;
         }
@@ -185,7 +185,7 @@ const BuilderProvider = ({
         id = baseElementIdProp;
       }
 
-      const element = getElement(id, { defaultValue: undefined });
+      const element = getElement(id, undefined);
       if (!element) {
         return;
       }
@@ -242,7 +242,7 @@ const BuilderProvider = ({
       toElementId: string,
       rootId?: string
     ) => {
-      const toElement = getElement(toElementId, { defaultValue: undefined });
+      const toElement = getElement(toElementId, undefined);
       if (!toElement) {
         return false;
       }
@@ -404,7 +404,7 @@ const BuilderProvider = ({
 
   const setVisibility = useCallback(
     (elementId: string, visibility: boolean) => {
-      const element = getElement(elementId, { defaultValue: undefined });
+      const element = getElement(elementId, undefined);
       if (!element) {
         return;
       }
@@ -421,7 +421,7 @@ const BuilderProvider = ({
 
   const getBaseElement = useCallback(
     (otherBaseElementId?: string) => {
-      const element = getElement(otherBaseElementId ?? baseElementId, { defaultValue: undefined });
+      const element = getElement(otherBaseElementId ?? baseElementId, undefined);
       if (!element) {
         return undefined;
       }
@@ -449,7 +449,7 @@ const BuilderProvider = ({
         return;
       }
 
-      const element = getElement(elementId, { defaultValue: undefined });
+      const element = getElement(elementId, undefined);
       if (!element || elementId !== getElementSelected()) {
         return;
       }
