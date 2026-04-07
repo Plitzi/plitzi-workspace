@@ -10,10 +10,12 @@ export type Orientation = 'horizontal' | 'vertical';
 
 export type DevToolsContainerProps = {
   children?: ReactNode;
+  className?: string;
+  innerClassName?: string;
   enabled?: boolean;
 };
 
-const DevToolsContainer = ({ children, enabled = false }: DevToolsContainerProps) => {
+const DevToolsContainer = ({ children, className, innerClassName, enabled = false }: DevToolsContainerProps) => {
   const [orientation, setOrientation] = useState<Orientation>('horizontal');
 
   const handleChangeOrientation = useCallback((orientation: Orientation) => setOrientation(orientation), []);
@@ -25,12 +27,13 @@ const DevToolsContainer = ({ children, enabled = false }: DevToolsContainerProps
   return (
     <DevToolsContextProvider>
       <div
-        className={clsx('flex grow overflow-auto', {
-          'flex-col': orientation === 'horizontal',
-          'h-screen': orientation === 'vertical'
-        })}
+        className={clsx(
+          'flex grow overflow-auto',
+          { 'flex-col': orientation === 'horizontal', 'h-screen': orientation === 'vertical' },
+          className
+        )}
       >
-        <div className="grow basis-0 overflow-auto">{children}</div>
+        <div className={clsx('grow basis-0 flex-col overflow-auto', innerClassName)}>{children}</div>
         <DevToolsPanel orientation={orientation} onChangeOrientation={handleChangeOrientation} />
       </div>
     </DevToolsContextProvider>
