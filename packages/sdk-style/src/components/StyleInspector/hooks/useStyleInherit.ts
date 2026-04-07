@@ -35,16 +35,14 @@ const useStyleInherit = ({
       selectorsToSkip.push(selector);
     }
 
-    return calculateInheriting(
-      element,
-      componentType,
-      flat,
-      platform,
-      { styleSelector, styleState, styleVariant, includeSelf: selectors.length > 1 },
-      componentDefinitions.current,
-      selectorsToSkip,
-      selectorsToInclude
-    );
+    return calculateInheriting(element, componentType, flat, platform, componentDefinitions.current, {
+      styleSelector,
+      styleState,
+      styleVariant,
+      includeSelf: selectors.length > 1,
+      skipSelectors: selectorsToSkip,
+      addSelectors: selectorsToInclude
+    });
   }, [selector, element, componentType, flat, platform, styleSelector, styleState, styleVariant, componentDefinitions]);
 
   return inheritData;

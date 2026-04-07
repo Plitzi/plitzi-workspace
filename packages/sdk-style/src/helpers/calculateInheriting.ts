@@ -275,12 +275,24 @@ const calculateInheriting = (
   componentType: string | undefined,
   flat: Schema['flat'],
   platform: Style['platform'],
-  params: { styleSelector?: string; styleState?: StyleState; styleVariant?: string; includeSelf?: boolean } = {},
   componentDefinitions: Record<string, ComponentDefinition> = {},
-  skipSelectors: string[] = [],
-  addSelectors: string[] = []
+  params: {
+    styleSelector?: string;
+    styleState?: StyleState;
+    styleVariant?: string;
+    includeSelf?: boolean;
+    skipSelectors?: string[];
+    addSelectors?: string[];
+  } = {}
 ): InheritData => {
-  const { styleSelector = 'base', styleState, styleVariant, includeSelf = false } = params;
+  const {
+    styleSelector = 'base',
+    styleState,
+    styleVariant,
+    includeSelf = false,
+    skipSelectors = [],
+    addSelectors = []
+  } = params;
   const metadata: InheritData = { tree: [], style: {}, parentStyle: {} };
   const hierarchy = element ? buildHierarchy(flat, element) : [];
   const seenDefaultTypes = new Set<string>();
@@ -344,9 +356,15 @@ const calculateInheriting = (
     for (const node of hierarchy) {
       const isParent = element?.definition.parentId === node.id;
       const isAncestor = node.id !== element?.id;
-      let sources = resolveSources(node, componentType, group, styleSelector, addSelectors);
+      let sources = resolveSources(
+        node,
+        node.definition.type === componentType ? componentType : undefined,
+        group,
+        styleSelector,
+        addSelectors
+      );
       if (!includeSelf && !isAncestor && !styleState && !styleVariant && Object.keys(sources).length) {
-        sources = [];
+        sources = sources.filter(source => source.type === 'element');
       }
 
       for (const source of sources) {
