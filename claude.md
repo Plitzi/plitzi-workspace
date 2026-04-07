@@ -73,13 +73,13 @@ useStore('selector', { defaultValue: undefined })    // → [string | undefined,
 
 ### useStoreGetter
 ```ts
-const { getValue } = useStoreGetter()            // full store access
-getValue()                                        // → TState
-getValue('schema.flat')                           // → PathValue<TState, 'schema.flat'>
+const getState = useStoreGetter()               // full store access
+getState()                                        // → TState
+getState('schema.flat')                           // → PathValue<TState, 'schema.flat'>
 
-const { getValue } = useStoreGetter('schema.flat') // scoped to base path
-getValue()                                        // → PathValue<TState, 'schema.flat'>
-getValue('element1')                              // → sub-path value
+const getElement = useStoreGetter('schema.flat') // scoped to base path
+getElement()                                      // → PathValue<TState, 'schema.flat'>
+getElement('element1')                            // → sub-path value
 ```
 Passive hook — no subscriptions, no re-renders. `getValue` reads `store.getState()` at call time.
 Stable reference: only re-created when the store instance or base path changes.

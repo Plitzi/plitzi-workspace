@@ -43,35 +43,35 @@ describe('useStoreGetter — basic reads (no base path)', () => {
     const store = makeStore();
     const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
-    expect(result.current.getValue()).toEqual(store.getState());
+    expect(result.current()).toEqual(store.getState());
   });
 
   it('getValue("count") returns primitive path value', () => {
     const store = makeStore();
     const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
-    expect(result.current.getValue('count')).toBe(0);
+    expect(result.current('count')).toBe(0);
   });
 
   it('getValue("user.name") returns nested path value', () => {
     const store = makeStore();
     const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
-    expect(result.current.getValue('user.name')).toBe('Alice');
+    expect(result.current('user.name')).toBe('Alice');
   });
 
   it('getValue("schema.flat") returns nested object', () => {
     const store = makeStore();
     const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
-    expect(result.current.getValue('schema.flat')).toEqual(store.getState().schema.flat);
+    expect(result.current('schema.flat')).toEqual(store.getState().schema.flat);
   });
 
   it('getValue("schema.flat.btn1") returns deep dynamic path value', () => {
     const store = makeStore();
     const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
-    expect(result.current.getValue('schema.flat.btn1' as 'schema.flat')).toEqual({ label: 'Button', type: 'button' });
+    expect(result.current('schema.flat.btn1' as 'schema.flat')).toEqual({ label: 'Button', type: 'button' });
   });
 
   it('getValue with nonexistent path returns undefined', () => {
@@ -79,7 +79,7 @@ describe('useStoreGetter — basic reads (no base path)', () => {
     const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
     // schema.flat is Record<string, ...> so any string key is valid in the type
-    expect(result.current.getValue('schema.flat.nonexistent' as 'schema.flat')).toBeUndefined();
+    expect(result.current('schema.flat.nonexistent' as 'schema.flat')).toBeUndefined();
   });
 });
 
@@ -92,7 +92,7 @@ describe('useStoreGetter — reads with base path', () => {
       wrapper: makeWrapper(store)
     });
 
-    expect(result.current.getValue()).toEqual(store.getState().schema.flat);
+    expect(result.current()).toEqual(store.getState().schema.flat);
   });
 
   it('getValue("btn1") returns sub-value relative to base', () => {
@@ -101,7 +101,7 @@ describe('useStoreGetter — reads with base path', () => {
       wrapper: makeWrapper(store)
     });
 
-    expect(result.current.getValue('btn1')).toEqual({ label: 'Button', type: 'button' });
+    expect(result.current('btn1')).toEqual({ label: 'Button', type: 'button' });
   });
 
   it('getValue("btn1.label") returns deep sub-value', () => {
@@ -110,7 +110,7 @@ describe('useStoreGetter — reads with base path', () => {
       wrapper: makeWrapper(store)
     });
 
-    expect(result.current.getValue('btn1.label')).toBe('Button');
+    expect(result.current('btn1.label')).toBe('Button');
   });
 
   it('getValue with nonexistent sub-path returns undefined', () => {
@@ -120,7 +120,7 @@ describe('useStoreGetter — reads with base path', () => {
     });
 
     // schema.flat is Record<string, ...> so any string key is a valid sub-path in the type
-    expect(result.current.getValue('nonexistent')).toBeUndefined();
+    expect(result.current('nonexistent')).toBeUndefined();
   });
 
   it('nonexistent base path — getValue() returns undefined', () => {
@@ -134,7 +134,7 @@ describe('useStoreGetter — reads with base path', () => {
       { wrapper: makeWrapper(store) }
     );
 
-    expect(result.current.getValue()).toBeUndefined();
+    expect(result.current()).toBeUndefined();
   });
 
   it('nonexistent base path — getValue("sub") returns undefined', () => {
@@ -148,7 +148,7 @@ describe('useStoreGetter — reads with base path', () => {
       { wrapper: makeWrapper(store) }
     );
 
-    expect(result.current.getValue('sub')).toBeUndefined();
+    expect(result.current('sub')).toBeUndefined();
   });
 });
 
@@ -161,7 +161,7 @@ describe('useStoreGetter — reads current state (no stale closure)', () => {
 
     store.setState('count', 42);
 
-    expect(result.current.getValue('count')).toBe(42);
+    expect(result.current('count')).toBe(42);
   });
 
   it('getValue("count") in useCallback reads latest value after multiple mutations', () => {
@@ -170,7 +170,7 @@ describe('useStoreGetter — reads current state (no stale closure)', () => {
 
     const { result } = renderHook(
       () => {
-        const { getValue } = useStoreGetter<AppState>();
+        const getValue = useStoreGetter<AppState>();
         const readCurrent = useCallback(() => {
           reads.push(getValue('count'));
         }, [getValue]);
@@ -202,7 +202,7 @@ describe('useStoreGetter — reads current state (no stale closure)', () => {
       )
     );
 
-    expect((result.current.getValue('btn1') as { label: string }).label).toBe('Updated');
+    expect((result.current('btn1') as { label: string }).label).toBe('Updated');
   });
 
   it('getValue reads fresh value after setState with updater function', () => {
@@ -211,7 +211,7 @@ describe('useStoreGetter — reads current state (no stale closure)', () => {
 
     store.setState('count', prev => prev + 10);
 
-    expect(result.current.getValue('count')).toBe(10);
+    expect(result.current('count')).toBe(10);
   });
 });
 
@@ -311,7 +311,7 @@ describe('useStoreGetter — getValue stability', () => {
     renderHook(
       () => {
         useBoundStore('count'); // causes re-renders
-        const { getValue } = useStoreGetter<AppState>();
+        const getValue = useStoreGetter<AppState>();
         getValueRefs.push(getValue);
         return getValue;
       },
@@ -331,7 +331,7 @@ describe('useStoreGetter — getValue stability', () => {
 
     const { rerender } = renderHook(
       () => {
-        const { getValue } = useStoreGetter<AppState>();
+        const getValue = useStoreGetter<AppState>();
         getValueRefs.push(getValue);
         return getValue;
       },
@@ -354,12 +354,12 @@ describe('useStoreGetter — getValue stability', () => {
       { wrapper: makeWrapper(store) }
     );
 
-    const firstGetValue = result.current.getValue;
+    const firstGetValue = result.current;
 
     basePath = 'user';
     rerender();
 
-    expect(result.current.getValue).not.toBe(firstGetValue);
+    expect(result.current).not.toBe(firstGetValue);
   });
 });
 
@@ -434,7 +434,7 @@ describe('useStoreGetter — edge cases', () => {
       wrapper: makeWrapper(store)
     });
 
-    expect(result.current.getValue()).toBe(0);
+    expect(result.current()).toBe(0);
   });
 
   it('getValue called synchronously in a handler reads current state', () => {
@@ -443,7 +443,7 @@ describe('useStoreGetter — edge cases', () => {
 
     const { result } = renderHook(
       () => {
-        const { getValue } = useStoreGetter<AppState>();
+        const getValue = useStoreGetter<AppState>();
         return {
           handle: () => {
             store.setState('count', 77);
@@ -467,12 +467,12 @@ describe('useStoreGetter — edge cases', () => {
       { wrapper: makeWrapper(store) }
     );
 
-    expect(result.current.getValue()).toEqual(store.getState().schema.flat);
+    expect(result.current()).toEqual(store.getState().schema.flat);
 
     basePath = 'user';
     rerender();
 
-    expect(result.current.getValue()).toEqual(store.getState().user);
+    expect(result.current()).toEqual(store.getState().user);
   });
 
   it('rapid base path changes → no memory leak, listeners size stays 0', () => {
@@ -497,7 +497,7 @@ describe('useStoreGetter — edge cases', () => {
     const store = makeStore();
     const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
-    const value = result.current.getValue();
+    const value = result.current();
     expect(value).toBe(store.getState()); // same reference
   });
 
@@ -507,7 +507,7 @@ describe('useStoreGetter — edge cases', () => {
 
     renderHook(
       () => {
-        const { getValue } = useStoreGetter<AppState>();
+        const getValue = useStoreGetter<AppState>();
         capturedGetValue = getValue as (...args: unknown[]) => unknown;
       },
       { wrapper: makeWrapper(store) }
@@ -528,10 +528,10 @@ describe('useStoreGetter — createStoreHook integration', () => {
 
     const { result } = renderHook(() => useBoundGetter(), { wrapper: makeWrapper(store) });
 
-    expect(result.current.getValue('count')).toBe(0);
+    expect(result.current('count')).toBe(0);
 
     act(() => store.setState('count', 7));
-    expect(result.current.getValue('count')).toBe(7);
+    expect(result.current('count')).toBe(7);
   });
 
   it('createStoreHook useStoreGetter with base path reads scoped values', () => {
@@ -540,7 +540,7 @@ describe('useStoreGetter — createStoreHook integration', () => {
 
     const { result } = renderHook(() => useBoundGetter('schema.flat'), { wrapper: makeWrapper(store) });
 
-    expect(result.current.getValue('btn1')).toEqual({ label: 'Button', type: 'button' });
+    expect(result.current('btn1')).toEqual({ label: 'Button', type: 'button' });
   });
 
   it('useStoreGetter from createStoreHook does not cause re-renders on mutation', () => {
@@ -578,8 +578,8 @@ describe('useStoreGetter — createStoreHook integration', () => {
     const { result: resultA } = renderHook(() => useBoundGetter(), { wrapper: makeWrapper(storeA) });
     const { result: resultB } = renderHook(() => useBoundGetter(), { wrapper: makeWrapper(storeB) });
 
-    expect(resultA.current.getValue('count')).toBe(100);
-    expect(resultB.current.getValue('count')).toBe(200);
+    expect(resultA.current('count')).toBe(100);
+    expect(resultB.current('count')).toBe(200);
   });
 });
 
@@ -600,7 +600,7 @@ describe('useStoreGetter — performance', () => {
 
     const elapsed = measure('10 000 getValue() calls', () => {
       for (let i = 0; i < 10_000; i++) {
-        result.current.getValue('count');
+        result.current('count');
       }
     });
 

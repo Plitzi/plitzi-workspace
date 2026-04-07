@@ -20,21 +20,19 @@ export type GetValueFromBaseFn<TBase> = TBase extends object
     }
   : () => TBase;
 
-function useStoreGetter<TState extends object>(): { getValue: GetValueFn<TState> };
+function useStoreGetter<TState extends object>(): GetValueFn<TState>;
 
 function useStoreGetter<TState extends object, P extends PathOf<TState>>(
   basePath: P
-): { getValue: GetValueFromBaseFn<PathValue<TState, P>> };
+): GetValueFromBaseFn<PathValue<TState, P>>;
 
-function useStoreGetter<TState extends object, P extends PathOf<TState>>(
-  basePath?: P
-): { getValue: (subPath?: string) => any } {
+function useStoreGetter<TState extends object, P extends PathOf<TState>>(basePath?: P): (subPath?: string) => any {
   const store = use(StoreContext) as StoreApi<TState> | undefined;
   if (!store) {
     throw new Error('useStoreGetter must be used inside a StoreProvider');
   }
 
-  const getValue = useCallback(
+  return useCallback(
     (subPath?: string): any => {
       const state = store.getState();
       if (basePath !== undefined) {
@@ -47,8 +45,6 @@ function useStoreGetter<TState extends object, P extends PathOf<TState>>(
     },
     [store, basePath]
   );
-
-  return { getValue };
 }
 
 export default useStoreGetter;

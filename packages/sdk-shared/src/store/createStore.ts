@@ -182,11 +182,9 @@ export const createStoreHook = <TState extends object>() => {
     return useStoreSyncBase<TState, PathOf<TState>>(path as PathOf<TState>, value as any, options);
   }
 
-  function useStoreGetter(): { getValue: GetValueFn<TState> };
+  function useStoreGetter(): GetValueFn<TState>;
 
-  function useStoreGetter<P extends PathOf<TState>>(
-    basePath: P
-  ): { getValue: GetValueFromBaseFn<PathValue<TState, P>> };
+  function useStoreGetter<P extends PathOf<TState>>(basePath: P): GetValueFromBaseFn<PathValue<TState, P>>;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function useStoreGetter(basePath?: any): unknown {
