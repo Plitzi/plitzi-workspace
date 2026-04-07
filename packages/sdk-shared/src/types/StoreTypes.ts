@@ -72,6 +72,18 @@ export type PathSetters<TState extends object, Paths extends ReadonlyArray<PathO
 // 'sync'  — writes the value to the store on every render where it changed (default).
 export type SyncMode = 'mount' | 'sync';
 
+export type StoreHookBaseOptions<TState extends object = object> = {
+  store?: StoreApi<TState>;
+};
+
+export type StoreHookReactiveOptions<T, TState extends object = object> = StoreHookBaseOptions<TState> & {
+  mode?: SyncMode;
+  enabled?: boolean;
+  equalityFn?: (a: T, b: T) => boolean;
+};
+
+export type StoreLogger<T> = (event: { path: PathOf<T> | undefined; prev: T; next: T }) => void;
+
 export type Listener = () => void;
 
 export type SetState<T> = {
@@ -106,6 +118,10 @@ export type CommonState = {
 export type BuilderState = CommonState & {
   displayMode: DisplayMode;
   selector?: string;
+  elementHovered?: string;
+  elementSelected?: string;
+  setHovered: (elementId?: string) => void;
+  setSelected: (elementId?: string, iframeDOM?: HTMLIFrameElement | null, force?: boolean) => void;
 };
 
 export type SdkState = CommonState & {};

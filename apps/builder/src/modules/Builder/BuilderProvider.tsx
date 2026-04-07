@@ -165,7 +165,11 @@ const BuilderProvider = ({
   const setHovered = useCallback(
     (elementId?: string) => {
       setElementHovered(state => {
-        if ((!state && !elementId) || (elementId && state === elementId) || (elementId && !getElement(elementId))) {
+        if (
+          (!state && !elementId) ||
+          (elementId && state === elementId) ||
+          (elementId && !getElement(elementId, { defaultValue: undefined }))
+        ) {
           return state;
         }
 
@@ -181,7 +185,7 @@ const BuilderProvider = ({
         id = baseElementIdProp;
       }
 
-      const element = getElement(id);
+      const element = getElement(id, { defaultValue: undefined });
       if (!element) {
         return;
       }
@@ -238,7 +242,7 @@ const BuilderProvider = ({
       toElementId: string,
       rootId?: string
     ) => {
-      const toElement = getElement(toElementId);
+      const toElement = getElement(toElementId, { defaultValue: undefined });
       if (!toElement) {
         return false;
       }
@@ -400,7 +404,7 @@ const BuilderProvider = ({
 
   const setVisibility = useCallback(
     (elementId: string, visibility: boolean) => {
-      const element = getElement(elementId);
+      const element = getElement(elementId, { defaultValue: undefined });
       if (!element) {
         return;
       }
@@ -417,7 +421,7 @@ const BuilderProvider = ({
 
   const getBaseElement = useCallback(
     (otherBaseElementId?: string) => {
-      const element = getElement(otherBaseElementId ?? baseElementId);
+      const element = getElement(otherBaseElementId ?? baseElementId, { defaultValue: undefined });
       if (!element) {
         return undefined;
       }
@@ -445,7 +449,7 @@ const BuilderProvider = ({
         return;
       }
 
-      const element = getElement(elementId);
+      const element = getElement(elementId, { defaultValue: undefined });
       if (!element || elementId !== getElementSelected()) {
         return;
       }
@@ -493,15 +497,10 @@ const BuilderProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseElementId, mode]);
 
-  // useStoreSync(
-  //   ['elementHovered', 'setHovered', 'elementSelected', 'setSelected'],
-  //   [elementHovered, setHovered, elementSelected, setSelected]
-  // );
-
-  useStoreSync('elementHovered', elementHovered);
-  useStoreSync('setHovered', () => setHovered);
-  useStoreSync('elementSelected', elementSelected);
-  useStoreSync('setSelected', () => setSelected);
+  useStoreSync(
+    ['elementHovered', 'setHovered', 'elementSelected', 'setSelected'],
+    [elementHovered, () => setHovered, elementSelected, () => setSelected]
+  );
 
   const events = useMemo<Record<string, EventBridgeCallback>>(
     () => ({ builderSetBaseContext, builderSetSelected: setSelected, builderSetHovered: setHovered }),

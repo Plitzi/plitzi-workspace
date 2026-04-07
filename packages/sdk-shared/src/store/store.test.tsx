@@ -2326,3 +2326,159 @@ describe('defaultValue', () => {
     });
   });
 });
+
+describe('createStore — logger', () => {
+  type LogState = { count: number; user: { name: string } };
+
+  const makeLogStore = (logger?: Parameters<typeof createStore<LogState>>[1]) =>
+    createStore<LogState>(() => ({ count: 0, user: { name: 'Alice' } }), logger);
+
+  it('fires with correct path, prev, and next on path setState', () => {
+    const logger = vi.fn();
+    const store = makeLogStore({ logger });
+
+    store.setState('count', 5);
+
+    expect(logger).toHaveBeenCalledTimes(1);
+    expect(logger).toHaveBeenCalledWith({
+      path: 'count',
+      prev: { count: 0, user: { name: 'Alice' } },
+      next: { count: 5, user: { name: 'Alice' } }
+    });
+  });
+
+  it('fires with path: undefined on full-state setState', () => {
+    const logger = vi.fn();
+    const store = makeLogStore({ logger });
+
+    store.setState(undefined, { count: 99, user: { name: 'Bob' } });
+
+    expect(logger).toHaveBeenCalledWith(
+      expect.objectContaining({ path: undefined, next: { count: 99, user: { name: 'Bob' } } })
+    );
+  });
+
+  it('fires after updater function with correct next', () => {
+    const logger = vi.fn();
+    const store = makeLogStore({ logger });
+
+    store.setState('count', prev => prev + 10);
+
+    expect(logger).toHaveBeenCalledWith(expect.objectContaining({ next: { count: 10, user: { name: 'Alice' } } }));
+  });
+
+  it('does NOT fire when state is equal (bail-out)', () => {
+    const logger = vi.fn();
+    const store = makeLogStore({ logger });
+
+    store.setState('count', 0);
+
+    expect(logger).not.toHaveBeenCalled();
+  });
+
+  it('fires once per setState call', () => {
+    const logger = vi.fn();
+    const store = makeLogStore({ logger });
+
+    store.setState('count', 1);
+    store.setState('count', 2);
+    store.setState('user.name', 'Bob');
+
+    expect(logger).toHaveBeenCalledTimes(3);
+  });
+
+  it('prev reflects state before the mutation', () => {
+    const logger = vi.fn();
+    const store = makeLogStore({ logger });
+
+    store.setState('count', 1);
+    store.setState('count', 2);
+
+    const calls = logger.mock.calls as Array<[{ prev: LogState; next: LogState }]>;
+    expect(calls[0][0].prev.count).toBe(0);
+    expect(calls[1][0].prev.count).toBe(1);
+  });
+});
+
+describe('useStore — store option', () => {
+  type AppState = { count: number; user: { name: string } };
+
+  const makeExternalStore = () => createStore<AppState>(() => ({ count: 100, user: { name: 'External' } }));
+
+  const makeContextStore = () => createStore<AppState>(() => ({ count: 0, user: { name: 'Context' } }));
+
+  const makeWrapper =
+    (store: StoreApi<AppState>) =>
+    ({ children }: { children: ReactNode }) =>
+      createElement(StoreContext, { value: store }, children);
+
+  const { useStore: useBoundStore } = createStoreHook<AppState>();
+
+  it('reads from explicit store, not context', () => {
+    const contextStore = makeContextStore();
+    const externalStore = makeExternalStore();
+
+    const { result } = renderHook(() => useBoundStore('count', { store: externalStore }), {
+      wrapper: makeWrapper(contextStore)
+    });
+
+    expect(result.current[0]).toBe(100);
+  });
+
+  it('re-renders when explicit store changes, not when context store changes', () => {
+    const contextStore = makeContextStore();
+    const externalStore = makeExternalStore();
+    const renderFn = vi.fn();
+
+    renderHook(
+      () => {
+        renderFn();
+        return useBoundStore('count', { store: externalStore });
+      },
+      { wrapper: makeWrapper(contextStore) }
+    );
+
+    act(() => contextStore.setState('count', 99));
+    expect(renderFn).toHaveBeenCalledTimes(1);
+
+    act(() => externalStore.setState('count', 200));
+    expect(renderFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('setter writes to explicit store', () => {
+    const contextStore = makeContextStore();
+    const externalStore = makeExternalStore();
+
+    const { result } = renderHook(() => useBoundStore('count', { store: externalStore }), {
+      wrapper: makeWrapper(contextStore)
+    });
+
+    act(() => result.current[1](42));
+
+    expect(externalStore.getState().count).toBe(42);
+    expect(contextStore.getState().count).toBe(0);
+  });
+});
+
+describe('useStoreSync — store option', () => {
+  type AppState = { count: number };
+
+  const makeWrapper =
+    (store: StoreApi<AppState>) =>
+    ({ children }: { children: ReactNode }) =>
+      createElement(StoreContext, { value: store }, children);
+
+  const { useStoreSync: useBoundSync } = createStoreHook<AppState>();
+
+  it('syncs into explicit store, not context store', () => {
+    const contextStore = createStore<AppState>(() => ({ count: 0 }));
+    const externalStore = createStore<AppState>(() => ({ count: 0 }));
+
+    renderHook(() => useBoundSync('count', 77, { store: externalStore }), {
+      wrapper: makeWrapper(contextStore)
+    });
+
+    expect(externalStore.getState().count).toBe(77);
+    expect(contextStore.getState().count).toBe(0);
+  });
+});

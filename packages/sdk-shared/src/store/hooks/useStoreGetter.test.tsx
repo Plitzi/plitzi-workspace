@@ -148,6 +148,7 @@ describe('useStoreGetter — reads with base path', () => {
       { wrapper: makeWrapper(store) }
     );
 
+    // @ts-expect-error — nonexistent base means sub-path type is unknown at runtime
     expect(result.current('sub')).toBeUndefined();
   });
 });
@@ -640,5 +641,213 @@ describe('useStoreGetter — performance', () => {
 
     expect(renderFn).toHaveBeenCalledTimes(1);
     expect(elapsed).toBeLessThan(2000);
+  });
+});
+
+// ─── Array paths ──────────────────────────────────────────────────────────────
+
+describe('useStoreGetter — array paths', () => {
+  it('returns tuple of values in order', () => {
+    const store = makeStore();
+    const { result } = renderHook(
+      () => useStoreGetter<AppState, readonly ['count', 'user.name']>(['count', 'user.name'] as const),
+      { wrapper: makeWrapper(store) }
+    );
+
+    const values = result.current();
+    expect(values[0]).toBe(0);
+    expect(values[1]).toBe('Alice');
+  });
+
+  it('reads current values after mutation without re-render', () => {
+    const store = makeStore();
+    const { result } = renderHook(
+      () => useStoreGetter<AppState, readonly ['count', 'user.name']>(['count', 'user.name'] as const),
+      { wrapper: makeWrapper(store) }
+    );
+
+    act(() => store.setState('count', 7));
+    act(() => store.setState('user.name', 'Bob'));
+
+    const values = result.current();
+    expect(values[0]).toBe(7);
+    expect(values[1]).toBe('Bob');
+  });
+
+  it('no subscriptions after mount (listeners.size === 0)', () => {
+    const store = makeStore() as StoreApiInternal<AppState>;
+
+    renderHook(() => useStoreGetter<AppState, readonly ['count', 'user.name']>(['count', 'user.name'] as const), {
+      wrapper: makeWrapper(store)
+    });
+
+    expect(store.listeners.size).toBe(0);
+    expect(store.pathListeners.size).toBe(0);
+  });
+
+  it('per-element defaultValue array — slot with undefined in store uses its default', () => {
+    // Use schema.version (a number) — access a path guaranteed to be undefined at runtime via cast
+    const store = createStore<AppState>(() => ({
+      user: { name: 'Alice', age: 30 },
+      schema: { version: 1, flat: {} },
+      count: 5
+    }));
+
+    const fallback = { label: 'Default', type: 'button' };
+    // schema.flat.btn1 is undefined because flat is empty
+    const getPaths = useStoreGetter as (paths: readonly string[], opts: { defaultValue: unknown[] }) => () => unknown[];
+    const { result } = renderHook(
+      () => getPaths(['schema.flat.btn1', 'count'], { defaultValue: [fallback, undefined] }),
+      { wrapper: makeWrapper(store) }
+    );
+
+    const values = result.current();
+    expect(values[0]).toEqual(fallback); // undefined → fallback
+    expect(values[1]).toBe(5); // defined → actual
+  });
+
+  it('scalar defaultValue — undefined slots all use the same default', () => {
+    const store = createStore<AppState>(() => ({
+      user: { name: 'Alice', age: 30 },
+      schema: { version: 1, flat: {} },
+      count: 0
+    }));
+
+    const fallback = { label: 'Fallback', type: 'text' };
+    const getPaths = useStoreGetter as (paths: readonly string[], opts: { defaultValue: unknown }) => () => unknown[];
+    const { result } = renderHook(
+      () => getPaths(['schema.flat.btn1', 'schema.flat.txt1'], { defaultValue: fallback }),
+      { wrapper: makeWrapper(store) }
+    );
+
+    const values = result.current();
+    expect(values[0]).toEqual(fallback);
+    expect(values[1]).toEqual(fallback);
+  });
+});
+
+// ─── defaultValue on base path ────────────────────────────────────────────────
+
+describe('useStoreGetter — defaultValue on base path', () => {
+  it('() call returns default when base value is undefined at runtime', () => {
+    // schema.flat.btn1 is undefined because flat is empty
+    const store = createStore<AppState>(() => ({
+      user: { name: 'Alice', age: 30 },
+      schema: { version: 1, flat: {} },
+      count: 0
+    }));
+
+    const fallback = { label: 'Default' };
+    const { result } = renderHook(
+      () =>
+        useStoreGetter<AppState, 'schema.flat', { label: string }>('schema.flat', {
+          defaultValue: fallback
+        }),
+      { wrapper: makeWrapper(store) }
+    );
+
+    // schema.flat = {} which is not undefined — default is NOT applied (only triggers on undefined)
+    expect(result.current()).toEqual({});
+  });
+
+  it('() returns default when exact path value is undefined', () => {
+    const store = createStore<AppState>(() => ({
+      user: { name: 'Alice', age: 30 },
+      schema: { version: 1, flat: {} },
+      count: 0
+    }));
+
+    const fallback = { label: 'Default', type: 'button' };
+    const getScoped = useStoreGetter as (path: string, opts: { defaultValue: unknown }) => (sub?: string) => unknown;
+    const { result } = renderHook(() => getScoped('schema.flat.btn1', { defaultValue: fallback }), {
+      wrapper: makeWrapper(store)
+    });
+
+    expect(result.current()).toEqual(fallback);
+  });
+
+  it('() returns actual value when defined (default ignored)', () => {
+    const store = makeStore();
+
+    const { result } = renderHook(
+      () =>
+        useStoreGetter<AppState, 'schema.flat', { label: string }>('schema.flat', {
+          defaultValue: { label: 'UNUSED' }
+        }),
+      { wrapper: makeWrapper(store) }
+    );
+
+    expect(result.current()).toEqual(store.getState().schema.flat);
+  });
+
+  it('sub-path call ignores defaultValue', () => {
+    const store = makeStore();
+
+    const { result } = renderHook(
+      () =>
+        useStoreGetter<AppState, 'schema.flat', { label: string }>('schema.flat', {
+          defaultValue: { label: 'UNUSED' }
+        }),
+      { wrapper: makeWrapper(store) }
+    );
+
+    expect(result.current('btn1')).toEqual({ label: 'Button', type: 'button' });
+  });
+});
+
+// ─── store option in useStoreGetter ──────────────────────────────────────────
+
+describe('useStoreGetter — store option', () => {
+  it('reads from explicit store, not context', () => {
+    const contextStore = makeStore();
+    const externalStore = createStore<AppState>(() => ({
+      user: { name: 'External', age: 1 },
+      schema: { version: 1, flat: {} },
+      count: 999
+    }));
+
+    const { result } = renderHook(() => useStoreGetter<AppState>({ store: externalStore }), {
+      wrapper: makeWrapper(contextStore)
+    });
+
+    expect(result.current('count')).toBe(999);
+  });
+
+  it('reads from explicit store for scoped path', () => {
+    const contextStore = makeStore();
+    const externalStore = createStore<AppState>(() => ({
+      user: { name: 'External', age: 1 },
+      schema: { version: 1, flat: { ext1: { label: 'External', type: 'div' } } },
+      count: 0
+    }));
+
+    const { result } = renderHook(
+      () => useStoreGetter<AppState, 'schema.flat'>('schema.flat', { store: externalStore }),
+      { wrapper: makeWrapper(contextStore) }
+    );
+
+    expect(result.current('ext1')).toEqual({ label: 'External', type: 'div' });
+    expect(result.current('btn1')).toBeUndefined();
+  });
+
+  it('reads from explicit store for array paths', () => {
+    const contextStore = makeStore();
+    const externalStore = createStore<AppState>(() => ({
+      user: { name: 'Ext', age: 5 },
+      schema: { version: 1, flat: {} },
+      count: 42
+    }));
+
+    const { result } = renderHook(
+      () =>
+        useStoreGetter<AppState, readonly ['count', 'user.name']>(['count', 'user.name'] as const, {
+          store: externalStore
+        }),
+      { wrapper: makeWrapper(contextStore) }
+    );
+
+    const values = result.current();
+    expect(values[0]).toBe(42);
+    expect(values[1]).toBe('Ext');
   });
 });

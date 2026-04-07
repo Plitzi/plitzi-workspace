@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import getByPath from './helpers/getByPath';
@@ -7,13 +9,31 @@ import useStoreBase from './hooks/useStore';
 import useStoreGetterBase from './hooks/useStoreGetter';
 import useStoreSyncBase from './hooks/useStoreSync';
 
-import type { GetState, Listener, Path, PathOf, PathValue, SetState, StoreApi, StoreApiInternal } from '../types';
+import type {
+  GetState,
+  Listener,
+  Path,
+  PathOf,
+  PathValue,
+  PathValues,
+  SetState,
+  StoreApi,
+  StoreApiInternal,
+  StoreLogger
+} from '../types';
 import type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions } from './hooks/useStore';
-import type { GetValueFn, GetValueFromBaseFn } from './hooks/useStoreGetter';
-import type { UseStoreSyncOptions } from './hooks/useStoreSync';
+import type {
+  GetValueFn,
+  GetValueFromBaseFn,
+  GetValueFromBaseWithDefaultFn,
+  GetValueMultiFn,
+  UseStoreGetterOptions
+} from './hooks/useStoreGetter';
+import type { UseStoreSyncMultiOptions, UseStoreSyncOptions } from './hooks/useStoreSync';
 
 function createStore<TState extends object>(
-  initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>)
+  initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
+  storeOptions?: { logger?: StoreLogger<TState> }
 ): StoreApi<TState> {
   let state: TState;
   const listeners = new Set<Listener>();
@@ -31,16 +51,20 @@ function createStore<TState extends object>(
   ) => {
     const prevState = state;
 
+    const resolvedValue = path
+      ? typeof value === 'function'
+        ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(
+            getByPath(prevState, path) as PathValue<TState, P>
+          )
+        : value
+      : undefined;
+
+    if (path && Object.is(getByPath(prevState, path), resolvedValue)) {
+      return;
+    }
+
     const nextState: TState = path
-      ? setByPath(
-          prevState,
-          path,
-          typeof value === 'function'
-            ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(
-                getByPath(prevState, path) as PathValue<TState, P>
-              )
-            : value
-        )
+      ? setByPath(prevState, path, resolvedValue)
       : typeof value === 'function'
         ? (value as (prev: TState) => TState)(prevState)
         : { ...prevState, ...(value as TState) };
@@ -50,6 +74,7 @@ function createStore<TState extends object>(
     }
 
     state = nextState;
+    storeOptions?.logger?.({ path, prev: prevState, next: state });
     listeners.forEach(l => l());
     pathListeners.forEach((set, candidate) => {
       if (path && !isPathAffected(path, candidate)) {
@@ -111,11 +136,11 @@ export const createStoreHook = <TState extends object>() => {
   // TypeScript does not support instantiating a generic function type (e.g. typeof useStoreBase<TState>),
   // so they must be re-declared here to bind TState at factory level.
 
-  function useStore(options?: UseStoreOptions<TState>): [TState, StoreApi<TState>['setState']];
+  function useStore(options?: UseStoreOptions<TState, TState>): [TState, StoreApi<TState>['setState']];
 
   function useStore<P extends PathOf<TState>>(
     path: P,
-    options?: Omit<UseStoreOptions<PathValue<TState, P>>, 'defaultValue'>
+    options?: Omit<UseStoreOptions<PathValue<TState, P>, TState>, 'defaultValue'>
   ): [
     PathValue<TState, P>,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
@@ -123,7 +148,7 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<P extends PathOf<TState>, D>(
     path: P,
-    options: UseStoreOptions<PathValue<TState, P>> & { defaultValue: D }
+    options: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue: D }
   ): [
     NonNullable<PathValue<TState, P>> | D,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
@@ -131,7 +156,7 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<TSelected>(
     selector: (state: TState) => TSelected,
-    options?: UseStoreOptions<TSelected>
+    options?: UseStoreOptions<TSelected, TState>
   ): [TSelected, StoreApi<TState>['setState']];
 
   function useStore<const Paths extends ReadonlyArray<PathOf<TState>>>(
@@ -155,41 +180,70 @@ export const createStoreHook = <TState extends object>() => {
     options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue }
   ): MultiPathReturn<TState, Paths, TDefaultValue>;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function useStore(arg?: any, options?: any): unknown {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return useStoreBase(arg, options);
   }
 
   function useStoreSync(
     path: undefined,
     value: TState | Partial<TState>,
-    options?: UseStoreSyncOptions<TState>
+    options?: UseStoreSyncOptions<TState, TState>
   ): [TState, (value: TState | ((prev: TState) => TState)) => void];
 
   function useStoreSync<P extends PathOf<TState>>(
     path: P,
     value: PathValue<TState, P>,
-    options?: UseStoreSyncOptions<PathValue<TState, P>>
+    options?: UseStoreSyncOptions<PathValue<TState, P>, TState>
   ): [
     PathValue<TState, P>,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function useStoreSync(path: PathOf<TState> | undefined, value: unknown, options?: UseStoreSyncOptions<any>): unknown {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    return useStoreSyncBase<TState, PathOf<TState>>(path as PathOf<TState>, value as any, options);
+  function useStoreSync<const Paths extends ReadonlyArray<PathOf<TState>>>(
+    paths: Paths,
+    values: PathValues<TState, Paths>,
+    options?: UseStoreSyncMultiOptions<TState>
+  ): MultiPathReturn<TState, Paths>;
+
+  function useStoreSync(pathOrPaths: any, value: any, options?: any): unknown {
+    return useStoreSyncBase<TState, PathOf<TState>>(pathOrPaths, value, options);
   }
 
-  function useStoreGetter(): GetValueFn<TState>;
+  function useStoreGetter(options?: UseStoreGetterOptions<TState>): GetValueFn<TState>;
 
-  function useStoreGetter<P extends PathOf<TState>>(basePath: P): GetValueFromBaseFn<PathValue<TState, P>>;
+  function useStoreGetter<P extends PathOf<TState>>(
+    basePath: P,
+    options?: UseStoreGetterOptions<TState>
+  ): GetValueFromBaseFn<PathValue<TState, P>>;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function useStoreGetter(basePath?: any): unknown {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (useStoreGetterBase as (b?: any) => unknown)(basePath);
+  function useStoreGetter<P extends PathOf<TState>, D>(
+    basePath: P,
+    options: UseStoreGetterOptions<TState, D> & { defaultValue: D }
+  ): GetValueFromBaseWithDefaultFn<PathValue<TState, P>, D>;
+
+  function useStoreGetter<const Paths extends ReadonlyArray<PathOf<TState>>>(
+    paths: Paths,
+    options?: UseStoreGetterOptions<TState>
+  ): GetValueMultiFn<TState, Paths>;
+
+  function useStoreGetter<
+    const Paths extends ReadonlyArray<PathOf<TState>>,
+    const TDefaultValue extends readonly (PathValue<TState, Paths[number]> | undefined)[]
+  >(
+    paths: Paths,
+    options: UseStoreGetterOptions<TState, TDefaultValue> & { defaultValue: TDefaultValue }
+  ): GetValueMultiFn<TState, Paths, TDefaultValue>;
+
+  function useStoreGetter<
+    const Paths extends ReadonlyArray<PathOf<TState>>,
+    const TDefaultValue extends PathValue<TState, Paths[number]>
+  >(
+    paths: Paths,
+    options: UseStoreGetterOptions<TState, TDefaultValue> & { defaultValue: TDefaultValue }
+  ): GetValueMultiFn<TState, Paths, TDefaultValue>;
+
+  function useStoreGetter(arg?: any, options?: any): unknown {
+    return (useStoreGetterBase as (a?: any, b?: any) => unknown)(arg, options);
   }
 
   return { useStore, useStoreSync, useStoreGetter };

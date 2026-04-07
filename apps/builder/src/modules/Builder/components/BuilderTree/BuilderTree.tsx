@@ -44,7 +44,7 @@ const BuilderTree = () => {
 
   const isDragAllowed = useCallback(
     (id: string, dropPosition: DropPosition, parentId?: string) => {
-      const element = getElement(id);
+      const element = getElement(id, { defaultValue: undefined });
       const parentElement = parentId ? getElement(parentId) : undefined;
       if (!element || (dropPosition !== 'inside' && !parentElement)) {
         return true;
@@ -82,7 +82,7 @@ const BuilderTree = () => {
 
         case 'itemChanged': {
           const { item } = state.data;
-          const element = getElement(item.id);
+          const element = getElement(item.id, { defaultValue: undefined });
           if (!element) {
             break;
           }
@@ -96,7 +96,7 @@ const BuilderTree = () => {
 
         case 'itemDragged': {
           const { id, toId, dropPosition } = state.data;
-          const element = getElement(id);
+          const element = getElement(id, { defaultValue: undefined });
           if (!element) {
             break;
           }

@@ -134,7 +134,11 @@ const BuilderAreaTracking = ({
       switch (e.key) {
         case 'Delete':
         case 'Backspace': {
-          if (!elementSelected || elementSelected === baseElementId || !getSchema(`flat.${elementSelected}`)) {
+          if (
+            !elementSelected ||
+            elementSelected === baseElementId ||
+            !getSchema(`flat.${elementSelected}`, { defaultValue: undefined })
+          ) {
             break;
           }
 
@@ -222,7 +226,11 @@ const BuilderAreaTracking = ({
         return;
       }
 
-      if (elementSelected === baseElementId || !getSchema() || !getStyle()) {
+      if (
+        elementSelected === baseElementId ||
+        !getSchema(undefined, { defaultValue: undefined }) ||
+        !getStyle(undefined, { defaultValue: undefined })
+      ) {
         return;
       }
 

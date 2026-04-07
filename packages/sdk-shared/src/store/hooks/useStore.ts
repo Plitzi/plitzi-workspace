@@ -13,7 +13,8 @@ import type {
   PathSetters,
   PathValue,
   PathValues,
-  StoreApi
+  StoreApi,
+  StoreHookReactiveOptions
 } from '../../types/StoreTypes';
 
 export type MultiPathReturn<
@@ -29,10 +30,7 @@ export type UseStoreReturn<TState extends object, TArg> =
       ? [TSelected, StoreApi<TState>['setState']]
       : [TState, StoreApi<TState>['setState']];
 
-export type UseStoreOptions<T> = {
-  mode?: 'sync' | 'mount';
-  enabled?: boolean;
-  equalityFn?: (a: T, b: T) => boolean;
+export type UseStoreOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
   defaultValue?: NonNullable<T>;
 };
 
@@ -43,7 +41,7 @@ export type UseStoreMultiOptions<
     | readonly (PathValue<TState, Paths[number]> | undefined)[]
     | PathValue<TState, Paths[number]>
     | undefined = undefined
-> = Omit<UseStoreOptions<never>, 'defaultValue' | 'equalityFn'> & {
+> = Omit<StoreHookReactiveOptions<never, TState>, 'equalityFn'> & {
   equalityFn?: (a: PathValues<TState, Paths>, b: PathValues<TState, Paths>) => boolean;
   defaultValue?: TDefaultValue;
 };
@@ -276,9 +274,10 @@ function useStore<
 
 function useStore<TState extends object>(
   arg?: PathOf<TState> | ReadonlyArray<PathOf<TState>> | ((state: TState) => unknown),
-  options: UseStoreOptions<any> = {}
+  options: UseStoreOptions<any, any> = {}
 ): unknown {
-  const store = use(StoreContext) as StoreApi<TState> | undefined;
+  const contextStore = use(StoreContext) as StoreApi<TState> | undefined;
+  const store = (options.store as StoreApi<TState> | undefined) ?? contextStore;
   if (!store) {
     throw new Error('useStore must be used inside a StoreProvider');
   }
