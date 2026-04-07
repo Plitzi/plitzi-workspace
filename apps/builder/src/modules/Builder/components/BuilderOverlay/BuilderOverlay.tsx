@@ -110,7 +110,14 @@ const BuilderOverlay = ({
 
       return { id, element, elementDOM };
     });
-  }, [baseElementId, element?.definition.parentId, id, getElementDOM, element]);
+  }, [
+    baseElementId,
+    element?.definition.parentId,
+    id,
+    getElementDOM,
+    element,
+    element?.definition.initialState?.visibility
+  ]);
 
   useEffect(() => {
     if (!overlayProps.elementDOM) {
