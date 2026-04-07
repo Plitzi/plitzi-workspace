@@ -27,7 +27,7 @@ import AppMain from '@modules/App/AppMain';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { generateFacade, StoreProvider } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, generateFacade, StoreProvider } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 import { getEnvironmentServer } from './config';
@@ -176,7 +176,7 @@ const App = ({
         };
 
   return (
-    <StoreProvider>
+    <StoreProvider logger={createStoreDevToolsLogger('sdk')}>
       <Provider components={components}>
         <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
           <HelmetProvider>

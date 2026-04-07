@@ -5,7 +5,7 @@ import { createContext, use, useMemo, useRef } from 'react';
 import createStore from './createStore';
 import useStoreSync from './hooks/useStoreSync';
 
-import type { StoreApi } from '../types';
+import type { StoreApi, StoreLogger } from '../types';
 import type { ReactNode } from 'react';
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -16,6 +16,7 @@ export type StoreProviderProps<TState extends object = any> = {
   value?: Partial<TState> | ((state: TState) => TState);
   inherit?: boolean;
   autoSync?: boolean;
+  logger?: StoreLogger<TState>;
   children?: ReactNode;
 };
 
@@ -24,6 +25,7 @@ const StoreProvider = <TState extends object = any>({
   value,
   inherit = false,
   autoSync = true,
+  logger,
   children
 }: StoreProviderProps<TState>) => {
   const parentStore = use(StoreContext) as StoreApi<TState> | undefined;
@@ -38,7 +40,7 @@ const StoreProvider = <TState extends object = any>({
     if (store) {
       storeRef.current = store;
     } else {
-      storeRef.current = createStore<TState>(() => storeState);
+      storeRef.current = createStore<TState>(() => storeState, { logger });
     }
   }
 

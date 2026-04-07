@@ -1,6 +1,8 @@
 import { formatDate } from '../../helpers';
+import getByPath from '../../store/helpers/getByPath';
 
-import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
+import type { Log, LogInteraction, LogNavigation, LogStore, ProviderCallback } from '../../types/DevToolsTypes';
+import type { PathOf, StoreLogger } from '../../types/StoreTypes';
 
 type CallbackInternal = (
   logType: Log['logType'],
@@ -18,19 +20,29 @@ class PlitziConsole {
   callbackInternal?: CallbackInternal;
   callbackAddProvider?: CallbackAddProvider;
   callbackRemoveProvider?: CallbackRemoveProvider;
+  pendingLimit: number = 100;
+  pendingLogs: Log[] = [];
   listening: boolean = false;
   listeningCategory?: Log['category'];
   logsListened: Log[] = [];
   listeningParams?: { category: Log['category'] };
 
-  constructor(callback?: CallbackInternal) {
+  constructor(callback?: CallbackInternal, pendingLimit: number = 100) {
     this.callbackInternal = callback;
+    this.pendingLimit = pendingLimit;
   }
 
   // Integration
 
   setCallback(callback?: CallbackInternal) {
     this.callbackInternal = callback;
+    if (this.pendingLogs.length && this.callbackInternal) {
+      for (const log of this.pendingLogs) {
+        this.callbackInternal(log.logType, log.category, log.message, log.params, log.time);
+      }
+
+      this.pendingLogs = [];
+    }
   }
 
   setCallbackAddProvider(callback?: CallbackAddProvider) {
@@ -44,11 +56,16 @@ class PlitziConsole {
   // Private Methods
 
   #log(logType: Log['logType'], category: Log['category'], message: Log['message'], params: Log['params']) {
+    const time = this.getTime(true);
     if (!this.callbackInternal) {
+      this.pendingLogs.push({ logType, category, message, params, time } as Log);
+      if (this.pendingLogs.length > this.pendingLimit) {
+        this.pendingLogs.shift();
+      }
+
       return;
     }
 
-    const time = this.getTime(true);
     if (!this.listening) {
       this.callbackInternal(logType, category, message, params, time);
     } else if (category === 'navigation') {
@@ -121,5 +138,13 @@ class PlitziConsole {
 }
 
 export const pConsole = new PlitziConsole();
+
+export function createStoreDevToolsLogger<TState extends object>(storeName = 'store'): StoreLogger<TState> {
+  return ({ path, prev, next }) => {
+    const prevValue = path ? getByPath(prev, path as PathOf<TState>) : prev;
+    const nextValue = path ? getByPath(next, path as PathOf<TState>) : next;
+    pConsole.info('store', storeName, { storeName, path, prev: prevValue, next: nextValue } as LogStore['params']);
+  };
+}
 
 export default PlitziConsole;

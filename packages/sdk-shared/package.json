@@ -884,6 +884,10 @@
       "types": "./dist/src/store/helpers/useIsomorphicLayoutEffect.d.ts",
       "import": "./dist/src/store/helpers/useIsomorphicLayoutEffect.mjs"
     },
+    "./store/hooks/shared": {
+      "types": "./dist/src/store/hooks/shared.d.ts",
+      "import": "./dist/src/store/hooks/shared.mjs"
+    },
     "./store/hooks/useStore": {
       "types": "./dist/src/store/hooks/useStore.d.ts",
       "import": "./dist/src/store/hooks/useStore.mjs"
