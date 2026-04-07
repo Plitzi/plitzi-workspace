@@ -1,19 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { use, useCallback } from 'react';
+import { use, useMemo } from 'react';
 
 import getByPath from '../helpers/getByPath';
 import { StoreContext } from '../StoreProvider';
 
-import type {
-  __NoDefault,
-  PathOf,
-  PathValue,
-  PathValues,
-  StoreApi,
-  StoreHookBaseOptions
-} from '../../types/StoreTypes';
+import type { __NoDefault, PathOf, PathValue, StoreApi, StoreHookBaseOptions } from '../../types/StoreTypes';
 
 export type GetValueFn<TState extends object> = {
   (): TState;
@@ -43,11 +36,9 @@ export type GetValueFromBaseWithDefaultFn<TBase, D> = TBase extends object
     }
   : () => NonNullable<TBase> | D;
 
-export type GetValueMultiFn<
-  TState extends object,
-  Paths extends ReadonlyArray<PathOf<TState>>,
-  TDefaultValue = __NoDefault
-> = () => PathValues<TState, Paths, TDefaultValue>;
+export type GetterTuple<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
+  [K in keyof Paths]: Paths[K] extends PathOf<TState> ? GetValueFromBaseFn<PathValue<TState, Paths[K]>> : never;
+};
 
 export type UseStoreGetterOptions<TState extends object = object, D = __NoDefault> = StoreHookBaseOptions<TState> & {
   defaultValue?: D;
@@ -68,36 +59,16 @@ function useStoreGetter<TState extends object, P extends PathOf<TState>, D>(
   options: UseStoreGetterOptions<TState, D> & { defaultValue: D }
 ): GetValueFromBaseWithDefaultFn<PathValue<TState, P>, D>;
 
-// 4. Array paths, no default
+// 4. Array paths — returns tuple of individual getters
 function useStoreGetter<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
   paths: Paths,
   options?: UseStoreGetterOptions<TState>
-): GetValueMultiFn<TState, Paths>;
-
-// 5. Array paths, per-element default array
-function useStoreGetter<
-  TState extends object,
-  const Paths extends ReadonlyArray<PathOf<TState>>,
-  const TDefaultValue extends readonly (PathValue<TState, Paths[number]> | undefined)[]
->(
-  paths: Paths,
-  options: UseStoreGetterOptions<TState, TDefaultValue> & { defaultValue: TDefaultValue }
-): GetValueMultiFn<TState, Paths, TDefaultValue>;
-
-// 6. Array paths, scalar default
-function useStoreGetter<
-  TState extends object,
-  const Paths extends ReadonlyArray<PathOf<TState>>,
-  const TDefaultValue extends PathValue<TState, Paths[number]>
->(
-  paths: Paths,
-  options: UseStoreGetterOptions<TState, TDefaultValue> & { defaultValue: TDefaultValue }
-): GetValueMultiFn<TState, Paths, TDefaultValue>;
+): GetterTuple<TState, Paths>;
 
 function useStoreGetter<TState extends object>(
   arg?: string | readonly string[] | UseStoreGetterOptions<TState>,
   options?: UseStoreGetterOptions<TState, any>
-): (subPath?: string, opts?: { defaultValue?: unknown }) => any {
+): any {
   const resolvedBasePath = typeof arg === 'string' ? arg : undefined;
   const resolvedPaths = Array.isArray(arg) ? arg : undefined;
   const resolvedOptions: UseStoreGetterOptions<TState, any> | undefined =
@@ -112,37 +83,41 @@ function useStoreGetter<TState extends object>(
   const { defaultValue } = resolvedOptions ?? {};
   const pathsKey = resolvedPaths?.join('|');
 
-  return useCallback(
-    (subPath?: string, callDefault?: unknown): any => {
-      const state = store.getState();
-
+  return useMemo(
+    () => {
       if (resolvedPaths) {
-        return resolvedPaths.map((p, i) => {
-          const val = getByPath(state, p as PathOf<TState>);
-          if (val !== undefined || defaultValue === undefined) {
-            return val;
+        return resolvedPaths.map(p => (subPath?: string, callDefault?: unknown): any => {
+          const base = getByPath(store.getState(), p as PathOf<TState>);
+          if (subPath !== undefined) {
+            const subVal = getByPath(base as TState, subPath as PathOf<TState>);
+            return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
           }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return Array.isArray(defaultValue) ? (defaultValue[i] ?? val) : defaultValue;
+
+          return base === undefined && callDefault !== undefined ? callDefault : base;
         });
       }
 
-      if (resolvedBasePath !== undefined) {
-        const base = getByPath(state, resolvedBasePath as PathOf<TState>);
-        if (subPath !== undefined) {
-          const subVal = getByPath(base as TState, subPath as PathOf<TState>);
-          return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
+      return (subPath?: string, callDefault?: unknown): any => {
+        const state = store.getState();
+
+        if (resolvedBasePath !== undefined) {
+          const base = getByPath(state, resolvedBasePath as PathOf<TState>);
+          if (subPath !== undefined) {
+            const subVal = getByPath(base as TState, subPath as PathOf<TState>);
+            return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
+          }
+
+          const baseDefault = callDefault !== undefined ? callDefault : defaultValue;
+          return base === undefined && baseDefault !== undefined ? baseDefault : base;
         }
-        const baseDefault = callDefault !== undefined ? callDefault : defaultValue;
-        return base === undefined && baseDefault !== undefined ? baseDefault : base;
-      }
 
-      if (subPath !== undefined) {
-        const val = getByPath(state, subPath as PathOf<TState>);
-        return val === undefined && callDefault !== undefined ? callDefault : val;
-      }
+        if (subPath !== undefined) {
+          const val = getByPath(state, subPath as PathOf<TState>);
+          return val === undefined && callDefault !== undefined ? callDefault : val;
+        }
 
-      return state;
+        return state;
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, resolvedBasePath, pathsKey, defaultValue]

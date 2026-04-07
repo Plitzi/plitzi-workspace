@@ -26,7 +26,7 @@ import type {
   GetValueFn,
   GetValueFromBaseFn,
   GetValueFromBaseWithDefaultFn,
-  GetValueMultiFn,
+  GetterTuple,
   UseStoreGetterOptions
 } from './hooks/useStoreGetter';
 import type { UseStoreSyncMultiOptions, UseStoreSyncOptions } from './hooks/useStoreSync';
@@ -224,23 +224,7 @@ export const createStoreHook = <TState extends object>() => {
   function useStoreGetter<const Paths extends ReadonlyArray<PathOf<TState>>>(
     paths: Paths,
     options?: UseStoreGetterOptions<TState>
-  ): GetValueMultiFn<TState, Paths>;
-
-  function useStoreGetter<
-    const Paths extends ReadonlyArray<PathOf<TState>>,
-    const TDefaultValue extends readonly (PathValue<TState, Paths[number]> | undefined)[]
-  >(
-    paths: Paths,
-    options: UseStoreGetterOptions<TState, TDefaultValue> & { defaultValue: TDefaultValue }
-  ): GetValueMultiFn<TState, Paths, TDefaultValue>;
-
-  function useStoreGetter<
-    const Paths extends ReadonlyArray<PathOf<TState>>,
-    const TDefaultValue extends PathValue<TState, Paths[number]>
-  >(
-    paths: Paths,
-    options: UseStoreGetterOptions<TState, TDefaultValue> & { defaultValue: TDefaultValue }
-  ): GetValueMultiFn<TState, Paths, TDefaultValue>;
+  ): GetterTuple<TState, Paths>;
 
   function useStoreGetter(arg?: any, options?: any): unknown {
     return (useStoreGetterBase as (a?: any, b?: any) => unknown)(arg, options);

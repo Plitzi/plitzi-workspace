@@ -19,9 +19,7 @@ import type { ClipboardEvent } from 'react';
 
 const BuilderTree = () => {
   const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
-  const getStyle = useStoreGetter('style');
-  const getElement = useStoreGetter('schema.flat');
-  const getSchema = useStoreGetter('schema');
+  const [getSchema, getElement, getStyle] = useStoreGetter(['schema', 'schema.flat', 'style']);
   const [[elementHovered, setHoverElement, elementSelected, setSelectElement]] = useStore([
     'elementHovered',
     'setHovered',

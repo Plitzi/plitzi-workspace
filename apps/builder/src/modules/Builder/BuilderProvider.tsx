@@ -74,8 +74,7 @@ const BuilderProvider = ({
     'elementHovered',
     'elementSelected'
   ]);
-  const getElementSelected = useStoreGetter('elementSelected');
-  const getElement = useStoreGetter('schema.flat');
+  const [getElement, getElementSelected] = useStoreGetter(['schema.flat', 'elementSelected']);
 
   // Builder Methods
 

@@ -57,8 +57,7 @@ const BuilderAreaTracking = ({
     'elementSelected',
     'setSelected'
   ]);
-  const getSchema = useStoreGetter('schema');
-  const getStyle = useStoreGetter('style');
+  const [getSchema, getStyle] = useStoreGetter(['schema', 'style']);
   const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
