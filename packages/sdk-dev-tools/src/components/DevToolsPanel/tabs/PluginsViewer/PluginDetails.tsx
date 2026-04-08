@@ -1,9 +1,6 @@
-import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import syntaxHighlight from '@plitzi/sdk-shared/helpers/syntaxHighlight';
-
-import { useDevToolsTheme } from '../../../../DevToolsThemeContext';
 
 export type PluginDetailsProps = {
   label?: string;
@@ -13,8 +10,6 @@ export type PluginDetailsProps = {
 };
 
 const PluginDetails = ({ author, settings, label, version }: PluginDetailsProps) => {
-  const { isDark } = useDevToolsTheme();
-
   const settingsParsed = useMemo(() => {
     if (!settings || Object.keys(settings).length === 0) {
       return null;
@@ -23,36 +18,33 @@ const PluginDetails = ({ author, settings, label, version }: PluginDetailsProps)
     return syntaxHighlight(JSON.stringify(settings, null, 2));
   }, [settings]);
 
-  const labelColor = isDark ? 'text-zinc-500' : 'text-zinc-400';
-  const valueColor = isDark ? 'text-zinc-200' : 'text-zinc-800';
-  const borderColor = isDark ? 'border-zinc-700' : 'border-zinc-200';
-  const codeBg = isDark ? 'bg-zinc-800' : 'bg-zinc-50';
-
   return (
     <div className="flex h-full grow basis-0 flex-col overflow-y-auto p-4">
-      <div className={clsx('mb-4 border-b pb-3', borderColor)}>
-        <div className={clsx('text-base font-semibold', valueColor)}>{label}</div>
-        <div className={clsx('text-xs', labelColor)}>Plugin</div>
+      <div className="mb-4 border-b border-zinc-200 pb-3 dark:border-zinc-700">
+        <div className="text-base font-semibold text-zinc-800 dark:text-zinc-200">{label}</div>
+        <div className="text-xs text-zinc-400 dark:text-zinc-500">Plugin</div>
       </div>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className={clsx('text-xs font-medium tracking-wider uppercase', labelColor)}>Version</span>
-          <span className={clsx('font-mono text-xs', valueColor)}>{version ?? '—'}</span>
+          <span className="text-xs font-medium tracking-wider text-zinc-400 uppercase dark:text-zinc-500">Version</span>
+          <span className="font-mono text-xs text-zinc-800 dark:text-zinc-200">{version ?? '—'}</span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className={clsx('text-xs font-medium tracking-wider uppercase', labelColor)}>Author</span>
-          <span className={clsx('text-xs', valueColor)}>{author ?? '—'}</span>
+          <span className="text-xs font-medium tracking-wider text-zinc-400 uppercase dark:text-zinc-500">Author</span>
+          <span className="text-xs text-zinc-800 dark:text-zinc-200">{author ?? '—'}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <span className={clsx('text-xs font-medium tracking-wider uppercase', labelColor)}>Settings</span>
+          <span className="text-xs font-medium tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+            Settings
+          </span>
           {settingsParsed ? (
             <pre
-              className={clsx('overflow-auto rounded p-2 font-mono text-xs leading-5', codeBg)}
+              className="overflow-auto rounded bg-zinc-50 p-2 font-mono text-xs leading-5 dark:bg-zinc-800"
               dangerouslySetInnerHTML={{ __html: settingsParsed }}
             />
           ) : (
-            <span className={clsx('text-xs italic', labelColor)}>No settings</span>
+            <span className="text-xs text-zinc-400 italic dark:text-zinc-500">No settings</span>
           )}
         </div>
       </div>

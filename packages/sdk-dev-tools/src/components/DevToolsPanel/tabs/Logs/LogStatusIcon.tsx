@@ -1,7 +1,5 @@
 import clsx from 'clsx';
 
-import { useDevToolsTheme } from '../../../../DevToolsThemeContext';
-
 import type { LogType } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -14,29 +12,6 @@ export type LogStatusIconProps = {
 };
 
 const LogStatusIcon = ({ className, logType = 'info', iconClassName, title, children }: LogStatusIconProps) => {
-  const { isDark } = useDevToolsTheme();
-
-  const iconColor =
-    logType === 'danger'
-      ? isDark
-        ? 'text-red-400'
-        : 'text-red-500'
-      : logType === 'warning'
-        ? isDark
-          ? 'text-amber-400'
-          : 'text-amber-500'
-        : logType === 'info'
-          ? isDark
-            ? 'text-violet-400'
-            : 'text-violet-500'
-          : logType === 'success'
-            ? isDark
-              ? 'text-emerald-400'
-              : 'text-emerald-500'
-            : isDark
-              ? 'text-zinc-400'
-              : 'text-zinc-500';
-
   const defaultIcon =
     logType === 'danger'
       ? 'fa-regular fa-circle-xmark'
@@ -50,7 +25,19 @@ const LogStatusIcon = ({ className, logType = 'info', iconClassName, title, chil
 
   return (
     <div className={clsx('flex items-center gap-1', className)} title={title}>
-      <i className={clsx(iconClassName ?? defaultIcon, iconColor, 'text-xs')} />
+      <i
+        className={clsx(
+          iconClassName ?? defaultIcon,
+          {
+            'text-red-500 dark:text-red-400': logType === 'danger',
+            'text-amber-500 dark:text-amber-400': logType === 'warning',
+            'text-violet-500 dark:text-violet-400': logType === 'info',
+            'text-emerald-500 dark:text-emerald-400': logType === 'success',
+            'text-zinc-500 dark:text-zinc-400': !['danger', 'warning', 'info', 'success'].includes(logType)
+          },
+          'text-xs'
+        )}
+      />
       {children}
     </div>
   );

@@ -920,6 +920,18 @@
       "types": "./dist/src/style/styleConstants.d.ts",
       "import": "./dist/src/style/styleConstants.mjs"
     },
+    "./theme": {
+      "types": "./dist/src/theme/index.d.ts",
+      "import": "./dist/src/theme/index.mjs"
+    },
+    "./theme/ThemeContext": {
+      "types": "./dist/src/theme/ThemeContext.d.ts",
+      "import": "./dist/src/theme/ThemeContext.mjs"
+    },
+    "./theme/index": {
+      "types": "./dist/src/theme/index.d.ts",
+      "import": "./dist/src/theme/index.mjs"
+    },
     "./types": {
       "types": "./dist/src/types/index.d.ts",
       "import": "./dist/src/types/index.mjs"

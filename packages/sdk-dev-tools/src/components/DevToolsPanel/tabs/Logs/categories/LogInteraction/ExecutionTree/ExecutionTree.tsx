@@ -5,7 +5,6 @@ import { useCallback, useMemo } from 'react';
 import { getDurationMs } from '@plitzi/sdk-shared';
 
 import ExecutionTreeNode from './ExecutionTreeNode';
-import { useDevToolsTheme } from '../../../../../../../DevToolsThemeContext';
 
 import type { LogInteraction } from '@plitzi/sdk-shared';
 
@@ -20,8 +19,6 @@ export type ExecutionTreeProps = {
 };
 
 const ExecutionTree = ({ className, nodeId, nodes, selected, onSelect }: ExecutionTreeProps) => {
-  const { isDark } = useDevToolsTheme();
-
   const treeNodes = useMemo(() => {
     let auxNode = get(nodes, nodeId) as Nodes[keyof Nodes] | undefined;
     const tree = [];
@@ -40,12 +37,7 @@ const ExecutionTree = ({ className, nodeId, nodes, selected, onSelect }: Executi
 
   return (
     <div className={clsx('flex flex-col gap-1.5', className)}>
-      <div
-        className={clsx(
-          'flex items-center gap-1.5 px-2 text-[10px] font-semibold tracking-wider uppercase',
-          isDark ? 'text-zinc-500' : 'text-zinc-400'
-        )}
-      >
+      <div className="flex items-center gap-1.5 px-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
         <i className="fa-solid fa-code-merge" />
         Execution Tree
       </div>

@@ -5,3 +5,9 @@
 @plugin '@tailwindcss/forms';
 
 @config '../../tailwind.config.js';
+
+@theme {
+  --color-scheme: light dark;
+}
+
+/* @custom-variant dark (&:where(.dark, .dark *)); */

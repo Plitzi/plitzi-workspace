@@ -3,7 +3,6 @@ import clsx from 'clsx';
 
 import LogNavigationBody from './LogNavigationBody';
 import LogNavigationHeader from './LogNavigationHeader';
-import { useDevToolsTheme } from '../../../../../../DevToolsThemeContext';
 
 import type { LogNavigation as TLogNavigation } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -19,21 +18,15 @@ export type LogNavigationProps = {
 };
 
 const LogNavigation = ({ time, message, params }: LogNavigationProps) => {
-  const { isDark } = useDevToolsTheme();
-
-  const borderColor =
-    params?.status === 'normal'
-      ? 'border-l-emerald-500'
-      : params?.status === 'accessDenied'
-        ? 'border-l-red-500'
-        : 'border-l-amber-500';
-
   return (
     <ContainerCollapsable
       className={clsx(
-        'last:border-b-none w-full border-b border-l-2 px-2 py-1 transition-colors',
-        borderColor,
-        isDark ? 'border-b-zinc-700 hover:bg-zinc-800/50' : 'border-b-zinc-200 hover:bg-zinc-50'
+        'last:border-b-none w-full border-b border-l-2 border-b-zinc-200 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50',
+        {
+          'border-l-emerald-500': params?.status === 'normal',
+          'border-l-red-500': params?.status === 'accessDenied',
+          'border-l-amber-500': params?.status !== 'normal' && params?.status === 'accessDenied'
+        }
       )}
       collapsed
     >
@@ -44,7 +37,7 @@ const LogNavigation = ({ time, message, params }: LogNavigationProps) => {
         iconCollapsed={iconCollapsed}
         iconExpanded={iconExpanded}
       >
-        <span className={isDark ? 'text-zinc-500' : 'text-zinc-400'}>0ms</span>
+        <span className="text-zinc-400 dark:text-zinc-500">0ms</span>
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content>
         <LogNavigationBody elementId={params?.elementId} startTime={time} endTime={time} duration="0ms" />

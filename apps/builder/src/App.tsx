@@ -67,7 +67,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import { createStoreDevToolsLogger, generateFacade, StoreProvider } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, generateFacade, StoreProvider, ThemeProvider } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -366,12 +366,14 @@ const App = (props: AppProps) => {
 
   return (
     <StoreProvider logger={createStoreDevToolsLogger('builder')}>
+      <ThemeProvider storageKey="plitzi-builder-theme">
       <Provider components={components}>
         <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
           {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
           {hasBrowserRouter && childrenParsed}
         </ContainerRoot>
       </Provider>
+      </ThemeProvider>
     </StoreProvider>
   );
 };

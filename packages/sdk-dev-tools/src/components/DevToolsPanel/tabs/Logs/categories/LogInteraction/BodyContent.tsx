@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import ExecutionTree from './ExecutionTree';
 import InteractionNode from './InteractionNode';
-import { useDevToolsTheme } from '../../../../../../DevToolsThemeContext';
 
 import type { LogInteraction } from '@plitzi/sdk-shared';
 
@@ -15,7 +14,6 @@ export type BodyContentProps = {
 };
 
 const BodyContent = ({ className, node, nodes }: BodyContentProps) => {
-  const { isDark } = useDevToolsTheme();
   const [nodeSelectedId, setSelectedNodeId] = useState<string | undefined>(node.id);
   const nodeSelected = useMemo(() => get(nodes, `${nodeSelectedId}`), [nodeSelectedId, nodes]);
 
@@ -30,7 +28,7 @@ const BodyContent = ({ className, node, nodes }: BodyContentProps) => {
         selected={nodeSelectedId}
         onSelect={handleSelect}
       />
-      <div className={clsx('mx-1 w-px shrink-0', isDark ? 'bg-zinc-800' : 'bg-zinc-200')} />
+      <div className="mx-1 w-px shrink-0 bg-zinc-200 dark:bg-zinc-800" />
       {nodeSelectedId && (
         <div className="flex min-w-0 grow basis-0">
           <InteractionNode

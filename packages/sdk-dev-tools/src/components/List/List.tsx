@@ -3,7 +3,6 @@ import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 
 import ListItem from './ListItem';
-import { useDevToolsTheme } from '../../DevToolsThemeContext';
 
 import type { ReactNode } from 'react';
 
@@ -20,7 +19,6 @@ export type ListProps<T> = {
 };
 
 const List = <T extends ListItem>({ items = [], className, value, onSelect }: ListProps<T>) => {
-  const { isDark } = useDevToolsTheme();
   const [filter, setFilter] = useState('');
 
   const itemsSorted = useMemo<ListItem[]>(
@@ -37,16 +35,13 @@ const List = <T extends ListItem>({ items = [], className, value, onSelect }: Li
   const handleSelect = useCallback((id?: string) => onSelect?.(items.find(item => item.id === id)), [items, onSelect]);
 
   return (
-    <div
-      className={clsx('flex h-full flex-col gap-2 border-r', isDark ? 'border-zinc-700' : 'border-zinc-200', className)}
-    >
+    <div className={clsx('flex h-full flex-col gap-2 border-r border-zinc-200 dark:border-zinc-700', className)}>
       <div className="px-2 pt-2">
         <Input value={filter} onChange={handleChangeFilter} placeholder="Search..." size="sm" />
       </div>
-      <div className={clsx('flex flex-col overflow-y-auto text-xs', isDark ? 'text-zinc-300' : 'text-zinc-700')}>
-        {itemsSorted.length === 0 ? (
-          <div className={clsx('p-4 text-center', isDark ? 'text-zinc-600' : 'text-zinc-400')}>No items</div>
-        ) : (
+      <div className="flex flex-col overflow-y-auto text-xs text-zinc-700 dark:text-zinc-300">
+        {!itemsSorted.length && <div className="p-4 text-center text-zinc-400 dark:text-zinc-600">No items</div>}
+        {itemsSorted.length &&
           itemsSorted.map((item, i) => (
             <ListItem
               key={i}
@@ -56,8 +51,7 @@ const List = <T extends ListItem>({ items = [], className, value, onSelect }: Li
               id={item.id}
               onSelect={handleSelect}
             />
-          ))
-        )}
+          ))}
       </div>
     </div>
   );

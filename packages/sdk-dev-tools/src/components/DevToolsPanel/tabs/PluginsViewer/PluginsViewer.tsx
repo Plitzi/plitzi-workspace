@@ -4,7 +4,6 @@ import { use, useCallback, useMemo, useState } from 'react';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 
 import PluginDetails from './PluginDetails';
-import { useDevToolsTheme } from '../../../../DevToolsThemeContext';
 import List from '../../../List';
 
 import type { ListItem } from '../../../List/List';
@@ -15,7 +14,6 @@ export type PluginsViewerProps = {
 };
 
 const PluginsViewer = ({ className }: PluginsViewerProps) => {
-  const { isDark } = useDevToolsTheme();
   const { plugins } = use(PluginsContext);
 
   const pluginsParsed = useMemo<ListItem<Plugin>[]>(
@@ -30,14 +28,12 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
           label: (
             <div className="flex flex-col gap-0.5">
               <span className="capitalize">{pluginKey}</span>
-              <span className={clsx('text-[10px]', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
-                {plugin.manifest.version}
-              </span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{plugin.manifest.version}</span>
             </div>
           )
         };
       }),
-    [plugins, isDark]
+    [plugins]
   );
 
   const [plugin, setPlugin] = useState<ListItem<Plugin> | undefined>();
@@ -54,12 +50,7 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
           settings={plugin.settings}
         />
       ) : (
-        <div
-          className={clsx(
-            'flex grow flex-col items-center justify-center gap-2',
-            isDark ? 'text-zinc-600' : 'text-zinc-400'
-          )}
-        >
+        <div className="flex grow flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-600">
           <i className="fa-solid fa-puzzle-piece text-2xl opacity-30" />
           <span>Select a plugin</span>
         </div>

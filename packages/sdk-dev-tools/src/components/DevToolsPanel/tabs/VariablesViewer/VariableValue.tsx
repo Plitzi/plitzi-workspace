@@ -1,7 +1,5 @@
 import clsx from 'clsx';
 
-import { useDevToolsTheme } from '../../../../DevToolsThemeContext';
-
 export type VariableValueProps = {
   className?: string;
   type?: string;
@@ -10,38 +8,25 @@ export type VariableValueProps = {
 };
 
 const VariableValue = ({ className, type, preffix, value }: VariableValueProps) => {
-  const { isDark } = useDevToolsTheme();
-
   return (
     <div className={clsx('flex items-center gap-1.5', className)}>
       {preffix && (
-        <span
-          className={clsx(
-            'shrink-0 text-[10px] font-medium tracking-wider uppercase',
-            isDark ? 'text-zinc-500' : 'text-zinc-400'
-          )}
-        >
+        <span className="shrink-0 text-[10px] font-medium tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
           {preffix}
         </span>
       )}
       {type === 'color' && (
         <div
-          className={clsx('h-3.5 w-3.5 shrink-0 rounded-sm border', isDark ? 'border-zinc-600' : 'border-zinc-300')}
+          className="h-3.5 w-3.5 shrink-0 rounded-sm border border-zinc-300 dark:border-zinc-600"
           title={value}
           style={{ backgroundColor: value }}
         />
       )}
       <span
-        className={clsx(
-          'truncate font-mono',
-          type === 'color'
-            ? isDark
-              ? 'text-zinc-300'
-              : 'text-zinc-700'
-            : isDark
-              ? 'text-violet-300'
-              : 'text-violet-700'
-        )}
+        className={clsx('truncate font-mono', {
+          'text-zinc-700 dark:text-zinc-300': type === 'color',
+          'text-violet-700 dark:text-violet-300': type !== 'color'
+        })}
         title={value}
       >
         {value ?? '—'}

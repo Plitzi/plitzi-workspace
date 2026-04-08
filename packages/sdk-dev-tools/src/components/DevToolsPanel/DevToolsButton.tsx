@@ -1,7 +1,5 @@
 import clsx from 'clsx';
 
-import { useDevToolsTheme } from '../../DevToolsThemeContext';
-
 import type { MouseEvent } from 'react';
 
 export type DevToolsButtonProps = {
@@ -13,19 +11,15 @@ export type DevToolsButtonProps = {
 };
 
 const DevToolsButton = ({ className, iconClassName, title, isSelected = false, onClick }: DevToolsButtonProps) => {
-  const { isDark } = useDevToolsTheme();
-
   return (
     <button
       className={clsx(
         'flex h-6 w-6 cursor-pointer items-center justify-center rounded transition-colors',
-        isSelected
-          ? isDark
-            ? 'bg-violet-500/20 text-violet-400'
-            : 'bg-violet-500/10 text-violet-600'
-          : isDark
-            ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100'
-            : 'text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900',
+        {
+          'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400': isSelected,
+          'text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100':
+            !isSelected
+        },
         className
       )}
       title={title}

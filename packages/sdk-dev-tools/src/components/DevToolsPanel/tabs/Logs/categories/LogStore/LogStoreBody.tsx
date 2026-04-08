@@ -1,122 +1,15 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useDevToolsTheme } from '../../../../../../DevToolsThemeContext';
+import buildDiff from './helpers/buildDiff';
+import buildHunks from './helpers/buildHunks';
+import buildSections from './helpers/buildSections';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type DiffLine = { type: 'same' | 'added' | 'removed'; text: string };
-type Hunk = { start: number; end: number };
-type Section =
+export type DiffLine = { type: 'same' | 'added' | 'removed'; text: string };
+export type Hunk = { start: number; end: number };
+export type Section =
   | { kind: 'line'; line: DiffLine; diffIndex: number; hunkIndex: number | null }
   | { kind: 'separator'; hunkIndex: number; total: number };
-
-// ─── Diff algorithm (LCS backtrack) ──────────────────────────────────────────
-
-function serialize(value: unknown): string {
-  if (value === undefined || value === null) {
-    return '';
-  }
-
-  if (typeof value === 'function') {
-    return 'Function';
-  }
-
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    return String(value);
-  }
-}
-
-function buildDiff(prev: unknown, next: unknown): DiffLine[] {
-  const a = serialize(prev).split('\n');
-  const b = serialize(next).split('\n');
-  const m = a.length;
-  const n = b.length;
-
-  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0) as number[]);
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
-    }
-  }
-
-  const lines: DiffLine[] = [];
-  let i = m;
-  let j = n;
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
-      lines.unshift({ type: 'same', text: a[i - 1] });
-      i--;
-      j--;
-    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      lines.unshift({ type: 'added', text: b[j - 1] });
-      j--;
-    } else {
-      lines.unshift({ type: 'removed', text: a[i - 1] });
-      i--;
-    }
-  }
-
-  return lines;
-}
-
-// ─── Hunk detection ───────────────────────────────────────────────────────────
-
-function buildHunks(diff: DiffLine[]): Hunk[] {
-  const hunks: Hunk[] = [];
-  let start = -1;
-
-  for (let i = 0; i < diff.length; i++) {
-    if (diff[i].type !== 'same') {
-      if (start === -1) {
-        start = i;
-      }
-    } else if (start !== -1) {
-      hunks.push({ start, end: i - 1 });
-      start = -1;
-    }
-  }
-
-  if (start !== -1) {
-    hunks.push({ start, end: diff.length - 1 });
-  }
-
-  return hunks;
-}
-
-// ─── Section builder ─────────────────────────────────────────────────────────
-
-function buildSections(diff: DiffLine[], hunks: Hunk[], contextLines: number): Section[] {
-  if (hunks.length === 0) {
-    return diff.map((line, i) => ({ kind: 'line', line, diffIndex: i, hunkIndex: null }));
-  }
-
-  const sections: Section[] = [];
-  let lastEnd = -1;
-
-  hunks.forEach((hunk, hunkIdx) => {
-    const ctxStart = Math.max(0, hunk.start - contextLines);
-    const ctxEnd = Math.min(diff.length - 1, hunk.end + contextLines);
-
-    if (ctxStart > lastEnd + 1) {
-      sections.push({ kind: 'separator', hunkIndex: hunkIdx, total: hunks.length });
-    }
-
-    for (let i = Math.max(ctxStart, lastEnd + 1); i <= ctxEnd; i++) {
-      const inHunk = i >= hunk.start && i <= hunk.end;
-      sections.push({ kind: 'line', line: diff[i], diffIndex: i, hunkIndex: inHunk ? hunkIdx : null });
-    }
-
-    lastEnd = ctxEnd;
-  });
-
-  return sections;
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export type LogStoreBodyProps = {
   path?: string;
@@ -126,7 +19,6 @@ export type LogStoreBodyProps = {
 };
 
 const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps) => {
-  const { isDark } = useDevToolsTheme();
   const containerRef = useRef<HTMLPreElement | null>(null);
   const [activeHunk, setActiveHunk] = useState(0);
 
@@ -166,52 +58,35 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diff]);
 
-  // ─── Theme classes ──────────────────────────────────────────────────────────
-
-  const codeBg = isDark ? 'bg-zinc-800' : 'bg-zinc-50';
-  const pathColor = isDark ? 'text-zinc-500' : 'text-zinc-400';
-  const labelColor = isDark ? 'text-zinc-400' : 'text-zinc-500';
-  const hunkCountColor = isDark ? 'text-zinc-600' : 'text-zinc-400';
-  const sameLineColor = isDark ? 'text-zinc-600' : 'text-zinc-400';
-  const navBtnBase = clsx(
-    'rounded px-2 py-0.5 text-xs transition-colors',
-    isDark ? 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600' : 'bg-zinc-200 text-zinc-600 hover:bg-zinc-300'
-  );
-  const navBtnDisabled = isDark ? 'opacity-30 cursor-not-allowed' : 'opacity-30 cursor-not-allowed';
-
   return (
-    <div
-      className={clsx(
-        'mx-2 my-1.5 flex flex-col gap-2 rounded border font-mono',
-        isDark ? 'border-zinc-700 bg-zinc-800/50' : 'border-zinc-200 bg-zinc-50'
-      )}
-    >
+    <div className="mx-2 my-1.5 flex flex-col gap-2 rounded border border-zinc-200 bg-zinc-50 font-mono dark:border-zinc-700 dark:bg-zinc-800/50">
       {/* Header */}
-      <div
-        className={clsx(
-          'flex items-center justify-between border-b px-2 py-1',
-          isDark ? 'border-zinc-700' : 'border-zinc-200'
-        )}
-      >
+      <div className="flex items-center justify-between border-b border-zinc-200 px-2 py-1 dark:border-zinc-700">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className={clsx('shrink-0', labelColor)}>path</span>
-          <span className={clsx('truncate', pathColor)}>{path ?? '(full state)'}</span>
+          <span className="shrink-0 text-zinc-500 dark:text-zinc-400">path</span>
+          <span className="truncate text-zinc-400 dark:text-zinc-500">{path ?? '(full state)'}</span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {hasDiffs && (
-            <span className={clsx('tabular-nums', hunkCountColor)}>
+            <span className="text-zinc-400 tabular-nums dark:text-zinc-600">
               {activeHunk + 1}/{hunks.length}
             </span>
           )}
           <button
-            className={clsx(navBtnBase, (!hasDiffs || isFirst) && navBtnDisabled)}
+            className={clsx(
+              'rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600',
+              { 'cursor-not-allowed opacity-30 dark:cursor-not-allowed dark:opacity-30': !hasDiffs || isFirst }
+            )}
             disabled={!hasDiffs || isFirst}
             onClick={() => navigate(-1)}
           >
             ↑ Prev
           </button>
           <button
-            className={clsx(navBtnBase, (!hasDiffs || isLast) && navBtnDisabled)}
+            className={clsx(
+              'rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600',
+              { 'cursor-not-allowed opacity-30 dark:cursor-not-allowed dark:opacity-30': !hasDiffs || isLast }
+            )}
             disabled={!hasDiffs || isLast}
             onClick={() => navigate(1)}
           >
@@ -221,8 +96,8 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
       </div>
 
       {/* Diff content */}
-      <pre ref={containerRef} className={clsx('max-h-64 overflow-auto text-xs leading-5', codeBg)}>
-        {!hasDiffs && <div className={clsx('px-3 py-2 italic', sameLineColor)}>No changes</div>}
+      <pre ref={containerRef} className="max-h-64 overflow-auto bg-zinc-50 text-xs leading-5 dark:bg-zinc-800">
+        {!hasDiffs && <div className="px-3 py-2 text-zinc-400 italic dark:text-zinc-600">No changes</div>}
 
         {sections.map((section, idx) => {
           if (section.kind === 'separator') {
@@ -232,16 +107,10 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
               <div
                 key={`sep-${idx}`}
                 data-hunk={section.hunkIndex}
-                className={clsx(
-                  'px-3',
-                  isActive
-                    ? isDark
-                      ? 'bg-violet-900/40 text-violet-400'
-                      : 'bg-violet-50 text-violet-600'
-                    : isDark
-                      ? 'text-zinc-700'
-                      : 'text-zinc-400'
-                )}
+                className={clsx('px-3', {
+                  'bg-violet-50 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400': isActive,
+                  'text-zinc-400 dark:text-zinc-700': !isActive
+                })}
               >
                 @@ hunk {section.hunkIndex + 1}/{section.total} @@
               </div>
@@ -256,16 +125,10 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
               <div
                 key={diffIndex}
                 data-hunk={hunkIndex ?? undefined}
-                className={clsx(
-                  'px-3',
-                  isActiveHunkLine
-                    ? isDark
-                      ? 'bg-red-500/20 text-red-300'
-                      : 'bg-red-100 text-red-700'
-                    : isDark
-                      ? 'bg-red-500/10 text-red-400'
-                      : 'bg-red-50 text-red-600'
-                )}
+                className={clsx('px-3', {
+                  'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300': isActiveHunkLine,
+                  'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400': !isActiveHunkLine
+                })}
               >
                 {'- '}
                 {line.text}
@@ -278,16 +141,10 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
               <div
                 key={diffIndex}
                 data-hunk={hunkIndex ?? undefined}
-                className={clsx(
-                  'px-3',
-                  isActiveHunkLine
-                    ? isDark
-                      ? 'bg-emerald-500/20 text-emerald-300'
-                      : 'bg-emerald-100 text-emerald-700'
-                    : isDark
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-emerald-50 text-emerald-600'
-                )}
+                className={clsx('px-3', {
+                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300': isActiveHunkLine,
+                  'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400': !isActiveHunkLine
+                })}
               >
                 {'+ '}
                 {line.text}
@@ -296,7 +153,7 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
           }
 
           return (
-            <div key={diffIndex} className={clsx('px-3', sameLineColor)}>
+            <div key={diffIndex} className="px-3 text-zinc-400 dark:text-zinc-600">
               {'  '}
               {line.text}
             </div>

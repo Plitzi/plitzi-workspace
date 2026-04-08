@@ -13,3 +13,4 @@ export * from './collections';
 export * from './websockets';
 export * from './devTools';
 export * from './store';
+export * from './theme';

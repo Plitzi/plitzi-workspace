@@ -7,7 +7,6 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import DevToolsBody from './DevToolsBody';
 import DevToolsHeader from './DevToolsHeader';
 import DevToolsSubHeader from './DevToolsSubHeader';
-import { useDevToolsTheme } from '../../DevToolsThemeContext';
 
 import type { Orientation } from '../../DevToolsContainer';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
@@ -22,7 +21,6 @@ export type DevToolsPanelProps = {
 };
 
 const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientation }: DevToolsPanelProps) => {
-  const { isDark } = useDevToolsTheme();
   const [tabSelected, setTabSelected] = useState('logs');
   const { currentPageId } = use(NavigationContext);
   const [elementSelected, setElementSelected] = useState<string | undefined>();
@@ -47,9 +45,7 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
       parentRef={parentRef}
       autoGrow={false}
     >
-      <div
-        className={clsx('flex h-full w-full flex-col', isDark ? 'bg-zinc-900 text-zinc-200' : 'bg-white text-zinc-800')}
-      >
+      <div className="flex h-full w-full flex-col bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
         <DevToolsHeader
           orientation={orientation}
           onChangeOrientation={onChangeOrientation}

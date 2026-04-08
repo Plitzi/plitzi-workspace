@@ -1,8 +1,5 @@
 import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
-import clsx from 'clsx';
 import { useMemo } from 'react';
-
-import { useDevToolsTheme } from '../../../../../../../DevToolsThemeContext';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -11,8 +8,6 @@ export type NodeWhenProps = {
 };
 
 const NodeWhen = ({ when }: NodeWhenProps) => {
-  const { isDark } = useDevToolsTheme();
-
   const whenStr = useMemo(() => {
     if (!when) {
       return null;
@@ -27,15 +22,10 @@ const NodeWhen = ({ when }: NodeWhenProps) => {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <span
-        className={clsx(
-          'text-[10px] font-semibold tracking-wider uppercase',
-          isDark ? 'text-zinc-500' : 'text-zinc-400'
-        )}
-      >
+      <span className="text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
         Condition
       </span>
-      <span className={clsx('break-all', isDark ? 'text-zinc-300' : 'text-zinc-700')}>{whenStr}</span>
+      <span className="break-all text-zinc-700 dark:text-zinc-300">{whenStr}</span>
     </div>
   );
 };

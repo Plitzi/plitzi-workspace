@@ -3,7 +3,6 @@ import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import DevToolsButton from './DevToolsButton';
-import { useDevToolsTheme } from '../../DevToolsThemeContext';
 
 import type { ReactNode } from 'react';
 
@@ -16,7 +15,6 @@ export type DevToolsSubHeaderProps = {
 };
 
 const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelectElement }: DevToolsSubHeaderProps) => {
-  const { isDark } = useDevToolsTheme();
   const [selectorEnabled, setSelectorEnabled] = useState(false);
 
   const handleElementHovered = useCallback(
@@ -99,8 +97,7 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
   return (
     <div
       className={clsx(
-        'flex shrink-0 items-center justify-between gap-2 border-b px-2 py-1',
-        isDark ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-50',
+        'flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800',
         className
       )}
     >

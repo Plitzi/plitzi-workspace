@@ -2,9 +2,11 @@ import Button from '@plitzi/plitzi-ui/Button';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
+import clsx from 'clsx';
 import { use, useState, useCallback, useMemo, memo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
@@ -21,6 +23,7 @@ import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared'
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 const AppHeader = () => {
+  const { isDark, toggleTheme } = use(ThemeContext);
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
@@ -110,9 +113,16 @@ const AppHeader = () => {
   }, []);
 
   return (
-    <div className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+    <div
+      className={clsx(
+        'py-3border-gray-200 flex h-12 items-center justify-between border-b bg-white px-4 text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200'
+      )}
+    >
       <div className="flex h-full items-center gap-4">
-        <div className="bg-grayviolet-200 flex h-8 w-20 items-center justify-between rounded-lg px-3" id="plitzi-logo">
+        <div
+          className={clsx('px-3bg-zinc-100 flex h-8 w-20 items-center justify-between rounded-lg dark:bg-zinc-800')}
+          id="plitzi-logo"
+        >
           <a href={origin}>
             <img src="https://cdn.plitzi.com/resources/img/favicon.svg" className="h-6 w-6" alt="Plitzi" />
           </a>
@@ -138,6 +148,15 @@ const AppHeader = () => {
           })}
         </div>
         <PreviewModeButtons />
+        <button
+          className={clsx(
+            'flex h-7 w-7 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
+          )}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={toggleTheme}
+        >
+          <i className={clsx('fa-solid text-sm', isDark ? 'fa-sun' : 'fa-moon')} />
+        </button>
         <div className="flex gap-4">
           <Button
             id="header-publish"

@@ -1,7 +1,3 @@
-import clsx from 'clsx';
-
-import { useDevToolsTheme } from '../../../../../../../DevToolsThemeContext';
-
 export type NodeHeaderProps = {
   className?: string;
   duration?: string;
@@ -11,28 +7,23 @@ export type NodeHeaderProps = {
 };
 
 const NodeHeader = ({ duration, status, type, action }: NodeHeaderProps) => {
-  const { isDark } = useDevToolsTheme();
-
-  const labelColor = isDark ? 'text-zinc-500' : 'text-zinc-400';
-  const valueColor = isDark ? 'text-zinc-300' : 'text-zinc-700';
-
   return (
-    <div className={clsx('grid grid-cols-2 gap-x-3 gap-y-0.5 rounded p-2', isDark ? 'bg-zinc-800/60' : 'bg-zinc-50')}>
+    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 rounded bg-zinc-50 p-2 dark:bg-zinc-800/60">
       <div className="flex gap-1.5">
-        <span className={labelColor}>Duration</span>
-        <span className={clsx('font-mono', valueColor)}>{duration}</span>
+        <span className="text-zinc-400 dark:text-zinc-500">Duration</span>
+        <span className="font-mono text-zinc-700 dark:text-zinc-300">{duration}</span>
       </div>
       <div className="flex gap-1.5">
-        <span className={labelColor}>Type</span>
-        <span className={valueColor}>{type}</span>
+        <span className="text-zinc-400 dark:text-zinc-500">Type</span>
+        <span className="text-zinc-700 dark:text-zinc-300">{type}</span>
       </div>
       <div className="flex gap-1.5">
-        <span className={labelColor}>Status</span>
-        <span className={valueColor}>{status}</span>
+        <span className="text-zinc-400 dark:text-zinc-500">Status</span>
+        <span className="text-zinc-700 dark:text-zinc-300">{status}</span>
       </div>
       <div className="flex gap-1.5">
-        <span className={labelColor}>Action</span>
-        <span className={valueColor}>{action}</span>
+        <span className="text-zinc-400 dark:text-zinc-500">Action</span>
+        <span className="text-zinc-700 dark:text-zinc-300">{action}</span>
       </div>
     </div>
   );

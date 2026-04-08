@@ -2,7 +2,6 @@ import clsx from 'clsx';
 import { useMemo, useCallback } from 'react';
 
 import LogsSummaryItem from './LogsSummaryItem';
-import { useDevToolsTheme } from '../../../../../DevToolsThemeContext';
 
 import type { Orientation } from '../../../../../DevToolsContainer';
 import type { Log, LogType } from '@plitzi/sdk-shared';
@@ -16,8 +15,6 @@ export type LogsSummaryProps = {
 };
 
 const LogsSummary = ({ className, orientation = 'horizontal', items, logTypeSelected, onClick }: LogsSummaryProps) => {
-  const { isDark } = useDevToolsTheme();
-
   const summary = useMemo(() => {
     return items.reduce<Record<string, number>>((acc, log) => {
       const { logType } = log;
@@ -34,8 +31,7 @@ const LogsSummary = ({ className, orientation = 'horizontal', items, logTypeSele
   return (
     <div
       className={clsx(
-        'flex shrink-0 select-none',
-        isDark ? 'border-zinc-700' : 'border-zinc-200',
+        'flex shrink-0 border-zinc-200 select-none dark:border-zinc-700',
         orientation === 'horizontal' ? 'flex-col border-r' : 'border-b',
         className
       )}
