@@ -126,7 +126,7 @@ export type LogStoreBodyProps = {
   contextLines?: number;
 };
 
-const LogStoreBody = ({ path, prev, next, contextLines = 3 }: LogStoreBodyProps) => {
+const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps) => {
   const containerRef = useRef<HTMLPreElement | null>(null);
   const [activeHunk, setActiveHunk] = useState(0);
 
