@@ -1,7 +1,12 @@
 @use './sdk';
 @use '@plitzi/plitzi-ui/Toast/Assets/index.scss';
-@import './tailwind.css';
 @import '@plitzi/plitzi-ui/style.css';
+
+@layer components {
+  @import '@fortawesome/fontawesome-free/css/all.min.css';
+}
+
+@import './tailwind.css';
 
 body {
   margin: 0;

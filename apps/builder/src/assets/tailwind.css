@@ -1,13 +1,11 @@
-@import 'tailwindcss/theme.css';
-@import 'tailwindcss/preflight.css';
-@import 'tailwindcss/utilities.css';
+@import 'tailwindcss';
 
 @plugin '@tailwindcss/forms';
 
 @config '../../tailwind.config.js';
 
-@theme {
+/* @theme {
   --color-scheme: light dark;
-}
+} */
 
 /* @custom-variant dark (&:where(.dark, .dark *)); */
