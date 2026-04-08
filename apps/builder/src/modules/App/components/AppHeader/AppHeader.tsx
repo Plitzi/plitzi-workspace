@@ -1,22 +1,19 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import { get } from '@plitzi/plitzi-ui/helpers';
-import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import { use, useState, useCallback, useMemo } from 'react';
+import { use, useState, useCallback, useMemo, memo } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
-import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
 import BorderButton from './BorderButton';
 import DisplayModeButtons from './DisplayModeButtons';
 import HistoryButtons from './HistoryButtons';
 import PageHeader from './PageHeader';
+import PreviewModeButtons from './PreviewModeButtons';
 import ZoomButtons from './ZoomButtons';
-import AppContext from '../../AppContext';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
 
@@ -26,17 +23,9 @@ import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/Netw
 const AppHeader = () => {
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const { eventBridge } = use(EventBridgeContext);
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
-  const queueProcessing = use(QueueStatusContext);
-  const { previewMode, setPreviewMode } = use(AppContext);
   const [loadingDeployment, setLoadingDeployment] = useState(false);
   const { subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
-
-  const handleClickPreviewMode = useCallback(() => {
-    void eventBridge.emit('builder', 'builderSetSelected', null);
-    setPreviewMode(state => !state);
-  }, [eventBridge, setPreviewMode]);
 
   const handleClickPublish = useCallback(async () => {
     const response = await showModal<{ environment: string; description: string }>(
@@ -148,19 +137,7 @@ const AppHeader = () => {
             return <BuilderCollaboratorHeaderUser key={i} color={color} firstName={firstName} surName={surName} />;
           })}
         </div>
-        <IconGroup gap={4}>
-          <IconGroup.Icon
-            icon={queueProcessing ? 'fas fa-sync fa-spin' : 'fas fa-check'}
-            title="Mode: Desktop"
-            intent="custom"
-            className="text-green-500"
-          />
-          <IconGroup.Icon
-            icon={previewMode ? 'fa-solid fa-pause' : 'fa-solid fa-play'}
-            cursor="pointer"
-            onClick={handleClickPreviewMode}
-          />
-        </IconGroup>
+        <PreviewModeButtons />
         <div className="flex gap-4">
           <Button
             id="header-publish"
@@ -186,4 +163,4 @@ const AppHeader = () => {
   );
 };
 
-export default AppHeader;
+export default memo(AppHeader);

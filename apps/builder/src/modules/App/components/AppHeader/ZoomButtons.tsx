@@ -1,5 +1,5 @@
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo, memo } from 'react';
 
 import AppContext from '@pmodules/App/AppContext';
 
@@ -41,4 +41,4 @@ const ZoomButtons = () => {
   );
 };
 
-export default ZoomButtons;
+export default memo(ZoomButtons);

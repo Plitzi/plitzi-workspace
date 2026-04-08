@@ -41,10 +41,10 @@ const Directory = ({
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [flat] = useStore('schema.flat');
+  const [pageDefinitions] = useStore('pageDefinitions');
   const items = useMemo(
     () =>
-      Object.values(flat)
+      Object.values(pageDefinitions)
         .filter(({ attributes, definition }) => {
           const sameFolder = attributes.folder === id || (!attributes.folder && !id);
 
@@ -76,7 +76,7 @@ const Directory = ({
             return (labelA || '').localeCompare(labelB || '');
           }
         ),
-    [flat, id]
+    [id, pageDefinitions]
   );
   const directories = useMemo(
     () =>

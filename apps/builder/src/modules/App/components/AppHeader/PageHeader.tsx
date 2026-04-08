@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { useCallback, use } from 'react';
+import { useCallback, use, memo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
@@ -33,4 +33,4 @@ const PageHeader = () => {
   );
 };
 
-export default PageHeader;
+export default memo(PageHeader);

@@ -22,9 +22,9 @@ export type DirectoryItemProps = {
 
 const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryItemProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, styleCache]] = useStore(['schema', 'style.cache']);
-  const { eventBridge } = use(EventBridgeContext);
   const [zoom, setZoom] = useState(false);
+  const [[schema, styleCache]] = useStore(['schema', 'style.cache'], { enabled: zoom });
+  const { eventBridge } = use(EventBridgeContext);
   const styleMemo = useMemo(() => ({ paddingLeft: nestedLevel * 16 }), [nestedLevel]);
 
   const handleClickZoom = useCallback((e: MouseEvent) => {
