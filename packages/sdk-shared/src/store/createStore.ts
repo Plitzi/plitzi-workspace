@@ -7,6 +7,7 @@ import isPathAffected from './helpers/isPathAffected';
 import setByPath from './helpers/setByPath';
 import useStoreBase from './hooks/useStore';
 import useStoreGetterBase from './hooks/useStoreGetter';
+import useStoreSetterBase from './hooks/useStoreSetter';
 import useStoreSyncBase from './hooks/useStoreSync';
 
 import type {
@@ -29,6 +30,7 @@ import type {
   GetterTuple,
   UseStoreGetterOptions
 } from './hooks/useStoreGetter';
+import type { SetFromBaseFn, SetStateFn, UseStoreSetterOptions } from './hooks/useStoreSetter';
 import type { UseStoreSyncMultiOptions, UseStoreSyncOptions } from './hooks/useStoreSync';
 
 function createStore<TState extends object>(
@@ -232,7 +234,18 @@ export const createStoreHook = <TState extends object>() => {
     return (useStoreGetterBase as (a?: any, b?: any) => unknown)(arg, options);
   }
 
-  return { useStore, useStoreSync, useStoreGetter };
+  function useStoreSetter(options?: UseStoreSetterOptions<TState>): SetStateFn<TState>;
+
+  function useStoreSetter<P extends PathOf<TState>>(
+    basePath: P,
+    options?: UseStoreSetterOptions<TState>
+  ): SetFromBaseFn<PathValue<TState, P>>;
+
+  function useStoreSetter(arg?: any, options?: any): unknown {
+    return (useStoreSetterBase as (a?: any, b?: any) => unknown)(arg, options);
+  }
+
+  return { useStore, useStoreSync, useStoreGetter, useStoreSetter };
 };
 
 export default createStore;

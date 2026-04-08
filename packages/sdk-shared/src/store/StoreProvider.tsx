@@ -13,6 +13,7 @@ export const StoreContext = createContext<StoreApi<any> | undefined>(undefined);
 
 export type StoreProviderProps<TState extends object = any> = {
   store?: StoreApi<TState>;
+  path?: string;
   value?: Partial<TState> | ((state: TState) => TState);
   inherit?: boolean;
   autoSync?: boolean;
@@ -22,6 +23,7 @@ export type StoreProviderProps<TState extends object = any> = {
 
 const StoreProvider = <TState extends object = any>({
   store,
+  path,
   value,
   inherit = false,
   autoSync = true,
@@ -44,10 +46,14 @@ const StoreProvider = <TState extends object = any>({
     }
   }
 
-  useStoreSync<TState>(undefined, storeState as Partial<TState>, {
-    enabled: !!value && autoSync,
-    store: storeRef.current
-  });
+  const syncEnabled = !!value && autoSync;
+  const syncStore = storeRef.current;
+
+  // Path sync: write only the sub-path. Full-state sync: merge whole storeState.
+  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-unsafe-argument
+  useStoreSync(path as any, (path ? value : storeState) as any, { enabled: syncEnabled && !!path, store: syncStore });
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useStoreSync<TState>(undefined, storeState as Partial<TState>, { enabled: syncEnabled && !path, store: syncStore });
 
   return <StoreContext value={storeRef.current}>{children}</StoreContext>;
 };
