@@ -896,6 +896,10 @@
       "types": "./dist/src/store/hooks/useStoreGetter.d.ts",
       "import": "./dist/src/store/hooks/useStoreGetter.mjs"
     },
+    "./store/hooks/useStoreSetter": {
+      "types": "./dist/src/store/hooks/useStoreSetter.d.ts",
+      "import": "./dist/src/store/hooks/useStoreSetter.mjs"
+    },
     "./store/hooks/useStoreSync": {
       "types": "./dist/src/store/hooks/useStoreSync.d.ts",
       "import": "./dist/src/store/hooks/useStoreSync.mjs"

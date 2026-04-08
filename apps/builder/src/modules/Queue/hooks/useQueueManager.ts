@@ -1,12 +1,13 @@
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 
+import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
 import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
-import { SchemaActions } from '@pmodules/Schema/SchemaReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
 import type { QueueItem, QueuePriority } from '../QueueContext';
+import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type {
   BuilderMutationsMap,
   BuilderQueriesMap,
@@ -18,7 +19,6 @@ import type {
 } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
-import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 
 export type UseQueueManagerProps = {

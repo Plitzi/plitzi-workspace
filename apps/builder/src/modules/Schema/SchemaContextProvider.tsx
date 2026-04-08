@@ -8,6 +8,7 @@ import { useMemo, useCallback, use, useEffect } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
@@ -16,10 +17,8 @@ import { createStoreHook } from '@plitzi/sdk-shared/store';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-import SchemaReducer, { SchemaActions } from './SchemaReducer';
-
-import type { SchemaReducerActions } from './SchemaReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type {
   BuilderMutationsMap,
   BuilderNetworkContextValue,

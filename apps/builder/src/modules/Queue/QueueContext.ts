@@ -2,9 +2,9 @@
 import { createContext } from 'react';
 
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
-import type { SchemaReducerActions } from '@pmodules/Schema/SchemaReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 import type { ActionDispatch } from 'react';
 
