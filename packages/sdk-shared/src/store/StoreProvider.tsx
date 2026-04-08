@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { createContext, use, useMemo, useRef } from 'react';
@@ -8,8 +9,8 @@ import useStoreSync from './hooks/useStoreSync';
 import type { StoreApi, StoreLogger } from '../types';
 import type { ReactNode } from 'react';
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const StoreContext = createContext<StoreApi<any> | undefined>(undefined);
+const StoreContext = createContext<StoreApi<any> | undefined>(undefined);
+StoreContext.displayName = 'StoreContext';
 
 export type StoreProviderProps<TState extends object = any> = {
   store?: StoreApi<TState>;
@@ -50,12 +51,12 @@ const StoreProvider = <TState extends object = any>({
   const syncStore = storeRef.current;
 
   // Path sync: write only the sub-path. Full-state sync: merge whole storeState.
-  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-unsafe-argument
   useStoreSync(path as any, (path ? value : storeState) as any, { enabled: syncEnabled && !!path, store: syncStore });
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useStoreSync<TState>(undefined, storeState as Partial<TState>, { enabled: syncEnabled && !path, store: syncStore });
 
   return <StoreContext value={storeRef.current}>{children}</StoreContext>;
 };
+
+export { StoreContext };
 
 export default StoreProvider;

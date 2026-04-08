@@ -25,6 +25,7 @@ export type ElementContextValue<T = unknown, T2 extends 'skipHOC' | 'full' = 'fu
 const ElementContext = createContext<ElementContextValue | ElementContextValue<unknown, 'skipHOC'>>(
   undefined as unknown as ElementContextValue
 );
+ElementContext.displayName = 'ElementContext';
 
 export type ElementProviderProps = {
   children: ReactNode;

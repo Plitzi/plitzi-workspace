@@ -109,5 +109,6 @@ export type BuilderContextValue = {
 const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValue;
 
 const BuilderContext = createContext<BuilderContextValue>(builderContextDefaultValue);
+BuilderContext.displayName = 'BuilderContext';
 
 export default BuilderContext;

@@ -28,6 +28,7 @@ const workflowContextDefaultValue = {
   direction: 'horizontal'
 } as WorkflowContextValue;
 
-const WorkflowContext = createContext<WorkflowContextValue>(workflowContextDefaultValue);
+const WorkflowContext = createContext(workflowContextDefaultValue);
+WorkflowContext.displayName = 'WorkflowContext';
 
 export default WorkflowContext;

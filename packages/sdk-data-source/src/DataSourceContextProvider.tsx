@@ -36,6 +36,7 @@ const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourc
         ({ context } = existingSource);
       } else {
         context = createContext(undefined as T);
+        context.displayName = `ContextSource${meta.source ?? id}`;
       }
 
       sourcesRef.current[id] = { id, meta, context } as Source;

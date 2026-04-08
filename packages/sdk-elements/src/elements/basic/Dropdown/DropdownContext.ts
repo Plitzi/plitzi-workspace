@@ -11,5 +11,6 @@ export type DropdownContextValue = {
 };
 
 const DropdownContext = createContext(undefined as unknown as DropdownContextValue);
+DropdownContext.displayName = 'DropdownContext';
 
 export default DropdownContext;

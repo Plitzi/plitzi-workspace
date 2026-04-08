@@ -32,5 +32,6 @@ export type QueueContextValue = {
 const queueContextDefaultValue = { queueManager: {}, enqueueMiddleware: () => {} } as unknown as QueueContextValue;
 
 const QueueContext = createContext(queueContextDefaultValue);
+QueueContext.displayName = 'QueueContext';
 
 export default QueueContext;

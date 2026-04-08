@@ -8,5 +8,6 @@ export type NetworkInternalContextValue = Omit<OfflineData, 'collections' | 'seg
 };
 
 const NetworkInternalContext = createContext({} as NetworkInternalContextValue);
+NetworkInternalContext.displayName = 'NetworkInternalContext';
 
 export default NetworkInternalContext;

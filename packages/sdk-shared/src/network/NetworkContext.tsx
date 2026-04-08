@@ -80,5 +80,6 @@ const networkContextDefaultValue: NetworkContextValue = {
 } as unknown as NetworkContextValue;
 
 const NetworkContext = createContext<NetworkContextValue>(networkContextDefaultValue);
+NetworkContext.displayName = 'NetworkContext';
 
 export default NetworkContext;

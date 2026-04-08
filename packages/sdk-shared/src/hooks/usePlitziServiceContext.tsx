@@ -42,7 +42,8 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
 
 const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;
 
-export const PlitziServiceContext = createContext<PlitziServiceContextValue>(plitziServiceContextDefaultValue);
+const PlitziServiceContext = createContext<PlitziServiceContextValue>(plitziServiceContextDefaultValue);
+PlitziServiceContext.displayName = 'PlitziServiceContext';
 
 const usePlitziServiceContext = <TEventBridge = any, TInteractions = any>() => {
   const context = use(PlitziServiceContext) as PlitziServiceContextValue<TEventBridge, TInteractions> | undefined;
@@ -61,6 +62,6 @@ const PlitziServiceProvider = (props: { children?: ReactNode; value: PlitziServi
   return <PlitziServiceContext value={value}>{children}</PlitziServiceContext>;
 };
 
-export { PlitziServiceProvider };
+export { PlitziServiceProvider, PlitziServiceContext };
 
 export default usePlitziServiceContext;

@@ -19,6 +19,7 @@ export type AppContextValue = {
 
 const appContextDefaultValue: AppContextValue = {} as AppContextValue;
 
-const AppContext = createContext<AppContextValue>(appContextDefaultValue);
+const AppContext = createContext(appContextDefaultValue);
+AppContext.displayName = 'AppContext';
 
 export default AppContext;

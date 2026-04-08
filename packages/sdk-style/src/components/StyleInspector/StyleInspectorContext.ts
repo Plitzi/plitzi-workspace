@@ -26,5 +26,6 @@ export type StyleInspectorContextValue = {
 const styleInspectorContextDefaultValue = {} as StyleInspectorContextValue;
 
 const StyleInspectorContext = createContext(styleInspectorContextDefaultValue);
+StyleInspectorContext.displayName = 'StyleInspectorContext';
 
 export default StyleInspectorContext;

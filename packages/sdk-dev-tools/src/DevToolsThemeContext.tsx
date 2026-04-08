@@ -14,13 +14,14 @@ export type DevToolsThemeContextValue = {
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
-export const DevToolsThemeContext = createContext<DevToolsThemeContextValue>({
+const DevToolsThemeContext = createContext<DevToolsThemeContextValue>({
   theme: 'dark',
   isDark: true,
   toggleTheme: () => {}
 });
+DevToolsThemeContext.displayName = 'DevToolsThemeContext';
 
-export const useDevToolsTheme = () => use(DevToolsThemeContext);
+const useDevToolsTheme = () => use(DevToolsThemeContext);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
@@ -64,5 +65,8 @@ const DevToolsThemeProvider = ({ defaultTheme = 'dark', children }: DevToolsThem
     <DevToolsThemeContext value={{ theme, isDark: theme === 'dark', toggleTheme }}>{children}</DevToolsThemeContext>
   );
 };
+
+// eslint-disable-next-line react-refresh/only-export-components
+export { DevToolsThemeContext, useDevToolsTheme };
 
 export default DevToolsThemeProvider;

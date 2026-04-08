@@ -40,5 +40,6 @@ export type UndoableContextValue = {
 const undoableContextDefaultValue = {} as UndoableContextValue;
 
 const UndoableContext = createContext(undoableContextDefaultValue);
+UndoableContext.displayName = 'UndoableContext';
 
 export default UndoableContext;
