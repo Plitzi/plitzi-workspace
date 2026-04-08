@@ -1,5 +1,7 @@
-import Button from '@plitzi/plitzi-ui/Button';
+import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useDevToolsTheme } from '../../../../../../DevToolsThemeContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +36,6 @@ function buildDiff(prev: unknown, next: unknown): DiffLine[] {
   const m = a.length;
   const n = b.length;
 
-  // LCS table
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0) as number[]);
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -42,7 +43,6 @@ function buildDiff(prev: unknown, next: unknown): DiffLine[] {
     }
   }
 
-  // Backtrack from bottom-right to top-left
   const lines: DiffLine[] = [];
   let i = m;
   let j = n;
@@ -87,7 +87,7 @@ function buildHunks(diff: DiffLine[]): Hunk[] {
   return hunks;
 }
 
-// ─── Visible sections builder ─────────────────────────────────────────────────
+// ─── Section builder ─────────────────────────────────────────────────────────
 
 function buildSections(diff: DiffLine[], hunks: Hunk[], contextLines: number): Section[] {
   if (hunks.length === 0) {
@@ -101,7 +101,6 @@ function buildSections(diff: DiffLine[], hunks: Hunk[], contextLines: number): S
     const ctxStart = Math.max(0, hunk.start - contextLines);
     const ctxEnd = Math.min(diff.length - 1, hunk.end + contextLines);
 
-    // Separator when there's a gap between previous context and this one
     if (ctxStart > lastEnd + 1) {
       sections.push({ kind: 'separator', hunkIndex: hunkIdx, total: hunks.length });
     }
@@ -127,6 +126,7 @@ export type LogStoreBodyProps = {
 };
 
 const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps) => {
+  const { isDark } = useDevToolsTheme();
   const containerRef = useRef<HTMLPreElement | null>(null);
   const [activeHunk, setActiveHunk] = useState(0);
 
@@ -156,7 +156,6 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
     [activeHunk, hunks.length, scrollToHunk]
   );
 
-  // Reset and scroll to first hunk when diff changes
   useEffect(() => {
     if (!hasDiffs) {
       return;
@@ -167,89 +166,143 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diff]);
 
+  // ─── Theme classes ──────────────────────────────────────────────────────────
+
+  const codeBg = isDark ? 'bg-zinc-800' : 'bg-zinc-50';
+  const pathColor = isDark ? 'text-zinc-500' : 'text-zinc-400';
+  const labelColor = isDark ? 'text-zinc-400' : 'text-zinc-500';
+  const hunkCountColor = isDark ? 'text-zinc-600' : 'text-zinc-400';
+  const sameLineColor = isDark ? 'text-zinc-600' : 'text-zinc-400';
+  const navBtnBase = clsx(
+    'rounded px-2 py-0.5 text-xs transition-colors',
+    isDark ? 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600' : 'bg-zinc-200 text-zinc-600 hover:bg-zinc-300'
+  );
+  const navBtnDisabled = isDark ? 'opacity-30 cursor-not-allowed' : 'opacity-30 cursor-not-allowed';
+
   return (
-    <div className="m-2 flex flex-col gap-3 font-mono text-xs">
-      <div className="flex gap-1">
-        <span className="font-bold text-gray-500">Path:</span>
-        <span className="text-gray-700">{path ?? '(full state)'}</span>
+    <div
+      className={clsx(
+        'mx-2 my-1.5 flex flex-col gap-2 rounded border font-mono',
+        isDark ? 'border-zinc-700 bg-zinc-800/50' : 'border-zinc-200 bg-zinc-50'
+      )}
+    >
+      {/* Header */}
+      <div
+        className={clsx(
+          'flex items-center justify-between border-b px-2 py-1',
+          isDark ? 'border-zinc-700' : 'border-zinc-200'
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className={clsx('shrink-0', labelColor)}>path</span>
+          <span className={clsx('truncate', pathColor)}>{path ?? '(full state)'}</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {hasDiffs && (
+            <span className={clsx('tabular-nums', hunkCountColor)}>
+              {activeHunk + 1}/{hunks.length}
+            </span>
+          )}
+          <button
+            className={clsx(navBtnBase, (!hasDiffs || isFirst) && navBtnDisabled)}
+            disabled={!hasDiffs || isFirst}
+            onClick={() => navigate(-1)}
+          >
+            ↑ Prev
+          </button>
+          <button
+            className={clsx(navBtnBase, (!hasDiffs || isLast) && navBtnDisabled)}
+            disabled={!hasDiffs || isLast}
+            onClick={() => navigate(1)}
+          >
+            ↓ Next
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-gray-600">
-            Diff
-            {hasDiffs && (
-              <span className="ml-1 font-normal text-gray-400">
-                ({activeHunk + 1} / {hunks.length})
-              </span>
-            )}
-          </span>
-          <div className="flex gap-2">
-            <Button onClick={() => navigate(-1)} disabled={!hasDiffs || isFirst} size="xs">
-              Prev
-            </Button>
-            <Button onClick={() => navigate(1)} disabled={!hasDiffs || isLast} size="xs">
-              Next
-            </Button>
-          </div>
-        </div>
+      {/* Diff content */}
+      <pre ref={containerRef} className={clsx('max-h-64 overflow-auto text-xs leading-5', codeBg)}>
+        {!hasDiffs && <div className={clsx('px-3 py-2 italic', sameLineColor)}>No changes</div>}
 
-        <pre ref={containerRef} className="max-h-60 overflow-auto rounded bg-gray-100 p-2 text-xs leading-relaxed">
-          {!hasDiffs && <div className="text-gray-400 italic">No changes</div>}
-
-          {sections.map((section, idx) => {
-            if (section.kind === 'separator') {
-              const isActive = section.hunkIndex === activeHunk;
-
-              return (
-                <div
-                  key={`sep-${idx}`}
-                  data-hunk={section.hunkIndex}
-                  className={`my-0.5 rounded px-1 text-blue-500 ${isActive ? 'bg-blue-100' : 'bg-gray-200'}`}
-                >
-                  @@ hunk {section.hunkIndex + 1} / {section.total} @@
-                </div>
-              );
-            }
-
-            const { line, diffIndex, hunkIndex } = section;
-            const isActiveHunkLine = hunkIndex === activeHunk;
-
-            if (line.type === 'removed') {
-              return (
-                <div
-                  key={diffIndex}
-                  data-hunk={hunkIndex ?? undefined}
-                  className={`bg-red-100 text-red-700 ${isActiveHunkLine ? 'bg-red-200' : ''}`}
-                >
-                  {'- '}
-                  {line.text}
-                </div>
-              );
-            }
-
-            if (line.type === 'added') {
-              return (
-                <div
-                  key={diffIndex}
-                  data-hunk={hunkIndex ?? undefined}
-                  className={`bg-green-100 text-green-700 ${isActiveHunkLine ? 'bg-green-200' : ''}`}
-                >
-                  {'+ '}
-                  {line.text}
-                </div>
-              );
-            }
+        {sections.map((section, idx) => {
+          if (section.kind === 'separator') {
+            const isActive = section.hunkIndex === activeHunk;
 
             return (
-              <div key={diffIndex} className="text-gray-400">
-                {'  '}
+              <div
+                key={`sep-${idx}`}
+                data-hunk={section.hunkIndex}
+                className={clsx(
+                  'px-3',
+                  isActive
+                    ? isDark
+                      ? 'bg-violet-900/40 text-violet-400'
+                      : 'bg-violet-50 text-violet-600'
+                    : isDark
+                      ? 'text-zinc-700'
+                      : 'text-zinc-400'
+                )}
+              >
+                @@ hunk {section.hunkIndex + 1}/{section.total} @@
+              </div>
+            );
+          }
+
+          const { line, diffIndex, hunkIndex } = section;
+          const isActiveHunkLine = hunkIndex === activeHunk;
+
+          if (line.type === 'removed') {
+            return (
+              <div
+                key={diffIndex}
+                data-hunk={hunkIndex ?? undefined}
+                className={clsx(
+                  'px-3',
+                  isActiveHunkLine
+                    ? isDark
+                      ? 'bg-red-500/20 text-red-300'
+                      : 'bg-red-100 text-red-700'
+                    : isDark
+                      ? 'bg-red-500/10 text-red-400'
+                      : 'bg-red-50 text-red-600'
+                )}
+              >
+                {'- '}
                 {line.text}
               </div>
             );
-          })}
-        </pre>
-      </div>
+          }
+
+          if (line.type === 'added') {
+            return (
+              <div
+                key={diffIndex}
+                data-hunk={hunkIndex ?? undefined}
+                className={clsx(
+                  'px-3',
+                  isActiveHunkLine
+                    ? isDark
+                      ? 'bg-emerald-500/20 text-emerald-300'
+                      : 'bg-emerald-100 text-emerald-700'
+                    : isDark
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : 'bg-emerald-50 text-emerald-600'
+                )}
+              >
+                {'+ '}
+                {line.text}
+              </div>
+            );
+          }
+
+          return (
+            <div key={diffIndex} className={clsx('px-3', sameLineColor)}>
+              {'  '}
+              {line.text}
+            </div>
+          );
+        })}
+      </pre>
     </div>
   );
 };

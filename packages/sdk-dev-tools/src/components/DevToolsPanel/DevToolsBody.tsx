@@ -3,6 +3,7 @@ import { use } from 'react';
 
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 
+import { useDevToolsTheme } from '../../DevToolsThemeContext';
 import DataSourceViewer from './tabs/DataSourceViewer';
 import ElementsViewer from './tabs/ElementsViewer';
 import Logs from './tabs/Logs';
@@ -18,11 +19,12 @@ export type DevToolsBodyProps = {
 };
 
 const DevToolsBody = ({ className, tabSelected, orientation, elementSelected, onSelectElement }: DevToolsBodyProps) => {
+  const { isDark } = useDevToolsTheme();
   const { logs, clearLogs } = use(DevToolsContext);
 
   return (
-    <div className={clsx('flex h-full w-full grow overflow-auto bg-gray-50', className)}>
-      <div className="flex w-full flex-col gap-2">
+    <div className={clsx('flex h-full w-full grow overflow-auto', isDark ? 'bg-zinc-900' : 'bg-white', className)}>
+      <div className="flex w-full flex-col">
         {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
         {tabSelected === 'dataSources' && <DataSourceViewer elementSelected={elementSelected} />}
         {tabSelected === 'variables' && <VariablesViewer />}

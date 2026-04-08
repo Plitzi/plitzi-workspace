@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import DevToolsButton from './DevToolsButton';
+import { useDevToolsTheme } from '../../DevToolsThemeContext';
 
 import type { ReactNode } from 'react';
 
@@ -15,6 +16,7 @@ export type DevToolsSubHeaderProps = {
 };
 
 const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelectElement }: DevToolsSubHeaderProps) => {
+  const { isDark } = useDevToolsTheme();
   const [selectorEnabled, setSelectorEnabled] = useState(false);
 
   const handleElementHovered = useCallback(
@@ -95,8 +97,14 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
   }, [handleClick, handleMouseMove, selectorEnabled]);
 
   return (
-    <div className={clsx('flex items-center justify-between gap-2 border-b border-gray-300 px-2 py-1', className)}>
-      <div className="flex gap-2">
+    <div
+      className={clsx(
+        'flex shrink-0 items-center justify-between gap-2 border-b px-2 py-1',
+        isDark ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-50',
+        className
+      )}
+    >
+      <div className="flex gap-1">
         <DevToolsButton
           iconClassName="fa-regular fa-hand-pointer"
           title="Select an element in the page to inspect it"

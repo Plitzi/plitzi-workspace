@@ -1,9 +1,9 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 import Log from './Log';
 import LogsSummary from './LogsSummary';
+import { useDevToolsTheme } from '../../../../DevToolsThemeContext';
 
 import type { Orientation } from '../../../../DevToolsContainer';
 import type { LogType, Log as TLog } from '@plitzi/sdk-shared';
@@ -16,6 +16,7 @@ export type LogsProps = {
 };
 
 const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', onClear }: LogsProps) => {
+  const { isDark } = useDevToolsTheme();
   const [logTypeSelected, setLogTypeSelected] = useState<LogType>();
   const listRef = useRef<HTMLDivElement | null>(null);
   const isUserNearBottomRef = useRef(true);
@@ -45,14 +46,30 @@ const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', o
     setLogTypeSelected(logType);
   }, []);
 
+  const borderClass = isDark ? 'border-zinc-700' : 'border-zinc-200';
+  const toolbarBg = isDark ? 'bg-zinc-800' : 'bg-zinc-50';
+  const mutedText = isDark ? 'text-zinc-500' : 'text-zinc-400';
+  const clearBtnClass = clsx(
+    'rounded px-2 py-0.5 text-xs transition-colors',
+    isDark
+      ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+      : 'text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800'
+  );
+
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex justify-between gap-2 border-b border-gray-300 px-2 py-1">
-        <div />
-        <Button size="xs" onClick={onClear}>
-          Clear Logs
-        </Button>
+      {/* Toolbar */}
+      <div className={clsx('flex shrink-0 items-center justify-between border-b px-2 py-1', toolbarBg, borderClass)}>
+        <span className={clsx('font-mono', mutedText)}>
+          {items.length} {items.length === 1 ? 'entry' : 'entries'}
+        </span>
+        <button className={clearBtnClass} onClick={onClear}>
+          <i className="fa-solid fa-trash-can mr-1" />
+          Clear
+        </button>
       </div>
+
+      {/* Content */}
       <div
         className={clsx('flex h-full w-full overflow-hidden', {
           'grow basis-0 flex-col': orientation === 'vertical'
@@ -66,11 +83,18 @@ const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', o
           onClick={handleClickSummary}
         />
         <div ref={listRef} onScroll={handleScroll} className="flex grow basis-0 flex-col overflow-y-auto">
-          {items
-            .filter(item => !logTypeSelected || item.logType === logTypeSelected)
-            .map((item, i) => (
-              <Log key={i} category={item.category} time={item.time} params={item.params} message={item.message} />
-            ))}
+          {items.length === 0 ? (
+            <div className={clsx('flex grow flex-col items-center justify-center gap-2', mutedText)}>
+              <i className="fa-solid fa-terminal text-3xl opacity-20" />
+              <span>No logs yet</span>
+            </div>
+          ) : (
+            items
+              .filter(item => !logTypeSelected || item.logType === logTypeSelected)
+              .map((item, i) => (
+                <Log key={i} category={item.category} time={item.time} params={item.params} message={item.message} />
+              ))
+          )}
         </div>
       </div>
     </div>

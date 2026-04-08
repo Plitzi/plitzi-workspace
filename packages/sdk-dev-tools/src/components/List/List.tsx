@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 
 import ListItem from './ListItem';
+import { useDevToolsTheme } from '../../DevToolsThemeContext';
 
 import type { ReactNode } from 'react';
 
@@ -19,7 +20,9 @@ export type ListProps<T> = {
 };
 
 const List = <T extends ListItem>({ items = [], className, value, onSelect }: ListProps<T>) => {
+  const { isDark } = useDevToolsTheme();
   const [filter, setFilter] = useState('');
+
   const itemsSorted = useMemo<ListItem[]>(
     () => items.filter(item => (item.name ?? '').toLowerCase().includes(filter.toLowerCase())),
     [items, filter]
@@ -31,23 +34,30 @@ const List = <T extends ListItem>({ items = [], className, value, onSelect }: Li
   );
 
   const handleChangeFilter = useCallback((filterValue: string) => setFilter(filterValue), []);
-
   const handleSelect = useCallback((id?: string) => onSelect?.(items.find(item => item.id === id)), [items, onSelect]);
 
   return (
-    <div className={clsx('flex h-full flex-col gap-4 border-r border-gray-300', className)}>
-      <Input value={filter} onChange={handleChangeFilter} placeholder="Search..." size="sm" />
-      <div className="flex flex-col gap-1 overflow-y-auto text-sm">
-        {itemsSorted.map((item, i) => (
-          <ListItem
-            key={i}
-            label={item.label}
-            name={item.name}
-            isSelected={parsedValue?.id === item.id}
-            id={item.id}
-            onSelect={handleSelect}
-          />
-        ))}
+    <div
+      className={clsx('flex h-full flex-col gap-2 border-r', isDark ? 'border-zinc-700' : 'border-zinc-200', className)}
+    >
+      <div className="px-2 pt-2">
+        <Input value={filter} onChange={handleChangeFilter} placeholder="Search..." size="sm" />
+      </div>
+      <div className={clsx('flex flex-col overflow-y-auto text-xs', isDark ? 'text-zinc-300' : 'text-zinc-700')}>
+        {itemsSorted.length === 0 ? (
+          <div className={clsx('p-4 text-center', isDark ? 'text-zinc-600' : 'text-zinc-400')}>No items</div>
+        ) : (
+          itemsSorted.map((item, i) => (
+            <ListItem
+              key={i}
+              label={item.label}
+              name={item.name}
+              isSelected={parsedValue?.id === item.id}
+              id={item.id}
+              onSelect={handleSelect}
+            />
+          ))
+        )}
       </div>
     </div>
   );

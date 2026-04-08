@@ -29,9 +29,7 @@ const Log = ({ category, message, time, params }: LogProps) => {
       {category === 'navigation' && (
         <LogNavigation message={message} params={params as TLogNavigation['params']} time={time} />
       )}
-      {category === 'store' && (
-        <LogStore message={message} params={params as TLogStore['params']} time={time} />
-      )}
+      {category === 'store' && <LogStore message={message} params={params as TLogStore['params']} time={time} />}
     </>
   );
 };

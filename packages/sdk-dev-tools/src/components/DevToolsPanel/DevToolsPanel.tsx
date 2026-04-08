@@ -7,6 +7,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import DevToolsBody from './DevToolsBody';
 import DevToolsHeader from './DevToolsHeader';
 import DevToolsSubHeader from './DevToolsSubHeader';
+import { useDevToolsTheme } from '../../DevToolsThemeContext';
 
 import type { Orientation } from '../../DevToolsContainer';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
@@ -21,6 +22,7 @@ export type DevToolsPanelProps = {
 };
 
 const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientation }: DevToolsPanelProps) => {
+  const { isDark } = useDevToolsTheme();
   const [tabSelected, setTabSelected] = useState('logs');
   const { currentPageId } = use(NavigationContext);
   const [elementSelected, setElementSelected] = useState<string | undefined>();
@@ -30,12 +32,11 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
   );
 
   const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), []);
-
   const handleSelectElement = useCallback((id?: string) => setElementSelected(id), [setElementSelected]);
 
   return (
     <ContainerResizable
-      className={clsx('component__container-resizable-sidebar text-sm', className)}
+      className={clsx('component__container-resizable-sidebar text-xs', className)}
       minConstraintsX={orientation === 'vertical' ? 500 : Infinity}
       maxConstraintsX={orientation === 'vertical' ? 1000 : Infinity}
       minConstraintsY={orientation === 'vertical' ? Infinity : 34}
@@ -46,25 +47,29 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
       parentRef={parentRef}
       autoGrow={false}
     >
-      <DevToolsHeader
-        orientation={orientation}
-        onChangeOrientation={onChangeOrientation}
-        onTabSelect={handleTabSelect}
-        tabSelected={tabSelected}
-      />
-      {['dataSources', 'elements'].includes(tabSelected) && (
-        <DevToolsSubHeader
+      <div
+        className={clsx('flex h-full w-full flex-col', isDark ? 'bg-zinc-900 text-zinc-200' : 'bg-white text-zinc-800')}
+      >
+        <DevToolsHeader
+          orientation={orientation}
+          onChangeOrientation={onChangeOrientation}
+          onTabSelect={handleTabSelect}
+          tabSelected={tabSelected}
+        />
+        {['dataSources', 'elements'].includes(tabSelected) && (
+          <DevToolsSubHeader
+            elementSelected={elementSelected}
+            onSelectElement={handleSelectElement}
+            currentPageId={currentPageId}
+          />
+        )}
+        <DevToolsBody
+          orientation={orientation}
+          tabSelected={tabSelected}
           elementSelected={elementSelected}
           onSelectElement={handleSelectElement}
-          currentPageId={currentPageId}
         />
-      )}
-      <DevToolsBody
-        orientation={orientation}
-        tabSelected={tabSelected}
-        elementSelected={elementSelected}
-        onSelectElement={handleSelectElement}
-      />
+      </div>
     </ContainerResizable>
   );
 };
