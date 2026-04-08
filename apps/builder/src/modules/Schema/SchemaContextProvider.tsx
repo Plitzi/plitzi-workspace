@@ -269,21 +269,37 @@ const SchemaContextProvider = ({
       // Pages
 
       subscriptionManager.subscribe('SpaceAddPage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { page } = get(data, 'data.SpaceAddPage', {}) as BuilderSubscriptionsMap['SpaceAddPage'];
         void schemaAddPage(page, true);
       });
 
       subscriptionManager.subscribe('SpaceHomePage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { page } = get(data, 'data.SpaceHomePage', {}) as BuilderSubscriptionsMap['SpaceHomePage'];
         schemaHomePage(page.id, true);
       });
 
       subscriptionManager.subscribe('SpaceUpdatePage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { page } = get(data, 'data.SpaceUpdatePage', {}) as BuilderSubscriptionsMap['SpaceUpdatePage'];
         schemaUpdatePage(page, true);
       });
 
       subscriptionManager.subscribe('SpaceRemovePage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageId } = get(data, 'data.SpaceRemovePage', {}) as BuilderSubscriptionsMap['SpaceRemovePage'];
         schemaRemovePage(pageId, true);
       });
@@ -291,6 +307,10 @@ const SchemaContextProvider = ({
       // Page Folders
 
       subscriptionManager.subscribe('SpaceAddPageFolder', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageFolder } = get(
           data,
           'data.SpaceAddPageFolder',
@@ -300,6 +320,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceUpdatePageFolder', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageFolder } = get(
           data,
           'data.SpaceUpdatePageFolder',
@@ -309,6 +333,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceRemovePageFolder', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageFolderId } = get(
           data,
           'data.SpaceRemovePageFolder',
@@ -320,11 +348,19 @@ const SchemaContextProvider = ({
       // Variables
 
       subscriptionManager.subscribe('SpaceAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { variable } = get(data, 'data.SpaceAddVariable', {}) as BuilderSubscriptionsMap['SpaceAddVariable'];
         schemaAddVariable(variable, true);
       });
 
       subscriptionManager.subscribe('SpaceUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { variable } = get(
           data,
           'data.SpaceUpdateVariable',
@@ -334,6 +370,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { name } = get(data, 'data.SpaceRemoveVariable', {}) as BuilderSubscriptionsMap['SpaceRemoveVariable'];
         schemaRemoveVariable(name, true);
       });
@@ -341,6 +381,10 @@ const SchemaContextProvider = ({
       // Others
 
       subscriptionManager.subscribe('SpaceUpdateSettings', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { value, path } = get(
           data,
           'data.SpaceUpdateSettings',
@@ -352,6 +396,10 @@ const SchemaContextProvider = ({
       // Elements
 
       subscriptionManager.subscribe('SpaceAddElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -370,16 +418,28 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceUpdateElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { element } = get(data, 'data.SpaceUpdateElement', {}) as BuilderSubscriptionsMap['SpaceUpdateElement'];
         schemaUpdateElement(element, true);
       });
 
       subscriptionManager.subscribe('SpaceRemoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { elementId } = get(data, 'data.SpaceRemoveElement', {}) as BuilderSubscriptionsMap['SpaceRemoveElement'];
         schemaRemoveElement(elementId, true);
       });
 
       subscriptionManager.subscribe('SpaceMoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { from, to, elementId, dropPosition } = get(
           data,
           'data.SpaceMoveElement',
@@ -389,6 +449,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceCloneElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -408,11 +472,19 @@ const SchemaContextProvider = ({
       // Others
 
       subscriptionManager.subscribe('SpaceUpdated', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { schema } = get(data, 'data.SpaceUpdated', {}) as BuilderSubscriptionsMap['SpaceUpdated'];
         schemaUpdate(schema, true);
       });
 
       subscriptionManager.subscribe('SpaceAddTemplate', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           style,

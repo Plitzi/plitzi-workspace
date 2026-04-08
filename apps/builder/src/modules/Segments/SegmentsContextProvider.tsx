@@ -509,6 +509,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
   useEffect(() => {
     if (includeSubscriptions) {
       subscriptionManager.subscribe('SegmentAddElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -536,6 +540,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         );
       });
       subscriptionManager.subscribe('SegmentUpdateElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { element, contextId } = get(data, 'data.SegmentUpdateElement', {}) as {
           element: Element;
           contextId: string;
@@ -543,6 +551,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentUpdateElement(contextId, element, true);
       });
       subscriptionManager.subscribe('SegmentRemoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { elementId, contextId } = get(data, 'data.SegmentRemoveElement', {}) as {
           elementId: string;
           contextId: string;
@@ -550,6 +562,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentRemoveElement(contextId, elementId, true);
       });
       subscriptionManager.subscribe('SegmentMoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { from, to, elementId, dropPosition, contextId } = get(data, 'data.SegmentMoveElement', {}) as {
           from: string;
           to: string;
@@ -560,6 +576,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentMoveElement(contextId, from, to, elementId, dropPosition, true);
       });
       subscriptionManager.subscribe('SegmentCloneElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -584,6 +604,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         );
       });
       subscriptionManager.subscribe('SegmentAddTemplate', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           styles,
@@ -614,6 +638,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       });
 
       subscriptionManager.subscribe('SegmentSpaceAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, variable } = get(
           data,
           'data.SegmentSpaceAddVariable',
@@ -623,6 +651,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       });
 
       subscriptionManager.subscribe('SegmentSpaceUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, variable } = get(
           data,
           'data.SegmentSpaceUpdateVariable',
@@ -632,6 +664,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       });
 
       subscriptionManager.subscribe('SegmentSpaceRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, variable } = get(
           data,
           'data.SegmentSpaceRemoveVariable',
@@ -641,6 +677,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       });
 
       subscriptionManager.subscribe('SegmentStyleAddSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, type, path, style, contextId, params } = get(
           data,
           'data.SegmentStyleAddSelector',
@@ -649,6 +689,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentStyleAddSelector(contextId, displayMode, selector, type, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, path, style, contextId, params } = get(
           data,
           'data.SegmentStyleUpdateSelector',
@@ -657,6 +701,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentStyleUpdateSelector(contextId, displayMode, selector, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {
           displayMode: DisplayMode;
           selector: string;
@@ -666,6 +714,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       });
 
       subscriptionManager.subscribe('SegmentStyleAddSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, displayMode, selector, category, name, value } = get(
           data,
           'data.SegmentStyleAddSelectorVariable',
@@ -674,6 +726,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentStyleAddSelectorVariable(contextId, displayMode, selector, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, displayMode, selector, category, name, value } = get(
           data,
           'data.SegmentStyleUpdateSelectorVariable',
@@ -682,6 +738,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentStyleUpdateSelectorVariable(contextId, displayMode, selector, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, displayMode, selector, category, name } = get(
           data,
           'data.SegmentStyleRemoveSelectorVariable',
@@ -691,6 +751,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       });
 
       subscriptionManager.subscribe('SegmentStyleAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value, contextId } = get(
           data,
           'data.SegmentStyleAddVariable',
@@ -699,6 +763,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentStyleAddVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value, contextId } = get(
           data,
           'data.SegmentStyleUpdateVariable',
@@ -707,6 +775,10 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         segmentStyleUpdateVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, contextId } = get(
           data,
           'data.SegmentStyleRemoveVariable',

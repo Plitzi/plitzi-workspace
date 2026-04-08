@@ -2,6 +2,7 @@ import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StoreProvider from '@plitzi/sdk-shared/store/StoreProvider';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
@@ -47,7 +48,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
 
   return (
     <div className="flex w-full grow">
-      <StoreProvider value={generateStoreState} inherit>
+      <StoreProvider value={generateStoreState} inherit logger={createStoreDevToolsLogger('segment')}>
         <BuilderProvider
           schemaName={definition.name}
           baseElementId={definition.baseElementId}

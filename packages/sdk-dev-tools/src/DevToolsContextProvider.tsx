@@ -69,6 +69,7 @@ const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => 
       pConsole.setCallback(undefined);
       pConsole.setCallbackAddProvider(undefined);
       pConsole.setCallbackRemoveProvider(undefined);
+      pConsole.flush();
     };
   }, [handleAddLog, handleAddProvider, handleRemoveProvider]);
 

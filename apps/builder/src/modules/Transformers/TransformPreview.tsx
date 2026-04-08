@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { StoreProvider } from '@plitzi/sdk-shared/store';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
@@ -15,7 +16,7 @@ const TransformPreview = ({ preview, previewMode = true }: TransformPreviewProps
 
   return (
     <div className="flex w-full grow overflow-y-auto">
-      <StoreProvider value={storeValue}>
+      <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('transform-preview')}>
         <BuilderAreaPreview
           previewMode={previewMode}
           className="min-h-full w-full"

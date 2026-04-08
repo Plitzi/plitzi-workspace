@@ -21,6 +21,7 @@ class PlitziConsole {
   callbackAddProvider?: CallbackAddProvider;
   callbackRemoveProvider?: CallbackRemoveProvider;
   pendingLimit: number = 100;
+  logsListenedLimit: number = 1000;
   pendingLogs: Log[] = [];
   listening: boolean = false;
   listeningCategory?: Log['category'];
@@ -56,6 +57,14 @@ class PlitziConsole {
     this.callbackRemoveProvider = callback;
   }
 
+  flush(hard = false) {
+    this.logsListened = [];
+
+    if (hard) {
+      this.pendingLogs = [];
+    }
+  }
+
   // Private Methods
 
   #log(logType: Log['logType'], category: Log['category'], message: Log['message'], params: Log['params']) {
@@ -75,6 +84,10 @@ class PlitziConsole {
       this.logsListened.push({ logType, category, message, params, time } as Log & LogNavigation);
     } else {
       this.logsListened.push({ logType, category, message, params, time } as Log & LogInteraction);
+    }
+
+    if (this.logsListened.length > this.logsListenedLimit) {
+      this.logsListened.shift();
     }
   }
 

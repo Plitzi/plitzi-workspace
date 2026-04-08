@@ -1,6 +1,7 @@
 import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import { useMemo } from 'react';
 
+import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { createStoreHook, StoreProvider } from '@plitzi/sdk-shared/store';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
@@ -24,7 +25,7 @@ const TemplateContent = ({ baseElementId, schema, style }: TemplateContentProps)
   return (
     <div className="flex h-full w-full flex-col gap-2 overflow-hidden">
       <div className="relative flex flex-col overflow-hidden">
-        <StoreProvider value={storeValue}>
+        <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('template')}>
           <ContainerAutoScale className="flex min-h-46 w-full items-center justify-center overflow-hidden rounded-sm">
             <BuilderAreaPreview
               id={baseElementId}

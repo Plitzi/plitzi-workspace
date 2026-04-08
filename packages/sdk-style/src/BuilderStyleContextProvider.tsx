@@ -219,11 +219,19 @@ const BuilderStyleContextProvider = ({
   useEffect(() => {
     if (includeSubscriptions) {
       subscriptionManager.subscribe('StyleUpdated', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const style = get(data, 'data.StyleUpdated', {}) as BuilderSubscriptionsMap['StyleUpdated'];
         styleUpdate(style, true);
       });
 
       subscriptionManager.subscribe('StyleAddSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, type, path, style, params } = get(
           data,
           'data.StyleAddSelector',
@@ -233,6 +241,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, path, style, params } = get(
           data,
           'data.StyleUpdateSelector',
@@ -242,6 +254,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector } = get(
           data,
           'data.StyleRemoveSelector',
@@ -251,6 +267,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleAddSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, category, name, value } = get(
           data,
           'data.StyleAddSelectorVariable',
@@ -260,6 +280,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, category, name, value } = get(
           data,
           'data.StyleUpdateSelectorVariable',
@@ -269,6 +293,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleRemoveSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, category, name } = get(
           data,
           'data.StyleRemoveSelectorVariable',
@@ -278,6 +306,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value } = get(
           data,
           'data.StyleAddVariable',
@@ -287,6 +319,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value } = get(
           data,
           'data.StyleUpdateVariable',
@@ -296,6 +332,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name } = get(
           data,
           'data.StyleRemoveVariable',
@@ -305,6 +345,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateSettings', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { path, value } = get(
           data,
           'data.StyleUpdateSettings',

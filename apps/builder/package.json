@@ -28,6 +28,7 @@
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-plugins": "workspace:*",
+    "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-state": "workspace:*",

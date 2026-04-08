@@ -3,6 +3,7 @@ import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { useState, useMemo } from 'react';
 
 import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
+import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
@@ -128,7 +129,13 @@ const AppMain = ({
     ]
   );
 
-  return <AppContext value={appValueMemo}>{childrenMemo}</AppContext>;
+  return (
+    <AppContext value={appValueMemo}>
+      <DevToolsContainer innerClassName="flex" enabled={debugMode}>
+        {childrenMemo}
+      </DevToolsContainer>
+    </AppContext>
+  );
 };
 
 export default AppMain;
