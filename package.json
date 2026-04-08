@@ -39,7 +39,7 @@
     "eslint": "^9.39.4",
     "jest": "^30.3.0",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "turbo": "^2.9.3"
+    "turbo": "^2.9.5"
   },
   "engines": {
     "node": ">=20"

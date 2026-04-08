@@ -24,7 +24,7 @@ const LogStore = ({ time, message, params }: LogStoreProps) => {
       <ContainerCollapsable.Header
         title={<LogStoreHeader storeName={params?.storeName} path={params?.path} message={message} time={time} />}
         placement="left"
-        className={{ headerTitle: 'overflow-hidden' }}
+        className={{ headerTitle: 'overflow-hidden', header: 'hover:bg-transparent dark:hover:bg-transparent' }}
         iconCollapsed={iconCollapsed}
         iconExpanded={iconExpanded}
       />
