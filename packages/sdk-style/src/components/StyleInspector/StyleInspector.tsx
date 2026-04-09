@@ -30,9 +30,9 @@ export type StyleInspectorProps = {
   allowStyleState?: boolean;
   allowStyleVariant?: boolean;
   onChange?: (selector?: string) => void;
-  onVariantChange?: (variant?: string) => void;
-  onStateChange?: (state: StyleState) => void;
-  onRemoveVariant?: (variant: string) => void;
+  onVariantChange?: (variant?: string) => void; // @todo: pending to implement
+  onStateChange?: (state: StyleState) => void; // @todo: pending to implement
+  onRemoveVariant?: (variant: string) => void; // @todo: pending to implement
 };
 
 const StyleInspector = ({
