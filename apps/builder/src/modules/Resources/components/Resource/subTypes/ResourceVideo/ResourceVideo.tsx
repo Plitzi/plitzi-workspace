@@ -52,7 +52,7 @@ const ResourceVideo = ({
       onDragEnd={handleDragEnd}
       draggable={!isLoading}
       className={clsx(
-        'group relative flex min-h-20 cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none',
+        'group relative flex min-h-20 cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
         className
       )}
       onClick={onClick}

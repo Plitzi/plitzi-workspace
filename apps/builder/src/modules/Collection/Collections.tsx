@@ -25,7 +25,7 @@ const Collections = () => {
         <Button.Icon icon="fa-solid fa-plus" />
         New Collection
       </Button>
-      <div className="w-full border-b border-solid border-gray-200" />
+      <div className="w-full border-b border-solid border-gray-200 dark:border-zinc-700" />
       <Flex direction="column" gap={2}>
         {Object.values(collections).map(collection => {
           const { id, namePlural } = collection;

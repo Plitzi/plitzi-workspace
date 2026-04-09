@@ -153,7 +153,7 @@ const CollectionForm = ({
       <div className="flex flex-col gap-2">
         <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
           <Form.Header className="flex w-full">
-            <div className="flex w-full justify-between border-b border-gray-300 pb-2">
+            <div className="flex w-full justify-between border-b border-gray-300 pb-2 dark:border-zinc-700">
               <Heading as="h6">{id ? namePlural : 'New Collection'}</Heading>
               <div className="flex justify-end gap-3">
                 {id && (
@@ -183,7 +183,7 @@ const CollectionForm = ({
       <div className="flex flex-col">
         <Heading as="h6">Schema</Heading>
         <div className="flex w-full flex-col gap-2">
-          <div className="flex gap-10 border-b border-gray-300 pb-2 font-bold">
+          <div className="flex gap-10 border-b border-gray-300 pb-2 font-bold dark:border-zinc-700">
             <div className="flex grow basis-0">Name</div>
             <div className="flex grow basis-0">Identifier</div>
             <div className="flex grow basis-0">Type</div>

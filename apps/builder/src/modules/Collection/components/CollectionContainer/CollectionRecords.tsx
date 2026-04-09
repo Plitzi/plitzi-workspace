@@ -11,8 +11,8 @@ export type CollectionRecordsProps = {
 };
 
 const CollectionRecords = ({ items, fields, onUpdate, onRemove }: CollectionRecordsProps) => (
-  <div className="flex grow flex-col rounded-sm border border-gray-300">
-    <div className="flex h-10 items-center gap-4 border-b border-gray-300 px-4 py-3 font-bold">
+  <div className="flex grow flex-col rounded-sm border border-gray-300 dark:border-zinc-700">
+    <div className="flex h-10 items-center gap-4 border-b border-gray-300 px-4 py-3 font-bold dark:border-zinc-700">
       {fields &&
         Object.keys(fields).map((fieldKey, i) => (
           <div className="grow basis-0 items-center" key={i}>

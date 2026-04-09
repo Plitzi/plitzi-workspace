@@ -24,7 +24,7 @@ const ChatMessage = ({ id = '', role = 'assistant', content = [] }: ChatMessageP
 
   return (
     <div className="flex flex-col text-sm" id={id}>
-      <div className="flex gap-1 font-medium text-gray-900">{roleLabel}</div>
+      <div className="flex gap-1 font-medium text-gray-900 dark:text-zinc-100">{roleLabel}</div>
       <Message message={message} />
     </div>
   );

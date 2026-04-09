@@ -269,7 +269,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   return (
     <Card
       ref={ref}
-      className="builder__context-menu z-99999999 flex overflow-visible rounded-sm bg-slate-100 shadow-2xl"
+      className="builder__context-menu z-99999999 flex overflow-visible rounded-sm bg-slate-100 shadow-2xl dark:bg-zinc-800"
       style={{
         position: 'fixed',
         top: yPos,

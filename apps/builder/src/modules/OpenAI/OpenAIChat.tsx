@@ -167,7 +167,7 @@ const OpenAIChat = () => {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <div className="flex grow flex-col border-b border-gray-300">
+      <div className="flex grow flex-col border-b border-gray-300 dark:border-zinc-700">
         <Chat messages={conversation} ref={chatRef} />
       </div>
       <div className="flex gap-2 p-2">

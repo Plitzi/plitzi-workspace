@@ -28,7 +28,7 @@ const ModalBody = ({
     <>
       <div className="flex flex-col">
         <Heading as="h4">My Credentials</Heading>
-        <Text size="sm" className="text-gray-500">
+        <Text size="sm" className="text-gray-500 dark:text-zinc-400">
           Manage your authentication credentials and API keys
         </Text>
       </div>

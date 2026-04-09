@@ -32,7 +32,7 @@ const ResourcePlugin = ({
   return (
     <div
       className={clsx(
-        'group relative flex w-full cursor-pointer overflow-hidden rounded-md border border-gray-300 select-none [column-span:all]',
+        'group relative flex w-full cursor-pointer overflow-hidden rounded-md border border-gray-300 select-none [column-span:all] dark:border-zinc-600',
         className
       )}
       onClick={onClick}

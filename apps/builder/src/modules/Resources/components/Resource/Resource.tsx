@@ -82,7 +82,7 @@ const Resource = ({
                 >
                   <Icon
                     icon="fa-solid fa-arrow-up-right-from-square"
-                    className="rounded-sm bg-white p-1"
+                    className="rounded-sm bg-white p-1 dark:bg-zinc-800"
                     size="custom"
                   />
                 </a>

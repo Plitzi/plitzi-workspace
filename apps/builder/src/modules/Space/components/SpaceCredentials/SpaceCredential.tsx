@@ -62,10 +62,10 @@ const SpaceCredential = ({
   return (
     <div
       className={clsx('group relative flex flex-col gap-2 rounded border p-2', {
-        'hover:bg-primary-100/30 border-gray-300': !selected && isSupported,
+        'hover:bg-primary-100/30 border-gray-300 dark:border-zinc-700': !selected && isSupported,
         'border-primary-400 bg-primary-100/50': selected && isSupported,
         'cursor-pointer': isSupported,
-        'cursor-not-allowed border-gray-300 bg-gray-100 opacity-70': !isSupported
+        'cursor-not-allowed border-gray-300 bg-gray-100 opacity-70 dark:border-zinc-700 dark:bg-zinc-800': !isSupported
       })}
       onClick={handleClick}
     >
@@ -115,7 +115,7 @@ const SpaceCredential = ({
           </div>
         )}
       </div>
-      <div className="text-xs text-gray-500">Created {createdAtParsed}</div>
+      <div className="text-xs text-gray-500 dark:text-zinc-400">Created {createdAtParsed}</div>
 
       <div className="absolute right-2 bottom-2">
         {!inUse && (

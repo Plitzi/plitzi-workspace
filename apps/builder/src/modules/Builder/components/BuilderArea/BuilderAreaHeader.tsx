@@ -152,19 +152,19 @@ const BuilderAreaHeader = ({
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300': !isActive
+            'bg-gray-300 dark:bg-zinc-600': !isActive
           })}
         />
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300': !isActive
+            'bg-gray-300 dark:bg-zinc-600': !isActive
           })}
         />
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300': !isActive
+            'bg-gray-300 dark:bg-zinc-600': !isActive
           })}
         />
         {!multiPagesMode && baseElementIdOriginal !== baseElementId && (
@@ -174,7 +174,10 @@ const BuilderAreaHeader = ({
           </Button>
         )}
       </Flex>
-      <div title="Default Page" className={clsx({ 'text-primary-400': defaultPage, 'text-gray-400': !defaultPage })}>
+      <div
+        title="Default Page"
+        className={clsx({ 'text-primary-ui': defaultPage, 'text-gray-400 dark:text-zinc-600': !defaultPage })}
+      >
         <Icon icon="fas fa-home" />
       </div>
       <Flex
