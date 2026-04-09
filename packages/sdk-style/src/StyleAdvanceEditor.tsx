@@ -61,7 +61,7 @@ const StyleAdvanceEditor = () => {
         <Button
           intent="custom"
           size="custom"
-          className="mr-2 rounded-sm bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow p-2"
+          className="mr-2 rounded-sm bg-white p-2 text-zinc-800 shadow dark:bg-zinc-700 dark:text-zinc-200"
           onClick={handleFormat}
           title="Auto format"
           disabled={networkLoading}
@@ -70,7 +70,11 @@ const StyleAdvanceEditor = () => {
         </Button>
         <ContainerFloating containerLeftOffset={-208} containerTopOffset={4}>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="custom" className="rounded-sm bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow p-2">
+            <Button
+              intent="custom"
+              size="custom"
+              className="rounded-sm bg-white p-2 text-zinc-800 shadow dark:bg-zinc-700 dark:text-zinc-200"
+            >
               <i className="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>

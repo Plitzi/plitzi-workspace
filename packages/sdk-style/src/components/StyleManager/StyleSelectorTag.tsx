@@ -41,7 +41,7 @@ const StyleSelectorTag = ({
   return (
     <div
       className={clsx(
-        'group flex items-center justify-between gap-2 border-t border-gray-300 dark:border-zinc-700 p-1 cursor-pointer',
+        'group flex cursor-pointer items-center justify-between gap-2 border-t border-gray-300 p-1 dark:border-zinc-700',
         {
           'hover:bg-gray-100 dark:hover:bg-zinc-700/60': !active,
           'bg-gray-200 dark:bg-zinc-700': active

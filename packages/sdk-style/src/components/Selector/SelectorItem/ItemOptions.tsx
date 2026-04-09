@@ -48,16 +48,25 @@ const ItemOptions = ({ selector = '', type = 'class', onAction }: ItemOptionsPro
         <Icon icon="fa-solid fa-ellipsis-vertical" className="h-4 w-4 !min-w-4" />
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="text-xs text-zinc-700 dark:text-zinc-300">
-        <div className="rounded bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 py-1">
+        <div className="rounded border border-gray-200 bg-gray-50 py-1 dark:border-zinc-700 dark:bg-zinc-800">
           <div className="mb-1 px-2 font-bold text-zinc-800 dark:text-zinc-200">Actions</div>
           <ul className="flex flex-col gap-1 px-2">
-            <li onClick={handleClickDuplicate} className="cursor-pointer rounded-sm px-2 py-1 hover:bg-gray-200 dark:hover:bg-zinc-700">
+            <li
+              onClick={handleClickDuplicate}
+              className="cursor-pointer rounded-sm px-2 py-1 hover:bg-gray-200 dark:hover:bg-zinc-700"
+            >
               Duplicate
             </li>
-            <li onClick={handleClickRemove} className="cursor-pointer rounded-sm px-2 py-1 hover:bg-gray-200 dark:hover:bg-zinc-700">
+            <li
+              onClick={handleClickRemove}
+              className="cursor-pointer rounded-sm px-2 py-1 hover:bg-gray-200 dark:hover:bg-zinc-700"
+            >
               Remove
             </li>
-            <li onClick={handleClickDelete} className="cursor-pointer rounded-sm px-2 py-1 text-red-400 hover:bg-gray-200 dark:hover:bg-zinc-700">
+            <li
+              onClick={handleClickDelete}
+              className="cursor-pointer rounded-sm px-2 py-1 text-red-400 hover:bg-gray-200 dark:hover:bg-zinc-700"
+            >
               Delete
             </li>
           </ul>

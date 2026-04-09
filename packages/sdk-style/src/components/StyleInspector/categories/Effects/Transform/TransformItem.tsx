@@ -104,7 +104,7 @@ const TransformItem = ({ value = 'translate3d(0px, 0px, 0px)', onRemove, onChang
 
   return (
     <ContainerFloating className="w-full" closeOnClick={false}>
-      <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-0.5 select-none hover:bg-gray-100 dark:hover:bg-zinc-700/60">
+      <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 bg-white px-2 py-0.5 select-none hover:bg-gray-100 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700/60">
         <div className="flex items-center">{value}</div>
         <div className="flex">
           <Icon size="xs" icon="fas fa-trash-alt" onClick={onRemove} intent="danger" title="Remove" />

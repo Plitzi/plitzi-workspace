@@ -244,7 +244,7 @@ const Selector = ({
       <ContainerFloating.Trigger className="w-full">
         <div
           className={clsx(
-            'bg-grayviolet-200 dark:bg-zinc-800 relative flex flex-wrap gap-1 rounded-sm p-1',
+            'bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1 dark:bg-zinc-800',
             className,
             {
               'pointer-events-none cursor-not-allowed bg-gray-100 dark:bg-zinc-900': disabled,

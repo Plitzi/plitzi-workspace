@@ -42,19 +42,28 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
           <div className="font-bold">From:</div>
           <div className="ml-1 truncate capitalize">{fromPath ? `${sourceName} [${name}]` : 'None'}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 dark:border-zinc-600 py-0.5 text-xs" title={fromPath}>
+        <div
+          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
+          title={fromPath}
+        >
           <div className="font-bold">Path:</div>
           <div className="ml-1 truncate">{fromPath ? `${source}.${fromPath}` : ''}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 dark:border-zinc-600 py-0.5 text-xs" title={toPath}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={toPath}>
           <div className="font-bold">To:</div>
           <div className="ml-1 truncate capitalize">{`${category} ${toPath}`}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 dark:border-zinc-600 py-0.5 text-xs" title={transformerName}>
+        <div
+          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
+          title={transformerName}
+        >
           <div className="font-bold">Transformers:</div>
           <div className="ml-1 truncate">{transformerName}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 dark:border-zinc-600 py-0.5 text-xs" title={whenStr}>
+        <div
+          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
+          title={whenStr}
+        >
           <div className="font-bold">When:</div>
           <div className="ml-1 truncate">{whenStr}</div>
         </div>

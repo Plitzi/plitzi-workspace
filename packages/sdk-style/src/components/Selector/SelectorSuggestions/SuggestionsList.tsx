@@ -24,7 +24,7 @@ const SuggestionsList = ({ selectors = [], onSelect }: SuggestionsListProps) => 
           />
         ))}
         {selectors.length === 0 && (
-          <div className="w-full rounded-sm border-2 border-dashed border-gray-300 dark:border-zinc-600 p-3 text-center text-zinc-500 dark:text-zinc-400">
+          <div className="w-full rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
             No tokens availables
           </div>
         )}

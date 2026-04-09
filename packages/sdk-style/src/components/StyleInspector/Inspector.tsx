@@ -228,7 +228,7 @@ const InspectorModeBasic = ({
             onCollapse={handleChangeCollapse}
           />
         </div>
-        <div className="flex items-center justify-end gap-4 border-t border-gray-200 dark:border-zinc-700 px-2 py-1">
+        <div className="flex items-center justify-end gap-4 border-t border-gray-200 px-2 py-1 dark:border-zinc-700">
           <Switch size="xs" label="Replace Tokens" checked={replaceTokens} onChange={handleChangeReplaceTokens} />
           {mode === 'element' && (
             <Switch size="xs" label="Show All Options" checked={showAllOptions} onChange={handleChangeShowAllOptions} />
