@@ -38,7 +38,12 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
       selectorsParsed = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
-    return selectorsParsed.sort((a, b) => Number(b.type === 'element') - Number(a.type === 'element'));
+    return selectorsParsed.sort((a, b) => {
+      const aNumber = Number(a.type === 'element');
+      const bNumber = Number(b.type === 'element');
+
+      return aNumber === bNumber ? a.name.localeCompare(b.name) : bNumber - aNumber;
+    });
   }, [selectors, searchInput]);
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
