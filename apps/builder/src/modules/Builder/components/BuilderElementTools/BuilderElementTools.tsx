@@ -26,10 +26,11 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   const [selected, setSelected] = useStorage('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [[selector, elementSelected], setSelector] = useStore(['selector', 'elementSelected'], {
-    defaultValue: undefined
+  const [[selector, elementSelected], setSelector] = useStore(['selector', 'elementSelected']);
+  const [displayMode] = useStore('displayMode');
+  const [[selectors, element]] = useStore([`style.platform.${displayMode}`, `schema.flat.${elementSelected}`], {
+    defaultValue: [undefined, undefined]
   });
-  const [element] = useStore(`schema.flat.${elementSelected}`, { defaultValue: undefined });
   const { componentDefinitions } = use(ComponentContext);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);
@@ -120,6 +121,8 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
       <div className="flex grow basis-0 flex-col overflow-y-auto">
         {selected === 'style' && (
           <StyleInspector
+            displayMode={displayMode}
+            selectors={selectors}
             value={selector}
             mode="element"
             element={element}

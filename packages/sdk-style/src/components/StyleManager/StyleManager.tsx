@@ -14,16 +14,13 @@ const StyleManager = () => {
   const [selector, setSelector] = useState<StyleItem | undefined>(undefined);
 
   const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, style, displayMode]] = useStore(['schema.flat', 'style', 'displayMode']);
+  const [[flat, displayMode]] = useStore(['schema.flat', 'displayMode']);
+  const [selectors] = useStore(`style.platform.${displayMode}`);
+
   const flatList = useMemo(
     () => Object.values(flat),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [Object.keys(flat).length]
-  );
-  const selectors = useMemo(
-    () => Object.values(get(style, `platform.${displayMode}`, {})),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [displayMode, Object.keys(style.platform[displayMode]).length]
   );
 
   const styleSelectorsAvailables = useMemo(
@@ -60,6 +57,8 @@ const StyleManager = () => {
           {selector && (
             <StyleInspector
               mode="manager"
+              displayMode={displayMode}
+              selectors={selectors}
               styleSelectors={styleSelectors}
               styleSelectorsAvailables={styleSelectorsAvailables}
               allowStyleSelector={selector.type === 'element'}

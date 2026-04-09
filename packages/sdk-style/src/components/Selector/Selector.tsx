@@ -11,7 +11,7 @@ import SelectorItem from './SelectorItem';
 import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
 
-import type { DisplayMode, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { StyleItem } from '@plitzi/sdk-shared';
 import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent, RefObject } from 'react';
 
 export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
@@ -19,11 +19,10 @@ export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
 export type SelectorProps = {
   className?: string;
   value?: string;
+  selectors?: Record<string, StyleItem>;
   selector?: Pick<StyleItem, 'name' | 'type'>;
   componentType?: string;
-  displayMode: DisplayMode;
   disabled?: boolean;
-  style: Style;
   onSelectorSelected?: (selector?: SelectorValue) => void;
   onAdd?: (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => void;
   onChange?: (value: string) => void;
@@ -33,11 +32,10 @@ export type SelectorProps = {
 const Selector = ({
   className = '',
   value = '',
+  selectors,
   selector: selectorProp,
   componentType,
-  displayMode,
   disabled = false,
-  style,
   onChange,
   onSelectorSelected,
   onAdd,
@@ -49,19 +47,17 @@ const Selector = ({
   const { existsPopup, addPopup } = usePopup('floating');
   const tagComponent = useMemo(
     () =>
-      Object.values(get(style, `platform.${displayMode}`, {})).find(
+      Object.values(selectors ?? {}).find(
         selector => selector.type === 'element' && selector.componentType === componentType
       ),
-    [componentType, displayMode, style]
+    [componentType, selectors]
   );
   const tags = useMemo<SelectorValue[]>(() => {
-    const selectors = get(style, `platform.${displayMode}`);
-
-    return Object.values(pick(selectors, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
-  }, [style, displayMode, value]);
+    return Object.values(pick(selectors ?? {}, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
+  }, [selectors, value]);
   const selectorsAvailables = useMemo<StyleItem[]>(
-    () => Object.values(omit(get(style, `platform.${displayMode}`), value.split(' '))),
-    [style, displayMode, value]
+    () => Object.values(omit(selectors ?? {}, value.split(' '))),
+    [selectors, value]
   );
 
   const handleChangeInput = useCallback(

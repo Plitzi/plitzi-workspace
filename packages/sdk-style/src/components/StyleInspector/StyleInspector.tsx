@@ -14,10 +14,12 @@ import Inspector from './Inspector';
 
 import type { SelectorValue } from '../Selector';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { BuilderState, Element, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { BuilderState, DisplayMode, Element, StyleItem, TagType } from '@plitzi/sdk-shared';
 import type { StyleState } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
+  displayMode: DisplayMode;
+  selectors?: Record<string, StyleItem>;
   value?: string;
   element?: Element;
   componentType?: string;
@@ -28,10 +30,14 @@ export type StyleInspectorProps = {
   allowStyleState?: boolean;
   allowStyleVariant?: boolean;
   onChange?: (selector?: string) => void;
+  onVariantChange?: (variant?: string) => void;
+  onStateChange?: (state: StyleState) => void;
   onRemoveVariant?: (variant: string) => void;
 };
 
 const StyleInspector = ({
+  displayMode,
+  selectors,
   value,
   element,
   mode = 'element',
@@ -44,26 +50,25 @@ const StyleInspector = ({
   onChange,
   onRemoveVariant
 }: StyleInspectorProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[style, platform, displayMode]] = useStore(['style', 'style.platform', 'displayMode']);
+  const { useStoreSync } = createStoreHook<BuilderState>();
   const [styleSelector, setStyleSelector] = useState('base');
   const [styleVariant, setStyleVariant] = useState<string | undefined>(undefined);
   const [styleState, setStyleState] = useState<StyleState | undefined>(undefined);
+  useStoreSync('styleSelector', styleSelector, { enabled: mode === 'element' });
+  useStoreSync('styleVariant', styleVariant, { enabled: mode === 'element' });
+  useStoreSync('styleState', styleState, { enabled: mode === 'element' });
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
-  const selectors = useMemo(
+  const selectorsFiltered = useMemo(
     () =>
       Object.values(
-        pick(
-          get(style.platform, displayMode),
-          element ? [element.definition.type, ...selectorName.split(' ')] : selectorName.split(' ')
-        )
+        pick(selectors ?? {}, element ? [element.definition.type, ...selectorName.split(' ')] : selectorName.split(' '))
       ),
-    [style.platform, displayMode, element, selectorName]
+    [selectors, element, selectorName]
   );
   const selector = useMemo<StyleItem | undefined>(
-    () => get(style, `platform.${displayMode}.${value}`),
-    [style, displayMode, value]
+    () => (value ? get(selectors, value) : undefined),
+    [selectors, value]
   );
   const variants = useMemo(
     () =>
@@ -110,7 +115,7 @@ const StyleInspector = ({
       }
 
       const { name, type } = selector;
-      if (!isDuplicated && name !== '' && !(platform[displayMode][name] as StyleItem | undefined)) {
+      if (!isDuplicated && name !== '' && !selectors?.[name]) {
         builderHandler('styleAddSelector', displayMode, name, type, undefined, undefined, {
           styleSelector,
           componentType: type === 'element' ? componentType : undefined
@@ -119,8 +124,8 @@ const StyleInspector = ({
         isDuplicated &&
         originalSelector &&
         originalSelector.name !== name &&
-        (platform[displayMode][originalSelector.name] as StyleItem | undefined) &&
-        !(platform[displayMode][name] as StyleItem | undefined)
+        selectors?.[originalSelector.name] &&
+        !(selectors[name] as StyleItem | undefined)
       ) {
         builderHandler(
           'styleAddSelector',
@@ -128,12 +133,12 @@ const StyleInspector = ({
           name,
           type,
           undefined,
-          get(platform, `${displayMode}.${originalSelector.name}.attributes`, {}),
+          get(selectors, `${originalSelector.name}.attributes`, {}),
           { styleSelector, componentType: type === 'element' ? componentType : undefined }
         );
       }
     },
-    [builderHandler, componentType, displayMode, platform, styleSelector]
+    [builderHandler, componentType, displayMode, selectors, styleSelector]
   );
 
   const handleSelectSelector = useCallback(
@@ -221,11 +226,10 @@ const StyleInspector = ({
         {mode === 'element' && (
           <Selector
             className="min-h-0 w-full"
-            style={style}
             value={selectorName}
+            selectors={selectors}
             selector={selector}
             componentType={componentType}
-            displayMode={displayMode}
             onAdd={handleAddSelector}
             onChange={handleChangeSelector}
             onRemove={handleRemoveSelector}
@@ -282,7 +286,7 @@ const StyleInspector = ({
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300 dark:border-zinc-700">
         <Inspector
-          selectors={selectors}
+          selectors={selectorsFiltered}
           componentType={componentType}
           selector={selector}
           styleSelector={styleSelector}

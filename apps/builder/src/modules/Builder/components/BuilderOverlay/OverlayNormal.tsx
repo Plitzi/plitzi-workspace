@@ -48,7 +48,13 @@ const OverlayNormal = ({
   collaboratorName = ''
 }: OverlayNormalProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[style, selector]] = useStore(['style', 'selector']);
+  const [[style, selector, styleSelector, styleVariant, styleState]] = useStore([
+    'style',
+    'selector',
+    'styleSelector',
+    'styleVariant',
+    'styleState'
+  ]);
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = use(BuilderContext);
   const styleRef = useRef(style);
@@ -111,21 +117,32 @@ const OverlayNormal = ({
             set(draft, 'definition.styleSelectors.base', newSelector);
           })
         );
-        builderHandler('styleAddSelector', displayMode, newSelector, 'class', '', {
-          width: `${width}px`,
-          height: `${height}px`
-        });
+        builderHandler(
+          'styleAddSelector',
+          displayMode,
+          newSelector,
+          'class',
+          undefined,
+          { width: `${width}px`, height: `${height}px` },
+          { styleSelector: 'base' }
+        );
       } else {
-        const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`, 'class');
-        const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
-        builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', {
-          ...values,
-          width: `${width}px`,
-          height: `${height}px`
-        });
+        const values = get(
+          styleRef.current,
+          `platform.${displayMode}.${selector}.attributes.${styleSelector}.default`,
+          {}
+        );
+        builderHandler(
+          'styleUpdateSelector',
+          displayMode,
+          selector,
+          undefined,
+          { ...values, width: `${width}px`, height: `${height}px` },
+          { styleSelector, styleVariant, styleState }
+        );
       }
     },
-    [element, mode, selector, builderHandler, displayMode]
+    [element, mode, selector, builderHandler, displayMode, styleSelector, styleVariant, styleState]
   );
 
   const handleChange = useCallback(

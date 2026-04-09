@@ -21,21 +21,24 @@ export type ManagerSelectorProps = {
   flatList: Element[];
   selected?: string;
   onSelect?: Dispatch<SetStateAction<StyleItem | undefined>>;
-  selectors: StyleItem[];
+  selectors?: Record<string, StyleItem>;
 };
 
 const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
+  const selectorsArr = useMemo(() => Object.values(selectors ?? {}), [selectors]);
   const [searchInput, setSearchInput] = useState('');
   const { builderHandler } = use(BuilderContext);
   const { components } = use(ComponentContext);
   const componentsNotAvailables = useMemo(
-    () => selectors.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
-    [selectors]
+    () => selectorsArr.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
+    [selectorsArr]
   );
   const finalSelectors = useMemo(() => {
-    let selectorsParsed = selectors;
+    let selectorsParsed = selectorsArr;
     if (!isEmpty(searchInput)) {
-      selectorsParsed = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
+      selectorsParsed = selectorsArr.filter(selector =>
+        selector.name.toLowerCase().includes(searchInput.toLowerCase())
+      );
     }
 
     return selectorsParsed.sort((a, b) => {
@@ -44,7 +47,7 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
 
       return aNumber === bNumber ? a.name.localeCompare(b.name) : bNumber - aNumber;
     });
-  }, [selectors, searchInput]);
+  }, [selectorsArr, searchInput]);
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
 
@@ -78,9 +81,9 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
 
   const handleClickSelect = useCallback(
     (selector: string) => {
-      onSelect?.(state => (state?.name === selector ? undefined : selectors.find(s => s.name === selector)));
+      onSelect?.(state => (state?.name === selector ? undefined : selectorsArr.find(s => s.name === selector)));
     },
-    [onSelect, selectors]
+    [onSelect, selectorsArr]
   );
 
   const elementHasSelector = useCallback((element: Element, selector: string) => {
