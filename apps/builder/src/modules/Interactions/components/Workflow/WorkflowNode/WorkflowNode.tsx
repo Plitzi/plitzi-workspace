@@ -160,13 +160,13 @@ const WorkflowNode = ({
 
   return (
     <div
-      className={clsx('w-full rounded-xl border-2 bg-white', {
-        'border-gray-300': !isOpened,
+      className={clsx('w-full rounded-xl border-2 bg-white dark:bg-zinc-800', {
+        'border-gray-300 dark:border-zinc-600': !isOpened,
         'border-blue-500': isOpened
       })}
     >
       <NodeHeader
-        className={clsx({ 'border-b-2 border-dotted border-gray-300': isOpened })}
+        className={clsx({ 'border-b-2 border-dotted border-gray-300 dark:border-zinc-600': isOpened })}
         id={id}
         title={title}
         type={type}

@@ -1,6 +1,4 @@
-import type { Theme } from '../../types';
-
-const getSystemTheme = (): Theme => {
+const getSystemTheme = (): 'dark' | 'light' => {
   if (typeof window === 'undefined') {
     return 'dark';
   }

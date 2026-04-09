@@ -43,7 +43,7 @@ const SpacingEditor = ({ fragmentSelected, value, onChange }: SpacingEditorProps
   const segment = fragmentSelected.split('-')[0];
 
   return (
-    <div className="mt-2 rounded-sm border border-gray-300 bg-white select-none">
+    <div className="mt-2 rounded-sm border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 select-none">
       <div className="grid grid-cols-2 items-center gap-2 px-1 pt-1">
         <div className="mr-1 flex items-center capitalize">
           <Icon className="mr-1">{iconsMap[fragmentSelected as keyof typeof iconsMap]}</Icon>

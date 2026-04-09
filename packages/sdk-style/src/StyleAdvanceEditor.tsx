@@ -61,7 +61,7 @@ const StyleAdvanceEditor = () => {
         <Button
           intent="custom"
           size="custom"
-          className="mr-2 rounded-sm bg-white p-2"
+          className="mr-2 rounded-sm bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow p-2"
           onClick={handleFormat}
           title="Auto format"
           disabled={networkLoading}
@@ -70,12 +70,12 @@ const StyleAdvanceEditor = () => {
         </Button>
         <ContainerFloating containerLeftOffset={-208} containerTopOffset={4}>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="custom" className="rounded-sm bg-white p-2">
+            <Button intent="custom" size="custom" className="rounded-sm bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow p-2">
               <i className="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>
-            <div className="flex w-60 flex-col items-center justify-center p-4 text-center">
+            <div className="flex w-60 flex-col items-center justify-center p-4 text-center text-zinc-700 dark:text-zinc-300">
               <p>Add your own CSS code here to customize the appearance and layout of your site.</p>
               <a
                 href="https://codex.wordpress.org/CSS"

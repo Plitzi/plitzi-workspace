@@ -133,7 +133,7 @@ const Variables = () => {
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="min-h-px w-full bg-gray-300" />
+      <div className="min-h-px w-full bg-gray-300 dark:bg-zinc-700" />
       <SchemaVariables
         className="min-h-0 grow basis-0"
         variables={variablesFiltered}
@@ -142,7 +142,7 @@ const Variables = () => {
         onUpdate={handleUpdateSchemaVariable}
         onRemove={handleRemoveSchemaVariable}
       />
-      <div className="min-h-px w-full bg-gray-300" />
+      <div className="min-h-px w-full bg-gray-300 dark:bg-zinc-700" />
       <div className="flex grow basis-0 flex-col pb-2">
         <Heading as="h6">Style Variables</Heading>
         <StyleVariables

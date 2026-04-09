@@ -1,5 +1,5 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { createContext, useCallback, useEffect } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import getSystemTheme from './helpers/getSystemTheme';
 
@@ -22,44 +22,45 @@ const ThemeProvider = ({
   storageType = 'localStorage',
   children
 }: ThemeProviderProps) => {
-  const isSystem = defaultTheme === 'system';
-  const [theme, setTheme] = useStorage<Theme>(
-    storageKey,
-    defaultTheme === 'system' ? getSystemTheme() : defaultTheme,
-    storageType
-  );
+  const [themeMode, setThemeMode] = useStorage<Theme>(storageKey, defaultTheme, storageType);
 
-  // When in system mode, track OS preference changes
+  // Track OS preference changes (needed when mode is 'system')
+  const [systemTheme, setSystemTheme] = useState<'dark' | 'light'>(() => getSystemTheme());
+
   useEffect(() => {
-    if (!isSystem) {
-      return;
-    }
-
     const mq = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : undefined;
-    const handler = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
+    const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
     mq?.addEventListener('change', handler);
 
     return () => mq?.removeEventListener('change', handler);
-  }, [isSystem, setTheme]);
+  }, []);
+
+  const resolvedTheme = useMemo<'dark' | 'light'>(
+    () => (themeMode === 'system' ? systemTheme : themeMode),
+    [themeMode, systemTheme]
+  );
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') {
+    if (resolvedTheme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, [theme]);
+  }, [resolvedTheme]);
 
   const toggleTheme = useCallback(() => {
-    if (isSystem) {
-      return;
-    }
+    setThemeMode(prev => {
+      if (prev === 'dark') return 'light';
+      if (prev === 'light') return 'system';
 
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  }, [isSystem, setTheme]);
+      return 'dark';
+    });
+  }, [setThemeMode]);
 
-  return <ThemeContext value={{ theme, isDark: theme === 'dark', toggleTheme }}>{children}</ThemeContext>;
+  return (
+    <ThemeContext value={{ theme: themeMode, isDark: resolvedTheme === 'dark', toggleTheme }}>{children}</ThemeContext>
+  );
 };
 
 export { ThemeContext };

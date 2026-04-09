@@ -20,7 +20,7 @@ const Element = ({
 
   return (
     <div className="flex cursor-grabbing flex-col items-center gap-2" draggable onDragStart={onDragStart} title={label}>
-      <div className="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg border border-gray-300 p-1.5">
+      <div className="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1.5">
         {icon && typeof icon === 'string' && !icon.startsWith('http') && <Icon intent="custom" icon={icon} />}
         {icon && typeof icon === 'string' && icon.startsWith('http') && (
           <Icon intent="custom">

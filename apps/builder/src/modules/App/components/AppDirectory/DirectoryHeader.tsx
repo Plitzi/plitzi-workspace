@@ -83,7 +83,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   }, [showModal, pageFolders, eventBridge]);
 
   return (
-    <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3">
+    <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 dark:border-zinc-700 pb-3">
       <Button
         intent="primary"
         size="sm"

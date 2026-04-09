@@ -42,7 +42,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
         <Button
           intent="custom"
           size="custom"
-          className="mr-2 rounded-sm bg-white p-2"
+          className="mr-2 rounded-sm bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow p-2"
           onClick={handleClickSave}
           title="Save State"
         >

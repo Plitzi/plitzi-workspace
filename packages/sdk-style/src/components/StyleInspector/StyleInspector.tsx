@@ -280,7 +280,7 @@ const StyleInspector = ({
           </div>
         )}
       </div>
-      <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300">
+      <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300 dark:border-zinc-700">
         <Inspector
           selectors={selectors}
           componentType={componentType}

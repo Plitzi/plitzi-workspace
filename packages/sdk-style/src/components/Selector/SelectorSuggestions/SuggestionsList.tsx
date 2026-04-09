@@ -10,7 +10,7 @@ export type SuggestionsListProps = {
 const SuggestionsList = ({ selectors = [], onSelect }: SuggestionsListProps) => {
   return (
     <div className="flex w-full flex-col">
-      <div className="mb-1 w-full text-sm font-bold">Tokens Availables</div>
+      <div className="mb-1 w-full text-sm font-bold text-zinc-800 dark:text-zinc-200">Tokens Availables</div>
       <div className="flex max-h-[250px] flex-col items-start gap-1 overflow-y-auto text-xs">
         {selectors.map((selector, index) => (
           <SelectorItem
@@ -24,7 +24,7 @@ const SuggestionsList = ({ selectors = [], onSelect }: SuggestionsListProps) => 
           />
         ))}
         {selectors.length === 0 && (
-          <div className="w-full rounded-sm border-2 border-dashed border-gray-300 p-3 text-center">
+          <div className="w-full rounded-sm border-2 border-dashed border-gray-300 dark:border-zinc-600 p-3 text-center text-zinc-500 dark:text-zinc-400">
             No tokens availables
           </div>
         )}

@@ -243,10 +243,14 @@ const Selector = ({
     <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
       <ContainerFloating.Trigger className="w-full">
         <div
-          className={clsx('bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1', className, {
-            'pointer-events-none cursor-not-allowed bg-gray-100': disabled,
-            'cursor-pointer': !disabled
-          })}
+          className={clsx(
+            'bg-grayviolet-200 dark:bg-zinc-800 relative flex flex-wrap gap-1 rounded-sm p-1',
+            className,
+            {
+              'pointer-events-none cursor-not-allowed bg-gray-100 dark:bg-zinc-900': disabled,
+              'cursor-pointer': !disabled
+            }
+          )}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
         >
@@ -254,7 +258,7 @@ const Selector = ({
             intent="secondary"
             size="custom"
             onClick={handleClickStyleManager}
-            className="h-7 w-7 rounded-sm bg-white"
+            className="h-7 w-7 rounded-sm bg-white dark:bg-zinc-700 dark:text-zinc-200"
             title="Style Manager"
           >
             <Button.Icon icon="fas fa-swatchbook" />

@@ -51,7 +51,7 @@ const SpacingMargin = ({
   } = values ?? {};
 
   return (
-    <div className="relative flex cursor-pointer flex-col rounded-md border border-gray-300 bg-white select-none">
+    <div className="relative flex cursor-pointer flex-col rounded-md border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 select-none">
       <div className="flex items-center justify-center py-0.5">
         <InspectorLabel
           className="absolute top-0 left-0 overflow-hidden rounded-br-md !p-0 text-[10px]"

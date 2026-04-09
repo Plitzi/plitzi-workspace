@@ -68,7 +68,7 @@ const StyleManager = () => {
             />
           )}
           {!selector && (
-            <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center select-none">
+            <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 dark:border-zinc-600 p-3 text-center text-zinc-500 dark:text-zinc-400 select-none">
               No selector or element selected. Click on one to select it.
             </div>
           )}

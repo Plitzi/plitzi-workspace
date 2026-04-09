@@ -63,7 +63,7 @@ const NodePreview = ({ preview, defaultPreview, onChange }: NodePreviewProps) =>
   );
 
   return (
-    <div className="flex flex-col items-center border-t-2 border-dotted border-gray-300 px-4 py-2">
+    <div className="flex flex-col items-center border-t-2 border-dotted border-gray-300 px-4 py-2 dark:border-zinc-600">
       <ContainerCollapsable className="flex w-full justify-center" collapsed={isCollapsed}>
         <ContainerCollapsable.Header title="Preview" placement="right" />
         <ContainerCollapsable.Content>

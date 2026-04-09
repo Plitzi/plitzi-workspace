@@ -23,7 +23,7 @@ const ElementCategory = ({ components, category = '' }: ElementCategoryProps) =>
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="border-t border-gray-200" />
+      <div className="border-t border-gray-200 dark:border-zinc-700" />
       <Heading as="h6" className="capitalize">
         {category}
       </Heading>

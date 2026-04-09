@@ -39,8 +39,8 @@ const WorkflowHeader = ({ flows, flowId = '', setFlowId }: WorkflowHeaderProps) 
 
   return (
     <div
-      className={clsx('flex justify-between gap-1 bg-white px-2 py-1', {
-        'w-full rounded-2xl border border-gray-300': flows.length > 0
+      className={clsx('flex justify-between gap-1 bg-white px-2 py-1 dark:bg-zinc-800', {
+        'w-full rounded-2xl border border-gray-300 dark:border-zinc-600': flows.length > 0
       })}
     >
       {flows.length > 0 && (

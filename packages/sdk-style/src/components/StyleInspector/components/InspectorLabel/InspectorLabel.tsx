@@ -49,11 +49,11 @@ const InspectorLabel = ({
       <label
         className={clsx('m-0 truncate', {
           'px-1': !sectionTitle,
-          'rounded-tl rounded-tr border border-gray-300 bg-gray-100 px-2 font-bold': sectionTitle,
-          'cursor-pointer bg-blue-200 text-blue-400': hasValues && !hasBinding && !hasVariables,
-          'cursor-pointer bg-green-200 text-green-400': hasVariables,
-          'cursor-pointer bg-purple-200 text-purple-400': hasBinding,
-          'bg-orange-200 text-orange-400': hasInherit && !hasValues && !hasVariables
+          'rounded-tl rounded-tr border border-gray-300 dark:border-zinc-600 bg-gray-100 dark:bg-zinc-700 px-2 font-bold text-zinc-700 dark:text-zinc-200': sectionTitle,
+          'cursor-pointer bg-blue-200 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400': hasValues && !hasBinding && !hasVariables,
+          'cursor-pointer bg-green-200 dark:bg-green-900/50 text-green-600 dark:text-green-400': hasVariables,
+          'cursor-pointer bg-purple-200 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400': hasBinding,
+          'bg-orange-200 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400': hasInherit && !hasValues && !hasVariables
         })}
         onClick={handleClickResetValue}
       >

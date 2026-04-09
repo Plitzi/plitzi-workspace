@@ -79,7 +79,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
           />
         </Flex>
         {zoom && (
-          <div className="relative my-2 rounded-sm border border-gray-300">
+          <div className="relative my-2 rounded-sm border border-gray-300 dark:border-zinc-700">
             <ContainerAutoScale className="flex h-37.5 w-full items-center justify-center overflow-hidden rounded-sm">
               <BuilderAreaPreview
                 id={id}

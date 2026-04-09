@@ -144,7 +144,7 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
 
   return (
-    <div className="flex max-w-[350px] grow basis-0 flex-col gap-2 overflow-auto border-r border-gray-300 pt-2 pr-2">
+    <div className="flex max-w-[350px] grow basis-0 flex-col gap-2 overflow-auto border-r border-gray-300 dark:border-zinc-700 pt-2 pr-2">
       <Button intent="primary" size="sm" className="w-full" iconPlacement="before" onClick={onOpenAddSelector}>
         <Button.Icon icon="fas fa-tint" size="md" className="text-base" />
         New Selector

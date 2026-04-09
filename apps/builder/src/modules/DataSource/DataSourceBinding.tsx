@@ -178,7 +178,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
   if (Object.keys(sources).length === 0) {
     return (
-      <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center">
+      <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
         Sources not found, Check if you have sources added
       </div>
     );
@@ -194,7 +194,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
         return (
           <Fragment key={`${id}_${i}`}>
-            {i !== 0 && <div className="h-0.5 w-full bg-gray-300" />}
+            {i !== 0 && <div className="h-0.5 w-full bg-gray-300 dark:bg-zinc-700" />}
             <ContainerCollapsable collapsed={!binding.length}>
               <ContainerCollapsable.Header
                 title={upperFirst(fkey)}
@@ -231,7 +231,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                 </div>
                 {bindingFormValues[fkey] && (
                   <div
-                    className={clsx('border-t border-gray-300 py-4', {
+                    className={clsx('border-t border-gray-300 py-4 dark:border-zinc-700', {
                       'mt-4': !!binding.length,
                       'border-b': i !== bindingCategories.length - 1
                     })}

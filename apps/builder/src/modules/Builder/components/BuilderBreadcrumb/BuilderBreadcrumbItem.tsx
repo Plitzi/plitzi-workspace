@@ -49,7 +49,7 @@ const BuilderBreadcrumbItem = ({
   return (
     <li
       className={clsx(
-        'breadcrumb__item flex items-center gap-2 text-xs select-none before:text-black not-first:before:content-[">"] first:before:content-none',
+        'breadcrumb__item flex items-center gap-2 text-xs select-none before:text-black not-first:before:content-[">"] first:before:content-none dark:before:text-zinc-500',
         className,
         { 'hover:text-primary-500': !isActive, 'text-primary-500': isActive }
       )}
