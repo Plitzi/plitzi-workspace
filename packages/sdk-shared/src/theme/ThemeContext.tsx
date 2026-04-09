@@ -6,7 +6,7 @@ import getSystemTheme from './helpers/getSystemTheme';
 import type { Theme, ThemeContextValue } from '../types';
 import type { ReactNode } from 'react';
 
-const ThemeContext = createContext<ThemeContextValue>({ theme: 'dark', isDark: true, toggleTheme: () => {} });
+const ThemeContext = createContext<ThemeContextValue>({ theme: 'dark', toggleTheme: () => {} });
 ThemeContext.displayName = 'ThemeContext';
 
 export type ThemeProviderProps = {
@@ -25,7 +25,7 @@ const ThemeProvider = ({
   const [themeMode, setThemeMode] = useStorage<Theme>(storageKey, defaultTheme, storageType);
 
   // Track OS preference changes (needed when mode is 'system')
-  const [systemTheme, setSystemTheme] = useState<'dark' | 'light'>(() => getSystemTheme());
+  const [systemTheme, setSystemTheme] = useState<Theme>(() => getSystemTheme());
 
   useEffect(() => {
     const mq = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : undefined;
@@ -35,7 +35,7 @@ const ThemeProvider = ({
     return () => mq?.removeEventListener('change', handler);
   }, []);
 
-  const resolvedTheme = useMemo<'dark' | 'light'>(
+  const resolvedTheme = useMemo<Theme>(
     () => (themeMode === 'system' ? systemTheme : themeMode),
     [themeMode, systemTheme]
   );
@@ -55,17 +55,13 @@ const ThemeProvider = ({
         return 'light';
       }
 
-      if (prev === 'light') {
-        return 'system';
-      }
-
       return 'dark';
     });
   }, [setThemeMode]);
 
-  return (
-    <ThemeContext value={{ theme: themeMode, isDark: resolvedTheme === 'dark', toggleTheme }}>{children}</ThemeContext>
-  );
+  const themeValue = useMemo(() => ({ theme: themeMode, toggleTheme }), [themeMode, toggleTheme]);
+
+  return <ThemeContext value={themeValue}>{children}</ThemeContext>;
 };
 
 export { ThemeContext };

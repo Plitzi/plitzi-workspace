@@ -152,7 +152,7 @@ const AppHeader = () => {
         <PreviewModeButtons />
         <button
           className={clsx(
-            'flex h-7 w-7 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
+            'flex h-7 w-7 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
           )}
           title={
             theme === 'dark' ? 'Switch to light mode' : theme === 'light' ? 'Use system theme' : 'Switch to dark mode'
@@ -162,7 +162,7 @@ const AppHeader = () => {
           <i
             className={clsx(
               'fa-solid text-sm',
-              theme === 'dark' ? 'fa-sun' : theme === 'light' ? 'fa-desktop' : 'fa-moon'
+              theme === 'dark' ? 'fa-sun' : theme === 'light' ? 'fa-moon' : 'fa-desktop'
             )}
           />
         </button>
