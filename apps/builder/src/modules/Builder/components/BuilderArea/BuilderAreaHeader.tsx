@@ -192,8 +192,8 @@ const BuilderAreaHeader = ({
       />
       <div title="Theme" className="flex cursor-pointer" onClick={handleClickTheme}>
         {theme === 'system' && <Icon icon="fa-solid fa-desktop" />}
-        {theme === 'light' && <Icon icon="fa-solid fa-sun" />}
-        {theme === 'dark' && <Icon icon="fa-solid fa-moon" />}
+        {theme === 'dark' && <Icon icon="fa-solid fa-sun" />}
+        {theme === 'light' && <Icon icon="fa-solid fa-moon" />}
       </div>
       {!previewMode && (
         <Flex items="center" gap={3}>
