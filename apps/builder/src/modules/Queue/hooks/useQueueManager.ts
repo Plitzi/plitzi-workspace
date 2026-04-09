@@ -189,14 +189,7 @@ const useQueueManager = ({
         case StyleActions.STYLE_ADD_SELECTOR: {
           const { displayMode, selector, selectorType, path, value, params } = item.action;
 
-          return mutate('StyleAddSelector', {
-            displayMode,
-            selector,
-            type: selectorType,
-            path,
-            style: value,
-            params
-          });
+          return mutate('StyleAddSelector', { displayMode, selector, type: selectorType, path, style: value, params });
         }
 
         case StyleActions.STYLE_UPDATE_SELECTOR: {
