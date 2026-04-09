@@ -66,7 +66,7 @@ const SchemaVariable = ({
 
   if (editMode) {
     return (
-      <div className="rounded-sm border border-gray-300 dark:border-zinc-700 p-2">
+      <div className="rounded-sm border border-gray-300 p-2 dark:border-zinc-700">
         <SchemaVariableForm
           name={name}
           category={category}
@@ -82,7 +82,7 @@ const SchemaVariable = ({
   }
 
   return (
-    <div className="group flex flex-col gap-1 rounded-sm border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-2 py-0.5 text-sm text-zinc-700 dark:text-zinc-300">
+    <div className="group flex flex-col gap-1 rounded-sm border border-gray-300 bg-white px-2 py-0.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
       <div className="flex w-full cursor-pointer items-center gap-2" onClick={handleClick}>
         <div className="flex w-full overflow-hidden">
           {subValues && subValues.length > 0 && (

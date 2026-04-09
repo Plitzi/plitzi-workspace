@@ -23,7 +23,7 @@ import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared'
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 const AppHeader = () => {
-  const { theme, isDark, toggleTheme } = use(ThemeContext);
+  const { theme, toggleTheme } = use(ThemeContext);
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
@@ -120,7 +120,9 @@ const AppHeader = () => {
     >
       <div className="flex h-full items-center gap-4">
         <div
-          className={clsx('px-3bg-zinc-100 flex h-8 w-20 items-center justify-between rounded-lg dark:bg-zinc-800')}
+          className={clsx(
+            'bg-grayviolet-200 flex h-8 w-20 items-center justify-between rounded-lg pr-2 pl-3 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
+          )}
           id="plitzi-logo"
         >
           <a href={origin}>
@@ -152,10 +154,17 @@ const AppHeader = () => {
           className={clsx(
             'flex h-7 w-7 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
           )}
-          title={theme === 'dark' ? 'Switch to light mode' : theme === 'light' ? 'Use system theme' : 'Switch to dark mode'}
+          title={
+            theme === 'dark' ? 'Switch to light mode' : theme === 'light' ? 'Use system theme' : 'Switch to dark mode'
+          }
           onClick={toggleTheme}
         >
-          <i className={clsx('fa-solid text-sm', theme === 'dark' ? 'fa-sun' : theme === 'light' ? 'fa-desktop' : 'fa-moon')} />
+          <i
+            className={clsx(
+              'fa-solid text-sm',
+              theme === 'dark' ? 'fa-sun' : theme === 'light' ? 'fa-desktop' : 'fa-moon'
+            )}
+          />
         </button>
         <div className="flex gap-4">
           <Button

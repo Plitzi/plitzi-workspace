@@ -178,27 +178,27 @@ const App = ({
   return (
     <StoreProvider logger={createStoreDevToolsLogger('sdk')}>
       <ThemeProvider defaultTheme="system">
-      <Provider components={components}>
-        <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
-          <HelmetProvider>
-            <ReactRouter {...(reactRouterProps as { location: string })}>
-              <ApolloProvider client={client}>
-                <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                  <AppMain
-                    server={finalServer}
-                    webKey={webKey}
-                    renderMode={renderMode}
-                    debugMode={debugMode}
-                    webId={webId}
-                    sdkEnvironment={sdkEnvironment}
-                    {...sdkProps}
-                  />
-                </ComponentProvider>
-              </ApolloProvider>
-            </ReactRouter>
-          </HelmetProvider>
-        </ContainerRoot>
-      </Provider>
+        <Provider components={components}>
+          <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
+            <HelmetProvider>
+              <ReactRouter {...(reactRouterProps as { location: string })}>
+                <ApolloProvider client={client}>
+                  <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                    <AppMain
+                      server={finalServer}
+                      webKey={webKey}
+                      renderMode={renderMode}
+                      debugMode={debugMode}
+                      webId={webId}
+                      sdkEnvironment={sdkEnvironment}
+                      {...sdkProps}
+                    />
+                  </ComponentProvider>
+                </ApolloProvider>
+              </ReactRouter>
+            </HelmetProvider>
+          </ContainerRoot>
+        </Provider>
       </ThemeProvider>
     </StoreProvider>
   );

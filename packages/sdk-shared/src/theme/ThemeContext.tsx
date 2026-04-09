@@ -51,8 +51,13 @@ const ThemeProvider = ({
 
   const toggleTheme = useCallback(() => {
     setThemeMode(prev => {
-      if (prev === 'dark') return 'light';
-      if (prev === 'light') return 'system';
+      if (prev === 'dark') {
+        return 'light';
+      }
+
+      if (prev === 'light') {
+        return 'system';
+      }
 
       return 'dark';
     });
