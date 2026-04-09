@@ -26,7 +26,7 @@ const TemplateContent = ({ baseElementId, schema, style }: TemplateContentProps)
     <div className="flex h-full w-full flex-col gap-2 overflow-hidden">
       <div className="relative flex flex-col overflow-hidden">
         <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('template')}>
-          <ContainerAutoScale className="flex min-h-46 w-full items-center justify-center overflow-hidden rounded-sm">
+          <ContainerAutoScale className="flex min-h-46 w-full items-center justify-center overflow-hidden">
             <BuilderAreaPreview
               id={baseElementId}
               schema={schema}

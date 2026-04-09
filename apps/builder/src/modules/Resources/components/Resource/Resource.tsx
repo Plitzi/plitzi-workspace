@@ -96,7 +96,7 @@ const Resource = ({
           </Heading>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <Heading as="h6" className="w-[50px] text-end font-bold">
+              <Heading as="h6" className="w-12.5 text-end font-bold">
                 Title:
               </Heading>
               <div className="font-sm truncate" title={title}>
@@ -104,13 +104,13 @@ const Resource = ({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Heading as="h6" className="w-[50px] text-end font-bold">
+              <Heading as="h6" className="w-12.5 text-end font-bold">
                 Type:
               </Heading>
               <div className="font-sm">{type}</div>
             </div>
             <div className="flex items-center gap-2">
-              <Heading as="h6" className="w-[50px] text-end font-bold">
+              <Heading as="h6" className="w-12.5 text-end font-bold">
                 Url:
               </Heading>
               <Input value={src} size="xs" className="grow basis-0" readOnly />

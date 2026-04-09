@@ -182,7 +182,9 @@ const ResourcesCdn = ({
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
-        <div className="rounded border border-gray-400 dark:border-zinc-600 px-1 text-xs text-gray-500 dark:text-zinc-400">{finalResources.length}</div>
+        <div className="rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+          {finalResources.length}
+        </div>
         {/* <Icon
           icon="fa-solid fa-pencil"
           className="hidden cursor-pointer group-hover:block"

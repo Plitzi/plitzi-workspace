@@ -134,9 +134,10 @@ const ResourceDirectory = ({
   return (
     <ContainerCollapsable
       className={clsx(
-        'w-full gap-2 rounded p-2',
+        'w-full rounded',
         {
-          'border border-dashed border-orange-500 bg-orange-100 dark:bg-orange-950/20': items.length === 0 && !isDefault,
+          'border border-dashed border-orange-500 bg-orange-100 dark:bg-orange-950/20':
+            items.length === 0 && !isDefault,
           'bg-slate-100 dark:bg-zinc-800/60': items.length > 0 || isDefault,
           'outline-2 -outline-offset-2 outline-black dark:outline-white': isDragging
         },
@@ -149,7 +150,7 @@ const ResourceDirectory = ({
     >
       <ContainerCollapsable.Header
         className={{
-          header: clsx('group w-full', { 'pointer-events-none': isDragging }),
+          header: clsx('group w-full p-2', { 'pointer-events-none': isDragging }),
           headerSlot: 'flex items-center gap-2',
           headerContainer: 'grow basis-0 overflow-hidden',
           headerTitle: 'w-full grow basis-0'
@@ -164,7 +165,9 @@ const ResourceDirectory = ({
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
-        <div className="rounded border border-gray-400 dark:border-zinc-600 px-1 text-xs text-gray-500 dark:text-zinc-400">{items.length}</div>
+        <div className="rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+          {items.length}
+        </div>
         {!isDefault && canRemove && (
           <Icon
             intent="danger"
@@ -176,7 +179,7 @@ const ResourceDirectory = ({
         )}
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={clsx('max-h-87.5 overflow-y-auto', { 'pointer-events-none': isDragging })}
+        className={clsx('max-h-87.5 overflow-y-auto p-2', { 'pointer-events-none': isDragging })}
       >
         {items.length > 0 && (
           <div className="mt-2 block columns-3 gap-2">
