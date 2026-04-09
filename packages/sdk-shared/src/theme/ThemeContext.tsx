@@ -61,6 +61,15 @@ const ThemeProvider = ({ defaultTheme = 'dark', storageKey, children }: ThemePro
     return () => mq?.removeEventListener('change', handler);
   }, [isSystem]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
   const toggleTheme = useCallback(() => {
     if (isSystem) {
       return;

@@ -8,7 +8,7 @@
   --color-scheme: light dark;
 } */
 
-/* @custom-variant dark (&:where(.dark, .dark *)); */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   .dark {

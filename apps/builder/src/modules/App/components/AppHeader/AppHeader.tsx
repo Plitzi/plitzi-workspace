@@ -115,7 +115,7 @@ const AppHeader = () => {
   return (
     <div
       className={clsx(
-        'py-3border-gray-200 flex h-12 items-center justify-between border-b bg-white px-4 text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200'
+        'py-3border-gray-200 flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200'
       )}
     >
       <div className="flex h-full items-center gap-4">
