@@ -1,52 +1,33 @@
-import { createContext, useCallback, useEffect, useState } from 'react';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import { createContext, useCallback, useEffect } from 'react';
 
+import getSystemTheme from './helpers/getSystemTheme';
+
+import type { Theme, ThemeContextValue } from '../types';
 import type { ReactNode } from 'react';
-
-export type Theme = 'dark' | 'light';
-export type ThemeDefaultValue = Theme | 'system';
-
-export type ThemeContextValue = {
-  theme: Theme;
-  isDark: boolean;
-  toggleTheme: () => void;
-};
 
 const ThemeContext = createContext<ThemeContextValue>({ theme: 'dark', isDark: true, toggleTheme: () => {} });
 ThemeContext.displayName = 'ThemeContext';
 
-const getSystemTheme = (): Theme => {
-  try {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  } catch {
-    return 'dark';
-  }
-};
-
-const resolveInitialTheme = (storageKey: string | undefined, defaultTheme: ThemeDefaultValue): Theme => {
-  if (storageKey) {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored === 'dark' || stored === 'light') {
-        return stored;
-      }
-    } catch {
-      // localStorage unavailable
-    }
-  }
-
-  return defaultTheme === 'system' ? getSystemTheme() : defaultTheme;
-};
-
 export type ThemeProviderProps = {
-  defaultTheme?: ThemeDefaultValue;
+  defaultTheme?: Theme;
   storageKey?: string;
+  storageType?: 'localStorage' | 'sessionStorage';
   children?: ReactNode;
 };
 
-const ThemeProvider = ({ defaultTheme = 'dark', storageKey, children }: ThemeProviderProps) => {
+const ThemeProvider = ({
+  defaultTheme = 'dark',
+  storageKey = 'theme',
+  storageType = 'localStorage',
+  children
+}: ThemeProviderProps) => {
   const isSystem = defaultTheme === 'system';
-
-  const [theme, setTheme] = useState<Theme>(() => resolveInitialTheme(storageKey, defaultTheme));
+  const [theme, setTheme] = useStorage<Theme>(
+    storageKey,
+    defaultTheme === 'system' ? getSystemTheme() : defaultTheme,
+    storageType
+  );
 
   // When in system mode, track OS preference changes
   useEffect(() => {
@@ -59,7 +40,7 @@ const ThemeProvider = ({ defaultTheme = 'dark', storageKey, children }: ThemePro
     mq?.addEventListener('change', handler);
 
     return () => mq?.removeEventListener('change', handler);
-  }, [isSystem]);
+  }, [isSystem, setTheme]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -75,19 +56,8 @@ const ThemeProvider = ({ defaultTheme = 'dark', storageKey, children }: ThemePro
       return;
     }
 
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      if (storageKey) {
-        try {
-          localStorage.setItem(storageKey, next);
-        } catch {
-          // ignore
-        }
-      }
-
-      return next;
-    });
-  }, [isSystem, storageKey]);
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  }, [isSystem, setTheme]);
 
   return <ThemeContext value={{ theme, isDark: theme === 'dark', toggleTheme }}>{children}</ThemeContext>;
 };

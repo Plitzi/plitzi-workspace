@@ -117,7 +117,7 @@ const ContainerSitemap = () => {
   );
 
   return (
-    <Card className="relative flex grow flex-col">
+    <Card className="relative flex grow flex-col rounded-none" size="custom">
       <Card.Body className="overflow-hidden" grow>
         <WorkflowDiagram
           pages={pages}

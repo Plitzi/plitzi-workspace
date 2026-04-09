@@ -366,13 +366,13 @@ const App = (props: AppProps) => {
 
   return (
     <StoreProvider logger={createStoreDevToolsLogger('builder')}>
-      <ThemeProvider storageKey="plitzi-builder-theme">
-      <Provider components={components}>
-        <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
-          {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
-          {hasBrowserRouter && childrenParsed}
-        </ContainerRoot>
-      </Provider>
+      <ThemeProvider storageKey="builder-state.theme">
+        <Provider components={components}>
+          <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
+            {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
+            {hasBrowserRouter && childrenParsed}
+          </ContainerRoot>
+        </Provider>
       </ThemeProvider>
     </StoreProvider>
   );

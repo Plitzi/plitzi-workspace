@@ -74,9 +74,10 @@ const CustomNode = memo(({ id, data, selected = false }: CustomNodeProps) => {
         className="bg-primary-500! hover:bg-primary-600! h-5! w-5! border-4! border-white! shadow-lg transition-all duration-200 hover:scale-110"
       />
       <Card
-        className={clsx('h-37.5 w-50 p-2 shadow-md transition-shadow hover:shadow-lg', {
+        className={clsx('min-h-37.5 w-50 shadow-md transition-shadow hover:shadow-lg', {
           'ring-2 ring-blue-500 ring-offset-2': selected
         })}
+        size="xs"
       >
         <Card.Header>
           <div className="flex w-full items-start">
