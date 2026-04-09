@@ -146,7 +146,7 @@ const BuilderAreaHeader = ({
     <Flex
       items="center"
       gap={4}
-      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-300 bg-white pr-2 pl-4"
+      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-200 bg-white pr-2 pl-4 dark:border-zinc-700 dark:bg-zinc-800"
     >
       <Flex items="center" gap={2}>
         <div
@@ -177,7 +177,11 @@ const BuilderAreaHeader = ({
       <div title="Default Page" className={clsx({ 'text-primary-400': defaultPage, 'text-gray-400': !defaultPage })}>
         <Icon icon="fas fa-home" />
       </div>
-      <Flex items="center" grow className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none">
+      <Flex
+        items="center"
+        grow
+        className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none dark:border-zinc-700 dark:text-zinc-400"
+      >
         <div className="mr-4 w-full truncate">{pageTitle}</div>
       </Flex>
       <Icon

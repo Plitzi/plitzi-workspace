@@ -9,3 +9,10 @@
 } */
 
 /* @custom-variant dark (&:where(.dark, .dark *)); */
+
+@layer base {
+  .dark {
+    color-scheme: dark;
+    color: theme(--color-zinc-200);
+  }
+}
