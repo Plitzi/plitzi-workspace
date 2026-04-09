@@ -36,7 +36,7 @@ const BuilderContextMenuItem = ({
         <div className="mr-1 text-blue-400">{children}</div>
         {title}
       </div>
-      <div className="text-[10px] text-xs text-gray-500 opacity-80 dark:text-zinc-400">{shortcut}</div>
+      <div className="text-xs text-[10px] text-gray-500 opacity-80 dark:text-zinc-400">{shortcut}</div>
     </div>
   );
 };

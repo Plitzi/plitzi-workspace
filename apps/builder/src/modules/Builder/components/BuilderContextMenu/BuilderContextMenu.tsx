@@ -253,10 +253,11 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
           transform: `scale(${1 / zoom})`,
           transformOrigin: 'top left'
         }}
+        size="custom"
       >
         <Card.Body className="w-full">
           <div className="flex h-20 items-center justify-center rounded-sm border-2 border-dashed p-3">
-            No components selected. Click on a component to select it
+            No components selected.
           </div>
         </Card.Body>
       </Card>
@@ -278,6 +279,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
         transform: `scale(${1 / zoom})`,
         transformOrigin: 'top left'
       }}
+      size="custom"
     >
       <Card.Body className="w-full">
         <div className="flex w-full flex-col">
