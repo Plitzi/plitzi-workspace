@@ -8,12 +8,11 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
 import DirectoryItem from './DirectoryItem';
 
-import type { PageFolder, BuilderState } from '@plitzi/sdk-shared';
+import type { PageFolder, Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type DirectoryProps = {
@@ -22,6 +21,7 @@ export type DirectoryProps = {
   slug?: string;
   parentId?: string;
   pageFolders?: PageFolder[];
+  elements?: Element[];
   isRootFolder?: boolean;
   currentPageId?: string;
   nestedLevel?: number;
@@ -35,48 +35,15 @@ const Directory = ({
   isRootFolder = false,
   currentPageId,
   nestedLevel = 0,
-  pageFolders
+  pageFolders,
+  elements
 }: DirectoryProps) => {
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [pageDefinitions] = useStore('pageDefinitions');
   const items = useMemo(
-    () =>
-      Object.values(pageDefinitions)
-        .filter(({ attributes, definition }) => {
-          const sameFolder = attributes.folder === id || (!attributes.folder && !id);
-
-          return sameFolder && (definition.type === 'page' || definition.type === 'layoutContainer');
-        })
-        .sort(
-          (
-            { definition: definitionA, attributes: attributesA },
-            { definition: definitionB, attributes: attributesB }
-          ) => {
-            const { type: typeA, label: labelA } = definitionA;
-            const { type: typeB, label: labelB } = definitionB;
-
-            // Layouts after Pages
-            if (typeA !== typeB) {
-              return typeA === 'layoutContainer' ? 1 : -1;
-            }
-
-            // Same time, default first
-            if (attributesA.default && !attributesB.default) {
-              return -1;
-            }
-
-            if (!attributesA.default && attributesB.default) {
-              return 1;
-            }
-
-            // Alphabetic sort
-            return (labelA || '').localeCompare(labelB || '');
-          }
-        ),
-    [id, pageDefinitions]
+    () => (elements ?? []).filter(({ attributes }) => attributes.folder === id || (!attributes.folder && !id)),
+    [elements, id]
   );
   const directories = useMemo(
     () =>
@@ -118,7 +85,7 @@ const Directory = ({
 
   const titleMemo = useMemo(
     () => (
-      <Flex justify="between" grow style={{ paddingLeft: nestedLevel * 16 }}>
+      <Flex justify="between" grow style={{ paddingLeft: nestedLevel * 12 }}>
         <Flex items="center" gap={2}>
           {collapsed && <Icon size="xs" intent="custom" icon="fa-solid fa-folder" />}
           {!collapsed && <Icon size="xs" intent="custom" icon="fa-regular fa-folder-open" />}
@@ -171,12 +138,12 @@ const Directory = ({
   const handleCollapse = useCallback((isCollapsed: boolean) => setCollapsed(isCollapsed), []);
 
   return (
-    <ContainerCollapsable collapsed={!(items.length > 0 || directories.length > 0)} onChange={handleCollapse} gap={2}>
+    <ContainerCollapsable collapsed={!(items.length > 0 || directories.length > 0)} onChange={handleCollapse} gap={1}>
       <ContainerCollapsable.Header
         placement="right"
         iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-left" />}
         iconExpanded={<Icon size="sm" icon="fa-solid fa-angle-down" />}
-        className="p-0!"
+        className="py-0"
         title={titleMemo}
       >
         {!isRootFolder && (
@@ -193,7 +160,7 @@ const Directory = ({
           </Flex>
         )}
       </ContainerCollapsable.Header>
-      <ContainerCollapsable.Content gap={2}>
+      <ContainerCollapsable.Content gap={1}>
         {items.map(item => (
           <DirectoryItem
             key={item.id}
@@ -208,9 +175,10 @@ const Directory = ({
               key={directory.id}
               {...directory}
               slug={directory.slug}
+              currentPageId={currentPageId}
               parentId={id}
               pageFolders={pageFolders}
-              currentPageId={currentPageId}
+              elements={elements}
               nestedLevel={nestedLevel + 1}
             />
           ))}

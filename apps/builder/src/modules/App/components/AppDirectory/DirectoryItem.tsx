@@ -51,7 +51,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
   );
 
   return (
-    <Flex className="group">
+    <Flex className="group px-1 hover:bg-gray-50 dark:hover:bg-zinc-800/60">
       <Link to={id} relative="path" className="flex min-w-0 grow basis-0 flex-col" onClick={handleClick}>
         <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
