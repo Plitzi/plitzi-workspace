@@ -12,14 +12,7 @@ export type LogsSummaryItemProps = {
   onClick?: (logType?: LogType) => void;
 };
 
-const LogsSummaryItem = ({
-  className,
-  amount,
-  suffix = 'All',
-  selected,
-  logType = 'info',
-  onClick
-}: LogsSummaryItemProps) => {
+const LogsSummaryItem = ({ className, amount, suffix = 'All', selected, logType, onClick }: LogsSummaryItemProps) => {
   const handleClick = useCallback(() => onClick?.(logType), [onClick, logType]);
 
   return (
@@ -37,9 +30,8 @@ const LogsSummaryItem = ({
           'fa-solid fa-triangle-exclamation text-amber-500 dark:text-amber-400': logType === 'warning',
           'fa-solid fa-circle-info text-violet-500 dark:text-violet-400': logType === 'info',
           'fa-solid fa-check text-emerald-500 dark:text-emerald-400': logType === 'success',
-          'fa-solid fa-list text-zinc-500 dark:text-zinc-400': !['danger', 'warning', 'info', 'success'].includes(
-            logType
-          )
+          'fa-solid fa-list text-zinc-500 dark:text-zinc-400':
+            !logType || !['danger', 'warning', 'info', 'success'].includes(logType)
         })}
       />
       <span className="font-medium text-zinc-700 tabular-nums dark:text-zinc-200">{amount}</span>
