@@ -105,7 +105,9 @@ const AppMain = ({
           <DataSourceContextProvider environment={environment}>
             <InteractionsBuilderContextProvider previewMode={previewMode}>
               <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
-                <AppContainer externalStyle={externalStyle} />
+                <DevToolsContainer innerClassName="flex" enabled={debugMode}>
+                  <AppContainer externalStyle={externalStyle} />
+                </DevToolsContainer>
               </PopupProvider>
             </InteractionsBuilderContextProvider>
           </DataSourceContextProvider>
@@ -129,13 +131,7 @@ const AppMain = ({
     ]
   );
 
-  return (
-    <AppContext value={appValueMemo}>
-      <DevToolsContainer innerClassName="flex" enabled={debugMode}>
-        {childrenMemo}
-      </DevToolsContainer>
-    </AppContext>
-  );
+  return <AppContext value={appValueMemo}>{childrenMemo}</AppContext>;
 };
 
 export default AppMain;

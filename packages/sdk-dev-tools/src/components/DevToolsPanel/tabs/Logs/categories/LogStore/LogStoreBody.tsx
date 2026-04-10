@@ -58,6 +58,10 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diff]);
 
+  const handleClickPrevious = useCallback(() => navigate(-1), [navigate]);
+
+  const handleClickNext = useCallback(() => navigate(1), [navigate]);
+
   return (
     <div className="mx-2 my-1.5 flex flex-col gap-2 rounded border border-zinc-200 bg-zinc-50 font-mono dark:border-zinc-700 dark:bg-zinc-800/50">
       {/* Header */}
@@ -78,7 +82,7 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
               { 'cursor-not-allowed opacity-30 dark:cursor-not-allowed dark:opacity-30': !hasDiffs || isFirst }
             )}
             disabled={!hasDiffs || isFirst}
-            onClick={() => navigate(-1)}
+            onClick={handleClickPrevious}
           >
             ↑ Prev
           </button>
@@ -88,7 +92,7 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
               { 'cursor-not-allowed opacity-30 dark:cursor-not-allowed dark:opacity-30': !hasDiffs || isLast }
             )}
             disabled={!hasDiffs || isLast}
-            onClick={() => navigate(1)}
+            onClick={handleClickNext}
           >
             ↓ Next
           </button>
