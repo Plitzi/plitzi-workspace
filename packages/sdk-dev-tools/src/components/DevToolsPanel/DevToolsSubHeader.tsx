@@ -50,7 +50,14 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
     setSelectorEnabled(false);
   }, []);
 
-  const handleClickSelector = useCallback(() => setSelectorEnabled(true), [setSelectorEnabled]);
+  const handleClickSelector = useCallback(
+    (e: MouseEvent | React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setSelectorEnabled(true);
+    },
+    [setSelectorEnabled]
+  );
 
   const handleClickPage = useCallback(() => {
     setSelectorEnabled(false);
@@ -77,12 +84,12 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
 
   useEffect(() => {
     if (!selectorEnabled || typeof document === 'undefined') {
-      return undefined;
+      return;
     }
 
     const plitziSdkContainer = document.getElementsByClassName('plitzi-sdk')[0] as HTMLElement | undefined;
     if (!plitziSdkContainer) {
-      return undefined;
+      return;
     }
 
     plitziSdkContainer.addEventListener('click', handleClick);

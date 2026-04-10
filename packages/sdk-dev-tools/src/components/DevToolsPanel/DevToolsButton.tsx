@@ -7,7 +7,7 @@ export type DevToolsButtonProps = {
   isSelected?: boolean;
   iconClassName?: string;
   title?: string;
-  onClick?: (e?: MouseEvent) => void;
+  onClick?: (e: MouseEvent) => void;
 };
 
 const DevToolsButton = ({ className, iconClassName, title, isSelected = false, onClick }: DevToolsButtonProps) => {
