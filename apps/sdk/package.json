@@ -102,7 +102,7 @@
     "typescript": "^6.0.2",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-ejs": "^1.7.0",
-    "vite-plugin-mkcert": "^1.17.10"
+    "vite-plugin-mkcert": "^2.0.0"
   },
   "scripts": {
     "start": "vite dev --mode development",
