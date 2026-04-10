@@ -55,17 +55,7 @@ const BuilderProvider = ({
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
-  const [theme, setTheme] = useState<StyleThemeMode>(() => {
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      return 'light';
-    }
-
-    return 'system';
-  });
+  const [theme, setTheme] = useState<StyleThemeMode>('light');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const { useStore, useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();

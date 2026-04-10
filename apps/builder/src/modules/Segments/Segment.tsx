@@ -124,8 +124,9 @@ const Segment = ({
           resizeHandles: ['se'],
           width: 800,
           height: 500,
+          allowLeftSide: false,
           allowRightSide: false,
-          allowExternal: false,
+          allowExternal: true,
           placement: 'floating'
         });
       }

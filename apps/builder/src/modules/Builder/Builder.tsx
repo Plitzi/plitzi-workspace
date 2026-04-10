@@ -42,7 +42,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
         title: 'Tools',
         resizeHandles: ['se'],
         width: 350,
-        allowLeftSide: true,
+        allowLeftSide: false,
         allowRightSide: true,
         placement: 'right'
       });
