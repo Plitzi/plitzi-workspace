@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+
 import CollectionContextProvider from '@modules/Collection/CollectionContextProvider';
 import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
 import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
@@ -12,6 +14,9 @@ import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
+
+import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
+import styleUrl from '../../assets/plitzi-sdk.scss?url';
 
 import type {
   Environment,
@@ -38,6 +43,7 @@ export type AppMainProps = {
   instanceId?: string;
   renderMode?: RenderMode;
   sdkStylePath?: string;
+  sdkDevToolsStylePath?: string;
   previewMode?: boolean;
   debugMode?: boolean;
   state?: Record<string, unknown>;
@@ -63,6 +69,7 @@ const AppMain = ({
   instanceId,
   renderMode = 'iframe',
   sdkStylePath = './plitzi-sdk.css',
+  sdkDevToolsStylePath = './plitzi-sdk-devtools.css',
   previewMode = true,
   debugMode = false,
   state,
@@ -86,7 +93,7 @@ const AppMain = ({
     >
       <SchemaContextProvider>
         <CollectionContextProvider>
-          <PluginsContextProvider renderMode={renderMode} sdkStylePath={sdkStylePath}>
+          <PluginsContextProvider renderMode={renderMode} sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
             <SdkStyleContextProvider>
               <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
                 <SegmentsContextProvider>
@@ -104,13 +111,19 @@ const AppMain = ({
                       <StateManagerContextProvider webId={webId} state={state} onInit={onInitStateManager}>
                         <DataSourceContextProvider environment={environment}>
                           <InteractionsSdkContextProvider previewMode={previewMode}>
-                            <DevToolsContainer enabled={debugMode}>
+                            <DevToolsContainer
+                              enabled={debugMode}
+                              devToolsStyleLink={devtoolsCssUrl ? devtoolsCssUrl : sdkDevToolsStylePath}
+                              renderMode="shadow"
+                              innerClassName={clsx({ flex: renderMode === 'iframe' })}
+                            >
                               <Sdk
                                 renderMode={renderMode}
                                 previewMode={previewMode}
                                 debugMode={debugMode}
                                 environment={environment}
                                 isHydrating={isHydrating}
+                                sdkStylePath={styleUrl ? styleUrl : sdkStylePath}
                                 {...sdkProps}
                               />
                             </DevToolsContainer>

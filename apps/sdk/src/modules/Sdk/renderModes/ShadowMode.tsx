@@ -12,12 +12,13 @@ import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlit
 
 export type ShadowModeProps = {
   pageId?: string;
+  sdkStylePath?: string;
   style?: string;
   plitziContextValue: PlitziServiceContextValue;
   assets: Record<string, Asset>;
 };
 
-const ShadowMode = ({ pageId = '', style = '', plitziContextValue, assets }: ShadowModeProps) => {
+const ShadowMode = ({ pageId = '', sdkStylePath = '', style = '', plitziContextValue, assets }: ShadowModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
   const assetsMemo = useMemo(() => Object.values(assets), [assets]);
 
@@ -26,6 +27,7 @@ const ShadowMode = ({ pageId = '', style = '', plitziContextValue, assets }: Sha
       {assetsMemo.map((item, i) => (
         <ContainerShadow.Link key={i} href={item.params.href} />
       ))}
+      <ContainerShadow.Link href={sdkStylePath} />
       <ContainerShadow.Content>
         <SpaceContainer>
           <style dangerouslySetInnerHTML={{ __html: style }} />

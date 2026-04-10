@@ -23,7 +23,10 @@ import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-
 import App from './App';
 
 // SDK Style
-import './assets/index.scss';
+import './assets/plitzi-sdk.scss';
+if (import.meta.env.PROD) {
+  void import('./assets/plitzi-sdk-devtools.scss');
+}
 
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type EventBridge from '@plitzi/sdk-event-bridge';
@@ -121,6 +124,7 @@ export type PlitziSdkProps = {
   isHydrating?: boolean;
   previewMode?: boolean;
   externalStyle?: string;
+  sdkDevToolsStylePath?: string;
   state?: Record<string, unknown>;
 };
 

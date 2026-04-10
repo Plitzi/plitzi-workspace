@@ -21,7 +21,6 @@ import ShadowMode from './renderModes/ShadowMode';
 import SdkPlugin from './SdkPlugin';
 // eslint-disable-next-line
 // @ts-ignore
-import style from '../../assets/index.scss?inline';
 
 import type { Environment, RenderMode, SdkState } from '@plitzi/sdk-shared';
 
@@ -32,6 +31,7 @@ export type SdkProps = {
   isHydrating?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
+  sdkStylePath?: string;
 };
 
 const Sdk = ({
@@ -40,7 +40,8 @@ const Sdk = ({
   environment = 'main',
   previewMode = true,
   isHydrating = false,
-  debugMode = false
+  debugMode = false,
+  sdkStylePath = './plitzi-sdk.css'
 }: SdkProps) => {
   const { currentPageId } = use(NavigationContext);
   const { assets } = use(PluginsContext);
@@ -58,7 +59,7 @@ const Sdk = ({
     const cacheParsed = processCssTokens(styleCache, variables);
 
     if (renderMode === 'iframe' || renderMode === 'shadow') {
-      return `${style}.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
+      return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
     }
 
     return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
@@ -132,7 +133,15 @@ const Sdk = ({
   }
 
   if (renderMode === 'shadow') {
-    return <ShadowMode style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} assets={assets} />;
+    return (
+      <ShadowMode
+        sdkStylePath={sdkStylePath}
+        style={css}
+        plitziContextValue={plitziContextValue}
+        pageId={currentPageId}
+        assets={assets}
+      />
+    );
   }
 
   return (
