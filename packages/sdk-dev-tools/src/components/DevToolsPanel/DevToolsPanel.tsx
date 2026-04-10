@@ -34,7 +34,9 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
 
   return (
     <ContainerResizable
-      className={clsx('component__container-resizable-sidebar text-xs', className)}
+      className={clsx('component__container-resizable-sidebar text-xs', className, {
+        'h-full': orientation === 'vertical'
+      })}
       minConstraintsX={orientation === 'vertical' ? 500 : Infinity}
       maxConstraintsX={orientation === 'vertical' ? 1000 : Infinity}
       minConstraintsY={orientation === 'vertical' ? Infinity : 34}
