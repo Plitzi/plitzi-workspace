@@ -9,7 +9,7 @@ import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
-import type { BuilderState, EventBridgeEvent, Segment } from '@plitzi/sdk-shared';
+import type { BuilderState, EventBridgeEvent } from '@plitzi/sdk-shared';
 
 export type BuilderPopupProps = {
   previewMode?: boolean;
@@ -19,8 +19,7 @@ export type BuilderPopupProps = {
 const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPopupProps) => {
   const { eventBridge } = use(EventBridgeContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [segments] = useStore('segments');
-  const segment = segments[segmentIdentifier] as Segment | undefined;
+  const [segment] = useStore(`segments.${segmentIdentifier}`, { defaultValue: undefined });
 
   const generateStoreState = useCallback(
     (currentState: BuilderState) => ({
