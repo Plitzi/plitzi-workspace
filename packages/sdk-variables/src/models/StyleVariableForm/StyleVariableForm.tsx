@@ -117,7 +117,7 @@ const StyleVariableForm = ({
     <Form
       form={form}
       onSubmit={handleSubmitInternal}
-      className="w-full gap-4 rounded border border-gray-300 bg-slate-100 p-2"
+      className="w-full gap-4 rounded border border-gray-300 bg-white p-2 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300"
     >
       <Form.Body gap={2}>
         <Form.Input name="name" placeholder="Name" size="xs" disabled={!isNewRecord} />
