@@ -20,7 +20,8 @@ import type { ClipboardEvent } from 'react';
 const BuilderTree = () => {
   const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
   const [getSchema, getElement, getStyle] = useStoreGetter(['schema', 'schema.flat', 'style']);
-  const [[elementHovered, setHoverElement, elementSelected, setSelectElement]] = useStore([
+  const [[flat, elementHovered, setHoverElement, elementSelected, setSelectElement]] = useStore([
+    'schema.flat',
     'elementHovered',
     'setHovered',
     'elementSelected',
@@ -150,13 +151,13 @@ const BuilderTree = () => {
   );
 
   const nodes = useMemo(() => {
-    const nodesMapped = recursiveMap(getSchema('flat'), componentDefinitions.current, baseElementId);
+    const nodesMapped = recursiveMap(flat, componentDefinitions.current, baseElementId);
     if (!baseElementId || !nodesMapped) {
       return [];
     }
 
     return [nodesMapped];
-  }, [getSchema, componentDefinitions, baseElementId]);
+  }, [flat, componentDefinitions, baseElementId]);
 
   const handleCopy = useCallback(
     (e: ClipboardEvent) => {
