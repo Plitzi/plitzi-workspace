@@ -97,8 +97,10 @@ const StyleInspector = ({
       return;
     }
 
-    const selectorNames = get(styleSelectors, styleSelector, '').split(' ');
-    onChange?.(selectorNames[selectorNames.length - 1]);
+    if (value !== element?.definition.type) {
+      const selectorNames = get(styleSelectors, styleSelector, '').split(' ');
+      onChange?.(selectorNames[selectorNames.length - 1]);
+    }
     setStyleState(undefined);
     setStyleVariant(undefined);
   }, [styleSelector]);

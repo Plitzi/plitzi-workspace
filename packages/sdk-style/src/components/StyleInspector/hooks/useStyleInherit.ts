@@ -30,7 +30,7 @@ const useStyleInherit = ({
   const inheritData = useMemo(() => {
     const selectorsToSkip: string[] = [];
     const selectorsToInclude: string[] = [];
-    const selectors = element?.definition.styleSelectors[styleSelector].split(' ') ?? [];
+    const selectors = (element?.definition.styleSelectors[styleSelector] ?? '').split(' ');
     if (selector && selectors.length > 1) {
       selectorsToSkip.push(selector);
     }
