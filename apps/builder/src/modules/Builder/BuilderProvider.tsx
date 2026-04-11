@@ -410,6 +410,10 @@ const BuilderProvider = ({
 
   const getBaseElement = useCallback(
     (otherBaseElementId?: string) => {
+      if (!baseElementId && !baseElementId) {
+        return undefined;
+      }
+
       const element = getElement(otherBaseElementId ?? baseElementId, undefined);
       if (!element) {
         return undefined;
