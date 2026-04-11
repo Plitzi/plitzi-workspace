@@ -59,7 +59,7 @@ const StyleInspectorProvider = ({
       if (styleState && styleVariant) {
         attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
       } else if (styleVariant) {
-        attributes = block.variants?.[styleVariant].default ?? {};
+        attributes = block.variants?.[styleVariant]?.default ?? {};
       } else if (styleState) {
         attributes = block.states?.[styleState] ?? {};
       } else {
