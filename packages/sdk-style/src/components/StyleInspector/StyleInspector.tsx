@@ -72,7 +72,7 @@ const StyleInspector = ({
   );
   const variants = useMemo(
     () =>
-      Object.keys(selector?.attributes[styleSelector].variants ?? {}).map(variant => ({
+      Object.keys(selector?.attributes[styleSelector]?.variants ?? {}).map(variant => ({
         label: variant,
         value: variant
       })),
