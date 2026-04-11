@@ -9,6 +9,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -47,6 +48,7 @@ const BuilderAreaPreview = ({
   const { settings, flat } = schema ?? {};
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
+  const { theme } = use(BuilderContext);
 
   const getWindow = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -103,7 +105,11 @@ const BuilderAreaPreview = ({
   }, [components, element, id]);
 
   return (
-    <ContainerFrame className={clsx('builder-area flex', className)} css={css}>
+    <ContainerFrame
+      className={clsx('builder-area flex', className)}
+      css={css}
+      style={{ colorScheme: theme === 'system' ? 'light' : theme }}
+    >
       <PlitziServiceProvider value={plitziContextValue}>
         <DataSourceContextProvider>
           <InteractionsBuilderContextProvider>

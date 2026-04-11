@@ -191,7 +191,7 @@ const BuilderArea = ({
             css={css}
             assets={assets}
             className="absolute h-full w-full origin-top-left"
-            style={{ colorScheme: theme === 'system' ? 'normal' : theme }}
+            style={{ colorScheme: theme === 'system' ? 'light' : theme }}
           >
             {Plugin && (
               <>
