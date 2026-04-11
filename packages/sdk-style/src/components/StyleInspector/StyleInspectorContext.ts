@@ -18,6 +18,7 @@ export type StyleInspectorContextValue = {
   variables: Record<string, unknown>;
   inheritData: InheritData['style'];
   bindingData: Partial<Record<StyleCategory, StyleValue>>;
+  getValues: () => Partial<Record<StyleCategory, StyleValue>>;
   setValue: SetValues;
   resetValue: (keys: StyleCategory | StyleCategory[]) => void;
   getDefaultValue: (key?: StyleCategory[] | StyleCategory) => StyleValue | Record<StyleCategory, StyleValue>;

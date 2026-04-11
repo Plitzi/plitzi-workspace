@@ -7,7 +7,7 @@ import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import StyleInspectorContext from '../StyleInspectorContext';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
-import type { StyleBlock, StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseInspectorValuesProps<TAsValue extends boolean> = {
   keys?: StyleCategory[];
@@ -39,30 +39,14 @@ const useInspectorValues = <TAsValue extends boolean>({
   strictMode = false,
   replaceTokens = false
 }: UseInspectorValuesProps<TAsValue>): UseInspectorValuesReturn<TAsValue> => {
-  let { inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } =
-    {} as StyleInspectorContextValue;
+  let { inheritData, bindingData, variables, getValues } = {} as StyleInspectorContextValue;
   if (skipContext) {
-    ({ inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } = context);
+    ({ inheritData, bindingData, variables, getValues } = context);
   } else {
-    ({ inheritData, bindingData, selector, styleSelector, styleState, styleVariant, variables } =
-      use(StyleInspectorContext));
+    ({ inheritData, bindingData, variables, getValues } = use(StyleInspectorContext));
   }
 
-  let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
-  if (selector && styleSelector && (selector.attributes[styleSelector] as StyleBlock | undefined)) {
-    const block = selector.attributes[styleSelector];
-    if (styleState && styleVariant) {
-      attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
-    } else if (styleVariant) {
-      attributes = block.variants?.[styleVariant].default ?? {};
-    } else if (styleState) {
-      attributes = block.states?.[styleState] ?? {};
-    } else {
-      attributes = block.default ?? {};
-    }
-  } else {
-    attributes = {};
-  }
+  const attributes = getValues();
 
   const hasInherit = useMemo(
     () =>
