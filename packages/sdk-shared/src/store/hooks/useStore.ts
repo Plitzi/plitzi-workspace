@@ -183,7 +183,7 @@ function useMultiStore<TState extends object, const Paths extends ReadonlyArray<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, pathsKey, equalityFn, defaultValue]);
 
-  const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode);
+  const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode, true);
   const selected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
   const setters = useMultiSetters(store, paths, pathsKey);
 

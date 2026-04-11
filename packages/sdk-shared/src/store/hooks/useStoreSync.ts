@@ -13,6 +13,7 @@ import type { PathOf, PathValue, PathValues, StoreApi, StoreHookReactiveOptions 
 
 export type UseStoreSyncOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
   syncStrategy?: 'render' | 'afterRender';
+  canListen?: boolean;
 };
 
 export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
@@ -20,6 +21,7 @@ export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
   'equalityFn'
 > & {
   syncStrategy?: 'render' | 'afterRender';
+  canListen?: boolean;
 };
 
 // ─── useStoreSyncMulti ────────────────────────────────────────────────────────
@@ -30,7 +32,7 @@ function useStoreSyncMulti<TState extends object, const Paths extends ReadonlyAr
   values: PathValues<TState, Paths>,
   options: UseStoreSyncMultiOptions<TState>
 ): MultiPathReturn<TState, Paths> {
-  const { mode = 'sync', enabled = true, syncStrategy = 'afterRender' } = options;
+  const { mode = 'sync', enabled = true, syncStrategy = 'afterRender', canListen = false } = options;
   const pathsKey = paths.join('|');
 
   const mountedRef = useRef(false);
@@ -84,7 +86,7 @@ function useStoreSyncMulti<TState extends object, const Paths extends ReadonlyAr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, pathsKey]);
 
-  const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode);
+  const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode, canListen);
   const selected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
   const setters = useMultiSetters(store, paths, pathsKey);
 
@@ -101,7 +103,13 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
 ): [unknown, (value: unknown) => void] {
   const isFullState = path === undefined;
   const defaultEq = isFullState ? shallowEqual : Object.is;
-  const { mode = 'sync', enabled = true, equalityFn = defaultEq, syncStrategy = 'afterRender' } = options;
+  const {
+    mode = 'sync',
+    enabled = true,
+    equalityFn = defaultEq,
+    syncStrategy = 'afterRender',
+    canListen = false
+  } = options;
 
   const lastSyncedRef = useRef<typeof value | undefined>(undefined);
   const mountedRef = useRef(false);
@@ -148,7 +156,7 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
   const subscribe = useMemo(
     () =>
       (cb: () => void): (() => void) => {
-        if (!enabled) {
+        if (!enabled || !canListen) {
           return () => {};
         }
 
@@ -159,7 +167,7 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
         return store.subscribePath(path as PathOf<TState>, cb);
       },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, path, enabled]
+    [store, path, enabled, canListen]
   );
 
   const lastSelectedRef = useRef(getSnapshot());

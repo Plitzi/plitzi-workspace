@@ -34,11 +34,12 @@ export function useMultiSubscribe<TState extends object>(
   paths: ReadonlyArray<PathOf<TState>>,
   pathsKey: string,
   enabled: boolean,
-  mode: SyncMode
+  mode: SyncMode,
+  canListen: boolean = false
 ): (cb: () => void) => () => void {
   return useMemo(
     () => (cb: () => void) => {
-      if (!enabled || mode === 'mount') {
+      if (!enabled || mode === 'mount' || !canListen) {
         return () => {};
       }
 
