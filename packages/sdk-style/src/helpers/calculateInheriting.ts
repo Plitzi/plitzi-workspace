@@ -392,7 +392,7 @@ const calculateInheriting = (
 
       if (defaultStyle && !seenDefaultTypes.has(node.definition.type)) {
         seenDefaultTypes.add(node.definition.type);
-        metadata.tree.push({ ...defaultStyle, displayMode, isParent, isAncestor });
+        metadata.tree.push({ ...defaultStyle, displayMode, isParent, isAncestor: false });
       }
     }
   }
@@ -419,11 +419,7 @@ const calculateInheriting = (
         finalStyle[key] = [];
       }
 
-      finalStyle[key].push({
-        key: node.name,
-        value: styleData[key] as StyleValue,
-        displayMode: node.displayMode
-      });
+      finalStyle[key].push({ key: node.name, value: styleData[key] as StyleValue, displayMode: node.displayMode });
     }
   }
 
