@@ -123,13 +123,13 @@ const getPaths = (
   const paths = Object.keys(pages)
     .reduce<Path[]>((acum, pageId) => {
       const {
-        attributes: { accessLevel, enabled, unauthorizedBehaviour }
+        attributes: { accessLevel, enabled = true, unauthorizedBehaviour }
       } = pages[pageId];
       let {
         attributes: { unauthorizedPageRedirect }
       } = pages[pageId];
 
-      if (typeof enabled === 'boolean' && !enabled && previewMode) {
+      if (!enabled && previewMode) {
         return acum;
       }
 

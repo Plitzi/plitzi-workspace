@@ -13,7 +13,9 @@ const SpaceCredentialsEmpty = ({ children }: SpaceCredentialsEmptyProps) => {
       <div className="flex flex-col items-center justify-center gap-2">
         <Icon icon="fa-solid fa-key" size="custom" className="fa-2x rounded-full bg-gray-400 p-4" />
         <Text>No credentials yet</Text>
-        <Text className="text-gray-400 dark:text-zinc-500">Add your first credential to start managing your credentials</Text>
+        <Text className="text-gray-400 dark:text-zinc-500">
+          Add your first credential to start managing your credentials
+        </Text>
       </div>
       {children}
     </div>

@@ -1,6 +1,6 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 
-import { inheritableAttributesBase } from '@plitzi/sdk-shared';
+import { inheritableAttributesBase } from '@plitzi/sdk-shared/style';
 
 import type {
   ComponentDefinition,

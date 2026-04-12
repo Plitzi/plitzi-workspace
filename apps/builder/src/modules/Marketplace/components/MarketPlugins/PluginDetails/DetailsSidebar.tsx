@@ -63,7 +63,7 @@ const DetailsSidebar = ({
   }, [latestVersion, onUpdate]);
 
   return (
-    <div className="flex w-[300px] flex-col">
+    <div className="flex w-75 flex-col">
       <div className="flex flex-col rounded-sm border border-gray-300 p-4 dark:border-zinc-700">
         <div className="flex items-center justify-center">
           <div className="h-32 w-32 bg-contain bg-no-repeat" style={{ backgroundImage: `url(${icon})` }} />
@@ -100,7 +100,7 @@ const DetailsSidebar = ({
         <Heading as="h4">Overview</Heading>
         <div className="font-sm mt-4">{description}</div>
       </div>
-      <div className="mt-6 flex flex-col rounded-sm border border-gray-300 p-4 dark:border-zinc-700 text-sm">
+      <div className="mt-6 flex flex-col rounded-sm border border-gray-300 p-4 text-sm dark:border-zinc-700">
         <Heading as="h4">Information</Heading>
         <div className="mt-4 flex flex-col">
           <div className="flex items-center justify-between">

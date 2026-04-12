@@ -55,19 +55,24 @@ export default defineConfig(({ mode, command }) => {
         exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
         tsconfigPath: './tsconfig.app.json'
       }),
-      {
-        name: 'debug-resolve',
-        resolveId(/* source, importer */) {
-          // console.log(`[VITE RESOLVE] Trying to resolve: ${source} from ${importer}`);
-          return null; // Allow vite keep resolving
-        }
-      },
+      // {
+      //   name: 'trace-import-chain',
+      //   enforce: 'pre',
+      //   resolveId(source, importer) {
+      //     if (source.includes('plitzi')) {
+      //       console.log('\n---');
+      //       console.log('IMPORT:', source);
+      //       console.log('FROM  :', importer);
+      //     }
+      //     return null;
+      //   }
+      // },
       {
         name: 'externalize-and-log',
         enforce: 'pre',
         resolveId(source, importer) {
-          if (!importer || command === 'serve') {
-            // Ignore main entries or runtime
+          if (!importer || command === 'serve' || process.env.VITEST) {
+            // Ignore main entries or runtime or tests
             return null;
           }
 
@@ -92,9 +97,9 @@ export default defineConfig(({ mode, command }) => {
         //     '@icons': resolve(__dirname, './src/icons'),
         //     '@components': path.resolve(__dirname, './src/components'),
         //     '@hooks': path.resolve(__dirname, './src/hooks'),
-        //     '@': resolve(__dirname, './src')
+        //     '@': resolve(__dirname, './src'),
       },
-      extensions: ['.js', '.ts', '.tsx']
+      extensions: ['.js', '.ts', '.tsx', '.mjs']
     },
     build: {
       outDir: 'dist/src',

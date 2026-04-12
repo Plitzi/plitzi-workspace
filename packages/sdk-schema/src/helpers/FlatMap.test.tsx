@@ -814,12 +814,17 @@ describe('Testing FlatMap', () => {
       },
       elementsStyle: {
         cache: '',
+        mode: 'desktop-first',
         platform: {
           desktop: {
             'heading-rdGM': {
               attributes: {
-                'background-color': 'var(--primaryColor)',
-                color: 'var(--fancyVariableColor)'
+                base: {
+                  default: {
+                    'background-color': 'var(--primaryColor)',
+                    color: 'var(--fancyVariableColor)'
+                  }
+                }
               },
               cache: '.heading-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}',
               name: 'heading-rdGM',
@@ -829,8 +834,12 @@ describe('Testing FlatMap', () => {
               name: 'button-rdGM',
               type: 'class',
               attributes: {
-                color: 'var(--fancyVariableColor)',
-                'background-color': 'var(--primaryColor)'
+                base: {
+                  default: {
+                    color: 'var(--fancyVariableColor)',
+                    'background-color': 'var(--primaryColor)'
+                  }
+                }
               },
               cache: '.button-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}'
             }
@@ -838,7 +847,11 @@ describe('Testing FlatMap', () => {
           mobile: {},
           tablet: {}
         },
-        variables: {}
+        variables: {},
+        theme: {
+          default: 'system',
+          schemes: ['light', 'dark']
+        }
       },
       variables: [
         {

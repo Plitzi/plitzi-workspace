@@ -13,6 +13,7 @@ export type BasicAuthProviderProps = AuthProviderProps & {
   logoutUrl?: string;
   detailsPath?: string;
   tokenPath?: string;
+  refreshTokenPath?: string;
   expirationTimePath?: string;
   isSSR?: boolean;
 };
@@ -29,6 +30,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     logoutUrl: string;
     detailsPath: string;
     tokenPath: string;
+    refreshTokenPath: string;
     expirationTimePath: string;
     isSSR: boolean;
   };
@@ -42,6 +44,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     logoutUrl = '',
     detailsPath = '',
     tokenPath = '',
+    refreshTokenPath = '',
     expirationTimePath = '',
     isSSR = false
   }: BasicAuthProviderProps = {}) {
@@ -54,6 +57,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       logoutUrl,
       detailsPath,
       tokenPath,
+      refreshTokenPath,
       expirationTimePath,
       isSSR
     };
@@ -161,7 +165,7 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
     const result = {
       errors: get(res.data, 'errors', {}),
       accessToken: get(res.data, this.options.tokenPath, ''),
-      refreshToken: get(res.data, this.options.refreshUrl, null),
+      refreshToken: get(res.data, this.options.refreshTokenPath, ''),
       expiresAt: get(res.data, this.options.expirationTimePath, 0)
     } as {
       errors?: Record<string, unknown>;

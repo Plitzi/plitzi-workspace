@@ -35,14 +35,22 @@ const PluginItem = ({
 
   return (
     <div
-      className={clsx('flex w-full flex-col rounded-sm border border-gray-300 select-none dark:border-zinc-700', className)}
+      className={clsx(
+        'flex w-full flex-col rounded-sm border border-gray-300 select-none dark:border-zinc-700',
+        className
+      )}
       onClick={handleClick}
       style={{ backgroundImage: `linear-gradient(${backgroundColor} 20%, white)` }}
     >
       <div className="flex justify-between px-4 pt-4 pb-2">
         <div className="flex flex-col">
           <div className="text-sm font-bold">{name}</div>
-          <a className="flex items-center text-xs text-gray-500 dark:text-zinc-400" target="_blank" rel="noreferrer" href={website}>
+          <a
+            className="flex items-center text-xs text-gray-500 dark:text-zinc-400"
+            target="_blank"
+            rel="noreferrer"
+            href={website}
+          >
             {website}
             <i className="fa-solid fa-arrow-up-right-from-square ml-1" />
           </a>

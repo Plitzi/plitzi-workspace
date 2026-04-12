@@ -37,7 +37,6 @@
     "@changesets/cli": "^2.30.0",
     "@types/react": "^19.2.14",
     "eslint": "^9.39.4",
-    "jest": "^30.3.0",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.9.6"
   },

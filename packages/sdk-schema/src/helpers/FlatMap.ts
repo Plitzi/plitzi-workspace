@@ -449,7 +449,14 @@ class FlatMap {
     Object.values(elements.acum).forEach(element => {
       const { id } = element;
       set(elements.acum, `${id}.definition.rootId`, elements.item?.id);
-      const calculatedStyle = calculateInheriting(element, undefined, this.flat, style.platform);
+      const calculatedStyle = calculateInheriting(
+        element,
+        undefined,
+        this.flat,
+        style.platform,
+        {},
+        { includeSelf: true }
+      );
       calculatedStyle.tree.forEach(item => {
         const { displayMode, name } = item;
         if (!(name in elementsStyle.platform[displayMode]) && name in style.platform[displayMode]) {
@@ -494,23 +501,17 @@ class FlatMap {
       .filter(Boolean)
       .forEach(selector => {
         Object.values(style.platform).forEach(platform => {
-          const elementStyle = platform[selector as DisplayMode] as StyleItem | undefined;
-          if (!elementStyle) {
+          const styleItem = platform[selector as DisplayMode] as StyleItem | undefined;
+          if (!styleItem) {
             return;
           }
 
-          Object.values(elementStyle.attributes)
-            .filter(attribute => typeof attribute === 'string' && VARIABLE_REGEX.test(attribute))
-            .forEach(attribute => {
-              [...(attribute as string).matchAll(VARIABLE_REGEX_GLOBAL)].forEach(match => {
-                const variableFound = variables.find(
-                  variable => variable.name === match[1] || variable.name === match[2]
-                );
-                if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
-                  variablesFound.push(variableFound);
-                }
-              });
-            });
+          [...JSON.stringify(styleItem.attributes).matchAll(VARIABLE_REGEX_GLOBAL)].forEach(match => {
+            const variableFound = variables.find(variable => variable.name === match[1] || variable.name === match[2]);
+            if (variableFound && !variablesFound.find(variable => variable.name === variableFound.name)) {
+              variablesFound.push(variableFound);
+            }
+          });
         });
       });
 

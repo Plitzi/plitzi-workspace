@@ -31,7 +31,7 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
   } = usePlitziServiceContext();
   const { navigate, routeParams, queryParams } = use(NavigationContext);
   const { useStore } = createStoreHook<CommonState>();
-  const [[flat, pageFolders]] = useStore(['schema.flat', 'schema.pageFolders']);
+  const [[pageDefinitions, pageFolders]] = useStore(['pageDefinitions', 'schema.pageFolders']);
 
   const url = useMemo(() => {
     if (mode === 'external') {
@@ -54,8 +54,8 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
       return urlAux;
     }
 
-    return getPageFullPath(flat, pageFolders, href, true);
-  }, [mode, href, flat, pageFolders, queryParams, routeParams]);
+    return getPageFullPath(pageDefinitions, pageFolders, href, true);
+  }, [mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
 
   const handleClick = (e: MouseEvent) => {
     if (!previewMode) {

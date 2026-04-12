@@ -82,6 +82,7 @@
     "@types/ejs": "^3.1.5",
     "css-loader": "^7.1.4",
     "eslint": "^9.39.4",
+    "eslint-plugin-import": "^2.32.0",
     "flow-bin": "^0.309.0",
     "mini-css-extract-plugin": "^2.10.2",
     "postcss": "^8.5.9",
@@ -101,14 +102,16 @@
     "stylelint-scss": "^7.0.0",
     "terser": "^5.46.1",
     "typescript": "^6.0.2",
+    "vite": "^8.0.8",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-ejs": "^1.7.0",
-    "vite-plugin-mkcert": "^2.0.0"
+    "vite-plugin-mkcert": "^2.0.0",
+    "vitest": "^4.1.4"
   },
   "scripts": {
     "start": "vite dev --mode development",
-    "test": "node --experimental-vm-modules ../../node_modules/.bin/jest",
-    "test:coverage": "jest --coverage",
+    "test": "vitest run",
+    "test:coverage": "",
     "lint": "TIMING=1 eslint ./src",
     "lint-style": "stylelint \"**/*.scss\" --custom-syntax postcss-scss",
     "lint-style:fix": "stylelint \"**/*.scss\" --custom-syntax postcss-scss --fix",

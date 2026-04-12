@@ -152,7 +152,10 @@ const TemporalResource = ({
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={clsx('relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600', className)}
+      className={clsx(
+        'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
+        className
+      )}
     >
       <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file?.size} />
       {file?.name && <ResourceName name={file.name} />}

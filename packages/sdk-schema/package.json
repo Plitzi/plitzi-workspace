@@ -14,17 +14,9 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
     },
-    "./SchemaMainContext": {
-      "types": "./dist/src/SchemaMainContext.d.ts",
-      "import": "./dist/src/SchemaMainContext.mjs"
-    },
     "./SchemaReducer": {
       "types": "./dist/src/SchemaReducer.d.ts",
       "import": "./dist/src/SchemaReducer.mjs"
-    },
-    "./SchemaSettingsContext": {
-      "types": "./dist/src/SchemaSettingsContext.d.ts",
-      "import": "./dist/src/SchemaSettingsContext.mjs"
     },
     "./helpers/FlatMap": {
       "types": "./dist/src/helpers/FlatMap.d.ts",
@@ -48,6 +40,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
+    "@plitzi/plitzi-ui": "^1.5.4",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "prop-types": "^15.8.1"

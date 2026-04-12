@@ -197,9 +197,6 @@ const ApiContainer = ({
       interactionCallbacks={interactionCallbacks}
     >
       <ApiContainerContext value={data}>{!isLoading && children}</ApiContainerContext>
-      {/* {!isLoading && isError && previewMode && (
-        <div className="plitzi-component__api-container-error">{JSON.stringify(data?.data ?? '')}</div>
-      )} */}
     </RootElement>
   );
 };

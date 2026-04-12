@@ -5,8 +5,12 @@
         "name": "heading-rdGM",
         "type": "class",
         "attributes": {
-          "color": "var(--fancyVariableColor)",
-          "background-color": "var(--primaryColor)"
+          "base": {
+            "default": {
+              "color": "var(--fancyVariableColor)",
+              "background-color": "var(--primaryColor)"
+            }
+          }
         },
         "cache": ".heading-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}"
       },
@@ -14,8 +18,12 @@
         "name": "button-rdGM",
         "type": "class",
         "attributes": {
-          "color": "var(--fancyVariableColor)",
-          "background-color": "var(--primaryColor)"
+          "base": {
+            "default": {
+              "color": "var(--fancyVariableColor)",
+              "background-color": "var(--primaryColor)"
+            }
+          }
         },
         "cache": ".button-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}"
       }

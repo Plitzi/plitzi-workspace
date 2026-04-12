@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { StyleVariableCategory } from '@plitzi/sdk-shared';
+import { StyleVariableCategory } from '@plitzi/sdk-shared/types';
 
 import StyleMap from './StyleMap';
 

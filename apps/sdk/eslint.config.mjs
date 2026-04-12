@@ -25,8 +25,9 @@
 //   }
 // ];
 
-import sharedConfig from '../../packages/sdk-shared/eslint.config.mjs';
 import tsEslint from 'typescript-eslint';
+
+import sharedConfig from '../../packages/sdk-shared/eslint.config.mjs';
 
 export default tsEslint.config({
   extends: [sharedConfig],

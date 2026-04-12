@@ -92,7 +92,9 @@ const CustomNode = memo(({ id, data, selected = false }: CustomNodeProps) => {
               <div className="min-w-0 flex-1">
                 <h3 className="text-foreground truncate text-sm font-semibold">{data.title}</h3>
                 {data.path && (
-                  <p className="text-muted-foreground truncate rounded-sm text-xs text-gray-500 dark:text-zinc-400">{data.path}</p>
+                  <p className="text-muted-foreground truncate rounded-sm text-xs text-gray-500 dark:text-zinc-400">
+                    {data.path}
+                  </p>
                 )}
               </div>
             </div>

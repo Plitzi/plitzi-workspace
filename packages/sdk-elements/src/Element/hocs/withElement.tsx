@@ -26,7 +26,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const WithElementComponent = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
-    const contextValueSkipHOC = useMemo<ElementContextValue<unknown, 'skipHOC'>>(
+    const contextValueSkipHOC = useMemo<ElementContextValue<'skipHOC'>>(
       () => ({ id, rootId, plitziJsxSkipHOC: true }),
       [id, rootId]
     );
