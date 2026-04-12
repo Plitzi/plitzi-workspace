@@ -6,12 +6,11 @@ import { useCallback, use, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
 import ItemActions from './ItemActions';
 
-import type { BuilderState, Element } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type DirectoryItemProps = {
@@ -21,9 +20,7 @@ export type DirectoryItemProps = {
 };
 
 const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryItemProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
   const [zoom, setZoom] = useState(false);
-  const [[schema, styleCache]] = useStore(['schema', 'style.cache'], { enabled: zoom });
   const { eventBridge } = use(EventBridgeContext);
   const styleMemo = useMemo(() => ({ paddingLeft: nestedLevel * 16 }), [nestedLevel]);
 
@@ -81,13 +78,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
         {zoom && (
           <div className="relative my-2 rounded-sm border border-gray-300 dark:border-zinc-700">
             <ContainerAutoScale className="flex h-37.5 w-full items-center justify-center overflow-hidden rounded-sm">
-              <BuilderAreaPreview
-                id={id}
-                schema={schema}
-                styleCache={styleCache}
-                className="h-full w-full"
-                previewMode
-              />
+              <BuilderAreaPreview id={id} className="h-full w-full" previewMode />
             </ContainerAutoScale>
           </div>
         )}

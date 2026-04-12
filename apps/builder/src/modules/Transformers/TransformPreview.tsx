@@ -17,13 +17,7 @@ const TransformPreview = ({ preview, previewMode = true }: TransformPreviewProps
   return (
     <div className="flex w-full grow overflow-y-auto">
       <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('transform-preview')}>
-        <BuilderAreaPreview
-          previewMode={previewMode}
-          className="min-h-full w-full"
-          schema={storeValue.schema}
-          id={preview.definition.rootId}
-          styleCache={storeValue.style.cache}
-        />
+        <BuilderAreaPreview id={preview.definition.rootId} previewMode={previewMode} className="min-h-full w-full" />
       </StoreProvider>
     </div>
   );
