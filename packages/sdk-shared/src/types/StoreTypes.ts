@@ -1,6 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
-export type Listener = () => void;
+import type { Schema, Element } from './SchemaTypes';
+import type { Segment } from './SegmentTypes';
+import type { DisplayMode, Style, StyleState } from './StyleTypes';
+
+// ─── Internal types ───────────────────────────────────────────────────────────
 
 export type Path = string;
 
@@ -32,9 +37,63 @@ export type PathValue<T, P> = P extends `${infer K}.${infer Rest}`
     ? T[P]
     : never;
 
+export type PathSetter<TState extends object, P extends PathOf<TState>> = (
+  value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
+) => void;
+
+export type __NoDefault = { __noDefault: true };
+type NumericIndex<I> = I extends `${infer N extends number}` ? N : I extends number ? I : never;
+export type PathValues<
+  TState extends object,
+  Paths extends ReadonlyArray<PathOf<TState>>,
+  DefaultValue = __NoDefault
+> = {
+  [I in keyof Paths]: Paths[I] extends PathOf<TState>
+    ? [DefaultValue] extends [__NoDefault]
+      ? PathValue<TState, Paths[I]>
+      : DefaultValue extends readonly any[]
+        ? NumericIndex<I> extends infer NI
+          ? NI extends keyof DefaultValue
+            ? DefaultValue[NI] extends undefined
+              ? PathValue<TState, Paths[I]> | undefined
+              : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue[NI]
+            : PathValue<TState, Paths[I]>
+          : never
+        : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue
+    : never;
+};
+
+export type PathSetters<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
+  [I in keyof Paths]: Paths[I] extends PathOf<TState> ? PathSetter<TState, Paths[I]> : never;
+};
+
+// ─── Public types ─────────────────────────────────────────────────────────────
+
+// 'mount' — writes the value to the store only on the first render.
+// 'sync'  — writes the value to the store on every render where it changed (default).
+export type SyncMode = 'mount' | 'sync';
+
+export type StoreHookBaseOptions<TState extends object = object> = {
+  store?: StoreApi<TState>;
+};
+
+export type StoreHookReactiveOptions<T, TState extends object = object> = StoreHookBaseOptions<TState> & {
+  mode?: SyncMode;
+  enabled?: boolean;
+  equalityFn?: (a: T, b: T) => boolean;
+};
+
+export type StoreLogger<T> = (event: { path: PathOf<T> | undefined; prev: T; next: T }) => void;
+
+export type Listener = () => void;
+
 export type SetState<T> = {
-  (path: undefined, value: T | ((prev: T) => T)): void;
-  <P extends PathOf<T>>(path: P, value: PathValue<T, P> | ((prev: PathValue<T, P>) => PathValue<T, P>)): void;
+  (path: undefined, value: T | ((prev: T) => T), canPropagate?: boolean): void;
+  <P extends PathOf<T>>(
+    path: P,
+    value: PathValue<T, P> | ((prev: PathValue<T, P>) => PathValue<T, P>),
+    canPropagate?: boolean
+  ): void;
 };
 
 export type GetState<T> = () => T;
@@ -51,3 +110,27 @@ export type StoreApiInternal<T> = StoreApi<T> & {
   listeners: Set<Listener>;
   pathListeners: Map<string, Set<Listener>>;
 };
+
+// States
+
+export type CommonState = {
+  prevSchema?: Schema; // used when elements are inside a reference and refer to main schema
+  schema: Schema; // current schema, normally is the main one but can be from a segment
+  pageDefinitions: Record<string, Element>;
+  style: Style;
+  segments: Record<string, Segment>;
+};
+
+export type BuilderState = CommonState & {
+  displayMode: DisplayMode;
+  selector?: string;
+  styleSelector?: string;
+  styleVariant?: string;
+  styleState?: StyleState;
+  elementHovered?: string;
+  elementSelected?: string;
+  setHovered: (elementId?: string) => void;
+  setSelected: (elementId?: string, iframeDOM?: HTMLIFrameElement | null, force?: boolean) => void;
+};
+
+export type SdkState = CommonState & {};

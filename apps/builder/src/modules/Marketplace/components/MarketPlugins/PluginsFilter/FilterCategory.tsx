@@ -21,7 +21,7 @@ const FilterCategory = ({
   return (
     <div
       className={clsx(
-        'flex grow basis-0 cursor-pointer items-center justify-center px-2 py-1.5 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-gray-300',
+        'flex grow basis-0 cursor-pointer items-center justify-center px-2 py-1.5 not-last:border-r not-last:border-gray-300 dark:not-last:border-zinc-700',
         className,
         { 'bg-blue-100 font-bold': active }
       )}

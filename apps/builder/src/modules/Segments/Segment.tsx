@@ -124,8 +124,9 @@ const Segment = ({
           resizeHandles: ['se'],
           width: 800,
           height: 500,
+          allowLeftSide: false,
           allowRightSide: false,
-          allowExternal: false,
+          allowExternal: true,
           placement: 'floating'
         });
       }
@@ -166,7 +167,7 @@ const Segment = ({
     <Flex className="group my-2 cursor-grabbing first:mt-0" gap={2} items="center" draggable onDragStart={onDragStart}>
       <Icon icon="fa-solid fa-diamond" intent="primaryActive" />
       <div className="flex grow basis-0 flex-col overflow-hidden">
-        <div className="group-hover:text-primary-400 truncate font-bold">{name}</div>
+        <div className="group-hover:text-primary-text truncate font-bold">{name}</div>
       </div>
       <div className="hidden gap-1 group-hover:flex">
         <Icon

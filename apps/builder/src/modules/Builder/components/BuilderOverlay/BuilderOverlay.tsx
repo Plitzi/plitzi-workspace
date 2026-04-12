@@ -4,12 +4,12 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import { processContainer } from './BuilderOverlayHelper';
 import OverlayNormal from './OverlayNormal';
-import useBuilderElement from '../../hooks/useBuilderElement';
 
-import type { DisplayMode, Element, EventBridgeEvent } from '@plitzi/sdk-shared';
+import type { BuilderState, DisplayMode, Element, EventBridgeEvent } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BuilderOverlayProps = {
@@ -37,9 +37,10 @@ const BuilderOverlay = ({
   color,
   collaboratorName = ''
 }: BuilderOverlayProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [element] = useStore(`schema.flat.${id}`, { defaultValue: undefined });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rootContainerRef = useRef<HTMLDivElement | null>(null);
-  const element = useBuilderElement(id);
   const [container, setContainer] = useState({
     width: 0,
     height: 0,
@@ -109,7 +110,14 @@ const BuilderOverlay = ({
 
       return { id, element, elementDOM };
     });
-  }, [baseElementId, element?.definition.parentId, id, getElementDOM, element]);
+  }, [
+    baseElementId,
+    element?.definition.parentId,
+    id,
+    getElementDOM,
+    element,
+    element?.definition.initialState?.visibility
+  ]);
 
   useEffect(() => {
     if (!overlayProps.elementDOM) {

@@ -7,15 +7,15 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react';
 
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';
 
-import type { Element, ElementBinding, BindingCategory, SourceMeta } from '@plitzi/sdk-shared';
+import type { Element, ElementBinding, BindingCategory, SourceMeta, BuilderState } from '@plitzi/sdk-shared';
 
 const bindingCategories: BindingCategory[] = ['attributes', 'style', 'initialState'];
 
@@ -27,20 +27,21 @@ export type DataSourceBindingProps = {
 };
 
 const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceBindingProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [flat] = useStore('schema.flat');
   const { getSourcesByElementId } = use(DataSourceContext);
-  const { schema } = use(BuilderSchemaContext);
   const { attributes, definition } = element;
   const [bindingFormValues, setBindingFormValues] = useState<Record<keyof typeof attributes, ElementBinding | null>>(
     () => Object.keys(attributes).reduce((acum, key) => ({ ...acum, [key]: null }), {})
   );
   const sources = useMemo(
     () =>
-      Object.values(getSourcesByElementId(schema.flat, id))
+      Object.values(getSourcesByElementId(flat, id))
         .filter(source => source.meta.source)
         .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {
           '': { id: undefined, source: undefined, name: 'None', fields: () => [] } as SourceMeta
         }),
-    [getSourcesByElementId, id, schema.flat]
+    [getSourcesByElementId, id, flat]
   );
 
   useEffect(() => {
@@ -177,7 +178,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
   if (Object.keys(sources).length === 0) {
     return (
-      <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center">
+      <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
         Sources not found, Check if you have sources added
       </div>
     );
@@ -193,7 +194,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
         return (
           <Fragment key={`${id}_${i}`}>
-            {i !== 0 && <div className="h-0.5 w-full bg-gray-300" />}
+            {i !== 0 && <div className="h-0.5 w-full bg-gray-300 dark:bg-zinc-700" />}
             <ContainerCollapsable collapsed={!binding.length}>
               <ContainerCollapsable.Header
                 title={upperFirst(fkey)}
@@ -230,7 +231,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                 </div>
                 {bindingFormValues[fkey] && (
                   <div
-                    className={clsx('border-t border-gray-300 py-4', {
+                    className={clsx('border-t border-gray-300 py-4 dark:border-zinc-700', {
                       'mt-4': !!binding.length,
                       'border-b': i !== bindingCategories.length - 1
                     })}

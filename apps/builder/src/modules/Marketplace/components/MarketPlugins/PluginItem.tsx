@@ -35,22 +35,30 @@ const PluginItem = ({
 
   return (
     <div
-      className={clsx('flex w-full flex-col rounded-sm border border-gray-300 select-none', className)}
+      className={clsx(
+        'flex w-full flex-col rounded-sm border border-gray-300 select-none dark:border-zinc-700',
+        className
+      )}
       onClick={handleClick}
       style={{ backgroundImage: `linear-gradient(${backgroundColor} 20%, white)` }}
     >
       <div className="flex justify-between px-4 pt-4 pb-2">
         <div className="flex flex-col">
           <div className="text-sm font-bold">{name}</div>
-          <a className="flex items-center text-xs text-gray-500" target="_blank" rel="noreferrer" href={website}>
+          <a
+            className="flex items-center text-xs text-gray-500 dark:text-zinc-400"
+            target="_blank"
+            rel="noreferrer"
+            href={website}
+          >
             {website}
             <i className="fa-solid fa-arrow-up-right-from-square ml-1" />
           </a>
         </div>
         {icon && <div className="h-10 w-10 bg-contain bg-no-repeat" style={{ backgroundImage: `url(${icon})` }} />}
       </div>
-      <div className="flex px-4 py-2 text-xs text-gray-500">{description}</div>
-      <div className="flex items-center justify-between border-t border-gray-300 px-4 py-2">
+      <div className="flex px-4 py-2 text-xs text-gray-500 dark:text-zinc-400">{description}</div>
+      <div className="flex items-center justify-between border-t border-gray-300 px-4 py-2 dark:border-zinc-700">
         <Button className="rounded-sm">View Plugin</Button>
         <div className="flex">
           {version && latestVersion !== version && (

@@ -28,26 +28,37 @@ const ExecutionTreeNode = ({
 
   return (
     <div
-      className={clsx('flex cursor-pointer items-center gap-1 px-2', {
-        'pl-4': level === 1,
-        'bg-gray-300': isSelected,
-        'hover:bg-gray-200': !isSelected
-      })}
+      className={clsx(
+        'flex cursor-pointer items-center gap-2 border-l-2 px-2 py-1 transition-colors',
+        level === 1 ? 'pl-5' : 'pl-2',
+        {
+          'border-l-violet-500 bg-violet-50 text-violet-700 dark:border-l-violet-500 dark:bg-violet-500/15 dark:text-violet-300':
+            isSelected,
+          'border-l-transparent text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:border-l-transparent dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200':
+            !isSelected
+        }
+      )}
       onClick={handleClick}
     >
       <div
-        className={clsx('h-2.5 w-2.5 rounded-full', {
-          'bg-green-500': status === 'success',
-          'bg-orange-500': status === 'skipped',
-          'bg-gray-500': status === 'disabled'
+        className={clsx('h-2 w-2 shrink-0 rounded-full', {
+          'bg-emerald-500': status === 'success',
+          'bg-amber-500': status === 'skipped',
+          'bg-zinc-300 dark:bg-zinc-600': status === 'disabled',
+          'bg-zinc-400 dark:bg-zinc-500': status === 'failed'
         })}
         title={status}
       />
-      <div className="flex w-full justify-between">
-        <div className="flex">
-          {title} ({duration})
+      <div className="flex min-w-0 grow justify-between gap-2">
+        <span className="truncate">{title}</span>
+        <div className="flex shrink-0 items-center gap-1.5 text-zinc-400 dark:text-zinc-600">
+          <span className="font-mono">{duration}</span>
+          {action && (
+            <span className="rounded bg-zinc-100 px-1 font-mono text-[10px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500">
+              {action}
+            </span>
+          )}
         </div>
-        <div className="flex">[{action}]</div>
       </div>
     </div>
   );

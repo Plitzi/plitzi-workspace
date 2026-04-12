@@ -37,7 +37,7 @@ const TransformLayout = ({
         <i className="fas fa-code" />
       </Button>
       <Select2
-        className="w-[150px]"
+        className="w-37.5"
         clearable={false}
         isSearchable={false}
         value={layoutMode}

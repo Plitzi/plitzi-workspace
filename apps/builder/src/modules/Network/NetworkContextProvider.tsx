@@ -8,12 +8,11 @@ import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 
-import NetworkInternalContext from './contexts/NetworkInternalContext';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
-import type { NetworkInternalContextValue } from './contexts/NetworkInternalContext';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type {
   Server,
@@ -25,7 +24,8 @@ import type {
   ServerEnvironment,
   BuilderQueriesMap,
   BuilderMutationsMap,
-  BuilderSubscriptionsMap
+  BuilderSubscriptionsMap,
+  NetworkInternalContextValue
 } from '@plitzi/sdk-shared';
 import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';

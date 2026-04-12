@@ -26,7 +26,7 @@ const BuilderContextMenuItem = ({
   return (
     <div
       className={clsx(
-        'flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none last:border-b-0 hover:bg-blue-100',
+        'flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none last:border-b-0 hover:bg-blue-100 dark:border-zinc-700 dark:hover:bg-blue-900/40',
         className
       )}
       onClick={handleClick}
@@ -36,7 +36,7 @@ const BuilderContextMenuItem = ({
         <div className="mr-1 text-blue-400">{children}</div>
         {title}
       </div>
-      <div className="text-xs text-[10px] text-gray-500 opacity-80">{shortcut}</div>
+      <div className="text-xs text-[10px] text-gray-500 opacity-80 dark:text-zinc-400">{shortcut}</div>
     </div>
   );
 };

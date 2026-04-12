@@ -20,9 +20,19 @@ const NodeMetadata = ({ when, whenParams }: NodeMetadataProps) => {
     return syntaxHighlight(JSON.stringify(getValuesRequired(when, whenParams), null, 2)) as string;
   }, [whenParams, when]);
 
+  if (!content) {
+    return null;
+  }
+
   return (
-    <div className="flex grow text-xs whitespace-pre">
-      <pre dangerouslySetInnerHTML={{ __html: content }} />
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+        Params
+      </span>
+      <pre
+        className="overflow-auto rounded bg-zinc-50 p-2 font-mono text-xs leading-5 dark:bg-zinc-800"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
     </div>
   );
 };

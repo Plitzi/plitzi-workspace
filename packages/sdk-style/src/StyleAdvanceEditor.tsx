@@ -7,14 +7,14 @@ import { useCallback, useMemo, useState, use } from 'react';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
+
+import type { CommonState } from '@plitzi/sdk-shared';
 
 const StyleAdvanceEditor = () => {
-  const {
-    schema: {
-      settings: { customCss: customCssProp }
-    },
-    schemaUpdateSettings
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [customCssProp] = useStore('schema.settings.customCss');
+  const { schemaUpdateSettings } = use(SchemaContext);
   const [customCss, setCustomCss] = useState(() => {
     if (typeof customCssProp !== 'string') {
       return '';
@@ -61,7 +61,7 @@ const StyleAdvanceEditor = () => {
         <Button
           intent="custom"
           size="custom"
-          className="mr-2 rounded-sm bg-white p-2"
+          className="mr-2 rounded-sm bg-white p-2 text-zinc-800 shadow dark:bg-zinc-700 dark:text-zinc-200"
           onClick={handleFormat}
           title="Auto format"
           disabled={networkLoading}
@@ -70,12 +70,16 @@ const StyleAdvanceEditor = () => {
         </Button>
         <ContainerFloating containerLeftOffset={-208} containerTopOffset={4}>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="custom" className="rounded-sm bg-white p-2">
+            <Button
+              intent="custom"
+              size="custom"
+              className="rounded-sm bg-white p-2 text-zinc-800 shadow dark:bg-zinc-700 dark:text-zinc-200"
+            >
               <i className="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>
           <ContainerFloating.Content>
-            <div className="flex w-60 flex-col items-center justify-center p-4 text-center">
+            <div className="flex w-60 flex-col items-center justify-center p-4 text-center text-zinc-700 dark:text-zinc-300">
               <p>Add your own CSS code here to customize the appearance and layout of your site.</p>
               <a
                 href="https://codex.wordpress.org/CSS"

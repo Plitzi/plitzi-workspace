@@ -9,11 +9,10 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
@@ -21,7 +20,7 @@ import TransformPreview from './TransformPreview';
 
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const Transform = () => {
@@ -32,10 +31,8 @@ const Transform = () => {
     builderHandler,
     baseContext: { baseElementId }
   } = use(BuilderContext);
-  const {
-    style: { mode: styleMode }
-  } = use(StyleContext);
-  const { elementSelected } = use(BuilderSelectedContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[styleMode, elementSelected]] = useStore(['style.mode', 'elementSelected']);
   const { rootRef } = use(ContainerRootContext);
   const [mode, setMode] = useState<'html-tailwind' | 'webflow' | 'html'>('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);
@@ -206,7 +203,7 @@ const Transform = () => {
         </div>
         {isEditorVisible && (
           <div
-            className={clsx('flex bg-white', {
+            className={clsx('flex bg-white dark:bg-zinc-900', {
               'h-full': layoutMode === 'horizontal',
               'w-full': layoutMode === 'vertical'
             })}
@@ -269,7 +266,7 @@ const Transform = () => {
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between gap-3 border-t border-gray-400 p-2">
+      <div className="flex items-center justify-between gap-3 border-t border-gray-400 p-2 dark:border-zinc-600">
         <TransformLayout
           layoutMode={layoutMode}
           onLayoutModeChange={handleChangeLayoutMode}

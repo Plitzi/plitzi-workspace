@@ -1,9 +1,10 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import React, { useCallback, use, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, use, useEffect, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
@@ -24,7 +25,8 @@ import type {
   StyleVariableValue,
   TagType,
   StyleCategory,
-  StyleState
+  StyleState,
+  CommonState
 } from '@plitzi/sdk-shared';
 
 export type BuilderStyleContextProviderProps = {
@@ -54,8 +56,9 @@ const BuilderStyleContextProvider = ({
     [middlewaresProp]
   );
   const [style, dispatchStyle] = useReducerWithMiddleware(StyleReducer, styleProp ?? EMPTY_STYLE_SCHEMA, middlewares);
-  const styleRef = useRef(style);
-  styleRef.current = style;
+
+  const { useStoreSync } = createStoreHook<CommonState>();
+  useStoreSync('style', style);
 
   const styleUpdate = useCallback(
     (style: Style, fromSubscriptions = false) =>
@@ -216,11 +219,19 @@ const BuilderStyleContextProvider = ({
   useEffect(() => {
     if (includeSubscriptions) {
       subscriptionManager.subscribe('StyleUpdated', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const style = get(data, 'data.StyleUpdated', {}) as BuilderSubscriptionsMap['StyleUpdated'];
         styleUpdate(style, true);
       });
 
       subscriptionManager.subscribe('StyleAddSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, type, path, style, params } = get(
           data,
           'data.StyleAddSelector',
@@ -230,6 +241,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, path, style, params } = get(
           data,
           'data.StyleUpdateSelector',
@@ -239,6 +254,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector } = get(
           data,
           'data.StyleRemoveSelector',
@@ -248,6 +267,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleAddSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, category, name, value } = get(
           data,
           'data.StyleAddSelectorVariable',
@@ -257,6 +280,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, category, name, value } = get(
           data,
           'data.StyleUpdateSelectorVariable',
@@ -266,6 +293,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleRemoveSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, category, name } = get(
           data,
           'data.StyleRemoveSelectorVariable',
@@ -275,6 +306,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value } = get(
           data,
           'data.StyleAddVariable',
@@ -284,6 +319,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value } = get(
           data,
           'data.StyleUpdateVariable',
@@ -293,6 +332,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name } = get(
           data,
           'data.StyleRemoveVariable',
@@ -302,6 +345,10 @@ const BuilderStyleContextProvider = ({
       });
 
       subscriptionManager.subscribe('StyleUpdateSettings', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { path, value } = get(
           data,
           'data.StyleUpdateSettings',
@@ -344,8 +391,6 @@ const BuilderStyleContextProvider = ({
     styleUpdateSettings
   ]);
 
-  const styleContextMemo = useMemo(() => ({ style }), [style]);
-
   const events = useMemo(
     () => ({
       styleUpdate,
@@ -379,7 +424,7 @@ const BuilderStyleContextProvider = ({
 
   useEventBridge('main', events);
 
-  return <StyleContext value={styleContextMemo}>{children}</StyleContext>;
+  return <StyleContext value={events}>{children}</StyleContext>;
 };
 
 export default BuilderStyleContextProvider;

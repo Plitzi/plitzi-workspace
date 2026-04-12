@@ -2,12 +2,12 @@ import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import ElementDetails from './ElementDetails';
 import ElementsList from './ElementsList';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { CommonState, Element } from '@plitzi/sdk-shared';
 
 export type ElementsViewerProps = {
   className?: string;
@@ -17,10 +17,11 @@ export type ElementsViewerProps = {
 
 const ElementsViewer = ({ className, elementSelected, onSelectElement }: ElementsViewerProps) => {
   const { currentPageId } = use(NavigationContext);
-  const { schema } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [flat] = useStore('schema.flat');
   const elements = useMemo<Element[]>(
-    () => Object.values(schema.flat).filter(element => element.definition.rootId === currentPageId),
-    [schema.flat, currentPageId]
+    () => Object.values(flat).filter(element => element.definition.rootId === currentPageId),
+    [flat, currentPageId]
   );
   const element = useMemo(() => elements.find(element => element.id === elementSelected), [elements, elementSelected]);
 

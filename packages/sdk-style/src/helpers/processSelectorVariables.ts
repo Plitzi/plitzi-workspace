@@ -1,4 +1,4 @@
-import { StyleVariableCategory } from '@plitzi/sdk-shared';
+import { StyleVariableCategory } from '@plitzi/sdk-shared/types';
 
 import type { StyleItem, StyleThemeValue } from '@plitzi/sdk-shared';
 

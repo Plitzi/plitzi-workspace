@@ -1,4 +1,5 @@
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
+import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import { getDurationMs } from '@plitzi/sdk-shared';
@@ -10,8 +11,8 @@ import LogStatusIcon from '../../LogStatusIcon';
 import type { LogInteraction as TLogInteraction } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-const iconCollapsed = <i className="fa-solid fa-angle-right" />;
-const iconExpanded = <i className="fa-solid fa-angle-down" />;
+const iconCollapsed = <i className="fa-solid fa-angle-right text-[10px]" />;
+const iconExpanded = <i className="fa-solid fa-angle-down text-[10px]" />;
 
 export type LogInteractionProps = {
   className?: string;
@@ -30,7 +31,13 @@ const LogInteraction = ({
   const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
 
   return (
-    <ContainerCollapsable className="last:border-b-none w-full border-b border-gray-300 px-2 py-1" collapsed>
+    <ContainerCollapsable
+      className={clsx(
+        'last:border-b-none w-full border-b border-l-2 border-b-zinc-200 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50',
+        { 'border-l-emerald-500': status === 'completed', 'border-l-red-500': status === 'skipped' }
+      )}
+      collapsed
+    >
       <ContainerCollapsable.Header
         title={<LogInteractionHeader status={status} message={message} time={time} />}
         placement="left"
@@ -38,7 +45,7 @@ const LogInteraction = ({
         iconCollapsed={iconCollapsed}
         iconExpanded={iconExpanded}
       >
-        <div className="flex gap-3">
+        <div className="flex gap-3 text-zinc-400 dark:text-zinc-500">
           {status === 'completed' && !!nodesSkipped && (
             <LogStatusIcon logType="warning" title="Skipped">
               {nodesSkipped}

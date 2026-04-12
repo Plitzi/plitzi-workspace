@@ -60,4 +60,17 @@ export type Style = {
   cache: string;
 };
 
-export type StyleContextValue = { style: Style };
+export type StyleContextValue = {
+  styleUpdate?: unknown;
+  styleAddSelector?: unknown;
+  styleUpdateSelector?: unknown;
+  styleRemoveSelector?: unknown;
+  styleAddSelectorVariable?: unknown;
+  styleUpdateSelectorVariable?: unknown;
+  styleRemoveSelectorVariable?: unknown;
+  styleAddVariable?: unknown;
+  styleUpdateVariable?: unknown;
+  styleRemoveVariable?: unknown;
+  styleAddTemplate?: unknown;
+  styleUpdateSettings?: unknown;
+};

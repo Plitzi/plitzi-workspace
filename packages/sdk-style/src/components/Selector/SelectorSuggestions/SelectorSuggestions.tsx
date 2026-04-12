@@ -23,7 +23,7 @@ const SelectorSuggestions = ({ onSelect, onCreate, selector = '', selectors = []
     let finalSelectors = selectors;
     if (selector) {
       finalSelectors = finalSelectors.filter(
-        token => !token.name.includes(':') && token.name.toLowerCase().includes(selector.toLowerCase())
+        token => token.type === 'class' && token.name.toLowerCase().includes(selector.toLowerCase())
       );
     }
 

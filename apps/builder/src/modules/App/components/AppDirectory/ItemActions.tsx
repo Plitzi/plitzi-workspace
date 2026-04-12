@@ -8,9 +8,9 @@ import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { BuilderState, Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type PageActionsProps = {
@@ -30,9 +30,8 @@ const ItemActions = ({
   defaultPage = false,
   onZoom
 }: PageActionsProps) => {
-  const {
-    schema: { flat }
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [element] = useStore(`schema.flat.${id}`);
   const { eventBridge } = use(EventBridgeContext);
   const { navigate, currentPageId } = use(NavigationContext);
   const { showDialog } = useModal();
@@ -42,7 +41,7 @@ const ItemActions = ({
     async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      if (!(flat[id] as Element | undefined)) {
+      if (!(element as Element | undefined)) {
         return;
       }
 
@@ -74,14 +73,14 @@ const ItemActions = ({
         void eventBridge.emit('main', 'schemaHomePage', id);
       }
     },
-    [flat, id, defaultPage, showDialog, addToast, eventBridge]
+    [element, id, defaultPage, showDialog, addToast, eventBridge]
   );
 
   const handleClickRemove = useCallback(
     async (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      if (!(flat[id] as Element | undefined)) {
+      if (!(element as Element | undefined)) {
         return;
       }
 
@@ -119,7 +118,7 @@ const ItemActions = ({
         void eventBridge.emit('main', 'schemaRemoveElement', id);
       }
     },
-    [flat, id, defaultPage, showDialog, type, addToast, eventBridge, navigate, currentPageId]
+    [element, id, defaultPage, showDialog, type, addToast, eventBridge, navigate, currentPageId]
   );
 
   return (

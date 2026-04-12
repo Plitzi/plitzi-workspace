@@ -1,28 +1,33 @@
-import Heading from '@plitzi/plitzi-ui/Heading';
-import { use } from 'react';
-
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import VariablesList from './VariablesList';
 import VariablesStyleList from './VariablesStyleList';
 
+import type { CommonState } from '@plitzi/sdk-shared';
+
 const VariablesViewer = () => {
-  const {
-    schema: { variables }
-  } = use(SchemaContext);
-  const {
-    style: { variables: styleVariables }
-  } = use(StyleContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [[variables, styleVariables]] = useStore(['schema.variables', 'style.variables']);
   const { variables: variablesParsed } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
 
   return (
-    <div className="flex w-full flex-col p-2">
-      <Heading as="h4">Schema Variables</Heading>
-      <VariablesList variables={variables} variablesParsed={variablesParsed} />
-      <Heading as="h4">Style Variables</Heading>
-      <VariablesStyleList variables={styleVariables} />
+    <div className="flex w-full flex-col gap-4 overflow-y-auto p-3">
+      <section className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+          <i className="fa-solid fa-code" />
+          Schema Variables
+        </div>
+        <VariablesList variables={variables} variablesParsed={variablesParsed} />
+      </section>
+
+      <section className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+          <i className="fa-solid fa-palette" />
+          Style Variables
+        </div>
+        <VariablesStyleList variables={styleVariables} />
+      </section>
     </div>
   );
 };

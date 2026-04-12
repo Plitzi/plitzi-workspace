@@ -8,6 +8,8 @@ export type OptionColorProps = {
   onChange?: (value: StyleValue | Record<StyleCategory, StyleValue>) => void;
 };
 
+const allowedWords = ['inherit'];
+
 const OptionColor = ({ className, value, onChange }: OptionColorProps) => {
   return (
     <ColorPicker
@@ -16,6 +18,7 @@ const OptionColor = ({ className, value, onChange }: OptionColorProps) => {
       value={value as string}
       onChange={onChange}
       allowVariables
+      allowedWords={allowedWords}
     />
   );
 };

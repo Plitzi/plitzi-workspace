@@ -1,4 +1,4 @@
-import { expect, describe, test } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 import { calculateDistances } from './BuilderOverlayHelper';
 

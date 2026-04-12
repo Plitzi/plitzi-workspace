@@ -15,16 +15,22 @@ export type LogInteractionBodyProps = {
 
 const LogInteractionBody = ({ node, nodes, startTime, endTime, duration, elementId }: LogInteractionBodyProps) => {
   return (
-    <div className="m-2 flex flex-col text-sm">
-      <BodyHeader
-        triggerName={node.title}
-        startTime={startTime}
-        endTime={endTime}
-        duration={duration}
-        elementId={elementId}
-      />
-      <div className="border-t border-gray-200" />
-      <BodyContent node={node} nodes={nodes} className="gap-2" />
+    <div className="mx-2 my-1.5 flex flex-col gap-2 overflow-hidden rounded border border-zinc-200 text-xs dark:border-zinc-800">
+      {/* Header: times + details */}
+      <div className="bg-zinc-50 px-3 py-2 dark:bg-zinc-800/60">
+        <BodyHeader
+          triggerName={node.title}
+          startTime={startTime}
+          endTime={endTime}
+          duration={duration}
+          elementId={elementId}
+        />
+      </div>
+
+      {/* Tree + node detail */}
+      <div className="border-t border-zinc-200 dark:border-zinc-800">
+        <BodyContent node={node} nodes={nodes} className="gap-0" />
+      </div>
     </div>
   );
 };

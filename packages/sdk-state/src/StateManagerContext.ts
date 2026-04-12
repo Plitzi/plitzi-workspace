@@ -7,5 +7,6 @@ const stateManagerContextDefaultValue: StateManagerContextValue = {
 } as StateManagerContextValue;
 
 const StateManagerContext = createContext(stateManagerContextDefaultValue);
+StateManagerContext.displayName = 'StateManagerContext';
 
 export default StateManagerContext;

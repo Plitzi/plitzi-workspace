@@ -30,12 +30,13 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
   );
 
   const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), []);
-
   const handleSelectElement = useCallback((id?: string) => setElementSelected(id), [setElementSelected]);
 
   return (
     <ContainerResizable
-      className={clsx('component__container-resizable-sidebar text-sm', className)}
+      className={clsx('component__container-resizable-sidebar text-xs', className, {
+        'h-full': orientation === 'vertical'
+      })}
       minConstraintsX={orientation === 'vertical' ? 500 : Infinity}
       maxConstraintsX={orientation === 'vertical' ? 1000 : Infinity}
       minConstraintsY={orientation === 'vertical' ? Infinity : 34}
@@ -46,25 +47,27 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
       parentRef={parentRef}
       autoGrow={false}
     >
-      <DevToolsHeader
-        orientation={orientation}
-        onChangeOrientation={onChangeOrientation}
-        onTabSelect={handleTabSelect}
-        tabSelected={tabSelected}
-      />
-      {['dataSources', 'elements'].includes(tabSelected) && (
-        <DevToolsSubHeader
+      <div className="flex h-full w-full flex-col bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+        <DevToolsHeader
+          orientation={orientation}
+          onChangeOrientation={onChangeOrientation}
+          onTabSelect={handleTabSelect}
+          tabSelected={tabSelected}
+        />
+        {['dataSources', 'elements'].includes(tabSelected) && (
+          <DevToolsSubHeader
+            elementSelected={elementSelected}
+            onSelectElement={handleSelectElement}
+            currentPageId={currentPageId}
+          />
+        )}
+        <DevToolsBody
+          orientation={orientation}
+          tabSelected={tabSelected}
           elementSelected={elementSelected}
           onSelectElement={handleSelectElement}
-          currentPageId={currentPageId}
         />
-      )}
-      <DevToolsBody
-        orientation={orientation}
-        tabSelected={tabSelected}
-        elementSelected={elementSelected}
-        onSelectElement={handleSelectElement}
-      />
+      </div>
     </ContainerResizable>
   );
 };

@@ -50,11 +50,13 @@ const SelectorForm = ({
   const watchMode = useFormWatch(form.formMethods, 'mode');
   const componentOptions = useMemo(
     () =>
-      Object.keys(components).map(componentType => (
-        <option key={componentType} value={componentType} disabled={componentsNotAvailables?.includes(componentType)}>
-          {capitalize(componentType.replace(/([a-z0-9])([A-Z])/g, '$1 $2'))}
-        </option>
-      )),
+      Object.keys(components)
+        .sort((a, b) => a.localeCompare(b))
+        .map(componentType => (
+          <option key={componentType} value={componentType} disabled={componentsNotAvailables?.includes(componentType)}>
+            {capitalize(componentType.replace(/([a-z0-9])([A-Z])/g, '$1 $2'))}
+          </option>
+        )),
     [components, componentsNotAvailables]
   );
 

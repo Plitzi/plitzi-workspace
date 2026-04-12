@@ -14,5 +14,6 @@ export type DevToolsContextValue = {
 const devToolsContextDefaultValue = { logs: [], providers: {} };
 
 const DevToolsContext = createContext<DevToolsContextValue>(devToolsContextDefaultValue);
+DevToolsContext.displayName = 'DevToolsContext';
 
 export default DevToolsContext;

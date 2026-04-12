@@ -217,7 +217,15 @@ abstract class AuthProvider<U = Record<string, unknown>> {
       return Promise.resolve({ data: undefined, status: res.status });
     }
 
-    return { data: (await res.json()) as T, status: res.status };
+    let data: T;
+
+    try {
+      data = (await res.json()) as T;
+    } catch {
+      data = undefined as T;
+    }
+
+    return { data, status: res.status };
   }
 }
 

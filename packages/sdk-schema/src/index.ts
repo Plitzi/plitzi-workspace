@@ -1,9 +1,7 @@
 import FlatMap from './helpers/FlatMap';
-import SchemaMainContext from './SchemaMainContext';
-import SchemaSettingsContext from './SchemaSettingsContext';
+import SchemaReducer from './SchemaReducer';
 
-export * from './SchemaMainContext';
+export * from './SchemaReducer';
 export * from './helpers/FlatMap';
-export * from './SchemaSettingsContext';
 
-export { FlatMap, SchemaSettingsContext, SchemaMainContext };
+export { FlatMap, SchemaReducer };

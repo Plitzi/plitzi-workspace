@@ -9,18 +9,15 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
@@ -35,7 +32,7 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
-import type { BuilderNetworkContextValue, ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
+import type { BuilderState, BuilderNetworkContextValue, ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
 
 export type BuilderAreaProps = {
   className?: string;
@@ -60,19 +57,18 @@ const BuilderArea = ({
   previewMode = false,
   debugMode = false
 }: BuilderAreaProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [cache] = useStore('style.cache');
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {
     theme,
     multiPagesMode,
     mode,
-    baseContext: { baseElementId }
+    baseContext: { baseElementId },
+    builderGetBaseElement
   } = use(BuilderContext);
   const { displayBorderComponents, zoom } = use(AppContext);
-  const {
-    style,
-    style: { cache }
-  } = use(BuilderStyleContext);
   const { useDataSource } = use(DataSourceContext);
   // @todo: variables should be only related to styles
   const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
@@ -87,7 +83,6 @@ const BuilderArea = ({
   const refContainer = useRef<HTMLDivElement>(null);
   const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
   const { currentPageId } = use(NavigationContext);
-  const { schema, builderGetBaseElement } = use(BuilderSchemaContext);
   const { rootRef } = use(ContainerRootContext);
   const { sdkEnvironment, builderEnvironment } = use(NetworkContext) as BuilderNetworkContextValue;
 
@@ -124,8 +119,6 @@ const BuilderArea = ({
       contexts: {
         ComponentContext,
         ContainerRootContext,
-        SchemaContext,
-        StyleContext,
         SegmentsContext,
         CollectionContext,
         NetworkContext,
@@ -151,8 +144,6 @@ const BuilderArea = ({
     ]
   );
 
-  const schemaValueMemo = useMemo(() => ({ schema }), [schema]);
-  const styleValueMemo = useMemo(() => ({ style }), [style]);
   const baseElementValueMemo = useMemo(() => ({ id: baseElementId, rootId: baseElementId }), [baseElementId]);
 
   return (
@@ -200,7 +191,7 @@ const BuilderArea = ({
             css={css}
             assets={assets}
             className="absolute h-full w-full origin-top-left"
-            style={{ colorScheme: theme === 'system' ? 'normal' : theme }}
+            style={{ colorScheme: theme === 'system' ? 'light' : theme }}
           >
             {Plugin && (
               <>
@@ -214,11 +205,7 @@ const BuilderArea = ({
                 >
                   <SpaceContainer>
                     <PlitziServiceProvider value={plitziContextValue}>
-                      <SchemaContext value={schemaValueMemo}>
-                        <StyleContext value={styleValueMemo}>
-                          <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
-                        </StyleContext>
-                      </SchemaContext>
+                      <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
                     </PlitziServiceProvider>
                   </SpaceContainer>
 

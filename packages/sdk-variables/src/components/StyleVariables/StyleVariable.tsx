@@ -51,7 +51,7 @@ const StyleVariable = ({ category, name, value, onUpdate, onRemove }: StyleVaria
 
   if (editMode) {
     return (
-      <div className="rounded-sm border border-gray-300 p-2">
+      <div className="rounded-sm border border-gray-300 bg-white p-2 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
         <StyleVariableForm
           name={name}
           category={category}
@@ -64,7 +64,7 @@ const StyleVariable = ({ category, name, value, onUpdate, onRemove }: StyleVaria
   }
 
   return (
-    <div className="group flex flex-col gap-1 rounded-sm border border-gray-300 px-1 py-0.5 text-sm hover:bg-slate-100">
+    <div className="group flex flex-col gap-1 rounded-sm border border-gray-300 bg-white px-1 py-0.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
       <div className="flex w-full cursor-pointer items-center gap-2" onClick={handleClick}>
         <div className="flex w-full overflow-hidden">
           <div className="flex min-w-0 grow basis-0 justify-between gap-2">

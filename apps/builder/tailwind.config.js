@@ -1,7 +1,5 @@
-// Packages
 import { join } from 'path';
 
-// Monorepo
 import sharedConfig from '../../packages/sdk-shared/tailwind.config';
 
 const config = {

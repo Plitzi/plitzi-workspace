@@ -1,13 +1,12 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
-import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
-import type { InteractionCallback, InteractionCallbackParamValues, Schema } from '@plitzi/sdk-shared';
+import type { SdkState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type PageInteractionsProps = {
@@ -16,15 +15,15 @@ export type PageInteractionsProps = {
 };
 
 const PageInteractions = ({ children, previewMode = true }: PageInteractionsProps) => {
-  const { schema } = use(SchemaContext);
-  const { keepState, stateStorage } = useMemo<Schema['settings']>(
-    () => get(schema, 'settings', {} as Schema['settings']),
-    [schema]
-  );
   const { setStateByKey, clearCache } = use(StateManagerContext);
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
-  const { pages: pageIds, pageDefinitions } = use(SchemaPagesContext);
+  const { useStore } = createStoreHook<SdkState>();
+  const [[{ keepState, stateStorage }, pageIds, pageDefinitions]] = useStore([
+    'schema.settings',
+    'schema.pages',
+    'pageDefinitions'
+  ]);
 
   const handleSetPageState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {

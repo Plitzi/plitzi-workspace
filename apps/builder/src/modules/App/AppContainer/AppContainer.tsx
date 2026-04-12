@@ -4,8 +4,6 @@ import { use, useMemo, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
 import AppContext from '../AppContext';
@@ -29,8 +27,6 @@ const separatorsBefore = ['layerManager', 'settings'];
 
 const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { previewMode } = use(AppContext);
-  const schemaContext = use(SchemaContext);
-  const styleContext = use(StyleContext);
   const { eventBridge } = use(EventBridgeContext);
   const { currentPageId } = use(NavigationContext);
   const [popupsActiveLeft, setPopupsActiveLeft] = useStorage<string[]>(
@@ -65,12 +61,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   return (
     <div className="flex grow flex-col overflow-auto">
       <AppHeader />
-      <BuilderProvider
-        schema={schemaContext.schema}
-        style={styleContext.style}
-        baseElementId={currentPageId}
-        onHandler={builderHandler}
-      >
+      <BuilderProvider baseElementId={currentPageId} onHandler={builderHandler}>
         <PopupProvider
           popups={popups}
           multi

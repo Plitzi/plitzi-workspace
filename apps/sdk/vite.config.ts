@@ -104,7 +104,8 @@ export default defineConfig(({ mode, command }) => {
         version: PACKAGE.version
       }),
       command === 'build' && ejsPlugin(devMode),
-      !isWatch && viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-sdk.(js|css)$/ }),
+      !isWatch &&
+        viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-sdk(|-devtools).(js|css)$/ }),
       dts({
         entryRoot: 'src',
         outDir: 'dist',
@@ -197,6 +198,7 @@ export default defineConfig(({ mode, command }) => {
       lib: {
         entry: ['./src/index.tsx']
       },
+      cssCodeSplit: true,
       rollupOptions: {
         treeshake: true,
         external: [
@@ -212,8 +214,16 @@ export default defineConfig(({ mode, command }) => {
             format: 'es',
             exports: 'named',
             manualChunks: undefined,
-            inlineDynamicImports: true, // false if u want to have chunks !devMode,
+            // inlineDynamicImports: true, // false if u want to have chunks !devMode,
             entryFileNames: 'plitzi-sdk.js',
+            // assetFileNames: assetInfo => {
+            //   const { names } = assetInfo;
+            //   if (names[0] === 'index.css') {
+            //     return 'plitzi-sdk.css';
+            //   }
+
+            //   return assetInfo.names[0];
+            // },
             globals: {
               react: 'React',
               'react-dom': 'ReactDOM',

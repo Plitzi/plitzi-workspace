@@ -1,6 +1,6 @@
 import { debounce } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { memo, useState, useEffect, useCallback, useMemo } from 'react';
 
 import type { RefObject } from 'react';
 
@@ -225,4 +225,4 @@ const OverlayButtonResize = ({
   );
 };
 
-export default OverlayButtonResize;
+export default memo(OverlayButtonResize);

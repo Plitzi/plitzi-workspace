@@ -36,11 +36,12 @@ const ExecutionTree = ({ className, nodeId, nodes, selected, onSelect }: Executi
   const handleClick = useCallback((id: string) => onSelect?.(id), [onSelect]);
 
   return (
-    <div className={clsx('flex flex-col gap-2', className)}>
-      <div className="flex items-center gap-1">
-        <i className="fa-solid fa-code-merge" /> Execution Tree
+    <div className={clsx('flex flex-col gap-1.5', className)}>
+      <div className="flex items-center gap-1.5 px-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+        <i className="fa-solid fa-code-merge" />
+        Execution Tree
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col">
         {treeNodes.map((treeNode, i) => (
           <ExecutionTreeNode
             key={i}

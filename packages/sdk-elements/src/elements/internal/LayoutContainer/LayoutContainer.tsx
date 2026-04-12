@@ -26,6 +26,7 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
   } = usePlitziServiceContext();
 
   const updateMask = useCallback((parent?: HTMLElement, child?: Element | null) => {
+    console.log('re-render');
     if (!parent || !child) {
       return;
     }
@@ -54,14 +55,19 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
       return;
     }
 
-    const handleResize = throttle((entries: ResizeObserverEntry[]) => {
-      for (const e of entries) {
-        updateMask(e.target as HTMLElement, e.target.querySelector('.plitzi-component--layout-body'));
-      }
+    const handleResize = throttle(() => {
+      const parent = ref.current;
+      const child = parent.querySelector('.plitzi-component--layout-body');
+      updateMask(parent, child);
     }, 150);
 
     const observer = new ResizeObserver(handleResize);
     observer.observe(ref.current);
+
+    const child = ref.current.querySelector('.plitzi-component--layout-body');
+    if (child) {
+      observer.observe(child);
+    }
 
     return () => {
       handleResize.cancel();

@@ -1,13 +1,14 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import { useCallback, use, useEffect, useMemo, useRef } from 'react';
+import { useCallback, use, useEffect, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
-import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
@@ -33,22 +34,18 @@ import type {
   BuilderMutationsMap,
   BuilderSubscriptionsMap,
   StyleCategory,
-  StyleState
+  StyleState,
+  BuilderState
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
 export type SegmentsContextProviderProps = {
   children: ReactNode;
-  segments?: Record<string, Segment>;
   includeSubscriptions?: boolean;
 };
 
-const SegmentsContextProvider = ({
-  children,
-  segments: segmentsProp,
-  includeSubscriptions = true
-}: SegmentsContextProviderProps) => {
+const SegmentsContextProvider = ({ children, includeSubscriptions = true }: SegmentsContextProviderProps) => {
   const { query, mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
     BuilderMutationsMap,
@@ -57,13 +54,7 @@ const SegmentsContextProvider = ({
   const internalData = use(NetworkInternalContext);
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
-  const segmentsPropMemo = useMemo(() => {
-    if (segmentsProp) {
-      return segmentsProp;
-    }
-
-    return internalData.segments;
-  }, [internalData.segments, segmentsProp]);
+  const segmentsPropMemo = useMemo(() => internalData.segments, [internalData.segments]);
   const [segments, dispatchSegments] = useReducerWithMiddleware(SegmentsReducer, segmentsPropMemo, [
     {
       middleware: undoableMiddleware as ReducerMiddlewareCallback<
@@ -80,8 +71,10 @@ const SegmentsContextProvider = ({
       filterCallback: action => !action.fromSubscriptions
     }
   ]);
-  const segmentsRef = useRef(segments);
-  segmentsRef.current = segments;
+
+  const { useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
+  useStoreSync('segments', segments);
+  const getSegment = useStoreGetter('segments');
 
   const segmentsFetch = useCallback(
     async (filter?: string | object, cursor?: string, limit?: number) => {
@@ -112,8 +105,9 @@ const SegmentsContextProvider = ({
 
   const segmentGet = useCallback(
     async (identifier: string) => {
-      if (segmentsRef.current[identifier as keyof typeof segmentsRef.current] as Segment | undefined) {
-        return segmentsRef.current[identifier as keyof typeof segmentsRef.current] as Segment;
+      const segment = getSegment(identifier, undefined);
+      if (segment) {
+        return segment;
       }
 
       try {
@@ -144,7 +138,7 @@ const SegmentsContextProvider = ({
         return undefined;
       }
     },
-    [dispatchSegments, query]
+    [dispatchSegments, getSegment, query]
   );
 
   const segmentsAdd = useCallback(
@@ -515,6 +509,10 @@ const SegmentsContextProvider = ({
   useEffect(() => {
     if (includeSubscriptions) {
       subscriptionManager.subscribe('SegmentAddElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -542,6 +540,10 @@ const SegmentsContextProvider = ({
         );
       });
       subscriptionManager.subscribe('SegmentUpdateElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { element, contextId } = get(data, 'data.SegmentUpdateElement', {}) as {
           element: Element;
           contextId: string;
@@ -549,6 +551,10 @@ const SegmentsContextProvider = ({
         segmentUpdateElement(contextId, element, true);
       });
       subscriptionManager.subscribe('SegmentRemoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { elementId, contextId } = get(data, 'data.SegmentRemoveElement', {}) as {
           elementId: string;
           contextId: string;
@@ -556,6 +562,10 @@ const SegmentsContextProvider = ({
         segmentRemoveElement(contextId, elementId, true);
       });
       subscriptionManager.subscribe('SegmentMoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { from, to, elementId, dropPosition, contextId } = get(data, 'data.SegmentMoveElement', {}) as {
           from: string;
           to: string;
@@ -566,6 +576,10 @@ const SegmentsContextProvider = ({
         segmentMoveElement(contextId, from, to, elementId, dropPosition, true);
       });
       subscriptionManager.subscribe('SegmentCloneElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -590,6 +604,10 @@ const SegmentsContextProvider = ({
         );
       });
       subscriptionManager.subscribe('SegmentAddTemplate', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           styles,
@@ -620,6 +638,10 @@ const SegmentsContextProvider = ({
       });
 
       subscriptionManager.subscribe('SegmentSpaceAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, variable } = get(
           data,
           'data.SegmentSpaceAddVariable',
@@ -629,6 +651,10 @@ const SegmentsContextProvider = ({
       });
 
       subscriptionManager.subscribe('SegmentSpaceUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, variable } = get(
           data,
           'data.SegmentSpaceUpdateVariable',
@@ -638,6 +664,10 @@ const SegmentsContextProvider = ({
       });
 
       subscriptionManager.subscribe('SegmentSpaceRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, variable } = get(
           data,
           'data.SegmentSpaceRemoveVariable',
@@ -647,6 +677,10 @@ const SegmentsContextProvider = ({
       });
 
       subscriptionManager.subscribe('SegmentStyleAddSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, type, path, style, contextId, params } = get(
           data,
           'data.SegmentStyleAddSelector',
@@ -655,6 +689,10 @@ const SegmentsContextProvider = ({
         segmentStyleAddSelector(contextId, displayMode, selector, type, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, path, style, contextId, params } = get(
           data,
           'data.SegmentStyleUpdateSelector',
@@ -663,6 +701,10 @@ const SegmentsContextProvider = ({
         segmentStyleUpdateSelector(contextId, displayMode, selector, path, style, params, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelector', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { displayMode, selector, contextId } = get(data, 'data.SegmentStyleRemoveSelector', {}) as {
           displayMode: DisplayMode;
           selector: string;
@@ -672,6 +714,10 @@ const SegmentsContextProvider = ({
       });
 
       subscriptionManager.subscribe('SegmentStyleAddSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, displayMode, selector, category, name, value } = get(
           data,
           'data.SegmentStyleAddSelectorVariable',
@@ -680,6 +726,10 @@ const SegmentsContextProvider = ({
         segmentStyleAddSelectorVariable(contextId, displayMode, selector, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, displayMode, selector, category, name, value } = get(
           data,
           'data.SegmentStyleUpdateSelectorVariable',
@@ -688,6 +738,10 @@ const SegmentsContextProvider = ({
         segmentStyleUpdateSelectorVariable(contextId, displayMode, selector, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveSelectorVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { contextId, displayMode, selector, category, name } = get(
           data,
           'data.SegmentStyleRemoveSelectorVariable',
@@ -697,6 +751,10 @@ const SegmentsContextProvider = ({
       });
 
       subscriptionManager.subscribe('SegmentStyleAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value, contextId } = get(
           data,
           'data.SegmentStyleAddVariable',
@@ -705,6 +763,10 @@ const SegmentsContextProvider = ({
         segmentStyleAddVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, value, contextId } = get(
           data,
           'data.SegmentStyleUpdateVariable',
@@ -713,6 +775,10 @@ const SegmentsContextProvider = ({
         segmentStyleUpdateVariable(contextId, category, name, value, true);
       });
       subscriptionManager.subscribe('SegmentStyleRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { category, name, contextId } = get(
           data,
           'data.SegmentStyleRemoveVariable',
@@ -836,7 +902,6 @@ const SegmentsContextProvider = ({
 
   const segmentsContextValue = useMemo<SegmentsContextValue<'builder'>>(
     () => ({
-      segments,
       dispatchSegments,
       segmentGet,
       segmentsFetch,
@@ -847,7 +912,6 @@ const SegmentsContextProvider = ({
       segmentAddMutation
     }),
     [
-      segments,
       dispatchSegments,
       segmentGet,
       segmentsFetch,

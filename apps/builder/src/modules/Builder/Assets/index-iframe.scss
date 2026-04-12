@@ -114,6 +114,12 @@ body {
   }
 }
 
+@media (prefers-color-scheme: dark) {
+  .builder-iframe.builder--display-component-border {
+    background-color: #1f1f1f;
+  }
+}
+
 .with__container {
   user-select: none;
 }

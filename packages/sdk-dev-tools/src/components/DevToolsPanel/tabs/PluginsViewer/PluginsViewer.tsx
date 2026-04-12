@@ -15,6 +15,7 @@ export type PluginsViewerProps = {
 
 const PluginsViewer = ({ className }: PluginsViewerProps) => {
   const { plugins } = use(PluginsContext);
+
   const pluginsParsed = useMemo<ListItem<Plugin>[]>(
     () =>
       Object.keys(plugins).map(pluginKey => {
@@ -25,29 +26,34 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
           id: pluginKey,
           name: pluginKey,
           label: (
-            <div className="flex flex-col capitalize">
-              {pluginKey}
-              <span className="text-xs text-gray-500">{plugin.manifest.version}</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="capitalize">{pluginKey}</span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{plugin.manifest.version}</span>
             </div>
           )
         };
       }),
     [plugins]
   );
-  const [plugin, setPlugin] = useState<ListItem<Plugin> | undefined>();
 
+  const [plugin, setPlugin] = useState<ListItem<Plugin> | undefined>();
   const handleItemSelected = useCallback((pluginSelected?: ListItem<Plugin>) => setPlugin(pluginSelected), []);
 
   return (
     <div className={clsx('flex h-full w-full', className)}>
-      <List className="w-[300px] p-2" items={pluginsParsed} value={plugin} onSelect={handleItemSelected} />
-      {plugin && (
+      <List className="w-[240px]" items={pluginsParsed} value={plugin} onSelect={handleItemSelected} />
+      {plugin ? (
         <PluginDetails
           label={plugin.name}
           version={plugin.manifest.version}
           author={plugin.manifest.author}
           settings={plugin.settings}
         />
+      ) : (
+        <div className="flex grow flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-600">
+          <i className="fa-solid fa-puzzle-piece text-2xl opacity-30" />
+          <span>Select a plugin</span>
+        </div>
       )}
     </div>
   );

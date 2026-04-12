@@ -6,8 +6,6 @@ import { useCallback, use, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
 import ItemActions from './ItemActions';
@@ -22,12 +20,8 @@ export type DirectoryItemProps = {
 };
 
 const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryItemProps) => {
-  const { schema } = use(SchemaContext);
-  const {
-    style: { cache }
-  } = use(StyleContext);
-  const { eventBridge } = use(EventBridgeContext);
   const [zoom, setZoom] = useState(false);
+  const { eventBridge } = use(EventBridgeContext);
   const styleMemo = useMemo(() => ({ paddingLeft: nestedLevel * 16 }), [nestedLevel]);
 
   const handleClickZoom = useCallback((e: MouseEvent) => {
@@ -54,7 +48,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
   );
 
   return (
-    <Flex className="group">
+    <Flex className="group px-1 hover:bg-gray-50 dark:hover:bg-zinc-800/60">
       <Link to={id} relative="path" className="flex min-w-0 grow basis-0 flex-col" onClick={handleClick}>
         <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
@@ -82,9 +76,9 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
           />
         </Flex>
         {zoom && (
-          <div className="relative my-2 rounded-sm border border-gray-300">
+          <div className="relative my-2 rounded-sm border border-gray-300 dark:border-zinc-700">
             <ContainerAutoScale className="flex h-37.5 w-full items-center justify-center overflow-hidden rounded-sm">
-              <BuilderAreaPreview id={id} schema={schema} styleCache={cache} className="h-full w-full" previewMode />
+              <BuilderAreaPreview id={id} className="h-full w-full" previewMode />
             </ContainerAutoScale>
           </div>
         )}

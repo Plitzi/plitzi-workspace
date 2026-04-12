@@ -52,7 +52,7 @@ const ResourceFile = ({
       onDragEnd={handleDragEnd}
       draggable={!isLoading}
       className={clsx(
-        'group relative flex w-full cursor-pointer flex-col justify-center overflow-hidden rounded-md border border-gray-300 select-none',
+        'group relative flex w-full cursor-pointer flex-col justify-center overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
         className
       )}
       onClick={onClick}

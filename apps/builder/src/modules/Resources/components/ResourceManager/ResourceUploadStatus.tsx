@@ -35,7 +35,7 @@ const ResourceUploadStatus = ({
   return (
     <div className="group absolute top-0 right-0 bottom-0 left-0 flex cursor-pointer items-center justify-around rounded-md bg-[#00000080] text-white">
       <div className="flex h-12 w-12 items-center justify-center" title="Upload">
-        <i className="fa-solid fa-cloud-arrow-up fa-3x hover:text-primary-400" onClick={onUpload} />
+        <i className="fa-solid fa-cloud-arrow-up fa-3x hover:text-primary-ui" onClick={onUpload} />
       </div>
       <div className="flex h-12 w-12 items-center justify-center" title="Cancel">
         <i className="fa-solid fa-circle-xmark fa-3x hover:text-red-400" onClick={onCancel} />

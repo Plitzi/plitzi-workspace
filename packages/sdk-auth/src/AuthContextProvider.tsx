@@ -1,15 +1,14 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
-import { useMemo, use } from 'react';
+import { useMemo } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
 import useAuth from './hooks/useAuth';
 
-import type { AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
+import type { CommonState, AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AuthContextProviderProps = {
@@ -28,20 +27,23 @@ const AuthContextProvider = ({
   server,
   environment = 'production'
 }: AuthContextProviderProps) => {
-  const {
-    userProvider,
-    loginUrl,
-    userUrl,
-    refreshUrl,
-    logoutUrl,
-    tokenStorage = 'localStorage',
-    detailsPath = 'details',
-    tokenPath = 'access_token',
-    expirationTimePath = 'expire_at'
-  } = use(SchemaSettingsContext);
-  const {
-    schema: { variables }
-  } = use(SchemaContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [
+    [
+      {
+        userProvider,
+        loginUrl,
+        userUrl,
+        refreshUrl,
+        logoutUrl,
+        tokenStorage = 'localStorage',
+        detailsPath = 'details',
+        tokenPath = 'access_token',
+        expirationTimePath = 'expire_at'
+      },
+      variables
+    ]
+  ] = useStore(['schema.settings', 'schema.variables']);
   const { queryParams, hostname } = useNavigation({ server });
 
   const variablesWhenData = useMemo(
@@ -68,9 +70,9 @@ const AuthContextProvider = ({
     }, {});
   }, [variables, variablesWhenData]);
 
-  const authData = useMemo(
-    () =>
-      JSON.parse(
+  const authData = useMemo(() => {
+    try {
+      return JSON.parse(
         processTwig(
           JSON.stringify({ loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath }),
           variablesParsed
@@ -83,9 +85,11 @@ const AuthContextProvider = ({
         detailsPath?: string;
         tokenPath?: string;
         expirationTimePath?: string;
-      },
-    [loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath, variablesParsed]
-  );
+      };
+    } catch {
+      return { loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath };
+    }
+  }, [loginUrl, userUrl, refreshUrl, logoutUrl, detailsPath, tokenPath, expirationTimePath, variablesParsed]);
 
   const { manager, loading, authenticated } = useAuth({
     server,

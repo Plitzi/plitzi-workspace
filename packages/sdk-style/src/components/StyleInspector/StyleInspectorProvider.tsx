@@ -14,6 +14,7 @@ import type { InheritData } from '../../helpers';
 import type {
   DisplayMode,
   Element,
+  StyleBlock,
   StyleCategory,
   StyleItem,
   StyleObject,
@@ -51,6 +52,26 @@ const StyleInspectorProvider = ({
   const { useDataSource } = use(DataSourceContext);
   const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
 
+  const getValues = useCallback(() => {
+    let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
+    if (selector && styleSelector && (selector.attributes[styleSelector] as StyleBlock | undefined)) {
+      const block = selector.attributes[styleSelector];
+      if (styleState && styleVariant) {
+        attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
+      } else if (styleVariant) {
+        attributes = block.variants?.[styleVariant]?.default ?? {};
+      } else if (styleState) {
+        attributes = block.states?.[styleState] ?? {};
+      } else {
+        attributes = block.default ?? {};
+      }
+    } else {
+      attributes = {};
+    }
+
+    return attributes;
+  }, [selector, styleSelector, styleState, styleVariant]);
+
   const setValue = useCallback(
     (styleKey?: StyleCategory, values?: StyleObject | StyleValue): void => {
       if (
@@ -66,7 +87,7 @@ const StyleInspectorProvider = ({
       }
 
       if (!styleKey && selector && typeof values === 'object') {
-        const newValues = { ...get(selector.attributes, `${styleSelector}.default`, {}), ...values };
+        const newValues = { ...getValues(), ...values };
         (Object.keys(newValues) as StyleCategory[]).forEach(k => {
           if (newValues[k] === undefined) {
             delete newValues[k];
@@ -78,7 +99,7 @@ const StyleInspectorProvider = ({
 
       onChange?.(styleKey, values);
     },
-    [bindingData, onChange, selector, styleSelector]
+    [bindingData, getValues, onChange, selector]
   ) as SetValues;
 
   const getDefaultValue = useCallback(
@@ -122,6 +143,7 @@ const StyleInspectorProvider = ({
       variables: schemaVariables,
       inheritData: inheritData.style,
       bindingData: bindingData,
+      getValues,
       setValue,
       resetValue,
       getDefaultValue
@@ -136,6 +158,7 @@ const StyleInspectorProvider = ({
       schemaVariables,
       inheritData.style,
       bindingData,
+      getValues,
       setValue,
       resetValue,
       getDefaultValue

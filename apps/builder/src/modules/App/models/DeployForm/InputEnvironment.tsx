@@ -60,8 +60,9 @@ const InputEnvironment = () => (
                   className={clsx(
                     'relative flex grow basis-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 p-2',
                     {
-                      'hover:bg-primary-100 hover:border-primary-300 border-gray-300': value !== env.value,
-                      'border-primary-300 bg-primary-100': value === env.value
+                      'hover:bg-primary-100 hover:border-primary-300 border-gray-300 dark:border-zinc-600':
+                        value !== env.value,
+                      'border-primary-500 bg-primary-300': value === env.value
                     }
                   )}
                   onClick={() => handleChange(env.value)}
@@ -71,7 +72,7 @@ const InputEnvironment = () => (
                   {value === env.value && (
                     <Icon
                       icon="fa-solid fa-circle-check"
-                      className="text-primary-500 absolute top-1 right-1 group-hover:text-white"
+                      className="text-primary-ui absolute top-1 right-1 group-hover:text-white"
                       title="Selected"
                       size="xl"
                     />

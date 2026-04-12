@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import OverlayButtonContainer from './OverlayButtonContainer';
@@ -13,7 +13,7 @@ import OverlayButtonResize from './OverlayButtonResize';
 import OverlaySpacing from './OverlaySpacing';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { DisplayMode, Element } from '@plitzi/sdk-shared';
+import type { BuilderState, DisplayMode, Element } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type OverlayNormalProps = {
@@ -47,9 +47,16 @@ const OverlayNormal = ({
   color,
   collaboratorName = ''
 }: OverlayNormalProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[style, selector, styleSelector, styleVariant, styleState]] = useStore([
+    'style',
+    'selector',
+    'styleSelector',
+    'styleVariant',
+    'styleState'
+  ]);
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = use(BuilderContext);
-  const { style, selector } = use(BuilderStyleContext);
   const styleRef = useRef(style);
   styleRef.current = style;
 
@@ -110,21 +117,32 @@ const OverlayNormal = ({
             set(draft, 'definition.styleSelectors.base', newSelector);
           })
         );
-        builderHandler('styleAddSelector', displayMode, newSelector, 'class', '', {
-          width: `${width}px`,
-          height: `${height}px`
-        });
+        builderHandler(
+          'styleAddSelector',
+          displayMode,
+          newSelector,
+          'class',
+          undefined,
+          { width: `${width}px`, height: `${height}px` },
+          { styleSelector: 'base' }
+        );
       } else {
-        const selectorType = get(styleRef.current, `platform.${displayMode}.${selector}.type`, 'class');
-        const values = get(styleRef.current, `platform.${displayMode}.${selector}.attributes`);
-        builderHandler('styleUpdateSelector', displayMode, selector, selectorType, '', {
-          ...values,
-          width: `${width}px`,
-          height: `${height}px`
-        });
+        const values = get(
+          styleRef.current,
+          `platform.${displayMode}.${selector}.attributes.${styleSelector}.default`,
+          {}
+        );
+        builderHandler(
+          'styleUpdateSelector',
+          displayMode,
+          selector,
+          undefined,
+          { ...values, width: `${width}px`, height: `${height}px` },
+          { styleSelector, styleVariant, styleState }
+        );
       }
     },
-    [element, mode, selector, builderHandler, displayMode]
+    [element, mode, selector, builderHandler, displayMode, styleSelector, styleVariant, styleState]
   );
 
   const handleChange = useCallback(

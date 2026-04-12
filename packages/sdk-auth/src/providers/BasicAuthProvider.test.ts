@@ -19,13 +19,15 @@ describe('BasicAuthProvider', () => {
     const provider = new BasicAuthProvider({
       loginUrl: '/login',
       tokenPath: 'accessToken',
+      refreshTokenPath: 'refreshToken',
       expirationTimePath: 'expiresIn'
     });
 
     mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ accessToken: 'token-123', refreshToken: 'refresh-123', expiresIn: 3600 }), {
-        status: 200
-      })
+      new Response(
+        JSON.stringify({ accessToken: 'token-123', refreshToken: 'refresh-123', expiresIn: Date.now() + 3600 }),
+        { status: 200 }
+      )
     );
 
     const token = await provider.login({ username: 'demo', password: '123' });
@@ -55,7 +57,10 @@ describe('BasicAuthProvider', () => {
 
   it('refresh returns a new token when backend responds', async () => {
     const provider = new BasicAuthProvider({
-      refreshUrl: '/refresh'
+      refreshUrl: '/refresh',
+      tokenPath: 'accessToken',
+      refreshTokenPath: 'refreshToken',
+      expirationTimePath: 'expiresIn'
     });
 
     const expiredToken: TokenResult = {
@@ -68,9 +73,10 @@ describe('BasicAuthProvider', () => {
     provider.cache = { token: expiredToken };
 
     mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ accessToken: 'new-token', refreshToken: 'new-refresh', expiresIn: 3600 }), {
-        status: 200
-      })
+      new Response(
+        JSON.stringify({ accessToken: 'new-token', refreshToken: 'new-refresh', expiresIn: Date.now() + 3600 }),
+        { status: 200 }
+      )
     );
 
     const refreshed = await provider.refresh();
@@ -85,8 +91,8 @@ describe('BasicAuthProvider', () => {
     });
 
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 401 }));
-
-    await expect(provider.login({ username: 'x', password: 'y' })).rejects.toThrow('HTTP 401');
+    const response = await provider.login({ username: 'x', password: 'y' });
+    expect(response).toBe(undefined);
   });
 
   // it('login → refresh uses cached token when still valid', async () => {

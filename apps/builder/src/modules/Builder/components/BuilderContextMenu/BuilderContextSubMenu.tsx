@@ -31,7 +31,7 @@ const BuilderContextSubMenu = ({ items, width = 150, iframeDOM, onClick }: Build
     <div
       ref={ref}
       className={clsx(
-        'relative flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100',
+        'relative flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100 dark:border-zinc-700 dark:hover:bg-blue-900/40',
         { 'rounded-tr': items?.length === 0 }
       )}
       // onMouseEnter={handleMouseEnter}
@@ -44,8 +44,9 @@ const BuilderContextSubMenu = ({ items, width = 150, iframeDOM, onClick }: Build
       </div>
       {showMenu && items && items.length > 0 && (
         <Card
-          className="absolute top-0 left-full z-[99999999] flex overflow-hidden rounded-none rounded-l-none rounded-r-sm bg-slate-100 shadow-2xl"
+          className="absolute top-0 left-full z-99999999 flex overflow-hidden rounded-none rounded-l-none rounded-r-sm bg-slate-100 shadow-2xl dark:bg-zinc-800"
           style={{ width: `${width}px` }}
+          size="custom"
         >
           <Card.Body className="w-full">
             <div className="flex w-full flex-col">

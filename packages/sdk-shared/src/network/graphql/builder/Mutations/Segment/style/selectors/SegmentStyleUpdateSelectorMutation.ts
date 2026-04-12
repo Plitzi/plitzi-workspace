@@ -19,9 +19,12 @@ const SegmentStyleUpdateSelectorMutation = gql`
       params: $params
       contextId: $contextId
     ) {
-      variables
-      platform
-      cache
+      displayMode
+      selector
+      type
+      path
+      style
+      params
     }
   }
 `;

@@ -9,8 +9,6 @@
   "files": [
     "dist",
     "eslint.config.mjs",
-    "jest.config.js",
-    "jest.setup.js",
     "tailwind.config.js",
     "vite.config.ts",
     "setupTests.ts"
@@ -31,22 +29,6 @@
     "./builder/contexts/BuilderContext": {
       "types": "./dist/src/builder/contexts/BuilderContext.d.ts",
       "import": "./dist/src/builder/contexts/BuilderContext.mjs"
-    },
-    "./builder/contexts/BuilderHoveredContext": {
-      "types": "./dist/src/builder/contexts/BuilderHoveredContext.d.ts",
-      "import": "./dist/src/builder/contexts/BuilderHoveredContext.mjs"
-    },
-    "./builder/contexts/BuilderSchemaContext": {
-      "types": "./dist/src/builder/contexts/BuilderSchemaContext.d.ts",
-      "import": "./dist/src/builder/contexts/BuilderSchemaContext.mjs"
-    },
-    "./builder/contexts/BuilderSelectedContext": {
-      "types": "./dist/src/builder/contexts/BuilderSelectedContext.d.ts",
-      "import": "./dist/src/builder/contexts/BuilderSelectedContext.mjs"
-    },
-    "./builder/contexts/BuilderStyleContext": {
-      "types": "./dist/src/builder/contexts/BuilderStyleContext.d.ts",
-      "import": "./dist/src/builder/contexts/BuilderStyleContext.mjs"
     },
     "./builder/contexts/index": {
       "types": "./dist/src/builder/contexts/index.d.ts",
@@ -187,6 +169,10 @@
     "./network/NetworkContext": {
       "types": "./dist/src/network/NetworkContext.d.ts",
       "import": "./dist/src/network/NetworkContext.mjs"
+    },
+    "./network/NetworkInternalContext": {
+      "types": "./dist/src/network/NetworkInternalContext.d.ts",
+      "import": "./dist/src/network/NetworkInternalContext.mjs"
     },
     "./network/graphql": {
       "types": "./dist/src/network/graphql/index.d.ts",
@@ -880,13 +866,41 @@
       "types": "./dist/src/store/helpers/getByPath.d.ts",
       "import": "./dist/src/store/helpers/getByPath.mjs"
     },
+    "./store/helpers/isPathAffected": {
+      "types": "./dist/src/store/helpers/isPathAffected.d.ts",
+      "import": "./dist/src/store/helpers/isPathAffected.mjs"
+    },
     "./store/helpers/setByPath": {
       "types": "./dist/src/store/helpers/setByPath.d.ts",
       "import": "./dist/src/store/helpers/setByPath.mjs"
     },
+    "./store/helpers/shallowEqual": {
+      "types": "./dist/src/store/helpers/shallowEqual.d.ts",
+      "import": "./dist/src/store/helpers/shallowEqual.mjs"
+    },
+    "./store/helpers/useIsomorphicLayoutEffect": {
+      "types": "./dist/src/store/helpers/useIsomorphicLayoutEffect.d.ts",
+      "import": "./dist/src/store/helpers/useIsomorphicLayoutEffect.mjs"
+    },
+    "./store/hooks/shared": {
+      "types": "./dist/src/store/hooks/shared.d.ts",
+      "import": "./dist/src/store/hooks/shared.mjs"
+    },
     "./store/hooks/useStore": {
       "types": "./dist/src/store/hooks/useStore.d.ts",
       "import": "./dist/src/store/hooks/useStore.mjs"
+    },
+    "./store/hooks/useStoreGetter": {
+      "types": "./dist/src/store/hooks/useStoreGetter.d.ts",
+      "import": "./dist/src/store/hooks/useStoreGetter.mjs"
+    },
+    "./store/hooks/useStoreSetter": {
+      "types": "./dist/src/store/hooks/useStoreSetter.d.ts",
+      "import": "./dist/src/store/hooks/useStoreSetter.mjs"
+    },
+    "./store/hooks/useStoreSync": {
+      "types": "./dist/src/store/hooks/useStoreSync.d.ts",
+      "import": "./dist/src/store/hooks/useStoreSync.mjs"
     },
     "./store/index": {
       "types": "./dist/src/store/index.d.ts",
@@ -903,6 +917,22 @@
     "./style/styleConstants": {
       "types": "./dist/src/style/styleConstants.d.ts",
       "import": "./dist/src/style/styleConstants.mjs"
+    },
+    "./theme": {
+      "types": "./dist/src/theme/index.d.ts",
+      "import": "./dist/src/theme/index.mjs"
+    },
+    "./theme/ThemeContext": {
+      "types": "./dist/src/theme/ThemeContext.d.ts",
+      "import": "./dist/src/theme/ThemeContext.mjs"
+    },
+    "./theme/helpers/getSystemTheme": {
+      "types": "./dist/src/theme/helpers/getSystemTheme.d.ts",
+      "import": "./dist/src/theme/helpers/getSystemTheme.mjs"
+    },
+    "./theme/index": {
+      "types": "./dist/src/theme/index.d.ts",
+      "import": "./dist/src/theme/index.mjs"
     },
     "./types": {
       "types": "./dist/src/types/index.d.ts",
@@ -988,6 +1018,10 @@
       "types": "./dist/src/types/StyleTypes.d.ts",
       "import": "./dist/src/types/StyleTypes.mjs"
     },
+    "./types/ThemeTypes": {
+      "types": "./dist/src/types/ThemeTypes.d.ts",
+      "import": "./dist/src/types/ThemeTypes.mjs"
+    },
     "./types/index": {
       "types": "./dist/src/types/index.d.ts",
       "import": "./dist/src/types/index.mjs"
@@ -1016,7 +1050,7 @@
     "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.4.26",
+    "@plitzi/plitzi-ui": "^1.5.4",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.6",
@@ -1036,7 +1070,6 @@
     "@eslint/js": "^10.0.1",
     "@tailwindcss/forms": "^0.5.11",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.6.1",
@@ -1044,39 +1077,37 @@
     "@types/react-dom": "^19.2.3",
     "@types/twig": "^1.12.17",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.4",
     "babel-minify": "^0.5.2",
     "eslint": "^9.39.4",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-config-turbo": "^2.9.3",
+    "eslint-config-turbo": "^2.9.6",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-cypress": "^6.2.2",
+    "eslint-plugin-cypress": "^6.3.0",
     "eslint-plugin-flowtype": "8.0.3",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^29.15.1",
     "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "eslint-plugin-storybook": "^10.3.4",
-    "globals": "^17.4.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "postcss": "^8.5.8",
-    "prettier": "^3.8.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "eslint-plugin-storybook": "^10.3.5",
+    "globals": "^17.5.0",
+    "jsdom": "^29.0.2",
+    "postcss": "^8.5.9",
+    "prettier": "^3.8.2",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "tailwindcss": "^4.2.2",
     "terser": "^5.46.1",
-    "ts-jest": "^29.4.9",
     "typescript": "^6.0.2",
-    "typescript-eslint": "^8.58.0",
-    "vite": "^8.0.3",
+    "typescript-eslint": "^8.58.1",
+    "vite": "^8.0.8",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-react": "^4.0.1",
-    "vitest": "^4.1.2",
+    "vitest": "^4.1.4",
     "vitest-fetch-mock": "^0.4.5"
   }
 }

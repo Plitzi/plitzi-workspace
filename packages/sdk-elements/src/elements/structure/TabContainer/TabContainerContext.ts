@@ -8,5 +8,6 @@ export type TabContainerContextValue = {
 };
 
 const TabContainerContext = createContext<TabContainerContextValue>(undefined as unknown as TabContainerContextValue);
+TabContainerContext.displayName = 'TabContainerContext';
 
 export default TabContainerContext;

@@ -20,8 +20,7 @@ const builderSubscriptionsContextDefaultValue = {
   subscriptionsCollaborators: []
 } as BuilderSubscriptionsContextValue;
 
-const BuilderSubscriptionsContext = createContext<BuilderSubscriptionsContextValue>(
-  builderSubscriptionsContextDefaultValue
-);
+const BuilderSubscriptionsContext = createContext(builderSubscriptionsContextDefaultValue);
+BuilderSubscriptionsContext.displayName = 'BuilderSubscriptionsContext';
 
 export default BuilderSubscriptionsContext;

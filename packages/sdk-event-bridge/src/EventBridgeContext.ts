@@ -8,5 +8,6 @@ export type EventBridgeContextValue<T = unknown> = EventBridgeContextValueShared
 const eventBridgeContextDefaultValue = {} as EventBridgeContextValue;
 
 const EventBridgeContext = createContext(eventBridgeContextDefaultValue);
+EventBridgeContext.displayName = 'EventBridgeContext';
 
 export default EventBridgeContext;

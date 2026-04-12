@@ -5,13 +5,14 @@ import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState, useRef } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { createStoreHook, StoreProvider } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import PluginManager from '../../../Element/PluginManager';
 import RootElement from '../../../Element/RootElement';
 
-import type { Element, Schema, Segment, ElementLayoutType } from '@plitzi/sdk-shared';
+import type { Element, Schema, Segment, ElementLayoutType, CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ReferenceProps = {
@@ -37,10 +38,11 @@ const Reference = ({
   } = useElement();
   const {
     settings: { previewMode, environment },
-    contexts: { SchemaContext, SegmentsContext }
+    contexts: { SegmentsContext }
   } = usePlitziServiceContext();
-  const { schema: mainSchema } = use(SchemaContext);
-  const { segments, segmentGet } = use(SegmentsContext);
+  const { useStore } = createStoreHook<CommonState>();
+  const [[mainSchema, segments]] = useStore(['schema', 'segments']);
+  const { segmentGet } = use(SegmentsContext);
 
   const schemaRef = useRef(mainSchema);
   schemaRef.current = mainSchema;
@@ -179,14 +181,14 @@ const Reference = ({
   const { element, elementType, referenceContextData } = reference;
   if (previewMode && element && referenceType === 'element') {
     return (
-      <SchemaContext value={referenceContextData}>
+      <StoreProvider value={referenceContextData}>
         <PluginManager
           key={`${id}_${referenceId}`}
           type={elementType}
           internalProps={internalPropsMemo}
           plitziElementLayout={plitziElementLayoutMemo}
         />
-      </SchemaContext>
+      </StoreProvider>
     );
   }
 
@@ -197,7 +199,7 @@ const Reference = ({
         'reference--build-mode': !previewMode
       })}
     >
-      <SchemaContext value={referenceContextData}>
+      <StoreProvider value={referenceContextData}>
         {element && (
           <PluginManager
             key={`${id}_${referenceId}`}
@@ -206,7 +208,7 @@ const Reference = ({
             plitziElementLayout={plitziElementLayoutMemo}
           />
         )}
-      </SchemaContext>
+      </StoreProvider>
       {!previewMode && !element && <div className="reference__label">Element Reference {referenceType}</div>}
       {previewMode && !element && referenceType === 'segment' && (
         <div>

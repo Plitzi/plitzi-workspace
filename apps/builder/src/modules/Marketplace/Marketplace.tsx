@@ -22,7 +22,10 @@ const Marketplace = () => {
         </div>
       </div>
       <div className="flex grow basis-0">
-        <MarketSidebar onSelect={setSelected} className="mr-10 border-r border-gray-300 pr-10 pb-6" />
+        <MarketSidebar
+          onSelect={setSelected}
+          className="mr-10 border-r border-gray-300 pr-10 pb-6 dark:border-zinc-700"
+        />
         <div className="flex grow basis-0 flex-col">
           {selected === 'news' && <MarketNews />}
           {selected === 'plugins' && <MarketPlugins />}

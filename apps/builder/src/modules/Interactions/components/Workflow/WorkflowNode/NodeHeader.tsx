@@ -165,11 +165,14 @@ const NodeHeader = ({
     <div className={clsx('flex gap-2 p-2', className)}>
       <div className="flex flex-col items-center justify-center">
         <div
-          className={clsx('flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-gray-300', {
-            'bg-blue-400 text-white': type === 'trigger',
-            'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
-            'bg-orange-400 text-white': type === 'utility'
-          })}
+          className={clsx(
+            'flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-gray-300 dark:border-zinc-600',
+            {
+              'bg-blue-400 text-white': type === 'trigger',
+              'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
+              'bg-orange-400 text-white': type === 'utility'
+            }
+          )}
           onClick={onClickOpen}
         >
           {type === 'trigger' && <i className="fa-solid fa-wand-magic-sparkles" />}

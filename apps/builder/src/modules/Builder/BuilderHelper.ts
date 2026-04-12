@@ -8,7 +8,6 @@ import { generateCache, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import type {
   BuilderContextValue,
-  BuilderSchemaContextValue,
   ComponentDefinition,
   Element,
   Schema,
@@ -213,7 +212,7 @@ export const getElementDefinition = (
 
 type BuilderMetadata = {
   mutate: NetworkContextValue['mutate'];
-  builderDropElement: BuilderSchemaContextValue['builderDropElement'];
+  builderDropElement: BuilderContextValue['builderDropElement'];
   elementSelected: string;
   componentDefinitions: Record<string, ComponentDefinition>;
   baseElementId?: string;

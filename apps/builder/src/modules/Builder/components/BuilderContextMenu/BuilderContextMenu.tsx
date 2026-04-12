@@ -5,17 +5,15 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
 
-import type { Element, SegmentsContextValue } from '@plitzi/sdk-shared';
+import type { BuilderState, SegmentsContextValue } from '@plitzi/sdk-shared';
 
 export type BuilderContextMenuProps = {
   width?: number;
@@ -25,6 +23,10 @@ export type BuilderContextMenuProps = {
 };
 
 const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: BuilderContextMenuProps) => {
+  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
+  const [getSchema, getElement, getStyle] = useStoreGetter(['schema', 'schema.flat', 'style']);
+  const [[elementSelected, setSelected]] = useStore(['elementSelected', 'setSelected']);
+  const [element] = useStore(`schema.flat.${elementSelected}`, { defaultValue: undefined });
   const { showModal } = useModal();
   const { existsPopup, addPopup } = usePopup();
   const ref = useRef<HTMLDivElement>(null);
@@ -34,13 +36,6 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const [showMenu, setShowMenu] = useState(false);
   const { builderElementPermissions, builderHandler, elementAsTemplate } = use(BuilderContext);
   const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
-  const { elementSelected, setSelected } = use(BuilderSelectedContext);
-  const {
-    schema,
-    schema: { flat }
-  } = use(BuilderSchemaContext);
-  const { style } = use(BuilderStyleContext);
-  const element = useMemo(() => (elementSelected ? flat[elementSelected] : undefined), [elementSelected, flat]);
   const componentConfig = useMemo(
     () => (element ? builderElementPermissions(element) : {}),
     [element, builderElementPermissions]
@@ -127,8 +122,8 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
         return [];
       }
 
-      const element = flat[id];
-      if (!(element as Element | undefined)) {
+      const element = getElement(id, undefined);
+      if (!element) {
         return [];
       }
 
@@ -150,7 +145,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
 
       return [...getPath(parentId, false, skip - 1), id];
     },
-    [flat]
+    [getElement]
   );
 
   const handleClickDelete = () => {
@@ -186,7 +181,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
 
     if (response && element) {
       const { name, description, cdnIdentifier } = response;
-      void elementAsTemplate(cdnIdentifier, schema, style, name, description ?? '', element);
+      void elementAsTemplate(cdnIdentifier, getSchema(), getStyle(), name, description ?? '', element);
     }
   };
 
@@ -204,7 +199,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
 
     if (response && element) {
       const { name, description } = response;
-      void builderSegmentsContext.elementAsSegment(schema, style, name, description ?? '', element);
+      void builderSegmentsContext.elementAsSegment(getSchema(), getStyle(), name, description ?? '', element);
     }
   };
 
@@ -230,15 +225,15 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const subMenuMemo = useMemo(
     () =>
       path
-        .filter(segment => (flat[segment] as Element | undefined) && segment !== elementSelected)
+        .filter(segment => getElement(segment, undefined) && segment !== elementSelected)
         .map(segment => {
           const {
             definition: { label }
-          } = flat[segment];
+          } = getElement(segment);
 
           return { key: segment, value: label };
         }),
-    [path, flat, elementSelected]
+    [path, getElement, elementSelected]
   );
 
   if (!showMenu) {
@@ -258,10 +253,11 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
           transform: `scale(${1 / zoom})`,
           transformOrigin: 'top left'
         }}
+        size="custom"
       >
         <Card.Body className="w-full">
           <div className="flex h-20 items-center justify-center rounded-sm border-2 border-dashed p-3">
-            No components selected. Click on a component to select it
+            No components selected.
           </div>
         </Card.Body>
       </Card>
@@ -274,7 +270,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   return (
     <Card
       ref={ref}
-      className="builder__context-menu z-99999999 flex overflow-visible rounded-sm bg-slate-100 shadow-2xl"
+      className="builder__context-menu z-99999999 flex overflow-visible rounded-sm bg-slate-100 shadow-2xl dark:bg-zinc-800"
       style={{
         position: 'fixed',
         top: yPos,
@@ -283,6 +279,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
         transform: `scale(${1 / zoom})`,
         transformOrigin: 'top left'
       }}
+      size="custom"
     >
       <Card.Body className="w-full">
         <div className="flex w-full flex-col">

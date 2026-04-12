@@ -8,12 +8,11 @@ import { use, useCallback, useMemo, useState } from 'react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
-import type { SchemaVariable, StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
+import type { BuilderState, SchemaVariable, StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
 
 const Variables = () => {
   const { showDialog } = useModal();
@@ -26,12 +25,8 @@ const Variables = () => {
     () => ({ routeParams, queryParams, hostname, environment }),
     [routeParams, queryParams, hostname, environment]
   );
-  const {
-    schema: { variables: schemaVariables }
-  } = use(SchemaContext);
-  const {
-    style: { variables: styleVariables }
-  } = use(StyleContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[schemaVariables, styleVariables]] = useStore(['schema.variables', 'style.variables']);
 
   const variablesFiltered = useMemo(
     () =>
@@ -138,7 +133,7 @@ const Variables = () => {
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="min-h-px w-full bg-gray-300" />
+      <div className="min-h-px w-full bg-gray-300 dark:bg-zinc-700" />
       <SchemaVariables
         className="min-h-0 grow basis-0"
         variables={variablesFiltered}
@@ -147,7 +142,7 @@ const Variables = () => {
         onUpdate={handleUpdateSchemaVariable}
         onRemove={handleRemoveSchemaVariable}
       />
-      <div className="min-h-px w-full bg-gray-300" />
+      <div className="min-h-px w-full bg-gray-300 dark:bg-zinc-700" />
       <div className="flex grow basis-0 flex-col pb-2">
         <Heading as="h6">Style Variables</Heading>
         <StyleVariables

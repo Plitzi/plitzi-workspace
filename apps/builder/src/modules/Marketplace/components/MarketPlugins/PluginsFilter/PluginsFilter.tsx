@@ -28,7 +28,7 @@ const PluginsFilter = ({ filter, onChange }: PluginsFilterProps) => {
 
   return (
     <div className="flex w-full items-center justify-between">
-      <div className="mr-10 flex grow overflow-hidden rounded-sm border border-gray-300">
+      <div className="mr-10 flex grow overflow-hidden rounded-sm border border-gray-300 dark:border-zinc-700">
         <FilterCategory active={filter.owner.contains === ''} id="" name="All Plugins" onClick={handleClick} />
         <FilterCategory active={filter.owner.contains === 'plitzi'} id="plitzi" name="Official" onClick={handleClick} />
       </div>

@@ -30,8 +30,8 @@ const CategoryContainer = ({
     <ContainerCollapsable className={className} collapsed={isCollapsed} onChange={onCollapse}>
       <ContainerCollapsable.Header
         className={clsx('h-8', {
-          'border-b border-gray-300 hover:bg-slate-100': isCollapsed,
-          'bg-slate-100': !isCollapsed
+          'border-b border-gray-200 hover:bg-slate-100 dark:border-zinc-700 dark:hover:bg-zinc-700/50': isCollapsed,
+          'bg-slate-100 dark:bg-zinc-700/50': !isCollapsed
         })}
         title={title}
         placement="right"
@@ -41,7 +41,11 @@ const CategoryContainer = ({
         <InspectorDots styleKeys={dotKeys} />
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={clsx('flex flex-col gap-3 p-2', { 'border-b border-gray-300': !isCollapsed }, classNameContent)}
+        className={clsx(
+          'flex flex-col gap-3 p-2',
+          { 'border-b border-gray-200 dark:border-zinc-700': !isCollapsed },
+          classNameContent
+        )}
       >
         {children}
       </ContainerCollapsable.Content>

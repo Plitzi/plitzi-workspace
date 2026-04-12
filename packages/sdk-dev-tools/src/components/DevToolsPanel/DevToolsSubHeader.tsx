@@ -50,7 +50,14 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
     setSelectorEnabled(false);
   }, []);
 
-  const handleClickSelector = useCallback(() => setSelectorEnabled(true), [setSelectorEnabled]);
+  const handleClickSelector = useCallback(
+    (e: MouseEvent | React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setSelectorEnabled(true);
+    },
+    [setSelectorEnabled]
+  );
 
   const handleClickPage = useCallback(() => {
     setSelectorEnabled(false);
@@ -77,12 +84,12 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
 
   useEffect(() => {
     if (!selectorEnabled || typeof document === 'undefined') {
-      return undefined;
+      return;
     }
 
     const plitziSdkContainer = document.getElementsByClassName('plitzi-sdk')[0] as HTMLElement | undefined;
     if (!plitziSdkContainer) {
-      return undefined;
+      return;
     }
 
     plitziSdkContainer.addEventListener('click', handleClick);
@@ -95,8 +102,13 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
   }, [handleClick, handleMouseMove, selectorEnabled]);
 
   return (
-    <div className={clsx('flex items-center justify-between gap-2 border-b border-gray-300 px-2 py-1', className)}>
-      <div className="flex gap-2">
+    <div
+      className={clsx(
+        'flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800',
+        className
+      )}
+    >
+      <div className="flex gap-1">
         <DevToolsButton
           iconClassName="fa-regular fa-hand-pointer"
           title="Select an element in the page to inspect it"

@@ -1,9 +1,10 @@
 import { PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import Builder from '@pmodules/Builder';
+
+import type { BuilderState } from '@plitzi/sdk-shared';
 
 export type ContainerDefaultProps = {
   previewMode?: boolean;
@@ -11,8 +12,8 @@ export type ContainerDefaultProps = {
 };
 
 const ContainerDefault = ({ previewMode = false, externalStyle = '' }: ContainerDefaultProps) => {
-  const { pages, settings } = use(SchemaMainContext);
-  const { segments } = use(SegmentsContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[settings, pages, segments]] = useStore(['schema.settings', 'schema.pages', 'segments']);
   const customCss = useMemo(() => {
     let css = settings.customCss;
     if (typeof css !== 'string') {

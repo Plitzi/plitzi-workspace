@@ -1,13 +1,12 @@
-import { use, useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import BuilderOverlay from '../BuilderOverlay';
 import BuilderOverlayDistance from '../BuilderOverlay/BuilderOverlayDistance';
 import BuilderOverlayDrag from '../BuilderOverlay/BuilderOverlayDrag';
 
-import type { DisplayMode } from '@plitzi/sdk-shared';
+import type { BuilderState, DisplayMode } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BuilderAreaOverlayProps = {
@@ -25,8 +24,8 @@ const BuilderAreaOverlay = ({
   zoom = 1,
   displayMode = 'desktop'
 }: BuilderAreaOverlayProps) => {
-  const { elementHovered } = use(BuilderHoveredContext);
-  const { elementSelected } = use(BuilderSelectedContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[elementHovered, elementSelected]] = useStore(['elementHovered', 'elementSelected']);
   const [showDistance, setShowDistance] = useState(false);
 
   const overlaySelectMemo = useMemo(

@@ -2,11 +2,14 @@ import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
+import StoreProvider from '@plitzi/sdk-shared/store/StoreProvider';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
-import type { EventBridgeEvent, Segment } from '@plitzi/sdk-shared';
+import type { BuilderState, EventBridgeEvent } from '@plitzi/sdk-shared';
 
 export type BuilderPopupProps = {
   previewMode?: boolean;
@@ -15,8 +18,17 @@ export type BuilderPopupProps = {
 
 const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPopupProps) => {
   const { eventBridge } = use(EventBridgeContext);
-  const { segments } = use(SegmentsContext);
-  const segment = segments[segmentIdentifier] as Segment | undefined;
+  const { useStore } = createStoreHook<BuilderState>();
+  const [segment] = useStore(`segments.${segmentIdentifier}`, { defaultValue: undefined });
+
+  const generateStoreState = useCallback(
+    (currentState: BuilderState) => ({
+      ...currentState,
+      schema: { ...currentState.schema, ...segment?.schema },
+      style: segment?.style ?? EMPTY_STYLE_SCHEMA
+    }),
+    [segment]
+  );
 
   const builderHandler = useCallback(
     (event: EventBridgeEvent, data: unknown[]): void => void eventBridge.emit('segment', event, segment?.id, ...data),
@@ -31,32 +43,32 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
     );
   }
 
-  const { schema, style, definition } = segment;
+  const { definition } = segment;
 
   return (
     <div className="flex w-full grow">
-      <BuilderProvider
-        schemaName={definition.name}
-        schema={schema}
-        style={style}
-        baseElementId={definition.baseElementId}
-        mode="segment"
-        onHandler={builderHandler}
-      >
-        <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
-          <Builder />
+      <StoreProvider value={generateStoreState} inherit logger={createStoreDevToolsLogger('segment')}>
+        <BuilderProvider
+          schemaName={definition.name}
+          baseElementId={definition.baseElementId}
+          mode="segment"
+          onHandler={builderHandler}
+        >
+          <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
+            <Builder />
 
-          {!previewMode && (
-            <PopupSidePanel
-              className="max-h-[calc(100vh-48px)] overflow-y-auto"
-              placementTabs="right"
-              minWidth={320}
-              maxWidth={540}
-              canHide
-            />
-          )}
-        </PopupProvider>
-      </BuilderProvider>
+            {!previewMode && (
+              <PopupSidePanel
+                className="max-h-[calc(100vh-48px)] overflow-y-auto"
+                placementTabs="right"
+                minWidth={320}
+                maxWidth={540}
+                canHide
+              />
+            )}
+          </PopupProvider>
+        </BuilderProvider>
+      </StoreProvider>
     </div>
   );
 };

@@ -9,5 +9,6 @@ export type InteractionsContextValue = InteractionsContextValueShared<InstanceTy
 const InteractionsContextDefaultValue = {} as InteractionsContextValue;
 
 const InteractionsContext = createContext(InteractionsContextDefaultValue);
+InteractionsContext.displayName = 'InteractionsContext';
 
 export default InteractionsContext;

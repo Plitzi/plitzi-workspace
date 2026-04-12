@@ -27,7 +27,7 @@ import AppMain from '@modules/App/AppMain';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { generateFacade } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, generateFacade, StoreProvider, ThemeProvider } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
 import { getEnvironmentServer } from './config';
@@ -107,7 +107,7 @@ const App = ({
     []
   );
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
-  const [debugMode, setDebugMode] = useStorage(`web_${webId}_state.debugMode`, false, 'localStorage', false);
+  const [debugMode, setDebugMode] = useStorage(`web_${webId}_state.debugMode`, false, 'localStorage', debugModeProp);
   const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
 
@@ -176,27 +176,31 @@ const App = ({
         };
 
   return (
-    <Provider components={components}>
-      <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
-        <HelmetProvider>
-          <ReactRouter {...(reactRouterProps as { location: string })}>
-            <ApolloProvider client={client}>
-              <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                <AppMain
-                  server={finalServer}
-                  webKey={webKey}
-                  renderMode={renderMode}
-                  debugMode={debugMode}
-                  webId={webId}
-                  sdkEnvironment={sdkEnvironment}
-                  {...sdkProps}
-                />
-              </ComponentProvider>
-            </ApolloProvider>
-          </ReactRouter>
-        </HelmetProvider>
-      </ContainerRoot>
-    </Provider>
+    <StoreProvider logger={createStoreDevToolsLogger('sdk')}>
+      <ThemeProvider defaultTheme="system">
+        <Provider components={components}>
+          <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
+            <HelmetProvider>
+              <ReactRouter {...(reactRouterProps as { location: string })}>
+                <ApolloProvider client={client}>
+                  <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                    <AppMain
+                      server={finalServer}
+                      webKey={webKey}
+                      renderMode={renderMode}
+                      debugMode={debugMode}
+                      webId={webId}
+                      sdkEnvironment={sdkEnvironment}
+                      {...sdkProps}
+                    />
+                  </ComponentProvider>
+                </ApolloProvider>
+              </ReactRouter>
+            </HelmetProvider>
+          </ContainerRoot>
+        </Provider>
+      </ThemeProvider>
+    </StoreProvider>
   );
 };
 

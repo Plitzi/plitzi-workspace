@@ -1,12 +1,15 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { useCallback, use } from 'react';
+import { useCallback, use, memo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
+
+import type { BuilderState } from '@plitzi/sdk-shared';
 
 const PageHeader = () => {
-  const { pageDefinitions } = use(SchemaMainContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [pageDefinitions] = useStore('pageDefinitions');
   const { currentPageId } = use(NavigationContext);
   const [, setPopupsActiveLeft] = useStorage<string[]>('builder-state.popupSidePanel.popupsActive.left', []);
 
@@ -30,4 +33,4 @@ const PageHeader = () => {
   );
 };
 
-export default PageHeader;
+export default memo(PageHeader);

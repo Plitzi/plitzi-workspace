@@ -2,12 +2,12 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
-import type { SourceField } from '@plitzi/sdk-shared';
+import type { BuilderState, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type PageStateSourceProps = {
@@ -17,7 +17,8 @@ export type PageStateSourceProps = {
 const PageStateSource = ({ children }: PageStateSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { currentPageId } = use(NavigationContext);
-  const { pageDefinitions } = use(SchemaMainContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [pageDefinitions] = useStore('pageDefinitions');
   const { state } = use(StateManagerContext);
   const pages = useMemo(
     () =>

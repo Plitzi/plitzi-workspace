@@ -21,25 +21,33 @@ export type ManagerSelectorProps = {
   flatList: Element[];
   selected?: string;
   onSelect?: Dispatch<SetStateAction<StyleItem | undefined>>;
-  selectors: StyleItem[];
+  selectors?: Record<string, StyleItem>;
 };
 
 const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
+  const selectorsArr = useMemo(() => Object.values(selectors ?? {}), [selectors]);
   const [searchInput, setSearchInput] = useState('');
   const { builderHandler } = use(BuilderContext);
   const { components } = use(ComponentContext);
   const componentsNotAvailables = useMemo(
-    () => selectors.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
-    [selectors]
+    () => selectorsArr.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
+    [selectorsArr]
   );
   const finalSelectors = useMemo(() => {
-    let selectorsParsed = selectors;
+    let selectorsParsed = selectorsArr;
     if (!isEmpty(searchInput)) {
-      selectorsParsed = selectors.filter(selector => selector.name.toLowerCase().includes(searchInput.toLowerCase()));
+      selectorsParsed = selectorsArr.filter(selector =>
+        selector.name.toLowerCase().includes(searchInput.toLowerCase())
+      );
     }
 
-    return selectorsParsed.sort((a, b) => Number(b.type === 'element') - Number(a.type === 'element'));
-  }, [selectors, searchInput]);
+    return selectorsParsed.sort((a, b) => {
+      const aNumber = Number(a.type === 'element');
+      const bNumber = Number(b.type === 'element');
+
+      return aNumber === bNumber ? a.name.localeCompare(b.name) : bNumber - aNumber;
+    });
+  }, [selectorsArr, searchInput]);
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
 
@@ -73,9 +81,9 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
 
   const handleClickSelect = useCallback(
     (selector: string) => {
-      onSelect?.(state => (state?.name === selector ? undefined : selectors.find(s => s.name === selector)));
+      onSelect?.(state => (state?.name === selector ? undefined : selectorsArr.find(s => s.name === selector)));
     },
-    [onSelect, selectors]
+    [onSelect, selectorsArr]
   );
 
   const elementHasSelector = useCallback((element: Element, selector: string) => {
@@ -144,7 +152,7 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
 
   return (
-    <div className="flex max-w-[350px] grow basis-0 flex-col gap-2 overflow-auto border-r border-gray-300 pt-2 pr-2">
+    <div className="flex max-w-[350px] grow basis-0 flex-col gap-2 overflow-auto border-r border-gray-300 pt-2 pr-2 dark:border-zinc-700">
       <Button intent="primary" size="sm" className="w-full" iconPlacement="before" onClick={onOpenAddSelector}>
         <Button.Icon icon="fas fa-tint" size="md" className="text-base" />
         New Selector

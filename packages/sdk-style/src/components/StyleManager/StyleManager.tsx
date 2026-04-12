@@ -1,31 +1,26 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useState, use, useMemo } from 'react';
 
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import ManagerSelector from './ManagerSelector';
 import StyleInspector from '../StyleInspector';
 
-import type { StyleItem } from '@plitzi/sdk-shared';
+import type { BuilderState, StyleItem } from '@plitzi/sdk-shared';
 
 const StyleManager = () => {
   const { componentDefinitions } = use(ComponentContext);
   const [selector, setSelector] = useState<StyleItem | undefined>(undefined);
-  const {
-    schema: { flat }
-  } = use(BuilderSchemaContext);
-  const { style, displayMode } = use(BuilderStyleContext);
+
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[flat, displayMode]] = useStore(['schema.flat', 'displayMode']);
+  const [selectors] = useStore(`style.platform.${displayMode}`);
+
   const flatList = useMemo(
     () => Object.values(flat),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [Object.keys(flat).length]
-  );
-  const selectors = useMemo(
-    () => Object.values(get(style, `platform.${displayMode}`, {})),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [displayMode, Object.keys(style.platform[displayMode]).length]
   );
 
   const styleSelectorsAvailables = useMemo(
@@ -62,6 +57,8 @@ const StyleManager = () => {
           {selector && (
             <StyleInspector
               mode="manager"
+              displayMode={displayMode}
+              selectors={selectors}
               styleSelectors={styleSelectors}
               styleSelectorsAvailables={styleSelectorsAvailables}
               allowStyleSelector={selector.type === 'element'}
@@ -70,7 +67,7 @@ const StyleManager = () => {
             />
           )}
           {!selector && (
-            <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center select-none">
+            <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-500 select-none dark:border-zinc-600 dark:text-zinc-400">
               No selector or element selected. Click on one to select it.
             </div>
           )}

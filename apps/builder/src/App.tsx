@@ -67,7 +67,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import { generateFacade } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, generateFacade, StoreProvider, ThemeProvider } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -145,7 +145,8 @@ const App = (props: AppProps) => {
     includeSubscriptions = true,
     userKey = '',
     className = 'min-h-screen',
-    builderEnvironment = 'production'
+    builderEnvironment = 'production',
+    debugMode: debugModeProp = false
   } = props;
   useMemo(
     () =>
@@ -166,8 +167,26 @@ const App = (props: AppProps) => {
     []
   );
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
-  const [instanceId, setInstanceId] = useStorage<string>(`web_${webId}_state.instanceId`, '', 'sessionStorage');
+  const [instanceId, setInstanceId] = useStorage(`web_${webId}_state.instanceId`, '', 'sessionStorage');
+  const [debugMode, setDebugMode] = useStorage('builder-state.debugMode', false, 'localStorage', debugModeProp);
   const server = useMemo(() => getEnvironmentServer(builderEnvironment, serverProp), [builderEnvironment, serverProp]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key === 'F12') {
+        setDebugMode(state => !state);
+      }
+    },
+    [setDebugMode]
+  );
+
+  useEffect(() => {
+    if (!debugModeProp) {
+      return;
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown, debugModeProp]);
 
   useEffect(() => {
     console.log(
@@ -331,21 +350,33 @@ const App = (props: AppProps) => {
             localComponents={sdkComponents as unknown as Record<string, ComponentPlugin>}
           >
             <ToastProvider>
-              <AppMain {...omit(props, ['children', 'server'])} server={server} instanceId={instanceId} webId={webId} />
+              <AppMain
+                {...omit(props, ['children', 'server'])}
+                debugMode={debugMode}
+                server={server}
+                instanceId={instanceId}
+                webId={webId}
+              />
             </ToastProvider>
           </ComponentProvider>
         </ApolloProvider>
       ),
-    [client, instanceId, localComponents, props, server, webId]
+    [client, debugMode, instanceId, localComponents, props, server, webId]
   );
 
+  const storeValue = useMemo(() => ({ styleSelector: 'base' }), []);
+
   return (
-    <Provider components={components}>
-      <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
-        {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
-        {hasBrowserRouter && childrenParsed}
-      </ContainerRoot>
-    </Provider>
+    <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('builder')}>
+      <ThemeProvider storageKey="builder-state.theme">
+        <Provider components={components}>
+          <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
+            {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
+            {hasBrowserRouter && childrenParsed}
+          </ContainerRoot>
+        </Provider>
+      </ThemeProvider>
+    </StoreProvider>
   );
 };
 

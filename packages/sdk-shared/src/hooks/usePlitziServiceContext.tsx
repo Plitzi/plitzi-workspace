@@ -12,10 +12,8 @@ import type {
   InteractionsContextValue,
   NavigationContextValue,
   PluginsContextValue,
-  SchemaContextValue,
   SegmentsContextValue,
-  StateManagerContextValue,
-  StyleContextValue
+  StateManagerContextValue
 } from '../types';
 import type { Context, ReactNode, RefObject } from 'react';
 
@@ -29,8 +27,6 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
   customContexts: Record<string, Context<any>>;
   contexts: {
     DataSourceContext: Context<DataSourceContextValue>;
-    SchemaContext: Context<SchemaContextValue>;
-    StyleContext: Context<StyleContextValue>;
     SegmentsContext: Context<SegmentsContextValue>;
     NavigationContext: Context<NavigationContextValue>;
     CollectionContext: Context<CollectionContextValue>;
@@ -46,7 +42,8 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
 
 const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;
 
-export const PlitziServiceContext = createContext<PlitziServiceContextValue>(plitziServiceContextDefaultValue);
+const PlitziServiceContext = createContext<PlitziServiceContextValue>(plitziServiceContextDefaultValue);
+PlitziServiceContext.displayName = 'PlitziServiceContext';
 
 const usePlitziServiceContext = <TEventBridge = any, TInteractions = any>() => {
   const context = use(PlitziServiceContext) as PlitziServiceContextValue<TEventBridge, TInteractions> | undefined;
@@ -65,6 +62,6 @@ const PlitziServiceProvider = (props: { children?: ReactNode; value: PlitziServi
   return <PlitziServiceContext value={value}>{children}</PlitziServiceContext>;
 };
 
-export { PlitziServiceProvider };
+export { PlitziServiceProvider, PlitziServiceContext };
 
 export default usePlitziServiceContext;

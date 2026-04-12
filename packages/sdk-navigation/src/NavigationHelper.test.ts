@@ -1,3 +1,4 @@
+import { pick } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect } from 'vitest';
 
 import { getPageFullPath, getPaths } from './NavigationHelper';
@@ -510,11 +511,12 @@ describe('Testing NavigationHelper', () => {
     const previewMode = false;
     const strictMode = true;
 
-    expect(getPaths(pages, schemaFlat, pageFolders, authenticated, basePath, previewMode, strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, previewMode, strictMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',
         accessLevel: 'authenticated',
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -524,6 +526,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '64bba0dbde52766b70ce322c',
         path: '/spaces/:spaceId',
         accessLevel: 'authenticated',
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -532,19 +535,36 @@ describe('Testing NavigationHelper', () => {
       {
         pageId: '657425e280b5b09c93b4a284',
         path: '/no-published/test',
+        accessLevel: undefined,
+        enabled: true,
         isRaw: false,
-        hasAccess: true
+        hasAccess: true,
+        unauthorizedBehaviour: undefined,
+        unauthorizedPageRedirect: undefined
       },
       {
         pageId: '64b0cc5612b6aa7fe0bd6e62',
         path: '/no-published/demo',
         enabled: false,
         isRaw: false,
-        hasAccess: true
+        hasAccess: true,
+        accessLevel: undefined,
+        unauthorizedBehaviour: undefined,
+        unauthorizedPageRedirect: undefined
+      },
+      {
+        pageId: '67091af172e7bddf906e07d7',
+        path: '/no-published/67091af172e7bddf906e07d7',
+        enabled: false,
+        isRaw: false,
+        hasAccess: true,
+        accessLevel: undefined,
+        unauthorizedBehaviour: undefined,
+        unauthorizedPageRedirect: undefined
       },
       {
         pageId: '655606a327a07efc899aabb2',
-        path: '/no-published',
+        path: '/no-published/655606a327a07efc899aabb2',
         accessLevel: 'public',
         enabled: false,
         isRaw: false,
@@ -553,16 +573,10 @@ describe('Testing NavigationHelper', () => {
         hasAccess: true
       },
       {
-        pageId: '67091af172e7bddf906e07d7',
-        path: '/no-published',
-        enabled: false,
-        isRaw: false,
-        hasAccess: true
-      },
-      {
         pageId: '6500448795e141eac765c372',
         path: '/auth/signup',
         accessLevel: 'public',
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '',
@@ -572,6 +586,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '64599fe5e07288d4094abbed',
         path: '/auth/login',
         accessLevel: 'public',
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/',
@@ -582,7 +597,10 @@ describe('Testing NavigationHelper', () => {
         path: '/67091af172e7bddf906e07d7',
         enabled: false,
         isRaw: true,
-        hasAccess: true
+        hasAccess: true,
+        accessLevel: undefined,
+        unauthorizedBehaviour: undefined,
+        unauthorizedPageRedirect: undefined
       },
       {
         pageId: '67001330e33d456df96630f4',
@@ -598,7 +616,11 @@ describe('Testing NavigationHelper', () => {
         pageId: '657425e280b5b09c93b4a284',
         path: '/657425e280b5b09c93b4a284',
         isRaw: true,
-        hasAccess: true
+        hasAccess: true,
+        enabled: true,
+        accessLevel: undefined,
+        unauthorizedBehaviour: undefined,
+        unauthorizedPageRedirect: undefined
       },
       {
         pageId: '655606a327a07efc899aabb2',
@@ -614,6 +636,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '6500448795e141eac765c372',
         path: '/6500448795e141eac765c372',
         accessLevel: 'public',
+        enabled: true,
         isRaw: true,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '',
@@ -623,6 +646,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '64bba0dbde52766b70ce322c',
         path: '/64bba0dbde52766b70ce322c',
         accessLevel: 'authenticated',
+        enabled: true,
         isRaw: true,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -633,12 +657,16 @@ describe('Testing NavigationHelper', () => {
         path: '/64b0cc5612b6aa7fe0bd6e62',
         enabled: false,
         isRaw: true,
-        hasAccess: true
+        hasAccess: true,
+        accessLevel: undefined,
+        unauthorizedBehaviour: undefined,
+        unauthorizedPageRedirect: undefined
       },
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/64669d67e07288d4094abbf2',
         accessLevel: 'authenticated',
+        enabled: true,
         isRaw: true,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -648,6 +676,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '645f2945e07288d4094abbf1',
         path: '/645f2945e07288d4094abbf1',
         accessLevel: 'authenticated',
+        enabled: true,
         isRaw: true,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -657,6 +686,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '64599fe5e07288d4094abbed',
         path: '/64599fe5e07288d4094abbed',
         accessLevel: 'public',
+        enabled: true,
         isRaw: true,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/',
@@ -666,6 +696,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '645f2945e07288d4094abbf1',
         path: '/',
         accessLevel: 'authenticated',
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -683,12 +714,12 @@ describe('Testing NavigationHelper', () => {
       }
     ]);
 
-    expect(getPaths(pages, schemaFlat, pageFolders, authenticated, basePath, !previewMode, strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, !previewMode, strictMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',
         accessLevel: 'authenticated',
-        enabled: undefined,
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -698,7 +729,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '64bba0dbde52766b70ce322c',
         path: '/spaces/:spaceId',
         accessLevel: 'authenticated',
-        enabled: undefined,
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -706,7 +737,7 @@ describe('Testing NavigationHelper', () => {
       },
       {
         accessLevel: undefined,
-        enabled: undefined,
+        enabled: true,
         pageId: '657425e280b5b09c93b4a284',
         path: '/no-published/test',
         isRaw: false,
@@ -722,7 +753,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64599fe5e07288d4094abbed',
@@ -732,7 +763,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '67001330e33d456df96630f4',
@@ -750,7 +781,7 @@ describe('Testing NavigationHelper', () => {
         isRaw: true,
         hasAccess: true,
         accessLevel: undefined,
-        enabled: undefined,
+        enabled: true,
         unauthorizedBehaviour: undefined,
         unauthorizedPageRedirect: undefined
       },
@@ -762,7 +793,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64bba0dbde52766b70ce322c',
@@ -772,7 +803,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64669d67e07288d4094abbf2',
@@ -782,7 +813,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '645f2945e07288d4094abbf1',
@@ -792,7 +823,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64599fe5e07288d4094abbed',
@@ -802,7 +833,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '645f2945e07288d4094abbf1',
@@ -812,7 +843,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '67001330e33d456df96630f4',
@@ -826,12 +857,12 @@ describe('Testing NavigationHelper', () => {
       }
     ]);
 
-    expect(getPaths(pages, schemaFlat, pageFolders, authenticated, basePath, !previewMode, !strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, !previewMode, !strictMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',
         accessLevel: 'authenticated',
-        enabled: undefined,
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -841,7 +872,7 @@ describe('Testing NavigationHelper', () => {
         pageId: '64bba0dbde52766b70ce322c',
         path: '/spaces/:spaceId',
         accessLevel: 'authenticated',
-        enabled: undefined,
+        enabled: true,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
@@ -849,7 +880,7 @@ describe('Testing NavigationHelper', () => {
       },
       {
         accessLevel: undefined,
-        enabled: undefined,
+        enabled: true,
         pageId: '657425e280b5b09c93b4a284',
         path: '/no-published/test',
         isRaw: false,
@@ -865,7 +896,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64599fe5e07288d4094abbed',
@@ -875,7 +906,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '67001330e33d456df96630f4',
@@ -893,7 +924,7 @@ describe('Testing NavigationHelper', () => {
         isRaw: true,
         hasAccess: true,
         accessLevel: undefined,
-        enabled: undefined,
+        enabled: true,
         unauthorizedBehaviour: undefined,
         unauthorizedPageRedirect: undefined
       },
@@ -905,7 +936,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64bba0dbde52766b70ce322c',
@@ -915,7 +946,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64669d67e07288d4094abbf2',
@@ -925,7 +956,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '645f2945e07288d4094abbf1',
@@ -935,7 +966,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '64599fe5e07288d4094abbed',
@@ -945,7 +976,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/',
         hasAccess: false,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '645f2945e07288d4094abbf1',
@@ -955,7 +986,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
         hasAccess: true,
-        enabled: undefined
+        enabled: true
       },
       {
         pageId: '67001330e33d456df96630f4',
@@ -969,7 +1000,7 @@ describe('Testing NavigationHelper', () => {
       },
       {
         accessLevel: 'authenticated',
-        enabled: undefined,
+        enabled: true,
         hasAccess: false,
         isRaw: true,
         pageId: '645f2945e07288d4094abbf1',

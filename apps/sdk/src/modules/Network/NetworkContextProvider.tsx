@@ -5,19 +5,18 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-
-import NetworkInternalContext from './contexts/NetworkInternalContext';
 
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
 import type {
   Environment,
-  OfflineData,
   OfflineDataRaw,
   Server,
   ServerEnvironment,
   SdkQueriesMap,
-  SdkMutationsMap
+  SdkMutationsMap,
+  NetworkInternalContextValue
 } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
@@ -58,12 +57,12 @@ const NetworkContextProvider = ({
   const client = typeof window === 'undefined' && offlineDataAvailable ? undefined : useApolloClient();
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState<ReactNode | undefined>(undefined);
-  const [internalData, setInternalData] = useState<OfflineData>(() => {
+  const [internalData, setInternalData] = useState<NetworkInternalContextValue>(() => {
     if (offlineDataAvailable && offlineDataType === 'json') {
-      return { ...offlineData, plugins: {} };
+      return { ...offlineData, plugins: {}, segments: {}, collections: {} };
     }
 
-    return {} as OfflineData;
+    return { plugins: {}, segments: {}, collections: {} } as NetworkInternalContextValue;
   });
 
   const query = useCallback(
@@ -198,15 +197,16 @@ const NetworkContextProvider = ({
         plugins,
         style: Space.style,
         collections: Collections.edges.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}),
-        segments: Space.segments
-          ?.map(segment => ({
-            ...segment,
-            schema: {
-              ...get(segment, 'schema'),
-              flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-            }
-          }))
-          .reduce((obj, segment) => ({ ...obj, [segment.identifier]: segment }), {})
+        segments:
+          Space.segments
+            ?.map(segment => ({
+              ...segment,
+              schema: {
+                ...get(segment, 'schema'),
+                flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
+              }
+            }))
+            .reduce((obj, segment) => ({ ...obj, [segment.identifier]: segment }), {}) ?? {}
       });
     }
 

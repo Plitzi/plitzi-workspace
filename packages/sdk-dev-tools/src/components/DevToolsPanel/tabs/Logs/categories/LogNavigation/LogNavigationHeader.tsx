@@ -15,7 +15,7 @@ export type LogNavigationHeaderProps = {
 };
 
 const LogNavigationHeader = ({ status, message, time }: LogNavigationHeaderProps) => {
-  const { logType, statusMessage } = useMemo<{ logType: LogType; statusMessage: string }>(() => {
+  const { logType, statusMessage } = useMemo<{ logType: LogType | 'custom'; statusMessage: string }>(() => {
     if (status === 'normal') {
       return { logType: 'success', statusMessage: 'Success' };
     }
@@ -36,14 +36,12 @@ const LogNavigationHeader = ({ status, message, time }: LogNavigationHeaderProps
   }, [status]);
 
   return (
-    <div className="flex w-full justify-between text-sm">
-      <div className="flex min-w-0 grow basis-0 items-center gap-3">
-        <span className="font-bold">{typeof time === 'string' ? time : formatDate(time)}</span>
-        <div className="flex">
-          <LogStatus logType={logType}>{statusMessage}</LogStatus>
-        </div>
-        <div className="grow basis-0 truncate">{message}</div>
-      </div>
+    <div className="flex w-full items-center gap-2 overflow-hidden">
+      <span className="shrink-0 font-mono text-zinc-400 tabular-nums dark:text-zinc-500">
+        {typeof time === 'string' ? time : formatDate(time)}
+      </span>
+      <LogStatus logType={logType}>{statusMessage}</LogStatus>
+      <div className="grow basis-0 truncate text-zinc-700 dark:text-zinc-300">{message}</div>
     </div>
   );
 };

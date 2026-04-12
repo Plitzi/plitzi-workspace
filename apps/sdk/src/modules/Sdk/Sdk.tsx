@@ -5,16 +5,14 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
 import IframeMode from './renderModes/IframeMode';
@@ -23,9 +21,8 @@ import ShadowMode from './renderModes/ShadowMode';
 import SdkPlugin from './SdkPlugin';
 // eslint-disable-next-line
 // @ts-ignore
-import style from '../../assets/index.scss?inline';
 
-import type { Environment, RenderMode } from '@plitzi/sdk-shared';
+import type { Environment, RenderMode, SdkState } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   renderMode?: RenderMode;
@@ -34,6 +31,7 @@ export type SdkProps = {
   isHydrating?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
+  sdkStylePath?: string;
 };
 
 const Sdk = ({
@@ -42,32 +40,30 @@ const Sdk = ({
   environment = 'main',
   previewMode = true,
   isHydrating = false,
-  debugMode = false
+  debugMode = false,
+  sdkStylePath = './plitzi-sdk.css'
 }: SdkProps) => {
   const { currentPageId } = use(NavigationContext);
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const schemaSettings = use(SchemaSettingsContext);
-  const { segments } = use(SegmentsContext);
+  const { useStore } = createStoreHook<SdkState>();
+  const [[schemaSettings, styleCache, segments]] = useStore(['schema.settings', 'style.cache', 'segments']);
   const { useDataSource } = use(DataSourceContext);
   const { sdkEnvironment } = use(NetworkContext);
   const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
 
-  const {
-    style: { cache }
-  } = use(StyleContext);
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
     const cssVariables = schemaVariablesToCss(variables);
-    const cacheParsed = processCssTokens(cache, variables);
+    const cacheParsed = processCssTokens(styleCache, variables);
 
     if (renderMode === 'iframe' || renderMode === 'shadow') {
-      return `${style}.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
+      return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
     }
 
     return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
-  }, [segments, variables, cache, renderMode, schemaSettings.customCss, externalStyle]);
+  }, [segments, variables, styleCache, renderMode, schemaSettings.customCss, externalStyle]);
 
   const getWindow = useCallback(() => {
     if (iframeRef.current) {
@@ -105,9 +101,7 @@ const Sdk = ({
       customContexts: {},
       contexts: {
         ComponentContext,
-        SchemaContext,
         SegmentsContext,
-        StyleContext,
         CollectionContext,
         NetworkContext,
         PluginsContext,
@@ -139,7 +133,15 @@ const Sdk = ({
   }
 
   if (renderMode === 'shadow') {
-    return <ShadowMode style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} assets={assets} />;
+    return (
+      <ShadowMode
+        sdkStylePath={sdkStylePath}
+        style={css}
+        plitziContextValue={plitziContextValue}
+        pageId={currentPageId}
+        assets={assets}
+      />
+    );
   }
 
   return (

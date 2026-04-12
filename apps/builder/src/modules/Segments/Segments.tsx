@@ -110,11 +110,11 @@ const Segments = () => {
           <Button.Icon icon="fa-solid fa-plus" />
           New Segment
         </Button>
-        <Input placeholder="Search" value={filter} onChange={handleChange} label="">
+        <Input placeholder="Search" value={filter} onChange={handleChange} size="sm">
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="mt-2 h-px bg-gray-200" />
+      <div className="mt-2 h-px bg-gray-200 dark:bg-zinc-700" />
       <Flex direction="column">
         {!loading &&
           Object.values(segments).map((segment, key) => {

@@ -18,7 +18,7 @@ const CollectionField = ({ name = '', machineName = '', type, params, onRemove }
   const isPrimary = get(params, 'primary', false) as boolean;
 
   return (
-    <div className="flex items-center gap-10 border-b border-gray-300 pb-2 hover:cursor-pointer hover:bg-blue-200/20">
+    <div className="flex items-center gap-10 border-b border-gray-300 pb-2 hover:cursor-pointer hover:bg-blue-200/20 dark:border-zinc-700 dark:hover:bg-blue-900/20">
       <div className="text-md flex grow basis-0 items-center font-bold">{name !== '' ? name : 'New Field'}</div>
       <div className="text-md flex grow basis-0 items-center">{machineName !== '' ? machineName : 'Not Set'}</div>
       <div className="flex grow basis-0 items-center">

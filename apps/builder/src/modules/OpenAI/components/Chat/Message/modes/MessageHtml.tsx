@@ -6,21 +6,22 @@ import clsx from 'clsx';
 import { useCallback, useEffect, use, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import TransformPreview from '@pmodules/Transformers/TransformPreview';
 
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
 
 export type MessageHtmlProps = {
   content?: string;
 };
 
 const MessageHtml = ({ content = '' }: MessageHtmlProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [elementSelected] = useStore('elementSelected');
   const { server, webKey } = use(NetworkContext);
-  const { elementSelected } = use(BuilderSelectedContext);
   const [viewMode, setViewMode] = useState('preview');
   const [fullScreen, setFullScreen] = useState(false);
   const { addToast } = useToast();

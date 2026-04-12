@@ -35,7 +35,7 @@ const CollectionRecord = ({
   }, [publishedAt]);
 
   return (
-    <div className="flex items-center gap-4 border-b border-gray-300 px-4 py-3 text-xs last:border-b-0">
+    <div className="flex items-center gap-4 border-b border-gray-300 px-4 py-3 text-xs last:border-b-0 dark:border-zinc-700">
       {fields &&
         values &&
         Object.keys(fields).map((fieldKey, i) => {
@@ -48,7 +48,7 @@ const CollectionRecord = ({
                 values[fieldKey]}
               {(type as string) === 'image' && (
                 <div
-                  className="flex h-12 w-20 items-center justify-center rounded-sm bg-gray-300 bg-cover bg-no-repeat"
+                  className="flex h-12 w-20 items-center justify-center rounded-sm bg-gray-300 bg-cover bg-no-repeat dark:bg-zinc-600"
                   style={{ backgroundImage: `url(${values[fieldKey]})` }}
                 >
                   {valueEmpty && <i className="fas fa-image fa-2x" />}

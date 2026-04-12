@@ -6,10 +6,10 @@ import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { RouteParams } from '@plitzi/sdk-shared';
+import type { BuilderState, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 
@@ -19,7 +19,8 @@ export type NavigationContextProviderProps = {
 };
 
 const NavigationContextProvider = ({ previewMode = false, children }: NavigationContextProviderProps) => {
-  const { pages, pageDefinitions, pageFolders } = use(SchemaMainContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
   const { server } = use(NetworkContext);
   const { authenticated } = use(AuthContext);
   const { queryParams, hostname, location } = useNavigation({ server });
@@ -28,16 +29,8 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
   pageDefinitionsRef.current = pageDefinitions;
 
   const paths = useMemo(
-    () =>
-      getPaths(
-        pages,
-        pageDefinitions,
-        pageFolders,
-        previewMode ? undefined : authenticated,
-        server.basePath,
-        previewMode
-      ),
-    [pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
+    () => getPaths(pageDefinitions, pageFolders, previewMode ? undefined : authenticated, server.basePath, previewMode),
+    [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 
   const matchResult = useMemo(

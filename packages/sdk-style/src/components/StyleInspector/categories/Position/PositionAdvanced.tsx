@@ -44,11 +44,11 @@ const PositionAdvanced = ({ value, onChange }: PositionAdvancedProps) => {
           />
         </div>
         <div className="row-start-2 grid h-24 w-full auto-rows-fr grid-cols-3 place-items-center gap-2">
-          <div className="col-start-2 h-full w-0.5 bg-gray-300" />
-          <div className="row-start-2 h-0.5 w-full bg-gray-300" />
-          <div className="row-start-2 h-8 w-8 rounded bg-gray-300" />
-          <div className="row-start-2 h-0.5 w-full bg-gray-300" />
-          <div className="col-start-2 row-start-3 h-full w-0.5 bg-gray-300" />
+          <div className="col-start-2 h-full w-0.5 bg-gray-300 dark:bg-zinc-600" />
+          <div className="row-start-2 h-0.5 w-full bg-gray-300 dark:bg-zinc-600" />
+          <div className="row-start-2 h-8 w-8 rounded bg-gray-300 dark:bg-zinc-600" />
+          <div className="row-start-2 h-0.5 w-full bg-gray-300 dark:bg-zinc-600" />
+          <div className="col-start-2 row-start-3 h-full w-0.5 bg-gray-300 dark:bg-zinc-600" />
         </div>
         <div className="row-start-2 flex max-w-[80px] items-center justify-self-start">
           <CategoryOption

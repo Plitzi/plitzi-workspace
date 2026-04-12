@@ -20,7 +20,7 @@ export type VideoProps = {
 
 const Video = ({
   ref,
-  src = '',
+  src,
   autoPlay = false,
   playsInline = false,
   loop = false,

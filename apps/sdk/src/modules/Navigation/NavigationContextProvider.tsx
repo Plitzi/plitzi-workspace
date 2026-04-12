@@ -3,16 +3,21 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import SchemaPagesContext from '@modules/Schema/SchemaPagesContext';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { NavigationContextValue, NavigationStatus, RenderMode, RouteParams } from '@plitzi/sdk-shared';
+import type {
+  BuilderState,
+  NavigationContextValue,
+  NavigationStatus,
+  RenderMode,
+  RouteParams
+} from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 
@@ -30,10 +35,8 @@ const NavigationContextProvider = ({
   previewMode = true
 }: NavigationContextProviderProps) => {
   const { server } = use(NetworkContext);
-  const {
-    schema: { pageFolders }
-  } = use(SchemaContext);
-  const { pageDefinitions, pages } = use(SchemaPagesContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
   const { queryParams, hostname, location } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -42,8 +45,8 @@ const NavigationContextProvider = ({
   const navigate = renderMode !== 'widget' ? useNavigate() : undefined;
 
   const paths = useMemo(
-    () => getPaths(pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
-    [pages, pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
+    () => getPaths(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
+    [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 
   const matchResult = useMemo<{

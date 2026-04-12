@@ -16,7 +16,6 @@ export type Segment = {
 };
 
 export type BuilderSegmentsContextValue = {
-  segments: Record<string, Segment>;
   dispatchSegments?: unknown;
   segmentGet: (identifier: string) => Promise<Segment | undefined>;
   segmentsFetch: (
@@ -45,7 +44,7 @@ export type BuilderSegmentsContextValue = {
 
 export type SegmentsContextValue<T extends 'builder' | 'sdk' = 'sdk'> = T extends 'builder'
   ? BuilderSegmentsContextValue
-  : Pick<BuilderSegmentsContextValue, 'segments' | 'segmentGet'>;
+  : Pick<BuilderSegmentsContextValue, 'segmentGet'>;
 
 // Raws
 

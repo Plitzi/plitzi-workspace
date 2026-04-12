@@ -59,7 +59,7 @@ const useDragElement = ({ attributes, type, variables, manifest }: UseDragElemen
         });
       }
 
-      e.dataTransfer.setData('add##plitzi-element', JSON.stringify({ id: generateID(), element, variables }));
+      e.dataTransfer.setData(`add##${type}`, JSON.stringify({ id: generateID(), element, variables }));
     },
     [attributes, componentDefinitions, type, variables]
   );

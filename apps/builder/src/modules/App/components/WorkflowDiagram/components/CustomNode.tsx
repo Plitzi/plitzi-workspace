@@ -14,7 +14,7 @@ import type { Node, NodeProps } from '@xyflow/react';
 const accessLevelConfig = {
   none: {
     label: 'None',
-    color: 'bg-slate-100 text-slate-700 border-slate-300',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600',
     icon: 'fa-solid fa-lock'
   },
   public: {
@@ -74,9 +74,10 @@ const CustomNode = memo(({ id, data, selected = false }: CustomNodeProps) => {
         className="bg-primary-500! hover:bg-primary-600! h-5! w-5! border-4! border-white! shadow-lg transition-all duration-200 hover:scale-110"
       />
       <Card
-        className={clsx('h-37.5 w-50 p-2 shadow-md transition-shadow hover:shadow-lg', {
+        className={clsx('min-h-37.5 w-50 shadow-md transition-shadow hover:shadow-lg', {
           'ring-2 ring-blue-500 ring-offset-2': selected
         })}
+        size="xs"
       >
         <Card.Header>
           <div className="flex w-full items-start">
@@ -91,7 +92,9 @@ const CustomNode = memo(({ id, data, selected = false }: CustomNodeProps) => {
               <div className="min-w-0 flex-1">
                 <h3 className="text-foreground truncate text-sm font-semibold">{data.title}</h3>
                 {data.path && (
-                  <p className="text-muted-foreground truncate rounded-sm text-xs text-gray-500">{data.path}</p>
+                  <p className="text-muted-foreground truncate rounded-sm text-xs text-gray-500 dark:text-zinc-400">
+                    {data.path}
+                  </p>
                 )}
               </div>
             </div>
@@ -109,7 +112,7 @@ const CustomNode = memo(({ id, data, selected = false }: CustomNodeProps) => {
           </div>
         </Card.Header>
         <Card.Body>
-          <hr className="my-1 border-gray-300" />
+          <hr className="my-1 border-gray-300 dark:border-zinc-700" />
           <div className="space-y-2 py-2">
             <div className="flex items-center gap-2">
               <Badge solid={false} intent="custom" size="xs" icon={config.icon} className={config.color}>

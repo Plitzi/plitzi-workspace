@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
+import { StoreProvider } from '@plitzi/sdk-shared/store';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
 import type { Schema, Style } from '@plitzi/sdk-shared';
@@ -12,22 +12,13 @@ export type TransformPreviewProps = {
 };
 
 const TransformPreview = ({ preview, previewMode = true }: TransformPreviewProps) => {
-  const schemaMemo = useMemo(() => ({ schema: preview.schema }), [preview.schema]);
-  const styleMemo = useMemo(() => ({ style: preview.style }), [preview.style]);
+  const storeValue = useMemo(() => ({ schema: preview.schema, style: preview.style }), [preview.schema, preview.style]);
 
   return (
     <div className="flex w-full grow overflow-y-auto">
-      <SchemaContext value={schemaMemo}>
-        <StyleContext value={styleMemo}>
-          <BuilderAreaPreview
-            previewMode={previewMode}
-            className="min-h-full w-full"
-            schema={schemaMemo.schema}
-            id={preview.definition.rootId}
-            styleCache={styleMemo.style.cache}
-          />
-        </StyleContext>
-      </SchemaContext>
+      <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('transform-preview')}>
+        <BuilderAreaPreview id={preview.definition.rootId} previewMode={previewMode} className="min-h-full w-full" />
+      </StoreProvider>
     </div>
   );
 };

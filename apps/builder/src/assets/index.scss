@@ -1,8 +1,13 @@
 @use 'sass:meta';
 
-@import './tailwind.css';
 @import '@plitzi/plitzi-ui/style.css';
-@import '@xyflow/react/dist/style.css';
+
+@layer components {
+  @import '@fortawesome/fontawesome-free/css/all.min.css';
+  @import '@xyflow/react/dist/style.css';
+}
+
+@import './tailwind.css';
 
 @include meta.load-css('./variables');
 
@@ -20,12 +25,6 @@ body,
     .builder-area {
       pointer-events: none;
     }
-  }
-
-  .builder-container {
-    background-image:
-      linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
-    background-size: 24px 24px;
   }
 }
 

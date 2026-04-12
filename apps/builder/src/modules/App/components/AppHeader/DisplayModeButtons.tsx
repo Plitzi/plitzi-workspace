@@ -1,6 +1,6 @@
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import DesktopWithMobile from '@plitzi/plitzi-ui/icons/DesktopWithMobile';
-import { useCallback, use } from 'react';
+import { useCallback, use, memo } from 'react';
 
 import AppContext from '@pmodules/App/AppContext';
 
@@ -45,4 +45,4 @@ const DisplayModeButtons = () => {
   );
 };
 
-export default DisplayModeButtons;
+export default memo(DisplayModeButtons);

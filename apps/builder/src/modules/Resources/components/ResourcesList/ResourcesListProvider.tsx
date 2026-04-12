@@ -12,8 +12,8 @@ export type ResourcesListContextValue = {
   setIsFileMoving: Dispatch<SetStateAction<boolean>>;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const ResourcesListContext = createContext<ResourcesListContextValue>({} as ResourcesListContextValue);
+const ResourcesListContext = createContext<ResourcesListContextValue>({} as ResourcesListContextValue);
+ResourcesListContext.displayName = 'ResourcesListContext';
 
 export type ResourcesListProviderProps = { children: ReactNode };
 
@@ -27,5 +27,7 @@ const ResourcesListProvider = ({ children }: ResourcesListProviderProps) => {
 
   return <ResourcesListContext value={contextValue}>{children}</ResourcesListContext>;
 };
+
+export { ResourcesListContext };
 
 export default ResourcesListProvider;

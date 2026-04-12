@@ -46,7 +46,7 @@ const Collection = ({ id, active = false, namePlural, setCollectionId }: Collect
 
   return (
     <div
-      className={clsx('flex w-full cursor-pointer items-center justify-between', { 'text-primary-500': active })}
+      className={clsx('flex w-full cursor-pointer items-center justify-between', { 'text-primary-text': active })}
       onClick={handleClick}
     >
       <div className="flex items-center">

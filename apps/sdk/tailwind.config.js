@@ -1,4 +1,5 @@
 import { join } from 'path';
+
 import sharedConfig from '../../packages/sdk-shared/tailwind.config';
 
 const config = {

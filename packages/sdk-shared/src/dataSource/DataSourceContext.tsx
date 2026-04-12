@@ -5,5 +5,6 @@ import type { DataSourceContextValue } from '../types';
 const dataSourceContextDefaultValue = {} as DataSourceContextValue;
 
 const DataSourceContext = createContext<DataSourceContextValue>(dataSourceContextDefaultValue);
+DataSourceContext.displayName = 'DataSourceContext';
 
 export default DataSourceContext;

@@ -5,19 +5,16 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, use, useState } from 'react';
-// import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
+import type { BuilderState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 const ContainerSettings = () => {
-  const { settings: settingsProp } = use(SchemaMainContext);
-  const {
-    style: { mode }
-  } = use(StyleContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[settingsProp, styleMode]] = useStore(['schema.settings', 'style.mode']);
   const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp);
@@ -200,7 +197,7 @@ const ContainerSettings = () => {
           <Select
             size="sm"
             name="mode"
-            value={mode}
+            value={styleMode}
             onChange={handleChangeMode}
             label="Style Mode (Breakpoint system)"
             placeholder="None"

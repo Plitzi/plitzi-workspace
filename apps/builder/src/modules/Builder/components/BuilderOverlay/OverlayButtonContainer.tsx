@@ -5,11 +5,8 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderHoveredContext from '@plitzi/sdk-shared/builder/contexts/BuilderHoveredContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import SegmentForm from '@pmodules/Segments/models/SegmentForm';
 
 import OverlayButton from './OverlayButton';
@@ -17,7 +14,7 @@ import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { Element, SegmentsContextValue } from '@plitzi/sdk-shared';
+import type { BuilderState, Element, SegmentsContextValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type OverlayButtonContainerProps = {
@@ -39,14 +36,13 @@ const OverlayButtonContainer = ({
   zoom = 1,
   onHoverRemove
 }: OverlayButtonContainerProps) => {
+  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
+  const [getSchema, getStyle] = useStoreGetter(['schema', 'style']);
+  const [[elementSelected, setSelected, setHovered]] = useStore(['elementSelected', 'setSelected', 'setHovered']);
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { setHovered } = use(BuilderHoveredContext);
-  const { elementSelected, setSelected } = use(BuilderSelectedContext);
   const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
-  const { schema } = use(BuilderSchemaContext);
-  const { style } = use(BuilderStyleContext);
   const { builderHandler, builderElementPermissions, mode, elementAsTemplate } = use(BuilderContext);
   const {
     definition: { items }
@@ -86,7 +82,7 @@ const OverlayButtonContainer = ({
     }
   }, [addPopup, existsPopup, mode]);
 
-  const handleClickAsTemplate = async () => {
+  const handleClickAsTemplate = useCallback(async () => {
     const response = await showModal<{ name: string; description?: string; cdnIdentifier: string }>(
       <Modal.Header>
         <h4>Add Template</h4>
@@ -100,7 +96,7 @@ const OverlayButtonContainer = ({
 
     if (response) {
       const { name, description, cdnIdentifier } = response;
-      void elementAsTemplate(cdnIdentifier, schema, style, name, description ?? '', element);
+      void elementAsTemplate(cdnIdentifier, getSchema(), getStyle(), name, description ?? '', element);
       addToast(
         <div>
           Template <b>{name}</b> Created
@@ -112,9 +108,9 @@ const OverlayButtonContainer = ({
         }
       );
     }
-  };
+  }, [addToast, element, elementAsTemplate, getSchema, getStyle, showModal]);
 
-  const handleClickAsSegment = async () => {
+  const handleClickAsSegment = useCallback(async () => {
     const response = await showModal<{ name: string; description: string }>(
       <Modal.Header>
         <h4>Add Segment</h4>
@@ -128,7 +124,7 @@ const OverlayButtonContainer = ({
 
     if (response) {
       const { name, description } = response;
-      void builderSegmentsContext.elementAsSegment(schema, style, name, description, element);
+      void builderSegmentsContext.elementAsSegment(getSchema(), getStyle(), name, description, element);
       addToast(
         <div>
           Segment <b>{name}</b> Created
@@ -140,7 +136,7 @@ const OverlayButtonContainer = ({
         }
       );
     }
-  };
+  }, [addToast, builderSegmentsContext, element, getSchema, getStyle, showModal]);
 
   const handleMouseEnter = useCallback(() => setHovered(undefined), [setHovered]);
 

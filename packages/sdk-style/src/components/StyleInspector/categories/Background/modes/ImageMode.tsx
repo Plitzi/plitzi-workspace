@@ -1,6 +1,5 @@
 /* eslint-disable quotes */
 
-import { get } from '@plitzi/plitzi-ui/helpers';
 import BackgroundTileX from '@plitzi/plitzi-ui/icons/BackgroundTileX';
 import BackgroundTileXY from '@plitzi/plitzi-ui/icons/BackgroundTileXY';
 import BackgroundTileY from '@plitzi/plitzi-ui/icons/BackgroundTileY';
@@ -31,10 +30,11 @@ const ImageMode = ({ replaceTokens = false, onChange }: ImageModeProps) => {
     replaceTokens
   });
 
-  const backgroundImage = useMemo(
-    () => get((bgImage as string).match(/\("(?<content>.*)"\)/im), 'groups.content', ''),
-    [bgImage]
-  );
+  const backgroundImage = useMemo(() => {
+    const match = (bgImage as string).match(/\("(?<content>.*)"\)/im);
+
+    return match?.groups?.content ?? '';
+  }, [bgImage]);
 
   const position = (backgroundPosition as string).split(' ');
   let size = (backgroundSize as string).split(' ');

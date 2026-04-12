@@ -11,14 +11,13 @@ import { Link } from 'react-router-dom';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { BuilderState, Element } from '@plitzi/sdk-shared';
 
 export type BuilderAreaHeaderProps = {
   baseElementId: string;
@@ -35,6 +34,14 @@ const BuilderAreaHeader = ({
   headerTitle = '',
   previewMode = false
 }: BuilderAreaHeaderProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[pageFolders, definition, pageDefinitions, elementSelected, setSelected]] = useStore([
+    'schema.pageFolders',
+    'schema.definition',
+    'pageDefinitions',
+    'elementSelected',
+    'setSelected'
+  ]);
   const { existsPopup, addPopup } = usePopup();
   const {
     theme,
@@ -47,12 +54,8 @@ const BuilderAreaHeader = ({
     mode
   } = use(BuilderContext);
   const {
-    schema: { flat, pageFolders, definition }
-  } = use(BuilderSchemaContext);
-  const {
     server: { basePath }
   } = use(NetworkContext);
-  const { elementSelected, setSelected } = use(BuilderSelectedContext);
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
 
@@ -105,13 +108,13 @@ const BuilderAreaHeader = ({
   }, [addPopup, baseElementId, existsPopup, mode, setSelected]);
 
   const fullpath = useMemo(() => {
-    const path = getPageFullPath(flat, pageFolders, baseElementId, true);
+    const path = getPageFullPath(pageDefinitions, pageFolders, baseElementId, true);
     if (path === '/') {
       return '';
     }
 
     return path;
-  }, [flat, pageFolders, baseElementId]);
+  }, [pageDefinitions, pageFolders, baseElementId]);
 
   const title = get(element, 'attributes.name', 'Page') as string;
   const defaultPage = get(element, 'attributes.default', false) as boolean;
@@ -143,25 +146,25 @@ const BuilderAreaHeader = ({
     <Flex
       items="center"
       gap={4}
-      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-300 bg-white pr-2 pl-4"
+      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-200 bg-white pr-2 pl-4 dark:border-zinc-700 dark:bg-zinc-800"
     >
       <Flex items="center" gap={2}>
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300': !isActive
+            'bg-gray-300 dark:bg-zinc-600': !isActive
           })}
         />
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300': !isActive
+            'bg-gray-300 dark:bg-zinc-600': !isActive
           })}
         />
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300': !isActive
+            'bg-gray-300 dark:bg-zinc-600': !isActive
           })}
         />
         {!multiPagesMode && baseElementIdOriginal !== baseElementId && (
@@ -171,10 +174,17 @@ const BuilderAreaHeader = ({
           </Button>
         )}
       </Flex>
-      <div title="Default Page" className={clsx({ 'text-primary-400': defaultPage, 'text-gray-400': !defaultPage })}>
+      <div
+        title="Default Page"
+        className={clsx({ 'text-primary-ui': defaultPage, 'text-gray-400 dark:text-zinc-600': !defaultPage })}
+      >
         <Icon icon="fas fa-home" />
       </div>
-      <Flex items="center" grow className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none">
+      <Flex
+        items="center"
+        grow
+        className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none dark:border-zinc-700 dark:text-zinc-400"
+      >
         <div className="mr-4 w-full truncate">{pageTitle}</div>
       </Flex>
       <Icon
@@ -185,8 +195,8 @@ const BuilderAreaHeader = ({
       />
       <div title="Theme" className="flex cursor-pointer" onClick={handleClickTheme}>
         {theme === 'system' && <Icon icon="fa-solid fa-desktop" />}
-        {theme === 'light' && <Icon icon="fa-solid fa-sun" />}
-        {theme === 'dark' && <Icon icon="fa-solid fa-moon" />}
+        {theme === 'dark' && <Icon icon="fa-solid fa-sun" />}
+        {theme === 'light' && <Icon icon="fa-solid fa-moon" />}
       </div>
       {!previewMode && (
         <Flex items="center" gap={3}>

@@ -5,23 +5,25 @@ import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, use, useEffect, useState, useTransition, useRef } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import Chat from './components/Chat';
 import VoiceVisualizer from './components/VoiceVisualizer';
 import useMediaRecorder from './hooks/useMediaRecorder';
 
 import type { OpenAIMessage } from './types/openAI';
+import type { BuilderState } from '@plitzi/sdk-shared';
 import type { KeyboardEvent } from 'react';
 
 const OpenAIChat = () => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [elementSelected] = useStore('elementSelected');
   const chatRef = useRef<HTMLDivElement | null>(null);
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
   const { currentPageId } = use(NavigationContext);
-  const { elementSelected } = use(BuilderSelectedContext);
   const [threadId, setThreadId] = useStorage<string>('builder-state.assistantAI.threadId', '');
   const [conversation, setConversation] = useState<OpenAIMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
@@ -165,7 +167,7 @@ const OpenAIChat = () => {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <div className="flex grow flex-col border-b border-gray-300">
+      <div className="flex grow flex-col border-b border-gray-300 dark:border-zinc-700">
         <Chat messages={conversation} ref={chatRef} />
       </div>
       <div className="flex gap-2 p-2">

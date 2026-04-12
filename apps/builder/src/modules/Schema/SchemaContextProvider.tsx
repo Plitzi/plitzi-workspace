@@ -3,28 +3,27 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
-import { useMemo, useRef, useCallback, use, useEffect } from 'react';
+import { useMemo, useCallback, use, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import SchemaMainContext from '@plitzi/sdk-schema/SchemaMainContext';
-import SchemaSettingsContext from '@plitzi/sdk-schema/SchemaSettingsContext';
+import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import NetworkInternalContext from '@pmodules/Network/contexts/NetworkInternalContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-import SchemaReducer, { SchemaActions } from './SchemaReducer';
-
-import type { SchemaReducerActions } from './SchemaReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type {
   BuilderMutationsMap,
   BuilderNetworkContextValue,
   BuilderQueriesMap,
+  BuilderState,
   BuilderSubscriptionsMap,
   DropPosition,
   Element,
@@ -49,13 +48,10 @@ const SchemaContextProvider = ({
 }: SchemaContextProviderProps) => {
   const internalData = use(NetworkInternalContext);
   const { eventBridge } = use(EventBridgeContext);
-  const schemaPropMemo = useMemo<Schema>(() => {
-    if (schemaProp) {
-      return { ...EMPTY_SCHEMA.schema, ...schemaProp };
-    }
-
-    return { ...EMPTY_SCHEMA.schema, ...internalData.schema };
-  }, [internalData.schema, schemaProp]);
+  const schemaPropMemo = useMemo<Schema>(
+    () => ({ ...EMPTY_SCHEMA.schema, ...(schemaProp ? schemaProp : internalData.schema) }),
+    [schemaProp, internalData.schema]
+  );
   const { enqueueMiddleware } = use(QueueContext);
   const { undoableMiddleware } = use(UndoableContext);
   const [schema, dispatchSchema] = useReducerWithMiddleware(SchemaReducer, schemaPropMemo, [
@@ -68,13 +64,20 @@ const SchemaContextProvider = ({
       filterCallback: action => !action.fromSubscriptions
     }
   ]);
-  const schemaRef = useRef(schema);
   const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
     BuilderMutationsMap,
     BuilderSubscriptionsMap
   >;
-  schemaRef.current = schema;
+  const { useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
+  useStoreSync('schema', schema);
+  const getSchemaFlat = useStoreGetter('schema.flat');
+
+  const pageDefinitions = useValueMemo(
+    pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
+    'soft'
+  );
+  useStoreSync('pageDefinitions', pageDefinitions);
 
   const schemaUpdate = useCallback(
     (newSchema: SchemaRaw, fromSubscriptions = false) =>
@@ -124,8 +127,7 @@ const SchemaContextProvider = ({
 
   const schemaCloneElement = useCallback(
     (elementId: string, targetId?: string, fromSubscriptions = false) => {
-      const flat = get(schemaRef.current, 'flat');
-      const elements = FlatMap.cloneElements(flat, elementId, targetId);
+      const elements = FlatMap.cloneElements(getSchemaFlat(), elementId, targetId);
       if (!elements.item) {
         return;
       }
@@ -143,7 +145,7 @@ const SchemaContextProvider = ({
         fromSubscriptions
       });
     },
-    [dispatchSchema]
+    [dispatchSchema, getSchemaFlat]
   );
 
   const schemaRemoveElement = useCallback(
@@ -266,21 +268,37 @@ const SchemaContextProvider = ({
       // Pages
 
       subscriptionManager.subscribe('SpaceAddPage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { page } = get(data, 'data.SpaceAddPage', {}) as BuilderSubscriptionsMap['SpaceAddPage'];
         void schemaAddPage(page, true);
       });
 
       subscriptionManager.subscribe('SpaceHomePage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { page } = get(data, 'data.SpaceHomePage', {}) as BuilderSubscriptionsMap['SpaceHomePage'];
         schemaHomePage(page.id, true);
       });
 
       subscriptionManager.subscribe('SpaceUpdatePage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { page } = get(data, 'data.SpaceUpdatePage', {}) as BuilderSubscriptionsMap['SpaceUpdatePage'];
         schemaUpdatePage(page, true);
       });
 
       subscriptionManager.subscribe('SpaceRemovePage', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageId } = get(data, 'data.SpaceRemovePage', {}) as BuilderSubscriptionsMap['SpaceRemovePage'];
         schemaRemovePage(pageId, true);
       });
@@ -288,6 +306,10 @@ const SchemaContextProvider = ({
       // Page Folders
 
       subscriptionManager.subscribe('SpaceAddPageFolder', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageFolder } = get(
           data,
           'data.SpaceAddPageFolder',
@@ -297,6 +319,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceUpdatePageFolder', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageFolder } = get(
           data,
           'data.SpaceUpdatePageFolder',
@@ -306,6 +332,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceRemovePageFolder', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { pageFolderId } = get(
           data,
           'data.SpaceRemovePageFolder',
@@ -317,11 +347,19 @@ const SchemaContextProvider = ({
       // Variables
 
       subscriptionManager.subscribe('SpaceAddVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { variable } = get(data, 'data.SpaceAddVariable', {}) as BuilderSubscriptionsMap['SpaceAddVariable'];
         schemaAddVariable(variable, true);
       });
 
       subscriptionManager.subscribe('SpaceUpdateVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { variable } = get(
           data,
           'data.SpaceUpdateVariable',
@@ -331,6 +369,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceRemoveVariable', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { name } = get(data, 'data.SpaceRemoveVariable', {}) as BuilderSubscriptionsMap['SpaceRemoveVariable'];
         schemaRemoveVariable(name, true);
       });
@@ -338,6 +380,10 @@ const SchemaContextProvider = ({
       // Others
 
       subscriptionManager.subscribe('SpaceUpdateSettings', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { value, path } = get(
           data,
           'data.SpaceUpdateSettings',
@@ -349,6 +395,10 @@ const SchemaContextProvider = ({
       // Elements
 
       subscriptionManager.subscribe('SpaceAddElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -367,16 +417,28 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceUpdateElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { element } = get(data, 'data.SpaceUpdateElement', {}) as BuilderSubscriptionsMap['SpaceUpdateElement'];
         schemaUpdateElement(element, true);
       });
 
       subscriptionManager.subscribe('SpaceRemoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { elementId } = get(data, 'data.SpaceRemoveElement', {}) as BuilderSubscriptionsMap['SpaceRemoveElement'];
         schemaRemoveElement(elementId, true);
       });
 
       subscriptionManager.subscribe('SpaceMoveElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { from, to, elementId, dropPosition } = get(
           data,
           'data.SpaceMoveElement',
@@ -386,6 +448,10 @@ const SchemaContextProvider = ({
       });
 
       subscriptionManager.subscribe('SpaceCloneElement', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           to,
@@ -405,11 +471,19 @@ const SchemaContextProvider = ({
       // Others
 
       subscriptionManager.subscribe('SpaceUpdated', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const { schema } = get(data, 'data.SpaceUpdated', {}) as BuilderSubscriptionsMap['SpaceUpdated'];
         schemaUpdate(schema, true);
       });
 
       subscriptionManager.subscribe('SpaceAddTemplate', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
         const {
           element,
           style,
@@ -532,11 +606,9 @@ const SchemaContextProvider = ({
 
   useEventBridge('main', events);
 
-  // @todo: move everything to builderHandler
   const valueMemo = useMemo(() => {
     return {
       dispatchSchema,
-      schema,
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
@@ -558,7 +630,6 @@ const SchemaContextProvider = ({
     };
   }, [
     dispatchSchema,
-    schema,
     schemaUpdate,
     schemaAddElement,
     schemaUpdateElement,
@@ -579,31 +650,7 @@ const SchemaContextProvider = ({
     schemaRemoveVariable
   ]);
 
-  const pageDefinitions = useValueMemo(
-    pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
-    'soft'
-  );
-  const mainSchemaValueMemo = useMemo(
-    () => ({
-      pages: get(schema, 'pages', []) as string[],
-      pageDefinitions,
-      pageFolders: get(schema, 'pageFolders', []),
-      settings: get(schema, 'settings', {}) as Schema['settings'],
-      variables: get(schema, 'variables', []) as SchemaVariable[]
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [schema.pages, schema.settings, schema.pageFolders, schema.variables, pageDefinitions]
-  );
-
-  const schemaSettings = useMemo(() => schema.settings, [schema.settings]);
-
-  return (
-    <SchemaMainContext value={mainSchemaValueMemo}>
-      <SchemaSettingsContext value={schemaSettings}>
-        <SchemaContext value={valueMemo}>{children}</SchemaContext>
-      </SchemaSettingsContext>
-    </SchemaMainContext>
-  );
+  return <SchemaContext value={valueMemo}>{children}</SchemaContext>;
 };
 
 export default SchemaContextProvider;

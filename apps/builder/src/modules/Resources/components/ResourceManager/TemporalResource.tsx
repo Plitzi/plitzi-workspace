@@ -152,7 +152,10 @@ const TemporalResource = ({
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={clsx('relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none', className)}
+      className={clsx(
+        'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
+        className
+      )}
     >
       <ResourceContent type={type} src={src} title={title} metadata={metadata} size={file?.size} />
       {file?.name && <ResourceName name={file.name} />}
@@ -167,7 +170,7 @@ const TemporalResource = ({
       )}
       {error && (
         <div
-          className="absolute bottom-1 left-1 flex items-center justify-center rounded-sm bg-white p-1 text-red-400"
+          className="absolute bottom-1 left-1 flex items-center justify-center rounded-sm bg-white p-1 text-red-400 dark:bg-zinc-800"
           title={error}
         >
           <i className="fa-solid fa-triangle-exclamation" />

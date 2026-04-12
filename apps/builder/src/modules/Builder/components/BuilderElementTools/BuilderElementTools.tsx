@@ -5,9 +5,8 @@ import clsx from 'clsx';
 import { use, useMemo, useCallback, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSelectedContext from '@plitzi/sdk-shared/builder/contexts/BuilderSelectedContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
@@ -15,10 +14,9 @@ import Interactions from '@pmodules/Interactions/Interactions';
 import BuilderBreadcrumb from '../BuilderBreadcrumb';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
 import ElementSettings from './ElementSettings';
-import useBuilderElement from '../../hooks/useBuilderElement';
 import ToolsList from '../ToolsList';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, BuilderState } from '@plitzi/sdk-shared';
 
 export type BuilderElementToolsProps = {
   initialTab?: string;
@@ -27,9 +25,12 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
-  const { selector, setSelector } = use(BuilderStyleContext);
-  const { elementSelected } = use(BuilderSelectedContext);
-  const element = useBuilderElement(elementSelected);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[selector, elementSelected], setSelector] = useStore(['selector', 'elementSelected']);
+  const [displayMode] = useStore('displayMode');
+  const [[selectors, element]] = useStore([`style.platform.${displayMode}`, `schema.flat.${elementSelected}`], {
+    defaultValue: [undefined, undefined]
+  });
   const { componentDefinitions } = use(ComponentContext);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);
@@ -103,7 +104,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
 
   if (!element) {
     return (
-      <div className="m-3 w-full self-start rounded-sm border-2 border-dashed border-gray-300 p-3 text-center">
+      <div className="m-3 w-full self-start rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
         Click on a component to select it
       </div>
     );
@@ -120,6 +121,8 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
       <div className="flex grow basis-0 flex-col overflow-y-auto">
         {selected === 'style' && (
           <StyleInspector
+            displayMode={displayMode}
+            selectors={selectors}
             value={selector}
             mode="element"
             element={element}

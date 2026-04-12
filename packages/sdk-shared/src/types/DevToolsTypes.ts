@@ -4,7 +4,7 @@ import type { ElementInteraction } from './SchemaTypes';
 import type { ReactNode } from 'react';
 
 export type LogType = 'info' | 'warning' | 'danger' | 'success' | 'custom';
-export type LogCategory = 'navigation' | 'interactions';
+export type LogCategory = 'navigation' | 'interactions' | 'store';
 
 export type LogNavigation = { category: 'navigation'; params: { status: NavigationStatus; elementId: string } };
 export type LogEventBridge = { category: 'eventBridge'; params: Record<string, unknown> };
@@ -19,12 +19,26 @@ export type LogInteraction = {
     nodes: Record<string, InteractionNode>;
   };
 };
+export type LogStore = {
+  category: 'store';
+  params: {
+    storeName: string;
+    path: string | undefined;
+    prev: unknown;
+    next: unknown;
+  };
+};
 
-export type LogParams = LogNavigation['params'] | LogInteraction['params'] | LogEventBridge['params'];
+export type LogParams =
+  | LogNavigation['params']
+  | LogInteraction['params']
+  | LogEventBridge['params']
+  | LogStore['params'];
 export type Log = { logType: string; message: ReactNode; time?: string } & (
   | LogInteraction
   | LogNavigation
   | LogEventBridge
+  | LogStore
 );
 
 export type ProviderCallback = (...args: unknown[]) => Record<string, unknown>;

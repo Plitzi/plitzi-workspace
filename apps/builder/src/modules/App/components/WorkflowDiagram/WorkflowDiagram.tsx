@@ -168,7 +168,7 @@ const WorkflowDiagram = ({
       <MiniMap nodeColor={getColor} className="bg-background! border" />
 
       <Panel position="top-left" className="space-x-2">
-        <Card className="flex gap-2 p-2">
+        <Card className="flex gap-2" size="xs">
           <Card.Body gap={2}>
             <Button size="sm" intent="primary" onClick={handleAddPage} iconPlacement="before">
               <Button.Icon icon="fa-solid fa-plus" />
@@ -187,7 +187,7 @@ const WorkflowDiagram = ({
       </Panel>
 
       <Panel position="top-right" className="space-y-2">
-        <Card className="space-y-2 p-3">
+        <Card className="space-y-2" size="xs">
           <Card.Header>
             <h3 className="text-sm font-semibold">Access Levels</h3>
           </Card.Header>

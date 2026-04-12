@@ -15,7 +15,6 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
   const { addToast } = useToast();
   const { useInteractions } = use(InteractionsContext);
   // const { Helmet } = use(NavigationContext);
-  // const { head } = use(SchemaSettingsContext);
 
   const handleAddNotification = useCallback(
     (

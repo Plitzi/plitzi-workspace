@@ -10,8 +10,6 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import BuilderSchemaContext from '@plitzi/sdk-shared/builder/contexts/BuilderSchemaContext';
-import BuilderStyleContext from '@plitzi/sdk-shared/builder/contexts/BuilderStyleContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
@@ -19,10 +17,8 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import StyleContext from '@plitzi/sdk-style/StyleContext';
 import AppContext from '@pmodules/App/AppContext';
 
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
@@ -46,9 +42,6 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
     baseContext: { baseElementId }
   } = use(BuilderContext);
   const { rootRef } = use(ContainerRootContext);
-
-  const { schema } = use(BuilderSchemaContext);
-  const { style } = use(BuilderStyleContext);
 
   const getWindow = useCallback(() => {
     // if (ref.current) {
@@ -77,11 +70,9 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         ComponentContext,
         CollectionContext,
         NetworkContext,
-        StyleContext,
         PluginsContext,
         NavigationContext,
         DataSourceContext,
-        SchemaContext,
         StateManagerContext,
         SegmentsContext,
         EventBridgeContext,
@@ -91,8 +82,6 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
     [previewMode, currentPageId, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
-  const schemaValueMemo = useMemo(() => ({ schema }), [schema]);
-  const styleValueMemo = useMemo(() => ({ style }), [style]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
   const { variables } = useDataSource<Record<string, string>>({ id, sourceFilter: ['variables'], mode: 'read' });
@@ -100,22 +89,18 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
   const children = useMemo(
     () => (
       <PlitziServiceProvider value={plitziContextValue}>
-        <SchemaContext value={schemaValueMemo}>
-          <StyleContext value={styleValueMemo}>
-            <ErrorBoundary>
-              {Settings && (
-                <div className="flex h-full flex-col">
-                  <Heading as="h5">Settings</Heading>
-                  <Settings {...attributes} id={id} variables={variables} onUpdate={handleChange} />
-                </div>
-              )}
-              {!Settings && <div className="element-tools--empty">Settings not available.</div>}
-            </ErrorBoundary>
-          </StyleContext>
-        </SchemaContext>
+        <ErrorBoundary>
+          {Settings && (
+            <div className="flex h-full flex-col">
+              <Heading as="h5">Settings</Heading>
+              <Settings {...attributes} id={id} variables={variables} onUpdate={handleChange} />
+            </div>
+          )}
+          {!Settings && <div className="element-tools--empty">Settings not available.</div>}
+        </ErrorBoundary>
       </PlitziServiceProvider>
     ),
-    [Settings, attributes, variables, handleChange, id, plitziContextValue, schemaValueMemo, styleValueMemo]
+    [Settings, attributes, variables, handleChange, id, plitziContextValue]
   );
 
   if (Plugin && pluginStyles?.[type] && pluginStyles[type].length > 0) {

@@ -1,11 +1,31 @@
 import { render } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { Button } from './Button';
+import ElementContext from '../../../Element/ElementContext';
+
+import type { ElementContextValue } from '../../../Element/ElementContext';
+
+vi.mock('../../../Element/hocs/withElement', () => ({
+  default: (element: unknown) => element
+}));
+
+vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+  default: () => ({
+    settings: { previewMode: true },
+    contexts: {}
+  })
+}));
 
 describe('Button Tests', () => {
   it('Render Component', () => {
-    const { baseElement } = render(<Button />);
+    const { baseElement } = render(
+      <ElementContext
+        value={{ id: '', rootId: '', plitziJsxSkipHOC: false, definition: { label: 'Button' } } as ElementContextValue}
+      >
+        <Button />
+      </ElementContext>
+    );
 
     expect(baseElement).toBeTruthy();
   });
