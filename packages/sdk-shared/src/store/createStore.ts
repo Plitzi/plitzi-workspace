@@ -49,7 +49,8 @@ function createStore<TState extends object>(
       | PathValue<TState, P>
       | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
       | TState
-      | ((prev: TState) => TState)
+      | ((prev: TState) => TState),
+    canPropagate: boolean = true
   ) => {
     const prevState = state;
 
@@ -77,6 +78,10 @@ function createStore<TState extends object>(
 
     state = nextState;
     storeOptions?.logger?.({ path, prev: prevState, next: state });
+    if (!canPropagate) {
+      return;
+    }
+
     listeners.forEach(l => l());
     pathListeners.forEach((set, candidate) => {
       if (path && !isPathAffected(path, candidate)) {

@@ -364,8 +364,10 @@ const App = (props: AppProps) => {
     [client, debugMode, instanceId, localComponents, props, server, webId]
   );
 
+  const storeValue = useMemo(() => ({ styleSelector: 'base' }), []);
+
   return (
-    <StoreProvider logger={createStoreDevToolsLogger('builder')}>
+    <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('builder')}>
       <ThemeProvider storageKey="builder-state.theme">
         <Provider components={components}>
           <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>

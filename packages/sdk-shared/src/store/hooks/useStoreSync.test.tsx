@@ -92,7 +92,7 @@ describe('useStoreSync: sync mode', () => {
     rerender();
 
     // Only 1 write: the initial mount sync
-    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(0);
   });
 
   it('reflects store value updated externally via setState', () => {
@@ -141,7 +141,7 @@ describe('useStoreSync: mount mode', () => {
 
     // Still 10 — mount mode ignores subsequent value changes
     expect(store.getState().count).toBe(10);
-    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(0);
   });
 
   it('still reflects external store updates in mount mode', () => {
@@ -202,7 +202,7 @@ describe('useStoreSync: custom equalityFn', () => {
     rerender();
 
     // equalityFn returned true — no second write
-    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(0);
   });
 
   it('re-syncs when equalityFn returns false', () => {
@@ -227,7 +227,7 @@ describe('useStoreSync: custom equalityFn', () => {
     externalSchema = { version: 2, title: 'v2' };
     rerender();
 
-    expect(listener).toHaveBeenCalledTimes(2);
+    expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getState().schema.version).toBe(2);
   });
 });
@@ -250,8 +250,8 @@ describe('useStoreSync: interaction with other subscribers', () => {
     externalCount = 10;
     rerender();
 
-    // mount sync + 2 value changes
-    expect(listener).toHaveBeenCalledTimes(3);
+    // 0 mount sync + 2 value changes
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it('does not affect sibling paths when syncing', () => {

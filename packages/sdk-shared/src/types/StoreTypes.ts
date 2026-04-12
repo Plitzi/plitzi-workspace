@@ -88,8 +88,12 @@ export type StoreLogger<T> = (event: { path: PathOf<T> | undefined; prev: T; nex
 export type Listener = () => void;
 
 export type SetState<T> = {
-  (path: undefined, value: T | ((prev: T) => T)): void;
-  <P extends PathOf<T>>(path: P, value: PathValue<T, P> | ((prev: PathValue<T, P>) => PathValue<T, P>)): void;
+  (path: undefined, value: T | ((prev: T) => T), canPropagate?: boolean): void;
+  <P extends PathOf<T>>(
+    path: P,
+    value: PathValue<T, P> | ((prev: PathValue<T, P>) => PathValue<T, P>),
+    canPropagate?: boolean
+  ): void;
 };
 
 export type GetState<T> = () => T;

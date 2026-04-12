@@ -108,7 +108,7 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
     enabled = true,
     equalityFn = defaultEq,
     syncStrategy = 'afterRender',
-    canListen = false
+    canListen = true
   } = options;
 
   const lastSyncedRef = useRef<typeof value | undefined>(undefined);
@@ -121,31 +121,14 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
     enabled &&
     (isFirstRender || (mode === 'sync' && !equalityFn(lastSyncedRef.current as PathValue<TState, P>, value)));
 
-  const runSync = () => {
+  const runSync = (canPropagate = true) => {
     lastSyncedRef.current = value;
     if (isFullState) {
-      store.setState(undefined, prev => ({ ...prev, ...value }));
+      store.setState(undefined, prev => ({ ...prev, ...value }), canPropagate);
     } else {
-      store.setState(path, value as PathValue<TState, P>);
+      store.setState(path, value as PathValue<TState, P>, canPropagate);
     }
   };
-
-  if (syncStrategy === 'render') {
-    if (shouldSync) {
-      runSync();
-    }
-  } else {
-    if (shouldSync && isFirstRender) {
-      runSync();
-    }
-
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useIsomorphicLayoutEffect(() => {
-      if (shouldSync && !isFirstRender) {
-        runSync();
-      }
-    }, [shouldSync, value, path]);
-  }
 
   const getSnapshot = useMemo(
     () => () => (isFullState ? store.getState() : getByPath(store.getState(), path as PathOf<TState>)),
@@ -198,6 +181,23 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, path]
   );
+
+  if (syncStrategy === 'render') {
+    if (shouldSync && selected !== value) {
+      runSync();
+    }
+  } else {
+    if (shouldSync && isFirstRender && selected !== value) {
+      runSync(false);
+    }
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useIsomorphicLayoutEffect(() => {
+      if (shouldSync && !isFirstRender) {
+        runSync();
+      }
+    }, [shouldSync, value, path]);
+  }
 
   return [selected, setState];
 }

@@ -545,7 +545,7 @@ describe('store enabled / options', () => {
       rerender();
 
       expect(store.getState().count).toBe(10);
-      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(0);
     });
 
     it('mode sync via options object (default)', () => {

@@ -36,7 +36,7 @@ const StoreProvider = <TState extends object = any>({
   const storeState = useMemo(() => {
     const parentState = inherit && parentStore ? parentStore.getState() : ({} as TState);
 
-    return typeof value === 'function' ? value(parentState) : { ...parentState, ...(value ?? {}) };
+    return typeof value === 'function' ? value(parentState) : { ...parentState, ...value };
   }, [inherit, parentStore, value]);
 
   if (!storeRef.current) {
@@ -51,8 +51,16 @@ const StoreProvider = <TState extends object = any>({
   const syncStore = storeRef.current;
 
   // Path sync: write only the sub-path. Full-state sync: merge whole storeState.
-  useStoreSync(path as any, (path ? value : storeState) as any, { enabled: syncEnabled && !!path, store: syncStore });
-  useStoreSync<TState>(undefined, storeState as Partial<TState>, { enabled: syncEnabled && !path, store: syncStore });
+  useStoreSync(path as any, (path ? value : storeState) as any, {
+    enabled: syncEnabled && !!path,
+    store: syncStore,
+    canListen: !!store
+  });
+  useStoreSync<TState>(undefined, storeState as Partial<TState>, {
+    enabled: syncEnabled && !path,
+    store: syncStore,
+    canListen: !!store
+  });
 
   return <StoreContext value={storeRef.current}>{children}</StoreContext>;
 };
