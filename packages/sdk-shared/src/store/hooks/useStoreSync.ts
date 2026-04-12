@@ -1,8 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useCallback, useRef, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useMemo } from 'react';
 
-import { useMultiExternalStore, useMultiSetters, useMultiSubscribe, useResolvedStore } from './shared';
+import {
+  useExternalStoreUnified,
+  useMultiExternalStore,
+  useMultiSetters,
+  useMultiSubscribe,
+  useResolvedStore
+} from './shared';
 import { defaultMultiEqualityFn } from './useStore';
 import getByPath from '../helpers/getByPath';
 import shallowEqual from '../helpers/shallowEqual';
@@ -155,7 +161,7 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
 
   const lastSelectedRef = useRef(getSnapshot());
 
-  const selected = useSyncExternalStore(subscribe, () => {
+  const selected = useExternalStoreUnified(subscribe, () => {
     if (!enabled) {
       return lastSelectedRef.current;
     }

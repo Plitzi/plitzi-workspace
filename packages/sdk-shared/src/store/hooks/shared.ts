@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { use, useMemo, useSyncExternalStore } from 'react';
+import { use, useCallback, useMemo, useSyncExternalStore } from 'react';
 
 import { StoreContext } from '../StoreProvider';
 
 import type { PathOf, StoreApi, SyncMode } from '../../types/StoreTypes';
 import type { RefObject } from 'react';
+
+export function useExternalStoreUnified<T>(subscribe: (cb: () => void) => () => void, getSnapshot: () => T): T {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
 
 /**
  * Resolves the store from an explicit option or the nearest StoreContext.
@@ -77,7 +81,7 @@ export function useMultiExternalStore(
   enabled: boolean,
   lastRef: RefObject<unknown[] | null>
 ): unknown[] {
-  return useSyncExternalStore(subscribe, () => {
+  const getSnapshotFn = useCallback(() => {
     if (!enabled) {
       const snap = lastRef.current ?? getSnapshot();
       lastRef.current = snap;
@@ -86,5 +90,7 @@ export function useMultiExternalStore(
     }
 
     return getSnapshot();
-  });
+  }, [enabled, getSnapshot, lastRef]);
+
+  return useExternalStoreUnified(subscribe, getSnapshotFn);
 }
