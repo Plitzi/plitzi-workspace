@@ -82,7 +82,7 @@
     "sass": "^1.99.0",
     "sass-embedded": "^1.99.0",
     "sass-loader": "^16.0.7",
-    "stylelint": "^17.6.0",
+    "stylelint": "^17.7.0",
     "stylelint-order": "^8.1.1",
     "stylelint-scss": "^7.0.0",
     "terser": "^5.46.1",
