@@ -57,13 +57,10 @@ const Sdk = ({
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
     const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssTokens(styleCache, variables);
+    const cssParsed = `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
 
-    if (renderMode === 'iframe' || renderMode === 'shadow') {
-      return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
-    }
-
-    return `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
-  }, [segments, variables, styleCache, renderMode, schemaSettings.customCss, externalStyle]);
+    return `@layer plitzi-sdk-runtime{${cssParsed}}`;
+  }, [segments, variables, styleCache, schemaSettings.customCss, externalStyle]);
 
   const getWindow = useCallback(() => {
     if (iframeRef.current) {

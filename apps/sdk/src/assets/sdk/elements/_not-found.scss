@@ -1,5 +1,7 @@
-.plitzi-component__not-found {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+@mixin styles {
+  .plitzi-component__not-found {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }

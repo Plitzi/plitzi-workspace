@@ -1,3 +1,5 @@
-.plitzi-component__text {
-  display: inline;
+@mixin styles {
+  .plitzi-component__text {
+    display: inline;
+  }
 }

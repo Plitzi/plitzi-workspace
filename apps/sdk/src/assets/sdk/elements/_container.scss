@@ -1,4 +1,6 @@
-.plitzi-component__container {
-  min-height: 50px;
-  min-width: 50px;
+@mixin styles {
+  .plitzi-component__container {
+    min-height: 50px;
+    min-width: 50px;
+  }
 }

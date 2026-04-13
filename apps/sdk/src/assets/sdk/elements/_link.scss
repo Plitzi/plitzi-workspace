@@ -1,12 +1,14 @@
-.plitzi-component__link {
-  min-height: 30px;
-  min-width: 30px;
-  display: inline-block;
-  color: #333;
-  text-decoration: none;
-  cursor: pointer;
-
-  &:hover {
+@mixin styles {
+  .plitzi-component__link {
+    min-height: 30px;
+    min-width: 30px;
+    display: inline-block;
+    color: #333;
     text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: none;
+    }
   }
 }

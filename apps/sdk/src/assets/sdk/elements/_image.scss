@@ -1,10 +1,12 @@
-.plitzi-component__image {
-  height: 140px;
-  width: 140px;
-  display: block;
+@mixin styles {
+  .plitzi-component__image {
+    height: 140px;
+    width: 140px;
+    display: block;
 
-  &.image--edit-mode > img {
-    height: 100%;
-    width: 100%;
+    &.image--edit-mode > img {
+      height: 100%;
+      width: 100%;
+    }
   }
 }

@@ -1,5 +1,7 @@
-@use './sdk';
-@use '@plitzi/plitzi-ui/Toast/Assets/index.scss';
+@use './sdk' as sdkComponents;
+@use '@plitzi/plitzi-ui/Toast/Assets/index.scss' as toast;
+
+@layer plitzi-sdk-base, plitzi-sdk-runtime;
 
 @layer components {
   @import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -7,7 +9,7 @@
 
 @import './tailwind.css';
 
-@layer base {
+@layer plitzi-sdk-base {
   body {
     margin: 0;
   }
@@ -102,4 +104,6 @@
       box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
     }
   }
+
+  @include sdkComponents.styles;
 }

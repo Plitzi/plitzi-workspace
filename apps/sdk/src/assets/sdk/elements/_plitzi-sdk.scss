@@ -1,14 +1,16 @@
-.plitzi-component__plitzi-sdk {
-  min-height: 50px;
-  min-width: 50px;
+@mixin styles {
+  .plitzi-component__plitzi-sdk {
+    min-height: 50px;
+    min-width: 50px;
 
-  > .plitzi-sdk {
-    overflow: auto;
-  }
-
-  &.plitzi-component {
     > .plitzi-sdk {
-      pointer-events: none;
+      overflow: auto;
+    }
+
+    &.plitzi-component {
+      > .plitzi-sdk {
+        pointer-events: none;
+      }
     }
   }
 }

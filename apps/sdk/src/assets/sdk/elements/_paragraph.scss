@@ -1,4 +1,6 @@
-.plitzi-component__paragraph {
-  margin-bottom: 14px;
-  margin-top: 14px;
+@mixin styles {
+  .plitzi-component__paragraph {
+    margin-bottom: 14px;
+    margin-top: 14px;
+  }
 }

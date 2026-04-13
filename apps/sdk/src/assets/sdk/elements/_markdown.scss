@@ -1,18 +1,20 @@
 @use 'sass:meta';
 
-.plitzi-component__markdown {
-  @include meta.load-css('@plitzi/plitzi-ui/Markdown/Assets/index.scss');
+@mixin styles {
+  .plitzi-component__markdown {
+    @include meta.load-css('@plitzi/plitzi-ui/Markdown/Assets/index.scss');
 
-  &.plitzi-component__markdown--edit-mode {
-    .markdown {
-      pointer-events: none;
+    &.plitzi-component__markdown--edit-mode {
+      .markdown {
+        pointer-events: none;
+      }
     }
-  }
 
-  .markdown {
-    height: '100%';
-    width: '100%';
-    min-height: 0;
-    min-width: 0;
+    .markdown {
+      height: '100%';
+      width: '100%';
+      min-height: 0;
+      min-width: 0;
+    }
   }
 }

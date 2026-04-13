@@ -1,11 +1,13 @@
-.plitzi-component__video {
-  height: 250px;
-  width: 400px;
-  display: block;
+@mixin styles {
+  .plitzi-component__video {
+    height: 250px;
+    width: 400px;
+    display: block;
 
-  &.video--edit-mode > video {
-    height: 100%;
-    width: 100%;
-    object-fit: inherit;
+    &.video--edit-mode > video {
+      height: 100%;
+      width: 100%;
+      object-fit: inherit;
+    }
   }
 }

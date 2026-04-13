@@ -1,81 +1,83 @@
-.plitzi-component__list {
-  min-height: 50px;
-  min-width: 50px;
-  margin-bottom: 10px;
-  margin-top: 0;
-  padding-left: 40px;
-}
-
-.plitzi-component__list-item {
-  min-height: 50px;
-  min-width: 50px;
-}
-
-.plitzi-component__controlled-list {
-  min-height: 50px;
-  min-width: 50px;
-  margin-bottom: 10px;
-  margin-top: 0;
-  padding-left: 40px;
-
-  &.controlled-list--build-mode {
-    .plitzi-component__controlled-list-item:not(:first-child) {
-      pointer-events: none;
-      opacity: 0.5;
-    }
-  }
-
-  &.container--empty {
-    .plitzi-component__controlled-list-item {
-      min-height: 50px;
-    }
-  }
-
-  .controlled-list.controlled-list--empty {
+@mixin styles {
+  .plitzi-component__list {
     min-height: 50px;
     min-width: 50px;
-    padding: 12px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid #7290e7;
-    border-radius: 4px;
-    background-color: rgba(#7290e7, 8%);
-    color: #7290e7;
-    font-weight: bold;
+    margin-bottom: 10px;
+    margin-top: 0;
+    padding-left: 40px;
   }
 
-  .plitzi-component__controlled-list-item {
-    position: relative;
-    font-weight: bold;
-
-    &:not(:last-child) {
-      border-bottom: none;
-    }
-
-    .controlled-list-item__counter {
-      padding: 0 5px;
-      left: 0;
-      top: 0;
-      position: absolute;
-      display: none;
-      border: 1px solid #7290e7;
-      background-color: rgba(#7290e7, 8%);
-      color: white;
-      line-height: 14px;
-      font-size: 12px;
-    }
+  .plitzi-component__list-item {
+    min-height: 50px;
+    min-width: 50px;
   }
-}
 
-.builder--display-component-border {
   .plitzi-component__controlled-list {
-    .plitzi-component__controlled-list-item {
+    min-height: 50px;
+    min-width: 50px;
+    margin-bottom: 10px;
+    margin-top: 0;
+    padding-left: 40px;
+
+    &.controlled-list--build-mode {
+      .plitzi-component__controlled-list-item:not(:first-child) {
+        pointer-events: none;
+        opacity: 0.5;
+      }
+    }
+
+    &.container--empty {
+      .plitzi-component__controlled-list-item {
+        min-height: 50px;
+      }
+    }
+
+    .controlled-list.controlled-list--empty {
+      min-height: 50px;
+      min-width: 50px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       border: 1px solid #7290e7;
-      background-color: rgba(#ffb3cb, 8%);
+      border-radius: 4px;
+      background-color: rgba(#7290e7, 8%);
+      color: #7290e7;
+      font-weight: bold;
+    }
+
+    .plitzi-component__controlled-list-item {
+      position: relative;
+      font-weight: bold;
+
+      &:not(:last-child) {
+        border-bottom: none;
+      }
 
       .controlled-list-item__counter {
-        display: block;
+        padding: 0 5px;
+        left: 0;
+        top: 0;
+        position: absolute;
+        display: none;
+        border: 1px solid #7290e7;
+        background-color: rgba(#7290e7, 8%);
+        color: white;
+        line-height: 14px;
+        font-size: 12px;
+      }
+    }
+  }
+
+  .builder--display-component-border {
+    .plitzi-component__controlled-list {
+      .plitzi-component__controlled-list-item {
+        border: 1px solid #7290e7;
+        background-color: rgba(#ffb3cb, 8%);
+
+        .controlled-list-item__counter {
+          display: block;
+        }
       }
     }
   }

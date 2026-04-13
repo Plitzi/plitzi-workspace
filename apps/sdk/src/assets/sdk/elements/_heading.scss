@@ -1,35 +1,37 @@
-.plitzi-component__heading {
-  margin-bottom: 25px;
-  margin-top: 25px;
-  font-weight: 700;
-}
+@mixin styles {
+  .plitzi-component__heading {
+    margin-bottom: 25px;
+    margin-top: 25px;
+    font-weight: 700;
+  }
 
-.plitzi-component__heading-h1 {
-  line-height: 44px;
-  font-size: 38px;
-}
+  .plitzi-component__heading-h1 {
+    line-height: 44px;
+    font-size: 38px;
+  }
 
-.plitzi-component__heading-h2 {
-  line-height: 36px;
-  font-size: 32px;
-}
+  .plitzi-component__heading-h2 {
+    line-height: 36px;
+    font-size: 32px;
+  }
 
-.plitzi-component__heading-h3 {
-  line-height: 30px;
-  font-size: 24px;
-}
+  .plitzi-component__heading-h3 {
+    line-height: 30px;
+    font-size: 24px;
+  }
 
-.plitzi-component__heading-h4 {
-  line-height: 24px;
-  font-size: 18px;
-}
+  .plitzi-component__heading-h4 {
+    line-height: 24px;
+    font-size: 18px;
+  }
 
-.plitzi-component__heading-h5 {
-  line-height: 20px;
-  font-size: 14px;
-}
+  .plitzi-component__heading-h5 {
+    line-height: 20px;
+    font-size: 14px;
+  }
 
-.plitzi-component__heading-h6 {
-  line-height: 18px;
-  font-size: 12px;
+  .plitzi-component__heading-h6 {
+    line-height: 18px;
+    font-size: 12px;
+  }
 }

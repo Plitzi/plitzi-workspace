@@ -1,5 +1,9 @@
-@use './elements';
+@use './elements' as elements;
 
-.plitzi-component--hidden {
-  display: none !important;
+@mixin styles {
+  .plitzi-component--hidden {
+    display: none !important;
+  }
+
+  @include elements.styles;
 }

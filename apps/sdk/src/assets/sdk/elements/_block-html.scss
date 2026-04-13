@@ -1,16 +1,18 @@
-// .plitzi-component__block-html {
-// }
+@mixin styles {
+  // .plitzi-component__block-html {
+  // }
 
-.builder-iframe.builder--display-component-border {
-  .plitzi-component__block-html {
-    &.block-html--empty {
-      min-height: 50px;
-      min-width: 50px;
-    }
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__block-html {
+      &.block-html--empty {
+        min-height: 50px;
+        min-width: 50px;
+      }
 
-    &.plitzi-component {
-      > * {
-        pointer-events: none;
+      &.plitzi-component {
+        > * {
+          pointer-events: none;
+        }
       }
     }
   }
