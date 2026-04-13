@@ -9,27 +9,22 @@
 
 @import './tailwind.css';
 
-@include meta.load-css('./variables');
-
-.plitzi-builder {
-  font-family: 'Rubik', sans-serif;
-}
-
-body,
-.plitzi-builder {
-  &.resizing,
-  &.accordion-resizing,
-  &.moving {
-    user-select: none;
-
-    .builder-area {
-      pointer-events: none;
-    }
+@layer plitzi-builder-base {
+  @include meta.load-css('./variables');
+  .plitzi-builder {
+    font-family: 'Rubik', sans-serif;
   }
-}
 
-@keyframes dashdraw {
-  from {
-    stroke-dashoffset: 10;
+  body,
+  .plitzi-builder {
+    &.resizing,
+    &.accordion-resizing,
+    &.moving {
+      user-select: none;
+
+      .builder-area {
+        pointer-events: none;
+      }
+    }
   }
 }
