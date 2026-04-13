@@ -55,8 +55,8 @@ const Effects = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Effe
   return (
     <CategoryContainer title="Effects" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <div className="flex flex-col gap-2">
-        <CategorySection label="Size" keys={['opacity']}>
-          <CategoryOption value={opacity} onChange={handleChange('cursor')} type="metric" />
+        <CategorySection label="Opacity" keys={['opacity']}>
+          <CategoryOption value={opacity} onChange={handleChange('opacity')} type="metric" />
         </CategorySection>
         <CategorySection label="Cursor" keys={['cursor']}>
           <CategoryOption value={cursor} onChange={handleChange('cursor')} type="select">

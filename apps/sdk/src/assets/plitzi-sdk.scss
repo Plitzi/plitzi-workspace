@@ -7,97 +7,99 @@
 
 @import './tailwind.css';
 
-body {
-  margin: 0;
-}
-
-*,
-::before,
-::after {
-  box-sizing: border-box;
-  border: 0 solid;
-}
-
-.plitzi-sdk {
-  display: flex;
-
-  &.min-h-screen {
-    min-height: 100vh;
+@layer base {
+  body {
+    margin: 0;
   }
 
-  .grow {
-    flex-grow: 1;
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+    border: 0 solid;
   }
 
-  iframe {
-    border: none;
-  }
+  .plitzi-sdk {
+    display: flex;
 
-  &.resizing,
-  &.moving {
-    pointer-events: none;
-    user-select: none;
-  }
+    &.min-h-screen {
+      min-height: 100vh;
+    }
 
-  &.sdk-debug-mode {
-    .devtools-element-hovered {
-      animation: pulse 2s infinite;
-      outline: rgb(91, 107, 223) solid 2px;
-      outline-offset: -2px;
+    .grow {
+      flex-grow: 1;
+    }
+
+    iframe {
+      border: none;
+    }
+
+    &.resizing,
+    &.moving {
+      pointer-events: none;
+      user-select: none;
+    }
+
+    &.sdk-debug-mode {
+      .devtools-element-hovered {
+        animation: pulse 2s infinite;
+        outline: rgb(91, 107, 223) solid 2px;
+        outline-offset: -2px;
+      }
     }
   }
-}
 
-.made-in-plitzi {
-  padding: 6px 8px;
-  right: 12px;
-  bottom: 12px;
-  position: fixed;
-  z-index: 999999;
-  border: 1px solid rgb(229, 231, 235);
-  border-radius: 4px;
-  background-color: white;
-  color: rgb(75, 85, 99);
-  font-weight: 700;
-  line-height: 16px;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    'Noto Sans',
-    sans-serif,
-    'Apple Color Emoji',
-    'Segoe UI Emoji',
-    'Segoe UI Symbol',
-    'Noto Color Emoji';
-  font-size: 12px;
-  text-decoration: none;
-  user-select: none;
-  box-shadow:
-    rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-    rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-    rgba(0, 0, 0, 0.1) 0px 1px 3px 0px,
-    rgba(0, 0, 0, 0) 0px 1px 2px -1px;
-}
-
-@keyframes pulse {
-  0% {
-    // transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  .made-in-plitzi {
+    padding: 6px 8px;
+    right: 12px;
+    bottom: 12px;
+    position: fixed;
+    z-index: 999999;
+    border: 1px solid rgb(229, 231, 235);
+    border-radius: 4px;
+    background-color: white;
+    color: rgb(75, 85, 99);
+    font-weight: 700;
+    line-height: 16px;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      'Noto Sans',
+      sans-serif,
+      'Apple Color Emoji',
+      'Segoe UI Emoji',
+      'Segoe UI Symbol',
+      'Noto Color Emoji';
+    font-size: 12px;
+    text-decoration: none;
+    user-select: none;
+    box-shadow:
+      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
+      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
+      rgba(0, 0, 0, 0.1) 0px 1px 3px 0px,
+      rgba(0, 0, 0, 0) 0px 1px 2px -1px;
   }
 
-  70% {
-    // transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-  }
+  @keyframes pulse {
+    0% {
+      // transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+    }
 
-  100% {
-    // transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    70% {
+      // transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    100% {
+      // transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
   }
 }

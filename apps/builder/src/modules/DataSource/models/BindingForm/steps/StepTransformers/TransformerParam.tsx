@@ -52,7 +52,10 @@ const TransformerParam = ({
 
   const fieldsDataSource = useMemo<AutoComplete[]>(() => {
     if (!dataSourceFields) {
-      return ['source'];
+      return [
+        { type: 'token', value: 'source' },
+        { type: 'token', value: 'sourceTo' }
+      ];
     }
 
     return [

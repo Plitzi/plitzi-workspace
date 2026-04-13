@@ -9,11 +9,14 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { CommonState } from '@plitzi/sdk-shared';
+import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
+import type { CommonState, StyleVariableCategory } from '@plitzi/sdk-shared';
 
 const StyleAdvanceEditor = () => {
   const { useStore } = createStoreHook<CommonState>();
-  const [customCssProp] = useStore('schema.settings.customCss');
+  const [[customCssProp, styleVariables]] = useStore(['schema.settings.customCss', 'style.variables'], {
+    defaultValue: ['', undefined]
+  });
   const { schemaUpdateSettings } = use(SchemaContext);
   const [customCss, setCustomCss] = useState(() => {
     if (typeof customCssProp !== 'string') {
@@ -54,9 +57,26 @@ const StyleAdvanceEditor = () => {
     }
   }, [networkQuery, customCss, schemaUpdateSettingsDebounce]);
 
+  const variables = useMemo<AutoComplete[]>(() => {
+    if (!styleVariables) {
+      return [];
+    }
+
+    return Object.keys(styleVariables)
+      .flatMap(variableGroup => Object.keys(styleVariables[variableGroup as StyleVariableCategory] ?? {}))
+      .map(variable => ({ type: 'css-token', value: variable }));
+  }, [styleVariables]);
+
   return (
     <div className="relative flex h-full w-full flex-col">
-      <CodeMirror className="h-full" value={customCss} theme="dark" lineWrapping onChange={handleChange} />
+      <CodeMirror
+        className="h-full"
+        value={customCss}
+        autoComplete={variables}
+        theme="dark"
+        lineWrapping
+        onChange={handleChange}
+      />
       <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"

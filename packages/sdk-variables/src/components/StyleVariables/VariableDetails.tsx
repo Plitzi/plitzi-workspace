@@ -12,7 +12,7 @@ const VariableDetails = ({ name }: VariableDetailsProps) => {
   const { addToast } = useToast();
 
   const handleClickCopy = useCallback(() => {
-    void navigator.clipboard.writeText(`{{${name}}}`);
+    void navigator.clipboard.writeText(`var(--${name})`);
     addToast('Variable copied into the clipboard', {
       appeareance: 'success',
       autoDismiss: true,

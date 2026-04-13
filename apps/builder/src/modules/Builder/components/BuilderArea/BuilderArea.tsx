@@ -149,7 +149,7 @@ const BuilderArea = ({
   return (
     <div
       className={clsx(
-        'builder-area flex flex-col p-2 select-none',
+        'builder-area flex flex-col select-none',
         {
           'min-w-150 overflow-hidden': multiPagesMode,
           'basis-0 overflow-auto': !multiPagesMode && !mobilePreview,
