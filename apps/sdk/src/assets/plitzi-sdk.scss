@@ -1,7 +1,7 @@
 @use './sdk' as sdkComponents;
 @use '@plitzi/plitzi-ui/Toast/Assets/index.scss' as toast;
 
-@layer plitzi-sdk-base, plitzi-sdk-runtime;
+@layer plitzi-sdk-base, plitzi-sdk-runtime ,plitzi-sdk-plugin;
 
 @layer components {
   @import '@fortawesome/fontawesome-free/css/all.min.css';

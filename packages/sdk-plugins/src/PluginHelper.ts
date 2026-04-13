@@ -50,20 +50,28 @@ const getComponentDefinition = (
           type,
           // SDK
           settings,
-          assets: Object.values(assets).map<Asset>(({ src, type, isMain }) => {
-            const url = `${resource}/${src}`;
-            const urlEncoded = btoa(url);
-            if (type === 'style') {
-              return {
-                type: 'link',
-                id: urlEncoded,
-                params: { href: url, rel: 'stylesheet', type: 'text/css' },
-                isMain
-              } as Asset;
-            }
+          assets: Object.values(assets)
+            .filter(({ src }) => {
+              if (!src) {
+                return false;
+              }
 
-            return { type: 'script', id: urlEncoded, params: { src: url, type: 'text/javascript' }, isMain } as Asset;
-          }),
+              return ['.css', '.js', '.mjs', '.cjs'].some(ext => src.endsWith(ext));
+            })
+            .map<Asset>(({ src, type, isMain }) => {
+              const url = `${resource}/${src}`;
+              const urlEncoded = btoa(url);
+              if (type === 'style' && url.endsWith('.css')) {
+                return {
+                  type: 'link',
+                  id: urlEncoded,
+                  params: { href: url, rel: 'stylesheet', type: 'text/css' },
+                  isMain
+                } as Asset;
+              }
+
+              return { type: 'script', id: urlEncoded, params: { src: url, type: 'text/javascript' }, isMain } as Asset;
+            }),
           scope,
           module,
           subPlugins
