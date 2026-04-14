@@ -43,7 +43,7 @@
     "immer": "^11.1.4",
     "jszip": "^3.10.1",
     "react-hook-form": "^7.72.1",
-    "react-router-dom": "^7.14.0",
+    "react-router-dom": "^7.14.1",
     "swr": "^2.4.1",
     "twig": "^3.0.0",
     "uuid": "^13.0.0",
