@@ -20,6 +20,7 @@ import type {
   MultiPathReturn,
   Path,
   PathOf,
+  PathOrFn,
   PathSetters,
   PathValue,
   PathValues,
@@ -189,6 +190,16 @@ export const createStoreHook = <TState extends object>() => {
     options: UseStoreMultiOptions<TState, Paths> & { transformer: (values: PathValues<TState, Paths>) => TResult }
   ): [TResult, ...PathSetters<TState, Paths>];
 
+  function useStore(
+    paths: ReadonlyArray<PathOrFn<TState>>,
+    options?: UseStoreOptions<unknown, TState> & { transformer?: never }
+  ): [unknown[], ...Array<(value: unknown) => void>];
+
+  function useStore<TResult>(
+    paths: ReadonlyArray<PathOrFn<TState>>,
+    options: UseStoreOptions<unknown, TState> & { transformer: (values: unknown[]) => TResult }
+  ): [TResult, ...Array<(value: unknown) => void>];
+
   function useStore(arg?: any, options?: any): unknown {
     return useStoreBase(arg, options);
   }
@@ -200,7 +211,7 @@ export const createStoreHook = <TState extends object>() => {
   ): void;
 
   function useStoreSync<P extends PathOf<TState>>(
-    path: P,
+    path: P | ((state: TState) => P),
     value: PathValue<TState, P>,
     options?: UseStoreSyncOptions<PathValue<TState, P>, TState>
   ): void;
@@ -208,6 +219,12 @@ export const createStoreHook = <TState extends object>() => {
   function useStoreSync<const Paths extends ReadonlyArray<PathOf<TState>>>(
     paths: Paths,
     values: PathValues<TState, Paths>,
+    options?: UseStoreSyncMultiOptions<TState>
+  ): void;
+
+  function useStoreSync(
+    paths: ReadonlyArray<PathOrFn<TState>>,
+    values: readonly unknown[],
     options?: UseStoreSyncMultiOptions<TState>
   ): void;
 

@@ -8,6 +8,7 @@ import useIsomorphicLayoutEffect from '../helpers/useIsomorphicLayoutEffect';
 
 import type {
   PathOf,
+  PathOrFn,
   PathValue,
   PathValues,
   StoreApi,
@@ -17,14 +18,14 @@ import type {
 
 export type { UseStoreSyncOptions, UseStoreSyncMultiOptions };
 
-function useStoreSyncMulti<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
+function useStoreSyncMulti<TState extends object>(
   store: StoreApi<TState>,
-  paths: Paths,
-  values: PathValues<TState, Paths>,
+  paths: ReadonlyArray<PathOrFn<TState>>,
+  values: readonly unknown[],
   options: UseStoreSyncMultiOptions<TState>
 ): void {
   const { mode = 'sync', enabled = true, syncStrategy = 'afterRender' } = options;
-  const pathsKey = paths.join('|');
+  const pathsKey = paths.map((p, i) => (typeof p === 'function' ? `fn_${i}` : p)).join('|');
 
   const mountedRef = useRef(false);
   const isFirstRender = !mountedRef.current;
@@ -33,14 +34,13 @@ function useStoreSyncMulti<TState extends object, const Paths extends ReadonlyAr
   const lastSyncedRef = useRef<readonly unknown[] | undefined>(undefined);
 
   const shouldSync =
-    enabled &&
-    (isFirstRender ||
-      (mode === 'sync' && (values as unknown[]).some((v, i) => !Object.is(lastSyncedRef.current?.[i], v))));
+    enabled && (isFirstRender || (mode === 'sync' && values.some((v, i) => !Object.is(lastSyncedRef.current?.[i], v))));
 
   const runSync = () => {
-    lastSyncedRef.current = values as unknown[];
+    lastSyncedRef.current = values;
     paths.forEach((p, i) => {
-      store.setState(p, (values as unknown[])[i] as PathValue<TState, typeof p>);
+      const resolvedPath = typeof p === 'function' ? p(store.getState()) : p;
+      store.setState(resolvedPath, values[i] as PathValue<TState, PathOf<TState>>);
     });
   };
 
@@ -130,9 +130,15 @@ function useStoreSync<TState extends object, const Paths extends ReadonlyArray<P
   options?: UseStoreSyncMultiOptions<TState>
 ): void;
 
+function useStoreSync<TState extends object>(
+  paths: ReadonlyArray<PathOrFn<TState>>,
+  values: readonly unknown[],
+  options?: UseStoreSyncMultiOptions<TState>
+): void;
+
 function useStoreSync<TState extends object, P extends PathOf<TState>>(
-  pathOrPaths: P | ((state: TState) => P) | ReadonlyArray<PathOf<TState>> | undefined,
-  value: PathValue<TState, P> | TState | PathValues<TState, ReadonlyArray<PathOf<TState>>>,
+  pathOrPaths: P | ((state: TState) => P) | ReadonlyArray<PathOrFn<TState>> | undefined,
+  value: PathValue<TState, P> | TState | readonly unknown[],
   options: UseStoreSyncOptions<any, any> | UseStoreSyncMultiOptions<TState> = {}
 ): void {
   const store = useResolvedStore(
@@ -144,8 +150,8 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useStoreSyncMulti(
       store,
-      pathOrPaths as ReadonlyArray<PathOf<TState>>,
-      value as PathValues<TState, ReadonlyArray<PathOf<TState>>>,
+      pathOrPaths as ReadonlyArray<PathOrFn<TState>>,
+      value as readonly unknown[],
       options as UseStoreSyncMultiOptions<TState>
     );
     return;

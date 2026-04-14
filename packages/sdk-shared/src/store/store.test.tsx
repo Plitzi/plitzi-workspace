@@ -478,19 +478,21 @@ describe('store enabled / options', () => {
         () => {
           renderFn();
           return useStore([
-            'count',
-            s => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>
-          ] as const);
+            'count' as PathOf<AppState>,
+            (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>
+          ]);
         },
         { wrapper: makeWrapper(store) }
       );
 
-      expect(result.current[0][0]).toBe(0);
-      expect(result.current[0][1]).toBe('Alice');
+      const vals = () => result.current[0];
+
+      expect(vals()[0]).toBe(0);
+      expect(vals()[1]).toBe('Alice');
 
       // Switch resolved path of second entry from 'user.name' to 'user.age'
       act(() => store.setState('meta.active', false));
-      expect(result.current[0][1]).toBe(30);
+      expect(vals()[1]).toBe(30);
 
       // Changes to old path (user.name) should NOT cause a re-render
       act(() => store.setState('user.name', 'Bob'));
@@ -498,8 +500,82 @@ describe('store enabled / options', () => {
 
       // Changes to new path (user.age) should cause a re-render
       act(() => store.setState('user.age', 55));
-      expect(result.current[0][1]).toBe(55);
+      expect(vals()[1]).toBe(55);
       expect(renderFn).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('useStoreSync: dynamic path function', () => {
+    it('syncs to the resolved path on initial render', () => {
+      const store = makeStore();
+
+      renderHook(
+        () => useStoreSync((s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>, 'Synced'),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().user.name).toBe('Synced');
+    });
+
+    it('syncs to the new resolved path when state changes the path', () => {
+      const store = makeStore();
+      let active = true;
+
+      const { rerender } = renderHook(
+        () =>
+          useStoreSync(
+            (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>,
+            (active ? 'Dynamic' : 99) as unknown as string
+          ),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().user.name).toBe('Dynamic');
+
+      // Change external condition so path resolves differently
+      act(() => store.setState('meta.active', false));
+      active = false;
+      rerender();
+
+      expect(store.getState().user.age).toBe(99);
+    });
+
+    it('multi-path: syncs dynamic path entries correctly', () => {
+      const store = makeStore();
+
+      renderHook(
+        () =>
+          useStoreSync(
+            ['count', (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>],
+            [42, 'Synced']
+          ),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().count).toBe(42);
+      expect(store.getState().user.name).toBe('Synced');
+    });
+
+    it('multi-path: syncs to new resolved path when state-driven path changes', () => {
+      const store = makeStore();
+      let active = true;
+
+      const { rerender } = renderHook(
+        () =>
+          useStoreSync(
+            ['count', (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>],
+            [10, active ? 'NewName' : 55]
+          ),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().user.name).toBe('NewName');
+
+      act(() => store.setState('meta.active', false));
+      active = false;
+      rerender();
+
+      expect(store.getState().user.age).toBe(55);
     });
   });
 
