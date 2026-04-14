@@ -3,8 +3,9 @@
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { EventBridgeEvent } from '@plitzi/sdk-shared';
+import type { BuilderState, EventBridgeEvent } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type OverlaySpacingProps = {
@@ -24,6 +25,8 @@ const OverlaySpacing = ({
   elementDOM,
   zoom = 1
 }: OverlaySpacingProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [element] = useStore(`schema.flat.${id}`, { defaultValue: undefined });
   const { eventBridge } = use(EventBridgeContext);
   const [rawStyle, setRawStyle] = useState<Partial<CSSStyleDeclaration> | undefined>({});
 
@@ -64,7 +67,7 @@ const OverlaySpacing = ({
 
   useEffect(() => {
     setRawStyle(getStyle());
-  }, [getStyle, id]);
+  }, [getStyle, id, element?.definition.initialState?.styleVariants]);
 
   const calculateWidth = useCallback((distance?: string, mode = 'rest', correction = '0px') => {
     if (distance === '0px') {

@@ -125,7 +125,7 @@ const BuilderOverlay = ({
     }
 
     handleProcessContainer(overlayProps.elementDOM);
-  }, [handleProcessContainer, overlayProps]);
+  }, [handleProcessContainer, overlayProps, element?.definition.initialState?.styleVariant]);
 
   useEffect(() => {
     const { elementDOM } = overlayProps;
