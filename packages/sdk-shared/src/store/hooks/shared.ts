@@ -3,11 +3,10 @@
 
 import { use, useCallback, useMemo, useSyncExternalStore } from 'react';
 
-import { PATH_RESOLVER_TAG } from '../../types/StoreTypes';
 import getByPath from '../helpers/getByPath';
 import { StoreContext } from '../StoreContext';
 
-import type { PathOf, PathResolverFn, StoreApi, SyncMode } from '../../types/StoreTypes';
+import type { PathOf, PathOrFn, StoreApi, SyncMode } from '../../types/StoreTypes';
 import type { RefObject } from 'react';
 
 export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
@@ -24,35 +23,21 @@ export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
   return true;
 };
 
-export function pathOf<TState extends object, P extends PathOf<TState>>(
-  fn: (state: TState) => P
-): PathResolverFn<TState, P> {
-  return Object.assign(fn, { [PATH_RESOLVER_TAG]: true as const });
-}
-
-export function isPathResolver<TState extends object>(fn: unknown): fn is PathResolverFn<TState> {
-  return typeof fn === 'function' && PATH_RESOLVER_TAG in fn;
-}
-
 export function makeSingleSnapshot<TState extends object>(
   store: StoreApi<TState>,
-  pathOrSelector: PathOf<TState> | PathResolverFn<TState> | ((state: TState) => unknown) | undefined,
+  pathOrFn: PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined,
   defaultValue?: unknown
 ): () => unknown {
   return () => {
     const state = store.getState();
 
-    if (typeof pathOrSelector === 'function') {
-      if (isPathResolver<TState>(pathOrSelector)) {
-        const val = getByPath(state, pathOrSelector(state));
-        return val === undefined ? defaultValue : val;
-      }
-
-      return pathOrSelector(state);
+    if (typeof pathOrFn === 'function') {
+      const val = getByPath(state, pathOrFn(state));
+      return val === undefined ? defaultValue : val;
     }
 
-    if (typeof pathOrSelector === 'string') {
-      const val = getByPath(state, pathOrSelector);
+    if (typeof pathOrFn === 'string') {
+      const val = getByPath(state, pathOrFn);
       return val === undefined ? defaultValue : val;
     }
 
@@ -62,7 +47,7 @@ export function makeSingleSnapshot<TState extends object>(
 
 export function makeMultiSnapshot<TState extends object>(
   store: StoreApi<TState>,
-  paths: ReadonlyArray<PathOf<TState>>,
+  pathsRef: RefObject<ReadonlyArray<PathOrFn<TState>>>,
   lastRef: RefObject<unknown[] | null>,
   options: { equalityFn?: (a: unknown[], b: unknown[]) => boolean; defaultValue?: unknown } = {}
 ): () => unknown[] {
@@ -70,9 +55,11 @@ export function makeMultiSnapshot<TState extends object>(
 
   return () => {
     const state = store.getState();
+    const paths = pathsRef.current;
 
     const next = paths.map((p, i) => {
-      const val = getByPath(state, p);
+      const resolvedPath = typeof p === 'function' ? p(state) : p;
+      const val = getByPath(state, resolvedPath);
       if (val !== undefined || defaultValue === undefined) {
         return val;
       }
@@ -110,19 +97,23 @@ export function useResolvedStore<TState extends object>(
 
 export function useMultiSubscribe<TState extends object>(
   store: StoreApi<TState>,
-  paths: ReadonlyArray<PathOf<TState>>,
+  pathsRef: RefObject<ReadonlyArray<PathOrFn<TState>>>,
   pathsKey: string,
   enabled: boolean,
-  mode: SyncMode,
-  canListen: boolean = false
+  mode: SyncMode
 ): (cb: () => void) => () => void {
   return useMemo(
     () => (cb: () => void) => {
-      if (!enabled || mode === 'mount' || !canListen) {
+      if (!enabled || mode === 'mount') {
         return () => {};
       }
 
-      const unsubs = paths.map(p => store.subscribePath(p, cb));
+      const paths = pathsRef.current;
+      if (paths.some(p => typeof p === 'function')) {
+        return store.subscribe(cb);
+      }
+
+      const unsubs = paths.map(p => store.subscribePath(p as PathOf<TState>, cb));
       return () => unsubs.forEach(u => u());
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -132,11 +123,18 @@ export function useMultiSubscribe<TState extends object>(
 
 export function useMultiSetters<TState extends object>(
   store: StoreApi<TState>,
-  paths: ReadonlyArray<PathOf<TState>>,
+  pathsRef: RefObject<ReadonlyArray<PathOrFn<TState>>>,
   pathsKey: string
 ): Array<(value: any) => void> {
+  const length = pathsRef.current.length;
+
   return useMemo(
-    () => paths.map(p => (value: any) => store.setState(p, value)),
+    () =>
+      Array.from({ length }, (_, i) => (value: any) => {
+        const p = pathsRef.current[i];
+        const resolvedPath = typeof p === 'function' ? p(store.getState()) : p;
+        store.setState(resolvedPath, value);
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, pathsKey]
   );

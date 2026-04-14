@@ -4,7 +4,6 @@ import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import {
   defaultMultiEqualityFn,
-  isPathResolver,
   makeMultiSnapshot,
   makeSingleSnapshot,
   useMultiExternalStore,
@@ -18,7 +17,7 @@ import type {
   __NoDefault,
   MultiPathReturn,
   PathOf,
-  PathResolverFn,
+  PathOrFn,
   PathSetter,
   PathSetters,
   PathValue,
@@ -29,21 +28,28 @@ import type {
   UseStoreReturn
 } from '../../types/StoreTypes';
 
-export { defaultMultiEqualityFn, pathOf } from './shared';
-export type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions, UseStoreReturn, PathResolverFn };
+export { defaultMultiEqualityFn } from './shared';
+export type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions, UseStoreReturn };
 
-function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((state: TState) => unknown) | undefined>(
+type PathFn<TState extends object> = (state: TState) => PathOf<TState>;
+
+function useSingleStore<TState extends object>(
   store: StoreApi<TState>,
-  pathOrSelector: TArg,
-  options: UseStoreOptions<unknown>
-): UseStoreReturn<TState, TArg> {
-  const { mode = 'sync', enabled = true, defaultValue } = options;
-  const equalityFn = options.equalityFn ?? (typeof pathOrSelector === 'function' ? shallowEqual : Object.is);
+  pathOrFn: PathOf<TState> | PathFn<TState> | undefined,
+  options: UseStoreOptions<any>
+): [unknown, (value: unknown) => void] {
+  const mode = options.mode ?? 'sync';
+  const enabled = options.enabled ?? true;
+  const defaultValue = options.defaultValue as unknown;
+  const isFullState = pathOrFn === undefined;
+  const equalityFn =
+    (options.equalityFn as ((a: unknown, b: unknown) => boolean) | undefined) ??
+    (isFullState ? shallowEqual : Object.is);
+  const transformer = options.transformer as ((value: unknown) => unknown) | undefined;
+  const transformerRef = useRef<typeof transformer>(transformer);
+  transformerRef.current = transformer;
 
-  const getSnapshot = useMemo(
-    () => makeSingleSnapshot(store, pathOrSelector, defaultValue),
-    [store, pathOrSelector, defaultValue]
-  );
+  const getSnapshot = useMemo(() => makeSingleSnapshot(store, pathOrFn, defaultValue), [store, pathOrFn, defaultValue]);
 
   const lastRef = useRef<unknown>(getSnapshot());
 
@@ -54,13 +60,13 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
           return () => {};
         }
 
-        if (typeof pathOrSelector === 'string') {
-          return store.subscribePath(pathOrSelector as PathOf<TState>, cb);
+        if (typeof pathOrFn === 'string') {
+          return store.subscribePath(pathOrFn, cb);
         }
 
         return store.subscribe(cb);
       },
-    [enabled, mode, pathOrSelector, store]
+    [enabled, mode, pathOrFn, store]
   );
 
   const getSnap = () => {
@@ -81,48 +87,65 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
     return next;
   };
 
-  const selected = useSyncExternalStore(subscribe, getSnap, getSnap);
+  const raw = useSyncExternalStore(subscribe, getSnap, getSnap);
+
+  const result = useMemo(() => (transformerRef.current ? transformerRef.current(raw) : raw), [raw]);
 
   const setState = useCallback(
     (value: unknown) => {
-      if (typeof pathOrSelector === 'string') {
-        store.setState(pathOrSelector as PathOf<TState>, value as PathValue<TState, PathOf<TState>>);
-      } else if (isPathResolver<TState>(pathOrSelector)) {
-        store.setState(pathOrSelector(store.getState()), value as PathValue<TState, PathOf<TState>>);
-      } else {
+      if (isFullState) {
         store.setState(undefined, value as TState);
+      } else if (typeof pathOrFn === 'function') {
+        store.setState(pathOrFn(store.getState()), value as PathValue<TState, PathOf<TState>>);
+      } else {
+        store.setState(pathOrFn, value as PathValue<TState, PathOf<TState>>);
       }
     },
-    [store, pathOrSelector]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, pathOrFn]
   );
 
-  return [selected, setState] as UseStoreReturn<TState, TArg>;
+  return [result, setState];
 }
 
-function useMultiStore<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
+function useMultiStore<TState extends object>(
   store: StoreApi<TState>,
-  paths: Paths,
-  options: UseStoreMultiOptions<TState, Paths>
-): MultiPathReturn<TState, Paths> {
-  const { mode = 'sync', enabled = true } = options;
+  paths: ReadonlyArray<PathOrFn<TState>>,
+  options: UseStoreMultiOptions<TState, any>
+): unknown {
+  const mode = options.mode ?? 'sync';
+  const enabled = options.enabled ?? true;
   const defaultValue = options.defaultValue as unknown;
   const equalityFn =
     (options.equalityFn as ((a: unknown[], b: unknown[]) => boolean) | undefined) ?? defaultMultiEqualityFn;
-  const pathsKey = paths.join('|');
+  const transformer = options.transformer as ((values: unknown[]) => unknown) | undefined;
+  const transformerRef = useRef<typeof transformer>(transformer);
+  transformerRef.current = transformer;
+
+  const pathsRef = useRef<ReadonlyArray<PathOrFn<TState>>>(paths);
+  pathsRef.current = paths;
+
+  const pathsKey = paths.map((p, i) => (typeof p === 'function' ? `fn_${i}` : p)).join('|');
 
   const lastRef = useRef<unknown[] | null>(null);
 
   const getSnapshot = useMemo(
-    () => makeMultiSnapshot(store, paths, lastRef, { equalityFn, defaultValue }),
+    () => makeMultiSnapshot(store, pathsRef, lastRef, { equalityFn, defaultValue }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, pathsKey, equalityFn, defaultValue]
   );
 
-  const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode, true);
-  const selected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
-  const setters = useMultiSetters(store, paths, pathsKey);
+  const subscribe = useMultiSubscribe(store, pathsRef, pathsKey, enabled, mode);
+  const rawSelected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
 
-  return [selected, ...setters] as unknown as MultiPathReturn<TState, Paths>;
+  const result = useMemo(
+    () => (transformerRef.current ? transformerRef.current(rawSelected) : rawSelected),
+    [rawSelected]
+  );
+
+  const setters = useMultiSetters(store, pathsRef, pathsKey);
+
+  return [result, ...setters];
 }
 
 function useStore<TState extends object>(
@@ -132,33 +155,32 @@ function useStore<TState extends object>(
 
 function useStore<TState extends object, P extends PathOf<TState>>(
   path: P,
-  options?: UseStoreOptions<PathValue<TState, P>> & { defaultValue?: never }
-): [
-  PathValue<TState, P>,
-  (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
-];
+  options?: UseStoreOptions<PathValue<TState, P>> & { defaultValue?: never; transformer?: never }
+): [PathValue<TState, P>, PathSetter<TState, P>];
 
 function useStore<TState extends object, P extends PathOf<TState>, D>(
   path: P,
-  options: UseStoreOptions<PathValue<TState, P>> & { defaultValue: D }
-): [
-  NonNullable<PathValue<TState, P>> | D,
-  (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
-];
+  options: UseStoreOptions<PathValue<TState, P>> & { defaultValue: D; transformer?: never }
+): [NonNullable<PathValue<TState, P>> | D, PathSetter<TState, P>];
 
-function useStore<TState extends object, P extends PathOf<TState>>(
-  pathResolver: PathResolverFn<TState, P>,
-  options?: UseStoreOptions<PathValue<TState, P>>
-): [PathValue<TState, P>, PathSetter<TState, P>];
+function useStore<TState extends object, P extends PathOf<TState>, TResult>(
+  path: P,
+  options: UseStoreOptions<PathValue<TState, P>> & { transformer: (value: PathValue<TState, P>) => TResult }
+): [TResult, PathSetter<TState, P>];
 
-function useStore<TState extends object, TSelected>(
-  selector: (state: TState) => TSelected,
-  options?: UseStoreOptions<TSelected>
-): [TSelected, StoreApi<TState>['setState']];
+function useStore<TState extends object>(
+  pathFn: PathFn<TState>,
+  options?: UseStoreOptions<unknown, TState> & { transformer?: never }
+): [unknown, (value: unknown) => void];
+
+function useStore<TState extends object, TResult>(
+  pathFn: PathFn<TState>,
+  options: UseStoreOptions<unknown, TState> & { transformer: (value: unknown) => TResult }
+): [TResult, (value: unknown) => void];
 
 function useStore<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
   paths: Paths,
-  options?: Omit<UseStoreMultiOptions<TState, Paths>, 'defaultValue'>
+  options?: Omit<UseStoreMultiOptions<TState, Paths>, 'defaultValue' | 'transformer'>
 ): MultiPathReturn<TState, Paths, __NoDefault>;
 
 function useStore<
@@ -167,31 +189,46 @@ function useStore<
   const TDefaultValue extends readonly (PathValue<TState, Paths[number]> | undefined)[]
 >(
   paths: Paths,
-  options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue }
+  options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue; transformer?: never }
 ): MultiPathReturn<TState, Paths, TDefaultValue>;
 
 function useStore<
   TState extends object,
   const Paths extends ReadonlyArray<PathOf<TState>>,
-  const TDefaultValue extends PathValue<TState, Paths[number]>
+  TDefaultValue extends PathValue<TState, Paths[number]>
 >(
   paths: Paths,
-  options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue }
+  options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue; transformer?: never }
 ): MultiPathReturn<TState, Paths, TDefaultValue>;
 
+function useStore<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>, TResult>(
+  paths: Paths,
+  options: UseStoreMultiOptions<TState, Paths> & { transformer: (values: PathValues<TState, Paths>) => TResult }
+): [TResult, ...PathSetters<TState, Paths>];
+
 function useStore<TState extends object>(
-  arg?: PathOf<TState> | ReadonlyArray<PathOf<TState>> | ((state: TState) => unknown),
+  paths: ReadonlyArray<PathOrFn<TState>>,
+  options?: { transformer?: never } & UseStoreOptions<unknown, TState>
+): [unknown[], ...Array<(value: unknown) => void>];
+
+function useStore<TState extends object, TResult>(
+  paths: ReadonlyArray<PathOrFn<TState>>,
+  options: { transformer: (values: unknown[]) => TResult } & UseStoreOptions<unknown, TState>
+): [TResult, ...Array<(value: unknown) => void>];
+
+function useStore<TState extends object>(
+  arg?: PathOf<TState> | ReadonlyArray<PathOrFn<TState>> | PathFn<TState>,
   options: UseStoreOptions<any, any> = {}
 ): unknown {
   const store = useResolvedStore(options.store as StoreApi<TState> | undefined, 'useStore');
 
   if (Array.isArray(arg)) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useMultiStore(store, arg as ReadonlyArray<PathOf<TState>>, options);
+    return useMultiStore(store, arg as ReadonlyArray<PathOrFn<TState>>, options);
   }
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  return useSingleStore(store, arg as PathOf<TState> | ((state: TState) => unknown) | undefined, options);
+  return useSingleStore(store, arg as PathOf<TState> | PathFn<TState> | undefined, options);
 }
 
 export type { PathSetters, PathValues };

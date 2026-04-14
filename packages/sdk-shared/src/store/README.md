@@ -1,6 +1,6 @@
 # Store
 
-A lightweight React store built on `useSyncExternalStore`. Provides path-based subscriptions, multi-path reads, snapshot getters, and two-way sync helpers — all type-safe with dot-notation paths.
+A lightweight React store built on `useSyncExternalStore`. Provides path-based subscriptions, multi-path reads, snapshot getters, and sync helpers — all type-safe with dot-notation paths.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ StoreProvider.tsx        context provider with optional sync
 hooks/
   shared.ts              snapshot factories, subscription helpers, useResolvedStore
   useStore.ts            subscribe + read
-  useStoreSync.ts        two-way sync (parent→store)
+  useStoreSync.ts        sync external value into the store (write-only)
   useStoreGetter.ts      non-reactive snapshot getter
   useStoreSetter.ts      fire-and-forget setter
 helpers/
@@ -64,24 +64,36 @@ const [name, setName] = useStore('user.name');
 // With default value
 const [el, setEl] = useStore(`schema.flat.${id}` as PathOf<MyState>, { defaultValue: {} });
 
-// Selector (shallowEqual by default)
-const [derived] = useStore(s => ({ flat: s.schema.flat, count: s.count }));
+// Dynamic path (function resolves the path string at runtime)
+const [val, setVal] = useStore(s => `style.platform.${s.displayMode}` as PathOf<MyState>);
 
-// Dynamic path via pathOf
-const [val, setVal] = useStore(pathOf(s => `style.platform.${s.displayMode}` as PathOf<MyState>));
+// Transform the value (memoized, no extra re-renders)
+const [upper] = useStore('user.name', { transformer: v => v.toUpperCase() });
 
 // Multi-path
 const [[name, count], setName, setCount] = useStore(['user.name', 'count']);
 
+// Multi-path with dynamic path
+const [[name, val], setName, setVal] = useStore([
+  'user.name',
+  s => `style.${s.displayMode}` as PathOf<MyState>
+]);
+
+// Multi-path with transformer
+const [derived] = useStore(['user.name', 'count'], {
+  transformer: ([name, count]) => `${name} (${count})`
+});
+
 // Options
-useStore('user.name', { enabled: false });          // unsubscribed
-useStore('user.name', { mode: 'mount' });           // read once on mount
-useStore('user.name', { store: myStore });          // explicit store
+useStore('user.name', { enabled: false });       // unsubscribed
+useStore('user.name', { mode: 'mount' });        // read once on mount
+useStore('user.name', { store: myStore });       // explicit store
+useStore('user.name', { equalityFn: Object.is }); // custom equality
 ```
 
 ## `useStoreSync`
 
-Syncs an external value into the store. Used in `StoreProvider` and components that receive props they want to expose to the store.
+Syncs an external value into the store on every render (write-only, no subscription). Returns `void`.
 
 ```ts
 // Sync full state (merges)
@@ -94,10 +106,9 @@ useStoreSync('schema', schema);
 useStoreSync(['schema', 'style'], [schema, style]);
 
 // Options
-useStoreSync('schema', schema, { mode: 'mount' });         // sync on mount only
-useStoreSync('schema', schema, { enabled: false });        // disabled
+useStoreSync('schema', schema, { mode: 'mount' });          // sync on mount only
+useStoreSync('schema', schema, { enabled: false });         // disabled
 useStoreSync('schema', schema, { syncStrategy: 'render' }); // sync during render (no layout effect)
-useStoreSync('schema', schema, { canListen: true });       // also subscribe to store changes
 ```
 
 ## `useStoreGetter`
@@ -122,7 +133,7 @@ const [getName, getCount] = useStoreGetter(['user.name', 'count']);
 getName(); // → string
 getCount(); // → number
 
-// Mixed paths + selectors
+// Mixed paths + functions
 const [getFlat, getCount] = useStoreGetter(['schema.flat', s => s.count]);
 ```
 
@@ -139,9 +150,9 @@ setState(undefined, fullState);
 
 // Scoped setter
 const setFlat = useStoreSetter('schema.flat');
-setFlat(id, element);                      // sets schema.flat.${id}
-setFlat(`${id}.attributes`, attrs);        // sets schema.flat.${id}.attributes
-setFlat(undefined, flatObj);               // replaces schema.flat
+setFlat(id, element);               // sets schema.flat.${id}
+setFlat(`${id}.attributes`, attrs); // sets schema.flat.${id}.attributes
+setFlat(undefined, flatObj);        // replaces schema.flat
 ```
 
 ## `createStoreHook`
@@ -160,27 +171,16 @@ All types live in `src/types/StoreTypes.ts`:
 |---|---|
 | `PathOf<T>` | Union of all valid dot-paths in `T` |
 | `PathValue<T, P>` | Value type at path `P` in `T` |
+| `PathOrFn<T>` | `PathOf<T>` or a function `(state: T) => PathOf<T>` |
 | `PathValues<T, Paths>` | Tuple of values for an array of paths |
 | `PathSetter<T, P>` | Setter function for a single path |
 | `PathSetters<T, Paths>` | Tuple of setters for an array of paths |
 | `MultiPathReturn<T, Paths>` | `[values, ...setters]` tuple |
 | `StoreApi<T>` | `{ getState, setState, subscribe, subscribePath }` |
 | `SetState<T>` | Full `setState` overload signature |
-| `PathResolverFn<T, P>` | Tagged function `(state: T) => P` for `pathOf()` |
-| `UseStoreOptions` | Options for `useStore` (mode, enabled, equalityFn, defaultValue) |
+| `UseStoreOptions` | Options for `useStore` (mode, enabled, equalityFn, defaultValue, transformer) |
 | `UseStoreMultiOptions` | Options for multi-path `useStore` |
-| `UseStoreSyncOptions` | Options for `useStoreSync` |
+| `UseStoreSyncOptions` | Options for `useStoreSync` (mode, enabled, syncStrategy) |
 | `UseStoreSyncMultiOptions` | Options for multi-path `useStoreSync` |
 | `UseStoreGetterOptions` | Options for `useStoreGetter` |
 | `UseStoreSetterOptions` | Options for `useStoreSetter` |
-
-## `pathOf`
-
-Tags a path resolver function so `useStore` treats it as a dynamic path subscription (subscribes to the resolved path) rather than a selector.
-
-```ts
-import { pathOf } from '@plitzi/sdk-shared/store/hooks/useStore';
-
-// Subscribes to e.g. "style.platform.desktop"
-const [val, setVal] = useStore(pathOf(s => `style.platform.${s.displayMode}` as PathOf<MyState>));
-```

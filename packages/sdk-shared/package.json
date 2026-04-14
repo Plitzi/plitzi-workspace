@@ -854,6 +854,10 @@
       "types": "./dist/src/store/index.d.ts",
       "import": "./dist/src/store/index.mjs"
     },
+    "./store/StoreContext": {
+      "types": "./dist/src/store/StoreContext.d.ts",
+      "import": "./dist/src/store/StoreContext.mjs"
+    },
     "./store/StoreProvider": {
       "types": "./dist/src/store/StoreProvider.d.ts",
       "import": "./dist/src/store/StoreProvider.mjs"

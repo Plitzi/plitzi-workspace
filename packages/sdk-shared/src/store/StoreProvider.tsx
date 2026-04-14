@@ -60,13 +60,11 @@ const StoreProvider = <TState extends object = any>({
 
   useStoreSync(path as any, (path ? value : storeState) as any, {
     enabled: syncEnabled && !!path,
-    store: syncStore,
-    canListen: !!store
+    store: syncStore
   });
   useStoreSync<TState>(undefined, storeState as Partial<TState>, {
     enabled: syncEnabled && !path,
-    store: syncStore,
-    canListen: !!store
+    store: syncStore
   });
 
   return <StoreContext value={storeRef.current}>{children}</StoreContext>;

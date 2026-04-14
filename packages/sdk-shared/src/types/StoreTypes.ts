@@ -106,11 +106,7 @@ export type StoreApiInternal<T> = StoreApi<T> & {
   pathListeners: Map<string, Set<Listener>>;
 };
 
-export const PATH_RESOLVER_TAG = Symbol('pathResolver');
-
-export type PathResolverFn<TState extends object, P extends PathOf<TState> = PathOf<TState>> = ((
-  state: TState
-) => P) & { readonly [PATH_RESOLVER_TAG]: true };
+export type PathOrFn<TState extends object> = PathOf<TState> | ((state: TState) => PathOf<TState>);
 
 export type MultiPathReturn<
   TState extends object,
@@ -119,16 +115,15 @@ export type MultiPathReturn<
 > = [PathValues<TState, Paths, TDefaultValue>, ...PathSetters<TState, Paths>];
 
 export type UseStoreReturn<TState extends object, TArg> =
-  TArg extends PathResolverFn<TState, infer P>
-    ? [PathValue<TState, P>, PathSetter<TState, P>]
-    : TArg extends PathOf<TState>
-      ? [PathValue<TState, TArg>, PathSetter<TState, TArg>]
-      : TArg extends (state: TState) => infer TResult
-        ? [TResult, StoreApi<TState>['setState']]
-        : [TState, StoreApi<TState>['setState']];
+  TArg extends PathOf<TState>
+    ? [PathValue<TState, TArg>, PathSetter<TState, TArg>]
+    : TArg extends (state: TState) => unknown
+      ? [unknown, (value: unknown) => void]
+      : [TState, StoreApi<TState>['setState']];
 
 export type UseStoreOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
   defaultValue?: NonNullable<T>;
+  transformer?: (value: T) => unknown;
 };
 
 export type UseStoreMultiOptions<
@@ -141,11 +136,11 @@ export type UseStoreMultiOptions<
 > = Omit<StoreHookReactiveOptions<never, TState>, 'equalityFn'> & {
   equalityFn?: (a: PathValues<TState, Paths>, b: PathValues<TState, Paths>) => boolean;
   defaultValue?: TDefaultValue;
+  transformer?: (values: PathValues<TState, Paths>) => unknown;
 };
 
 export type UseStoreSyncOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
   syncStrategy?: 'render' | 'afterRender';
-  canListen?: boolean;
 };
 
 export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
@@ -153,7 +148,6 @@ export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
   'equalityFn'
 > & {
   syncStrategy?: 'render' | 'afterRender';
-  canListen?: boolean;
 };
 
 export type GetValueFn<TState extends object> = {

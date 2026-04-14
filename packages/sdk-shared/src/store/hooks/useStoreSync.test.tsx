@@ -8,8 +8,6 @@ import { StoreContext } from '../StoreProvider';
 import type { StoreApi } from '../../types';
 import type { ReactNode } from 'react';
 
-// ─── State shape ──────────────────────────────────────────────────────────────
-
 type SyncState = {
   schema: { version: number; title: string };
   count: number;
@@ -39,14 +37,6 @@ describe('useStoreSync: mount behavior', () => {
     renderHook(() => useStoreSync('count', 42), { wrapper: makeWrapper(store) });
 
     expect(store.getState().count).toBe(42);
-  });
-
-  it('returns the synced value immediately on mount', () => {
-    const store = makeStore();
-
-    const { result } = renderHook(() => useStoreSync('count', 99), { wrapper: makeWrapper(store) });
-
-    expect(result.current[0]).toBe(99);
   });
 
   it('writes a nested path value on mount', () => {
@@ -88,21 +78,10 @@ describe('useStoreSync: sync mode', () => {
 
     const { rerender } = renderHook(() => useStoreSync('count', 5), { wrapper: makeWrapper(store) });
 
-    rerender(); // same value — should not trigger setState again
+    rerender();
     rerender();
 
-    // Only 1 write: the initial mount sync
     expect(listener).toHaveBeenCalledTimes(0);
-  });
-
-  it('reflects store value updated externally via setState', () => {
-    const store = makeStore();
-
-    const { result } = renderHook(() => useStoreSync('count', 0), { wrapper: makeWrapper(store) });
-
-    act(() => store.setState('count', 77));
-
-    expect(result.current[0]).toBe(77);
   });
 
   it('syncs multiple times as the external value changes', () => {
@@ -139,43 +118,8 @@ describe('useStoreSync: mount mode', () => {
     rerender();
     rerender();
 
-    // Still 10 — mount mode ignores subsequent value changes
     expect(store.getState().count).toBe(10);
     expect(listener).toHaveBeenCalledTimes(0);
-  });
-
-  it('still reflects external store updates in mount mode', () => {
-    const store = makeStore();
-
-    const { result } = renderHook(() => useStoreSync('count', 5, { mode: 'mount' }), { wrapper: makeWrapper(store) });
-
-    act(() => store.setState('count', 42));
-
-    // Reading side still works — it reflects whatever is in the store
-    expect(result.current[0]).toBe(42);
-  });
-});
-
-describe('useStoreSync: returned setState', () => {
-  it('updates the store via the returned setter', () => {
-    const store = makeStore();
-
-    const { result } = renderHook(() => useStoreSync('count', 0), { wrapper: makeWrapper(store) });
-
-    act(() => result.current[1](100));
-
-    expect(store.getState().count).toBe(100);
-    expect(result.current[0]).toBe(100);
-  });
-
-  it('supports updater function in the returned setter', () => {
-    const store = makeStore();
-
-    const { result } = renderHook(() => useStoreSync('count', 10), { wrapper: makeWrapper(store) });
-
-    act(() => result.current[1](prev => prev + 5));
-
-    expect(result.current[0]).toBe(15);
   });
 });
 
@@ -197,11 +141,9 @@ describe('useStoreSync: custom equalityFn', () => {
       { wrapper: makeWrapper(store) }
     );
 
-    // New reference, same content
     externalSchema = { version: 1, title: 'same' };
     rerender();
 
-    // equalityFn returned true — no second write
     expect(listener).toHaveBeenCalledTimes(0);
   });
 
@@ -250,7 +192,6 @@ describe('useStoreSync: interaction with other subscribers', () => {
     externalCount = 10;
     rerender();
 
-    // 0 mount sync + 2 value changes
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
@@ -300,17 +241,16 @@ describe('useStoreSync: driven by React local state', () => {
     const { result } = renderHook(
       () => {
         const [localCount, setLocalCount] = useState(0);
-        const [storeCount] = useStoreSync('count', localCount, { syncStrategy: 'afterRender' });
-        return { storeCount, setLocalCount };
+        useStoreSync('count', localCount, { syncStrategy: 'afterRender' });
+        return { setLocalCount };
       },
       { wrapper: makeWrapper(store) }
     );
 
-    expect(result.current.storeCount).toBe(0);
+    expect(store.getState().count).toBe(0);
 
     act(() => result.current.setLocalCount(42));
 
-    expect(result.current.storeCount).toBe(42);
     expect(store.getState().count).toBe(42);
   });
 
@@ -320,17 +260,14 @@ describe('useStoreSync: driven by React local state', () => {
     const { result } = renderHook(
       () => {
         const [localCount, setLocalCount] = useState(10);
-        const [storeCount] = useStoreSync('count', localCount, { mode: 'mount' });
-        return { storeCount, setLocalCount };
+        useStoreSync('count', localCount, { mode: 'mount' });
+        return { setLocalCount };
       },
       { wrapper: makeWrapper(store) }
     );
 
     act(() => result.current.setLocalCount(99));
 
-    // Store still holds the mount value
     expect(store.getState().count).toBe(10);
-    // But reading side reflects any external change to the store
-    expect(result.current.storeCount).toBe(10);
   });
 });
