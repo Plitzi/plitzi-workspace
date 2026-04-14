@@ -12,26 +12,29 @@ import useStoreSyncBase from './hooks/useStoreSync';
 
 import type {
   GetState,
+  GetterTuple,
+  GetValueFn,
+  GetValueFromBaseFn,
+  GetValueFromBaseWithDefaultFn,
   Listener,
+  MultiPathReturn,
   Path,
   PathOf,
   PathValue,
   PathValues,
+  SetFromBaseFn,
   SetState,
+  SetStateFn,
   StoreApi,
   StoreApiInternal,
-  StoreLogger
+  StoreLogger,
+  UseStoreGetterOptions,
+  UseStoreMultiOptions,
+  UseStoreOptions,
+  UseStoreSetterOptions,
+  UseStoreSyncMultiOptions,
+  UseStoreSyncOptions
 } from '../types';
-import type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions } from './hooks/useStore';
-import type {
-  GetValueFn,
-  GetValueFromBaseFn,
-  GetValueFromBaseWithDefaultFn,
-  GetterTuple,
-  UseStoreGetterOptions
-} from './hooks/useStoreGetter';
-import type { SetFromBaseFn, SetStateFn, UseStoreSetterOptions } from './hooks/useStoreSetter';
-import type { UseStoreSyncMultiOptions, UseStoreSyncOptions } from './hooks/useStoreSync';
 
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
@@ -117,7 +120,6 @@ function createStore<TState extends object>(
 
   const api: StoreApi<TState> = { getState, setState, subscribe, subscribePath };
 
-  // Expose internals in test mode to verify memory and listener cleanup
   if (import.meta.env.MODE === 'test') {
     (api as StoreApiInternal<TState>).listeners = listeners;
     (api as StoreApiInternal<TState>).pathListeners = pathListeners;
@@ -126,50 +128,7 @@ function createStore<TState extends object>(
   return api;
 }
 
-//   const { useStore, useStoreSync, useStoreGetter, useStoreSetter } = createStoreHook<MyState>()
-//
-//   ── useStore ────────────────────────────────────────────────────────────────────────────────
-//   useStore()                                                   → [MyState, setState]
-//   useStore('user.name')                                        → [string, setName]
-//   useStore(`schema.flat.${id}` as PathOf<MyState>)            → [Element, setElement]  dynamic path
-//   useStore(s => s.count)                                       → [number, setState]  shallowEqual by default
-//   useStore(s => ({ flat: s.schema.flat, count: s.count }))    → [derived, setState]  single subscription
-//   useStore(['user.name', 'count'])                             → [[name, count], setName, setCount]
-//   useStore('user.name', { enabled: false })                    → unsubscribed, returns last value
-//   useStore('user.name', { store: myStore })                    → reads from explicit store instance
-//
-//   ── useStoreSync ────────────────────────────────────────────────────────────────────────────
-//   useStoreSync(undefined, fullState)                           → [TState, setState]    syncs full state
-//   useStoreSync('schema', schema)                               → [Schema, setSchema]   sync on every render
-//   useStoreSync('schema', schema, { mode: 'mount' })            → [Schema, setSchema]   sync on mount only
-//   useStoreSync('schema', schema, { enabled: false })           → disabled, no sync
-//   useStoreSync('schema', schema, { store: myStore })           → syncs to explicit store instance
-//
-//   ── useStoreGetter ──────────────────────────────────────────────────────────────────────────
-//   useStoreGetter()                                             → getState  reads full state snapshot
-//   useStoreGetter('schema.flat')                                → getFlatSnapshot  reads sub-path
-//   useStoreGetter('schema.flat', { defaultValue: {} })          → getFlatSnapshot  returns default when undefined
-//   useStoreGetter('schema.flat')(id)                            → element  reads sub-path at call time
-//   useStoreGetter(['user.name', 'count'])                       → [getName, getCount]  tuple of getters
-//   useStoreGetter(['user.name', 'count'], { defaultValue: [] }) → tuple with per-index or scalar default
-//   useStoreGetter(['schema.flat', s => s.count])                → [getFlat, getCount]  mixed paths + selectors
-//   useStoreGetter('schema.flat', { store: myStore })            → reads from explicit store instance
-//
-//   ── useStoreSetter ──────────────────────────────────────────────────────────────────────────
-//   useStoreSetter()                                             → setState  full store setter
-//   useStoreSetter()(undefined, fullState)                       → replaces full state
-//   useStoreSetter()('user.name', 'Alice')                       → sets nested path
-//   useStoreSetter()('user.name', prev => prev + '!')            → updater function
-//   useStoreSetter('schema.flat')                                → setter scoped to base path
-//   useStoreSetter('schema.flat')(id, element)                   → sets schema.flat.${id}
-//   useStoreSetter('schema.flat')(`${id}.attributes`, attrs)     → sets schema.flat.${id}.attributes
-//   useStoreSetter('schema.flat')(undefined, flatObj)            → replaces full schema.flat
-//   useStoreSetter('schema.flat', { store: myStore })            → scoped setter on explicit store instance
 export const createStoreHook = <TState extends object>() => {
-  // The overloads below intentionally mirror useStore.ts / useStoreSync.ts.
-  // TypeScript does not support instantiating a generic function type (e.g. typeof useStoreBase<TState>),
-  // so they must be re-declared here to bind TState at factory level.
-
   function useStore(options?: UseStoreOptions<TState, TState>): [TState, StoreApi<TState>['setState']];
 
   function useStore<P extends PathOf<TState>>(

@@ -3,13 +3,12 @@
 
 import { use, useCallback, useMemo, useSyncExternalStore } from 'react';
 
+import { PATH_RESOLVER_TAG } from '../../types/StoreTypes';
 import getByPath from '../helpers/getByPath';
-import { StoreContext } from '../StoreProvider';
+import { StoreContext } from '../StoreContext';
 
-import type { PathOf, StoreApi, SyncMode } from '../../types/StoreTypes';
+import type { PathOf, PathResolverFn, StoreApi, SyncMode } from '../../types/StoreTypes';
 import type { RefObject } from 'react';
-
-// ─── Shared equality ─────────────────────────────────────────────────────────
 
 export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
   if (a.length !== b.length) {
@@ -25,27 +24,35 @@ export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
   return true;
 };
 
-// ─── Snapshot factories ───────────────────────────────────────────────────────
+export function pathOf<TState extends object, P extends PathOf<TState>>(
+  fn: (state: TState) => P
+): PathResolverFn<TState, P> {
+  return Object.assign(fn, { [PATH_RESOLVER_TAG]: true as const });
+}
 
-/**
- * Creates a `getSnapshot` function for a single path, selector, or full state.
- * Used by both `useStore` and `useStoreSync` so the logic lives in one place.
- */
+export function isPathResolver<TState extends object>(fn: unknown): fn is PathResolverFn<TState> {
+  return typeof fn === 'function' && PATH_RESOLVER_TAG in fn;
+}
+
 export function makeSingleSnapshot<TState extends object>(
   store: StoreApi<TState>,
-  pathOrSelector: PathOf<TState> | ((state: TState) => unknown) | undefined,
+  pathOrSelector: PathOf<TState> | PathResolverFn<TState> | ((state: TState) => unknown) | undefined,
   defaultValue?: unknown
 ): () => unknown {
   return () => {
     const state = store.getState();
 
     if (typeof pathOrSelector === 'function') {
+      if (isPathResolver<TState>(pathOrSelector)) {
+        const val = getByPath(state, pathOrSelector(state));
+        return val === undefined ? defaultValue : val;
+      }
+
       return pathOrSelector(state);
     }
 
     if (typeof pathOrSelector === 'string') {
       const val = getByPath(state, pathOrSelector);
-
       return val === undefined ? defaultValue : val;
     }
 
@@ -53,18 +60,11 @@ export function makeSingleSnapshot<TState extends object>(
   };
 }
 
-/**
- * Creates a `getSnapshot` function for multiple paths.
- * Used by both `useStore` and `useStoreSync` so the logic lives in one place.
- */
 export function makeMultiSnapshot<TState extends object>(
   store: StoreApi<TState>,
   paths: ReadonlyArray<PathOf<TState>>,
   lastRef: RefObject<unknown[] | null>,
-  options: {
-    equalityFn?: (a: unknown[], b: unknown[]) => boolean;
-    defaultValue?: unknown;
-  } = {}
+  options: { equalityFn?: (a: unknown[], b: unknown[]) => boolean; defaultValue?: unknown } = {}
 ): () => unknown[] {
   const { equalityFn = defaultMultiEqualityFn, defaultValue } = options;
 
@@ -79,7 +79,6 @@ export function makeMultiSnapshot<TState extends object>(
 
       if (Array.isArray(defaultValue)) {
         const def = (defaultValue as unknown[])[i];
-
         return def !== undefined ? def : val;
       }
 
@@ -92,15 +91,10 @@ export function makeMultiSnapshot<TState extends object>(
     }
 
     lastRef.current = next;
-
     return next;
   };
 }
 
-/**
- * Resolves the store from an explicit option or the nearest StoreContext.
- * Throws if neither is available.
- */
 export function useResolvedStore<TState extends object>(
   optionStore: StoreApi<TState> | undefined,
   hookName: string
@@ -114,10 +108,6 @@ export function useResolvedStore<TState extends object>(
   return store;
 }
 
-/**
- * Stable subscribe function for multi-path hooks.
- * Returns a no-op when disabled or in mount mode.
- */
 export function useMultiSubscribe<TState extends object>(
   store: StoreApi<TState>,
   paths: ReadonlyArray<PathOf<TState>>,
@@ -133,7 +123,6 @@ export function useMultiSubscribe<TState extends object>(
       }
 
       const unsubs = paths.map(p => store.subscribePath(p, cb));
-
       return () => unsubs.forEach(u => u());
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,9 +130,6 @@ export function useMultiSubscribe<TState extends object>(
   );
 }
 
-/**
- * Stable setter array for multi-path hooks.
- */
 export function useMultiSetters<TState extends object>(
   store: StoreApi<TState>,
   paths: ReadonlyArray<PathOf<TState>>,
@@ -156,10 +142,6 @@ export function useMultiSetters<TState extends object>(
   );
 }
 
-/**
- * useSyncExternalStore wrapper for multi-path hooks.
- * When disabled, freezes at the first-seen snapshot.
- */
 export function useMultiExternalStore(
   subscribe: (cb: () => void) => () => void,
   getSnapshot: () => unknown[],
@@ -170,7 +152,6 @@ export function useMultiExternalStore(
     if (!enabled) {
       const snap = lastRef.current ?? getSnapshot();
       lastRef.current = snap;
-
       return snap;
     }
 

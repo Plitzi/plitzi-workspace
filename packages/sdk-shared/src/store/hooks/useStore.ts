@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import {
   defaultMultiEqualityFn,
+  isPathResolver,
   makeMultiSnapshot,
   makeSingleSnapshot,
   useMultiExternalStore,
@@ -13,49 +14,23 @@ import {
 } from './shared';
 import shallowEqual from '../helpers/shallowEqual';
 
-export { defaultMultiEqualityFn } from './shared';
-
 import type {
   __NoDefault,
+  MultiPathReturn,
   PathOf,
+  PathResolverFn,
   PathSetter,
   PathSetters,
   PathValue,
   PathValues,
   StoreApi,
-  StoreHookReactiveOptions
+  UseStoreMultiOptions,
+  UseStoreOptions,
+  UseStoreReturn
 } from '../../types/StoreTypes';
 
-export type MultiPathReturn<
-  TState extends object,
-  Paths extends ReadonlyArray<PathOf<TState>>,
-  TDefaultValue = __NoDefault
-> = [PathValues<TState, Paths, TDefaultValue>, ...PathSetters<TState, Paths>];
-
-export type UseStoreReturn<TState extends object, TArg> =
-  TArg extends PathOf<TState>
-    ? [PathValue<TState, TArg>, PathSetter<TState, TArg>]
-    : TArg extends (state: TState) => infer TSelected
-      ? [TSelected, StoreApi<TState>['setState']]
-      : [TState, StoreApi<TState>['setState']];
-
-export type UseStoreOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
-  defaultValue?: NonNullable<T>;
-};
-
-export type UseStoreMultiOptions<
-  TState extends object,
-  Paths extends ReadonlyArray<PathOf<TState>>,
-  TDefaultValue extends
-    | readonly (PathValue<TState, Paths[number]> | undefined)[]
-    | PathValue<TState, Paths[number]>
-    | undefined = undefined
-> = Omit<StoreHookReactiveOptions<never, TState>, 'equalityFn'> & {
-  equalityFn?: (a: PathValues<TState, Paths>, b: PathValues<TState, Paths>) => boolean;
-  defaultValue?: TDefaultValue;
-};
-
-// ─── useSingleStore ───────────────────────────────────────────────────────────
+export { defaultMultiEqualityFn, pathOf } from './shared';
+export type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions, UseStoreReturn, PathResolverFn };
 
 function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((state: TState) => unknown) | undefined>(
   store: StoreApi<TState>,
@@ -103,7 +78,6 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
     }
 
     lastRef.current = next;
-
     return next;
   };
 
@@ -113,6 +87,8 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
     (value: unknown) => {
       if (typeof pathOrSelector === 'string') {
         store.setState(pathOrSelector as PathOf<TState>, value as PathValue<TState, PathOf<TState>>);
+      } else if (isPathResolver<TState>(pathOrSelector)) {
+        store.setState(pathOrSelector(store.getState()), value as PathValue<TState, PathOf<TState>>);
       } else {
         store.setState(undefined, value as TState);
       }
@@ -122,8 +98,6 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
 
   return [selected, setState] as UseStoreReturn<TState, TArg>;
 }
-
-// ─── useMultiStore ────────────────────────────────────────────────────────────
 
 function useMultiStore<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
   store: StoreApi<TState>,
@@ -151,8 +125,6 @@ function useMultiStore<TState extends object, const Paths extends ReadonlyArray<
   return [selected, ...setters] as unknown as MultiPathReturn<TState, Paths>;
 }
 
-// ─── useStore ─────────────────────────────────────────────────────────────────
-
 function useStore<TState extends object>(
   arg?: undefined,
   options?: UseStoreOptions<TState>
@@ -173,6 +145,11 @@ function useStore<TState extends object, P extends PathOf<TState>, D>(
   NonNullable<PathValue<TState, P>> | D,
   (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
 ];
+
+function useStore<TState extends object, P extends PathOf<TState>>(
+  pathResolver: PathResolverFn<TState, P>,
+  options?: UseStoreOptions<PathValue<TState, P>>
+): [PathValue<TState, P>, PathSetter<TState, P>];
 
 function useStore<TState extends object, TSelected>(
   selector: (state: TState) => TSelected,
@@ -216,5 +193,7 @@ function useStore<TState extends object>(
   // eslint-disable-next-line react-hooks/rules-of-hooks
   return useSingleStore(store, arg as PathOf<TState> | ((state: TState) => unknown) | undefined, options);
 }
+
+export type { PathSetters, PathValues };
 
 export default useStore;
