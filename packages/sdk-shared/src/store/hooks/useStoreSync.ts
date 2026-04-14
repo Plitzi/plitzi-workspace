@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useCallback, useRef, useMemo } from 'react';
+import { useCallback, useRef, useMemo, useSyncExternalStore } from 'react';
 
 import {
-  useExternalStoreUnified,
+  makeMultiSnapshot,
+  makeSingleSnapshot,
   useMultiExternalStore,
   useMultiSetters,
   useMultiSubscribe,
   useResolvedStore
 } from './shared';
-import { defaultMultiEqualityFn } from './useStore';
-import getByPath from '../helpers/getByPath';
 import shallowEqual from '../helpers/shallowEqual';
 import useIsomorphicLayoutEffect from '../helpers/useIsomorphicLayoutEffect';
 
@@ -78,19 +77,11 @@ function useStoreSyncMulti<TState extends object, const Paths extends ReadonlyAr
 
   const lastRef = useRef<unknown[] | null>(null);
 
-  const getSnapshot = useCallback((): unknown[] => {
-    const state = store.getState();
-    const next = paths.map(p => getByPath(state, p));
-    const prev = lastRef.current;
-    if (prev !== null && defaultMultiEqualityFn(prev, next)) {
-      return prev;
-    }
-
-    lastRef.current = next;
-
-    return next;
+  const getSnapshot = useMemo(
+    () => makeMultiSnapshot(store, paths, lastRef),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, pathsKey]);
+    [store, pathsKey]
+  );
 
   const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode, canListen);
   const selected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
@@ -137,7 +128,7 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
   };
 
   const getSnapshot = useMemo(
-    () => () => (isFullState ? store.getState() : getByPath(store.getState(), path as PathOf<TState>)),
+    () => makeSingleSnapshot(store, isFullState ? undefined : (path as PathOf<TState>)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, path]
   );
@@ -161,7 +152,7 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
 
   const lastSelectedRef = useRef(getSnapshot());
 
-  const selected = useExternalStoreUnified(subscribe, () => {
+  const getSnap = () => {
     if (!enabled) {
       return lastSelectedRef.current;
     }
@@ -174,7 +165,9 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
     lastSelectedRef.current = next;
 
     return next;
-  });
+  };
+
+  const selected = useSyncExternalStore(subscribe, getSnap, getSnap);
 
   const setState = useCallback(
     (v: unknown) => {

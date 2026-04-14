@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { pick } from '@plitzi/plitzi-ui/helpers/lodash';
 import { createContext, use, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
@@ -16,7 +17,8 @@ export type StoreProviderProps<TState extends object = any> = {
   store?: StoreApi<TState>;
   path?: string;
   value?: Partial<TState> | ((state: TState) => TState);
-  inherit?: boolean;
+  /** true = inherit all parent keys, string[] = inherit only listed keys */
+  inherit?: boolean | ReadonlyArray<keyof TState>;
   autoSync?: boolean;
   logger?: StoreLogger<TState>;
   children?: ReactNode;
@@ -34,7 +36,15 @@ const StoreProvider = <TState extends object = any>({
   const parentStore = use(StoreContext) as StoreApi<TState> | undefined;
   const storeRef = useRef<StoreApi<TState>>(undefined);
   const storeState = useMemo(() => {
-    const parentState = inherit && parentStore ? parentStore.getState() : ({} as TState);
+    let parentState = {} as TState;
+    if (inherit && parentStore) {
+      const fullState = parentStore.getState();
+      if (inherit === true) {
+        parentState = fullState;
+      } else if (Array.isArray(inherit)) {
+        parentState = pick(fullState as Record<keyof TState, unknown>, inherit);
+      }
+    }
 
     return typeof value === 'function' ? value(parentState) : { ...parentState, ...value };
   }, [inherit, parentStore, value]);

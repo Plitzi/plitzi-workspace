@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import {
-  useExternalStoreUnified,
+  defaultMultiEqualityFn,
+  makeMultiSnapshot,
+  makeSingleSnapshot,
   useMultiExternalStore,
   useMultiSetters,
   useMultiSubscribe,
   useResolvedStore
 } from './shared';
-import getByPath from '../helpers/getByPath';
 import shallowEqual from '../helpers/shallowEqual';
+
+export { defaultMultiEqualityFn } from './shared';
 
 import type {
   __NoDefault,
@@ -63,21 +66,7 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
   const equalityFn = options.equalityFn ?? (typeof pathOrSelector === 'function' ? shallowEqual : Object.is);
 
   const getSnapshot = useMemo(
-    () => (): unknown => {
-      const state = store.getState();
-
-      if (typeof pathOrSelector === 'function') {
-        return (pathOrSelector as (s: TState) => unknown)(state);
-      }
-
-      if (typeof pathOrSelector === 'string') {
-        const val = getByPath(state, pathOrSelector as PathOf<TState>);
-
-        return val === undefined ? defaultValue : val;
-      }
-
-      return state;
-    },
+    () => makeSingleSnapshot(store, pathOrSelector, defaultValue),
     [store, pathOrSelector, defaultValue]
   );
 
@@ -99,7 +88,7 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
     [enabled, mode, pathOrSelector, store]
   );
 
-  const selected = useExternalStoreUnified(subscribe, () => {
+  const getSnap = () => {
     if (!enabled) {
       return lastRef.current;
     }
@@ -116,7 +105,9 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
     lastRef.current = next;
 
     return next;
-  });
+  };
+
+  const selected = useSyncExternalStore(subscribe, getSnap, getSnap);
 
   const setState = useCallback(
     (value: unknown) => {
@@ -134,20 +125,6 @@ function useSingleStore<TState extends object, TArg extends PathOf<TState> | ((s
 
 // ─── useMultiStore ────────────────────────────────────────────────────────────
 
-export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  for (let i = 0; i < a.length; i++) {
-    if (!Object.is(a[i], b[i])) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
 function useMultiStore<TState extends object, const Paths extends ReadonlyArray<PathOf<TState>>>(
   store: StoreApi<TState>,
   paths: Paths,
@@ -161,33 +138,11 @@ function useMultiStore<TState extends object, const Paths extends ReadonlyArray<
 
   const lastRef = useRef<unknown[] | null>(null);
 
-  const getSnapshot = useCallback((): unknown[] => {
-    const state = store.getState();
-
-    const next = paths.map((p, i) => {
-      const val = getByPath(state, p);
-      if (val !== undefined || defaultValue === undefined) {
-        return val;
-      }
-
-      if (Array.isArray(defaultValue)) {
-        const def = (defaultValue as unknown[])[i];
-
-        return def !== undefined ? def : val;
-      }
-
-      return defaultValue;
-    });
-
-    if (lastRef.current !== null && equalityFn(lastRef.current, next)) {
-      return lastRef.current;
-    }
-
-    lastRef.current = next;
-
-    return next;
+  const getSnapshot = useMemo(
+    () => makeMultiSnapshot(store, paths, lastRef, { equalityFn, defaultValue }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, pathsKey, equalityFn, defaultValue]);
+    [store, pathsKey, equalityFn, defaultValue]
+  );
 
   const subscribe = useMultiSubscribe(store, paths, pathsKey, enabled, mode, true);
   const selected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
