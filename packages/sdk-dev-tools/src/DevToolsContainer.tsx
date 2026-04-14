@@ -1,6 +1,8 @@
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import clsx from 'clsx';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, use } from 'react';
+
+import { ThemeContext } from '@plitzi/sdk-shared';
 
 import DevToolsPanel from './components/DevToolsPanel';
 import DevToolsContextProvider from './DevToolsContextProvider';
@@ -28,28 +30,8 @@ const DevToolsContainer = ({
   devToolsStyle = '',
   devToolsStyleLink = ''
 }: DevToolsContainerProps) => {
+  const { theme } = use(ThemeContext);
   const [orientation, setOrientation] = useState<Orientation>('horizontal');
-  const [isDark, setIsDark] = useState(
-    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-  );
-
-  useEffect(() => {
-    if (typeof document === 'undefined' || renderMode === 'default') {
-      return;
-    }
-
-    const syncTheme = () => {
-      const isDark = document.documentElement.classList.contains('dark');
-      setIsDark(isDark);
-    };
-
-    const mutationObserver = new MutationObserver(syncTheme);
-    mutationObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    return () => {
-      mutationObserver.disconnect();
-    };
-  }, [renderMode]);
 
   const handleChangeOrientation = useCallback((orientation: Orientation) => setOrientation(orientation), []);
 
@@ -76,7 +58,7 @@ const DevToolsContainer = ({
             <ContainerShadow.Content>
               <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
               <DevToolsPanel
-                className={clsx({ dark: isDark })}
+                className={clsx({ dark: theme === 'dark' })}
                 orientation={orientation}
                 onChangeOrientation={handleChangeOrientation}
               />

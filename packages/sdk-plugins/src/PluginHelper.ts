@@ -2,6 +2,8 @@ import { get, omit } from '@plitzi/plitzi-ui/helpers';
 
 import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
 
+import manifestAssetToAsset from './helpers/manifestAssetToAsset';
+
 import type { PluginManifest, ComponentDefinition, PluginRaw, Asset } from '@plitzi/sdk-shared';
 
 const getComponentDefinition = (
@@ -24,6 +26,7 @@ const getComponentDefinition = (
         icon = 'https://cdn.plitzi.com/resources/img/favicon.svg'
       },
       assets,
+      assetsSettings,
       pluginSchema
     } = pluginManifest;
 
@@ -50,6 +53,15 @@ const getComponentDefinition = (
           type,
           // SDK
           settings,
+          assetsSettings: Object.values(assetsSettings)
+            .filter(({ src }) => {
+              if (!src) {
+                return false;
+              }
+
+              return ['.css', '.js', '.mjs', '.cjs'].some(ext => src.endsWith(ext));
+            })
+            .map(manifestAsset => manifestAssetToAsset(resource, manifestAsset, true)),
           assets: Object.values(assets)
             .filter(({ src }) => {
               if (!src) {
@@ -58,20 +70,7 @@ const getComponentDefinition = (
 
               return ['.css', '.js', '.mjs', '.cjs'].some(ext => src.endsWith(ext));
             })
-            .map<Asset>(({ src, type, isMain }) => {
-              const url = `${resource}/${src}`;
-              const urlEncoded = btoa(url);
-              if (type === 'style' && url.endsWith('.css')) {
-                return {
-                  type: 'link',
-                  id: urlEncoded,
-                  params: { href: url, rel: 'stylesheet', type: 'text/css' },
-                  isMain
-                } as Asset;
-              }
-
-              return { type: 'script', id: urlEncoded, params: { src: url, type: 'text/javascript' }, isMain } as Asset;
-            }),
+            .map(manifestAsset => manifestAssetToAsset(resource, manifestAsset)),
           scope,
           module,
           subPlugins

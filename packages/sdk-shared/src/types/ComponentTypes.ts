@@ -16,6 +16,7 @@ export type ComponentPlugin<T = unknown> = ComponentPluginFC<T> & {
   content: ComponentDefinition;
   type: string;
   assets: Asset[];
+  assetsSettings: Omit<Asset, 'isMain'>[];
   plugins?: Record<string, ComponentPlugin<T>>;
   origin: ComponentOrigin;
   extraProps?: Record<string, unknown>;
@@ -28,6 +29,7 @@ export type ComponentPluginWithHOC<T = unknown> = ComponentPluginFC<T & { intern
   content: ComponentDefinition;
   type: string;
   assets: Asset[];
+  assetsSettings: Omit<Asset, 'isMain'>[];
   plugins?: Record<string, ComponentPluginWithHOC<T>>;
   origin: ComponentOrigin;
   extraProps?: Record<string, unknown>;

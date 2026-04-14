@@ -2,6 +2,7 @@ import Heading from '@plitzi/plitzi-ui/components/Heading';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
+import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
@@ -18,6 +19,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import AppContext from '@pmodules/App/AppContext';
 
@@ -35,8 +37,9 @@ export type ElementSettingsProps = {
 const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleChange }: ElementSettingsProps) => {
   const { previewMode, displayBorderComponents } = use(AppContext);
   const { getComponent } = use(ComponentContext);
+  const { theme } = use(ThemeContext);
   const Plugin = getComponent(type) as ComponentPlugin | undefined;
-  const { pluginStyles } = use(PluginsContext);
+  const { pluginSettingsStyles } = use(PluginsContext);
   const { currentPageId } = use(NavigationContext);
   const {
     baseContext: { baseElementId }
@@ -91,8 +94,10 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
       <PlitziServiceProvider value={plitziContextValue}>
         <ErrorBoundary>
           {Settings && (
-            <div className="flex h-full flex-col">
-              <Heading as="h5">Settings</Heading>
+            <div className={clsx('flex h-full flex-col', { dark: theme === 'dark' })}>
+              <Heading as="h5" className="m-0">
+                Settings
+              </Heading>
               <Settings {...attributes} id={id} variables={variables} onUpdate={handleChange} />
             </div>
           )}
@@ -100,10 +105,10 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         </ErrorBoundary>
       </PlitziServiceProvider>
     ),
-    [Settings, attributes, variables, handleChange, id, plitziContextValue]
+    [plitziContextValue, Settings, theme, attributes, id, variables, handleChange]
   );
 
-  if (Plugin && pluginStyles?.[type] && pluginStyles[type].length > 0) {
+  if (Plugin && pluginSettingsStyles?.[type] && pluginSettingsStyles[type].length > 0) {
     return (
       <ContainerShadow
         className="flex h-full flex-col"
@@ -120,7 +125,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
           </div>
         }
       >
-        {pluginStyles[type].map((style, i) => (
+        {pluginSettingsStyles[type].map((style, i) => (
           <ContainerShadow.Link key={i} href={style} />
         ))}
         <ContainerShadow.Content>{children}</ContainerShadow.Content>

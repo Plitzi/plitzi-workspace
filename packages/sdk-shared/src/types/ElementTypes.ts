@@ -36,6 +36,7 @@ export type ComponentDefinition = Pick<
   'attributes' | 'builder' | 'definition' | 'defaultStyle' | 'initialItems'
 > & {
   assets: Asset[];
+  assetsSettings: Omit<Asset, 'isMain'>[];
   manifest: PluginManifest;
   market: Omit<PluginManifest, 'name'> & { category: string };
   settings: { [key: string]: string | number | boolean };

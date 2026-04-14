@@ -1,7 +1,5 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-
-import getSystemTheme from './helpers/getSystemTheme';
+import { createContext, useCallback, useEffect, useMemo } from 'react';
 
 import type { Theme, ThemeContextValue } from '../types';
 import type { ReactNode } from 'react';
@@ -24,30 +22,41 @@ const ThemeProvider = ({
 }: ThemeProviderProps) => {
   const [themeMode, setThemeMode] = useStorage<Theme>(storageKey, defaultTheme, storageType);
 
-  // Track OS preference changes (needed when mode is 'system')
-  const [systemTheme, setSystemTheme] = useState<Theme>(() => getSystemTheme());
-
   useEffect(() => {
-    const mq = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : undefined;
-    const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
-    mq?.addEventListener('change', handler);
+    if (typeof document === 'undefined' || typeof window === 'undefined') {
+      return;
+    }
 
-    return () => mq?.removeEventListener('change', handler);
+    // via Class
+    const syncTheme = () => setThemeMode(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    const mutationObserver = new MutationObserver(syncTheme);
+    mutationObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    // via Media
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setThemeMode(e.matches ? 'dark' : 'light');
+    mq.addEventListener('change', handler);
+
+    return () => {
+      mutationObserver.disconnect();
+      mq.removeEventListener('change', handler);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const resolvedTheme = useMemo<Theme>(
-    () => (themeMode === 'system' ? systemTheme : themeMode),
-    [themeMode, systemTheme]
-  );
-
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
     const root = document.documentElement;
-    if (resolvedTheme === 'dark') {
+    if (themeMode === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, [resolvedTheme]);
+  }, [themeMode]);
 
   const toggleTheme = useCallback(() => {
     setThemeMode(prev => {

@@ -266,12 +266,11 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
     [baseAssets, pluginStyleAssets, pluginCustomStyleAssets, temporalCustomStyles]
   );
 
-  // @todo: revisar donde se usa
-  const pluginStyles = useMemo(() => {
+  const pluginSettingsStyles = useMemo(() => {
     const style: Record<string, string[]> = {};
     Object.values(plugins).forEach(plugin => {
-      const { subPlugins, type, assets = [] } = plugin;
-      const pluginAssets = assets.filter(asset => asset.type === 'link').map(asset => asset.params.href);
+      const { subPlugins, type, assetsSettings = [] } = plugin;
+      const pluginAssets = assetsSettings.filter(asset => asset.type === 'link').map(asset => asset.params.href);
       if (type && pluginAssets.length > 0) {
         style[type] = pluginAssets;
       }
@@ -300,7 +299,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       remove,
       registerCustomAssets,
       unregisterCustomAssets,
-      pluginStyles
+      pluginSettingsStyles
     }),
     [
       baseAssets,
@@ -315,7 +314,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       getPluginSettings,
       update,
       remove,
-      pluginStyles
+      pluginSettingsStyles
     ]
   );
 

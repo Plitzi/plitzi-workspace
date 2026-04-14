@@ -1,5 +1,5 @@
-import ThemeProvider from './ThemeContext';
+import ThemeProvider from './ThemeProvider';
 
-export * from './ThemeContext';
+export * from './ThemeProvider';
 
 export { ThemeProvider };

@@ -30,6 +30,7 @@ export type ManifestAsset = {
 
 export type PluginManifest = {
   assets: Record<string, ManifestAsset>;
+  assetsSettings: Record<string, ManifestAsset>;
   author: string;
   icon?: string;
   definition: {
@@ -79,6 +80,7 @@ export type Asset =
 
 export type Plugin = {
   assets: Asset[];
+  assetsSettings: Omit<Asset, 'isMain'>[];
   attributes: ComponentDefinition['attributes'];
   builder: PluginBuilder;
   defaultStyle: ComponentDefinition['defaultStyle'];
@@ -110,7 +112,7 @@ export type PluginsContextValue = {
   remove?: (pluginType: string) => Promise<boolean>;
   registerCustomAssets: (assets: Asset[]) => void;
   unregisterCustomAssets: (assets: string[]) => void;
-  pluginStyles?: Record<string, string[]>;
+  pluginSettingsStyles?: Record<string, string[]>;
 };
 
 // Raw
