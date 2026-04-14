@@ -922,17 +922,9 @@
       "types": "./dist/src/theme/index.d.ts",
       "import": "./dist/src/theme/index.mjs"
     },
-    "./theme/ThemeContext": {
-      "types": "./dist/src/theme/ThemeContext.d.ts",
-      "import": "./dist/src/theme/ThemeContext.mjs"
-    },
     "./theme/ThemeProvider": {
       "types": "./dist/src/theme/ThemeProvider.d.ts",
       "import": "./dist/src/theme/ThemeProvider.mjs"
-    },
-    "./theme/helpers/getSystemTheme": {
-      "types": "./dist/src/theme/helpers/getSystemTheme.d.ts",
-      "import": "./dist/src/theme/helpers/getSystemTheme.mjs"
     },
     "./theme/index": {
       "types": "./dist/src/theme/index.d.ts",

@@ -22,6 +22,10 @@
       "types": "./dist/src/PluginsContext.d.ts",
       "import": "./dist/src/PluginsContext.mjs"
     },
+    "./helpers/manifestAssetToAsset": {
+      "types": "./dist/src/helpers/manifestAssetToAsset.d.ts",
+      "import": "./dist/src/helpers/manifestAssetToAsset.mjs"
+    },
     "./index": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.mjs"
