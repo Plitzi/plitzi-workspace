@@ -111,7 +111,8 @@ const BuilderArea = ({
         currentPageId,
         environment: 'main',
         sdkEnvironment,
-        builderEnvironment
+        builderEnvironment,
+        theme
       },
       root: { baseElementId },
       utils: { displayBorderComponents, getWindow, rootRef },
@@ -135,12 +136,13 @@ const BuilderArea = ({
       previewMode,
       debugMode,
       currentPageId,
+      sdkEnvironment,
+      builderEnvironment,
+      theme,
       baseElementId,
       displayBorderComponents,
       getWindow,
-      rootRef,
-      sdkEnvironment,
-      builderEnvironment
+      rootRef
     ]
   );
 

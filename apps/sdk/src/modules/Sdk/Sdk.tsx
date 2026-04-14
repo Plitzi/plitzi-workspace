@@ -11,6 +11,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
@@ -43,6 +44,7 @@ const Sdk = ({
   debugMode = false,
   sdkStylePath = './plitzi-sdk.css'
 }: SdkProps) => {
+  const { theme } = use(ThemeContext);
   const { currentPageId } = use(NavigationContext);
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -85,7 +87,8 @@ const Sdk = ({
         renderMode,
         environment,
         sdkEnvironment,
-        ...schemaSettings
+        ...schemaSettings,
+        theme
       },
       root: {
         baseElementId: currentPageId
@@ -118,6 +121,7 @@ const Sdk = ({
       environment,
       sdkEnvironment,
       schemaSettings,
+      theme,
       getWindow,
       rootRef
     ]

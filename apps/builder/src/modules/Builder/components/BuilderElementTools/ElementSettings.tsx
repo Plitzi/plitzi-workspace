@@ -58,7 +58,8 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
     () => ({
       settings: {
         previewMode,
-        currentPageId
+        currentPageId,
+        theme
       },
       root: {
         baseElementId
@@ -82,7 +83,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         InteractionsContext
       }
     }),
-    [previewMode, currentPageId, baseElementId, displayBorderComponents, getWindow, rootRef]
+    [previewMode, currentPageId, theme, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

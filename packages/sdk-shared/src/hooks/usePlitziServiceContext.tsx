@@ -13,12 +13,19 @@ import type {
   NavigationContextValue,
   PluginsContextValue,
   SegmentsContextValue,
-  StateManagerContextValue
+  StateManagerContextValue,
+  Theme
 } from '../types';
 import type { Context, ReactNode, RefObject } from 'react';
 
 export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> = {
-  settings: { isHydrating?: boolean; previewMode?: boolean; environment?: string; [key: string]: unknown };
+  settings: {
+    isHydrating?: boolean;
+    previewMode?: boolean;
+    environment?: string;
+    [key: string]: unknown;
+    theme: Theme;
+  };
   root: { baseElementId: string };
   utils: {
     getWindow: () => Window | null;
