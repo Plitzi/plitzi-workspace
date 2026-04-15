@@ -1,4 +1,5 @@
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
+import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -32,7 +33,7 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
       {itemsParsed.map((item, i) => (
         <IconGroup.Icon
           size={item.size}
-          className="cursor-pointer"
+          className={clsx('cursor-pointer', { 'h-5 w-5': item.size !== 'custom' })}
           active={item.active}
           key={i}
           onClick={handleChange(item.value)}
