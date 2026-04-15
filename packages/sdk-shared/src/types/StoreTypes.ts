@@ -108,6 +108,32 @@ export type StoreApiInternal<T> = StoreApi<T> & {
 
 export type PathOrFn<TState extends object> = PathOf<TState> | ((state: TState) => PathOf<TState>);
 
+export type PathOrFnValue<TState extends object, Entry> =
+  Entry extends PathOf<TState>
+    ? PathValue<TState, Entry>
+    : Entry extends (state: TState) => infer P
+      ? P extends PathOf<TState>
+        ? PathValue<TState, P>
+        : unknown
+      : unknown;
+
+export type PathOrFnValues<TState extends object, Entries extends ReadonlyArray<PathOrFn<TState>>> = {
+  [I in keyof Entries]: PathOrFnValue<TState, Entries[I]>;
+};
+
+export type PathOrFnSetter<TState extends object, Entry> =
+  Entry extends PathOf<TState>
+    ? PathSetter<TState, Entry>
+    : Entry extends (state: TState) => infer P
+      ? P extends PathOf<TState>
+        ? PathSetter<TState, P>
+        : (value: unknown) => void
+      : (value: unknown) => void;
+
+export type PathOrFnSetters<TState extends object, Entries extends ReadonlyArray<PathOrFn<TState>>> = {
+  [I in keyof Entries]: PathOrFnSetter<TState, Entries[I]>;
+};
+
 export type MultiPathReturn<
   TState extends object,
   Paths extends ReadonlyArray<PathOf<TState>>,
