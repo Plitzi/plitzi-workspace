@@ -126,6 +126,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
           setValue(undefined, {
             'background-color': undefined,
             'background-position': undefined,
+            'background-image': undefined,
             'background-size': undefined,
             'background-repeat': undefined,
             'background-attachment': undefined,
