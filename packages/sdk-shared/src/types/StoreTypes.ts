@@ -5,8 +5,6 @@ import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
 import type { DisplayMode, Style, StyleState } from './StyleTypes';
 
-// ─── Internal types ───────────────────────────────────────────────────────────
-
 export type Path = string;
 
 export type Primitive = string | number | boolean | null | undefined | symbol | bigint;
@@ -42,7 +40,9 @@ export type PathSetter<TState extends object, P extends PathOf<TState>> = (
 ) => void;
 
 export type __NoDefault = { __noDefault: true };
+
 type NumericIndex<I> = I extends `${infer N extends number}` ? N : I extends number ? I : never;
+
 export type PathValues<
   TState extends object,
   Paths extends ReadonlyArray<PathOf<TState>>,
@@ -67,10 +67,6 @@ export type PathSetters<TState extends object, Paths extends ReadonlyArray<PathO
   [I in keyof Paths]: Paths[I] extends PathOf<TState> ? PathSetter<TState, Paths[I]> : never;
 };
 
-// ─── Public types ─────────────────────────────────────────────────────────────
-
-// 'mount' — writes the value to the store only on the first render.
-// 'sync'  — writes the value to the store on every render where it changed (default).
 export type SyncMode = 'mount' | 'sync';
 
 export type StoreHookBaseOptions<TState extends object = object> = {
@@ -105,17 +101,152 @@ export type StoreApi<T> = {
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
 };
 
-// Tests purposes only
 export type StoreApiInternal<T> = StoreApi<T> & {
   listeners: Set<Listener>;
   pathListeners: Map<string, Set<Listener>>;
 };
 
-// States
+export type PathOrFn<TState extends object> = PathOf<TState> | ((state: TState) => PathOf<TState>);
+
+export type PathOrFnValue<TState extends object, Entry> =
+  Entry extends PathOf<TState>
+    ? PathValue<TState, Entry>
+    : Entry extends (state: TState) => infer P
+      ? P extends PathOf<TState>
+        ? PathValue<TState, P>
+        : unknown
+      : unknown;
+
+export type PathOrFnValues<TState extends object, Entries extends ReadonlyArray<PathOrFn<TState>>> = {
+  [I in keyof Entries]: PathOrFnValue<TState, Entries[I]>;
+};
+
+export type PathOrFnSetter<TState extends object, Entry> =
+  Entry extends PathOf<TState>
+    ? PathSetter<TState, Entry>
+    : Entry extends (state: TState) => infer P
+      ? P extends PathOf<TState>
+        ? PathSetter<TState, P>
+        : (value: unknown) => void
+      : (value: unknown) => void;
+
+export type PathOrFnSetters<TState extends object, Entries extends ReadonlyArray<PathOrFn<TState>>> = {
+  [I in keyof Entries]: PathOrFnSetter<TState, Entries[I]>;
+};
+
+export type MultiPathReturn<
+  TState extends object,
+  Paths extends ReadonlyArray<PathOf<TState>>,
+  TDefaultValue = __NoDefault
+> = [PathValues<TState, Paths, TDefaultValue>, ...PathSetters<TState, Paths>];
+
+export type UseStoreReturn<TState extends object, TArg> =
+  TArg extends PathOf<TState>
+    ? [PathValue<TState, TArg>, PathSetter<TState, TArg>]
+    : TArg extends (state: TState) => unknown
+      ? [unknown, (value: unknown) => void]
+      : [TState, StoreApi<TState>['setState']];
+
+export type UseStoreOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
+  defaultValue?: NonNullable<T>;
+  transformer?: (value: T) => unknown;
+};
+
+export type UseStoreMultiOptions<
+  TState extends object,
+  Paths extends ReadonlyArray<PathOf<TState>>,
+  TDefaultValue extends
+    | readonly (PathValue<TState, Paths[number]> | undefined)[]
+    | PathValue<TState, Paths[number]>
+    | undefined = undefined
+> = Omit<StoreHookReactiveOptions<never, TState>, 'equalityFn'> & {
+  equalityFn?: (a: PathValues<TState, Paths>, b: PathValues<TState, Paths>) => boolean;
+  defaultValue?: TDefaultValue;
+  transformer?: (values: PathValues<TState, Paths>) => unknown;
+};
+
+export type UseStoreSyncOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
+  syncStrategy?: 'render' | 'afterRender';
+};
+
+export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
+  StoreHookReactiveOptions<never, TState>,
+  'equalityFn'
+> & {
+  syncStrategy?: 'render' | 'afterRender';
+};
+
+export type GetValueFn<TState extends object> = {
+  (): TState;
+  <P extends PathOf<TState>>(path: P): PathValue<TState, P>;
+  <P extends PathOf<TState>, D>(path: P, defaultValue: D): NonNullable<PathValue<TState, P>> | D;
+  <D>(path: undefined, defaultValue: D): NonNullable<TState> | D;
+};
+
+export type GetValueFromBaseFn<TBase> = TBase extends object
+  ? {
+      (): TBase;
+      <SubP extends PathOf<TBase>>(path: SubP): PathValue<TBase, SubP>;
+      <SubP extends PathOf<TBase>, D>(path: SubP, defaultValue: D): NonNullable<PathValue<TBase, SubP>> | D;
+      <D>(path: undefined, defaultValue: D): NonNullable<TBase> | D;
+    }
+  : () => TBase;
+
+export type GetValueFromBaseWithDefaultFn<TBase, D> = TBase extends object
+  ? {
+      (): NonNullable<TBase> | D;
+      <SubP extends PathOf<NonNullable<TBase>>>(path: SubP): PathValue<NonNullable<TBase>, SubP>;
+      <SubP extends PathOf<NonNullable<TBase>>, D2>(
+        path: SubP,
+        defaultValue: D2
+      ): NonNullable<PathValue<NonNullable<TBase>, SubP>> | D2;
+      <D2>(path: undefined, defaultValue: D2): NonNullable<TBase> | D2;
+    }
+  : () => NonNullable<TBase> | D;
+
+type EntryGetter<TState extends object, Entry> =
+  Entry extends PathOf<TState>
+    ? GetValueFromBaseFn<PathValue<TState, Entry>>
+    : Entry extends (state: TState) => infer R
+      ? R extends object
+        ? GetValueFromBaseFn<R>
+        : () => R
+      : never;
+
+export type GetterTuple<
+  TState extends object,
+  Entries extends ReadonlyArray<PathOf<TState> | ((state: TState) => unknown)>
+> = {
+  [K in keyof Entries]: EntryGetter<TState, Entries[K]>;
+};
+
+export type UseStoreGetterOptions<TState extends object = object, D = __NoDefault> = StoreHookBaseOptions<TState> & {
+  defaultValue?: D;
+};
+
+export type SetStateFn<TState extends object> = {
+  (path: undefined, value: TState | ((prev: TState) => TState)): void;
+  <P extends PathOf<TState>>(
+    path: P,
+    value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
+  ): void;
+};
+
+export type SetFromBaseFn<TBase> = TBase extends object
+  ? {
+      (subPath: undefined, value: TBase | ((prev: TBase) => TBase)): void;
+      <SubP extends PathOf<TBase>>(
+        subPath: SubP,
+        value: PathValue<TBase, SubP> | ((prev: PathValue<TBase, SubP>) => PathValue<TBase, SubP>)
+      ): void;
+    }
+  : (subPath: undefined, value: TBase) => void;
+
+export type UseStoreSetterOptions<TState extends object = object> = StoreHookBaseOptions<TState>;
 
 export type CommonState = {
-  prevSchema?: Schema; // used when elements are inside a reference and refer to main schema
-  schema: Schema; // current schema, normally is the main one but can be from a segment
+  prevSchema?: Schema;
+  schema: Schema;
   pageDefinitions: Record<string, Element>;
   style: Style;
   segments: Record<string, Segment>;

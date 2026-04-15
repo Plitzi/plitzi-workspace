@@ -266,14 +266,14 @@ describe('store enabled / options', () => {
       expect(renderFn).toHaveBeenCalledTimes(3); // only the rerender from enabled change
     });
 
-    it('disabled selector does not re-render on state change', () => {
+    it('disabled path fn does not re-render on state change', () => {
       const store = makeStore();
       const renderFn = vi.fn();
 
       renderHook(
         () => {
           renderFn();
-          return useStore(s => s.count, { enabled: false });
+          return useStore(() => 'count' as const, { enabled: false });
         },
         { wrapper: makeWrapper(store) }
       );
@@ -394,138 +394,188 @@ describe('store enabled / options', () => {
     });
   });
 
-  describe('useStore: shallowEqual default for selectors', () => {
-    it('does NOT re-render when selector returns a new object with same shallow content', () => {
+  describe('useStore: function path re-subscription', () => {
+    it('reads from the resolved path on initial render', () => {
       const store = makeStore();
-      const renderFn = vi.fn();
 
-      renderHook(
-        () => {
-          renderFn();
-          // Returns a new object every time but with the same content
-          return useStore(s => ({ name: s.user.name, age: s.user.age }));
-        },
+      const { result } = renderHook(
+        () => useStore(s => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>),
         { wrapper: makeWrapper(store) }
       );
 
-      // Change something unrelated to user
-      act(() => store.setState('count', 1));
-      act(() => store.setState('count', 2));
-
-      expect(renderFn).toHaveBeenCalledTimes(1); // shallowEqual prevented re-renders
+      expect(result.current[0]).toBe('Alice'); // meta.active = true → user.name
     });
 
-    it('re-renders when selector result shallow-differs', () => {
+    it('re-renders with new path value when resolved path changes', () => {
       const store = makeStore();
       const renderFn = vi.fn();
 
       const { result } = renderHook(
         () => {
           renderFn();
-          return useStore(s => ({ name: s.user.name, age: s.user.age }));
+          return useStore(s => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>);
         },
         { wrapper: makeWrapper(store) }
       );
 
-      act(() => store.setState('user.name', 'Bob'));
+      expect(result.current[0]).toBe('Alice');
 
+      // Changing meta.active causes the resolved path to switch from 'user.name' to 'user.age'
+      act(() => store.setState('meta.active', false));
+
+      expect(result.current[0]).toBe(30); // now reading user.age
       expect(renderFn).toHaveBeenCalledTimes(2);
-      expect((result.current[0] as { name: string }).name).toBe('Bob');
     });
 
-    it('does NOT re-render when pick-like selector returns same keys and values', () => {
+    it('stops reacting to old path after resolved path changes', () => {
       const store = makeStore();
       const renderFn = vi.fn();
 
       renderHook(
         () => {
           renderFn();
-          // Simulates pick(schema.flat, schema.pages)
-          return useStore(s => {
-            const result: Record<string, unknown> = {};
-            for (const key of s.schema.pages) {
-              result[key] = s.schema.flat[key];
-            }
-            return result;
-          });
+          return useStore(s => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>);
         },
         { wrapper: makeWrapper(store) }
       );
 
-      // Change something outside schema
-      act(() => store.setState('count', 5));
-      expect(renderFn).toHaveBeenCalledTimes(1);
-
-      // Change schema.version (not flat or pages)
-      act(() => store.setState('schema.version', 2));
-      expect(renderFn).toHaveBeenCalledTimes(1); // shallowEqual: same keys, same refs
-    });
-
-    it('re-renders when pick-like selector result changes', () => {
-      const store = makeStore();
-      const renderFn = vi.fn();
-
-      renderHook(
-        () => {
-          renderFn();
-          return useStore(s => {
-            const result: Record<string, unknown> = {};
-            for (const key of s.schema.pages) {
-              result[key] = s.schema.flat[key];
-            }
-            return result;
-          });
-        },
-        { wrapper: makeWrapper(store) }
-      );
-
-      // Update an element that is in pages
-      act(() =>
-        store.setState(
-          'schema.flat.btn1' as PathOf<AppState>,
-          { label: 'New Label', type: 'button' } as AppState['schema']['flat'][string]
-        )
-      );
-
-      expect(renderFn).toHaveBeenCalledTimes(2); // btn1 ref changed
-    });
-
-    it('can override shallowEqual with Object.is via equalityFn option', () => {
-      // note: this will generate unlimited re-render because of the Object.is
-      const store = makeStore();
-      const renderFn = vi.fn();
-
-      renderHook(
-        () => {
-          renderFn();
-
-          return useStore(s => ({ name: s.user.name }), { equalityFn: (a, b) => a.name === b.name });
-        },
-        { wrapper: makeWrapper(store) }
-      );
-
-      // Object.is compares references — new object always differs
-      act(() => store.setState('count', 1)); // triggers subscribe → new object → re-render
-      expect(renderFn).toHaveBeenCalledTimes(1);
-    });
-
-    it('primitive selector still uses Object.is correctly', () => {
-      const store = makeStore();
-      const renderFn = vi.fn();
-
-      renderHook(
-        () => {
-          renderFn();
-          return useStore(s => s.user.name); // primitive — shallowEqual === Object.is for primitives
-        },
-        { wrapper: makeWrapper(store) }
-      );
-
-      act(() => store.setState('user.age', 31)); // name unchanged
-      expect(renderFn).toHaveBeenCalledTimes(1);
-
-      act(() => store.setState('user.name', 'Bob'));
+      // Switch resolved path to 'user.age'
+      act(() => store.setState('meta.active', false));
       expect(renderFn).toHaveBeenCalledTimes(2);
+
+      // Changing old path (user.name) should NOT cause a re-render
+      act(() => store.setState('user.name', 'Bob'));
+      expect(renderFn).toHaveBeenCalledTimes(2); // no extra render
+    });
+
+    it('reacts to changes on the new resolved path after the switch', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      const { result } = renderHook(
+        () => {
+          renderFn();
+          return useStore(s => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>);
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      // Switch resolved path to 'user.age'
+      act(() => store.setState('meta.active', false));
+      expect(result.current[0]).toBe(30);
+
+      // Changes on new path (user.age) should trigger a re-render
+      act(() => store.setState('user.age', 99));
+      expect(result.current[0]).toBe(99);
+      expect(renderFn).toHaveBeenCalledTimes(3);
+    });
+
+    it('multi-path: stops reacting to old path after one path function resolves differently', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      const { result } = renderHook(
+        () => {
+          renderFn();
+          return useStore([
+            'count' as PathOf<AppState>,
+            (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>
+          ]);
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      const vals = () => result.current[0];
+
+      expect(vals()[0]).toBe(0);
+      expect(vals()[1]).toBe('Alice');
+
+      // Switch resolved path of second entry from 'user.name' to 'user.age'
+      act(() => store.setState('meta.active', false));
+      expect(vals()[1]).toBe(30);
+
+      // Changes to old path (user.name) should NOT cause a re-render
+      act(() => store.setState('user.name', 'Bob'));
+      expect(renderFn).toHaveBeenCalledTimes(2); // only initial + path switch
+
+      // Changes to new path (user.age) should cause a re-render
+      act(() => store.setState('user.age', 55));
+      expect(vals()[1]).toBe(55);
+      expect(renderFn).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('useStoreSync: dynamic path function', () => {
+    it('syncs to the resolved path on initial render', () => {
+      const store = makeStore();
+
+      renderHook(
+        () => useStoreSync((s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>, 'Synced'),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().user.name).toBe('Synced');
+    });
+
+    it('syncs to the new resolved path when state changes the path', () => {
+      const store = makeStore();
+      let active = true;
+
+      const { rerender } = renderHook(
+        () =>
+          useStoreSync(
+            (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>,
+            (active ? 'Dynamic' : 99) as unknown as string
+          ),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().user.name).toBe('Dynamic');
+
+      // Change external condition so path resolves differently
+      act(() => store.setState('meta.active', false));
+      active = false;
+      rerender();
+
+      expect(store.getState().user.age).toBe(99);
+    });
+
+    it('multi-path: syncs dynamic path entries correctly', () => {
+      const store = makeStore();
+
+      renderHook(
+        () =>
+          useStoreSync(
+            ['count', (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>],
+            [42, 'Synced']
+          ),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().count).toBe(42);
+      expect(store.getState().user.name).toBe('Synced');
+    });
+
+    it('multi-path: syncs to new resolved path when state-driven path changes', () => {
+      const store = makeStore();
+      let active = true;
+
+      const { rerender } = renderHook(
+        () =>
+          useStoreSync(
+            ['count', (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>],
+            [10, active ? 'NewName' : 55]
+          ),
+        { wrapper: makeWrapper(store) }
+      );
+
+      expect(store.getState().user.name).toBe('NewName');
+
+      act(() => store.setState('meta.active', false));
+      active = false;
+      rerender();
+
+      expect(store.getState().user.age).toBe(55);
     });
   });
 
@@ -595,7 +645,7 @@ describe('store enabled / options', () => {
       renderHook(
         () => {
           renderFn();
-          return useStoreSync('count', 0, { enabled: false });
+          useStoreSync('count', 0, { enabled: false });
         },
         { wrapper: makeWrapper(store) }
       );
@@ -750,28 +800,6 @@ describe('store enabled / options', () => {
       rerender();
 
       expect(store.getState().count).toBe(77); // synced on first enabled render
-    });
-
-    it('shallowEqual handles null/undefined in selector output gracefully', () => {
-      const store = makeStore();
-      const renderFn = vi.fn();
-
-      renderHook(
-        () => {
-          renderFn();
-          return useStore(s => (s.count > 0 ? { count: s.count } : null));
-        },
-        { wrapper: makeWrapper(store) }
-      );
-
-      act(() => store.setState('meta.active', false)); // count still 0 → null
-      expect(renderFn).toHaveBeenCalledTimes(1);
-
-      act(() => store.setState('count', 1)); // count > 0 → object
-      expect(renderFn).toHaveBeenCalledTimes(2);
-
-      act(() => store.setState('count', 2)); // count > 0, different value — new object, different key
-      expect(renderFn).toHaveBeenCalledTimes(3);
     });
 
     it('two useStore hooks with different enabled states are independent', () => {
@@ -1081,14 +1109,14 @@ describe('performance', () => {
       expect(elapsed).toBeLessThan(2000);
     });
 
-    it('equalityFn evita re-renders con objetos equivalentes (selector)', () => {
+    it('equalityFn evita re-renders con objetos equivalentes (path)', () => {
       const store = makeStore();
       const { useStore } = createStoreHook<PerfState>();
       const renderFn = vi.fn();
 
       renderHook(
         () => {
-          const [user] = useStore(s => s.user, { equalityFn: (a, b) => a.name === b.name && a.age === b.age });
+          const [user] = useStore('user', { equalityFn: (a, b) => a.name === b.name && a.age === b.age });
           renderFn();
           return user;
         },
@@ -1498,75 +1526,6 @@ describe('fiability', () => {
       expect(counts.reduce((a, b) => a + b, 0)).toBe(20);
 
       hooks.forEach(h => h.unmount());
-    });
-  });
-
-  describe('Stability: selector with and without equalityFn', () => {
-    it('selector returning a primitive re-renders when the derived value changes (no equalityFn)', () => {
-      const store = makeStore();
-      const { fn, count } = renderCount();
-
-      // A primitive result works safely with Object.is — no infinite loop.
-      // This verifies that without equalityFn the hook re-renders when the selector output changes.
-      const { result } = renderHook(
-        () => {
-          const [v] = useStore(s => s.schema.version);
-          fn();
-          return v;
-        },
-        { wrapper: makeWrapper(store) }
-      );
-
-      expect(result.current).toBe(1);
-      expect(count()).toBe(1);
-
-      act(() => store.setState('schema.version', 2));
-      expect(result.current).toBe(2);
-      expect(count()).toBe(2);
-
-      // Same value — no re-render
-      act(() => store.setState('schema.version', 2));
-      expect(count()).toBe(2);
-    });
-
-    it('selector returning a new object does NOT re-render with a correct equalityFn', () => {
-      const store = makeStore();
-      const { fn, count } = renderCount();
-
-      renderHook(
-        () => {
-          useStore(s => ({ provider: s.schema.settings.userProvider }), {
-            equalityFn: (a, b) => a.provider === b.provider
-          });
-          fn();
-        },
-        { wrapper: makeWrapper(store) }
-      );
-
-      act(() => store.setState('schema.version', 2));
-      expect(count()).toBe(1);
-    });
-
-    it('selector returning a derived primitive does not re-render if the result is equal', () => {
-      const store = makeStore();
-      const { fn, count } = renderCount();
-
-      renderHook(
-        () => {
-          // Primitive result — Object.is works by default
-          useStore(s => s.schema.settings.userProvider.toUpperCase());
-          fn();
-        },
-        { wrapper: makeWrapper(store) }
-      );
-
-      // Changes something unrelated to userProvider
-      act(() => store.setState('schema.version', 2));
-      expect(count()).toBe(1);
-
-      // userProvider changes — derived result changes too
-      act(() => store.setState('schema.settings.userProvider', 'github'));
-      expect(count()).toBe(2);
     });
   });
 
@@ -2279,10 +2238,9 @@ describe('defaultValue', () => {
   describe('useStore: defaultValue — multi-path scalar', () => {
     it('applies scalar default to all undefined paths', () => {
       const store = makeStore();
-      const { result } = renderHook(
-        () => useStore(['tag', 'score'] as const, { defaultValue: 'N/A' as unknown as undefined }),
-        { wrapper: makeWrapper(store) }
-      );
+      const { result } = renderHook(() => useStore(['tag', 'score'] as const, { defaultValue: 'N/A' }), {
+        wrapper: makeWrapper(store)
+      });
 
       expect(result.current[0][0]).toBe('N/A');
       expect(result.current[0][1]).toBe('N/A');
@@ -2292,10 +2250,9 @@ describe('defaultValue', () => {
       const store = makeStore();
       act(() => store.setState('tag', 'real'));
 
-      const { result } = renderHook(
-        () => useStore(['tag', 'score'] as const, { defaultValue: 'N/A' as unknown as undefined }),
-        { wrapper: makeWrapper(store) }
-      );
+      const { result } = renderHook(() => useStore(['tag', 'score'] as const, { defaultValue: 'N/A' }), {
+        wrapper: makeWrapper(store)
+      });
 
       expect(result.current[0][0]).toBe('real'); // defined → no default
       expect(result.current[0][1]).toBe('N/A'); // undefined → default

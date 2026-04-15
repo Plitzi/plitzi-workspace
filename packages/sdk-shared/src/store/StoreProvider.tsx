@@ -2,16 +2,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { pick } from '@plitzi/plitzi-ui/helpers/lodash';
-import { createContext, use, useMemo, useRef } from 'react';
+import { use, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
 import useStoreSync from './hooks/useStoreSync';
+import { StoreContext } from './StoreContext';
 
 import type { StoreApi, StoreLogger } from '../types';
 import type { ReactNode } from 'react';
-
-const StoreContext = createContext<StoreApi<any> | undefined>(undefined);
-StoreContext.displayName = 'StoreContext';
 
 export type StoreProviderProps<TState extends object = any> = {
   store?: StoreApi<TState>;
@@ -60,16 +58,13 @@ const StoreProvider = <TState extends object = any>({
   const syncEnabled = !!value && autoSync;
   const syncStore = storeRef.current;
 
-  // Path sync: write only the sub-path. Full-state sync: merge whole storeState.
   useStoreSync(path as any, (path ? value : storeState) as any, {
     enabled: syncEnabled && !!path,
-    store: syncStore,
-    canListen: !!store
+    store: syncStore
   });
   useStoreSync<TState>(undefined, storeState as Partial<TState>, {
     enabled: syncEnabled && !path,
-    store: syncStore,
-    canListen: !!store
+    store: syncStore
   });
 
   return <StoreContext value={storeRef.current}>{children}</StoreContext>;
