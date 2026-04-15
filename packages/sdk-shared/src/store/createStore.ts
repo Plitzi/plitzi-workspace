@@ -133,19 +133,19 @@ function createStore<TState extends object>(
 export const createStoreHook = <TState extends object>() => {
   function useStore(options?: UseStoreOptions<TState, TState>): [TState, StoreApi<TState>['setState']];
 
-  function useStore<P extends PathOf<TState>>(
-    path: P,
-    options?: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue?: never; transformer?: never }
-  ): [
-    PathValue<TState, P>,
-    (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
-  ];
-
   function useStore<P extends PathOf<TState>, D>(
     path: P,
     options: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue: D; transformer?: never }
   ): [
     NonNullable<PathValue<TState, P>> | D,
+    (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
+  ];
+
+  function useStore<P extends PathOf<TState>>(
+    path: P,
+    options?: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue?: never; transformer?: never }
+  ): [
+    PathValue<TState, P>,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
   ];
 
