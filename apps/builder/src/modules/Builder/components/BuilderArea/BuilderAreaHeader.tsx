@@ -204,13 +204,13 @@ const BuilderAreaHeader = ({
             <div className="cursor-pointer" onClick={handleClickMultipage}>
               {!multiPagesMode && (
                 <Icon title="Zoom into page overview">
-                  <PageOverview />
+                  <PageOverview className="h-4 w-4" />
                 </Icon>
               )}
               {multiPagesMode && (
                 <Link to={basePath ? `${basePath}/${baseElementId}` : baseElementId}>
                   <Icon title="Zoom in on this page">
-                    <PageOverviewZoom />
+                    <PageOverviewZoom className="h-4 w-4" />
                   </Icon>
                 </Link>
               )}
