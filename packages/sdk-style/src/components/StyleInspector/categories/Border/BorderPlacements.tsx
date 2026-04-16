@@ -30,7 +30,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
         onClick={handleClick('top')}
         active={currentPlacement === 'top'}
       >
-        <BorderPlacementTop />
+        <BorderPlacementTop className="h-7 w-7" />
       </Icon>
 
       <Icon
@@ -41,7 +41,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
         onClick={handleClick('left')}
         active={currentPlacement === 'left'}
       >
-        <BorderPlacementLeft />
+        <BorderPlacementLeft className="h-7 w-7" />
       </Icon>
       <Icon
         size="2xl"
@@ -51,7 +51,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
         onClick={handleClick('all')}
         active={currentPlacement === 'all'}
       >
-        <BorderPlacementCenter />
+        <BorderPlacementCenter className="h-7 w-7" />
       </Icon>
       <Icon
         size="2xl"
@@ -61,7 +61,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
         onClick={handleClick('right')}
         active={currentPlacement === 'right'}
       >
-        <BorderPlacementRight />
+        <BorderPlacementRight className="h-7 w-7" />
       </Icon>
       <Icon
         size="2xl"
@@ -71,7 +71,7 @@ const BorderPlacements = ({ currentPlacement, setCurrentPlacement }: BorderPlace
         onClick={handleClick('bottom')}
         active={currentPlacement === 'bottom'}
       >
-        <BorderPlacementBottom />
+        <BorderPlacementBottom className="h-7 w-7" />
       </Icon>
     </div>
   );

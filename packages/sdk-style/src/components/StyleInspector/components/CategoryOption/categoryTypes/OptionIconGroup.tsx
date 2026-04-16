@@ -33,7 +33,7 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
       {itemsParsed.map((item, i) => (
         <IconGroup.Icon
           size={item.size}
-          className={clsx('cursor-pointer', { 'h-5 w-5': item.size !== 'custom' })}
+          className={clsx('cursor-pointer', { 'h-4 w-5': item.size !== 'custom' })}
           active={item.active}
           key={i}
           onClick={handleChange(item.value)}

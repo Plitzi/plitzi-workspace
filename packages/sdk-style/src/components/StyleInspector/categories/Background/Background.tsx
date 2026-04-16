@@ -15,6 +15,7 @@ import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 import parseToBgLayers from './helpers/parseToBgLayers';
+import InspectorLabel from '../../components/InspectorLabel';
 
 import type { BackgroundLayer as TBackgroundLayer } from './helpers/backgroundParser';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -152,7 +153,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">Layers</span>
+            <InspectorLabel keyValue={BG_LAYER_KEYS}>Layers</InspectorLabel>
             <button
               type="button"
               className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-xs text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/30"
