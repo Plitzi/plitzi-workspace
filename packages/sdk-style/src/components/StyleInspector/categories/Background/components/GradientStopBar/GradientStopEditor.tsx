@@ -34,10 +34,13 @@ const GradientStopEditor = ({
       size="xs"
       className="w-20 shrink-0"
       value={stop.position}
-      units={[{ label: '%', value: '%' }]}
+      units={[
+        { label: '%', value: '%' },
+        { label: 'PX', value: 'px' }
+      ]}
       allowedWords={[]}
       min={0}
-      max={100}
+      max={stop.position.includes('%') ? 100 : Infinity}
       onChange={onPositionChange}
     />
     {showRemove && (
