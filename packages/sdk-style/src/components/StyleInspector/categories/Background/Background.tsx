@@ -1,20 +1,26 @@
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
-import { memo, useCallback, use, useState, useMemo } from 'react';
+import { memo, useCallback, use, useState, useRef } from 'react';
 
-import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-
-import ImageMode from './modes/ImageMode';
-// import LinearGradientMode from './modes/LinearGradientMode';
-// import RadialGradientMode from './modes/RadialGradientMode';
+import BackgroundLayer from './components/BackgroundLayer';
+import {
+  DEFAULT_LAYER_PROPS,
+  DEFAULT_STOPS,
+  newLayerId,
+  newStopId,
+  serializeLayersToCSS
+} from './helpers/backgroundParser';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
+import parseToBgLayers from './helpers/parseToBgLayers';
 
+import type { BackgroundLayer as TBackgroundLayer } from './helpers/backgroundParser';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { DragEvent } from 'react';
 
-const dotKeys = [
+const DOT_KEYS = [
   'background-color',
   'background-image',
   'background-attachment',
@@ -25,180 +31,199 @@ const dotKeys = [
   'mask-image'
 ] as StyleCategory[];
 
+const BG_LAYER_KEYS: StyleCategory[] = [
+  'background-image',
+  'background-size',
+  'background-position',
+  'background-repeat',
+  'background-attachment',
+  'background-clip'
+];
+
 export type BackgroundProps = {
   replaceTokens?: boolean;
   isCollapsed?: boolean;
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
+const cssKeyFromRecord = (record: Partial<Record<StyleCategory, StyleValue>>): string =>
+  BG_LAYER_KEYS.map(k => String(record[k])).join('||');
+
 const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BackgroundProps) => {
-  const { setValue, variables } = use(StyleInspectorContext);
-  const {
-    'background-color': bgColor,
-    'background-clip': bgClip,
-    'mask-image': maskImage
-  } = useInspectorValues({
-    keys: [
-      'background-color',
-      'background-image',
-      'background-attachment',
-      'background-position',
-      'background-repeat',
-      'background-clip',
-      'mask-image'
-    ],
+  const { setValue } = use(StyleInspectorContext);
+
+  const layerValues = useInspectorValues({ keys: BG_LAYER_KEYS, asValue: true, strictMode: true, replaceTokens });
+  const { 'background-color': bgColor, 'mask-image': maskImage } = useInspectorValues({
+    keys: ['background-color', 'mask-image'],
     asValue: true,
     replaceTokens
   });
-  const { 'background-image': bgImage } = useInspectorValues({
-    keys: ['background-image'],
-    asValue: true,
-    strictMode: true,
-    replaceTokens
-  });
-  const bgImagePreview = useMemo(() => processTwig(bgImage as string, variables, true) as string, [bgImage, variables]);
-  const [imgType, setImgType] = useState(() => {
-    if (bgImage && (bgImage as string).includes('url')) {
-      return 'image';
-    }
 
-    if (bgImage && (bgImage as string).includes('linear-gradient')) {
-      return 'linear-gradient';
-    }
+  const cssKey = cssKeyFromRecord(layerValues);
+  const layerValuesRef = useRef(layerValues);
+  layerValuesRef.current = layerValues;
 
-    if (bgImage && (bgImage as string).includes('radial-gradient')) {
-      return 'radial-gradient';
-    }
-
-    return 'color';
-  });
+  const internalCssKeyRef = useRef<string | null>(null);
+  const [layers, setLayers] = useState<TBackgroundLayer[]>(() => parseToBgLayers(layerValues));
 
   useDidUpdateEffect(() => {
-    if (!bgImage) {
-      setImgType('color');
-
+    if (cssKey === internalCssKeyRef.current) {
       return;
     }
 
-    if ((bgImage as string).includes('url')) {
-      setImgType('image');
-    } else if ((bgImage as string).includes('linear-gradient')) {
-      setImgType('linear-gradient');
-    } else if ((bgImage as string).includes('radial-gradient')) {
-      setImgType('radial-gradient');
-    } else {
-      setImgType('color');
-    }
-  }, [bgImage]);
+    setLayers(parseToBgLayers(layerValuesRef.current));
+  }, [cssKey]);
 
-  const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('background', isCollapsed), [onCollapse]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const handleChange = useCallback(
-    (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
-      if (type === 'background-image') {
-        switch (imgType) {
-          case 'image':
-            setValue('background-image', `url("${value as string}")`);
+  const handleToggleExpand = useCallback((id: string) => setExpandedId(prev => (prev === id ? null : id)), []);
 
-            break;
-          case 'linear-gradient':
-            setValue('background-image', `linear-gradient(${value as string})`);
-
-            break;
-          case 'radial-gradient':
-            setValue('background-image', `radial-gradient(${value as string})`);
-
-            break;
-          default:
-            setValue('background-image', value as StyleValue);
-        }
-      } else {
-        setValue(type, value as StyleValue);
-      }
-    },
-    [setValue, imgType]
-  );
-
-  const handleChangeFill = useCallback(
-    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
-      switch (value) {
-        case 'color':
-          setValue(undefined, {
-            'background-color': undefined,
-            'background-position': undefined,
-            'background-image': undefined,
-            'background-size': undefined,
-            'background-repeat': undefined,
-            'background-attachment': undefined,
-            'background-clip': undefined
-          });
-
-          break;
-        case 'image':
-          setValue(undefined, {
-            'background-color': undefined,
-            'background-image': 'url("https://cdn.plitzi.com/resources/img/background-image.svg")'
-          });
-
-          break;
-        case 'linear-gradient':
-          setValue(undefined, {
-            'background-color': undefined,
-            'background-image': 'linear-gradient(black, white)'
-          });
-
-          break;
-        case 'radial-gradient':
-          setValue(undefined, {
-            'background-color': undefined,
-            'background-image': 'radial-gradient(circle at 50% 50%, black, white)'
-          });
-
-          break;
-        default:
-          setValue(undefined, { 'background-color': undefined, 'background-image': undefined });
-      }
+  const applyLayers = useCallback(
+    (newLayers: TBackgroundLayer[]) => {
+      const css = serializeLayersToCSS(newLayers);
+      internalCssKeyRef.current = cssKeyFromRecord(css);
+      setLayers(newLayers);
+      setValue(undefined, css);
     },
     [setValue]
   );
 
+  const dragSourceIndexRef = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const handleDragStart = useCallback(
+    (index: number) => (e: DragEvent) => {
+      dragSourceIndexRef.current = index;
+      e.dataTransfer.effectAllowed = 'move';
+    },
+    []
+  );
+
+  const handleDragOver = useCallback((index: number) => () => setDragOverIndex(index), []);
+
+  const handleDragEnd = useCallback(() => {
+    dragSourceIndexRef.current = null;
+    setDragOverIndex(null);
+  }, []);
+
+  const handleDrop = useCallback(
+    (toIndex: number) => (e: DragEvent) => {
+      e.preventDefault();
+      const fromIndex = dragSourceIndexRef.current;
+      if (fromIndex === null || fromIndex === toIndex) {
+        dragSourceIndexRef.current = null;
+        setDragOverIndex(null);
+        return;
+      }
+
+      const reordered = [...layers];
+      const [moved] = reordered.splice(fromIndex, 1);
+      reordered.splice(toIndex, 0, moved);
+      dragSourceIndexRef.current = null;
+      setDragOverIndex(null);
+      applyLayers(reordered);
+    },
+    [layers, applyLayers]
+  );
+
+  const handleLayerChange = useCallback(
+    (index: number) => (updated: TBackgroundLayer) => {
+      applyLayers(layers.map((l, i) => (i === index ? updated : l)));
+    },
+    [layers, applyLayers]
+  );
+
+  const handleAddLayer = useCallback(() => {
+    const newId = newLayerId();
+    const newLayer: TBackgroundLayer = {
+      ...DEFAULT_LAYER_PROPS,
+      id: newId,
+      type: 'linear-gradient',
+      stops: [
+        { id: newStopId(), color: DEFAULT_STOPS[0].color, position: '0%' },
+        { id: newStopId(), color: DEFAULT_STOPS[1].color, position: '100%' }
+      ]
+    };
+
+    setExpandedId(newId);
+    applyLayers([newLayer, ...layers]);
+  }, [layers, applyLayers]);
+
+  const handleRemoveLayer = useCallback(
+    (index: number) => () => {
+      applyLayers(layers.filter((_, i) => i !== index));
+    },
+    [layers, applyLayers]
+  );
+
+  const handleBgColorChange = useCallback(
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
+      setValue('background-color', value as StyleValue);
+    },
+    [setValue]
+  );
+
+  const handleMaskImageChange = useCallback(
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
+      setValue('mask-image', value as StyleValue);
+    },
+    [setValue]
+  );
+
+  const handleCollapse = useCallback((collapsed: boolean) => onCollapse?.('background', collapsed), [onCollapse]);
+
   return (
-    <CategoryContainer title="Background" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <div className="inspector__background flex flex-col gap-2">
-        <div className="mx-auto h-16 w-16 rounded-sm border border-gray-300 bg-white p-1">
-          <div
-            className="h-full w-full bg-contain bg-center bg-no-repeat"
-            style={{ backgroundImage: bgImagePreview }}
-          />
+    <CategoryContainer title="Background" dotKeys={DOT_KEYS} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">Layers</span>
+            <button
+              type="button"
+              className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-xs text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/30"
+              onClick={handleAddLayer}
+              title="Add background layer"
+            >
+              <i className="fas fa-plus text-[10px]" />
+              Add
+            </button>
+          </div>
+
+          {!layers.length && (
+            <div className="rounded border border-dashed border-gray-300 py-3 text-center text-xs text-gray-400 dark:border-zinc-600 dark:text-zinc-500">
+              No layers — click Add to start
+            </div>
+          )}
+
+          {layers.length > 0 && (
+            <div className="flex flex-col gap-1">
+              {layers.map((layer, index) => (
+                <BackgroundLayer
+                  key={layer.id}
+                  index={index}
+                  layer={layer}
+                  expanded={expandedId === layer.id}
+                  isDragOver={dragOverIndex === index}
+                  onExpand={() => handleToggleExpand(layer.id)}
+                  onChange={handleLayerChange(index)}
+                  onRemove={handleRemoveLayer(index)}
+                  onDragStart={handleDragStart(index)}
+                  onDragOver={handleDragOver(index)}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleDrop(index)}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        <CategorySection label="Fill" keys={dotKeys}>
-          <CategoryOption value={imgType} onChange={handleChangeFill} type="select">
-            <option value="color">Color</option>
-            <option value="image">Image</option>
-            <option value="linear-gradient">Linear Gradient</option>
-            <option value="radial-gradient">Radial Gradient</option>
-          </CategoryOption>
+
+        <CategorySection label="Base Color" keys={['background-color']}>
+          <CategoryOption type="color" value={bgColor} onChange={handleBgColorChange} />
         </CategorySection>
-        <CategorySection label="Mask Img" keys={['mask-image']}>
-          <CategoryOption value={maskImage} onChange={handleChange('mask-image')} />
+
+        <CategorySection label="Mask" keys={['mask-image']}>
+          <CategoryOption value={maskImage} onChange={handleMaskImageChange} />
         </CategorySection>
-        <CategorySection label="Clip" keys={['background-clip']}>
-          <CategoryOption value={bgClip} onChange={handleChange('background-clip')} type="select">
-            <option value="border-box">Border Box</option>
-            <option value="padding-box">Padding Box</option>
-            <option value="content-box">Content Box</option>
-            <option value="text">Text</option>
-            <option value="border-area">Border Area</option>
-          </CategoryOption>
-        </CategorySection>
-        {imgType === 'image' && <ImageMode replaceTokens={replaceTokens} onChange={handleChange} />}
-        {/* {imgType === 'linear-gradient' && <LinearGradientMode partialValue={bgImage} />}
-        {imgType === 'radial-gradient' && <RadialGradientMode partialValue={bgImage} />} */}
-        {imgType === 'color' && (
-          <CategorySection label="Color" keys={['background-color']}>
-            <CategoryOption type="color" value={bgColor} onChange={handleChange('background-color')} />
-          </CategorySection>
-        )}
       </div>
     </CategoryContainer>
   );

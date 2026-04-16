@@ -8,108 +8,95 @@ import { useCallback, useMemo } from 'react';
 
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
-import useInspectorValues from '../../../hooks/useInspectorValues';
 
-import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { BackgroundLayer } from '../helpers/backgroundParser';
 
 export type ImageModeProps = {
-  replaceTokens?: boolean;
-  onChange?: (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
+  layer: BackgroundLayer;
+  onChange?: (layer: BackgroundLayer) => void;
 };
 
-const ImageMode = ({ replaceTokens = false, onChange }: ImageModeProps) => {
-  const {
-    'background-image': bgImage,
-    'background-size': backgroundSize,
-    'background-attachment': backgroundAttachment,
-    'background-position': backgroundPosition,
-    'background-repeat': backgroundRepeat
-  } = useInspectorValues({
-    keys: ['background-image', 'background-size', 'background-attachment', 'background-position', 'background-repeat'],
-    asValue: true,
-    replaceTokens
-  });
+const ImageMode = ({ layer, onChange }: ImageModeProps) => {
+  const isCustomSize = layer.size === 'auto' || layer.size.includes(' ') || /^\d/.test(layer.size);
 
-  const backgroundImage = useMemo(() => {
-    const match = (bgImage as string).match(/\("(?<content>.*)"\)/im);
+  const sizeParts = useMemo(() => (layer.size.includes(' ') ? layer.size.split(' ') : ['auto', 'auto']), [layer.size]);
 
-    return match?.groups?.content ?? '';
-  }, [bgImage]);
-
-  const position = (backgroundPosition as string).split(' ');
-  let size = (backgroundSize as string).split(' ');
-  if (backgroundSize === 'auto') {
-    size = ['auto', 'auto'];
-  } else if (backgroundSize === 'cover' || backgroundSize === 'contain') {
-    size = ['auto', 'auto'];
-  }
-
-  let customSize = false;
-  if (backgroundSize === 'auto' || (backgroundSize as string).includes(' ')) {
-    customSize = true;
-  }
-
-  const handleChange = useCallback(
-    (type: StyleCategory, subType?: 'height' | 'width' | 'top' | 'left') =>
-      (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
-        if (type === 'background-size') {
-          if (['auto', 'cover', 'contain'].includes(value as string)) {
-            onChange?.(type)(value as string);
-          } else {
-            let size = (backgroundSize as string).split(' ');
-            if (size.length === 1) {
-              size = ['0px', '0px'];
-            }
-
-            if (subType === 'width') {
-              onChange?.('background-size')(`${value as string} ${size[1]}`);
-            } else {
-              onChange?.('background-size')(`${size[0]} ${value as string}`);
-            }
-          }
-        } else if (type === 'background-position') {
-          let position = (backgroundPosition as string).split(' ');
-          if (position.length === 1) {
-            position = ['0px', '0px'];
-          }
-
-          if (subType === 'left') {
-            onChange?.('background-position')(`${value as string} ${position[1]}`);
-          } else {
-            onChange?.('background-position')(`${position[0]} ${value as string}`);
-          }
-        } else {
-          onChange?.(type)(value);
-        }
-      },
-    [backgroundSize, onChange, backgroundPosition]
+  const handleUrlChange = useCallback(
+    (value: unknown) => onChange?.({ ...layer, url: String(value) }),
+    [layer, onChange]
   );
+
+  const handleSizePresetChange = useCallback(
+    (value: unknown) => {
+      const v = String(value);
+      if (v === 'cover' || v === 'contain') {
+        onChange?.({ ...layer, size: v });
+      } else {
+        // "auto" → custom mode with existing size
+        const current = layer.size;
+        onChange?.({ ...layer, size: current === 'cover' || current === 'contain' ? 'auto auto' : current });
+      }
+    },
+    [layer, onChange]
+  );
+
+  const handleSizeWidthChange = useCallback(
+    (value: unknown) => onChange?.({ ...layer, size: `${String(value)} ${sizeParts[1] ?? 'auto'}` }),
+    [layer, onChange, sizeParts]
+  );
+
+  const handleSizeHeightChange = useCallback(
+    (value: unknown) => onChange?.({ ...layer, size: `${sizeParts[0] ?? 'auto'} ${String(value)}` }),
+    [layer, onChange, sizeParts]
+  );
+
+  const handlePositionXChange = useCallback(
+    (value: unknown) => onChange?.({ ...layer, positionX: String(value) }),
+    [layer, onChange]
+  );
+
+  const handlePositionYChange = useCallback(
+    (value: unknown) => onChange?.({ ...layer, positionY: String(value) }),
+    [layer, onChange]
+  );
+
+  const handleRepeatChange = useCallback(
+    (value: unknown) => onChange?.({ ...layer, repeat: String(value) }),
+    [layer, onChange]
+  );
+
+  const handleAttachmentChange = useCallback(
+    (value: unknown) => onChange?.({ ...layer, attachment: String(value) }),
+    [layer, onChange]
+  );
+
+  const sizePreset = layer.size === 'cover' ? 'cover' : layer.size === 'contain' ? 'contain' : 'auto';
 
   const itemsSize = useMemo(
     () => [
       {
         value: 'auto',
         icon: <div className="px-1 text-xs select-none">Custom</div>,
-        description: '',
-        active: customSize,
+        description: 'Custom dimensions',
+        active: sizePreset === 'auto',
         size: 'custom' as const
       },
       {
         value: 'cover',
         icon: <div className="px-1 text-xs select-none">Cover</div>,
-        description: '',
-        active: backgroundSize === 'cover',
+        description: 'Cover the element',
+        active: sizePreset === 'cover',
         size: 'custom' as const
       },
       {
         value: 'contain',
         icon: <div className="px-1 text-xs select-none">Contain</div>,
-        description: 'Reverse Direction',
-        active: backgroundSize === 'contain',
+        description: 'Fit inside the element',
+        active: sizePreset === 'contain',
         size: 'custom' as const
       }
     ],
-    [backgroundSize, customSize]
+    [sizePreset]
   );
 
   const itemsRepeat = useMemo(
@@ -118,28 +105,28 @@ const ImageMode = ({ replaceTokens = false, onChange }: ImageModeProps) => {
         value: 'repeat',
         icon: <BackgroundTileXY />,
         description: 'Horizontally and Vertically',
-        active: backgroundRepeat === 'repeat'
+        active: layer.repeat === 'repeat'
       },
       {
         value: 'repeat-x',
         icon: <BackgroundTileX />,
         description: 'Horizontally',
-        active: backgroundRepeat === 'repeat-x'
+        active: layer.repeat === 'repeat-x'
       },
       {
         value: 'repeat-y',
         icon: <BackgroundTileY />,
         description: 'Vertically',
-        active: backgroundRepeat === 'repeat-y'
+        active: layer.repeat === 'repeat-y'
       },
       {
         value: 'no-repeat',
         icon: <XMark />,
         description: "Don't tile",
-        active: backgroundRepeat === 'no-repeat'
+        active: layer.repeat === 'no-repeat'
       }
     ],
-    [backgroundRepeat]
+    [layer.repeat]
   );
 
   const itemsAttachment = useMemo(
@@ -147,68 +134,65 @@ const ImageMode = ({ replaceTokens = false, onChange }: ImageModeProps) => {
       {
         value: 'fixed',
         icon: <div className="px-1 text-xs select-none">Fixed</div>,
-        description: '',
-        active: backgroundAttachment === 'fixed',
+        description: 'Fixed to viewport',
+        active: layer.attachment === 'fixed',
+        size: 'custom' as const
+      },
+      {
+        value: 'local',
+        icon: <div className="px-1 text-xs select-none">Local</div>,
+        description: 'Scrolls with content',
+        active: layer.attachment === 'local',
         size: 'custom' as const
       },
       {
         value: 'scroll',
-        icon: <div className="px-1 text-xs select-none">Not Fixed</div>,
-        description: '',
-        active: backgroundAttachment === 'scroll',
+        icon: <div className="px-1 text-xs select-none">Scroll</div>,
+        description: 'Scrolls with element',
+        active: layer.attachment === 'scroll',
         size: 'custom' as const
       }
     ],
-    [backgroundAttachment]
+    [layer.attachment]
   );
+
+  const positionAllowedWords = ['center', 'top', 'right', 'bottom', 'left', 'auto'];
 
   return (
     <>
-      <CategorySection label="Image" keys={['background-image']}>
-        <CategoryOption value={backgroundImage} onChange={onChange?.('background-image')} type="input" />
+      <CategorySection label="URL">
+        <CategoryOption type="input" value={layer.url} onChange={handleUrlChange} />
       </CategorySection>
-      <CategorySection label="Size" keys={['background-size']}>
-        <CategoryOption onChange={onChange?.('background-size')} type="iconGroup" items={itemsSize} />
+      <CategorySection label="Size">
+        <CategoryOption type="iconGroup" items={itemsSize} onChange={handleSizePresetChange} />
       </CategorySection>
-      {customSize && (
+      {isCustomSize && (
         <CategorySection>
-          <CategoryOption
-            keys={['background-size']}
-            label="Width"
-            value={size[0]}
-            onChange={handleChange('background-size', 'width')}
-            type="metric"
-          />
-          <CategoryOption
-            keys={['background-size']}
-            label="Height"
-            value={size[1]}
-            onChange={handleChange('background-size', 'height')}
-            type="metric"
-          />
+          <CategoryOption label="W" type="metric" value={sizeParts[0]} onChange={handleSizeWidthChange} />
+          <CategoryOption label="H" type="metric" value={sizeParts[1]} onChange={handleSizeHeightChange} />
         </CategorySection>
       )}
-      <CategorySection label="Image Position" keys={['background-position']}>
+      <CategorySection label="Position">
         <CategoryOption
-          keys={['background-position']}
-          label="Top"
-          value={position[0]}
-          onChange={handleChange('background-position', 'top')}
+          label="X"
           type="metric"
+          value={layer.positionX}
+          allowedWords={positionAllowedWords}
+          onChange={handlePositionXChange}
         />
         <CategoryOption
-          keys={['background-position']}
-          label="Left"
-          value={position[1]}
-          onChange={handleChange('background-position', 'left')}
+          label="Y"
           type="metric"
+          value={layer.positionY}
+          allowedWords={positionAllowedWords}
+          onChange={handlePositionYChange}
         />
       </CategorySection>
-      <CategorySection label="Tile" keys={['background-repeat']}>
-        <CategoryOption onChange={onChange?.('background-repeat')} type="iconGroup" items={itemsRepeat} />
+      <CategorySection label="Tile">
+        <CategoryOption type="iconGroup" items={itemsRepeat} onChange={handleRepeatChange} />
       </CategorySection>
-      <CategorySection label="Fixed" keys={['background-attachment']}>
-        <CategoryOption onChange={onChange?.('background-attachment')} type="iconGroup" items={itemsAttachment} />
+      <CategorySection label="Attachment">
+        <CategoryOption type="iconGroup" items={itemsAttachment} onChange={handleAttachmentChange} />
       </CategorySection>
     </>
   );
