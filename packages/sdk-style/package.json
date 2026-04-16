@@ -194,13 +194,73 @@
       "types": "./dist/src/components/StyleInspector/categories/Background/Background.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Background/Background.mjs"
     },
+    "./components/StyleInspector/categories/Background/components/BackgroundLayer": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundLayer/BackgroundLayer": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/BackgroundLayer.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/BackgroundLayer.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundLayer/index": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar/GradientPreviewBar": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientPreviewBar.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientPreviewBar.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopBar": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopBar.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopBar.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopEditor": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopEditor.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopEditor.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopHandle": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopHandle.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopHandle.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopTrack": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopTrack.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopTrack.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar/index": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/helpers/backgroundParser": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/helpers/backgroundParser.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/helpers/backgroundParser.mjs"
+    },
+    "./components/StyleInspector/categories/Background/helpers/parseToBgLayers": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/helpers/parseToBgLayers.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/helpers/parseToBgLayers.mjs"
+    },
     "./components/StyleInspector/categories/Background/index": {
       "types": "./dist/src/components/StyleInspector/categories/Background/index.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Background/index.mjs"
     },
+    "./components/StyleInspector/categories/Background/modes/ConicGradientMode": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/modes/ConicGradientMode.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/modes/ConicGradientMode.mjs"
+    },
     "./components/StyleInspector/categories/Background/modes/ImageMode": {
       "types": "./dist/src/components/StyleInspector/categories/Background/modes/ImageMode.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Background/modes/ImageMode.mjs"
+    },
+    "./components/StyleInspector/categories/Background/modes/LinearGradientMode": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/modes/LinearGradientMode.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/modes/LinearGradientMode.mjs"
+    },
+    "./components/StyleInspector/categories/Background/modes/RadialGradientMode": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/modes/RadialGradientMode.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/modes/RadialGradientMode.mjs"
     },
     "./components/StyleInspector/categories/Border": {
       "types": "./dist/src/components/StyleInspector/categories/Border/index.d.ts",
