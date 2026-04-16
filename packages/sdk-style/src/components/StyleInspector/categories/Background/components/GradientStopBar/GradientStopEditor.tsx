@@ -39,6 +39,7 @@ const GradientStopEditor = ({
         { label: 'PX', value: 'px' }
       ]}
       allowedWords={[]}
+      min={Infinity}
       onChange={onPositionChange}
     />
     {showRemove && (
