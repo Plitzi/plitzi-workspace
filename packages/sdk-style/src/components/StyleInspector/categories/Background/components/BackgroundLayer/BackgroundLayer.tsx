@@ -1,6 +1,6 @@
 import Icon from '@plitzi/plitzi-ui/Icon';
 import clsx from 'clsx';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import CategoryOption from '../../../../components/CategoryOption';
 import CategorySection from '../../../../components/CategorySection';
@@ -31,28 +31,15 @@ export type BackgroundLayerProps = {
   layer: BackgroundLayerType;
   index: number;
   expanded: boolean;
-  isDragOver: boolean;
-  onExpand: () => void;
+  onExpand: (id: string) => void;
   onChange: (layer: BackgroundLayerType) => void;
   onRemove: () => void;
-  onDragStart: (e: DragEvent) => void;
-  onDragOver: (e: DragEvent) => void;
-  onDragEnd: (e: DragEvent) => void;
-  onDrop: (e: DragEvent) => void;
+  onReorder: (fromIndex: number, toIndex: number) => void;
 };
 
-const BackgroundLayer = ({
-  layer,
-  expanded,
-  isDragOver,
-  onExpand,
-  onChange,
-  onRemove,
-  onDragStart,
-  onDragOver,
-  onDragEnd,
-  onDrop
-}: BackgroundLayerProps) => {
+const BackgroundLayer = ({ layer, index, expanded, onExpand, onChange, onRemove, onReorder }: BackgroundLayerProps) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+
   const previewCSS = useMemo(() => serializeLayerImage(layer), [layer]);
 
   const handleTypeChange = useCallback(
@@ -63,17 +50,46 @@ const BackgroundLayer = ({
     [layer, onChange]
   );
 
+  const handleExpand = useCallback(() => onExpand(layer.id), [onExpand, layer.id]);
+
   const handleClipChange = useCallback(
     (value: unknown) => onChange({ ...layer, clip: String(value) }),
     [layer, onChange]
   );
 
-  const handleDragOver = useCallback(
+  const handleDragStart = useCallback(
+    (e: DragEvent) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(index));
+    },
+    [index]
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
     (e: DragEvent) => {
       e.preventDefault();
-      onDragOver(e);
+      setIsDragOver(false);
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if (!isNaN(fromIndex)) {
+        onReorder(fromIndex, index);
+      }
     },
-    [onDragOver]
+    [index, onReorder]
   );
 
   return (
@@ -83,14 +99,15 @@ const BackgroundLayer = ({
         'border-gray-200 dark:border-zinc-700': !isDragOver
       })}
       onDragOver={handleDragOver}
-      onDrop={onDrop}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <div className="flex h-8 items-center gap-1 px-1">
         <span
           draggable
           className="cursor-grab px-1 text-gray-400 hover:text-gray-600 active:cursor-grabbing dark:text-zinc-500 dark:hover:text-zinc-300"
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         >
           <Icon icon="fa-solid fa-grip-lines" size="xs" />
         </span>
@@ -109,7 +126,7 @@ const BackgroundLayer = ({
         <button
           type="button"
           className="cursor-pointer p-1 text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-          onClick={onExpand}
+          onClick={handleExpand}
           title={expanded ? 'Collapse' : 'Expand'}
         >
           <Icon icon={expanded ? 'fa-solid fa-angle-up' : 'fa-solid fa-angle-down'} size="xs" />

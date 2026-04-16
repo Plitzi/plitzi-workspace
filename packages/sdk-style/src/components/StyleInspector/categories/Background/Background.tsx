@@ -18,7 +18,6 @@ import parseToBgLayers from './helpers/parseToBgLayers';
 
 import type { BackgroundLayer as TBackgroundLayer } from './helpers/backgroundParser';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-import type { DragEvent } from 'react';
 
 const DOT_KEYS = [
   'background-color',
@@ -88,39 +87,15 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
     [setValue]
   );
 
-  const dragSourceIndexRef = useRef<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
-  const handleDragStart = useCallback(
-    (index: number) => (e: DragEvent) => {
-      dragSourceIndexRef.current = index;
-      e.dataTransfer.effectAllowed = 'move';
-    },
-    []
-  );
-
-  const handleDragOver = useCallback((index: number) => () => setDragOverIndex(index), []);
-
-  const handleDragEnd = useCallback(() => {
-    dragSourceIndexRef.current = null;
-    setDragOverIndex(null);
-  }, []);
-
-  const handleDrop = useCallback(
-    (toIndex: number) => (e: DragEvent) => {
-      e.preventDefault();
-      const fromIndex = dragSourceIndexRef.current;
-      if (fromIndex === null || fromIndex === toIndex) {
-        dragSourceIndexRef.current = null;
-        setDragOverIndex(null);
+  const handleReorder = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) {
         return;
       }
 
       const reordered = [...layers];
       const [moved] = reordered.splice(fromIndex, 1);
       reordered.splice(toIndex, 0, moved);
-      dragSourceIndexRef.current = null;
-      setDragOverIndex(null);
       applyLayers(reordered);
     },
     [layers, applyLayers]
@@ -203,14 +178,10 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
                   index={index}
                   layer={layer}
                   expanded={expandedId === layer.id}
-                  isDragOver={dragOverIndex === index}
-                  onExpand={() => handleToggleExpand(layer.id)}
+                  onExpand={handleToggleExpand}
                   onChange={handleLayerChange(index)}
                   onRemove={handleRemoveLayer(index)}
-                  onDragStart={handleDragStart(index)}
-                  onDragOver={handleDragOver(index)}
-                  onDragEnd={handleDragEnd}
-                  onDrop={handleDrop(index)}
+                  onReorder={handleReorder}
                 />
               ))}
             </div>
