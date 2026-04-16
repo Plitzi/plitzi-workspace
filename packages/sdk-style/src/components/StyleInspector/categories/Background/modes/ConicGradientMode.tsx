@@ -2,7 +2,9 @@ import { useCallback } from 'react';
 
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
+import BackgroundPosition from '../components/BackgroundPosition';
 import BackgroundSize from '../components/BackgroundSize';
+import BackgroundTile from '../components/BackgroundTile';
 import GradientStopBar from '../components/GradientStopBar';
 
 import type { BackgroundLayer, GradientStop } from '../helpers/backgroundParser';
@@ -70,6 +72,8 @@ const ConicGradientMode = ({ layer, onChange }: ConicGradientModeProps) => {
         <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
       </CategorySection>
       <BackgroundSize layer={layer} onChange={onChange} />
+      <BackgroundPosition layer={layer} onChange={onChange} />
+      <BackgroundTile layer={layer} onChange={onChange} />
     </>
   );
 };
