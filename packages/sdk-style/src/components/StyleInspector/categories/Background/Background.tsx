@@ -72,6 +72,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
     }
 
     setLayers(parseToBgLayers(layerValuesRef.current));
+    internalCssKeyRef.current = cssKey;
   }, [cssKey]);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -122,7 +123,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
     };
 
     setExpandedId(newId);
-    applyLayers([newLayer, ...layers]);
+    applyLayers([...layers, newLayer]);
   }, [layers, applyLayers]);
 
   const handleRemoveLayer = useCallback(

@@ -15,10 +15,6 @@ const parseToBgLayers = (values: LayerValues): BackgroundLayer[] => {
     'background-clip': values['background-clip'] as string | undefined
   });
 
-  return parsed.map(l => ({
-    ...l,
-    id: newLayerId(),
-    stops: l.stops.map(s => ({ ...s, id: newStopId() }))
-  }));
+  return parsed.map(l => ({ ...l, id: newLayerId(), stops: l.stops.map(s => ({ ...s, id: newStopId() })) }));
 };
 export default parseToBgLayers;

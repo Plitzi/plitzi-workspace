@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
+import BackgroundSize from '../components/BackgroundSize';
 import GradientStopBar from '../components/GradientStopBar';
 
 import type { BackgroundLayer, GradientStop } from '../helpers/backgroundParser';
@@ -48,6 +49,7 @@ const LinearGradientMode = ({ layer, onChange }: LinearGradientModeProps) => {
       <CategorySection label="Gradient" direction="column">
         <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
       </CategorySection>
+      <BackgroundSize layer={layer} onChange={onChange} />
     </>
   );
 };

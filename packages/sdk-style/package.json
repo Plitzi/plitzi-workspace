@@ -206,6 +206,18 @@
       "types": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/index.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundLayer/index.mjs"
     },
+    "./components/StyleInspector/categories/Background/components/BackgroundSize": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundSize/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundSize/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundSize/BackgroundSize": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundSize/BackgroundSize.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundSize/BackgroundSize.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundSize/index": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundSize/index.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/components/BackgroundSize/index.mjs"
+    },
     "./components/StyleInspector/categories/Background/components/GradientStopBar": {
       "types": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/index.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Background/components/GradientStopBar/index.mjs"
