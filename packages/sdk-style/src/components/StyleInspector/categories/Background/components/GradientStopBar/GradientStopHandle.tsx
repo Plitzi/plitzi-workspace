@@ -1,5 +1,7 @@
 import clsx from 'clsx';
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+
+import normalizeLeft from '../../helpers/normalizeLeft';
 
 import type { GradientStop } from '../../helpers/backgroundParser';
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
@@ -16,6 +18,14 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
   const handleRef = useRef<HTMLDivElement>(null);
   const isCapturing = useRef(false);
   const hasMoved = useRef(false);
+  const left = useMemo(
+    () =>
+      normalizeLeft(
+        stop.position,
+        (handleRef.current?.parentNode as HTMLElement | null)?.getBoundingClientRect().width ?? Infinity
+      ),
+    [stop.position]
+  );
 
   const getPct = useCallback(
     (clientX: number): number => {
@@ -33,9 +43,9 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
 
   useLayoutEffect(() => {
     if (!isCapturing.current && handleRef.current) {
-      handleRef.current.style.left = stop.position || '0%';
+      handleRef.current.style.left = left;
     }
-  }, [stop.position]);
+  }, [left]);
 
   const handlePointerDown = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -86,7 +96,7 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
           ? 'z-10 border-blue-500 ring-1 ring-blue-300 dark:ring-blue-700'
           : 'z-0 border-white hover:border-gray-300 dark:border-zinc-500'
       )}
-      style={{ left: stop.position || '0%', backgroundColor: stop.color }}
+      style={{ left, backgroundColor: stop.color }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

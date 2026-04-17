@@ -95,9 +95,9 @@ const GradientStopBar = ({ stops, onChange }: GradientStopBarProps) => {
   return (
     <div className="flex flex-col gap-2">
       <GradientPreviewBar gradientCSS={gradientCSS} onClick={handleBarClick} />
-
-      <GradientStopTrack stops={stops} selectedId={selectedId} onChange={onChange} onSelect={setSelectedId} />
-
+      <div className="flex px-2">
+        <GradientStopTrack stops={stops} selectedId={selectedId} onChange={onChange} onSelect={setSelectedId} />
+      </div>
       {selectedStop && (
         <GradientStopEditor
           stop={selectedStop}
@@ -107,7 +107,6 @@ const GradientStopBar = ({ stops, onChange }: GradientStopBarProps) => {
           onRemove={handleRemoveStop}
         />
       )}
-
       <div className="flex flex-wrap gap-1">
         {sortedStops.map(stop => (
           <button
