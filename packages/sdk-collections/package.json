@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-collections",
-  "version": "0.28.14",
+  "version": "0.29.0",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",

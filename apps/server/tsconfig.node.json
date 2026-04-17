@@ -1,0 +1,9 @@
+{
+  "extends": "../../packages/sdk-shared/tsconfig.node.json",
+  "references": [{ "path": "../../packages/sdk-shared" }],
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist"
+  },
+  "include": ["vite.config.ts"]
+}

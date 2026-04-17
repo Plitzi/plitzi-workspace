@@ -1,0 +1,53 @@
+{
+  "name": "@plitzi/sdk-server",
+  "version": "0.1.1",
+  "license": "GPLv3",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "repository": {
+    "type": "https",
+    "url": "https://github.com/plitzi/plitzi-workspace.git"
+  },
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "dependencies": {
+    "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.6",
+    "@vitejs/plugin-react": "^4.5.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsx": "^4.19.4",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "scripts": {
+    "dev": "node --import tsx --watch src/server.ts",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit"
+  }
+}
