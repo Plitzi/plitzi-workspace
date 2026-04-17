@@ -1,5 +1,6 @@
 import { get, pick, set } from '@plitzi/plitzi-ui/helpers';
 import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
@@ -55,7 +56,7 @@ const BuilderProvider = ({
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
   const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
-  const [theme, setTheme] = useState<StyleThemeMode>('light');
+  const [theme, setTheme] = useStorage<StyleThemeMode>('builder-state.theme-builder', 'light', 'localStorage');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const { useStore, useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
@@ -529,6 +530,7 @@ const BuilderProvider = ({
       pages.length,
       baseContext,
       baseElementIdProp,
+      setTheme,
       builderSetBaseContext,
       builderElementPermissions,
       builderHandler,
