@@ -274,6 +274,10 @@
       "types": "./dist/src/components/StyleInspector/categories/Background/helpers/backgroundParser.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Background/helpers/backgroundParser.mjs"
     },
+    "./components/StyleInspector/categories/Background/helpers/normalizeLeft": {
+      "types": "./dist/src/components/StyleInspector/categories/Background/helpers/normalizeLeft.d.ts",
+      "import": "./dist/src/components/StyleInspector/categories/Background/helpers/normalizeLeft.mjs"
+    },
     "./components/StyleInspector/categories/Background/helpers/parseToBgLayers": {
       "types": "./dist/src/components/StyleInspector/categories/Background/helpers/parseToBgLayers.d.ts",
       "import": "./dist/src/components/StyleInspector/categories/Background/helpers/parseToBgLayers.mjs"
