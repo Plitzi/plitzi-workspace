@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/static-components */
+
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';

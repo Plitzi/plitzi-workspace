@@ -17,11 +17,7 @@ const StyleManager = () => {
   const [[flat, displayMode]] = useStore(['schema.flat', 'displayMode']);
   const [selectors] = useStore(`style.platform.${displayMode}`);
 
-  const flatList = useMemo(
-    () => Object.values(flat),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [Object.keys(flat).length]
-  );
+  const flatList = useMemo(() => Object.values(flat), [flat]);
 
   const styleSelectorsAvailables = useMemo(
     () =>

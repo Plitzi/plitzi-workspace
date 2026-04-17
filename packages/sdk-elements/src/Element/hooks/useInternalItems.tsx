@@ -33,8 +33,8 @@ const useInternalItems = ({
   const { plugins } = use(PluginsContext);
 
   const { items } = definition;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const layoutKeyIdentifier = useMemo(() => Math.round(Math.random() * 100), [plitziElementLayout]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/purity
+  const layoutKeyIdentifier = useMemo(() => Math.round(Date.now()), [plitziElementLayout]);
 
   return useMemo<ReactNode | undefined>(() => {
     if (!plitziElementLayout && !children && (!items || items.length === 0)) {

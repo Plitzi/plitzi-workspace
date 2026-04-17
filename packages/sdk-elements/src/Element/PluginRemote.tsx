@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/static-components */
+
 import { lazy, Suspense, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';

@@ -86,6 +86,7 @@ const BuilderOverlay = ({
     [refIframe, zoom]
   );
 
+  // eslint-disable-next-line react-hooks/use-memo
   const throttledHandleProcessContainer = useCallback(throttle(handleProcessContainer, 50), [handleProcessContainer]);
 
   const getElementDOM = useCallback(
