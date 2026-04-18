@@ -4,7 +4,23 @@ import { TtlCache } from '../helpers/ttlCache';
 import { PluginManager } from '../plugins/manager';
 import { compileTemplate } from '../ssr/template';
 
-import type { CacheFilter, CacheManager, PluginRegistry, SSRServerConfig } from '../types';
+import type { CacheFilter, CacheManager, PluginRegistry, PluginSource, SSRServerConfig } from '../types';
+
+const DEFAULT_PLUGIN_VERSION = '1.0.0';
+
+const normalizePluginSource = (source: PluginSource): PluginSource => ({
+  ...source,
+  version: source.version ?? DEFAULT_PLUGIN_VERSION
+});
+
+const normalizePlugins = (plugins: Record<string, PluginSource>): Record<string, PluginSource> => {
+  const out: Record<string, PluginSource> = {};
+  for (const [name, source] of Object.entries(plugins)) {
+    out[name] = normalizePluginSource(source);
+  }
+
+  return out;
+};
 
 export type SSRServer = {
   listen: (port: number, host?: string) => void;
@@ -54,11 +70,15 @@ export const createSSRServer = (config: SSRServerConfig): SSRServer => {
   const cache: CacheManager | null = cacheStore ? buildCacheManager(cacheStore) : null;
   const renderFn = config.templateFn ?? compileTemplate();
 
-  const pluginManager = new PluginManager(config.plugins ?? {}, config.pluginsCacheDir, config.pluginsTtlMs);
+  const pluginManager = new PluginManager(
+    normalizePlugins(config.plugins ?? {}),
+    config.pluginsCacheDir,
+    config.pluginsTtlMs
+  );
 
   const plugins: PluginRegistry = {
-    register: (name, source) => pluginManager.register(name, source),
-    invalidate: (name?) => pluginManager.invalidate(name)
+    register: (name, source) => pluginManager.register(name, normalizePluginSource(source)),
+    invalidate: (name?, version?) => pluginManager.invalidate(name, version)
   };
 
   let primary: ReturnType<typeof buildTransport>['primary'];

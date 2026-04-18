@@ -51,9 +51,23 @@ export const buildBody = async (
   const reactDomBase = `https://esm.sh/react-dom@${reactVersion}`;
   const devSuffix = devMode ? '?dev' : '';
 
-  const pluginNames = resolvedCtx.spaceDeployment?.pluginNames;
+  const pluginNames = resolvedCtx.spaceDeployment?.pluginNames ?? [];
+  const pluginSources = resolvedCtx.spaceDeployment?.pluginSources;
+
+  // Auto-register plugins defined inline in the deployment (e.g. downloaded from DB/CDN)
+  const dynamicNames: string[] = [];
+  if (pluginManager && pluginSources) {
+    for (const [pluginName, pluginSource] of Object.entries(pluginSources)) {
+      const key = pluginManager.ensure(pluginName, pluginSource);
+      if (!pluginNames.includes(key)) {
+        dynamicNames.push(key);
+      }
+    }
+  }
+
+  const allPluginNames = [...pluginNames, ...dynamicNames];
   const plugins =
-    pluginManager && pluginNames && pluginNames.length > 0 ? await pluginManager.getEntries(pluginNames) : undefined;
+    pluginManager && allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : undefined;
 
   return renderFn({
     title: 'Plitzi App',

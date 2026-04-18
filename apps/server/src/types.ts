@@ -39,12 +39,14 @@ export type PluginSourceFile = {
   js: string;
   css?: string;
   action?: PluginAction;
+  version?: string;
 };
 
 export type PluginSourceComponent = {
   component: unknown;
   js?: string;
   css?: string;
+  version?: string;
 };
 
 export type PluginSource = PluginSourceFile | PluginSourceComponent;
@@ -84,6 +86,7 @@ export type SSRSpaceDeployment = {
   revision?: number;
   templateProps?: SSRTemplateProps;
   pluginNames?: string[];
+  pluginSources?: Record<string, PluginSource>;
   error?: {
     code: number;
     message: string;
@@ -124,7 +127,7 @@ export type SSRServerConfig = {
 
 export type PluginRegistry = {
   register: (name: string, source: PluginSource) => void;
-  invalidate: (name?: string) => Promise<void>;
+  invalidate: (name?: string, version?: string) => Promise<void>;
 };
 
 export type CacheFilter = {

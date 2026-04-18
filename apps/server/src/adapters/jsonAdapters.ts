@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 
-import type { SSRAdapters, SSRRequest, SSRSpaceDeployment } from '../types';
+import type { SSRAdapters, SSRRequest, SSRSpaceDeployment, SSRUser } from '../types';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export type JsonAdaptersConfig = {
   offlineData: string | ((spaceId: number, environment: string, revision?: number) => string);
   deployment?: string | SSRSpaceDeployment | Record<string, SSRSpaceDeployment>;
+  user?: SSRUser | ((req: SSRRequest) => SSRUser | undefined | Promise<SSRUser | undefined>);
 };
 
 const isDeploymentObject = (v: NonNullable<JsonAdaptersConfig['deployment']>): v is SSRSpaceDeployment =>
@@ -57,5 +58,10 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
     );
   };
 
-  return { getOfflineData, getSpaceDeployment };
+  const getUser = config.user
+    ? (req: SSRRequest): Promise<SSRUser | undefined> =>
+        Promise.resolve(typeof config.user === 'function' ? config.user(req) : config.user)
+    : undefined;
+
+  return { getOfflineData, getSpaceDeployment, getUser };
 };

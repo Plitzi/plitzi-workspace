@@ -11,7 +11,7 @@ const META_FILE = 'meta.json';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const DEFAULT_CACHE_DIR = '.sdk-plugins';
 
-type Meta = { compiledAt: number };
+type Meta = { compiledAt: number; version?: string };
 
 type CacheEntry = { compiledAt: number; entry: PluginEntry };
 
@@ -39,6 +39,20 @@ export class PluginManager {
     this.plugins[name] = source;
     this.mem.delete(name);
     this.failed.delete(name);
+  }
+
+  /**
+   * Registers a plugin only if it is not yet known under its effective key.
+   * Returns the effective key (`name@version` when version is set, `name` otherwise)
+   * so the caller can pass it directly to getEntries().
+   */
+  ensure(name: string, source: PluginSource): string {
+    const key = source.version ? `${name}@${source.version}` : name;
+    if (!(key in this.plugins)) {
+      this.register(key, source);
+    }
+
+    return key;
   }
 
   private pluginDir(name: string): string {
@@ -92,20 +106,29 @@ export class PluginManager {
     }
 
     const meta = await this.readMeta(name);
-    if (meta && !this.isExpired(meta.compiledAt)) {
-      const jsOk = await this.fileExists(path.join(this.pluginDir(name), 'index.js'));
-      if (jsOk) {
-        const sourceCss = source.css;
-        let cssUrl: string | undefined;
-        if (await this.fileExists(path.join(this.pluginDir(name), 'index.css'))) {
-          cssUrl = `${this.urlPrefix}/${name}/index.css`;
-        } else if (sourceCss && this.isWebUrl(sourceCss)) {
-          cssUrl = sourceCss;
-        }
+    if (meta) {
+      const sourceVersion = source.version;
 
-        const entry = this.toEntry(name, true, cssUrl);
-        this.mem.set(name, { compiledAt: meta.compiledAt, entry });
-        return entry;
+      if (sourceVersion && meta.version !== sourceVersion) {
+        // Version changed — nuke disk cache so build() starts clean
+        console.log(`[SSR] Plugin "${name}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`);
+        await fs.rm(this.pluginDir(name), { recursive: true, force: true });
+      } else if (sourceVersion || !this.isExpired(meta.compiledAt)) {
+        // Versioned plugins never expire; unversioned respect TTL
+        const jsOk = await this.fileExists(path.join(this.pluginDir(name), 'index.js'));
+        if (jsOk) {
+          const sourceCss = source.css;
+          let cssUrl: string | undefined;
+          if (await this.fileExists(path.join(this.pluginDir(name), 'index.css'))) {
+            cssUrl = `${this.urlPrefix}/${name}/index.css`;
+          } else if (sourceCss && this.isWebUrl(sourceCss)) {
+            cssUrl = sourceCss;
+          }
+
+          const entry = this.toEntry(name, true, cssUrl);
+          this.mem.set(name, { compiledAt: meta.compiledAt, entry });
+          return entry;
+        }
       }
     }
 
@@ -160,7 +183,7 @@ export class PluginManager {
       }
 
       const compiledAt = Date.now();
-      await this.writeMeta(name, { compiledAt });
+      await this.writeMeta(name, { compiledAt, version: source.version });
 
       const entry = this.toEntry(name, true, cssUrl);
       this.mem.set(name, { compiledAt, entry });
@@ -193,15 +216,49 @@ export class PluginManager {
     return out;
   }
 
-  async invalidate(name?: string): Promise<void> {
-    if (name) {
-      this.mem.delete(name);
-      this.failed.delete(name);
-      await fs.rm(this.pluginDir(name), { recursive: true, force: true });
-    } else {
+  async invalidate(name?: string, version?: string): Promise<void> {
+    if (!name) {
       this.mem.clear();
       this.failed.clear();
       await fs.rm(this.outputDir, { recursive: true, force: true });
+      return;
+    }
+
+    if (version) {
+      // Invalidate one specific version
+      const key = `${name}@${version}`;
+      this.mem.delete(key);
+      this.failed.delete(key);
+      await fs.rm(this.pluginDir(key), { recursive: true, force: true });
+      return;
+    }
+
+    // Invalidate all versions: exact name + every name@* variant
+    const prefix = `${name}@`;
+    const keysToEvict = new Set<string>();
+    keysToEvict.add(name);
+    for (const key of Object.keys(this.plugins)) {
+      if (key.startsWith(prefix)) keysToEvict.add(key);
+    }
+    for (const key of this.mem.keys()) {
+      if (key.startsWith(prefix)) keysToEvict.add(key);
+    }
+
+    for (const key of keysToEvict) {
+      this.mem.delete(key);
+      this.failed.delete(key);
+    }
+
+    // Remove matching dirs from disk
+    try {
+      const entries = await fs.readdir(this.outputDir);
+      await Promise.all(
+        entries
+          .filter(e => e === name || e.startsWith(prefix))
+          .map(e => fs.rm(path.join(this.outputDir, e), { recursive: true, force: true }))
+      );
+    } catch {
+      // outputDir doesn't exist yet — nothing to clean
     }
   }
 

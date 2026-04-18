@@ -44,6 +44,7 @@ server.listen(3001);
 | `plugins` | `Record<string, PluginSource>` | — | Named plugin definitions. Compiled or copied on first use and cached for `pluginsTtlMs`. |
 | `pluginsCacheDir` | `string` | `.sdk-plugins` | Directory where compiled plugin files are stored. |
 | `pluginsTtlMs` | `number` | `604800000` | TTL in milliseconds for compiled plugins (default: 1 week). |
+| `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked after the built-in public directory and before `static` prefix routes. |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |
 
@@ -77,7 +78,7 @@ type SSRAdapters = {
 
 ## JSON adapters (offline mode)
 
-`createJsonAdapters` provides a ready-made adapter pair that reads data from local JSON files, useful for offline mode, integration tests, and static deployments.
+`createJsonAdapters` provides a ready-made adapter set that reads data from local JSON files, useful for offline mode, integration tests, and static deployments.
 
 ```ts
 import { createSSRServer, createJsonAdapters } from '@plitzi/sdk-server';
@@ -85,7 +86,8 @@ import { createSSRServer, createJsonAdapters } from '@plitzi/sdk-server';
 const server = createSSRServer({
   adapters: createJsonAdapters({
     offlineData: '/exports/offline.json',
-    deployment: { spaceId: 1, environment: 'main', revision: 0 }
+    deployment: { spaceId: 1, environment: 'main', revision: 0 },
+    user: { id: 1, username: 'admin', email: 'admin@example.com', verified: true, permissions: [], roles: [] }
   })
 });
 
@@ -101,6 +103,8 @@ server.listen(3001);
 | `deployment` | `string` | Path to a JSON file containing an `SSRSpaceDeployment` object. |
 | `deployment` | `SSRSpaceDeployment` | Inline deployment object used for every request. |
 | `deployment` | `Record<hostname, SSRSpaceDeployment>` | Per-hostname map. Use `'*'` as a catch-all. |
+| `user` | `SSRUser` | Fixed user returned for every request. Useful for testing authenticated flows. |
+| `user` | `(req) => SSRUser \| undefined \| Promise<SSRUser \| undefined>` | Function for dynamic user resolution per request. |
 
 ## Static files
 
@@ -118,9 +122,20 @@ createSSRServer({
 
 Static responses include `ETag`, `Last-Modified`, and `Cache-Control` headers. Subsequent requests with `If-None-Match` receive `304 Not Modified` when the file has not changed. JS, CSS, and font files are served with `Cache-Control: immutable`; all other assets use a 1-hour max-age.
 
-### Built-in public directory
+### Public directory
 
-Any file placed in the package's `public/` directory is served automatically at its root path (e.g. `public/favicon.png` → `/favicon.png`), before consumer-defined `static` routes.
+Any file placed in the package's `public/` directory is served automatically at its root path (e.g. `public/favicon.png` → `/favicon.png`).
+
+Use `publicDir` to serve your own root-level files (e.g. `robots.txt`, `sitemap.xml`) without prefixes:
+
+```ts
+createSSRServer({
+  publicDir: path.resolve(process.cwd(), 'src/services/ssr/public'),
+  adapters: { ... }
+});
+```
+
+The lookup order for a request is: built-in `public/` → `publicDir` → `static` prefix routes → SSR renderer.
 
 ## Compression
 
@@ -199,9 +214,10 @@ const server = createSSRServer({
     // From a source file — compiled to ESM with esbuild
     'my-chart': {
       js: '/abs/path/to/MyChart.tsx',
-      css: '/abs/path/to/MyChart.css'  // optional
+      css: '/abs/path/to/MyChart.css',  // filesystem path — copied to .sdk-plugins
+      version: '1.2.0'
     },
-    // Pre-compiled local file — copied as-is
+    // Pre-compiled local file — copied as-is (version defaults to '1.0.0')
     'data-table': {
       js: '/abs/path/to/table.js',
       action: 'copy'
@@ -209,25 +225,37 @@ const server = createSSRServer({
     // Pre-compiled from a CDN — fetched and cached
     'video-player': {
       js: 'https://cdn.example.com/player.js',
-      css: 'https://cdn.example.com/player.css'
+      css: 'https://cdn.example.com/player.css',
+      version: '3.0.1'
+    },
+    // CSS already served via `static` — referenced directly, not copied
+    'plitziBuilder': {
+      js: '/abs/path/to/builder/index.ts',
+      css: '/builder-assets/plitzi-builder.css',  // web URL — injected as-is
+      action: 'compile',
+      version: '2.1.0'
     },
     // React component passed directly (SSR-capable, compiled from source for client)
     'rich-text': {
       component: RichTextComponent,
-      js: '/abs/path/to/RichText.tsx'
+      js: '/abs/path/to/RichText.tsx',
+      version: '1.0.0'
     }
   },
   adapters: { ... }
 });
 
-// Manually invalidate a plugin (e.g. after deploying a new version)
+// Invalidate one specific version
+await server.plugins.invalidate('my-chart', '1.2.0');
+
+// Invalidate all versions of a plugin (my-chart, my-chart@1.2.0, …)
 await server.plugins.invalidate('my-chart');
 
-// Invalidate all plugins
+// Invalidate everything
 await server.plugins.invalidate();
 ```
 
-The adapter returns which plugin names the space is allowed to use:
+The adapter controls which plugins each space gets via `pluginNames` (for pre-registered plugins) and `pluginSources` (for plugins defined inline — downloaded and cached automatically):
 
 ```ts
 const getSpaceDeployment = async (req): Promise<SSRSpaceDeployment> => {
@@ -237,10 +265,23 @@ const getSpaceDeployment = async (req): Promise<SSRSpaceDeployment> => {
     spaceId: space.id,
     environment: space.environment,
     revision: space.revision,
-    pluginNames: space.hasPremiumPlugins ? ['my-chart', 'data-table'] : []
+    // Activate pre-registered plugins by name
+    pluginNames: space.hasPremiumPlugins ? ['my-chart', 'data-table'] : [],
+    // Inline plugin definitions — auto-downloaded and compiled on first use
+    pluginSources: space.customPlugins
+      ? {
+          'custom-widget': {
+            js: `https://cdn.example.com/widgets/${space.id}/index.js`,
+            css: `https://cdn.example.com/widgets/${space.id}/index.css`,
+            version: space.customPluginVersion
+          }
+        }
+      : undefined
   };
 };
 ```
+
+Plugins listed in `pluginSources` are registered into the plugin manager on-the-fly using `ensure()`, which only triggers a rebuild if the plugin is new or its `version` has changed. Both `pluginNames` and `pluginSources` entries are resolved in parallel before the HTML is rendered.
 
 ### Plugin sources
 
@@ -251,6 +292,32 @@ const getSpaceDeployment = async (req): Promise<SSRSpaceDeployment> => {
 | `{ js: 'https://...' }` | Auto-detected → copy (fetch) | CDN or external URLs |
 | `{ js: '...', action: 'compile' \| 'copy' }` | Explicit | Override auto-detection |
 | `{ component: MyComp, js: 'file.tsx' }` | compile | Component reference for SSR + source for client |
+
+### Plugin versioning
+
+Every plugin registered through `createSSRServer` (or via `server.plugins.register`) is versioned. If you omit `version`, it defaults to `'1.0.0'`:
+
+```ts
+plugins: {
+  // explicit version
+  'my-chart': {
+    js: 'https://cdn.example.com/chart@1.2.0/index.js',
+    css: 'https://cdn.example.com/chart@1.2.0/index.css',
+    version: '1.2.0'
+  },
+  // version defaults to '1.0.0'
+  'data-table': {
+    js: '/abs/path/to/table.js'
+  }
+}
+```
+
+Versioned plugins:
+- **Never expire by TTL** — considered immutable; disk cache is kept indefinitely.
+- **Version change triggers rebuild** — if the on-disk `meta.json` has a different version, the old cache is discarded and the plugin is recompiled/re-fetched automatically on the next request.
+- **Bump `version`** whenever you deploy a new build to guarantee all nodes pick up the update.
+
+Plugins coming from `pluginSources` in the deployment follow the same rules — version is required there to avoid stale caches across deployments.
 
 ### Action auto-detection
 

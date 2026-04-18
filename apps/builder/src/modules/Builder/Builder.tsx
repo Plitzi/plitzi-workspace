@@ -65,9 +65,8 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
   return (
     <div
       className={clsx(
-        'flex min-w-0 grow basis-0 overflow-auto bg-gray-100 bg-size-[24px_24px] dark:bg-zinc-950',
-        'bg-[linear-gradient(to_right,#d1d5db_1px,transparent_1px),linear-gradient(to_bottom,#d1d5db_1px,transparent_1px)]',
-        'dark:bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)]',
+        'flex min-w-0 grow basis-0 overflow-auto bg-gray-100 bg-size-[16px_16px] dark:bg-zinc-950',
+        'bg-[radial-gradient(circle_at_1px_1px,#d1d5db_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,#27272a_1px,transparent_0)]',
         { 'justify-center': !multiPagesMode }
       )}
     >
