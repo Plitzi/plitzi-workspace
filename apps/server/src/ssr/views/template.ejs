@@ -52,6 +52,7 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="plitzi" class="plitzi-root-container"><%- locals.html || '' %></div>
+    <% if (!locals.ssrOnly) { %>
     <script type="module">
       import { render } from '<%= locals.jsPath || '' %>';
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
@@ -67,5 +68,6 @@
       render('plitzi', <%- locals.offlineData || '{}' %>, {}, false, true);
       <% } %>
     </script>
+    <% } %>
   </body>
 </html>

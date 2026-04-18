@@ -33,7 +33,7 @@ export type SSRCredential = {
   data: unknown;
 };
 
-export type PluginAction = 'copy' | 'compile';
+export type PluginAction = 'copy' | 'compile' | 'download';
 
 export type PluginSourceFile = {
   js: string;
@@ -68,6 +68,8 @@ export type SSRTemplateProps = {
   reactJsx?: string;
   reactDom?: string;
   reactDomClient?: string;
+  /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
+  ssrOnly?: boolean;
 };
 
 export type SSRUser = {
@@ -122,6 +124,10 @@ export type SSRServerConfig = {
   plugins?: Record<string, PluginSource>;
   pluginsCacheDir?: string;
   pluginsTtlMs?: number;
+  /** Auto-download and cache plugins declared in the schema's offlineData.plugins list. Default: true. */
+  autoLoadSchemaPlugins?: boolean;
+  /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
+  ssrOnly?: boolean;
   adapters: SSRAdapters;
 };
 

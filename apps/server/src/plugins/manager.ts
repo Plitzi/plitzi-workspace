@@ -192,6 +192,25 @@ export class PluginManager {
             cssUrl = `${this.urlPrefix}/${name}/index.css`;
           }
         }
+      } else if (action === 'download') {
+        const jsRes = await fetch(jsPath);
+        if (!jsRes.ok) throw new Error(`HTTP ${jsRes.status} downloading ${jsPath}`);
+        await fs.writeFile(path.join(dir, 'index.js'), await jsRes.text());
+
+        if (cssPath) {
+          const isRemote = cssPath.startsWith('http://') || cssPath.startsWith('https://');
+          if (isRemote) {
+            const cssRes = await fetch(cssPath);
+            if (!cssRes.ok) throw new Error(`HTTP ${cssRes.status} downloading ${cssPath}`);
+            await fs.writeFile(path.join(dir, 'index.css'), await cssRes.text());
+          } else if (this.isWebUrl(cssPath)) {
+            cssUrl = cssPath; // absolute local path — serve as-is
+          } else {
+            await copyPlugin(cssPath, dir, 'index.css');
+          }
+
+          cssUrl = `${this.urlPrefix}/${name}/index.css`;
+        }
       } else {
         await copyPlugin(jsPath, dir, 'index.js');
         if (cssPath) {

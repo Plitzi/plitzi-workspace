@@ -1,6 +1,7 @@
 import { renderToString } from 'react-dom/server';
 
 import Component from './Component';
+import { registerExternalPlugins } from './registerExternalPlugins';
 import { buildServerInfo } from '../helpers/buildServerInfo';
 import { escapeJson } from '../helpers/escapeJson';
 
@@ -22,6 +23,7 @@ export const buildBody = async (
     config.adapters.getOfflineData(spaceId, environment, revision),
     config.adapters.getUser?.(req)
   ]);
+
   const resolvedCtx: SSRContext = { ...ctx, user };
   const server = buildServerInfo(req, resolvedCtx);
 
@@ -67,7 +69,13 @@ export const buildBody = async (
     }
   }
 
-  const allPluginNames = [...pluginNames, ...dynamicNames];
+  // Auto-register external plugins declared in the schema (offlineData.plugins)
+  // Downloads JS/CSS from CDN once, caches to disk via PluginManager for subsequent requests
+  const autoLoad = config.autoLoadSchemaPlugins !== false;
+  const externalNames = autoLoad && pluginManager ? await registerExternalPlugins(pluginManager, offlineData) : [];
+  const externalNamesFiltered = externalNames.filter(k => !pluginBaseNames.has(k.replace(/@[^@]*$/, '')));
+
+  const allPluginNames = [...pluginNames, ...dynamicNames, ...externalNamesFiltered];
   const plugins =
     pluginManager && allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : undefined;
 
@@ -81,6 +89,7 @@ export const buildBody = async (
     reactDomClient: `${reactDomBase}/client${devSuffix}`,
     ...resolvedCtx.spaceDeployment?.templateProps,
     plugins: plugins ?? resolvedCtx.spaceDeployment?.templateProps?.plugins,
+    ssrOnly: config.ssrOnly === true,
     html,
     offlineData: offlineDataStr
   });
