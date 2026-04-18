@@ -84,8 +84,12 @@ export class PluginManager {
   }
 
   private toEntry(name: string, hasJS: boolean, cssUrl?: string): PluginEntry {
+    const keyName = name.split('@')[0];
+    const varName = keyName.split('-').join('_').split('.').join('_');
     return {
       name,
+      varName,
+      keyName,
       js: hasJS ? `${this.urlPrefix}/${name}/index.js` : undefined,
       css: cssUrl
     };
@@ -113,7 +117,7 @@ export class PluginManager {
     }
 
     if (isComponentSource(source) && !source.js) {
-      return { name: key };
+      return this.toEntry(key, false);
     }
 
     const cached = this.mem.get(key);
@@ -172,7 +176,7 @@ export class PluginManager {
       : (source.action ?? detectAction(source.js));
 
     if (!jsPath || !action) {
-      return { name };
+      return this.toEntry(name, false);
     }
 
     console.log(`[SSR] Plugin "${name}" building (${action}: ${jsPath})…`);

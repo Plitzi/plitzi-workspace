@@ -53,6 +53,10 @@ export type PluginSource = PluginSourceFile | PluginSourceComponent;
 
 export type PluginEntry = {
   name: string;
+  /** JS-safe identifier for the import statement (hyphens/dots replaced with underscores, no @version). */
+  varName: string;
+  /** SDK lookup key used as the object property (base name without @version). */
+  keyName: string;
   js?: string;
   css?: string;
 };

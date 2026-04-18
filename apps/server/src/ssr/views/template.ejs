@@ -56,13 +56,11 @@
     <script type="module">
       import { render } from '<%= locals.jsPath || '' %>';
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
-      <% const toVar = name => '__p_' + name.replace(/[^a-zA-Z0-9_$]/g, '_'); %>
-      <% const toKey = name => name.replace(/@[^@]*$/, ''); %>
       <% if (activePlugins.length > 0) { %>
       <% for (const plugin of activePlugins) { %>
-      import { default as <%= toVar(plugin.name) %> } from '<%= plugin.js %>';
+      import { default as <%= plugin.varName %> } from '<%= plugin.js %>';
       <% } %>
-      const __plitziPlugins = { <%- activePlugins.map(p => `'${toKey(p.name)}': ${toVar(p.name)}`).join(', ') %> };
+      const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': ${p.varName}`).join(', ') %> };
       render('plitzi', <%- locals.offlineData || '{}' %>, __plitziPlugins, false, true);
       <% } else { %>
       render('plitzi', <%- locals.offlineData || '{}' %>, {}, false, true);
