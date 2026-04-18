@@ -4,16 +4,15 @@ export const runMiddlewares = async (
   middlewares: SSRMiddleware[],
   req: SSRRequest & Partial<SSRContext>,
   res: SSRResponseHelpers,
-  ctx: SSRContext,
-  onStop: () => void
-): Promise<void> => {
+  ctx: SSRContext
+): Promise<boolean> => {
   Object.assign(req, ctx);
 
   let index = 0;
-  let stopped: boolean = false;
+  const state = { stopped: false };
 
   const next = async (): Promise<void> => {
-    if (stopped) {
+    if (state.stopped) {
       return;
     }
     const mw = index < middlewares.length ? middlewares[index++] : undefined;
@@ -21,15 +20,14 @@ export const runMiddlewares = async (
       return;
     }
 
-    let nextCalled: boolean = false;
+    const nextState = { called: false };
     await mw(req, res, async () => {
-      nextCalled = true;
+      nextState.called = true;
       await next();
     });
 
-    if (!nextCalled) {
-      stopped = true;
-      onStop();
+    if (!nextState.called) {
+      state.stopped = true;
     }
   };
 
@@ -38,4 +36,6 @@ export const runMiddlewares = async (
   if (req.spaceDeployment) {
     ctx.spaceDeployment = req.spaceDeployment;
   }
+
+  return state.stopped;
 };

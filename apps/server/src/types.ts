@@ -33,20 +33,70 @@ export type SSRCredential = {
   data: unknown;
 };
 
+export type PluginAction = 'copy' | 'compile';
+
+export type PluginSourceFile = {
+  js: string;
+  css?: string;
+  action?: PluginAction;
+};
+
+export type PluginSourceComponent = {
+  component: unknown;
+  js?: string;
+  css?: string;
+};
+
+export type PluginSource = PluginSourceFile | PluginSourceComponent;
+
+export type PluginEntry = {
+  name: string;
+  js?: string;
+  css?: string;
+};
+
+export type SSRTemplateProps = {
+  title?: string;
+  jsPath?: string;
+  cssPath?: string;
+  builderJsPath?: string;
+  builderCssPath?: string;
+  plugins?: PluginEntry[];
+  react?: string;
+  reactJsx?: string;
+  reactDom?: string;
+  reactDomClient?: string;
+};
+
+export type SSRUser = {
+  id: number;
+  username: string;
+  email: string;
+  verified: boolean;
+  permissions: string[];
+  roles: string[];
+};
+
 export type SSRSpaceDeployment = {
   environment?: Environment;
   credential?: SSRCredential;
   spaceId?: number | null;
   revision?: number;
+  templateProps?: SSRTemplateProps;
+  pluginNames?: string[];
   error?: {
     code: number;
     message: string;
   };
 };
 
+export type SSRTemplateFn = (params: SSRTemplateProps & { html: string; offlineData: string }) => string;
+
 export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
+  getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
+  onLogout?: (req: SSRRequest) => Promise<void>;
 };
 
 export type SSRServerConfig = {
@@ -63,7 +113,17 @@ export type SSRServerConfig = {
   reactVersion?: string;
   devMode?: boolean;
   cacheTtlMs?: number;
+  logoutPath?: string | false;
+  templateFn?: SSRTemplateFn;
+  plugins?: Record<string, PluginSource>;
+  pluginsCacheDir?: string;
+  pluginsTtlMs?: number;
   adapters: SSRAdapters;
+};
+
+export type PluginRegistry = {
+  register: (name: string, source: PluginSource) => void;
+  invalidate: (name?: string) => Promise<void>;
 };
 
 export type CacheFilter = {
@@ -84,6 +144,7 @@ export type SSRMiddleware = (req: SSRRequest, res: SSRResponseHelpers, next: SSR
 
 export type SSRContext = {
   spaceDeployment?: SSRSpaceDeployment;
+  user?: SSRUser;
 };
 
 export type { OfflineDataRaw, Server };

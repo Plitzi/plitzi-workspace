@@ -11,8 +11,16 @@ export type {
   SSRMiddlewareNext,
   SSRContext,
   SSRSpaceDeployment,
+  SSRTemplateProps,
+  SSRTemplateFn,
   SSRCredential,
   SSRHeaders,
+  PluginSource,
+  PluginSourceFile,
+  PluginSourceComponent,
+  PluginAction,
+  PluginEntry,
   CacheFilter,
-  CacheManager
+  CacheManager,
+  SSRUser
 } from './types';

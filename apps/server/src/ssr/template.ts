@@ -4,24 +4,15 @@ import { fileURLToPath } from 'node:url';
 
 import ejs from 'ejs';
 
+import type { SSRTemplateFn, SSRTemplateProps } from '../types';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_PATH = path.resolve(__dirname, 'views/template.ejs');
+const DEFAULT_TEMPLATE_PATH = path.resolve(__dirname, 'views/template.ejs');
 
-const compiledTemplate = ejs.compile(fs.readFileSync(TEMPLATE_PATH, 'utf-8'), { filename: TEMPLATE_PATH });
-
-export type TemplateParams = {
-  title: string;
+export type TemplateParams = SSRTemplateProps & {
   html: string;
   offlineData: string;
-  jsPath: string;
-  cssPath: string;
-  builderJsPath?: string;
-  builderCssPath?: string;
-  pluginsJsPath?: string;
-  react: string;
-  reactJsx: string;
-  reactDom: string;
-  reactDomClient: string;
 };
 
-export const renderTemplate = (params: TemplateParams): string => compiledTemplate(params);
+export const compileTemplate = (): SSRTemplateFn =>
+  ejs.compile(fs.readFileSync(DEFAULT_TEMPLATE_PATH, 'utf-8'), { filename: DEFAULT_TEMPLATE_PATH });

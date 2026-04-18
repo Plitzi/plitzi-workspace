@@ -1,11 +1,11 @@
 import { renderToString } from 'react-dom/server';
 
 import Component from './Component';
-import { renderTemplate } from './template';
 import { buildServerInfo } from '../helpers/buildServerInfo';
 import { escapeJson } from '../helpers/escapeJson';
 
-import type { SSRRequest, SSRContext, SSRServerConfig } from '../types';
+import type { PluginManager } from '../plugins/manager';
+import type { SSRRequest, SSRContext, SSRServerConfig, SSRTemplateFn } from '../types';
 import type { Environment } from '@plitzi/sdk-shared';
 
 export const buildBody = async (
@@ -14,16 +14,22 @@ export const buildBody = async (
   config: SSRServerConfig,
   spaceId: number,
   environment: string,
-  revision: number
+  revision: number,
+  renderFn: SSRTemplateFn,
+  pluginManager?: PluginManager
 ): Promise<string> => {
-  const offlineData = await config.adapters.getOfflineData(spaceId, environment, revision);
-  const server = buildServerInfo(req);
+  const [offlineData, user] = await Promise.all([
+    config.adapters.getOfflineData(spaceId, environment, revision),
+    config.adapters.getUser?.(req)
+  ]);
+  const resolvedCtx: SSRContext = { ...ctx, user };
+  const server = buildServerInfo(req, resolvedCtx);
 
   const html = renderToString(
     <Component
       offlineData={offlineData}
       server={server}
-      environment={(ctx.spaceDeployment?.environment ?? environment) as Environment}
+      environment={(resolvedCtx.spaceDeployment?.environment ?? environment) as Environment}
       sdkEnvironment={config.sdkEnvironment ?? 'production'}
     />
   ).trim();
@@ -45,17 +51,21 @@ export const buildBody = async (
   const reactDomBase = `https://esm.sh/react-dom@${reactVersion}`;
   const devSuffix = devMode ? '?dev' : '';
 
-  return renderTemplate({
+  const pluginNames = resolvedCtx.spaceDeployment?.pluginNames;
+  const plugins =
+    pluginManager && pluginNames && pluginNames.length > 0 ? await pluginManager.getEntries(pluginNames) : undefined;
+
+  return renderFn({
     title: 'Plitzi App',
-    html,
-    offlineData: offlineDataStr,
     jsPath: '/sdk-assets/plitzi-sdk.js',
     cssPath: '/sdk-assets/plitzi-sdk.css',
-    builderJsPath: '/builder-assets/plitzi-builder.js',
-    builderCssPath: '/builder-assets/plitzi-builder.css',
     react: `${reactBase}${devSuffix}`,
     reactJsx: `${reactBase}/jsx-runtime${devSuffix}`,
     reactDom: `${reactDomBase}${devSuffix}`,
-    reactDomClient: `${reactDomBase}/client${devSuffix}`
+    reactDomClient: `${reactDomBase}/client${devSuffix}`,
+    ...resolvedCtx.spaceDeployment?.templateProps,
+    plugins: plugins ?? resolvedCtx.spaceDeployment?.templateProps?.plugins,
+    html,
+    offlineData: offlineDataStr
   });
 };

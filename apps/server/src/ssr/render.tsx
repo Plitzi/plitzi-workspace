@@ -1,7 +1,8 @@
 import { buildBody } from './buildBody';
 
 import type { TtlCache } from '../helpers/ttlCache';
-import type { SSRRequest, SSRResponseHelpers, SSRContext, SSRServerConfig } from '../types';
+import type { PluginManager } from '../plugins/manager';
+import type { SSRRequest, SSRResponseHelpers, SSRContext, SSRServerConfig, SSRTemplateFn } from '../types';
 
 export const buildCacheKey = (
   spaceId: number | string | null,
@@ -15,7 +16,9 @@ export const renderSSR = async (
   res: SSRResponseHelpers,
   ctx: SSRContext,
   config: SSRServerConfig,
-  cache?: TtlCache<string>
+  renderFn: SSRTemplateFn,
+  cache?: TtlCache<string>,
+  pluginManager?: PluginManager // optional — no plugins if not provided
 ): Promise<void> => {
   const {
     environment = 'main',
@@ -33,7 +36,16 @@ export const renderSSR = async (
       return;
     }
 
-    const body = await buildBody(req, ctx, config, spaceId as number, environment as string, revision);
+    const body = await buildBody(
+      req,
+      ctx,
+      config,
+      spaceId as number,
+      environment as string,
+      revision,
+      renderFn,
+      pluginManager
+    );
     cache.set(cacheKey, body);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Cache', 'MISS');
@@ -41,7 +53,16 @@ export const renderSSR = async (
     return;
   }
 
-  const body = await buildBody(req, ctx, config, spaceId as number, environment as string, revision);
+  const body = await buildBody(
+    req,
+    ctx,
+    config,
+    spaceId as number,
+    environment as string,
+    revision,
+    renderFn,
+    pluginManager
+  );
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(body);
 };

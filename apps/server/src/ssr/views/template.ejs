@@ -41,6 +41,12 @@
     <link href="<%= locals.builderCssPath %>" rel="preload" as="style" />
     <link href="<%= locals.builderCssPath %>" rel="stylesheet" />
     <% } %>
+    <% if (locals.plugins && locals.plugins.length > 0) { %>
+    <% for (const plugin of locals.plugins) { if (plugin.css) { %>
+    <link href="<%= plugin.css %>" rel="preload" as="style" />
+    <link href="<%= plugin.css %>" rel="stylesheet" />
+    <% } } %>
+    <% } %>
   </head>
 
   <body>
@@ -48,10 +54,14 @@
     <div id="plitzi" class="plitzi-root-container"><%- locals.html || '' %></div>
     <script type="module">
       import { render } from '<%= locals.jsPath || '' %>';
-      <% if (locals.pluginsJsPath) { %>
-      import { PlitziBuilder } from '<%= locals.pluginsJsPath %>';
-
-      render('plitzi', <%- locals.offlineData || '{}' %>, { plitziBuilder: PlitziBuilder }, false, true);
+      <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
+      <% const toIdentifier = name => '__plugin_' + name.replace(/[^a-zA-Z0-9_$]/g, '_'); %>
+      <% if (activePlugins.length > 0) { %>
+      <% for (const plugin of activePlugins) { %>
+      import * as <%= toIdentifier(plugin.name) %> from '<%= plugin.js %>';
+      <% } %>
+      const __plitziBuilder = { <%- activePlugins.map(p => `...${toIdentifier(p.name)}`).join(', ') %> };
+      render('plitzi', <%- locals.offlineData || '{}' %>, __plitziBuilder, false, true);
       <% } else { %>
       render('plitzi', <%- locals.offlineData || '{}' %>, {}, false, true);
       <% } %>

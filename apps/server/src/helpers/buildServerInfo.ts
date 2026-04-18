@@ -1,9 +1,10 @@
-import type { SSRRequest } from '../types';
+import type { SSRRequest, SSRContext } from '../types';
 import type { Server } from '@plitzi/sdk-shared';
 
-export const buildServerInfo = (req: SSRRequest): Partial<Server> => {
+export const buildServerInfo = (req: SSRRequest, ctx?: SSRContext): Partial<Server> => {
   const accessToken = req.query['access-token'];
   const origin = `${req.protocol}://${req.hostname}`;
+  const user = ctx?.user;
 
   return {
     basePath: '/',
@@ -14,8 +15,8 @@ export const buildServerInfo = (req: SSRRequest): Partial<Server> => {
       pathname: req.path || '/',
       search: req.search
     } as Location,
-    authenticated: false,
+    authenticated: !!user,
     skipAuth: !!accessToken,
-    user: undefined
+    user: user ? { details: user } : undefined
   };
 };

@@ -12,7 +12,8 @@ import { renderSSR } from '../ssr/render';
 import type { Handler } from './transports';
 import type { RawResponse } from '../helpers/buildResponseHelpers';
 import type { TtlCache } from '../helpers/ttlCache';
-import type { SSRServerConfig, SSRRequest, SSRContext } from '../types';
+import type { PluginManager } from '../plugins/manager';
+import type { SSRServerConfig, SSRRequest, SSRContext, SSRTemplateFn } from '../types';
 import type { IncomingMessage } from 'node:http';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,7 +24,9 @@ const handleRequest = async (
   rawRes: RawResponse,
   config: SSRServerConfig,
   port: number,
-  cache: TtlCache<string> | undefined
+  renderFn: SSRTemplateFn,
+  cache: TtlCache<string> | undefined,
+  pluginManager: PluginManager
 ): Promise<void> => {
   const req = parseRequest(raw);
   const res = buildResponseHelpers(rawRes, req.headers['accept-encoding']);
@@ -38,6 +41,29 @@ const handleRequest = async (
   }
 
   if (serveStatic(req, res, BUILTIN_PUBLIC_DIR)) {
+    return;
+  }
+
+  if (req.path.startsWith(pluginManager.urlPrefix + '/')) {
+    const relative = req.path.slice(pluginManager.urlPrefix.length);
+    const pluginName = relative.split('/')[1];
+    if (pluginName && pluginManager.hasPlugin(pluginName)) {
+      await pluginManager.prepare(pluginName);
+      const strippedReq: SSRRequest = { ...req, path: relative };
+      if (serveStatic(strippedReq, res, pluginManager.outputDir)) {
+        return;
+      }
+    }
+    res.setStatus(404);
+    res.send('Not found');
+    return;
+  }
+
+  const logoutPath = config.logoutPath === false ? null : (config.logoutPath ?? '/auth/logout');
+  if (logoutPath && req.method === 'POST' && req.path === logoutPath) {
+    await config.adapters.onLogout?.(req);
+    res.setStatus(204);
+    res.end();
     return;
   }
 
@@ -56,20 +82,23 @@ const handleRequest = async (
   const ctx: SSRContext = {};
   const middlewares = [spaceDeploymentMiddleware(config.adapters), basicAuthMiddleware()];
 
-  let stopped: boolean = false;
-  await runMiddlewares(middlewares, req, res, ctx, () => {
-    stopped = true;
-  });
+  const stopped = await runMiddlewares(middlewares, req, res, ctx);
   if (stopped || res.status !== 200) {
     return;
   }
 
-  await renderSSR(req, res, ctx, config, cache);
+  await renderSSR(req, res, ctx, config, renderFn, cache, pluginManager);
 };
 
-export const makeHandler = (config: SSRServerConfig, port: number, cache: TtlCache<string> | undefined): Handler => {
+export const makeHandler = (
+  config: SSRServerConfig,
+  port: number,
+  renderFn: SSRTemplateFn,
+  cache: TtlCache<string> | undefined,
+  pluginManager: PluginManager
+): Handler => {
   return (raw, rawRes) => {
-    handleRequest(raw, rawRes, config, port, cache).catch((err: unknown) => {
+    handleRequest(raw, rawRes, config, port, renderFn, cache, pluginManager).catch((err: unknown) => {
       console.error('[SSR] Unhandled error:', err);
       try {
         if (!rawRes.headersSent) {
