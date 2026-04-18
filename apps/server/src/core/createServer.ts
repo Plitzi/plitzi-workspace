@@ -78,7 +78,10 @@ export const createSSRServer = (config: SSRServerConfig): SSRServer => {
   );
 
   const plugins: PluginRegistry = {
-    register: (name, source) => pluginManager.register(name, normalizePluginSource(source)),
+    register: (name, source) => {
+      const normalized = normalizePluginSource(source);
+      pluginManager.register(`${name}@${normalized.version}`, normalized);
+    },
     invalidate: (name?, version?) => pluginManager.invalidate(name, version)
   };
 

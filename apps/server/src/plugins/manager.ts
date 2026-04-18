@@ -231,7 +231,8 @@ export class PluginManager {
     const out: Record<string, unknown> = {};
     for (const [name, source] of Object.entries(this.plugins)) {
       if (isComponentSource(source)) {
-        out[name] = source.component;
+        // Use base name (without @version) so the SDK can find the component by renderType
+        out[name.replace(/@[^@]*$/, '')] = source.component;
       }
     }
 

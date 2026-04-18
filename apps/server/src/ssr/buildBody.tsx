@@ -55,11 +55,13 @@ export const buildBody = async (
   const pluginSources = resolvedCtx.spaceDeployment?.pluginSources;
 
   // Auto-register plugins defined inline in the deployment (e.g. downloaded from DB/CDN)
+  // pluginNames contains base names; skip any plugin already covered there to avoid duplicates
+  const pluginBaseNames = new Set(pluginNames.map(n => n.replace(/@[^@]*$/, '')));
   const dynamicNames: string[] = [];
   if (pluginManager && pluginSources) {
     for (const [pluginName, pluginSource] of Object.entries(pluginSources)) {
       const key = pluginManager.ensure(pluginName, pluginSource);
-      if (!pluginNames.includes(key)) {
+      if (!pluginBaseNames.has(pluginName)) {
         dynamicNames.push(key);
       }
     }
