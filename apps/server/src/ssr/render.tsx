@@ -1,32 +1,21 @@
-import { renderToString } from 'react-dom/server';
+import { buildBody } from './buildBody';
 
-import Component from './Component';
-import { renderTemplate } from './template';
-import { buildServerInfo } from '../helpers/buildServerInfo';
-
+import type { TtlCache } from '../helpers/ttlCache';
 import type { SSRRequest, SSRResponseHelpers, SSRContext, SSRServerConfig } from '../types';
-import type { Environment } from '@plitzi/sdk-shared';
 
-const escapeJson = (str: string): string =>
-  str
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
+export const buildCacheKey = (
+  spaceId: number | string | null,
+  environment: string,
+  revision: number,
+  req: SSRRequest
+): string => `${spaceId ?? 1}\0${environment}\0${revision}\0${req.hostname}\0${req.path}\0${req.search}`;
 
-/**
- * Perform SSR for a single request.
- *
- * Reads space/environment from `ctx.spaceDeployment` (populated by the
- * spaceDeployment middleware) and calls `config.adapters.getOfflineData` to
- * fetch the space snapshot.
- */
 export const renderSSR = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
   ctx: SSRContext,
-  config: SSRServerConfig
+  config: SSRServerConfig,
+  cache?: TtlCache<string>
 ): Promise<void> => {
   const {
     environment = 'main',
@@ -34,49 +23,25 @@ export const renderSSR = async (
     revision = 0
   } = ctx.spaceDeployment as Exclude<typeof ctx.spaceDeployment, undefined>;
 
-  const offlineData = await config.adapters.getOfflineData(spaceId as number, environment as string, revision);
-  const server = buildServerInfo(req);
+  if (cache) {
+    const cacheKey = buildCacheKey(spaceId, environment as string, revision, req);
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('X-Cache', 'HIT');
+      res.send(cached);
+      return;
+    }
 
-  const html = renderToString(
-    <Component
-      offlineData={offlineData}
-      server={server}
-      environment={environment as Environment}
-      sdkEnvironment={config.sdkEnvironment ?? 'production'}
-    />
-  ).trim();
+    const body = await buildBody(req, ctx, config, spaceId as number, environment as string, revision);
+    cache.set(cacheKey, body);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('X-Cache', 'MISS');
+    res.send(body);
+    return;
+  }
 
-  const offlineDataStr = escapeJson(
-    JSON.stringify({
-      offlineData,
-      offlineMode: true,
-      environment,
-      renderMode: 'raw',
-      server,
-      sdkEnvironment: config.sdkEnvironment ?? 'production'
-    })
-  );
-
-  const devMode = config.devMode ?? process.env.NODE_ENV !== 'production';
-  const reactVersion = config.reactVersion ?? '19';
-  const reactBase = `https://esm.sh/react@${reactVersion}`;
-  const reactDomBase = `https://esm.sh/react-dom@${reactVersion}`;
-  const devSuffix = devMode ? '?dev' : '';
-
-  const body = renderTemplate({
-    title: 'Plitzi App',
-    html,
-    offlineData: offlineDataStr,
-    jsPath: '/sdk-assets/plitzi-sdk.js',
-    cssPath: '/sdk-assets/plitzi-sdk.css',
-    builderJsPath: '/builder-assets/plitzi-builder.js',
-    builderCssPath: '/builder-assets/plitzi-builder.css',
-    react: `${reactBase}${devSuffix}`,
-    reactJsx: `${reactBase}/jsx-runtime${devSuffix}`,
-    reactDom: `${reactDomBase}${devSuffix}`,
-    reactDomClient: `${reactDomBase}/client${devSuffix}`
-  });
-
+  const body = await buildBody(req, ctx, config, spaceId as number, environment as string, revision);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(body);
 };

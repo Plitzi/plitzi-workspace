@@ -1,11 +1,9 @@
 import crypto from 'node:crypto';
 
-import type { SSRMiddleware, SSRContext, SSRCredential } from '../types';
+import type { SSRMiddleware, SSRContext } from '../types';
 
-/** In-memory cache: tokenHash → timestamp of last successful auth */
 const authCache = new Map<string, number>();
 
-/** Default TTL in milliseconds (5 minutes) */
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const sendChallenge = (res: Parameters<SSRMiddleware>[1], domain: string, realm: string): void => {
@@ -17,26 +15,15 @@ const sendChallenge = (res: Parameters<SSRMiddleware>[1], domain: string, realm:
 
 export type BasicAuthOptions = {
   realm?: string;
-  /** Cache TTL in milliseconds. Defaults to 5 minutes. */
   cacheTtlMs?: number;
 };
 
-/**
- * Basic-auth middleware.
- *
- * Reads the credential from `ctx.spaceDeployment.credential` (populated by
- * the space-deployment middleware). If the credential type is not `'basic'`,
- * the middleware passes through immediately.
- *
- * Successful auth results are cached in-memory to avoid re-checking every
- * request (replacing the Redis-based cache in the original implementation).
- */
 export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddleware => {
   const { realm = 'Restricted Area', cacheTtlMs = DEFAULT_CACHE_TTL_MS } = options;
 
   return async (req, res, next) => {
     const ctx = req as typeof req & SSRContext;
-    const credential = ctx.spaceDeployment?.credential as SSRCredential | undefined;
+    const credential = ctx.spaceDeployment?.credential;
 
     if (!credential || credential.provider !== 'ssr') {
       await next();
@@ -50,7 +37,7 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
     }
 
     const hostname = req.hostname;
-    const authHeader = req.headers['authorization'] as string | undefined;
+    const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Basic ')) {
       sendChallenge(res, hostname, realm);
       return;
@@ -66,7 +53,6 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       return;
     }
 
-    // Check in-memory cache
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const cacheKey = `${hostname}:${tokenHash}`;
     const now = Date.now();
@@ -76,7 +62,6 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
         await next();
         return;
       }
-      // Expired — remove and re-validate
       authCache.delete(cacheKey);
       sendChallenge(res, hostname, realm);
       return;
@@ -88,7 +73,6 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       return;
     }
 
-    // Store successful auth in cache
     authCache.set(cacheKey, now);
 
     await next();

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title><%= locals.title || '' %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" href="https://cdn.plitzi.com/resources/img/favicon.svg" />
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://cdn.plitzi.com" />
+
+    <link rel="modulepreload" href="<%= locals.react || '' %>" crossorigin />
+    <link rel="modulepreload" href="<%= locals.reactDom || '' %>" crossorigin />
+
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "<%= locals.react || '' %>",
+          "react-dom": "<%= locals.reactDom || '' %>",
+          "react-dom/client": "<%= locals.reactDomClient || '' %>",
+          "react/jsx-runtime": "<%= locals.reactJsx || '' %>",
+          "@plitzi/plitzi-sdk": "<%= locals.jsPath || '' %>"
+        }
+      }
+    </script>
+
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet';"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    </noscript>
+
+    <link href="<%= locals.cssPath || '' %>" rel="preload" as="style" />
+    <link href="<%= locals.cssPath || '' %>" rel="stylesheet" />
+    <% if (locals.builderCssPath) { %>
+    <link href="<%= locals.builderCssPath %>" rel="preload" as="style" />
+    <link href="<%= locals.builderCssPath %>" rel="stylesheet" />
+    <% } %>
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="plitzi" class="plitzi-root-container"><%- locals.html || '' %></div>
+    <script type="module">
+      import { render } from '<%= locals.jsPath || '' %>';
+      <% if (locals.pluginsJsPath) { %>
+      import { PlitziBuilder } from '<%= locals.pluginsJsPath %>';
+
+      render('plitzi', <%- locals.offlineData || '{}' %>, { plitziBuilder: PlitziBuilder }, false, true);
+      <% } else { %>
+      render('plitzi', <%- locals.offlineData || '{}' %>, {}, false, true);
+      <% } %>
+    </script>
+  </body>
+</html>

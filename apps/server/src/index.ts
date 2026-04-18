@@ -1,27 +1,7 @@
-/**
- * @plitzi/server-ssr
- *
- * A standalone HTTP/2-compatible SSR server for Plitzi spaces.
- *
- * ## Usage as a library
- *
- * ```ts
- * import { createSSRServer } from '@plitzi/server-ssr';
- *
- * const server = createSSRServer({
- *   port: 3001,
- *   adapters: {
- *     getOfflineData,
- *     getSpaceDeployment
- *   }
- * });
- *
- * server.listen(3001);
- * ```
- */
-
 export { createSSRServer } from './core/createServer';
+export { createJsonAdapters } from './adapters/jsonAdapters';
 
+export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
 export type {
   SSRAdapters,
   SSRServerConfig,
@@ -32,5 +12,7 @@ export type {
   SSRContext,
   SSRSpaceDeployment,
   SSRCredential,
-  SSRHeaders
+  SSRHeaders,
+  CacheFilter,
+  CacheManager
 } from './types';

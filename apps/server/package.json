@@ -27,17 +27,20 @@
   "sideEffects": false,
   "dependencies": {
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*",
+    "ejs": "^3.1.10"
   },
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
+    "@types/ejs": "^3.1.5",
     "@types/node": "^22.15.21",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.6",
     "@vitejs/plugin-react": "^4.5.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-import": "^2.32.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tsx": "^4.19.4",
@@ -48,6 +51,7 @@
   "scripts": {
     "dev": "node --import tsx --watch src/server.ts",
     "build": "vite build",
+    "lint": "TIMING=1 eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit"
   }
 }

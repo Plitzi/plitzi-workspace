@@ -1,7 +1,5 @@
 import type { OfflineDataRaw, Environment, Server } from '@plitzi/sdk-shared';
-import type { IncomingHttpHeaders, ServerHttp2Stream } from 'node:http2';
-
-// ─── Request / Response ──────────────────────────────────────────────────────
+import type { IncomingHttpHeaders } from 'node:http';
 
 export type SSRHeaders = IncomingHttpHeaders & {
   ':authority'?: string;
@@ -10,10 +8,6 @@ export type SSRHeaders = IncomingHttpHeaders & {
   ':scheme'?: string;
 };
 
-/**
- * Normalised request object created from a raw HTTP/1 or HTTP/2 incoming message.
- * Consumers (middlewares, handlers) always receive this shape.
- */
 export type SSRRequest = {
   method: string;
   path: string;
@@ -22,10 +16,7 @@ export type SSRRequest = {
   hostname: string;
   protocol: 'http' | 'https';
   headers: SSRHeaders;
-  /** Query string parsed into key-value pairs */
   query: Record<string, string>;
-  /** If the connection used HTTP/2 streams, the raw stream is available */
-  stream?: ServerHttp2Stream;
 };
 
 export type SSRResponseHelpers = {
@@ -36,8 +27,6 @@ export type SSRResponseHelpers = {
   send: (body: string) => void;
   end: () => void;
 };
-
-// ─── Space Deployment ────────────────────────────────────────────────────────
 
 export type SSRCredential = {
   provider: string;
@@ -55,76 +44,46 @@ export type SSRSpaceDeployment = {
   };
 };
 
-// ─── Adapters ────────────────────────────────────────────────────────────────
-
-/**
- * Functions that the consumer (e.g. plitzi-sdk-server) must provide so that
- * the SSR server can fetch data without importing database modules directly.
- */
 export type SSRAdapters = {
-  /**
-   * Fetch all space/style/segments/collections needed to render a page.
-   */
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
-
-  /**
-   * Resolve which space+environment to use for a given inbound request.
-   * Called once per request before rendering.
-   */
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
 };
 
-// ─── Server Config ───────────────────────────────────────────────────────────
-
 export type SSRServerConfig = {
-  /** TCP port to listen on. Defaults to 3001 */
   port?: number;
-  /** Hostname/IP to bind. Defaults to '0.0.0.0' */
   host?: string;
-  /**
-   * TLS key + cert for HTTPS/HTTP2.
-   * When omitted the server listens in plain-text HTTP/2 (h2c) with HTTP/1 fallback.
-   */
+  httpVersion?: 1 | 2 | 3;
   tls?: {
     key: Buffer | string;
     cert: Buffer | string;
+    minVersion?: 'TLSv1' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
   };
-  /** SDK environment forwarded to the React component. Defaults to 'production'. */
-  sdkEnvironment?: 'production' | 'staging' | 'development';
-  /** Filesystem path(s) to serve as static files, keyed by URL prefix. */
+  sdkEnvironment?: 'production' | 'staging' | 'development' | 'local';
   static?: Record<string, string>;
-  /**
-   * React version used to build importmap URLs.
-   * Defaults to the react version in the consumer's package.json.
-   */
   reactVersion?: string;
-  /**
-   * If true, append '?dev' to esm.sh CDN URLs for React.
-   * Defaults to `process.env.NODE_ENV !== 'production'`.
-   */
   devMode?: boolean;
-  /**
-   * Adapter callbacks provided by the hosting application.
-   */
+  cacheTtlMs?: number;
   adapters: SSRAdapters;
 };
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
+export type CacheFilter = {
+  spaceId?: number;
+  environment?: string;
+  hostname?: string;
+};
+
+export type CacheManager = {
+  invalidate: (filter?: CacheFilter) => number;
+  clear: () => void;
+  readonly size: number;
+};
 
 export type SSRMiddlewareNext = () => Promise<void> | void;
 
-export type SSRMiddleware = (
-  req: SSRRequest,
-  res: SSRResponseHelpers,
-  next: SSRMiddlewareNext
-) => Promise<void> | void;
-
-// ─── Context (populated by middlewares) ──────────────────────────────────────
+export type SSRMiddleware = (req: SSRRequest, res: SSRResponseHelpers, next: SSRMiddlewareNext) => Promise<void> | void;
 
 export type SSRContext = {
   spaceDeployment?: SSRSpaceDeployment;
 };
-
-// ─── Re-export sdk types used widely ────────────────────────────────────────
 
 export type { OfflineDataRaw, Server };

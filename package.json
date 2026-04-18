@@ -46,7 +46,6 @@
   "packageManager": "yarn@4.2.2",
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "!apps/server"
+    "packages/*"
   ]
 }

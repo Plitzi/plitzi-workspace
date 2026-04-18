@@ -1,20 +1,39 @@
-import type { Http2ServerResponse } from 'node:http2';
-import type { ServerResponse } from 'node:http';
+import { compressBody, selectEncoding } from './compress';
+
+import type { ContentEncoding } from './compress';
 import type { SSRResponseHelpers } from '../types';
 
-/**
- * Wrap a raw Node.js HTTP/1 or HTTP/2 response into the thin
- * `SSRResponseHelpers` interface used throughout the server.
- */
-export const buildResponseHelpers = (raw: Http2ServerResponse | ServerResponse): SSRResponseHelpers => {
-  let statusCode = 200;
+export type RawResponse = {
+  headersSent: boolean;
+  setHeader(name: string, value: string | number | readonly string[]): unknown;
+  getHeaders(): Record<string, string | number | readonly string[]>;
+  writeHead(statusCode: number, headers?: Record<string, string | number | readonly string[]>): unknown;
+  end(chunk?: string | Buffer): unknown;
+};
 
-  const helpers: SSRResponseHelpers = {
+export const buildResponseHelpers = (raw: RawResponse, acceptEncoding?: string): SSRResponseHelpers => {
+  let statusCode = 200;
+  const encoding: ContentEncoding = selectEncoding(acceptEncoding);
+
+  const writeSend = (body: string) => {
+    const compressed = compressBody(body, encoding);
+    const isCompressed = compressed !== body;
+    if (isCompressed) {
+      raw.setHeader('Content-Encoding', encoding);
+      raw.setHeader('Vary', 'Accept-Encoding');
+    }
+    raw.setHeader('Content-Length', Buffer.byteLength(compressed).toString());
+    if (!raw.headersSent) {
+      raw.writeHead(statusCode);
+    }
+    raw.end(compressed);
+  };
+
+  return {
     get status() {
       return statusCode;
     },
     get headers() {
-      // Return already-set response headers as a plain object.
       return raw.getHeaders() as Record<string, string>;
     },
     setHeader(name, value) {
@@ -24,10 +43,7 @@ export const buildResponseHelpers = (raw: Http2ServerResponse | ServerResponse):
       statusCode = code;
     },
     send(body) {
-      if (!raw.headersSent) {
-        raw.writeHead(statusCode);
-      }
-      raw.end(body);
+      writeSend(body);
     },
     end() {
       if (!raw.headersSent) {
@@ -36,6 +52,4 @@ export const buildResponseHelpers = (raw: Http2ServerResponse | ServerResponse):
       raw.end();
     }
   };
-
-  return helpers;
 };
