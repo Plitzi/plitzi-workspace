@@ -24,21 +24,30 @@ export class PluginManager {
   private readonly mem = new Map<string, CacheEntry>();
   private readonly inflight = new Map<string, Promise<PluginEntry | null>>();
   private readonly failed = new Set<string>();
+  /** Maps base plugin name → most recently registered effective key (may include @version) */
+  private readonly nameIndex = new Map<string, string>();
 
   constructor(plugins: Record<string, PluginSource>, cacheDir?: string, ttlMs?: number) {
     this.plugins = plugins;
     this.outputDir = path.resolve(process.cwd(), cacheDir ?? DEFAULT_CACHE_DIR);
     this.ttlMs = ttlMs ?? DEFAULT_TTL_MS;
+    for (const key of Object.keys(plugins)) {
+      const baseName = key.replace(/@[^@]*$/, '');
+      this.nameIndex.set(baseName, key);
+    }
   }
 
   hasPlugin(name: string): boolean {
-    return name in this.plugins;
+    return this.resolveKey(name) !== null;
   }
 
   register(name: string, source: PluginSource): void {
     this.plugins[name] = source;
     this.mem.delete(name);
     this.failed.delete(name);
+    // Index by base name so callers can resolve without knowing the version
+    const baseName = name.replace(/@[^@]*$/, '');
+    this.nameIndex.set(baseName, name);
   }
 
   /**
@@ -53,6 +62,17 @@ export class PluginManager {
     }
 
     return key;
+  }
+
+  /**
+   * Resolves a caller-supplied name to the effective key stored in the plugins map.
+   * Accepts both the exact key (`plitziBuilder@1.0.0`) and the base name (`plitziBuilder`).
+   */
+  private resolveKey(name: string): string | null {
+    if (name in this.plugins) return name;
+    const indexed = this.nameIndex.get(name);
+    if (indexed && indexed in this.plugins) return indexed;
+    return null;
   }
 
   private pluginDir(name: string): string {
@@ -76,64 +96,66 @@ export class PluginManager {
   }
 
   async prepare(name: string): Promise<PluginEntry | null> {
-    if (this.failed.has(name)) {
+    const key = this.resolveKey(name) ?? name;
+
+    if (this.failed.has(key)) {
       return null;
     }
 
-    const inflight = this.inflight.get(name);
+    const inflight = this.inflight.get(key);
     if (inflight !== undefined) {
       return inflight;
     }
 
-    const source = this.plugins[name] as PluginSource | undefined;
+    const source = this.plugins[key] as PluginSource | undefined;
     if (source === undefined) {
       return null;
     }
 
     if (isComponentSource(source) && !source.js) {
-      return { name };
+      return { name: key };
     }
 
-    const cached = this.mem.get(name);
+    const cached = this.mem.get(key);
     if (cached && !this.isExpired(cached.compiledAt)) {
-      const jsOk = await this.fileExists(path.join(this.pluginDir(name), 'index.js'));
+      const jsOk = await this.fileExists(path.join(this.pluginDir(key), 'index.js'));
       if (jsOk) {
         return cached.entry;
       }
       // File was deleted from disk — drop memory cache and rebuild
-      console.warn(`[SSR] Plugin "${name}" cache invalidated: output file missing, rebuilding…`);
-      this.mem.delete(name);
+      console.warn(`[SSR] Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
+      this.mem.delete(key);
     }
 
-    const meta = await this.readMeta(name);
+    const meta = await this.readMeta(key);
     if (meta) {
       const sourceVersion = source.version;
 
       if (sourceVersion && meta.version !== sourceVersion) {
         // Version changed — nuke disk cache so build() starts clean
-        console.log(`[SSR] Plugin "${name}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`);
-        await fs.rm(this.pluginDir(name), { recursive: true, force: true });
+        console.log(`[SSR] Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`);
+        await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion || !this.isExpired(meta.compiledAt)) {
         // Versioned plugins never expire; unversioned respect TTL
-        const jsOk = await this.fileExists(path.join(this.pluginDir(name), 'index.js'));
+        const jsOk = await this.fileExists(path.join(this.pluginDir(key), 'index.js'));
         if (jsOk) {
           const sourceCss = source.css;
           let cssUrl: string | undefined;
-          if (await this.fileExists(path.join(this.pluginDir(name), 'index.css'))) {
-            cssUrl = `${this.urlPrefix}/${name}/index.css`;
+          if (await this.fileExists(path.join(this.pluginDir(key), 'index.css'))) {
+            cssUrl = `${this.urlPrefix}/${key}/index.css`;
           } else if (sourceCss && this.isWebUrl(sourceCss)) {
             cssUrl = sourceCss;
           }
 
-          const entry = this.toEntry(name, true, cssUrl);
-          this.mem.set(name, { compiledAt: meta.compiledAt, entry });
+          const entry = this.toEntry(key, true, cssUrl);
+          this.mem.set(key, { compiledAt: meta.compiledAt, entry });
           return entry;
         }
       }
     }
 
-    const promise = this.build(name, source).finally(() => this.inflight.delete(name));
-    this.inflight.set(name, promise);
+    const promise = this.build(key, source).finally(() => this.inflight.delete(key));
+    this.inflight.set(key, promise);
     return promise;
   }
 
@@ -220,6 +242,7 @@ export class PluginManager {
     if (!name) {
       this.mem.clear();
       this.failed.clear();
+      this.nameIndex.clear();
       await fs.rm(this.outputDir, { recursive: true, force: true });
       return;
     }
@@ -229,6 +252,7 @@ export class PluginManager {
       const key = `${name}@${version}`;
       this.mem.delete(key);
       this.failed.delete(key);
+      if (this.nameIndex.get(name) === key) this.nameIndex.delete(name);
       await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       return;
     }
@@ -248,6 +272,7 @@ export class PluginManager {
       this.mem.delete(key);
       this.failed.delete(key);
     }
+    this.nameIndex.delete(name);
 
     // Remove matching dirs from disk
     try {
@@ -265,6 +290,7 @@ export class PluginManager {
   destroy(): void {
     this.mem.clear();
     this.failed.clear();
+    this.nameIndex.clear();
   }
 
   private async readMeta(name: string): Promise<Meta | null> {

@@ -16,7 +16,8 @@ const normalizePluginSource = (source: PluginSource): PluginSource => ({
 const normalizePlugins = (plugins: Record<string, PluginSource>): Record<string, PluginSource> => {
   const out: Record<string, PluginSource> = {};
   for (const [name, source] of Object.entries(plugins)) {
-    out[name] = normalizePluginSource(source);
+    const normalized = normalizePluginSource(source);
+    out[`${name}@${normalized.version}`] = normalized;
   }
 
   return out;
