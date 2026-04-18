@@ -44,6 +44,10 @@ const handleRequest = async (
     return;
   }
 
+  if (config.publicDir && serveStatic(req, res, config.publicDir)) {
+    return;
+  }
+
   if (req.path.startsWith(pluginManager.urlPrefix + '/')) {
     const relative = req.path.slice(pluginManager.urlPrefix.length);
     const pluginName = relative.split('/')[1];

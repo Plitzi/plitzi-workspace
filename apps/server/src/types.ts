@@ -109,6 +109,7 @@ export type SSRServerConfig = {
     minVersion?: 'TLSv1' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
   };
   sdkEnvironment?: 'production' | 'staging' | 'development' | 'local';
+  publicDir?: string;
   static?: Record<string, string>;
   reactVersion?: string;
   devMode?: boolean;
